@@ -26,8 +26,7 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 
 public class DeveloperDumpAllTypesScript extends GhidraScript {
@@ -57,12 +56,14 @@ public class DeveloperDumpAllTypesScript extends GhidraScript {
 
 		Iterator<DataType> allDataTypes = manager.getAllDataTypes();
 		while (allDataTypes.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType dataType = allDataTypes.next();
 			DataTypePath dataTypePath = dataType.getDataTypePath();
 			String pathString = dataTypePath.toString();
 			String htmlString = ToolTipUtils.getToolTipText(dataType);
-			String plainString = HTMLUtilities.fromHTML(htmlString);
+			String plainString = Swing.runNow(() -> {
+				return HTMLUtilities.fromHTML(htmlString);
+			});
 			fileWriter.append(pathString);
 			fileWriter.append("\n");
 			fileWriter.append(plainString);

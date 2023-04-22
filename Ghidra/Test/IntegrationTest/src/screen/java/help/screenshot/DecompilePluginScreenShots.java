@@ -30,7 +30,7 @@ import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.programtree.ViewManagerComponentProvider;
 
 public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
-	private static final Color DARK_BLUE = Palette.getColor("navy");
+	private static final Color NAVY = Palette.getColor("navy");
 	private static final Color DARK_GREEN = Palette.GREEN;
 	private static final Color YELLOW_ORANGE = Palette.getColor("darkkhaki");
 	private static final Color PURPLE = Palette.PURPLE;
@@ -190,28 +190,28 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 
 		TextFormatter tf = new TextFormatter(font, 15, 400, 4, 14, 1);
 		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
-		TextFormatterContext darkBlue = new TextFormatterContext(DARK_BLUE);
+		TextFormatterContext navyBlue = new TextFormatterContext(NAVY);
 		TextFormatterContext darkGreen = new TextFormatterContext(DARK_GREEN);
 		TextFormatterContext orange = new TextFormatterContext(YELLOW_ORANGE);
 		TextFormatterContext purple = new TextFormatterContext(PURPLE);
 		tf.colorLines(Palette.getColor("palegreen"), 9, 1);
 
 		// @formatter:off
-		tf.writeln("|8b 40 0c|     |MOV|    |EAX|,|Oxc|[|EAX|]", blue, darkBlue, orange, darkGreen, orange );
-		tf.writeln("|3b 45 fc|     |CMP|    |EAX|,|local_8|[|EBP|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|79 29|        |JLE|    |LAB_080483c6|", blue, darkBlue, darkBlue );
-		tf.writeln("|8b 55 08|     |MOV|    |EDX|,|psParm1|[|EBP|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 45 fc|     |MOV|    |EAX|,|local_8|[|EBP|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|89 42 0c|     |MOV|    |0xC|,|[EDX]||EAX|", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 45 08|     |MOV|    |EAX|,|psParm1|[|EBP|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 50 08|     |MOV|    |EAX|,|0x4|[|EAX|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 45 08|     |MOV|    |EAX|,|psParm1|[|EBP|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 40 04|     |MOV|    |EAX|,|0x4|[|EAX|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|89 42 04|     |MOV|    |0x4|,|[EDX]||EAX|", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 45 08|     |MOV|    |EAX|,|psParm1|[|EBP|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 50 04|     |MOV|    |EDX|,|0x4|[|EAX|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 45 08|     |MOV|    |EAX|,|psParm1|[|EBP|]", blue, darkBlue, orange, purple, orange );
-		tf.writeln("|8b 40 08|     |MOV|    |EAX|,|0x8|[|EAX|]", blue, darkBlue, orange, purple, orange );
+		tf.writeln("|8b 40 0c|     |MOV|    |EAX|,|Oxc|[|EAX|]", blue, navyBlue, orange, darkGreen, orange );
+		tf.writeln("|3b 45 fc|     |CMP|    |EAX|,|local_8|[|EBP|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|79 29|        |JLE|    |LAB_080483c6|", blue, navyBlue, navyBlue );
+		tf.writeln("|8b 55 08|     |MOV|    |EDX|,|psParm1|[|EBP|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 45 fc|     |MOV|    |EAX|,|local_8|[|EBP|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|89 42 0c|     |MOV|    |0xC|,|[EDX]||EAX|", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 45 08|     |MOV|    |EAX|,|psParm1|[|EBP|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 50 08|     |MOV|    |EAX|,|0x4|[|EAX|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 45 08|     |MOV|    |EAX|,|psParm1|[|EBP|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 40 04|     |MOV|    |EAX|,|0x4|[|EAX|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|89 42 04|     |MOV|    |0x4|,|[EDX]||EAX|", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 45 08|     |MOV|    |EAX|,|psParm1|[|EBP|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 50 04|     |MOV|    |EDX|,|0x4|[|EAX|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 45 08|     |MOV|    |EAX|,|psParm1|[|EBP|]", blue, navyBlue, orange, purple, orange );
+		tf.writeln("|8b 40 08|     |MOV|    |EAX|,|0x8|[|EAX|]", blue, navyBlue, orange, purple, orange );
 		// @formatter:on
 
 		return tf.getImage();

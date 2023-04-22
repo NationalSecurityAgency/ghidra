@@ -87,6 +87,10 @@ public class ProjectArchive implements DomainFileArchive {
 		return Objects.equals(originalDomainFile.getFileID(), other.originalDomainFile.getFileID());
 	}
 
+	public boolean hasExclusiveAccess() {
+		return dataTypeArchive.hasExclusiveAccess();
+	}
+
 	@Override
 	public boolean isModifiable() {
 		DomainFile domainFile = getDomainObject().getDomainFile();
@@ -211,6 +215,11 @@ public class ProjectArchive implements DomainFileArchive {
 
 		@Override
 		public void sourceArchiveChanged(DataTypeManager dtm, SourceArchive dataTypeSource) {
+			fireStateChanged();
+		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dtm) {
 			fireStateChanged();
 		}
 	}

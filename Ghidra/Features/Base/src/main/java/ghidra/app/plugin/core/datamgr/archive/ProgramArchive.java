@@ -94,6 +94,11 @@ public class ProgramArchive implements DomainFileArchive {
 	}
 
 	@Override
+	public boolean hasExclusiveAccess() {
+		return program.hasExclusiveAccess();
+	}
+
+	@Override
 	public boolean isChanged() {
 		return false;
 	}

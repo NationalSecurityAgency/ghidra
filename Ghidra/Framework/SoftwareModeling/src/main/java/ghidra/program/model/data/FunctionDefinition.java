@@ -16,7 +16,9 @@
 package ghidra.program.model.data;
 
 import ghidra.program.model.listing.FunctionSignature;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * Defines a function signature for things like function pointers.
@@ -50,10 +52,42 @@ public interface FunctionDefinition extends DataType, FunctionSignature {
 	public void setVarArgs(boolean hasVarArgs);
 
 	/**
+	 * Set whether or not this function has a return.
+	 * 
+	 * @param hasNoReturn true if this function does not return.
+	 */
+	public void setNoReturn(boolean hasNoReturn);
+
+	/**
 	 * Set the generic calling convention associated with this function definition.
+	 * <br>
+	 * The total number of unique calling convention names used within a given {@link Program}
+	 * or {@link DataTypeManager} may be limited (e.g., 127).  When this limit is exceeded an error
+	 * will be logged and this setting ignored.
+	 * 
 	 * @param genericCallingConvention generic calling convention
+	 * @deprecated Use of {@link GenericCallingConvention} is deprecated since arbitrary calling
+	 * convention names are now supported.  {@link #setCallingConvention(String)} should be used.
 	 */
 	public void setGenericCallingConvention(GenericCallingConvention genericCallingConvention);
+
+	/**
+	 * Set the calling convention associated with this function definition.
+	 * <br>
+	 * The total number of unique calling convention names used within a given {@link Program}
+	 * or {@link DataTypeManager} may be limited (e.g., 127).  When this limit is exceeded an error
+	 * will be logged and this setting ignored.
+	 *  
+	 * @param conventionName calling convention name or null.  This name is restricted to those
+	 * defined by {@link GenericCallingConvention}, the associated compiler specification.  
+	 * The prototype model declaration name form (e.g., "__stdcall") should be specified as it 
+	 * appears in a compiler specification (*.cspec).  The special "unknown" and "default" names 
+	 * are also allowed.
+	 * @throws InvalidInputException if specified conventionName is not defined by 
+	 * {@link GenericCallingConvention} or the associated compiler specification if 
+	 * datatype manager has an associated program architecture.
+	 */
+	public void setCallingConvention(String conventionName) throws InvalidInputException;
 
 	/**
 	 * Replace the given argument with another data type

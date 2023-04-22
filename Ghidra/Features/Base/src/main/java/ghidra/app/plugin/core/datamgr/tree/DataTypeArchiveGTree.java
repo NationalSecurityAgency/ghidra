@@ -336,8 +336,7 @@ public class DataTypeArchiveGTree extends GTree {
 					isSelected ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor());
 			}
 
-			MultiIcon multiIcon = new MultiIcon(
-				new BackgroundIcon(ICON_WIDTH, ICON_HEIGHT, false));
+			MultiIcon multiIcon = new MultiIcon(new DtBackgroundIcon());
 			Icon icon = getIcon();
 			multiIcon.addIcon(new CenterVerticalIcon(icon, ICON_HEIGHT));
 

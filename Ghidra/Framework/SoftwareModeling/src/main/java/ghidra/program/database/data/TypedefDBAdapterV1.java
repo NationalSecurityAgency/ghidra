@@ -25,7 +25,9 @@ import ghidra.util.exception.VersionException;
  * Version 1 implementation for accessing the Typedef database table. 
  */
 class TypedefDBAdapterV1 extends TypedefDBAdapter implements RecordTranslator {
+
 	static final int VERSION = 1;
+
 	static final int V1_TYPEDEF_DT_ID_COL = 0;
 	static final int V1_TYPEDEF_NAME_COL = 1;
 	static final int V1_TYPEDEF_CAT_COL = 2;
@@ -40,6 +42,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter implements RecordTranslator {
 //			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE },
 //		new String[] { "Data Type ID", "Name", "Category ID", "Source Archive ID",
 //			"Universal Data Type ID", "Source Sync Time", "Last Change Time" });
+
 	private Table table;
 
 	/**
@@ -56,12 +59,7 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter implements RecordTranslator {
 		}
 		int version = table.getSchema().getVersion();
 		if (version != VERSION) {
-			String msg = "Expected version " + VERSION + " for table " + TYPEDEF_TABLE_NAME +
-				" but got " + table.getSchema().getVersion();
-			if (version < VERSION) {
-				throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-			}
-			throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+			throw new VersionException(version < VERSION);
 		}
 	}
 

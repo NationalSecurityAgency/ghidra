@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * A fixed size 16 byte signed integer (commonly referred to in C as int128_t)
  */
-public class Integer16DataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class Integer16DataType extends AbstractSignedIntegerDataType {
 
 	/** A statically defined Integer16DataType instance.*/
 	public final static Integer16DataType dataType = new Integer16DataType();
@@ -30,7 +28,7 @@ public class Integer16DataType extends AbstractIntegerDataType {
 	}
 
 	public Integer16DataType(DataTypeManager dtm) {
-		super("int16", true, dtm);
+		super("int16", dtm);
 	}
 
 	@Override

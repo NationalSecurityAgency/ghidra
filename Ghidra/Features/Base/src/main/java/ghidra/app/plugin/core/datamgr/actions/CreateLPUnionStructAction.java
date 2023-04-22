@@ -311,4 +311,10 @@ public class CreateLPUnionStructAction extends DockingAction implements DataType
 		// TODO Auto-generated method stub
 
 	}
+
+	@Override
+	public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+		// TODO Auto-generated method stub
+
+	}
 }

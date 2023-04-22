@@ -25,17 +25,17 @@ import ghidra.util.exception.VersionException;
  * To change the template for this generated type comment go to
  * {@literal Window>Preferences>Java>Code Generation>Code and Comments}
  * 
- * 
+ * NOTE: Use of tablePrefix introduced with this adapter version.
  */
 class ArrayDBAdapterV1 extends ArrayDBAdapter {
+
 	static final int VERSION = 1;
+
 	static final String ARRAY_TABLE_NAME = "Arrays";
 	static final int V1_ARRAY_DT_ID_COL = 0;
 	static final int V1_ARRAY_DIM_COL = 1;
 	static final int V1_ARRAY_ELEMENT_LENGTH_COL = 2; // applies to sizable dynamic types only
 	static final int V1_ARRAY_CAT_COL = 3;
-
-	private Table table;
 
 	public static final Schema V1_SCHEMA =
 		new Schema(VERSION, "Array ID",
@@ -43,22 +43,31 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 				LongField.INSTANCE },
 			new String[] { "Data Type ID", "Dimension", "Length", "Cat ID" });
 
-	/**
-	 * Constructor
-	 * 
-	 */
-	public ArrayDBAdapterV1(DBHandle handle, boolean create) throws VersionException, IOException {
+	private Table table;
 
+	/**
+	 * Gets a version 1 adapter for the {@link ArrayDB} database table.
+	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
+	 * @param create create table if true else acquire for read-only or update use
+	 * @throws VersionException if the the table's version does not match the expected version
+	 * for this adapter.
+	 * @throws IOException an IO error occured during table creation
+	 */
+	public ArrayDBAdapterV1(DBHandle handle, String tablePrefix, boolean create)
+			throws VersionException, IOException {
+		String tableName = tablePrefix + ARRAY_TABLE_NAME;
 		if (create) {
-			table = handle.createTable(ARRAY_TABLE_NAME, V1_SCHEMA, new int[] { V1_ARRAY_CAT_COL });
+			table = handle.createTable(tableName, V1_SCHEMA, new int[] { V1_ARRAY_CAT_COL });
 		}
 		else {
-			table = handle.getTable(ARRAY_TABLE_NAME);
+			table = handle.getTable(tableName);
 			if (table == null) {
-				throw new VersionException("Missing Table: " + ARRAY_TABLE_NAME);
+				throw new VersionException("Missing Table: " + tableName);
 			}
-			else if (table.getSchema().getVersion() != VERSION) {
-				throw new VersionException(VersionException.NEWER_VERSION, false);
+			int version = table.getSchema().getVersion();
+			if (version != VERSION) {
+				throw new VersionException(version < VERSION);
 			}
 		}
 	}
@@ -67,11 +76,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 	public DBRecord createRecord(long dataTypeID, int numberOfElements, int length, long catID)
 			throws IOException {
 
-		long tableKey = table.getKey();
-//		if (tableKey <= DataManager.VOID_DATATYPE_ID) {
-//			tableKey = DataManager.VOID_DATATYPE_ID +1;
-//		}
-		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.ARRAY, tableKey);
+		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.ARRAY, table.getKey());
 
 		DBRecord record = V1_SCHEMA.createRecord(key);
 		record.setLongValue(V1_ARRAY_DT_ID_COL, dataTypeID);
@@ -105,7 +110,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
-		handle.deleteTable(ARRAY_TABLE_NAME);
+		handle.deleteTable(table.getName());
 	}
 
 	@Override

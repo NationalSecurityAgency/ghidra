@@ -15,8 +15,7 @@
  */
 package ghidra.trace.database.symbol;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.symbol.OverlappingNamespaceException;
@@ -165,54 +164,19 @@ public class DBTraceFunctionSymbolView
 		}
 	}
 
-	public static List<String> getCallingConventionNames(CompilerSpec cs) {
-		PrototypeModel[] namedCCs = cs.getCallingConventions();
-		List<String> names = new ArrayList<>(2 + namedCCs.length);
-		names.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
-		names.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
-		for (PrototypeModel model : namedCCs) {
-			names.add(model.getName());
-		}
-		return names;
-	}
-
 	@Override
-	public List<String> getCallingConventionNames() {
-		// TODO: Allow for user-selected compiler spec(s)
-		return getCallingConventionNames(manager.trace.getBaseCompilerSpec());
+	public Collection<String> getCallingConventionNames() {
+		return manager.dataTypeManager.getDefinedCallingConventionNames();
 	}
 
 	@Override
 	public PrototypeModel getDefaultCallingConvention() {
-		CompilerSpec cs = manager.trace.getBaseCompilerSpec();
-		if (cs == null) {
-			return null;
-		}
-		return cs.getDefaultCallingConvention();
+		return manager.dataTypeManager.getDefaultCallingConvention();
 	}
 
 	@Override
 	public PrototypeModel getCallingConvention(String name) {
-		CompilerSpec cs = manager.trace.getBaseCompilerSpec();
-		if (cs == null) {
-			return null;
-		}
-		if (Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(name)) {
-			return null;
-		}
-		if (Function.DEFAULT_CALLING_CONVENTION_STRING.equals(name)) {
-			return cs.getDefaultCallingConvention();
-		}
-		return cs.getCallingConvention(name);
-	}
-
-	@Override
-	public PrototypeModel[] getCallingConventions() {
-		CompilerSpec cs = manager.trace.getBaseCompilerSpec();
-		if (cs == null) {
-			return EMPTY_MODEL_LIST;
-		}
-		return cs.getCallingConventions();
+		return manager.dataTypeManager.getCallingConvention(name);
 	}
 
 	// TODO: Move this into a FunctionUtilities class?

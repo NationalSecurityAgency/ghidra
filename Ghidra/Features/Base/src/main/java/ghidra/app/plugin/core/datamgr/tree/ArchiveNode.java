@@ -21,11 +21,16 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.program.model.data.*;
+import ghidra.util.HTMLUtilities;
 import ghidra.util.task.SwingUpdateManager;
 
 public class ArchiveNode extends CategoryNode {
+
+	protected static final String DEFAULT_DATA_ORG_DESCRIPTION =
+		"[Using Default Data Organization]";
 
 	protected Archive archive;
 	protected ArchiveNodeCategoryChangeListener listener;
@@ -43,6 +48,43 @@ public class ArchiveNode extends CategoryNode {
 			ArrayPointerFilterState filterState) {
 		super(rootCategory, filterState);
 		this.archive = archive;
+	}
+
+	protected String buildTooltip(String path) {
+		DataTypeManager dtm = archive.getDataTypeManager();
+		if (dtm == null) {
+			return null;
+		}
+		StringBuilder buf = new StringBuilder(HTMLUtilities.HTML);
+		buf.append(HTMLUtilities.escapeHTML(path));
+		buf.append(HTMLUtilities.BR);
+		String programArchSummary = dtm.getProgramArchitectureSummary();
+		if (programArchSummary != null) {
+			buf.append(HTMLUtilities.HTML_SPACE);
+			buf.append(HTMLUtilities.HTML_SPACE);
+			buf.append(HTMLUtilities.escapeHTML(programArchSummary));
+			addArchiveWarnings(dtm, buf);
+		}
+		else {
+			buf.append(DEFAULT_DATA_ORG_DESCRIPTION);
+		}
+		return buf.toString();
+	}
+
+	private void addArchiveWarnings(DataTypeManager dtm, StringBuilder buf) {
+		if (dtm instanceof StandAloneDataTypeManager archiveDtm) {
+			if (archiveDtm.isProgramArchitectureMissing()) {
+				buf.append(HTMLUtilities.BR);
+				buf.append(
+					"<font color=\"" + Messages.ERROR +
+						"\">** Missing Language/Compiler Specification **</font>");
+			}
+			else if (archiveDtm.isProgramArchitectureUpgradeRequired()) {
+				buf.append(HTMLUtilities.BR);
+				buf.append("<font color=\"" + Messages.WARNING +
+					"\">** Language Upgrade Required **</font>");
+			}
+		}
 	}
 
 	protected void archiveStateChanged() {
@@ -172,11 +214,11 @@ public class ArchiveNode extends CategoryNode {
 		return -1; // All ArchiveNodes are before any other types of nodes
 	}
 
-	@Override
 	/**
 	 * The hashcode must not be based on the name since it can change based upon the underlying
 	 * archive. This must be consistent with the equals method implementation.
 	 */
+	@Override
 	public int hashCode() {
 		return getArchive().hashCode();
 	}
@@ -422,6 +464,14 @@ public class ArchiveNode extends CategoryNode {
 
 		@Override
 		public void sourceArchiveChanged(DataTypeManager manager, SourceArchive sourceArchive) {
+			nodeChangedUpdater.update();
+		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager manager) {
+			// need to force all cached datatype tooltips to be cleared 
+			// due to change in data organization
+			unloadChildren();
 			nodeChangedUpdater.update();
 		}
 	}

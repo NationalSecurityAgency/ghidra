@@ -24,9 +24,13 @@ import ghidra.util.exception.VersionException;
 
 /**
  * Version 2 implementation for accessing the Typedef database table. 
+ * 
+ * NOTE: Use of tablePrefix introduced with this adapter version.
  */
 class TypedefDBAdapterV2 extends TypedefDBAdapter {
+
 	static final int VERSION = 2;
+
 	static final int V2_TYPEDEF_DT_ID_COL = 0;
 	static final int V2_TYPEDEF_FLAGS_COL = 1;
 	static final int V2_TYPEDEF_NAME_COL = 2;
@@ -35,61 +39,53 @@ class TypedefDBAdapterV2 extends TypedefDBAdapter {
 	static final int V2_TYPEDEF_UNIVERSAL_DT_ID_COL = 5;
 	static final int V2_TYPEDEF_SOURCE_SYNC_TIME_COL = 6;
 	static final int V2_TYPEDEF_LAST_CHANGE_TIME_COL = 7;
+
 	static final Schema V2_SCHEMA = new Schema(VERSION, "Typedef ID",
 		new Field[] { LongField.INSTANCE, ShortField.INSTANCE, StringField.INSTANCE,
 			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
 			LongField.INSTANCE },
 		new String[] { "Data Type ID", "Flags", "Name", "Category ID", "Source Archive ID",
 			"Universal Data Type ID", "Source Sync Time", "Last Change Time" });
+
 	private Table table;
 
 	/**
 	 * Gets a version 1 adapter for the Typedef database table.
 	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param create true if this constructor should create the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if IO error occurs
 	 */
-	public TypedefDBAdapterV2(DBHandle handle, boolean create)
+	public TypedefDBAdapterV2(DBHandle handle, String tablePrefix, boolean create)
 			throws VersionException, IOException {
-
+		String tableName = tablePrefix + TYPEDEF_TABLE_NAME;
 		if (create) {
-			table = handle.createTable(TYPEDEF_TABLE_NAME, V2_SCHEMA,
+			table = handle.createTable(tableName, V2_SCHEMA,
 				new int[] { V2_TYPEDEF_CAT_COL, V2_TYPEDEF_UNIVERSAL_DT_ID_COL });
 		}
 		else {
-			table = handle.getTable(TYPEDEF_TABLE_NAME);
+			table = handle.getTable(tableName);
 			if (table == null) {
-				throw new VersionException("Missing Table: " + TYPEDEF_TABLE_NAME);
+				throw new VersionException("Missing Table: " + tableName);
 			}
 			int version = table.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg = "Expected version " + VERSION + " for table " + TYPEDEF_TABLE_NAME +
-					" but got " + table.getSchema().getVersion();
-				if (version < VERSION) {
-					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-				}
-				throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+				throw new VersionException(version < VERSION);
 			}
 		}
 	}
 
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
-		handle.deleteTable(TYPEDEF_TABLE_NAME);
+		handle.deleteTable(table.getName());
 	}
 
 	@Override
 	public DBRecord createRecord(long dataTypeID, String name, short flags, long categoryID,
 			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
-
-		long tableKey = table.getKey();
-//		if (tableKey <= DataManager.VOID_DATATYPE_ID) {
-//			tableKey = DataManager.VOID_DATATYPE_ID +1;
-//		}
-		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.TYPEDEF, tableKey);
-
+		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.TYPEDEF, table.getKey());
 		DBRecord record = V2_SCHEMA.createRecord(key);
 		record.setLongValue(V2_TYPEDEF_DT_ID_COL, dataTypeID);
 		record.setShortValue(V2_TYPEDEF_FLAGS_COL, flags);

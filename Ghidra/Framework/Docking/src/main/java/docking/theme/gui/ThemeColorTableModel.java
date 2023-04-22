@@ -37,7 +37,7 @@ import ghidra.util.table.column.GColumnRenderer;
  * Table model for theme colors
  */
 public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, Object> {
-	private List<ColorValue> colors;
+	protected List<ColorValue> colors;
 	private GThemeValueMap currentValues;
 	private GThemeValueMap themeValues;
 	private GThemeValueMap defaultValues;
@@ -57,6 +57,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	public void reloadCurrent() {
 		currentValues = valuesCache.getCurrentValues();
 		colors = currentValues.getColors();
+		filter();
 		fireTableDataChanged();
 	}
 
@@ -81,6 +82,11 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		lightDefaultValues = valuesCache.getLightValues();
 		darkDefaultValues = valuesCache.getDarkValues();
 
+		filter();
+	}
+
+	protected void filter() {
+		// for subclasses
 	}
 
 	@Override
@@ -266,5 +272,6 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 	}
 
-	private record ResolvedColor(String id, String refId, Color color) { /**/ }
+	private record ResolvedColor(String id, String refId, Color color) {
+		/**/ }
 }

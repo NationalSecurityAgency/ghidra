@@ -908,5 +908,10 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 				SourceArchive dataTypeSource) {
 			// don't care
 		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			// don't care
+		}
 	}
 }

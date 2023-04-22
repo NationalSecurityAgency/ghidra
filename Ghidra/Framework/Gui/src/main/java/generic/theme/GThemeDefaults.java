@@ -55,7 +55,6 @@ public class GThemeDefaults {
 		// generic color concepts
 		public static final GColor BACKGROUND = new GColor("color.bg");
 		public static final GColor CURSOR = new GColor("color.cursor.focused");
-		public static final GColor DISABLED = new GColor("color.palette.disabled");
 		public static final GColor ERROR = new GColor("color.fg.error");
 		public static final GColor FOREGROUND = new GColor("color.fg");
 		public static final GColor FOREGROUND_DISABLED = new GColor("color.fg.disabled");
@@ -71,8 +70,6 @@ public class GThemeDefaults {
 			public static final GColor FG_ERROR_UNSELECTED = new GColor("color.fg.error.table.unselected");
 			public static final GColor FG_UNEDITABLE_SELECTED = new GColor("color.fg.table.uneditable.selected");
 			public static final GColor FG_UNEDITABLE_UNSELECTED = new GColor("color.fg.table.uneditable.unselected");
-			public static final GColor FG_UNSELECTED = new GColor("color.fg.table");
-			public static final GColor FG_SELECTED = new GColor("color.fg.table.unselected");
 			//@formatter:on
 		}
 

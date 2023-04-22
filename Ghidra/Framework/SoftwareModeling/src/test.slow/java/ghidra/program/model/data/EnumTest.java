@@ -21,13 +21,13 @@ import java.util.NoSuchElementException;
 
 import org.junit.*;
 
-import generic.test.AbstractGTest;
+import generic.test.AbstractGenericTest;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for Enum data types.
  */
-public class EnumTest extends AbstractGTest {
+public class EnumTest extends AbstractGenericTest {
 
 	private DataTypeManager dataMgr;
 

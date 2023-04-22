@@ -48,8 +48,11 @@ public class PreProcessorTest extends AbstractGenericTest {
 		super();
 	}
 
-	@BeforeClass
-	public static void init() {
+	@Before
+	public void init() {
+		if (dtMgr != null) {
+			return; // do only once - but not too soon
+		}
 		URL url = PreProcessorTest.class.getResource(resourceName);
 
 		String[] args = new String[] { "-I" + url.getPath() + "/..", "-DFROM_ARG_VALUE=300",

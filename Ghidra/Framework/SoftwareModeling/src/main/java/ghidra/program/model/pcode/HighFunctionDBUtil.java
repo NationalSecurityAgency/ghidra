@@ -696,10 +696,11 @@ public class HighFunctionDBUtil {
 
 		ParameterDefinition[] params = sig.getArguments();
 		FunctionDefinitionDataType fsig = new FunctionDefinitionDataType("tmpname"); // Empty datatype, will get renamed later
-		fsig.setGenericCallingConvention(sig.getGenericCallingConvention());
+		fsig.setCallingConvention(sig.getCallingConventionName());
 		fsig.setArguments(params);
 		fsig.setReturnType(sig.getReturnType());
 		fsig.setVarArgs(sig.hasVarArgs());
+		fsig.setNoReturn(sig.hasNoReturn());
 
 		DataTypeSymbol datsym = new DataTypeSymbol(fsig, "prt", AUTO_CAT);
 		Program program = function.getProgram();

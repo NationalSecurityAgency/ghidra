@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import db.*;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the Component database table.
@@ -43,14 +42,14 @@ abstract class ComponentDBAdapter {
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
-	 * @param monitor the monitor to use for displaying status or for canceling.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @return the adapter for accessing the table of component data types.
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	static ComponentDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
+	static ComponentDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix)
 			throws VersionException, IOException {
-		return new ComponentDBAdapterV0(handle, openMode == DBConstants.CREATE);
+		return new ComponentDBAdapterV0(handle, tablePrefix, openMode == DBConstants.CREATE);
 	}
 
 	/**

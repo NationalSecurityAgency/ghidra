@@ -58,14 +58,23 @@ public class ApplicationProperties extends Properties {
 	public static final String APPLICATION_GRADLE_MIN_PROPERTY = "application.gradle.min";
 
 	/**
-	 * The minimum major version of Java required to run the application. For example, "8".
+	 * The earliest version of gradle after {@link #APPLICATION_GRADLE_MIN_PROPERTY} that is
+	 * unsupported.
+	 * <p>
+	 * If all versions of Gradle greater than or equal to {@link #APPLICATION_GRADLE_MIN_PROPERTY}
+	 * are supported, this property should not be set.
+	 */
+	public static final String APPLICATION_GRADLE_MAX_PROPERTY = "application.gradle.max";
+
+	/**
+	 * The minimum major version of Java required to run the application.
 	 */
 	public static final String APPLICATION_JAVA_MIN_PROPERTY = "application.java.min";
 
 	/**
-	 * The maximum major version of Java the application will run under. For example, "8".
+	 * The maximum major version of Java the application will run under.
 	 * <p>
-	 * If all versions of Java greater than {@link #APPLICATION_JAVA_MIN_PROPERTY} are
+	 * If all versions of Java greater than or equal to {@link #APPLICATION_JAVA_MIN_PROPERTY} are
 	 * supported, this property should not be set.
 	 */
 	public static final String APPLICATION_JAVA_MAX_PROPERTY = "application.java.max";

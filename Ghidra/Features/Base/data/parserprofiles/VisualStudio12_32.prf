@@ -172,12 +172,8 @@ wpcapi.h
 wscapi.h
 wsdapi.h
 wspiapi.h
-
 rpcproxy.h
 
--I/VC/VS12/src
--I/VC/VS12/include
--I/VC/SDK/v7.1A/Include
 -D_M_IX86=300
 -D_MSC_VER=1200
 -D_INTEGRAL_MAX_BITS=32
@@ -191,7 +187,6 @@ rpcproxy.h
 -DSTRSAFE_LIB
 -DSTRSAFE_LIB_IMPL
 -DLPSKBINFO=LPARAM
--D_WCHAR_T_DEFINED
 -DCONST=const
 -D_CRT_SECURE_NO_WARNINGS
 -D_CRT_NONSTDC_NO_DEPRECATE
@@ -205,3 +200,14 @@ rpcproxy.h
 -D_ThrowInfo=ThrowInfo
 -v0
 -D__inner_checkReturn=""
+
+/data/HeaderFiles/VC/VS12/src
+/data/HeaderFiles/VC/VS12/include
+/data/HeaderFiles/VC/SDK/v7.1A/Include
+
+x86:LE:32:default
+
+windows
+
+
+

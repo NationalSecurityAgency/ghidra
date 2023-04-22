@@ -9,7 +9,7 @@
             processorspec="AARCH64.pspec"
             manualindexfile="../manuals/AARCH64.idx"
             id="AARCH64:LE:64:v8A">
-    <description>Generic ARM v8.5-A LE instructions, LE data, missing some 8.5 vector</description>
+    <description>Generic ARM64 v8.5-A LE instructions, LE data, missing some 8.5 vector</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
     <compiler name="Visual Studio" spec="AARCH64_win.cspec" id="windows"/>
     <external_name tool="gnu" name="aarch64"/>
@@ -25,7 +25,7 @@
             processorspec="AARCH64.pspec"
             manualindexfile="../manuals/AARCH64.idx"
             id="AARCH64:BE:64:v8A">
-    <description>Generic ARM v8.5-A LE instructions, BE data, missing some 8.5 vector</description>
+    <description>Generic ARM64 v8.5-A LE instructions, BE data, missing some 8.5 vector</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
     <external_name tool="gnu" name="aarch64"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
@@ -39,7 +39,7 @@
             processorspec="AARCH64.pspec"
             manualindexfile="../manuals/AARCH64.idx"
             id="AARCH64:LE:32:ilp32">
-    <description>Generic ARM v8.5-A LE instructions, LE data, ilp32</description>
+    <description>Generic ARM64 v8.5-A LE instructions, LE data, ilp32</description>
     <truncate_space space="ram" size="4"/>
     <compiler name="default" spec="AARCH64_ilp32.cspec" id="default"/>
     <external_name tool="gnu" name="aarch64:ilp32"/>
@@ -55,7 +55,7 @@
             processorspec="AARCH64.pspec"
             manualindexfile="../manuals/AARCH64.idx"
             id="AARCH64:BE:32:ilp32">
-    <description>Generic ARM v8.5-A LE instructions, BE data, ilp32</description>
+    <description>Generic ARM64 v8.5-A LE instructions, BE data, ilp32</description>
     <truncate_space space="ram" size="4"/>
     <compiler name="default" spec="AARCH64_ilp32.cspec" id="default"/>
     <external_name tool="gnu" name="aarch64:ilp32"/>

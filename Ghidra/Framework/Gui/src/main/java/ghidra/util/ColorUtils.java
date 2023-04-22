@@ -223,12 +223,12 @@ public class ColorUtils {
 
 	private static int combineDarker(int primary, int secondary) {
 		int nudge = Math.min(MAX_COLOR_VALUE - secondary, MAX_NUDGE);
-		return primary - nudge;
+		return Math.max(primary - nudge, 0);
 	}
 
 	private static int combineBrighter(int primary, int secondary) {
 		int nudge = Math.min(secondary, MAX_NUDGE);
-		return primary + nudge;
+		return Math.max(primary + nudge, 0);
 	}
 
 	private static boolean isBright(Color color) {
@@ -264,7 +264,7 @@ public class ColorUtils {
 	/**
 	 * A color {@link Comparator} for ordering colors.
 	 */
-	public static Comparator<Color> COMPARATOR = new Comparator<Color>() {
+	public static Comparator<Color> COMPARATOR = new Comparator<>() {
 
 		@Override
 		public int compare(Color c1, Color c2) {

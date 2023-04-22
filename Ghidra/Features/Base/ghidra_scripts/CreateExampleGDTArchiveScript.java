@@ -31,6 +31,7 @@ import java.io.IOException;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
+import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
@@ -52,14 +53,16 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 		parseGDT_WinVS22();
 	}
 	
-	private void parseHeaderFilesToGDT(File outputDir, String gdtName, String languageID, String compiler, String[] filenames, String[] args)
+	private void parseHeaderFilesToGDT(File outputDir, String gdtName, String languageID, String compiler,
+			String[] filenames, String includePaths[], String[] args)
 			throws ParseException, ghidra.app.util.cparser.CPP.ParseException, IOException {
 		DataTypeManager openTypes[] = null;
 		
-		parseHeaderFilesToGDT(openTypes, outputDir, gdtName, languageID, compiler, filenames, args);
+		parseHeaderFilesToGDT(openTypes, outputDir, gdtName, languageID, compiler, filenames, includePaths, args);
 	}
 
-	private void parseHeaderFilesToGDT(DataTypeManager openTypes[], File outputDir, String gdtName, String languageID, String compiler, String[] filenames, String[] args)
+	private void parseHeaderFilesToGDT(DataTypeManager openTypes[], File outputDir, String gdtName, String languageID, String compiler,
+			String[] filenames, String[] includePaths, String[] args)
 			throws ParseException, ghidra.app.util.cparser.CPP.ParseException, IOException {
 		
 		String dataTypeFile = outputDir + File.separator + gdtName + ".gdt";
@@ -68,9 +71,9 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 		
         FileDataTypeManager dtMgr = FileDataTypeManager.createFileArchive(f);
         
-		String messages = CParserUtils.parseHeaderFiles(openTypes, filenames, args, dtMgr, languageID, compiler, null, monitor);
+		CParseResults results = CParserUtils.parseHeaderFiles(openTypes, filenames, includePaths, args, dtMgr, languageID, compiler, monitor);
 		
-		Msg.info(this, messages);
+		Msg.info(this, results.getFormattedParseMessage(null));
 
 		dtMgr.save();
 		dtMgr.close();
@@ -79,7 +82,7 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 	/**
 	 * Turn string into a file, delete old archive if it exists
 	 * 
-	 * @param dataTypeFile
+	 * @param dataTypeFile name of archive file
 	 * 
 	 * @return file
 	 */
@@ -112,12 +115,15 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"dsound.h",
 		};
 		
+		String includeFiles[] = {
+			headerFilePath+"/VC/VS22/10.0.190141.0",
+			headerFilePath+"/VC/VS22/10.0.19041.0/um",
+			headerFilePath+"/VC/VS22/10.0.19041.0/shared",
+			headerFilePath+"/VC/VS22/10.0.19041.0/ucrt",
+			headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.30.30705/include",			
+		};
+		
 		String args[] = {
-				"-I"+headerFilePath+"/VC/VS22/10.0.190141.0",
-				"-I"+headerFilePath+"/VC/VS22/10.0.19041.0/um",
-				"-I"+headerFilePath+"/VC/VS22/10.0.19041.0/shared",
-				"-I"+headerFilePath+"/VC/VS22/10.0.19041.0/ucrt",
-				"-I"+headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.30.30705/include",
 				"-D_AMD64_",
 				"-D_M_AMD64",
 				"-D_M_X64",
@@ -126,7 +132,7 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"-v0",
 		};
 		
-		parseHeaderFilesToGDT(outputDirectory, "directX64", "x86:LE:64:default", "windows", filenames, args);
+		parseHeaderFilesToGDT(outputDirectory, "directX64", "x86:LE:64:default", "windows", filenames, includeFiles, args);
 	}
 	
 	public void parseGDT_WinVS22() throws Exception {
@@ -167,7 +173,7 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"complex.h",
 				"math.h",
 				"mbctype.h",
-				"mbstring.hs",
+				"mbstring.h",
 				"memory.h",
 				"minmax.h",
 				"new.h",
@@ -216,7 +222,7 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"dssec.h",
 				"iads.h",
 				"identitycommon.h",
-				"identityproviders.h",
+				"identityprovider.h",
 				"identitystore.h",
 				"keycredmgr.h",
 				"lmaccess.h",
@@ -237,7 +243,7 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"slpublic.h",
 				"subauth.h",
 				"tokenbinding.h",
-				"tpmsvcmgr.h",
+				"tpmvscmgr.h",
 				"wincred.h",
 				"wincrypt.h",
 				"winnetwk.h",
@@ -267,7 +273,7 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"mswsock.h",
 				"ws2tcpip.h",
 				"wsipv6ok.h",
-				"wslwlink.h",
+				"wsnwlink.h",
 				"wsrm.h",
 				"mswsockdef.h",
 				
@@ -375,7 +381,7 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"thumbcache.h",
 				"thumbnailstreamcache.h",
 				"tlogstg.h",
-				"usereng.h",
+				"userenv.h",
 				
 				"# Windows Controls",
 				"commctrl.h",
@@ -452,12 +458,15 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"lmwksta.h"
 		};
 		
+		String includeFiles[] = {
+			headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.29.30133/include",
+			headerFilePath+"/VC/VS22/10.0.19041.0/shared",
+			headerFilePath+"/VC/VS22/10.0.19041.0/ucrt",
+			headerFilePath+"/VC/VS22/10.0.19041.0/um",
+			headerFilePath+"/VC/VS22/10.0.19041.0/winrt",			
+		};
+		
 		String args[] = {
-				"-I"+headerFilePath+"/VC/VS22/Community/VC/Tools/MSVC/14.29.30133/include",
-				"-I"+headerFilePath+"/VC/VS22/10.0.19041.0/shared",
-				"-I"+headerFilePath+"/VC/VS22/10.0.19041.0/ucrt",
-				"-I"+headerFilePath+"/VC/VS22/10.0.19041.0/um",
-				"-I"+headerFilePath+"/VC/VS22/10.0.19041.0/winrt",
 				"-D_MSC_VER=1924",
 				"-D_INTEGRAL_MAX_BITS=64",
 				"-DWINVER=0x0a00",
@@ -473,7 +482,6 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"-DSTRSAFE_LIB",
 				"-DSTRSAFE_LIB_IMPL",
 				"-DLPSKBINFO=LPARAM",
-				"-D_WCHAR_T_DEFINED",
 				"-DCONST=const",
 				"-D_CRT_SECURE_NO_WARNINGS",
 				"-D_CRT_NONSTDC_NO_DEPRECATE",
@@ -494,6 +502,6 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"-DSECURITY_WIN32",
 		};
 		
-		parseHeaderFilesToGDT(outputDirectory, "windows_vs22_64_new", "x86:LE:64:default", "windows", filenames, args);
+		parseHeaderFilesToGDT(outputDirectory, "windows_vs22_64_new", "x86:LE:64:default", "windows", filenames, includeFiles, args);
 	}
 }

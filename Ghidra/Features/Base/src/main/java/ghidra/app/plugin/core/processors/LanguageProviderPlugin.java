@@ -221,7 +221,8 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 				Program program = (Program) dobj;
 
 				monitor.setMessage("Identify Language...");
-				SetLanguageDialog dialog = new SetLanguageDialog(tool, program);
+				SetLanguageDialog dialog = new SetLanguageDialog(tool, program,
+					"Set Language: " + program.getDomainFile().getName());
 				LanguageID langDescID = dialog.getLanguageDescriptionID();
 				CompilerSpecID compilerSpecDescID = dialog.getCompilerSpecDescriptionID();
 				if ((langDescID == null) || (compilerSpecDescID == null)) {

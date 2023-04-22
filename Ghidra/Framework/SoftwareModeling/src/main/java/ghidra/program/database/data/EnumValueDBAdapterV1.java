@@ -22,6 +22,8 @@ import ghidra.util.exception.VersionException;
 
 /**
  * Version 1 implementation for the enumeration tables adapter.
+ * 
+ * NOTE: Use of tablePrefix introduced with this adapter version.
  */
 class EnumValueDBAdapterV1 extends EnumValueDBAdapter {
 
@@ -36,36 +38,32 @@ class EnumValueDBAdapterV1 extends EnumValueDBAdapter {
 	/**
 	 * Gets a version 1 adapter for the Enumeration Data Type Values database table.
 	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param create true if this constructor should create the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if IO error occurs
 	 */
-	public EnumValueDBAdapterV1(DBHandle handle, boolean create)
+	EnumValueDBAdapterV1(DBHandle handle, String tablePrefix, boolean create)
 			throws VersionException, IOException {
-
+		String tableName = tablePrefix + ENUM_VALUE_TABLE_NAME;
 		if (create) {
-			table = handle.createTable(ENUM_VALUE_TABLE_NAME, SCHEMA, new int[] { ENUMVAL_ID_COL });
+			table = handle.createTable(tableName, SCHEMA, new int[] { ENUMVAL_ID_COL });
 		}
 		else {
-			table = handle.getTable(ENUM_VALUE_TABLE_NAME);
+			table = handle.getTable(tableName);
 			if (table == null) {
 				throw new VersionException(true);
 			}
 			int version = table.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg = "Expected version " + VERSION + " for table " + ENUM_VALUE_TABLE_NAME +
-					" but got " + table.getSchema().getVersion();
-				if (version < VERSION) {
-					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-				}
-				throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+				throw new VersionException(version < VERSION);
 			}
 		}
 	}
 
 	@Override
-	public void createRecord(long enumID, String name, long value, String comment)
+	void createRecord(long enumID, String name, long value, String comment)
 			throws IOException {
 		DBRecord record = SCHEMA.createRecord(table.getKey());
 		record.setLongValue(ENUMVAL_ID_COL, enumID);
@@ -76,28 +74,32 @@ class EnumValueDBAdapterV1 extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public DBRecord getRecord(long valueID) throws IOException {
+	DBRecord getRecord(long valueID) throws IOException {
 		return table.getRecord(valueID);
 	}
 
 	@Override
-	public void removeRecord(long valueID) throws IOException {
+	void removeRecord(long valueID) throws IOException {
 		table.deleteRecord(valueID);
 	}
 
 	@Override
-	public void updateRecord(DBRecord record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		table.putRecord(record);
 	}
 
 	@Override
-	public Field[] getValueIdsInEnum(long enumID) throws IOException {
+	Field[] getValueIdsInEnum(long enumID) throws IOException {
 		return table.findRecords(new LongField(enumID), ENUMVAL_ID_COL);
 	}
 
 	@Override
 	RecordIterator getRecords() throws IOException {
 		return table.iterator();
+	}
+
+	void deleteTable(DBHandle handle) throws IOException {
+		handle.deleteTable(table.getName());
 	}
 
 	@Override

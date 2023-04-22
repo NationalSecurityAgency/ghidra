@@ -37,10 +37,13 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.StandAloneDataTypeManager.LanguageUpdateOption;
+import ghidra.program.model.lang.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -89,6 +92,45 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		}
 		finally {
 			dataTypeManager.endTransaction(id, true);
+		}
+		waitForTree();
+	}
+
+	protected DataType resolveDataType(StandAloneDataTypeManager archiveDtm, DataType dt)
+			throws Exception {
+		int id = archiveDtm.startTransaction("resolve datatype");
+		try {
+			return archiveDtm.resolve(dt, null);
+		}
+		finally {
+			archiveDtm.endTransaction(id, true);
+			waitForTree();
+		}
+	}
+
+	protected void setArchitecture(StandAloneDataTypeManager archiveDtm, String languageId,
+			String compilerSpecId) throws Exception {
+		LanguageService languageService = getLanguageService();
+		Language language = languageService.getLanguage(new LanguageID(languageId));
+
+		int id = archiveDtm.startTransaction("set architecture");
+		try {
+			archiveDtm.setProgramArchitecture(language, new CompilerSpecID(compilerSpecId),
+				LanguageUpdateOption.CLEAR, TaskMonitor.DUMMY);
+		}
+		finally {
+			archiveDtm.endTransaction(id, true);
+		}
+		waitForTree();
+	}
+
+	protected void removeArchitecture(StandAloneDataTypeManager archiveDtm) throws Exception {
+		int id = archiveDtm.startTransaction("remove architecture");
+		try {
+			archiveDtm.clearProgramArchitecture(TaskMonitor.DUMMY);
+		}
+		finally {
+			archiveDtm.endTransaction(id, true);
 		}
 		waitForTree();
 	}
@@ -190,10 +232,12 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 	@After
 	public void tearDown() throws Exception {
 
-		SwingUtilities.invokeLater(() -> {
-			ProgramManager pm = tool.getService(ProgramManager.class);
-			pm.closeProgram();
-		});
+		if (tool != null) {
+			SwingUtilities.invokeLater(() -> {
+				ProgramManager pm = tool.getService(ProgramManager.class);
+				pm.closeProgram();
+			});
+		}
 		waitForPostedSwingRunnables();
 
 		// this handles the save changes dialog and potential analysis dialogs

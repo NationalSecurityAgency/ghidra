@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.viewer.format;
 
+import java.awt.Color;
+
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GColor;
@@ -25,11 +27,13 @@ import ghidra.app.util.viewer.proxy.ProxyObj;
 
 public class ErrorListingField extends ListingTextField {
 
+	private static Color BG_ERROR_COLOR = new GColor("color.bg.listing.error");
+
 	private Throwable t;
 
 	private static HighlightProvider myProvider =
 		(text, obj, fieldFactoryClass, cursorTextOffset) -> new Highlight[] {
-			new Highlight(0, text.length() - 1, new GColor("color.bg.error")) };
+			new Highlight(0, text.length() - 1, BG_ERROR_COLOR) };
 
 	public ErrorListingField(FieldFactory ff, ProxyObj<?> proxy, int varWidth, Throwable t) {
 		super(ff, proxy, createField(ff, proxy, varWidth, t));

@@ -115,8 +115,13 @@ class ProgramListPanel extends JPanel {
 		listModel = new DefaultListModel<>();
 		initListModel();
 		programList = new JList<>(listModel);
-		programList.setBackground(BACKGROUND_COLOR);
-		programList.setForeground(FOREGROUND_COLOR);
+
+		// Some LaFs use different selection colors depending on whether the list has focus.  This
+		// list does not get focus, so the selection color does not look correct when interacting 
+		// with the list.   Setting the color here updates the list to always use the focused
+		// selected color.
+		programList.setSelectionBackground(new GColor("system.color.bg.selected.view"));
+
 		programList.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 		programList.addMouseMotionListener(new MouseMotionAdapter() {
 			@Override
@@ -259,5 +264,6 @@ class ProgramListPanel extends JPanel {
 
 			return this;
 		}
+
 	}
 }

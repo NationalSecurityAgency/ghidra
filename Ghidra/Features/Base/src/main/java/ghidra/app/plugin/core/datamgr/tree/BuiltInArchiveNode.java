@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.datamgr.tree;
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.datamgr.archive.BuiltInArchive;
+import ghidra.util.HTMLUtilities;
 import resources.MultiIcon;
 
 public class BuiltInArchiveNode extends ArchiveNode {
@@ -35,7 +36,13 @@ public class BuiltInArchiveNode extends ArchiveNode {
 
 	@Override
 	public String getToolTip() {
-		return "Built In Data Types";
+		StringBuilder buf = new StringBuilder(HTMLUtilities.HTML);
+		buf.append("Built In Data Types");
+		buf.append(HTMLUtilities.BR);
+		buf.append(HTMLUtilities.HTML_SPACE);
+		buf.append(HTMLUtilities.HTML_SPACE);
+		buf.append(DEFAULT_DATA_ORG_DESCRIPTION);
+		return buf.toString();
 	}
 
 }

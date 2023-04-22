@@ -44,6 +44,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -971,6 +972,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 		ResourceFile emuTestingArchive = Application.getModuleDataFile("pcodetest/EmuTesting.gdt");
 		archiveDtMgr = FileDataTypeManager.openFileArchive(emuTestingArchive, false);
+		assertEquals(ArchiveWarning.NONE, archiveDtMgr.getWarning());
 		DataType dt = archiveDtMgr.getDataType(CategoryPath.ROOT, TEST_INFO_STRUCT_NAME);
 		if (dt == null || !(dt instanceof Structure)) {
 			fail(TEST_INFO_STRUCT_NAME +

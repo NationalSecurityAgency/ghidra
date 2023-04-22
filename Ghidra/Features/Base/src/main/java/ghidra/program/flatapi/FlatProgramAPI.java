@@ -36,6 +36,8 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
@@ -184,7 +186,7 @@ public class FlatProgramAPI {
 	 * only necessary to analyze changes and not the entire program which can take much
 	 * longer and affect more of the program than is necessary.
 	 */
-	@Deprecated
+	@Deprecated(since = "7.4", forRemoval = true)
 	public void analyze(Program program) {
 		analyzeAll(program);
 	}
@@ -405,7 +407,7 @@ public class FlatProgramAPI {
 	 * @deprecated use {@link #createLabel(Address, String, boolean)} instead.
 	 * Deprecated in Ghidra 7.4
 	 */
-	@Deprecated
+	@Deprecated(since = "7.4", forRemoval = true)
 	public final Symbol createSymbol(Address address, String name, boolean makePrimary)
 			throws Exception {
 		return createLabel(address, name, makePrimary);
@@ -443,9 +445,8 @@ public class FlatProgramAPI {
 	 */
 	public final Symbol createLabel(Address address, String name, Namespace namespace,
 			boolean makePrimary, SourceType sourceType) throws Exception {
-		Symbol symbol;
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
-		symbol = symbolTable.createLabel(address, name, namespace, sourceType);
+		Symbol symbol = symbolTable.createLabel(address, name, namespace, sourceType);
 		if (makePrimary && !symbol.isPrimary()) {
 			SetLabelPrimaryCmd cmd = new SetLabelPrimaryCmd(address, name, namespace);
 			if (cmd.applyTo(currentProgram)) {
@@ -458,7 +459,7 @@ public class FlatProgramAPI {
 	/**
 	 * @deprecated use {@link #createLabel(Address, String, boolean, SourceType)} instead. Deprecated in Ghidra 7.4
 	 */
-	@Deprecated
+	@Deprecated(since = "7.4", forRemoval = true)
 	public final Symbol createSymbol(Address address, String name, boolean makePrimary,
 			boolean makeUnique, SourceType sourceType) throws Exception {
 		return createLabel(address, name, makePrimary, sourceType);
@@ -1129,7 +1130,7 @@ public class FlatProgramAPI {
 	 * 			   no longer have to be unique. Use {@link #getGlobalFunctions(String)}
 	 * 			   Deprecated in Ghidra 7.4
 	 */
-	@Deprecated
+	@Deprecated(since = "7.4", forRemoval = true)
 	public final Function getFunction(String name) {
 		List<Function> globalFunctions = currentProgram.getListing().getGlobalFunctions(name);
 		return globalFunctions.isEmpty() ? null : globalFunctions.get(0);
@@ -1383,7 +1384,7 @@ public class FlatProgramAPI {
 	 * @deprecated Since the same label name can be at the same address if in a different namespace,
 	 * this method is ambiguous. Use {@link #getSymbolAt(Address, String, Namespace)} instead.
 	 */
-	@Deprecated
+	@Deprecated(since = "7.4", forRemoval = true)
 	public final Symbol getSymbolAt(Address address, String name) {
 		SymbolIterator symbols = currentProgram.getSymbolTable().getSymbolsAsIterator(address);
 		for (Symbol symbol : symbols) {
@@ -1477,7 +1478,7 @@ public class FlatProgramAPI {
 	 * @throws IllegalStateException if there is more than one symbol with that name.
 	 * @deprecated use {@link #getSymbols(String, Namespace)}
 	 */
-	@Deprecated
+	@Deprecated(since = "7.4", forRemoval = true)
 	public final Symbol getSymbol(String name, Namespace namespace) {
 		List<Symbol> symbols = currentProgram.getSymbolTable().getSymbols(name, namespace);
 		if (symbols.size() == 1) {
@@ -1583,7 +1584,7 @@ public class FlatProgramAPI {
 	 * @deprecated This method is deprecated because it did not allow you to include the
 	 * largest possible address.  Instead use the one that takes a start address and a length.
 	 */
-	@Deprecated
+	@Deprecated(since = "7.4", forRemoval = true)
 	public final ProgramFragment createFragment(String fragmentName, Address start, Address end)
 			throws DuplicateNameException, NotFoundException {
 		ProgramModule module = currentProgram.getListing().getDefaultRootModule();
@@ -1617,7 +1618,7 @@ public class FlatProgramAPI {
 	 * @deprecated This method is deprecated because it did not allow you to include the
 	 * largest possible address.  Instead use the one that takes a start address and a length.
 	 */
-	@Deprecated
+	@Deprecated(since = "7.4", forRemoval = true)
 	public final ProgramFragment createFragment(ProgramModule module, String fragmentName,
 			Address start, Address end) throws DuplicateNameException, NotFoundException {
 		ProgramFragment fragment = getFragment(module, fragmentName);
@@ -2487,7 +2488,16 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Opens a Data Type Archive
+	 * Opens an existing File Data Type Archive.
+	 * <p>
+	 * <B>NOTE:</B> If archive has an assigned architecture, issues may arise due to a revised or
+	 * missing {@link Language}/{@link CompilerSpec} which will result in a warning but not
+	 * prevent the archive from being opened.  Such a warning condition will be logged and may 
+	 * result in missing or stale information for existing datatypes which have architecture related
+	 * data.  In some case it may be appropriate to 
+	 * {@link FileDataTypeManager#getWarning() check for warnings} on the returned archive
+	 * object prior to its use.
+	 * 
 	 * @param archiveFile the archive file to open
 	 * @param readOnly should file be opened read only
 	 * @return the data type manager
@@ -2495,8 +2505,7 @@ public class FlatProgramAPI {
 	 */
 	public final FileDataTypeManager openDataTypeArchive(File archiveFile, boolean readOnly)
 			throws Exception {
-		FileDataTypeManager dtfm = FileDataTypeManager.openFileArchive(archiveFile, !readOnly);
-		return dtfm;
+		return FileDataTypeManager.openFileArchive(archiveFile, !readOnly);
 	}
 
 	/**

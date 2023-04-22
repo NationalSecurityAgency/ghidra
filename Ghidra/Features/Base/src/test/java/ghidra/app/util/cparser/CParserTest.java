@@ -15,10 +15,7 @@
  */
 package ghidra.app.util.cparser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -28,30 +25,9 @@ import org.junit.Test;
 
 import ghidra.app.util.cparser.C.CParser;
 import ghidra.app.util.cparser.C.ParseException;
-import ghidra.program.model.data.Array;
-import ghidra.program.model.data.BuiltInDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.CharDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.program.model.data.FunctionDefinition;
-import ghidra.program.model.data.GenericCallingConvention;
-import ghidra.program.model.data.LongLongDataType;
-import ghidra.program.model.data.ParameterDefinition;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.ShortDataType;
-import ghidra.program.model.data.StandAloneDataTypeManager;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.data.TypeDef;
-import ghidra.program.model.data.TypedefDataType;
-import ghidra.program.model.data.UnsignedLongDataType;
-import ghidra.program.model.data.UnsignedLongLongDataType;
-import ghidra.program.model.data.UnsignedShortDataType;
-import ghidra.program.model.data.WideCharDataType;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 
 public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -246,11 +222,11 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		String parseMessages = parser.getParseMessages();
 		System.out.println(parseMessages);
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
 
 		DataType dt;
 		DataType pointedToDT;
@@ -285,14 +261,14 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		funcDef = (FunctionDefinition) dt;
 		str = funcDef.getPrototypeString();
 		assertEquals("signature not correct", "void _Once(_Once_t * , _func_anon_ * )", replaceAnonFuncName(str));
-		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getCallingConventionName());
 		funcArgs = funcDef.getArguments();
 		assertTrue("struct fstruct", funcArgs[0].getDataType() instanceof Pointer);	
 		assertTrue("ptr", funcArgs[1].getDataType() instanceof Pointer);
 		pointedToDT = ((Pointer) funcArgs[1].getDataType()).getDataType();
 		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
 		funcDef = (FunctionDefinition) pointedToDT;
-		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getCallingConventionName());
 		str = funcDef.getPrototypeString();
 		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
 
@@ -301,12 +277,12 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertTrue("_Twice function definition", dt instanceof FunctionDefinition);
 		funcDef = (FunctionDefinition) dt;
 		str = funcDef.getPrototypeString();
-		assertEquals("calling convention _Twice", "__stdcall", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Twice", "__stdcall", funcDef.getCallingConventionName());
 		funcArgs = funcDef.getArguments();
 		pointedToDT = ((Pointer) funcArgs[0].getDataType()).getDataType();
 		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
 		funcDef = (FunctionDefinition) pointedToDT;
-		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getCallingConventionName());
 		str = funcDef.getPrototypeString();
 		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
 
@@ -315,12 +291,12 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertTrue("_Twice function definition", dt instanceof FunctionDefinition);
 		funcDef = (FunctionDefinition) dt;
 		str = funcDef.getPrototypeString();
-		assertEquals("calling convention _Thrice", "", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Thrice", "unknown", funcDef.getCallingConventionName());
 		funcArgs = funcDef.getArguments();
 		pointedToDT = ((Pointer) funcArgs[0].getDataType()).getDataType();
 		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
 		funcDef = (FunctionDefinition) pointedToDT;
-		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getCallingConventionName());
 		str = funcDef.getPrototypeString();
 		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
 		
@@ -368,22 +344,34 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "stdcall_func");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
-		assertTrue("Callee should not purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() == GenericCallingConvention.stdcall);
+		assertTrue("Callee should not purge", CompilerSpec.CALLING_CONVENTION_stdcall
+				.equals(((FunctionDefinition) dt).getCallingConventionName()));
 		assertTrue("signature not correct", str.equals("int stdcall_func(int b)"));
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "cdecl_func");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
-		assertTrue("Caller should purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() != GenericCallingConvention.stdcall);
+		assertTrue("Caller should purge", CompilerSpec.CALLING_CONVENTION_cdecl
+				.equals(((FunctionDefinition) dt).getCallingConventionName()));
 		assertTrue("signature not correct", str.equals("int cdecl_func(int a)"));
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "cdecl_func_after");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
-		assertTrue("Caller should purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() != GenericCallingConvention.stdcall);
+		assertTrue("Caller should purge", CompilerSpec.CALLING_CONVENTION_cdecl
+				.equals(((FunctionDefinition) dt).getCallingConventionName()));
 
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "_Noreturn_exit");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
+
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "win_exit");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
+
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "gcc_exit");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
+		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "UINT2");
 		assertTrue(dt instanceof TypeDef);
 		assertEquals("ushort", ((TypeDef) dt).getBaseDataType().getName());

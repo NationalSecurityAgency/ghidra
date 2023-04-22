@@ -32,33 +32,33 @@ class EnumValueDBAdapterNoTable extends EnumValueDBAdapter {
 	 * Gets a pre-table version of the adapter for the enumeration data type values database table.
 	 * @param handle handle to the database which doesn't contain the table.
 	 */
-	public EnumValueDBAdapterNoTable(DBHandle handle) {
+	EnumValueDBAdapterNoTable(DBHandle handle) {
 		// no table needed
 	}
 
 	@Override
-	public void createRecord(long enumID, String name, long value, String comment)
+	void createRecord(long enumID, String name, long value, String comment)
 			throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public DBRecord getRecord(long valueID) throws IOException {
+	DBRecord getRecord(long valueID) throws IOException {
 		return null;
 	}
 
 	@Override
-	public void updateRecord(DBRecord record) throws IOException {
+	void updateRecord(DBRecord record) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void removeRecord(long valueID) throws IOException {
+	void removeRecord(long valueID) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Field[] getValueIdsInEnum(long enumID) throws IOException {
+	Field[] getValueIdsInEnum(long enumID) throws IOException {
 		return Field.EMPTY_ARRAY;
 	}
 

@@ -15,7 +15,10 @@
  */
 package ghidra.program.model;
 
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.ParameterDefinition;
+import ghidra.program.model.lang.PrototypeModel;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
 
 /**
@@ -65,8 +68,18 @@ public class TestDoubleFunctionSignature implements FunctionSignature {
 	}
 
 	@Override
-	public GenericCallingConvention getGenericCallingConvention() {
+	public boolean hasNoReturn() {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public PrototypeModel getCallingConvention() {
+		return null;
+	}
+
+	@Override
+	public String getCallingConventionName() {
+		return Function.UNKNOWN_CALLING_CONVENTION_STRING;
 	}
 
 	@Override

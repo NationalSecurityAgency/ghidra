@@ -25,10 +25,12 @@ public class LanguageVersionException extends VersionException {
 	private LanguageTranslator languageTranslator;
 
 	/**
-	 * Construct a minor upgradeable language version exception
+	 * Construct a language version exception
+	 * @param msg condition detail
+	 * @param upgradable true indicates that an upgrade is possible.
 	 */
-	public LanguageVersionException() {
-		super(true);
+	public LanguageVersionException(String msg, boolean upgradable) {
+		super(msg, upgradable ? OLDER_VERSION : UNKNOWN_VERSION, upgradable);
 	}
 
 	/**
@@ -82,10 +84,11 @@ public class LanguageVersionException extends VersionException {
 			Language oldLanguage = OldLanguageFactory.getOldLanguageFactory()
 					.getOldLanguage(languageID, languageVersion);
 			if (oldLanguage == null) {
-				// Assume minor version behavior - old language does not exist for current major version
-				Msg.error(LanguageVersionException.class, "Old language specification not found: " +
-					languageID + " (Version " + languageVersion + ")");
-				return new LanguageVersionException();
+				// old language does not exist to facilitate upgrade translation
+				String msg = "Old language specification not found: " + languageID + " (Version " +
+					languageVersion + "), translation not possible";
+				Msg.error(LanguageVersionException.class, msg);
+				return new LanguageVersionException(msg, false);
 			}
 
 			// Ensure that we can upgrade the language
@@ -113,7 +116,10 @@ public class LanguageVersionException extends VersionException {
 		else if (language.getVersion() == languageVersion &&
 			language.getMinorVersion() > languageMinorVersion) {
 			// Minor version change - translator not needed (languageUpgradeTranslator is null)
-			return new LanguageVersionException();
+			String fromVer = languageVersion + "." + languageMinorVersion;
+			String toVer = languageVersion + "." + language.getMinorVersion();
+			return new LanguageVersionException("Minor language change " + fromVer + " -> " + toVer,
+				true);
 		}
 		else if (language.getMinorVersion() != languageMinorVersion ||
 			language.getVersion() != languageVersion) {
