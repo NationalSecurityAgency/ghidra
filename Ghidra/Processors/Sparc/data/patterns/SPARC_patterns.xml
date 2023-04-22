@@ -32,4 +32,9 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
+  <pattern>
+    <!-- retl; add o7, l7, l7 -->
++   <data>0x81 0xc3 0xe0 0x08 0xae 0x03 0xc0 0x17</data>
++   <funcstart label="__sparc_get_pc_thunk" validcode="function"/>
++  </pattern>
  </patternlist>
