@@ -40,6 +40,7 @@ import docking.widgets.tree.support.GTreeRenderer;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.Swing;
 import resources.ResourceManager;
 
 /**
@@ -353,14 +354,38 @@ public class DockingUtils {
 		c.setBackground(Palette.NO_COLOR);
 	}
 
+	/**
+	 * Sets the application-wide Java tooltip enablement.  
+	 * @param enabled true if enabled; false prevents all Java tooltips
+	 */
+	public static void setTipWindowEnabled(boolean enabled) {
+		Swing.runLater(() -> ToolTipManager.sharedInstance().setEnabled(enabled));
+	}
+
+	/**
+	 * Returns true if application-wide Java tooltips are enabled.
+	 * @return true if application-wide Java tooltips are enabled.
+	 */
+	public static boolean isTipWindowEnabled() {
+		return Swing.runNow(() -> ToolTipManager.sharedInstance().isEnabled());
+	}
+
 	/** Hides any open tooltip window */
 	public static void hideTipWindow() {
-		// This is a hack, since Java's manager doesn't have this method
-		javax.swing.ToolTipManager.sharedInstance().setEnabled(false);
-		javax.swing.ToolTipManager.sharedInstance().setEnabled(true);
 
-// TODO: Ultimately, the ESCAPE key binding in the Java TTM should hide any visible tooltips.  We
-//       need to look into why this isn't working.
+		Swing.runLater(() -> {
+			ToolTipManager ttm = ToolTipManager.sharedInstance();
+			if (!ttm.isEnabled()) {
+				return; // nothing to do
+			}
+
+			//
+			// This is a hack, since Java's manager doesn't have this method.  Calling 
+			// setEnabled(false) will close any open tooltips.
+			// 
+			ttm.setEnabled(false);
+			ttm.setEnabled(true);
+		});
 	}
 
 }

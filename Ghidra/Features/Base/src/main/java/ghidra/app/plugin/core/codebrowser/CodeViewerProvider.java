@@ -1095,7 +1095,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			setHover(isSelected());
 		}
 
-		void setHover(boolean enabled) {
+		private void setHover(boolean enabled) {
 			getToolBarData().setIcon(enabled ? HOVER_ON_ICON : HOVER_OFF_ICON);
 			setHoverEnabled(enabled);
 		}
