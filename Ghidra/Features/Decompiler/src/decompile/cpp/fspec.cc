@@ -4579,6 +4579,9 @@ void FuncCallSpecs::resolveSpacebaseRelative(Funcdata &data,Varnode *phvn)
     if (op->getIn(stackPlaceholderSlot) == phvn) {
       data.opRemoveInput(op,stackPlaceholderSlot);
       clearStackPlaceholderSlot();
+      if (phvn->hasNoDescend()) {
+        data.opDestroy(phvn->getDef());
+      }
       return;
     }
   }
