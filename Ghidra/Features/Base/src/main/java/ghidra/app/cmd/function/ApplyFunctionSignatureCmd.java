@@ -140,7 +140,11 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 			func.updateFunction(conventionName, returnParam, params,
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, false, source);
 			func.setVarArgs(signature.hasVarArgs());
-			func.setNoReturn(signature.hasNoReturn());
+			
+			// Only apply noreturn if signature has it set
+			if (signature.hasNoReturn()) {
+				func.setNoReturn(signature.hasNoReturn());
+			}
 		}
 		catch (DuplicateNameException e) {
 			// should not happen unless caused by a concurrent operation
