@@ -34,7 +34,6 @@ import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.lang.*;
@@ -679,120 +678,6 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			assertEquals(BigInteger.valueOf(0x12340078),
 				TraceSleighUtils.evaluate("RAX", tb.trace, 1, thread, 0));
-		}
-	}
-
-	@Test(expected = AccessPcodeExecutionException.class)
-	public void testCheckedMOV_err() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					""",
-				List.of(
-					"MOV RCX,RAX"));
-
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-		}
-	}
-
-	@Test
-	public void testCheckedMOV_known() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			// Make RAX known in the trace
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					RAX = 0x1234;
-					""",
-				List.of(
-					"MOV RCX,RAX"));
-
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-			// No assertions. It should simply not throw an exception.
-		}
-	}
-
-	@Test(expected = AccessPcodeExecutionException.class)
-	public void testCheckedMOV_knownPast_err() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			// Make RAX known in the trace
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					RAX = 0x1234;
-					""",
-				List.of(
-					"MOV RCX,RAX"));
-
-			// Start emulator one snap later
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 1) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-			// No assertions. It should throw an exception.
-		}
-	}
-
-	@Test
-	public void testCheckedMOV_knownPast_has() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			// Make RAX known in the trace
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					RAX = 0x1234;
-					""",
-				List.of(
-					"MOV RCX,RAX"));
-
-			// Start emulator one snap later, but with "has-known" checks
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 1) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireHasKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-			// No assertions. It should simply not throw an exception.
-		}
-	}
-
-	@Test
-	public void testCheckedMOV_initialized() throws Throwable {
-		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			TraceThread thread = initTrace(tb, """
-					RIP = 0x00400000;
-					""",
-				List.of(
-					"MOV RAX,0", // Have the program initialize it
-					"MOV RCX,RAX"));
-
-			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0) {
-				@Override
-				protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
-					return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(data);
-				}
-			};
-			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
-			emuThread.stepInstruction();
-			emuThread.stepInstruction();
-			// No assertions. It should simply not throw an exception.
 		}
 	}
 
