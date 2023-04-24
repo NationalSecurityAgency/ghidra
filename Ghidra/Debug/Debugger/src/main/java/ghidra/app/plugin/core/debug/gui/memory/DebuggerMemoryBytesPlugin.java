@@ -59,7 +59,6 @@ import ghidra.program.util.ProgramSelection;
 		TraceSelectionPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerModelService.class, // For memory capture
 		ClipboardService.class,
 	})
 public class DebuggerMemoryBytesPlugin

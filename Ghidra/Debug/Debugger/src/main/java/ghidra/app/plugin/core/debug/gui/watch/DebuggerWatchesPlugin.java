@@ -37,7 +37,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		DebuggerWatchesService.class,
 	},
 	servicesRequired = {
-		DebuggerModelService.class,
 		DebuggerTraceManagerService.class,
 		DataTypeManagerService.class, // For DataType selection field
 	})

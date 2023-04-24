@@ -37,7 +37,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		TraceActivatedPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerModelService.class,
 		DebuggerStaticMappingService.class,
 		DebuggerTraceManagerService.class,
 		ProgramManager.class,

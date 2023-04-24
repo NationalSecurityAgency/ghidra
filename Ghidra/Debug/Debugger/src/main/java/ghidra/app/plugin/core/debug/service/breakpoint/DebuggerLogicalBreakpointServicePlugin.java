@@ -41,7 +41,8 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.trace.model.*;
@@ -70,7 +71,6 @@ import ghidra.util.datastruct.ListenerSet;
 	},
 	servicesRequired = {
 		DebuggerTraceManagerService.class,
-		DebuggerModelService.class,
 		DebuggerStaticMappingService.class,
 	},
 	servicesProvided = {
@@ -1006,7 +1006,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 	private void traceOpened(Trace trace) {
 		processChange(c -> {
-			TraceRecorder recorder = modelService.getRecorder(trace);
+			TraceRecorder recorder = modelService == null ? null : modelService.getRecorder(trace);
 			long snap = traceManager.getCurrentFor(trace).getSnap();
 			doTrackTrace(c, trace, recorder, snap);
 		}, "traceOpened");
@@ -1171,7 +1171,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	public CompletableFuture<Void> placeBreakpointAt(Trace trace, Address address, long length,
 			Collection<TraceBreakpointKind> kinds, String name) {
 		long snap = traceManager.getCurrentFor(trace).getSnap();
-		TraceRecorder recorder = modelService.getRecorder(trace);
+		TraceRecorder recorder = modelService == null ? null : modelService.getRecorder(trace);
 
 		ProgramLocation staticLocation = mappingService.getOpenMappedLocation(
 			new DefaultTraceLocation(trace, null, Lifespan.at(snap), address));
@@ -1268,7 +1268,8 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 	private void planActOnLocTarget(BreakpointActionSet actions, TraceBreakpoint tb,
 			BiConsumer<BreakpointActionSet, TargetBreakpointLocation> targetLocConsumer) {
-		TraceRecorder recorder = modelService.getRecorder(tb.getTrace());
+		TraceRecorder recorder =
+			modelService == null ? null : modelService.getRecorder(tb.getTrace());
 		if (recorder == null) {
 			return;
 		}
