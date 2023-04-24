@@ -43,7 +43,7 @@ public class GdbInferiorImpl implements GdbInferior {
 			"0x(?<end>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<size>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<offset>[0-9,A-F,a-f]+)\\s+" +
-			"(?<file>\\S*)\\s*");
+			"(?<file>.*)");
 
 	protected static final Pattern MEMORY_MAPPING_LINE_PATTERN =
 		Pattern.compile("\\s*" + //
@@ -52,7 +52,7 @@ public class GdbInferiorImpl implements GdbInferior {
 			"0x(?<size>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<offset>[0-9,A-F,a-f]+)\\s+" +
 			"(?<flags>[rwsxp\\-]+)\\s+" +
-			"(?<file>\\S*)\\s*");
+			"(?<file>.*)");
 
 	protected final GdbManagerImpl manager;
 	private final int id;
