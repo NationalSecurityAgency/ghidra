@@ -40,7 +40,6 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.BytesFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
 /**
   *  Generates Bytes Fields.
@@ -212,8 +211,8 @@ public class BytesFieldFactory extends FieldFactory {
 		boolean addDelimiter = extraLength != 0;
 		buildAttributedByteValues(elements, 0, bytes, length, 0, ListingColors.BYTES, addDelimiter);
 		if (addDelimiter) {
-			buildAttributedByteValues(elements, groupLength, alignmentBytes,
-				alignmentBytes.length, residual, ListingColors.BYTES_ALIGNMENT, false);
+			buildAttributedByteValues(elements, groupLength, alignmentBytes, alignmentBytes.length,
+				residual, ListingColors.BYTES_ALIGNMENT, false);
 		}
 
 		return ListingTextField.createPackedTextField(this, proxy, elements, startX + varWidth,
@@ -321,9 +320,6 @@ public class BytesFieldFactory extends FieldFactory {
 
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
-
-		Msg.debug(this, "Bytes - getProgLoc() - row / col: " + row + " / " + col);
-
 		Object obj = bf.getProxy().getObject();
 		if (!(obj instanceof CodeUnit) || row < 0 || col < 0) {
 			return null;
@@ -363,9 +359,9 @@ public class BytesFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * Computes how many bytes the the given column position represents. Normally this is just the 
-	 * column position / 2 (since each byte consists of two chars).  There is a special case when 
-	 * the col position is just past the last char of the token.  In this case, we want to return 
+	 * Computes how many bytes the the given column position represents. Normally this is just the
+	 * column position / 2 (since each byte consists of two chars).  There is a special case when
+	 * the col position is just past the last char of the token.  In this case, we want to return
 	 * the number of bytes in a token - 1;
 	 */
 	private int getByteIndexInToken(int col) {
@@ -377,9 +373,9 @@ public class BytesFieldFactory extends FieldFactory {
 
 	/**
 	 * Computes the character offset for a BytesFieldLocation based on the character column the
-	 * cursor is at in the token.  BytesFieldLocation character offsets are always as if the group 
-	 * size is 1. So for all positions except the last byte, it is just the column modulo 2.  For 
-	 * the last byte, we have to account for any columns past the last char.  In this case, we have 
+	 * cursor is at in the token.  BytesFieldLocation character offsets are always as if the group
+	 * size is 1. So for all positions except the last byte, it is just the column modulo 2.  For
+	 * the last byte, we have to account for any columns past the last char.  In this case, we have
 	 * to subtract off 2 for every byte before the last byte.
 	 */
 	private int computeCharOffset(int col) {
@@ -443,8 +439,7 @@ public class BytesFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel,
-			ListingHighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new BytesFieldFactory(formatModel, provider, displayOptions, fieldOptions);
 	}
