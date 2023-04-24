@@ -37,8 +37,8 @@ public class ErrorListingField extends ListingTextField {
 
 	public ErrorListingField(FieldFactory ff, ProxyObj<?> proxy, int varWidth, Throwable t) {
 		super(ff, proxy, null, createHighlightFactory());
-		this.field = createField(ff, proxy, varWidth);
 		this.t = t;
+		this.field = createField(ff, proxy, varWidth);
 	}
 
 	private static ListingFieldHighlightFactoryAdapter createHighlightFactory() {
@@ -46,9 +46,8 @@ public class ErrorListingField extends ListingTextField {
 	}
 
 	private ClippingTextField createField(FieldFactory ff, ProxyObj<?> proxy, int varWidth) {
-		ClippingTextField textField =
-			new ClippingTextField(ff.getStartX() + varWidth, ff.getWidth(),
-				createElement(ff, t), hlFactory);
+		ClippingTextField textField = new ClippingTextField(ff.getStartX() + varWidth,
+			ff.getWidth(), createElement(ff, t), hlFactory);
 		return textField;
 	}
 
