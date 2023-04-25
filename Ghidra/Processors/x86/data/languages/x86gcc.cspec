@@ -364,7 +364,7 @@
     </pcode>
   </callfixup>
   
-    <callfixup name="get_pc_thunk_si">
+  <callfixup name="get_pc_thunk_si">
     <target name="__i686.get_pc_thunk.si"/>
     <target name="__x86.get_pc_thunk.si"/>
     <pcode>
@@ -374,4 +374,71 @@
       ]]></body>
     </pcode>
   </callfixup>
+
+  <callfixup name="x86_return_thunk">
+      <target name="__x86_return_thunk"/>
+      <pcode>
+        <body><![CDATA[
+	  EIP = *:4 ESP;
+	  ESP = ESP + 4;
+	  return [EIP];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="fentry">
+      <target name="__fentry__"/>
+      <pcode>
+        <body><![CDATA[
+	  temp:1 = 0;
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="mcount">
+      <target name="mcount"/>
+      <pcode>
+        <body><![CDATA[
+	  temp:1 = 0;
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_ebp">
+      <target name="__x86_indirect_thunk_ebp"/>
+      <pcode>
+        <body><![CDATA[
+	  call [EBP];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_eax">
+      <target name="__x86_indirect_thunk_eax"/>
+      <pcode>
+        <body><![CDATA[
+	  call [EAX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_ebx">
+      <target name="__x86_indirect_thunk_ebx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [EBX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_ecx">
+      <target name="__x86_indirect_thunk_ecx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [ECX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_edx">
+      <target name="__x86_indirect_thunk_edx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [EDX];
+        ]]></body>
+      </pcode>
+    </callfixup>
 </compiler_spec>

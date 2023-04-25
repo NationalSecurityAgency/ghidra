@@ -239,4 +239,135 @@
          <register name="RBP"/>
       </returnaddress>
     </prototype>
+    
+    <callfixup name="x86_return_thunk">
+      <target name="__x86_return_thunk"/>
+      <pcode>
+        <body><![CDATA[
+	  RIP = *:8 RSP;
+	  RSP = RSP + 8;
+	  return [RIP];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="fentry">
+      <target name="__fentry__"/>
+      <pcode>
+        <body><![CDATA[
+	  temp:1 = 0;
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="mcount">
+      <target name="mcount"/>
+      <pcode>
+        <body><![CDATA[
+	  temp:1 = 0;
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rbp">
+      <target name="__x86_indirect_thunk_rbp"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RBP];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rax">
+      <target name="__x86_indirect_thunk_rax"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RAX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rbx">
+      <target name="__x86_indirect_thunk_rbx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RBX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rcx">
+      <target name="__x86_indirect_thunk_rcx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RCX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_rdx">
+      <target name="__x86_indirect_thunk_rdx"/>
+      <pcode>
+        <body><![CDATA[
+	  call [RDX];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r8">
+      <target name="__x86_indirect_thunk_r8"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R8];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r9">
+      <target name="__x86_indirect_thunk_r9"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R9];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r10">
+      <target name="__x86_indirect_thunk_r10"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R10];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r11">
+      <target name="__x86_indirect_thunk_r11"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R11];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r12">
+      <target name="__x86_indirect_thunk_r12"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R12];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r13">
+      <target name="__x86_indirect_thunk_r13"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R13];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r14">
+      <target name="__x86_indirect_thunk_r14"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R14];
+        ]]></body>
+      </pcode>
+    </callfixup>
+    <callfixup name="x86_indirect_thunk_r15">
+      <target name="__x86_indirect_thunk_r15"/>
+      <pcode>
+        <body><![CDATA[
+	  call [R15];
+        ]]></body>
+      </pcode>
+    </callfixup>
 </compiler_spec>
