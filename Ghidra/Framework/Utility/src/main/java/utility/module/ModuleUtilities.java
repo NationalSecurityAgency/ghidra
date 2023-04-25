@@ -92,7 +92,13 @@ public class ModuleUtilities {
 		if (!rootDir.exists() || remainingDepth <= 0) {
 			return moduleRootDirs;
 		}
-		for (ResourceFile subDir : rootDir.listFiles(ResourceFile::isDirectory)) {
+		
+		ResourceFile[] subDirs =  rootDir.listFiles(ResourceFile::isDirectory);
+		if (subDirs == null) {
+			throw new RuntimeException("Failed to read directory: " + rootDir);
+		}
+		
+		for (ResourceFile subDir : subDirs) {
 			if ("build".equals(subDir.getName())) {
 				continue; // ignore all "build" directories
 			}
