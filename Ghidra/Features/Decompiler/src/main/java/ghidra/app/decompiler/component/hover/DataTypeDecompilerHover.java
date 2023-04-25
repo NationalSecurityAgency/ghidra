@@ -144,6 +144,9 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 			int n = parent.getLength();
 			if (offset >= 0 && offset < n) {
 				DataTypeComponent dtc = parent.getComponentAt(offset);
+				if (dtc == null) {
+					return null;
+				}
 				fieldDt = dtc.getDataType();
 			}
 		}
