@@ -559,6 +559,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		try (Transaction tx = trace.openTransaction("Invalidate Emulator Cache")) {
 			trace.setEmulatorCacheVersion(version + 1);
 		}
+		// Do not call clearUndo() here. This is supposed to be undoable.
+
 		// NB. Success should already display on screen, since it's current.
 		// Failure should be reported by tool's task manager.
 		traceManager.materialize(current);
@@ -749,19 +751,21 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	protected TraceSnapshot writeToScratch(CacheKey key, CachedEmulator ce) {
+		TraceSnapshot destSnap;
 		try (Transaction tx = key.trace.openTransaction("Emulate")) {
-			TraceSnapshot destSnap = findScratch(key.trace, key.time);
+			destSnap = findScratch(key.trace, key.time);
 			try {
 				ce.emulator().writeDown(key.platform, destSnap.getKey(), key.time.getSnap());
 			}
 			catch (Throwable e) {
 				Msg.showError(this, null, "Emulate",
-					"There was an issue writing the emulation result to trace trace. " +
+					"There was an issue writing the emulation result to the trace. " +
 						"The displayed state may be inaccurate and/or incomplete.",
 					e);
 			}
-			return destSnap;
 		}
+		key.trace.clearUndo();
+		return destSnap;
 	}
 
 	protected long doEmulate(CacheKey key, TaskMonitor monitor) throws CancelledException {
@@ -798,6 +802,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				trace.getMemoryManager().getMemoryRegisterSpace(thread, 0, true);
 			}
 		}
+		trace.clearUndo();
 	}
 
 	protected void requireOpen(Trace trace) {
