@@ -1,3 +1,73 @@
+# MOVAPD 4-45 PAGE 1165 LINE 60844
+:VMOVAPD XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x28; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+    YmmReg1 = zext(XmmReg2_m128);
+    # TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# MOVAPD 4-45 PAGE 1165 LINE 60846
+:VMOVAPD XmmReg2, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x29; mod=3 & XmmReg1 & (XmmReg2 & YmmReg2)
+{
+    YmmReg2 = zext(XmmReg1);
+    # TODO ZmmReg2 = zext(XmmReg2)
+}
+
+# MOVAPD 4-45 PAGE 1165 LINE 60846
+:VMOVAPD m128, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x29; XmmReg1 ... & m128
+{
+    m128 = XmmReg1;
+    # TODO ZmmReg2 = zext(XmmReg2)
+}
+
+# MOVAPD 4-45 PAGE 1165 LINE 60848
+:VMOVAPD YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x28; YmmReg1 ... & YmmReg2_m256
+{
+    YmmReg1 = YmmReg2_m256;
+    # TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# MOVAPD 4-45 PAGE 1165 LINE 60850
+:VMOVAPD YmmReg2_m256, YmmReg1 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x29; YmmReg1 ... & YmmReg2_m256
+{
+    YmmReg2_m256 = YmmReg1;
+    # TODO ZmmReg2 = zext(YmmReg2)
+}
+
+# MOVAPS 4-49 PAGE 1169 LINE 61039
+:VMOVAPS XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x28; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
+{
+    YmmReg1 = zext(XmmReg2_m128);
+    # TODO ZmmReg1 = zext(XmmReg1)
+}
+
+# MOVAPS 4-49 PAGE 1169 LINE 61041
+:VMOVAPS XmmReg2, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x29; mod=3 & XmmReg1 & (XmmReg2 & YmmReg2)
+{
+    YmmReg2 = zext(XmmReg1);
+    # TODO ZmmReg2 = zext(XmmReg2)
+}
+
+# MOVAPS 4-49 PAGE 1169 LINE 61041
+:VMOVAPS m128, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x29; XmmReg1 ... & m128
+{
+    m128 = XmmReg1;
+    # TODO ZmmReg2 = zext(XmmReg2)
+}
+
+# MOVAPS 4-49 PAGE 1169 LINE 61043
+:VMOVAPS YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x28; YmmReg1 ... & YmmReg2_m256
+{
+    YmmReg1 = YmmReg2_m256;
+    # TODO ZmmReg1 = zext(YmmReg1)
+}
+
+# MOVAPS 4-49 PAGE 1169 LINE 61045
+:VMOVAPS YmmReg2_m256, YmmReg1 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x29; YmmReg1 ... & YmmReg2_m256
+{
+    YmmReg2_m256 = YmmReg1;
+    # TODO ZmmReg2 = zext(YmmReg2)
+}
+
 # MOVDQA,VMOVDQA32/64 4-62 PAGE 1182 LINE 61667
 # Note: we do not model the exception generated if VMOVDQA is used with a memory operand which is not 16-bye aligned
 :VMOVDQA XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x6F; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
@@ -141,5 +211,77 @@
 	build check_Reg32_dest;
 }
 
+# VZEROALL 5-563 PAGE 2387 LINE 122405
+:VZEROALL  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x77
+{
+    YMM0[0,64] = 0:8; YMM0[64,64] = 0:8; YMM0[128,64] = 0:8; YMM0[192,64] = 0:8;
+    YMM1[0,64] = 0:8; YMM1[64,64] = 0:8; YMM1[128,64] = 0:8; YMM1[192,64] = 0:8;
+    YMM2[0,64] = 0:8; YMM2[64,64] = 0:8; YMM2[128,64] = 0:8; YMM2[192,64] = 0:8;
+    YMM3[0,64] = 0:8; YMM3[64,64] = 0:8; YMM3[128,64] = 0:8; YMM3[192,64] = 0:8;
+    YMM4[0,64] = 0:8; YMM4[64,64] = 0:8; YMM4[128,64] = 0:8; YMM4[192,64] = 0:8;
+    YMM5[0,64] = 0:8; YMM5[64,64] = 0:8; YMM5[128,64] = 0:8; YMM5[192,64] = 0:8;
+    YMM6[0,64] = 0:8; YMM6[64,64] = 0:8; YMM6[128,64] = 0:8; YMM6[192,64] = 0:8;
+    YMM7[0,64] = 0:8; YMM7[64,64] = 0:8; YMM7[128,64] = 0:8; YMM7[192,64] = 0:8;
+    #TODO: Zmm
+}
 
+@ifdef IA64
+:VZEROALL  is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x77
+{
+    YMM0[0,64] = 0:8; YMM0[64,64] = 0:8; YMM0[128,64] = 0:8; YMM0[192,64] = 0:8;
+    YMM1[0,64] = 0:8; YMM1[64,64] = 0:8; YMM1[128,64] = 0:8; YMM1[192,64] = 0:8;
+    YMM2[0,64] = 0:8; YMM2[64,64] = 0:8; YMM2[128,64] = 0:8; YMM2[192,64] = 0:8;
+    YMM3[0,64] = 0:8; YMM3[64,64] = 0:8; YMM3[128,64] = 0:8; YMM3[192,64] = 0:8;
+    YMM4[0,64] = 0:8; YMM4[64,64] = 0:8; YMM4[128,64] = 0:8; YMM4[192,64] = 0:8;
+    YMM5[0,64] = 0:8; YMM5[64,64] = 0:8; YMM5[128,64] = 0:8; YMM5[192,64] = 0:8;
+    YMM6[0,64] = 0:8; YMM6[64,64] = 0:8; YMM6[128,64] = 0:8; YMM6[192,64] = 0:8;
+    YMM7[0,64] = 0:8; YMM7[64,64] = 0:8; YMM7[128,64] = 0:8; YMM7[192,64] = 0:8;
+    YMM8[0,64] = 0:8; YMM8[64,64] = 0:8; YMM8[128,64] = 0:8; YMM8[192,64] = 0:8;
+    YMM9[0,64] = 0:8; YMM9[64,64] = 0:8; YMM9[128,64] = 0:8; YMM9[192,64] = 0:8;
+    YMM10[0,64] = 0:8; YMM10[64,64] = 0:8; YMM10[128,64] = 0:8; YMM10[192,64] = 0:8;
+    YMM11[0,64] = 0:8; YMM11[64,64] = 0:8; YMM11[128,64] = 0:8; YMM11[192,64] = 0:8;
+    YMM12[0,64] = 0:8; YMM12[64,64] = 0:8; YMM12[128,64] = 0:8; YMM12[192,64] = 0:8;
+    YMM13[0,64] = 0:8; YMM13[64,64] = 0:8; YMM13[128,64] = 0:8; YMM13[192,64] = 0:8;
+    YMM14[0,64] = 0:8; YMM14[64,64] = 0:8; YMM14[128,64] = 0:8; YMM14[192,64] = 0:8;
+    YMM15[0,64] = 0:8; YMM15[64,64] = 0:8; YMM15[128,64] = 0:8; YMM15[192,64] = 0:8;
+    #TODO: Zmm
+}
+@endif
+
+# VZEROUPPER 5-565 PAGE 2389 LINE 122480
+:VZEROUPPER  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x77
+{
+    YMM0[128,64] = 0:8; YMM0[192,64] = 0:8;
+    YMM1[128,64] = 0:8; YMM1[192,64] = 0:8;
+    YMM2[128,64] = 0:8; YMM2[192,64] = 0:8;
+    YMM3[128,64] = 0:8; YMM3[192,64] = 0:8;
+    YMM4[128,64] = 0:8; YMM4[192,64] = 0:8;
+    YMM5[128,64] = 0:8; YMM5[192,64] = 0:8;
+    YMM6[128,64] = 0:8; YMM6[192,64] = 0:8;
+    YMM7[128,64] = 0:8; YMM7[192,64] = 0:8;
+    #TODO: Zmm
+}
+
+@ifdef IA64
+:VZEROUPPER  is $(LONGMODE_ON) & $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x77
+{
+    YMM0[128,64] = 0:8; YMM0[192,64] = 0:8;
+    YMM1[128,64] = 0:8; YMM1[192,64] = 0:8;
+    YMM2[128,64] = 0:8; YMM2[192,64] = 0:8;
+    YMM3[128,64] = 0:8; YMM3[192,64] = 0:8;
+    YMM4[128,64] = 0:8; YMM4[192,64] = 0:8;
+    YMM5[128,64] = 0:8; YMM5[192,64] = 0:8;
+    YMM6[128,64] = 0:8; YMM6[192,64] = 0:8;
+    YMM7[128,64] = 0:8; YMM7[192,64] = 0:8;
+    YMM8[128,64] = 0:8; YMM8[192,64] = 0:8;
+    YMM9[128,64] = 0:8; YMM9[192,64] = 0:8;
+    YMM10[128,64] = 0:8; YMM10[192,64] = 0:8;
+    YMM11[128,64] = 0:8; YMM11[192,64] = 0:8;
+    YMM12[128,64] = 0:8; YMM12[192,64] = 0:8;
+    YMM13[128,64] = 0:8; YMM13[192,64] = 0:8;
+    YMM14[128,64] = 0:8; YMM14[192,64] = 0:8;
+    YMM15[128,64] = 0:8; YMM15[192,64] = 0:8;
+    #TODO: Zmm
+}
+@endif
 

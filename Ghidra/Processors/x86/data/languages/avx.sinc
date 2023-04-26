@@ -1114,66 +1114,6 @@ define pcodeop vminss_avx ;
 	# TODO ZmmReg1 = zext(XmmReg1)
 }
 
-# MOVAPD 4-45 PAGE 1165 LINE 60844
-define pcodeop vmovapd_avx ;
-:VMOVAPD XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x28; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
-{
-	local tmp:16 = vmovapd_avx( XmmReg2_m128 );
-	YmmReg1 = zext(tmp);
-	# TODO ZmmReg1 = zext(XmmReg1)
-}
-
-# MOVAPD 4-45 PAGE 1165 LINE 60846
-:VMOVAPD XmmReg2_m128, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x29; XmmReg1 ... & XmmReg2_m128
-{
-	XmmReg2_m128 = vmovapd_avx( XmmReg1 );
-	# TODO ZmmReg2 = zext(XmmReg2)
-}
-
-# MOVAPD 4-45 PAGE 1165 LINE 60848
-:VMOVAPD YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x28; YmmReg1 ... & YmmReg2_m256
-{
-	YmmReg1 = vmovapd_avx( YmmReg2_m256 );
-	# TODO ZmmReg1 = zext(YmmReg1)
-}
-
-# MOVAPD 4-45 PAGE 1165 LINE 60850
-:VMOVAPD YmmReg2_m256, YmmReg1 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_WIG); byte=0x29; YmmReg1 ... & YmmReg2_m256
-{
-	YmmReg2_m256 = vmovapd_avx( YmmReg1 );
-	# TODO ZmmReg2 = zext(YmmReg2)
-}
-
-# MOVAPS 4-49 PAGE 1169 LINE 61039
-define pcodeop vmovaps_avx ;
-:VMOVAPS XmmReg1, XmmReg2_m128 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x28; (XmmReg1 & YmmReg1) ... & XmmReg2_m128
-{
-	local tmp:16 = vmovaps_avx( XmmReg2_m128 );
-	YmmReg1 = zext(tmp);
-	# TODO ZmmReg1 = zext(XmmReg1)
-}
-
-# MOVAPS 4-49 PAGE 1169 LINE 61041
-:VMOVAPS XmmReg2_m128, XmmReg1 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x29; XmmReg1 ... & XmmReg2_m128
-{
-	XmmReg2_m128 = vmovaps_avx( XmmReg1 );
-	# TODO ZmmReg2 = zext(XmmReg2)
-}
-
-# MOVAPS 4-49 PAGE 1169 LINE 61043
-:VMOVAPS YmmReg1, YmmReg2_m256 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x28; YmmReg1 ... & YmmReg2_m256
-{
-	YmmReg1 = vmovaps_avx( YmmReg2_m256 );
-	# TODO ZmmReg1 = zext(YmmReg1)
-}
-
-# MOVAPS 4-49 PAGE 1169 LINE 61045
-:VMOVAPS YmmReg2_m256, YmmReg1 is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x29; YmmReg1 ... & YmmReg2_m256
-{
-	YmmReg2_m256 = vmovaps_avx( YmmReg1 );
-	# TODO ZmmReg2 = zext(YmmReg2)
-}
-
 # MOVD/MOVQ 4-55 PAGE 1175 LINE 61358
 define pcodeop vmovd_avx ;
 :VMOVD XmmReg1, rm32 is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_66) & $(VEX_0F) & $(VEX_W0); byte=0x6E; (XmmReg1 & YmmReg1) ... & rm32
@@ -3299,22 +3239,6 @@ define pcodeop vtestpd_avx ;
 {
 	vtestpd_avx( YmmReg1, YmmReg2_m256 );
 	# TODO set flags AF, CF, PF, SF, ZF
-}
-
-# VZEROALL 5-563 PAGE 2387 LINE 122405
-define pcodeop vzeroall_avx ;
-:VZEROALL  is $(VEX_NONE) & $(VEX_L256) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x77
-{
-	vzeroall_avx(  );
-	# TODO missing destination or side effects
-}
-
-# VZEROUPPER 5-565 PAGE 2389 LINE 122480
-define pcodeop vzeroupper_avx ;
-:VZEROUPPER  is $(VEX_NONE) & $(VEX_L128) & $(VEX_PRE_NONE) & $(VEX_0F) & $(VEX_WIG); byte=0x77
-{
-	vzeroupper_avx(  );
-	# TODO missing destination or side effects
 }
 
 # XORPD 5-596 PAGE 2420 LINE 123828
