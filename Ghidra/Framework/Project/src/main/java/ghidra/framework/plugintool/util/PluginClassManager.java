@@ -200,7 +200,7 @@ public class PluginClassManager {
 			}
 
 			if (!PluginPackage.exists(packageName)) {
-				Msg.warn(this, "Unable to find plugin pacakge '" + packageName +
+				Msg.warn(this, "Unable to find plugin package '" + packageName +
 					"' while restoring plugins from xml");
 				continue;
 			}
