@@ -90,6 +90,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
 	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
 	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
+	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
 
 	// TODO: Experimental Option !!
 	private static final String ENABLE_COMPRESSED_DATABUFFER_OUTPUT =
@@ -338,11 +339,13 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		options.registerOption(USE_ALERT_ANIMATION_OPTION_NAME, true, help,
 			"Signals that user notifications should be animated.  This makes notifications more " +
 				"distinguishable.");
-		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, Boolean.FALSE, help,
+		options.registerOption(SHOW_TOOLTIPS_OPTION_NAME, true, help,
+			"Controls the display of tooltip popup windows.");
+		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false, help,
 			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
 				"configuration for other direction)");
 
-		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, Boolean.TRUE, help,
+		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, true, help,
 			"Restore the previous project when Ghidra starts.");
 
 		defaultLaunchMode = options.getEnum(DEFAULT_TOOL_LAUNCH_MODE, defaultLaunchMode);
@@ -352,6 +355,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		boolean animationEnabled = options.getBoolean(USE_ALERT_ANIMATION_OPTION_NAME, true);
 		AnimationUtils.setAnimationEnabled(animationEnabled);
+
+		boolean showToolTips = options.getBoolean(SHOW_TOOLTIPS_OPTION_NAME, true);
+		DockingUtils.setTipWindowEnabled(showToolTips);
 
 		boolean compressDataBuffers =
 			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false);
@@ -373,6 +379,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		}
 		else if (USE_ALERT_ANIMATION_OPTION_NAME.equals(optionName)) {
 			AnimationUtils.setAnimationEnabled((Boolean) newValue);
+		}
+		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
+			DockingUtils.setTipWindowEnabled((Boolean) newValue);
 		}
 		else if (ENABLE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
 			DataBuffer.enableCompressedSerializationOutput((Boolean) newValue);

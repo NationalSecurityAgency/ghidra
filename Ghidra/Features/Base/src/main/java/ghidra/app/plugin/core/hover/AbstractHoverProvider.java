@@ -80,6 +80,10 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 		}
 	}
 
+	public boolean isForcePopups() {
+		return false; // the default implementation is to be disabled if tip windows are disabled
+	}
+
 	private boolean hasEnabledHoverServices() {
 		for (HoverService hoverService : hoverServices) {
 			if (hoverService.hoverModeSelected()) {
@@ -162,6 +166,10 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			Rectangle fieldBounds) {
 		lastField = field;
 
+		if (!enabled) {
+			return;
+		}
+
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		Window activeWindow = kfm.getActiveWindow();
 		if (activeWindow == null) {
@@ -187,9 +195,10 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			}
 		});
 
+		boolean force = isForcePopups();
 		boolean isToolTip = comp instanceof JToolTip;
 		if (isToolTip) {
-			popupWindow.showPopup(event);
+			popupWindow.showPopup(event, force);
 		}
 		else {
 
@@ -206,7 +215,7 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			Rectangle keepVisibleArea = new Rectangle(event.getPoint());
 			keepVisibleArea.grow(horizontalPad, verticalPad);
 
-			popupWindow.showOffsetPopup(event, keepVisibleArea);
+			popupWindow.showOffsetPopup(event, keepVisibleArea, force);
 		}
 	}
 
