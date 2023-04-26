@@ -13,28 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.model.data.floats;
+package ghidra.program.model.data;
 
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.util.classfinder.ClassTranslator;
+public class Float4DataType extends AbstractFloatDataType {
 
-public class Float32DataType extends AbstractFloatDataType {
+	public static final Float4DataType dataType = new Float4DataType();
 
-	static {
-		// remap old byte-sized float to this bit-sized equivalent
-		ClassTranslator.put(
-			"ghidra.program.model.data.Float4DataType", Float32DataType.class.getName());
-	}
-
-	public static final Float32DataType dataType = new Float32DataType();
-
-	public Float32DataType() {
+	public Float4DataType() {
 		this(null);
 	}
 
-	public Float32DataType(DataTypeManager dtm) {
-		super("float32", 4, dtm);
+	public Float4DataType(DataTypeManager dtm) {
+		super("float4", 4, dtm);
 	}
 
 	@Override
@@ -42,7 +32,7 @@ public class Float32DataType extends AbstractFloatDataType {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}
-		return new Float32DataType(dtm);
+		return new Float4DataType(dtm);
 	}
 
 }

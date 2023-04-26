@@ -27,7 +27,6 @@ import ghidra.dbg.target.TargetDataTypeMember;
 import ghidra.dbg.target.TargetNamedDataType;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.util.Msg;
 
 public class TargetDataTypeConverter {

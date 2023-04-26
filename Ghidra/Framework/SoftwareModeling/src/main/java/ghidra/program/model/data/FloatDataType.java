@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.program.model.data.floats.AbstractFloatDataType;
-
 /**
  * Provides a definition of a Float within a program.
  */

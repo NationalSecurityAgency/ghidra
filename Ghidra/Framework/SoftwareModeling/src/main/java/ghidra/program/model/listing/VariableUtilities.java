@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.Namespace;

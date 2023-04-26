@@ -25,8 +25,6 @@ import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
 import ghidra.app.util.bin.format.pe.cli.tables.*;
 import ghidra.app.util.bin.format.pe.cli.tables.indexes.CliIndexTypeDefOrRef;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.floats.Float32DataType;
-import ghidra.program.model.data.floats.Float64DataType;
 import ghidra.util.exception.InvalidInputException;
 
 public abstract class CliAbstractSig extends CliBlob implements CliRepresentable {
@@ -141,9 +139,9 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 				return UnsignedIntegerDataType.dataType;
 
 			case ELEMENT_TYPE_R4:
-				return Float32DataType.dataType;
+				return Float4DataType.dataType;
 			case ELEMENT_TYPE_R8:
-				return Float64DataType.dataType;
+				return Float8DataType.dataType;
 
 			case ELEMENT_TYPE_I8:
 				return LongLongDataType.dataType;

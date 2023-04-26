@@ -18,7 +18,7 @@ package ghidra.program.model.pcode;
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.floats.AbstractFloatDataType;
+import ghidra.program.model.data.AbstractFloatDataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.MemoryBlock;

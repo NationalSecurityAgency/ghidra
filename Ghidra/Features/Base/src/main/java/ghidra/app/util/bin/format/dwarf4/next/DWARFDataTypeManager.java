@@ -25,7 +25,6 @@ import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFDataTypeImporter.DWARFDataType;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;

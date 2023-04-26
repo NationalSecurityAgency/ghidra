@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.util.exception.AssertException;
 
 /**

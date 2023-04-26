@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.model.data.floats;
+package ghidra.program.model.data;
 
 import java.math.BigInteger;
 import java.util.TreeMap;
@@ -22,7 +22,6 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.pcode.floatformat.*;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -224,11 +223,11 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 		if (floatTypes == null) {
 			// unsupported sizes filled-in with a null
 			floatTypes = new TreeMap<Integer, AbstractFloatDataType>();
+			floatTypes.put(Float2DataType.dataType.getLength(), Float2DataType.dataType);
+			floatTypes.put(Float4DataType.dataType.getLength(), Float4DataType.dataType);
+			floatTypes.put(Float8DataType.dataType.getLength(), Float8DataType.dataType);
+			floatTypes.put(Float10DataType.dataType.getLength(), Float10DataType.dataType);
 			floatTypes.put(Float16DataType.dataType.getLength(), Float16DataType.dataType);
-			floatTypes.put(Float32DataType.dataType.getLength(), Float32DataType.dataType);
-			floatTypes.put(Float64DataType.dataType.getLength(), Float64DataType.dataType);
-			floatTypes.put(Float80DataType.dataType.getLength(), Float80DataType.dataType);
-			floatTypes.put(Float128DataType.dataType.getLength(), Float128DataType.dataType);
 		}
 		return floatTypes;
 	}

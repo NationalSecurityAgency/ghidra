@@ -21,8 +21,6 @@ import org.junit.Test;
 
 import generic.test.AbstractGTest;
 import ghidra.pcode.floatformat.*;
-import ghidra.program.model.data.floats.Float32DataType;
-import ghidra.program.model.data.floats.Float64DataType;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.util.LittleEndianDataConverter;
 
@@ -42,49 +40,49 @@ public class FloatDataTypeTest extends AbstractGTest {
 		int bits = Float.floatToRawIntBits(Float.NaN);
 		byte[] bytes = getBytes(bits, 4);
 		Object value =
-			Float32DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float4DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals(ff.getBigNaN(false), value);
 
 		bits = Float.floatToRawIntBits(Float.POSITIVE_INFINITY);
 		bytes = getBytes(bits, 4);
 		value =
-			Float32DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float4DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals(ff.getBigInfinity(false), value);
 
 		bits = Float.floatToRawIntBits(Float.NEGATIVE_INFINITY);
 		bytes = getBytes(bits, 4);
 		value =
-			Float32DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float4DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals(ff.getBigInfinity(true), value);
 
 		bits = Float.floatToRawIntBits(0F);
 		bytes = getBytes(bits, 4);
 		value =
-			Float32DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float4DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("0.0", ff.toDecimalString((BigFloat) value));
 
 		bits = Float.floatToRawIntBits(1F);
 		bytes = getBytes(bits, 4);
 		value =
-			Float32DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float4DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("1.0", ff.toDecimalString((BigFloat) value));
 
 		bits = Float.floatToRawIntBits(-1F);
 		bytes = getBytes(bits, 4);
 		value =
-			Float32DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float4DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("-1.0", ff.toDecimalString((BigFloat) value));
 
 		bits = Float.floatToRawIntBits(555.555F);
 		bytes = getBytes(bits, 4);
 		value =
-			Float32DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float4DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("555.55499", ff.toDecimalString((BigFloat) value, true));
 
 		bits = Float.floatToRawIntBits(-555.555F);
 		bytes = getBytes(bits, 4);
 		value =
-			Float32DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float4DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("-555.55499", ff.toDecimalString((BigFloat) value, true));
 
 	}
@@ -97,49 +95,49 @@ public class FloatDataTypeTest extends AbstractGTest {
 		long bits = Double.doubleToRawLongBits(Double.NaN);
 		byte[] bytes = getBytes(bits, 8);
 		Object value =
-			Float64DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float8DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals(ff.getBigNaN(false), value);
 
 		bits = Double.doubleToRawLongBits(Double.POSITIVE_INFINITY);
 		bytes = getBytes(bits, 8);
 		value =
-			Float64DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float8DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals(ff.getBigInfinity(false), value);
 
 		bits = Double.doubleToRawLongBits(Double.NEGATIVE_INFINITY);
 		bytes = getBytes(bits, 8);
 		value =
-			Float64DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float8DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals(ff.getBigInfinity(true), value);
 
 		bits = Double.doubleToRawLongBits(0D);
 		bytes = getBytes(bits, 8);
 		value =
-			Float64DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float8DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("0.0", ff.toDecimalString((BigFloat) value));
 
 		bits = Double.doubleToRawLongBits(1D);
 		bytes = getBytes(bits, 8);
 		value =
-			Float64DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float8DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("1.0", ff.toDecimalString((BigFloat) value));
 
 		bits = Double.doubleToRawLongBits(-1D);
 		bytes = getBytes(bits, 8);
 		value =
-			Float64DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float8DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("-1.0", ff.toDecimalString((BigFloat) value));
 
 		bits = Double.doubleToRawLongBits(555.555D);
 		bytes = getBytes(bits, 8);
 		value =
-			Float64DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float8DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("555.5549999999999", ff.toDecimalString((BigFloat) value, true));
 
 		bits = Double.doubleToRawLongBits(-555.555D);
 		bytes = getBytes(bits, 8);
 		value =
-			Float64DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
+			Float8DataType.dataType.getValue(new ByteMemBufferImpl(null, bytes, false), null, 10);
 		assertEquals("-555.5549999999999", ff.toDecimalString((BigFloat) value, true));
 
 	}

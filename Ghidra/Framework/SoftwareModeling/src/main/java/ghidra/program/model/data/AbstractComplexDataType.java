@@ -19,7 +19,6 @@ import java.math.BigDecimal;
 
 import generic.complex.Complex;
 import ghidra.docking.settings.Settings;
-import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.WrappedMemBuffer;
 
