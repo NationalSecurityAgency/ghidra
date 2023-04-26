@@ -86,7 +86,7 @@ public class AutoAnalysisPluginScreenShots extends GhidraScreenShotGenerator {
 		TestBackgroundCommand cmd = new TestBackgroundCommand(start, end);
 		tool.executeBackgroundCommand(cmd, program);
 		start.await();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		captureWindow();
 		end.countDown();
 		int width = image.getWidth(null);

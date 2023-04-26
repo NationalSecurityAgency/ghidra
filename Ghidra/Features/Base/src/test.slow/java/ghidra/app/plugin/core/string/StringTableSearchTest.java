@@ -839,7 +839,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		tool.firePluginEvent(
 			new ProgramSelectionPluginEvent("Test", new ProgramSelection(set), program));
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		dialog = getDialog();
 		Container container = dialog.getComponent();
@@ -1095,7 +1095,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		tool.firePluginEvent(
 			new ProgramSelectionPluginEvent("Test", new ProgramSelection(set), program));
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		dialog = getDialog();
 		Container container = dialog.getComponent();
@@ -1245,7 +1245,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// the createSymbol call will trigger notifications in the Swing thread that we need
 		// to finish before we can move on
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		// make string with auto label selected
 		DockingAction makeStringAction =
 			(DockingAction) getInstanceField("makeStringAction", provider);
@@ -1276,7 +1276,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// select the address set
 		tool.firePluginEvent(
 			new ProgramSelectionPluginEvent("Test", new ProgramSelection(set), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		dialog = getDialog();
 
@@ -1369,7 +1369,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// test that the label was made
 		Symbol sym = program.getSymbolTable().getPrimarySymbol(addr(0x40504c));
 		assertEquals("s_String4", sym.getName());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// try to make char array
 		//	select row with String4
@@ -1572,7 +1572,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 			int row = findRow(model, address);
 			table.addRowSelectionInterval(row, row);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private int findRow(StringTableModel model, Address address) {

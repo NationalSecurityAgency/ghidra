@@ -251,7 +251,7 @@ public class ImporterPlugin extends Plugin
 			public void run(TaskMonitor monitor) throws CancelledException {
 
 				for (File f : files) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 
 					// Test for Packed DB file using ItemDeserializer
 					ItemDeserializer itemDeserializer = null;

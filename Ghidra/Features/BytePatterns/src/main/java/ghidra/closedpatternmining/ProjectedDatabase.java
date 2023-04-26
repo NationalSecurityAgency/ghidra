@@ -171,7 +171,7 @@ public class ProjectedDatabase {
 
 				Integer count = frequentItemBag.get(globalItem);
 				if (count == null) {
-					frequentItemBag.put(globalItem, new Integer(fullSequence.getCount()));
+					frequentItemBag.put(globalItem, Integer.valueOf(fullSequence.getCount()));
 				}
 				else {
 					frequentItemBag.put(globalItem, count + fullSequence.getCount());
@@ -231,7 +231,7 @@ public class ProjectedDatabase {
 				String symbol = firstSequence.getSequenceAsString().substring(dittedPosition,
 					dittedPosition + 1);
 				//System.out.println("adding " + symbol + " at position " + dittedPosition);
-				positionsToSymbols.put(new Integer(dittedPosition), symbol);
+				positionsToSymbols.put(Integer.valueOf(dittedPosition), symbol);
 				dittedPosition++;
 			}
 			dittedPosition++;//advance past fixedPosition

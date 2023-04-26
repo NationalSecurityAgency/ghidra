@@ -138,7 +138,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 			monitor.setMessage( "Creating group descriptors..." );
 			monitor.setMaximum( numGroups );
 			for ( int i = 0; i < numGroups; i++ ) {
-				monitor.checkCanceled( );
+				monitor.checkCancelled( );
 				groupDescriptors[ i ] = new Ext4GroupDescriptor( reader, is64Bit );
 				DataType groupDescDataType = groupDescriptors[ i ].toDataType( );
 				createData( program, groupDescAddress, groupDescDataType );
@@ -225,7 +225,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 		int inodeIndex = 0;
 
 		for ( int i = 0; i < groupDescriptors.length; i++ ) {
-			monitor.checkCanceled( );
+			monitor.checkCancelled( );
 			long inodeTableBlockOffset = groupDescriptors[ i ].getBg_inode_table_lo( ) & 0xffffffffL;
 			if ( is64Bit ) {
 				inodeTableBlockOffset = ( ((long) groupDescriptors[ i ].getBg_inode_table_hi( )) << 32 ) | inodeTableBlockOffset;
@@ -245,7 +245,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 			monitor.setMaximum( inodesPerGroup );
 			monitor.setProgress( 0 );
 			for ( int j = 0; j < inodesPerGroup; j++ ) {
-				monitor.checkCanceled( );
+				monitor.checkCancelled( );
 
 				Ext4Inode inode = new Ext4Inode( reader );
 				DataType dataType = inode.toDataType( );
@@ -292,7 +292,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 			Ext4SuperBlock superBlock, Ext4Inode[] inodes, TaskMonitor monitor) throws Exception {
 		//first 0xa inodes are reserved (0 doesn't exist)
 		for ( int i = 0x1; i < inodes.length; i++ ) {
-			monitor.checkCanceled( );
+			monitor.checkCancelled( );
 			Ext4Inode inode = inodes[ i ];
 			
 			short mode = inode.getI_mode();
@@ -373,7 +373,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 			short numEntries = header.getEh_entries( );
 			List<Ext4ExtentIdx> entries = i_block.getIndexEntries();
 			for ( int i = 0; i < numEntries; i++ ) {
-				monitor.checkCanceled( );
+				monitor.checkCancelled( );
 
 				Ext4ExtentIdx extentIndex = entries.get( i );
 				long lo = extentIndex.getEi_leaf_lo();
@@ -413,7 +413,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 		monitor.setMessage( "Creating super block and group descriptor copies..." );
 		monitor.setMaximum(numGroups);
 		for ( int i = 1; i < numGroups; i++ ) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if( isSparseSuper && (!isXpowerOfY(i, 3) && !isXpowerOfY(i, 5) && !isXpowerOfY(i, 7)) ) {
 				continue;
 			}

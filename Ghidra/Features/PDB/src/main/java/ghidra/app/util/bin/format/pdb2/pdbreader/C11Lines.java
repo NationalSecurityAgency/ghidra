@@ -63,7 +63,7 @@ public class C11Lines {
 		startEnd = new ArrayList<>();
 		seg = new ArrayList<>();
 		for (int i = 0; i < cFile; i++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			int val = reader.parseInt();
 			if (val < 0) {
 				throw new PdbException("beyond our max integer limitation");
@@ -71,13 +71,13 @@ public class C11Lines {
 			baseSrcFile.add(val);
 		}
 		for (int i = 0; i < cSeg; i++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			StartEnd se = new StartEnd();
 			se.parse(reader);
 			startEnd.add(se);
 		}
 		for (int i = 0; i < cSeg; i++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			seg.add(reader.parseUnsignedShortVal());
 		}
 		ccSegs = new ArrayList<>();
@@ -88,14 +88,14 @@ public class C11Lines {
 		offsets = new ArrayList<>();
 		lineNumbers = new ArrayList<>();
 		for (int i = 0; i < cFile; i++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			reader.setIndex(baseSrcFile.get(i));
 			int ccSeg = reader.parseUnsignedShortVal();
 			ccSegs.add(ccSeg);
 			reader.skip(2); // padding
 			List<Integer> baseSrcLn = new ArrayList<>();
 			for (int j = 0; j < ccSeg; j++) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				baseSrcLn.add(reader.parseInt());
 			}
 			baseSrcLines.add(baseSrcLn);
@@ -112,20 +112,20 @@ public class C11Lines {
 			List<List<Long>> fileSegOffsets = new ArrayList<>(); // unsigned int
 			List<List<Integer>> fileSegLineNums = new ArrayList<>(); // unsigned short
 			for (int j = 0; j < ccSeg; j++) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				reader.setIndex(baseSrcLn.get(j));
 				int segNum = reader.parseUnsignedShortVal();
 				segNums.add(segNum);
 				int cPair = reader.parseUnsignedShortVal();
 				List<Long> segOffsets = new ArrayList<>(); // unsigned ints
 				for (int k = 0; k < cPair; k++) {
-					pdb.checkCanceled();
+					pdb.checkCancelled();
 					segOffsets.add(reader.parseUnsignedIntVal());
 				}
 				fileSegOffsets.add(segOffsets);
 				List<Integer> segLineNums = new ArrayList<>(); // unsigned shorts
 				for (int k = 0; k < cPair; k++) {
-					pdb.checkCanceled();
+					pdb.checkCancelled();
 					segLineNums.add(reader.parseUnsignedShortVal());
 				}
 				fileSegLineNums.add(segLineNums);

@@ -701,7 +701,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	private class CancellingStubTaskMonitorComponent extends TaskMonitorComponent {
 
 		@Override
-		public void checkCanceled() throws CancelledException {
+		public void checkCancelled() throws CancelledException {
 			if (calledFromSearchTask()) {
 				throw new CancelledException();
 			}

@@ -98,7 +98,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 
 		boolean changed = true;
 		while (changed) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			changed = false;
 
 			// start 1 from the end so we always have a predecessor

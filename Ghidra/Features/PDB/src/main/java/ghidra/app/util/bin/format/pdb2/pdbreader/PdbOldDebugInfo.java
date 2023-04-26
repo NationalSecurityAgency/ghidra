@@ -94,7 +94,7 @@ public class PdbOldDebugInfo extends PdbDebugInfo {
 		PdbByteReader substreamReader =
 			reader.getSubPdbByteReader(lengthModuleInformationSubstream);
 		while (substreamReader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			ModuleInformation moduleInformation = new ModuleInformation500(pdb);
 			moduleInformation.deserialize(substreamReader);
 			moduleInformationList.add(moduleInformation);

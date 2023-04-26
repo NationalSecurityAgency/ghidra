@@ -26,11 +26,11 @@ public class LongColumnAdapter extends AbstractColumnAdapter {
 
 	@Override
 	Object getKeyValue(DBRecord rec) {
-		return new Long(rec.getKey());
+		return Long.valueOf(rec.getKey());
 	}
 
 	@Override
 	Object getValue(DBRecord rec, int col) {
-		return new Long(rec.getLongValue(col));
+		return Long.valueOf(rec.getLongValue(col));
 	}
 }

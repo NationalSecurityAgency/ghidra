@@ -423,7 +423,7 @@ public class SymbolicPropogator {
 				.getExtrapop() == PrototypeModel.UNKNOWN_EXTRAPOP;
 
 		while (!contextStack.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (canceled) {
 				body.add(conflicts); // put the conflict/redone addresses back in
 				return body;
@@ -458,7 +458,7 @@ public class SymbolicPropogator {
 			Address maxAddr = null;
 			while (nextAddr != null) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// already done it!
 				if (body.contains(nextAddr)) {

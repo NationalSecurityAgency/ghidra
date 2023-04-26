@@ -70,7 +70,7 @@ public class GTreeExpandAllTask extends GTreeTask {
 		if (!force && !parent.isAutoExpandPermitted()) {
 			return;
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		List<GTreeNode> allChildren = parent.getChildren();
 		if (allChildren.size() == 0) {
 			return;
@@ -80,7 +80,7 @@ public class GTreeExpandAllTask extends GTreeTask {
 			expandPath(treePath, monitor);
 		}
 		for (GTreeNode child : allChildren) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			expandNode(child, false, monitor);
 		}
 		monitor.incrementProgress(1); // TODO: total node count is unknown

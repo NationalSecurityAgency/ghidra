@@ -492,7 +492,7 @@ class CodeUnitMerger extends AbstractListingMerger {
 					conflictInfoPanel.setCodeUnitInfo(range, conflictIndex + 1, totalConflicts);
 					conflictInfoPanel.setConflictInfo(1, 1);
 					showMergePanel(listingPanel, rangeMin, rangeMax, monitor);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					chosenConflictOption = getSelectedOption(conflictPanel);
 					monitor.setMaximum(totalConflicts);
 					monitor.setProgress(conflictIndex + 1);
@@ -736,7 +736,7 @@ class CodeUnitMerger extends AbstractListingMerger {
 				register, addrRange.getMinAddress(), addrRange.getMaxAddress());
 			resultContext.remove(addrRange.getMinAddress(), addrRange.getMaxAddress(), register);
 			while (origValueIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange valueRange = origValueIter.next();
 				RegisterValue value =
 					originContext.getRegisterValue(register, valueRange.getMinAddress());
@@ -791,7 +791,7 @@ class CodeUnitMerger extends AbstractListingMerger {
 		// Get each code unit out of the iterator and set it in the merged
 		// program if it is an instruction.
 		while (sourceCodeUnits.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeUnit cu = sourceCodeUnits.next();
 			if (mergeCount > granularity) {
 				monitor.setProgress(mergeProgress);

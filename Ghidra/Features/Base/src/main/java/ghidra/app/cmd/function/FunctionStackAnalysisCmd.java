@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +139,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 		ArrayList<Function> funcList = new ArrayList<Function>(); // list of functions needing stack frames created
 		stack.push(f);
 		while (!stack.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = stack.pop();
 			if (func.isThunk()) {
 				continue;
@@ -163,7 +162,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 //		int default_purge = program.getCompilerSpec().getCallStackMod();
 //		int default_stackshift = program.getCompilerSpec().getCallStackShift();
 		while (!funcList.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = funcList.remove(0);
 			SourceType oldSignatureSource = func.getSignatureSource();
 
@@ -218,7 +217,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 
 		InstructionIterator iter = program.getListing().getInstructions(func.getBody(), true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instr = iter.next();
 
 			// process any stack pointer references

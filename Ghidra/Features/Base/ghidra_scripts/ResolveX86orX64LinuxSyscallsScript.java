@@ -250,7 +250,7 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 			TaskMonitor tMonitor) throws CancelledException {
 		Map<Function, Set<Address>> funcsToCalls = new HashMap<>();
 		for (Function func : program.getFunctionManager().getFunctionsNoStubs(true)) {
-			tMonitor.checkCanceled();
+			tMonitor.checkCancelled();
 			for (Instruction inst : program.getListing().getInstructions(func.getBody(), true)) {
 				if (tester.test(inst)) {
 					Set<Address> callSites = funcsToCalls.get(func);

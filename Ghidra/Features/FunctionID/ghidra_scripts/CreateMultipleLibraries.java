@@ -117,7 +117,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 		FunctionManager functionManager = program.getFunctionManager();
 		FunctionIterator functions = functionManager.getFunctions(true);
 		while (functions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = functions.next();
 			FidHashQuad hashFunction = service.hashFunction(func);
 			if (hashFunction == null) {
@@ -153,7 +153,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 		MessageDigest digest = new FNV1a64MessageDigest();
 		Collections.sort(hashList);
 		for (int i = 0; i < hashList.size(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			digest.update(hashList.get(i));
 		}
 		return digest.digestLong();
@@ -164,7 +164,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 			currentLibraryName + ':' + currentLibraryVersion + ':' + currentLibraryVariant;
 		ArrayList<Long> hashList = new ArrayList<>();
 		for (int i = 0; i < programs.size(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				hashListProgram(programs.get(i), hashList);
 			}
@@ -223,7 +223,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 		commonSymbols = new LinkedList<>();
 		String line = reader.readLine();
 		while (line != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (line.length() != 0) {
 				commonSymbols.add(line);
 			}
@@ -257,7 +257,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 		}
 		DomainFile[] files = myFolder.getFiles();
 		for (DomainFile domainFile : files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			// Do not follow folder-links or consider program links.  Using content type
 			// to filter is best way to control this.  If program links should be considered
 			// "Program.class.isAssignableFrom(domainFile.getDomainObjectClass())"
@@ -268,7 +268,7 @@ public class CreateMultipleLibraries extends GhidraScript {
 		}
 		DomainFolder[] folders = myFolder.getFolders();
 		for (DomainFolder domainFolder : folders) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			findPrograms(programs, domainFolder);
 		}
 	}

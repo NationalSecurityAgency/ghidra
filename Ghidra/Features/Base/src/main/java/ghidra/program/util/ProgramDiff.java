@@ -548,7 +548,7 @@ public class ProgramDiff {
 			// Create a do nothing task monitor that we can pass along.
 			monitor = TaskMonitor.DUMMY;
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		ProgramDiff subDiff;
 		try {
@@ -1192,7 +1192,7 @@ public class ProgramDiff {
 		ProgramContext pc2 = program2.getProgramContext();
 
 		for (String element : pc1.getRegisterNames()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Register rb1 = pc1.getRegister(element);
 			Register rb2 = pc2.getRegister(element);
 			if (rb1.isProcessorContext() || rb2.isProcessorContext()) {
@@ -1230,7 +1230,7 @@ public class ProgramDiff {
 			throws CancelledException {
 		AddressRangeIterator iter = addressSet.getAddressRanges();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange range = iter.next();
 			Address min = range.getMinAddress();
 			Address max = range.getMaxAddress();
@@ -1247,7 +1247,7 @@ public class ProgramDiff {
 				new CombinedAddressRangeIterator(it1, convertedIt2);
 
 			while (p1CombinedIterator.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange addrRange = p1CombinedIterator.next();
 				Address rangeMin1 = addrRange.getMinAddress();
 				Address rangeMin2 =
@@ -1646,7 +1646,7 @@ public class ProgramDiff {
 		AddressSet tmpAddrSet = new AddressSet();
 		AddressRangeIterator iter = initialAddressSet.getAddressRanges();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange range = iter.next();
 			Address minAddr = range.getMinAddress();
 			Address maxAddr = range.getMaxAddress();

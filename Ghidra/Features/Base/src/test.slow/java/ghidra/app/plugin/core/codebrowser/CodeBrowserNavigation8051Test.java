@@ -85,7 +85,7 @@ public class CodeBrowserNavigation8051Test extends AbstractGhidraHeadedIntegrati
 	public void testOperandNavigation() throws Exception {
 		loadProgram("test");
 		env.showTool();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.goTo(new OperandFieldLocation(program, addr("CODE:07ea"), null, null, null, 0, 0));
 		assertEquals(addr("CODE:07ea"), cb.getCurrentAddress());
 

@@ -55,7 +55,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForJDialog(null, "Test Properties", 500);
 		assertNotNull("Dialog failed to launch", editorDialog);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		waitForOptionsTree(dialogComponent);
 		return editorDialog;
 	}
@@ -230,7 +230,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("abc", textSelector.getSelectedItem());
 
 		runSwing(() -> textSelector.setSelectedItem("ghi"), true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressButtonByText(dialog, "OK");
 

@@ -170,7 +170,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 		// each address should correspond to a function
 		for (Function function : listing.getFunctions(set, true)) {
 			
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(functionCount++);
 			
 			Address entryAddr = function.getEntryPoint();

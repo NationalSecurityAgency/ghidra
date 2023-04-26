@@ -67,11 +67,11 @@ public class ImpliedMatchUtils {
 		AddressSetView body = sourceFunction.getBody();
 		AddressIterator iterator = referenceManager.getReferenceSourceIterator(body, true);
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = iterator.next();
 			Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
 			for (Reference reference : referencesFrom) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				VTImpliedMatchInfo match = findImpliedMatch(correlator, sourceFunction,
 					destinationFunction, reference, possibleMatchSet, monitor);
 

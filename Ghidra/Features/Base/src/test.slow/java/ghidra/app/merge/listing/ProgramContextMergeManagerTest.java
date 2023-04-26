@@ -263,7 +263,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x5L), (Long) null, new Long(0x40e20100L));
+		checkDisplayValues(Long.valueOf(0x5L), (Long) null, Long.valueOf(0x40e20100L));
 
 		chooseCancel(); // 1002085 - 1002100
 		Thread.sleep(250);
@@ -320,7 +320,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x5L), (Long) null, new Long(0x40e20100L));
+		checkDisplayValues(Long.valueOf(0x5L), (Long) null, Long.valueOf(0x40e20100L));
 		chooseRadioButton(LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -364,7 +364,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x5L), (Long) null, new Long(0x40e20100L));
+		checkDisplayValues(Long.valueOf(0x5L), (Long) null, Long.valueOf(0x40e20100L));
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1002050 - 1002074
 		waitForMergeCompletion();
 
@@ -408,7 +408,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x5L), (Long) null, new Long(0x40e20100L));
+		checkDisplayValues(Long.valueOf(0x5L), (Long) null, Long.valueOf(0x40e20100L));
 		chooseRadioButton(ORIGINAL_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -452,7 +452,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues((Long) null, new Long(0x5L), new Long(0x40e20100L));
+		checkDisplayValues((Long) null, Long.valueOf(0x5L), Long.valueOf(0x40e20100L));
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -757,39 +757,39 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		executeMerge(ASK_USER);
 
 		// EBP register conflicts
-		checkDisplayValues(new Long(0x22334455L), new Long(0xaa33cc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0xaa33cc55L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1001007 - 1001008
-		checkDisplayValues(new Long(0x22334455L), new Long(0x99887766L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0x99887766L), (Long) null);
 		chooseRadioButton(ORIGINAL_BUTTON_NAME); // 1002055 - 1002060
 
 		// TR2 register conflicts
-		checkDisplayValues(new Long(0x5L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x5L), Long.valueOf(0x1L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1002050 - 1002074
-		checkDisplayValues(new Long(0x7L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x1L), (Long) null);
 		chooseRadioButton(LATEST_BUTTON_NAME); // 1002075 - 1002084
-		checkDisplayValues(new Long(0x7L), new Long(0x3L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x3L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1002085 - 1002100
 
 		// AX register conflicts
-		checkDisplayValues(new Long(0x123bL), new Long(0xabcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0xabcdL), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x123bL), new Long(0x1255L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0x1255L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006432 - 1006434
 
 		// BP register conflicts
-		checkDisplayValues(new Long(0x4455L), new Long(0xcc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0xcc55L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1001007 - 1001008
-		checkDisplayValues(new Long(0x4455L), new Long(0x7766L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0x7766L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1002055 - 1002060
 
 		// AL register conflicts
-		checkDisplayValues(new Long(0x3bL), new Long(0xcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0xcdL), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x3bL), new Long(0x55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0x55L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006432 - 1006434
 
 		// AH register conflicts
-		checkDisplayValues(new Long(0x12L), new Long(0xabL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x12L), Long.valueOf(0xabL), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME); // 1006428 - 100106430
 
 		waitForMergeCompletion();
@@ -1011,9 +1011,9 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x66L), new Long(0x7L), new Long(0x1010101L));
+		checkDisplayValues(Long.valueOf(0x66L), Long.valueOf(0x7L), Long.valueOf(0x1010101L));
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
-		checkDisplayValues(new Long(0x44L), new Long(0x5L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x44L), Long.valueOf(0x5L), (Long) null);
 		chooseRadioButton(CHECKED_OUT_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -1061,9 +1061,9 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x66L), new Long(0x7L), new Long(0x1010101L));
+		checkDisplayValues(Long.valueOf(0x66L), Long.valueOf(0x7L), Long.valueOf(0x1010101L));
 		chooseRadioButton(LATEST_BUTTON_NAME);
-		checkDisplayValues(new Long(0x44L), new Long(0x5L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x44L), Long.valueOf(0x5L), (Long) null);
 		chooseRadioButton(LATEST_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -1111,9 +1111,9 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		});
 
 		executeMerge(ASK_USER);
-		checkDisplayValues(new Long(0x66L), new Long(0x7L), new Long(0x1010101L));
+		checkDisplayValues(Long.valueOf(0x66L), Long.valueOf(0x7L), Long.valueOf(0x1010101L));
 		chooseRadioButton(ORIGINAL_BUTTON_NAME);
-		checkDisplayValues(new Long(0x44L), new Long(0x5L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x44L), Long.valueOf(0x5L), (Long) null);
 		chooseRadioButton(ORIGINAL_BUTTON_NAME);
 		waitForMergeCompletion();
 
@@ -1136,7 +1136,7 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		String latestExpected = getValueString(latest);
 		String myExpected = getValueString(my);
 		String originalExpected = getValueString(original);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		Window window = windowForComponent(getMergePanel());
 		final VerticalChoicesPanel comp = findComponent(window, VerticalChoicesPanel.class);
 		JLabel latestLabel = (JLabel) findComponentByName(comp, comp.getComponentName(1, 1));
@@ -1267,39 +1267,39 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		executeMerge(ASK_USER);
 
 		// EBP register conflicts
-		checkDisplayValues(new Long(0x22334455L), new Long(0xaa33cc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0xaa33cc55L), (Long) null);
 		chooseProgramContext("EBP", KEEP_MY, false); // 1001007 - 1001008
-		checkDisplayValues(new Long(0x22334455L), new Long(0x99887766L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0x99887766L), (Long) null);
 		chooseProgramContext("EBP", KEEP_ORIGINAL, false); // 1002055 - 1002060
 
 		// TR2 register conflicts
-		checkDisplayValues(new Long(0x5L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x5L), Long.valueOf(0x1L), (Long) null);
 		chooseProgramContext("TR2", KEEP_MY, false); // 1002050 - 1002074
-		checkDisplayValues(new Long(0x7L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x1L), (Long) null);
 		chooseProgramContext("TR2", KEEP_LATEST, false); // 1002075 - 1002084
-		checkDisplayValues(new Long(0x7L), new Long(0x3L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x3L), (Long) null);
 		chooseProgramContext("TR2", KEEP_MY, false); // 1002085 - 1002100
 
 		// AX register conflicts
-		checkDisplayValues(new Long(0x123bL), new Long(0xabcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0xabcdL), (Long) null);
 		chooseProgramContext("AX", KEEP_MY, false); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x123bL), new Long(0x1255L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0x1255L), (Long) null);
 		chooseProgramContext("AX", KEEP_MY, false); // 1006432 - 1006434
 
 		// BP register conflicts
-		checkDisplayValues(new Long(0x4455L), new Long(0xcc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0xcc55L), (Long) null);
 		chooseProgramContext("BP", KEEP_MY, false); // 1001007 - 1001008
-		checkDisplayValues(new Long(0x4455L), new Long(0x7766L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0x7766L), (Long) null);
 		chooseProgramContext("BP", KEEP_MY, false); // 1002055 - 1002060
 
 		// AL register conflicts
-		checkDisplayValues(new Long(0x3bL), new Long(0xcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0xcdL), (Long) null);
 		chooseProgramContext("AL", KEEP_MY, false); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x3bL), new Long(0x55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0x55L), (Long) null);
 		chooseProgramContext("AL", KEEP_MY, false); // 1006432 - 1006434
 
 		// AH register conflicts
-		checkDisplayValues(new Long(0x12L), new Long(0xabL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x12L), Long.valueOf(0xabL), (Long) null);
 		chooseProgramContext("AH", KEEP_MY, false); // 1006428 - 100106430
 
 		waitForMergeCompletion();
@@ -1377,39 +1377,39 @@ public class ProgramContextMergeManagerTest extends AbstractListingMergeManagerT
 		executeMerge(ASK_USER);
 
 		// EBP register conflicts
-		checkDisplayValues(new Long(0x22334455L), new Long(0xaa33cc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0xaa33cc55L), (Long) null);
 		chooseProgramContext("EBP", KEEP_MY, true); // 1001007 - 1001008
-//		checkDisplayValues(new Long(0x22334455L), new Long(0x99887766L), (Long) null);
+//		checkDisplayValues(Long.valueOf(0x22334455L), Long.valueOf(0x99887766L), (Long) null);
 //		chooseProgramContext("EBP", KEEP_ORIGINAL, false); // 1002055 - 1002060
 
 		// TR2 register conflicts
-		checkDisplayValues(new Long(0x5L), new Long(0x1L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x5L), Long.valueOf(0x1L), (Long) null);
 		chooseProgramContext("TR2", KEEP_MY, true); // 1002050 - 1002074
-//		checkDisplayValues(new Long(0x7L), new Long(0x1L), (Long) null);
+//		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x1L), (Long) null);
 //		chooseProgramContext("TR2", KEEP_LATEST, false); // 1002075 - 1002084
-//		checkDisplayValues(new Long(0x7L), new Long(0x3L), (Long) null);
+//		checkDisplayValues(Long.valueOf(0x7L), Long.valueOf(0x3L), (Long) null);
 //		chooseProgramContext("TR2", KEEP_MY, false); // 1002085 - 1002100
 
 		// AX register conflicts
-		checkDisplayValues(new Long(0x123bL), new Long(0xabcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0xabcdL), (Long) null);
 		chooseProgramContext("AX", KEEP_MY, false); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x123bL), new Long(0x1255L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x123bL), Long.valueOf(0x1255L), (Long) null);
 		chooseProgramContext("AX", KEEP_MY, false); // 1006432 - 1006434
 
 		// BP register conflicts
-		checkDisplayValues(new Long(0x4455L), new Long(0xcc55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0xcc55L), (Long) null);
 		chooseProgramContext("BP", KEEP_MY, true); // 1001007 - 1001008
-//		checkDisplayValues(new Long(0x4455L), new Long(0x7766L), (Long) null);
+//		checkDisplayValues(Long.valueOf(0x4455L), Long.valueOf(0x7766L), (Long) null);
 //		chooseProgramContext("BP", KEEP_MY, false); // 1002055 - 1002060
 
 		// AL register conflicts
-		checkDisplayValues(new Long(0x3bL), new Long(0xcdL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0xcdL), (Long) null);
 		chooseProgramContext("AL", KEEP_MY, false); // 1006428 - 1006430
-		checkDisplayValues(new Long(0x3bL), new Long(0x55L), (Long) null);
+		checkDisplayValues(Long.valueOf(0x3bL), Long.valueOf(0x55L), (Long) null);
 		chooseProgramContext("AL", KEEP_MY, false); // 1006432 - 1006434
 
 		// AH register conflicts
-		checkDisplayValues(new Long(0x12L), new Long(0xabL), (Long) null);
+		checkDisplayValues(Long.valueOf(0x12L), Long.valueOf(0xabL), (Long) null);
 		chooseProgramContext("AH", KEEP_MY, true); // 1006428 - 100106430
 
 		waitForMergeCompletion();

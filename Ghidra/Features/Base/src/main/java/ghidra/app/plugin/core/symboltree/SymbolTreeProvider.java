@@ -658,7 +658,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			}
 
 			for (GTreeTask task : tasks) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				task.run(monitor);
 			}
 		}

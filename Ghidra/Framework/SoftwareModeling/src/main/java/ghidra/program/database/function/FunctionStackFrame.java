@@ -415,7 +415,7 @@ class FunctionStackFrame implements StackFrame {
 		function.manager.lock.acquire();
 		try {
 			checkIsValid();
-			Object key = new Integer(offset);
+			Object key = Integer.valueOf(offset);
 			int index = Arrays.binarySearch(variables, key, StackVariableComparator.get());
 			if (index >= 0) {
 				return variables[index];

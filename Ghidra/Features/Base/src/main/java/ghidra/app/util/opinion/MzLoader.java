@@ -158,7 +158,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				int len = relocationType.getLength();
 				addr = addr.add(header.e_lfarlc());
 				for (int i = 0; i < relocations.size(); i++) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					DataUtilities.createData(program, addr.add(i * len), relocationType, -1,
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
@@ -266,7 +266,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		MemoryBlock[] blocks = memory.getBlocks();
 
 		for (int i = 1; i < blocks.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			MemoryBlock block = blocks[i];
 			if (!block.isInitialized()) {
 				continue;
@@ -279,7 +279,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				mIndex = (int) block.getSize() - 2;
 			}
 			for (; mIndex >= 0; mIndex--) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Address offAddr = block.getStart().add(mIndex);
 				int val = block.getByte(offAddr);
 				val &= 0xff;
@@ -435,7 +435,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		BinaryReader reader = mz.getBinaryReader();
 
 		for (MzRelocation relocation : mz.getRelocations()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			int seg = relocation.getSegment();
 			int off = relocation.getOffset();

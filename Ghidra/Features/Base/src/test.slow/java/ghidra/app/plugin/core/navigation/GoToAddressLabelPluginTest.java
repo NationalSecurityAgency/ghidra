@@ -697,7 +697,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("1001000");
 		performOkCallback();
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(clear.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
@@ -714,7 +714,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("1001010");
 		performOkCallback();
 		assertEquals(addr("1001010"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
@@ -728,7 +728,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		setText("1001020");
 		performOkCallback();
 		assertEquals(addr("1001020"), cbPlugin.getCurrentAddress());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
@@ -1092,7 +1092,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	private void showDialog() {
 		Swing.runLater(() -> dialog.show(provider, cbPlugin.getCurrentAddress(), tool));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void setText(final String text) throws Exception {

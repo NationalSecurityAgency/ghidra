@@ -267,7 +267,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		for (Iterator<Address> laterIter = doLaterSet.iterator(); laterIter.hasNext();) {
 			Address entry = laterIter.next();
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (!listing.isUndefined(entry, entry)) {
 				laterIter.remove();
@@ -305,7 +305,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 			monitor.setProgress(count++);
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// already disassembled
 			if (!listing.isUndefined(entry, entry)) {
@@ -376,7 +376,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		AddressIterator aiter = program.getSymbolTable().getExternalEntryPointIterator();
 		while (aiter.hasNext()) {
 			externalCount++;
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address entryAddr = aiter.next();
 			Symbol entry = symbolTable.getPrimarySymbol(entryAddr);
 			// make sure to put on things that are external entry points, but not defined symbols.
@@ -394,7 +394,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		SymbolIterator symbolIter = symbolTable.getSymbols(addressSet, SymbolType.LABEL, true);
 
 		while (symbolIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol entry = symbolIter.next();
 			Address entryAddr = entry.getAddress();
 			if (addressSet.contains(entryAddr)) {

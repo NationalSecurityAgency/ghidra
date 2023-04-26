@@ -71,7 +71,7 @@ public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegration
 		program.endTransaction(transactionID, false);
 
 		env.dispose();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	@Test

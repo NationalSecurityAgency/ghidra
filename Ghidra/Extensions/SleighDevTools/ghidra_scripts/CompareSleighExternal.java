@@ -58,7 +58,7 @@ public class CompareSleighExternal extends GhidraScript {
 		
 		long align = currentProgram.getLanguage().getInstructionAlignment();
 		while (addresses.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = addresses.next();
 			
 			completed++;

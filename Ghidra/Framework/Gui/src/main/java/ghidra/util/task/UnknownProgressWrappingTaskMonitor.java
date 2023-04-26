@@ -53,8 +53,8 @@ public class UnknownProgressWrappingTaskMonitor extends TaskMonitorAdapter {
 	}
 
 	@Override
-	public void checkCanceled() throws CancelledException {
-		delegate.checkCanceled();
+	public void checkCancelled() throws CancelledException {
+		delegate.checkCancelled();
 	}
 
 	private void maybeUpdateMaximum() {

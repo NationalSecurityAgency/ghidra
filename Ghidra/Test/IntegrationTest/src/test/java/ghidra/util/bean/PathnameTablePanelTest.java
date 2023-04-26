@@ -78,26 +78,26 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		selectRow(3);
 		assertNotNull(upButton);
 		pressButton(upButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		int row = table.getSelectedRow();
 		assertEquals(2, row);
 		assertEquals("c:\\path_four", table.getModel().getValueAt(row, 0));
 
 		pressButton(upButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(1, row);
 		assertEquals("c:\\path_four", table.getModel().getValueAt(row, 0));
 
 		pressButton(upButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(0, row);
 		assertEquals("c:\\path_four", table.getModel().getValueAt(row, 0));
 
 		pressButton(upButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(4, row);
 		assertEquals("c:\\path_four", table.getModel().getValueAt(row, 0));
@@ -109,26 +109,26 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 
 		assertNotNull(downButton);
 		pressButton(downButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		int row = table.getSelectedRow();
 		assertEquals(3, row);
 		assertEquals("c:\\path_three", table.getModel().getValueAt(row, 0));
 
 		pressButton(downButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(4, row);
 		assertEquals("c:\\path_three", table.getModel().getValueAt(row, 0));
 
 		pressButton(downButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(0, row);
 		assertEquals("c:\\path_three", table.getModel().getValueAt(row, 0));
 
 		pressButton(downButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(1, row);
 		assertEquals("c:\\path_three", table.getModel().getValueAt(row, 0));
@@ -140,27 +140,27 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 
 		assertNotNull(removeButton);
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		int row = table.getSelectedRow();
 		assertEquals(3, row);
 
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(2, row);
 
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(1, row);
 
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(0, row);
 
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(-1, row);
 
@@ -179,7 +179,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertNotNull(addButton);
 		pressButton(addButton, false);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		selectFromFileChooser();
 
 		assertEquals(6, table.getRowCount());
@@ -201,7 +201,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertNotNull(addButton);
 		pressButton(addButton, false);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		GhidraFileChooser fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 		assertNotNull(fileChooser);
 
@@ -235,7 +235,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertNotNull(addButton);
 		pressButton(addButton, false);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		selectFromFileChooser();
 
 		assertEquals(6, table.getRowCount());
@@ -255,17 +255,17 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		selectRow(4);
 
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		int row = table.getSelectedRow();
 		assertEquals(3, row);
 
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(2, row);
 
 		pressButton(resetButton, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressResetConfirmation();
 
@@ -273,7 +273,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertEquals(5, rowCount);
 
 		pressButton(addButton, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		selectFromFileChooser();
 
@@ -281,7 +281,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertEquals(6, rowCount);
 
 		pressButton(resetButton, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressResetConfirmation();
 
@@ -301,7 +301,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertNotNull(yesButton);
 
 		pressButton(yesButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void selectFromFileChooser() throws Exception {
@@ -319,7 +319,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		waitForUpdateOnChooser(fileChooser);
 
 		pressButton(chooseButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void reset() {

@@ -190,7 +190,7 @@ public class FunctionMerge {
 		int count = 0;
 		while (originIter.hasNext()) {
 			monitor.setProgress(++count);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function originFunction = originIter.next();
 			SourceType originSource = originFunction.getSymbol().getSource();
 			Address originEntryPoint = originFunction.getEntryPoint();
@@ -234,7 +234,7 @@ public class FunctionMerge {
 		int count = 0;
 		while (iter.hasNext()) {
 			monitor.setProgress(++count);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function resultFunction = iter.next();
 			Address resultEntryPt = resultFunction.getEntryPoint();
 			monitor.setMessage("Replacing function name " + count + " of " + max + ".  Address=" +

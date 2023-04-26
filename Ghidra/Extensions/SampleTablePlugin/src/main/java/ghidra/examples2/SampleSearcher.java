@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +34,7 @@ public class SampleSearcher {
 		monitor.initialize(program.getFunctionManager().getFunctionCount());
 		while (it.hasNext()) {
 			if (monitor.isCancelled()) {
-				monitor.clearCanceled();  //otherwise the partial results won't be shown
+				monitor.clearCancelled();  //otherwise the partial results won't be shown
 				break;
 			}
 			Function fun = it.next();

@@ -865,7 +865,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		waitForBusyRunManager(controller);
 		waitForAnimation();
 		getPrimaryGraphViewer().repaint();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		long end = System.currentTimeMillis();
 		Msg.debug(this, "relayout time: " + ((end - start) / 1000.0) + "s");

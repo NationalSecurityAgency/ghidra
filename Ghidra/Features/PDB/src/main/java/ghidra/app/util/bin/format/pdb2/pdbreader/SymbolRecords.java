@@ -113,7 +113,7 @@ public class SymbolRecords {
 		}
 
 		for (ModuleInformation module : debugInfo.moduleInformationList) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			int streamNumber = module.getStreamNumberDebugInformation();
 			if (streamNumber == 0xffff) {
 				moduleSymbolsByOffset.add(new TreeMap<>());
@@ -171,7 +171,7 @@ public class SymbolRecords {
 		//System.out.println(reader.dump(0x400));
 		Map<Long, AbstractMsSymbol> mySymbolsByOffset = new TreeMap<>();
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 
 			// Including length in byte array for alignment purposes.
 			int offset = reader.getIndex();
@@ -191,7 +191,7 @@ public class SymbolRecords {
 		writer.write("SymbolRecords-----------------------------------------------\n");
 		dumpSymbolMap(symbolsByOffset, writer);
 		for (int i = 0; i < moduleSymbolsByOffset.size(); i++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			Map<Long, AbstractMsSymbol> map = moduleSymbolsByOffset.get(i);
 			if (map != null) {
 				writer.write("Module(" + i + ") List:\n");
@@ -212,7 +212,7 @@ public class SymbolRecords {
 			throws IOException, CancelledException {
 		writer.write("SymbolMap---------------------------------------------------");
 		for (Map.Entry<Long, AbstractMsSymbol> entry : mySymbolsByOffset.entrySet()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			StringBuilder builder = new StringBuilder();
 			builder.append("\n------------------------------------------------------------\n");
 			builder.append(String.format("Offset: 0X%08X\n", entry.getKey()));

@@ -612,7 +612,7 @@ public class DWARFProgram implements Closeable {
 		BinaryReader br = debugInfoBR;
 		br.setPointerIndex(0);
 		while (br.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage("Bootstrapping DWARF Compilation Unit #" + compUnits.size());
 
 			DWARFCompilationUnit cu = DWARFCompilationUnit.readCompilationUnit(this, br,

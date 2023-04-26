@@ -266,7 +266,7 @@ public class AddressRangeMapDB implements DBListener {
 
 			Address fromEndAddr = fromAddr.add(length - 1);
 			for (AddressRange range : getAddressRanges(fromAddr, fromEndAddr)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Address minAddr = range.getMinAddress();
 				Field value = getValue(minAddr);
@@ -281,7 +281,7 @@ public class AddressRangeMapDB implements DBListener {
 			}
 			clearRange(fromAddr, fromEndAddr);
 			for (AddressRange range : tmpMap.getAddressRanges()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Field value = tmpMap.getValue(range.getMinAddress());
 				paintRange(range.getMinAddress(), range.getMaxAddress(), value);
 			}

@@ -1040,7 +1040,7 @@ public class LocalBufferFile implements BufferFile {
 		}
 		finally {
 			// circumvent other exceptions if cancelled
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 
 		if (headerTransferRequired) {
@@ -1073,7 +1073,7 @@ public class LocalBufferFile implements BufferFile {
 			int srcBlockCnt = in.getBlockCount();
 			BufferFileBlock block;
 			while ((block = in.readBlock()) != null) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				out.writeBlock(block);
 				monitor.setProgress(count++);
 			}

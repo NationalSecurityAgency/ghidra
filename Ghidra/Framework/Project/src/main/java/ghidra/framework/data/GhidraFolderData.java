@@ -1126,7 +1126,7 @@ class GhidraFolderData {
 			}
 			List<String> files = getFileNames();
 			for (String file : files) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				GhidraFileData fileData = getFileData(file, false);
 				if (fileData != null) {
 					fileData.copyTo(newFolderData, monitor);
@@ -1134,7 +1134,7 @@ class GhidraFolderData {
 			}
 			List<String> folders = getFolderNames();
 			for (String folder : folders) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				GhidraFolderData folderData = getFolderData(folder, false);
 				if (folderData != null) {
 					folderData.copyTo(newFolderData, monitor);

@@ -279,7 +279,7 @@ public class ByteViewerToolConnectionTest extends AbstractGhidraHeadedIntegratio
 		else {
 			SwingUtilities.invokeLater(r);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 }

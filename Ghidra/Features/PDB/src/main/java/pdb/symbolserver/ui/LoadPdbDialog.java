@@ -593,7 +593,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		}
 		catch (CancelledException | IOCancelledException ce) {
 			setStatusText("Operation cancelled");
-			monitor.clearCanceled();
+			monitor.clearCancelled();
 		}
 		catch (IOException ioe) {
 			Msg.showError(this, getComponent(), "Error Getting Symbol File", ioe);

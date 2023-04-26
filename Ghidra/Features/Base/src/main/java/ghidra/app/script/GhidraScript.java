@@ -395,7 +395,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		start();
 		try {
 			run();
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		finally {
 			end(true);

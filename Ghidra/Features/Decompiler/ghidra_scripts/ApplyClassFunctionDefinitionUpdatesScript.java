@@ -58,7 +58,7 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 
 		List<FunctionDefinition> classFunctionDefinitions = new ArrayList<FunctionDefinition>();
 		for (DataType selectedDataType : selectedDatatypes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (!(selectedDataType instanceof FunctionDefinition)) {
 				continue;
@@ -81,7 +81,7 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 		List<Object> changedItems = new ArrayList<Object>();
 
 		for (FunctionDefinition functionDef : classFunctionDefinitions) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<Object> newChangedItems = classHelper.applyNewFunctionDefinition(functionDef);
 
@@ -102,7 +102,7 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 			println();
 			println("Updated structures:");
 			for (Structure structure : structuresOnList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(structure.getPathName());
 			}
 		}
@@ -111,7 +111,7 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 			println();
 			println("Updated functions:");
 			for (Function function : functionsOnList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(function.getEntryPoint().toString());
 			}
 		}

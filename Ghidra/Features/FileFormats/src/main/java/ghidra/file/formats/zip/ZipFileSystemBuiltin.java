@@ -107,7 +107,7 @@ public class ZipFileSystemBuiltin implements GFileSystem {
 
 		Enumeration<? extends ZipEntry> entries = zipFile.entries();
 		while (entries.hasMoreElements()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			ZipEntry currentEntry = entries.nextElement();
 			fsIndexHelper.storeFile(currentEntry.getName(), -1, currentEntry.isDirectory(),
 				currentEntry.getSize(), currentEntry);

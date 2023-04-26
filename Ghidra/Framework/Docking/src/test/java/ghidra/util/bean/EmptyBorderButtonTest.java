@@ -162,6 +162,6 @@ public class EmptyBorderButtonTest extends AbstractDockingTest {
 	// testBorderDragging() // is this possible?
 
 //	private void closeDialogs() {
-//		closeAllWindowsAndFrames();
+//		closeAllWindows();
 //	}
 }

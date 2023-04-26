@@ -167,7 +167,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 		int cnt = 0;
 		while (toIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address oldAddr = toIterator.next();
 			if (!oldAddr.isVariableAddress() && !(oldAddr instanceof OldGenericNamespaceAddress)) {
 				break;
@@ -253,7 +253,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 		RecordIterator iter = oldStackRefAdapter.getRecords();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 
 			Address fromAddr =
@@ -1390,7 +1390,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 
 		for (Reference ref : refs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address fromAddr = ref.getFromAddress();
 			int opIndex = ref.getOperandIndex();
@@ -1437,7 +1437,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 			AddressIterator refSourceIter = getReferenceSourceIterator(firstAddr, forward);
 			while (refSourceIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Address oldFromAddr = refSourceIter.next();
 				if ((forward && oldFromAddr.compareTo(fromEndAddr) > 0) ||
@@ -1460,7 +1460,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 				Address newRefFromAddr = toAddr.add(offset);
 
 				for (Reference ref : refs) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 
 					Address newRefToAddr = ref.getToAddress();
 					int opIndex = ref.getOperandIndex();

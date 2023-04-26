@@ -273,7 +273,7 @@ public class SelectByScopedFlowPlugin extends ProgramPlugin {
 		monitor.initialize(addresses.getNumAddresses());
 
 		for (; iterator.hasNext();) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeBlock codeBlock = iterator.next();
 			CodeBlockVertex vertex = new CodeBlockVertex(codeBlock);
 			vertices.add(vertex);
@@ -299,7 +299,7 @@ public class SelectByScopedFlowPlugin extends ProgramPlugin {
 
 		Map<CodeBlock, CodeBlockVertex> blockToVertexMap = mapBlocksToVertices(vertices);
 		for (CodeBlockVertex startVertex : vertices) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			addEdgesForStartVertex(graph, blockToVertexMap, startVertex, monitor);
 		}
 	}
@@ -311,7 +311,7 @@ public class SelectByScopedFlowPlugin extends ProgramPlugin {
 		CodeBlock codeBlock = start.getCodeBlock();
 		CodeBlockReferenceIterator destinations = codeBlock.getDestinations(monitor);
 		for (; destinations.hasNext();) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeBlockReference reference = destinations.next();
 			CodeBlock destinationBlock = reference.getDestinationBlock();
 			CodeBlockVertex end = blockToVertexMap.get(destinationBlock);

@@ -203,7 +203,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		executeOnSwingWithoutBlocking(
 			() -> dragNDropHandler.drop(destinationNode, transferable, dragAction));
 		util.waitForTree();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	@Test
@@ -280,7 +280,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		Collections.sort(list, util.getSymbolComparator());
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		util.waitForTree();
 
 		List<Symbol> symbolList = new ArrayList<>();
@@ -338,7 +338,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		util.waitForTree();
 
 		GTreeNode cnode = rootNode.getChild(4);

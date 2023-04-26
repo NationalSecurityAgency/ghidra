@@ -92,7 +92,7 @@ public class SequenceDatabase {
 				SequenceItem fItem = new SequenceItem(seq.getSequenceAsString().substring(i, i + 1), i);
 				Integer count = itemBag.get(fItem);
 				if (count == null) {
-					itemBag.put(fItem, new Integer(seq.getCount()));
+					itemBag.put(fItem, Integer.valueOf(seq.getCount()));
 				}
 				else {
 					itemBag.put(fItem, count + seq.getCount());

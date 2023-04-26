@@ -486,7 +486,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		boolean success = false;
 		try {
 			while (!unprocessed.isEmpty()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				UnprocessedLibrary unprocessedLibrary = unprocessed.remove();
 				String libraryName = unprocessedLibrary.name();
 				int depth = unprocessedLibrary.depth();
@@ -581,7 +581,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		boolean success = false;
 		try {
 			for (File candidateLibraryFile : candidateLibraryFiles) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				List<String> newLibraryList = new ArrayList<>();
 				library = loadLibrary(simpleLibraryName, candidateLibraryFile,
 					desiredLoadSpec, newLibraryList, options, consumer, log, monitor);
@@ -863,7 +863,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		monitor.initialize(loadedByName.size());
 		for (Loaded<Program> loadedProgram : loadedByName.values()) {
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Program program = loadedProgram.getDomainObject();
 			ExternalManager extManager = program.getExternalManager();
@@ -912,7 +912,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			if (Library.UNKNOWN.equals(externalLibName)) {
 				continue;
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				String externalFileName = FilenameUtils.getName(externalLibName);
 				Loaded<Program> matchingExtProgram = findLibrary(loadedByName, externalFileName);

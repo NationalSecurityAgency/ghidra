@@ -66,7 +66,7 @@ public class StructureEditorLockedActions4Test extends AbstractStructureEditorTe
 
 		// Make array of 5 quadwords
 		invoke(arrayAction, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		assertEquals("Enter Number", dialog.getTitle());

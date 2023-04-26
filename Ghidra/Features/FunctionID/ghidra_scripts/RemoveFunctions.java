@@ -561,7 +561,7 @@ public class RemoveFunctions extends GhidraScript {
 			monitor.setMaximum(AUTO_FAIL_REGEX.size());
 			monitor.setProgress(0);
 			for (String regex : AUTO_FAIL_REGEX) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				List<FunctionRecord> recordList = modifiableFidDB.findFunctionsByNameRegex(regex);
 				for (FunctionRecord record : recordList) {
@@ -571,7 +571,7 @@ public class RemoveFunctions extends GhidraScript {
 			monitor.setMaximum(SPECIAL_PARENT.size());
 			monitor.setProgress(0);
 			for (Pair<String, Pair<Long, Long>> pair : SPECIAL_PARENT) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				List<FunctionRecord> childFunctions =
 					modifiableFidDB.findFunctionsByFullHash(pair.second.first);
@@ -592,28 +592,28 @@ public class RemoveFunctions extends GhidraScript {
 			monitor.setProgress(0);
 			for (Pair<Short, Long> pair : REMOVE_HASHES) {
 				modifiableFidDB.setAutoFailByFullHash(pair.second.longValue(), true);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			monitor.setMaximum(FORCE_RELATION.size());
 			monitor.setProgress(0);
 			for (Pair<Short, Long> pair : FORCE_RELATION) {
 				modifiableFidDB.setForceRelationByFullHash(pair.second.longValue(), true);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			monitor.setMaximum(FORCE_SPECIFIC.size());
 			monitor.setProgress(0);
 			for (Pair<Short, Long> pair : FORCE_SPECIFIC) {
 				modifiableFidDB.setForceSpecificByFullHash(pair.second.longValue(), true);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			monitor.setMaximum(AUTO_PASS.size());
 			monitor.setProgress(0);
 			for (Pair<Short, Long> pair : AUTO_PASS) {
 				modifiableFidDB.setAutoPassByFullHash(pair.second.longValue(), true);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 
@@ -625,7 +625,7 @@ public class RemoveFunctions extends GhidraScript {
 				for (FunctionRecord funcRec : listSpecHash) {
 					modifiableFidDB.setAutoFailOnFunction(funcRec, true);
 				}
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			modifiableFidDB.saveDatabase("", monitor);

@@ -44,7 +44,7 @@ public class EditBytesScript extends GhidraScript {
 		boolean containedInBlock = false;
 
 		while (containedInBlock == false) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			newBytes = askBytes("Replace Bytes", "Replace bytes at cursor with:");
 			endAddr = currentLocation.getByteAddress().add(newBytes.length - 1);
 			activeAddr = currentLocation.getByteAddress();

@@ -1174,7 +1174,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			new DefaultCompositeMember(isClass, editComposite, errorConsumer);
 
 		for (PdbMember m : members) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				if (!rootMember.addMember(m, monitor)) {
 					return false;

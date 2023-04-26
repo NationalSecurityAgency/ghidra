@@ -133,7 +133,7 @@ abstract class FunctionAdapter {
 			FunctionAdapter tmpAdapter = new FunctionAdapterV3(tmpHandle, map, true);
 			RecordIterator it = oldAdapter.iterateFunctionRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateFunctionRecord(rec);
 				monitor.setProgress(++count);
@@ -142,7 +142,7 @@ abstract class FunctionAdapter {
 			FunctionAdapter newAdapter = new FunctionAdapterV3(handle, map, true);
 			it = tmpAdapter.iterateFunctionRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateFunctionRecord(rec);
 				monitor.setProgress(++count);

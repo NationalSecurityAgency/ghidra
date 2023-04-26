@@ -120,7 +120,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			// mark all detected non-returning functions
 			AddressIterator noreturns = noReturnSet.getAddresses(true);
 			for (Address address : noreturns) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				setFunctionNonReturning(program, address);
 
@@ -317,7 +317,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		AddressIterator refIter =
 			cp.getReferenceManager().getReferenceSourceIterator(checkSet, true);
 		for (Address address : refIter) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// instruction may have already been checked from a non-returning call
 			if (checkedSet.contains(address)) {

@@ -202,7 +202,7 @@ public abstract class SyncAction extends DockingAction implements Comparable<Syn
 		synchronizer.openTransactions();
 		try {
 			for (DataTypeSyncInfo info : selectedList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMessage("Syncing " + info.getName());
 				applyOperation(info);
 				outOfSynchDataTypes.remove(info);

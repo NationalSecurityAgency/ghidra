@@ -380,7 +380,7 @@ public abstract class PdbDebugInfo {
 		if (version == SCV1400) {
 			//long version2 = substreamReader.parseUnsignedIntVal();
 			while (substreamReader.hasMore()) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				SectionContribution sectionContribution = new SectionContribution1400();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
@@ -389,7 +389,7 @@ public abstract class PdbDebugInfo {
 		else if (version == SCV600) {
 			//long version2 = substreamReader.parseUnsignedIntVal();
 			while (substreamReader.hasMore()) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				SectionContribution sectionContribution = new SectionContribution600();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
@@ -401,7 +401,7 @@ public abstract class PdbDebugInfo {
 		// be the override method for PdbNewDebugInfo.
 		else {
 			while (substreamReader.hasMore()) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				SectionContribution sectionContribution = new SectionContribution400();
 				sectionContribution.deserialize(substreamReader);
 				sectionContributionList.add(sectionContribution);
@@ -436,7 +436,7 @@ public abstract class PdbDebugInfo {
 		int numSegLog = substreamReader.parseUnsignedShortVal();
 		// Process records
 		while (substreamReader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			SegmentMapDescription segment = new SegmentMapDescription();
 			segment.deserialize(substreamReader);
 			segmentMapList.add(segment);
@@ -477,7 +477,7 @@ public abstract class PdbDebugInfo {
 		int[] count = new int[numInformationModules];
 		int totalCount = 0;
 		for (int moduleIndex = 0; moduleIndex < numInformationModules; moduleIndex++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			index[moduleIndex] = indicesReader.parseUnsignedShortVal();
 			count[moduleIndex] = countsReader.parseUnsignedShortVal();
 			totalCount += count[moduleIndex];
@@ -490,7 +490,7 @@ public abstract class PdbDebugInfo {
 		PdbByteReader offsetReader = fileInfoReader.getSubPdbByteReader(totalCount * 4);
 		int[] offset = new int[totalCount];
 		for (int moduleIndex = 0; moduleIndex < totalCount; moduleIndex++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			offset[moduleIndex] = offsetReader.parseInt();
 		}
 		PdbByteReader namesReader =
@@ -498,10 +498,10 @@ public abstract class PdbDebugInfo {
 
 		int totalRefs = 0;
 		for (int moduleIndex = 0; moduleIndex < numInformationModules; moduleIndex++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			ModuleInformation module = moduleInformationList.get(moduleIndex);
 			for (int fileIndex = 0; fileIndex < count[moduleIndex]; fileIndex++) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				int ref = totalRefs + fileIndex;
 				int nameOffset = offset[ref];
 				namesReader.setIndex(nameOffset);
@@ -558,7 +558,7 @@ public abstract class PdbDebugInfo {
 		if (doNewStuff) {
 			dumpSymbols(writer);
 			for (Module module : modules) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				module.dump(writer);
 			}
 		}
@@ -573,7 +573,7 @@ public abstract class PdbDebugInfo {
 	 */
 	protected void dumpModuleInformation(Writer writer) throws IOException, CancelledException {
 		for (ModuleInformation information : moduleInformationList) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			writer.write(information.dump());
 			writer.write("\n");
 		}
@@ -588,7 +588,7 @@ public abstract class PdbDebugInfo {
 	 */
 	protected void dumpSectionContributions(Writer writer) throws IOException, CancelledException {
 		for (SectionContribution contribution : sectionContributionList) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			writer.write(contribution.dump());
 			writer.write("\n");
 		}
@@ -603,7 +603,7 @@ public abstract class PdbDebugInfo {
 	 */
 	protected void dumpSegmentMap(Writer writer) throws IOException, CancelledException {
 		for (SegmentMapDescription description : segmentMapList) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			writer.write(description.dump());
 			writer.write("\n");
 		}
@@ -614,7 +614,7 @@ public abstract class PdbDebugInfo {
 	// during development.
 	private void parseModules() throws CancelledException {
 		for (ModuleInformation moduleInformation : moduleInformationList) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			Module module = new Module(pdb, moduleInformation);
 			modules.add(module);
 		}
@@ -666,7 +666,7 @@ public abstract class PdbDebugInfo {
 		MsSymbolIterator iterator = getSymbolIterator();
 		List<AbstractMsSymbol> symbols = new ArrayList<>();
 		while (iterator.hasNext()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			symbols.add(iterator.next());
 		}
 	}
@@ -684,7 +684,7 @@ public abstract class PdbDebugInfo {
 		MsSymbolIterator iterator = getSymbolIterator();
 		List<AbstractMsSymbol> symbols = new ArrayList<>();
 		while (iterator.hasNext()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			symbols.add(iterator.next());
 		}
 		if (symbols.size() != symbolRecords.getSymbolsByOffset().size()) {
@@ -695,7 +695,7 @@ public abstract class PdbDebugInfo {
 		int cnt = 0;
 		for (Map.Entry<Long, AbstractMsSymbol> entry : symbolRecords.getSymbolsByOffset()
 				.entrySet()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			AbstractMsSymbol msym = entry.getValue();
 			AbstractMsSymbol lsym = symbols.get(cnt);
 			String mstr = msym.toString();
@@ -710,20 +710,20 @@ public abstract class PdbDebugInfo {
 
 		// Compare module symbols
 		for (int modnum = 0; modnum < numModules(); modnum++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			Module module = modules.get(modnum);
 			MsSymbolIterator moduleSymbolsIterator = module.getSymbolIterator();
 			cnt = 0;
 			Map<Long, AbstractMsSymbol> map = symbolRecords.getModuleSymbolsByOffset(modnum);
 			List<Long> keys = new ArrayList<>();
 			for (Map.Entry<Long, AbstractMsSymbol> entry : map.entrySet()) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				Long key = entry.getKey();
 				keys.add(key);
 			}
 			Collections.sort(keys);
 			for (Long key : keys) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				AbstractMsSymbol msym = map.get(key);
 				if (!moduleSymbolsIterator.hasNext()) {
 					// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.

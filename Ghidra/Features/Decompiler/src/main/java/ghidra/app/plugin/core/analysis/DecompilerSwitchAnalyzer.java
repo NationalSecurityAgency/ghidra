@@ -117,11 +117,11 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			runDecompilerAnalysis(program, definedFunctions, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			runDecompilerAnalysis(program, undefinedFunctions, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		catch (CancelledException ce) {
 			throw ce;
@@ -235,7 +235,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		Listing list = program.getListing();
 		InstructionIterator iterator = list.getInstructions(set, true);
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Instruction instruction = iterator.next();
 			FlowType flowType = instruction.getFlowType();

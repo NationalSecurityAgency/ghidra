@@ -136,7 +136,7 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 
 		for (Address entryPoint : set) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			Function func = functionManager.getFunctionAt(entryPoint);
@@ -395,7 +395,7 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 
 		private void doWork(Function function, DecompInterface decompiler, TaskMonitor monitor)
 				throws CancelledException {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage(getName() + " - decompile " + function.getName());
 			analyzeFunction(decompiler, function, monitor);
 		}

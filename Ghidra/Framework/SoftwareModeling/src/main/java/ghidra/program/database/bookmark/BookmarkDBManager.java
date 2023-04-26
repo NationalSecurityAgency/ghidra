@@ -423,7 +423,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 				DBRecord rec = iter.next();
 				BookmarkDB bm = getBookmark(rec);
 				removeBookmark(bm);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 		}
 		catch (IOException e) {
@@ -756,7 +756,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 					if (category == null || category.equals(bm.getCategory())) {
 						doRemoveBookmark(bm);
 					}
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 				if (bookmarkAdapter.getBookmarkCount(typeId) == 0) {
 					removeBookmarks(bmt.getTypeString());

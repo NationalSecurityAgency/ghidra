@@ -66,7 +66,7 @@ public class CaptureFunctionDataTypesCmd extends BackgroundCommand {
 			FunctionManager functionManager = program.getFunctionManager();
 			FunctionIterator functions = functionManager.getFunctions(set, true);
 			while (functions.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Function function = functions.next();
 				FunctionSignature signature = function.getSignature(true);
 				FunctionDefinitionDataType functionDef =

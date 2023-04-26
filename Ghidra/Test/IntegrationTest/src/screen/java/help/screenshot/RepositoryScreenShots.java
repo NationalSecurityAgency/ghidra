@@ -1196,7 +1196,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 			}
 		});
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		executeMerge(ASK_USER);
 
@@ -2662,7 +2662,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 	private void setToolSize(final int width, final int height) throws Exception {
 		runSwing(() -> mergeTool.setSize(width, height));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		sleep(500);
 	}
 
@@ -2689,7 +2689,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		assertNotNull(applyButton);
 
 		pressButton(applyButton);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		resultProgram.flushEvents();
 		if (doWait) {
 			waitForCompletion(window);
@@ -2744,7 +2744,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 			ListingMergePanel listingMergePanel = mergeMgr.getListingMergePanel();
 			listingMergePanel.goTo(addr(address));
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public void openEachListingsData(final String address) {
@@ -2759,7 +2759,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				listingPanel.getListingModel().openData(data);
 			}
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	protected void chooseApply(Container mergePanel) throws Exception {
@@ -2767,7 +2767,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		Window window = windowForComponent(mergePanel);
 		assertNotNull(window);
 		pressButtonByText(window, "Apply");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		waitForApply(false);
 	}
 
@@ -2872,6 +2872,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				(horizontalScrollBar.getMinimum() + horizontalScrollBar.getMaximum() -
 					horizontalScrollBar.getVisibleAmount()) * percent / 100);
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 }

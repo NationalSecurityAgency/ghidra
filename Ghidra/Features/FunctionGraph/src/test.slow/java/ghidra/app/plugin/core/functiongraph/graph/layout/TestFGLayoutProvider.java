@@ -246,7 +246,7 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 			// Route our edges!
 			//
 			for (FGEdge e : edges) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				FGVertex startVertex = e.getStart();
 				FGVertex endVertex = e.getEnd();

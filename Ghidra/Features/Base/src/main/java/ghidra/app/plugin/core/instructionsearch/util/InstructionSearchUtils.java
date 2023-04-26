@@ -420,7 +420,7 @@ public class InstructionSearchUtils {
 		for (String byteStr2 : byteStrs) {
 			int bint = Integer.parseInt(byteStr2, 2);
 			byte newbyte = (byte) bint;
-			bytes.add(new Byte(newbyte));
+			bytes.add(Byte.valueOf(newbyte));
 		}
 
 		return bytes;

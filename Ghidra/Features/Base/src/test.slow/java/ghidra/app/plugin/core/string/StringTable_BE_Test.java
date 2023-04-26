@@ -219,7 +219,7 @@ public class StringTable_BE_Test extends AbstractGhidraHeadedIntegrationTest {
 		final AddressSet set = new AddressSet();
 		set.addRange(addr(0x100), addr(0x1000));
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// select the address set
 		cbPlugin.firePluginEvent(new ProgramSelectionPluginEvent(cbPlugin.getName(),
@@ -304,7 +304,7 @@ public class StringTable_BE_Test extends AbstractGhidraHeadedIntegrationTest {
 		CodeViewerProvider cbProvider = cb.getProvider();
 		SwingUtilities.invokeLater(
 			() -> searchAction.actionPerformed(cbProvider.getActionContext(null)));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		return getDialogComponent(SearchStringDialog.class);
 	}
 }

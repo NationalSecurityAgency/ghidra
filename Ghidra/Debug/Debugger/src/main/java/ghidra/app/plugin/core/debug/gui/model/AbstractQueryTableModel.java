@@ -305,7 +305,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 		}
 		for (T t : (Iterable<T>) streamRows(trace, query, span)::iterator) {
 			accumulator.add(t);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 	}
 

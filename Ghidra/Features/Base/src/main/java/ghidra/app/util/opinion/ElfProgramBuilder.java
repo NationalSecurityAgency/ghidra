@@ -225,7 +225,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		monitor.initialize(segments.length + sections.length);
 
 		for (ElfProgramHeader segment : segments) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			long size = segment.getFileSize();
 			if (segment.getType() == ElfProgramHeaderConstants.PT_NULL ||
@@ -237,7 +237,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		for (ElfSectionHeader section : sections) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			long size = section.getSize();
 			if (section.getType() == ElfSectionHeaderConstants.SHT_NULL ||
@@ -268,7 +268,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		IndexRangeIterator rangeIterator = fileMap.getIndexRangeIterator(0);
 		int unallocatedIndex = 0;
 		while (rangeIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			IndexRange range = rangeIterator.next();
 			int value = fileMap.getValue(range.getStart());
@@ -398,7 +398,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private void addProgramProperties(TaskMonitor monitor) throws CancelledException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setMessage("Adding program properties...");
 
 		Options props = program.getOptions(Program.PROGRAM_INFO);
@@ -440,10 +440,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		int fileIndex = 0;
 		ElfSymbolTable[] symbolTables = elf.getSymbolTables();
 		for (ElfSymbolTable symbolTable : symbolTables) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String[] files = symbolTable.getSourceFiles();
 			for (String file : files) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				props.setString(ElfLoader.ELF_SOURCE_FILE_PROPERTY_PREFIX + pad(fileIndex++) + "]",
 					file);
 			}
@@ -454,7 +454,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		if (dynamicTable != null) {
 			String[] neededLibs = elf.getDynamicLibraryNames();
 			for (String neededLib : neededLibs) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				props.setString(ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
 					neededLib);
 			}
@@ -475,7 +475,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	 * @throws CancelledException if load task is cancelled
 	 */
 	private void processGNU(TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		Address versionTableAddr = null;
 
@@ -646,7 +646,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void processEntryPoints(TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setMessage("Creating entry points...");
 
 		long entry = elf.e_entry(); // already adjusted for pre-link
@@ -720,7 +720,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.initialize(elementCount);
 			for (int i = 0; i < elementCount; i++) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 
 				Address addr = entryArrayAddr.add(i * dt.getLength());
@@ -808,7 +808,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void markupInterpreter(TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setMessage("Processing interpreter...");
 		Address interpStrAddr = null;
 
@@ -839,7 +839,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void processImports(TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setMessage("Processing imports...");
 
 		ExternalManager extManager = program.getExternalManager();
@@ -883,7 +883,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		try {
 			for (ElfRelocationTable relocationTable : relocationTables) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				processRelocationTable(relocationTable, context, monitor);
 			}
 		}
@@ -988,7 +988,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		for (ElfRelocation reloc : relocs) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			long type = reloc.getType();
@@ -1225,7 +1225,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.initialize(programHeaders.length);
 			int vaddrFieldIndex = elf.is64Bit() ? 3 : 2; // p_vaddr structure element index
 			for (int i = 0; i < programHeaders.length; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 
 				Data d = array.getComponent(i);
@@ -1291,7 +1291,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			ElfSectionHeader[] sections = elf.getSections();
 			monitor.initialize(sections.length);
 			for (int i = 0; i < sections.length; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 
 				Data d = array.getComponent(i);
@@ -1560,7 +1560,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		monitor.initialize(totalCount);
 
 		for (ElfSymbolTable elfSymbolTable : symbolTables) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address symbolTableAddr = null;
 
@@ -1645,7 +1645,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void processSymbols(ElfSymbol[] symbols, HashMap<Address, Integer> dataAllocationMap,
 			TaskMonitor monitor) throws CancelledException {
 		for (ElfSymbol elfSymbol : symbols) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			try {
@@ -2403,7 +2403,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void markupElfInfoProducers(TaskMonitor monitor) throws CancelledException {
 		List<ElfInfoProducer> elfInfoProducers = ElfInfoProducer.getElfInfoProducers(this);
 		for (ElfInfoProducer elfInfoProducer : elfInfoProducers) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			elfInfoProducer.markupElfInfo(monitor);
 		}
@@ -2737,7 +2737,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		monitor.initialize(totalLength);
 
 		for (ElfStringTable stringTable : stringTables) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address stringTableAddr = null;
 
@@ -3023,7 +3023,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		monitor.setMessage("Exapanding Program Segments...");
 		monitor.initialize(elfProgramHeaders.length);
 		for (int i = 0; i < elfProgramHeaders.length; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			ElfProgramHeader elfProgramHeader = elfProgramHeaders[i];
@@ -3142,7 +3142,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		monitor.setMessage("Processing program headers...");
 		monitor.initialize(elfProgramHeaders.length);
 		for (int i = 0; i < elfProgramHeaders.length; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			ElfProgramHeader elfProgramHeader = elfProgramHeaders[i];
 			if (elfProgramHeader.getType() == ElfProgramHeaderConstants.PT_NULL) {
@@ -3326,7 +3326,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		AddressSpace defaultSpace = getDefaultAddressSpace();
 		ElfSectionHeader[] sections = elf.getSections();
 		for (ElfSectionHeader elfSectionToLoad : sections) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long addr = elfSectionToLoad.getAddress();
 			if (addr < 0) {
 				relocStartAddr = 0;
@@ -3366,7 +3366,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		monitor.setMessage("Processing section headers...");
 		monitor.initialize(sections.length);
 		for (ElfSectionHeader elfSectionToLoad : sections) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			int type = elfSectionToLoad.getType();
 			if (type != ElfSectionHeaderConstants.SHT_NULL &&

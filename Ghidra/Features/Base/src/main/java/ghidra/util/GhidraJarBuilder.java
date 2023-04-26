@@ -767,7 +767,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				int numRead;
 
 				while ((numRead = in.read(bytes)) != -1) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					jarOut.write(bytes, 0, numRead);
 				}
 			}
@@ -801,7 +801,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			int numRead;
 
 			while ((numRead = in.read(bytes)) != -1) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				jarOut.write(bytes, 0, numRead);
 			}
 			in.close();
@@ -863,7 +863,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			int numRead;
 
 			while ((numRead = in.read(bytes)) != -1) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				zipOut.write(bytes, 0, numRead);
 			}
 			in.close();
@@ -893,7 +893,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			int numRead;
 
 			while ((numRead = in.read(bytes)) != -1) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				zipOut.write(bytes, 0, numRead);
 			}
 			in.close();

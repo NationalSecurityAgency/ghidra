@@ -49,7 +49,7 @@ public class C13FileChecksums extends C13Section {
 			throws CancelledException, PdbException {
 		super(ignore);
 		while (reader.numRemaining() >= FileChecksum.getBaseRecordSize()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FileChecksum fileChecksum = new FileChecksum(reader);
 			fileChecksums.add(fileChecksum);
 		}

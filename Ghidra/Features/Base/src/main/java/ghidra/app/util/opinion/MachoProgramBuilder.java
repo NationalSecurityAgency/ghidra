@@ -474,7 +474,7 @@ public class MachoProgramBuilder {
  		monitor.setMessage("Processing unsupported load commands...");
 
  		for (LoadCommand loadCommand : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
- 			monitor.checkCanceled();
+ 			monitor.checkCancelled();
  			log.appendMsg(loadCommand.getCommandName());
  		}
  	}
@@ -1151,7 +1151,7 @@ public class MachoProgramBuilder {
 
 		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
  		for (Section section : machoHeader.getAllSections()) {
- 			monitor.checkCanceled();
+ 			monitor.checkCancelled();
 
 			MemoryBlock sectionMemoryBlock = getMemoryBlock(section);
 			if (sectionMemoryBlock == null) {
@@ -1163,7 +1163,7 @@ public class MachoProgramBuilder {
 			}
 
 			for (RelocationInfo relocationInfo : section.getRelocations()) {
- 				monitor.checkCanceled();
+ 				monitor.checkCancelled();
 				Address address = sectionMemoryBlock.getStart().add(relocationInfo.getAddress());
 				relocationMap.put(relocationInfo, address);
 			}
@@ -1183,9 +1183,9 @@ public class MachoProgramBuilder {
 		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
  		for (DynamicSymbolTableCommand cmd : machoHeader
  				.getLoadCommands(DynamicSymbolTableCommand.class)) {
- 			monitor.checkCanceled();
+ 			monitor.checkCancelled();
  			for (RelocationInfo relocationInfo : cmd.getExternalRelocations()) {
- 				monitor.checkCanceled();
+ 				monitor.checkCancelled();
  				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
  			}
  		}
@@ -1204,9 +1204,9 @@ public class MachoProgramBuilder {
 		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
  		for (DynamicSymbolTableCommand cmd : machoHeader
  				.getLoadCommands(DynamicSymbolTableCommand.class)) {
- 			monitor.checkCanceled();
+ 			monitor.checkCancelled();
  			for (RelocationInfo relocationInfo : cmd.getLocalRelocations()) {
- 				monitor.checkCanceled();
+ 				monitor.checkCancelled();
  				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
  			}
  		}
@@ -1582,7 +1582,7 @@ public class MachoProgramBuilder {
 
 		monitor.setMaximum(pageStartsCount);
 		for (int index = 0; index < pageStartsCount; index++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			long page = dataPageStart + (pageSize * index);
 
@@ -1659,7 +1659,7 @@ public class MachoProgramBuilder {
 		long next = -1;
 		boolean start = true;
 		while (next != 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address chainLoc = chainStart.add(nextOff);
 			final long chainValue = DyldChainedPtr.getChainValue(memory, chainLoc, pointerFormat);
@@ -1839,7 +1839,7 @@ public class MachoProgramBuilder {
 	 */
 	protected void markupChainedFixups(List<Address> chainedFixups) throws CancelledException {
 		for (Address addr : chainedFixups) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				listing.createData(addr, Pointer64DataType.dataType);
 			}

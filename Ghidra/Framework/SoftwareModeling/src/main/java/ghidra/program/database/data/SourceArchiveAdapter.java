@@ -114,7 +114,7 @@ abstract class SourceArchiveAdapter {
 			tmpAdapter = new SourceArchiveAdapterV0(tmpHandle, tablePrefix, true);
 			Iterator<DBRecord> it = oldAdapter.getRecords().iterator();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
@@ -122,7 +122,7 @@ abstract class SourceArchiveAdapter {
 			SourceArchiveAdapter newAdapter = new SourceArchiveAdapterV0(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords().iterator();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}

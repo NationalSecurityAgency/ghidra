@@ -947,7 +947,7 @@ public class GhidraFileData {
 			return false;
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setMessage("Initiating Check In for " + name);
 		boolean success = false;
 		LocalManagedBufferFile srcFile = null;
@@ -983,7 +983,7 @@ public class GhidraFileData {
 					}
 				}
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			synchronized (fileSystem) {
 				srcFile.createNewVersion(checkinFile, comment, monitor);
 				success = true;

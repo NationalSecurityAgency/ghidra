@@ -246,7 +246,7 @@ public class WeakSetTest extends AbstractGenericTest {
 	}
 
 //	private void forceGarbageCollection() {
-//		waitForPostedSwingRunnables();
+//		waitForSwing();
 //		System.gc();
 //		System.gc();
 //		try {

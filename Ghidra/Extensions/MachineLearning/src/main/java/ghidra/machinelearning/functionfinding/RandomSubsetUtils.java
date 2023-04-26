@@ -53,7 +53,7 @@ public class RandomSubsetUtils {
 		int addressesVisited = 0;
 		int listIndex = 0;
 		while (iter.hasNext() && addressesAdded < k) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = iter.next();
 			if (sortedRandom.get(listIndex) == addressesVisited) {
 				randomAddresses.add(addr);

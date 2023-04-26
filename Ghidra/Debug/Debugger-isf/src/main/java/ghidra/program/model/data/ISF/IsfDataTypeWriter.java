@@ -263,7 +263,7 @@ public class IsfDataTypeWriter {
 		int cnt = 0;
 		for (String key : keylist) {
 			DataType dataType = map.get(key);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (key.contains(".conflict")) {
 				continue;
 			}

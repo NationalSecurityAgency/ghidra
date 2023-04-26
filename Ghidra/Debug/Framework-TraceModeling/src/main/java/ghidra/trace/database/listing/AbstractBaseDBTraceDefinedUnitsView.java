@@ -312,7 +312,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 			cacheForSequence.invalidate();
 			for (T unit : mapSpace.reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (unit.getStartSnap() < startSnap) {
 					Lifespan oldSpan = unit.getLifespan();
 					if (clearContext) {

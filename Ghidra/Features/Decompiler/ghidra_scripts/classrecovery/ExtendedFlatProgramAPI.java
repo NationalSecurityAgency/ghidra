@@ -91,7 +91,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		int numComponents = data.getNumComponents();
 
 		for (int ii = 0; ii < numComponents; ++ii) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data component = data.getComponent(ii);
 			if (!component.isPointer()) {
@@ -226,7 +226,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		int index = 0;
 		try {
 			while (index < numZeros) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (getByte(address.add(index)) != 0x00) {
 					return false;
 				}
@@ -406,7 +406,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		Function currentFunction = getFunctionAfter(minAddress);
 
 		while (currentFunction != null && functionsToCheck != 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address maxAddress = currentFunction.getBody().getMaxAddress();
 			Address fillerAddress = getAddress(maxAddress, 1);
 
@@ -465,7 +465,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		int numSameByte = 0;
 		byte currentByte = getByte(address);
 		while (validMemory.contains(address) && getFunctionContaining(address) == null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			numSameByte++;
 			address = getAddress(firstAddress, numSameByte);
 			if (address == null) {
@@ -497,7 +497,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		Iterator<Address> iterator = containedAddresses.iterator();
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = iterator.next();
 
 			// a previously created one might call the one that contains this so
@@ -599,7 +599,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			currentProgram.getSymbolTable().getSymbols(addressSet, SymbolType.LABEL, true);
 
 		while (symbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = symbols.next();
 			if (exact && symbol.getName().equals(symbolName)) {
 				symbolsInSet.add(symbol);
@@ -696,7 +696,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		SymbolIterator symbols = currentProgram.getSymbolTable().getSymbols(namespace);
 
 		while (symbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol symbol = symbols.next();
 			if (exact && symbol.getName().equals(symbolName)) {
 				symbolList.add(symbol);
@@ -718,7 +718,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		Iterator<Function> bFunctionsIterator = bFunctions.iterator();
 		while (bFunctionsIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function bFunction = bFunctionsIterator.next();
 			if (doesFunctionACallFunctionB(aFunction, bFunction)) {
 				return true;
@@ -744,7 +744,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 				.getListing()
 				.getInstructions(callingFunction.getBody(), true);
 		while (instructions.hasNext() && callNumber < callIndex) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instruction = instructions.next();
 			if (instruction.getFlowType().isCall()) {
 				callNumber++;
@@ -774,14 +774,14 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		Iterator<Function> calledFunctionsIterator =
 			callingFunction.getCalledFunctions(monitor).iterator();
 		while (calledFunctionsIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function calledFunction = calledFunctionsIterator.next();
 			List<Address> referencesToFunctionBFromFunctionA =
 				getReferencesToFunctionBFromFunctionA(callingFunction, calledFunction);
 			// add them to list of ref address pairs
 			Iterator<Address> iterator = referencesToFunctionBFromFunctionA.iterator();
 			while (iterator.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Address sourceRefAddr = iterator.next();
 				referenceAddressPairs.add(
 					new ReferenceAddressPair(sourceRefAddr, calledFunction.getEntryPoint()));
@@ -810,7 +810,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		while (referencesToFunctionBIterator.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Reference ref = referencesToFunctionBIterator.next();
 
 			if (aFunction.getBody().contains(ref.getFromAddress())) {
@@ -844,7 +844,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		}
 		Iterator<Function> functionIterator = calledFunctions.iterator();
 		while (functionIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function calledFunction = functionIterator.next();
 			if (calledFunction.isThunk()) {
 				calledFunction = calledFunction.getThunkedFunction(true);
@@ -925,7 +925,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		List<Address> referenceAddresses = new ArrayList<Address>(referenceToClassMap.keySet());
 		Iterator<Address> referenceIterator = referenceAddresses.iterator();
 		while (referenceIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address referenceAddress = referenceIterator.next();
 
 			Function function = getReferencedFunction(referenceAddress, true);
@@ -957,7 +957,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		for (Reference referenceFrom : referencesFrom) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address referencedAddress = referenceFrom.getToAddress();
 			if (referencedAddress == null) {
@@ -1029,7 +1029,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		Symbol primarySymbol = symbolTable.getPrimarySymbol(address);
 
 		while (primarySymbol != null && primarySymbol.getSource() != SourceType.DEFAULT) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			symbolTable.removeSymbolSpecial(primarySymbol);
 			primarySymbol = symbolTable.getPrimarySymbol(address);
 		}
@@ -1084,7 +1084,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		CategoryPath dataTypePath = parent;
 
 		for (String name : namespace.getPathList(true)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			dataTypePath = new CategoryPath(dataTypePath, name);
 		}
@@ -1154,7 +1154,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		// template name to class var
 		Iterator<RecoveredClass> recoveredClassesIterator = recoveredClasses.iterator();
 		while (recoveredClassesIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecoveredClass recoveredClass = recoveredClassesIterator.next();
 
 			String className = recoveredClass.getName();
@@ -1174,7 +1174,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 		Iterator<RecoveredClass> classWithTemplatesIterator = classesWithTemplates.iterator();
 
 		while (classWithTemplatesIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecoveredClass currentClass = classWithTemplatesIterator.next();
 
 			// skip if already processed
@@ -1197,7 +1197,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 			Iterator<RecoveredClass> classesWithSameShortnameIterator =
 				classesWithSameShortenedName.iterator();
 			while (classesWithSameShortnameIterator.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				RecoveredClass classWithSameShortName = classesWithSameShortnameIterator.next();
 
@@ -1239,7 +1239,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 				while (leftoversIterator.hasNext()) {
 
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					RecoveredClass currentClassWithSameShortName = leftoversIterator.next();
 					currentClassWithSameShortName.addShortenedTemplatedName(
 						getNewShortenedTemplateName(currentClassWithSameShortName, commaIndex));
@@ -1254,7 +1254,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 				while (leftovers2Iterator.hasNext()) {
 
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					RecoveredClass currentClassWithSameShortName = leftovers2Iterator.next();
 
 					String shortenedTemplateName =
@@ -1322,7 +1322,7 @@ public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
 		Iterator<RecoveredClass> classIterator = templateClasses.iterator();
 		while (classIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecoveredClass currentClass = classIterator.next();
 
 			if (currentClass.getShortenedTemplateName().equals(shortenedName)) {

@@ -90,7 +90,7 @@ abstract class PointerDBAdapter implements RecordTranslator {
 			tmpAdapter = new PointerDBAdapterV2(tmpHandle, tablePrefix, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
@@ -98,7 +98,7 @@ abstract class PointerDBAdapter implements RecordTranslator {
 			PointerDBAdapter newAdapter = new PointerDBAdapterV2(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}

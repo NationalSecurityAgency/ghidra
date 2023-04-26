@@ -166,7 +166,7 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 		}
 		// Only processing importer disassembly not yet claimed by function bodies
 		for (Function f : program.getFunctionManager().getFunctions(set, true)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			set = set.subtract(f.getBody());
 		}
 		return set;

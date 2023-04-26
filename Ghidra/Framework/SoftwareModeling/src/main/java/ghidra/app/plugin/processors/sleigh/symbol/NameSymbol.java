@@ -93,7 +93,7 @@ public class NameSymbol extends ValueSymbol {
 		int ind = (int) getPatternValue().getValue(walker);
 		String token = nametable[ind];
 		for (int i = 0; i < token.length(); ++i)
-			list.add(new Character(token.charAt(i)));
+			list.add(Character.valueOf(token.charAt(i)));
 	}
 
 	@Override

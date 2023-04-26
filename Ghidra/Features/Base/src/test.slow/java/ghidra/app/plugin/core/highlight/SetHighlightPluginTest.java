@@ -95,7 +95,7 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		AddressSet selectionSet = new AddressSet(addr(0x01001234), addr(0x01001277));
 		tool.firePluginEvent(
 			new ProgramSelectionPluginEvent("test", new ProgramSelection(selectionSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		context = cb.getProvider().getActionContext(null);
 
 		// Selection Only
@@ -110,7 +110,7 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		AddressSet highlightSet = new AddressSet(addr(0x01001270), addr(0x01001297));
 		tool.firePluginEvent(
 			new ProgramHighlightPluginEvent("test", new ProgramSelection(highlightSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		context = cb.getProvider().getActionContext(null);
 
 		// Selection & Highlight
@@ -125,7 +125,7 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		selectionSet = new AddressSet();
 		tool.firePluginEvent(
 			new ProgramSelectionPluginEvent("test", new ProgramSelection(selectionSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		context = cb.getProvider().getActionContext(null);
 
 		// Highlight Only
@@ -148,7 +148,7 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		AddressSet selectionSet = new AddressSet(addr(0x01001234), addr(0x01001277));
 		tool.firePluginEvent(
 			new ProgramSelectionPluginEvent("test", new ProgramSelection(selectionSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(new ProgramSelection(selectionSet), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(), getHighlight());
@@ -167,7 +167,7 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		AddressSet highlightSet = new AddressSet(addr(0x01001270), addr(0x01001297));
 		tool.firePluginEvent(
 			new ProgramHighlightPluginEvent("test", new ProgramSelection(highlightSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(new ProgramSelection(), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(highlightSet), getHighlight());
@@ -186,12 +186,12 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		AddressSet selectionSet = new AddressSet(addr(0x01001234), addr(0x01001277));
 		tool.firePluginEvent(
 			new ProgramSelectionPluginEvent("test", new ProgramSelection(selectionSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		AddressSet highlightSet = new AddressSet(addr(0x01001270), addr(0x01001297));
 		tool.firePluginEvent(
 			new ProgramHighlightPluginEvent("test", new ProgramSelection(highlightSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(new ProgramSelection(selectionSet), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(highlightSet), getHighlight());
@@ -213,12 +213,12 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		AddressSet selectionSet = new AddressSet(addr(0x01001234), addr(0x01001277));
 		tool.firePluginEvent(
 			new ProgramSelectionPluginEvent("test", new ProgramSelection(selectionSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		AddressSet highlightSet = new AddressSet(addr(0x01001270), addr(0x01001297));
 		tool.firePluginEvent(
 			new ProgramHighlightPluginEvent("test", new ProgramSelection(highlightSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(new ProgramSelection(selectionSet), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(highlightSet), getHighlight());
@@ -240,7 +240,7 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		AddressSet highlightSet = new AddressSet(addr(0x01001270), addr(0x01001297));
 		tool.firePluginEvent(
 			new ProgramHighlightPluginEvent("test", new ProgramSelection(highlightSet), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(new ProgramSelection(), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(highlightSet), getHighlight());

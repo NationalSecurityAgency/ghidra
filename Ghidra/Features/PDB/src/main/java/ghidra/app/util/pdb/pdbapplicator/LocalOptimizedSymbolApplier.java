@@ -69,7 +69,7 @@ public class LocalOptimizedSymbolApplier extends MsSymbolApplier {
 		symbol.getTypeRecordNumber();
 		while (iter.hasNext() &&
 			(iter.peek() instanceof AbstractDefinedSingleAddressRangeMsSymbol)) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			DefinedSingleAddressRangeSymbolApplier rangeApplier =
 				new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
 			rangeApplier.applyTo(this);

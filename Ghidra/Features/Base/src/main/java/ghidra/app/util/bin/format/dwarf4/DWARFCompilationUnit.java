@@ -354,7 +354,7 @@ public class DWARFCompilationUnit {
 		while ((br.getPointerIndex() < getEndOffset()) &&
 			(die = DebugInfoEntry.read(br, this, dwarfProgram.getAttributeFactory())) != null) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (die.isTerminator()) {
 				if (parent == null && parentStack.isEmpty()) {

@@ -432,7 +432,7 @@ public final class FileUtilities {
 		monitor.initialize(files.length);
 
 		for (int i = 0; i < files.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (files[i].isDirectory()) {
 				// use a dummy monitor as not to ruin our progress
 				if (!doDeleteDir(files[i], monitor)) {
@@ -467,7 +467,7 @@ public final class FileUtilities {
 		}
 
 		for (File file : files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (file.isDirectory()) {
 				// use a dummy monitor as not to ruin our progress
 				if (!doDeleteDir(file, monitor)) {
@@ -534,7 +534,7 @@ public final class FileUtilities {
 		monitor.initialize(originalDirFiles.length);
 
 		for (File file : originalDirFiles) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage("Copying " + file.getAbsolutePath());
 			File destinationFile = new File(copyDir, file.getName());
 			if (file.isDirectory()) {
@@ -571,7 +571,7 @@ public final class FileUtilities {
 
 		int copiedFilesCount = 0;
 		for (File file : originalDirFiles) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage("Copying " + file.getAbsolutePath());
 			File destinationFile = new File(copyDir, file.getName());
 			if (file.isDirectory()) {

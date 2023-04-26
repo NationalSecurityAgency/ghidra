@@ -146,9 +146,9 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 
 			if (!didDelete) {
 				// try one more time
-				waitForPostedSwingRunnables();
+				waitForSwing();
 				sleep(1000);
-				waitForPostedSwingRunnables();
+				waitForSwing();
 				didDelete = archiveFile.delete();
 				Msg.trace(this, "\t\t" + testName.getMethodName() +
 					"after sleeping: did it get deleted?: " + didDelete);
@@ -173,7 +173,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		JButton createArchiveButton = findButtonByText(chooser, "Create Archive");
 		pressButton(createArchiveButton);
 		Msg.trace(this, testName.getMethodName() + ":\tpressed the button on the swing thread");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		Msg.trace(this,
 			"\t" + testName.getMethodName() + ":\tdone waiting for thread - created archive");
 
@@ -238,10 +238,10 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 				pm.closeProgram();
 			});
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// this handles the save changes dialog and potential analysis dialogs
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 		env.release(program);
 		env.dispose();
 	}
@@ -252,7 +252,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 
 	protected void waitForUpdateOnDirectory(GhidraFileChooser chooser) throws Exception {
 		// make sure swing has handled any pending changes
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// artificially high wait period that won't be reached most of the time
 		int timeoutMillis = 5000;
@@ -267,7 +267,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		}
 
 		// make sure swing has handled any pending changes
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	protected File writeTempFile(String filename) throws IOException {

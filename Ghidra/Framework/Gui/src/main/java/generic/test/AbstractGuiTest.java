@@ -37,6 +37,7 @@ import org.junit.Assert;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.AbstractSwingUpdateManager;
 import ghidra.util.task.SwingUpdateManager;
 import junit.framework.AssertionFailedError;
@@ -109,11 +110,11 @@ public class AbstractGuiTest extends AbstractGenericTest {
 		waitForSwing();
 	}
 
-	// TODO deprecate this; at time of writing there are 1174 references; wait until it is
-	//      a more reasonable number
-	//
-	//      Update: 744 references at 12/1/19
-	//      Update: 559 references at 12/4/20
+
+	/**
+	 * @deprecated Use {@link #waitForSwing()} instead
+	 */
+	@Deprecated(forRemoval = true, since = "10.3")
 	public static void waitForPostedSwingRunnables() {
 		waitForSwing();
 	}
@@ -1269,7 +1270,7 @@ public class AbstractGuiTest extends AbstractGenericTest {
 	 *             infrastructure method.
 	 */
 	@Deprecated
-	public static void privateWaitForPostedSwingRunnables_SwingSafe() {
+	public static void privatewaitForSwing_SwingSafe() {
 		yieldToSwing();
 	}
 

@@ -589,7 +589,7 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 			}
 		});
 		t.start();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private PluginTool getMergeTool() {
@@ -639,7 +639,7 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 		assertNotNull(applyButton);
 
 		pressButton(applyButton);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		resultProgram.flushEvents();
 		// wait until the panel has been reset
 		while (applyButton.isEnabled() && rb.isVisible()) {

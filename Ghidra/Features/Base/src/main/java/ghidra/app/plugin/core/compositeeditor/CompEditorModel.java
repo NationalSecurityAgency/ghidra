@@ -414,7 +414,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		monitor.initialize(entries);
 		for (int rowIndex = endRowIndex; rowIndex >= startRowIndex; rowIndex--) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int componentOrdinal = convertRowToOrdinal(rowIndex);
 			ordinals.add(componentOrdinal);
 			if (componentOrdinal < row) {

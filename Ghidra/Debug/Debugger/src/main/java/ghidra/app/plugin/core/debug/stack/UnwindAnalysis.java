@@ -244,7 +244,7 @@ public class UnwindAnalysis {
 		public void executeSet(SymPcodeExecutor exec, AddressSetView set)
 				throws CancelledException {
 			for (Instruction i : program.getListing().getInstructions(set, true)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				exec.execute(PcodeProgram.fromInstruction(i, true), PcodeUseropLibrary.nil());
 			}
 		}

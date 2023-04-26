@@ -145,7 +145,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 
 		monitor.setMaximum(pageStartsCount);
 		for (int index = 0; index < pageStartsCount; index++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			long page = dataPageStart + (pageSize * index);
 
@@ -216,7 +216,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 
 		long delta = -1;
 		while (delta != 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address chainLoc = chainStart.add(nextOff);
 			long chainValue = memory.getLong(chainLoc);

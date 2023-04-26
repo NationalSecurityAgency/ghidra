@@ -139,7 +139,7 @@ public class FunctionSignatureTextFieldTest extends AbstractGhidraHeadedIntegrat
 				field.setText(s);
 			}
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void replaceText(final String textToReplace, final String newText) {
@@ -152,6 +152,6 @@ public class FunctionSignatureTextFieldTest extends AbstractGhidraHeadedIntegrat
 				field.replaceSelection(newText);
 			}
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 }

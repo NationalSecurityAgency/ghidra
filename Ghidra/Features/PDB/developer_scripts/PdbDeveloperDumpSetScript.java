@@ -82,7 +82,7 @@ public class PdbDeveloperDumpSetScript extends GhidraScript {
 
 	private void dumpFiles(List<IOEntry> entries) throws CancelledException, PdbException {
 		for (IOEntry entry : entries) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			println("Processing PDB Dump of: " + entry.input());
 			try (AbstractPdb pdb =
 				PdbParser.parse(entry.input(), new PdbReaderOptions(), monitor)) {

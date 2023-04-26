@@ -303,7 +303,7 @@ public class FunctionStartRFParams {
 		funcEntries = new AddressSet();
 		funcInteriors = new AddressSet();
 		while (fIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = fIter.next();
 			monitor.incrementProgress(1);
 			if (func.getBody().getNumAddresses() < minFuncSize) {

@@ -207,7 +207,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 			monitor.initialize(mappedImages.size());
 			for (DyldCacheImage mappedImage : mappedImages) {
 				String name = new File(mappedImage.getPath()).getName();
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMessage("Analyzing function starts for " + name + "...");
 				monitor.incrementProgress(1);
 
@@ -274,7 +274,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 		List<FunctionStartsCommand> commands = header.getLoadCommands(FunctionStartsCommand.class);
 		for (FunctionStartsCommand cmd : commands) {
 			for (Address addr : cmd.findFunctionStartAddrs(provider, textSegmentAddr)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (!set.contains(textSegmentAddr)) {
 					continue;
 				}

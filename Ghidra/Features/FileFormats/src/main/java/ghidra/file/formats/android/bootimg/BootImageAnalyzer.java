@@ -202,7 +202,7 @@ public class BootImageAnalyzer extends FileFormatAnalyzer implements AnalysisWor
 				createFragment(program, "Ramdisk Table", start, end);
 
 				for (VendorRamdiskTableEntryV4 entry : v4.getVendorRamdiskTableEntryList()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					DataType entryDataType = entry.toDataType();
 					createData(program, start, entryDataType);
 					start = start.add(entryDataType.getLength());

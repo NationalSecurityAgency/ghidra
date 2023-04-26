@@ -488,7 +488,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 			throws CancelledException, IOException {
 
 		VersionException versionExc = null;
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 //		try {
 		checkOldProperties(openMode);
@@ -502,14 +502,14 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		return versionExc;
 	}
 
 	private void initManagers(int openMode, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		dataTypeManager.archiveReady(openMode, monitor);
 	}
 

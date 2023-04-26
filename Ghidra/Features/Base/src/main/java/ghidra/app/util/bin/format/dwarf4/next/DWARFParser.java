@@ -76,7 +76,7 @@ public class DWARFParser {
 		CategoryPath rootCP = prog.getRootDNI().asCategoryPath();
 
 		for (DataTypePath dataTypePath : importedTypes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			if ( (monitor.getProgress() % 5) == 0 ) {

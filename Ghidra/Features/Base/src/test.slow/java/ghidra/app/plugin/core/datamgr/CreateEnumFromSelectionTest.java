@@ -134,7 +134,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		waitForTree();
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		DataTypeNode testEnumNode1 = (DataTypeNode) programNode.getChild("Colors");
 		assertNotNull(testEnumNode1);
@@ -167,7 +167,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		tf.setText("myNewEnum");
 		pressButtonByText(window, "OK");
 		assertTrue(!window.isShowing());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		waitForTree();
 
 		DataTypeNode newEnumNode = (DataTypeNode) programNode.getChild("myNewEnum");
@@ -238,7 +238,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		waitForTree();
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		DataTypeNode testEnumNode1 = (DataTypeNode) programNode.getChild("Colors");
 		assertNotNull(testEnumNode1);
@@ -280,7 +280,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		pressButtonByText(window2, "OK");
 
 		assertTrue(!window2.isShowing());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		DataTypeNode newEnumNode = (DataTypeNode) programNode.getChild("myNewEnum2");
 		assertNotNull(newEnumNode);
@@ -324,7 +324,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		waitForTree();
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		DataTypeNode testEnumNode1 = (DataTypeNode) programNode.getChild("Colors");
 		assertNotNull(testEnumNode1);
@@ -357,7 +357,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		tf.setText("myNewEnum");
 		pressButtonByText(window, "OK");
 		assertTrue(!window.isShowing());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		waitForTree();
 
 		DataTypeNode newEnumNode = (DataTypeNode) programNode.getChild("myNewEnum");
@@ -415,7 +415,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		waitForTree();
 
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		DataTypeNode testEnumNode1 = (DataTypeNode) programNode.getChild("Colors");
 		assertNotNull(testEnumNode1);

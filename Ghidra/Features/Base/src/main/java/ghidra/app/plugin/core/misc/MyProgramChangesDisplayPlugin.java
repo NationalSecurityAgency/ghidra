@@ -432,7 +432,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 
-			monitor.checkCanceled(); // plugin was shut down while we were scheduled
+			monitor.checkCancelled(); // plugin was shut down while we were scheduled
 
 			ProgramChangeSet changes = null;
 			try {

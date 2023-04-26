@@ -639,7 +639,7 @@ public class ShowConstantUse extends GhidraScript {
 			ReferenceIterator referencesTo =
 				currentProgram.getReferenceManager().getReferencesTo(addr);
 			for (Reference reference : referencesTo) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// get function containing.
 				Address refAddr = reference.getFromAddress();

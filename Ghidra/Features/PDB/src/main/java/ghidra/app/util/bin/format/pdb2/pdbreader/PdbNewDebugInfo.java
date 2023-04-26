@@ -171,7 +171,7 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 		PdbByteReader substreamReader =
 			reader.getSubPdbByteReader(lengthModuleInformationSubstream);
 		while (substreamReader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			ModuleInformation moduleInformation = new ModuleInformation600(pdb);
 			moduleInformation.deserialize(substreamReader);
 			moduleInformationList.add(moduleInformation);
@@ -310,7 +310,7 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 		int count = tableSize;
 		int realEntryCount = 0;
 		while (--count >= 0) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			int offset = substreamReader.parseInt();
 			bufferReader.setIndex(offset);
 			String name = bufferReader.parseNullTerminatedString(

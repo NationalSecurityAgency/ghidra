@@ -309,7 +309,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 		JButton confirmButton = findButtonByText(confirmDialog, "Convert");
 		pressButton(confirmButton);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		dialog = waitForDialogComponent(ProjectInfoDialog.class);
 		assertNotNull("Expected to find Project Info dialog after conversion completed", dialog);

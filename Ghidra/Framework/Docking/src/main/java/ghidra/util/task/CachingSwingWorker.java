@@ -337,9 +337,9 @@ public abstract class CachingSwingWorker<T> implements CachingLoader<T> {
 		}
 
 		@Override
-		public void checkCanceled() throws CancelledException {
+		public void checkCancelled() throws CancelledException {
 			for (int i = 0; i < monitors.size(); i++) {
-				monitors.get(i).checkCanceled();
+				monitors.get(i).checkCancelled();
 			}
 		}
 

@@ -1709,7 +1709,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			monitor.setProgress(0);
 			int i = 0;
 			for (DataType dt : dataTypes) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				resolve(dt, handler);
 				if (isResolveCacheOwner) {
 					flushResolveQueue(false);
@@ -4119,7 +4119,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		List<DBRecord> records = sourceArchiveAdapter.getRecords();
 		for (DBRecord record : records) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (SourceArchiveUpgradeMap.isReplacedSourceArchive(record.getKey())) {
 				return true;
 			}
@@ -4145,7 +4145,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 		RecordIterator records = compositeAdapter.getRecords();
 		while (records.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = records.next();
 			if (!rec.getBooleanValue(CompositeDBAdapter.COMPOSITE_IS_UNION_COL)) {
 				// StructureDB instantiation will perform an automatic flex-array
@@ -4174,7 +4174,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		BuiltInDataTypeManager builtInDTM = BuiltInDataTypeManager.getDataTypeManager();
 		for (String name : SourceArchiveUpgradeMap.getTypedefReplacements()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType dataType = getDataType(CategoryPath.ROOT, name);
 			if (dataType instanceof TypeDef) {
 				DataType builtIn = builtInDTM.getDataType(CategoryPath.ROOT, name);
@@ -4234,7 +4234,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 		int count = 0;
 		for (CompositeDB c : orderedComposites) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			c.fixupComponents();
 			monitor.setProgress(++count);
 		}
@@ -4278,7 +4278,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		GDirectedGraph<CompositeDB, GEdge<CompositeDB>> graph = GraphFactory.createDirectedGraph();
 		Iterator<Composite> allComposites = getAllComposites();
 		while (allComposites.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CompositeDB c = (CompositeDB) allComposites.next();
 			graph.addVertex(c);
 			for (DataTypeComponent m : c.getDefinedComponents()) {

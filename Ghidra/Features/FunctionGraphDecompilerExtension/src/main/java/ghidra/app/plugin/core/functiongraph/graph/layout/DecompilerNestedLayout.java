@@ -245,7 +245,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		// Route our edges!
 		//
 		for (FGEdge e : edges) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			FGVertex startVertex = e.getStart();
 			FGVertex endVertex = e.getEnd();
@@ -1001,7 +1001,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		BlockGraph blockGraph = new BlockGraph();
 		BidiMap<CodeBlock, PcodeBlock> bidiMap = new DualHashBidiMap<>();
 		for (; iterator.hasNext();) {
-			taskMonitor.checkCanceled();
+			taskMonitor.checkCancelled();
 
 			CodeBlock codeBlock = iterator.next();
 			FGVertex vertex = getVertex(jungGraph, codeBlock.getMinAddress());
@@ -1016,11 +1016,11 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		}
 
 		for (CodeBlock block : bidiMap.keySet()) {
-			taskMonitor.checkCanceled();
+			taskMonitor.checkCancelled();
 
 			CodeBlockReferenceIterator destinations = block.getDestinations(taskMonitor);
 			while (destinations.hasNext()) {
-				taskMonitor.checkCanceled();
+				taskMonitor.checkCancelled();
 
 				CodeBlockReference ref = destinations.next();
 				// We only want control flow that is internal to the function. Make sure to

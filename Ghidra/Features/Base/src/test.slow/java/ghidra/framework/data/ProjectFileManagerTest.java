@@ -91,7 +91,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 	private void flushFileSystemEventsAndClearTestQueue() {
 		flushFileSystemEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		events.clear();
 	}
 
@@ -620,7 +620,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	private void assertEventsSize(int size) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		int eventCount = events.size();
 		if (eventCount == size) {
 			return; // all is well

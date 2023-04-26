@@ -62,7 +62,7 @@ class PythonPluginExecutionThread extends Thread {
 		// Setup transaction for the execution.
 		try (Transaction tx = program != null ? program.openTransaction("Python command") : null) {
 			// Setup Ghidra state to be passed into interpreter
-			interactiveTaskMonitor.clearCanceled();
+			interactiveTaskMonitor.clearCancelled();
 			interactiveScript.setSourceFile(new ResourceFile(new File("python")));
 			PluginTool tool = plugin.getTool();
 			interactiveScript.set(

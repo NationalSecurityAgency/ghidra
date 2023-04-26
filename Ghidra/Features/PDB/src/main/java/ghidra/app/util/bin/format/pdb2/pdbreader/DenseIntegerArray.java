@@ -50,7 +50,7 @@ public class DenseIntegerArray {
 		array.clear();
 		int arraySize = reader.parseInt();
 		for (int i = 0; i < arraySize; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int val = reader.parseInt();
 			array.add(val);
 		}

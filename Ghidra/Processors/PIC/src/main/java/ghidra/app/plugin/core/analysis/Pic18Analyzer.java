@@ -371,7 +371,7 @@ public class Pic18Analyzer extends AbstractAnalyzer {
 
 		}
 		bsrContext.writeValue(block.getMaxAddress());
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 	}
 
 	private Vertex getConnectedVertex(DirectedGraph graph, CodeBlock block, Vertex srcVertex) {

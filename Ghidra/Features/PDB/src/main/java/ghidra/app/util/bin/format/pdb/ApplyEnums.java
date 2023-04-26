@@ -43,7 +43,7 @@ class ApplyEnums {
 			MessageLog log) throws CancelledException {
 		monitor.setMessage("Applying enums...");
 		while (xmlParser.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			XmlElement elem = xmlParser.next();
 
 			if (elem.isEnd() && elem.getName().equals("enums")) {

@@ -409,7 +409,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 			throws CancelledException, OverlappingFunctionException {
 		Iterator<Function> iter = program.getFunctionManager().getFunctionsOverlapping(body);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function elem = iter.next();
 			AddressSetView funcBody = elem.getBody();
 			if (funcBody.contains(entry)) {
@@ -440,7 +440,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 			TaskMonitor monitor) throws CancelledException {
 		Iterator<Function> iter = program.getFunctionManager().getFunctionsOverlapping(body);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function elem = iter.next();
 			if (elem.getEntryPoint().equals(entry)) {
 				// if finding the entrypoint, need to redefine the functions body.
@@ -705,7 +705,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 			Iterator<Function> iter = program.getFunctionManager().getFunctionsOverlapping(newBody);
 
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Function elem = iter.next();
 				if (elem.getEntryPoint().equals(entry)) {
 					// if finding the entrypoint, need to redefine the functions body.

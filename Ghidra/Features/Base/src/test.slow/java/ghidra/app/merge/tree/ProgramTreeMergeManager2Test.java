@@ -868,7 +868,7 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		waitForCondition(() -> applyButton.isEnabled(), "Apply button never became enabled");
 
 		pressButton(applyButton);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		resultProgram.flushEvents();
 
 		if (doWait) {

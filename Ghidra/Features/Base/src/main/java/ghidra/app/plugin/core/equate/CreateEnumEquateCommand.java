@@ -83,7 +83,7 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 		monitor.initialize(addresses.getNumAddresses());
 		while (it.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Instruction instruction = it.next();
 			processsEquates(instruction);

@@ -342,7 +342,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 				fieldOptions.setInt(name, 0);
 			}
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 	}
 

@@ -78,7 +78,7 @@ public class SeparatedCodeSymbolApplier extends MsSymbolApplier {
 		manageBlockNesting(this);
 
 		while (notDone()) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			MsSymbolApplier applier = applicator.getSymbolApplier(iter);
 			if (!(applier instanceof EndSymbolApplier)) {
 				Msg.info(this, "Unexpected applier in " + getClass().getSimpleName() + ": " +

@@ -176,7 +176,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 							"\".");
 					break;
 				}
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				CodeUnit cu = iterator.next();
 				accumulator.add(cu.getMinAddress());
 				monitor.incrementProgress(cu.getLength());

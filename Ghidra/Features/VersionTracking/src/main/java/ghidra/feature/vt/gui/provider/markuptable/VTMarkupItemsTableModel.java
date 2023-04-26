@@ -122,7 +122,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 		monitor.initialize(markupItems.size());
 
 		for (VTMarkupItem markupItem : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			accumulator.add(markupItem);
 			monitor.incrementProgress(1);
 		}

@@ -81,7 +81,7 @@ public class DominanceModularizationCmd extends AbstractModularizationCmd {
 		makeFragment(program, currentModule, vertex);
 
 		for (CodeBlockVertex child : children) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			rebuildProgramTree(dg, child, currentModule);
 		}
 	}

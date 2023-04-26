@@ -116,7 +116,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		Swing.allowSwingToProcessEvents();
 		for (Data stringInstance : DefinedDataIterator.definedStrings(localProgram)) {
 			accumulator.add(createIndexedStringInstanceLocation(localProgram, stringInstance));
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 	}

@@ -64,7 +64,7 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 //		AbstractArgumentsListMsType argsList = (AbstractArgumentsListMsType) msType;
 //		List<AbstractTypeIndex> list = argsList.getArgTypeIndexList();
 //		for (AbstractTypeIndex element : list) {
-//			applicator.checkCanceled();
+//			applicator.checkCancelled();
 //			AbstractMsTypeApplier argApplier = applicator.getTypeApplier(element.get());
 //
 //			if (argApplier instanceof PrimitiveTypeApplier &&
@@ -87,7 +87,7 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 		AbstractArgumentsListMsType argsList = (AbstractArgumentsListMsType) msType;
 		List<RecordNumber> args = argsList.getArgRecordNumbers();
 		for (RecordNumber arg : args) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			MsTypeApplier argApplier = applicator.getTypeApplier(arg);
 
 			if (argApplier instanceof PrimitiveTypeApplier &&
@@ -123,7 +123,7 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 		List<ParameterDefinition> parameterDefinitionList = new ArrayList<>();
 		int parameterCount = 0;
 		for (RecordNumber arg : args) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			MsTypeApplier argApplier = applicator.getTypeApplier(arg);
 
 			if (argApplier instanceof PrimitiveTypeApplier &&
@@ -187,7 +187,7 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 //		List<ParameterDefinition> parameterDefinitionList = new ArrayList<>();
 //		int parameterCount = 0;
 //		for (AbstractTypeIndex element : list) {
-//			applicator.getMonitor().checkCanceled();
+//			applicator.getMonitor().checkCancelled();
 //			AbstractMsTypeApplier argApplier = applicator.getTypeApplier(element.get());
 //
 //			if (argApplier instanceof PrimitiveTypeApplier &&

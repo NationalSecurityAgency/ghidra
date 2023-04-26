@@ -129,7 +129,7 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 		List<GTreeNode> children = children();
 		monitor = new TreeTaskMonitor(monitor, children.size());
 		for (GTreeNode child : children) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			count += child.loadAll(monitor);
 			monitor.incrementProgress(1);
 		}

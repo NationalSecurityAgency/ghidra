@@ -274,7 +274,7 @@ public class AskDialog<T> extends DialogComponentProvider {
 		if (text.equalsIgnoreCase("e")) {
 			return Math.E;
 		}
-		return new Double(text);
+		return Double.valueOf(text);
 	}
 
 }

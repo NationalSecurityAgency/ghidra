@@ -234,7 +234,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 		AddressSet checkedTargets = new AddressSet();
 
 		while (iter.hasNext() && !newCodeFound) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = iter.next();
 

@@ -233,7 +233,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			}
 		}
 		for (MsTypeApplier memberTypeApplierIterated : fieldListApplier.getMemberList()) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			if (memberTypeApplierIterated instanceof MemberTypeApplier) {
 				MemberTypeApplier memberTypeApplier = (MemberTypeApplier) memberTypeApplierIterated;
 				MsTypeApplier fieldApplier = memberTypeApplier.getFieldTypeApplier();

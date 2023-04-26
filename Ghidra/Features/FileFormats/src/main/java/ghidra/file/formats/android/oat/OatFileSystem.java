@@ -121,7 +121,7 @@ public class OatFileSystem extends GFileSystemBase {
 			monitor.setMessage("Creating OAT filesystem...");
 
 			for (OatDexFile oatDexFileHeader : dexFileList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				DexHeader dexHeader = oatDexFileHeader.getDexHeader();
 				if (dexHeader == null) {
@@ -131,7 +131,7 @@ public class OatFileSystem extends GFileSystemBase {
 				StringTokenizer tokenizer =
 					new StringTokenizer(oatDexFileHeader.getDexFileLocation(), "/");
 				while (tokenizer.hasMoreTokens()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					String token = tokenizer.nextToken();
 					boolean isDirectory = tokenizer.hasMoreTokens();//last token is file name
 					if (!isDirectory) {

@@ -500,7 +500,7 @@ public class GoRttiContext extends ProgramContext {
 		monitor.initialize(goTypes.size());
 		List<Long> typeOffsets = goTypes.keySet().stream().sorted().collect(Collectors.toList());
 		for (Long typeOffset : typeOffsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			GoType typ = getGoType(typeOffset);
 			DataType dt = typ.recoverDataType();
@@ -525,7 +525,7 @@ public class GoRttiContext extends ProgramContext {
 		goTypes.clear();
 		Set<Long> discoveredTypes = new HashSet<>();
 		for (Iterator<GoType> it = firstModule.iterateTypes(); it.hasNext();) {
-			upwtm.checkCanceled();
+			upwtm.checkCancelled();
 			upwtm.setProgress(discoveredTypes.size());
 
 			GoType type = it.next();

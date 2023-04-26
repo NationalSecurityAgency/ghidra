@@ -658,7 +658,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		AddressSet result = new AddressSet();
 		for (AddressRange range : getUndefinedRangeIterator(set, true)) {
 			result.add(range);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		return result;
 	}

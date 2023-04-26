@@ -103,7 +103,7 @@ public class DWARFFunctionImporter {
 
 		for (DIEAggregate diea : DIEAMonitoredIterator.iterable(prog,
 			"DWARF - Create Funcs & Symbols", monitor)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			try {
 				switch (diea.getTag()) {

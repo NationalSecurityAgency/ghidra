@@ -331,7 +331,7 @@ class SymbolMerge {
 			if (toNamespace != expectedToNamespace) {
 				toSymbolTable.removeSymbolSpecial(toSymbol);
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 	}
 
@@ -365,7 +365,7 @@ class SymbolMerge {
 		Address toAddress = originToResultTranslator.getAddress(fromAddress);
 		Symbol[] fromSymbols = fromSymbolTable.getUserSymbols(fromAddress);
 		for (Symbol fromSymbol : fromSymbols) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (fromSymbol.getSymbolType().equals(SymbolType.FUNCTION)) {
 				continue; // handle function symbols separately
 			}

@@ -1954,13 +1954,13 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 			}
 		}
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		setUseForAll(useForAll, VariousChoicesPanel.class);
 
 		try {
 			waitForApply(true);
 			pressButtonByText(window, "Apply");
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			waitForApply(false);
 		}
 		catch (UsrException e) {
