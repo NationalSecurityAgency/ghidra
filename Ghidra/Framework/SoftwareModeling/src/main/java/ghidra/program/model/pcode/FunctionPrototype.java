@@ -88,7 +88,7 @@ public class FunctionPrototype {
 	 */
 	public FunctionPrototype(FunctionSignature proto, CompilerSpec cspec,
 			boolean voidimpliesdotdotdot) {
-		modelname = proto.getName();
+		modelname = proto.getCallingConventionName();
 		PrototypeModel model = cspec.matchConvention(modelname);
 		localsyms = null;
 		injectname = null;
