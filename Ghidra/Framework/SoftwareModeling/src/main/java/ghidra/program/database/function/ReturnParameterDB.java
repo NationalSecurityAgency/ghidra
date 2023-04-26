@@ -28,14 +28,15 @@ public class ReturnParameterDB extends ParameterDB {
 
 	private DataType dataType;
 
-	/**
-	 * @param function
-	 * @param s
-	 */
 	ReturnParameterDB(FunctionDB function, DataType dt, VariableStorage storage) {
 		super(function, null);
 		this.dataType = dt;
 		this.storage = storage;
+	}
+
+	@Override
+	protected boolean isVoidAllowed() {
+		return true;
 	}
 
 	@Override
@@ -123,15 +124,10 @@ public class ReturnParameterDB extends ParameterDB {
 			VariableStorage newStorage = VariableStorage.UNASSIGNED_STORAGE;
 			boolean hasCustomVariableStorage = function.hasCustomVariableStorage();
 			if (hasCustomVariableStorage) {
-				DataType baseType = type;
-				if (baseType instanceof TypeDef) {
-					baseType = ((TypeDef) baseType).getBaseDataType();
-				}
 				try {
-					newStorage =
-						(baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
-								: VariableUtilities.resizeStorage(getVariableStorage(), type,
-									alignStack, function);
+					newStorage = VoidDataType.isVoidDataType(type) ? VariableStorage.VOID_STORAGE
+							: VariableUtilities.resizeStorage(getVariableStorage(), type,
+								alignStack, function);
 					VariableUtilities.checkStorage(newStorage, type, force);
 				}
 				catch (InvalidInputException e) {

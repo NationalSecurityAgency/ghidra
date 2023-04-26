@@ -96,6 +96,13 @@ public class FunctionEditorModel {
 
 		returnInfo = new ParamInfo(this, function.getReturn());
 
+		// check for void storage correction
+		if (VoidDataType.isVoidDataType(returnInfo.getDataType()) &&
+			returnInfo.getStorage() != VariableStorage.VOID_STORAGE) {
+			returnInfo.setStorage(VariableStorage.VOID_STORAGE);
+			modelChanged = true;
+		}
+
 		autoParamCount = 0;
 		Parameter[] params = function.getParameters();
 		for (Parameter parameter : params) {
@@ -265,7 +272,7 @@ public class FunctionEditorModel {
 		}
 		else if (!allowCustomStorage &&
 			Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(callingConventionName)) {
-			if (!(returnType instanceof VoidDataType && parameters.isEmpty())) {
+			if (!(VoidDataType.isVoidDataType(returnType) && parameters.isEmpty())) {
 				statusText =
 					"Warning: No calling convention specified. Ghidra may automatically assign one later.";
 			}
@@ -338,17 +345,9 @@ public class FunctionEditorModel {
 		return true;
 	}
 
-	private DataType getBaseDataType(DataType dataType) {
-		if (dataType instanceof TypeDef) {
-			return ((TypeDef) dataType).getBaseDataType();
-		}
-		return dataType;
-	}
-
 	private boolean hasValidReturnType() {
 		DataType returnType = returnInfo.getDataType();
-		DataType baseType = getBaseDataType(returnType);
-		if (baseType instanceof VoidDataType) {
+		if (VoidDataType.isVoidDataType(returnType)) {
 			return true;
 		}
 		if (returnType.getLength() <= 0) {
@@ -377,7 +376,7 @@ public class FunctionEditorModel {
 
 	private boolean isValidParamType(ParamInfo param) {
 		DataType dataType = param.getDataType();
-		if (dataType.isEquivalent(VoidDataType.dataType)) {
+		if (VoidDataType.isVoidDataType(dataType)) {
 			statusText = "\"void\" is not allowed as a parameter datatype.";
 			return false;
 		}
@@ -800,7 +799,7 @@ public class FunctionEditorModel {
 
 		param.setFormalDataType(formalDataType.clone(program.getDataTypeManager()));
 		if (allowCustomStorage) {
-			if (isReturn && (formalDataType instanceof VoidDataType)) {
+			if (isReturn && VoidDataType.isVoidDataType(formalDataType)) {
 				param.setStorage(VariableStorage.VOID_STORAGE);
 			}
 			else {
@@ -1099,10 +1098,8 @@ public class FunctionEditorModel {
 
 		setCallingConventionName(functionDefinition.getCallingConventionName());
 
-		if (!isSameSize(returnInfo.getFormalDataType(), functionDefinition.getReturnType())) {
-			returnInfo.setStorage(VariableStorage.UNASSIGNED_STORAGE);
-		}
-		returnInfo.setFormalDataType(functionDefinition.getReturnType());
+		DataType returnDt = functionDefinition.getReturnType();
+		returnInfo.setFormalDataType(returnDt);
 
 		List<ParamInfo> oldParams = parameters;
 		parameters = new ArrayList<>();
@@ -1117,6 +1114,13 @@ public class FunctionEditorModel {
 		fixupOrdinals();
 
 		if (allowCustomStorage) {
+			if (VoidDataType.isVoidDataType(returnDt)) {
+				returnInfo.setStorage(VariableStorage.VOID_STORAGE);
+			}
+			else if (!isSameSize(returnInfo.getFormalDataType(),
+				functionDefinition.getReturnType())) {
+				returnInfo.setStorage(VariableStorage.UNASSIGNED_STORAGE);
+			}
 			reconcileCustomStorage(oldParams, parameters);
 		}
 		else {

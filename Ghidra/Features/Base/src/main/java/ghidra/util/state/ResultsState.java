@@ -2168,7 +2168,7 @@ public class ResultsState {
 		}
 		else {
 			returnType = func.getReturnType();
-			if (VoidDataType.dataType.isEquivalent(returnType)) {
+			if (VoidDataType.isVoidDataType(returnType)) {
 				return;
 			}
 		}

@@ -3288,8 +3288,7 @@ public class RecoveredClassHelper {
 			}
 
 			if (returnType.equals("void")) {
-				DataType voidDataType = new VoidDataType();
-				constructorFunction.setReturnType(voidDataType, SourceType.ANALYSIS);
+				constructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
 			}
 			else if (returnType.contains("*")) {
 				DataType classPointerDataType = dataTypeManager.getPointer(classStruct);
@@ -3353,7 +3352,7 @@ public class RecoveredClassHelper {
 					true);
 			}
 
-			destructorFunction.setReturnType(new VoidDataType(), SourceType.ANALYSIS);
+			destructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
 		}
 	}
 
@@ -3400,7 +3399,7 @@ public class RecoveredClassHelper {
 					true, true);
 			}
 
-			vbaseDestructorFunction.setReturnType(new VoidDataType(), SourceType.ANALYSIS);
+			vbaseDestructorFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
 		}
 
 	}
@@ -6220,7 +6219,7 @@ public class RecoveredClassHelper {
 						if (!atexitCalledFunctions.contains(calledFunction)) {
 							atexitCalledFunctions.add(calledFunction);
 						}
-						calledFunction.setReturnType(new VoidDataType(), SourceType.ANALYSIS);
+						calledFunction.setReturnType(VoidDataType.dataType, SourceType.ANALYSIS);
 					}
 					else {
 						if (!atexitCalledFunctions.contains(calledFunction)) {

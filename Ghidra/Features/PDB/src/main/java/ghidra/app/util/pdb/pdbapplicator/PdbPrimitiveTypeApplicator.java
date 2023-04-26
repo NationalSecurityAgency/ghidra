@@ -79,8 +79,7 @@ public class PdbPrimitiveTypeApplicator {
 
 	DataType getVoidType() {
 		if (voidGhidraPrimitive == null) {
-			DataType dataType = new VoidDataType(getDataTypeManager());
-			voidGhidraPrimitive = resolve(dataType);
+			voidGhidraPrimitive = resolve(VoidDataType.dataType);
 		}
 		return voidGhidraPrimitive;
 	}
