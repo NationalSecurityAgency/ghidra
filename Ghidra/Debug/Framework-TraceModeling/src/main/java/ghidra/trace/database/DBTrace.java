@@ -175,6 +175,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			e.unwrap(LanguageNotFoundException.class);
 			throw new AssertionError(e);
 		}
+		clearUndo(false);
 		changeSet = traceChangeSet = new DBTraceChangeSet();
 		recordChanges = true;
 
@@ -194,6 +195,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			e.unwrap(LanguageNotFoundException.class);
 			throw new AssertionError(e);
 		}
+		clearUndo(false);
 		changeSet = traceChangeSet = new DBTraceChangeSet();
 		recordChanges = true;
 
