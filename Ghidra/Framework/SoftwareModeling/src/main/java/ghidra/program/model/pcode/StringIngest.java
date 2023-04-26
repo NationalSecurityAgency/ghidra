@@ -65,11 +65,14 @@ public class StringIngest implements ByteIngest {
 
 	@Override
 	public String toString() {
+		if (outStream == null) {
+			return "<empty>";
+		}
 		return outStream.toString();
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return (outStream.size() == 0);
+		return outStream == null || (outStream.size() == 0);
 	}
 }
