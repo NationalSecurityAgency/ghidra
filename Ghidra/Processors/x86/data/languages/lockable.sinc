@@ -1,0 +1,1379 @@
+# The LOCK prefix is only valid for certain instructions, otherwise, from the
+# Intel instruction manual:
+#     An undefined opcode exception will also be generated if the LOCK prefix
+#     is used with any instruction not in the above list.
+# The instructions in this file have their non-lockable counterparts in ia.sinc
+
+:ADC^lockx spec_m8,imm8		is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=2 ... ; imm8 
+{ 
+    build lockx; 
+    build spec_m8;
+    addCarryFlags( spec_m8, imm8:1 ); 
+    resultflags( spec_m8 );
+    build unlock;
+}
+
+:ADC^lockx spec_m16,imm16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0x81; spec_m16 & reg_opcode=2 ...; imm16 
+{    
+    build lockx;
+    build spec_m16;
+    addCarryFlags( spec_m16, imm16:2 );
+    resultflags( spec_m16 );
+    build unlock; 
+}
+
+:ADC^lockx spec_m32,imm32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0x81; spec_m32 & reg_opcode=2 ...; imm32 
+{    
+    build lockx;
+    build spec_m32;
+    addCarryFlags( spec_m32, imm32:4 );
+    resultflags( spec_m32 );
+    build unlock; 
+}
+
+@ifdef IA64
+:ADC^lockx spec_m64,simm32       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; spec_m64 & reg_opcode=2 ...; simm32 
+{    
+    build lockx;
+    build spec_m64;
+    addCarryFlags( spec_m64, simm32 );
+    resultflags( spec_m64 );
+    build unlock; 
+}
+@endif
+
+:ADC^lockx spec_m16,simm8_16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0x83; spec_m16 & reg_opcode=2 ...; simm8_16	
+{
+    build lockx; 
+    build spec_m16;
+    addCarryFlags( spec_m16, simm8_16 );
+    resultflags( spec_m16 );
+    build unlock; 
+}
+
+:ADC^lockx spec_m32,simm8_32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0x83; spec_m32 & reg_opcode=2 ...; simm8_32 
+{
+    build lockx;
+    build spec_m32;
+    addCarryFlags( spec_m32, simm8_32 );
+    resultflags( spec_m32 );
+    build unlock; 
+}
+
+@ifdef IA64
+:ADC^lockx spec_m64,simm8_64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x83; spec_m64 & reg_opcode=2 ...; simm8_64 
+{
+    build lockx;
+    build spec_m64;
+    addCarryFlags( spec_m64, simm8_64 );
+    resultflags( spec_m64 );
+    build unlock; 
+}
+@endif
+
+:ADC^lockx m8,Reg8      is vexMode=0 & lockx & unlock & byte=0x10; m8 & Reg8 ...                 
+{
+    build lockx;
+    build m8;
+    addCarryFlags( m8, Reg8 );
+    resultflags( m8 );
+    build unlock;
+}
+
+:ADC^lockx m16,Reg16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0x11; m16 & Reg16 ...    
+{
+    build lockx;
+    build m16;
+    addCarryFlags( m16, Reg16 );
+    resultflags( m16 );
+    build unlock;
+}
+
+:ADC^lockx m32,Reg32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0x11; m32 & Reg32 ...    
+{
+    build lockx;
+    build m32;
+    addCarryFlags( m32, Reg32 );
+    resultflags( m32 );
+    build unlock;
+}
+
+@ifdef IA64
+:ADC^lockx m64,Reg64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x11; m64 & Reg64 ...    
+{
+    build lockx;
+    build m64;
+    addCarryFlags( m64, Reg64 );
+    resultflags( m64 );
+    build unlock;
+}
+@endif
+
+:ADD^lockx spec_m8,imm8		is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=0 ...; imm8		
+{
+    build lockx;
+    build spec_m8;
+    addflags( spec_m8,imm8 );
+    spec_m8 =   spec_m8 +  imm8;
+    resultflags(  spec_m8);
+    build unlock;
+}
+
+:ADD^lockx spec_m16,imm16		is vexMode=0 & lockx & unlock & opsize=0 & byte=0x81; spec_m16 & reg_opcode=0 ...; imm16	
+{
+    build lockx;
+    build spec_m16;
+    addflags( spec_m16,imm16);
+    spec_m16 =  spec_m16 + imm16;
+    resultflags( spec_m16);
+    build unlock;
+}
+
+:ADD^lockx spec_m32,imm32		is vexMode=0 & lockx & unlock & opsize=1 & byte=0x81; spec_m32 & reg_opcode=0 ...; imm32	
+{
+    build lockx;
+    build spec_m32;
+    addflags( spec_m32,imm32);
+    spec_m32 =  spec_m32 + imm32;
+    resultflags( spec_m32);
+    build unlock;
+}
+
+@ifdef IA64
+:ADD^lockx spec_m64,simm32		is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; spec_m64 & reg_opcode=0 ...; simm32	
+{
+    build lockx;
+    build spec_m64;
+    addflags( spec_m64,simm32);
+    spec_m64 =  spec_m64 + simm32;
+    resultflags( spec_m64);
+    build unlock;
+}
+@endif
+
+:ADD^lockx spec_m16,simm8_16		is vexMode=0 & lockx & unlock & opsize=0 & byte=0x83; spec_m16 & reg_opcode=0 ...; simm8_16	
+{
+    build lockx;
+    build spec_m16;
+    addflags( spec_m16,simm8_16);
+    spec_m16 =  spec_m16 + simm8_16;
+    resultflags( spec_m16);
+    build unlock;
+}
+
+:ADD^lockx spec_m32,simm8_32		is vexMode=0 & lockx & unlock & opsize=1 & byte=0x83; spec_m32 & reg_opcode=0 ...; simm8_32	
+{
+    build lockx;
+    build spec_m32;
+    addflags( spec_m32,simm8_32);
+    spec_m32 =  spec_m32 + simm8_32;
+    resultflags( spec_m32);
+    build unlock;
+}
+
+@ifdef IA64
+:ADD^lockx spec_m64,simm8_64		is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x83; spec_m64 & reg_opcode=0 ...; simm8_64	
+{
+    build lockx;
+    build spec_m64;
+    addflags( spec_m64,simm8_64);
+    spec_m64 =  spec_m64 + simm8_64;
+    resultflags( spec_m64);
+    build unlock;
+}
+@endif
+
+:ADD^lockx m8,Reg8      is vexMode=0 & lockx & unlock & byte=0x00; m8 & Reg8 ...                 
+{
+    build lockx;
+    build m8;
+    addflags(  m8,Reg8 );
+    m8 =   m8 +  Reg8;
+    resultflags(  m8);
+    build unlock;
+}
+
+:ADD^lockx m16,Reg16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0x1; m16 & Reg16 ...     
+{
+    build lockx;
+    build m16;
+    addflags( m16,Reg16);
+    m16 =  m16 + Reg16;
+    resultflags( m16);
+    build unlock;
+}
+
+:ADD^lockx m32,Reg32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0x1; m32 & Reg32 ...     
+{
+    build lockx;
+    build m32;
+    addflags( m32,Reg32);
+    m32 =  m32 + Reg32;
+    resultflags( m32);
+    build unlock;
+}
+
+@ifdef IA64
+:ADD^lockx m64,Reg64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x1; m64 & Reg64 ...    
+{
+    build lockx;
+    build m64;
+    addflags( m64,Reg64);
+    m64 =  m64 + Reg64;
+    resultflags( m64);
+    build unlock;
+}
+@endif
+
+:AND^lockx m8,imm8      is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); m8 & reg_opcode=4 ...; imm8     
+{
+    build lockx;
+    build m8;
+    logicalflags();
+    m8 =   m8 &  imm8;
+    resultflags(  m8);
+    build unlock;
+}
+
+:AND^lockx m16,imm16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0x81; m16 & reg_opcode=4 ...; imm16  
+{
+    build lockx;
+    build m16;
+    logicalflags();
+    m16 =  m16 & imm16;
+    resultflags( m16);
+    build unlock;
+}
+
+:AND^lockx m32,imm32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0x81; m32 & reg_opcode=4 ...; imm32  
+{
+    build lockx;
+    build m32;
+    logicalflags();
+    m32 =  m32 & imm32;
+    resultflags( m32);
+    build unlock;
+}
+
+@ifdef IA64
+:AND^lockx m64,simm32    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; m64 & reg_opcode=4 ...; simm32  
+{
+    build lockx;
+    build m64;
+    logicalflags();
+    m64 =  m64 & simm32;
+    resultflags( m64);
+    build unlock;
+}
+@endif
+
+:AND^lockx m16,usimm8_16		is vexMode=0 & lockx & unlock & opsize=0 & byte=0x83; m16 & reg_opcode=4 ...; usimm8_16	
+{
+    build lockx;
+    build m16;
+    logicalflags();
+    m16 =  m16 & usimm8_16;
+    resultflags( m16);
+    build unlock;
+}
+
+:AND^lockx m32,usimm8_32		is vexMode=0 & lockx & unlock & opsize=1 & byte=0x83; m32 & reg_opcode=4 ...; usimm8_32	
+{
+    build lockx;
+    build m32;
+    logicalflags();
+    m32 =  m32 & usimm8_32;
+    resultflags( m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:AND^lockx m64,usimm8_64		is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x83; m64 & reg_opcode=4 ...; usimm8_64	
+{
+    build lockx;
+    build m64;
+    logicalflags();
+    m64 =  m64 & usimm8_64;
+    resultflags( m64);
+    build unlock; 
+}
+@endif
+
+:AND^lockx m8,Reg8      is vexMode=0 & lockx & unlock & byte=0x20; m8 & Reg8 ...                     
+{
+    build lockx;
+    build m8;
+    logicalflags();
+    m8 =   m8 &  Reg8;
+    resultflags(  m8);
+    build unlock; 
+}
+
+:AND^lockx m16,Reg16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0x21; m16 & Reg16 ...        
+{
+    build lockx;
+    build m16;
+    logicalflags();
+    m16 =  m16 & Reg16;
+    resultflags( m16);
+    build unlock; 
+}
+
+:AND^lockx m32,Reg32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0x21; m32 & Reg32 ...        
+{
+    build lockx;
+    build m32;
+    logicalflags();
+    m32 =  m32 & Reg32;
+    resultflags( m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:AND^lockx m64,Reg64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x21; m64 & Reg64 ...        
+{
+    build lockx;
+    build m64;
+    logicalflags();
+    m64 =  m64 & Reg64;
+    resultflags( m64);
+    build unlock; 
+}
+@endif
+
+:BTC^lockx Mem,Reg16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xbb; Mem & Reg16 ...		
+{
+    build lockx;
+    build Mem;
+    local ptr = Mem + (sext(Reg16) s>> 3);
+    local bit=Reg16&7;
+    local val = (*:1 ptr >> bit) & 1;
+    *:1 ptr= *:1 ptr ^(1<<bit);
+    CF=(val!=0);
+    build unlock; 
+}
+
+:BTC^lockx Mem,Reg32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xbb; Mem & Reg32 ...		
+{
+    build lockx;
+    build Mem;
+@ifdef IA64
+    local ptr = Mem + (sext(Reg32) s>> 3);
+@else
+    local ptr = Mem + (Reg32 s>> 3);
+@endif
+    local bit=Reg32&7;
+    local val = (*:1 ptr >> bit) & 1;
+    *:1 ptr = *:1 ptr ^ (1<<bit);
+    CF = (val != 0);
+    build unlock;
+}
+
+@ifdef IA64
+:BTC^lockx Mem,Reg64     is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xbb; Mem & Reg64 ...		
+{
+    build lockx;
+    build Mem;
+    local ptr = Mem + (Reg64 s>> 3);
+    local bit=Reg64&7;
+    local val = (*:1 ptr >> bit) & 1;
+    *:1 ptr = *:1 ptr ^ (1<<bit);
+    CF = (val != 0);
+    build unlock; 
+}
+@endif
+
+:BTC^lockx m16,imm8     is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xba; m16 & reg_opcode=7 ...; imm8   
+{
+    build lockx;
+    build m16;
+    local bit=imm8&0xf;
+    local val=(m16>>bit)&1;
+    m16=m16^(1<<bit);
+    CF=(val!=0);
+    build unlock; 
+}
+
+:BTC^lockx m32,imm8     is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xba; m32 & reg_opcode=7 ...; imm8   
+{
+    build lockx;
+    build m32;
+    local bit=imm8&0x1f;
+    local val=(m32>>bit)&1;
+    CF=(val!=0);
+    m32=m32^(1<<bit);
+    build unlock; 
+}
+
+@ifdef IA64
+:BTC^lockx m64,imm8     is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xba; m64 & reg_opcode=7 ...; imm8   
+{
+    build lockx;
+    build m64;
+    local bit=imm8&0x3f;
+    local val=(m64>>bit)&1;
+    m64=m64^(1<<bit);
+    CF=(val!=0);
+    build unlock; 
+}
+@endif
+
+:BTR^lockx Mem,Reg16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xb3; Mem & Reg16 ...		
+{
+    build lockx;
+    build Mem;
+    local ptr = Mem + (sext(Reg16) s>> 3);
+    local bit=Reg16&7;
+    local val=(*:1 ptr >> bit) & 1;
+    *:1 ptr = *:1 ptr & ~(1<<bit);
+    CF = (val!=0);
+    build unlock; 
+}
+
+:BTR^lockx Mem,Reg32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xb3; Mem & Reg32 ...		
+{
+    build lockx;
+    build Mem;
+@ifdef IA64
+    local ptr = Mem + (sext(Reg32) s>> 3);
+@else
+    local ptr = Mem + (Reg32 s>> 3);
+@endif
+    local bit = Reg32 & 7;
+    local val = (*:1 ptr >> bit) & 1;
+    *:1 ptr = *:1 ptr & ~(1<<bit);
+    CF = (val!=0);
+    build unlock;
+}
+
+@ifdef IA64
+:BTR^lockx Mem,Reg64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xb3; Mem & Reg64 ...		
+{
+    build lockx;
+    build Mem;
+    local ptr = Mem + (Reg64 s>> 3);
+    local bit = Reg64 & 7;
+    local val = (*:1 ptr >> bit) & 1;
+    *:1 ptr = *:1 ptr & ~(1<<bit);
+    CF = (val!=0);
+    build unlock; 
+}
+@endif
+
+:BTR^lockx m16,imm8     is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xba; m16 & reg_opcode=6 ...; imm8   
+{
+    build lockx;
+    build m16;
+    local bit=imm8&0xf;
+    local val=(m16>>bit)&1;
+    m16=m16 & ~(1<<bit);
+    CF=(val!=0);
+    build unlock; 
+}
+
+:BTR^lockx m32,imm8     is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xba; m32 & reg_opcode=6 ...; imm8   
+{
+    build lockx;
+    build m32;
+    local bit=imm8&0x1f;
+    local val=(m32>>bit)&1;
+    CF=(val!=0);
+    m32=m32 & ~(1<<bit);
+    build unlock; 
+}
+
+@ifdef IA64
+:BTR^lockx m64,imm8     is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xba; m64 & reg_opcode=6 ...; imm8   
+{
+    build lockx;
+    build m64;
+    local bit=imm8&0x3f;
+    local val=(m64>>bit)&1;
+    m64=m64 & ~(1<<bit);
+    CF=(val!=0);
+    build unlock; 
+}
+@endif
+
+:BTS^lockx Mem,Reg16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xab; Mem & Reg16 ...		
+{
+    build lockx;
+    build Mem;
+    local ptr = Mem + (sext(Reg16) s>> 3);
+    local bit = Reg16&7;
+    local val = (*:1 ptr >> bit) & 1;
+    *:1 ptr = *:1 ptr | (1<<bit);
+    CF = (val != 0);
+    build unlock; 
+}
+
+:BTS^lockx Mem,Reg32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xab; Mem & Reg32 ...		
+{
+    build lockx;
+    build Mem;
+@ifdef IA64
+    local ptr = Mem + (sext(Reg32) s>>3);
+@else
+    local ptr = Mem + (Reg32 s>>3);
+@endif
+    local bit = Reg32 & 7;
+    local val = (*:1 ptr >> bit) & 1;
+    *:1 ptr = *:1 ptr | (1<<bit);
+    CF = (val != 0);
+    build unlock;
+}
+
+@ifdef IA64
+:BTS^lockx Mem,Reg64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xab; Mem & Reg64 ...		
+{
+    build lockx;
+    build Mem;
+    local ptr = Mem + (Reg64 s>>3);
+    local bit = Reg64 & 7;
+    local val = (*:1 ptr >> bit) & 1;
+    *:1 ptr = *:1 ptr | (1<<bit);
+    CF = (val != 0);
+    build unlock; 
+}
+@endif
+
+:BTS^lockx m16,imm8     is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xba; m16 & reg_opcode=5 ...; imm8   
+{
+    build lockx;
+    build m16;
+    local bit=imm8&0xf;
+    local val=(m16>>bit)&1;
+    m16=m16 | (1<<bit);
+    CF=(val!=0);
+    build unlock; 
+}
+
+:BTS^lockx m32,imm8     is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xba; m32 & reg_opcode=5 ...; imm8   
+{
+    build lockx;
+    build m32;
+    local bit=imm8&0x1f;
+    local val=(m32>>bit)&1;
+    CF=(val!=0);
+    m32=m32 | (1<<bit);
+    build unlock; 
+}
+
+@ifdef IA64
+:BTS^lockx m64,imm8     is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xba; m64 & reg_opcode=5 ...; imm8   
+{
+    build lockx;
+    build m64;
+    local bit=imm8&0x3f;
+    local val=(m64>>bit)&1;
+    m64=m64 | (1<<bit);
+    CF=(val!=0);
+    build unlock; 
+}
+@endif
+
+:CMPXCHG^lockx m8,Reg8  is vexMode=0 & lockx & unlock & byte=0xf; byte=0xb0; m8 & Reg8 ...           
+{
+    build lockx;
+    build m8;
+    subflags(AL,m8);
+    local tmp=AL-m8;
+    resultflags(tmp);
+    local diff = m8^Reg8;
+    m8 = m8 ^ (ZF*diff);
+    diff = AL ^ m8; AL = AL ^ ((ZF==0)*diff);
+    build unlock; 
+}
+
+:CMPXCHG^lockx m16,Reg16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xb1; m16 & Reg16 ...  
+{
+    build lockx;
+    build m16;
+    subflags(AX,m16);
+    local tmp=AX-m16;
+    resultflags(tmp);
+    local diff = m16^Reg16;
+    m16 = m16 ^ (zext(ZF) * diff);
+    diff = AX ^ m16;
+    AX = AX ^ (zext(ZF==0) * diff);
+    build unlock; 
+}
+
+:CMPXCHG^lockx m32,Reg32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xb1; m32 & Reg32 ... & check_EAX_dest ...
+{
+    build lockx;
+    build m32;
+	#this instruction writes to either EAX or m32
+	#in 64-bit mode, a 32-bit register that is written to
+	#(and only the register that is written to)
+	#must be zero-extended to 64 bits
+	subflags(EAX,m32);
+	local tmp=EAX-m32;
+	resultflags(tmp);
+    if (ZF==1) goto <equal>;
+    EAX = m32;
+    build check_EAX_dest;
+    goto <inst_end>;
+<equal>
+    m32 = Reg32;
+<inst_end>
+    build unlock;
+}
+
+@ifdef IA64
+:CMPXCHG^lockx m64,Reg64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xb1; m64 & Reg64 ...  
+{
+    build lockx;
+    build m64;
+    subflags(RAX,m64);
+    local tmp=RAX-m64;
+    resultflags(tmp);
+    local diff = m64^Reg64;
+    m64 = m64 ^ (zext(ZF) * diff);
+    diff = RAX ^ m64;
+    RAX = RAX ^ (zext(ZF==0) * diff);
+    build unlock; 
+}
+@endif
+
+:CMPXCHG8B^lockx  m64        is vexMode=0 & lockx & unlock & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & m64 
+{
+    build lockx;
+    build m64;
+    ZF = ((zext(EDX) << 32) | zext(EAX)) == m64;
+    if (ZF == 1) goto <equal>;
+    EDX = m64(4);
+    EAX = m64:4;
+    goto <done>;
+<equal>
+    m64 = (zext(ECX) << 32) | zext(EBX);
+  <done>
+    build unlock;
+}
+
+@ifdef IA64
+:CMPXCHG16B^lockx  m128	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & ( m128 ) {
+    build lockx;
+    build m128;
+    ZF = ((zext(RDX) << 64) | zext(RAX)) == m128;
+    if (ZF == 1) goto <equal>;
+    RDX = m128(8);
+    RAX = m128:8;
+    goto <done>;
+<equal>
+    m128 = ((zext(RCX) << 64) | zext(RBX));
+<done>
+    build unlock;
+}
+@endif
+
+:DEC^lockx spec_m8       is vexMode=0 & lockx & unlock & byte=0xfe; spec_m8 & reg_opcode=1 ...         
+{
+    build lockx;
+    build spec_m8;
+    OF = sborrow(spec_m8,1);
+    spec_m8 =  spec_m8 - 1;
+    resultflags( spec_m8);
+    build unlock; 
+}
+
+:DEC^lockx spec_m16      is vexMode=0 & lockx & unlock & opsize=0 & byte=0xff; spec_m16 & reg_opcode=1 ... 
+{
+    build lockx;
+    build spec_m16;
+    OF = sborrow(spec_m16,1);
+    spec_m16 = spec_m16 - 1;
+    resultflags(spec_m16);
+    build unlock; 
+}
+
+:DEC^lockx spec_m32      is vexMode=0 & lockx & unlock & opsize=1 & byte=0xff; spec_m32 & reg_opcode=1 ... 
+{
+    build lockx;
+    build spec_m32;
+    OF = sborrow(spec_m32,1);
+    spec_m32 = spec_m32 - 1;
+    resultflags(spec_m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:DEC^lockx spec_m64      is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xff; spec_m64 & reg_opcode=1 ... 
+{
+    build lockx;
+    build spec_m64;
+    OF = sborrow(spec_m64,1);
+    spec_m64 = spec_m64 - 1;
+    resultflags(spec_m64);
+    build unlock; 
+}
+@endif
+
+:INC^lockx  spec_m8	is vexMode=0 & lockx & unlock & byte=0xfe; spec_m8 ...				
+{
+    build lockx;
+    build spec_m8;
+    OF = scarry(spec_m8,1);
+    spec_m8 =  spec_m8 + 1;
+    resultflags( spec_m8);
+    build unlock; 
+}
+
+:INC^lockx spec_m16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0xff; spec_m16 ...	
+{
+    build lockx;
+    build spec_m16;
+    OF = scarry(spec_m16,1);
+    spec_m16 = spec_m16 + 1;
+    resultflags(spec_m16);
+    build unlock; 
+}
+
+:INC^lockx spec_m32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0xff; spec_m32 ...	
+{
+    build lockx;
+    build spec_m32;
+    OF = scarry(spec_m32,1);
+    spec_m32 = spec_m32 + 1;
+    resultflags(spec_m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:INC^lockx spec_m64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xff; spec_m64 ... 
+{
+    build lockx;
+    build spec_m64;
+    OF = scarry(spec_m64,1);
+    spec_m64 = spec_m64 + 1;
+    resultflags(spec_m64);
+    build unlock; 
+}
+@endif
+
+:NEG^lockx m8       is vexMode=0 & lockx & unlock & byte=0xf6; m8 & reg_opcode=3 ...         
+{
+    build lockx;
+    build m8;
+    negflags(m8);
+    m8 =  -m8;
+    resultflags(m8 );
+    build unlock; 
+}
+
+:NEG^lockx m16      is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf7; m16 & reg_opcode=3 ... 
+{
+    build lockx;
+    build m16;
+    negflags(m16);
+    m16 = -m16;
+    resultflags(m16);
+    build unlock; 
+}
+
+:NEG^lockx m32      is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf7; m32 & reg_opcode=3 ... 
+{
+    build lockx;
+    build m32;
+    negflags(m32);
+    m32 = -m32;
+    resultflags(m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:NEG^lockx m64      is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf7; m64 & reg_opcode=3 ... 
+{
+    build lockx;
+    build m64;
+    negflags(m64);
+    m64 = -m64;
+    resultflags(m64);
+    build unlock; 
+}
+@endif
+
+:NOT^lockx m8       is vexMode=0 & lockx & unlock & byte=0xf6; m8 & reg_opcode=2 ...         
+{
+    build lockx;
+    build m8;
+    m8 =  ~m8;
+    build unlock; 
+}
+
+:NOT^lockx m16      is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf7; m16 & reg_opcode=2 ... 
+{
+    build lockx;
+    build m16;
+    m16 = ~m16;
+    build unlock; 
+}
+
+:NOT^lockx m32      is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf7; m32 & reg_opcode=2 ... 
+{
+    build lockx;
+    build m32;
+    m32 = ~m32;
+    build unlock; 
+}
+
+@ifdef IA64
+:NOT^lockx m64      is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf7; m64 & reg_opcode=2 ... 
+{
+    build lockx;
+    build m64;
+    m64 = ~m64;
+    build unlock; 
+}
+@endif
+
+:OR^lockx  spec_m8,imm8      is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=1 ...; imm8     
+{
+    build lockx;
+    build spec_m8;
+    logicalflags();
+    spec_m8 =   spec_m8 |  imm8;
+    resultflags(  spec_m8);
+    build unlock; 
+}
+
+:OR^lockx  spec_m16,imm16        is vexMode=0 & lockx & unlock & opsize=0 & byte=0x81; spec_m16 & reg_opcode=1 ...; imm16  
+{
+    build lockx;
+    build spec_m16;
+    logicalflags();
+    spec_m16 =  spec_m16 | imm16;
+    resultflags( spec_m16);
+    build unlock; 
+}
+
+:OR^lockx  spec_m32,imm32        is vexMode=0 & lockx & unlock & opsize=1 & byte=0x81; spec_m32 & reg_opcode=1 ...; imm32  
+{
+    build lockx;
+    build spec_m32;
+    logicalflags();
+    spec_m32 =  spec_m32 | imm32;
+    resultflags( spec_m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:OR^lockx  spec_m64,simm32       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; spec_m64 & reg_opcode=1 ...; simm32 
+{
+    build lockx;
+    build spec_m64;
+    logicalflags();
+    tmp:8 = spec_m64;
+    spec_m64 =  tmp | simm32;
+    resultflags( spec_m64);
+    build unlock; 
+}
+@endif
+
+:OR^lockx  spec_m16,usimm8_16        is vexMode=0 & lockx & unlock & opsize=0 & byte=0x83; spec_m16 & reg_opcode=1 ...; usimm8_16  
+{
+    build lockx;
+    build spec_m16;
+    logicalflags();
+    spec_m16 =  spec_m16 | usimm8_16;
+    resultflags( spec_m16);
+    build unlock; 
+}
+
+:OR^lockx  spec_m32,usimm8_32        is vexMode=0 & lockx & unlock & opsize=1 & byte=0x83; spec_m32 & reg_opcode=1 ...; usimm8_32  
+{
+    build lockx;
+    build spec_m32;
+    logicalflags();
+    spec_m32 =  spec_m32 | usimm8_32;
+    resultflags( spec_m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:OR^lockx  spec_m64,usimm8_64        is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x83; spec_m64 & reg_opcode=1 ...; usimm8_64  
+{
+    build lockx;
+    build spec_m64;
+    logicalflags();
+    spec_m64 =  spec_m64 | usimm8_64;
+    resultflags( spec_m64);
+    build unlock; 
+}
+@endif
+
+:OR^lockx  m8,Reg8      is vexMode=0 & lockx & unlock & byte=0x8; m8 & Reg8 ...                  
+{
+    build lockx;
+    build m8;
+    logicalflags();
+    m8 =   m8 |  Reg8;
+    resultflags(  m8);
+    build unlock; 
+}
+
+:OR^lockx  m16,Reg16        is vexMode=0 & lockx & unlock & opsize=0 & byte=0x9; m16 & Reg16 ...     
+{
+    build lockx;
+    build m16;
+    logicalflags();
+    m16 =  m16 | Reg16;
+    resultflags( m16);
+    build unlock; 
+}
+
+:OR^lockx  m32,Reg32        is vexMode=0 & lockx & unlock & opsize=1 & byte=0x9; m32 & Reg32 ...     
+{
+    build lockx;
+    build m32;
+    logicalflags();
+    m32 =  m32 | Reg32;
+    resultflags( m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:OR^lockx  m64,Reg64        is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x9; m64 & Reg64 ...     
+{
+    build lockx;
+    build m64;
+    logicalflags();
+    m64 =  m64 | Reg64;
+    resultflags( m64);
+    build unlock; 
+}
+@endif
+
+:SBB^lockx  m8,imm8     is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); m8 & reg_opcode=3 ...; imm8								
+{
+    build lockx;
+    build m8;
+    subCarryFlags( m8, imm8 );
+    resultflags(m8);
+    build unlock; 
+}
+
+:SBB^lockx  m16,imm16       is vexMode=0 & lockx & unlock & opsize=0 & byte=0x81; m16 & reg_opcode=3 ...; imm16							
+{
+    build lockx;
+    build m16;
+    subCarryFlags( m16, imm16 );
+    resultflags(m16);
+    build unlock; 
+}
+
+:SBB^lockx  m32,imm32       is vexMode=0 & lockx & unlock & opsize=1 & byte=0x81; m32 & reg_opcode=3 ...; imm32	
+{
+    build lockx;
+    build m32;
+    subCarryFlags( m32, imm32 );
+    resultflags(m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:SBB^lockx  m64,imm32       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; m64 & reg_opcode=3 ...; imm32							
+{
+    build lockx;
+    build m64;
+    subCarryFlags( m64, imm32 );
+    resultflags(m64);
+    build unlock; 
+}
+@endif
+
+:SBB^lockx  m16,simm8_16       is vexMode=0 & lockx & unlock & opsize=0 & byte=0x83; m16 & reg_opcode=3 ...; simm8_16						
+{
+    build lockx;
+    build m16;
+    subCarryFlags( m16, simm8_16 );
+    resultflags(m16);
+    build unlock; 
+}
+
+:SBB^lockx  m32,simm8_32       is vexMode=0 & lockx & unlock & opsize=1 & byte=0x83; m32 & reg_opcode=3 ...; simm8_32	
+{
+    build lockx;
+    build m32;
+    subCarryFlags( m32, simm8_32 );
+    resultflags(m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:SBB^lockx  m64,simm8_64       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x83; m64 & reg_opcode=3 ...; simm8_64						
+{
+    build lockx;
+    build m64;
+    subCarryFlags( m64, simm8_64 );
+    resultflags(m64);
+    build unlock; 
+}
+@endif
+
+:SBB^lockx  m8,Reg8     is vexMode=0 & lockx & unlock & byte=0x18; m8 & Reg8 ...											
+{
+    build lockx;
+    build m8;
+    subCarryFlags(  m8, Reg8 );
+    resultflags(m8);
+    build unlock; 
+}
+
+:SBB^lockx  m16,Reg16       is vexMode=0 & lockx & unlock & opsize=0 & byte=0x19; m16 & Reg16 ...						
+{
+    build lockx;
+    build m16;
+    subCarryFlags( m16, Reg16 );
+    resultflags(m16);
+    build unlock; 
+}
+
+:SBB^lockx  m32,Reg32       is vexMode=0 & lockx & unlock & opsize=1 & byte=0x19; m32 & Reg32 ...	
+{
+    build lockx;
+    build m32;
+    subCarryFlags( m32, Reg32 );
+    resultflags(m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:SBB^lockx  m64,Reg64       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x19; m64 & Reg64 ...						
+{
+    build lockx;
+    build m64;
+    subCarryFlags( m64, Reg64 );
+    resultflags(m64);
+    build unlock; 
+}
+@endif
+
+:SUB^lockx  spec_m8,imm8     is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=5 ...; imm8     
+{
+    build lockx;
+    build spec_m8;
+    subflags(  spec_m8,imm8 );
+    spec_m8 =   spec_m8 -  imm8;
+    resultflags(  spec_m8);
+    build unlock; 
+}
+
+:SUB^lockx  spec_m16,imm16       is vexMode=0 & lockx & unlock & opsize=0 & byte=0x81; spec_m16 & reg_opcode=5 ...; imm16  
+{
+    build lockx;
+    build spec_m16;
+    subflags( spec_m16,imm16);
+    spec_m16 =  spec_m16 - imm16;
+    resultflags( spec_m16);
+    build unlock; 
+}
+
+:SUB^lockx  spec_m32,imm32       is vexMode=0 & lockx & unlock & opsize=1 & byte=0x81; spec_m32 & reg_opcode=5 ...; imm32  
+{
+    build lockx;
+    build spec_m32;
+    subflags( spec_m32,imm32);
+    spec_m32 =  spec_m32 - imm32;
+    resultflags( spec_m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:SUB^lockx  spec_m64,simm32       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; spec_m64 & reg_opcode=5 ...; simm32  
+{
+    build lockx;
+    build spec_m64;
+    subflags( spec_m64,simm32);
+    spec_m64 =  spec_m64 - simm32;
+    resultflags( spec_m64);
+    build unlock; 
+}
+@endif
+
+:SUB^lockx  spec_m16,simm8_16       is vexMode=0 & lockx & unlock & opsize=0 & byte=0x83; spec_m16 & reg_opcode=5 ...; simm8_16  
+{
+    build lockx;
+    build spec_m16;
+    subflags( spec_m16,simm8_16);
+    spec_m16 =  spec_m16 - simm8_16;
+    resultflags( spec_m16);
+    build unlock; 
+}
+
+:SUB^lockx  spec_m32,simm8_32       is vexMode=0 & lockx & unlock & opsize=1 & byte=0x83; spec_m32 & reg_opcode=5 ...; simm8_32  
+{
+    build lockx;
+    build spec_m32;
+    subflags( spec_m32,simm8_32);
+    spec_m32 =  spec_m32 - simm8_32;
+    resultflags( spec_m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:SUB^lockx  spec_m64,simm8_64       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x83; spec_m64 & reg_opcode=5 ...; simm8_64  
+{
+    build lockx;
+    build spec_m64;
+    subflags( spec_m64,simm8_64);
+    spec_m64 =  spec_m64 - simm8_64;
+    resultflags( spec_m64);
+    build unlock; 
+}
+@endif
+
+:SUB^lockx  m8,Reg8     is vexMode=0 & lockx & unlock & byte=0x28; m8 & Reg8 ...                 
+{
+    build lockx;
+    build m8;
+    subflags(  m8,Reg8 );
+    m8 =   m8 -  Reg8;
+    resultflags(  m8);
+    build unlock; 
+}
+
+:SUB^lockx  m16,Reg16       is vexMode=0 & lockx & unlock & opsize=0 & byte=0x29; m16 & Reg16 ...        
+{
+    build lockx;
+    build m16;
+    subflags( m16,Reg16);
+    m16 =  m16 - Reg16;
+    resultflags( m16);
+    build unlock; 
+}
+
+:SUB^lockx  m32,Reg32       is vexMode=0 & lockx & unlock & opsize=1 & byte=0x29; m32 & Reg32 ...        
+{
+    build lockx;
+    build m32;
+    subflags( m32,Reg32);
+    m32 =  m32 - Reg32;
+    resultflags( m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:SUB^lockx  m64,Reg64       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x29; m64 & Reg64 ...        
+{
+    build lockx;
+    build m64;
+    subflags( m64,Reg64);
+    m64 =  m64 - Reg64;
+    resultflags( m64);
+    build unlock; 
+}
+@endif
+
+:XADD^lockx  m8,Reg8 	is vexMode=0 & lockx & unlock & byte=0x0F; byte=0xC0;  m8 & Reg8  ...        
+{
+    build lockx;
+    build m8;
+    addflags( m8,Reg8 );
+    local tmp =  m8 +  Reg8;
+    Reg8 = m8;
+    m8 = tmp;
+    resultflags(tmp);
+    build unlock; 
+}
+
+:XADD^lockx m16,Reg16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0x0F; byte=0xC1; m16 & Reg16 ... 
+{
+    build lockx;
+    build m16;
+    addflags(m16,Reg16);
+    local tmp = m16 + Reg16;
+    Reg16 = m16;
+    m16 = tmp;
+    resultflags(tmp);
+    build unlock; 
+}
+
+:XADD^lockx m32,Reg32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0x0F; byte=0xC1; m32 & Reg32 ... 
+{
+    build lockx;
+    build m32;
+    addflags(m32,Reg32);
+    local tmp = m32 + Reg32;
+    Reg32 = m32;
+    m32 = tmp;
+    resultflags(tmp);
+    build unlock; 
+}
+
+@ifdef IA64
+:XADD^lockx m64,Reg64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x0F; byte=0xC1; m64 & Reg64 ... 
+{
+    build lockx;
+    build m64;
+    addflags(m64,Reg64);
+    local tmp = m64 + Reg64;
+    Reg64 = m64;
+    m64 = tmp;
+    resultflags(tmp);
+    build unlock; 
+}
+@endif
+
+# XCHG with memory operands always asserts a lock signal regardless of prefix presence
+:XCHG^xacq_xrel_prefx^alwaysLock   m8,Reg8        is vexMode=0 & xacq_xrel_prefx & alwaysLock & byte=0x86; m8 & Reg8  ...                
+{ 
+   build xacq_xrel_prefx;
+   build alwaysLock; 
+   build m8;
+   local tmp = m8;  
+   m8 = Reg8;
+   Reg8 = tmp; 
+   UNLOCK();
+}
+
+:XCHG^xacq_xrel_prefx^alwaysLock  m16,Reg16   is vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=0 & byte=0x87; m16 & Reg16 ...        
+{ 
+   build xacq_xrel_prefx;
+   build alwaysLock;
+   build m16;
+   local tmp = m16; 
+   m16 = Reg16; 
+   Reg16 = tmp; 
+   UNLOCK();
+}
+
+:XCHG^xacq_xrel_prefx^alwaysLock  m32,Reg32   is vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=1 & byte=0x87; m32 & Reg32 ...        
+{ 
+  build xacq_xrel_prefx;
+  build alwaysLock;
+  build m32;
+  local tmp = m32; 
+  m32 = Reg32; 
+  Reg32 = tmp; 
+  UNLOCK(); 
+}
+
+@ifdef IA64
+:XCHG^xacq_xrel_prefx^alwaysLock m64,Reg64   is $(LONGMODE_ON) & vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=2 & byte=0x87; m64 & Reg64 ...        
+{ 
+  build xacq_xrel_prefx; 
+  build alwaysLock;
+  build m64;
+  local tmp = m64; 
+  m64 = Reg64; 
+  Reg64 = tmp; 
+  UNLOCK(); 
+}
+@endif
+
+:XOR^lockx spec_m8,imm8      is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=6 ...; imm8     
+{
+    build lockx;
+    build spec_m8;
+    logicalflags();
+    spec_m8 =   spec_m8 ^  imm8;
+    resultflags(  spec_m8);
+    build unlock; 
+}
+
+:XOR^lockx spec_m16,imm16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0x81; spec_m16 & reg_opcode=6 ...; imm16  
+{
+    build lockx;
+    build spec_m16;
+    logicalflags();
+    spec_m16 =  spec_m16 ^ imm16;
+    resultflags( spec_m16);
+    build unlock; 
+}
+
+:XOR^lockx spec_m32,imm32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0x81; spec_m32 & reg_opcode=6 ...; imm32  
+{
+    build lockx;
+    build spec_m32;
+    logicalflags();
+    spec_m32 =  spec_m32 ^ imm32;
+    resultflags( spec_m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:XOR^lockx spec_m64,simm32   is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; spec_m64 & reg_opcode=6 ...; simm32 
+{
+    build lockx;
+    build spec_m64;
+    logicalflags();
+    spec_m64 =  spec_m64 ^ simm32;
+    resultflags( spec_m64);
+    build unlock; 
+}
+@endif
+
+:XOR^lockx spec_m16,usimm8_16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0x83; spec_m16 & reg_opcode=6 ...; usimm8_16  
+{
+    build lockx;
+    build spec_m16;
+    logicalflags();
+    spec_m16 =  spec_m16 ^ usimm8_16;
+    resultflags( spec_m16);
+    build unlock; 
+}
+
+:XOR^lockx spec_m32,usimm8_32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0x83; spec_m32 & reg_opcode=6 ...; usimm8_32  
+{
+    build lockx;
+    build spec_m32;
+    logicalflags();
+    spec_m32 =  spec_m32 ^ usimm8_32;
+    resultflags( spec_m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:XOR^lockx spec_m64,usimm8_64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x83; spec_m64 & reg_opcode=6 ...; usimm8_64  
+{
+    build lockx;
+    build spec_m64;
+    logicalflags();
+    spec_m64 =  spec_m64 ^ usimm8_64;
+    resultflags( spec_m64);
+    build unlock; 
+}
+@endif
+
+:XOR^lockx m8,Reg8      is vexMode=0 & lockx & unlock & byte=0x30; m8 & Reg8 ...                     
+{
+    build lockx;
+    build m8;
+    logicalflags();
+    m8 =   m8 ^  Reg8;
+    resultflags(  m8);
+    build unlock; 
+}
+
+:XOR^lockx m16,Reg16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0x31; m16 & Reg16 ...        
+{
+    build lockx;
+    build m16;
+    logicalflags();
+    m16 =  m16 ^ Reg16;
+    resultflags( m16);
+    build unlock; 
+}
+
+:XOR^lockx m32,Reg32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0x31; m32 & Reg32 ... 
+{
+    build lockx;
+    build m32;
+    logicalflags();
+    m32 =  m32 ^ Reg32;
+    resultflags( m32);
+    build unlock; 
+}
+
+@ifdef IA64
+:XOR^lockx m64,Reg64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x31; m64 & Reg64 ...        
+{
+    build lockx;
+    build m64;
+    logicalflags();
+    m64 =  m64 ^ Reg64;
+    resultflags( m64);
+    build unlock; 
+}
+@endif
