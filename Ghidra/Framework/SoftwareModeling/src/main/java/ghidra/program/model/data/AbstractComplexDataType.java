@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 
 import generic.complex.Complex;
 import ghidra.docking.settings.Settings;
+import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.WrappedMemBuffer;
 
@@ -87,8 +88,14 @@ public abstract class AbstractComplexDataType extends BuiltIn {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDescription() {
-		return "The data type for a complex number: a + bi";
+		return "The data type for a complex number: a + bi; consisting of two " +
+			floatType.getName() + " values";
 	}
 
 	private static double toDouble(Object obj) {

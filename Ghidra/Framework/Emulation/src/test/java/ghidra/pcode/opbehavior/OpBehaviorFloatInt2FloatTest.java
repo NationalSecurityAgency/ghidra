@@ -41,19 +41,19 @@ public class OpBehaviorFloatInt2FloatTest extends AbstractOpBehaviorTest {
 
 		long result = op.evaluateUnary(4, 4, 2);
 		Assert.assertEquals(0, result & 0xffffffff00000000L);// verify that only 4-bytes are used
-		Assert.assertEquals(2.0d, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.0d, ff.decodeHostFloat(result), 0);
 
 		result = op.evaluateUnary(4, 4, -2);
 		Assert.assertEquals(0, result & 0xffffffff00000000L);// verify that only 4-bytes are used
-		Assert.assertEquals(-2.0d, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.0d, ff.decodeHostFloat(result), 0);
 
 		result = op.evaluateUnary(4, 4, 0);
 		Assert.assertEquals(0, result & 0xffffffff00000000L);// verify that only 4-bytes are used
-		Assert.assertEquals(0d, ff.getHostFloat(result), 0);
+		Assert.assertEquals(0d, ff.decodeHostFloat(result), 0);
 
 		result = op.evaluateUnary(4, 4, 0x0ffffffffL);
 		Assert.assertEquals(0, result & 0xffffffff00000000L);// verify that only 4-bytes are used
-		Assert.assertEquals(-1.0d, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-1.0d, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -67,20 +67,20 @@ public class OpBehaviorFloatInt2FloatTest extends AbstractOpBehaviorTest {
 
 		BigInteger result = op.evaluateUnary(4, 4, BigInteger.valueOf(2));
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(ff.getBigFloat(2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.0d), ff.decodeBigFloat(result));
 
 		result = op.evaluateUnary(4, 4, BigInteger.valueOf(-2));
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.decodeBigFloat(result));
 
 		result = op.evaluateUnary(4, 4, BigInteger.ZERO);
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(ff.getBigZero(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigZero(false), ff.decodeBigFloat(result));
 
 		BigInteger NEG_ONE = Utils.bytesToBigInteger(
 			new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff }, 4, false, false);
 		result = op.evaluateUnary(4, 4, NEG_ONE);
-		Assert.assertEquals(ff.getBigFloat(-1.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-1.0d), ff.decodeBigFloat(result));
 
 	}
 

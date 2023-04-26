@@ -79,7 +79,7 @@ public abstract class CountedDynamicDataType extends DynamicDataType {
 		int n = (int) getCount(memory, start.add(counterOffset));
 
 		DataTypeComponent[] comps = new DataTypeComponent[n + 1];
-		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(header, buf);
+		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(header, buf, false);
 
 		if (dti == null) {
 			Msg.error(this, "ERROR: problem with data at " + buf.getAddress());
@@ -94,7 +94,7 @@ public abstract class CountedDynamicDataType extends DynamicDataType {
 		try {
 			newBuf.advance(countSize);
 			for (int i = 1; i <= n; i++) {
-				dti = DataTypeInstance.getDataTypeInstance(baseStruct, buf);
+				dti = DataTypeInstance.getDataTypeInstance(baseStruct, buf, false);
 				if (dti == null) {
 					Msg.error(this, "ERROR: problem with data at " + buf.getAddress());
 					return null;

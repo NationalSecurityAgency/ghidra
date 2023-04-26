@@ -32,6 +32,8 @@ import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodDef.CliMethodDefRo
 import ghidra.app.util.bin.format.pe.cli.tables.CliTypeTable;
 import ghidra.app.util.bin.format.pe.cli.tables.indexes.CliIndexCustomAttributeType;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.floats.Float32DataType;
+import ghidra.program.model.data.floats.Float64DataType;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 
@@ -410,12 +412,12 @@ public class CliBlobCustomAttrib extends CliBlob {
 
 					case ELEMENT_TYPE_R4:
 						addFixedArg(processFixedArgs, baseTypeCode,
-							reader.readNextByteArray(Float4DataType.dataType.getLength()));
+							reader.readNextByteArray(Float32DataType.dataType.getLength()));
 						break;
 
 					case ELEMENT_TYPE_R8:
 						addFixedArg(processFixedArgs, baseTypeCode,
-							reader.readNextByteArray(Float8DataType.dataType.getLength()));
+							reader.readNextByteArray(Float64DataType.dataType.getLength()));
 						break;
 
 					case ELEMENT_TYPE_STRING:

@@ -501,7 +501,7 @@ public class DataPlugin extends Plugin implements DataService {
 		}
 
 		DataTypeInstance dataTypeInstance = DataTypeInstance.getDataTypeInstance(dataType,
-			new DumbMemBufferImpl(program.getMemory(), start));
+			new DumbMemBufferImpl(program.getMemory(), start), false);
 		if (dataTypeInstance == null) {
 			tool.setStatusInfo("Unallowed data type at " + start + ": " + dataType.getName());
 			return -1;

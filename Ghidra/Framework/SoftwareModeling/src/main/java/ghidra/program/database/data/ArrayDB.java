@@ -36,6 +36,7 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	private volatile String displayName;
 	private ArrayDBAdapter adapter;
+	private int elementLength; // lazy initialization
 
 	/**
 	 * Constructor
@@ -52,6 +53,7 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	@Override
 	protected String doGetName() {
+		elementLength = -1; // signal refresh by getElementLength() 
 		return DataTypeUtilities.getName(this, true);
 	}
 
@@ -74,6 +76,7 @@ class ArrayDB extends DataTypeDB implements Array {
 	@Override
 	protected boolean refresh() {
 		try {
+			elementLength = -1;
 			DBRecord rec = adapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
@@ -130,6 +133,11 @@ class ArrayDB extends DataTypeDB implements Array {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDescription() {
 		checkIsValid();
 		return "Array of " + getDataType().getDescription();
@@ -169,15 +177,23 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	@Override
 	public int getElementLength() {
-		DataType dt = getDataType();
-		int elementLen;
-		if (dt instanceof Dynamic) {
-			elementLen = record.getIntValue(ArrayDBAdapter.ARRAY_ELEMENT_LENGTH_COL);
+		lock.acquire();
+		try {
+			checkIsValid();
+			DataType dt = getDataType();
+			if (elementLength < 0) {
+				if (dt instanceof Dynamic) {
+					elementLength = record.getIntValue(ArrayDBAdapter.ARRAY_ELEMENT_LENGTH_COL);
+				}
+				else {
+					elementLength = dt.getAlignedLength();
+				}
+			}
+			return elementLength;
 		}
-		else {
-			elementLen = dt.getLength();
+		finally {
+			lock.release();
 		}
-		return elementLen;
 	}
 
 	@Override
@@ -251,7 +267,7 @@ class ArrayDB extends DataTypeDB implements Array {
 				if (newDt instanceof Dynamic || newDt instanceof FactoryDataType) {
 					newDt = DataType.DEFAULT;
 				}
-				int elementLength = newDt.getLength() < 0 ? oldElementLength : -1;
+				elementLength = newDt.getLength() < 0 ? oldElementLength : -1;
 				record.setIntValue(ArrayDBAdapter.ARRAY_ELEMENT_LENGTH_COL, elementLength);
 				try {
 					adapter.updateRecord(record);
@@ -288,7 +304,8 @@ class ArrayDB extends DataTypeDB implements Array {
 	public void dataTypeSizeChanged(DataType dt) {
 		lock.acquire();
 		try {
-			if (checkIsValid() && dt == getDataType()) {
+			if (checkIsValid() && dt == getDataType() && dt.getLength() > 0) {
+				elementLength = -1;
 				notifySizeChanged(true);
 			}
 		}
@@ -333,6 +350,7 @@ class ArrayDB extends DataTypeDB implements Array {
 	@Override
 	public void dataTypeDeleted(DataType dt) {
 		if (getDataType() == dt) {
+			elementLength = -1;
 			dataMgr.addDataTypeToDelete(key);
 		}
 	}

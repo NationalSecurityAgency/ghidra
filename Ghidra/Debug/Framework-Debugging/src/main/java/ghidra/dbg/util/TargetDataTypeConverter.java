@@ -27,6 +27,7 @@ import ghidra.dbg.target.TargetDataTypeMember;
 import ghidra.dbg.target.TargetNamedDataType;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.util.Msg;
 
 public class TargetDataTypeConverter {
@@ -481,6 +482,8 @@ public class TargetDataTypeConverter {
 			case SINT:
 				return AbstractIntegerDataType.getSignedDataType(tPrimitive.getLength(), dtm);
 			case FLOAT:
+				// TODO: lookup by length must use "raw" encoding size since "aligned" lengths
+				// may be duplicated across different float types.
 				return AbstractFloatDataType.getFloatDataType(tPrimitive.getLength(), dtm);
 			case COMPLEX:
 				return AbstractComplexDataType.getComplexDataType(tPrimitive.getLength(), dtm);

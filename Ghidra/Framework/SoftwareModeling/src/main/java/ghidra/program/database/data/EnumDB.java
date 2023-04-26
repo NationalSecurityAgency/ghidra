@@ -454,6 +454,11 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDescription() {
 		lock.acquire();
 		try {

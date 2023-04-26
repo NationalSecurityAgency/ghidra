@@ -784,7 +784,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						false)
 					: LittleEndianDataConverter.INSTANCE.getBigInteger(bytes, index, elementSize,
 						false);
-			BigDecimal val = ff.round(ff.getHostFloat(encoding));
+			BigDecimal val = ff.round(ff.decodeBigFloat(encoding));
 			return val.toString();
 		}
 	}
@@ -879,7 +879,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		if (reg != null && floatRegSet.contains(reg)) {
 			FloatFormat floatFormat = FloatFormatFactory.getFloatFormat(size);
 			BigDecimal hostFloat =
-				floatFormat.round(floatFormat.getHostFloat(new BigInteger(1, values)));
+				floatFormat.round(floatFormat.decodeBigFloat(new BigInteger(1, values)));
 			floatStr = " (" + hostFloat.toString() + ")";
 		}
 

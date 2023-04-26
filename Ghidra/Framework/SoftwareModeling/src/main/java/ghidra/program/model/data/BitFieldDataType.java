@@ -15,9 +15,8 @@
  */
 package ghidra.program.model.data;
 
-import java.util.*;
-
 import java.math.BigInteger;
+import java.util.*;
 
 import ghidra.docking.settings.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -334,6 +333,11 @@ public class BitFieldDataType extends AbstractDataType {
 	@Override
 	public int getLength() {
 		return storageSize;
+	}
+
+	@Override
+	public int getAlignedLength() {
+		return getLength();
 	}
 
 	@Override

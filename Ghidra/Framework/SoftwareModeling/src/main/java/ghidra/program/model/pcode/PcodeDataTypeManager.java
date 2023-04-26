@@ -28,6 +28,7 @@ import ghidra.program.database.data.PointerTypedefInspector;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.program.model.listing.Program;
@@ -249,6 +250,7 @@ public class PcodeDataTypeManager {
 		else if (meta.equals("float")) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElement(el);
+			// NOTE: Float lookup by length must use "raw" encoding size since
 			return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
 		}
 		else if (meta.equals("partunion")) {

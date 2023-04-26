@@ -255,6 +255,11 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return -1;
+	}
+
+	@Override
 	public String getDescription() {
 		return "Function Signature Data Type";
 	}

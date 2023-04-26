@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.model.data;
+package ghidra.program.model.data.floats;
 
-public class Float8DataType extends AbstractFloatDataType {
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.util.classfinder.ClassTranslator;
 
-	public static final Float8DataType dataType = new Float8DataType();
+public class Float16DataType extends AbstractFloatDataType {
 
-	public Float8DataType() {
+	static {
+		// remap old byte-sized float to this bit-sized equivalent
+		ClassTranslator.put(
+			"ghidra.program.model.data.Float2DataType", Float16DataType.class.getName());
+	}
+
+	public static final Float16DataType dataType = new Float16DataType();
+
+	public Float16DataType() {
 		this(null);
 	}
 
-	public Float8DataType(DataTypeManager dtm) {
-		super("float8", dtm);
+	public Float16DataType(DataTypeManager dtm) {
+		super("float16", 2, dtm);
 	}
 
 	@Override
@@ -33,12 +42,7 @@ public class Float8DataType extends AbstractFloatDataType {
 		if (dtm == getDataTypeManager()) {
 			return this;
 		}
-		return new Float8DataType(dtm);
-	}
-
-	@Override
-	public int getLength() {
-		return 8;
+		return new Float16DataType(dtm);
 	}
 
 }

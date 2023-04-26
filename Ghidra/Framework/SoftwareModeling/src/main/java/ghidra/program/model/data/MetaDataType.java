@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.program.model.data.floats.AbstractFloatDataType;
+
 public enum MetaDataType {
 	// Enumerations are ordered in terms of how "specific" the data-type class is
 	VOID,		// "void" data-type

@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.floats.Float128DataType;
 import ghidra.program.model.symbol.Namespace;
 
 /**
@@ -283,7 +284,7 @@ public class DemangledDataType extends DemangledType {
 			dt = FloatDataType.dataType;
 		}
 		else if (FLOAT128.equals(name)) {
-			dt = new TypedefDataType(FLOAT128, Float16DataType.dataType);
+			dt = new TypedefDataType(FLOAT128, Float128DataType.dataType);
 		}
 		else if (DOUBLE.equals(name)) {
 			dt = DoubleDataType.dataType;

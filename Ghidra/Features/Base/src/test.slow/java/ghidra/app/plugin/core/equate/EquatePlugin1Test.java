@@ -863,7 +863,7 @@ public class EquatePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 			}
 			else if (name.indexOf("Float") >= 0) {
 				assertTrue(popupPath[1].startsWith("Float"));
-				assertTrue(popupPath[1].endsWith(" 5.605194E-45"));
+				assertTrue(popupPath[1].endsWith(" 5.6051939E-45"));
 			}
 			else {
 				fail("Unhandled Convert item: " + name);

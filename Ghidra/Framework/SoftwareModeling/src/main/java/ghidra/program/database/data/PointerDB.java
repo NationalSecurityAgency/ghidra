@@ -208,6 +208,12 @@ class PointerDB extends DataTypeDB implements Pointer {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		// assume pointers are never padded
+		return getLength();
+	}
+
+	@Override
 	public String getDescription() {
 		lock.acquire();
 		try {

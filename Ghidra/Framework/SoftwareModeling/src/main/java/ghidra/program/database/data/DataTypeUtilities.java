@@ -23,6 +23,7 @@ import ghidra.app.util.SymbolPathParser;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.util.UniversalID;

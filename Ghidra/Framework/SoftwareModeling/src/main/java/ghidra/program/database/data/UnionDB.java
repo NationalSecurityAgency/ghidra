@@ -487,7 +487,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			if (dt instanceof BitFieldDataType) {
 				dt = adjustBitField(dt); // in case base type changed
 			}
-			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 			if (length < 0) {
 				continue; // illegal condition - skip
 			}
@@ -533,7 +533,8 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			boolean changed = false;
 			for (DataTypeComponentDB dtc : components) {
 				if (dtc.getDataType() == dt) {
-					int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+					int length =
+						DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 					if (length >= 0 && length != dtc.getLength()) {
 						dtc.setLength(length, true);
 						changed = true;
@@ -824,7 +825,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 					}
 					else {
 						int len = DataTypeComponent.usesZeroLengthComponent(newDt) ? 0
-								: newDt.getLength();
+								: newDt.getAlignedLength();
 						if (len < 0) {
 							len = dtc.getLength();
 						}
