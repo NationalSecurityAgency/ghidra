@@ -454,7 +454,7 @@ public class DemangledFunction extends DemangledObject {
 		}
 
 		ApplyFunctionSignatureCmd cmd = new ApplyFunctionSignatureCmd(function.getEntryPoint(),
-			signature, SourceType.IMPORTED, true, false);
+			signature, SourceType.IMPORTED, true, FunctionRenameOption.RENAME_IF_DEFAULT);
 		cmd.applyTo(program);
 
 		return true;
