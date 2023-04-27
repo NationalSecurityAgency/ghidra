@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.lang;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 
@@ -45,11 +45,11 @@ public class RegisterValueContextTest extends AbstractGhidraHeadlessIntegrationT
 		BigInteger value = val.getUnsignedValue();
 		assertEquals(0x12345678, value.longValue());
 		BigInteger valueMask = val.getValueMask();
-		assertEquals(0xffffffffL, valueMask.longValue());
+		assertEquals(0xffffffffffffffffL, valueMask.longValue());
 
 		RegisterValue newValue = new RegisterValue(regContext, value, valueMask);
 		assertEquals(0x12345678, newValue.getUnsignedValue().longValue());
-		assertEquals(0xffffffffL, newValue.getValueMask().longValue());
+		assertEquals(0xffffffffffffffffL, newValue.getValueMask().longValue());
 
 	}
 
@@ -57,22 +57,24 @@ public class RegisterValueContextTest extends AbstractGhidraHeadlessIntegrationT
 	public void testBytes() {
 
 		RegisterValue val = new RegisterValue(regContext,
-			new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, 1, 2, 3, 4 });
+			new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff,
+				(byte) 0xff, (byte) 0xff, (byte) 0xff, 1, 2, 3, 4, 5, 6, 7, 8 });
 
-		assertEquals(0x01020304, val.getUnsignedValueIgnoreMask().longValue());
-		assertEquals(0x01020304, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(0x01020304, val.getUnsignedValue().longValue());
-		assertEquals(0x01020304, val.getSignedValue().longValue());
-		assertEquals(0x0ffffffffL, val.getValueMask().longValue());
+		assertEquals(0x0102030405060708L, val.getUnsignedValueIgnoreMask().longValue());
+		assertEquals(0x0102030405060708L, val.getSignedValueIgnoreMask().longValue());
+		assertEquals(0x0102030405060708L, val.getUnsignedValue().longValue());
+		assertEquals(0x0102030405060708L, val.getSignedValue().longValue());
+		assertEquals(0x0ffffffffffffffffL, val.getValueMask().longValue());
 
 		val = new RegisterValue(regContext,
-			new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xf0, (byte) 0xff, 1, 2, 3, 4 });
+			new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xf0, (byte) 0xff, (byte) 0xff,
+				(byte) 0xff, (byte) 0xff, (byte) 0xff, 1, 2, 3, 4, 5, 6, 7, 8 });
 
-		assertEquals(0x01020304, val.getUnsignedValueIgnoreMask().longValue());
-		assertEquals(0x01020304, val.getSignedValueIgnoreMask().longValue());
+		assertEquals(0x0102030405060708L, val.getUnsignedValueIgnoreMask().longValue());
+		assertEquals(0x0102030405060708L, val.getSignedValueIgnoreMask().longValue());
 		assertEquals(null, val.getUnsignedValue());
 		assertEquals(null, val.getSignedValue());
-		assertEquals(0x0fffff0ffL, val.getValueMask().longValue());
+		assertEquals(0x0fffff0ffffffffffL, val.getValueMask().longValue());
 	}
 
 	@Test
@@ -81,41 +83,43 @@ public class RegisterValueContextTest extends AbstractGhidraHeadlessIntegrationT
 		RegisterValue val =
 			new RegisterValue(regContext, new byte[] { (byte) 0xff, (byte) 0xff, 0x12, 0x34 });
 
-		assertEquals(0x12340000, val.getUnsignedValueIgnoreMask().longValue());
-		assertEquals(0x12340000, val.getSignedValueIgnoreMask().longValue());
+		assertEquals(0x1234000000000000L, val.getUnsignedValueIgnoreMask().longValue());
+		assertEquals(0x1234000000000000L, val.getSignedValueIgnoreMask().longValue());
 		assertEquals(null, val.getUnsignedValue());
 		assertEquals(null, val.getSignedValue());
-		assertEquals(0x0ffff0000L, val.getValueMask().longValue());
+		assertEquals(0x0ffff000000000000L, val.getValueMask().longValue());
 
 		val = new RegisterValue(regContext, new byte[] { (byte) 0x10, (byte) 0xff, 0x12, 0x34 });
 
-		assertEquals(0x10340000, val.getUnsignedValueIgnoreMask().longValue());
-		assertEquals(0x10340000, val.getSignedValueIgnoreMask().longValue());
+		assertEquals(0x1034000000000000L, val.getUnsignedValueIgnoreMask().longValue());
+		assertEquals(0x1034000000000000L, val.getSignedValueIgnoreMask().longValue());
 		assertEquals(null, val.getUnsignedValue());
 		assertEquals(null, val.getSignedValue());
-		assertEquals(0x10ff0000, val.getValueMask().longValue());
+		assertEquals(0x10ff000000000000L, val.getValueMask().longValue());
 	}
 
 	@Test
 	public void testBytesShrink() {
 
 		RegisterValue val = new RegisterValue(regContext, new byte[] { (byte) 0xff, (byte) 0xff,
-			(byte) 0xff, (byte) 0xff, 0, 0, 0, 0, 0x12, 0x34, 0x56, 0x78, 0, 0, 0, 0 });
+			(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, 0, 0, 0,
+			0, 0, 0, 0, 0, 0x12, 0x34, 0x56, 0x78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
 
-		assertEquals(0x12345678, val.getUnsignedValueIgnoreMask().longValue());
-		assertEquals(0x12345678, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(0x12345678, val.getUnsignedValue().longValue());
-		assertEquals(0x12345678, val.getSignedValue().longValue());
-		assertEquals(0x0ffffffffL, val.getValueMask().longValue());
+		assertEquals(0x1234567800000000L, val.getUnsignedValueIgnoreMask().longValue());
+		assertEquals(0x1234567800000000L, val.getSignedValueIgnoreMask().longValue());
+		assertEquals(0x1234567800000000L, val.getUnsignedValue().longValue());
+		assertEquals(0x1234567800000000L, val.getSignedValue().longValue());
+		assertEquals(0xffffffffffffffffL, val.getValueMask().longValue());
 
 		val = new RegisterValue(regContext, new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xf0,
-			(byte) 0xff, 0, 0, 0, 0, 0x12, 0x34, 0x56, 0x78, 0, 0, 0, 0 });
+			(byte) 0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x12, 0x34, 0x56, 0x78, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0 });
 
-		assertEquals(0x12345078, val.getUnsignedValueIgnoreMask().longValue());
-		assertEquals(0x12345078, val.getSignedValueIgnoreMask().longValue());
+		assertEquals(0x1234507800000000L, val.getUnsignedValueIgnoreMask().longValue());
+		assertEquals(0x1234507800000000L, val.getSignedValueIgnoreMask().longValue());
 		assertEquals(null, val.getUnsignedValue());
 		assertEquals(null, val.getSignedValue());
-		assertEquals(0x0fffff0ffL, val.getValueMask().longValue());
+		assertEquals(0xfffff0ff00000000L, val.getValueMask().longValue());
 	}
 
 }
