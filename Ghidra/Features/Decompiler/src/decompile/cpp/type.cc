@@ -1011,6 +1011,13 @@ Datatype *TypeArray::getSubType(uintb off,uintb *newoff) const
   return arrayof;
 }
 
+int4 TypeArray::getHoleSize(int4 off) const
+
+{
+  int4 newOff = off % arrayof->getSize();
+  return arrayof->getHoleSize(newOff);
+}
+
 /// Given some contiguous piece of the array, figure out which element overlaps
 /// the piece, and pass back the element index and the renormalized offset
 /// \param off is the offset into the array
@@ -1410,6 +1417,23 @@ Datatype *TypeStruct::getSubType(uintb off,uintb *newoff) const
   const TypeField &curfield( field[i] );
   *newoff = off - curfield.offset;
   return curfield.type;
+}
+
+int4 TypeStruct::getHoleSize(int4 off) const
+
+{
+  int4 i = getLowerBoundField(off);
+  if (i >= 0) {
+    const TypeField &curfield( field[i] );
+    int4 newOff = off - curfield.offset;
+    if (newOff < curfield.type->getSize())
+      return curfield.type->getHoleSize(newOff);
+  }
+  i += 1;				// advance to first field following off
+  if (i < field.size()) {
+    return field[i].offset - off;	// Distance to following field
+  }
+  return getSize() - off;		// Distance to end of structure
 }
 
 Datatype *TypeStruct::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const
@@ -1837,12 +1861,14 @@ const TypeField *TypeUnion::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,
 {
   Funcdata *fd = op->getParent()->getFuncdata();
   const ResolvedUnion *res = fd->getUnionField(this, op, slot);
-  if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
-    const TypeField *field = getField(res->getFieldNum());
-    newoff = offset - field->offset;
-    return field;
+  if (res != (ResolvedUnion *)0) {
+    if (res->getFieldNum() >= 0) {
+      const TypeField *field = getField(res->getFieldNum());
+      newoff = offset - field->offset;
+      return field;
+    }
   }
-  if (op->code() == CPUI_SUBPIECE && slot == 1) {	// The slot is artificial in this case
+  else if (op->code() == CPUI_SUBPIECE && slot == 1) {	// The slot is artificial in this case
     ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op);
     fd->setUnionField(this, op, slot, scoreFields.getResult());
     if (scoreFields.getResult().getFieldNum() >= 0) {
@@ -1937,8 +1963,28 @@ void TypePartialStruct::printRaw(ostream &s) const
 Datatype *TypePartialStruct::getSubType(uintb off,uintb *newoff) const
 
 {
+  int4 sizeLeft = (size - (int4)off);
   off += offset;
-  return container->getSubType(off, newoff);
+  Datatype *ct = container;
+  do {
+    ct = ct->getSubType(off, newoff);
+    if (ct == (Datatype *)0)
+      break;
+    off = *newoff;
+    // Component can extend beyond range of this partial, in which case we go down another level
+  } while(ct->getSize() - (int4)off > sizeLeft);
+  return ct;
+}
+
+int4 TypePartialStruct::getHoleSize(int4 off) const
+
+{
+  int4 sizeLeft = size-off;
+  off += offset;
+  int4 res = container->getHoleSize(off);
+  if (res > sizeLeft)
+    res = sizeLeft;
+  return res;
 }
 
 int4 TypePartialStruct::compare(const Datatype &op,int4 level) const
@@ -3576,7 +3622,10 @@ TypePointer *TypeFactory::getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc
 Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
 
 {
+  if (offset + size > ct->getSize())
+    return (Datatype *)0;
   Datatype *lastType = (Datatype *)0;
+  uintb lastOff = 0;
   uintb curOff = offset;
   do {
     if (ct->getSize() <= size) {
@@ -3588,11 +3637,12 @@ Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
       return getTypePartialUnion((TypeUnion *)ct, curOff, size);
     }
     lastType = ct;
+    lastOff = curOff;
     ct = ct->getSubType(curOff,&curOff);
   } while(ct != (Datatype *)0);
   // If we reach here, lastType is bigger than size
   if (lastType->getMetatype() == TYPE_STRUCT || lastType->getMetatype() == TYPE_ARRAY)
-    return getTypePartialStruct(lastType, curOff, size);
+    return getTypePartialStruct(lastType, lastOff, size);
   return (Datatype *)0;
 }
 

@@ -1917,7 +1917,8 @@
       <sect4 id="TypeBoolean">
 	<title>Boolean</title>
 	<para>
-	  A 1-byte boolean data-type is supported. 
+	  A 1-byte boolean data-type is supported. Boolean constants are rendered as either the
+	  token <emphasis role="bold">true</emphasis> or the token <emphasis role="bold">false</emphasis>.
 	</para>
       </sect4>
       <sect4 id="TypeFloat">
@@ -1972,10 +1973,15 @@
 	<para>
 	  Pointer data-types are fully supported.  A pointer to any other supported data-type is
 	  possible.  The data-type being pointed to, whether it is a primitive, structure, or another pointer,
-	  informs how the Decompiler renders a dereferenced pointer.
-	  The Decompiler assumes that a pointer variable may refer to an array of
-	  the underlying data-type and will use array notation if there is evidence of more than
-	  one element.
+	  informs how the Decompiler renders a dereferenced pointer or other pointer expression.
+	</para>
+        <para>
+	  The Decompiler automatically assumes that a pointer may reference an array of the underlying data-type.
+	  If an integer value is added to the pointer and the value is known to be a multiple of the data-type's size,
+	  the expression is treated as either <emphasis>pointer arithmetic</emphasis> or as an array access, and the multiplication
+	  factor is hidden. Adding smaller integers to a structure pointer typically results in a
+	  <emphasis>field access</emphasis> expression using the '->' or other language specific token. See the discussion
+	  on <emphasis>Structures</emphasis> below.
 	</para>
 	<para>
 	  The default pointer size is set based on the processor and compiler selected when the Program is
@@ -1985,9 +1991,11 @@
 	  architectures can model different size pointers into the space (such as <emphasis>near</emphasis> pointers).
 	</para>
 	<para>
-	  For processors with more than one memory address space, pointer data-types currently cannot be directly
-	  annotated to indicate a preferred address space.  Where there is ambiguity, the Decompiler attempts to
-	  determine the correct address space from the context of its use within the function.
+	  For processors with more than one memory address space, pointer data-types do not by default indicate
+	  a preferred address space and can be used to reference data in any address space.
+	  Where there is ambiguity, the Decompiler attempts to determine the correct address space from the context
+	  of its use within the function.  It is possible to create pointer data-types with an
+	  explicitly preferred address space, see <xref linkend="AttributeAddressPointer"/>.
 	</para>
       </sect4>
       <sect4 id="TypeArray">
@@ -1995,6 +2003,28 @@
 	<para>
 	  Array data-types are fully supported. The array element can be any other supported data-type
 	  with a fixed size.
+	</para>
+	<para>
+	  For code that accesses arrays, the Decompiler keeps track of the array index and automatically
+	  hides the underlying multiplication needed to account for the size of an element.  The access is
+	  displayed as an expression using standard square brace notation, '[' and ']'.
+	  For an access that covers more than one array element simultaneously, the Decompiler will either
+	  generate a pointer expression that casts to a data-type of the correct size or may generate a
+	  special token representing the accessed portion of the array.
+          <informalexample>
+	    <programlisting>
+	      text[iVar1] = 'a';           // Assigning a character to a variable index of the array
+	      cVar2 = text[7];             // Reading a fixed element from an array
+	      text._8_2_ = 0x7677;         // Auto-generated token indicating multiple elements are assigned at once
+	    </programlisting>
+          </informalexample>
+	  For an auto-generated token like <code>_8_2_</code>, the first integer indicates the offset in bytes
+	  of the access from the start of the array, and the second integer indicates the number of bytes being accessed.
+	</para>
+	<para>
+	  If more then one element is being accessed simultaneously, the Decompiler may try to split
+	  the access into logical pieces. See the description of the analysis option for
+	  <link linkend="AnalysisSplitArray">Splitting Array Accesses</link>.
 	</para>
       </sect4>
       <sect4 id="TypeStructure">
@@ -2004,6 +2034,29 @@
 	  when analyzing a function; it propagates them into the function from explicitly
 	  annotated sources, like input parameters or global variables.  Decompiler-directed creation of
 	  structures can be triggered by the user (see <xref linkend="ActionAutoStructure"/>).
+	</para>
+	<para>
+	  For variables that are known to be structures, or pointers to structures, the Decompiler keeps
+	  track of offsets into the variable and will render the name of the specific field being
+	  accessed, using language specific access operators such as '.' or '->'. If the part of the
+	  structure being accessed does not have a normal field name, either because the structure data-type
+	  does not list a name at that position or because more than one field is being accessed
+	  simultaneously, the Decompiler will either cast a pointer to a data-type of the correct size or
+	  may automatically generate a token name representing the accessed portion.
+          <informalexample>
+	    <programlisting>
+	      struct1.a = 1;                // Assigning an integer to a field named "a"
+	      fVar1 = ptr->b;               // Reading field "b" through a pointer
+	      struct1._20_4_ = 0xff00ff00;  // Auto-generated name for assigning multiple fields at once
+	    </programlisting>
+          </informalexample>
+	  For an auto-generated token like <code>_20_4_</code>, the first integer indicates the offset in bytes
+	  of the access from the start of the structure, and the second integer indicates the number of bytes being accessed.
+	</para>
+	<para>
+          If more than one field is being accessed simultaneously, the Decompiler may try to split
+	  the access into logical pieces. See the description of the analysis option for
+	  <link linkend="AnalysisSplitStruct">Splitting Structure Accesses</link>.
 	</para>
       </sect4>
       <sect4 id="TypeEnum">
@@ -3086,6 +3139,62 @@
 	  and a sequence of instructions can share the same predicate. The Decompiler merges the
 	  resulting <code>if/else</code> blocks that share the same predicate so that the condition is only
 	  printed once.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry id="AnalysisSplitStruct">
+      <term><emphasis role="bold">Split combined structure fields</emphasis></term>
+      <listitem>
+	<para>
+	  When this option is active, the Decompiler attempts to identify places in the code where multiple
+	  fields of a structure data-type are being moved simultaneously with a single operation. Then it splits the
+	  operation into multiple pieces so that the logical fields can be seen individually.
+	  When this option isn't active, the Decompiler creates an artificial token to
+	  represent the combined fields being written to or read from.
+          <informalexample>
+	    <programlisting>
+	      struct1._20_4_ = 0xff00ff00;  // Auto-generated name for assigning multiple fields at once
+	        ...
+	      struct1.a = 0xff00;           // The same assignment, after splitting
+	      struct1.b = 0xff00;
+	    </programlisting>
+          </informalexample>
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry id="AnalysisSplitArray">
+      <term><emphasis role="bold">Split combined array elements</emphasis></term>
+      <listitem>
+	<para>
+	  When this option is active, the Decompiler attempts to identify places in the code where multiple
+	  elements of an array are being moved simultaneously with a single operation. Then it splits the
+	  operation into multiple pieces so each element of the array can be seen individually.
+	  When this option isn't active, the Decompiler creates an artificial token to
+	  represent the combined elements being written to or read from.
+          <informalexample>
+	    <programlisting>
+	      text._20_2_ = 0x4241;        // Auto-generated name for assigning multiple elements at once
+	        ...
+	      text[20] = 'A';              // The same assignment, after splitting
+	      test[21] = 'B';
+	    </programlisting>
+          </informalexample>
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry id="AnalysisSplitPointers">
+      <term><emphasis role="bold">Split pointers to combined elements</emphasis></term>
+      <listitem>
+	<para>
+	  This options affects when the Decompiler's splitting actions are applied. See
+	  the discussion above about 
+	  <link linkend="AnalysisSplitStruct">Splitting Structure Accesses</link> and
+	  <link linkend="AnalysisSplitArray">Splitting Array Accesses</link>.
+	  If this option is on, a split is performed whenever combined elements or combined
+	  fields are copied.  In particular, either the read access, or the write access, or both,
+	  can be through a pointer.
+	  If this option is off, splitting is limited to copies between structures or arrays at fixed
+	  locations, either at a global address, or on the local stack.
 	</para>
       </listitem>
     </varlistentry>

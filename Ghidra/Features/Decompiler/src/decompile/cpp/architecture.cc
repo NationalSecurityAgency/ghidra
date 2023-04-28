@@ -1401,7 +1401,9 @@ void Architecture::resetDefaultsInternal(void)
   infer_pointers = true;
   analyze_for_loops = true;
   readonlypropagate = false;
-  alias_block_level = 2;	// Block structs and arrays by default
+  alias_block_level = 2;	// Block structs and arrays by default, but not more primitive data-types
+  split_datatype_config = OptionSplitDatatypes::option_struct | OptionSplitDatatypes::option_array
+      | OptionSplitDatatypes::option_pointer;
 }
 
 /// Reset options that can be modified by the OptionDatabase. This includes
