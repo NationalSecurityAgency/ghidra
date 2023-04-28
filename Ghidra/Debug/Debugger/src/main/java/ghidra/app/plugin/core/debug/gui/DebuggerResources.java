@@ -1878,22 +1878,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface ForceFullViewAction {
-		String NAME = "Force Full View";
-		String DESCRIPTION = "Ignore regions and fiew full address spaces";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "force_full_view";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuGroup(GROUP_GENERAL)
-					.menuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	interface CompareTimesAction {
 		String NAME = "Compare";
 		String DESCRIPTION = "Compare this point in time to another";
