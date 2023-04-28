@@ -79,6 +79,15 @@ public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 	}
 
 	@Override
+	public boolean isEnabledForContext(ActionContext context) {
+		Reqs reqs = getReqs(context);
+		if (reqs == null) {
+			return false;
+		}
+		return super.isEnabledForContext(context);
+	}
+
+	@Override
 	public void actionPerformed(ActionContext context) {
 		Reqs reqs = getReqs(context);
 		if (reqs == null) {
