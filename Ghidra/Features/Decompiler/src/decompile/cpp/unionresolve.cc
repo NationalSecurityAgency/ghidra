@@ -18,7 +18,8 @@
 
 namespace ghidra {
 
-/// The original parent must either be a union, a pointer to a union, or a partial union.
+/// The original parent must either be a union, a partial union, a structure with a single field,
+/// an array with a single element, or a pointer to one of these data-types.
 /// The object is set up initially to resolve to the parent.
 /// \param parent is the original parent data-type
 ResolvedUnion::ResolvedUnion(Datatype *parent)
@@ -27,8 +28,6 @@ ResolvedUnion::ResolvedUnion(Datatype *parent)
   baseType = parent;
   if (baseType->getMetatype() == TYPE_PTR)
     baseType = ((TypePointer *)baseType)->getPtrTo();
-  if (baseType->getMetatype() != TYPE_UNION && baseType->getMetatype() != TYPE_STRUCT)
-    throw LowlevelError("Unsupported data-type for ResolveUnion");
   resolve = parent;
   fieldNum = -1;
   lock = false;

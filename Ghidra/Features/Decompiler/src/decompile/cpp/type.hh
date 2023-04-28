@@ -436,7 +436,6 @@ protected:
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
   void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
-  int4 scoreFill(PcodeOp *op,int4 slot) const;	///< Determine best type fit for given PcodeOp use
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
   TypeStruct(void) : Datatype(0,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
@@ -456,6 +455,7 @@ public:
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
   static void assignFieldOffsets(vector<TypeField> &list,int4 align);	///< Assign field offsets given a byte alignment
+  static int4 scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot);	///< Determine best type fit for given PcodeOp use
 };
 
 /// \brief A collection of overlapping Datatype objects: A \b union of component \b fields

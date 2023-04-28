@@ -2395,7 +2395,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   if (tokenct == outHighType) {
     if (tokenct->needsResolution()) {
       // operation copies directly to outvn AS a union
-      ResolvedUnion resolve(tokenct);
+      ResolvedUnion resolve(tokenct);	// Force the varnode to resolve to the parent data-type
       data.setUnionField(tokenct, op, -1, resolve);
     }
     // Short circuit more sophisticated casting tests.  If they are the same type, there is no cast

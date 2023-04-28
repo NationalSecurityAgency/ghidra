@@ -1047,17 +1047,26 @@ void TypeArray::encode(Encoder &encoder) const
 Datatype *TypeArray::resolveInFlow(PcodeOp *op,int4 slot)
 
 {
-  // This is currently only called if the array size is 1
-  // in which case this should always resolve to the element data-type
-  return arrayof;
+  Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
+
+  int4 fieldNum = TypeStruct::scoreSingleComponent(this,op,slot);
+
+  ResolvedUnion compFill(this,fieldNum,*fd->getArch()->types);
+  fd->setUnionField(this, op, slot, compFill);
+  return compFill.getDatatype();
 }
 
 Datatype* TypeArray::findResolve(const PcodeOp *op,int4 slot)
 
 {
-  // This is currently only called if the array size is 1
-  // in which case this should always resolve to the element data-type
-  return arrayof;
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
+  return arrayof;		// If not calculated before, assume referring to the element
 }
 
 int4 TypeArray::findCompatibleResolve(Datatype *ct) const
@@ -1569,14 +1578,15 @@ void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
   }
 }
 
-/// We know if this method is called that \b this structure has a single field that fills the entire
-/// structure.  The indicated Varnode can either be referred either by naming the struture or naming
-/// the field.  This method returns an indication of the best fit: either 0 for the field or
-/// -1 for the structure.
+/// If this method is called, the given data-type has a single component that fills it entirely
+/// (either a field or an element). The indicated Varnode can be resolved either by naming the
+/// data-type or naming the component. This method returns an indication of the best fit:
+/// either 0 for the component or -1 for the data-type.
+/// \param parent is the given data-type with a single component
 /// \param op is the given PcodeOp using the Varnode
 /// \param slot is -1 if the Varnode is an output or >=0 indicating the input slot
 /// \return either 0 to indicate the field or -1 to indicate the structure
-int4 TypeStruct::scoreFill(PcodeOp *op,int4 slot) const
+int4 TypeStruct::scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot)
 
 {
   if (op->code() == CPUI_COPY || op->code() == CPUI_INDIRECT) {
@@ -1585,14 +1595,14 @@ int4 TypeStruct::scoreFill(PcodeOp *op,int4 slot) const
       vn = op->getOut();
     else
       vn = op->getIn(0);
-    if (vn->isTypeLock() && vn->getType() == this)
+    if (vn->isTypeLock() && vn->getType() == parent)
       return -1;	// COPY of the structure directly, use whole structure
   }
   else if ((op->code() == CPUI_LOAD && slot == -1)||(op->code() == CPUI_STORE && slot == 2)) {
     Varnode *vn = op->getIn(1);
     if (vn->isTypeLock()) {
       Datatype *ct = vn->getTypeReadFacing(op);
-      if (ct->getMetatype() == TYPE_PTR && ((TypePointer *)ct)->getPtrTo() == this)
+      if (ct->getMetatype() == TYPE_PTR && ((TypePointer *)ct)->getPtrTo() == parent)
 	return -1;	// LOAD or STORE of the structure directly, use whole structure
     }
   }
@@ -1605,11 +1615,11 @@ int4 TypeStruct::scoreFill(PcodeOp *op,int4 slot) const
 	param = fc->getParam(slot-1);
       else if (slot < 0 && fc->isOutputLocked())
 	param = fc->getOutput();
-      if (param != (ProtoParameter *)0 && param->getType() == this)
-	return -1;	// Function signature refers to structure directly, use whole structure
+      if (param != (ProtoParameter *)0 && param->getType() == parent)
+	return -1;	// Function signature refers to parent directly, resolve to parent
     }
   }
-  return 0;	// In all other cases refer to the field
+  return 0;	// In all other cases resolve to the component
 }
 
 Datatype *TypeStruct::resolveInFlow(PcodeOp *op,int4 slot)
@@ -1620,7 +1630,7 @@ Datatype *TypeStruct::resolveInFlow(PcodeOp *op,int4 slot)
   if (res != (ResolvedUnion *)0)
     return res->getDatatype();
 
-  int4 fieldNum = scoreFill(op,slot);
+  int4 fieldNum = scoreSingleComponent(this,op,slot);
 
   ResolvedUnion compFill(this,fieldNum,*fd->getArch()->types);
   fd->setUnionField(this, op, slot, compFill);
@@ -4044,6 +4054,8 @@ void TypeFactory::decodeCoreTypes(Decoder &decoder)
 void TypeFactory::decodeDataOrganization(Decoder &decoder)
 
 {
+  uint4 defaultSize = glb->getDefaultSize();
+  align = 0;
   uint4 elemId = decoder.openElement(ELEM_DATA_ORGANIZATION);
   for(;;) {
     uint4 subId = decoder.openElement();
@@ -4055,14 +4067,14 @@ void TypeFactory::decodeDataOrganization(Decoder &decoder)
       sizeOfLong = decoder.readSignedInteger(ATTRIB_VALUE);
     }
     else if (subId == ELEM_SIZE_ALIGNMENT_MAP) {
-      align = 0;
       for(;;) {
 	uint4 mapId = decoder.openElement();
 	if (mapId != ELEM_ENTRY) break;
+	int4 sz = decoder.readSignedInteger(ATTRIB_SIZE);
 	int4 val = decoder.readSignedInteger(ATTRIB_ALIGNMENT);
-	decoder.closeElement(mapId);
-	if (val > align)		// Take maximum size alignment
+	if (sz <= defaultSize)
 	  align = val;
+	decoder.closeElement(mapId);
       }
     }
     else {
