@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,24 +21,24 @@
  */
 package ghidra.app.util.viewer.proxy;
 
+import java.util.ConcurrentModificationException;
+
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 
-import java.util.ConcurrentModificationException;
-
 /**
- * Stores information about a code unti in a program such that the code unit can 
- * be retrieved when needed.
+ * Stores information about a code unit in a program.
  */
 public class CodeUnitProxy extends ProxyObj<CodeUnit> {
-	Program program;
-	CodeUnit cu;
-	Address addr;
+	private Program program;
+	private CodeUnit cu;
+	private Address addr;
 
 	/**
 	 * Construct a proxy for a code unit
+	 * @param model the model
 	 * @param program the program containing the code unit
 	 * @param cu the code unit to proxy.
 	 */
@@ -50,9 +49,6 @@ public class CodeUnitProxy extends ProxyObj<CodeUnit> {
 		this.addr = cu.getMinAddress();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.proxy.ProxyObj#getObject()
-	 */
 	@Override
 	public CodeUnit getObject() {
 		if (cu != null) {
@@ -67,4 +63,12 @@ public class CodeUnitProxy extends ProxyObj<CodeUnit> {
 		return cu;
 	}
 
+	@Override
+	public boolean contains(Address a) {
+		CodeUnit c = getObject();
+		if (c == null) {
+			return false;
+		}
+		return c.contains(a);
+	}
 }

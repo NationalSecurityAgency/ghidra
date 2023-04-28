@@ -7119,6 +7119,86 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
+/// \class RuleSplitCopy
+/// \brief Split COPY ops based on TypePartialStruct
+///
+/// If more than one logical component of a structure or array is copied at once,
+/// rewrite the COPY operator as multiple COPYs.
+void RuleSplitCopy::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_COPY);
+}
+
+int4 RuleSplitCopy::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Datatype *inType = op->getIn(0)->getTypeReadFacing(op);
+  Datatype *outType = op->getOut()->getTypeDefFacing();
+  type_metatype metain = inType->getMetatype();
+  type_metatype metaout = outType->getMetatype();
+  if (metain != TYPE_PARTIALSTRUCT && metaout != TYPE_PARTIALSTRUCT &&
+      metain != TYPE_ARRAY && metaout != TYPE_ARRAY &&
+      metain != TYPE_STRUCT && metaout != TYPE_STRUCT)
+    return false;
+  SplitDatatype splitter(data);
+  if (splitter.splitCopy(op, inType, outType))
+    return 1;
+  return 0;
+}
+
+/// \class RuleSplitLoad
+/// \brief Split LOAD ops based on TypePartialStruct
+///
+/// If more than one logical component of a structure or array is loaded at once,
+/// rewrite the LOAD operator as multiple LOADs.
+void RuleSplitLoad::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_LOAD);
+}
+
+int4 RuleSplitLoad::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Datatype *inType = SplitDatatype::getValueDatatype(op, op->getOut()->getSize(), data.getArch()->types);
+  if (inType == (Datatype *)0)
+    return 0;
+  type_metatype metain = inType->getMetatype();
+  if (metain != TYPE_STRUCT && metain != TYPE_ARRAY && metain != TYPE_PARTIALSTRUCT)
+    return 0;
+  SplitDatatype splitter(data);
+  if (splitter.splitLoad(op, inType))
+    return 1;
+  return 0;
+}
+
+/// \class RuleSplitStore
+/// \brief Split STORE ops based on TypePartialStruct
+///
+/// If more than one logical component of a structure or array is stored at once,
+/// rewrite the STORE operator as multiple STOREs.
+void RuleSplitStore::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_STORE);
+}
+
+int4 RuleSplitStore::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  Datatype *outType = SplitDatatype::getValueDatatype(op, op->getIn(2)->getSize(), data.getArch()->types);
+  if (outType == (Datatype *)0)
+    return 0;
+  type_metatype metain = outType->getMetatype();
+  if (metain != TYPE_STRUCT && metain != TYPE_ARRAY && metain != TYPE_PARTIALSTRUCT)
+    return 0;
+  SplitDatatype splitter(data);
+  if (splitter.splitStore(op, outType))
+    return 1;
+  return 0;
+}
+
 /// \class RuleSubNormal
 /// \brief Pull-back SUBPIECE through INT_RIGHT and INT_SRIGHT
 ///

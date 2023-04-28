@@ -17,14 +17,16 @@ package ghidra.pcode.floatformat;
 
 import static org.junit.Assert.*;
 
-import java.math.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Random;
 
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 
-public strictfp class FloatFormatTest extends AbstractGenericTest {
+public class FloatFormatTest extends AbstractGenericTest {
 
 	public FloatFormatTest() {
 		super();
@@ -38,8 +40,8 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 				continue;
 			}
 			FloatFormat.SmallFloatData data = FloatFormat.getSmallFloatData(x);
-			double y = FloatFormat.createFloat(data.sign < 0,
-				data.unscaled << (64 - data.fracbits - 1), data.scale);
+			double y = FloatFormat.createDouble(data.sign < 0,
+				data.unscaled << (64 - data.fracbits), data.scale);
 			Assert.assertEquals("case #" + Integer.toString(i), x, y, 0);
 			++i;
 		}
@@ -203,7 +205,7 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public strictfp void testDoubleRoundAtMidpoint() {
+	public void testDoubleRoundAtMidpoint() {
 		// test even and odd float significands at extremes
 		assertDoubleMidpointRound(false, 1, 1);
 		assertDoubleMidpointRound(false, 1, 2);
@@ -230,7 +232,7 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public strictfp void testBigRoundAtMidpoint() {
+	public void testBigRoundAtMidpoint() {
 		// test even and odd float significands at extremes
 		assertBigMidpointRound(false, 1, 1);
 		assertBigMidpointRound(false, 1, 2);
@@ -265,39 +267,39 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		BigFloat big = ff.getBigFloat(f);
 		BigInteger encoding = ff.getEncoding(big);
 		Assert.assertEquals(intbits, encoding.longValue());
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		f = 3.75f;
 		intbits = Float.floatToRawIntBits(f);
 		big = ff.getBigFloat(f);
 		encoding = ff.getEncoding(big);
 		Assert.assertEquals((intbits) & 0xffffffffL, encoding.longValue());
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		f = -4.5f;
 		intbits = Float.floatToRawIntBits(f);
 		big = ff.getBigFloat(f);
 		encoding = ff.getEncoding(big);
 		Assert.assertEquals((intbits) & 0xffffffffL, encoding.longValue());
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		f = Float.POSITIVE_INFINITY;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(ff.getBigFloat(f));
 		Assert.assertEquals(intbits, encoding.longValue());
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(encoding));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(encoding));
 
 		f = Float.NEGATIVE_INFINITY;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(ff.getBigFloat(f));
 		Assert.assertEquals((intbits) & 0xffffffffL, encoding.longValue());
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(encoding));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(encoding));
 
 		f = Float.NaN;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(ff.getBigFloat(f));
 		Assert.assertEquals(intbits, encoding.longValue());
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(encoding));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(encoding));
 
 		/// 64-bit encoding
 
@@ -307,74 +309,79 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		big = ff.getBigFloat(d);
 		encoding = ff.getEncoding(big);
 		Assert.assertEquals(longbits, encoding.longValue());
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		d = 3.75d;
 		longbits = Double.doubleToRawLongBits(d);
 		big = ff.getBigFloat(d);
 		encoding = ff.getEncoding(big);
 		Assert.assertEquals(longbits, encoding.longValue());
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		d = -4.5d;
 		longbits = Double.doubleToRawLongBits(d);
 		big = ff.getBigFloat(d);
 		encoding = ff.getEncoding(big);
 		Assert.assertEquals(longbits, encoding.longValue());
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		d = Double.POSITIVE_INFINITY;
 		longbits = Double.doubleToRawLongBits(d);
 
 		encoding = ff.getBigInfinityEncoding(false);
 		Assert.assertEquals(longbits, encoding.longValue());
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(encoding));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(encoding));
 
 		d = Double.NEGATIVE_INFINITY;
 		longbits = Double.doubleToRawLongBits(d);
 		encoding = ff.getBigInfinityEncoding(true);
 		Assert.assertEquals(longbits, encoding.longValue());
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(encoding));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(encoding));
 
 		d = Double.NaN;
 		longbits = Double.doubleToRawLongBits(d);
 
 		encoding = ff.getBigNaNEncoding(false);
 		Assert.assertEquals(longbits, encoding.longValue());
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(encoding));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(encoding));
 
 		/// 80-bit encoding
 
 		ff = new FloatFormat(10);
+		big = ff.getBigFloat(1.0);
+		encoding = ff.getEncoding(big);
+		// use round trip to verify
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
+
 		big = ff.getBigFloat(4.5);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigFloat(3.75);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigFloat(-4.5);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigInfinity(false);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigInfinity(true);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigNaN(false);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		/// 128-bit encoding
 
@@ -382,32 +389,32 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		big = ff.getBigFloat(4.5);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigFloat(3.75);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigFloat(-4.5);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigInfinity(false);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigInfinity(true);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 		big = ff.getBigNaN(false);
 		encoding = ff.getEncoding(big);
 		// use round trip to verify
-		Assert.assertEquals(big, ff.getHostFloat(encoding));
+		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
 	}
 
@@ -421,43 +428,43 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		int intbits = Float.floatToRawIntBits(f);
 		long encoding = ff.getEncoding(f);
 		Assert.assertEquals(intbits, encoding);
-		Assert.assertEquals(f, (float) ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(f, (float) ff.decodeHostFloat(encoding), 0);
 
 		f = 8.908155E-39f;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(f);
 		Assert.assertEquals((intbits) & 0xffffffffL, encoding);
-		Assert.assertEquals(f, (float) ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(f, (float) ff.decodeHostFloat(encoding), 0);
 
 		f = 3.75f;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(f);
 		Assert.assertEquals((intbits) & 0xffffffffL, encoding);
-		Assert.assertEquals(f, (float) ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(f, (float) ff.decodeHostFloat(encoding), 0);
 
 		f = -4.5f;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(f);
 		Assert.assertEquals((intbits) & 0xffffffffL, encoding);
-		Assert.assertEquals(f, (float) ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(f, (float) ff.decodeHostFloat(encoding), 0);
 
 		f = Float.POSITIVE_INFINITY;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(f);
 		Assert.assertEquals(intbits, encoding);
-		Assert.assertEquals(f, (float) ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(f, (float) ff.decodeHostFloat(encoding), 0);
 
 		f = Float.NEGATIVE_INFINITY;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(f);
 		Assert.assertEquals((intbits) & 0xffffffffL, encoding);
-		Assert.assertEquals(f, (float) ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(f, (float) ff.decodeHostFloat(encoding), 0);
 
 		f = Float.NaN;
 		intbits = Float.floatToRawIntBits(f);
 		encoding = ff.getEncoding(f);
 		Assert.assertEquals(intbits, encoding);
-		Assert.assertEquals(f, (float) ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(f, (float) ff.decodeHostFloat(encoding), 0);
 
 		/// 64-bit encoding
 
@@ -466,48 +473,48 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		long longbits = Double.doubleToRawLongBits(d);
 		encoding = ff.getEncoding(d);
 		Assert.assertEquals(longbits, encoding);
-		Assert.assertEquals(d, ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(d, ff.decodeHostFloat(encoding), 0);
 
 		d = 3.75d;
 		longbits = Double.doubleToRawLongBits(d);
 		encoding = ff.getEncoding(d);
 		Assert.assertEquals(longbits, encoding);
-		Assert.assertEquals(d, ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(d, ff.decodeHostFloat(encoding), 0);
 
 		d = -4.5d;
 		longbits = Double.doubleToRawLongBits(d);
 		encoding = ff.getEncoding(d);
 		Assert.assertEquals(longbits, encoding);
-		Assert.assertEquals(d, ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(d, ff.decodeHostFloat(encoding), 0);
 
 		d = Double.POSITIVE_INFINITY;
 		longbits = Double.doubleToRawLongBits(d);
 		encoding = ff.getEncoding(d);
 		Assert.assertEquals(longbits, encoding);
-		Assert.assertEquals(d, ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(d, ff.decodeHostFloat(encoding), 0);
 
 		d = Double.NEGATIVE_INFINITY;
 		longbits = Double.doubleToRawLongBits(d);
 		encoding = ff.getEncoding(d);
 		Assert.assertEquals(longbits, encoding);
-		Assert.assertEquals(d, ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(d, ff.decodeHostFloat(encoding), 0);
 
 		d = Double.NaN;
 		longbits = Double.doubleToRawLongBits(d);
 		encoding = ff.getEncoding(d);
 		Assert.assertEquals(longbits, encoding);
-		Assert.assertEquals(d, ff.getHostFloat(encoding), 0);
+		Assert.assertEquals(d, ff.decodeHostFloat(encoding), 0);
 	}
 
 	@Test
-	public strictfp void testBigFloatFloatFormatRandom() {
+	public void testBigFloatFloatFormatRandom() {
 		Random rand = new Random(1);
 		FloatFormat floatFormat = FloatFormatFactory.getFloatFormat(4);
 
 		for (int i = 0; i < 1000; ++i) {
 			float f = rand.nextFloat();
 			BigInteger encoding0 = BigInteger.valueOf(Float.floatToRawIntBits(f));
-			BigFloat bf1 = floatFormat.getHostFloat(encoding0);
+			BigFloat bf1 = floatFormat.decodeBigFloat(encoding0);
 			BigFloat bf2 = FloatFormat.toBigFloat(f);
 			assertEquals(bf1.toString(), bf2.toString());
 			BigInteger encoding1 = floatFormat.getEncoding(bf1);
@@ -517,14 +524,14 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public strictfp void testBigFloatDoubleFormatRandom() {
+	public void testBigFloatDoubleFormatRandom() {
 		Random rand = new Random(1);
 		FloatFormat floatFormat = FloatFormatFactory.getFloatFormat(8);
 
 		for (int i = 0; i < 1000; ++i) {
 			double f = rand.nextFloat();
 			BigInteger encoding0 = BigInteger.valueOf(Double.doubleToLongBits(f));
-			BigFloat bf1 = floatFormat.getHostFloat(encoding0);
+			BigFloat bf1 = floatFormat.decodeBigFloat(encoding0);
 			BigFloat bf2 = FloatFormat.toBigFloat(f);
 			assertEquals(bf1.toString(), bf2.toString());
 			BigInteger encoding1 = floatFormat.getEncoding(bf1);
@@ -743,32 +750,32 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		long a = ff.getEncoding(1.234);
 		long b = ff.getEncoding(1.123);
 		long result = ff.opAdd(a, b);// 1.234 + 1.123
-		Assert.assertEquals(2.357, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.357, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-1.123);
 		result = ff.opAdd(a, b);// -1.123 + 1.123
-		Assert.assertEquals(0d, ff.getHostFloat(result), 0);
+		Assert.assertEquals(0d, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opAdd(a, b);// +INFINITY + 1.123
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opAdd(a, b);// -INFINITY + 1.123
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opAdd(a, b);// -INFINITY + -INFINITY
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opAdd(a, b);// -INFINITY + +INFINITY
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		b = ff.getEncoding(1.123);
 		result = ff.opAdd(a, b);// NaN + 1.123
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -778,32 +785,32 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		BigInteger a = ff.getEncoding(ff.getBigFloat(1.234d));
 		BigInteger b = ff.getEncoding(ff.getBigFloat(1.123d));
 		BigInteger result = ff.opAdd(a, b);// 1.234 + 1.123
-		Assert.assertEquals(ff.getBigFloat(2.357), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.357), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-1.123d));
 		result = ff.opAdd(a, b);// -1.123 + 1.123
-		Assert.assertEquals(ff.getBigZero(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigZero(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = ff.opAdd(a, b);// +INFINITY + 1.123
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = ff.opAdd(a, b);// -INFINITY + 1.123
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		b = ff.getBigInfinityEncoding(true);
 		result = ff.opAdd(a, b);// -INFINITY + -INFINITY
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		b = ff.getBigInfinityEncoding(false);
 		result = ff.opAdd(a, b);// -INFINITY + +INFINITY
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		b = ff.getEncoding(ff.getBigFloat(1.123d));
 		result = ff.opAdd(a, b);// NaN + 1.123
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -813,32 +820,32 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		long a = ff.getEncoding(1.5);
 		long b = ff.getEncoding(1.25);
 		long result = ff.opSub(a, b);// 1.5 - 1.25
-		Assert.assertEquals(0.25, ff.getHostFloat(result), 0);
+		Assert.assertEquals(0.25, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-1.25);
 		result = ff.opSub(a, b);// -1.25 - 1.25
-		Assert.assertEquals(-2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.5, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opSub(a, b);// +INFINITY - 1.25
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opSub(a, b);// -INFINITY - 1.25
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opSub(a, b);// -INFINITY - -INFINITY
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opSub(a, b);// -INFINITY - +INFINITY
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		b = ff.getEncoding(1.25);
 		result = ff.opSub(a, b);// NaN - 1.25
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -848,32 +855,32 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		BigInteger a = ff.getEncoding(ff.getBigFloat(1.5d));
 		BigInteger b = ff.getEncoding(ff.getBigFloat(1.25d));
 		BigInteger result = ff.opSub(a, b);// 1.5 - 1.25
-		Assert.assertEquals(ff.getBigFloat(0.25d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(0.25d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-1.25d));
 		result = ff.opSub(a, b);// -1.25 - 1.25
-		Assert.assertEquals(ff.getBigFloat(-2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.5d), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = ff.opSub(a, b);// +INFINITY - 1.25
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = ff.opSub(a, b);// -INFINITY - 1.25
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		b = ff.getBigInfinityEncoding(true);
 		result = ff.opSub(a, b);// -INFINITY - -INFINITY
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 
 		b = ff.getBigInfinityEncoding(false);
 		result = ff.opSub(a, b);// -INFINITY - +INFINITY
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		b = ff.getEncoding(ff.getBigFloat(1.25d));
 		result = ff.opSub(a, b);// NaN - 1.25
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -883,19 +890,19 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		long a = ff.getEncoding(3.75);
 		long b = ff.getEncoding(1.5);
 		long result = ff.opDiv(a, b);
-		Assert.assertEquals(2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.5, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(0);
 		result = ff.opDiv(a, b);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-3.75);
 		result = ff.opDiv(a, b);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.NaN);
 		result = ff.opDiv(a, b);
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -905,19 +912,19 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		BigInteger a = ff.getEncoding(ff.getBigFloat(3.75d));
 		BigInteger b = ff.getEncoding(ff.getBigFloat(1.5d));
 		BigInteger result = ff.opDiv(a, b);
-		Assert.assertEquals(ff.getBigFloat(2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.5d), ff.decodeBigFloat(result));
 
 		b = ff.getBigZeroEncoding(false);
 		result = ff.opDiv(a, b);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-3.75d));
 		result = ff.opDiv(a, b);
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		b = ff.getBigNaNEncoding(false);
 		result = ff.opDiv(a, b);
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -927,19 +934,19 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		long a = ff.getEncoding(2.5);
 		long b = ff.getEncoding(1.5);
 		long result = ff.opMult(a, b);
-		Assert.assertEquals(3.75, ff.getHostFloat(result), 0);
+		Assert.assertEquals(3.75, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opMult(a, b);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opMult(a, b);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.NaN);
 		result = ff.opMult(a, b);
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -949,19 +956,19 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger b = ff.getEncoding(ff.getBigFloat(1.5d));
 		BigInteger result = ff.opMult(a, b);
-		Assert.assertEquals(ff.getBigFloat(3.75d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(3.75d), ff.decodeBigFloat(result));
 
 		b = ff.getBigInfinityEncoding(false);
 		result = ff.opMult(a, b);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = ff.opMult(a, b);
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		b = ff.getBigNaNEncoding(false);
 		result = ff.opMult(a, b);
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -970,23 +977,23 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		long a = ff.getEncoding(2.5);
 		long result = ff.opNeg(a);
-		Assert.assertEquals(-2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.5, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.5);
 		result = ff.opNeg(a);
-		Assert.assertEquals(2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.5, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opNeg(a);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opNeg(a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		result = ff.opNeg(a);
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -995,23 +1002,23 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger result = ff.opNeg(a);
-		Assert.assertEquals(ff.getBigFloat(-2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.5d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.5d));
 		result = ff.opNeg(a);
-		Assert.assertEquals(ff.getBigFloat(2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.5d), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = ff.opNeg(a);
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = ff.opNeg(a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		result = ff.opNeg(a);
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -1020,23 +1027,23 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		long a = ff.getEncoding(2.5);
 		long result = ff.opAbs(a);
-		Assert.assertEquals(2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.5, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.5);
 		result = ff.opAbs(a);
-		Assert.assertEquals(2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.5, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opAbs(a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opAbs(a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		result = ff.opAbs(a);
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -1045,23 +1052,23 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger result = ff.opAbs(a);
-		Assert.assertEquals(ff.getBigFloat(2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.5d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.5d));
 		result = ff.opAbs(a);
-		Assert.assertEquals(ff.getBigFloat(2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.5d), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = ff.opAbs(a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = ff.opAbs(a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		result = ff.opAbs(a);
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -1069,8 +1076,8 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		FloatFormat ff = new FloatFormat(8);
 		long longbits = ff.getEncoding(2.0);
 		longbits = ff.opSqrt(longbits);
-		double d = ff.getHostFloat(longbits);
-		Assert.assertEquals("1.414213562373095", Double.toString(d).substring(0, 17));
+		double d = ff.decodeHostFloat(longbits);
+		Assert.assertEquals("1.4142135623730951", Double.toString(d));
 	}
 
 	@Test
@@ -1079,7 +1086,7 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		BigFloat big = ff.getBigFloat(2.0);
 		BigInteger encoding = ff.getEncoding(big);
 		encoding = ff.opSqrt(encoding);
-		BigFloat result = ff.getHostFloat(encoding);
+		BigFloat result = ff.decodeBigFloat(encoding);
 		Assert.assertEquals("1.414213562373095", ff.round(result).toString());
 	}
 
@@ -1089,15 +1096,15 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		long result = ff.opInt2Float(2, 4);
 		Assert.assertEquals(0, result & 0xffffffff00000000L);// verify that only 4-bytes are used
-		Assert.assertEquals(2.0d, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.0d, ff.decodeHostFloat(result), 0);
 
 		result = ff.opInt2Float(-2, 4);
 		Assert.assertEquals(0, result & 0xffffffff00000000L);// verify that only 4-bytes are used
-		Assert.assertEquals(-2.0d, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.0d, ff.decodeHostFloat(result), 0);
 
 		result = ff.opInt2Float(0, 4);
 		Assert.assertEquals(0, result & 0xffffffff00000000L);// verify that only 4-bytes are used
-		Assert.assertEquals(0d, ff.getHostFloat(result), 0);
+		Assert.assertEquals(0d, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -1108,15 +1115,15 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		BigInteger result = ff.opInt2Float(BigInteger.valueOf(2), 4, true);
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(ff.getBigFloat(2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.0d), ff.decodeBigFloat(result));
 
 		result = ff.opInt2Float(BigInteger.valueOf(-2), 4, true);
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.decodeBigFloat(result));
 
 		result = ff.opInt2Float(BigInteger.ZERO, 4, true);
 		assertTrue(result.compareTo(limit) < 0);// verify that only 4-bytes are used
-		Assert.assertEquals(ff.getBigZero(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigZero(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -1157,23 +1164,23 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		long a = ff4.getEncoding(1.75);
 		long result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(1.75, ff8.getHostFloat(result), 0);
+		Assert.assertEquals(1.75, ff8.decodeHostFloat(result), 0);
 
 		a = ff4.getEncoding(-1.75);
 		result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(-1.75, ff8.getHostFloat(result), 0);
+		Assert.assertEquals(-1.75, ff8.decodeHostFloat(result), 0);
 
 		a = ff4.getEncoding(Float.POSITIVE_INFINITY);
 		result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff8.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff8.decodeHostFloat(result), 0);
 
 		a = ff4.getEncoding(Float.NEGATIVE_INFINITY);
 		result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff8.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff8.decodeHostFloat(result), 0);
 
 		a = ff4.getEncoding(Float.NaN);
 		result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(Double.NaN, ff8.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff8.decodeHostFloat(result), 0);
 
 	}
 
@@ -1184,23 +1191,23 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		BigInteger a = ff4.getEncoding(ff4.getBigFloat(1.75d));
 		BigInteger result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(ff8.getBigFloat(1.75d), ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigFloat(1.75d), ff8.decodeBigFloat(result));
 
 		a = ff4.getEncoding(ff4.getBigFloat(-1.75d));
 		result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(ff8.getBigFloat(-1.75d), ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigFloat(-1.75d), ff8.decodeBigFloat(result));
 
 		a = ff4.getEncoding(ff4.getBigInfinity(false));
 		result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(ff8.getBigInfinity(false), ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigInfinity(false), ff8.decodeBigFloat(result));
 
 		a = ff4.getEncoding(ff4.getBigInfinity(true));
 		result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(ff8.getBigInfinity(true), ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigInfinity(true), ff8.decodeBigFloat(result));
 
 		a = ff4.getEncoding(ff4.getBigNaN(false));
 		result = ff4.opFloat2Float(a, ff8);
-		Assert.assertEquals(ff8.getBigNaN(false), ff8.getHostFloat(result));
+		Assert.assertEquals(ff8.getBigNaN(false), ff8.decodeBigFloat(result));
 	}
 
 	@Test
@@ -1261,23 +1268,23 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		long a = ff.getEncoding(2.5);
 		long result = ff.opCeil(a);
-		Assert.assertEquals(3.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(3.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.5);
 		result = ff.opCeil(a);
-		Assert.assertEquals(-2.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opCeil(a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opCeil(a);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		result = ff.opCeil(a);
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -1286,23 +1293,23 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger result = ff.opCeil(a);
-		Assert.assertEquals(ff.getBigFloat(3.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(3.0d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.5d));
 		result = ff.opCeil(a);
-		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = ff.opCeil(a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = ff.opCeil(a);
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		result = ff.opCeil(a);
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -1311,27 +1318,27 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		long a = ff.getEncoding(2.5);
 		long result = ff.opFloor(a);
-		Assert.assertEquals(2.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.0);
 		result = ff.opFloor(a);
-		Assert.assertEquals(-2.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.5);
 		result = ff.opFloor(a);
-		Assert.assertEquals(-3.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-3.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opFloor(a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opFloor(a);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		result = ff.opFloor(a);
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -1340,27 +1347,27 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger result = ff.opFloor(a);
-		Assert.assertEquals(ff.getBigFloat(2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.0d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.0d));
 		result = ff.opFloor(a);
-		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.5d));
 		result = ff.opFloor(a);
-		Assert.assertEquals(ff.getBigFloat(-3.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-3.0d), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = ff.opFloor(a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = ff.opFloor(a);
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		result = ff.opFloor(a);
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 	@Test
@@ -1369,39 +1376,39 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		long a = ff.getEncoding(2.5);
 		long result = ff.opRound(a);
-		Assert.assertEquals(3.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(3.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(2.25);
 		result = ff.opRound(a);
-		Assert.assertEquals(2.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(2.75);
 		result = ff.opRound(a);
-		Assert.assertEquals(3.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(3.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.5);
 		result = ff.opRound(a);
-		Assert.assertEquals(-2.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.25);
 		result = ff.opRound(a);
-		Assert.assertEquals(-2.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.75);
 		result = ff.opRound(a);
-		Assert.assertEquals(-3.0, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-3.0, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = ff.opRound(a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = ff.opRound(a);
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		result = ff.opRound(a);
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -1410,39 +1417,237 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 
 		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigFloat(3.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(3.0d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(2.25d));
 		result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigFloat(2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.0d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(2.75d));
 		result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigFloat(3.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(3.0d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.5d));
 		result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.25d));
 		result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.0d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.75d));
 		result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigFloat(-3.0d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-3.0d), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		result = ff.opRound(a);
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
+	private void doTestValueOfBigInteger(BigDecimal bdVal) {
+		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		bdVal = bdVal.round(ff.getDisplayContext());
+		BigInteger biVal = bdVal.toBigInteger();
+		BigFloat f = ff.getBigFloat(biVal);
+		BigDecimal bd = ff.round(f);
+		assertEquals(biVal, bd.toBigInteger());
+		assertEquals(bdVal, bd);
+	}
+
+	@Test
+	public void testValueOfBigInteger() {
+		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		assertEquals("0.0", ff.toDecimalString(ff.getBigFloat(BigInteger.ZERO)));
+		assertEquals("1.0", ff.toDecimalString(ff.getBigFloat(BigInteger.ONE)));
+		assertEquals("2.0", ff.toDecimalString(ff.getBigFloat(BigInteger.TWO)));
+		assertEquals("-1.0", ff.toDecimalString(ff.getBigFloat(BigInteger.ONE.negate())));
+		assertEquals("-2.0", ff.toDecimalString(ff.getBigFloat(BigInteger.TWO.negate())));
+
+		doTestValueOfBigInteger(BigDecimal.valueOf(2.1234567890123456789e123));
+		doTestValueOfBigInteger(BigDecimal.valueOf(2.1234567890123456789e123).negate());
+		
+		// NOTE: BigDecimal.valueOf(Double.MAX_VALUE) produces a value greater than Double.MAX_VALUE		
+		// doTestValueOfBigInteger(BigDecimal.valueOf(Double.MAX_VALUE));
+
+
+		BigFloat bf = ff.decodeBigFloat(Double.doubleToRawLongBits(Double.MAX_VALUE));
+		bf = ff.getBigFloat(bf.toBigInteger());
+		assertEquals("1.797693134862316E+308", ff.toDecimalString(bf));
+
+		// step just beyond Double.MAX_VALUE - still decodes the same
+		BigDecimal maxBd = BigDecimal.valueOf(Double.MAX_VALUE);
+		BigInteger v =
+			BigDecimal.valueOf(maxBd.unscaledValue().longValue() + 1, maxBd.scale()).toBigInteger();
+		BigFloat f = ff.getBigFloat(v);
+		assertEquals("1.797693134862316E+308", ff.toDecimalString(f, true));
+
+		// step far beyond Double.MAX_VALUE
+		v = BigDecimal.valueOf(1, -309).toBigInteger();
+		f = ff.getBigFloat(v);
+		assertEquals("+Infinity", ff.toDecimalString(f, true));
+	}
+
+	private void doTestValueOfBigDecimal(BigDecimal v) {
+		doTestValueOfBigDecimal(v, null);
+	}
+
+	private void doTestValueOfBigDecimal(BigDecimal v, String expect) {
+		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		if (expect == null) {
+			expect = v.round(ff.getDisplayContext()).toString();
+			if (expect.indexOf('.') < 0) {
+				expect += ".0";
+			}
+		}
+		BigFloat bf = ff.getBigFloat(v);
+
+		assertEquals(expect, ff.toDecimalString(bf, true));
+
+		String encExpect = FloatFormat.toBinaryString(v.doubleValue());
+		String enc = ff.toBinaryString(bf);
+		if (!encExpect.equals(enc)) {
+			System.out.println("Unexpected encoding: " + enc +
+				"\nExpected encoding:   " + encExpect);
+			fail("Unexpected encoding");
+		}
+	}
+
+	@Test
+	public void testValueOfBigDecimal() {
+
+		doTestValueOfBigDecimal(BigDecimal.valueOf(0));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(1));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(2));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(2.123456789));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(2.1234567890123456789));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(2.1234567890123456789E+123));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(-1));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(-2));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(-2.123456789));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(-2.1234567890123456789));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(-2.1234567890123456789E+123));
+
+		// Java appears to exceed IEEE 754 decimal precision of 16 by producing 
+		// "1.7976931348623157E+308"
+
+		doTestValueOfBigDecimal(BigDecimal.valueOf(Double.MAX_VALUE));
+
+		doTestValueOfBigDecimal(BigDecimal.valueOf(2.1234567890123456789E-123));
+		doTestValueOfBigDecimal(BigDecimal.valueOf(-2.1234567890123456789E-123));
+
+		// NOTE: Java Double.MIN_VALUE = 0x0.0000000000001P-1022; // 4.9e-324
+		// corresponds to the minimum subnormal decoded value of the raw representation.
+		// The value 4.9e-324 is the shortest compact representation which retains the same
+		// encoded value.
+
+		doTestValueOfBigDecimal(BigDecimal.valueOf(Double.MIN_VALUE));
+
+		// step just beyond Double.MAX_VALUE - still decodes the same
+
+		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+
+		BigDecimal maxBd = BigDecimal.valueOf(Double.MAX_VALUE);
+		BigDecimal v = new BigDecimal(maxBd.unscaledValue().add(BigInteger.ONE), maxBd.scale());
+		BigFloat f = ff.getBigFloat(v);
+		assertEquals(BigDecimal.valueOf(Double.MAX_VALUE).round(ff.getDisplayContext()).toString(),
+			ff.toDecimalString(f, true));
+
+		// step far beyond Double.MAX_VALUE
+		v = new BigDecimal(maxBd.unscaledValue(), maxBd.scale() * 2);
+		f = ff.getBigFloat(v);
+		assertEquals("+Infinity", ff.toDecimalString(f));
+
+		// step just beyond Double.MIN_VALUE - still decodes the same
+		BigDecimal minBd = BigDecimal.valueOf(Double.MIN_VALUE);
+		v = new BigDecimal(minBd.unscaledValue().add(BigInteger.ONE), minBd.scale());
+		f = ff.getBigFloat(v);
+		assertEquals(BigDecimal.valueOf(Double.MIN_VALUE).round(ff.getDisplayContext()).toString(),
+			ff.toDecimalString(f, true));
+
+		// step far beyond Double.MIN_VALUE
+		v = new BigDecimal(minBd.unscaledValue(), minBd.scale() * 2);
+		f = ff.getBigFloat(v);
+		assertEquals("0.0", ff.toDecimalString(f));
+
+	}
+
+	private void doTestValueOfDecimalString(String str) {
+		doTestValueOfDecimalString(str, null);
+	}
+
+	private void doTestValueOfDecimalString(String str, String expect) {
+		// str should be expected if "expect" not specified
+		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		if (expect == null) {
+			// perform double-double conversion
+			BigFloat bf = ff.decodeBigFloat(Double.doubleToRawLongBits(Double.valueOf(str)));
+			expect = ff.toDecimalString(bf); // done to ensure consistent non-compact formatting
+		}
+		BigFloat f = ff.getBigFloat(str);
+		assertEquals(expect, ff.toDecimalString(f));
+	}
+
+	@Test
+	public void testValueOfDecimalString() {
+
+		doTestValueOfDecimalString("0");
+		doTestValueOfDecimalString("1");
+		doTestValueOfDecimalString("2");
+		doTestValueOfDecimalString("3.141592653589793238462643");
+		doTestValueOfDecimalString("2.123456789");
+		doTestValueOfDecimalString("2.1234567890123456789");
+		doTestValueOfDecimalString("2.1234567890123456789E+123");
+		doTestValueOfDecimalString("-1");
+		doTestValueOfDecimalString("-2");
+		doTestValueOfDecimalString("-2.123456789");
+		doTestValueOfDecimalString("-2.1234567890123456789");
+		doTestValueOfDecimalString("-2.1234567890123456789E+123");
+
+		doTestValueOfDecimalString(BigDecimal.valueOf(Double.MAX_VALUE).toString());
+
+		// NOTE: compensated for minor precision issue
+		doTestValueOfDecimalString("2.1234567890123456789E-123");
+		doTestValueOfDecimalString("-2.1234567890123456789E-123");
+
+		doTestValueOfDecimalString(BigDecimal.valueOf(Double.MIN_VALUE).toString());
+
+		// step just beyond Double.MAX_VALUE
+		doTestValueOfDecimalString("1.7976931348623159E+308", "+Infinity");
+
+		// step far beyond Double.MAX_VALUE
+		doTestValueOfDecimalString("2.2e350", "+Infinity");
+
+		// step just beyond Double.MIN_VALUE - still decodes the same
+		doTestValueOfDecimalString("4.98e-324");
+
+		// step far beyond Double.MIN_VALUE
+		doTestValueOfDecimalString("5.1e-350");
+
+	}
+
+	@Test
+	public void testDoubleDecodeWithToString() {
+		FloatFormat ff = FloatFormatFactory.getFloatFormat(8);
+		assertEquals("9.346009625593543E-307",
+			ff.toDecimalString(ff.decodeBigFloat(0x0065006700610050L)));
+		assertEquals("2.123456789012346",
+			ff.toDecimalString(ff.decodeBigFloat(0x4000FCD6E9BA37B3L)));
+		assertEquals("0.3",
+			ff.toDecimalString(ff.decodeBigFloat(0x3FD3333333333333L)));
+	}
+
+	@Test
+	public void testFloatDecodeWithToString() {
+		FloatFormat ff = FloatFormatFactory.getFloatFormat(4);
+		assertEquals("-1.4682312",
+			ff.toDecimalString(ff.decodeBigFloat(0xbfbbef00L), true));
+	}
 }

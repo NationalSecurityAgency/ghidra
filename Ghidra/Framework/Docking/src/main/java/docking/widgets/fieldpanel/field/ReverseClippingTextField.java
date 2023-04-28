@@ -47,7 +47,7 @@ public class ReverseClippingTextField implements TextField {
 
 	private String fullText;
 	private boolean isClipped;
-	private HighlightFactory hlFactory;
+	private FieldHighlightFactory hlFactory;
 
 	private boolean isPrimary;
 
@@ -69,7 +69,7 @@ public class ReverseClippingTextField implements TextField {
 	 *            The HighlightFactory object used to paint highlights.
 	 */
 	public ReverseClippingTextField(int startX, int width, FieldElement textElement,
-			HighlightFactory hlFactory) {
+			FieldHighlightFactory hlFactory) {
 
 		this.startX = startX;
 
@@ -302,7 +302,7 @@ public class ReverseClippingTextField implements TextField {
 		if (cursorLoc != null) {
 			cursorTextOffset = screenLocationToTextOffset(cursorLoc.row(), cursorLoc.col());
 		}
-		paintHighlights(g, hlFactory.getHighlights(this, getString(), cursorTextOffset));
+		paintHighlights(g, hlFactory.createHighlights(this, getString(), cursorTextOffset));
 	}
 
 	protected void paintHighlights(Graphics g, Highlight[] highlights) {

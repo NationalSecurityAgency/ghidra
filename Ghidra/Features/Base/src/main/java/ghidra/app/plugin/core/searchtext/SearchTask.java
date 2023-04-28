@@ -16,9 +16,9 @@
 package ghidra.app.plugin.core.searchtext;
 
 import ghidra.app.nav.Navigatable;
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
 import ghidra.framework.model.DomainObjectException;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -30,7 +30,7 @@ class SearchTask extends Task {
 
 	private Searcher textSearcher;
 	private Navigatable navigatable;
-	private ProgramLocation loc;
+	private TextSearchResult result;
 	private boolean isCanceled;
 	private Program program;
 
@@ -59,7 +59,7 @@ class SearchTask extends Task {
 		monitor.setMessage("Searching...");
 		textSearcher.setMonitor(monitor);
 		try {
-			loc = textSearcher.search();
+			result = textSearcher.search();
 		}
 		catch (Exception e) {
 			if (!(e instanceof DomainObjectException)) {
@@ -76,8 +76,8 @@ class SearchTask extends Task {
 		return navigatable;
 	}
 
-	ProgramLocation getSearchLocation() {
-		return loc;
+	TextSearchResult getSearchLocation() {
+		return result;
 	}
 
 	/**

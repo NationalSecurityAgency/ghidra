@@ -56,6 +56,11 @@ public enum ControlMode {
 	RO_TARGET("Control Target w/ Edits Disabled", new GIcon(
 		"icon.debugger.control.mode.ro.target")) {
 		@Override
+		public boolean isTarget() {
+			return true;
+		}
+
+		@Override
 		public boolean followsPresent() {
 			return true;
 		}
@@ -96,6 +101,11 @@ public enum ControlMode {
 	 * Control actions, breakpoint commands, and state edits are all directed to the target.
 	 */
 	RW_TARGET("Control Target", new GIcon("icon.debugger.control.mode.rw.target")) {
+		@Override
+		public boolean isTarget() {
+			return true;
+		}
+
 		@Override
 		public boolean followsPresent() {
 			return true;
@@ -154,6 +164,11 @@ public enum ControlMode {
 	 */
 	RO_TRACE("Control Trace w/ Edits Disabled", new GIcon("icon.debugger.control.mode.ro.trace")) {
 		@Override
+		public boolean isTarget() {
+			return false;
+		}
+
+		@Override
 		public boolean followsPresent() {
 			return false;
 		}
@@ -185,6 +200,11 @@ public enum ControlMode {
 	 * and state edits modify the current trace snapshot.
 	 */
 	RW_TRACE("Control Trace", new GIcon("icon.debugger.control.mode.rw.trace")) {
+		@Override
+		public boolean isTarget() {
+			return false;
+		}
+
 		@Override
 		public boolean followsPresent() {
 			return false;
@@ -251,6 +271,11 @@ public enum ControlMode {
 	 * schedule.
 	 */
 	RW_EMULATOR("Control Emulator", new GIcon("icon.debugger.control.mode.rw.emulator")) {
+		@Override
+		public boolean isTarget() {
+			return false;
+		}
+
 		@Override
 		public boolean followsPresent() {
 			return false;
@@ -430,4 +455,11 @@ public enum ControlMode {
 		}
 		return getAlternative(coordinates);
 	}
+
+	/**
+	 * Indicates whether this mode controls the target
+	 * 
+	 * @return true if it controls the target
+	 */
+	public abstract boolean isTarget();
 }

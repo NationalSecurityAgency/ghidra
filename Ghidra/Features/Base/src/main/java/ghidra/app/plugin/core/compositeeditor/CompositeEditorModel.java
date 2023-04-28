@@ -212,7 +212,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 
 		DataType resultDt = DataUtilities.reconcileAppliedDataType(currentDt, dt, true);
-		int resultLen = resultDt.getLength();
+		int resultLen = resultDt.getAlignedLength();
 
 		if (resultDt instanceof Dynamic) {
 			resultLen = DataTypeHelper.requestDtSize(getProvider(), resultDt.getDisplayName(),
@@ -222,7 +222,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			throw new InvalidDataTypeException("Data types of size 0 are not allowed.");
 		}
 
-		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen);
+		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen, true);
 	}
 
 	/**
@@ -1172,7 +1172,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			dtName = dt.getDisplayName();
 			if (dtString.equals(dtName)) {
 				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
-					element.getLength());
+					element.getLength(), true);
 			}
 		}
 
@@ -1204,7 +1204,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		if (maxLength > 0 && newLength > maxLength) {
 			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
 		}
-		return DataTypeInstance.getDataTypeInstance(newDt, newLength);
+		return DataTypeInstance.getDataTypeInstance(newDt, newLength, true);
 	}
 
 	@SuppressWarnings("unused") // the exception is thrown by subclasses

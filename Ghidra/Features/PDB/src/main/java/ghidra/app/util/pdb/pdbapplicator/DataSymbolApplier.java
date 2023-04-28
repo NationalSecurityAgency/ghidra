@@ -115,7 +115,7 @@ public class DataSymbolApplier extends MsSymbolApplier {
 			//TODO: might want to do an ApplyDatatypeCmd here!!!
 			DumbMemBufferImpl memBuffer =
 				new DumbMemBufferImpl(applicator.getProgram().getMemory(), address);
-			DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dataType, memBuffer);
+			DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dataType, memBuffer, false);
 			if (dti == null) {
 				applicator.appendLogMsg(
 					"Error: Failed to apply datatype " + dataType.getName() + " at " + address);

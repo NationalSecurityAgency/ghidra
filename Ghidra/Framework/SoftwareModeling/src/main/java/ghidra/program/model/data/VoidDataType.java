@@ -93,4 +93,20 @@ public class VoidDataType extends BuiltIn {
 		return null; // standard C name and type
 	}
 
+	/**
+	 * Determine if the specified {@link DataType} is a {@link VoidDataType} after 
+	 * stripping away any {@link TypeDef}.
+	 * @param dt datatype to be tested
+	 * @return true if dt is a void type
+	 */
+	public static boolean isVoidDataType(DataType dt) {
+		if (dt == null) {
+			return false;
+		}
+		if (dt instanceof TypeDef t) {
+			dt = t.getBaseDataType();
+		}
+		return dt instanceof VoidDataType;
+	}
+
 }

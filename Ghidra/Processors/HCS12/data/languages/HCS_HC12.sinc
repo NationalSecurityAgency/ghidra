@@ -5853,13 +5853,14 @@ define pcodeop LoadStack;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
 	V_equals_0();	
+	$(C) = 0;
 }
 
 :TSTB                    is Prefix18=0 & op8=0xD7 
 {
 	$(Z) = (B == 0);
 	$(N) = (B s< 0);
-	$(V) = 0;
+	V_equals_0();	
 	$(C) = 0;
 }
 

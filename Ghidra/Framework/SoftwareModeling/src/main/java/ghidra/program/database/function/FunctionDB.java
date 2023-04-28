@@ -392,7 +392,10 @@ public class FunctionDB extends DatabaseObject implements Function {
 				return;
 			}
 			type = type.clone(program.getDataTypeManager());
-			if (storage.isValid() && (storage.size() != type.getLength())) {
+			if (VoidDataType.isVoidDataType(type)) {
+				storage = VariableStorage.VOID_STORAGE;
+			}
+			else if (storage.isValid() && (storage.size() != type.getLength())) {
 				try {
 					storage = VariableUtilities.resizeStorage(storage, type, true, this);
 				}
@@ -811,13 +814,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 		}
 
 		dataTypes[0] = returnParam.getFormalDataType();
-		DataType baseType = dataTypes[0];
-		if (baseType instanceof TypeDef) {
-			baseType = ((TypeDef) baseType).getBaseDataType();
-		}
-		returnParam
-				.setDynamicStorage((baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
-						: VariableStorage.UNASSIGNED_STORAGE);
+		returnParam.setDynamicStorage(
+					VoidDataType.isVoidDataType(dataTypes[0]) ? VariableStorage.VOID_STORAGE
+							: VariableStorage.UNASSIGNED_STORAGE);
 
 		PrototypeModel callingConvention = getCallingConvention();
 		if (callingConvention == null) {
@@ -913,12 +912,8 @@ public class FunctionDB extends DatabaseObject implements Function {
 			ReturnParameterDB rtnParam = getReturn();
 			if (rtnParam.getVariableStorage().isBadStorage()) {
 				DataType dt = rtnParam.getDataType();
-				DataType baseType = dt;
-				if (baseType instanceof TypeDef) {
-					baseType = ((TypeDef) baseType).getBaseDataType();
-				}
 				VariableStorage storage =
-					(baseType instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
+					VoidDataType.isVoidDataType(dt) ? VariableStorage.VOID_STORAGE
 							: VariableStorage.UNASSIGNED_STORAGE;
 				rtnParam.setStorageAndDataType(storage, dt);
 			}

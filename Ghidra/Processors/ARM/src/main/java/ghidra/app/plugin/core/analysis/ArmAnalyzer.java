@@ -95,6 +95,10 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 								!instr.getFlowType().isTerminal()) {
 								// need to set the return override
 								instr.setFlowOverride(FlowOverride.RETURN);
+								// get rid of any references that might have been put on from
+								// bad flows
+								ReferenceManager refMgr = program.getReferenceManager();
+								refMgr.removeAllReferencesFrom(instr.getAddress());
 							}
 						}
 						// if LR is a constant and is set right after this, this is a call
@@ -107,6 +111,10 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 									// if there are is a read reference there as well,
 									//  then this is really a branch, not a call
 									if (hasDataReferenceTo(program, addr)) {
+										return false;
+									}
+									// if flow already over-ridden don't override again
+									if (instr.getFlowOverride() != FlowOverride.NONE) {
 										return false;
 									}
 									instr.setFlowOverride(FlowOverride.CALL);

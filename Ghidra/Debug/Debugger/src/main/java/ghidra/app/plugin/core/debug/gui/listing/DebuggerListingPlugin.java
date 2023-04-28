@@ -76,7 +76,6 @@ import utilities.util.SuppressableCallback.Suppression;
 		TraceSelectionPluginEvent.class
 	},
 	servicesRequired = {
-		DebuggerModelService.class, // For memory capture
 		DebuggerStaticMappingService.class, // For static listing sync. TODO: Optional?
 		DebuggerEmulationService.class, // TODO: Optional?
 		ProgramManager.class, // For static listing sync

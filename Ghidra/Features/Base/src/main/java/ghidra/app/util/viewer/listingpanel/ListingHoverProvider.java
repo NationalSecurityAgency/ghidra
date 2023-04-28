@@ -40,14 +40,20 @@ public class ListingHoverProvider extends AbstractHoverProvider {
 	}
 
 	@Override
+	public boolean isForcePopups() {
+		return true; // our enablement is controlled only by a user-level toolbar action
+	}
+
+	@Override
 	protected ProgramLocation getHoverLocation(FieldLocation fieldLocation, Field field,
 			Rectangle fieldBounds, MouseEvent event) {
 
 		ProgramLocation loc = null;
 		if (field instanceof ListingField) {
 			ListingField listingField = (ListingField) field;
-			loc = listingField.getFieldFactory().getProgramLocation(fieldLocation.getRow(),
-				fieldLocation.getCol(), listingField);
+			loc = listingField.getFieldFactory()
+					.getProgramLocation(fieldLocation.getRow(),
+						fieldLocation.getCol(), listingField);
 		}
 
 		return loc;

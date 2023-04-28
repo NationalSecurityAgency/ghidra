@@ -19,7 +19,7 @@ import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.fieldpanel.support.HighlightFactory;
+import docking.widgets.fieldpanel.support.FieldHighlightFactory;
 import ghidra.app.decompiler.ClangToken;
 
 public class ClangTextField extends WrappingVerticalLayoutTextField {
@@ -32,7 +32,7 @@ public class ClangTextField extends WrappingVerticalLayoutTextField {
 	}
 
 	public ClangTextField(List<ClangToken> tokenList, FieldElement[] fieldElements, int x,
-			int lineNumber, int width, HighlightFactory hlFactory) {
+			int lineNumber, int width, FieldHighlightFactory hlFactory) {
 		super(createSingleLineElement(fieldElements), x, width - x, 30, hlFactory, false);
 		this.tokenList = tokenList;
 		this.lineNumber = lineNumber;

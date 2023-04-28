@@ -16,7 +16,6 @@
 package ghidra.app.util.viewer.field;
 
 import ghidra.app.nav.Navigatable;
-import ghidra.app.util.viewer.format.ErrorListingField;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;

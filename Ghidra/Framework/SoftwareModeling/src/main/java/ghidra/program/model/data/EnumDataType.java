@@ -239,6 +239,11 @@ public class EnumDataType extends GenericDataType implements Enum {
 		return length;
 	}
 
+	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
 	public void setLength(int newLength) {
 		if (newLength == length) {
 			return;

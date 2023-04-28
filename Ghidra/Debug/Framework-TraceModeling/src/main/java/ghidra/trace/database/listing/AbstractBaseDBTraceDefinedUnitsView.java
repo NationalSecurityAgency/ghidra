@@ -376,8 +376,11 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		if (extending == null) {
 			toScan = span;
 		}
+		else if (span.lmax() <= extending.getEndSnap()) {
+			// we're shrinking or staying the same, so not possible to collide with others
+			return span;
+		}
 		else {
-			assert span.lmax() > extending.getEndSnap();
 			toScan = span.withMin(extending.getEndSnap() + 1);
 		}
 		T truncateBy =

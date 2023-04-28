@@ -1,0 +1,97 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Examples of functions reading and writing more than one element (or field) simultaneously
+-->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+53be200000004889fb4883ec500fbf17
+4889e764488b04252800000048894424
+4831c0e8d80f00008b4304488b4c2448
+6448330c252800000089442414486343
+080fb7044475064883c4505bc3e8b60f
+00000000000000000000000000000000
+48b8000100000002ffffc74708000000
+00488907c30000000000000000000000
+488b0648894704c30000000000000000
+55534889fd4883ec28488d5c240c6448
+8b042528000000488944241831c04889
+dfe85a0f0000488b45004889df488944
+240ce8510f0000488b44241864483304
+252800000075074883c4285b5dc3e825
+0f000000000000000000000000000000
+534883ec20488d5c240c64488b042528
+000000488944241831c04889dfe8fe0e
+0000488d7c2404e8040f0000488b4424
+044889df4889442410e8ea0e0000488b
+44241864483304252800000075064883
+c4205bc3e8bf0e000000000000000000
+534883ec20488d5c240c64488b042528
+000000488944241831c04889dfe89e0e
+00004889dfc744241007000700e8960e
+0000488b442418644833042528000000
+75064883c4205bc3e86b0e0000
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="loadalone"/>
+<symbol space="ram" offset="0x100060" name="storeconst"/>
+<symbol space="ram" offset="0x100080" name="copyloadstore"/>
+<symbol space="ram" offset="0x100090" name="storealone"/>
+<symbol space="ram" offset="0x1000f0" name="copy"/>
+<symbol space="ram" offset="0x100150" name="copyconst"/>
+<symbol space="ram" offset="0x101008" name="__stack_chk_fail"/>
+</binaryimage>
+<script>
+  <com>option noreturn __stack_chk_fail</com>
+  <com>parse line struct myfoo { int4 a; int2 b; int2 c; int4 d; };</com>
+  <com>parse line struct otherfoo { int2 A; int2 B; uint4 C; };</com>
+  <com>parse line extern int2 loadalone(myfoo *ptralone);</com>
+  <com>lo fu loadalone</com>
+  <com>map addr s0xffffffffffffffa8 int2 arr[32]</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern void storeconst(myfoo *ptr);</com>
+  <com>lo fu storeconst</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern void copyloadstore(myfoo *ptrstore,otherfoo *ptrload);</com>
+  <com>lo fu copyloadstore</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern void storealone(myfoo *point);</com>
+  <com>lo fu storealone</com>
+  <com>map addr s0xffffffffffffffd4 myfoo stackfoo</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern void copy(void);</com>
+  <com>lo fu copy</com>
+  <com>map addr s0xffffffffffffffe4 myfoo stackmy</com>
+  <com>map addr s0xffffffffffffffdc otherfoo stackother</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern void copyconst(void);</com>
+  <com>lo fu copyconst</com>
+  <com>map addr s0xffffffffffffffe4 myfoo stackconst</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Partial splitting #1" min="1" max="1">arr\[10\] = ptralone-&gt;b;</stringmatch>
+<stringmatch name="Partial splitting #2" min="1" max="1">arr\[11\] = ptralone-&gt;c;</stringmatch>
+<stringmatch name="Partial splitting #3" min="1" max="1">return arr\[ptralone-&gt;d\];</stringmatch>
+<stringmatch name="Partial splitting #4" min="1" max="1">ptr-&gt;d = 0;</stringmatch>
+<stringmatch name="Partial splitting #5" min="1" max="1">ptr-&gt;a = 0x100;</stringmatch>
+<stringmatch name="Partial splitting #6" min="1" max="1">ptr-&gt;b = 0x200;</stringmatch>
+<stringmatch name="Partial splitting #7" min="1" max="1">ptr-&gt;c = -1;</stringmatch>
+<stringmatch name="Partial splitting #8" min="1" max="1">iVar. = ptrload-&gt;B</stringmatch>
+<stringmatch name="Partial splitting #9" min="1" max="1">uVar. = ptrload-&gt;C</stringmatch>
+<stringmatch name="Partial splitting #9" min="1" max="1">ptrstore-&gt;b = ptrload-&gt;A</stringmatch>
+<stringmatch name="Partial splitting #10" min="1" max="1">ptrstore-&gt;c = iVar.;</stringmatch>
+<stringmatch name="Partial splitting #11" min="1" max="1">ptrstore-&gt;d = uVar.;</stringmatch>
+<stringmatch name="Partial splitting #12" min="1" max="1">stackfoo\.a = point-&gt;a;</stringmatch>
+<stringmatch name="Partial splitting #13" min="1" max="1">stackfoo\.b = point-&gt;b;</stringmatch>
+<stringmatch name="Partial splitting #14" min="1" max="1">stackfoo\.c = point-&gt;c;</stringmatch>
+<stringmatch name="Partial splitting #15" min="1" max="1">stackmy\.b = stackother\.A;</stringmatch>
+<stringmatch name="Partial splitting #16" min="1" max="1">stackmy\.c = stackother\.B;</stringmatch>
+<stringmatch name="Partial splitting #17" min="1" max="1">stackmy\.d = stackother\.C;</stringmatch>
+<stringmatch name="Partial splitting #18" min="1" max="1">stackconst\.b = 7;</stringmatch>
+<stringmatch name="Partial splitting #19" min="1" max="1">stackconst\.c = 7;</stringmatch>
+</decompilertest>

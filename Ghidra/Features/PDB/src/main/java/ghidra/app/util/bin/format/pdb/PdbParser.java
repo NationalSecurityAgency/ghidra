@@ -794,7 +794,7 @@ public class PdbParser {
 
 	void createData(Address address, DataType dataType, MessageLog log) {
 		DumbMemBufferImpl memBuffer = new DumbMemBufferImpl(program.getMemory(), address);
-		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dataType, memBuffer);
+		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dataType, memBuffer, false);
 		if (dti == null) {
 			log.appendMsg("PDB",
 				"Failed to apply datatype " + dataType.getName() + " at " + address);

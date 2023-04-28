@@ -1174,6 +1174,39 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+class RuleSplitCopy : public Rule {
+public:
+  RuleSplitCopy(const string &g) : Rule( g, 0, "splitcopy") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitCopy(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+class RuleSplitLoad : public Rule {
+public:
+  RuleSplitLoad(const string &g) : Rule( g, 0, "splitload") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitLoad(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+class RuleSplitStore : public Rule {
+public:
+  RuleSplitStore(const string &g) : Rule( g, 0, "splitstore") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitStore(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RuleSubNormal : public Rule {
 public:
   RuleSubNormal(const string &g) : Rule( g, 0, "subnormal") {}	///< Constructor

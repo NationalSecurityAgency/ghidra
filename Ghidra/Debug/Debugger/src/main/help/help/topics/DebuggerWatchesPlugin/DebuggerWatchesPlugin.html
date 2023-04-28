@@ -30,6 +30,18 @@
     applicable, that data type can optionally be applied to the trace database. Some metadata about
     the watch is also given, e.g., the address of the value.</P>
 
+    <P>The watch window uses colors to hint about changes in and freshness of displayed values. By
+    default, changed values are displayed in red, and stale values are displayed in dark grey. A
+    "stale" value is one which depends on any register or memory whose contents are not known. The
+    value displayed is that computed from the last recorded contents, defaulting to 0 when never
+    recorded. Simply, a "changed" watch is one whose value has just changed. For example, if a
+    value changes as result of stepping, then that watch is changed. However, given the possibility
+    of rewinding, changing thread focus, etc., "changed" is actually subtly more flexible. The
+    watch remembers the evaluation from the user's last coordinates (time, thread, frame, etc.) as
+    well as the current coordinates. So, "changed" more precisely refers to a watch whose value
+    differs between those two coordinates. This permits the user to switch focus between different
+    coordinates and quickly identify what is different.</P>
+
     <H2>Examples</H2>
 
     <P>For those less familiar with Sleigh, here are some example expressions:</P>
@@ -162,20 +174,5 @@
     "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State
     Plugin</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr" column
     cannot be edited, yet.</P>
-
-    <H2><A name="colors"></A>Tool Options: Colors</H2>
-
-    <P>The watch window uses colors to hint about changes in and freshness of displayed values.
-    They can be configured in the tool's options. By default, changed values are displayed in red,
-    and stale values are displayed in dark grey. A "stale" value is one which depends on any
-    register or memory whose contents are not known. The value displayed is that computed from the
-    last recorded contents, defaulting to 0 when never recorded. Simply, a "changed" watch is one
-    whose value has just changed. For example, if a value changes as result of stepping, then that
-    watch is changed. However, given the possibility of rewinding, changing thread focus, etc.,
-    "changed" is actually subtly more flexible. The watch remembers the evaluation from the user's
-    last coordinates (time, thread, frame, etc.) as well as the current coordinates. So, "changed"
-    more precisely refers to a watch whose value differs between those two coordinates. This
-    permits the user to switch focus between different coordinates and quickly identify what is
-    different.</P>
   </BODY>
 </HTML>

@@ -28,6 +28,18 @@
     for the target processor. It permits for the selection, organization, display, search,
     modification, and analysis of the registers and values.</P>
 
+    <P>The register window uses colors to hint about the state of registers and their values. By
+    default, changed registers are displayed in red, and stale registers are displayed in dark
+    grey. A "stale" register is one whose current value is not known. The value displayed is the
+    last recorded value or the default value 0. Simply, a "changed" register is one whose value has
+    just changed. For example, if a register is modified as result of stepping, then that register
+    is changed. However, given the possibility of rewinding, changing thread focus, etc., "changed"
+    is actually subtly more flexible. The registers window remembers the user's last coordinates
+    (time, thread, frame, etc.) as well as the current coordinates. So, "changed" more precisely
+    refers to a register whose value differs between those two coordinates. This permits the user
+    to switch focus between different coordinates and quickly identify what is different, so long
+    as those coordinates pertain to the same processor language.</P>
+
     <H2>Table Columns</H2>
 
     <P>The table displays information about registers, including their values and types. It has the
@@ -109,20 +121,5 @@
     <P>This button is analogous to the "snapshot" action of other Ghidra windows. It generates a
     clone of this window. The clone will no longer follow the current thread, but it will follow
     the current time.</P>
-
-    <H2><A name="colors"></A>Tool Options: Colors</H2>
-
-    <P>The register window uses colors to hint about the state of registers and their values. They
-    can be configured in the tool's options. By default, changed registers are displayed in red,
-    and stale registers are displayed in dark grey. A "stale" register is one whose current value
-    is not known. The value displayed is the last recorded value or the default value 0. Simply, a
-    "changed" register is one whose value has just changed. For example, if a register is modified
-    as result of stepping, then that register is changed. However, given the possibility of
-    rewinding, changing thread focus, etc., "changed" is actually subtly more flexible. The
-    registers window remembers the user's last coordinates (time, thread, frame, etc.) as well as
-    the current coordinates. So, "changed" more precisely refers to a register whose value differs
-    between those two coordinates. This permits the user to switch focus between different
-    coordinates and quickly identify what is different, so long as those coordinates pertain to the
-    same processor language.</P>
   </BODY>
 </HTML>

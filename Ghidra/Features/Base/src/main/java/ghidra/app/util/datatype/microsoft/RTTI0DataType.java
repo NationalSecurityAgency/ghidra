@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.datatype.microsoft;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAbsoluteAddress;
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.is64Bit;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
@@ -111,7 +110,7 @@ public class RTTI0DataType extends RTTIDataType {
 		Address nameAddress = start.add(nameOffset);
 		MemoryBufferImpl nameBuf = new MemoryBufferImpl(buf.getMemory(), nameAddress, 1024);
 		DataTypeInstance dti =
-			DataTypeInstance.getDataTypeInstance(new TerminatedStringDataType(), nameBuf);
+			DataTypeInstance.getDataTypeInstance(new TerminatedStringDataType(), nameBuf, false);
 
 		if (dti != null) {
 			comps[2] = new ReadOnlyDataTypeComponent(dti.getDataType(), this, dti.getLength(), 2,
@@ -178,7 +177,8 @@ public class RTTI0DataType extends RTTIDataType {
 		WrappedMemBuffer nameBuf = null;
 		try {
 			nameBuf = new WrappedMemBuffer(buf, getNameOffset(buf.getMemory().getProgram()));
-			dti = DataTypeInstance.getDataTypeInstance(new TerminatedStringDataType(), nameBuf);
+			dti = DataTypeInstance.getDataTypeInstance(new TerminatedStringDataType(), nameBuf,
+				false);
 		}
 		catch (AddressOutOfBoundsException e) {
 			// ignore

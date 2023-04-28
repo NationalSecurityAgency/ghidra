@@ -38,7 +38,7 @@ import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.ProgramDropProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.*;
@@ -322,13 +322,13 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider,
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
 			Program highlightProgram) {
 		connectedProvider.removeHighlightProvider(highlightProvider, highlightProgram);
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider,
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider,
 			Program highlightProgram) {
 		connectedProvider.setHighlightProvider(highlightProvider, highlightProgram);
 	}

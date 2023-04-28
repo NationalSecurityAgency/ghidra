@@ -209,6 +209,7 @@ public:
   virtual Datatype *getSubType(uintb off,uintb *newoff) const; ///< Recover component data-type one-level down
   virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual int4 getHoleSize(int4 off) const { return 0; }	///< Get number of bytes at the given offset that are padding
   virtual int4 numDepend(void) const { return 0; }	///< Return number of component sub-types
   virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }	///< Return the i-th component sub-type
   virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
@@ -386,6 +387,7 @@ public:
   Datatype *getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const;	///< Figure out what a byte range overlaps
   virtual void printRaw(ostream &s) const;
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual int4 getHoleSize(int4 off) const;
   virtual int4 numDepend(void) const { return 1; }
   virtual Datatype *getDepend(int4 index) const { return arrayof; }
   virtual void printNameBase(ostream &s) const { s << 'a'; arrayof->printNameBase(s); }
@@ -436,7 +438,6 @@ protected:
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
   void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
-  int4 scoreFill(PcodeOp *op,int4 slot) const;	///< Determine best type fit for given PcodeOp use
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
   TypeStruct(void) : Datatype(0,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
@@ -446,6 +447,7 @@ public:
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
   virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual int4 getHoleSize(int4 off) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
@@ -456,6 +458,7 @@ public:
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
   static void assignFieldOffsets(vector<TypeField> &list,int4 align);	///< Assign field offsets given a byte alignment
+  static int4 scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot);	///< Determine best type fit for given PcodeOp use
 };
 
 /// \brief A collection of overlapping Datatype objects: A \b union of component \b fields
@@ -498,6 +501,7 @@ public:
   Datatype *getParent(void) const { return container; }	///< Get the data-type containing \b this piece
   virtual void printRaw(ostream &s) const;
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual int4 getHoleSize(int4 off) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePartialStruct(*this); }

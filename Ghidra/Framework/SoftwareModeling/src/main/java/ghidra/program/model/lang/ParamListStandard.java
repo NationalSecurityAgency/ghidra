@@ -80,11 +80,7 @@ public class ParamListStandard implements ParamList {
 		if (tp == null) {
 			tp = DataType.DEFAULT;
 		}
-		DataType baseType = tp;
-		if (baseType instanceof TypeDef) {
-			baseType = ((TypeDef) baseType).getBaseDataType();
-		}
-		if (baseType instanceof VoidDataType) {
+		if (VoidDataType.isVoidDataType(tp)) {
 			return VariableStorage.VOID_STORAGE;
 		}
 		int sz = tp.getLength();

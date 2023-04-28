@@ -22,8 +22,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.exception.NotFoundException;
 
 public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
@@ -113,7 +113,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 					newValue |= 1;
 				}
 				memory.setInt(relocationAddress, newValue);
-				if (addend != 0) {
+				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
 					warnExternalOffsetRelocation(program, relocationAddress,
 						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
 					applyComponentOffsetPointer(program, relocationAddress, addend);

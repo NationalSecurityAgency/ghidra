@@ -24,7 +24,6 @@ import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.program.model.listing.Data;
@@ -80,11 +79,6 @@ public class OpenCloseField implements ListingField {
 	@Override
 	public FieldFactory getFieldFactory() {
 		return factory;
-	}
-
-	@Override
-	public FieldFormatModel getFieldModel() {
-		return factory.getFieldModel();
 	}
 
 	@Override

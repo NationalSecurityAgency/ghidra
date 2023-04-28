@@ -381,7 +381,7 @@ public class DWARFDataTypeManager {
 		String mangledName = null;
 		if (name != null) {
 			dt = baseDataTypes.get(name);
-			if (dt != null && dt.getLength() == dwarfSize &&
+			if (dt != null && dt.getAlignedLength() == dwarfSize &&
 				isEncodingCompatible(dwarfEncoding, dt)) {
 				return dt;
 			}
@@ -394,6 +394,9 @@ public class DWARFDataTypeManager {
 		dt = switch (dwarfEncoding) {
 			case DWARFEncoding.DW_ATE_address -> baseDataTypeVoid; // TODO: Check if bytesize != 0 - may want to make a void pointer
 			case DWARFEncoding.DW_ATE_boolean -> dwarfSize == 1 ? baseDataTypeBool : null;
+			// TODO: Float lookup by length must use "raw" encoding size since "aligned" lengths
+			// may be duplicated across different float types.  Lookup by name is preferred.
+			// May need to add name lookup capability to AbstractFloatDataType
 			case DWARFEncoding.DW_ATE_float -> AbstractFloatDataType.getFloatDataType(dwarfSize,
 				getCorrectDTMForFixedLengthTypes(name, dwarfSize));
 			case DWARFEncoding.DW_ATE_signed -> AbstractIntegerDataType.getSignedDataType(dwarfSize,
@@ -425,6 +428,7 @@ public class DWARFDataTypeManager {
 
 		return dt;
 	}
+
 
 	private DataTypeManager getCorrectDTMForFixedLengthTypes(String name, int dwarfSize) {
 		// If the requested name of the base type appears to have a bitsize string

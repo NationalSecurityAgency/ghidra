@@ -47,6 +47,7 @@ import ghidra.app.util.cparser.C.CParserUtils;
 import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.symbol.ExternalLocation;
@@ -747,8 +748,15 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 						setStatusText("Return name may not be modified");
 					}
 					else if ("Storage".equals(getColumnName(column))) {
-						setStatusText(
-							"Enable 'Use Custom Storage' to allow editing of Parameter and Return Storage");
+						boolean blockVoidStorageEdit = (rowData.getIndex() == null) &&
+							VoidDataType.isVoidDataType(rowData.getFormalDataType());
+						if (!blockVoidStorageEdit) {
+							setStatusText(
+								"Enable 'Use Custom Storage' to allow editing of Parameter and Return Storage");
+						}
+						else {
+							setStatusText("Void return storage may not be modified");
+						}
 					}
 				}
 			}

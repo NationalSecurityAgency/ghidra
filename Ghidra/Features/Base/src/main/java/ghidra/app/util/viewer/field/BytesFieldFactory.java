@@ -27,7 +27,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -35,6 +35,7 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.BytesFieldLocation;
 import ghidra.program.util.ProgramLocation;
@@ -81,7 +82,7 @@ public class BytesFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private BytesFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private BytesFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
@@ -171,22 +172,23 @@ public class BytesFieldFactory extends FieldFactory {
 		if (!enabled || !(obj instanceof CodeUnit)) {
 			return null;
 		}
-		CodeUnit cu = (CodeUnit) obj;
 
+		CodeUnit cu = (CodeUnit) obj;
 		int length = Math.min(cu.getLength(), 100);
 		byte[] bytes = new byte[length];
+		Memory memory = cu.getProgram().getMemory();
 		try {
-			length = cu.getProgram().getMemory().getBytes(cu.getAddress(), bytes);
+			length = memory.getBytes(cu.getAddress(), bytes);
 		}
 		catch (MemoryAccessException e) {
 			return null;
 		}
+
 		if (length == 0) {
 			return null;
 		}
 
-		if ((cu instanceof Instruction) && reverseInstByteOrdering &&
-			!cu.getProgram().getMemory().isBigEndian()) {
+		if ((cu instanceof Instruction) && reverseInstByteOrdering && !memory.isBigEndian()) {
 			int i = 0;
 			int j = length - 1;
 			while (j > i) {
@@ -196,26 +198,24 @@ public class BytesFieldFactory extends FieldFactory {
 			}
 		}
 
-		int fieldElementLength = length / byteGroupSize;
+		int groupLength = length / byteGroupSize;
 		int residual = length % byteGroupSize;
 		if (residual != 0) {
-			fieldElementLength++;
+			groupLength++;
 		}
+
 		boolean wasTruncated = length != cu.getLength();
-
 		byte[] alignmentBytes = getAlignmentBytes(cu, wasTruncated);
-		int extraLen = getLengthForAlignmentBytes(alignmentBytes, residual);
-
-		FieldElement[] aStrings = new FieldElement[fieldElementLength + extraLen];
-
-		buildAttributedByteValues(aStrings, 0, bytes, length, 0, ListingColors.BYTES,
-			extraLen != 0);
-		if (extraLen != 0) {
-			buildAttributedByteValues(aStrings, fieldElementLength, alignmentBytes,
-				alignmentBytes.length, residual, ListingColors.BYTES_ALIGNMENT, false);
+		int extraLength = getLengthForAlignmentBytes(alignmentBytes, residual);
+		FieldElement[] elements = new FieldElement[groupLength + extraLength];
+		boolean addDelimiter = extraLength != 0;
+		buildAttributedByteValues(elements, 0, bytes, length, 0, ListingColors.BYTES, addDelimiter);
+		if (addDelimiter) {
+			buildAttributedByteValues(elements, groupLength, alignmentBytes, alignmentBytes.length,
+				residual, ListingColors.BYTES_ALIGNMENT, false);
 		}
 
-		return ListingTextField.createPackedTextField(this, proxy, aStrings, startX + varWidth,
+		return ListingTextField.createPackedTextField(this, proxy, elements, startX + varWidth,
 			width, maxDisplayLines, hlProvider);
 	}
 
@@ -242,9 +242,9 @@ public class BytesFieldFactory extends FieldFactory {
 		return null;
 	}
 
-	private int buildAttributedByteValues(FieldElement[] aStrings, int pos, byte[] bytes, int size,
-			int residual, Color c, boolean addDelimToLastGroup) {
-		StringBuffer buffer = new StringBuffer();
+	private int buildAttributedByteValues(FieldElement[] elements, int pos, byte[] bytes, int size,
+			int residual, Color color, boolean addDelimiter) {
+		StringBuilder buffer = new StringBuilder();
 		int groupSize = byteGroupSize - residual;
 		int tempGroupSize = 0;
 		for (int i = 0; i < size; ++i) {
@@ -263,19 +263,20 @@ public class BytesFieldFactory extends FieldFactory {
 			if (tempGroupSize == groupSize) {
 				tempGroupSize = 0;
 				groupSize = byteGroupSize;
-				if (i < size - 1 || addDelimToLastGroup) {
+				if (i < size - 1 || addDelimiter) {
 					buffer.append(delim);
 				}
-				AttributedString as = new AttributedString(buffer.toString(), c, getMetrics());
-				aStrings[pos] = new TextFieldElement(as, pos, 0);
+				AttributedString as = new AttributedString(buffer.toString(), color, getMetrics());
+				elements[pos] = new TextFieldElement(as, pos, 0);
 				pos++;
-				buffer = new StringBuffer();
+				buffer = new StringBuilder();
 			}
 		}
+
 		// append incomplete byte group...
 		if (tempGroupSize > 0) {
-			AttributedString as = new AttributedString(buffer.toString(), c, getMetrics());
-			aStrings[pos] = new TextFieldElement(as, pos, 0);
+			AttributedString as = new AttributedString(buffer.toString(), color, getMetrics());
+			elements[pos] = new TextFieldElement(as, pos, 0);
 		}
 		return tempGroupSize;
 	}
@@ -310,8 +311,8 @@ public class BytesFieldFactory extends FieldFactory {
 		if (alignSize <= 0) {
 			return null;
 		}
-		int alignmentOffset = data.getParentOffset() + data.getLength();
 
+		int alignmentOffset = data.getParentOffset() + data.getLength();
 		byte[] bytes = new byte[alignSize];
 		parent.getBytes(bytes, alignmentOffset);
 		return bytes;
@@ -325,7 +326,6 @@ public class BytesFieldFactory extends FieldFactory {
 		}
 
 		CodeUnit cu = (CodeUnit) obj;
-
 		int[] cpath = null;
 		if (cu instanceof Data) {
 			cpath = ((Data) cu).getComponentPath();
@@ -354,16 +354,15 @@ public class BytesFieldFactory extends FieldFactory {
 
 		int byteIndex = tokenIndex * byteGroupSize + getByteIndexInToken(tokenCharPos);
 		int charOffset = computeCharOffset(tokenCharPos);
-
 		return new BytesFieldLocation(cu.getProgram(), cu.getMinAddress(),
 			cu.getMinAddress().add(byteIndex), cpath, charOffset);
 	}
 
 	/**
-	 *  Computes how many bytes the the given column position represents. Normally
-	 *  this is just the  column position / 2 (since each byte consists of two chars).  There
-	 *  is a special case when the col position is just past the last char of the token.  In
-	 *  this case, we want to return the number of bytes in a token - 1;
+	 * Computes how many bytes the the given column position represents. Normally this is just the
+	 * column position / 2 (since each byte consists of two chars).  There is a special case when
+	 * the col position is just past the last char of the token.  In this case, we want to return
+	 * the number of bytes in a token - 1;
 	 */
 	private int getByteIndexInToken(int col) {
 		if (col >= byteGroupSize * CHARS_IN_BYTE) {
@@ -374,11 +373,10 @@ public class BytesFieldFactory extends FieldFactory {
 
 	/**
 	 * Computes the character offset for a BytesFieldLocation based on the character column the
-	 * cursor is at in the token.  BytesFieldLocation character offsets are always as if the group size is 1.
-	 * So for all positions except the last byte, it is just the column modulo 2.  For the last byte, we have
-	 * to account for any columns past the last char.  In this case, we have to subtract off
-	 * 2 for every byte before the last byte.
-	 *
+	 * cursor is at in the token.  BytesFieldLocation character offsets are always as if the group
+	 * size is 1. So for all positions except the last byte, it is just the column modulo 2.  For
+	 * the last byte, we have to account for any columns past the last char.  In this case, we have
+	 * to subtract off 2 for every byte before the last byte.
 	 */
 	private int computeCharOffset(int col) {
 		if (col >= byteGroupSize * CHARS_IN_BYTE) {
@@ -390,17 +388,16 @@ public class BytesFieldFactory extends FieldFactory {
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation loc) {
+
 		if (!(loc instanceof BytesFieldLocation)) {
 			return null;
 		}
-
 		Object obj = bf.getProxy().getObject();
 		if (!(obj instanceof CodeUnit)) {
 			return null;
 		}
 
 		CodeUnit cu = (CodeUnit) obj;
-
 		BytesFieldLocation bytesLoc = (BytesFieldLocation) loc;
 		int byteIndex = bytesLoc.getByteIndex();
 		int columnInByte = bytesLoc.getColumnInByte();
@@ -442,7 +439,7 @@ public class BytesFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new BytesFieldFactory(formatModel, provider, displayOptions, fieldOptions);
 	}

@@ -98,7 +98,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private EolCommentFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private EolCommentFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "EOL_Comments_Field");
@@ -522,13 +522,13 @@ public class EolCommentFieldFactory extends FieldFactory {
 		if (!(obj instanceof CodeUnit)) {
 			return null;
 		}
+
 		DisplayableEol displayableEol =
 			new DisplayableEol((CodeUnit) obj, alwaysShowRepeatable, alwaysShowRefRepeatables,
 				alwaysShowAutomatic, codeUnitFormatOptions.followReferencedPointers(),
 				maxDisplayLines, useAbbreviatedAutomatic, showAutomaticFunctions);
 
 		ListingTextField btf = (ListingTextField) bf;
-
 		RowColLocation eolRowCol = displayableEol.getRowCol((CommentFieldLocation) loc);
 		RowColLocation rcl = btf.dataToScreenLocation(eolRowCol.row(), eolRowCol.col());
 		if (!hasSamePath(bf, loc)) {
@@ -548,7 +548,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel fieldFormatModel,
-			HighlightProvider highlightProvider, ToolOptions newDisplayOptions,
+			ListingHighlightProvider highlightProvider, ToolOptions newDisplayOptions,
 			ToolOptions newFieldOptions) {
 		return new EolCommentFieldFactory(fieldFormatModel, highlightProvider, newDisplayOptions,
 			newFieldOptions);

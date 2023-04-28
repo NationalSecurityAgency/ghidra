@@ -297,6 +297,66 @@
 	</p>
       </dd>
 <dt>
+<a name="AnalysisSplitStruct"></a><span class="term"><span class="bold"><strong>Split combined structure fields</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When this option is active, the Decompiler attempts to identify places in the code where multiple
+	  fields of a structure data-type are being moved simultaneously with a single operation. Then it splits the
+	  operation into multiple pieces so that the logical fields can be seen individually.
+	  When this option isn't active, the Decompiler creates an artificial token to
+	  represent the combined fields being written to or read from.
+          </p>
+<div class="informalexample">
+	    <pre class="programlisting">
+	      struct1._20_4_ = 0xff00ff00;  // Auto-generated name for assigning multiple fields at once
+	        ...
+	      struct1.a = 0xff00;           // The same assignment, after splitting
+	      struct1.b = 0xff00;
+	    </pre>
+          </div>
+<p>
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisSplitArray"></a><span class="term"><span class="bold"><strong>Split combined array elements</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When this option is active, the Decompiler attempts to identify places in the code where multiple
+	  elements of an array are being moved simultaneously with a single operation. Then it splits the
+	  operation into multiple pieces so each element of the array can be seen individually.
+	  When this option isn't active, the Decompiler creates an artificial token to
+	  represent the combined elements being written to or read from.
+          </p>
+<div class="informalexample">
+	    <pre class="programlisting">
+	      text._20_2_ = 0x4241;        // Auto-generated name for assigning multiple elements at once
+	        ...
+	      text[20] = 'A';              // The same assignment, after splitting
+	      test[21] = 'B';
+	    </pre>
+          </div>
+<p>
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisSplitPointers"></a><span class="term"><span class="bold"><strong>Split pointers to combined elements</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  This options affects when the Decompiler's splitting actions are applied. See
+	  the discussion above about 
+	  <a class="link" href="DecompilerOptions.html#AnalysisSplitStruct">Splitting Structure Accesses</a> and
+	  <a class="link" href="DecompilerOptions.html#AnalysisSplitArray">Splitting Array Accesses</a>.
+	  If this option is on, a split is performed whenever combined elements or combined
+	  fields are copied.  In particular, either the read access, or the write access, or both,
+	  can be through a pointer.
+	  If this option is off, splitting is limited to copies between structures or arrays at fixed
+	  locations, either at a global address, or on the local stack.
+	</p>
+      </dd>
+<dt>
 <a name="AnalysisInPlace"></a><span class="term"><span class="bold"><strong>Use in-place assignment operators</strong></span></span>
 </dt>
 <dd>

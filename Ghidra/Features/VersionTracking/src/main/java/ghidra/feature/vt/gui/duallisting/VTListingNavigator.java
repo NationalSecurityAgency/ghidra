@@ -18,7 +18,7 @@ package ghidra.feature.vt.gui.duallisting;
 import javax.swing.Icon;
 
 import ghidra.app.nav.*;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.program.model.listing.Program;
@@ -147,12 +147,12 @@ public class VTListingNavigator implements Navigatable {
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// currently unsupported
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// currently unsupported
 
 	}

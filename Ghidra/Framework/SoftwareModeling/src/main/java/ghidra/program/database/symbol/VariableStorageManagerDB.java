@@ -119,7 +119,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 	/**
 	 * Get the list of varnodes associated with the specified variable storage address.
 	 * NOTE: The program architecture and error handler must be set appropriately prior to 
-	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture, ErrorHandler)}.
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
 	 * @param variableAddr variable storage address
 	 * @return storage varnode list or null if address unknown
 	 * @throws IOException if a database IO error occurs
@@ -145,7 +145,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 	/**
 	 * Get the variable storage object associated with the specified variable storage address.
 	 * NOTE: The program architecture and error handler must be set appropriately prior to 
-	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture, ErrorHandler)}.
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
 	 * @param variableAddr variable storage address
 	 * @return variable storage object or null if address unknown
 	 * @throws IOException if a database IO error occurs
@@ -161,7 +161,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 	/**
 	 * Get a variable address for the given storage specification.
 	 * NOTE: The program architecture and error handler must be set appropriately prior to 
-	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture, ErrorHandler)}.
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
 	 * @param storage variable storage specification
 	 * @param create if true a new variable address will be allocated if needed
 	 * @return variable address which corresponds to the storage specification or null if not found

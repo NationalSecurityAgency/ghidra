@@ -1709,7 +1709,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			DataTypeComponent dtc = otherComponents[i];
 
 			DataType dt = resolvedDts[i]; // ancestry check already performed by caller
-			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 			if (length < 0 || dtc.isBitFieldComponent()) {
 				// TODO: bitfield truncation/expansion may be an issue if data organization changes
 				length = dtc.getLength();
@@ -1817,7 +1817,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				if (dtc.getDataType() == dt) {
 					// assume no impact to bitfields since base types should not change size
 					int dtcLen = dtc.getLength();
-					int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+					int length =
+						DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 					if (length < 0) {
 						length = dtcLen;
 					}
@@ -1875,7 +1876,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				forceRepack |= isPacked;
 				continue;
 			}
-			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 			if (length < 0) {
 				continue; // illegal condition - skip
 			}
@@ -2304,7 +2305,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			int nextIndex) throws IOException {
 
 		int oldLen = comp.getLength();
-		int len = DataTypeComponent.usesZeroLengthComponent(newDt) ? 0 : newDt.getLength();
+		int len = DataTypeComponent.usesZeroLengthComponent(newDt) ? 0 : newDt.getAlignedLength();
 		if (len < 0) {
 			len = oldLen;
 		}
