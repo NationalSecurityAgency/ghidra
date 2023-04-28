@@ -344,9 +344,14 @@ bool JumpValuesRangeDefault::contains(uintb val) const
 bool JumpValuesRangeDefault::initializeForReading(void) const
 
 {
-  if (range.getSize()==0) return false;
-  curval = range.getMin();
-  lastvalue = false;
+  if (range.getSize()==0) {
+    curval = extravalue;
+    lastvalue = true;
+  }
+  else {
+    curval = range.getMin();
+    lastvalue = false;
+  }
   return true;
 }
 
