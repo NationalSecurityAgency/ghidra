@@ -3,12 +3,33 @@
 <HTML>
   <HEAD>
     <TITLE>Ghidra Change History</TITLE>
+    <style>
+      gcode {
+        font-family: Consolas,"courier new";
+        font-weight: bold;
+        font-size: 85%;
+      }
+      gtitle {
+        font-style: italic;
+        font-weight: bold;
+        font-size: 95%;
+      }
+      gmsg {
+        font-style: italic;
+      }
+      gmsg::before {
+        content: open-quote;
+      }
+      gmsg::after {
+        content: close-quote;
+      }
+    </style>
   </HEAD>
 
 <BODY>
 
 <H1 align="center">Ghidra 10.2.3 Change History (February 2023)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Addressed CVE-2023-22671 by removing <code>eval</code> usage from <code>launch.sh</code>. (GP-2987, Issue #4869, #4872)</li>
     <li><I>Build</I>. Ghidra's Windows native binaries can now be built using Microsoft C++ Build Tools. (GP-2786, Issue #1733, #4647)</li>
@@ -20,7 +41,7 @@
     <li><I>Processors</I>. Added <code><B>volatile</B></code> and <code><B>size</B></code> attributes to individual default_symbols/symbol elements in pspec files. Symbols with these volatile and size attributes are treated as volatile by the Decompiler. (GP-2606)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Corrected RISC-V function start patterns.  The values of <code><B>totalbits</B></code> and <code><B>postbits</B></code> were set such that no patterns would ever match.  Call instructions split into call/jump based on return addressing saving in <code>RA</code>. (GP-2878)</li>
     <li><I>Analysis</I>. Corrected potentially bad constant propagation where the subtraction two unknown values can result in the placement of an erroneous memory reference. (GP-3066)</li>
@@ -53,7 +74,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.2.2 Change History (November 2022)</H1>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Debugger</I>. Improved error reporting for failed GADP-based Debugger connections. (GP-994)</li>
     <li><I>Debugger:Breakpoints</I>. Fixed breakpoint margin display in the Listing for breakpoints spanning multiple lines (code units). (GP-2733)</li>
@@ -65,12 +86,12 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.2.1 Change History (November 2022)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Data Types</I>. Added performance improvements for Structure build-up and resolution when simplifying assumptions can be made. (GP-2777)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>DB</I>. Corrected database table key iterator regression error introduced with Ghidra 10.2 which could result in a NullPointerException.  An internal long key iterator transition may fail under certain conditions when the iterator has already been exhausted. (GP-2805, Issue #4716)</li>
     <li><I>Debugger</I>. Removed a timeout when prompting the user for Debugger launch options. (GP-2722)</li>
@@ -87,7 +108,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.2 Change History (November 2022)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Ghidra now requires JDK 17 to run. (GP-2132, Issue #4316)</li>
     <li><I>Build</I>. A CycloneDX Software Bill of Materials (SBOM) is now included with a Ghidra distribution. (GP-1782)</li>
@@ -121,7 +142,7 @@
     <li><I>Scripting</I>. Added FlatDebuggerAPI interface for GhidraScripts to more easily access the Debugger's API. (GP-2189)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Added detection of <code>pop</code> to the PC as a return in ARM binaries. (GP-634)</li>
     <li><I>Analysis</I>. PointerTypedefs are now used for Relative Pointers in the Objective_C2 small method data structures.  Previously, the value was a DWORD and did not resolve to an address. (GP-1427)</li>
@@ -270,7 +291,7 @@
     <li><I>Testing</I>. Upgraded Jacoco to 0.8.8. (GP-2208)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed <B>Windows x86 PE RTTI Analyzer</B> to not duplicate labels on type_info vftables when PDB is present. (GP-854)</li>
     <li><I>Analysis</I>. Fixed long-standing issue with incorrectly named RTTI Type Descriptor symbols; also added correct class namespace. (GP-1703)</li>
@@ -450,7 +471,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.1.5 Change History (July 2022)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Changed disassembly of interrupt vectors with pointers to be consistent with interrupt vectors with code, specifically for ARM-cortex-embedded binary disassembly. (GP-2080, Issue #4263)</li>
     <li><I>Processors</I>. Added HC-12 processor support with a Flat 16-bit memory model by splitting HCS12X into HC-12, HCS-12, and HCS-12X processors. (GP-1716, Issue #1570, #4016)</li>
@@ -459,7 +480,7 @@
     <li><I>Processors</I>. Added support for AARCH64 ilp32 variant. (GP-2355)</li> 
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed function purge setting for x86 16-bit functions using <code>RETF</code> to return. (GP-2103, Issue #4293)</li>
     <li><I>Analysis</I>. Protected use of tmodeReg value in ArmAggressiveInstructionFinderAnalyzer when processor does not have a TMode register. (GP-2122)</li>
@@ -486,12 +507,12 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.1.4 Change History (May 2022)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Debugger:Listing</I>. Refresh button in Debugger's Dynamic Listing and Memory Bytes views now operates without a selection and is more thorough with respect to cache invalidation. (GP-1930)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed an exception that occurred when loading programs created in previous versions where the analysis option's type had changed (String to Long). (GP-1738)</li>
     <li><I>Analysis</I>. Constant reference propagation now uses pcode injection for segment and all userops.  This affects 16-bit code and the HCS12 processor. (GP-1987, Issue #4252)</li>
@@ -505,7 +526,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.1.3 Change History (April 2022)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>API</I>. Added the <code>getActiveGraphDisplay()</code> API method to GraphDisplayProvider to get the active graph. (GP-1804, Issue #4060)</li>
     <li><I>Debugger</I>. Created better comment in Dynamic Listing <B>Go To</B> dialog so users don't default to <code><B>*:4 EAX</B></code> syntax. (GP-1820)</li>
@@ -519,7 +540,7 @@
     <li><I>Scripting</I>. Improved RecoverClassesFromRTTIScript's method to validate GCC programs. (GP-1832)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed FID Analyzer to run only once on programs with call-fixups or identified non-returning flow. (GP-1502)</li>
     <li><I>Analysis</I>. Corrected the creation of Objective-C structures when structures collided with existing generic pointers laid down by chained-pointer processing during import. (GP-1841)</li>
@@ -564,7 +585,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.1.2 Change History (January 2022)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Upgraded Gson to 2.8.9. (GP-1632, Issue #3802)</li>
     <li><I>Basic Infrastructure</I>. Upgraded log4j to 2.17.1. (GP-1641)</li>
@@ -576,7 +597,7 @@
     <li><I>Scripting</I>. Updated RecoverClassesFromRTTI script for GCC programs to only create <code>typeinfo</code> structures in non-executable memory. (GP-1686)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed another bug with recovering Objective-C method names. (GP-1642, Issue #3817)</li>
     <li><I>Analysis</I>. Certain switch cases using the AARCH64 CSEL instruction will now recover correctly.  Previously internal CBRANCH instructions could cause switch flow recovery failure in the decompiler switch analyzer. (GP-1687)</li>
@@ -608,7 +629,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.1.1 Change History (December 2021)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed headless analysis exception related to running UI code from the GNU Demangler analyzer. (GP-1613, Issue #3765)</li>
     <li><I>Basic Infrastructure</I>. Upgrade logging dependency to use <i>log4j</i> 2.17.0 (GP-1621)</li>
@@ -619,7 +640,7 @@
     <li><I>Help</I>. Fixed NullPointerException when using the help system with animation disasbled. (GP-1612, Issue #3767)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Fixed the <I>"ERROR StatusLogger Reconfiguration failed"</I> message that appeared in the log when Ghidra was launched with <I>support/ghidraDebug</I> script. (GP-1607)</li>
     <li><I>Debugger</I>. Fixed null pointer exception in Debugger when opening a program from a shared project. (GP-1490)</li>
@@ -632,7 +653,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.1 Change History (December 2021)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Build</I>. Ghidra now builds on 64-bit Linux ARM and macOS M1 platforms. (GP-1106, Issue #3197)</li>
     <li><I>Build</I>. Native binaries for the current platform can now be built/rebuilt from within a release using the <B>support/buildNatives(.bat)</B> script.  Please see the "Building Ghidra Native Components" section of the Installation Guide for additional information. (GP-1209, Issue #3387)</li>
@@ -648,7 +669,7 @@
     <li><I>Scripting</I>. Created RunYARAFromGhidra.py to map YARA rules to Ghidra comments. (GP-1199)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. The called <code>___chkstk_ms()</code> function is now properly recognized and handled with a call fixup for windows x86-64. (GP-1347, Issue #1888, #1889)</li>
     <li><I>Analysis</I>. Added support for Objective-C small methods. (GP-1397, Issue #2719, #2732)</li>
@@ -735,7 +756,7 @@
     <li><I>Version Tracking</I>. Slightly relaxed score thresholds for the reference correlator portions of auto version tracking to enable discovery of more high scoring matches. (GP-1448)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed a bug that would result in the <B>COFF Header Annotation</B> analyzer running on PIC binaries when it was not intended to. (GP-1366, Issue #3386)</li>
     <li><I>Analysis</I>. The Objective-C analyzer no longer crashes when encountering categories with an implementation in an external binary. (GP-1413, Issue #3510)</li>
@@ -829,12 +850,12 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.0.4 Change History (September 2021)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Multi-User</I>. Added class serialization filter to Ghidra Server as a security measure. (GP-1314)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>C Parsing</I>. Changes to the CParser have been made to successfully parse a greater number of header files.  The CParser will now correctly evaluate the truth of expanded macro substitutions in <code>#if</code> statements.  Operator precedence has been corrected and support for additional operators added for constant simplification that is used to specify array sizes during parse.  In addition, C17 structure initialization syntax and multiple type casts are now parsed. (GP-1295, Issue #1652, #2665, #2666, #3410)</li>
     <li><I>Debugger</I>. Changed <B>Track Program Counter</B>, etc., to re-track even when clicking them doesn't <B>change</B> the current setting. (GP-1282)</li>
@@ -851,12 +872,12 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.0.3 Change History (September 2021)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Debugger:Watches</I>. Added ability to modify target memory and registers via the Watches window. (GP-1264, Issue #2866)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Improved SH4 constant reference analysis for PIC code, reference placement for jumps/calls, and non-return function analysis. General constant reference analysis has also been improved. (GP-1258)</li>
     <li><I>Basic Infrastructure</I>. Removed usage of the <code>--illegal-access=permit</code> JVM argument for improved JDK 17 runtime support.  The Ghidra Server continues to require JDK 11 to successfully run at this time. (GP-1193, Issue #3355)</li>
@@ -873,7 +894,7 @@
     <li><I>Processors</I>. Added semantics for several x86/x64 vector operations. (GP-1262)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Byte Viewer</I>. Fixed stack overflow issue in ByteViewer. (GP-1276)</li>
     <li><I>C Parsing</I>. Eliminated static variables that caused follow-on CParser tasks to error because they started in a bad state. (GP-1251, Issue #1421, #3350)</li>
@@ -900,12 +921,12 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.0.2 Change History (August 2021)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Scripting</I>. Created an example script which demonstrates how to use the FileBytes class to do a binary export of the current program. (GP-1157)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Data Types</I>. When creating a substructure from existing components, the new structure will adopt the pack setting of the parent structure from which it was created.  Note  that a packed structure may still move based upon component alignment rules. (GP-1111, Issue #3193)</li>
     <li><I>Decompiler</I>. Added <B>E</B> key binding to the Decompiler's Equate action. (GP-1146, Issue #3195)</li>
@@ -913,7 +934,7 @@
     <li><I>Scripting</I>. For stripped GCC binaries, improved prototype RecoverClassesFromRTTIScript identification of vtables and simple class data, constructors, and destructors. (GP-1055, Issue #3266)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Fixed regression that prevented Ghidra from launching on Windows when its path contained spaces. (GP-1113, Issue #3201, #3205)</li>
     <li><I>Data Types</I>. Fixed IllegalArgumentException error message when adding a duplicate enumerate name for EnumDataType. (GP-1173, Issue #3246)</li>
@@ -946,18 +967,18 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.0.1 Change History (July 2021)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Decompiler</I>. The Decompiler now supports conversion (hex, dec, bin, oct, char) and equate actions directly on constant tokens in the Decompiler window.  To the extent possible, these actions also affect matching scalar operands in the listing. (GP-1053, Issue #21)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Ghidra now gracefully fails to launch when its path contains an exclamation point. (GP-1057, Issue #1817)</li>
     <li><I>FileSystems</I>. Can now handle multi-level Ext4 extent nodes when reading a file. (GP-1070)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Build</I>. No longer building and distributing the Debugger native test binaries. (GP-1080, Issue #3160, #3177)</li>
     <li><I>Debugger</I>. Corrected potential deadlock condition within Debugger which could occur under some circumstances during a breakpoint or while stepping. (GP-1072)</li>
@@ -976,7 +997,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 10.0 Change History (June 2021)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Debugger</I>. Introduced the Debugger, along with GDB and dbgeng.dll connectors for debugging user-mode applications on Linux and Windows, respectively. The UI includes threads, timeline, modules, memory, registers, watches, etc., for examining and controlling debug targets. See <B>Help -> Contents -> What's New</B> for more details. (GP-986)</li>
     <li><I>Exporter</I>. For programs imported with the PE and ELF loaders, new exporters are available that write back to the original file layout.  Any file-backed bytes that were modified by the user in the program database will be reflected in the written file (except on relocations).  Writing back a modified Memory Map is not supported. (GP-786, Issue #1501, #1505, #19)</li>
@@ -986,7 +1007,7 @@
     <li><I>Scripting</I>. Created a script to allow users to search for image base offsets to the current cursor location in 32-bit and 64-bit programs. (GP-863)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Function signatures, including return types and argument data types, are now decoded from CLI Metadata for .NET binaries. (GP-327)</li>
     <li><I>Analysis</I>. Switched #Strings table processing from ASCII to UTF-8 for CIL binaries. (GP-330, Issue #423)</li>
@@ -1067,7 +1088,7 @@
     <li><I>Sleigh</I>. While register names should remain case-sensitive within a Sleigh spec during compilation/parse, register names must not duplicate in a case-insensitive manner since the Program API provides a case-insensitive register lookup by name. The Sleigh Compiler now enforces this. (GP-927)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed how managed code entry points in .NET binaries with CIL entry points are detected and labeled. (GP-319)</li>
     <li><I>Analysis</I>. Can now process implementation-specific data structures for Microsoft CIL compilers. (GP-461)</li>
@@ -1152,12 +1173,12 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.2.4 Change History (April 2021)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Improved support running under JDK 16.  Note that Ghidra still only officially supports JDK 11 LTS. (GP-824, Issue #2879, #2888)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>API</I>. Corrected error condition which could occur if overlay memory block duplicates another memory space name or overlay block name in a case-insensitive manner.  The names are intended to be case-sensitive. (GP-839, Issue #2898)</li>
     <li><I>Demangler</I>. Improved handling of mangled names on thunk functions which were previously left unmangled and could prevent name of underlying thunked function from appearing. (GP-809)</li>
@@ -1165,7 +1186,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.2.3 Change History (March 2021)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Added check for vftable entries in <code>.NEP</code> section and relaxed the requirement that the code must have a return. (GP-649)</li>
     <li><I>Analysis</I>. Corrected flaw in RTTI analyzer determination of size of vftables. (GP-688)</li>
@@ -1178,7 +1199,7 @@
     <li><I>Importer:ELF</I>. Sped up loading of ELF files with large symbol tables. (GP-697)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. The RTTI analyzer now runs prior to Reference analysis so that references into vftables are not turned into code or data before the vftables are created. (GP-517)</li>
     <li><I>API</I>. <code>Function.getCalledFunctions(TaskMonitor)</code> and <code>Function.getCallingFunctions(TaskMonitor)</code> now support passing <code>null</code> for the task monitor parameter, which previously would have thrown an exception. (GP-589, Issue #2643)</li>
@@ -1217,7 +1238,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.2.2 Change History (December 2020)</H1>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Graphing</I>. Fixed issue with Graph filters not working and satellite view sometimes not matching graph. (GP-526)</li>
     <li><I>Importer:Mach-O</I>. Mach-O DYLD cache incorrect offset use has been fixed. (GP-550, Issue #2560)</li>
@@ -1229,7 +1250,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.2.1 Change History (December 2020)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Updated RTTI analyzer to find <code>type_info</code> vftable when it cannot be found with its mangled name. This will enable many more Windows programs to have their RTTI structures created that were unable to be parsed in previous Ghidra versions. (GP-141)</li>
     <li><I>API</I>. Relaxed memory block naming restrictions and restored ability to have spaces in memory block names.  However, if a memory block is flagged as an overlay, the associated overlay space name may be modified to ensure validity and uniqueness.  The DuplicateNameException has been removed from all memory block API methods since this was entirely an overlay space concern.  Memory block GUI has also been changed eliminate the duplicate block name restriction. (GP-420, Issue #2465)</li>
@@ -1241,7 +1262,7 @@
     <li><I>Scripting</I>. Removed unnecessary 1-second delay when launching a script. (GP-443)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed the processing of CIL metadata that express arrays of non-primitive types. (GP-331)</li>
     <li><I>API</I>. WrappedMemBuffer methods <code>getInt</code>, <code>getShort</code>, <code>getLong</code>, and <code>getBigInteger</code> have been fixed when allocated at a non-zero offset, wrapping another MemBuffer such as DumbMemBufferImpl. (GP-486)</li>
@@ -1260,7 +1281,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.2 Change History (November 2020)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Graphing</I>. A new graph service and implementation was created. The graph service provides basic graphing capabilities. It was also used to generate several different types of graphs including code block graphs, call graphs, and AST graphs. In addition, an export graph service was created that supports various formats. (GP-211)</li>
     <li><I>PDB</I>. Added a new, prototype, platform-independent PDB analyzer that processes and applies data types and symbols to a program from a raw (non-XML-converted) PDB file, allowing users to more easily take advantage of PDB information. (GT-3112)</li>
@@ -1271,7 +1292,7 @@
     <li><I>Processors</I>. Added V850 processor module. (GT-3523, Issue #1430)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Increased the speed of the Embedded Media Analyzer, which was especially poor for large programs, by doing better checking and reducing the number of passes over the program. (GT-3258)</li>
     <li><I>Analysis</I>. Improved the performance of the RTTI analyzer. (GT-3341, Issue #10)</li>
@@ -1371,7 +1392,7 @@
     <li><I>Sleigh</I>. Error messages produced by the SLEIGH compiler have been reformatted to be more consistent in layout as well as more descriptive and more consistent in providing line number information. (GT-3174)</li>
 </ul>
 </blockquote>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Function start patterns found at 0x0, function signatures applied from the Data Type Manager at 0x0, and DWARF debug symbols applied at 0x0 will no longer cause stack traces.  In addition, DWARF symbols with zero length address range no longer stack trace. (GT-2817, Issue #386, #1560)</li>
     <li><I>Analysis</I>. Constant propagation will treat an OR with zero (0) as a simple copy. (GT-3548, Issue #1531)</li>
@@ -1485,7 +1506,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.1.2 Change History (February 2020)</H1>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Data Types</I>. Improved PDB composite reconstruction to attempt <code>pack(1)</code> alignment if default alignment fails. (GT-3401)</li>
     <li><I>Data Types</I>. Added missing support for multi-user merge of unions and structures containing bitfields or a trailing flexible array member. (GT-3479)</li>
@@ -1503,14 +1524,14 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.1.1 Change History (December 2019)</H1>
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Importer:Mach-O</I>. Improved import/load time of DYLD shared cache files. (GT-3261)</li>
     <li><I>Program API</I>. Cached the addresses that correspond to executable memory to improve analysis performance. (GT-3260)</li>
 </ul>
 </blockquote>
 
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed a symbol name error that occurred in the Objective-C analyzer. (GT-3321, Issue #1200)</li>
     <li><I>Analysis</I>. Constant references are now computed correctly within functions in overlay spaces. (GT-3373)</li>
@@ -1536,7 +1557,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.1 Change History (October 2019)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Data Types</I>. Added bit-field support to Structure and Union editor.  An additional Bit-field Editor was also added for explicit bit-field placement within non-packed structures. (GT-559)</li>
     <li><I>Eclipse Integration</I>. Added new GhidraSleighEditor Eclipse plugin in the installation directory under Extensions/Eclipse. (GT-113)</li>
@@ -1557,7 +1578,7 @@
 </ul>
 </blockquote>
 
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Analysis</I>. Added example script, ResolveX86orX64LinuxSyscallsScript.java, for decompiling Linux system calls in x86 and x64.  Added syscall-related exercises to <B>Advanced</B> class. (GT-3113)</li>
     <li><I>Basic Infrastructure</I>. Made bash scripts more portable, allowing Ghidra to be launched on additional platforms. (GT-2742, Issue #347)</li>
@@ -1632,7 +1653,7 @@
 </ul>
 </blockquote>
 
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Fixed an exception in the EmbeddedMediaAnalyzer that occurred when media was discovered at the very end of the address space. (GT-2890)</li>
     <li><I>Analysis</I>. Recognition and disassembly of the <code>FMA</code>, <code>F16C</code>, and several missing <code>AVX</code> instructions have been added to the base x86 processor specification.  The pcode for these instructions is pseudo-op and not a full pcode implementation. (GT-3168)</li>
@@ -1740,7 +1761,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.0.4 Change History (May 2019)</H1>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Multi-User:Ghidra Server</I>. Corrected severe script error in svrAdmin.bat introduced with 9.0.3 build. (GT-2874)</li>
     <li><I>GUI</I>. Restored the default 'p' key binding for creating pointers within the listing display. (GT-2854)</li>
@@ -1748,13 +1769,13 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.0.3 Change History (April 2019)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>GUI</I>. Function tags are now viewable from Functions Window table using new column. (GT-2114)</li>
 </ul>
 </blockquote>
 
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Decompiler</I>. Improved modeling of CFG on Windows 10. (GT-2755, Issue #340)</li>
     <li><I>Patcher</I>. Renamed patch directory to <install dir>/Ghidra/patch and added README.txt that explains how the patch directory is used. (GT-2734)</li>
@@ -1763,7 +1784,7 @@
 </ul>
 </blockquote>
 
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Code that checks for thunks no longer throws an exception if the PC is not set for the processor. (GT-2730)</li>
     <li><I>Analysis</I>. Made a fix to enable Apply button when changing tool options. (GT-2801, Issue #40)</li>
@@ -1781,7 +1802,7 @@
 </blockquote>
 
 <H1 align="center">Ghidra 9.0.2 Change History (April 2019)</H1>
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>Analysis</I>. Constant reference analysis boundary controls for speculative references has been fixed. Speculative references are references created from computed constants passed as parameters, stored to a location, or from indexed offsets from a register. (GT-2723, Issue #228)</li>
     <li><I>Decompiler</I>. Fixed Decompiler handling of Function Definition data types. (GT-2704, Issue #247)</li>
@@ -1798,20 +1819,20 @@
 </ul>
 </blockquote>
 
-<blockquote><p><u>Security</u></p>
+<blockquote><p><u><B>Security</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Added a property to support/launch.properties to prevent log4j from using jansi.dll on Windows. (GT-2725, Issue #286)</li>
 </ul>
 </blockquote>
 
 <H1 align="center">Ghidra 9.0.1 Change History (March 2019)</H1>
-<blockquote><p><u>New Features</u></p>
+<blockquote><p><u><B>New Features</B></u></p>
 <ul>
     <li><I>Scripting</I>. Created ShowEquatesInSelectionScript to show all equates within the current selection. (GT-2651, Issue #111)</li>
 </ul>
 </blockquote>
 
-<blockquote><p><u>Improvements</u></p>
+<blockquote><p><u><B>Improvements</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Updated commons-compress library to version 1.18. (GT-2657, Issue #171)</li>
     <li><I>Eclipse Integration</I>. Ghidra now connects to the Eclipse GhidraDev plugin on 127.0.0.1 rather than localhost. (GT-2691)</li>
@@ -1823,7 +1844,7 @@
 </ul>
 </blockquote>
 
-<blockquote><p><u>Bugs</u></p>
+<blockquote><p><u><B>Bugs</B></u></p>
 <ul>
     <li><I>API</I>. Fixed equals method on Varnode class. (GT-2648, Issue #97)</li>
     <li><I>API</I>. Fixed a bug in MaskImpl.complementMask(). (GT-2694, Issue #187)</li>
@@ -1854,7 +1875,7 @@
 </ul>
 </blockquote>
 
-<blockquote><p><u>Security</u></p>
+<blockquote><p><u><B>Security</B></u></p>
 <ul>
     <li><I>Basic Infrastructure</I>. Running Ghidra in debug mode no longer opens remotely accessible ports by default. (GT-2641, Issue #6)</li>
     <li><I>GUI</I>. The Defined Strings plugin no longer renders HTML in its table. (GT-2686, Issue #45)</li>
