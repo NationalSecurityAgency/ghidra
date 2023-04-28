@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.*;
 
@@ -352,6 +353,11 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 		waitForPass(() -> assertEquals(tb.set(tb.range(0x00400000, 0x0040ffff)),
 			new AddressSet(listing.getSelection())));
+	}
+
+	@Test
+	public void testActionAddRegion() throws Exception {
+		createAndOpenTrace();
 	}
 
 	@Test

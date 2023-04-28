@@ -101,6 +101,17 @@
     selects the region containing that cursor. If the dynamic listing has a selection, it selects
     all regions intersecting that selection.</P>
 
+    <H3><A name="add_region"></A>Add Region</H3>
+
+    <P>This action is available when a trace is active. It adds a new region to the memory map. It
+    should only be used for emulation or to correct or diagnose trace recording issues.</P>
+
+    <H3><A name="delete_regions"></A>Delete Regions</H3>
+
+    <P>This action is available when at least one region is selected. It deletes those regions. Use
+    this with caution, since recovering those regions could be difficult. In general, this should
+    only be used to remove regions that were manually added.</P>
+
     <H3><A name="force_full_view"></A>Force Full View</H3>
 
     <P>This action is available when a trace is active. It forces all physical address spaces into
