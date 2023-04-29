@@ -45,7 +45,7 @@
           <register name="R5"/>
         </pentry>
       </input>
-      <output killedbycall="true">
+      <output>
         <pentry minsize="1" maxsize="8">
           <register name="R0"/>
         </pentry>

@@ -3,7 +3,7 @@
 ###############################################################################
 
 #eBPF is a RISC register machine with a total of 11 64-bit registers, a program counter and a 512 byte fixed-size stack. 
-#9 registers are general purpouse read-write, one is a read-only stack pointer and the program counter is implicit,
+#9 registers are general purpose read-write, one is a read-only stack pointer and the program counter is implicit,
 #i.e. we can only jump to a certain offset from it. The eBPF registers are always 64-bit wide.
 
 define space ram type=ram_space size=8 default;
@@ -37,84 +37,70 @@ attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  
 #BPF_ALU64
 ###############################################################################
 
-:MOV dst, src  is src & dst & op_alu_jmp_opcode=0xb & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = src; }
-:MOV dst, imm  is imm & dst & op_alu_jmp_opcode=0xb & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = imm; }
+SRC8: src is src & op_alu_jmp_source=1 { export src; }
+SRC8: imm is imm & op_alu_jmp_source=0 { export *[const]:8 imm; }
 
-:ADD dst, src  is src & dst & op_alu_jmp_opcode=0x0 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst + src; }
-:ADD dst, imm  is imm & dst & op_alu_jmp_opcode=0x0 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst + imm; }
+SRC4: src is src & op_alu_jmp_source=1 { local tmp:4 = src:4; export tmp; }
+SRC4: imm is imm & op_alu_jmp_source=0 { export *[const]:4 imm; }
 
-:SUB dst, src  is src & dst & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst - src; }
-:SUB dst, imm  is imm & dst & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst - imm; }
+DST4: dst is dst { local tmp:4 = dst:4; export tmp; }
 
-:MUL dst, src  is src & dst & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst * src; }
-:MUL dst, imm  is imm & dst & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst * imm; }
+:MOV dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0xb & op_insn_class=0x7 { dst = SRC8; }
 
-:DIV dst, src  is src & dst & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst / src; }
-:DIV dst, imm  is imm & dst & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst / imm; }
+:ADD dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x0 & op_insn_class=0x7 { dst = dst + SRC8; }
 
-:OR dst, src  is src & dst & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst | src; }
-:OR dst, imm  is imm & dst & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst | imm; }
+:SUB dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x1 & op_insn_class=0x7 { dst = dst - SRC8; }
 
-:AND dst, src  is src & dst & op_alu_jmp_opcode=0x5 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst & src; }
-:AND dst, imm  is imm & dst & op_alu_jmp_opcode=0x5 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst & imm; }
+:MUL dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x2 & op_insn_class=0x7 { dst = dst * SRC8; }
 
-:LSH dst, src  is src & dst & op_alu_jmp_opcode=0x6 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst << src; }
-:LSH dst, imm  is imm & dst & op_alu_jmp_opcode=0x6 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst << imm; }
+:DIV dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x3 & op_insn_class=0x7 { dst = dst / SRC8; }
 
-:RSH dst, src  is src & dst & op_alu_jmp_opcode=0x7 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst >> src; }
-:RSH dst, imm  is imm & dst & op_alu_jmp_opcode=0x7 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst >> imm; }
+:OR dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x4 & op_insn_class=0x7 { dst = dst | SRC8; }
+
+:AND dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x5 & op_insn_class=0x7 { dst = dst & SRC8; }
+
+:LSH dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x6 & op_insn_class=0x7 { dst = dst << SRC8; }
+
+:RSH dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x7 & op_insn_class=0x7 { dst = dst >> SRC8; }
 
 :NEG dst  is dst & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = -dst; }
 
-:MOD dst, src  is src & dst & op_alu_jmp_opcode=0x9 & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst % src; }
-:MOD dst, imm  is imm & dst & op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst % imm; }
+:MOD dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x9 & op_insn_class=0x7 { dst = dst % SRC8; }
 
-:XOR dst, src  is src & dst & op_alu_jmp_opcode=0xa & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst ^ src; }
-:XOR dst, imm  is imm & dst & op_alu_jmp_opcode=0xa & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst ^ imm; }
+:XOR dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0xa & op_insn_class=0x7 { dst = dst ^ SRC8; }
 
-:ARSH dst, src  is src & dst & op_alu_jmp_opcode=0xc & op_alu_jmp_source=1 & op_insn_class=0x7 { dst = dst s>> src; }
-:ARSH dst, imm  is imm & dst & op_alu_jmp_opcode=0xc & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = dst s>> imm; }
+:ARSH dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0xc & op_insn_class=0x7 { dst = dst s>> SRC8; }
+
 
 #BPF_ALU
 ###############################################################################
 
-:MOV dst, src  is src & dst & op_alu_jmp_opcode=0xb & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(src:4); }
-:MOV dst, imm  is imm & dst & op_alu_jmp_opcode=0xb & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = imm; }
+:MOV dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0xb & op_insn_class=0x4 { dst = zext(SRC4); }
 
-:ADD dst, src  is src & dst & op_alu_jmp_opcode=0x0 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 + src:4); }
-:ADD dst, imm  is imm & dst & op_alu_jmp_opcode=0x0 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 + imm); }
+:ADD dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x0 & op_insn_class=0x4 { dst = zext(dst:4 + SRC4); }
 
-:SUB dst, src  is src & dst & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 - src:4); }
-:SUB dst, imm  is imm & dst & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 - imm); }
+:SUB dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x1 & op_insn_class=0x4 { dst = zext(dst:4 - SRC4); }
 
-:MUL dst, src  is src & dst & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 * src:4); }
-:MUL dst, imm  is imm & dst & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 * imm); }
+:MUL dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x2 & op_insn_class=0x4 { dst = zext(dst:4 * SRC4); }
 
-:DIV dst, src  is src & dst & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 / src:4); }
-:DIV dst, imm  is imm & dst & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 / imm); }
+:DIV dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x3 & op_insn_class=0x4 { dst = zext(dst:4 / SRC4); }
 
-:OR dst, src  is src & dst & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 | src:4); }
-:OR dst, imm  is imm & dst & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 | imm); }
+:OR dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x4 & op_insn_class=0x4 { dst = zext(dst:4 | SRC4); }
 
-:AND dst, src  is src & dst & op_alu_jmp_opcode=0x5 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 & src:4); }
-:AND dst, imm  is imm & dst & op_alu_jmp_opcode=0x5 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 & imm); }
+:AND dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x5 & op_insn_class=0x4 { dst = zext(dst:4 & SRC4); }
 
-:LSH dst, src  is src & dst & op_alu_jmp_opcode=0x6 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 << src:4); }
-:LSH dst, imm  is imm & dst & op_alu_jmp_opcode=0x6 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 << imm); }
+:LSH dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x6 & op_insn_class=0x4 { dst = zext(dst:4 << SRC4); }
 
-:RSH dst, src  is src & dst & op_alu_jmp_opcode=0x7 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 >> src:4); }
-:RSH dst, imm  is imm & dst & op_alu_jmp_opcode=0x7 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 >> imm); }
+:RSH dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x7 & op_insn_class=0x4 { dst = zext(dst:4 >> SRC4); }
 
 :NEG dst  is dst & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(-dst:4); }
 
-:MOD dst, src  is src & dst & op_alu_jmp_opcode=0x9 & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 % src:4); }
-:MOD dst, imm  is imm & dst & op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 % imm); }
+:MOD dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x9 & op_insn_class=0x4 { dst = zext(dst:4 % SRC4); }
 
-:XOR dst, src  is src & dst & op_alu_jmp_opcode=0xa & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 ^ src:4); }
-:XOR dst, imm  is imm & dst & op_alu_jmp_opcode=0xa & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 ^ imm); }
+:XOR dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0xa & op_insn_class=0x4 { dst = zext(dst:4 ^ SRC4); }
 
-:ARSH dst, src  is src & dst & op_alu_jmp_opcode=0xc & op_alu_jmp_source=1 & op_insn_class=0x4 { dst = zext(dst:4 s>> src:4); }
-:ARSH dst, imm  is imm & dst & op_alu_jmp_opcode=0xc & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(dst:4 s>> imm); }
+:ARSH dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0xc & op_insn_class=0x4 { dst = zext(dst:4 s>> SRC4); }
+
 
 #Bytewasp instructions
 ###############################################################################
@@ -324,185 +310,39 @@ attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  
 
 joff: reloc  is off [ reloc = inst_next + off * 8; ] { export *:8 reloc; }
 
+cond: "EQ" is op_alu_jmp_opcode=0x1 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  == SRC8; export cmp; }
+cond: "EQ" is op_alu_jmp_opcode=0x1 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 == SRC4; export cmp; }
+cond: "GT" is op_alu_jmp_opcode=0x2 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  > SRC8; export cmp; }
+cond: "GT" is op_alu_jmp_opcode=0x2 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 > SRC4; export cmp; }
+cond: "GE" is op_alu_jmp_opcode=0x3 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  >= SRC8; export cmp; }
+cond: "GE" is op_alu_jmp_opcode=0x3 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 >= SRC4; export cmp; }
+cond: "LT" is op_alu_jmp_opcode=0xa & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  <  SRC8; export cmp; }
+cond: "LT" is op_alu_jmp_opcode=0xa & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 <  SRC4; export cmp; }
+cond: "LE" is op_alu_jmp_opcode=0xb & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  <= SRC8; export cmp; }
+cond: "LE" is op_alu_jmp_opcode=0xb & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 <= SRC4; export cmp; }
+cond: "NE" is op_alu_jmp_opcode=0x5 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  != SRC8; export cmp; }
+cond: "NE" is op_alu_jmp_opcode=0x5 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 != SRC4; export cmp; }
+cond: "SET" is op_alu_jmp_opcode=0x4 & op_insn_class=0x5 & dst & SRC8 { local cmp = (dst & SRC8) != 0; export cmp; }
+cond: "SET" is op_alu_jmp_opcode=0x4 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = (DST4 & SRC4) != 0; export cmp; }
+
+cond: "SGT" is op_alu_jmp_opcode=0x6 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  s> SRC8; export cmp; }
+cond: "SGT" is op_alu_jmp_opcode=0x6 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 s> SRC4; export cmp; }
+cond: "SGE" is op_alu_jmp_opcode=0x7 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  s>= SRC8; export cmp; }
+cond: "SGE" is op_alu_jmp_opcode=0x7 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 s>= SRC4; export cmp; }
+cond: "SLT" is op_alu_jmp_opcode=0xc & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  s<  SRC8; export cmp; }
+cond: "SLT" is op_alu_jmp_opcode=0xc & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 s<  SRC4; export cmp; }
+cond: "SLE" is op_alu_jmp_opcode=0xd & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  s<= SRC8; export cmp; }
+cond: "SLE" is op_alu_jmp_opcode=0xd & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 s<= SRC4; export cmp; }
+
+
 :JA joff  is joff & op_alu_jmp_opcode=0x0 & op_alu_jmp_source=0 & op_insn_class=0x5 {	
     goto joff;
 }
 
-:JEQ dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=0 & op_insn_class=0x5 {	
-    if (dst == imm) goto joff;
+:J^cond dst, SRC8, joff  is joff & SRC8 & dst & cond {	  
+    if (cond) goto joff;
 }
 
-:JEQ dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst == src) goto joff;
-}
-
-:JEQ dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=0 & op_insn_class=0x6 {	
-    if (dst:4 == imm:4) goto joff;
-}
-
-:JEQ dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x1 & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 == src:4) goto joff;
-}
-
-:JGT dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst > imm) goto joff;	
-}
-
-:JGT dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst > src) goto joff;
-}
-
-:JGT dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 > imm:4) goto joff;	
-}
-
-:JGT dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x2 & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 > src:4) goto joff;
-}
-
-:JGE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst >= imm) goto joff;
-}
-
-:JGE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst >= src) goto joff;
-}
-
-:JGE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 >= imm:4) goto joff;
-}
-
-:JGE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x3 & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 >= src:4) goto joff;
-}
-
-:JLT dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0xa & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst < imm) goto joff;
-}
-
-:JLT dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0xa & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst < src) goto joff;
-}
-
-:JLT dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0xa & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 < imm:4) goto joff;
-}
-
-:JLT dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0xa & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 < src:4) goto joff;
-}
-
-:JLE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0xb & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst <= imm) goto joff;
-}
-
-:JLE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0xb & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst <= src) goto joff;
-}
-
-:JLE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0xb & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 <= imm:4) goto joff;
-}
-
-:JLE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0xb & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 <= src:4) goto joff;
-}
-
-:JNE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x5 & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst != imm) goto joff;
-}
-
-:JNE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x5 & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst != src) goto joff;	
-}
-
-:JNE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x5 & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 != imm:4) goto joff;
-}
-
-:JNE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x5 & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 != src:4) goto joff;	
-}
-
-:JSET dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=0 & op_insn_class=0x5 {    	  
-    if ((dst & imm) != 0) goto joff;
-}
-
-:JSET dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=1 & op_insn_class=0x5 {     
-    if ((dst & src) != 0) goto joff;
-}
-
-:JSET dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=0 & op_insn_class=0x6 {     
-    if ((dst:4 & imm:4) != 0) goto joff;
-}
-
-:JSET dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x4 & op_alu_jmp_source=1 & op_insn_class=0x6 {   	  
-    if ((dst:4 & src:4) != 0) goto joff;
-}
-
-:JSGT dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x6 & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst s> imm) goto joff;
-}
-
-:JSGT dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x6 & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst s> src) goto joff;
-}
-
-:JSGT dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x6 & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 s> imm:4) goto joff;
-}
-
-:JSGT dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x6 & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 s> src:4) goto joff;
-}
-
-:JSGE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x7 & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst s>= imm) goto joff;
-}
-
-:JSGE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x7 & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst s>= src) goto joff;
-}
-
-:JSGE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0x7 & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 s>= imm:4) goto joff;
-}
-
-:JSGE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0x7 & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 s>= src:4) goto joff;
-}
-
-:JSLT dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0xc & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst s< imm) goto joff;
-}
-
-:JSLT dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0xc & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst s< src) goto joff;
-}
-
-:JSLT dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0xc & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 s< imm:4) goto joff;
-}
-
-:JSLT dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0xc & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 s< src:4) goto joff;
-}
-
-:JSLE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x5 {	  
-    if (dst s<= imm) goto joff;
-}
-
-:JSLE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x5 {	  
-    if (dst s<= src) goto joff;
-}
-
-:JSLE dst, imm, joff  is imm & joff & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x6 {	  
-    if (dst:4 s<= imm:4) goto joff;
-}
-
-:JSLE dst, src, joff  is joff & src & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x6 {	  
-    if (dst:4 s<= src:4) goto joff;
-}
 
 SysCall:  imm is imm { export *[syscall]:1 imm; }
 
