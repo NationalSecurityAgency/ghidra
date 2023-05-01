@@ -1605,8 +1605,8 @@ class FuncCallSpecs : public FuncProto {
   Varnode *buildParam(Funcdata &data,Varnode *vn,ProtoParameter *param,Varnode *stackref);
   int4 transferLockedInputParam(ProtoParameter *param);
   PcodeOp *transferLockedOutputParam(ProtoParameter *param);
-  bool transferLockedInput(vector<Varnode *> &newinput);
-  bool transferLockedOutput(Varnode *&newoutput);
+  bool transferLockedInput(vector<Varnode *> &newinput,const FuncProto &source);
+  bool transferLockedOutput(Varnode *&newoutput,const FuncProto &source);
   void commitNewInputs(Funcdata &data,vector<Varnode *> &newinput);
   void commitNewOutputs(Funcdata &data,Varnode *newout);
   void collectOutputTrialVarnodes(vector<Varnode *> &trialvn);
