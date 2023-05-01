@@ -1278,9 +1278,11 @@ public class PreProcessor {
 			}
 		}
 		if (fis == null) {
-			addParseMessage(null, "PreProcessor:  File " + filename + " not found.");
+			String msg = "PreProcessor:  File " + filename + " not found.";
+			addParseMessage(null, msg);
+			Msg.error(this, msg);
 			return false;
-		}
+		}	
 		fileStack.push(filename);
 		alreadyDone = new HashMap<String, Integer>();
 		ReInit(fis);

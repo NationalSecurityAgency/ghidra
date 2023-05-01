@@ -1436,8 +1436,8 @@ void TranslationUnit() : {}
 void ExternalDeclaration() : {}
 {
     (
-        LOOKAHEAD(FunctionDefinition() )
-        FunctionDefinition() 
+        LOOKAHEAD( FunctionDefinition() "{" )
+          (FunctionDefinition() "{" [ StatementList() ] "}")
         |
 //        <INLINE> FunctionDefinition() 
 //        |
@@ -1492,7 +1492,7 @@ void FunctionDefinition() : {
         retDT = DeclarationSpecifiers(retDT) 
     ]
     {typedefParsingStack.push(Boolean.FALSE);}
-    dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();} CompoundStatement() 
+    dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();}
     {
         if (dec.getDataType() instanceof FunctionDefinition) {
             addDef(functions, dec.getName(), dec.getDataType());
@@ -2211,7 +2211,16 @@ DataType EnumSpecifier() : {
             dt= addDef(enums, enumName, enuum);
         }
         |
-        t= <IDENTIFIER>             { dt= getEnumDef(t.image); }
+        t= <IDENTIFIER>
+        {
+            dt= getEnumDef(t.image);
+            if (dt == null) {
+        	    String enumName= (t != null ? t.image : ("enum_" + cnt++));
+                EnumDataType enuum= new EnumDataType(getCurrentCategoryPath(), enumName, 4, dtMgr);
+                dt= enuum;
+                dt= addDef(enums, enumName, enuum);
+            }
+        }
     )
     {
         return dt;
@@ -2256,6 +2265,7 @@ int Enumerator(ArrayList<EnumMember> list, int value) : {
         if (evalue != null) {
             value = evalue;
         }
+        list.add(new EnumMember(t.image, value));
         return value;
     }
 }
