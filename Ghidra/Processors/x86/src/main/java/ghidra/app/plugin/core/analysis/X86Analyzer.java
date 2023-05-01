@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.analysis;
 import java.math.BigInteger;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Instruction;
@@ -48,7 +49,7 @@ public class X86Analyzer extends ConstantPropagationAnalyzer {
 		
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions 
-		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+		ConstantPropagationContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 			
 			@Override
 			public boolean evaluateContext(VarnodeContext context, Instruction instr) {
@@ -74,7 +75,7 @@ public class X86Analyzer extends ConstantPropagationAnalyzer {
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType, RefType refType) {
 
 				// don't allow flow references to locations not in memory if the location is not external.
 				if (refType.isFlow() && !instr.getMemory().contains(address) &&
@@ -82,10 +83,16 @@ public class X86Analyzer extends ConstantPropagationAnalyzer {
 					return false;
 				}
 
-				return super.evaluateReference(context, instr, pcodeop, address, size, refType);
+				return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 			}
 		};
-
+	
+		eval.setTrustWritableMemory(trustWriteMemOption)
+		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
+		
 		AddressSet resultSet = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
 		return resultSet;

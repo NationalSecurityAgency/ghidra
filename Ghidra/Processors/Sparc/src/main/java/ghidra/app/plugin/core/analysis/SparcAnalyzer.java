@@ -76,7 +76,7 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions 
-		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+		ConstantPropagationContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 
 			@Override
 			public boolean evaluateContext(VarnodeContext context, Instruction instr) {
@@ -126,7 +126,13 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 				return false;
 			}
 		};
-
+		
+		eval.setTrustWritableMemory(trustWriteMemOption)
+		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
+		
 		AddressSet resultSet = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
 		return resultSet;

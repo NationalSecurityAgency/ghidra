@@ -16,6 +16,7 @@
 package ghidra.program.util;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.RefType;
@@ -56,12 +57,13 @@ public interface ContextEvaluator {
 	 * @param pcodeop the PcodeOp operation that is causing this reference
 	 * @param address address being referenced
 	 * @param size size of the item being referenced (only non-zero if load or store of data)
+	 * @param dataType dataType associated with the reference if known
 	 * @param refType reference type (flow, data/read/write)
 	 * 
 	 * @return false if the reference should be ignored (or has been taken care of by this routine)
 	 */
 	boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address, int size,
-			RefType refType);
+			DataType dataType, RefType refType);
 
 	/**
 	 * Evaluate a potential constant to be used as an address or an interesting constant that
@@ -73,6 +75,7 @@ public interface ContextEvaluator {
 	 * @param pcodeop the PcodeOp operation that is causing this potential constant
 	 * @param constant constant value (in constant.getOffset() )
 	 * @param size size of constant value in bytes
+	 * @param dataType dataType associated with the reference if known
 	 * @param refType reference type (flow, data/read/write)
 	 * 
 	 * @return the original address unchanged if it should be a reference
@@ -80,7 +83,8 @@ public interface ContextEvaluator {
 	 *         a new address if the value should be a different address or address space
 	 *             Using something like instr.getProgram().getAddressFactory().getDefaultAddressSpace();
 	 */
-	Address evaluateConstant(VarnodeContext context, Instruction instr, int pcodeop, Address constant, int size, RefType refType);
+	Address evaluateConstant(VarnodeContext context, Instruction instr, int pcodeop, Address constant, int size,
+			DataType dataType, RefType refType);
 	
 	/**
 	 * Evaluate the instruction for an unknown destination
