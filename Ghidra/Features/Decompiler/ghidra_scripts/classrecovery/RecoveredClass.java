@@ -606,7 +606,7 @@ public class RecoveredClass {
 				DataTypeComponent component =
 					computedClassStructure.getComponentAt(offset.intValue());
 
-				if (!component.getDataType().equals(dataType)) {
+				if (component != null && !component.getDataType().equals(dataType)) {
 					computedClassStructure.replaceAtOffset(offset.intValue(), dataType,
 						dataType.getLength(), component.getFieldName(), component.getComment());
 				}
