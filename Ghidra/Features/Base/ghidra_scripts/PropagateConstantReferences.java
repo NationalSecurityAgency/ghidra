@@ -70,7 +70,7 @@ public class PropagateConstantReferences extends GhidraScript {
 
 			// follow all flows building up context
 			// use context to fill out addresses on certain instructions 
-			ContextEvaluator eval = new ConstantPropagationContextEvaluator(true);
+			ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, true);
 
 			SymbolicPropogator symEval = new SymbolicPropogator(currentProgram);
 

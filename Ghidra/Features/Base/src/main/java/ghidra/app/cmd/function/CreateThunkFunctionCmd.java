@@ -32,6 +32,7 @@ import ghidra.program.model.block.CodeBlock;
 import ghidra.program.model.block.CodeBlockReference;
 import ghidra.program.model.block.CodeBlockReferenceIterator;
 import ghidra.program.model.block.SimpleBlockModel;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -474,7 +475,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			new ContextEvaluatorAdapter() {
 				@Override
 				public boolean evaluateReference(VarnodeContext context, Instruction instr,
-						int pcodeop, Address address, int size, RefType refType) {
+						int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 					// go ahead and place the reference, since it is a constant.
 					if (refType.isComputed() && refType.isFlow() &&
 						program.getMemory().contains(address)) {

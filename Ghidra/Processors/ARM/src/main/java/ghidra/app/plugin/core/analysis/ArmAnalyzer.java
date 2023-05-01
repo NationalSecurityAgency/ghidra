@@ -81,7 +81,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
 		ConstantPropagationContextEvaluator eval =
-			new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+			new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 
 				@Override
 				public boolean evaluateContext(VarnodeContext context, Instruction instr) {
@@ -104,7 +104,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 						// if LR is a constant and is set right after this, this is a call
 						Varnode lrVal = context.getRegisterVarnodeValue(lrRegister);
 						if (lrVal != null) {
-							if (lrVal.isConstant()) {
+							if (context.isConstant(lrVal)) {
 								long target = lrVal.getAddress().getOffset();
 								Address addr = instr.getMaxAddress().add(1);
 								if (target == addr.getOffset() && !instr.getFlowType().isCall()) {
@@ -176,7 +176,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 
 				@Override
 				public boolean evaluateReference(VarnodeContext context, Instruction instr,
-						int pcodeop, Address address, int size, RefType refType) {
+						int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 					if (refType.isJump() && refType.isComputed() &&
 						program.getMemory().contains(address) && address.getOffset() != 0) {
 						if (instr.getMnemonicString().startsWith("tb")) {
@@ -184,24 +184,29 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 						}
 						doArmThumbDisassembly(program, instr, context, address, instr.getFlowType(),
 							true, monitor);
+						super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 						return !symEval.encounteredBranch();
 					}
 					if (refType.isData() && program.getMemory().contains(address)) {
 						if (refType.isRead() || refType.isWrite()) {
+							int numOperands = instr.getNumOperands();
+							// if two operands, then all read/write refs go on the 2nd operand
 							createData(program, address, size);
-							instr.addOperandReference(instr.getNumOperands() - 1, address, refType,
-								SourceType.ANALYSIS);
-							return false;
+							if (numOperands <= 2) {
+								instr.addOperandReference(instr.getNumOperands() - 1, address, refType,
+									SourceType.ANALYSIS);
+								return false;
+							}
+							return true;
 						}
 					}
 					else if (refType.isCall() && refType.isComputed() && !address.isExternalAddress()) {
 						// must disassemble right now, because TB flag could get set back at end of blx
 						doArmThumbDisassembly(program, instr, context, address, instr.getFlowType(),
 							true, monitor);
-						return false;
 					}
 
-					return super.evaluateReference(context, instr, pcodeop, address, size, refType);
+					return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 				}
 
 				@Override
@@ -225,7 +230,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 				public boolean evaluateReturn(Varnode retVN, VarnodeContext context, Instruction instruction) {
 					// check if a return is actually returning, or is branching with a constant PC
 
-					if (retVN != null && retVN.isConstant()) {
+					if (retVN != null && context.isConstant(retVN)) {
 						long offset = retVN.getOffset();
 						if (offset > 3 && offset != -1) {
 							// need to override the return to a branch
@@ -236,6 +241,12 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 					return false;
 				}
 			};
+			
+		eval.setTrustWritableMemory(trustWriteMemOption)
+		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
 
 		AddressSet resultSet = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
@@ -361,13 +372,13 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 
 			@Override
 			public Address evaluateConstant(VarnodeContext context, Instruction instr, int pcodeop,
-					Address constant, int size, RefType refType) {
+					Address constant, int size, DataType dataType, RefType refType) {
 				return null;
 			}
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType, RefType refType) {
 
 				// if ever see a reference to 0, something went wrong, stop the process
 				if (address == null) {

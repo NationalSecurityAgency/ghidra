@@ -154,7 +154,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
 		ConstantPropagationContextEvaluator eval =
-			new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+			new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 
 				@Override
 				public boolean evaluateContextBefore(VarnodeContext context, Instruction instr) {
@@ -224,7 +224,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 				@Override
 				public boolean evaluateReference(VarnodeContext context, Instruction instr,
-						int pcodeop, Address address, int size, RefType refType) {
+						int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 
 					if (instr.getFlowType().isJump()) {
 						// for branching instructions, if we have a good target, mark it
@@ -259,7 +259,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 						return true;
 					}
 
-					return super.evaluateReference(context, instr, pcodeop, address, size, refType);
+					return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 				}
 
 				@Override
@@ -315,6 +315,12 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 					return trustWriteMemOption;
 				}
 			};
+
+		eval.setTrustWritableMemory(trustWriteMemOption)
+		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
 
 		AddressSet resultSet = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
@@ -454,13 +460,13 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 			@Override
 			public Address evaluateConstant(VarnodeContext context, Instruction instr, int pcodeop,
-					Address constant, int size, RefType refType) {
+					Address constant, int size, DataType dataType, RefType refType) {
 				return null;
 			}
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType,RefType refType) {
 
 				// TODO: if ever loading from instructions in memory, must EXIT!
 				if (!((refType.isComputed() || refType.isConditional()) &&

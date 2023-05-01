@@ -21,9 +21,8 @@ import ghidra.program.model.address.Address;
 import ghidra.util.GhidraDataConverter;
 
 /**
- * Simple byte buffer implementation of the memBuffer.  Since there is no
- * actual memory object associated with this object, the getMemory method
- * is not implemented and all gets are limited to the bytes supplied during
+ * Simple byte buffer implementation of the memBuffer.  Even if a Memory is
+ * provided, the available bytes will be limited to the bytes provided during
  * construction.
  */
 public class ByteMemBufferImpl implements MemBuffer {
@@ -31,6 +30,7 @@ public class ByteMemBufferImpl implements MemBuffer {
 	private final GhidraDataConverter converter;
 	private byte[] bytes;
 	private Address addr;
+	private Memory mem;
 
 	/**
 	 * Construct a ByteMemBufferImpl object
@@ -39,9 +39,22 @@ public class ByteMemBufferImpl implements MemBuffer {
 	 * @param isBigEndian true for BigEndian, false for LittleEndian.
 	 */
 	public ByteMemBufferImpl(Address addr, byte[] bytes, boolean isBigEndian) {
+		this(null, addr, bytes, isBigEndian);
+	}
+
+	/**
+	 * Construct a ByteMemBufferImpl object
+	 * @param memory the memory in case getMemory() is called to get associated things like address spaces
+	 *        
+	 * @param addr the address to associate with the bytes
+	 * @param bytes the data that normally would be coming from memory.
+	 * @param isBigEndian true for BigEndian, false for LittleEndian.
+	 */
+	public ByteMemBufferImpl(Memory memory, Address addr, byte[] bytes, boolean isBigEndian) {
 		this.addr = addr;
 		this.bytes = bytes;
 		this.converter = GhidraDataConverter.getInstance(isBigEndian);
+		this.mem = memory;
 	}
 
 	/**
@@ -67,7 +80,7 @@ public class ByteMemBufferImpl implements MemBuffer {
 
 	@Override
 	public Memory getMemory() {
-		return null;
+		return mem;
 	}
 
 	@Override
