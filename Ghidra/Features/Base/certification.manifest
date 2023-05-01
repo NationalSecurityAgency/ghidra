@@ -15,6 +15,7 @@
 Module.manifest||GHIDRA||||END|
 data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+data/GolangFunctionsThatDoNotReturn||GHIDRA||||END|
 data/MachOFunctionsThatDoNotReturn||GHIDRA||||END|
 data/PEFunctionsThatDoNotReturn||GHIDRA||||END|
 data/base.file.extensions.icons.theme.properties||GHIDRA||||END|
@@ -85,6 +86,7 @@ data/symbols/win64/mfc90u.exports||GHIDRA||||END|
 data/symbols/win64/msvcrt.hints||GHIDRA||||END|
 data/typeinfo/generic/generic_clib.gdt||GHIDRA||||END|
 data/typeinfo/generic/generic_clib_64.gdt||GHIDRA||||END|
+data/typeinfo/golang/golang_1.18_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
 data/typeinfo/win32/msvcrt/clsids.txt||GHIDRA||reviewed||END|
 data/typeinfo/win32/msvcrt/guids.txt||GHIDRA||reviewed||END|

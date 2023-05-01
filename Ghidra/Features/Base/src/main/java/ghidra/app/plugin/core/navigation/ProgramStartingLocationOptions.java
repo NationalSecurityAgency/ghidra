@@ -60,7 +60,7 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 			"a newly discovered starting symbol, provided the user hasn't manually moved.";
 
 	private static final String DEFAULT_STARTING_SYMBOLS =
-		"main, WinMain, libc_start_main, WinMainStartup, start, entry";
+		"main, WinMain, libc_start_main, WinMainStartup, start, entry, main.main";
 
 	public static enum StartLocationType {
 		LOWEST_ADDRESS("Lowest Address"),

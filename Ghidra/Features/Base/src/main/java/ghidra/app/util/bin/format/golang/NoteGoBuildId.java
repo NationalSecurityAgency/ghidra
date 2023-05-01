@@ -79,7 +79,7 @@ public class NoteGoBuildId extends ElfNote {
 	@Override
 	public StructureDataType toStructure(DataTypeManager dtm) {
 		StructureDataType struct =
-			ElfNote.createNoteStructure(GolangElfInfoProducer.GO_CATEGORYPATH,
+			ElfNote.createNoteStructure(GoConstants.GOLANG_CATEGORYPATH,
 				"NoteGoBuildId_%d".formatted(description.length), false, nameLen, 0, dtm);
 		struct.add(StringUTF8DataType.dataType, description.length, "BuildId", null);
 		return struct;

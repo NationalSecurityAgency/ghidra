@@ -15,16 +15,18 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
 import generic.jar.ResourceFile;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
 import ghidra.program.model.lang.*;
 import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
@@ -39,20 +41,6 @@ public class DWARFRegisterMappingsManager {
 	private static Map<LanguageID, DWARFRegisterMappings> cache = new HashMap<>();
 
 	/**
-	 * Returns true if the specified {@link LanguageDescription} has DWARF
-	 * register mappings.
-	 *
-	 * @param langDesc The {@link LanguageDescription} to test
-	 * @return true if the language has a DWARF register mapping specified
-	 * @throws IOException if there was an error in the language LDEF file.
-	 */
-	public static boolean hasDWARFRegisterMapping(LanguageDescription langDesc) throws IOException {
-		return (langDesc instanceof SleighLanguageDescription) &&
-			getDWARFRegisterMappingFileNameFromLangDesc(
-				(SleighLanguageDescription) langDesc) != null;
-	}
-
-	/**
 	 * Returns true if the specified {@link Language} has DWARF register
 	 * mappings.
 	 *
@@ -61,7 +49,7 @@ public class DWARFRegisterMappingsManager {
 	 * @throws IOException if there was an error in the language LDEF file.
 	 */
 	public static boolean hasDWARFRegisterMapping(Language lang) throws IOException {
-		return hasDWARFRegisterMapping(lang.getLanguageDescription());
+		return DWARFUtil.getLanguageExternalFile(lang, DWARF_REGISTER_MAPPING_NAME) != null;
 	}
 
 	/**
@@ -84,51 +72,6 @@ public class DWARFRegisterMappingsManager {
 		return result;
 	}
 
-	/*
-	 * Returns the DWARF register mapping file specified in the lang's definition, or
-	 * null if it does not exist.
-	 */
-	private static String getDWARFRegisterMappingFileNameFromLangDesc(
-			SleighLanguageDescription langDesc) throws IOException {
-		List<String> dwarfSpecFilename = langDesc.getExternalNames(DWARF_REGISTER_MAPPING_NAME);
-		if (dwarfSpecFilename == null) {
-			return null;
-		}
-		if (dwarfSpecFilename.size() > 1) {
-			throw new IOException("Multiple DWARF register mappings found for language " +
-				langDesc.getLanguageID() + ": " + dwarfSpecFilename.toString());
-		}
-		return dwarfSpecFilename.get(0);
-	}
-
-	/**
-	 * Returns {@link ResourceFile} that should contain the specified language's
-	 * DWARF register mapping, never null.
-	 *
-	 * @param lang {@link Language} to find the mapping file for.
-	 * @return {@link ResourceFile} of where the mapping file should be, never
-	 *         null.
-	 * @throws IOException if not a Sleigh language or no mapping specified or
-	 *             multiple mappings specified.
-	 */
-	public static ResourceFile getDWARFRegisterMappingFileFor(Language lang) throws IOException {
-		LanguageDescription langDesc = lang.getLanguageDescription();
-		if (!(langDesc instanceof SleighLanguageDescription)) {
-			throw new IOException("Not a Sleigh Language: " + lang.getLanguageID());
-		}
-		SleighLanguageDescription sld = (SleighLanguageDescription) langDesc;
-		ResourceFile defsFile = sld.getDefsFile();
-		ResourceFile parentFile = defsFile.getParentFile();
-		String dwarfSpecFilename = getDWARFRegisterMappingFileNameFromLangDesc(sld);
-		if (dwarfSpecFilename == null) {
-			throw new IOException("No DWARF register mapping information found for language " +
-				lang.getLanguageID().getIdAsString());
-		}
-		ResourceFile dwarfFile = new ResourceFile(parentFile, dwarfSpecFilename);
-
-		return dwarfFile;
-	}
-
 	/**
 	 * Finds the DWARF register mapping information file specified in the
 	 * specified language's LDEF file and returns a new
@@ -149,7 +92,12 @@ public class DWARFRegisterMappingsManager {
 	 *             in the register mapping data.
 	 */
 	public static DWARFRegisterMappings readMappingForLang(Language lang) throws IOException {
-		ResourceFile dwarfFile = getDWARFRegisterMappingFileFor(lang);
+		ResourceFile dwarfFile =
+			DWARFUtil.getLanguageExternalFile(lang, DWARF_REGISTER_MAPPING_NAME);
+		if (dwarfFile == null) {
+			throw new IOException("Missing DWARF register mapping file for language " +
+				lang.getLanguageID().getIdAsString());
+		}
 		if (!dwarfFile.exists()) {
 			throw new IOException("Missing DWARF register mapping file " + dwarfFile +
 				" for language " + lang.getLanguageID().getIdAsString());

@@ -19,6 +19,7 @@ package ghidra.app.util.bin.format.dwarf4;
  * Holds the start (inclusive) and end (exclusive) addresses of a range.
  */
 public class DWARFRange implements Comparable<DWARFRange> {
+	public static final DWARFRange EMPTY = new DWARFRange(0, 1);
 
 	private final long start;
 	private final long end;

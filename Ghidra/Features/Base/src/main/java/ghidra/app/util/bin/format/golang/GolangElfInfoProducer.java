@@ -22,7 +22,6 @@ import ghidra.app.util.bin.format.elf.ElfLoadHelper;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ReaderFunc;
 import ghidra.app.util.bin.format.elf.info.ElfInfoProducer;
-import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -42,8 +41,6 @@ import ghidra.util.task.TaskMonitor;
  * </ul>
  */
 public class GolangElfInfoProducer implements ElfInfoProducer {
-	public static final CategoryPath GO_CATEGORYPATH = new CategoryPath("/golang");
-
 	private static final Map<String, ReaderFunc<ElfInfoItem>> GOLANGINFO_READERS = Map.of(
 		GoBuildInfo.SECTION_NAME, GoBuildInfo::read,
 		NoteGoBuildId.SECTION_NAME, NoteGoBuildId::read);

@@ -83,6 +83,14 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 	}
 
 	@Override
+	public boolean getDefaultEnablement(Program program) {
+		if ("golang".equals(program.getCompilerSpec().getCompilerSpecID().toString())) {
+			return false;
+		}
+		return super.getDefaultEnablement(program);
+	}
+
+	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) {
 		dtmService = AutoAnalysisManager.getAnalysisManager(program).getDataTypeManagerService();
 

@@ -233,7 +233,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
 	 * element is specified, or error while resolving storage element for specified datatype
 	 */
-	protected ParameterImpl(String name, int ordinal, DataType dataType, VariableStorage storage,
+	public ParameterImpl(String name, int ordinal, DataType dataType, VariableStorage storage,
 			boolean force, Program program, SourceType sourceType) throws InvalidInputException {
 		this(name, ordinal, dataType, storage, null, null, null, force, program, sourceType);
 	}

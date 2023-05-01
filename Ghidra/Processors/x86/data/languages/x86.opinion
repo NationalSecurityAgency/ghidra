@@ -22,6 +22,10 @@
         <constraint primary="333"  secondary="borlanddelphi" processor="x86" endian="little" size="32" />
         <constraint primary="334"  secondary="borlanddelphi" processor="x86" endian="little" size="32" />
       </constraint>
+      <constraint compilerSpecID="golang">
+        <constraint primary="332"  secondary="golang" processor="x86" endian="little" size="32" />
+        <constraint primary="34404"  secondary="golang" processor="x86" endian="little" size="64" />
+      </constraint>
     </constraint>
     <constraint loader="Debug Symbols (DBG)" compilerSpecID="windows">
         <constraint primary="332"   processor="x86"     endian="little" size="32" />

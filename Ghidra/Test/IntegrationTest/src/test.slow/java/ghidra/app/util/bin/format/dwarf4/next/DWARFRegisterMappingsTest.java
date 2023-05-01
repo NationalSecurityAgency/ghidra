@@ -24,14 +24,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import generic.jar.ResourceFile;
 import generic.test.category.NightlyCategory;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.xml.XmlUtilities;
-import utilities.util.FileResolutionResult;
-import utilities.util.FileUtilities;
 
 @Category(NightlyCategory.class)
 public class DWARFRegisterMappingsTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -53,21 +50,11 @@ public class DWARFRegisterMappingsTest extends AbstractGhidraHeadlessIntegration
 	public void testReadMappings() throws IOException {
 		for (LanguageDescription langDesc : DefaultLanguageService.getLanguageService().getLanguageDescriptions(
 			false)) {
-
-			if (!DWARFRegisterMappingsManager.hasDWARFRegisterMapping(langDesc)) {
-				continue;
-			}
-
 			Language lang =
 				DefaultLanguageService.getLanguageService().getLanguage(langDesc.getLanguageID());
 
-			ResourceFile mappingFile =
-				DWARFRegisterMappingsManager.getDWARFRegisterMappingFileFor(lang);
-			FileResolutionResult dwarfFileFRR;
-			if ((dwarfFileFRR = FileUtilities.existsAndIsCaseDependent(mappingFile)) != null &&
-				!dwarfFileFRR.isOk()) {
-				throw new IOException(
-					"DWARF register mapping filename case problem: " + dwarfFileFRR.getMessage());
+			if (!DWARFRegisterMappingsManager.hasDWARFRegisterMapping(lang)) {
+				continue;
 			}
 
 			DWARFRegisterMappings drm = DWARFRegisterMappingsManager.readMappingForLang(lang);
