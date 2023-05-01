@@ -16,6 +16,8 @@
 #include "printjava.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 OpToken PrintJava::instanceof = { "instanceof", "", 2, 60, true, OpToken::binary, 1, 0, (OpToken *)0 };
 
 // Constructing this registers the capability
@@ -359,3 +361,5 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
     }
   }
 }
+
+} // End namespace ghidra

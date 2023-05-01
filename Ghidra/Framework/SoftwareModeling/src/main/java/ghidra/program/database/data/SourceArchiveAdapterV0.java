@@ -26,6 +26,8 @@ import ghidra.util.exception.VersionException;
 
 /**
  * Version 0 implementation for accessing the Data Type Archive ID database table. 
+ * 
+ * NOTE: Use of tablePrefix introduced with this adapter version.
  */
 class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 	static final int VERSION = 0;
@@ -45,38 +47,33 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 	/**
 	 * Gets a version 1 adapter for the Data Type Archive ID table.
 	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param create true if this constructor should create the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
+	 * @throws IOException if an IO errr occurs
 	 */
-	public SourceArchiveAdapterV0(DBHandle handle, boolean create)
+	public SourceArchiveAdapterV0(DBHandle handle, String tablePrefix, boolean create)
 			throws VersionException, IOException {
-
+		String tableName = tablePrefix + SOURCE_ARCHIVE_TABLE_NAME;
 		if (create) {
-			table = handle.createTable(TABLE_NAME, V0_SCHEMA);
-
+			table = handle.createTable(tableName, V0_SCHEMA);
 			createRecordForLocalManager();
 		}
 		else {
-			table = handle.getTable(TABLE_NAME);
+			table = handle.getTable(tableName);
 			if (table == null) {
 				throw new VersionException(true);
 			}
-			int version = table.getSchema().getVersion();
-			if (version != VERSION) {
-				String msg = "Expected version " + VERSION + " for table " + TABLE_NAME +
-					" but got " + table.getSchema().getVersion();
-				if (version < VERSION) {
-					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-				}
-				throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+			if (table.getSchema().getVersion() != VERSION) {
+				throw new VersionException(false);
 			}
 		}
 	}
 
 	/**
-	 * 
-	 * @throws IOException
+	 * Create standard entry which corresponds to local datatype manager
+	 * @throws IOException if an IO error occurs
 	 */
 	private void createRecordForLocalManager() throws IOException {
 		DBRecord record = V0_SCHEMA.createRecord(DataTypeManager.LOCAL_ARCHIVE_KEY);
@@ -129,6 +126,7 @@ class SourceArchiveAdapterV0 extends SourceArchiveAdapter {
 
 	@Override
 	protected void deleteTable(DBHandle handle) throws IOException {
+		handle.deleteTable(table.getName());
 	}
 
 }

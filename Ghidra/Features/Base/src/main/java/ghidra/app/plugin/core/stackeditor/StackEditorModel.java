@@ -202,7 +202,7 @@ public class StackEditorModel extends CompositeEditorModel {
 				dt = element.getDataType();
 				dtLen = dt.getLength();
 				return DataTypeInstance.getDataTypeInstance(dt,
-					(dtLen > 0) ? dtLen : element.getLength());
+					(dtLen > 0) ? dtLen : element.getLength(), true);
 			case NAME:
 				String fieldName = getFieldNameAtRow(rowIndex, (StackFrameDataType) viewComposite);
 				if (fieldName == null) {
@@ -1127,7 +1127,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		OffsetPairs offsetSelection = getRelOffsetSelection();
 		int transID = startTransaction("Apply Data Type \"" + dt.getName() + "\"");
 		try {
-			fieldEdited(DataTypeInstance.getDataTypeInstance(dt, dtLength), index,
+			fieldEdited(DataTypeInstance.getDataTypeInstance(dt, dtLength, true), index,
 				getDataTypeColumn());
 			setRelOffsetSelection(offsetSelection);
 		}
@@ -1157,7 +1157,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		if (max == Integer.MAX_VALUE) {
 			return Integer.MAX_VALUE;
 		}
-		return max / dtc.getLength();
+		return max / dtc.getDataType().getAlignedLength();
 	}
 
 	@Override
@@ -1320,7 +1320,7 @@ public class StackEditorModel extends CompositeEditorModel {
 			dtName = dt.getDisplayName();
 			if (dtString.equals(dtName)) {
 				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
-					element.getLength());
+					element.getLength(), true);
 			}
 		}
 
@@ -1346,7 +1346,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		if (maxLength > 0 && newLength > maxLength) {
 			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
 		}
-		return DataTypeInstance.getDataTypeInstance(newDt, newLength);
+		return DataTypeInstance.getDataTypeInstance(newDt, newLength, true);
 	}
 
 	@Override

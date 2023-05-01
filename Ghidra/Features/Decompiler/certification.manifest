@@ -44,6 +44,7 @@ src/decompile/datatests/noforloop_iterused.xml||GHIDRA||||END|
 src/decompile/datatests/offsetarray.xml||GHIDRA||||END|
 src/decompile/datatests/packstructaccess.xml||GHIDRA||||END|
 src/decompile/datatests/partialmerge.xml||GHIDRA||||END|
+src/decompile/datatests/partialsplit.xml||GHIDRA||||END|
 src/decompile/datatests/partialunion.xml||GHIDRA||||END|
 src/decompile/datatests/piecestruct.xml||GHIDRA||||END|
 src/decompile/datatests/pointercmp.xml||GHIDRA||||END|

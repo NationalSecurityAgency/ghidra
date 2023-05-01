@@ -16,10 +16,12 @@
 /// \file override.hh
 /// \brief A system for sending override commands to the decompiler
 
-#ifndef __OVERRIDE__
-#define __OVERRIDE__
+#ifndef __OVERRIDE_HH__
+#define __OVERRIDE_HH__
 
 #include "database.hh"
+
+namespace ghidra {
 
 class FuncCallSpecs;		// Forward declaration
 
@@ -89,4 +91,5 @@ public:
   static uint4 stringToType(const string &nm);		///< Convert a string to a flow override type
 };
 
+} // End namespace ghidra
 #endif

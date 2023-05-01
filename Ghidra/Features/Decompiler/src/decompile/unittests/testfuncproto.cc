@@ -18,6 +18,8 @@
 #include "test.hh"
 #include <iostream>
 
+namespace ghidra {
+
 class FuncProtoTestEnvironment {
   Architecture *g;
   ProtoModel *mod1;
@@ -684,3 +686,5 @@ TEST(funcproto_recovermixedmeta)
   ASSERT(!paramActive.getTrial(4).isUsed());
   ASSERT(register_used(paramActive.getTrial(5),"r10"))
 }
+
+} // End namespace ghidra

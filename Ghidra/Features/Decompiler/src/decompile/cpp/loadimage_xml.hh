@@ -16,10 +16,12 @@
 /// \file loadimage_xml.hh
 /// \brief Support for programs stored using an XML schema
 
-#ifndef __LOADIMAGE_XML__
-#define __LOADIMAGE_XML__
+#ifndef __LOADIMAGE_XML_HH__
+#define __LOADIMAGE_XML_HH__
 
 #include "loadimage.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_ARCH;		///< Marshaling attribute "arch"
 
@@ -53,4 +55,5 @@ public:
   virtual void adjustVma(long adjust);
 };
 
+} // End namespace ghidra
 #endif

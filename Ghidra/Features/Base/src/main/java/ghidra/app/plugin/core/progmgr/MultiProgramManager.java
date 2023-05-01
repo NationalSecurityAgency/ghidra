@@ -306,6 +306,10 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 				DomainObjectChangeRecord docr = ev.getChangeRecord(i);
 				int eventType = docr.getEventType();
 				if (eventType == DomainObject.DO_DOMAIN_FILE_CHANGED) {
+					ProgramInfo info = getInfo(program);
+					if (info != null) {
+						info.programSavedAs(); // updates info to new domain file
+					}
 					if (currentInfo != null && currentInfo.program == program) {
 						String name = program.getDomainFile().toString();
 						tool.setSubTitle(name);
@@ -522,8 +526,8 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		// 2. Opened via ProgramLink file
 		// 3. Opened via Program URL
 
-		public final DomainFile domainFile; // may be link file
-		public final URL ghidraURL;
+		private DomainFile domainFile; // may be link file
+		private URL ghidraURL;
 
 		private TransientToolState lastState;
 		private int instance;
@@ -552,7 +556,29 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			this.visible = visible;
 			instance = nextAvailableId.incrementAndGet();
 		}
+		
+		/**
+		 * {@return URL used to open program or null if not applicable}
+		 */
+		URL getGhidraUrl() {
+			return ghidraURL;
+		}
+		
+		/**
+		 * Get the {@link DomainFile} which corresponds to this program.  If {@link #getGhidraUrl()}
+		 * return null this file was used to open program.
+		 * @return {@link DomainFile} which corresponds to program
+		 */
+		DomainFile getDomainFile() {
+			return domainFile;
+		}
 
+		void programSavedAs() {
+			domainFile = program.getDomainFile();
+			ghidraURL = null;
+			str = null;
+		}
+		
 		public void setVisible(boolean state) {
 			visible = state;
 			fireVisibilityChangeEvent(program, visible);

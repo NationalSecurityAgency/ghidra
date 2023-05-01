@@ -15,6 +15,8 @@
  */
 #include "loadimage.hh"
 
+namespace ghidra {
+
 /// This is a convenience method wrapped around the core
 /// loadFill() routine.  It automatically allocates an array
 /// of the desired size, and then fills it with load image data.
@@ -110,3 +112,5 @@ void RawLoadImage::loadFill(uint1 *ptr,int4 size,const Address &addr)
     throw DataUnavailError(errmsg.str());
   }
 }
+
+} // End namespace ghidra

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_DOUBLE__
-#define __CPUI_DOUBLE__
+#ifndef __DOUBLE_HH__
+#define __DOUBLE_HH__
 
 #include "ruleaction.hh"
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief A logical value whose storage is split between two Varnodes
 ///
@@ -339,4 +341,6 @@ public:
   static bool testIndirectUse(PcodeOp *op1,PcodeOp *op2,const vector<PcodeOp *> &indirects);
   static void reassignIndirects(Funcdata &data,PcodeOp *newStore,const vector<PcodeOp *> &indirects);
 };
+
+} // End namespace ghidra
 #endif

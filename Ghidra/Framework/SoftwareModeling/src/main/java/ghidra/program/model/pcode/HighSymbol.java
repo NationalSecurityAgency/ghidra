@@ -501,8 +501,8 @@ public class HighSymbol {
 			AutoParameterType autoType =
 				isThis ? AutoParameterType.THIS : AutoParameterType.RETURN_STORAGE_PTR;
 			try {
-				VariableStorage newStorage = new DynamicVariableStorage(storage.getProgram(),
-					autoType, storage.getFirstVarnode());
+				VariableStorage newStorage = new DynamicVariableStorage(
+					storage.getProgramArchitecture(), autoType, storage.getFirstVarnode());
 				entryList[0] = new MappedEntry(this, newStorage, entry.getPCAdress());
 			}
 			catch (InvalidInputException e) {

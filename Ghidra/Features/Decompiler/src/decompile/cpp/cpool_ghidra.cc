@@ -15,6 +15,8 @@
  */
 #include "cpool_ghidra.hh"
 
+namespace ghidra {
+
 ConstantPoolGhidra::ConstantPoolGhidra(ArchitectureGhidra *g)
 
 {
@@ -64,3 +66,5 @@ void ConstantPoolGhidra::decode(Decoder &decoder,TypeFactory &typegrp)
 {
   throw LowlevelError("Cannot access constant pool with this method");
 }
+
+} // End namespace ghidra

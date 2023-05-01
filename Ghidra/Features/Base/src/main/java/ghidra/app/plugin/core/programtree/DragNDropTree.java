@@ -39,8 +39,7 @@ import generic.theme.GThemeDefaults.Colors;
  */
 public abstract class DragNDropTree extends JTree implements Draggable, Droppable, Autoscroll {
 
-	private static final Color BG_COLOR_DRAG_NO_SELECTION =
-		new GColor("color.bg.tree.drag.no.selection");
+	private static final Color BG_COLOR_DRAG_NO_SELECTION = new GColor("color.bg.tree.drag");
 
 	private AutoscrollAdapter autoscroller;
 

@@ -15,16 +15,21 @@
  */
 package ghidra.app.plugin.core.debug.platform.frida;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 import ghidra.app.plugin.core.debug.service.model.launch.*;
-import ghidra.app.services.DebuggerModelService;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 
-public class FridaDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpinion {
+public class FridaDebuggerProgramLaunchOpinion extends AbstractDebuggerProgramLaunchOpinion {
+	protected static final List<Class<? extends DebuggerProgramLaunchOffer>> OFFER_CLASSES =
+		List.of(
+			InVmFridaDebuggerProgramLaunchOffer.class,
+			GadpFridaDebuggerProgramLaunchOffer.class);
+
 	protected static abstract class AbstractFridaDebuggerProgramLaunchOffer
 			extends AbstractDebuggerProgramLaunchOffer {
 
@@ -45,9 +50,9 @@ public class FridaDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchO
 
 	}
 
-	protected class InVmFridaDebuggerProgramLaunchOffer
+	@FactoryClass("agent.frida.FridaInJvmDebuggerModelFactory")
+	protected static class InVmFridaDebuggerProgramLaunchOffer
 			extends AbstractFridaDebuggerProgramLaunchOffer {
-		private static final String FACTORY_CLS_NAME = "agent.frida.FridaInJvmDebuggerModelFactory";
 
 		public InVmFridaDebuggerProgramLaunchOffer(Program program, PluginTool tool,
 				DebuggerModelFactory factory) {
@@ -65,10 +70,9 @@ public class FridaDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchO
 		}
 	}
 
-	protected class GadpFridaDebuggerProgramLaunchOffer
+	@FactoryClass("agent.frida.gadp.FridaGadpDebuggerModelFactory")
+	protected static class GadpFridaDebuggerProgramLaunchOffer
 			extends AbstractFridaDebuggerProgramLaunchOffer {
-		private static final String FACTORY_CLS_NAME =
-			"agent.frida.gadp.FridaLocalDebuggerModelFactory";
 
 		public GadpFridaDebuggerProgramLaunchOffer(Program program, PluginTool tool,
 				DebuggerModelFactory factory) {
@@ -87,25 +91,7 @@ public class FridaDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchO
 	}
 
 	@Override
-	public Collection<DebuggerProgramLaunchOffer> getOffers(Program program, PluginTool tool,
-			DebuggerModelService service) {
-		String exe = program.getExecutablePath();
-		if (exe == null || "".equals(exe.trim())) {
-			return List.of();
-		}
-		List<DebuggerProgramLaunchOffer> offers = new ArrayList<>();
-		for (DebuggerModelFactory factory : service.getModelFactories()) {
-			if (!factory.isCompatible(program)) {
-				continue;
-			}
-			String clsName = factory.getClass().getName();
-			if (clsName.equals(InVmFridaDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
-				offers.add(new InVmFridaDebuggerProgramLaunchOffer(program, tool, factory));
-			}
-			else if (clsName.equals(GadpFridaDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
-				offers.add(new GadpFridaDebuggerProgramLaunchOffer(program, tool, factory));
-			}
-		}
-		return offers;
+	protected Collection<Class<? extends DebuggerProgramLaunchOffer>> getOfferClasses() {
+		return OFFER_CLASSES;
 	}
 }

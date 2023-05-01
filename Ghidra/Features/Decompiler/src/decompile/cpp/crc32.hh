@@ -16,10 +16,12 @@
 /// \file crc32.hh
 /// \brief Table and function for computing a CRC32
 
-#ifndef __CRC32__
-#define __CRC32__
+#ifndef __CRC32_HH__
+#define __CRC32_HH__
 
 #include "types.h"
+
+namespace ghidra {
 
 extern uint4 crc32tab[];	///< Table for quickly computing a 32-bit Cyclic Redundacy Check (CRC)
 
@@ -31,4 +33,5 @@ extern uint4 crc32tab[];	///< Table for quickly computing a 32-bit Cyclic Redund
 inline uint4 crc_update(uint4 reg,uint4 val) {
   return crc32tab[(reg ^ val)&0xff] ^ (reg>>8); }
 
+} // End namespace ghidra
 #endif

@@ -15,6 +15,8 @@
  */
 #include "double.hh"
 
+namespace ghidra {
+
 /// Internally, the \b lo and \b hi Varnodes are set to null, and the \b val field
 /// holds the constant value.
 /// \param sz is the size in bytes of the constant
@@ -3484,3 +3486,5 @@ void RuleDoubleStore::reassignIndirects(Funcdata &data,PcodeOp *newStore,const v
     data.opSetInput(op,data.newVarnodeIop(newStore),1);	// Assign the INDIRECT to the new STORE
   }
 }
+
+} // End namespace ghidra

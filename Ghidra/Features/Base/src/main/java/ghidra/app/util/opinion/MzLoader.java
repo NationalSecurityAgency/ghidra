@@ -127,11 +127,13 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	/**
 	 * Stores a relocation's fixup information
 	 * 
+	 * @param relocation The original relocation info
 	 * @param address The {@link SegmentedAddress} of the relocation
 	 * @param fileOffset The file offset of the relocation
 	 * @param segment The fixed-up segment after the relocation is applied
 	 */
-	private record RelocationFixup(SegmentedAddress address, int fileOffset, int segment) {}
+	private record RelocationFixup(MzRelocation relocation, SegmentedAddress address,
+			int fileOffset, int segment) {}
 
 	private void markupHeaders(Program program, FileBytes fileBytes, MzExecutable mz,
 			MessageLog log, TaskMonitor monitor) {
@@ -315,8 +317,10 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 			// Add to relocation table
 			program.getRelocationTable()
-					.add(relocationAddress, status, 0, new long[] { relocationAddress.getSegment(),
-						relocationAddress.getSegmentOffset() }, 2, null);
+					.add(relocationAddress, status, 0,
+						new long[] { relocationFixup.relocation.getSegment(),
+							relocationFixup.relocation.getOffset(), relocationFixup.segment },
+						2, null);
 		}
 	}
 
@@ -328,7 +332,8 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 		int ipValue = Short.toUnsignedInt(header.e_ip());
 
-		Address addr = space.getAddress(INITIAL_SEGMENT_VAL, ipValue);
+		Address addr =
+			space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, ipValue);
 		SymbolTable symbolTable = program.getSymbolTable();
 
 		try {
@@ -435,16 +440,15 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			int seg = relocation.getSegment();
 			int off = relocation.getOffset();
 
-			int relativeSegment = (seg - Short.toUnsignedInt(header.e_cs())) & 0xffff;
-			int relocationFileOffset = addressToFileOffset(relativeSegment, off, header);
+			int relocationFileOffset = addressToFileOffset(seg, off, header);
 			SegmentedAddress relocationAddress =
-				space.getAddress((relativeSegment + INITIAL_SEGMENT_VAL) & 0xffff, off);
+				space.getAddress((INITIAL_SEGMENT_VAL + seg) & 0xffff, off);
 
 			try {
 				int value = Short.toUnsignedInt(reader.readShort(relocationFileOffset));
-				int relocatedSegment = (value + INITIAL_SEGMENT_VAL) & 0xffff;
-				fixups.add(
-					new RelocationFixup(relocationAddress, relocationFileOffset, relocatedSegment));
+				int relocatedSegment = (INITIAL_SEGMENT_VAL + value) & 0xffff;
+				fixups.add(new RelocationFixup(relocation, relocationAddress, relocationFileOffset,
+					relocatedSegment));
 			}
 			catch (AddressOutOfBoundsException | IOException e) {
 				log.appendMsg(String.format("Failed to process relocation: %s (%s)",
@@ -464,7 +468,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	 * @return The segmented addresses converted to a file offset
 	 */
 	private int addressToFileOffset(int segment, int offset, OldDOSHeader header) {
-		return (segment << 4) + offset + paragraphsToBytes(header.e_cparhdr());
+		return (short) segment * 16 + offset + paragraphsToBytes(header.e_cparhdr());
 	}
 
 	/**

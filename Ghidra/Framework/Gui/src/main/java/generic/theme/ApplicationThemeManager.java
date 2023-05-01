@@ -73,9 +73,6 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	@Override
 	public void restoreThemeValues() {
-		if (activeLafType != activeTheme.getLookAndFeelType()) {
-			setLookAndFeel(activeTheme.getLookAndFeelType(), activeTheme.useDarkDefaults());
-		}
 		applicationDefaults = getApplicationDefaults();
 		buildCurrentValues();
 		lookAndFeelManager.resetAll(javaDefaults);
@@ -145,6 +142,7 @@ public class ApplicationThemeManager extends ThemeManager {
 			Msg.error(this, "Attempted to set unsupported Look and Feel: " + lafType);
 			return;
 		}
+
 		this.activeLafType = lafType;
 		this.useDarkDefaults = useDarkDefaults;
 

@@ -243,7 +243,7 @@ public class VariableUtilities {
 			}
 			if (dtLen < storageSize && storage.isRegisterStorage()) {
 				// TODO: this could be expanded to handle other storage
-				return new VariableStorage(storage.getProgram(),
+				return new VariableStorage(storage.getProgramArchitecture(),
 					shrinkRegister(storage.getRegister(), storageSize - dtLen));
 			}
 			throw new InvalidInputException(
@@ -372,6 +372,17 @@ public class VariableUtilities {
 	 */
 	public static VariableStorage resizeStorage(VariableStorage curStorage, DataType dataType,
 			boolean alignStack, Function function) throws InvalidInputException {
+
+		if (dataType instanceof TypeDef td) {
+			dataType = td.getBaseDataType();
+		}
+		if (dataType instanceof VoidDataType) {
+			return VariableStorage.VOID_STORAGE;
+		}
+		if (dataType instanceof AbstractFloatDataType) {
+			return curStorage; // do not constrain or attempt resize of float storage
+		}
+
 		if (!curStorage.isValid()) {
 			return curStorage;
 		}
@@ -380,15 +391,9 @@ public class VariableUtilities {
 		if (curSize == newSize) {
 			return curStorage;
 		}
+
 		if (curSize == 0 || curStorage.isUniqueStorage() || curStorage.isHashStorage()) {
 			throw new InvalidInputException("Storage can't be resized: " + curStorage.toString());
-		}
-
-		if (dataType instanceof TypeDef) {
-			dataType = ((TypeDef) dataType).getBaseDataType();
-		}
-		if (dataType instanceof AbstractFloatDataType) {
-			return curStorage; // do not constrain or attempt resize of float storage
 		}
 
 		if (newSize > curSize) {
@@ -721,7 +726,7 @@ public class VariableUtilities {
 	@Deprecated
 	public static ParameterImpl getThisParameter(Function function, PrototypeModel convention) {
 		if (convention != null &&
-			convention.getGenericCallingConvention() == GenericCallingConvention.thiscall) {
+			CompilerSpec.CALLING_CONVENTION_thiscall.equals(convention.getName())) {
 
 			DataType dt = findOrCreateClassStruct(function);
 			if (dt == null) {

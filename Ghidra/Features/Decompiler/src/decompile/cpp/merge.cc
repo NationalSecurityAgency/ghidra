@@ -16,6 +16,8 @@
 #include "merge.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 /// This instance assumes the identity of the given Varnode and the defining index is
 /// cached to facilitate quick sorting.
 /// \param v is the given Varnode
@@ -637,6 +639,7 @@ void Merge::trimOpOutput(PcodeOp *op)
   vn = op->getOut();
   Datatype *ct = vn->getType();
   copyop = data.newOp(1,op->getAddr());
+  data.opSetOpcode(copyop,CPUI_COPY);
   if (ct->needsResolution()) {
     int4 fieldNum = data.inheritResolution(ct, copyop, -1, op, -1);
     data.forceFacingType(ct, fieldNum, copyop, 0);
@@ -645,7 +648,6 @@ void Merge::trimOpOutput(PcodeOp *op)
   }
   uniq = data.newUnique(vn->getSize(),ct);
   data.opSetOutput(op,uniq);	// Output of op is now stubby uniq
-  data.opSetOpcode(copyop,CPUI_COPY);
   data.opSetOutput(copyop,vn);	// Original output is bumped forward slightly
   data.opSetInput(copyop,uniq,0);
   data.opInsertAfter(copyop,afterop);
@@ -1383,15 +1385,24 @@ void Merge::groupPartialRoot(Varnode *vn)
   }
 
   PieceNode::gatherPieces(pieces, vn, vn->getDef(), baseOffset);
+  bool throwOut = false;
   for(int4 i=0;i<pieces.size();++i) {
     Varnode *nodeVn = pieces[i].getVarnode();
     // Make sure each node is still marked and hasn't merged with anything else
-    if (!nodeVn->isProtoPartial()) return;
-    if (nodeVn->getHigh()->numInstances() != 1) return;
+    if (!nodeVn->isProtoPartial() || nodeVn->getHigh()->numInstances() != 1) {
+      throwOut = true;
+      break;
+    }
   }
-  for(int4 i=0;i<pieces.size();++i) {
-    Varnode *nodeVn = pieces[i].getVarnode();
-    nodeVn->getHigh()->groupWith(pieces[i].getTypeOffset() - baseOffset,high);
+  if (throwOut) {
+    for(int4 i=0;i<pieces.size();++i)
+      pieces[i].getVarnode()->clearProtoPartial();
+  }
+  else {
+    for(int4 i=0;i<pieces.size();++i) {
+      Varnode *nodeVn = pieces[i].getVarnode();
+      nodeVn->getHigh()->groupWith(pieces[i].getTypeOffset() - baseOffset,high);
+    }
   }
 }
 
@@ -1669,3 +1680,5 @@ void Merge::verifyHighCovers(void)
   }
 }
 #endif
+
+} // End namespace ghidra

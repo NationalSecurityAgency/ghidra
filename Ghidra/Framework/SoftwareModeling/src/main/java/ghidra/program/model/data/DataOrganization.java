@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.util.exception.NoValueException;
+import java.util.Arrays;
 
 public interface DataOrganization {
 
@@ -75,17 +75,17 @@ public interface DataOrganization {
 	int getLongLongSize();
 
 	/**
-	 * @return the size of a float primitive data type in bytes.
+	 * @return the encoding size of a float primitive data type in bytes.
 	 */
 	int getFloatSize();
 
 	/**
-	 * @return the size of a double primitive data type in bytes.
+	 * @return the encoding size of a double primitive data type in bytes.
 	 */
 	int getDoubleSize();
 
 	/**
-	 * @return the size of a long double primitive data type in bytes.
+	 * @return the encoding size of a long double primitive data type in bytes.
 	 */
 	int getLongDoubleSize();
 
@@ -119,12 +119,14 @@ public interface DataOrganization {
 	int getDefaultPointerAlignment();
 
 	/**
-	 * Gets the alignment that is defined for a data type of the indicated size if one is defined.
-	 * @param size the size of the data type
+	 * Gets the primitive data alignment that is defined for the specified size.  If no entry has 
+	 * been defined for the specified size alignment of the next smaller map entry will be returned.
+	 * If the map is empty the {@link #getDefaultAlignment() default alignment}.  The returned
+	 * value will not exceed the {@link #getAbsoluteMaxAlignment() defined maximum alignment}.
+	 * @param size the primitive data size
 	 * @return the alignment of the data type.
-	 * @throws NoValueException if there isn't an alignment defined for the indicated size.
 	 */
-	int getSizeAlignment(int size) throws NoValueException;
+	int getSizeAlignment(int size);
 
 	/**
 	 * Get the composite bitfield packing information associated with this data organization.
@@ -139,8 +141,8 @@ public interface DataOrganization {
 	int getSizeAlignmentCount();
 
 	/**
-	 * Gets the sizes that have an alignment specified.
-	 * @return the sizes with alignments mapped to them.
+	 * Gets the ordered list of sizes that have an alignment specified.
+	 * @return the ordered list of sizes with alignments mapped to them.
 	 */
 	int[] getSizes();
 
@@ -163,15 +165,6 @@ public interface DataOrganization {
 	 * @return the datatype alignment
 	 */
 	int getAlignment(DataType dataType);
-
-//	/**
-//	 * Determines the offset where the specified data type should be placed to be properly aligned.
-//	 * @param minimumOffset the minimum allowable offset where the data type can be placed.
-//	 * @param dataType the data type
-//	 * @param dtSize the data type's size
-//	 * @return the aligned offset for the data type
-//	 */
-//	int getAlignmentOffset(int minimumOffset, DataType dataType, int dtSize);
 
 	/**
 	 * Determine if this DataOrganization is equivalent to another specific instance
@@ -222,18 +215,13 @@ public interface DataOrganization {
 		}
 		int[] keys = getSizes();
 		int[] op2keys = obj.getSizes();
-		if (keys.length != op2keys.length) {
+		if (!Arrays.equals(keys, op2keys)) {
 			return false;
 		}
-		try {
-			for (int k : keys) {
-				if (getSizeAlignment(k) != obj.getSizeAlignment(k)) {
-					return false;
-				}
+		for (int k : keys) {
+			if (getSizeAlignment(k) != obj.getSizeAlignment(k)) {
+				return false;
 			}
-		}
-		catch (NoValueException ex) {
-			return false;
 		}
 		return true;
 	}

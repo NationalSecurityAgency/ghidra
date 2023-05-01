@@ -15,16 +15,23 @@
  */
 package ghidra.app.plugin.core.debug.platform.dbgeng;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 import ghidra.app.plugin.core.debug.service.model.launch.*;
-import ghidra.app.services.DebuggerModelService;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 
-public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpinion {
+public class DbgDebuggerProgramLaunchOpinion extends AbstractDebuggerProgramLaunchOpinion {
+	protected static final List<Class<? extends DebuggerProgramLaunchOffer>> OFFER_CLASSES =
+		List.of(
+			InVmDbgengDebuggerProgramLaunchOffer.class,
+			GadpDbgengDebuggerProgramLaunchOffer.class,
+			InVmDbgmodelDebuggerProgramLaunchOffer.class,
+			GadpDbgmodelDebuggerProgramLaunchOffer.class);
+
 	protected static abstract class AbstractDbgDebuggerProgramLaunchOffer
 			extends AbstractDebuggerProgramLaunchOffer {
 
@@ -39,10 +46,9 @@ public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		}
 	}
 
-	protected class InVmDbgengDebuggerProgramLaunchOffer
+	@FactoryClass("agent.dbgeng.DbgEngInJvmDebuggerModelFactory")
+	protected static class InVmDbgengDebuggerProgramLaunchOffer
 			extends AbstractDbgDebuggerProgramLaunchOffer {
-		private static final String FACTORY_CLS_NAME =
-			"agent.dbgeng.DbgEngInJvmDebuggerModelFactory";
 
 		public InVmDbgengDebuggerProgramLaunchOffer(Program program, PluginTool tool,
 				DebuggerModelFactory factory) {
@@ -60,10 +66,9 @@ public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		}
 	}
 
-	protected class GadpDbgengDebuggerProgramLaunchOffer
+	@FactoryClass("agent.dbgeng.gadp.DbgEngGadpDebuggerModelFactory")
+	protected static class GadpDbgengDebuggerProgramLaunchOffer
 			extends AbstractDbgDebuggerProgramLaunchOffer {
-		private static final String FACTORY_CLS_NAME =
-			"agent.dbgeng.gadp.DbgEngLocalDebuggerModelFactory";
 
 		public GadpDbgengDebuggerProgramLaunchOffer(Program program, PluginTool tool,
 				DebuggerModelFactory factory) {
@@ -81,10 +86,9 @@ public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		}
 	}
 
-	protected class InVmDbgmodelDebuggerProgramLaunchOffer
+	@FactoryClass("agent.dbgmodel.DbgModelInJvmDebuggerModelFactory")
+	protected static class InVmDbgmodelDebuggerProgramLaunchOffer
 			extends AbstractDbgDebuggerProgramLaunchOffer {
-		private static final String FACTORY_CLS_NAME =
-			"agent.dbgmodel.DbgModelInJvmDebuggerModelFactory";
 
 		public InVmDbgmodelDebuggerProgramLaunchOffer(Program program, PluginTool tool,
 				DebuggerModelFactory factory) {
@@ -102,10 +106,9 @@ public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		}
 	}
 
-	protected class GadpDbgmodelDebuggerProgramLaunchOffer
+	@FactoryClass("agent.dbgmodel.gadp.DbgModelGadpDebuggerModelFactory")
+	protected static class GadpDbgmodelDebuggerProgramLaunchOffer
 			extends AbstractDbgDebuggerProgramLaunchOffer {
-		private static final String FACTORY_CLS_NAME =
-			"agent.dbgmodel.gadp.DbgModelLocalDebuggerModelFactory";
 
 		public GadpDbgmodelDebuggerProgramLaunchOffer(Program program, PluginTool tool,
 				DebuggerModelFactory factory) {
@@ -124,31 +127,7 @@ public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 	}
 
 	@Override
-	public Collection<DebuggerProgramLaunchOffer> getOffers(Program program, PluginTool tool,
-			DebuggerModelService service) {
-		String exe = program.getExecutablePath();
-		if (exe == null || "".equals(exe.trim())) {
-			return List.of();
-		}
-		List<DebuggerProgramLaunchOffer> offers = new ArrayList<>();
-		for (DebuggerModelFactory factory : service.getModelFactories()) {
-			if (!factory.isCompatible(program)) {
-				continue;
-			}
-			String clsName = factory.getClass().getName();
-			if (clsName.equals(InVmDbgengDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
-				offers.add(new InVmDbgengDebuggerProgramLaunchOffer(program, tool, factory));
-			}
-			else if (clsName.equals(GadpDbgengDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
-				offers.add(new GadpDbgengDebuggerProgramLaunchOffer(program, tool, factory));
-			}
-			else if (clsName.equals(InVmDbgmodelDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
-				offers.add(new InVmDbgmodelDebuggerProgramLaunchOffer(program, tool, factory));
-			}
-			else if (clsName.equals(GadpDbgmodelDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
-				offers.add(new GadpDbgmodelDebuggerProgramLaunchOffer(program, tool, factory));
-			}
-		}
-		return offers;
+	protected Collection<Class<? extends DebuggerProgramLaunchOffer>> getOfferClasses() {
+		return OFFER_CLASSES;
 	}
 }

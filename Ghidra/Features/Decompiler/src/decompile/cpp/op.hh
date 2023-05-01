@@ -15,10 +15,12 @@
  */
 /// \file op.hh
 /// \brief The PcodeOp and PcodeOpBank classes
-#ifndef __CPUI_OP__
-#define __CPUI_OP__
+#ifndef __OP_HH__
+#define __OP_HH__
 
 #include "typeop.hh"
+
+namespace ghidra {
 
 extern ElementId ELEM_IOP;		///< Marshaling element \<iop>
 extern ElementId ELEM_UNIMPL;		///< Marshaling element \<unimpl>
@@ -371,4 +373,5 @@ inline bool PcodeOpNode::operator<(const PcodeOpNode &op2) const
   return false;
 }
 
+} // End namespace ghidra
 #endif

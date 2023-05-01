@@ -100,18 +100,19 @@ public abstract class AbstractWeakValueMap<K, V> implements Map<K, V> {
 		return false;
 	}
 
+	/**
+	 * Returns a {@link Collection} view of the values contained in this map.
+	 * The collection is backed by the map, so changes to the map are
+	 * reflected in the collection, and vice-versa. However, since values in this map
+	 * are held via weak references, the collection returned is effectively weak in that
+	 * any time, values may disappear from the collection. To get a static view of the values
+	 * in this map, you should construct another collection class (List, Set, etc.) and pass
+	 * this collection to it in its constructor.
+	 */
 	@Override
 	public Collection<V> values() {
-		ArrayList<V> list = new ArrayList<>(getRefMap().size());
-		Iterator<WeakValueRef<K, V>> it = getRefMap().values().iterator();
-		while (it.hasNext()) {
-			WeakValueRef<K, V> ref = it.next();
-			V value = ref.get();
-			if (value != null) {
-				list.add(value);
-			}
-		}
-		return list;
+		processQueue();
+		return new WeakValuesCollection();
 	}
 
 	@Override
@@ -128,19 +129,7 @@ public abstract class AbstractWeakValueMap<K, V> implements Map<K, V> {
 
 	@Override
 	public Set<Map.Entry<K, V>> entrySet() {
-		processQueue();
-		Set<Map.Entry<K, V>> list = new HashSet<>();
-		Set<Map.Entry<K, WeakValueRef<K, V>>> entrySet = getRefMap().entrySet();
-		Iterator<Map.Entry<K, WeakValueRef<K, V>>> it = entrySet.iterator();
-		while (it.hasNext()) {
-			Map.Entry<K, WeakValueRef<K, V>> next = it.next();
-			WeakValueRef<K, V> valueRef = next.getValue();
-			V value = valueRef.get();
-			if (value != null) {
-				list.add(new GeneratedEntry(next.getKey(), value));
-			}
-		}
-		return list;
+		return new EntrySet();
 	}
 
 	@Override
@@ -190,8 +179,7 @@ public abstract class AbstractWeakValueMap<K, V> implements Map<K, V> {
 
 		@Override
 		public V setValue(V value) {
-			this.value = value;
-			return put(key, value);
+			throw new UnsupportedOperationException();
 		}
 
 	}
@@ -213,4 +201,154 @@ public abstract class AbstractWeakValueMap<K, V> implements Map<K, V> {
 			this.key = key;
 		}
 	}
+
+	/**
+	 * Wrapper that provides a Collection view of the values in this map. 
+	 * The collection is backed by the map, so changes to the map are
+	 * reflected in the collection, and vice-versa. This collection has
+	 * weak values and all the magic to handle that is in the {@link WeakValuesIterator}
+	 * implementation.
+	 */
+	private class WeakValuesCollection extends AbstractCollection<V> {
+
+		@Override
+		public Iterator<V> iterator() {
+			return new WeakValuesIterator();
+		}
+
+		@Override
+		public int size() {
+			return AbstractWeakValueMap.this.size();
+		}
+	}
+
+	/**
+	 * Iterator that handles iterating over weak values. This iterator will find the next 
+	 * non-null value by checking each WeakReference to find a value that has not been garbage
+	 * collected. The next non-null value is found during the {@link #hasNext()} call and is
+	 * held onto via a strong reference to guarantee that if hasNext returns true, you will get
+	 * a non-null value on the call to {@link #next()}.
+	 * 
+	 */
+	private class WeakValuesIterator implements Iterator<V> {
+
+		private Iterator<Entry<K, WeakValueRef<K, V>>> refMapIterator;
+		private V nextValue;
+
+		public WeakValuesIterator() {
+			refMapIterator = getRefMap().entrySet().iterator();
+		}
+
+		@Override
+		public boolean hasNext() {
+			while (nextValue == null && refMapIterator.hasNext()) {
+				Entry<K, WeakValueRef<K, V>> next = refMapIterator.next();
+				nextValue = next.getValue().get();
+			}
+			return nextValue != null;
+		}
+
+		@Override
+		public V next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			V returnValue = nextValue;
+			nextValue = null;
+			return returnValue;
+		}
+
+		@Override
+		public void remove() {
+			refMapIterator.remove();
+		}
+	}
+
+	/**
+	 * This iterator works much like the {@link WeakValuesIterator}, except that this iterator
+	 * works on Map Entry objects.
+	 */
+	private class EntryIterator implements Iterator<Map.Entry<K, V>> {
+
+		private Iterator<Entry<K, WeakValueRef<K, V>>> refMapIterator;
+		private K nextKey;
+		private V nextValue;
+
+		public EntryIterator() {
+			refMapIterator = getRefMap().entrySet().iterator();
+		}
+
+		@Override
+		public boolean hasNext() {
+			while (nextValue == null && refMapIterator.hasNext()) {
+				Entry<K, WeakValueRef<K, V>> next = refMapIterator.next();
+				nextKey = next.getKey();
+				nextValue = next.getValue().get();
+			}
+			return nextValue != null;
+		}
+
+		@Override
+		public Map.Entry<K, V> next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			Map.Entry<K, V> result = new GeneratedEntry(nextKey, nextValue);
+			nextKey = null;
+			nextValue = null;
+			return result;
+		}
+
+		@Override
+		public void remove() {
+			refMapIterator.remove();
+		}
+
+	}
+
+	/**
+	 * Class that provides a {@link Set} view of the entry set of this map that is backed live
+	 * by this map. Its main job is to translate from Map.Entry<K, WeakValueRef<V>> to 
+	 * Map.Entry<K,V>. The heavy lifting is done by the EntryIterator. The super class implements
+	 * all the rest of the methods by leveraging the iterator. We implement
+	 * contains, remove, and clear as they can be implemented much more efficiently than the 
+	 * default implementation which iterates over all the values to do those operations.
+	 */
+	private class EntrySet extends AbstractSet<Map.Entry<K, V>> {
+		public Iterator<Map.Entry<K, V>> iterator() {
+			return new EntryIterator();
+		}
+
+		public boolean contains(Object o) {
+			if (o instanceof Map.Entry<?, ?> e) {
+				Object key = e.getKey();
+				Object v = get(key);
+				return Objects.equals(v, e.getValue());
+			}
+			return false;
+		}
+
+		public boolean remove(Object o) {
+			if (o instanceof Map.Entry<?, ?> e) {
+				Object key = e.getKey();
+				Object v = get(key);
+				if (Objects.equals(v, e.getValue())) {
+					remove(key);
+					return true;
+				}
+			}
+			return false;
+
+		}
+
+		public int size() {
+			return AbstractWeakValueMap.this.size();
+		}
+
+		public void clear() {
+			AbstractWeakValueMap.this.clear();
+		}
+
+	}
+
 }

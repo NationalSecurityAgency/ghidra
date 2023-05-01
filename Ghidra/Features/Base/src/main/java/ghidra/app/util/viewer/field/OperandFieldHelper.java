@@ -96,7 +96,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	OperandFieldHelper(String name, FieldFormatModel model, HighlightProvider hlProvider,
+	OperandFieldHelper(String name, FieldFormatModel model, ListingHighlightProvider hlProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(name, model, hlProvider, displayOptions, fieldOptions);
 

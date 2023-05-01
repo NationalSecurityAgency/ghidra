@@ -37,6 +37,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.MarkerLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.Msg;
@@ -98,6 +99,8 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
 	private DebuggerConsoleService consoleService;
+	@AutoServiceConsumed
+	private DebuggerControlService controlService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -107,8 +110,23 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 		tool.addPopupActionProvider(this);
 	}
 
+	protected boolean isControlTarget() {
+		if (controlService == null || traceManager == null) {
+			return true;
+		}
+		Trace trace = traceManager.getCurrentTrace();
+		if (trace == null) {
+			return true;
+		}
+		ControlMode mode = controlService.getCurrentMode(trace);
+		return mode.isTarget();
+	}
+
 	@Override
 	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
+		if (!isControlTarget()) {
+			return List.of();
+		}
 		TargetObject curObj = getCurrentTargetObject();
 		if (curObj == null) {
 			return List.of();

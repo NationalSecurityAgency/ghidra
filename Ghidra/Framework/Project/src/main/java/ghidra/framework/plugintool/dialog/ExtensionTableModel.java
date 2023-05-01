@@ -415,10 +415,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			Component comp = super.getTableCellRendererComponent(data);
 
 			ExtensionDetails extension = getSelectedExtension(data.getRowViewIndex());
-			if (isValidVersion(extension) || SystemUtilities.isInDevelopmentMode()) {
-				comp.setForeground(data.isSelected() ? Tables.FG_SELECTED : Tables.FG_UNSELECTED);
-			}
-			else {
+			if (!isValidVersion(extension)) {
 				comp.setForeground(
 					data.isSelected() ? Tables.FG_ERROR_SELECTED : Tables.FG_ERROR_UNSELECTED);
 			}

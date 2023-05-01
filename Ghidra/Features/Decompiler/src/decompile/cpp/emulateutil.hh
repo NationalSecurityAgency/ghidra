@@ -16,11 +16,13 @@
 /// \file emulateutil.hh
 /// \brief (Lightweight) emulation interface for executing PcodeOp objects within a syntax tree
 /// or for executing snippets defined with PcodeOpRaw objects
-#ifndef __CPUI_EMUTREE__
-#define __CPUI_EMUTREE__
+#ifndef __EMULATEUTIL_HH__
+#define __EMULATEUTIL_HH__
 
 #include "emulate.hh"
 #include "op.hh"
+
+namespace ghidra {
 
 /// \brief Emulation based on (existing) PcodeOps and Varnodes.
 ///
@@ -172,4 +174,5 @@ public:
   uintb getTempValue(uintb offset) const;
 };
 
+} // End namespace ghidra
 #endif

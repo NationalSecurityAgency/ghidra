@@ -22,7 +22,6 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datapreview.DataTypePreviewPlugin.DTPPTableModel;
@@ -174,6 +173,7 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		//      integerSize		= 4;
 		//    	longSize		= 4;
 		//		defaultAlignment = 1;
+		//      alignment per size: 2->2, 4->4, 8->4
 
 		plugin.addDataType(IntegerDataType.dataType);
 		plugin.addDataType(LongDataType.dataType);
@@ -190,12 +190,11 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(6, model.getRowCount());
 
 		Program program = buildProgram();
-
 		DataOrganizationImpl dataOrganization =
-			(DataOrganizationImpl) program.getDataTypeManager().getDataOrganization();
-
+			(DataOrganizationImpl) program.getCompilerSpec().getDataOrganization();
 		dataOrganization.setLongSize(8);
 
+		// Open program in tool and goto tested memory location
 		env.open(program);
 
 		gotoService.goTo(addr(program, 0x100df26));
@@ -210,19 +209,23 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("61004D00200065h", model.getValueAt(4, DTPPTableModel.PREVIEW_COL));// 8-byte long at offset 4
 		assertEquals("72h", model.getValueAt(5, DTPPTableModel.PREVIEW_COL));// 2-byte short at offset 12
 
-		// deactivate program
-		plugin.getTool().firePluginEvent(new ProgramActivatedPluginEvent("Test", null));
-		waitForPostedSwingRunnables();
+		env.close(program);
 
+		// Re-create program with mutated data-organization to simulate shift to 3-byte aligned types
 		// NOTE: Altering data organization on-the-fly is not supported
-		dataOrganization.setDefaultAlignment(2);
+
+		// alignment map should jive with 3-byte mutliple primitive type sizes
+		dataOrganization.clearSizeAlignmentMap();
+		dataOrganization.setSizeAlignment(1, 1);
+		dataOrganization.setSizeAlignment(3, 3);
+		dataOrganization.setSizeAlignment(6, 6);
 		dataOrganization.setShortSize(3);
 		dataOrganization.setIntegerSize(3);
 		dataOrganization.setLongSize(6);
 
-		// activate program
-		plugin.getTool().firePluginEvent(new ProgramActivatedPluginEvent("Test", program));
-		waitForPostedSwingRunnables();
+		// Open program in tool and goto tested memory location
+		program = buildProgram();
+		env.open(program);
 
 		gotoService.goTo(addr(program, 0x100df26));
 
@@ -231,8 +234,8 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("680054h", model.getValueAt(2, DTPPTableModel.PREVIEW_COL));// 3-byte short
 
 		assertEquals("680054h", model.getValueAt(3, DTPPTableModel.PREVIEW_COL));// 3-byte int at offset 0
-		assertEquals("4D00200065h", model.getValueAt(4, DTPPTableModel.PREVIEW_COL));// 6-byte long at offset 4
-		assertEquals("720061h", model.getValueAt(5, DTPPTableModel.PREVIEW_COL));// 3-byte short at offset 10
+		assertEquals("61004D0020h", model.getValueAt(4, DTPPTableModel.PREVIEW_COL));// 6-byte long at offset 6
+		assertEquals("670072h", model.getValueAt(5, DTPPTableModel.PREVIEW_COL));// 3-byte short at offset 12
 
 	}
 

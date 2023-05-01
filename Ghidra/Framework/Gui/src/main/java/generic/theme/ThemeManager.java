@@ -570,7 +570,7 @@ public abstract class ThemeManager {
 	}
 
 	protected void error(String message) {
-		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan();
+		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(ThemeManager.class);
 		StackTraceElement[] trace = t.getStackTrace();
 		StackTraceElement[] filtered = ReflectionUtilities.filterStackTrace(trace, "java.",
 			"theme.Gui", "theme.ThemeManager", "theme.GColor");

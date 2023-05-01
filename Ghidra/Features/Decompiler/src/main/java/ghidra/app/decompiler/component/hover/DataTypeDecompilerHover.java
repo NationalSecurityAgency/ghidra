@@ -103,27 +103,24 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 		// Field Name: fooField
 		//
 
-		String BR = HTMLUtilities.BR;
-		StringBuilder newContent = new StringBuilder();
-		newContent.append("<TABLE>");
+		StringBuilder buffy = new StringBuilder(HTMLUtilities.HTML);
 
 		//@formatter:off
-		newContent.append(
+		buffy.append("<TABLE>");
+		buffy.append(
 			row("Parent: ",	HTMLUtilities.friendlyEncodeHTML(parentType.getName())));
-		newContent.append(
+		buffy.append(
 			row("Offset: ", NumericUtilities.toHexString(offset)));
-		newContent.append(
+		buffy.append(
 			row("Field Name: ", HTMLUtilities.friendlyEncodeHTML(token.getText())));
+		buffy.append("</TABLE>");
 		//@formatter:on
 
-		newContent.append("</TABLE>");
+		if (fieldType != null) {
+			buffy.append(HTMLUtilities.BR).append("<HR WIDTH=\"95%\">").append(HTMLUtilities.BR);
+			buffy.append(ToolTipUtils.getHTMLRepresentation(fieldType).getFullHTMLContentString());
+		}
 
-		newContent.append(BR).append("<HR WIDTH=\"95%\">").append(BR);
-
-		String toolTipText = ToolTipUtils.getToolTipText(fieldType);
-		StringBuilder buffy = new StringBuilder(toolTipText);
-		int start = HTMLUtilities.HTML.length();
-		buffy.insert(start, newContent);
 		return buffy.toString();
 	}
 
@@ -144,6 +141,9 @@ public class DataTypeDecompilerHover extends AbstractConfigurableHover
 			int n = parent.getLength();
 			if (offset >= 0 && offset < n) {
 				DataTypeComponent dtc = parent.getComponentAt(offset);
+				if (dtc == null) {
+					return null;
+				}
 				fieldDt = dtc.getDataType();
 			}
 		}

@@ -16,6 +16,8 @@
 #include "database_ghidra.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 Scope *ScopeGhidra::buildSubScope(uint8 id,const string &nm)
 
 {
@@ -389,3 +391,5 @@ bool ScopeGhidraNamespace::isNameUsed(const string &nm,const Scope *op2) const
   uint8 otherId = (otherScope != (const ScopeGhidraNamespace *)0) ? otherScope->getId() : 0;
   return ghidra->isNameUsed(nm, uniqueId, otherId);
 }
+
+} // End namespace ghidra

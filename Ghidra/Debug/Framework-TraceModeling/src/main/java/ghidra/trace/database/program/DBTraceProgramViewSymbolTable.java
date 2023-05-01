@@ -74,6 +74,9 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	}
 
 	protected TraceNamespaceSymbol assertTraceNamespace(Namespace ns) {
+		if (ns == null) {
+			return symbolManager.getGlobalNamespace();
+		}
 		if (!(ns instanceof TraceNamespaceSymbol)) {
 			throw new IllegalArgumentException("Given namespace is not part of this trace");
 		}

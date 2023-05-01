@@ -353,6 +353,14 @@
         editing, since they support sharing and version control and therefore allow more than one
         user to modify them at a time. Only one user at a time can have a file archive opened for
         editing.</P>
+        
+        <BLOCKQUOTE>
+        <P><IMG alt="" src="help/shared/tip.png">You can assign a specific <I>"Architecture"</I>
+        to a Data Type Archive while it is open for editing.  This is recommended when an archive is targeting
+        a specific processor and compiler specification (see <A href="#Set_Archive_Architecture">Setting
+        Data Type Archive Architecture</A>).</P>
+        </BLOCKQUOTE>
+                
       </BLOCKQUOTE>
 
       <BLOCKQUOTE>
@@ -406,6 +414,51 @@
         Archive.</P>
                 </BLOCKQUOTE>
 	</BLOCKQUOTE>
+	
+		<H3><A name="Set_Archive_Architecture"></A>Setting Data Type Archive Architecture</H3>
+		
+		<BLOCKQUOTE>
+		<P>By default, data type archives are not assigned an architecture and adopt a default
+		<I>Data Organization</I> which determines primitive data type sizing (e.g., int, long, pointer, etc.)
+		as well as alignment and packing behavior.  While data types copied between archives or a program
+		with disimilar <I>Data Organizations</I> will generally resolve correctly, unexpected results 
+		may sometimes arise (e.g., bit-field packing within structures).  In addition, this situation 
+		frequently causes some confusion when viewing and editing data types where the <I>Data 
+		Organization</I> differs from the intended target architecture.</P>
+		
+		<P>With either a file or project data type archive open for editing, a specific architecture
+		may be assigned to the archive.  This is done by selecting the open archive node from the
+		data type tree, right-click on it and select the <I><B>Set Architecture...</B></I> action.
+		This will popup a processor/compiler-specification selection dialog from which a selection
+		may be made and the <B>OK</B> button clicked.  A final confirmation dialog will be displayed
+		before completing the change from which the <B>Set Architecture</B> or <B>Cancel</B> button 
+		must be clicked to confirm or cancel the change.  If confirmed, any architecture transition 
+		will resolve all data types to the new data organization.  Details related to custom variable 
+		storage for Function Definitions (not yet implemented) will be preserved if possible but 
+		may be discarded.</P>
+		
+		<P>At present, the user will be forced to save any unsaved archive changes prior to completing
+		an architecture setting change to allow for a fallback if neccessary.</P>
+		
+		</BLOCKQUOTE>
+		
+		<H3><A name="Clear_Archive_Architecture"></A>Clearing Data Type Archive Architecture</H3>
+		
+		<BLOCKQUOTE>
+		
+		<P>With either a file or project data type archive open for editing, a currently assigned architecture
+		may be cleared for a selected archive.  This is done by selecting the open archive node from the
+		data type tree, right-click on it and select the <I><B>Clear Architecture</B></I> action.
+		A final confirmation dialog will be displayed
+		before completing the change from which the <B>Clear Architecture</B> or <B>Cancel</B> button 
+		must be clicked to confirm or cancel the change.  If confirmed, the archive will revert a default
+		<I>Data Organization</I> and any custom variable storage for Function Definitions
+		(not yet implemented) will be discarded.
+
+		<P>At present, the user will be forced to save any unsaved changes prior to clearing the
+		architecture setting to allow for a fallback if neccessary.</P>
+		
+		</BLOCKQUOTE>
 
         <H3><A name="Close_Archive"></A>Closing a Data Type Archive</H3>
 

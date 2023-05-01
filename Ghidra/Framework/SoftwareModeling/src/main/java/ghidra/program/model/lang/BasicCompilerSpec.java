@@ -32,9 +32,9 @@ import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.DefaultProgramContext;
-import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.data.DataOrganization;
+import ghidra.program.model.data.DataOrganizationImpl;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -312,6 +312,12 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 	@Override
 	public PrototypeModel getCallingConvention(String name) {
+		if (name == null || Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(name)) {
+			return null;
+		}
+		if (Function.DEFAULT_CALLING_CONVENTION_STRING.equals(name)) {
+			return getDefaultCallingConvention();
+		}
 		return callingConventionMap.get(name);
 	}
 
@@ -1077,12 +1083,14 @@ public class BasicCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public PrototypeModel matchConvention(GenericCallingConvention genericCallingConvention) {
-		if (genericCallingConvention == GenericCallingConvention.unknown) {
+	public PrototypeModel matchConvention(String conventionName) {
+		if (conventionName == null ||
+			CALLING_CONVENTION_unknown.equals(conventionName) ||
+			CALLING_CONVENTION_default.equals(conventionName)) {
 			return defaultModel;
 		}
 		for (PrototypeModel model : models) {
-			if (model.getGenericCallingConvention() == genericCallingConvention) {
+			if (model.getName().equals(conventionName)) {
 				return model;
 			}
 		}

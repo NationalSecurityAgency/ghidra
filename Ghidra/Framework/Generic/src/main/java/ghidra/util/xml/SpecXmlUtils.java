@@ -64,6 +64,14 @@ public class SpecXmlUtils {
 		return false;
 	}
 	
+	static public boolean decodeBoolean(String val, boolean defaultValue) {
+		Boolean returnValue = decodeNullableBoolean(val);
+		if (returnValue != null) {
+			return returnValue;
+		}
+		return defaultValue;
+	}
+
 	static public String encodeBoolean(boolean val) {
 		return val ? "true" : "false";
 	}

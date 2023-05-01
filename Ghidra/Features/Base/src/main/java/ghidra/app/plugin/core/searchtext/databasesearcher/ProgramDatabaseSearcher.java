@@ -82,7 +82,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 	}
 
 	@Override
-	public ProgramLocation search() {
+	public TextSearchResult search() {
 		List<ProgramDatabaseFieldSearcher> orderedSearchers = searchers;
 		if (!searchOptions.isForward()) {
 			orderedSearchers = new ArrayList<>(searchers);
@@ -210,8 +210,9 @@ public class ProgramDatabaseSearcher implements Searcher {
 		}
 		if (options.searchBothInstructionMnemonicAndOperands()) {
 			searchers.add(
-				InstructionMnemonicOperandFieldSearcher.createInstructionMnemonicAndOperandFieldSearcher(
-					program, adjustedStart, trimmedSet, forward, pattern, format));
+				InstructionMnemonicOperandFieldSearcher
+						.createInstructionMnemonicAndOperandFieldSearcher(
+							program, adjustedStart, trimmedSet, forward, pattern, format));
 		}
 		if (options.searchOnlyInstructionMnemonics()) {
 			searchers.add(

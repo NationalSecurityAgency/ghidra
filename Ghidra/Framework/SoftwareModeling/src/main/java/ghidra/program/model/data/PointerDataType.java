@@ -172,6 +172,11 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDefaultLabelPrefix() {
 		return POINTER_LABEL_PREFIX;
 	}

@@ -76,13 +76,17 @@
  #define DID_FILE_ISDEF_DEF 1
  #endif
 
-#include "multinclude.h"
+#include <multinclude.h> /* include once */
+
+#include "multinclude.h" /* include twice */
 
 #include "multinclude.h"
 
 #include "multinclude.h"
 
-#include "multinclude.h"
+#define __DEFINED_INCLUDE <defined.h>
+
+#include __DEFINED_INCLUDE /* THIS SHOULD BE IGNORED <> */
 
 #define __TEXT(quote)  quote
 

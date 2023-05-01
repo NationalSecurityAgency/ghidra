@@ -264,9 +264,9 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		// TODO: Does the decompiler communicate the inferred calling convention?
 		try {
 			PrototypeModel convention = program.getCompilerSpec().findBestCallingConvention(params);
-			sig.setGenericCallingConvention(convention.getGenericCallingConvention());
+			sig.setCallingConvention(convention.getName());
 		}
-		catch (SleighException e) {
+		catch (SleighException | InvalidInputException e) {
 			// Whatever, just leave sig at "unknown"
 		}
 		return sig;
@@ -352,7 +352,7 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 			throw new PcodeExecutionException("Cannot get stack change for indirect call: " + op);
 		}
 		PrototypeModel convention =
-			program.getCompilerSpec().matchConvention(sig.getGenericCallingConvention());
+			program.getCompilerSpec().matchConvention(sig.getCallingConventionName());
 		if (convention == null) {
 			warnings.add(new UnspecifiedConventionStackUnwindWarning(null));
 			convention = program.getCompilerSpec().getDefaultCallingConvention();

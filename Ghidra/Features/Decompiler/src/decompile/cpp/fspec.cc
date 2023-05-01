@@ -16,6 +16,8 @@
 #include "fspec.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_CUSTOM = AttributeId("custom",114);
 AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",115);
 AttributeId ATTRIB_EXTENSION = AttributeId("extension",116);
@@ -5623,3 +5625,5 @@ void FuncCallSpecs::countMatchingCalls(const vector<FuncCallSpecs *> &qlst)
   for(;lastChange<i;++lastChange)
     copyList[lastChange]->matchCallCount = num;
 }
+
+} // End namespace ghidra

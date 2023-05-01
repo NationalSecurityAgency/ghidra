@@ -15,6 +15,8 @@
  */
 package agent.gdb.manager.impl.cmd;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
 import agent.gdb.manager.impl.GdbManagerImpl;
@@ -34,7 +36,7 @@ public class GdbFileExecAndSymbolsCommand extends AbstractGdbCommand<Void> {
 
 	@Override
 	public String encode() {
-		return "-file-exec-and-symbols " + file;
+		return "-file-exec-and-symbols \"" + StringEscapeUtils.escapeJava(file) + "\"";
 	}
 
 	@Override

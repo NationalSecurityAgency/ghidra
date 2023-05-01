@@ -16,11 +16,13 @@
 /// \file emulate.hh
 /// \brief Classes for emulating p-code
 
-#ifndef __CPUI_EMULATE__
-#define __CPUI_EMULATE__
+#ifndef __EMULATE_HH__
+#define __EMULATE_HH__
 
 #include "memstate.hh"
 #include "translate.hh"
+
+namespace ghidra {
 
 class Emulate;			// Forward declaration
 
@@ -545,4 +547,5 @@ inline Address EmulatePcodeCache::getExecuteAddress(void) const
     - VarnodeData
  */
 
+} // End namespace ghidra
 #endif

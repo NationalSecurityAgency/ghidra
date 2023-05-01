@@ -15,6 +15,8 @@
  */
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_NOCODE = AttributeId("nocode",84);
 
 ElementId ELEM_AST = ElementId("ast",115);
@@ -886,6 +888,21 @@ bool Funcdata::setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,
     }
     (*res.first).second = resolve;
   }
+  if (op->code() == CPUI_MULTIEQUAL && slot >= 0) {
+    // Data-type propagation doesn't happen between MULTIEQUAL input slots holding the same Varnode
+    // So if this is a MULTIEQUAL, copy resolution to any other input slots holding the same Varnode
+    const Varnode *vn = op->getIn(slot);		// The Varnode being directly set
+    for(int4 i=0;i<op->numInput();++i) {
+      if (i == slot) continue;
+      if (op->getIn(i) != vn) continue;		// Check that different input slot holds same Varnode
+      ResolveEdge dupedge(parent,op,i);
+      res = unionMap.emplace(dupedge,resolve);
+      if (!res.second) {
+	if (!(*res.first).second.isLocked())
+	  (*res.first).second = resolve;
+      }
+    }
+  }
   return true;
 }
 
@@ -1044,3 +1061,4 @@ void Funcdata::debugPrintRange(int4 i) const
 
 #endif
 
+} // End namespace ghidra

@@ -83,10 +83,10 @@ public class DbgModelInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	}
 
 	protected void completeCommandLine(List<String> cmd) {
-		if (!remote.equals("none")) {
+		if (!remote.equals("none") && !remote.equals("")) {
 			cmd.addAll(List.of(remote));
 		}
-		if (!transport.equals("none")) {
+		if (!transport.equals("none") && !transport.equals("")) {
 			cmd.addAll(List.of(transport));
 		}
 	}

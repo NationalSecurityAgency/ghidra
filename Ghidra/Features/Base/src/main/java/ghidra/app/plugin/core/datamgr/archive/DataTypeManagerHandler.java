@@ -437,12 +437,13 @@ public class DataTypeManagerHandler {
 		return openArchive(new ResourceFile(file), acquireWriteLock, isUserAction);
 	}
 
-	public Archive openArchive(ResourceFile file, boolean acquireWriteLock, boolean isUserAction)
+	public FileArchive openArchive(ResourceFile file, boolean acquireWriteLock,
+			boolean isUserAction)
 			throws IOException, DuplicateIdException {
 
 		file = file.getCanonicalFile();
 
-		Archive archive = getArchiveForFile(file);
+		FileArchive archive = getArchiveForFile(file);
 		if (archive == null) {
 			archive = new FileArchive(this, file, acquireWriteLock);
 			Archive existingArchive =
@@ -451,11 +452,10 @@ public class DataTypeManagerHandler {
 				archive.close();
 				throw new DuplicateIdException(archive.getName(), existingArchive.getName());
 			}
-
 			addArchivePath(file);
 			addArchive(archive);
 		}
-		if (isUserAction && (archive instanceof FileArchive)) {
+		if (isUserAction) {
 			userOpenedFileArchiveNames.add(getSaveableArchive(file.getAbsolutePath()));
 		}
 		return archive;
@@ -524,7 +524,7 @@ public class DataTypeManagerHandler {
 		return null;
 	}
 
-	private Archive getArchiveForFile(ResourceFile file) {
+	private FileArchive getArchiveForFile(ResourceFile file) {
 		for (Archive archive : openArchives) {
 			if (archive instanceof FileArchive) {
 				FileArchive fileArchive = (FileArchive) archive;
@@ -1228,6 +1228,13 @@ public class DataTypeManagerHandler {
 				SourceArchive dataTypeSource) {
 			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
 				listener.sourceArchiveChanged(dataTypeManager, dataTypeSource);
+			}
+		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
+				listener.programArchitectureChanged(dataTypeManager);
 			}
 		}
 	}

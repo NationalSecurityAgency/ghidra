@@ -22,10 +22,12 @@
 /// to produce an emergent transformation. The Rules are applied repeatedly until
 /// no Rule can make any additional transformations.
 
-#ifndef __RULE_ACTION__
-#define __RULE_ACTION__
+#ifndef __RULEACTION_HH__
+#define __RULEACTION_HH__
 
 #include "action.hh"
+
+namespace ghidra {
 
 /// \brief Structure for sorting out pointer expression trees
 ///
@@ -1172,6 +1174,39 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+class RuleSplitCopy : public Rule {
+public:
+  RuleSplitCopy(const string &g) : Rule( g, 0, "splitcopy") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitCopy(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+class RuleSplitLoad : public Rule {
+public:
+  RuleSplitLoad(const string &g) : Rule( g, 0, "splitload") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitLoad(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+class RuleSplitStore : public Rule {
+public:
+  RuleSplitStore(const string &g) : Rule( g, 0, "splitstore") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleSplitStore(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RuleSubNormal : public Rule {
 public:
   RuleSubNormal(const string &g) : Rule( g, 0, "subnormal") {}	///< Constructor
@@ -1605,4 +1640,6 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+
+} // End namespace ghidra
 #endif

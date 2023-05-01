@@ -361,6 +361,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		DataTypeManager dtm = toCategory.getDataTypeManager();
 		DataTypeManager nodeDtm = dataType.getDataTypeManager();
 		boolean sameManager = (dtm == nodeDtm);
+
 		DataType newDt = !sameManager ? dataType.clone(nodeDtm) : dataType.copy(nodeDtm);
 
 		if (!sameManager && toCategory.isRoot()) {

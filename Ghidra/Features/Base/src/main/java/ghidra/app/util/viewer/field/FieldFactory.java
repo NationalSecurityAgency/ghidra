@@ -20,7 +20,7 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.Gui;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -51,7 +51,7 @@ public abstract class FieldFactory implements ExtensionPoint {
 	protected Font baseFont;
 	protected int style = -1;
 	protected boolean enabled = true;
-	protected HighlightProvider hlProvider;
+	protected ListingHighlightProvider hlProvider;
 
 	protected String colorOptionName;
 	protected String styleOptionName;
@@ -65,7 +65,8 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	protected FieldFactory(String name, FieldFormatModel model, HighlightProvider highlightProvider,
+	protected FieldFactory(String name, FieldFormatModel model,
+			ListingHighlightProvider highlightProvider,
 			Options displayOptions, Options fieldOptions) {
 		this.name = name;
 		this.model = model;
@@ -81,7 +82,7 @@ public abstract class FieldFactory implements ExtensionPoint {
 
 	protected void initFieldOptions(Options fieldOptions) {
 		fieldOptions.getOptions(name)
-			.setOptionsHelpLocation(new HelpLocation("CodeBrowserPlugin", name));
+				.setOptionsHelpLocation(new HelpLocation("CodeBrowserPlugin", name));
 	}
 
 	protected void initDisplayOptions(Options displayOptions) {
@@ -121,7 +122,8 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 * @return the factory
 	 */
 	public abstract FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions options, ToolOptions fieldOptions);
+			ListingHighlightProvider highlightProvider, ToolOptions options,
+			ToolOptions fieldOptions);
 
 	/**
 	 * Notifications that the display options changed.
@@ -218,6 +220,19 @@ public abstract class FieldFactory implements ExtensionPoint {
 	public void setEnabled(boolean state) {
 		enabled = state;
 		model.modelChanged();
+	}
+
+	/**
+	 * Returns true if this given field represents the given location
+	 * @param listingField the field
+	 * @param location the location 
+	 * @return true if this given field represents the given location
+	 */
+	public boolean supportsLocation(ListingField listingField, ProgramLocation location) {
+		BigInteger dummyIndex = BigInteger.ZERO;
+		int dummyFieldNumber = 0;
+		FieldLocation f = getFieldLocation(listingField, dummyIndex, dummyFieldNumber, location);
+		return f != null;
 	}
 
 	/**

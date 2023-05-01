@@ -23,7 +23,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.*;
 
 import docking.DialogComponentProvider;
-import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.SleighUtils.SleighParseError;
@@ -31,7 +31,7 @@ import ghidra.pcode.exec.SleighUtils.SleighParseErrorEntry;
 import ghidra.util.*;
 
 public abstract class AbstractDebuggerSleighInputDialog extends DialogComponentProvider {
-	protected static final Color COLOR_ERROR = new GColor("color.fg.error");
+	protected static final Color COLOR_ERROR = Colors.ERROR;
 	protected static final AttributeSet RED_UNDERLINE;
 
 	static {

@@ -15,7 +15,7 @@
  */
 package ghidra.trace.model.symbol;
 
-import java.util.List;
+import java.util.Collection;
 
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
@@ -37,11 +37,30 @@ public interface TraceFunctionSymbolView extends TraceSymbolWithLocationView<Tra
 		return add(Lifespan.nowOn(snap), entryPoint, body, name, thunked, parent, source);
 	}
 
-	PrototypeModel[] getCallingConventions();
+	/**
+	 * Get the ordered unmodifiable set of defined calling convention names.  The reserved names 
+	 * "unknown" and "default" are not included.  The returned collection may not include all names 
+	 * referenced by various functions and function-definitions.  This set is limited to 
+	 * those defined by the associated compiler specification.
+	 *
+	 * @return the set of defined calling convention names.
+	 */
+	Collection<String> getCallingConventionNames();
 
-	List<String> getCallingConventionNames();
-
+	/**
+	 * Get the default calling convention's prototype model.
+	 *
+	 * @return the default calling convention prototype model.
+	 */
 	PrototypeModel getDefaultCallingConvention();
 
+	/**
+	 * Get the prototype model of the calling convention with the specified name from the 
+	 * associated compiler specification.  If {@link Function#DEFAULT_CALLING_CONVENTION_STRING}
+	 * is specified {@link #getDefaultCallingConvention()} will be returned.
+	 * 
+	 * @param name the calling convention name
+	 * @return the named function calling convention prototype model or null if not defined.
+	 */
 	PrototypeModel getCallingConvention(String name);
 }

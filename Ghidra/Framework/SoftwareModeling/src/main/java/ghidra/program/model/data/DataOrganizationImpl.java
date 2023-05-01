@@ -20,10 +20,11 @@ import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
+import ghidra.program.database.DBStringMapAdapter;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.Encoder;
-import ghidra.util.exception.NoValueException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -34,33 +35,55 @@ import ghidra.xml.XmlPullParser;
  */
 public class DataOrganizationImpl implements DataOrganization {
 
+	// NOTE: it is important that defaults match Decompiler defaults
+	public static final int DEFAULT_MACHINE_ALIGNMENT = 8;
+	public static final int DEFAULT_DEFAULT_ALIGNMENT = 1;
+	public static final int DEFAULT_DEFAULT_POINTER_ALIGNMENT = 4;
+	public static final int DEFAULT_POINTER_SHIFT = 0;
+	public static final int DEFAULT_POINTER_SIZE = 4;
+	public static final int DEFAULT_CHAR_SIZE = 1;
+	public static final boolean DEFAULT_CHAR_IS_SIGNED = true;
+	public static final int DEFAULT_WIDE_CHAR_SIZE = 2;
+	public static final int DEFAULT_SHORT_SIZE = 2;
+	public static final int DEFAULT_INT_SIZE = 4;
+	public static final int DEFAULT_LONG_SIZE = 4;
+	public static final int DEFAULT_LONG_LONG_SIZE = 8;
+	public static final int DEFAULT_FLOAT_SIZE = 4;			// encoding size only
+	public static final int DEFAULT_DOUBLE_SIZE = 8; 		// encoding size only
+	public static final int DEFAULT_LONG_DOUBLE_SIZE = 8;	// encoding size only
+
+	// DBStringMapAdapter save/restore keys
+	private static final String BIG_ENDIAN_NAME = "big_endian";
+	private static final String SIGNED_CHAR_TYPE_NAME = "signed_char_type";
+
 	private int absoluteMaxAlignment = NO_MAXIMUM_ALIGNMENT;
-	private int machineAlignment = 8;
-	private int defaultAlignment = 1;
-	private int defaultPointerAlignment = 4;
+	private int machineAlignment = DEFAULT_MACHINE_ALIGNMENT;
+	private int defaultAlignment = DEFAULT_DEFAULT_ALIGNMENT;
+	private int defaultPointerAlignment = DEFAULT_DEFAULT_POINTER_ALIGNMENT;
 
 	// Default sizes for primitive data types.
-	private int pointerShift = 0;
-	private int pointerSize = 4;
-	private int charSize = 1;
-	private int wideCharSize = 2;
-	private int shortSize = 2;
-	private int integerSize = 4;
-	private int longSize = 4;
-	private int longLongSize = 8;
-	private int floatSize = 4;
-	private int doubleSize = 8;
-	private int longDoubleSize = 8;
+	private int pointerShift = DEFAULT_POINTER_SHIFT;
+	private int pointerSize = DEFAULT_POINTER_SIZE;
+	private int charSize = DEFAULT_CHAR_SIZE;
+	private boolean isSignedChar = DEFAULT_CHAR_IS_SIGNED;
+	private int wideCharSize = DEFAULT_WIDE_CHAR_SIZE;
+	private int shortSize = DEFAULT_SHORT_SIZE;
+	private int integerSize = DEFAULT_INT_SIZE;
+	private int longSize = DEFAULT_LONG_SIZE;
+	private int longLongSize = DEFAULT_LONG_LONG_SIZE;
+	private int floatSize = DEFAULT_FLOAT_SIZE;
+	private int doubleSize = DEFAULT_DOUBLE_SIZE;
+	private int longDoubleSize = DEFAULT_LONG_DOUBLE_SIZE;
 
+	// Endianess explicitly set and not supported by saveXml/restore
 	private boolean bigEndian = false;
-	private boolean isSignedChar = true;
 
 	private BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl();
 
 	/*
 	 * Map for determining the alignment of a data type based upon its size.
 	 */
-	private final HashMap<Integer, Integer> sizeAlignmentMap = new HashMap<>();
+	private final TreeMap<Integer, Integer> sizeAlignmentMap = new TreeMap<>();
 
 	/**
 	 * Creates a new default DataOrganization. This has a mapping which defines the alignment
@@ -86,7 +109,9 @@ public class DataOrganizationImpl implements DataOrganization {
 		dataOrganization.setSizeAlignment(4, 4);
 		dataOrganization.setSizeAlignment(8, 4);
 		if (language != null) {
+			// NOTE: Ensure that saveXml always saves pointer size
 			dataOrganization.setPointerSize(language.getDefaultSpace().getPointerSize());
+			// NOTE: Endianess is not handled by saveXml/restore
 			dataOrganization.setBigEndian(language.isBigEndian());
 		}
 		return dataOrganization;
@@ -269,7 +294,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Defines the size of a float primitive data type.
+	 * Defines the encoding size of a float primitive data type.
 	 * @param floatSize the size of a float.
 	 */
 	public void setFloatSize(int floatSize) {
@@ -280,7 +305,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Defines the size of a double primitive data type.
+	 * Defines the encoding size of a double primitive data type.
 	 * @param doubleSize the size of a double.
 	 */
 	public void setDoubleSize(int doubleSize) {
@@ -294,7 +319,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Defines the size of a long double primitive data type.
+	 * Defines the encoding size of a long double primitive data type.
 	 * @param longDoubleSize the size of a long double.
 	 */
 	public void setLongDoubleSize(int longDoubleSize) {
@@ -384,15 +409,14 @@ public class DataOrganizationImpl implements DataOrganization {
 		this.defaultPointerAlignment = defaultPointerAlignment;
 	}
 
-	/**
-	 * Gets the alignment that is defined for a data type of the indicated size if one is defined.
-	 * @param size the size of the data type
-	 * @return the alignment of the data type.
-	 * @throws NoValueException if there isn't an alignment defined for the indicated size.
-	 */
 	@Override
-	public int getSizeAlignment(int size) throws NoValueException {
-		return sizeAlignmentMap.get(size);
+	public int getSizeAlignment(int size) {
+		Entry<Integer, Integer> floorEntry = sizeAlignmentMap.floorEntry(size);
+		int alignment = floorEntry != null ? floorEntry.getValue() : defaultAlignment;
+		if (absoluteMaxAlignment != 0) {
+			return Math.min(alignment, absoluteMaxAlignment);
+		}
+		return alignment;
 	}
 
 	/**
@@ -475,7 +499,7 @@ public class DataOrganizationImpl implements DataOrganization {
 
 	@Override
 	public int getAlignment(DataType dataType) {
-		int dtSize = dataType.getLength();
+		int dtSize = dataType.getAlignedLength();
 		if (dataType instanceof Dynamic || dataType instanceof FactoryDataType || dtSize <= 0) {
 			return 1;
 		}
@@ -500,18 +524,15 @@ public class DataOrganizationImpl implements DataOrganization {
 			BitFieldDataType bitfieldDt = (BitFieldDataType) dataType;
 			return getAlignment(bitfieldDt.getBaseDataType());
 		}
-		// Otherwise get the alignment based on the size.
-		if (sizeAlignmentMap.containsKey(dtSize)) {
-			int sizeAlignment = sizeAlignmentMap.get(dtSize);
-			return ((absoluteMaxAlignment == 0) || (sizeAlignment < absoluteMaxAlignment))
-					? sizeAlignment
-					: absoluteMaxAlignment;
-		}
-		if (dataType instanceof Pointer) {
+
+		// If pointer size not found in size alignment map use default pointer alignment
+		// TODO: this should probably be re-evaluated for its neccessity
+		if (!sizeAlignmentMap.containsKey(dtSize) && dataType instanceof Pointer) {
 			return getDefaultPointerAlignment();
 		}
-		// Otherwise just assume the default alignment.
-		return getDefaultAlignment();
+
+		// Otherwise get the alignment based on the size.
+		return getSizeAlignment(dtSize);
 	}
 
 	/**
@@ -526,13 +547,17 @@ public class DataOrganizationImpl implements DataOrganization {
 		if (alignment <= 0) {
 			return minimumOffset;
 		}
-		if ((alignment & 1) == 0) {
+		if (isPowerOfTwo(alignment)) {
 			// handle alignment which is a power-of-2
 			return alignment + ((minimumOffset - 1) & ~(alignment - 1));
 		}
 		int offcut = (minimumOffset % alignment);
 		int adj = (offcut != 0) ? (alignment - offcut) : 0;
 		return minimumOffset + adj;
+	}
+
+	private static boolean isPowerOfTwo(int n) {
+		return (n & (n - 1)) == 0;
 	}
 
 	/**
@@ -556,84 +581,295 @@ public class DataOrganizationImpl implements DataOrganization {
 		return (value2 != 0) ? getGreatestCommonDenominator(value2, value1 % value2) : value1;
 	}
 
+	/**
+	 * Save the specified data organization to the specified DB data map.
+	 * All existing map entries starting with keyPrefix will be removed prior
+	 * to ading the new map entries.
+	 * @param dataOrg data organization
+	 * @param dataMap DB data map
+	 * @param keyPrefix key prefix for all map entries
+	 * @throws IOException if an IO error occurs
+	 */
+	public static void save(DataOrganization dataOrg, DBStringMapAdapter dataMap, String keyPrefix)
+			throws IOException {
+
+		for (String key : dataMap.keySet()) {
+			if (key.startsWith(keyPrefix)) {
+				dataMap.delete(key);
+			}
+		}
+		
+		if (dataOrg.isBigEndian()) { // default is little-endian
+			dataMap.put(keyPrefix + BIG_ENDIAN_NAME, Boolean.TRUE.toString());
+		}
+
+		int absoluteMaxAlignment = dataOrg.getAbsoluteMaxAlignment();
+		if (absoluteMaxAlignment != NO_MAXIMUM_ALIGNMENT) {
+			dataMap.put(keyPrefix + ELEM_ABSOLUTE_MAX_ALIGNMENT.name(),
+				Integer.toString(absoluteMaxAlignment));
+		}
+
+		int machineAlignment = dataOrg.getMachineAlignment();
+		if (machineAlignment != DEFAULT_MACHINE_ALIGNMENT) {
+			dataMap.put(keyPrefix + ELEM_MACHINE_ALIGNMENT.name(),
+				Integer.toString(machineAlignment));
+		}
+
+		int defaultAlignment = dataOrg.getDefaultAlignment();
+		if (defaultAlignment != DEFAULT_DEFAULT_ALIGNMENT) {
+			dataMap.put(keyPrefix + ELEM_DEFAULT_ALIGNMENT.name(),
+				Integer.toString(defaultAlignment));
+		}
+
+		int defaultPointerAlignment = dataOrg.getDefaultPointerAlignment();
+		if (defaultPointerAlignment != DEFAULT_DEFAULT_POINTER_ALIGNMENT) {
+			dataMap.put(keyPrefix + ELEM_DEFAULT_POINTER_ALIGNMENT.name(),
+				Integer.toString(defaultPointerAlignment));
+		}
+
+		int pointerSize = dataOrg.getPointerSize();
+		if (pointerSize != DEFAULT_POINTER_SIZE) {
+			dataMap.put(keyPrefix + ELEM_POINTER_SIZE.name(), Integer.toString(pointerSize));
+		}
+
+		int pointerShift = dataOrg.getPointerShift();
+		if (pointerShift != DEFAULT_POINTER_SHIFT) {
+			dataMap.put(keyPrefix + ELEM_POINTER_SHIFT.name(), Integer.toString(pointerShift));
+		}
+
+		boolean isSignedChar = dataOrg.isSignedChar();
+		if (!isSignedChar) {
+			// NOTE: This differs from XML element name
+			dataMap.put(keyPrefix + SIGNED_CHAR_TYPE_NAME, Boolean.toString(isSignedChar));
+		}
+
+		int charSize = dataOrg.getCharSize();
+		if (charSize != DEFAULT_CHAR_SIZE) {
+			dataMap.put(keyPrefix + ELEM_CHAR_SIZE.name(), Integer.toString(charSize));
+		}
+
+		int wideCharSize = dataOrg.getWideCharSize();
+		if (wideCharSize != DEFAULT_WIDE_CHAR_SIZE) {
+			dataMap.put(keyPrefix + ELEM_WCHAR_SIZE.name(), Integer.toString(wideCharSize));
+		}
+
+		int shortSize = dataOrg.getShortSize();
+		if (shortSize != DEFAULT_SHORT_SIZE) {
+			dataMap.put(keyPrefix + ELEM_SHORT_SIZE.name(), Integer.toString(shortSize));
+		}
+
+		int integerSize = dataOrg.getIntegerSize();
+		if (integerSize != DEFAULT_INT_SIZE) {
+			dataMap.put(keyPrefix + ELEM_INTEGER_SIZE.name(), Integer.toString(integerSize));
+		}
+
+		int longSize = dataOrg.getLongSize();
+		if (longSize != DEFAULT_LONG_SIZE) {
+			dataMap.put(keyPrefix + ELEM_LONG_SIZE.name(), Integer.toString(longSize));
+		}
+
+		int longLongSize = dataOrg.getLongLongSize();
+		if (longLongSize != DEFAULT_LONG_LONG_SIZE) {
+			dataMap.put(keyPrefix + ELEM_LONG_LONG_SIZE.name(), Integer.toString(longLongSize));
+		}
+
+		int floatSize = dataOrg.getFloatSize();
+		if (floatSize != DEFAULT_FLOAT_SIZE) {
+			dataMap.put(keyPrefix + ELEM_FLOAT_SIZE.name(), Integer.toString(floatSize));
+		}
+
+		int doubleSize = dataOrg.getDoubleSize();
+		if (doubleSize != DEFAULT_DOUBLE_SIZE) {
+			dataMap.put(keyPrefix + ELEM_DOUBLE_SIZE.name(), Integer.toString(doubleSize));
+		}
+
+		int longDoubleSize = dataOrg.getLongDoubleSize();
+		if (longDoubleSize != DEFAULT_LONG_DOUBLE_SIZE) {
+			dataMap.put(keyPrefix + ELEM_LONG_DOUBLE_SIZE.name(), Integer.toString(longDoubleSize));
+		}
+
+		for (int size : dataOrg.getSizes()) {
+			String key = keyPrefix + ELEM_SIZE_ALIGNMENT_MAP.name() + "." + size;
+			dataMap.put(key, Integer.toString(dataOrg.getSizeAlignment(size)));
+		}
+
+		BitFieldPackingImpl.save(dataOrg.getBitFieldPacking(), dataMap,
+			keyPrefix + ELEM_BITFIELD_PACKING.name() + ".");
+	}
+
+	/**
+	 * Restore a data organization from the specified DB data map.
+	 * @param dataMap DB data map
+	 * @param keyPrefix key prefix for all map entries
+	 * @return data organization
+	 * @throws IOException if an IO error occurs
+	 */
+	public static DataOrganizationImpl restore(DBStringMapAdapter dataMap, String keyPrefix)
+			throws IOException {
+
+		DataOrganizationImpl dataOrg = new DataOrganizationImpl();
+		
+		dataOrg.bigEndian = dataMap.getBoolean(BIG_ENDIAN_NAME, false);
+
+		dataOrg.absoluteMaxAlignment =
+			dataMap.getInt(keyPrefix + ELEM_ABSOLUTE_MAX_ALIGNMENT.name(),
+				dataOrg.absoluteMaxAlignment);
+
+		dataOrg.machineAlignment =
+			dataMap.getInt(keyPrefix + ELEM_MACHINE_ALIGNMENT.name(), dataOrg.machineAlignment);
+
+		dataOrg.defaultAlignment =
+			dataMap.getInt(keyPrefix + ELEM_DEFAULT_ALIGNMENT.name(), dataOrg.defaultAlignment);
+
+		dataOrg.defaultPointerAlignment =
+			dataMap.getInt(keyPrefix + ELEM_DEFAULT_POINTER_ALIGNMENT.name(),
+			dataOrg.defaultPointerAlignment);
+
+		dataOrg.pointerSize =
+			dataMap.getInt(keyPrefix + ELEM_POINTER_SIZE.name(), dataOrg.pointerSize);
+
+		dataOrg.pointerShift =
+			dataMap.getInt(keyPrefix + ELEM_POINTER_SHIFT.name(), dataOrg.pointerShift);
+
+		dataOrg.isSignedChar =
+			dataMap.getBoolean(keyPrefix + SIGNED_CHAR_TYPE_NAME, dataOrg.isSignedChar);
+
+		dataOrg.charSize = dataMap.getInt(keyPrefix + ELEM_CHAR_SIZE.name(), dataOrg.charSize);
+
+		dataOrg.wideCharSize =
+			dataMap.getInt(keyPrefix + ELEM_WCHAR_SIZE.name(), dataOrg.wideCharSize);
+
+		dataOrg.shortSize = dataMap.getInt(keyPrefix + ELEM_SHORT_SIZE.name(), dataOrg.shortSize);
+
+		dataOrg.integerSize =
+			dataMap.getInt(keyPrefix + ELEM_INTEGER_SIZE.name(), dataOrg.integerSize);
+
+		dataOrg.longSize = dataMap.getInt(keyPrefix + ELEM_LONG_SIZE.name(), dataOrg.longSize);
+
+		dataOrg.longLongSize =
+			dataMap.getInt(keyPrefix + ELEM_LONG_LONG_SIZE.name(), dataOrg.longLongSize);
+
+		dataOrg.floatSize = dataMap.getInt(keyPrefix + ELEM_FLOAT_SIZE.name(), dataOrg.floatSize);
+
+		dataOrg.doubleSize =
+			dataMap.getInt(keyPrefix + ELEM_DOUBLE_SIZE.name(), dataOrg.doubleSize);
+
+		dataOrg.longDoubleSize =
+			dataMap.getInt(keyPrefix + ELEM_LONG_DOUBLE_SIZE.name(), dataOrg.longDoubleSize);
+
+		boolean firstEntry = true;
+		String alignmentMapKeyPrefix = keyPrefix + ELEM_SIZE_ALIGNMENT_MAP.name() + ".";
+		for (String key : dataMap.keySet()) {
+			if (!key.startsWith(alignmentMapKeyPrefix)) {
+				continue;
+			}
+			try {
+				int size = Integer.valueOf(key.substring(alignmentMapKeyPrefix.length()));
+				int alignment = Integer.valueOf(dataMap.get(key));
+				if (firstEntry) {
+					dataOrg.sizeAlignmentMap.clear();
+					firstEntry = false;
+				}
+				dataOrg.sizeAlignmentMap.put(size, alignment);
+			}
+			catch (NumberFormatException e) {
+				// ignore
+			}
+		}
+
+		dataOrg.bitFieldPacking =
+			BitFieldPackingImpl.restore(dataMap, keyPrefix + ELEM_BITFIELD_PACKING.name() + ".");
+
+		return dataOrg;
+	}
+
+	/**
+	 * Output the details of this data organization to a encoded document formatter.
+	 * @param encoder the output document encoder.
+	 * @throws IOException if an IO error occurs while encoding/writing output
+	 */
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_DATA_ORGANIZATION);
+		
+		// NOTE: endianess intentionally omitted from output 
+		
 		if (absoluteMaxAlignment != NO_MAXIMUM_ALIGNMENT) {
 			encoder.openElement(ELEM_ABSOLUTE_MAX_ALIGNMENT);
 			encoder.writeSignedInteger(ATTRIB_VALUE, absoluteMaxAlignment);
 			encoder.closeElement(ELEM_ABSOLUTE_MAX_ALIGNMENT);
 		}
-		if (machineAlignment != 8) {
+		if (machineAlignment != DEFAULT_MACHINE_ALIGNMENT) {
 			encoder.openElement(ELEM_MACHINE_ALIGNMENT);
 			encoder.writeSignedInteger(ATTRIB_VALUE, machineAlignment);
 			encoder.closeElement(ELEM_MACHINE_ALIGNMENT);
 		}
-		if (defaultAlignment != 1) {
+		if (defaultAlignment != DEFAULT_DEFAULT_ALIGNMENT) {
 			encoder.openElement(ELEM_DEFAULT_ALIGNMENT);
 			encoder.writeSignedInteger(ATTRIB_VALUE, defaultAlignment);
 			encoder.closeElement(ELEM_DEFAULT_ALIGNMENT);
 		}
-		if (defaultPointerAlignment != 4) {
+		if (defaultPointerAlignment != DEFAULT_DEFAULT_POINTER_ALIGNMENT) {
 			encoder.openElement(ELEM_DEFAULT_POINTER_ALIGNMENT);
 			encoder.writeSignedInteger(ATTRIB_VALUE, defaultPointerAlignment);
 			encoder.closeElement(ELEM_DEFAULT_POINTER_ALIGNMENT);
 		}
-		if (pointerSize != 0) {
-			encoder.openElement(ELEM_POINTER_SIZE);
-			encoder.writeSignedInteger(ATTRIB_VALUE, pointerSize);
-			encoder.closeElement(ELEM_POINTER_SIZE);
-		}
-		if (pointerShift != 0) {
+
+		// Always output pointer size
+		encoder.openElement(ELEM_POINTER_SIZE);
+		encoder.writeSignedInteger(ATTRIB_VALUE, pointerSize);
+		encoder.closeElement(ELEM_POINTER_SIZE);
+
+		if (pointerShift != DEFAULT_POINTER_SHIFT) {
 			encoder.openElement(ELEM_POINTER_SHIFT);
 			encoder.writeSignedInteger(ATTRIB_VALUE, pointerShift);
 			encoder.closeElement(ELEM_POINTER_SHIFT);
 		}
-		if (!isSignedChar) {
+		if (isSignedChar != DEFAULT_CHAR_IS_SIGNED) {
 			encoder.openElement(ELEM_CHAR_TYPE);
-			encoder.writeBool(ATTRIB_SIGNED, false);
+			encoder.writeBool(ATTRIB_SIGNED, isSignedChar);
 			encoder.closeElement(ELEM_CHAR_TYPE);
 		}
-		if (charSize != 1) {
+		if (charSize != DEFAULT_CHAR_SIZE) {
 			encoder.openElement(ELEM_CHAR_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, charSize);
 			encoder.closeElement(ELEM_CHAR_SIZE);
 		}
-		if (wideCharSize != 2) {
+		if (wideCharSize != DEFAULT_WIDE_CHAR_SIZE) {
 			encoder.openElement(ELEM_WCHAR_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, wideCharSize);
 			encoder.closeElement(ELEM_WCHAR_SIZE);
 		}
-		if (shortSize != 2) {
+		if (shortSize != DEFAULT_SHORT_SIZE) {
 			encoder.openElement(ELEM_SHORT_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, shortSize);
 			encoder.closeElement(ELEM_SHORT_SIZE);
 		}
-		if (integerSize != 4) {
+		if (integerSize != DEFAULT_INT_SIZE) {
 			encoder.openElement(ELEM_INTEGER_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, integerSize);
 			encoder.closeElement(ELEM_INTEGER_SIZE);
 		}
-		if (longSize != 4) {
+		if (longSize != DEFAULT_LONG_SIZE) {
 			encoder.openElement(ELEM_LONG_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, longSize);
 			encoder.closeElement(ELEM_LONG_SIZE);
 		}
-		if (longLongSize != 8) {
+		if (longLongSize != DEFAULT_LONG_LONG_SIZE) {
 			encoder.openElement(ELEM_LONG_LONG_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, longLongSize);
 			encoder.closeElement(ELEM_LONG_LONG_SIZE);
 		}
-		if (floatSize != 4) {
+		if (floatSize != DEFAULT_FLOAT_SIZE) {
 			encoder.openElement(ELEM_FLOAT_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, floatSize);
 			encoder.closeElement(ELEM_FLOAT_SIZE);
 		}
-		if (doubleSize != 8) {
+		if (doubleSize != DEFAULT_DOUBLE_SIZE) {
 			encoder.openElement(ELEM_DOUBLE_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, doubleSize);
 			encoder.closeElement(ELEM_DOUBLE_SIZE);
 		}
-		if (longDoubleSize != 8) {
+		if (longDoubleSize != DEFAULT_LONG_DOUBLE_SIZE) {
 			encoder.openElement(ELEM_LONG_DOUBLE_SIZE);
 			encoder.writeSignedInteger(ATTRIB_VALUE, longDoubleSize);
 			encoder.closeElement(ELEM_LONG_DOUBLE_SIZE);
@@ -654,33 +890,39 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Restore settings from an XML stream. This expects to see a \<data_organization> tag.
-	 * The XML is designed to override existing default settings. So this object needs to
-	 * be pre-populated with defaults, typically via getDefaultOrganization().
+	 * Restore settings from an XML stream. This expects to see parser positioned on the 
+	 * &lt;data_organization&gt; start tag.  The XML is designed to override existing language-specific 
+	 * default settings which are pre-populated with {@link #getDefaultOrganization(Language)}.  This 
+	 * will will ensure that the endianess setting is properly established since it is not included 
+	 * in the XML.
 	 * @param parser is the XML stream
 	 */
 	public void restoreXml(XmlPullParser parser) {
+		
+		// NOTE: endianess intentionally omitted from XML. 
+		
 		parser.start();
 		while (parser.peek().isStart()) {
 			String name = parser.peek().getName();
 
-			if (name.equals("char_type")) {
+			if (name.equals(ELEM_CHAR_TYPE.name())) {
 				XmlElement subel = parser.start();
-				String boolStr = subel.getAttribute("signed");
-				isSignedChar = SpecXmlUtils.decodeBoolean(boolStr);
+				String boolStr = subel.getAttribute(ATTRIB_SIGNED.name());
+				isSignedChar = SpecXmlUtils.decodeBoolean(boolStr, isSignedChar);
 				parser.end(subel);
 				continue;
 			}
-			else if (name.equals("bitfield_packing")) {
+			else if (name.equals(ELEM_BITFIELD_PACKING.name())) {
 				bitFieldPacking.restoreXml(parser);
 				continue;
 			}
-			else if (name.equals("size_alignment_map")) {
+			else if (name.equals(ELEM_SIZE_ALIGNMENT_MAP.name())) {
 				XmlElement subel = parser.start();
 				while (parser.peek().isStart()) {
 					XmlElement subsubel = parser.start();
-					int size = SpecXmlUtils.decodeInt(subsubel.getAttribute("size"));
-					int alignment = SpecXmlUtils.decodeInt(subsubel.getAttribute("alignment"));
+					int size = SpecXmlUtils.decodeInt(subsubel.getAttribute(ATTRIB_SIZE.name()));
+					int alignment =
+						SpecXmlUtils.decodeInt(subsubel.getAttribute(ATTRIB_ALIGNMENT.name()));
 					sizeAlignmentMap.put(size, alignment);
 					parser.end(subsubel);
 				}
@@ -689,51 +931,51 @@ public class DataOrganizationImpl implements DataOrganization {
 			}
 
 			XmlElement subel = parser.start();
-			String value = subel.getAttribute("value");
+			String value = subel.getAttribute(ATTRIB_VALUE.name());
 
-			if (name.equals("absolute_max_alignment")) {
+			if (name.equals(ELEM_ABSOLUTE_MAX_ALIGNMENT.name())) {
 				absoluteMaxAlignment = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("machine_alignment")) {
+			else if (name.equals(ELEM_MACHINE_ALIGNMENT.name())) {
 				machineAlignment = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("default_alignment")) {
+			else if (name.equals(ELEM_DEFAULT_ALIGNMENT.name())) {
 				defaultAlignment = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("default_pointer_alignment")) {
+			else if (name.equals(ELEM_DEFAULT_POINTER_ALIGNMENT.name())) {
 				defaultPointerAlignment = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("pointer_size")) {
+			else if (name.equals(ELEM_POINTER_SIZE.name())) {
 				pointerSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("pointer_shift")) {
+			else if (name.equals(ELEM_POINTER_SHIFT.name())) {
 				pointerShift = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("char_size")) {
+			else if (name.equals(ELEM_CHAR_SIZE.name())) {
 				charSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("wchar_size")) {
+			else if (name.equals(ELEM_WCHAR_SIZE.name())) {
 				wideCharSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("short_size")) {
+			else if (name.equals(ELEM_SHORT_SIZE.name())) {
 				shortSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("integer_size")) {
+			else if (name.equals(ELEM_INTEGER_SIZE.name())) {
 				integerSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("long_size")) {
+			else if (name.equals(ELEM_LONG_SIZE.name())) {
 				longSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("long_long_size")) {
+			else if (name.equals(ELEM_LONG_LONG_SIZE.name())) {
 				longLongSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("float_size")) {
+			else if (name.equals(ELEM_FLOAT_SIZE.name())) {
 				floatSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("double_size")) {
+			else if (name.equals(ELEM_DOUBLE_SIZE.name())) {
 				doubleSize = SpecXmlUtils.decodeInt(value);
 			}
-			else if (name.equals("long_double_size")) {
+			else if (name.equals(ELEM_LONG_DOUBLE_SIZE.name())) {
 				longDoubleSize = SpecXmlUtils.decodeInt(value);
 			}
 			parser.end(subel);

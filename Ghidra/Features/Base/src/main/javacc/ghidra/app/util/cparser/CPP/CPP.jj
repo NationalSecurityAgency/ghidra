@@ -835,9 +835,17 @@ public class PreProcessor {
 		String fn = new String(ft);
 		// get rid of any errant quoting or whitespace
 		fn = fn.trim();
-		if (fn.charAt(0) == '\"' && fn.endsWith("\"")) {
-			fn = fn.substring(1, fn.length() - 1);
+
+		// Check for quoted include file name, protects embedded spaces
+		if (fn.startsWith("\"") && fn.indexOf('\"', 1) > 0) {
+			fn = fn.substring(1, fn.indexOf('\"', 1));
 		}
+
+		// Check for <> include file name, protects embedded spaces
+		if (fn.startsWith("<") && fn.indexOf('>', 1) > 0) {
+			fn = fn.substring(1, fn.indexOf('>', 1));
+		}
+
 		FileInputStream fis = null;
 		File iFile = null;
 		int i;
@@ -1164,6 +1172,16 @@ public class PreProcessor {
 	public void addIncludePath(String path) {
 		pathList.addElement(path);
 	}
+	
+	public void addIncludePaths(String[] paths) {
+		if (paths == null || paths.length < 1) {
+			return;
+		}
+		
+		for (String path : paths) {
+			addIncludePath(path);
+		}
+	}
 
 	public int getNumericType(String val) {
 		try {
@@ -1238,7 +1256,7 @@ public class PreProcessor {
 		outputStream = new PrintStream(fos);
 	}
 
-	public void parse(String filename) throws ParseException {
+	public boolean parse(String filename) throws ParseException {
 		if (verboseLevel == 1) {
 			addParseMessage(null,
 				"PreProcessor:  Reading from file " + filename + " . . .");
@@ -1261,7 +1279,7 @@ public class PreProcessor {
 		}
 		if (fis == null) {
 			addParseMessage(null, "PreProcessor:  File " + filename + " not found.");
-			return;
+			return false;
 		}
 		fileStack.push(filename);
 		alreadyDone = new HashMap<String, Integer>();
@@ -1282,6 +1300,7 @@ public class PreProcessor {
 			addParseMessage(filename, "PreProcessor Token Error:  " + e.getMessage());
 			throw e;
 		}
+		return true;
 	}
 
 	PreProcessor(PreProcessor parent) {
@@ -2475,7 +2494,7 @@ TOKEN:
     <#NOTWWSQLT: ~[" ","\t","\n","\r","<","\""]> |
     <#NOTWSQLT: ~["\t","\n","\r","<","\""]> |
     <#NOTVALCMT: ("/##/")> |
-    <INTEGER_LITERAL: <DECIMAL_LITERAL> (["l","L"])? | <HEX_LITERAL> (["l","L","U"])* | <OCTAL_LITERAL> (["l","L"])*> |
+    <INTEGER_LITERAL: <DECIMAL_LITERAL> (["u","l","L","U"])* | <HEX_LITERAL> (["u","l","L","U"])* | <OCTAL_LITERAL> (["u","l","L","U"])*> |
     <#DECIMAL_LITERAL: ["0"-"9"] (["0"-"9"])*> |
     <#HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+> |
     <#HEX_DIGIT: (["0"-"9","a"-"f","A"-"F"])> |

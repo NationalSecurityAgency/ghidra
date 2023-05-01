@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.datamgr.archive;
 
 import java.awt.Component;
 import java.io.IOException;
+import java.util.Objects;
 
 import javax.swing.Icon;
 
@@ -64,6 +65,30 @@ public class ProjectArchive implements DomainFileArchive {
 			return getName().compareToIgnoreCase(archive.getName());
 		}
 		return -1; // Project Archives appear between the ProgramArchive and FileArchives.
+	}
+
+	@Override
+	public int hashCode() {
+		return originalDomainFile.getFileID().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		ProjectArchive other = (ProjectArchive) obj;
+		return Objects.equals(originalDomainFile.getFileID(), other.originalDomainFile.getFileID());
+	}
+
+	public boolean hasExclusiveAccess() {
+		return dataTypeArchive.hasExclusiveAccess();
 	}
 
 	@Override
@@ -190,6 +215,11 @@ public class ProjectArchive implements DomainFileArchive {
 
 		@Override
 		public void sourceArchiveChanged(DataTypeManager dtm, SourceArchive dataTypeSource) {
+			fireStateChanged();
+		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dtm) {
 			fireStateChanged();
 		}
 	}

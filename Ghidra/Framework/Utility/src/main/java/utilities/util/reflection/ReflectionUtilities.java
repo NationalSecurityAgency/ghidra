@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import ghidra.util.exception.AssertException;
+import ghidra.util.Msg;
 
 public class ReflectionUtilities {
 
@@ -240,13 +240,15 @@ public class ReflectionUtilities {
 		}
 
 		if (lastIgnoreIndex == -1) {
-			throw new AssertException("Did not find the following classes in the call stack: " +
-				Arrays.toString(classes));
+			Msg.error(ReflectionUtilities.class,
+				"Change call to ReflectionUtils.  Did not find the " +
+					"following classes in the call stack: " + Arrays.toString(classes));
 		}
 
 		if (lastIgnoreIndex == trace.length - 1) {
-			throw new AssertException(
-				"Call stack only contains the classes to ignore: " + Arrays.toString(classes));
+			Msg.error(ReflectionUtilities.class,
+				"Change call to ReflectionUtils. Call stack only contains the classes to ignore: " +
+					Arrays.toString(classes));
 		}
 
 		int startIndex = lastIgnoreIndex + 1;

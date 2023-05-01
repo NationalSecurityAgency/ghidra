@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Basic implementation for a Signed Long Integer dataType 
  */
-public class UnsignedLongDataType extends AbstractIntegerDataType {
-
-	private final static long serialVersionUID = 1;
+public class UnsignedLongDataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined UnsignedLongDataType instance.*/
 	public final static UnsignedLongDataType dataType = new UnsignedLongDataType();
@@ -30,30 +28,19 @@ public class UnsignedLongDataType extends AbstractIntegerDataType {
 	}
 
 	public UnsignedLongDataType(DataTypeManager dtm) {
-		super("ulong", false, dtm);
+		super("ulong", dtm);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		return getDataOrganization().getLongSize();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#hasLanguageDependantLength()
-	 */
 	@Override
 	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "Unsigned Long Integer (compiler-specific size)";

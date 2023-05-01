@@ -20,7 +20,6 @@ import javax.swing.Icon;
 import generic.jar.ResourceFile;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.archive.FileArchive;
-import ghidra.util.HTMLUtilities;
 import resources.MultiIcon;
 import resources.icons.TranslateIcon;
 
@@ -38,7 +37,7 @@ public class FileArchiveNode extends ArchiveNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		BackgroundIcon bgIcon = new BackgroundIcon(24, 16, false);
+		DtBackgroundIcon bgIcon = new DtBackgroundIcon();
 		MultiIcon multiIcon = new MultiIcon(bgIcon);
 		boolean hasWriteLock = fileArchive.hasWriteLock();
 		Icon baseIcon = fileArchive.getIcon(expanded);
@@ -46,42 +45,19 @@ public class FileArchiveNode extends ArchiveNode {
 		if (hasWriteLock) {
 			multiIcon.addIcon(new TranslateIcon(CHECKED_OUT_EXCLUSIVE_ICON, 8, -4));
 		}
+
+		// TODO: add program architecture state
+
 		return multiIcon;
 	}
 
 	@Override
 	public String getToolTip() {
 		ResourceFile file = fileArchive.getFile();
-		if (file != null) {
-			return "<html>" + HTMLUtilities.escapeHTML(file.getAbsolutePath());
-		}
-		return "[Unsaved New Archive]";
+		return buildTooltip(file != null ? file.getAbsolutePath() : "[Unsaved New Archive]");
 	}
 
 	public boolean hasWriteLock() {
 		return fileArchive.hasWriteLock();
 	}
-
-	/**
-	 * Overridden to avoid path conflicts that arise in CategoryNode.equals()
-	 *
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (getClass() != o.getClass()) {
-			return false;
-		}
-
-		if (super.equals(o)) {
-			ResourceFile myFile = fileArchive.getFile();
-			ResourceFile otherFile = ((FileArchiveNode) o).fileArchive.getFile();
-			return myFile.equals(otherFile);
-		}
-		return false;
-	}
-
 }

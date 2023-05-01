@@ -16,11 +16,13 @@
 /// \file jumptable.hh
 /// \brief Classes to support jump-tables and their recovery
 
-#ifndef __CPUI_JUMPTABLE__
-#define __CPUI_JUMPTABLE__
+#ifndef __JUMPTABLE_HH__
+#define __JUMPTABLE_HH__
 
 #include "emulateutil.hh"
 #include "rangeutil.hh"
+
+namespace ghidra {
 
 class EmulateFunction;
 
@@ -217,7 +219,7 @@ class JumpValuesRangeDefault : public JumpValuesRange {
   uintb extravalue;		///< The extra value
   Varnode *extravn;		///< The starting Varnode associated with the extra value
   PcodeOp *extraop;		///< The starting PcodeOp associated with the extra value
-  mutable bool lastvalue;	///< \b true is the extra value has been visited by the iterator
+  mutable bool lastvalue;	///< \b true if the extra value has been visited by the iterator
 public:
   void setExtraValue(uintb val) { extravalue = val; }	///< Set the extra value explicitly
   void setDefaultVn(Varnode *vn) { extravn = vn; }	///< Set the associated start Varnode
@@ -601,4 +603,5 @@ inline bool JumpTable::IndexPair::compareByPosition(const IndexPair &op1,const I
   return (op1.blockPosition < op2.blockPosition);
 }
 
+} // End namespace ghidra
 #endif

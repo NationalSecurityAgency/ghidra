@@ -18,7 +18,9 @@ package docking.options.editor;
 import java.awt.Color;
 import java.awt.Component;
 import java.beans.PropertyEditorSupport;
-import java.util.Objects;
+import java.util.*;
+
+import javax.swing.event.ChangeListener;
 
 import ghidra.util.Swing;
 
@@ -28,6 +30,7 @@ import ghidra.util.Swing;
 public class ColorPropertyEditor extends PropertyEditorSupport {
 
 	private GhidraColorChooser colorChooser;
+	private ChangeListener listener = e -> colorChanged();
 
 	private void colorChanged() {
 		// run later - allows debugging without hanging the UI in some environments
@@ -36,10 +39,22 @@ public class ColorPropertyEditor extends PropertyEditorSupport {
 
 	@Override
 	public Component getCustomEditor() {
-		// always create a new one. Holding on to closed dialogs causes issues if the
-		// theme changes
+
+		// always create a new one. Holding on to closed dialogs causes issues if the theme changes
+		List<Color> recent = new ArrayList<>();
+		List<Color> history = new ArrayList<>();
+		String activeTab = null;
+		if (colorChooser != null) {
+			history.addAll(colorChooser.getColorHistory());
+			recent.addAll(colorChooser.getRecentColors());
+			activeTab = colorChooser.getActiveTab();
+			colorChooser.getSelectionModel().removeChangeListener(listener);
+		}
 		colorChooser = new GhidraColorChooser();
-		colorChooser.getSelectionModel().addChangeListener(e -> colorChanged());
+		colorChooser.setColorHistory(history);
+		colorChooser.setRecentColors(recent);
+		colorChooser.setActiveTab(activeTab);
+		colorChooser.getSelectionModel().addChangeListener(listener);
 		return colorChooser;
 	}
 

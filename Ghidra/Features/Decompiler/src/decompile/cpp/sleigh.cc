@@ -16,6 +16,8 @@
 #include "sleigh.hh"
 #include "loadimage.hh"
 
+namespace ghidra {
+
 PcodeCacher::PcodeCacher(void)
 
 {
@@ -795,3 +797,5 @@ void Sleigh::allowContextSet(bool val) const
 {
   cache->allowSet(val);
 }
+
+} // End namespace ghidra

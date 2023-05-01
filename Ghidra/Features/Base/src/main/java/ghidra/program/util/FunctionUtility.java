@@ -20,7 +20,6 @@ import java.util.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -64,7 +63,7 @@ public class FunctionUtility {
 
 		Program sourceProgram = sourceFunction.getProgram();
 		Program destinationProgram = destinationFunction.getProgram();
-		boolean sameLanguage = isSameLanguage(destinationProgram, sourceProgram);
+		boolean sameLanguage = isSameLanguageAndCompilerSpec(destinationProgram, sourceProgram);
 
 		String callingConventionName =
 			determineCallingConventionName(destinationFunction, sourceFunction, sameLanguage);
@@ -274,7 +273,7 @@ public class FunctionUtility {
 	 * @param program2 the second program
 	 * @return true if the two programs have the same processor language and compiler spec.
 	 */
-	public static boolean isSameLanguage(Program program1, Program program2) {
+	public static boolean isSameLanguageAndCompilerSpec(Program program1, Program program2) {
 		Language language1 = program1.getLanguage();
 		Language language2 = program2.getLanguage();
 		if (language1.getLanguageID() != language2.getLanguageID()) {
@@ -289,17 +288,9 @@ public class FunctionUtility {
 	}
 
 	private static String determineCallingConventionName(Function destinationFunction,
-			Function sourceFunction, boolean sameLanguage) {
-		String sourceCallingConventionName = sourceFunction.getCallingConventionName();
-		if (sameLanguage) {
-			return sourceCallingConventionName; // Same language, so set to source.
-		}
-		GenericCallingConvention guessedCallingConvention =
-			GenericCallingConvention.guessFromName(sourceCallingConventionName);
-		if (guessedCallingConvention == GenericCallingConvention.thiscall) {
-			return GenericCallingConvention.thiscall.name(); // this call
-		}
-		return destinationFunction.getCallingConventionName(); // leave destination unchanged.
+			Function sourceFunction, boolean sameLanguageAndCompilerSpec) {
+		return sameLanguageAndCompilerSpec ? sourceFunction.getCallingConventionName()
+				: destinationFunction.getCallingConventionName();
 	}
 
 	private static boolean determineCustomStorageUse(Function destinationFunction,

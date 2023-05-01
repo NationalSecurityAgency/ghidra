@@ -15,8 +15,8 @@
  */
 /// \file xml.hh
 /// \brief Lightweight (and incomplete) XML parser for marshaling data to and from the decompiler
-#ifndef __CPUI_XML__
-#define __CPUI_XML__
+#ifndef __XML_HH__
+#define __XML_HH__
 
 #include "types.h"
 #include <fstream>
@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 #include <map>
+
+namespace ghidra {
 
 using std::string;
 using std::vector;
@@ -396,4 +398,6 @@ inline bool xml_readbool(const string &attr)
   if (firstc=='y') return true;         // For backward compatibility
   return false;
 }
+
+} // End namespace ghidra
 #endif

@@ -18,8 +18,8 @@
 ///
 /// This is also doubles as a place to list the common include files
 
-#ifndef __CPUI_ERROR__
-#define __CPUI_ERROR__
+#ifndef __ERROR_HH__
+#define __ERROR_HH__
 
 #include "types.h"
 #include <sstream>
@@ -32,6 +32,8 @@
 #include <algorithm>
 #include <cstring>
 #include <cctype>
+
+namespace ghidra {
 
 using std::string;
 using std::map;
@@ -95,4 +97,5 @@ struct ParseError : public LowlevelError { // Parsing error
   ParseError(const string &s) : LowlevelError(s) {}
 };
 
+} // End namespace ghidra
 #endif

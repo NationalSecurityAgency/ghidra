@@ -469,8 +469,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	private TraceRecorder currentRecorder; // Copy for transition
 
 	@AutoServiceConsumed
-	private DebuggerModelService modelService;
-	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private DebuggerListingService listingService;

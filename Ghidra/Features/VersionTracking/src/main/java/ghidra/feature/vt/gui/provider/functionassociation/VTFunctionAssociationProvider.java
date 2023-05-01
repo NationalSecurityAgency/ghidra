@@ -37,8 +37,8 @@ import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.threaded.ThreadedTableModel;
-import generic.theme.GColor;
 import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
@@ -79,8 +79,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 	public static final Icon FILTER_NOT_ACCEPTED_ICON =
 		new GIcon("icon.version.tracking.action.function.filter.not.accepted");
 	private static final String SHOW_COMPARE_ACTION_GROUP = "A9_ShowCompare"; // "A9_" forces to right of other dual view actions in toolbar.
-
-	private static final Color FG_ERROR = new GColor("color.fg.error");
 
 	private GhidraTable sourceFunctionsTable;
 	private GhidraTable destinationFunctionsTable;
@@ -361,7 +359,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		JPanel statusPanel = new JPanel(new BorderLayout());
 		statusLabel = new GDLabel(NO_ERROR_MESSAGE);
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		statusLabel.setForeground(FG_ERROR);
+		statusLabel.setForeground(Colors.ERROR);
 		statusLabel.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {

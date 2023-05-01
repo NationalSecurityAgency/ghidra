@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.datamgr.archive;
 
 import java.awt.Component;
 import java.io.IOException;
+import java.util.Objects;
 
 import javax.swing.Icon;
 
@@ -55,6 +56,26 @@ public class ProgramArchive implements DomainFileArchive {
 	}
 
 	@Override
+	public int hashCode() {
+		return program.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		ProgramArchive other = (ProgramArchive) obj;
+		return Objects.equals(program, other.program);
+	}
+
+	@Override
 	public int compareTo(Archive archive) {
 		if (archive instanceof BuiltInArchive) {
 			return 1;
@@ -70,6 +91,11 @@ public class ProgramArchive implements DomainFileArchive {
 	@Override
 	public void close() {
 		// Can't directly close the program archive. Instead you must close the Program.
+	}
+
+	@Override
+	public boolean hasExclusiveAccess() {
+		return program.hasExclusiveAccess();
 	}
 
 	@Override

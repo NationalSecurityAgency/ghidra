@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Basic implementation for an Signed LongLong Integer dataType 
  */
-public class LongLongDataType extends AbstractIntegerDataType {
-
-	private final static long serialVersionUID = 1;
+public class LongLongDataType extends AbstractSignedIntegerDataType {
 
 	/** A statically defined LongLongDataType instance.*/
 	public final static LongLongDataType dataType = new LongLongDataType();
@@ -30,29 +28,19 @@ public class LongLongDataType extends AbstractIntegerDataType {
 	}
 
 	public LongLongDataType(DataTypeManager dtm) {
-		super("longlong", true, dtm);
+		super("longlong", dtm);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		return getDataOrganization().getLongLongSize();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#hasLanguageDependantLength()
-	 */
 	@Override
 	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "Signed Long Long Integer (compiler-specific size)";

@@ -67,6 +67,11 @@ public class PartialUnion extends AbstractDataType {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDescription() {
 		return "Partial Union (internal)";
 	}

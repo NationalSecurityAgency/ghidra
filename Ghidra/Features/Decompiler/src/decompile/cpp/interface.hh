@@ -16,8 +16,8 @@
 /// \file interface.hh
 /// \brief Classes and utilities for a \e generic command-line interface
 
-#ifndef __INTERFACE__
-#define __INTERFACE__
+#ifndef __INTERFACE_HH__
+#define __INTERFACE_HH__
 
 #include "capability.hh"
 #include <map>
@@ -25,6 +25,8 @@
 #include <fstream>
 #include <sstream>
 #include <cstdio>
+
+namespace ghidra {
 
 using std::map;
 using std::istream;
@@ -295,4 +297,5 @@ public:
   virtual void execute(istream &s);
 };
 
+} // End namespace ghidra
 #endif

@@ -43,7 +43,7 @@ import util.CollectionUtils;
 
 class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
-	private static final Color FG_ENUM_BASED = new GColor("color.fg.plugin.equate.enum");
+	private static final Color FG_USER_DEFINED = new GColor("color.fg.plugin.equate.user.defined");
 
 	private EquateTablePlugin plugin;
 	private List<Equate> equateList = new ArrayList<>();
@@ -161,7 +161,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 				}
 				else if (!eq.isEnumBased()) { // User label
 					label.setForeground(
-						(isSelected) ? table.getSelectionForeground() : FG_ENUM_BASED);
+						(isSelected) ? table.getSelectionForeground() : FG_USER_DEFINED);
 				}
 
 				String tooltip = getEquateToolTip(eq);

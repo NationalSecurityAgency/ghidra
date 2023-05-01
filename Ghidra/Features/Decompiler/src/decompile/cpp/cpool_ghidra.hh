@@ -16,10 +16,12 @@
 /// \file cpool_ghidra.hh
 /// \brief Utility for implementing a \e constant \e pool backed by a Ghidra client
 
-#ifndef __CPOOL_GHIDRA__
-#define __CPOOL_GHIDRA__
+#ifndef __CPOOL_GHIDRA_HH__
+#define __CPOOL_GHIDRA_HH__
 
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 /// \brief An implementation of ConstantPool using a Ghidra client as the backing storage
 ///
@@ -41,4 +43,5 @@ public:
   virtual void decode(Decoder &decoder,TypeFactory &typegrp);
 };
 
+} // End namespace ghidra
 #endif

@@ -245,7 +245,7 @@ class FunctionsXmlMgr {
 			}
 
 			ApplyFunctionSignatureCmd afsCmd = new ApplyFunctionSignatureCmd(func.getEntryPoint(),
-				funcDef, SourceType.IMPORTED, false, false);
+				funcDef, SourceType.IMPORTED, false, FunctionRenameOption.RENAME_IF_DEFAULT);
 			if (!afsCmd.applyTo(program, monitor)) {
 				// TODO: continue trying to add local vars after failing to update the function signature?
 				log.appendMsg("Failed to update function " + funcDesc(func) + " with signature \"" +

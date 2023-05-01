@@ -487,7 +487,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			if (dt instanceof BitFieldDataType) {
 				dt = adjustBitField(dt); // in case base type changed
 			}
-			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 			if (length < 0) {
 				continue; // illegal condition - skip
 			}
@@ -497,12 +497,10 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			}
 		}
 		if (changed) {
-			// NOTE: since we do not retain our external alignment we have no way of knowing if
-			// it has changed, so we must assume it has if we are an aligned union
-			// Do not notify parents
-			if (!repack(false, false)) {
-				dataMgr.dataTypeChanged(this, false);
-			}
+			// Do not notify parents - must be invoked in composite dependency order
+			// Treat as an auto-change as a result of data organization change
+			repack(true, false);
+			dataMgr.dataTypeChanged(this, true);
 		}
 	}
 
@@ -535,7 +533,8 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			boolean changed = false;
 			for (DataTypeComponentDB dtc : components) {
 				if (dtc.getDataType() == dt) {
-					int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+					int length =
+						DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 					if (length >= 0 && length != dtc.getLength()) {
 						dtc.setLength(length, true);
 						changed = true;
@@ -562,8 +561,8 @@ class UnionDB extends CompositeDB implements UnionInternal {
 		DataType baseDataType = bitfieldDt.getBaseDataType();
 		baseDataType = resolve(baseDataType);
 
-		// Both aligned and non-packed bitfields use same adjustment
-		// non-packed must force bitfield placement at byte offset 0
+		// Both packed and non-packed bitfields use same adjustment
+		// Non-packed must force bitfield placement at byte offset 0
 		int bitSize = bitfieldDt.getDeclaredBitSize();
 		int effectiveBitSize =
 			BitFieldDataType.getEffectiveBitSize(bitSize, baseDataType.getLength());
@@ -795,9 +794,8 @@ class UnionDB extends CompositeDB implements UnionInternal {
 				checkAncestry(replacementDt);
 			}
 			catch (Exception e) {
-				// TODO: should we use Undefined instead since we do not support
-				// DEFAULT in Unions
-				replacementDt = DataType.DEFAULT;
+				// TODO: should we flag bad replacement
+				replacementDt = Undefined1DataType.dataType;
 			}
 			boolean changed = false;
 			for (int i = components.size() - 1; i >= 0; i--) {
@@ -827,7 +825,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 					}
 					else {
 						int len = DataTypeComponent.usesZeroLengthComponent(newDt) ? 0
-								: newDt.getLength();
+								: newDt.getAlignedLength();
 						if (len < 0) {
 							len = dtc.getLength();
 						}

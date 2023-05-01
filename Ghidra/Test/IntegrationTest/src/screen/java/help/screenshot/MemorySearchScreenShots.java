@@ -172,20 +172,20 @@ public class MemorySearchScreenShots extends AbstractSearchScreenShots {
 		Color selectionColor = Palette.getColor("palegreen");
 		TextFormatter tf = new TextFormatter(font, 8, 500, 4, 5, 2);
 		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
-		TextFormatterContext darkBlue = new TextFormatterContext(DARK_BLUE);
+		TextFormatterContext navyBlue = new TextFormatterContext(NAVY);
 		TextFormatterContext darkGreen = new TextFormatterContext(DARK_GREEN);
 		TextFormatterContext orange = new TextFormatterContext(YELLOW_ORANGE);
 		tf.colorLines(selectionColor, 3, 4);
 
 		// @formatter:off
 		tf.writeln("                         LAB_00401e8c");
-		tf.writeln("    00401e8c |a1 20 0d|     |MOV|      |EAX|,DAT_00410d20]", blue, darkBlue, orange);
+		tf.writeln("    00401e8c |a1 20 0d|     |MOV|      |EAX|,DAT_00410d20]", blue, navyBlue, orange);
 		tf.writeln("             |41 00|                                   ", blue);
-		tf.writeln("    00401e91 |85 c0|        |TEST|     |EAX|,|EAX|", blue, darkBlue, orange, orange);
-		tf.writeln("    00401e93 |56|           |PUSH|     |ESI|", blue, darkBlue, orange);
-		tf.writeln("    00401e94 |6a 14|        |PUSH|     |0x14|", blue, darkBlue, darkGreen);
-		tf.writeln("    00401e96 |5e|           |POP|      |ESI|", blue, darkBlue, orange);
-		tf.writeln("    00401e97 |75 07|        |JNZ|      LAB_00401ea0", blue, darkBlue);
+		tf.writeln("    00401e91 |85 c0|        |TEST|     |EAX|,|EAX|", blue, navyBlue, orange, orange);
+		tf.writeln("    00401e93 |56|           |PUSH|     |ESI|", blue, navyBlue, orange);
+		tf.writeln("    00401e94 |6a 14|        |PUSH|     |0x14|", blue, navyBlue, darkGreen);
+		tf.writeln("    00401e96 |5e|           |POP|      |ESI|", blue, navyBlue, orange);
+		tf.writeln("    00401e97 |75 07|        |JNZ|      LAB_00401ea0", blue, navyBlue);
 		// @formatter:on
 
 		image = tf.getImage();
@@ -196,14 +196,14 @@ public class MemorySearchScreenShots extends AbstractSearchScreenShots {
 		Font font = new Font("Monospaced", Font.PLAIN, 14);
 		TextFormatter tf = new TextFormatter(font, 4, 300, 4, 5, 2);
 		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
-		TextFormatterContext darkBlue = new TextFormatterContext(DARK_BLUE);
+		TextFormatterContext navy = new TextFormatterContext(NAVY);
 		TextFormatterContext darkGreen = new TextFormatterContext(DARK_GREEN);
 		TextFormatterContext orange = new TextFormatterContext(YELLOW_ORANGE);
 
-		tf.writeln(" |85 c0|      |TEST|     |EAX|,|EAX|", blue, darkBlue, orange, orange);
-		tf.writeln(" |56|         |PUSH|     |ESI|      ", blue, darkBlue, orange);
-		tf.writeln(" |6a 14|      |PUSH|     |0x14|     ", blue, darkBlue, darkGreen);
-		tf.writeln(" |5e|         |POP|      |ESI|      ", blue, darkBlue, orange);
+		tf.writeln(" |85 c0|      |TEST|     |EAX|,|EAX|", blue, navy, orange, orange);
+		tf.writeln(" |56|         |PUSH|     |ESI|      ", blue, navy, orange);
+		tf.writeln(" |6a 14|      |PUSH|     |0x14|     ", blue, navy, darkGreen);
+		tf.writeln(" |5e|         |POP|      |ESI|      ", blue, navy, orange);
 
 		image = tf.getImage();
 	}
@@ -212,12 +212,12 @@ public class MemorySearchScreenShots extends AbstractSearchScreenShots {
 	public void testSearchInstructionsExcludeOperands() {
 		Font font = new Font("Monospaced", Font.PLAIN, 14);
 		TextFormatter tf = new TextFormatter(font, 4, 80, 4, 5, 2);
-		TextFormatterContext darkBlue = new TextFormatterContext(DARK_BLUE);
+		TextFormatterContext navy = new TextFormatterContext(NAVY);
 
-		tf.writeln(" |TEST|", darkBlue);
-		tf.writeln(" |PUSH|", darkBlue);
-		tf.writeln(" |PUSH|", darkBlue);
-		tf.writeln(" |POP| ", darkBlue);
+		tf.writeln(" |TEST|", navy);
+		tf.writeln(" |PUSH|", navy);
+		tf.writeln(" |PUSH|", navy);
+		tf.writeln(" |POP| ", navy);
 		image = tf.getImage();
 	}
 
@@ -225,14 +225,14 @@ public class MemorySearchScreenShots extends AbstractSearchScreenShots {
 	public void testSearchInstructionsIncludeOperandsNoConsts() {
 		Font font = new Font("Monospaced", Font.PLAIN, 14);
 		TextFormatter tf = new TextFormatter(font, 4, 200, 4, 5, 2);
-		TextFormatterContext darkBlue = new TextFormatterContext(DARK_BLUE);
+		TextFormatterContext navy = new TextFormatterContext(NAVY);
 		TextFormatterContext darkGreen = new TextFormatterContext(DARK_GREEN);
 		TextFormatterContext orange = new TextFormatterContext(YELLOW_ORANGE);
 
-		tf.writeln(" |TEST|     |EAX|,|EAX|", darkBlue, orange, orange);
-		tf.writeln(" |PUSH|     |ESI|      ", darkBlue, orange);
-		tf.writeln(" |PUSH|     N          ", darkBlue, darkGreen);
-		tf.writeln(" |POP|      |ESI|      ", darkBlue, orange);
+		tf.writeln(" |TEST|     |EAX|,|EAX|", navy, orange, orange);
+		tf.writeln(" |PUSH|     |ESI|      ", navy, orange);
+		tf.writeln(" |PUSH|     N          ", navy, darkGreen);
+		tf.writeln(" |POP|      |ESI|      ", navy, orange);
 
 		image = tf.getImage();
 	}

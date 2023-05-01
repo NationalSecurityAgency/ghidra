@@ -18,6 +18,8 @@
 #include "flow.hh"
 #include "printc.hh"
 
+namespace ghidra {
+
 ElementId ELEM_ALIASBLOCK = ElementId("aliasblock",174);
 ElementId ELEM_ALLOWCONTEXTSET = ElementId("allowcontextset",175);
 ElementId ELEM_ANALYZEFORLOOPS = ElementId("analyzeforloops",176);
@@ -52,6 +54,7 @@ ElementId ELEM_PARAM3 = ElementId("param3",204);
 ElementId ELEM_PROTOEVAL = ElementId("protoeval",205);
 ElementId ELEM_SETACTION = ElementId("setaction",206);
 ElementId ELEM_SETLANGUAGE = ElementId("setlanguage",207);
+ElementId ELEM_SPLITDATATYPE = ElementId("splitdatatype",270);
 ElementId ELEM_STRUCTALIGN = ElementId("structalign",208);
 ElementId ELEM_TOGGLERULE = ElementId("togglerule",209);
 ElementId ELEM_WARNING = ElementId("warning",210);
@@ -122,6 +125,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionAliasBlock());
   registerOption(new OptionMaxInstruction());
   registerOption(new OptionNamespaceStrategy());
+  registerOption(new OptionSplitDatatypes());
 }
 
 OptionDatabase::~OptionDatabase(void)
@@ -917,3 +921,46 @@ string OptionNamespaceStrategy::apply(Architecture *glb,const string &p1,const s
   glb->print->setNamespaceStrategy(strategy);
   return "Namespace strategy set";
 }
+
+/// Possible value are:
+///   - (empty string) = 0
+///   - "struct"       = 1
+///   - "array"        = 2
+///   - "pointer"     = 4
+///
+/// \param val is the option string
+/// \return the corresponding configuration bit
+uint4 OptionSplitDatatypes::getOptionBit(const string &val)
+
+{
+  if (val.size() == 0) return 0;
+  if (val == "struct") return option_struct;
+  if (val == "array") return option_array;
+  if (val == "pointer") return option_pointer;
+  throw LowlevelError("Unknown data-type split option: "+val);
+}
+
+string OptionSplitDatatypes::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  uint4 oldConfig = glb->split_datatype_config;
+  glb->split_datatype_config = getOptionBit(p1);
+  glb->split_datatype_config |= getOptionBit(p2);
+  glb->split_datatype_config |= getOptionBit(p3);
+
+  if ((glb->split_datatype_config & (option_struct | option_array)) == 0) {
+    glb->allacts.toggleAction(glb->allacts.getCurrentName(),"splitcopy",false);
+    glb->allacts.toggleAction(glb->allacts.getCurrentName(),"splitpointer",false);
+  }
+  else {
+    bool pointers = (glb->split_datatype_config & option_pointer) != 0;
+    glb->allacts.toggleAction(glb->allacts.getCurrentName(),"splitcopy",true);
+    glb->allacts.toggleAction(glb->allacts.getCurrentName(),"splitpointer",pointers);
+  }
+
+  if (oldConfig == glb->split_datatype_config)
+    return "Split data-type configuration unchanged";
+  return "Split data-type configuration set";
+}
+
+} // End namespace ghidra

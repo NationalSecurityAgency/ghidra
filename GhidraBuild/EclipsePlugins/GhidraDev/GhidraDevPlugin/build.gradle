@@ -15,6 +15,9 @@
  */
 apply plugin: 'java-library'
 
+sourceCompatibility = "${rootProject.JAVA_COMPILER}"
+targetCompatibility = "${rootProject.JAVA_COMPILER}"
+
 //This project requires the eclpse PDE plugin. To create eclipse files for this project, run 
 //	"gradle eclipse -PeclipsePDE" 
 if (hasProperty("eclipsePDE")) {

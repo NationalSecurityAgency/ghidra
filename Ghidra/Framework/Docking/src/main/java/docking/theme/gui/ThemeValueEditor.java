@@ -130,6 +130,8 @@ public abstract class ThemeValueEditor<T> {
 			panel.add(editor.getCustomEditor(), BorderLayout.CENTER);
 
 			editor.setValue(initialValue);
+			storeState(); // save the initial value to the history
+
 			editor.addPropertyChangeListener(internalListener);
 			return panel;
 		}

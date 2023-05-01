@@ -46,7 +46,6 @@ import ghidra.util.Msg;
 		TraceClosedPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerModelService.class,
 		DebuggerTraceManagerService.class,
 		MarkerService.class, // TODO
 		DataTypeManagerService.class, // For DataType selection field

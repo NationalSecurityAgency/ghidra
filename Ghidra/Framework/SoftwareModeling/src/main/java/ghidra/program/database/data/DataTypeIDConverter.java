@@ -23,6 +23,7 @@ import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 import ghidra.util.NumericUtilities;
 import ghidra.util.UniversalID;
 import ghidra.util.datastruct.LongLongHashtable;
@@ -90,6 +91,10 @@ public class DataTypeIDConverter implements GhidraLaunchable {
 		FileDataTypeManager oldFileArchive = null;
 		try {
 			oldFileArchive = FileDataTypeManager.openFileArchive(inFile, false);
+			if (oldFileArchive.getWarning() != ArchiveWarning.NONE) {
+				System.out.println("Archive ID Conversion aborted");
+				return;
+			}
 
 			UniversalID oldFileUID = oldFileArchive.getUniversalID();
 			long newID = idMap.get(oldFileUID.getValue());

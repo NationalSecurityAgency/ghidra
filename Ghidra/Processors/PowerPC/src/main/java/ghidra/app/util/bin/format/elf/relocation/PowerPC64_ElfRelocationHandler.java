@@ -241,7 +241,7 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 				value64 = symbolValue + addend;
 				memory.setLong(relocationAddress, value64);
 				byteLength = 8;
-				if (addend != 0) {
+				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
 					warnExternalOffsetRelocation(program, relocationAddress,
 						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
 					applyComponentOffsetPointer(program, relocationAddress, addend);

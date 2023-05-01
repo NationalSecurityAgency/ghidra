@@ -18,17 +18,20 @@ package ghidra.program.model.lang;
 /**
  * Represents an opinion's compiler (gcc, borlandcpp, etc).
  */
-public class CompilerSpecID implements Comparable<CompilerSpecID> {
+public final class CompilerSpecID implements Comparable<CompilerSpecID> {
+
+	public static final String DEFAULT_ID = "default";
 
 	private final String id;
 
 	/**
 	 * Creates a new compiler spec ID.
 	 * 
-	 * @param id The compiler ID (gcc, borlandcpp, etc).
+	 * @param id The compiler ID (gcc, borlandcpp, etc) as defined in the appropriate 
+	 * {@link LanguageDescription}.  If null the value of "default" will be assumed.
 	 */
 	public CompilerSpecID(String id) {
-		this.id = id;
+		this.id = id != null ? id : DEFAULT_ID;
 	}
 
 	/**
@@ -38,12 +41,6 @@ public class CompilerSpecID implements Comparable<CompilerSpecID> {
 	 * @throws IllegalArgumentException if the compiler spec ID is null or empty.
 	 */
 	public String getIdAsString() {
-		if (id == null) {
-			throw new IllegalArgumentException("id == null not allowed");
-		}
-		if ("".equals(id)) {
-			throw new IllegalArgumentException("empty id not allowed");
-		}
 		return id;
 	}
 
@@ -51,7 +48,7 @@ public class CompilerSpecID implements Comparable<CompilerSpecID> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + id.hashCode();
 		return result;
 	}
 
@@ -67,15 +64,7 @@ public class CompilerSpecID implements Comparable<CompilerSpecID> {
 			return false;
 		}
 		final CompilerSpecID other = (CompilerSpecID) obj;
-		if (id == null) {
-			if (other.id != null) {
-				return false;
-			}
-		}
-		else if (!id.equals(other.id)) {
-			return false;
-		}
-		return true;
+		return id.equals(other.id);
 	}
 
 	@Override

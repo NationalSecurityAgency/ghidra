@@ -169,7 +169,7 @@ public abstract class IndexedDynamicDataType extends DynamicDataType {
 			comps = new DataTypeComponent[2];
 		}
 		MemoryBufferImpl newBuf = new MemoryBufferImpl(memory, buf.getAddress());
-		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(header, newBuf);
+		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(header, newBuf, false);
 		if (dti == null) {
 			Msg.error(this, "ERROR: problem with data at " + newBuf.getAddress());
 			return null;
@@ -183,7 +183,7 @@ public abstract class IndexedDynamicDataType extends DynamicDataType {
 				int offset = countSize;
 				newBuf = new MemoryBufferImpl(memory, buf.getAddress());
 				newBuf.advance(countSize);
-				dti = DataTypeInstance.getDataTypeInstance(data, newBuf);
+				dti = DataTypeInstance.getDataTypeInstance(data, newBuf, false);
 				if (dti == null) {
 					Msg.error(this, "ERROR: problem with data at " + newBuf.getAddress());
 					return null;

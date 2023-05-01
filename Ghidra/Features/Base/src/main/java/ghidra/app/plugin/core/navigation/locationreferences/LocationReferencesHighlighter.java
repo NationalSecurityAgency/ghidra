@@ -22,8 +22,9 @@ import generic.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.viewer.field.FieldFactory;
+import ghidra.app.util.ListingHighlightProvider;
+import ghidra.app.util.viewer.field.ListingField;
+import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -51,7 +52,7 @@ class LocationReferencesHighlighter {
 	private LocationReferencesProvider provider;
 	private LocationReferencesPlugin locationReferencesPlugin;
 
-	private HighlightProvider highlightProvider;
+	private ListingHighlightProvider highlightProvider;
 	private MarkerRemover markerRemover;
 	private Color highlightColor;
 	private OptionsChangeListener optionsListener = (options, name, oldValue, newValue) -> {
@@ -211,19 +212,20 @@ class LocationReferencesHighlighter {
 // Inner Classes
 //==================================================================================================
 
-	private class LocationReferencesHighlightProvider implements HighlightProvider {
+	private class LocationReferencesHighlightProvider implements ListingHighlightProvider {
 		private final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 
-		// for the Class parameter
 		@Override
-		public Highlight[] getHighlights(String text, Object obj,
-				Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
 			if (text == null) {
 				return NO_HIGHLIGHTS;
 			}
 
 			LocationDescriptor locationDescriptor = provider.getLocationDescriptor();
-			return locationDescriptor.getHighlights(text, obj, fieldFactoryClass, highlightColor);
+			ProxyObj<?> proxy = field.getProxy();
+			Object obj = proxy.getObject();
+			return locationDescriptor.getHighlights(text, obj, field.getFieldFactory().getClass(),
+				highlightColor);
 		}
 
 	}

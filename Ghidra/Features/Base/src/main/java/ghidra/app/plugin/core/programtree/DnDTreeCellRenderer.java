@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.programtree;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.*;
 
 import javax.swing.Icon;
@@ -26,7 +25,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import docking.widgets.GComponent;
 import generic.theme.GColor;
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors;
 import ghidra.program.model.listing.Group;
 import resources.ResourceManager;
 
@@ -331,7 +329,7 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 		for (int i = 0; i < iconIds.length; i++) {
 			GIcon icon = new GIcon(iconIds[i]);
 			iconMap.put(iconIds[i], icon);
-			Icon disabledIcon = getDisabledIcon(iconIds[i], icon);
+			Icon disabledIcon = ResourceManager.getDisabledIcon(icon);
 			iconMap.put(disabledNames[i], disabledIcon);
 		}
 	}
@@ -343,16 +341,5 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 			return new Dimension(dim.width, dim.height + 2);
 		}
 		return dim;
-	}
-
-	static Icon getDisabledIcon(String imageName, GIcon icon) {
-		Image cutImage = icon.getImageIcon().getImage();
-		BufferedImage bufferedImage = new BufferedImage(cutImage.getWidth(null),
-			cutImage.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g2d = bufferedImage.createGraphics();
-		g2d.drawImage(cutImage, 0, 0, null);
-		g2d.setColor(Colors.DISABLED);
-		g2d.fillRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
-		return ResourceManager.getImageIconFromImage(imageName, bufferedImage);
 	}
 }

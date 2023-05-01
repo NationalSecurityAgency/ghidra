@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.Timer;
 
+import docking.DockingUtils;
 import docking.widgets.shapes.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
@@ -226,12 +227,32 @@ public class PopupWindow {
 		closeTimer.setRepeats(false);
 	}
 
-	public void showOffsetPopup(MouseEvent e, Rectangle keepVisibleSize) {
-		doShowPopup(e, keepVisibleSize, DEFAULT_WINDOW_PLACER);
+	public void showOffsetPopup(MouseEvent e, Rectangle keepVisibleSize, boolean forceShow) {
+		if (forceShow || DockingUtils.isTipWindowEnabled()) {
+			doShowPopup(e, keepVisibleSize, DEFAULT_WINDOW_PLACER);
+		}
 	}
 
+	/**
+	 * Shows this popup window unless popups are disabled as reported by 
+	 * {@link DockingUtils#isTipWindowEnabled()}.
+	 * @param e the event
+	 */
 	public void showPopup(MouseEvent e) {
-		doShowPopup(e, null, DEFAULT_WINDOW_PLACER);
+		showPopup(e, false);
+	}
+
+	/**
+	 * Shows this popup window unless popups are disabled as reported by 
+	 * {@link DockingUtils#isTipWindowEnabled()}.  If {@code forceShow} is true, then the popup 
+	 * will be shown regardless of the state returned by {@link DockingUtils#isTipWindowEnabled()}.
+	 * @param e the event
+	 * @param forceShow true to show the popup even popups are disabled application-wide
+	 */
+	public void showPopup(MouseEvent e, boolean forceShow) {
+		if (forceShow || DockingUtils.isTipWindowEnabled()) {
+			doShowPopup(e, null, DEFAULT_WINDOW_PLACER);
+		}
 	}
 
 	private void doShowPopup(MouseEvent e, Rectangle keepVisibleSize, PopupWindowPlacer placer) {

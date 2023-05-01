@@ -37,7 +37,6 @@ import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.GhidraOptions;
 import ghidra.app.util.viewer.field.ListingColors;
 import ghidra.app.util.viewer.field.ListingColors.*;
@@ -48,7 +47,7 @@ import ghidra.util.SystemUtilities;
  */
 public class OptionsGui extends JPanel {
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
-	private static final HighlightFactory hlFactory =
+	private static final FieldHighlightFactory hlFactory =
 		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 
 	// @formatter:off
@@ -341,7 +340,7 @@ public class OptionsGui extends JPanel {
 	//Displays the font field with the actual fonts for easier selection
 	class FontRenderer extends GDLabel implements ListCellRenderer<String> {
 
-		private final Color SELECTED_COLOR = Palette.getColor("darkslategray");
+		private final Color SELECTED_BG_COLOR = Palette.getColor("darkslategray");
 
 		public FontRenderer() {
 			setOpaque(true);
@@ -354,8 +353,8 @@ public class OptionsGui extends JPanel {
 			Font origFont = fontNameField.getFont();
 			setFont(new Font(value.toString(), origFont.getStyle(), origFont.getSize()));
 
-			setBackground(isSelected ? SELECTED_COLOR : Colors.BACKGROUND);
-			setForeground(isSelected ? Tables.FG_SELECTED : Tables.FG_UNSELECTED);
+			setBackground(isSelected ? SELECTED_BG_COLOR : Colors.BACKGROUND);
+			setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
 
 			return this;
 		}
@@ -896,7 +895,7 @@ public class OptionsGui extends JPanel {
 		private ScreenElement screenElement;
 
 		ScreenElementTextField(ScreenElement screenElement, int startX, int length,
-				FieldElement field, HighlightFactory factory) {
+				FieldElement field, FieldHighlightFactory factory) {
 			super(startX, length, field, factory);
 			this.screenElement = screenElement;
 		}

@@ -24,7 +24,7 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.GhidraOptions;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
@@ -58,7 +58,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	public FunctionSignatureFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	public FunctionSignatureFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
@@ -123,12 +123,11 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		if (callingConvention.equals(Function.DEFAULT_CALLING_CONVENTION_STRING)) {
 			callingConvention = function.getCallingConvention().getName();
 		}
-		if (callingConvention != null &&
-			!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
+		if (!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
 			as = new AttributedString(callingConvention + " ", FunctionColors.RETURN_TYPE,
 				getMetrics());
 			textElements
-				.add(new FunctionCallingConventionFieldElement(as, elementIndex, 0, startCol));
+					.add(new FunctionCallingConventionFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
 		}
@@ -375,7 +374,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions toolOptions, ToolOptions fieldOptions) {
 		return new FunctionSignatureFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}

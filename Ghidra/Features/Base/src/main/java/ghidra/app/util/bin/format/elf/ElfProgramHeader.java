@@ -16,11 +16,13 @@
 package ghidra.app.util.bin.format.elf;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.function.BiConsumer;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.util.StringUtilities;
 
@@ -262,6 +264,34 @@ public class ElfProgramHeader
 	 */
 	public long getAdjustedLoadSize() {
 		return header.getLoadAdapter().getAdjustedLoadSize(this);
+	}
+
+	@Override
+	public boolean hasFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, Address start) {
+		return header.getLoadAdapter().hasFilteredLoadInputStream(elfLoadHelper, this, start);
+	}
+
+	@Override
+	public InputStream getFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, Address start,
+			long dataLength, BiConsumer<String, Throwable> errorConsumer) throws IOException {
+		return header.getLoadAdapter()
+				.getFilteredLoadInputStream(elfLoadHelper, this, start, dataLength,
+					getRawInputStream());
+	}
+
+	@Override
+	public InputStream getRawInputStream() throws IOException {
+		return getRawByteProvider().getInputStream(0);
+	}
+
+	private ByteProvider getRawByteProvider() {
+		if (reader == null) {
+			throw new UnsupportedOperationException("This ElfProgramHeader does not have a reader");
+		}
+		if (p_filesz <= 0) {
+			return ByteProvider.EMPTY_BYTEPROVIDER;
+		}
+		return new ByteProviderWrapper(reader.getByteProvider(), p_offset, p_filesz);
 	}
 
 	/**

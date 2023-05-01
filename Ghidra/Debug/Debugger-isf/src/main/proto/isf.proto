@@ -1,0 +1,128 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+package ghidra.dbg.isf.protocol;
+
+enum ErrorCode {
+	EC_UNKNOWN = 0;
+	EC_BAD_REQUEST = 1;
+	EC_NOT_SUPPORTED = 2;
+}
+
+// For testing: cause the server to report an unrecognized request error
+message ErrorRequest {
+}
+
+message ErrorReply {
+	ErrorCode code = 1;
+	string message = 2;
+}
+
+message PingRequest {
+	string content = 1;
+}
+
+message PingReply {
+	string content = 1;
+}
+
+message FullExportRequest {
+	string ns = 1;
+}
+
+message FullExportReply {
+	string value = 1;
+}
+
+message LookAddrRequest {
+	string ns = 1;
+	string key = 2;
+}
+
+message LookAddrReply {
+	string value = 1;
+}
+
+message LookTypeRequest {
+	string ns = 1;
+	string key = 2;
+}
+
+message LookTypeReply {
+	string value = 1;
+}
+
+message EnumTypesRequest {
+	string ns = 1;
+}
+
+message EnumTypesReply {
+	string ns = 1;
+	string value = 2;
+}
+
+
+message LookSymRequest {
+	string ns = 1;
+	string key = 2;
+}
+
+message LookSymReply {
+	string value = 1;
+}
+
+message EnumSymsRequest {
+	string ns = 1;
+}
+
+message EnumSymsReply {
+	string value = 1;
+}
+
+
+message RootAddedEvent {
+}
+
+
+message RootMessage {
+	int32 sequence = 1;
+
+	oneof msg {
+		ErrorRequest error_request = 100;
+		ErrorReply error_reply = 200;
+
+		PingRequest ping_request = 101;
+		PingReply ping_reply = 201;
+		
+		FullExportRequest full_export_request = 102;
+		FullExportReply full_export_reply = 202;
+		
+		LookTypeRequest look_type_request = 103;
+		LookTypeReply look_type_reply = 203;
+
+		LookSymRequest look_symbol_request = 104;
+		LookSymReply look_symbol_reply = 204;
+
+		LookAddrRequest look_address_request = 105;
+		LookAddrReply look_address_reply = 205;
+
+		EnumTypesRequest enum_types_request = 106;
+		EnumTypesReply enum_types_reply = 206;
+
+		EnumSymsRequest enum_symbols_request = 107;
+		EnumSymsReply enum_symbols_reply = 207;
+	}
+}

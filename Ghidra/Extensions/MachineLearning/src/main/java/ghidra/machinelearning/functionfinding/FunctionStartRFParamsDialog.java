@@ -162,7 +162,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 		this.plugin = plugin;
 		rowObjects = new ArrayList<>();
 		trainingSource = plugin.getCurrentProgram();
-		JPanel panel = createPanel();
+		JPanel panel = createWorkPanel();
 		addWorkPanel(panel);
 		trainButton = addTrainModelsButton();
 		addHideDialogButton();
@@ -268,7 +268,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 		return trainModelsButton;
 	}
 
-	private JPanel createPanel() {
+	private JPanel createWorkPanel() {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 
 		tableModel = new RandomForestTableModel(plugin.getTool(), rowObjects);
@@ -277,7 +277,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 		GTable modelStatsTable = evalPanel.getTable();
 		modelStatsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		evalPanel.setBorder(BorderFactory.createTitledBorder(MODEL_STATISTICS));
-		mainPanel.add(evalPanel, BorderLayout.EAST);
+		mainPanel.add(evalPanel, BorderLayout.CENTER);
 
 		DockingAction applyAction = new ActionBuilder(APPLY_MODEL_ACTION_NAME, plugin.getName())
 				.description("Apply Model to Source Program")
@@ -438,7 +438,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 	private JScrollPane getFuncAlignmentScrollPane() {
 		Long modulus = (Long) modBox.getSelectedItem();
 		int minSize = minimumSizeField.getIntValue();
-		//initialize map 
+		//initialize map
 		Map<Long, Long> countMap =
 			LongStream.range(0, modulus).boxed().collect(Collectors.toMap(i -> i, i -> 0l));
 		FunctionIterator fIter = trainingSource.getFunctionManager().getFunctionsNoStubs(true);
@@ -514,7 +514,7 @@ public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider
 	private void searchProgram(Program targetProgram, RandomForestRowObject modelRow) {
 		GetAddressesToClassifyTask getTask =
 			new GetAddressesToClassifyTask(targetProgram, plugin.getMinUndefinedRangeSize());
-		//don't want to use the dialog's progress bar 
+		//don't want to use the dialog's progress bar
 		TaskLauncher.launchModal("Gathering Addresses To Classify", getTask);
 		if (getTask.isCancelled()) {
 			return;

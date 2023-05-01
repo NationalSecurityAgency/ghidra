@@ -871,13 +871,41 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 	}
 
 	@Test
+	public void testSettingReturnStorageTooSmall() throws Exception {
+		model.setFormalReturnType(ByteDataType.dataType);
+		model.setUseCustomizeStorage(true);
+		model.setFormalReturnType(WordDataType.dataType);
+		assertTrue(model.isValid()); // should morph to correct sized reg if possible
+		VariableStorage returnStorage = model.getReturnStorage();
+		assertTrue(returnStorage.isRegisterStorage());
+		Register reg = returnStorage.getRegister();
+		assertEquals(program.getRegister("AX"), reg);
+		model.setReturnStorage(new VariableStorage(program, program.getRegister("AL"))); // too big allowed
+		assertTrue(!model.isValid()); // too small for word
+	}
+
+	@Test
+	public void testSettingParamStorageTooSmall() throws Exception {
+		model.setCallingConventionName(null);
+		model.setSignatureFieldText("int joe(int a)");
+		model.parseSignatureFieldText();
+		model.apply();
+		ParamInfo paramInfo = model.getParameters().get(0);
+		VariableStorage storage = paramInfo.getStorage();
+		model.setUseCustomizeStorage(true);
+		model.setParameterStorage(paramInfo,
+			new VariableStorage(program, storage.getMinAddress(), 2));
+		assertTrue(!model.isValid()); // too small for 4-byte int
+	}
+
+	@Test
 	public void testSettingReturnStorageTooBig() throws Exception {
 		model.setFormalReturnType(ByteDataType.dataType);
 		VariableStorage returnStorage = model.getReturnStorage();
 		model.setUseCustomizeStorage(true);
 		Register register = returnStorage.getRegister();
 		model.setReturnStorage(new VariableStorage(program, register.getBaseRegister()));
-		assertTrue(!model.isValid());
+		assertTrue(model.isValid()); // too big is allowed
 	}
 
 	@Test
@@ -891,7 +919,7 @@ public class FunctionEditorModelTest extends AbstractGuiTest {
 		model.setUseCustomizeStorage(true);
 		model.setParameterStorage(paramInfo,
 			new VariableStorage(program, storage.getMinAddress(), storage.size() * 2));
-		assertTrue(!model.isValid());
+		assertTrue(model.isValid()); // too big is allowed
 	}
 
 	@Test

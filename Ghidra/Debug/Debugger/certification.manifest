@@ -89,6 +89,7 @@ src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPlug
 src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginDecompiler.png||GHIDRA||||END|
 src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginListing.png||GHIDRA||||END|
 src/main/resources/defaultTools/Debugger.tool||GHIDRA||||END|
+src/main/resources/defaultTools/Emulator.tool||GHIDRA||||END|
 src/main/resources/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/attach.png||GHIDRA||||END|
 src/main/resources/images/autoread.png||GHIDRA||||END|
@@ -122,6 +123,7 @@ src/main/resources/images/object-running.png||GHIDRA||||END|
 src/main/resources/images/object-terminated.png||GHIDRA||||END|
 src/main/resources/images/object-unpopulated.png||GHIDRA||||END|
 src/main/resources/images/process.png||GHIDRA||||END|
+src/main/resources/images/process32.png||GHIDRA||||END|
 src/main/resources/images/record.png||GHIDRA||||END|
 src/main/resources/images/register-marker.png||GHIDRA||||END|
 src/main/resources/images/registers.png||GHIDRA||||END|

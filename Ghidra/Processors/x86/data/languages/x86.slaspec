@@ -1,4 +1,6 @@
 @include "ia.sinc"
+@include "lockable.sinc"
+with : lockprefx=0 {
 @include "avx.sinc"
 @include "avx_manual.sinc"
 @include "avx2.sinc"
@@ -14,4 +16,4 @@
 @include "smx.sinc"
 @include "cet.sinc"
 @include "rdrand.sinc"
-
+}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -33,6 +33,9 @@ public class DataTypeInstance {
 
 	/**
 	 * Create an instance of a data type with the given length.
+	 * <br>
+	 * NOTE: fixed-length primitive datatypes assume {@link DataType#getLength() raw datatype length}
+	 * intended for {@link Data} use.
 	 * 
 	 * @param dt data type
 	 * @param length fixed length of the data type
@@ -66,25 +69,44 @@ public class DataTypeInstance {
 		this.length = length;
 	}
 
+	@Override
+	public String toString() {
+		return dataType.toString();
+	}
+
 	/**
 	 * Generate a data-type instance
 	 * Factory and Dynamic data-types are NOT handled.
-	 * @param dataType
-	 * @param buf
+	 * @param dataType data type
+	 * @param buf memory buffer
+	 * @param useAlignedLength if true a fixed-length primitive data type will use its 
+	 * {@link DataType#getAlignedLength() aligned-length}, otherwise it will use its
+	 * {@link DataType#getLength() raw length}.  NOTE: This generally only relates to 
+	 * float datatypes whose raw encoding length may be shorter than their aligned-length
+	 * generally corresponding to a compiler's "sizeof(type)" value.  This should generally be
+	 * true for {@link DataTypeComponent} and false for simple {@link Data} instances.
 	 * @return data-type instance or null if one could not be determined
 	 */
-	public static DataTypeInstance getDataTypeInstance(DataType dataType, MemBuffer buf) {
-		return getDataTypeInstance(dataType, buf, -1);
+	public static DataTypeInstance getDataTypeInstance(DataType dataType, MemBuffer buf,
+			boolean useAlignedLength) {
+		return getDataTypeInstance(dataType, buf, -1, useAlignedLength);
 	}
 
 	/**
 	 * Attempt to create a fixed-length data-type instance.
 	 * Factory and non-sizable Dynamic data-types are NOT handled.
-	 * @param dataType
+	 * @param dataType data type
 	 * @param length length for sizable Dynamic data-types, otherwise ignored
+	 * @param useAlignedLength if true a fixed-length primitive data type will use its 
+	 * {@link DataType#getAlignedLength() aligned-length}, otherwise it will use its
+	 * {@link DataType#getLength() raw length}.  NOTE: This generally only relates to 
+	 * float datatypes whose raw encoding length may be shorter than their aligned-length
+	 * generally corresponding to a compiler's "sizeof(type)" value.  This should generally be
+	 * true for {@link DataTypeComponent} and false for simple {@link Data} instances.
 	 * @return data-type instance or null if unable to create instance.
 	 */
-	public static DataTypeInstance getDataTypeInstance(DataType dataType, int length) {
+	public static DataTypeInstance getDataTypeInstance(DataType dataType, int length,
+			boolean useAlignedLength) {
 		if (dataType == null) {
 			return null;
 		}
@@ -105,6 +127,9 @@ public class DataTypeInstance {
 				return null;
 			}
 		}
+		else if (useAlignedLength) {
+			length = dataType.getAlignedLength();
+		}
 		else {
 			length = dataType.getLength();
 		}
@@ -116,20 +141,26 @@ public class DataTypeInstance {
 		return new DataTypeInstance(dataType, length);
 	}
 
-	@Override
-	public String toString() {
-		return dataType.toString();
-	}
-
 	/**
 	 * Attempt to create a data-type instance associated with a specific memory location.
 	 * Factory and Dynamic data-types are handled.
+	 * <br>
+	 * NOTE: fixed-length primitive datatypes assume {@link DataType#getLength() raw datatype length}
+	 * intended for {@link Data} use.
+	 * 
 	 * @param dataType
 	 * @param buf memory location
 	 * @param length length for sizable Dynamic data-types, otherwise ignored
+	 * @param useAlignedLength if true a fixed-length primitive data type will use its 
+	 * {@link DataType#getAlignedLength() aligned-length}, otherwise it will use its
+	 * {@link DataType#getLength() raw length}.  NOTE: This generally only relates to 
+	 * float datatypes whose raw encoding length may be shorter than their aligned-length
+	 * generally corresponding to a compiler's "sizeof(type)" value.  This should generally be
+	 * true for {@link DataTypeComponent} and false for simple {@link Data} instances.
 	 * @return data-type instance or null if unable to create instance.
 	 */
-	public static DataTypeInstance getDataTypeInstance(DataType dataType, MemBuffer buf, int length) {
+	public static DataTypeInstance getDataTypeInstance(DataType dataType, MemBuffer buf, int length,
+			boolean useAlignedLength) {
 		if (dataType instanceof FactoryDataType) {
 			dataType = ((FactoryDataType) dataType).getDataType(buf);
 			length = -1; // ignore user-specified length for factory use
@@ -150,6 +181,9 @@ public class DataTypeInstance {
 		else if (dataType instanceof Dynamic) {
 			Dynamic dynamicDataType = (Dynamic) dataType;
 			length = dynamicDataType.getLength(buf, length);
+		}
+		else if (useAlignedLength) {
+			length = dataType.getAlignedLength();
 		}
 		else {
 			length = dataType.getLength();

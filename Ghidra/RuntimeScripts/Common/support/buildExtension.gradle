@@ -33,17 +33,14 @@ file(ghidraDir + "/application.properties").withReader { reader ->
 	project.ext.ghidra_version = ghidraProps.getProperty('application.version')
 	project.ext.RELEASE_NAME = ghidraProps.getProperty('application.release.name')
 	project.ext.DISTRO_PREFIX = "ghidra_${ghidra_version}"
-	project.ext.GRADLE_MINIMUM_VERSION = ghidraProps.getProperty('application.gradle.min')
+	project.ext.GRADLE_MIN = ghidraProps.getProperty('application.gradle.min')
+	project.ext.GRADLE_MAX = ghidraProps.getProperty('application.gradle.max')
 }
 
 /***************************************************************************************
- * Make sure the correct version of gradle is being used
+ * Make sure a supported version of Gradle is being used
  ***************************************************************************************/
-import org.gradle.util.GradleVersion;
-final GradleVersion minimum_version = GradleVersion.version("${GRADLE_MINIMUM_VERSION}")
-if (GradleVersion.current() < minimum_version) {
-	throw new GradleException("Requires at least $minimum_version, but was run with $gradle.gradleVersion")
-}
+checkGradleVersion()
 
 configurations {
 	helpPath
@@ -329,5 +326,38 @@ def getCurrentDate() {
 	def date = new Date()
 	def formattedDate = date.format('yyyyMMdd')
 	return formattedDate
+}
+
+/*********************************************************************************
+ * Throws a GradleException if the current Gradle version is outside of the supported
+ * Gradle version range defined in application.properties
+ *********************************************************************************/
+import org.gradle.util.GradleVersion;
+def checkGradleVersion() {
+	GradleVersion min = null;
+	GradleVersion max = null;
+	try {
+		min = GradleVersion.version("${rootProject.GRADLE_MIN}")
+	}
+	catch (IllegalArgumentException e) {
+		String defaultMin = "1.0"
+		println "Invalid minimum Gradle version specified in application.properties...using ${defaultMin}"
+		min = GradleVersion.version(defaultMin)
+	}
+	try {
+		if (rootProject.GRADLE_MAX) {
+			max = GradleVersion.version("${rootProject.GRADLE_MAX}")
+		}
+	}
+	catch (IllegalArgumentException e) {
+		println "Invalid maximum Gradle version specified in application.properties...ignoring"
+	}
+	String gradleRange = "at least ${min}"
+	if (max) {
+		gradleRange += " and less than ${max}"		
+	}
+	if (GradleVersion.current() < min || (max && GradleVersion.current() >= max)) {
+		throw new GradleException("Requires ${gradleRange}, but was run with $gradle.gradleVersion")
+	}
 }
 

@@ -24,12 +24,13 @@ import ghidra.util.exception.VersionException;
  *
  */
 class ArrayDBAdapterV0 extends ArrayDBAdapter {
+
+	private static final int VERSION = 0;
+
 	private static final String ARRAY_TABLE_NAME = "Arrays";
 	private static final int V0_ARRAY_DT_ID_COL = 0;
 	private static final int V0_ARRAY_DIM_COL = 1;
 	private static final int V0_ARRAY_ELEMENT_LENGTH_COL = 2; // applies to sizable dynamic types only
-
-	private Table table;
 
 // DO NOT REMOVE - this documents the schema used in version 0.
 //	public static final Schema SCHEMA = new Schema(0, "Array ID",
@@ -38,9 +39,13 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 //									new String[] {"Data Type ID", "Dimension",
 //											"Length"});
 
+	private Table table;
+
 	/**
-	 * Constructor
-	 * 
+	 * Gets a version 0 read-only adapter for the {@link ArrayDB} database table.
+	 * @param handle handle to the database containing the table.
+	 * @throws VersionException if the the table's version does not match the expected version
+	 * for this adapter.
 	 */
 	public ArrayDBAdapterV0(DBHandle handle) throws VersionException {
 
@@ -48,9 +53,8 @@ class ArrayDBAdapterV0 extends ArrayDBAdapter {
 		if (table == null) {
 			throw new VersionException("Missing Table: " + ARRAY_TABLE_NAME);
 		}
-		else if (table.getSchema().getVersion() != 0) {
-			throw new VersionException("Expected version 0 for table " + ARRAY_TABLE_NAME +
-				" but got " + table.getSchema().getVersion());
+		if (table.getSchema().getVersion() != VERSION) {
+			throw new VersionException();
 		}
 
 	}

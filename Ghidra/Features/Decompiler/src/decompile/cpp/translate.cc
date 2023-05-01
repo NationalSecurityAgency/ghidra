@@ -15,6 +15,8 @@
  */
 #include "translate.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_CODE = AttributeId("code",43);
 AttributeId ATTRIB_CONTAIN = AttributeId("contain",44);
 AttributeId ATTRIB_DEFAULTSPACE = AttributeId("defaultspace",45);
@@ -977,3 +979,5 @@ void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
   decoder.closeElement(elemId);
   dump(addr,(OpCode)opcode,outptr,invar,isize);
 }
+
+} // End namespace ghidra

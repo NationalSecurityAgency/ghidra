@@ -41,20 +41,22 @@ import ghidra.util.task.TaskMonitor;
 public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	private Address entryPt;
 	private SourceType source;
-	private boolean setName;
+	private FunctionRenameOption functionRenameOption;
 	private boolean preserveCallingConvention;
 	private FunctionSignature signature;
 	private Program program;
 
 	/**
 	 * Constructs a new command for creating a function.
+	 * Only a function with a default name will be renamed to the function signature's name
+	 * (see {@link FunctionRenameOption#RENAME_IF_DEFAULT}).
 	 * @param entry entry point address for the function to be created.
 	 * @param signature function signature to apply
 	 * @param source the source of this function signature
 	 */
 	public ApplyFunctionSignatureCmd(Address entry, FunctionSignature signature,
 			SourceType source) {
-		this(entry, signature, source, false, false);
+		this(entry, signature, source, false, FunctionRenameOption.RENAME_IF_DEFAULT);
 	}
 
 	/**
@@ -63,17 +65,35 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	 * @param signature function signature to apply
 	 * @param source the source of this function signature
 	 * @param preserveCallingConvention if true the function calling convention will not be changed
-	 * @param setName true if name of the function should be set to the name
-	 * of the signature
+	 * @param forceSetName true if name of the function should be set to the name, otherwise name
+	 * will only be set name if currently default (e.g., FUN_1234). A value of true is equivalent to
+	 * {@link FunctionRenameOption#RENAME}, while a value of false is equivalent to
+	 * {@link FunctionRenameOption#RENAME_IF_DEFAULT}.
+	 */
+	@Deprecated(since = "10.3", forRemoval = true)
+	public ApplyFunctionSignatureCmd(Address entry, FunctionSignature signature, SourceType source,
+			boolean preserveCallingConvention, boolean forceSetName) {
+		this(entry, signature, source, preserveCallingConvention,
+			forceSetName ? FunctionRenameOption.RENAME : FunctionRenameOption.RENAME_IF_DEFAULT);
+	}
+
+	/**
+	 * Constructs a new command for creating a function.
+	 * @param entry entry point address for the function to be created.
+	 * @param signature function signature to apply
+	 * @param source the source of this function signature
+	 * @param preserveCallingConvention if true the function calling convention will not be changed
+	 * @param functionRenameOption controls renaming of the function using the name from the 
+	 * specified function signature.
 	 */
 	public ApplyFunctionSignatureCmd(Address entry, FunctionSignature signature, SourceType source,
-			boolean preserveCallingConvention, boolean setName) {
+			boolean preserveCallingConvention, FunctionRenameOption functionRenameOption) {
 		super("Create Function", true, false, false);
 		this.entryPt = entry;
 		this.signature = signature;
 		this.source = source;
 		this.preserveCallingConvention = preserveCallingConvention;
-		this.setName = setName;
+		this.functionRenameOption = functionRenameOption;
 	}
 
 	@Override
@@ -89,7 +109,7 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 		monitor.setMessage("Rename " + func.getName());
 
 		try {
-			setSignature(func, signature, preserveCallingConvention, setName, source);
+			setSignature(func);
 		}
 		catch (InvalidInputException e) {
 			Msg.warn(this, e.getMessage());
@@ -106,22 +126,14 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Sets a function's signature in the program.
+	 * Sets a function's signature in the program using the command details.
 	 * @param func the function
-	 * @param signature the signature to apply
-	 * @param preserveCallingConvention if true, the functions calling convention will not be
-	 * 			modified
-	 * @param forceName force the name of the signature onto the function
-	 *                  normally the name is only set on default function names (not user-defined).
-	 * @param source the source of this function signature
 	 */
-	private boolean setSignature(Function func, FunctionSignature signature,
-			boolean preserveCallingConvention, boolean forceName, SourceType source)
-			throws InvalidInputException {
+	private boolean setSignature(Function func) throws InvalidInputException {
 
 		// take on the signatures name if this is not a user defined symbol
 		String name = signature.getName();
-		setName(func, name, source, forceName);
+		setName(func, name);
 
 		CompilerSpec compilerSpec = program.getCompilerSpec();
 		String conventionName = getCallingConvention(func, compilerSpec);
@@ -140,6 +152,11 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 			func.updateFunction(conventionName, returnParam, params,
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, false, source);
 			func.setVarArgs(signature.hasVarArgs());
+			
+			// Only apply noreturn if signature has it set
+			if (signature.hasNoReturn()) {
+				func.setNoReturn(signature.hasNoReturn());
+			}
 		}
 		catch (DuplicateNameException e) {
 			// should not happen unless caused by a concurrent operation
@@ -212,29 +229,21 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	}
 
 	private String getCallingConvention(Function function, CompilerSpec compilerSpec) {
-		PrototypeModel preferredModel = null;
-		if (signature.getGenericCallingConvention() != GenericCallingConvention.unknown) {
-			preferredModel = compilerSpec.matchConvention(signature.getGenericCallingConvention());
+
+		// Ignore signature's calling convention if unknown/not-defined
+		String callingConvention = signature.getCallingConventionName();
+		if (compilerSpec.getCallingConvention(callingConvention) == null) {
+			callingConvention = null;
 		}
 
-		PrototypeModel convention = function.getCallingConvention();
-		if (convention == null || !preserveCallingConvention) {
-			convention = preferredModel;
-// NOTE: This has been disable since it can cause imported signature information to be
-// ignored and overwritten by subsequent analysis
-//			if (convention == null && compilerSpec.getCallingConventions().length > 1) {
-//				// use default source for signature if convention is really unknown so that we
-//				// know dynamic storage assignment is unreliable
-//				source = SourceType.DEFAULT;
-//			}
+		// Continue using function's current calling convention if valid and either
+		// reservation was requested or signature's convention is unknown/not-defined.
+		PrototypeModel currentConvention = function.getCallingConvention();
+		if (currentConvention != null && (callingConvention == null || preserveCallingConvention)) {
+			callingConvention = function.getCallingConventionName();
 		}
 
-		// Calling convention is permitted to change
-		String conventionName = function.getCallingConventionName();
-		if (!preserveCallingConvention && convention != null) {
-			conventionName = convention.getName();
-		}
-		return conventionName;
+		return callingConvention;
 	}
 
 	private static void updateStackPurgeSize(Function function, Program program) {
@@ -296,37 +305,38 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 		}
 	}
 
-	private static void setName(Function function, String name, SourceType source,
-			boolean forceName) throws InvalidInputException {
+	/**
+	 * 
+	 * @param function function to be renamed
+	 * @param name function name to be applied
+	 * @throws InvalidInputException if invalid name is specified or a duplicate name occurs
+	 */
+	private void setName(Function function, String name) throws InvalidInputException {
 
-		if (name == null) {
+		if (functionRenameOption == FunctionRenameOption.NO_CHANGE || name == null) {
 			return;
 		}
 
-		Program program = function.getProgram();
-		Address entryPoint = function.getEntryPoint();
 		SymbolUtilities.validateName(name);
-
-		SymbolTable symbolTable = program.getSymbolTable();
-		Symbol sym = symbolTable.getPrimarySymbol(entryPoint);
-		if (sym == null || sym.getName().equals(name)) {
+		if (function.getName().equals(name)) {
 			return;
 		}
 
-		if (!forceName && sym.getSource() != SourceType.DEFAULT) {
+		if (functionRenameOption == FunctionRenameOption.RENAME_IF_DEFAULT &&
+			function.getSymbol().getSource() != SourceType.DEFAULT) {
 			// not default and we are not forcing the rename
 			return;
 		}
 
 		try {
-			removeCodeSymbol(symbolTable, entryPoint, name, function.getParentNamespace());
-			sym.setName(name, source);
+			removeCodeSymbol(function.getEntryPoint(), name, function.getParentNamespace());
+			function.setName(name, source);
 		}
 		catch (DuplicateNameException e) {
+			// unexpected
 			throw new InvalidInputException(
 				"Function name conflict occurred when applying function signature.");
 		}
-
 	}
 
 	/**
@@ -364,13 +374,11 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 		return getUniqueName(symbolTable, function, name);
 	}
 
-	private static void removeCodeSymbol(SymbolTable symbolTable, Address address, String name,
-			Namespace namespace) {
+	private void removeCodeSymbol(Address address, String name, Namespace namespace) {
+		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol otherSym = symbolTable.getSymbol(name, address, namespace);
-		if (otherSym != null) {
-			if (otherSym.getSymbolType() == SymbolType.LABEL) {
-				otherSym.delete(); // replace label if function name matches
-			}
+		if (otherSym != null && otherSym.getSymbolType() == SymbolType.LABEL) {
+			otherSym.delete(); // remove label so function rename may use it
 		}
 	}
 

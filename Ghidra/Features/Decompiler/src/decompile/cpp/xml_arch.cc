@@ -15,6 +15,8 @@
  */
 #include "xml_arch.hh"
 
+namespace ghidra {
+
 ElementId ELEM_XML_SAVEFILE = ElementId("xml_savefile",236);
 
 // Constructing the singleton registers the capability
@@ -153,3 +155,5 @@ void XmlArchitecture::restoreXml(DocumentStorage &store)
     SleighArchitecture::restoreXml(store);
   }
 }
+
+} // End namespace ghidra

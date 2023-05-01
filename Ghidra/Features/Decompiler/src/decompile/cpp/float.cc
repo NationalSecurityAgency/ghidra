@@ -19,6 +19,9 @@
 
 #include <cmath>
 #include <limits>
+
+namespace ghidra {
+
 using std::ldexp;
 using std::frexp;
 using std::signbit;
@@ -687,3 +690,5 @@ void FloatFormat::restoreXml(const Element *el)
   maxexponent = (1<<exp_size)-1;
   calcPrecision();
 }
+
+} // End namespace ghidra

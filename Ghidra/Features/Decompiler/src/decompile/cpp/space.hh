@@ -16,11 +16,13 @@
 /// \file space.hh
 /// \brief Classes for describing address spaces
 
-#ifndef __CPUI_SPACE__
-#define __CPUI_SPACE__
+#ifndef __SPACE_HH__
+#define __SPACE_HH__
 
 #include "error.hh"
 #include "marshal.hh"
+
+namespace ghidra {
 
 /// \brief Fundemental address space types
 ///
@@ -554,4 +556,5 @@ inline bool AddrSpace::compareByIndex(const AddrSpace *a,const AddrSpace *b) {
   return (a->index < b->index);
 }
 
+} // End namespace ghidra
 #endif

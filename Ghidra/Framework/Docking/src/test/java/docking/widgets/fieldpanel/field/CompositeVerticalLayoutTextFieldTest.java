@@ -42,7 +42,7 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 	int width = 100; // used to trigger horizontal clipping
 	int maxLines = 5; // used to trigger vertical clipping
 
-	private HighlightFactory hlFactory = (hlField, text, cursorTextOffset) -> {
+	private FieldHighlightFactory hlFactory = (hlField, text, cursorTextOffset) -> {
 		return new Highlight[] {};
 	};
 

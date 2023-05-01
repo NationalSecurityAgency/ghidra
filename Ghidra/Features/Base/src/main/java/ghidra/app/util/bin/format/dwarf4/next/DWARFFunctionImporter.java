@@ -388,7 +388,8 @@ public class DWARFFunctionImporter {
 				Parameter curparam = buildParameter(gfunc, i, dfunc.params.get(i), diea);
 				params.add(curparam);
 				if (i == 0 && checkThisParameter(dfunc.params.get(0), diea)) {
-					convention = compilerSpec.matchConvention(GenericCallingConvention.thiscall);
+					convention =
+						compilerSpec.matchConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
 				}
 			}
 

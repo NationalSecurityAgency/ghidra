@@ -27,6 +27,7 @@ import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.data.PointerTypedef;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -84,14 +85,20 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 			throws MemoryAccessException, NotFoundException;
 
 	/**
-	 * Apply a pointer-typedef with a specified component-offset.
+	 * Apply a pointer-typedef with a specified component-offset if specified address
+	 * is not contained within an execute block.
 	 * @param program program
 	 * @param addr address where data should be applied
 	 * @param componentOffset component offset
 	 */
 	public static void applyComponentOffsetPointer(Program program, Address addr,
 			long componentOffset) {
-		// TODO: we could also assign non-default address space setting if needed
+
+		MemoryBlock block = program.getMemory().getBlock(addr);
+		if (block == null || block.isExecute()) {
+			return; // avoid pointer creation where instruction may reside
+		}
+
 		PointerTypedef dt =
 			new PointerTypedef(null, null, -1, program.getDataTypeManager(), componentOffset);
 		try {
@@ -107,7 +114,8 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	/**
 	 * Determine if symbolAddr is contained within the EXTERNAL block with a non-zero adjustment.  
 	 * If so, relocationAddress will be marked with a <code>EXTERNAL Data Elf Relocation with pointer-offset</code> 
-	 * warning bookmark.
+	 * warning or error bookmark.  Bookmark and logged message will be conveyed as an error if 
+	 * relocationAddress resides within an executable memory block.
 	 * NOTE: This method should only be invoked when the symbol offset will be adjusted with a non-zero 
 	 * value (i.e., addend).
 	 * @param program program
@@ -126,6 +134,10 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 			return;
 		}
 
+		MemoryBlock block = program.getMemory().getBlock(relocationAddress);
+
+		boolean showAsError = block == null || block.isExecute();
+
 		String sign = "+";
 		if (adjustment < 0) {
 			adjustment = -adjustment;
@@ -134,13 +146,21 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 		String adjStr = sign + "0x" + Long.toHexString(adjustment);
 
 		symbolName = StringUtils.isEmpty(symbolName) ? ElfSymbol.FORMATTED_NO_NAME : symbolName;
-		Msg.warn(ElfRelocationHandler.class,
-			"EXTERNAL Data Elf Relocation with offset: at " + relocationAddress +
-			" (External Location = " + symbolName + adjStr + ")");
-		BookmarkManager bookmarkManager = program.getBookmarkManager();
-		bookmarkManager.setBookmark(relocationAddress, BookmarkType.WARNING, "EXTERNAL Relocation",
-			"EXTERNAL Data Elf Relocation with offset: External Location = " + symbolName +
-				adjStr);
+		String msg1 = "EXTERNAL Data Elf Relocation with offset: at " + relocationAddress +
+			" (External Location = " + symbolName + adjStr + ")";
+		if (showAsError) {
+			Msg.error(ElfRelocationHandler.class, msg1);
+		}
+		else {
+			Msg.warn(ElfRelocationHandler.class, msg1);
+		}
+		if (block != null) {
+			BookmarkManager bookmarkManager = program.getBookmarkManager();
+			bookmarkManager.setBookmark(relocationAddress, BookmarkType.WARNING,
+				"EXTERNAL Relocation",
+				"EXTERNAL Data Elf Relocation with offset: External Location = " + symbolName +
+					adjStr);
+		}
 	}
 
 	/**

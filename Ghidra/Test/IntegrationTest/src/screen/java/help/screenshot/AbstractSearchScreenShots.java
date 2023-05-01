@@ -25,7 +25,7 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 
 	protected static final Color YELLOW_ORANGE = Palette.getColor("darkkhaki");
 	protected static final Color BLUE_GREEN = Palette.GREEN;
-	protected static final Color DARK_BLUE = Palette.getColor("navy");
+	protected static final Color NAVY = Palette.getColor("navy");
 	protected static final Color DARK_GREEN = Palette.getColor("darkgreen");
 
 	@Override

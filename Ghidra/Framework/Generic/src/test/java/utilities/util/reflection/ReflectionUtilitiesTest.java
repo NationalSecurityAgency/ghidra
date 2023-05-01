@@ -23,8 +23,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ghidra.util.SystemUtilities;
-
 public class ReflectionUtilitiesTest {
 
 	@Test
@@ -39,18 +37,6 @@ public class ReflectionUtilitiesTest {
 
 		String caller = ReflectionUtilities.getClassNameOlderThan();
 		assertThat(caller, is(equalTo(ReflectionUtilitiesTest.class.getName())));
-	}
-
-	@Test
-	public void testGetClassNameAfter_InvalidClasses() {
-
-		try {
-			ReflectionUtilities.getClassNameOlderThan(SystemUtilities.class);
-			fail("Did not get an exception passing a class not in the stack");
-		}
-		catch (Exception e) {
-			// good
-		}
 	}
 
 	@Test
@@ -73,7 +59,7 @@ public class ReflectionUtilitiesTest {
 	public void testMovePastStackTracePattern() {
 
 		//@formatter:off
-		StackTraceElement[] trace = { 
+		StackTraceElement[] trace = {
 			element("Class1", "method"),
 			element("Class2", "method"),
 			element("Class3", "method"),
@@ -183,7 +169,7 @@ public class ReflectionUtilitiesTest {
 	public void testRuntimeTypeDiscovery_MixedHierarchy_AbstractClassAndInterfaceBothDefineValues() {
 
 		//
-		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one
 		// as well, where we pursue interfaces that may have defined some types.
 		//
 
@@ -198,7 +184,7 @@ public class ReflectionUtilitiesTest {
 	public void testRuntimeTypeDiscovery_SubInterfaceDefinesValues() {
 
 		//
-		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one
 		// as well, where we pursue interfaces that may have defined some types.
 		//
 
@@ -213,7 +199,7 @@ public class ReflectionUtilitiesTest {
 	public void testRuntimeTypeDiscovery_MixedHierarchy_UnrelatedParents() {
 
 		//
-		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one
 		// as well, where we pursue interfaces that may have defined some types.
 		//
 		// This test also verifies that in a mixed type hierarchy, we can correctly locate types
@@ -226,15 +212,14 @@ public class ReflectionUtilitiesTest {
 		assertEquals(String.class, types.get(0));
 		assertEquals(Double.class, types.get(1));
 
-		types = ReflectionUtilities.getTypeArguments(List.class,
-			ChildWithMixedParentTypes.class);
+		types = ReflectionUtilities.getTypeArguments(List.class, ChildWithMixedParentTypes.class);
 		assertEquals(1, types.size());
 		assertEquals(Integer.class, types.get(0));
 	}
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private StackTraceElement element(String className, String methodName) {
 		return new StackTraceElement(className + ".class", methodName, className + ".java", 1);
@@ -274,19 +259,16 @@ public class ReflectionUtilitiesTest {
 		// stub
 	}
 
-	private class ChildExtendingPartiallyDefinedTypes
-			extends AbstractPartiallyDefinedClass<String>
+	private class ChildExtendingPartiallyDefinedTypes extends AbstractPartiallyDefinedClass<String>
 			implements PartiallyDefinedInterface<Double> {
 		// stub
 	}
 
-	private class ChildExtendingWhollyDefinedTypes
-			implements WhollyDefinedInterface {
+	private class ChildExtendingWhollyDefinedTypes implements WhollyDefinedInterface {
 		// stub
 	}
 
-	private class ChildWithMixedParentTypes
-			extends ArrayList<Integer>
+	private class ChildWithMixedParentTypes extends ArrayList<Integer>
 			implements WhollyDefinedInterface {
 		// stub
 	}

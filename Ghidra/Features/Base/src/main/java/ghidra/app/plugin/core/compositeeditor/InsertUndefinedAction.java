@@ -59,7 +59,8 @@ public class InsertUndefinedAction extends CompositeEditorTableAction {
 					DataType undefinedDt =
 						model.viewComposite.isPackingEnabled() ? Undefined1DataType.dataType
 								: DataType.DEFAULT;
-					DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(undefinedDt, -1);
+					DataTypeInstance dti =
+						DataTypeInstance.getDataTypeInstance(undefinedDt, -1, false);
 					model.insert(index, dti.getDataType(), dti.getLength());
 				}
 			}

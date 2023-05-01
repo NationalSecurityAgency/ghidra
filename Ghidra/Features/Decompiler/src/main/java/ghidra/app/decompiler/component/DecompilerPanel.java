@@ -78,7 +78,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private final List<DecompilerMarginProvider> marginProviders = new ArrayList<>();
 	private final VerticalLayoutPixelIndexMap pixmap = new VerticalLayoutPixelIndexMap();
 
-	private HighlightFactory hlFactory;
+	private FieldHighlightFactory hlFactory;
 	private ClangHighlightController highlightController;
 	private Map<String, ClangDecompilerHighlighter> highlightersById = new HashMap<>();
 	private PendingHighlightUpdate pendingHighlightUpdate;
@@ -1220,10 +1220,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 // Inner Classes
 //==================================================================================================
 
-	private class SearchHighlightFactory implements HighlightFactory {
+	private class SearchHighlightFactory implements FieldHighlightFactory {
 
 		@Override
-		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
+		public Highlight[] createHighlights(Field field, String text, int cursorTextOffset) {
 			if (currentSearchLocation == null) {
 				return new Highlight[0];
 			}

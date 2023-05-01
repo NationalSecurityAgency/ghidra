@@ -16,6 +16,8 @@
 #include "sleigh_arch.hh"
 #include "inject_sleigh.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_DEPRECATED = AttributeId("deprecated",136);
 AttributeId ATTRIB_ENDIAN = AttributeId("endian",137);
 AttributeId ATTRIB_PROCESSOR = AttributeId("processor",138);
@@ -617,3 +619,5 @@ void SleighArchitecture::shutdown(void)
   translators.clear();
   // description.clear();  // static vector is destroyed by the normal exit handler
 }
+
+} // End namespace ghidra

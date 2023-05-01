@@ -15,6 +15,8 @@
  */
 #include "ifaceterm.hh"
 
+namespace ghidra {
+
 IfaceTerm::IfaceTerm(const string &prmpt,istream &is,ostream &os)
   : IfaceStatus(prmpt,os)
 {
@@ -265,3 +267,5 @@ bool IfaceTerm::isStreamFinished(void) const
   if (done||inerror) return true;
   return sptr->eof();
 }
+
+} // End namespace ghidra

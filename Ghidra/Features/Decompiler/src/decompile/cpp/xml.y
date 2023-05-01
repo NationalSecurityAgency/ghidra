@@ -26,6 +26,8 @@
 #include <iostream>
 #include <string>
 
+namespace ghidra {
+
 string Attributes::bogus_uri("http://unused.uri");
 
 /// \brief The XML character scanner
@@ -114,6 +116,7 @@ extern int4 convertEntityRef(const string &ref);	///< Convert an XML entity to i
 extern int4 convertCharRef(const string &ref);	///< Convert an XML character reference to its equivalent character
 static XmlScan *global_scan;					///< Global reference to the scanner
 static ContentHandler *handler;					///< Global reference to the content handler
+
 %}
 
 %union {
@@ -642,3 +645,5 @@ void xml_escape(ostream &s,const char *str)
     str++;
   }
 }
+
+} // End namespace ghidra

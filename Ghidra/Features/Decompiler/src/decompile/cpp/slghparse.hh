@@ -45,20 +45,28 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_SLGHPARSE_HH_INCLUDED
-# define YY_YY_SLGHPARSE_HH_INCLUDED
+#ifndef YY_SLEIGH_SLGHPARSE_HH_INCLUDED
+# define YY_SLEIGH_SLGHPARSE_HH_INCLUDED
 /* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
+#ifndef SLEIGHDEBUG
+# if defined YYDEBUG
 #if YYDEBUG
-extern int yydebug;
+#   define SLEIGHDEBUG 1
+#  else
+#   define SLEIGHDEBUG 0
+#  endif
+# else /* ! defined YYDEBUG */
+#  define SLEIGHDEBUG 0
+# endif /* ! defined YYDEBUG */
+#endif  /* ! defined SLEIGHDEBUG */
+#if SLEIGHDEBUG
+extern int sleighdebug;
 #endif
 
 /* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
+#ifndef SLEIGHTOKENTYPE
+# define SLEIGHTOKENTYPE
+  enum sleightokentype
   {
     OP_BOOL_OR = 258,
     OP_BOOL_AND = 259,
@@ -177,9 +185,9 @@ extern int yydebug;
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if ! defined SLEIGHSTYPE && ! defined SLEIGHSTYPE_IS_DECLARED
 
-union YYSTYPE
+union SLEIGHSTYPE
 {
 
 
@@ -229,14 +237,14 @@ union YYSTYPE
 
 };
 
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+typedef union SLEIGHSTYPE SLEIGHSTYPE;
+# define SLEIGHSTYPE_IS_TRIVIAL 1
+# define SLEIGHSTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE yylval;
+extern SLEIGHSTYPE sleighlval;
 
-int yyparse (void);
+int sleighparse (void);
 
-#endif /* !YY_YY_SLGHPARSE_HH_INCLUDED  */
+#endif /* !YY_SLEIGH_SLGHPARSE_HH_INCLUDED  */

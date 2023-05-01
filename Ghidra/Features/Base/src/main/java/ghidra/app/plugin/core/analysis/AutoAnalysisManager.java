@@ -114,6 +114,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	private Thread analysisThread;
 	private AnalysisTaskWrapper activeTask;
 	private Stack<AnalysisTaskWrapper> yieldedTasks = new Stack<>();
+	private boolean alreadyAskedThisSession = false;
 
 	/**
 	 * This variable is a poorly defined concept.  Essentially, this value is <b>intended</b> to
@@ -1115,6 +1116,12 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		// This code relies on being called in the swing thread to avoid a race condition
 		// where multiple threads check the flag before either thread has a chance to set it.
 		Swing.assertSwingThread("Asking to analyze must be on the swing thread!");
+
+		// We only ever want to ask once per session even if they said it is ok to ask again
+		if (alreadyAskedThisSession) {
+			return false;
+		}
+		alreadyAskedThisSession = true;
 
 		if (GhidraProgramUtilities.shouldAskToAnalyze(program)) {
 			String name = HTMLUtilities.escapeHTML(program.getDomainFile().getName());

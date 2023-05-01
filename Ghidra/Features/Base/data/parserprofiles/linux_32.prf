@@ -515,11 +515,6 @@ mechglue.h
 auth_gss.h
 auth_gssapi.h
 
--I/linux/include
--I/linux/include/sys
--I/linux/gcc/include
--I/linux/x86_64-redhat-linux5E/include
--I/linux/x86_64-redhat-linux5E/include/sys
 -D_X86_
 -D__STDC__
 -D_POSIX_C_SOURCE
@@ -528,10 +523,19 @@ auth_gssapi.h
 -D__builtin_va_list=void *
 -D__DO_NOT_DEFINE_COMPILE
 -D_Complex
--D_WCHAR_T
 -D__NO_STRING_INLINES
 -D__NO_LONG_DOUBLE_MATH
 -D__signed__
 -D__extension__=""
 -D__GLIBC_HAVE_LONG_LONG=1
 -Daligned_u64=uint64_t
+
+/data/HeaderFiles/linux/include
+/data/HeaderFiles/linux/include/sys
+/data/HeaderFiles/linux/gcc/include
+/data/HeaderFiles/linux/x86_64-redhat-linux5E/include
+/data/HeaderFiles/linux/x86_64-redhat-linux5E/include/sys
+
+x86:LE:32:default
+
+gcc

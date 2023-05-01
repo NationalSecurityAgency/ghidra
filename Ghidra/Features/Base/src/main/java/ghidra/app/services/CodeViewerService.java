@@ -22,7 +22,7 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.field.Field;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.ProgramDropProvider;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
@@ -105,14 +105,14 @@ public interface CodeViewerService {
 	 * @param provider The provider to set.
 	 * @param program The program with which to associate the given provider.
 	 */
-	public void setHighlightProvider(HighlightProvider provider, Program program);
+	public void setHighlightProvider(ListingHighlightProvider provider, Program program);
 
 	/**
 	 * Remove the highlight provider.
 	 * @param provider the provider to remove.
 	 * @param program the program associated with the given provider.
 	 */
-	public void removeHighlightProvider(HighlightProvider provider, Program program);
+	public void removeHighlightProvider(ListingHighlightProvider provider, Program program);
 
 	/**
 	 * Set a listing panel on the code viewer.

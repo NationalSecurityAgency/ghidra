@@ -17,7 +17,7 @@ package ghidra.app.nav;
 
 import javax.swing.Icon;
 
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -185,7 +185,7 @@ public interface Navigatable {
 	 * @param highlightProvider the provider
 	 * @param program the program
 	 */
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program program);
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program);
 
 	/**
 	 * Removes the given highlight provider for the given program
@@ -193,5 +193,5 @@ public interface Navigatable {
 	 * @param highlightProvider the provider
 	 * @param program the program
 	 */
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program program);
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program);
 }

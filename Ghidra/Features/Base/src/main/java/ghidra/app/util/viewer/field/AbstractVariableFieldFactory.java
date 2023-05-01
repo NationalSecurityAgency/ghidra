@@ -17,7 +17,7 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.*;
 
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -65,7 +65,7 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	protected AbstractVariableFieldFactory(String name, FieldFormatModel model,
-			HighlightProvider highlightProvider, Options displayOptions, Options fieldOptions) {
+			ListingHighlightProvider highlightProvider, Options displayOptions, Options fieldOptions) {
 		super(name, model, highlightProvider, displayOptions, fieldOptions);
 	}
 

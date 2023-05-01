@@ -16,7 +16,6 @@
 package docking.theme.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 
@@ -46,7 +45,7 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 	public ThemeColorTable(ThemeManager themeManager, GThemeValuesCache valuesProvider) {
 		super(new BorderLayout());
 		this.themeManager = themeManager;
-		colorTableModel = new ThemeColorTableModel(valuesProvider);
+		colorTableModel = createModel(valuesProvider);
 
 		filterTable = new GFilterTable<>(colorTableModel);
 		table = filterTable.getTable();
@@ -82,7 +81,10 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 		});
 
 		add(filterTable, BorderLayout.CENTER);
+	}
 
+	ThemeColorTableModel createModel(GThemeValuesCache valuesProvider) {
+		return new ThemeColorTableModel(valuesProvider);
 	}
 
 	void colorValueChanged(PropertyChangeEvent event) {
@@ -116,7 +118,7 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 			}
 			String id = currentValue.getId();
 			ColorValue themeValue = colorTableModel.getThemeValue(id);
-			return new ThemeTableContext<Color>(currentValue, themeValue);
+			return new ThemeTableContext<>(currentValue, themeValue);
 		}
 		return null;
 	}

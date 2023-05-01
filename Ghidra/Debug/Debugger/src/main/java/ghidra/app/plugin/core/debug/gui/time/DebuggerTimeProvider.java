@@ -27,7 +27,6 @@ import javax.swing.JComponent;
 import docking.ActionContext;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
-import docking.widgets.dialogs.InputDialog;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -40,7 +39,6 @@ import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
 public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	private static final AutoConfigState.ClassHandler<DebuggerTimeProvider> CONFIG_STATE_HANDLER =
@@ -85,6 +83,8 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 
 	/*testing*/ final DebuggerSnapshotTablePanel mainPanel;
 
+	protected final DebuggerTimeSelectionDialog timeDialog;
+
 	DockingAction actionGoToTime;
 	ToggleDockingAction actionHideScratch;
 
@@ -103,6 +103,8 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		setIcon(ICON_PROVIDER_TIME);
 		setHelpLocation(HELP_PROVIDER_TIME);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
+
+		timeDialog = new DebuggerTimeSelectionDialog(tool);
 
 		mainPanel = new DebuggerSnapshotTablePanel(tool);
 		buildMainPanel();
@@ -186,19 +188,12 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	}
 
 	private void activatedGoToTime() {
-		InputDialog dialog =
-			new InputDialog("Go To Time", "Schedule:", current.getTime().toString());
-		tool.showDialog(dialog);
-		if (dialog.isCanceled()) {
+		TraceSchedule time = timeDialog.promptTime(current.getTrace(), current.getTime());
+		if (time == null) {
+			// Cancelled
 			return;
 		}
-		try {
-			TraceSchedule time = TraceSchedule.parse(dialog.getValue());
-			traceManager.activateTime(time);
-		}
-		catch (IllegalArgumentException e) {
-			Msg.showError(this, getComponent(), "Go To Time", "Could not parse schedule");
-		}
+		traceManager.activateTime(time);
 	}
 
 	private void activatedHideScratch(ActionContext ctx) {

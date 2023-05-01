@@ -150,7 +150,11 @@ public final class ReferenceUtils {
 		if (cu instanceof Data) {
 			// Update the code unit for the composite data like structures and arrays, as the
 			// call to getCodeUnitContaining() gets the outermost data, not the inner-most.
-			cu = getDeepestDataContaining(address, program);
+			CodeUnit deepestCu = getDeepestDataContaining(address, program);
+			if (deepestCu != null) {
+				cu = deepestCu;
+			}
+
 		}
 
 		if (cu.getMinAddress().equals(address)) {
@@ -1329,7 +1333,14 @@ public final class ReferenceUtils {
 			return;
 		}
 
-		AddressSet offcut = new AddressSet(cu.getMinAddress().add(1), cu.getMaxAddress());
+		Address minAddress = cu.getMinAddress();
+		Address maxAddress = cu.getMaxAddress();
+		if (minAddress.equals(maxAddress)) {
+			// not sure when this can happen; have seen in the wild
+			return;
+		}
+
+		AddressSet offcut = new AddressSet(minAddress.add(1), maxAddress);
 		AddressIterator addresses = referenceManager.getReferenceDestinationIterator(offcut, true);
 		Address codeUnitAddress = cu.getAddress();
 		while (addresses.hasNext()) {

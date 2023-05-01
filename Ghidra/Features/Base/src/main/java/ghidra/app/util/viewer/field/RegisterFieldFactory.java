@@ -20,7 +20,7 @@ import java.util.*;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -52,7 +52,7 @@ public class RegisterFieldFactory extends FieldFactory {
 		super(FIELD_NAME);
 	}
 
-	private RegisterFieldFactory(FieldFormatModel model, HighlightProvider highlightProvider,
+	private RegisterFieldFactory(FieldFormatModel model, ListingHighlightProvider highlightProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, highlightProvider, displayOptions, fieldOptions);
 		regComp = new RegComparator();
@@ -73,7 +73,7 @@ public class RegisterFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions toolOptions,
+			ListingHighlightProvider highlightProvider, ToolOptions toolOptions,
 			ToolOptions fieldOptions) {
 		return new RegisterFieldFactory(formatModel, highlightProvider, toolOptions, fieldOptions);
 	}

@@ -17,12 +17,14 @@
 // You should be able to include this header to get all functionality
 // and we put a startup and shutdown routine here
 
-#ifndef __LIBDECOMP__
-#define __LIBDECOMP__
+#ifndef __LIBDECOMP_HH__
+#define __LIBDECOMP_HH__
 
 #include "architecture.hh"
 #include "sleigh_arch.hh"
 #include "ifacedecomp.hh"
+
+namespace ghidra {
 
 // Initialize all decompiler capabilities and register any sleigh specifications
 // If you have an entire ghidra distribution, you can specify its root with the -sleighhome- input,
@@ -33,4 +35,5 @@ extern void startDecompilerLibrary(const char *sleighhome,const vector<string> &
 
 extern void shutdownDecompilerLibrary(void);
 
+} // End namespace ghidra
 #endif

@@ -346,6 +346,7 @@ public enum ProgramEmulationUtils {
 				loadExecutable(initial, program);
 				doLaunchEmulationThread(trace, snap, program, pc, pc);
 			}
+			trace.clearUndo();
 			success = true;
 			return trace;
 		}

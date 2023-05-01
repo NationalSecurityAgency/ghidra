@@ -17,6 +17,8 @@
 #include "op.hh"
 #include "database.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_CLASS = AttributeId("class",66);
 AttributeId ATTRIB_REPREF = AttributeId("repref",67);
 AttributeId ATTRIB_SYMREF = AttributeId("symref",68);
@@ -66,6 +68,23 @@ void VariableGroup::removePiece(VariablePiece *piece)
 {
   pieceSet.erase(piece);
   // We currently don't adjust size here as removePiece is currently only called during clean up
+}
+
+/// Every VariablePiece in the given group is moved into \b this and the VariableGroup object is deleted.
+/// There must be no matching VariablePieces with the same size and offset between the two groups
+/// or a LowlevelError exception is thrown.
+/// \param op2 is the given VariableGroup to merge into \b this
+void VariableGroup::combineGroups(VariableGroup *op2)
+
+{
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator iter = op2->pieceSet.begin();
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator enditer = op2->pieceSet.end();
+
+  while(iter != enditer) {
+    VariablePiece *piece = *iter;
+    ++iter;
+    piece->transferGroup(this);
+  }
 }
 
 /// Construct piece given a HighVariable and its position within the whole.
@@ -162,15 +181,15 @@ void VariablePiece::transferGroup(VariableGroup *newGroup)
   newGroup->addPiece(this);
 }
 
-/// Combine the VariableGroup associated with the given other VariablePiece and the VariableGroup of \b this
-/// into one group. Combining in this way requires pieces of the same size and offset to be merged. This
+/// Combine the VariableGroup associated \b this and the given other VariablePiece into one group.
+/// Offsets are adjusted so that \b this and the other VariablePiece have the same offset.
+/// Combining in this way requires pieces of the same size and offset to be merged. This
 /// method does not do the merging but passes back a list of HighVariable pairs that need to be merged.
 /// The first element in the pair will have its VariablePiece in the new group, and the second element
 /// will have its VariablePiece freed in preparation for the merge.
-/// Offsets are adjusted so that \b this and the given other piece have the same offset;
 /// \param op2 is the given other VariablePiece
 /// \param mergePairs passes back the collection of HighVariable pairs that must be merged
-void VariablePiece::combineOtherGroup(VariablePiece *op2,vector<HighVariable *> &mergePairs)
+void VariablePiece::mergeGroups(VariablePiece *op2,vector<HighVariable *> &mergePairs)
 
 {
   int4 diff = groupOffset - op2->groupOffset;	// Add to op2, or subtract from this
@@ -521,6 +540,17 @@ void HighVariable::finalizeDatatype(Datatype *tp)
 
 {
   type = tp;
+  if (type->hasStripped()) {
+    if (type->getMetatype() == TYPE_PARTIALUNION) {
+      if (symbol != (Symbol *)0 && symboloffset != -1) {
+	type_metatype meta = symbol->getType()->getMetatype();
+	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
+	  type = type->getStripped();			// strip the partial union
+      }
+    }
+    else
+      type = type->getStripped();
+  }
   highflags |= type_finalized;
 }
 
@@ -555,7 +585,11 @@ void HighVariable::groupWith(int4 off,HighVariable *hi2)
     hi2->piece = new VariablePiece(hi2,hi2Off,this);
   }
   else {
-    throw LowlevelError("Cannot group HighVariables that are already grouped");
+    int4 offDiff = hi2->piece->getOffset() + off - piece->getOffset();
+    if (offDiff != 0)
+      piece->getGroup()->adjustOffsets(offDiff);
+    hi2->piece->getGroup()->combineGroups(piece->getGroup());
+    hi2->piece->markIntersectionDirty();
   }
 }
 
@@ -655,7 +689,7 @@ void HighVariable::merge(HighVariable *tv2,HighIntersectTest *testCache,bool iss
   if (isspeculative)
     throw LowlevelError("Trying speculatively merge variables in separate groups");
   vector<HighVariable *> mergePairs;
-  piece->combineOtherGroup(tv2->piece, mergePairs);
+  piece->mergeGroups(tv2->piece, mergePairs);
   for(int4 i=0;i<mergePairs.size();i+=2) {
     HighVariable *high1 = mergePairs[i];
     HighVariable *high2 = mergePairs[i+1];
@@ -1122,3 +1156,4 @@ bool HighIntersectTest::intersection(HighVariable *a,HighVariable *b)
   return res;
 }
 
+} // End namespace ghidra

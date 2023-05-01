@@ -43,7 +43,7 @@ public class SimpleTextField implements Field {
 	protected int numCols;
 	protected boolean allowCursorAtEnd;
 	protected boolean isPrimary;
-	protected final HighlightFactory hlFactory;
+	protected final FieldHighlightFactory hlFactory;
 
 	/**
 	 * Constructs a new SimpleTextField.
@@ -55,7 +55,7 @@ public class SimpleTextField implements Field {
 	 * the end of the text.
 	 */
 	public SimpleTextField(String text, FontMetrics fontMetrics, int startX, int width,
-			boolean allowCursorAtEnd, HighlightFactory hlFactory) {
+			boolean allowCursorAtEnd, FieldHighlightFactory hlFactory) {
 
 		this.text = text;
 		this.hlFactory = hlFactory;
@@ -207,7 +207,7 @@ public class SimpleTextField implements Field {
 			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc,
 			int rowHeight) {
 		paintSelection(g, colorManager, 0);
-		paintHighlights(g, hlFactory.getHighlights(this, text, -1));
+		paintHighlights(g, hlFactory.createHighlights(this, text, -1));
 		g.setFont(metrics.getFont());
 		if (foregroundColor == null) {
 			foregroundColor = context.getForeground();

@@ -1113,6 +1113,11 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 				SourceArchive sourceArchive) {
 			// don't care for now
 		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			// don't care for now
+		}
 	}
 
 	private class CustomDataType extends StructureDataType {

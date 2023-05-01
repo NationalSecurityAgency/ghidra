@@ -16,10 +16,12 @@
 /// \file variable.hh
 /// \brief Definitions for high-level variables
 
-#ifndef __CPUI_TYPEVAR__
-#define __CPUI_TYPEVAR__
+#ifndef __VARIABLE_HH__
+#define __VARIABLE_HH__
 
 #include "varnode.hh"
+
+namespace ghidra {
 
 class Symbol;
 
@@ -59,6 +61,7 @@ public:
   int4 getSize(void) const { return size; }	///< Get the number of bytes \b this group covers
   void setSymbolOffset(int4 val) { symbolOffset = val; }	///< Cache the symbol offset for the group
   int4 getSymbolOffset(void) const { return symbolOffset; }	///< Get offset of \b this group within its Symbol
+  void combineGroups(VariableGroup *op2);	///< Combine given VariableGroup into \b this
 };
 
 /// \brief Information about how a HighVariable fits into a larger group or Symbol
@@ -89,7 +92,7 @@ public:
   void updateCover(void) const;	///< Calculate extended cover based on intersections
   void transferGroup(VariableGroup *newGroup);	///< Transfer \b this piece to another VariableGroup
   void setHigh(HighVariable *newHigh) { high = newHigh; }	///< Move ownership of \b this to another HighVariable
-  void combineOtherGroup(VariablePiece *op2,vector<HighVariable *> &mergePairs);	///< Combine two VariableGroups
+  void mergeGroups(VariablePiece *op2,vector<HighVariable *> &mergePairs);	///< Combine two VariableGroups
 };
 
 class HighIntersectTest;
@@ -291,4 +294,5 @@ inline const Cover &HighVariable::getCover(void) const
   return piece->getCover();
 }
 
+} // End namespace ghidra
 #endif

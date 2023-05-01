@@ -345,11 +345,6 @@
     <attribute name="extrapop"/>
     <attribute name="stackshift"/>
     <attribute name="name"/>
-    <optional>
-    	<attribute name="type">
-                <ref name="generic_calling_convention_type"/>
-        </attribute>
-    </optional>
 
     <optional>
       <attribute name="strategy">

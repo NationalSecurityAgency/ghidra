@@ -16,7 +16,8 @@
 package ghidra.program.model.lang;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.AutoParameterType;
+import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.exception.InvalidInputException;
 
@@ -56,7 +57,8 @@ public class DynamicVariableStorage extends VariableStorage {
 	 * @param size varnode size
 	 * @throws InvalidInputException
 	 */
-	public DynamicVariableStorage(Program program, AutoParameterType autoParamType, Address address,
+	public DynamicVariableStorage(ProgramArchitecture program, AutoParameterType autoParamType,
+			Address address,
 			int size) throws InvalidInputException {
 		super(program, address, size);
 		this.autoParamType = autoParamType;
@@ -69,7 +71,8 @@ public class DynamicVariableStorage extends VariableStorage {
 	 * @param varnodes one or more ordered storage varnodes
 	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
-	public DynamicVariableStorage(Program program, AutoParameterType autoParamType, Varnode... varnodes)
+	public DynamicVariableStorage(ProgramArchitecture program, AutoParameterType autoParamType,
+			Varnode... varnodes)
 			throws InvalidInputException {
 		super(program, varnodes);
 		this.autoParamType = autoParamType;
@@ -84,7 +87,8 @@ public class DynamicVariableStorage extends VariableStorage {
 	 * @param size varnode size
 	 * @throws InvalidInputException
 	 */
-	public DynamicVariableStorage(Program program, boolean forcedIndirect, Address address, int size)
+	public DynamicVariableStorage(ProgramArchitecture program, boolean forcedIndirect,
+			Address address, int size)
 			throws InvalidInputException {
 		super(program, address, size);
 		this.forcedIndirect = forcedIndirect;
@@ -98,7 +102,8 @@ public class DynamicVariableStorage extends VariableStorage {
 	 * @param varnodes one or more ordered storage varnodes
 	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
-	public DynamicVariableStorage(Program program, boolean forcedIndirect, Varnode... varnodes)
+	public DynamicVariableStorage(ProgramArchitecture program, boolean forcedIndirect,
+			Varnode... varnodes)
 			throws InvalidInputException {
 		super(program, varnodes);
 		this.forcedIndirect = forcedIndirect;

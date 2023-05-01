@@ -15,12 +15,15 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack.vars;
 
+import static ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueRow.*;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.debug.stack.UnwoundFrame;
 import ghidra.pcode.exec.DebuggerPcodeUtils.PrettyBytes;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
@@ -44,7 +47,7 @@ import ghidra.util.exception.InvalidInputException;
  */
 public interface VariableValueRow {
 	// TODO: Colors specific to hovers?
-	GColor COLOR_ERROR = new GColor("color.fg.error");
+	GColor COLOR_ERROR = Colors.ERROR;
 	GColor COLOR_STALE = new GColor("color.fg.debugger.value.stale");
 
 	/**

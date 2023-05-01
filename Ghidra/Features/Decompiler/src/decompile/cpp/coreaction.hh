@@ -21,12 +21,14 @@
 /// (if they do they must check the covers themselves)
 
 
-#ifndef __CORE_ACTION__
-#define __CORE_ACTION__
+#ifndef __COREACTION_HH__
+#define __COREACTION_HH__
 
 #include "ruleaction.hh"
 #include "blockaction.hh"
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief Gather raw p-code for a function.
 class ActionStart : public Action {
@@ -1088,4 +1090,5 @@ public:
 inline bool TermOrder::additiveCompare(const AdditiveEdge *op1,const AdditiveEdge *op2) {
     return (-1 == op1->getVarnode()->termOrder(op2->getVarnode())); }
 
+} // End namespace ghidra
 #endif

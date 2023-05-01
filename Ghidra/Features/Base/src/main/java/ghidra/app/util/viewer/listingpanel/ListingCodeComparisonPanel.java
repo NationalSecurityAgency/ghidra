@@ -43,7 +43,7 @@ import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.codebrowser.hover.*;
 import ghidra.app.plugin.core.marker.MarkerManager;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.util.*;
@@ -308,17 +308,17 @@ public class ListingCodeComparisonPanel
 	 * @param leftHighlightProvider the highlight provider for the left side's listing.
 	 * @param rightHighlightProvider the highlight provider for the right side's listing.
 	 */
-	public void addHighlightProviders(HighlightProvider leftHighlightProvider,
-			HighlightProvider rightHighlightProvider) {
+	public void addHighlightProviders(ListingHighlightProvider leftHighlightProvider,
+			ListingHighlightProvider rightHighlightProvider) {
 		addLeftHighlightProvider(leftHighlightProvider);
 		addRightHighlightProvider(rightHighlightProvider);
 	}
 
-	private void addLeftHighlightProvider(HighlightProvider leftHighlightProvider) {
+	private void addLeftHighlightProvider(ListingHighlightProvider leftHighlightProvider) {
 		listingPanels[LEFT].getFormatManager().addHighlightProvider(leftHighlightProvider);
 	}
 
-	private void addRightHighlightProvider(HighlightProvider rightHighlightProvider) {
+	private void addRightHighlightProvider(ListingHighlightProvider rightHighlightProvider) {
 		listingPanels[RIGHT].getFormatManager().addHighlightProvider(rightHighlightProvider);
 	}
 
@@ -328,17 +328,17 @@ public class ListingCodeComparisonPanel
 	 * @param leftHighlightProvider the highlight provider for the left side's listing.
 	 * @param rightHighlightProvider the highlight provider for the right side's listing.
 	 */
-	public void removeHighlightProviders(HighlightProvider leftHighlightProvider,
-			HighlightProvider rightHighlightProvider) {
+	public void removeHighlightProviders(ListingHighlightProvider leftHighlightProvider,
+			ListingHighlightProvider rightHighlightProvider) {
 		removeLeftHighlightProvider(leftHighlightProvider);
 		removeRightHighlightProvider(rightHighlightProvider);
 	}
 
-	private void removeLeftHighlightProvider(HighlightProvider leftHighlightProvider) {
+	private void removeLeftHighlightProvider(ListingHighlightProvider leftHighlightProvider) {
 		listingPanels[LEFT].getFormatManager().removeHighlightProvider(leftHighlightProvider);
 	}
 
-	private void removeRightHighlightProvider(HighlightProvider rightHighlightProvider) {
+	private void removeRightHighlightProvider(ListingHighlightProvider rightHighlightProvider) {
 		listingPanels[RIGHT].getFormatManager().removeHighlightProvider(rightHighlightProvider);
 	}
 

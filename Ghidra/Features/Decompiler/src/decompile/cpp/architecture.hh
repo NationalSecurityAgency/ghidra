@@ -15,8 +15,8 @@
  */
 /// \file architecture.hh
 /// \brief Architecture and associated classes that help manage a single processor architecture and load image
-#ifndef __CPUI_ARCHITECTURE__
-#define __CPUI_ARCHITECTURE__
+#ifndef __ARCHITECTURE_HH__
+#define __ARCHITECTURE_HH__
 
 #include "capability.hh"
 #include "varmap.hh"
@@ -33,6 +33,8 @@
 #include "options.hh"
 #include "transform.hh"
 #include "prefersplit.hh"
+
+namespace ghidra {
 
 #ifdef CPUI_STATISTICS
 /// \brief Class for collecting statistics while processing over multiple functions
@@ -179,6 +181,7 @@ public:
   uint4 flowoptions;            ///< options passed to flow following engine
   uint4 max_instructions;	///< Maximum instructions that can be processed in one function
   int4 alias_block_level;	///< Aliases blocked by 0=none, 1=struct, 2=array, 3=all
+  uint4 split_datatype_config;	///< Toggle for data-types splitting: Bit 0=structs, 1=arrays, 2=pointers
   vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
 
   Database *symboltab;		///< Memory map of global variables and functions
@@ -397,4 +400,5 @@ inline bool Architecture::highPtrPossible(const Address &loc,int4 size) const {
   return !nohighptr.inRange(loc,size);
 }
 
+} // End namespace ghidra
 #endif

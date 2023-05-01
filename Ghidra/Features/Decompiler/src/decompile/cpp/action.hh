@@ -15,10 +15,12 @@
  */
 /// \file action.hh
 /// \brief Action, Rule, and other associates classes supporting transformations on function data-flow
-#ifndef __CPUI_ACTION__
-#define __CPUI_ACTION__
+#ifndef __ACTION_HH__
+#define __ACTION_HH__
 
 #include "block.hh"
+
+namespace ghidra {
 
 /// \brief The list of groups defining a \e root Action
 ///
@@ -321,4 +323,5 @@ public:
   void universalAction(Architecture *glb);		///< Build the universal action
 };
 
+} // End ghidra namespace
 #endif

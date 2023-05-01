@@ -518,9 +518,6 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	@Override
 	public SourceArchive getSourceArchive() {
-		if (dataMgr == null) {
-			return null;
-		}
 		return dataMgr.getSourceArchive(getSourceArchiveID());
 	}
 

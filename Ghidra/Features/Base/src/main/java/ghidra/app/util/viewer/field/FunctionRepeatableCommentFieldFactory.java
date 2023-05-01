@@ -21,7 +21,7 @@ import docking.widgets.fieldpanel.field.AttributedString;
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GColor;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
@@ -55,7 +55,7 @@ public class FunctionRepeatableCommentFieldFactory extends FieldFactory {
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	public FunctionRepeatableCommentFieldFactory(FieldFormatModel model,
-			HighlightProvider hlProvider, Options displayOptions, Options fieldOptions) {
+			ListingHighlightProvider hlProvider, Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
 	}
@@ -121,7 +121,7 @@ public class FunctionRepeatableCommentFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions options, ToolOptions fieldOptions) {
 
 		return new FunctionRepeatableCommentFieldFactory(formatModel, provider, options,

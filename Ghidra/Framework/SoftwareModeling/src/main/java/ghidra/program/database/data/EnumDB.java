@@ -15,6 +15,8 @@
  */
 package ghidra.program.database.data;
 
+import static ghidra.program.database.data.EnumSignedState.*;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
@@ -37,7 +39,6 @@ import ghidra.util.UniversalID;
  * Database implementation for the enumerated data type.
  */
 class EnumDB extends DataTypeDB implements Enum {
-
 	private static final SettingsDefinition[] ENUM_SETTINGS_DEFINITIONS =
 		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
 
@@ -45,9 +46,10 @@ class EnumDB extends DataTypeDB implements Enum {
 	private EnumValueDBAdapter valueAdapter;
 
 	private Map<String, Long> nameMap; // name to value
-	private TreeMap<Long, List<String>> valueMap; // value to names
+	private SortedMap<Long, List<String>> valueMap; // value to names
 	private Map<String, String> commentMap; // name to comment
 	private List<BitGroup> bitGroups;
+	private EnumSignedState signedState = null;
 
 	EnumDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache, EnumDBAdapter adapter,
 			EnumValueDBAdapter valueAdapter, DBRecord record) {
@@ -97,6 +99,27 @@ class EnumDB extends DataTypeDB implements Enum {
 			String comment = rec.getString(EnumValueDBAdapter.ENUMVAL_COMMENT_COL);
 			addToCache(valueName, value, comment);
 		}
+		signedState = computeSignedness();
+	}
+
+	private EnumSignedState computeSignedness() {
+		int length = record.getByteValue(EnumDBAdapter.ENUM_SIZE_COL);
+
+		if (valueMap.isEmpty()) {
+			return NONE;
+		}
+
+		long minValue = valueMap.firstKey();
+		long maxValue = valueMap.lastKey();
+
+		if (minValue < 0) {
+			return SIGNED;
+		}
+		if (maxValue > getMaxPossibleValue(length, true)) {
+			return UNSIGNED;
+		}
+
+		return NONE;		// we have no negatives and no large unsigned values
 	}
 
 	private void addToCache(String valueName, long value, String comment) {
@@ -258,8 +281,8 @@ class EnumDB extends DataTypeDB implements Enum {
 		lock.acquire();
 		try {
 			checkDeleted();
-			checkValue(value);
 			initializeIfNeeded();
+			checkValue(value);
 			if (nameMap.containsKey(valueName)) {
 				throw new IllegalArgumentException(valueName + " already exists in this enum");
 			}
@@ -272,6 +295,7 @@ class EnumDB extends DataTypeDB implements Enum {
 			valueAdapter.createRecord(key, valueName, value, comment);
 			adapter.updateRecord(record, true);
 			addToCache(valueName, value, comment);
+			signedState = computeSignedness();
 			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
@@ -283,17 +307,17 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	private void checkValue(long value) {
-		int length = getLength();
+		int length = record.getByteValue(EnumDBAdapter.ENUM_SIZE_COL);
 		if (length == 8) {
 			return; // all long values permitted
 		}
-		// compute maximum enum value as a positive value: (2^length)-1
-		long max = (1L << (getLength() * 8)) - 1;
-		if (value > max) {
-			throw new IllegalArgumentException(
-				getName() + " enum value 0x" + Long.toHexString(value) +
-					" is outside the range of 0x0 to 0x" + Long.toHexString(max));
 
+		long min = getMinPossibleValue();
+		long max = getMaxPossibleValue();
+		if (value < min || value > max) {
+			throw new IllegalArgumentException(
+				"Attempted to add a value outside the range for this enum: (" + min + ", " + max +
+					"): " + value);
 		}
 	}
 
@@ -317,6 +341,7 @@ class EnumDB extends DataTypeDB implements Enum {
 				}
 			}
 			adapter.updateRecord(record, true);
+			signedState = computeSignedness();
 			dataMgr.dataTypeChanged(this, false);
 		}
 		catch (IOException e) {
@@ -366,7 +391,7 @@ class EnumDB extends DataTypeDB implements Enum {
 				adapter.updateRecord(record, true);
 				addToCache(valueName, value, comment);
 			}
-
+			signedState = computeSignedness();
 			if (oldLength != newLength) {
 				notifySizeChanged(false);
 			}
@@ -426,6 +451,11 @@ class EnumDB extends DataTypeDB implements Enum {
 		finally {
 			lock.release();
 		}
+	}
+
+	@Override
+	public int getAlignedLength() {
+		return getLength();
 	}
 
 	@Override
@@ -616,6 +646,56 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
+	public long getMinPossibleValue() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			int length = record.getByteValue(EnumDBAdapter.ENUM_SIZE_COL);
+			return getMinPossibleValue(length, signedState != UNSIGNED);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public long getMaxPossibleValue() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			int length = record.getByteValue(EnumDBAdapter.ENUM_SIZE_COL);
+			return getMaxPossibleValue(length, signedState == SIGNED);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	private long getMaxPossibleValue(int bytes, boolean allowNegativeValues) {
+		if (bytes == 8) {
+			return Long.MAX_VALUE;
+		}
+		int bits = bytes * 8;
+		if (allowNegativeValues) {
+			bits -= 1;  // take away 1 bit for the sign
+		}
+
+		// the largest value that can be held in n bits in 2^n -1
+		return (1L << bits) - 1;
+	}
+
+	private long getMinPossibleValue(int bytes, boolean allowNegativeValues) {
+		if (!allowNegativeValues) {
+			return 0;
+		}
+		int bits = bytes * 8;
+
+		// smallest value (largest negative) that can be stored in n bits is when the sign bit
+		// is on (and sign extended), and all less significant bits are 0
+		return -1L << (bits - 1);
+	}
+
+	@Override
 	protected boolean refresh() {
 		try {
 			nameMap = null;
@@ -749,6 +829,73 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public boolean contains(String name) {
+		lock.acquire();
+		try {
+			checkIsValid();
+			initializeIfNeeded();
+			return nameMap.containsKey(name);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public boolean contains(long value) {
+		lock.acquire();
+		try {
+			checkIsValid();
+			initializeIfNeeded();
+			return valueMap.containsKey(value);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public boolean isSigned() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			initializeIfNeeded();
+			return signedState == SIGNED;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public int getMinimumPossibleLength() {
+		lock.acquire();
+		try {
+			if (valueMap.isEmpty()) {
+				return 1;
+			}
+			long minValue = valueMap.firstKey();
+			long maxValue = valueMap.lastKey();
+			boolean hasNegativeValues = minValue < 0;
+
+			// check the min and max values in this enum to see if they fit in 1 byte enum, then 
+			// 2 byte enum, then 4 byte enum. If the min min and max values fit, then all other values
+			// will fit as well
+			for (int size = 1; size < 8; size *= 2) {
+				long minPossible = getMinPossibleValue(size, hasNegativeValues);
+				long maxPossible = getMaxPossibleValue(size, hasNegativeValues);
+				if (minValue >= minPossible && maxValue <= maxPossible) {
+					return size;
+				}
+			}
+			return 8;
 		}
 		finally {
 			lock.release();
