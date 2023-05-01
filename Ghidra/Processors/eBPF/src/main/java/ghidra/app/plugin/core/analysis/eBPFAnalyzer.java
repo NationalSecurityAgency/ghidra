@@ -61,7 +61,7 @@ public class eBPFAnalyzer extends ConstantPropagationAnalyzer {
     @Override
     public AddressSet flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
     throws CancelledException {
-        ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption);
+        ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption);
         AddressSet resultSet = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
         BookmarkManager bmmanager = program.getBookmarkManager();
