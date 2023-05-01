@@ -15,19 +15,15 @@
  */
 package ghidra.app.services;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
 import javax.swing.tree.TreePath;
 
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.framework.plugintool.ServiceInfo;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.DataTypeArchive;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManagerChangeListener;
 import ghidra.util.HelpLocation;
 
 /**
@@ -35,14 +31,13 @@ import ghidra.util.HelpLocation;
  * "favorites." Favorites will show up on the popup menu for creating
  * data and defining function return types and parameters.
  */
-@ServiceInfo(defaultProvider = DataTypeManagerPlugin.class, description = "Service to provide list of cycle groups and data types identified as 'Favorites.'")
-public interface DataTypeManagerService extends DataTypeQueryService {
-
-	/**
-	 * Get the data type manager that has all of the built in types.
-	 * @return data type manager for built in data types
-	 */
-	public DataTypeManager getBuiltInDataTypesManager();
+//@formatter:off
+@ServiceInfo(
+	defaultProvider = DataTypeManagerPlugin.class, 
+	description = "Service to provide list of cycle groups and data types identified as 'Favorites.'"
+)
+//@formatter:on
+public interface DataTypeManagerService extends DataTypeQueryService, DataTypeArchiveService {
 
 	/**
 	 * Get the data types marked as favorites that will show up on
@@ -100,48 +95,6 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	 *         in other words, if {@link DataType#getDataTypeManager()} returns null.
 	 */
 	public void edit(DataType dt);
-
-	/**
-	 * Closes the archive for the given {@link DataTypeManager}.  This will ignore request to 
-	 * close the open Program's manager and the built-in manager.  
-	 * 
-	 * @param dtm the data type manager of the archive to close
-	 */
-	public void closeArchive(DataTypeManager dtm);
-
-	/**
-	 * Opens the specified data type archive contained within the Ghidra installation.
-	 * NOTE: This is predicated upon all archive files having a unique name within the installation.
-	 * Any path prefix specified may prevent the file from opening (or reopening) correctly.
-	 * @param archiveName archive file name (i.e., "generic_C_lib")
-	 * @return the data type archive or null if an archive with the specified name
-	 * can not be found.
-	 * @throws IOException if an i/o error occurs opening the data type archive
-	 * @throws DuplicateIdException if another archive with the same ID is already open
-	 */
-	public DataTypeManager openDataTypeArchive(String archiveName)
-			throws IOException, DuplicateIdException;
-
-	/** 
-	 * A method to open an Archive for the given, pre-existing DataTypeArchive (like one that
-	 * was opened during the import process.
-	 * 
-	 * @param dataTypeArchive the archive from which to create an Archive
-	 * @return an Archive based upon the given DataTypeArchive
-	 */
-	public Archive openArchive(DataTypeArchive dataTypeArchive);
-
-	/**
-	 * A method to open an Archive for the given, pre-existing archive file (*.gdt)
-	 * 
-	 * @param file data type archive file
-	 * @param acquireWriteLock true if write lock should be acquired (i.e., open for update)
-	 * @return an Archive based upon the given archive files
-	 * @throws IOException if an i/o error occurs opening the data type archive
-	 * @throws DuplicateIdException if another archive with the same ID is already open
-	 */
-	public Archive openArchive(File file, boolean acquireWriteLock)
-			throws IOException, DuplicateIdException;
 
 	/**
 	 * Selects the given data type in the display of data types.  A null <code>dataType</code>
