@@ -40,7 +40,7 @@ void testFunc()
 {
     typedef int InternFunc(int);
     
-// TODO    InternFunc * func = (InternFunc *) 0;
+    InternFunc * func = (InternFunc *) 0;
 }
 
 
@@ -919,6 +919,16 @@ enum options_enum {
 
 	TRINARY =  (0 ? 10 : 11),
 };
+
+/**
+ ** Predeclare Enum
+ **/
+ 
+typedef enum _PARAM_TYPE PARAM_TYPE;
+
+typedef int FuncUseEnum(PARAM_TYPE ptype);
+
+typedef enum _PARAM_TYPE { A, B, C } PARAM_TYPE;
 
 
 /**

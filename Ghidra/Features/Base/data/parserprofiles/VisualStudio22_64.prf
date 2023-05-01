@@ -46,7 +46,6 @@ Windows.h
 accctrl.h
 aclapi.h
 aclui.h
-advapi32.h
 adtgen.h
 authz.h
 azroles.h

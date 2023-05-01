@@ -188,7 +188,6 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"accctrl.h",
 				"aclapi.h",
 				"aclui.h",
-				"advapi32.h",
 				"adtgen.h",
 				"authz.h",
 				"azroles.h",
