@@ -580,17 +580,27 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	private void copyOptionsTo(Program program) {
+
+		// fetching the autoAnalysisManager for the  program here allows analyzers to register their
+		// options in that program's db. 
+		AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
+
 		Options destinationOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
 
-		// first remove all options in destination
-		for (String optionName : destinationOptions.getOptionNames()) {
-			destinationOptions.removeOption(optionName);
+		// copy the analyzer options (at the db level)
+		for (String optionName : analysisOptions.getOptionNames()) {
+			Object optionValue = analysisOptions.getObject(optionName, null);
+			if (optionValue == null && !destinationOptions.isRegistered(optionName)) {
+				Msg.warn(this, "Unable to copy null option %s to program %s".formatted(optionName,
+					program.getName()));
+			}
+			else {
+				destinationOptions.putObject(optionName, optionValue);
+			}
 		}
 
-		// now copy all the options in the source
-		for (String optionName : analysisOptions.getOptionNames()) {
-			destinationOptions.putObject(optionName, analysisOptions.getObject(optionName, null));
-		}
+		// update the analyzers on the program with new option values
+		aam.initializeOptions(analysisOptions);
 	}
 
 	private void replaceOldOptions() {
