@@ -277,6 +277,8 @@ public class DWARFExpressionEvaluator {
 			else {
 				useUnknownRegister = true;
 				if (offset == 0) {
+					// if offset is 0, we can represent the location as a ghidra register location
+					// also implies a deref by the user of this location info
 					registerLoc = true;
 				}
 			}
@@ -366,6 +368,7 @@ public class DWARFExpressionEvaluator {
 
 				case DW_OP_call_frame_cfa: {
 					push(registerMappings.getCallFrameCFA());
+					lastStackRelative = true;
 					break;
 				}
 

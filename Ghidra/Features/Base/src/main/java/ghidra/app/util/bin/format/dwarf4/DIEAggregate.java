@@ -17,9 +17,8 @@ package ghidra.app.util.bin.format.dwarf4;
 
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_formal_parameter;
 
-import java.util.*;
-
 import java.io.IOException;
+import java.util.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -296,6 +295,32 @@ public class DIEAggregate {
 					}
 					return new AttrInfo(attrVal, die, form);
 				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Return an attribute that is present in this {@link DIEAggregate}, or in any of its
+	 * direct children (of a specific type)
+	 *  
+	 * @param <T>
+	 * @param attribute the attribute to find
+	 * @param childTag the type of children to search
+	 * @param clazz type of the attribute to return
+	 * @return attribute value, or null if not found
+	 */
+	public <T extends DWARFAttributeValue> T findAttributeInChildren(int attribute, int childTag,
+			Class<T> clazz) {
+		T attributeValue = getAttribute(attribute, clazz);
+		if (attributeValue != null) {
+			return attributeValue;
+		}
+		for (DebugInfoEntry childDIE : getChildren(childTag)) {
+			DIEAggregate childDIEA = getProgram().getAggregate(childDIE);
+			attributeValue = childDIEA.getAttribute(attribute, clazz);
+			if (attributeValue != null) {
+				return attributeValue;
 			}
 		}
 		return null;
@@ -620,11 +645,13 @@ public class DIEAggregate {
 	 * Blob attributes are treated as a single location record for the current CU, using the
 	 * blob bytes as the DWARF expression of the location record.
 	 * <p>
-	 * @param attribute
-	 * @return
+	 * @param attribute the attribute to evaluate
+	 * @param range the address range the location covers (may be discarded if the attribute
+	 * value is a location list with its own range values)
+	 * @return list of locations, empty if missing, never null
 	 * @throws IOException
 	 */
-	public List<DWARFLocation> getAsLocation(int attribute) throws IOException {
+	public List<DWARFLocation> getAsLocation(int attribute, DWARFRange range) throws IOException {
 		AttrInfo attrInfo = findAttribute(attribute);
 		if (attrInfo == null) {
 			return List.of();
@@ -633,7 +660,7 @@ public class DIEAggregate {
 			return readDebugLocList(dnum.getUnsignedValue());
 		}
 		else if (attrInfo.attr instanceof DWARFBlobAttribute dblob) {
-			return _exprBytesAsLocation(dblob);
+			return _exprBytesAsLocation(dblob, range);
 		}
 		else {
 			throw new UnsupportedOperationException(
@@ -727,22 +754,8 @@ public class DIEAggregate {
 		return results;
 	}
 
-	private List<DWARFLocation> _exprBytesAsLocation(DWARFBlobAttribute attr) {
-		List<DWARFLocation> list = new ArrayList<>(1);
-
-		Number highPc = getCompilationUnit().getCompileUnit().getHighPC();
-		Number lowPc = getCompilationUnit().getCompileUnit().getLowPC();
-		if (highPc == null) {
-			// a DW_AT_high_pc is not required
-			// in this case presumably we don't have to choose from a location list based on range
-			// Make a 1-byte range
-			highPc = lowPc;
-		}
-		// If there is no low either, assume we don't need a range, and make a (0,0) range
-		DWARFRange range = (lowPc == null) ? new DWARFRange(0, 0)
-				: new DWARFRange(lowPc.longValue(), highPc.longValue());
-		list.add(new DWARFLocation(range, attr.getBytes()));
-		return list;
+	private List<DWARFLocation> _exprBytesAsLocation(DWARFBlobAttribute attr, DWARFRange range) {
+		return List.of(new DWARFLocation(range, attr.getBytes()));
 	}
 
 	/**
@@ -997,8 +1010,9 @@ public class DIEAggregate {
 				}
 			}
 			if ( !params.isEmpty() ) {
-				Msg.warn(this, "Extra params in concrete DIE instance: " + params);
-				Msg.warn(this, this.toString());
+				//Msg.warn(this, "Extra params in concrete DIE instance: " + params);
+				//Msg.warn(this, this.toString());
+				newParams.addAll(params);
 			}
 			params = newParams;
 		}

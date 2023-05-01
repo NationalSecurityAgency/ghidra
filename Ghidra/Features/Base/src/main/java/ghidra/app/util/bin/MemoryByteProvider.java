@@ -151,7 +151,7 @@ public class MemoryByteProvider implements ByteProvider {
 	 * @param maxAddress the highest address accessible by this provider (inclusive), or null
 	 * if there is no memory
 	 */
-	private MemoryByteProvider(Memory memory, Address baseAddress, Address maxAddress) {
+	public MemoryByteProvider(Memory memory, Address baseAddress, Address maxAddress) {
 		this.memory = memory;
 		this.baseAddress = baseAddress;
 		this.maxOffset = maxAddress != null

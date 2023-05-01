@@ -55,9 +55,9 @@ import ghidra.util.SystemUtilities;
  * structures.
  *
  */
-class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
+public class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 
-	static final DWARFDataTypeConflictHandler INSTANCE = new DWARFDataTypeConflictHandler();
+	public static final DWARFDataTypeConflictHandler INSTANCE = new DWARFDataTypeConflictHandler();
 
 	private DWARFDataTypeConflictHandler() {
 		// do not create instances of this class

@@ -157,6 +157,16 @@ public final class DWARFAttribute {
 	public static final int DW_AT_GNU_pubtypes = 0x2135;
 	// end GNU DebugFission
 
+	// Golang
+	public static final int DW_AT_go_kind = 0x2900;
+	public static final int DW_AT_go_key = 0x2901;
+	public static final int DW_AT_go_elem = 0x2902;
+	public static final int DW_AT_go_embedded_field = 0x2903;
+	public static final int DW_AT_go_runtime_type = 0x2904;
+	public static final int DW_AT_go_package_name = 0x2905;
+	public static final int DW_AT_go_dict_index = 0x2906;
+	// end Golang
+
 	// Apple proprietary tags
 	public static final int DW_AT_APPLE_ptrauth_key = 0x3e04;
 	public static final int DW_AT_APPLE_ptrauth_address_discriminated = 0x3e05;
