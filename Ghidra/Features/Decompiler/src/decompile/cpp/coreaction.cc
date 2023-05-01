@@ -1466,14 +1466,8 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 	data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
     }
   }
-  if (spacebase != (AddrSpace *)0) {	// If we need it, create the stackplaceholder
-    PcodeOp *op = fc->getOp();
-    int4 slot = op->numInput();
-    Varnode *loadval = data.opStackLoad(spacebase,0,1,op,(Varnode *)0,false);
-    data.opInsertInput(op,loadval,slot);
-    fc->setStackPlaceholderSlot(slot);
-    loadval->setSpacebasePlaceholder();
-  }
+  if (spacebase != (AddrSpace *)0)	// If we need it, create the stackplaceholder
+    fc->createPlaceholder(data, spacebase);
 }
 
 /// \brief Set up the return value recovery process for a single sub-function call
