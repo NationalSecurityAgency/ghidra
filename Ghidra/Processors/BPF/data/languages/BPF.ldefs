@@ -5,7 +5,7 @@
             size="32"
             variant="default"
             version="1.0"
-            slafile="BPF.sla"
+            slafile="BPF_le.sla"
             processorspec="BPF.pspec"
             id="BPF:LE:32:default">
     <description>BPF processor 32-bit little-endian</description>
