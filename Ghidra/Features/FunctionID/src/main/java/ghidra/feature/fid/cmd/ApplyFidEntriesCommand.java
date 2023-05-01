@@ -79,7 +79,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 				}
 
 				for (FidSearchResult entry : processProgram) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 
 					monitor.incrementProgress(1);
 					if (entry.function.isThunk()) {
@@ -167,7 +167,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 		int counter = 0;
 		Iterator<String> iterator = nameAnalysis.getNameIterator();
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String display = iterator.next();
 			NameVersions versions = nameAnalysis.getVersions(display);
 			if (versions != null && versions.demangledFull != null) {
@@ -202,7 +202,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 		if (nameAnalysis.numLibraries() < MAGIC_MULTIPLE_LIBRARY_LIMIT) {
 			Iterator<String> iterator = nameAnalysis.getLibraryIterator();
 			while (iterator.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (counter != 0) {
 					buffer.append(", ");
 				}
@@ -359,7 +359,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 
 		Address addr = function.getEntryPoint();
 		for (String functionName : unusedNames) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			addSymbolToFunction(function, functionName);
 			List<Address> list = multiMatchNames.get(functionName);
 			if (list == null) {

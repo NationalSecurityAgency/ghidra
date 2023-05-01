@@ -114,7 +114,7 @@ public abstract class ReducingLcs<I, T> extends Lcs<T> {
 
 		// add the shared beginning
 		for (int i = 0; i < startn; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			lcs.add(valueOf(xSource, i));
 		}
 
@@ -125,7 +125,7 @@ public abstract class ReducingLcs<I, T> extends Lcs<T> {
 		int length = lengthOf(xSource);
 		int endx = getEnd(xSource);
 		for (int i = endx; i < length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			lcs.add(valueOf(xSource, i));
 		}
 

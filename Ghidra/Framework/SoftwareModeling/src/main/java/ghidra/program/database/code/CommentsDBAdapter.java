@@ -126,7 +126,7 @@ abstract class CommentsDBAdapter {
 			CommentsDBAdapter tmpAdapter = new CommentsDBAdapterV1(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.getRecords();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getKey());
 				rec.setKey(addrMap.getKey(addr, true));
@@ -139,7 +139,7 @@ abstract class CommentsDBAdapter {
 
 			iter = tmpAdapter.getRecords();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = iter.next();
 				newAdapter.updateRecord(rec);
 				monitor.setProgress(++count);

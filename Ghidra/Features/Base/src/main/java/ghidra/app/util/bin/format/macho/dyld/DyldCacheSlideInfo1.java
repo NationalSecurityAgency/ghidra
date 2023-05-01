@@ -145,7 +145,7 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 		// V1 pointers currently don't need to be fixed, unless the pointers the
 		// dyld is slid from its preferred location.
 		for (int tocIndex = 0; tocIndex < toc_count; tocIndex++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			int entryIndex = (toc[tocIndex]) & 0xFFFF;
 			if (entryIndex > entries_count || entryIndex > bits.length) {

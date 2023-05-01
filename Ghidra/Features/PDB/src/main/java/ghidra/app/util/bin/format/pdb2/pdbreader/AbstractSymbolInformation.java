@@ -172,7 +172,7 @@ public abstract class AbstractSymbolInformation {
 		}
 		Map<Long, AbstractMsSymbol> symbolsByOffset = debugInfo.getSymbolsByOffset();
 		for (SymbolHashRecord record : hashRecords) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			long offset = record.getOffset() - 2; // Modified offset
 			AbstractMsSymbol symbol = symbolsByOffset.get(offset);
 			modifiedHashRecordSymbolOffsets.add(offset);
@@ -192,7 +192,7 @@ public abstract class AbstractSymbolInformation {
 		builder.append("HashRecords-------------------------------------------------\n");
 		builder.append("numHashRecords: " + hashRecords.size() + "\n");
 		for (SymbolHashRecord record : hashRecords) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			builder.append(
 				String.format("0X%08X  0X%04X\n", record.getOffset(), record.getReferenceCount()));
 		}
@@ -262,7 +262,7 @@ public abstract class AbstractSymbolInformation {
 
 		hashBucketOffsets = new ArrayList<>();
 		while (bucketsReader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			hashBucketOffsets.add(bucketsReader.parseInt());
 		}
 
@@ -323,11 +323,11 @@ public abstract class AbstractSymbolInformation {
 		// Throw away extra bytes between bit map and buckets.
 		reader.getSubPdbByteReader(numExtraBytes);
 		while (bitEncoderReader.hasMore() && reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			long val = bitEncoderReader.parseUnsignedIntVal();
 			//bitEncoded[index++] = val;
 			for (int bit = 0; bit < 32 && reader.hasMore(); bit++) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				if ((val & 0x01L) == 0x01L) {
 					hashBucketOffsets.add(reader.parseInt());
 				}
@@ -344,7 +344,7 @@ public abstract class AbstractSymbolInformation {
 			throw new PdbException("Compressed GSI Hash Buckets corrupt");
 		}
 		while (bitEncoderReader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			if (bitEncoderReader.parseUnsignedIntVal() != 0) {
 				throw new PdbException("Compressed GSI Hash Buckets corrupt");
 			}
@@ -362,7 +362,7 @@ public abstract class AbstractSymbolInformation {
 			throws PdbException, CancelledException {
 		hashRecords = new TreeSet<>();
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			SymbolHashRecord record = new SymbolHashRecord();
 			record.parse(reader);
 			hashRecords.add(record);

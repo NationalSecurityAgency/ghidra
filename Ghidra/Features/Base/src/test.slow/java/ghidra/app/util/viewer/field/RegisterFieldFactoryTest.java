@@ -100,7 +100,7 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 			program.endTransaction(transactionID, true);
 		}
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 
 		assertTrue(cb.goToField(entry, RegisterFieldFactory.FIELD_NAME, 0, 0, 0));
@@ -151,7 +151,7 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 			program.endTransaction(transactionID, true);
 		}
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 
 		assertTrue(cb.goToField(entry, RegisterFieldFactory.FIELD_NAME, 0, 0, 0));
@@ -181,7 +181,7 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 			program.endTransaction(transactionID, true);
 		}
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 
 		assertTrue(cb.goToField(entry, RegisterFieldFactory.FIELD_NAME, 0, 0, 0));

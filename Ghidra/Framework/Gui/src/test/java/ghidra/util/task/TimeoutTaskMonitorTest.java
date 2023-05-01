@@ -37,7 +37,7 @@ public class TimeoutTaskMonitorTest extends AbstractGenericTest {
 		sleep(timeout * 2);
 
 		try {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			fail();
 		}
 		catch (TimeoutException e) {

@@ -162,7 +162,7 @@ public class DecimalSearchFormat extends SearchFormat {
 
 		for (int i = 0; i < n; i++) {
 			byte b = (byte) value;
-			list.add(new Byte(b));
+			list.add(Byte.valueOf(b));
 			value >>= 8;
 		}
 		if (isBigEndian) {

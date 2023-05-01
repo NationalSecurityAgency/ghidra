@@ -129,7 +129,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		ArrayList<Function> funcList = new ArrayList<Function>(); // list of functions needing stack frames created
 		stack.push(f);
 		while (!stack.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = stack.pop();
 			// if the purge for the function is unknown, it has not been looked at yet.
 			//  we need to add it to the list to analyze its stack frame.
@@ -139,7 +139,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 				AddressIterator iter =
 					program.getReferenceManager().getReferenceSourceIterator(func.getBody(), true);
 				while (iter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Address fromAddr = iter.next();
 					Reference refs[] =
 						program.getReferenceManager().getFlowReferencesFrom(fromAddr);
@@ -174,7 +174,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		int default_stackshift = defaultModel.getStackshift();
 
 		while (!funcList.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = funcList.remove(0);
 			monitor.setMessage("Stack " + func.getName());
 
@@ -385,7 +385,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		VarnodeOperation vop = (VarnodeOperation) exp;
 		Varnode[] inputValues = vop.getInputValues();
 		for (int i = 0; i < inputValues.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (vn.equals(inputValues[i])) {
 				inputValues[i] = value;
 			}

@@ -411,7 +411,7 @@ class ThreadedTableModelUpdateMgr<T> {
 		public void run() {
 			TableUpdateJob<T> job = getNextJob();
 			while (job != null) {
-				monitor.clearCanceled();
+				monitor.clearCancelled();
 				job.run();
 
 				// useful for debug				
@@ -433,7 +433,7 @@ class ThreadedTableModelUpdateMgr<T> {
 		}
 
 		@Override
-		public void clearCanceled() {
+		public void clearCancelled() {
 			// don't allow this
 		}
 	}

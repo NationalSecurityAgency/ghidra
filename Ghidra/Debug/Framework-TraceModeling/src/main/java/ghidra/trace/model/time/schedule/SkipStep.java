@@ -70,7 +70,7 @@ public class SkipStep extends AbstractStep {
 			throws CancelledException {
 		for (int i = 0; i < tickCount; i++) {
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			stepper.skip(emuThread);
 		}
 	}

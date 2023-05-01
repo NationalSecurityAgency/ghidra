@@ -72,7 +72,7 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 			if (myProgram != null) {
 				myProgram.flushEvents();
 			}
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 		}
 		catch (Exception e) {

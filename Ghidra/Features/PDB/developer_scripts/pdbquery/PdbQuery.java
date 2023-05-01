@@ -124,7 +124,7 @@ public class PdbQuery {
 		println(script, "Searching " + num + " PDB data type components...");
 		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
 				.getTypeIndexMaxExclusive(); indexNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
 			AbstractMsType typeRecord = pdb.getTypeRecord(recordNumber);
 			String recordString = typeRecord.toString();
@@ -163,7 +163,7 @@ public class PdbQuery {
 		println(script, "Searching " + num + " PDB item type components...");
 		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < ipi
 				.getTypeIndexMaxExclusive(); indexNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			RecordNumber recordNumber = RecordNumber.itemRecordNumber(indexNumber);
 			AbstractMsType typeRecord = pdb.getTypeRecord(recordNumber);
 			String recordString = typeRecord.toString();
@@ -200,7 +200,7 @@ public class PdbQuery {
 		TaskMonitor monitor = script.getMonitor();
 		int numSymbols = 0;
 		for (int module = 0; module <= numModules; module++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(module);
 				numSymbols += symbols.size();
@@ -213,12 +213,12 @@ public class PdbQuery {
 		monitor.initialize(numSymbols);
 		println(script, "Searching " + numSymbols + " PDB symbol components...");
 		for (int module = 0; module <= numModules; module++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(module);
 				numSymbols += symbols.size();
 				for (Map.Entry<Long, AbstractMsSymbol> entry : symbols.entrySet()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					AbstractMsSymbol symbol = entry.getValue();
 					String symbolString = symbol.toString();
 					if (symbolString.contains(searchString)) {

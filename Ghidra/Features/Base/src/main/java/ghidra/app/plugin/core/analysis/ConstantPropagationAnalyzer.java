@@ -252,7 +252,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		AddressSet inBodySet = new AddressSet();
 		Iterator<Function> fiter = program.getFunctionManager().getFunctionsOverlapping(set);
 		while (fiter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function function = fiter.next();
 			locations.add(function.getEntryPoint());
 			inBodySet.add(function.getBody());
@@ -268,7 +268,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 		AddressSet outOfBodySet = new AddressSet();
 		while (referenceDestinationIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = referenceDestinationIterator.next();
 			ReferenceIterator referencesTo = referenceManager.getReferencesTo(address);
 			while (referencesTo.hasNext()) {
@@ -290,7 +290,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		outOfBodySet = new AddressSet();
 		AddressRangeIterator addressRanges = set.getAddressRanges();
 		while (addressRanges.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange addressRange = addressRanges.next();
 			locations.add(addressRange.getMinAddress());
 			outOfBodySet.add(addressRange.getMinAddress());
@@ -315,7 +315,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	protected AddressSetView runAddressAnalysis(final Program program, final Set<Address> locations,
 			final TaskMonitor monitor) throws CancelledException, InterruptedException, Exception {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		final AddressSet analyzedSet = new AddressSet();
 		if (locations.isEmpty()) {
@@ -391,7 +391,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		Listing listing = program.getListing();
 		int count = 0;
 		while (!todoSet.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if ((count++ % NOTIFICATION_INTERVAL) == 0) {
 				monitor.setProgress(totalNumAddresses - todoSet.getNumAddresses());
@@ -446,7 +446,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	public AddressSetView analyzeLocation(final Program program, Address start, AddressSetView set,
 			final TaskMonitor monitor) throws CancelledException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// get the function body
 		if (program.getListing().getInstructionAt(start) == null) {

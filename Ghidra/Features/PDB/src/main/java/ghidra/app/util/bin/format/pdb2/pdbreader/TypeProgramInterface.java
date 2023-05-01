@@ -266,7 +266,7 @@ public abstract class TypeProgramInterface implements TPI {
 		int recordNumber = typeIndexMin;
 
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 
 			recordLength = reader.parseUnsignedShortVal();
 			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
@@ -430,7 +430,7 @@ public abstract class TypeProgramInterface implements TPI {
 				throws PdbException, CancelledException {
 			if (hashKeySize == 2) {
 				for (int index = typeIndexMin; index < typeIndexMaxExclusive; index++) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					long hashVal = reader.parseUnsignedShortVal();
 					if (hashVal < 0 || hashVal >= numHashBins) {
 						throw new PdbException("Bad hashVal: " + hashVal);
@@ -439,7 +439,7 @@ public abstract class TypeProgramInterface implements TPI {
 			}
 			else if (hashKeySize == 4) {
 				for (int index = typeIndexMin; index < typeIndexMaxExclusive; index++) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					long hashVal = reader.parseUnsignedIntVal();
 					if (hashVal < 0 || hashVal >= numHashBins) {
 						throw new PdbException("Bad hashVal: " + hashVal);
@@ -465,7 +465,7 @@ public abstract class TypeProgramInterface implements TPI {
 			}
 			long previousTypeIndex = -1;
 			for (int i = 0; i < numPairs; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				TiOff tiOff = new TiOff32(reader);
 				if (tiOff.getTypeIndex() <= previousTypeIndex) {
 					throw new PdbException("Corruption in TypeIndex/Offset pairs: out of order");

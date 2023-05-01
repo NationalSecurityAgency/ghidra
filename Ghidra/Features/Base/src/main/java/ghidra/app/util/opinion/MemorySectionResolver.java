@@ -282,7 +282,7 @@ public abstract class MemorySectionResolver {
 		int sectionCount = sections.size();
 		monitor.initialize(sectionCount);
 		for (int index = sectionCount - 1; index >= 0; --index) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			resolveSectionMemory(sections.get(index), fileAllocationMap, monitor);
 			monitor.incrementProgress(1);
 		}
@@ -353,7 +353,7 @@ public abstract class MemorySectionResolver {
 		// NOTE: Allocated address ranges may refer to overlay memory address
 		for (AddressRange allocatedAddrRange : memoryAllocationList) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// Generate block name rangeIndex suffix if section sliced-up
 			Integer rangeIndex = sectionIndexMap.get(section.sectionName);
@@ -516,7 +516,7 @@ public abstract class MemorySectionResolver {
 		try {
 			long fileOffset = section.getFileOffset(); // only used for initialized sections
 			for (AddressRange physicalAddrRange : physicalConflictAddrSet.getAddressRanges()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Address physicalRangeMinAddr = physicalAddrRange.getMinAddress();
 				Address physicalRangeMaxAddr = physicalAddrRange.getMaxAddress();

@@ -330,7 +330,7 @@ public class VariableStorageManagerDB implements VariableStorageManager {
 		try {
 			RecordIterator recIter = adapter.getRecords();
 			while (recIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				DBRecord rec = recIter.next();
 				// NOTE: addrMap has already been switched-over to new language and its address spaces

@@ -129,7 +129,7 @@ public class InMemoryRangeMapAdapter implements RangeMapAdapter {
 		AddressRangeObjectMap<byte[]> newRangeMap = new AddressRangeObjectMap<byte[]>();
 		AddressRangeIterator addressRangeIterator = rangeMap.getAddressRangeIterator();
 		while (addressRangeIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange range = addressRangeIterator.next();
 			byte[] oldBytes = rangeMap.getObject(range.getMinAddress());
 			RegisterValue regValue = new RegisterValue(mapReg, oldBytes);

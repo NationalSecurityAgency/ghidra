@@ -148,7 +148,7 @@ public class PCodeCfgGraphTask extends Task {
 			throws CancelledException {
 		Iterator<PcodeOpAST> opIter = hfunction.getPcodeOps();
 		while (opIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			graphOpData(graph, opIter.next(), monitor);
 		}
 	}
@@ -187,7 +187,7 @@ public class PCodeCfgGraphTask extends Task {
 		}
 
 		for (int i = start; i <= stop; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Varnode input = op.getInput(i);
 			if (input != null) {
 				if (opVertex == null) {
@@ -272,7 +272,7 @@ public class PCodeCfgGraphTask extends Task {
 			throws CancelledException {
 		Iterator<PcodeBlockBasic> pblockIter = hfunction.getBasicBlocks().iterator();
 		while (pblockIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			graphPcodeBlock(graph, pblockIter.next(), monitor);
 		}
 	}
@@ -288,7 +288,7 @@ public class PCodeCfgGraphTask extends Task {
 
 		int outCnt = pblock.getOutSize();
 		for (int i = 0; i < outCnt; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			PcodeBlock outPBlock = pblock.getOut(i);
 			AttributedVertex toVertex = getBlockVertex(graph, outPBlock, monitor);
 			graph.addEdge(fromVertex, toVertex);

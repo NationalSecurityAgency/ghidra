@@ -764,7 +764,7 @@ public class ProjectFileManager implements ProjectData {
 			RepositoryAdapter newRepository, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		for (DomainFile df : checkoutList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (hasInvalidCheckout(df, newRepository)) {
 				return true;
 			}
@@ -787,7 +787,7 @@ public class ProjectFileManager implements ProjectData {
 			throws IOException, CancelledException {
 		List<DomainFile> list = new ArrayList<>();
 		for (DomainFile df : checkoutList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (hasInvalidCheckout(df, newRepository)) {
 				list.add(df);
 			}
@@ -809,7 +809,7 @@ public class ProjectFileManager implements ProjectData {
 	private void undoCheckouts(List<DomainFile> files, boolean keep, boolean force,
 			TaskMonitor monitor) throws IOException, CancelledException {
 		for (DomainFile df : files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (df.isCheckedOut()) {
 				df.undoCheckout(keep, force);
 			}
@@ -835,7 +835,7 @@ public class ProjectFileManager implements ProjectData {
 			throws IOException, CancelledException {
 
 		for (String name : fileSystem.getItemNames(folderPath)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			LocalFolderItem item = fileSystem.getItem(folderPath, name);
 			if (item.getCheckoutId() != FolderItem.DEFAULT_CHECKOUT_ID) {
 				GhidraFolderData folderData =
@@ -851,7 +851,7 @@ public class ProjectFileManager implements ProjectData {
 		}
 
 		for (String subfolder : fileSystem.getFolderNames(folderPath)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			findCheckedOutFiles(folderPath + subfolder, checkoutList, monitor);
 		}
 	}

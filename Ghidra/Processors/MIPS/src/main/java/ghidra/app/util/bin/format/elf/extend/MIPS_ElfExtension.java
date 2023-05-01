@@ -787,7 +787,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 
 			// process local symbol got entries
 			for (int i = 0; i < gotLocalEntryCount; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Address gotEntryAddr =
 					adjustTableEntryIfNonZero(gotBaseAddress, i, imageShift, elfLoadHelper);
 				Data pointerData = elfLoadHelper.createData(gotEntryAddr, PointerDataType.dataType);
@@ -799,7 +799,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			// process global/external symbol got entries
 			int gotIndex = gotLocalEntryCount;
 			for (int i = gotSymbolIndex; i < elfSymbols.length; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Address gotEntryAddr = adjustTableEntryIfNonZero(gotBaseAddress, gotIndex++,
 					imageShift, elfLoadHelper);
 				Data pointerData = elfLoadHelper.createData(gotEntryAddr, PointerDataType.dataType);
@@ -857,7 +857,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			// process global dynamic symbol got entries
 			int gotEntryIndex = 1;
 			for (int i = 0; i < gotSymbolIndex; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (!elfSymbols[i].isFunction() || !elfSymbols[i].isGlobal() ||
 					elfSymbols[i].getSectionHeaderIndex() != 0) {
 					continue;

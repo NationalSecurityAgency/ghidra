@@ -149,7 +149,7 @@ public class SymbolServerService {
 		Set<String> uniqueSymbolFilePaths = new HashSet<>();
 
 		for_each_symbol_server_loop: for (SymbolServer symbolServer : symbolServers) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!symbolServer.isLocal() && !findOptions.contains(FindOption.ALLOW_REMOTE)) {
 				Msg.debug(this,
 					logPrefix() + ": skipping non-local symbol server " +

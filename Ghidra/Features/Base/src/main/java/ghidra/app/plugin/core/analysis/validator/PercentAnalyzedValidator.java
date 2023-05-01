@@ -93,7 +93,7 @@ public class PercentAnalyzedValidator extends PostAnalysisValidator {
 			instCount += length;
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		DataIterator dataIter = prog.getListing().getData(execMemSetInitialized, true);
 		int dataCount = 0;

@@ -125,13 +125,13 @@ public class MsfStream {
 		// Read remaining pages, including last as possible partial page.
 		// Outer loop iterates over possible non-sequential groups.
 		while (remainingByteCount > 0) {
-			msf.checkCanceled();
+			msf.checkCancelled();
 			// Inner loop groups together sequential pages into one big read.
 			int firstSequentialPageNumber = pageList.get(pageNumber);
 			int lastSequentialPageNumber = firstSequentialPageNumber;
 			int numToReadInSequentialPages = 0;
 			do {
-				msf.checkCanceled();
+				msf.checkCancelled();
 				pageNumber++;
 				lastSequentialPageNumber++;
 				int numToReadInPage = Math.min(msf.getPageSize(), remainingByteCount);
@@ -238,7 +238,7 @@ public class MsfStream {
 			Msf.floorDivisionWithLog2Divisor(streamLength, msf.getLog2PageSize());
 		if (msf.getPageNumberSize() == 2) {
 			for (int i = 0; i < numPages; i++) {
-				msf.checkCanceled();
+				msf.checkCancelled();
 				int pageNumber = reader.parseUnsignedShortVal();
 				if (pageNumber == 0) {
 					break;
@@ -248,7 +248,7 @@ public class MsfStream {
 		}
 		else if (msf.getPageNumberSize() == 4) {
 			for (int i = 0; i < numPages; i++) {
-				msf.checkCanceled();
+				msf.checkCancelled();
 				int pageNumber = reader.parseInt();
 				if (pageNumber == 0) {
 					break;

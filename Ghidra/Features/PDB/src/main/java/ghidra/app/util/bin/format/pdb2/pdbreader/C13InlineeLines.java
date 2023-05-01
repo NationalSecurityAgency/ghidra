@@ -54,7 +54,7 @@ public class C13InlineeLines extends C13Section {
 			TaskMonitor monitor) throws CancelledException, PdbException {
 		List<InlineeSourceLine> lines = new ArrayList<>();
 		while (reader.numRemaining() >= InlineeSourceLine.getBaseRecordSize()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			InlineeSourceLine line = new InlineeSourceLine(reader);
 			lines.add(line);
 		}
@@ -65,7 +65,7 @@ public class C13InlineeLines extends C13Section {
 			TaskMonitor monitor) throws CancelledException, PdbException {
 		List<InlineeSourceLine> lines = new ArrayList<>();
 		while (reader.numRemaining() >= ExtendedInlineeSourceLine.getBaseRecordSize()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			ExtendedInlineeSourceLine line = new ExtendedInlineeSourceLine(reader, monitor);
 			lines.add(line);
 		}
@@ -165,7 +165,7 @@ public class C13InlineeLines extends C13Section {
 			super(reader);
 			long numExtraFiles = reader.parseUnsignedIntVal(); // unsigned int
 			for (long i = 0; i < numExtraFiles; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				extraFileIds.add(reader.parseInt());
 			}
 		}

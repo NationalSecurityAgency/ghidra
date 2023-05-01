@@ -550,7 +550,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		findAndTestFileChooser(importFile.getParentFile(), importFile.getName());
 
 		// give a chance for the work to be done by the swing thread
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void closeWarningDialog(boolean proceed) {
@@ -608,7 +608,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> okButton.doClick());
 
 		// wait to make sure that there is enough time to write the data
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// make sure that the file was created or already existed
 		File selectedFile = fileChooser.getSelectedFile(false);

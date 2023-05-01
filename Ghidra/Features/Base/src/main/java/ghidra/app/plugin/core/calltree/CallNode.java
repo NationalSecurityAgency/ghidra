@@ -80,7 +80,7 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		ReferenceManager referenceManager = program.getReferenceManager();
 		AddressIterator addressIterator = addresses.getAddresses(true);
 		while (addressIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = addressIterator.next();
 			Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
 			if (referencesFrom != null) {

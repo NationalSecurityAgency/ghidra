@@ -91,7 +91,7 @@ public class DumpFunctionPatternInfoScript extends GhidraScript {
 
 		AddressSetView initialized = currentProgram.getMemory().getLoadedAndInitializedAddressSet();
 		while (fIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = fIter.next();
 			if (func.isThunk()) {
 				continue;

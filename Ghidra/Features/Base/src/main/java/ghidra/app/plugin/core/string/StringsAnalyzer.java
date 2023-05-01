@@ -309,7 +309,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 
 			for (AddressSpace space : addressSpaces) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// Portion of current address space that intersects with initialized memory
 				AddressSet intersecting =

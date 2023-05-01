@@ -93,7 +93,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 		int cnt = 0;
 		RecordIterator iter = symbolTable.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 			if (rec.getBooleanValue(V0_SYMBOL_LOCAL_COL)) {
 				SymbolManager.saveLocalSymbol(handle, rec.getKey(),

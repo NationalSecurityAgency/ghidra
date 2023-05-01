@@ -618,7 +618,7 @@ public class FunctionManagerDB implements FunctionManager {
 			// Remove functions which overlap deleted address range
 			Iterator<Function> iter = getFunctionsOverlapping(new AddressSet(startAddr, endAddr));
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				FunctionDB func = (FunctionDB) iter.next();
 				removeFunction(func.getEntryPoint());
 			}
@@ -696,7 +696,7 @@ public class FunctionManagerDB implements FunctionManager {
 
 		FunctionIterator functions = getFunctions(false);
 		while (functions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// Establish signature source
 			FunctionDB func = (FunctionDB) functions.next();
@@ -776,13 +776,13 @@ public class FunctionManagerDB implements FunctionManager {
 			throws CancelledException, IOException {
 		FunctionIterator functions = getFunctions(false);
 		while (functions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FunctionDB func = (FunctionDB) functions.next();
 			removeExplicitThisParameters(func);
 		}
 		functions = getExternalFunctions();
 		while (functions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FunctionDB func = (FunctionDB) functions.next();
 			removeExplicitThisParameters(func);
 		}
@@ -1077,7 +1077,7 @@ public class FunctionManagerDB implements FunctionManager {
 		}
 		AddressIterator iter = decompilerPropertyMap.getPropertyIterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			upgradeDotDotDotToVarArgs(iter.next(), decompilerPropertyMap);
 		}
 
@@ -1327,7 +1327,7 @@ public class FunctionManagerDB implements FunctionManager {
 		try {
 			RecordIterator recIter = adapter.iterateFunctionRecords();
 			while (recIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				DBRecord rec = recIter.next();
 				// NOTE: addrMap has already been switched-over to new language and its address spaces

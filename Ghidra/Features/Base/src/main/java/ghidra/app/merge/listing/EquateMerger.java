@@ -148,7 +148,7 @@ class EquateMerger extends AbstractListingMerger {
 				// Each operand index can have multiple scalars
 				Scalar[] scalars = getScalars(resultCU, opIndex);
 				for (Scalar scalar : scalars) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					getOperandScalarConflicts(addr, opIndex, scalar);
 				}
 			}
@@ -329,7 +329,7 @@ class EquateMerger extends AbstractListingMerger {
 				else {
 					if (askUser && mergeManager != null) {
 						setupConflictPanel(listingPanel, equateConflict);
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 					}
 					else {
 						merge(equateConflict.address, equateConflict.opIndex,

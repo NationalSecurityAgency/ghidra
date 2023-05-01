@@ -424,7 +424,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(mappingWithSlideOffset);
 			for (int i = 0; i < mappingWithSlideCount; ++i) {
 				cacheMappingAndSlideInfoList.add(new DyldCacheMappingAndSlideInfo(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -747,7 +747,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(mappingOffset);
 			for (int i = 0; i < mappingCount; ++i) {
 				mappingInfoList.add(new DyldCacheMappingInfo(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -769,7 +769,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(offset);
 			for (int i = 0; i < count; ++i) {
 				imageInfoList.add(new DyldCacheImageInfo(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -815,7 +815,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(branchPoolsOffset);
 			for (int i = 0; i < branchPoolsCount; ++i) {
 				branchPoolList.add(reader.readNextLong());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -834,7 +834,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(imagesTextOffset);
 			for (int i = 0; i < imagesTextCount; ++i) {
 				imageTextInfoList.add(new DyldCacheImageTextInfo(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -854,7 +854,7 @@ public class DyldCacheHeader implements StructConverter {
 			reader.setPointerIndex(subCacheArrayOffset);
 			for (int i = 0; i < subCacheArrayCount; ++i) {
 				subcacheEntryList.add(new DyldSubcacheEntry(reader, headerType));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -910,7 +910,7 @@ public class DyldCacheHeader implements StructConverter {
 				Data d = DataUtilities.createData(program, addr, mappingInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -930,7 +930,7 @@ public class DyldCacheHeader implements StructConverter {
 				Data d = DataUtilities.createData(program, addr, mappingInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -952,7 +952,7 @@ public class DyldCacheHeader implements StructConverter {
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				program.getListing().setComment(addr, CodeUnit.EOL_COMMENT, imageInfo.getPath());
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -1029,7 +1029,7 @@ public class DyldCacheHeader implements StructConverter {
 					Pointer64DataType.dataType.getLength(),
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -1070,7 +1070,7 @@ public class DyldCacheHeader implements StructConverter {
 				program.getListing()
 						.setComment(addr, CodeUnit.EOL_COMMENT, imageTextInfo.getPath());
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -1090,7 +1090,7 @@ public class DyldCacheHeader implements StructConverter {
 				Data d = DataUtilities.createData(program, addr, subcacheEntry.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}

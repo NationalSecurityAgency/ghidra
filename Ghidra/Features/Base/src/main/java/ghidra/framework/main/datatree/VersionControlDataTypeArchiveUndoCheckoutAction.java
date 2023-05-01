@@ -261,7 +261,7 @@ public class VersionControlDataTypeArchiveUndoCheckoutAction extends VersionCont
 					}
 				}
 				for (DomainFileArchive currentArchive : modifiedCheckedOutFiles) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					DomainFile currentDF = currentArchive.getDomainFile();
 
 					if (saveCopy && currentDF.isChanged()) {

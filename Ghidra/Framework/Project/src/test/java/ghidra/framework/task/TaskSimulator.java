@@ -199,7 +199,7 @@ public class TaskSimulator {
 			monitor.initialize(count);
 
 			for (int i = 0; i < count; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				try {
 					Thread.sleep(1000);
 				}

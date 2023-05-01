@@ -412,7 +412,7 @@ public class Emulate {
 			}
 			executionState = EmulateExecutionState.EXECUTE;
 			do {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				executeCurrentOp();
 			}
 			while (executionState == EmulateExecutionState.EXECUTE);

@@ -401,7 +401,7 @@ class ServerConnectTask extends Task {
 			// do nothing - connect occurs during instantiation
 		}
 		finally {
-			monitor.checkCanceled(); // circumvent any IOException which may have occured
+			monitor.checkCancelled(); // circumvent any IOException which may have occured
 		}
 
 		// Perform secure socket test connection to prime keystore use without RMI involvement
@@ -415,7 +415,7 @@ class ServerConnectTask extends Task {
 			return socket.getSession().getPeerCertificates();
 		}
 		finally {
-			monitor.checkCanceled(); // circumvent any IOException which may have occured
+			monitor.checkCancelled(); // circumvent any IOException which may have occured
 		}
 	}
 

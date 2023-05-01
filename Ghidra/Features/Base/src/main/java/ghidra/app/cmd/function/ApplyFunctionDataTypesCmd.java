@@ -189,7 +189,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 
 		monitor.initialize(functionNameMap.size());
 		for (String functionName : functionNameMap.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			FunctionDefinition fdef = functionNameMap.get(functionName);
 			checkForSymbol(monitor, functionName, fdef, symbolMap, null);
@@ -205,10 +205,10 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	private void collectFunctionDefinitions(Category cat, TaskMonitor monitor,
 			Map<String, FunctionDefinition> functionNameMap) throws CancelledException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		for (DataType dt : cat.getDataTypes()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!(dt instanceof FunctionDefinition)) {
 				continue;
 			}

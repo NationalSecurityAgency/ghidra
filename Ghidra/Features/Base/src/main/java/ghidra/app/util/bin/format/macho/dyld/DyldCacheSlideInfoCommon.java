@@ -154,7 +154,7 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 
 		// Create pointers at any fixed-up addresses
 		for (Address addr : unchainedLocList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				program.getListing().createData(addr, Pointer64DataType.dataType);
 			}

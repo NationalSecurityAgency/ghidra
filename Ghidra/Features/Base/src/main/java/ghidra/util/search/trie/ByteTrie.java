@@ -174,7 +174,7 @@ public class ByteTrie<T> implements ByteTrieIfc<T> {
 		ByteTrieNode<T> top = root;
 		monitor.initialize(numberOfNodes());
 		while (top != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			op.op(top);
 			if (top.children.length == 0) {
@@ -206,7 +206,7 @@ public class ByteTrie<T> implements ByteTrieIfc<T> {
 		ByteTrieNode<T> ptr = root;
 		int index = 0;
 		while (index < text.length) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			ByteTrieNode<T> trans = null;
 			while (trans == null) {
@@ -265,7 +265,7 @@ public class ByteTrie<T> implements ByteTrieIfc<T> {
 			ByteTrieNode<T> ptr = root;
 			Address address = range.getMinAddress();
 			while (range.contains(address)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				final int bytesRead = memory.getBytes(address, buffer, 0, fetchSize);
 				monitor.incrementProgress(bytesRead);
 
@@ -324,7 +324,7 @@ public class ByteTrie<T> implements ByteTrieIfc<T> {
 			}
 			root.suffix = root;
 			while (!queue.isEmpty()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				ByteTrieNode<T> node = queue.removeFirst();
 				for (int ii = 0; ii < node.children.length; ++ii) {

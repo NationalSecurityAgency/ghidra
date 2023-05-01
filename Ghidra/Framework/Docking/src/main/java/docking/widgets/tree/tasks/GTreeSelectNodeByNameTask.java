@@ -53,7 +53,7 @@ public class GTreeSelectNodeByNameTask extends GTreeTask {
 		}
 
 		for (int i = 1; i < names.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			node = findNodeByName(node, names[i], monitor);
 			if (node == null) {
 				Msg.debug(this,
@@ -68,7 +68,7 @@ public class GTreeSelectNodeByNameTask extends GTreeTask {
 	private GTreeNode findNodeByName(GTreeNode node, String name, TaskMonitor monitor)
 			throws CancelledException {
 		for (GTreeNode child : node.getChildren()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (child.getName().equals(name)) {
 				return child;
 			}

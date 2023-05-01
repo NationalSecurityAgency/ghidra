@@ -141,7 +141,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 		ElfSectionHeader[] stringSections = elf.getSections(ElfSectionHeaderConstants.SHT_STRTAB);
 		for (ElfSectionHeader stringSection : stringSections) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				Address addr = addr(stringSection.getOffset());
 				Address maxAddr = addr.addNoWrap(stringSection.getSize() - 1);
@@ -176,7 +176,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 	private void processSectionHeaders(ElfHeader elf, Listing listing) throws Exception {
 		ElfSectionHeader[] sections = elf.getSections();
 		for (int i = 0; i < sections.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String name = sections[i].getNameAsString();
 
 			DataType sectionDT = sections[i].toDataType();
@@ -229,7 +229,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 		ElfProgramHeader[] programHeaders = elf.getProgramHeaders();
 		for (int i = 0; i < programHeaders.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data d = array.getComponent(i);
 			d.setComment(CodeUnit.EOL_COMMENT, programHeaders[i].getComment());
 
@@ -243,7 +243,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			throws CancelledException {
 		for (ElfProgramHeader programHeader : elf.getProgramHeaders(
 			ElfProgramHeaderConstants.PT_INTERP)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long offset = programHeader.getOffset();
 			if (offset == 0) {
 				Msg.warn(this, " Dynamic table appears to have been stripped from binary");
@@ -281,7 +281,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			BinaryReader reader = new BinaryReader(provider, !program.getMemory().isBigEndian());
 
 			for (int i = 0; i < dynamics.length; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Data dynamicData = dynamicTableData.getComponent(i);
 				if (dynamicData == null) {
@@ -360,7 +360,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 		ElfSymbolTable[] symbolTables = elf.getSymbolTables();
 		for (ElfSymbolTable symbolTable2 : symbolTables) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address symbolTableAddr = addr(symbolTable2.getFileOffset());
 
@@ -406,7 +406,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		monitor.setMessage("Processing relocation tables...");
 		ElfRelocationTable[] relocationTables = elf.getRelocationTables();
 		for (ElfRelocationTable relocationTable : relocationTables) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			ElfSectionHeader relocationSection = relocationTable.getTableSectionHeader();
 			String relocSectionName = "<section-not-found>";
 			if (relocationSection != null) {

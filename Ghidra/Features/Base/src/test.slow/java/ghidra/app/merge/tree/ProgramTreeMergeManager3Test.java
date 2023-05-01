@@ -1114,7 +1114,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 		});
 		executeMerge(ProgramTreeMergeManager.RENAME_PRIVATE);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		resultProgram.flushEvents();
 		Thread.sleep(1000);
 

@@ -79,7 +79,7 @@ public class DecompilerParallelConventionAnalysisCmd extends BackgroundCommand {
 		program = (Program) obj;
 
 		try {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			monitor.setMessage("Decompile " + function.getName());
 

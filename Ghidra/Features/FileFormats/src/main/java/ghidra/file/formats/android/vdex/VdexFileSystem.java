@@ -59,7 +59,7 @@ public class VdexFileSystem extends GFileSystemBase {
 			header.parse(reader, monitor);
 
 			for (int i = 0; i < header.getDexHeaderList().size(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DexHeader dexHeader = header.getDexHeaderList().get(i);
 				String name =
 					((dexHeader instanceof CDexHeader) ? "cdex" + "_" + i : "classes" + i + ".dex");

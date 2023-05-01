@@ -497,7 +497,7 @@ public class GTaskTest extends AbstractGenericTest {
 			catch (InterruptedException e) {
 				Assert.fail("Did not expect Interrupted Exception");
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			super.run(obj, monitor);
 		}
 	}

@@ -169,7 +169,7 @@ public class DataTypeWriter {
 		monitor.initialize(dataTypes.length);
 		int cnt = 0;
 		for (DataType dataType : dataTypes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			write(dataType, monitor);
 			monitor.setProgress(++cnt);
 		}
@@ -192,7 +192,7 @@ public class DataTypeWriter {
 		monitor.initialize(dataTypes.size());
 		int cnt = 0;
 		for (DataType dataType : dataTypes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			write(dataType, monitor, throwExceptionOnInvalidType);
 			monitor.setProgress(++cnt);
 		}
@@ -461,7 +461,7 @@ public class DataTypeWriter {
 		sb.append(EOL);
 
 		for (DataTypeComponent component : composite.getComponents()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			writeComponent(component, composite, sb, monitor);
 		}
 

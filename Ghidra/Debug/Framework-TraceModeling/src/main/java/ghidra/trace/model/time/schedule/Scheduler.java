@@ -122,7 +122,7 @@ public interface Scheduler {
 					emuThread.finishInstruction();
 				}
 				for (int i = 0; i < slice.tickCount; i++) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					emuThread.stepInstruction();
 					completedTicks++;
 				}

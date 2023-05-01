@@ -67,7 +67,7 @@ public class MatchData {
 
 		DataIterator aProgDataIter = aProgram.getListing().getDefinedData(setA, true);
 		while (aProgDataIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			Data aData = aProgDataIter.next();
 			final int length = aData.getLength();
@@ -150,7 +150,7 @@ public class MatchData {
 		monitor.initialize(searchResults.size());
 		monitor.setMessage("(3 of 4) Post-process search results");
 		for (SearchResult<Address, Pair<Set<Address>, Set<Address>>> searchResult : searchResults) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			Address bLocation = searchResult.getPosition();
 			if (bLocation.getOffset() % alignment != 0) {
@@ -183,7 +183,7 @@ public class MatchData {
 		monitor.initialize(searchResults.size());
 		monitor.setMessage("(4 of 4) Create match objects");
 		for (SearchResult<Address, Pair<Set<Address>, Set<Address>>> searchResult : searchResults) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			ByteTrieNodeIfc<Pair<Set<Address>, Set<Address>>> node = searchResult.getNode();
 			if (!done.contains(node)) {

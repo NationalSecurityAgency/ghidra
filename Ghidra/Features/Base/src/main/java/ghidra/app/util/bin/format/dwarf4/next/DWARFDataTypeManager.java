@@ -562,7 +562,7 @@ public class DWARFDataTypeManager {
 
 		for (DIEAggregate diea : DIEAMonitoredIterator.iterable(prog, "DWARF Import Types",
 			monitor)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			try {
 				if (isDataType(diea)) {
@@ -640,7 +640,7 @@ public class DWARFDataTypeManager {
 
 		for (DIEAggregate diea : DIEAMonitoredIterator.iterable(prog,
 			"DWARF Import Function Signatures", monitor)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				diea = getFuncDIEA(diea);
 				if (diea != null) {

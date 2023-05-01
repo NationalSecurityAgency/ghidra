@@ -161,7 +161,7 @@ public class NameTable {
 		// of domainSize) and do not need to store the domain and range items
 		// in a list indexed by i.
 		for (int i = 0; i < numPairs; i++) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			int bufOffset = reader.parseInt();
 			int streamNumber = reader.parseInt();
 			nameBufferReader.setIndex(bufOffset);
@@ -189,7 +189,7 @@ public class NameTable {
 	void deserializeNameTableStreams()
 			throws IOException, PdbException, CancelledException {
 		for (int streamNumber : streamNumbers) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			Map<Integer, String> stringsByOffset = new HashMap<>();
 			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
 			if (reader.getLimit() >= 12) {
@@ -202,7 +202,7 @@ public class NameTable {
 							int length = reader.parseInt();
 							PdbByteReader stringReader = reader.getSubPdbByteReader(length);
 							while (stringReader.hasMore()) {
-								pdb.checkCanceled();
+								pdb.checkCancelled();
 								int offset = stringReader.getIndex();
 								String string = stringReader.parseNullTerminatedUtf8String();
 								stringsByOffset.put(offset, string);

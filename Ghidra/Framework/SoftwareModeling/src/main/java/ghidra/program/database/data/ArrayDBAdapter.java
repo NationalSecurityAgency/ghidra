@@ -81,7 +81,7 @@ abstract class ArrayDBAdapter {
 			tmpAdapter = new ArrayDBAdapterV1(tmpHandle, tablePrefix, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
@@ -89,7 +89,7 @@ abstract class ArrayDBAdapter {
 			ArrayDBAdapterV1 newAdapter = new ArrayDBAdapterV1(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}

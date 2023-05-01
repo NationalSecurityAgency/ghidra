@@ -99,7 +99,7 @@ public class ManageFrontEndToolTest extends AbstractGhidraHeadedIntegrationTest 
 
 		DockingActionIf action = getAction(tool, "Project Window", "Configure Tool");
 		performAction(action, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		runSwing(() -> tool.showConfig(false, false));
 
 		managePluginsDialog = tool.getManagePluginsDialog();

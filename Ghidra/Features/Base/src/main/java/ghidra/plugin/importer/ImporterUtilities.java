@@ -410,7 +410,7 @@ public class ImporterUtilities {
 		boolean firstProgram = true;
 		Set<DomainFile> importedFilesSet = new HashSet<>();
 		for (Loaded<? extends DomainObject> loaded : loadResults) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (loaded.getDomainObject() instanceof Program program) {
 				ProgramMappingService.createAssociation(fsrl, program);

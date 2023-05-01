@@ -503,7 +503,7 @@ public class ConditionTestPanel extends JPanel {
 				catch (InterruptedException e) {
 					// ignore interruption
 				}
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			return new ConditionResult(result, msg);
 		}

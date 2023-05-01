@@ -100,7 +100,7 @@ public class FSBRootNode extends FSBNode {
 			return;
 		}
 		for (GTreeNode node : getChildren()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (node instanceof FSBFileNode) {
 				((FSBFileNode) node).updateFileAttributes(monitor);
 			}

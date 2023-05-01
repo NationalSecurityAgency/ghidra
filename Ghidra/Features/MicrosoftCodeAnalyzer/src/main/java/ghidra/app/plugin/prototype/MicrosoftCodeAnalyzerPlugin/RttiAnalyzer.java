@@ -161,7 +161,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		ArrayList<Address> rtti0Locations = new ArrayList<>();
 		int count = 0;
 		for (Address rtti0Address : possibleRtti0Addresses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(count++);
 
 			// Validate
@@ -228,7 +228,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 			List<Address> rtti0Locations, DataValidationOptions validationOptions,
 			TaskMonitor monitor) throws CancelledException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		List<Address> addresses =
 			getRefsToRtti0(program, rtti4Blocks, rtti0Locations, validationOptions, monitor);

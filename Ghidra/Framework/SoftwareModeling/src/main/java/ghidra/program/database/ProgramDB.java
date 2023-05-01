@@ -1572,7 +1572,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			int cnt = 0;
 			for (Symbol functionSymbol : symbolTable.getSymbols(memoryManager, SymbolType.FUNCTION,
 				true)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				ProgramUtilities.convertFunctionWrappedExternalPointer(functionSymbol);
 				monitor.setProgress(++cnt);
 			}
@@ -1588,7 +1588,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		VersionException versionExc = null;
 		overlaySpaceAdapter = new OverlaySpaceAdapterDB(dbh);
 		overlaySpaceAdapter.initializeOverlaySpaces(addressFactory);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			checkOldProperties(openMode, monitor);
@@ -1619,7 +1619,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				return versionExc;
 			}
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			memoryManager =
@@ -1629,7 +1629,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[CODE_MGR] = new CodeManager(dbh, addrMap, openMode, lock, monitor);
@@ -1637,7 +1637,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[FUNCTION_MGR] = new FunctionManagerDB(dbh, addrMap, openMode, lock, monitor);
@@ -1666,7 +1666,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				versionExc = e.combine(versionExc);
 			}
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[EXTERNAL_MGR] = new ExternalManagerDB(dbh, addrMap, openMode, lock, monitor);
@@ -1674,7 +1674,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[SYMBOL_MGR] = new SymbolManager(dbh, addrMap, openMode, this, lock, monitor);
@@ -1682,7 +1682,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[NAMESPACE_MGR] =
@@ -1691,7 +1691,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[REF_MGR] = new ReferenceDBManager(dbh, addrMap, openMode, lock, monitor);
@@ -1699,7 +1699,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[EQUATE_MGR] = new EquateManager(dbh, addrMap, openMode, lock, monitor);
@@ -1707,7 +1707,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[DATA_MGR] =
@@ -1716,7 +1716,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[PROPERTY_MGR] =
@@ -1725,7 +1725,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[BOOKMARK_MGR] = new BookmarkDBManager(dbh, addrMap, openMode, lock, monitor);
@@ -1733,7 +1733,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[TREE_MGR] = new TreeManager(dbh, this, addrMap, openMode, lock, monitor);
@@ -1741,7 +1741,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[RELOC_MGR] = new RelocationManager(dbh, addrMap, openMode, lock, monitor);
@@ -1749,7 +1749,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			managers[CONTEXT_MGR] = new ProgramRegisterContextDB(dbh, this, language, compilerSpec,
@@ -1759,7 +1759,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			versionExc = e.combine(versionExc);
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		return versionExc;
 	}
@@ -1768,12 +1768,12 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			throws CancelledException, IOException {
 		globalNamespace = new GlobalNamespace(getMemory());
 		for (int i = 0; i < NUM_MANAGERS; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			managers[i].setProgram(this);
 		}
 		listing.setProgram(this);
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Upgrade Function Manager 
 		if (openMode == UPGRADE && oldFunctionMgr != null) {
@@ -1781,7 +1781,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 
 		for (int i = 0; i < NUM_MANAGERS; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			managers[i].programReady(openMode, getStoredVersion(), monitor);
 		}
 
@@ -1887,14 +1887,14 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			clearCache(false);
 			Iterator<String> iter = addrSetPropertyMap.keySet().iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressSetPropertyMapDB pm = addrSetPropertyMap.get(iter.next());
 				pm.remove(startAddr, endAddr);
 			}
 
 			iter = intRangePropertyMap.keySet().iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				IntRangeMap map = intRangePropertyMap.get(iter.next());
 				map.clearValue(startAddr, endAddr);
 			}
@@ -2156,7 +2156,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		InstructionIterator instructions =
 			codeManager.getInstructions(memoryManager.getLoadedAndInitializedAddressSet(), true);
 		while (instructions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (++cnt % 100 == 0) {
 				monitor.setProgress(cnt);
 			}

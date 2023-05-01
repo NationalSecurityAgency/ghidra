@@ -87,7 +87,7 @@ public class RecursiveFindPathsAlgorithm<V, E extends GEdge<V>>
 
 		Collection<E> outEdges = getOutEdges(v);
 		for (E e : outEdges) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			V u = e.getEnd();
 			if (u.equals(endVertex)) {
@@ -106,7 +106,7 @@ public class RecursiveFindPathsAlgorithm<V, E extends GEdge<V>>
 		}
 		else {
 			for (E e : outEdges) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				V u = e.getEnd();
 				blockBackEdge(u, v);
 			}
@@ -157,7 +157,7 @@ public class RecursiveFindPathsAlgorithm<V, E extends GEdge<V>>
 		setStatus(path, STATUS.IN_PATH);
 
 		accumulator.add(path);
-		monitor.checkCanceled(); // pause for listener
+		monitor.checkCancelled(); // pause for listener
 		setStatus(endVertex, STATUS.WAITING);
 	}
 

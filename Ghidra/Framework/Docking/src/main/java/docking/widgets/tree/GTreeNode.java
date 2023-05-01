@@ -391,7 +391,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 		if (isLoaded()) {
 			for (GTreeNode child : children()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				GTreeNode filtered = child.filter(filter, monitor);
 				if (filtered != null) {
 					list.add(filtered);
@@ -422,7 +422,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		monitor = new TreeTaskMonitor(monitor, children.size());
 		int count = 1;
 		for (GTreeNode child : children) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			count += child.loadAll(monitor);
 			monitor.incrementProgress(1);
 		}

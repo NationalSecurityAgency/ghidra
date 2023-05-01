@@ -286,7 +286,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 			AddressSet currentSet = new AddressSet();
 			AddressRangeIterator rangeIter = propertyMap.getAddressRanges(fromAddr, rangeEnd);
 			while (rangeIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				currentSet.add(rangeIter.next());
 			}
 
@@ -294,7 +294,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 
 			rangeIter = currentSet.getAddressRanges();
 			while (rangeIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange range = rangeIter.next();
 				Address startAddr = range.getMinAddress();
 				Address endAddr = range.getMaxAddress();

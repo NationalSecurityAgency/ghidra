@@ -79,7 +79,7 @@ class ClassJar extends ClassLocation {
 
 			Enumeration<JarEntry> entries = jarFile.entries();
 			while (entries.hasMoreElements()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				processClassFiles(entries.nextElement());
 			}
 		}

@@ -34,7 +34,7 @@ class ClassPackage extends ClassLocation {
 	private String packageName;
 
 	ClassPackage(File rootDir, String packageName, TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		this.rootDir = rootDir;
 		this.packageName = packageName;
 		this.packageDir = getPackageDir(rootDir, packageName);
@@ -63,7 +63,7 @@ class ClassPackage extends ClassLocation {
 		}
 
 		for (File subdir : subdirs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!subdir.isDirectory()) {
 				continue;
 			}
@@ -96,7 +96,7 @@ class ClassPackage extends ClassLocation {
 
 		Iterator<ClassPackage> it = children.iterator();
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			ClassPackage subPkg = it.next();
 			subPkg.getClasses(set, monitor);
 		}

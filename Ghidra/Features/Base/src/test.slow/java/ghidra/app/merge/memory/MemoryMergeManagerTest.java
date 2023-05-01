@@ -743,7 +743,7 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 			}
 		});
 		t.start();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void waitForCompletion() throws Exception {
@@ -775,7 +775,7 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 		assertNotNull(applyButton);
 
 		pressButton(applyButton);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		resultProgram.flushEvents();
 		if (doWait) {
 			waitForCompletion();
@@ -820,7 +820,7 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 		assertNotNull(applyButton);
 
 		pressButton(applyButton);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		resultProgram.flushEvents();
 		if (doWait) {
 			waitForCompletion();

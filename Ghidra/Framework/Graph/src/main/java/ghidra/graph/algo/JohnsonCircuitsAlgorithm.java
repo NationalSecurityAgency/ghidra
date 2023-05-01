@@ -87,7 +87,7 @@ public class JohnsonCircuitsAlgorithm<V, E extends GEdge<V>> {
 	}
 
 	private boolean circuit(V v, int depth, TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// TODO
 		// Sigh.  We are greatly limited in the size of paths we can processes due to the 

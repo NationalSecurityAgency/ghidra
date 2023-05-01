@@ -130,7 +130,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 		assertNotNull(endPoint);
 
 		dragMouse(c, 1, startPoint.x, startPoint.y, endPoint.x, endPoint.y, 0);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		ByteBlockSelection selOne = c.getViewerSelection();
 

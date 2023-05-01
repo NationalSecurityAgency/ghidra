@@ -402,7 +402,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	 */
 	void determineFunctionConflicts(Function[] functions, boolean ignoreNames, TaskMonitor monitor)
 			throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		boolean isExternalFunction = (functions[LATEST] != null) ? functions[LATEST].isExternal()
 				: ((functions[MY] != null) ? functions[MY].isExternal()
 						: functions[ORIGINAL].isExternal());
@@ -504,7 +504,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	 */
 	boolean determineSignatureConflicts(Function[] functions, TaskMonitor monitor)
 			throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		Address entry = (functions[LATEST] != null) ? functions[LATEST].getEntryPoint()
 				: ((functions[MY] != null) ? functions[MY].getEntryPoint()
 						: functions[ORIGINAL].getEntryPoint());
@@ -1064,7 +1064,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	List<LocalVariableConflict> determineLocalVariableInfoConflicts(Function[] functions,
 			boolean autoMerge, FunctionVariableStorageConflicts storageConflicts,
 			TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		ArrayList<LocalVariableConflict> varConflictList = null;
 		Address entry = (functions[LATEST] != null) ? functions[LATEST].getEntryPoint()
 				: ((functions[MY] != null) ? functions[MY].getEntryPoint()
@@ -1374,7 +1374,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 			int chosenConflictOption, TaskMonitor monitor) throws CancelledException {
 		Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			ParamInfoConflict pc = iter.next();
 			mergeParamInfo(entryPt, pc, chosenConflictOption, monitor);
 		}
@@ -1406,7 +1406,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 		Iterator<ParamInfoConflict> iter = paramInfoConflicts.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			ParamInfoConflict pc = iter.next();
 			mergeParamInfo(functions, pc, chosenConflictOption, monitor);
 		}
@@ -1437,7 +1437,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 			int chosenConflictOption, TaskMonitor monitor) throws CancelledException {
 		Iterator<LocalVariableConflict> iter = localVarConflicts.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			LocalVariableConflict lvc = iter.next();
 			mergeLocal(entryPt, lvc, chosenConflictOption, monitor);
 		}
@@ -1445,7 +1445,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	protected void mergeLocal(Address entryPt, LocalVariableConflict localVarConflict,
 			int chosenConflictOption, TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		Variable[] vars = localVarConflict.vars; // [0]=Original, [1]=Latest, [2]=My
 		int conflicts = localVarConflict.varConflicts;
 //			if ((conflicts & VAR_REMOVED) != 0) {

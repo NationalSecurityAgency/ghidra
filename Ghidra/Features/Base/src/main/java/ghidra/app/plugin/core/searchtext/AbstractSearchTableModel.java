@@ -58,11 +58,11 @@ public abstract class AbstractSearchTableModel extends ProgramLocationPreviewTab
 	protected void doLoad(Accumulator<ProgramLocation> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 		Searcher searcher = getSearcher(tool, monitor);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		TextSearchResult result = searcher.search();
 		while (result != null && accumulator.size() < searchLimit) {
 			accumulator.add(result.programLocation());
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			result = searcher.search();
 		}
 	}

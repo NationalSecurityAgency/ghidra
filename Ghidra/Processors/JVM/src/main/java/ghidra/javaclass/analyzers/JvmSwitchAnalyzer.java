@@ -107,7 +107,7 @@ public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
 		//find the switch instructions and process them
 		while (instructionIterator.hasNext()) {
 			Instruction instruction = instructionIterator.next();
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(instruction.getLength());
 			String mnenomic = instruction.getMnemonicString();
 			if (!mnenomic.equals(TABLESWITCH_MNEMONIC) && !mnenomic.equals(LOOKUPSWITCH_MNEMONIC)) {

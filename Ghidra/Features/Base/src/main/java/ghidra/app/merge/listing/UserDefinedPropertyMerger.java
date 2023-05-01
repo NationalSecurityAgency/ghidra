@@ -339,7 +339,7 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 //				Address addr = (Address) propIter.next();
 //				if (sameOption[propIndex] == ASK_USER && mergeManager != null) {
 //					showMergePanel(listingPanel, propertyName, addr);
-//					monitor.checkCanceled();
+//					monitor.checkCancelled();
 //				}
 //				else {
 //					merge(propertyName, addr, sameOption[propIndex]);
@@ -365,7 +365,7 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 				}
 				if (sameOption[propertyIndex] == ASK_USER && mergeManager != null) {
 					showMergePanel(listingPanel, propertyName, addr);
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 				}
 				else {
 					merge(propertyName, addr, sameOption[propertyIndex]);

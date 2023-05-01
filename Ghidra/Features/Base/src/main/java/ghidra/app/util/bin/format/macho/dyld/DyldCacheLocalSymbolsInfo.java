@@ -155,7 +155,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 
 			for (int i = 0; i < nlistCount; ++i) {
 				nlistList.add(new NList(nListReader, is32bit));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 			// sort the entries by the index in the string table, so don't jump around reading
@@ -167,7 +167,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 			// initialize the NList strings from string table
 			long stringTableOffset = startIndex + stringsOffset;
 			for (NList nList : sortedList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				nList.initString(nListReader, stringTableOffset);
 			}
@@ -184,7 +184,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 		try {
 			for (int i = 0; i < entriesCount; ++i) {
 				localSymbolsEntryList.add(new DyldCacheLocalSymbolsEntry(reader));
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -203,7 +203,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 			for (NList nlist : nlistList) {
 				Data d = program.getListing().createData(addr, nlist.toDataType());
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -221,7 +221,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 			for (DyldCacheLocalSymbolsEntry localSymbolsEntry : localSymbolsEntryList) {
 				Data d = program.getListing().createData(addr, localSymbolsEntry.toDataType());
 				addr = addr.add(d.getLength());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}

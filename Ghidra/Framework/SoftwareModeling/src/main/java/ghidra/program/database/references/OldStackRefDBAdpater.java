@@ -83,7 +83,7 @@ class OldStackRefDBAdpater {
 
 		RecordIterator iter = refTable.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			newRefTable.putRecord(iter.next());
 			monitor.setProgress(++count);
 		}

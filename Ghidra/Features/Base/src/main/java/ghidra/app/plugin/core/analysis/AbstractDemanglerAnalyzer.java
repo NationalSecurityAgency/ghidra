@@ -115,7 +115,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		//       consider copying primary symbols to alt storage for iteration
 		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (++count % 100 == 0) {
 				monitor.setMessage(baseMonitorMessage + " - " + count + " symbols");

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +81,7 @@ public class VersionFileHandler {
 					freeIndexes = vf.getFreeIndexList();
 					String[] names = vf.getOldParameterNames();
 					for (int i = 0; i < names.length; i++) {
-						origParms.put(names[i], new Integer(vf.getOldParameter(names[i])));
+						origParms.put(names[i], Integer.valueOf(vf.getOldParameter(names[i])));
 					}
 					originalFileId = vf.getOriginalFileID();
 				}

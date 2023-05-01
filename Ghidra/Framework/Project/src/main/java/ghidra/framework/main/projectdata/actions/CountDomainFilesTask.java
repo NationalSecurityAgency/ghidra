@@ -47,7 +47,7 @@ class CountDomainFilesTask extends Task {
 		try {
 			fileCount = files.size();
 			for (DomainFolder folder : folders) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				countFiles(folder, monitor);
 			}
 		}
@@ -64,7 +64,7 @@ class CountDomainFilesTask extends Task {
 		}
 
 		for (DomainFolder subFolder : folder.getFolders()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!folders.contains(subFolder)) {
 				countFiles(subFolder, monitor);
 			}

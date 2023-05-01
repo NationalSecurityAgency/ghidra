@@ -457,7 +457,7 @@ public class WindowsResourceReference extends GhidraScript {
 		keys = constLocs.keySet();
 		locIter = keys.iterator();
 		while (locIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address loc = locIter.next();
 			Instruction instr = currentProgram.getListing().getInstructionAt(loc);
@@ -510,7 +510,7 @@ public class WindowsResourceReference extends GhidraScript {
 		locIter = keys.iterator();
 		//Iterate though the set of address locations
 		while (locIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address loc = locIter.next();
 			Instruction instr = currentProgram.getListing().getInstructionAt(loc);
@@ -553,7 +553,7 @@ public class WindowsResourceReference extends GhidraScript {
 
 		// Search each table
 		while (siter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Symbol sym = siter.next();
 

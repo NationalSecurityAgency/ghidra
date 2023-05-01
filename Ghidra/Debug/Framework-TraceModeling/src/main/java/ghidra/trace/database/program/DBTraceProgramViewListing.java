@@ -50,7 +50,7 @@ public class DBTraceProgramViewListing extends AbstractDBTraceProgramViewListing
 			for (AddressRange range : program.getAddressFactory()
 					.getAddressSet(startAddr,
 						endAddr)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				codeOperations.definedUnits()
 						.clear(Lifespan.at(program.snap), range, clearContext, monitor);
 			}

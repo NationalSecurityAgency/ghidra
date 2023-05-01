@@ -242,7 +242,7 @@ public class TestProgramManager {
 		while (true) {
 			try {
 				DomainFile df = folder.createFile(name, gzf, TaskMonitor.DUMMY);
-				AbstractGuiTest.waitForPostedSwingRunnables();
+				AbstractGuiTest.waitForSwing();
 				DomainObject dobj = df.getDomainObject(this, true, false, null);
 				try {
 					if (dobj.isChanged()) {

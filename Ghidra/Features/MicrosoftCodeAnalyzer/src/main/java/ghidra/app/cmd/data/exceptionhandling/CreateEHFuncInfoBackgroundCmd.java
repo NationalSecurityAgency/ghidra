@@ -88,7 +88,7 @@ public class CreateEHFuncInfoBackgroundCmd
 
 	private boolean createUnwindMapEntries() throws CancelledException {
 		monitor.setMessage("Creating UnwindMap");
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		Address compAddress;
 		Address unwindMapAddress;
@@ -129,7 +129,7 @@ public class CreateEHFuncInfoBackgroundCmd
 
 	private boolean createTryBlockMapEntries() throws CancelledException {
 		monitor.setMessage("Creating TryBlockMap");
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		Address compAddress;
 		Address tryBlockMapAddress;
@@ -170,7 +170,7 @@ public class CreateEHFuncInfoBackgroundCmd
 
 	private boolean createIPToStateMapEntries() throws CancelledException {
 		monitor.setMessage("Creating IPToStateMap");
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		Address compAddress;
 		Address ipToStateMapAddress;
@@ -211,7 +211,7 @@ public class CreateEHFuncInfoBackgroundCmd
 
 	private boolean createESTypeListEntries() throws CancelledException {
 		monitor.setMessage("Creating ESTypeList");
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		Address compAddress;
 		Address esTypeListAddress;

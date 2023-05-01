@@ -79,7 +79,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			if (resultProgram != null) {
 				resultProgram.flushEvents();
 			}
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 		}
 		catch (Exception e) {

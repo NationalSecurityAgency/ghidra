@@ -97,7 +97,7 @@ public class FileTimeDataType extends BuiltIn {
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		try {
 			long numTicks = buf.getLong(0);
-			return new Long(numTicks);
+			return Long.valueOf(numTicks);
 		}
 		catch (MemoryAccessException e) {
 			return null;

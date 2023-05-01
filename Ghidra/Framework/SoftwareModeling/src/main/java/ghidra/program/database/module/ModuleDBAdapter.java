@@ -68,7 +68,7 @@ abstract class ModuleDBAdapter {
 			tmpAdapter = new ModuleDBAdapterV1(tmpHandle, true, treeID);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateModuleRecord(rec);
 			}
@@ -77,7 +77,7 @@ abstract class ModuleDBAdapter {
 			ModuleDBAdapter newAdapter = new ModuleDBAdapterV1(handle, true, treeID);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateModuleRecord(rec);
 			}

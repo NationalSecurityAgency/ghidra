@@ -1584,7 +1584,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 			try {
 				while (total < DEFAULT_WAIT_TIMEOUT) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					total += sleep(DEFAULT_WAIT_DELAY);
 
 					if (testOver) {

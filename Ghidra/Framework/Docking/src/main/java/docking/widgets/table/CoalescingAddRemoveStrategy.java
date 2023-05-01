@@ -110,7 +110,7 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 				remove(tableData, toRemove, failedToRemove);
 				it.remove();
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 
 		if (!failedToRemove.isEmpty()) {
@@ -137,7 +137,7 @@ public class CoalescingAddRemoveStrategy<T> implements TableAddRemoveStrategy<T>
 				tableData.insert(value);
 				hashed.put(value, value);
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 

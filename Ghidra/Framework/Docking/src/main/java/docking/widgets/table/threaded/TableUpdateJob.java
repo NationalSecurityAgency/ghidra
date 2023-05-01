@@ -277,7 +277,7 @@ public class TableUpdateJob<T> {
 			if (pendingRequestedState != null) {
 				setState(pendingRequestedState);
 				pendingRequestedState = null;
-				monitor.clearCanceled();
+				monitor.clearCancelled();
 			}
 			else if (currentState != CANCELLED) {
 				setState(CANCELLED);

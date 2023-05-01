@@ -93,7 +93,7 @@ public class AcyclicCallGraphBuilder {
 		Set<Address> unprocessed = new TreeSet<>(functionSet); // reliable processing order
 		monitor.initialize(unprocessed.size());
 		while (!unprocessed.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address functionEntry = getNextStartFunction(startPoints, unprocessed);
 			processForward(graph, unprocessed, functionEntry, monitor);
 		}
@@ -166,7 +166,7 @@ public class AcyclicCallGraphBuilder {
 		initializeNode(curnode);
 		graph.addValue(curnode.address);
 		while (!stack.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			curnode = stack.peek();
 			if (curnode.nextchild >= curnode.children.length) {		// Node more to children to traverse for this node

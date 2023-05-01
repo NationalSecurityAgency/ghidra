@@ -122,7 +122,7 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 
 		if (shouldPerformOrdinalLookup(options)) {
 			for (Loaded<Program> loadedProgram : loadedPrograms) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Program program = loadedProgram.getDomainObject();
 				int id = program.startTransaction("Ordinal fixups");
 				try {
@@ -187,7 +187,7 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 		SymbolIterator iter =
 			program.getSymbolTable().getSymbolIterator(SymbolUtilities.ORDINAL_PREFIX + "*", true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol ordSym = iter.next();
 			if (!ordSym.getAddress().isMemoryAddress()) {
 				continue;

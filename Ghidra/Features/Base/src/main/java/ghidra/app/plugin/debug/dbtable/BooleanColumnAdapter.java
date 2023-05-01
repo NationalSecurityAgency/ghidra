@@ -27,7 +27,7 @@ public class BooleanColumnAdapter extends AbstractColumnAdapter {
 
 	@Override
 	Object getKeyValue(DBRecord rec) {
-		return new Boolean(((BooleanField) rec.getKeyField()).getBooleanValue());
+		return Boolean.valueOf(((BooleanField) rec.getKeyField()).getBooleanValue());
 	}
 
 	@Override

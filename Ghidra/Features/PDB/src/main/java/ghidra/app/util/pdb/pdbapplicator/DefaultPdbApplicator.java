@@ -413,7 +413,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		int num = debugInfo.getNumModules();
 		// moduleNumber zero is our global/public group.
 		for (int moduleNumber = 0; moduleNumber <= num; moduleNumber++) {
-			checkCanceled();
+			checkCancelled();
 			Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(moduleNumber);
 			SymbolGroup symbolGroup = new SymbolGroup(symbols, moduleNumber);
 			mySymbolGroups.add(symbolGroup);
@@ -436,8 +436,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * Check to see if this monitor has been canceled
 	 * @throws CancelledException if monitor has been cancelled
 	 */
-	void checkCanceled() throws CancelledException {
-		getMonitor().checkCanceled();
+	void checkCancelled() throws CancelledException {
+		getMonitor().checkCancelled();
 	}
 
 	/**
@@ -617,7 +617,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 			int num = debugInfo.getNumModules();
 			for (int index = 1; index <= num; index++) {
-				checkCanceled();
+				checkCancelled();
 				String moduleName = debugInfo.getModuleInformation(index).getModuleName();
 				categoryNames.add(moduleName);
 			}
@@ -712,7 +712,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		monitor.setMessage("PDB: Processing " + num + " data type components...");
 		for (int indexNumber =
 			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			//PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
 			//PdbResearch.checkBreak(indexNumber, applier);
@@ -780,7 +780,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		monitor.setMessage("PDB: Processing " + num + " item type components...");
 		for (int indexNumber =
 			ipi.getTypeIndexMin(); indexNumber < ipi.getTypeIndexMaxExclusive(); indexNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			MsTypeApplier applier = getTypeApplier(RecordNumber.itemRecordNumber(indexNumber));
 			applier.apply();
 			monitor.incrementProgress(1);
@@ -801,7 +801,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		monitor.setMessage("PDB: Processing " + verticesInPostOrder.size() +
 			" deferred data type dependencies...");
 		for (MsTypeApplier applier : verticesInPostOrder) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			//PdbResearch.checkBreak(applier.index);
 			//checkBreak(applier.index, applier);
 			if (applier.isDeferred()) {
@@ -824,7 +824,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		long longStart = System.currentTimeMillis();
 		for (int indexNumber =
 			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			//PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
 			//PdbResearch.checkBreak(indexNumber, applier);
@@ -1062,7 +1062,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		int num = debugInfo.getNumModules();
 		TaskMonitor monitor = getMonitor();
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
 			if (symbolGroup == null) {
 				continue; // should not happen
@@ -1074,7 +1074,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		// Process symbols list for each module
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			// Process module symbols list
 			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
 			if (symbolGroup == null) {
@@ -1094,7 +1094,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 //			throws CancelledException {
 //		symbolGroup.initGet();
 //		while (symbolGroup.hasNext()) {
-//			monitor.checkCanceled();
+//			monitor.checkCancelled();
 //			AbstractMsSymbol symbol = symbolGroup.peek();
 //			moduleSymbols.add(symbol.getClass());
 //			symbolGroup.next();
@@ -1107,7 +1107,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		iter.initGet();
 		TaskMonitor monitor = getMonitor();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			procSym(iter);
 			monitor.incrementProgress(1);
 		}
@@ -1141,7 +1141,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			if (!iter.hasNext()) {
 				break;
@@ -1179,7 +1179,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			if (!iter.hasNext()) {
 				break;
@@ -1218,7 +1218,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			if (!iter.hasNext()) {
 				break;
@@ -1254,12 +1254,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		Set<Long> offsetsRemaining = symbolGroup.getOffsets();
 		for (long off : debugInfo.getPublicSymbolInformation()
 				.getModifiedHashRecordSymbolOffsets()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			offsetsRemaining.remove(off);
 		}
 		for (long off : debugInfo.getGlobalSymbolInformation()
 				.getModifiedHashRecordSymbolOffsets()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			offsetsRemaining.remove(off);
 		}
 
@@ -1270,7 +1270,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsetsRemaining) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			AbstractMsSymbol symbol = iter.peek();
 			procSym(iter);
@@ -1318,7 +1318,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			pdbApplicatorMetrics.witnessLinkerSymbolType(iter.peek());
 			procSym(iter);
 			monitor.incrementProgress(1);
@@ -1359,7 +1359,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			int numCompileSymbols = 0;
 			int compileSymbolNumForCoffSymbols = -1;
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AbstractMsSymbol symbol = iter.next();
 				getPdbApplicatorMetrics().witnessLinkerSymbolType(symbol);
 				if (symbol instanceof PeCoffSectionMsSymbol) {
@@ -1412,7 +1412,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		int num = debugInfo.getNumModules();
 		TaskMonitor monitor = getMonitor();
 		for (int index = 1; index <= num; index++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (index == linkerModuleNumber) {
 				continue;
 			}
@@ -1427,7 +1427,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 		// Process symbols list for each module
 		for (int index = 1; index <= num; index++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (index == linkerModuleNumber) {
 				continue;
 			}
@@ -1437,7 +1437,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 			AbstractMsSymbolIterator iter = symbolGroup.iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AbstractMsSymbol symbol = iter.peek();
 				if (symbol instanceof AbstractThunkMsSymbol) {
 					procSym(iter);
@@ -1494,7 +1494,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		monitor.initialize(isClassByNamespace.size());
 		monitor.setMessage("PDB: Defining classes...");
 		for (Map.Entry<SymbolPath, Boolean> entry : isClassByNamespace.entrySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			SymbolPath path = entry.getKey();
 			boolean isClass = entry.getValue();
 			Namespace parentNamespace =

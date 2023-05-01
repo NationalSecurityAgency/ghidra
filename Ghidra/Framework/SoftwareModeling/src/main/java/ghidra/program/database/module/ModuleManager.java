@@ -189,7 +189,7 @@ class ModuleManager {
 
 			AddressRangeIterator iter = map.getAddressRanges();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange range = iter.next();
 				Address startAddr = range.getMinAddress();
 				Address endAddr = range.getMaxAddress();
@@ -210,7 +210,7 @@ class ModuleManager {
 				LongField.INSTANCE, true);
 			iter = tmpMap.getAddressRanges();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange range = iter.next();
 				map.paintRange(range.getMinAddress(), range.getMaxAddress(),
 					tmpMap.getValue(range.getMinAddress()));
@@ -378,7 +378,7 @@ class ModuleManager {
 
 			AddressRangeIterator rangeIter = fragMap.getAddressRanges(fromAddr, rangeEnd);
 			while (rangeIter.hasNext() && !addrSet.isEmpty()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange range = rangeIter.next();
 				Field field = fragMap.getValue(range.getMinAddress());
 				try {
@@ -410,11 +410,11 @@ class ModuleManager {
 
 			}
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			fragMap.clearRange(fromAddr, rangeEnd);
 
 			for (int i = 0; i < list.size(); i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				FragmentHolder fh = list.get(i);
 				fragMap.paintRange(fh.range.getMinAddress(), fh.range.getMaxAddress(),
 					new LongField(fh.frag.getKey()));

@@ -167,7 +167,7 @@ public abstract class AbstractModularizationCmd extends BackgroundCommand {
 
 		CodeBlockReferenceIterator iterator = sourceBlock.getDestinations(monitor);
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			CodeBlockReference destination = iterator.next();
 			CodeBlock targetBlock = getDestinationBlock(destination);

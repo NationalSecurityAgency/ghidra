@@ -84,7 +84,7 @@ public class ByteViewerPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 			ProgramManager pm = tool.getService(ProgramManager.class);
 			pm.openProgram(program.getDomainFile());
 			panel = plugin.getProvider().getByteViewerPanel();
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			env.showTool();
 
 		}
@@ -132,7 +132,7 @@ public class ByteViewerPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		Point endPoint = c.getCursorPoint();
 
 		dragMouse(c, 1, startPoint.x, startPoint.y, endPoint.x, endPoint.y, 0);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		ProgramSelection psel = cbPlugin.getCurrentSelection();
 

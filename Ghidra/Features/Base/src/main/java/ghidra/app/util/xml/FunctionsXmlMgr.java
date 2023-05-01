@@ -94,7 +94,7 @@ class FunctionsXmlMgr {
 			dtParser = new DtParser(dataManager);
 
 			while (parser.peek().isStart()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				final XmlElement functionElement = parser.start("FUNCTION");
 

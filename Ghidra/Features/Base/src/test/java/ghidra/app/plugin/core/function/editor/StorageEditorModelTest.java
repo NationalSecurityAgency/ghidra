@@ -146,7 +146,7 @@ public class StorageEditorModelTest extends AbstractGuiTest {
 		assertEquals(1, model.getVarnodes().size());
 		dataChangeCalled = false;
 		model.addVarnode();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(dataChangeCalled);
 
 		assertEquals(2, model.getVarnodes().size());
@@ -171,7 +171,7 @@ public class StorageEditorModelTest extends AbstractGuiTest {
 		model.setSelectedVarnodeRows(new int[] { 0 });
 		dataChangeCalled = false;
 		model.removeVarnodes();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(dataChangeCalled);
 
 		List<VarnodeInfo> varnodes = model.getVarnodes();
@@ -189,7 +189,7 @@ public class StorageEditorModelTest extends AbstractGuiTest {
 		assertTrue(model.canRemoveVarnodes());
 		model.removeVarnodes();
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(dataChangeCalled);
 
 		List<VarnodeInfo> varnodes = model.getVarnodes();

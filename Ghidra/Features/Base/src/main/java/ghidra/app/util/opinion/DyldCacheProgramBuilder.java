@@ -173,7 +173,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				bookmarkSet = true;
 			}
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 
@@ -221,7 +221,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			catch (MachException | IOException e) {
 				// Not a show-stopper...carry on.
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 	}
@@ -255,7 +255,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			catch (Exception e) {
 				log.appendMsg(e.getMessage() + " " + nlist.getString());
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 	}
@@ -307,7 +307,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			if (libobjcInfo == null && info.name.contains("libobjc.")) {
 				libobjcInfo = info;
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 		
@@ -317,7 +317,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		boolean exportsCreated = false;
 		for (DyldCacheMachoInfo info : infoSet) {
 			info.createExports();
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 
@@ -327,7 +327,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			monitor.initialize(infoSet.size());
 			for (DyldCacheMachoInfo info : infoSet) {
 				info.createSymbols(exportsCreated);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
@@ -337,7 +337,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		monitor.initialize(infoSet.size());
 		for (DyldCacheMachoInfo info : infoSet) {
 			info.markupHeaders();
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 
@@ -346,7 +346,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		monitor.initialize(infoSet.size());
 		for (DyldCacheMachoInfo info : infoSet) {
 			info.addToProgramTree();
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 
@@ -355,7 +355,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		monitor.initialize(infoSet.size());
 		for (DyldCacheMachoInfo info : infoSet) {
 			info.processMemoryBlocks();
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 

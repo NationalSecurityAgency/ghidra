@@ -51,7 +51,7 @@ class RelocationTableXmlMgr {
 
 		XmlElement element = parser.next();
 		while (true) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			element = parser.next();
 			if (!element.getName().equals("RELOCATION")) {
 				break;

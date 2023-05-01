@@ -73,7 +73,7 @@ public class PdbVbtManager extends VbtManager {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			if (!iter.hasNext()) {
 				break;

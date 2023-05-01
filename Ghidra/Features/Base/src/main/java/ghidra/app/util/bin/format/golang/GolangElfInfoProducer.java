@@ -57,7 +57,7 @@ public class GolangElfInfoProducer implements ElfInfoProducer {
 		Program program = elfLoadHelper.getProgram();
 
 		for (Entry<String, ReaderFunc<ElfInfoItem>> itemEntry : GOLANGINFO_READERS.entrySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			String sectionName = itemEntry.getKey();
 			ReaderFunc<ElfInfoItem> readFunc = itemEntry.getValue();

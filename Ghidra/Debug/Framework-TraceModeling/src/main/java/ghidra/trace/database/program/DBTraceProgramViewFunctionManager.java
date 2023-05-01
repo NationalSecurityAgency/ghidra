@@ -269,7 +269,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 		Iterator<? extends DBTraceFunctionSymbol> it =
 			getFunctionsInRange(new AddressRangeImpl(startAddr, endAddr), true);
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			it.next().delete();
 		}
 	}

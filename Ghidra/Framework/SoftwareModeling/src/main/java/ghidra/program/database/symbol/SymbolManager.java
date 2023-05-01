@@ -243,7 +243,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			adapter.getSymbols(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
 				AddressSpace.EXTERNAL_SPACE.getMaxAddress(), true);
 		while (symbolRecordIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = symbolRecordIterator.next();
 			rec.setByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL, SymbolType.LABEL.getID());
 			adapter.updateSymbolRecord(rec);
@@ -271,7 +271,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 		RecordIterator symbolRecordIterator = adapter.getSymbols();
 		while (symbolRecordIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setProgress(++cnt);
 			DBRecord rec = symbolRecordIterator.next();
 			long addr = rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL);
@@ -333,7 +333,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			Address curVarAddr = null;
 			long curDataTypeId = -1;
 			while (recIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = recIter.next();
 				Address addr =
 					addrMap.decodeAddress(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
@@ -403,7 +403,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 			Address addr = oldAddrMap.decodeAddress(rec.getKey());
 			refManager.addExternalEntryPointRef(addr);
@@ -434,7 +434,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 		RecordIterator iter = table.iterator();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 			Address addr = oldAddrMap.decodeAddress(rec.getLongValue(OLD_SYMBOL_ADDR_COL));
 			Namespace namespace = namespaceMgr.getNamespaceContaining(addr);

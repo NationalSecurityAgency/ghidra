@@ -69,13 +69,13 @@ public class ImportMSLibs extends GhidraScript {
 		monitor.initialize(non_debug_files.size() + debug_files.size());
 
 		for (File file : non_debug_files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			importLibrary(root, file, false, log);
 		}
 
 		for (File file : debug_files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			importLibrary(root, file, true, log);
 		}
@@ -90,7 +90,7 @@ public class ImportMSLibs extends GhidraScript {
 			CoffArchiveHeader coffArchiveHeader = CoffArchiveHeader.read(provider, TaskMonitor.DUMMY);
 			HashSet<Long> offsetsSeen = new HashSet<Long>();
 			for (CoffArchiveMemberHeader archiveMemberHeader : coffArchiveHeader.getArchiveMemberHeaders()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (offsetsSeen.contains(archiveMemberHeader.getPayloadOffset())) {
 					continue;
 				}
@@ -244,7 +244,7 @@ public class ImportMSLibs extends GhidraScript {
 	private void findFiles(ArrayList<File> non_debug_files, ArrayList<File> debug_files,
 			ArrayList<File> directories) throws CancelledException {
 		for (File directory : directories) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			findFiles(non_debug_files, debug_files, directory);
 		}
 	}
@@ -258,7 +258,7 @@ public class ImportMSLibs extends GhidraScript {
 
 		if (files != null) {
 			for (File file : files) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (file.isFile()) {
 					String lowerName = file.getName().toLowerCase();
 					if (lowerName.endsWith("d.lib")) {
@@ -275,7 +275,7 @@ public class ImportMSLibs extends GhidraScript {
 		}
 
 		for (File file : my_debug) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String lowerName = file.getName().toLowerCase();
 			String non_debug_name = lowerName.substring(0, lowerName.length() - 5) + ".lib";
 			boolean notfound = true;
@@ -298,7 +298,7 @@ public class ImportMSLibs extends GhidraScript {
 		non_debug_files.addAll(my_non_debug);
 
 		for (File subdir : subdirs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			findFiles(non_debug_files, debug_files, subdir);
 		}
 	}

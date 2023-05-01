@@ -123,7 +123,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 				GFileImpl file =
 					GFileImpl.fromPathString(this, root, mappedImage.getPath(), null, false, -1);
 				storeFile(file, mappedImage.getAddress(), i);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}

@@ -52,7 +52,7 @@ public class ModuleToPeHelper {
 				}
 				try {
 					taskMon.setMessage("Analyzing " + mod.getName());
-					taskMon.checkCanceled();
+					taskMon.checkCancelled();
 					ByteProvider provider = new ProgramInsertByteProvider(memory, mod);
 
 					DumpPeShim loader = new DumpPeShim((ProgramDB) program);
@@ -62,7 +62,7 @@ public class ModuleToPeHelper {
 				catch (Exception e) {
 					// Ignore
 					Msg.error(null, e.getMessage());
-					taskMon.clearCanceled();
+					taskMon.clearCancelled();
 				}
 			}
 		}

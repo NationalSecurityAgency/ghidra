@@ -56,7 +56,7 @@ public class DWARFAbbreviation
 		List<DWARFAttributeSpecification> tmpAttrSpecs = new ArrayList<>();
 		DWARFAttributeSpecification attr;
 		while ((attr = DWARFAttributeSpecification.read(reader)) != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			tmpAttrSpecs.add(prog.internAttributeSpec(attr));
 		}
 		DWARFAttributeSpecification[] attrSpecArray =
@@ -75,7 +75,7 @@ public class DWARFAbbreviation
 		// Read all abbreviations for this compilation unit and add to a map
 		DWARFAbbreviation abbrev = null;
 		while ((abbrev = DWARFAbbreviation.read(reader, prog, monitor)) != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			result.put(abbrev.getAbbreviationCode(), abbrev);
 		}
 

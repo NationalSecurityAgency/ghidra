@@ -52,7 +52,7 @@ public class UnapplyMarkupItemTask extends VtTask {
 	protected boolean doWork(TaskMonitor monitor) throws Exception {
 		monitor.initialize(markupItems.size());
 		for (VTMarkupItem markupItem : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			try {
 				maybeUnapply(markupItem);

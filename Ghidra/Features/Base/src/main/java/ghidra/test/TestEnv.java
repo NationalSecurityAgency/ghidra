@@ -1183,7 +1183,7 @@ public class TestEnv {
 	// the deprecation is OK--we are a framework method and we know we can use it
 	@SuppressWarnings("deprecation")
 	private void privateWaitForSwingRunnables() {
-		AbstractGuiTest.privateWaitForPostedSwingRunnables_SwingSafe();
+		AbstractGuiTest.privatewaitForSwing_SwingSafe();
 	}
 
 	private void disposeAllSwingUpdateManagers() {

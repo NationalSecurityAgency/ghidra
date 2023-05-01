@@ -322,7 +322,7 @@ public final class ReferenceUtils {
 			findDataTypeMatchesOutsideOfListing(asSet, program, dataType, fieldMatcher, monitor);
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 	}
 
 	private static Accumulator<LocationReference> asSet(
@@ -1041,7 +1041,7 @@ public final class ReferenceUtils {
 		Listing listing = program.getListing();
 		DataIterator dataIter = listing.getDefinedData(true);
 		while (dataIter.hasNext() && !monitor.isCancelled()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data data = dataIter.next();
 			getMatchingDataTypesReferencesFromDataAndSubData(accumulator, data, fieldMatcher,
@@ -1153,7 +1153,7 @@ public final class ReferenceUtils {
 
 		int numComponents = data.getNumComponents();
 		for (int i = 0; i < numComponents; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data subData = data.getComponent(i);
 			getMatchingDataTypesReferencesFromDataAndSubData(accumulator, subData, fieldMatcher,
@@ -1210,7 +1210,7 @@ public final class ReferenceUtils {
 		//
 
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Function function = iterator.next();
 			Address entryPoint = function.getEntryPoint();
@@ -1344,7 +1344,7 @@ public final class ReferenceUtils {
 		AddressIterator addresses = referenceManager.getReferenceDestinationIterator(offcut, true);
 		Address codeUnitAddress = cu.getAddress();
 		while (addresses.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = addresses.next();
 			if (addr.equals(codeUnitAddress)) {
@@ -1399,7 +1399,7 @@ public final class ReferenceUtils {
 		}
 
 		for (Address thunkAddr : thunkAddrs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Reference ref = new ThunkReference(thunkAddr, func.getEntryPoint());
 			consumer.accept(new LocationReference(ref, false));
