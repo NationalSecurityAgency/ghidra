@@ -15,7 +15,8 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -45,7 +46,6 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.tree.GTree;
-import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
@@ -138,9 +138,8 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	public void loadProgram() throws Exception {
 		loadProgram("WinHelloCPP.exe");
 
-		ResourceFile file = TestEnv.findProvidedDataTypeArchive("windows_vs12_32.gdt");
-		DataTypeManagerService dtm = tool.getService(DataTypeManagerService.class);
-		dtm.openArchive(file.getFile(false), false);
+		DataTypeManagerService dtms = tool.getService(DataTypeManagerService.class);
+		dtms.openDataTypeArchive("windows_vs12_32.gdt");
 	}
 
 	public void closeNonProgramArchives() {

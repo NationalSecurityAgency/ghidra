@@ -15,115 +15,26 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.List;
+import java.util.Set;
 
 import javax.swing.tree.TreePath;
 
-import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.datamgr.archive.*;
-import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
+import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
+import ghidra.app.plugin.core.datamgr.archive.DefaultDataTypeArchiveService;
 import ghidra.app.plugin.core.datamgr.util.DataTypeComparator;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.DataTypeArchive;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManagerChangeListener;
 import ghidra.util.HelpLocation;
-import ghidra.util.UniversalID;
 
 // FIXME!! TESTING
-public class DefaultDataTypeManagerService implements DataTypeManagerService {
-
-	private Map<String, FileDataTypeManager> archiveMap = new HashMap<>();
-	private DataTypeManager builtInDataTypesManager = BuiltInDataTypeManager.getDataTypeManager();
-
-	void dispose() {
-		for (FileDataTypeManager dtfm : archiveMap.values()) {
-			dtfm.close();
-		}
-		archiveMap.clear();
-	}
+public class DefaultDataTypeManagerService extends DefaultDataTypeArchiveService
+		implements DataTypeManagerService {
 
 	// TODO: This implementation needs to be consolidated with the tool-based service in 
 	// favor of a single static data type manager service used by both the tool and 
 	// headless scenarios
-
-	private FileDataTypeManager findOpenFileArchiveWithID(UniversalID universalID) {
-		if (universalID == null) {
-			return null;
-		}
-		for (FileDataTypeManager dtm : archiveMap.values()) {
-			if (universalID.equals(dtm.getUniversalID()) && !dtm.isClosed()) {
-				return dtm;
-			}
-		}
-		return null;
-	}
-
-	@Override
-	public synchronized DataTypeManager openDataTypeArchive(String archiveName)
-			throws IOException, DuplicateIdException {
-
-		if (archiveMap.containsKey(archiveName)) {
-			FileDataTypeManager dtm = archiveMap.get(archiveName);
-			if (!dtm.isClosed()) {
-				return dtm;
-			}
-			archiveMap.remove(archiveName);
-		}
-
-		ResourceFile archiveFile = DataTypeArchiveUtility.findArchiveFile(archiveName);
-		if (archiveFile == null) {
-			return null;
-		}
-
-		FileDataTypeManager fileDtm = FileDataTypeManager.openFileArchive(archiveFile, false);
-
-		FileDataTypeManager existingDtm = findOpenFileArchiveWithID(fileDtm.getUniversalID());
-		if (existingDtm != null) {
-			fileDtm.close();
-			throw new DuplicateIdException(fileDtm.getName(), existingDtm.getName());
-		}
-
-		archiveMap.put(archiveName, fileDtm);
-
-		return fileDtm;
-	}
-
-	@Override
-	public void closeArchive(DataTypeManager dtm) {
-
-		String archiveName = null;
-		Set<Entry<String, FileDataTypeManager>> entries = archiveMap.entrySet();
-		for (Entry<String, FileDataTypeManager> entry : entries) {
-			FileDataTypeManager manager = entry.getValue();
-			if (manager.equals(dtm)) {
-				archiveName = entry.getKey();
-				break;
-			}
-
-		}
-
-		if (archiveName != null) {
-			FileDataTypeManager manager = archiveMap.get(archiveName);
-			archiveMap.remove(archiveName);
-			manager.close();
-		}
-	}
-
-	@Override
-	public DataTypeManager[] getDataTypeManagers() {
-		ArrayList<FileDataTypeManager> dtmList = new ArrayList<>();
-		for (FileDataTypeManager dtm : archiveMap.values()) {
-			if (!dtm.isClosed()) {
-				dtmList.add(dtm);
-			}
-		}
-		DataTypeManager[] managers = new DataTypeManager[dtmList.size()];
-		dtmList.toArray(managers);
-		return managers;
-	}
 
 	@Override
 	public HelpLocation getEditorHelpLocation(DataType dataType) {
@@ -143,11 +54,6 @@ public class DefaultDataTypeManagerService implements DataTypeManagerService {
 	@Override
 	public void edit(DataType dt) {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public DataTypeManager getBuiltInDataTypesManager() {
-		return builtInDataTypesManager;
 	}
 
 	@Override
@@ -204,16 +110,6 @@ public class DefaultDataTypeManagerService implements DataTypeManagerService {
 
 	@Override
 	public Set<String> getPossibleEquateNames(long value) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Archive openArchive(File file, boolean acquireWriteLock) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Archive openArchive(DataTypeArchive dataTypeArchive) {
 		throw new UnsupportedOperationException();
 	}
 }

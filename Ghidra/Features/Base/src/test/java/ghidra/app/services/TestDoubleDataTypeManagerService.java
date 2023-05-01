@@ -22,11 +22,16 @@ import java.util.Set;
 
 import javax.swing.tree.TreePath;
 
+import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
+import ghidra.framework.model.DomainFile;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.util.HelpLocation;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A stub of the {@link DataTypeManagerService} interface.  This can be used to supply a test values 
@@ -133,6 +138,18 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 
 	@Override
 	public Set<String> getPossibleEquateNames(long value) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataTypeManager openArchive(ResourceFile file, boolean acquireWriteLock)
+			throws IOException, DuplicateIdException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DataTypeManager openArchive(DomainFile domainFile, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException, DuplicateIdException {
 		throw new UnsupportedOperationException();
 	}
 }
