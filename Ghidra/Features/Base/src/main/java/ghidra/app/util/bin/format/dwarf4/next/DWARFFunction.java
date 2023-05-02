@@ -18,11 +18,10 @@ package ghidra.app.util.bin.format.dwarf4.next;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_unspecified_parameters;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
@@ -235,7 +234,6 @@ public class DWARFFunction {
 	 * 
 	 * @param includeStorageDetail boolean flag, if true storage information will be included, if
 	 * false, VariableStorage.UNASSIGNED_STORAGE will be used
-	 * @param program Ghidra program that contains the parameter
 	 * @return list of Parameters
 	 * @throws InvalidInputException
 	 */
@@ -251,7 +249,6 @@ public class DWARFFunction {
 	/**
 	 * Returns a {@link FunctionDefinition} that reflects this function's information.
 	 *  
-	 * @param prog {@link DWARFProgram} that contains this function
 	 * @return {@link FunctionDefinition} that reflects this function's information
 	 */
 	public FunctionDefinition asFuncDef() {

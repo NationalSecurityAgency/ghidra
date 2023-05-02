@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.rtti;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.BinaryReader.ReaderFunction;
@@ -65,7 +64,6 @@ public class GoSlice {
 	 * @param startElement
 	 * @param elementCount
 	 * @param elementSize
-	 * @param programContext
 	 * @return
 	 */
 	public GoSlice getSubSlice(long startElement, long elementCount, long elementSize) {

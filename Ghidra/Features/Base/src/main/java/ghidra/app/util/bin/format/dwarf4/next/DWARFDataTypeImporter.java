@@ -86,7 +86,6 @@ public class DWARFDataTypeImporter {
 	 *
 	 * @param prog {@link DWARFProgram} that is being imported
 	 * @param dwarfDTM {@link DWARFDataTypeManager} helper
-	 * @param importOptions {@link DWARFImportOptions} control optional features during import
 	 */
 	public DWARFDataTypeImporter(DWARFProgram prog, DWARFDataTypeManager dwarfDTM) {
 		this.prog = prog;

@@ -78,8 +78,6 @@ public class DWARFDataTypeManager {
 	 *
 	 * @param prog {@link DWARFProgram} that holds the Ghidra {@link Program} being imported.
 	 * @param dataTypeManager {@link DataTypeManager} of the Ghidra Program.
-	 * @param builtInDTM {@link DataTypeManager} with built-in data types.
-	 * during the import session.
 	 */
 	public DWARFDataTypeManager(DWARFProgram prog, DataTypeManager dataTypeManager) {
 		this.prog = prog;
