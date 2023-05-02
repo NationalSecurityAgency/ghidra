@@ -197,6 +197,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 
 	private void mergeEnum(Enum mergedEnum, Enum enumToMerge) {
 
+		boolean hasSameNameDiffValueEntry = false;
 		for (String name : enumToMerge.getNames()) {
 
 			long valueToAdd = enumToMerge.getValue(name);
@@ -209,15 +210,19 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 			if (isConflictingEntry(mergedEnum, enumToMerge, name)) {
 				name = createDeconflictedName(mergedEnum, name);
 
+				hasSameNameDiffValueEntry = true;
 				comment = "NOTE: Duplicate name with different value";
-				Msg.debug(this,
-					"Merged Enum " + mergedEnum.getName() +
-						" has at least one duplicate named entry with different value than " +
-						"original. Underscore(s) have been appended to name allow addition.");
+				
 			}
 
 			mergedEnum.add(name, valueToAdd, comment);
 
+		}
+		
+		if(hasSameNameDiffValueEntry) {
+			Msg.showWarn(this, null, "Duplicate Entry Name(s)",
+				"Merged Enum " + mergedEnum.getName() + " has one or more entries with duplicate" +
+					" names. Underscore(s) have been appended to make them unique.");
 		}
 	}
 
