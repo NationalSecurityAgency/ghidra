@@ -32,7 +32,7 @@ import ghidra.util.Msg;
 public class GoSlice {
 
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoSlice> context;
@@ -53,7 +53,7 @@ public class GoSlice {
 		this.cap = cap;
 	}
 
-	public GoSlice(long array, long len, long cap, GoRttiContext programContext) {
+	public GoSlice(long array, long len, long cap, GoRttiMapper programContext) {
 		this(array, len, cap);
 		this.programContext = programContext;
 	}

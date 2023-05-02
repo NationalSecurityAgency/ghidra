@@ -46,16 +46,16 @@ import ghidra.program.model.listing.Program;
  * @param <T> a java class that has been tagged with a {@link StructureMapping} annotation.
  */
 public class StructureContext<T> {
-	protected final ProgramContext programContext;
+	protected final DataTypeMapper dataTypeMapper;
 	protected final StructureMappingInfo<T> mappingInfo;
 	protected final BinaryReader reader;
 	protected final long structureStart;
 	protected T structureInstance;
 	protected Structure structureDataType;
 
-	public StructureContext(ProgramContext programContext, StructureMappingInfo<T> mappingInfo,
+	public StructureContext(DataTypeMapper dataTypeMapper, StructureMappingInfo<T> mappingInfo,
 			BinaryReader reader) {
-		this.programContext = programContext;
+		this.dataTypeMapper = dataTypeMapper;
 		this.mappingInfo = mappingInfo;
 		this.reader = reader;
 		this.structureStart = reader.getPointerIndex();
@@ -86,19 +86,19 @@ public class StructureContext<T> {
 	}
 
 	/**
-	 * Returns a reference to the root {@link ProgramContext}, as a plain ProgramContext type.  If
-	 * a more specific ProgramContext type is needed, either type-cast this value, or use
+	 * Returns a reference to the root {@link DataTypeMapper}, as a plain DataTypeMapper type.  If
+	 * a more specific DataTypeMapper type is needed, either type-cast this value, or use
 	 * a {@link ContextField} tag on a field in your class that specifies the correct 
-	 * ProgramContext type.
+	 * DataTypeMapper type.
 	 *  
 	 * @return
 	 */
-	public ProgramContext getProgramContext() {
-		return programContext;
+	public DataTypeMapper getDataTypeMapper() {
+		return dataTypeMapper;
 	}
 
 	public Program getProgram() {
-		return programContext.program;
+		return dataTypeMapper.program;
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class StructureContext<T> {
 	 * @return {@link Address}
 	 */
 	public Address getStructureAddress() {
-		return programContext.getDataAddress(structureStart);
+		return dataTypeMapper.getDataAddress(structureStart);
 	}
 
 	/**
@@ -198,7 +198,7 @@ public class StructureContext<T> {
 	 */
 	public void appendComment(int commentType, String prefix, String comment, String sep)
 			throws IOException {
-		DWARFUtil.appendComment(programContext.getProgram(), getStructureAddress(), commentType,
+		DWARFUtil.appendComment(dataTypeMapper.getProgram(), getStructureAddress(), commentType,
 			prefix, comment, sep);
 	}
 
@@ -219,14 +219,14 @@ public class StructureContext<T> {
 	 */
 	public void markupStructure(boolean nested) throws IOException {
 		Address addr = getStructureAddress();
-		if (!nested && !programContext.markedupStructs.add(addr)) {
+		if (!nested && !dataTypeMapper.markedupStructs.add(addr)) {
 			return;
 		}
 
 		if (!nested) {
 			try {
 				Structure structDT = getStructureDataType();
-				programContext.markupAddress(addr, structDT);
+				dataTypeMapper.markupAddress(addr, structDT);
 			}
 			catch (IOException e) {
 				throw new IOException("Markup failed for structure %s at %s"
@@ -237,7 +237,7 @@ public class StructureContext<T> {
 			if (structureInstance instanceof StructureMarkup<?> sm) {
 				String structureLabel = sm.getStructureLabel();
 				if (structureLabel != null) {
-					programContext.labelAddress(addr, structureLabel);
+					dataTypeMapper.labelAddress(addr, structureLabel);
 				}
 			}
 		}
@@ -258,7 +258,7 @@ public class StructureContext<T> {
 		}
 		if (structureInstance instanceof StructureMarkup<?> sm) {
 			for (Object externalInstance : sm.getExternalInstancesToMarkup()) {
-				programContext.markup(externalInstance, false);
+				dataTypeMapper.markup(externalInstance, false);
 			}
 		}
 

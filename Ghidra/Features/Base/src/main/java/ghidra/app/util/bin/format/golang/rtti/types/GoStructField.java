@@ -18,14 +18,14 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.rtti.GoName;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiContext;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 
 @StructureMapping(structureName = "runtime.structfield")
 public class GoStructField {
 
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoStructField> context;
@@ -45,7 +45,7 @@ public class GoStructField {
 	@Markup
 	public GoName getName() throws IOException {
 		return name != 0
-				? context.getProgramContext().readStructure(GoName.class, name)
+				? context.getDataTypeMapper().readStructure(GoName.class, name)
 				: null;
 	}
 

@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
 
 /**
  * Indicates that the tagged field should be initialized with the value of the appropriate 
- * context object, either {@link ProgramContext} or {@link StructureContext}.
+ * context object, either {@link DataTypeMapper} or {@link StructureContext}.
  */
 @Retention(RUNTIME)
 @Target(FIELD)

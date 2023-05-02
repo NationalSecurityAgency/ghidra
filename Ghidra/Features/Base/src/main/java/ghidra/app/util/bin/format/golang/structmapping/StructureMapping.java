@@ -34,7 +34,7 @@ import java.lang.annotation.*;
  * In either case, various annotations on fields and methods will control how this structure 
  * will be marked up in the Ghidra program.
  * <p>
- * The tagged class must be {@link ProgramContext#registerStructure(Class) registered} with
+ * The tagged class must be {@link DataTypeMapper#registerStructure(Class) registered} with
  * the program context to enable the suite of structure mapped classes to work together when
  * applied to a Ghidra binary.
  * <p>
@@ -44,8 +44,8 @@ import java.lang.annotation.*;
  * variable length fields found in the structure. 
  * <p>
  * Structure mapped classes must have a {@link StructureContext} member variable that is tagged
- * with the {@link ContextField} annotation, and probably should have a {@link ProgramContext}
- * member variable (that corresponds to a more specific type of ProgramContext) that is also 
+ * with the {@link ContextField} annotation, and probably should have a {@link DataTypeMapper}
+ * member variable (that corresponds to a more specific type of DataTypeMapper) that is also 
  * tagged with the ContextField annotation.
  * 
  */
@@ -54,11 +54,11 @@ import java.lang.annotation.*;
 public @interface StructureMapping {
 	/**
 	 * Specifies the name of a Ghidra structure that the tagged class represents.  For fixed
-	 * length structures, the {@link ProgramContext} will search for this Ghidra data type
+	 * length structures, the {@link DataTypeMapper} will search for this Ghidra data type
 	 * in it's configured
-	 * {@link ProgramContext#addArchiveSearchCategoryPath(ghidra.program.model.data.CategoryPath...) archive}
+	 * {@link DataTypeMapper#addArchiveSearchCategoryPath(ghidra.program.model.data.CategoryPath...) archive}
 	 * and 
-	 * {@link ProgramContext#addProgramSearchCategoryPath(ghidra.program.model.data.CategoryPath...) program}
+	 * {@link DataTypeMapper#addProgramSearchCategoryPath(ghidra.program.model.data.CategoryPath...) program}
 	 * search paths.
 	 * 
 	 * @return
