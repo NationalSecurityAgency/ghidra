@@ -33,7 +33,7 @@ import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.*;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
@@ -179,12 +179,12 @@ public class ImageDialogProvider extends DialogComponentProvider {
 		}
 
 		newLabelPanel.add(createImageLabelComponent("New Image"), BorderLayout.NORTH);
-		newLabelPanel.setBorder(BorderFactory.createLineBorder(Java.BORDER, 20));
+		newLabelPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER, 20));
 		newLabelPanel.add(newImageLabel, BorderLayout.CENTER);
 
 		JPanel oldLabelPanel = new JPanel(new BorderLayout());
 		oldLabelPanel.add(createImageLabelComponent("Old Image"), BorderLayout.NORTH);
-		oldLabelPanel.setBorder(BorderFactory.createLineBorder(Java.BORDER, 20));
+		oldLabelPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER, 20));
 		oldLabelPanel.add(oldImageLabel, BorderLayout.CENTER);
 
 		imagePanel.add(oldLabelPanel, BorderLayout.WEST);

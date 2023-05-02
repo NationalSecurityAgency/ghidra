@@ -153,7 +153,7 @@ public class VisualVertexRenderer<V extends VisualVertex, E extends VisualEdge<V
 		g.fill(shape);
 
 		// an outline
-		g.setColor(Colors.Java.BORDER);
+		g.setColor(Colors.BORDER);
 		g.draw(shape);
 
 		g.setPaint(oldPaint);

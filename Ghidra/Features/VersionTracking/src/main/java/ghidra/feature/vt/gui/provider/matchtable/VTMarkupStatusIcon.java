@@ -22,7 +22,7 @@ import java.util.List;
 import javax.swing.Icon;
 
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.feature.vt.api.main.VTAssociationMarkupStatus;
 
 public class VTMarkupStatusIcon implements Icon {
@@ -74,7 +74,7 @@ public class VTMarkupStatusIcon implements Icon {
 			drawBar(g, x + startX + BORDER + 1, y + BORDER + 1, width, colors.get(i));
 		}
 
-		g.setColor(Java.BORDER);
+		g.setColor(Colors.BORDER);
 		g.drawRect(x, y, WIDTH, HEIGHT);
 //		g.drawRect(x, y, WIDTH / 2, HEIGHT);
 		g.drawRect(x + WIDTH, y + HEIGHT / 2 - 3, KNOB_WIDTH, 6);

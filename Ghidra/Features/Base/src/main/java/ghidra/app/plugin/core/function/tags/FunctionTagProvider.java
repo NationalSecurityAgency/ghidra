@@ -27,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HintTextField;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.cmd.Command;
@@ -239,9 +239,9 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		targetPanel = new TargetTagsPanel(this, tool, "Assigned To Function");
 		allFunctionsPanel = new AllFunctionsPanel(program, this, "Functions with Selected Tag");
 		buttonPanel = new FunctionTagButtonPanel(sourcePanel, targetPanel);
-		sourcePanel.setBorder(BorderFactory.createLineBorder(Java.BORDER));
-		targetPanel.setBorder(BorderFactory.createLineBorder(Java.BORDER));
-		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(Java.BORDER));
+		sourcePanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
+		targetPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
+		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 
 		// If we don't set this, then the splitter won't be able to shrink the
 		// target panels below the size required by its header, which can be large 

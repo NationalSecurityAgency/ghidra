@@ -29,7 +29,6 @@ import org.junit.Test;
 import docking.DockableComponent;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.cmd.comments.SetCommentCmd;
@@ -74,7 +73,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 
 		Rectangle cursor = getCursorBounds();
 		captureListingRange(0x0040be40, 0x0040be56, 600);
-		drawBorder(Java.BORDER);
+		drawBorder(Colors.BORDER);
 
 		drawTextWithArrowNearOpenStructureIcon("Closed", cursor);
 
@@ -95,7 +94,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		Rectangle cursor = getCursorBounds();
 		captureListingRange(0x0040be40, 0x0040be56, 600);
 
-		drawBorder(Java.BORDER);
+		drawBorder(Colors.BORDER);
 
 		drawTextWithArrowNearOpenStructureIcon("Open", cursor);
 	}

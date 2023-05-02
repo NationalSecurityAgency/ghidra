@@ -194,7 +194,7 @@ public abstract class LookAndFeelManager {
 
 	/**
 	 * Binds the component to the font identified by the given font id. Whenever the font for
-	 * the font id changes, the component will updated with the new font.
+	 * the font id changes, the component will be updated with the new font.
 	 * @param component the component to set/update the font
 	 * @param fontId the id of the font to register with the given component
 	 */
@@ -213,7 +213,7 @@ public abstract class LookAndFeelManager {
 	}
 
 	/**
-	 * Subclass provide this method to install the specific look and feel.
+	 * Subclasses may override this method to install a specific look and feel.
 	 *
 	 * @throws ClassNotFoundException if the <code>LookAndFeel</code>
 	 *           class could not be found
@@ -231,7 +231,7 @@ public abstract class LookAndFeelManager {
 	}
 
 	/**
-	 * Subclass can override this method to do specific LookAndFeel fix ups
+	 * Subclass may override this method to do specific LookAndFeel fix ups
 	 */
 	protected void fixupLookAndFeelIssues() {
 		// no generic fix-ups at this time.

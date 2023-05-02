@@ -27,10 +27,21 @@ public class ThemeTableContext<T> extends ActionContext {
 
 	private ThemeValue<T> currentValue;
 	private ThemeValue<T> themeValue;
+	private ThemeTable themeTable;
 
-	public ThemeTableContext(ThemeValue<T> currentValue, ThemeValue<T> themeValue) {
+	public ThemeTableContext(ThemeValue<T> currentValue, ThemeValue<T> themeValue,
+			ThemeTable themeTable) {
 		this.currentValue = currentValue;
 		this.themeValue = themeValue;
+		this.themeTable = themeTable;
+	}
+
+	/**
+	 * Returns the theme table for this context
+	 * @return the table
+	 */
+	public ThemeTable getThemeTable() {
+		return themeTable;
 	}
 
 	/**

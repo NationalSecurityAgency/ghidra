@@ -34,7 +34,7 @@ import ghidra.util.Swing;
 /**
  * Color Table for Theme Dialog
  */
-public class ThemeColorTable extends JPanel implements ActionContextProvider {
+public class ThemeColorTable extends JPanel implements ActionContextProvider, ThemeTable {
 
 	private ThemeColorTableModel colorTableModel;
 	private ColorValueEditor colorEditor = new ColorValueEditor(this::colorValueChanged);
@@ -87,6 +87,17 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 		return new ThemeColorTableModel(valuesProvider);
 	}
 
+	@Override
+	public void setShowSystemValues(boolean show) {
+		colorTableModel.setShowSystemValues(show);
+		reloadAll();
+	}
+
+	@Override
+	public boolean isShowingSystemValues() {
+		return colorTableModel.isShowingSystemValues();
+	}
+
 	void colorValueChanged(PropertyChangeEvent event) {
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
@@ -118,7 +129,7 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 			}
 			String id = currentValue.getId();
 			ColorValue themeValue = colorTableModel.getThemeValue(id);
-			return new ThemeTableContext<>(currentValue, themeValue);
+			return new ThemeTableContext<>(currentValue, themeValue, this);
 		}
 		return null;
 	}

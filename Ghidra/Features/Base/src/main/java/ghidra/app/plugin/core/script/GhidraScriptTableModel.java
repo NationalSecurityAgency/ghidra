@@ -372,7 +372,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 				KeyBindingsInfo info = (KeyBindingsInfo) value;
 
 				if (info.errorMessage != null) {
-					component.setForeground(Tables.FG_ERROR_UNSELECTED);
+					component.setForeground(Tables.ERROR_UNSELECTED);
 					component.setToolTipText(info.errorMessage);
 				}
 				else {
@@ -394,7 +394,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 				if (isSelected) {
 					JTable table = data.getTable();
 					Color selectedForegroundColor =
-						(info.errorMessage != null) ? Tables.FG_ERROR_SELECTED
+						(info.errorMessage != null) ? Tables.ERROR_SELECTED
 								: table.getSelectionForeground();
 					component.setForeground(selectedForegroundColor);
 				}

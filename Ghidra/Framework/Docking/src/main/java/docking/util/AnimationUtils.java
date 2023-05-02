@@ -26,7 +26,7 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
@@ -878,7 +878,7 @@ public class AnimationUtils {
 			double cx = emphasizedBounds.getCenterX();
 			double cy = emphasizedBounds.getCenterY();
 			g2d.rotate(rad, cx, cy);
-			g.setColor(Java.BORDER);
+			g.setColor(Colors.BORDER);
 
 			int iw = emphasizedBounds.width;
 			int ih = emphasizedBounds.height;

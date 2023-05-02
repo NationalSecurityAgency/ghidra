@@ -26,6 +26,7 @@ import docking.widgets.label.GDHtmlLabel;
 import generic.theme.GColor;
 import generic.theme.GColorUIResource;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors.Tables;
 
 /**
  * A common base class for list and table renderer objects, unifying the Ghidra look and feel.
@@ -163,6 +164,14 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 			return getDefaultBackgroundColor();
 		}
 		return ALT_BACKGROUND_COLOR;
+	}
+
+	protected Color getErrorForegroundColor(boolean isSelected) {
+		return isSelected ? Tables.ERROR_SELECTED : Tables.ERROR_UNSELECTED;
+	}
+
+	protected Color getUneditableForegroundColor(boolean isSelected) {
+		return isSelected ? Tables.UNEDITABLE_SELECTED : Tables.UNEDITABLE_UNSELECTED;
 	}
 
 // ==================================================================================================

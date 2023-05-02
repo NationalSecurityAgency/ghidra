@@ -28,7 +28,7 @@ import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.clipboard.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
@@ -75,7 +75,7 @@ public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 		captureListingCallMnemonic(start, end);
 
 		placeImagesSideBySide(image, menuImage);
-		drawBorder(Java.BORDER);
+		drawBorder(Colors.BORDER);
 	}
 
 	private void cropCopyMenu() {

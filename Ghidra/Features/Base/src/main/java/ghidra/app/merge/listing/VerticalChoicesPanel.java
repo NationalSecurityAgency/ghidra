@@ -29,7 +29,7 @@ import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.LongArrayList;
@@ -190,7 +190,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 				headerComps[i] = new MyLabel(items[i]);
 				headerComps[i].setName(getComponentName(0, i));
 				setRowComponent(headerComps[i], 0, i, defaultInsets);
-				headerComps[i].setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Java.BORDER));
+				headerComps[i].setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Colors.BORDER));
 			}
 		}
 		rowPanel.validate();

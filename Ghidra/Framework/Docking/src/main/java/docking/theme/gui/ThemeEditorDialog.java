@@ -50,7 +50,6 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 	private ThemeColorTable paletteTable;
 
 	private ThemeManager themeManager;
-
 	private GThemeValuesCache valuesCache;
 
 	public ThemeEditorDialog(ThemeManager themeManager) {
@@ -107,6 +106,22 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 					.onAction(c -> c.getThemeValue().installValue(themeManager))
 					.build();
 		addAction(resetValueAction);
+
+		DockingAction showSystemValuesAction =
+			new ActionBuilder("Toggle Show System Values", getTitle())
+					.popupMenuPath("Toggle Show System Values")
+					.withContext(ThemeTableContext.class)
+					.popupWhen(c -> true)
+					.helpLocation(new HelpLocation("Theming", "Toggle_Show_System_Values"))
+					.onAction(context -> toggleSystemValues(context))
+					.build();
+		addAction(showSystemValuesAction);
+	}
+
+	private void toggleSystemValues(ThemeTableContext<?> context) {
+		ThemeTable themeTable = context.getThemeTable();
+		boolean isShowing = themeTable.isShowingSystemValues();
+		themeTable.setShowSystemValues(!isShowing);
 	}
 
 	private void adjustFonts(int amount) {
