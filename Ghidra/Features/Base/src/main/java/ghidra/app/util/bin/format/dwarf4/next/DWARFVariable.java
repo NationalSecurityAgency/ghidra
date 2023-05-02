@@ -131,7 +131,6 @@ public class DWARFVariable {
 	 * Assign storage for this variable in a ram data location.
 	 * 
 	 * @param offset address offset
-	 * @param prog {@link DWARFProgram}
 	 */
 	public void setRamStorage(long offset) {
 		clearStorage();
@@ -146,7 +145,6 @@ public class DWARFVariable {
 	 * Assign storage for this variable at a stack offset.
 	 * 
 	 * @param offset stack offset
-	 * @param prog {@link DWARFProgram}
 	 */
 	public void setStackStorage(long offset) {
 		clearStorage();
@@ -170,7 +168,6 @@ public class DWARFVariable {
 	 * Assign storage for this variable via a list of registers.
 	 * 
 	 * @param registers registers that contain the data 
-	 * @param prog {@link DWARFProgram}
 	 */
 	public void setRegisterStorage(List<Register> registers) {
 		clearStorage();
