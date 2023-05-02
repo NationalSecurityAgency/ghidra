@@ -235,7 +235,6 @@ public class DWARFFunction {
 	 * 
 	 * @param includeStorageDetail boolean flag, if true storage information will be included, if
 	 * false, VariableStorage.UNASSIGNED_STORAGE will be used
-	 * @param program Ghidra program that contains the parameter
 	 * @return list of Parameters
 	 * @throws InvalidInputException
 	 */
@@ -251,7 +250,6 @@ public class DWARFFunction {
 	/**
 	 * Returns a {@link FunctionDefinition} that reflects this function's information.
 	 *  
-	 * @param prog {@link DWARFProgram} that contains this function
 	 * @return {@link FunctionDefinition} that reflects this function's information
 	 */
 	public FunctionDefinition asFuncDef() {

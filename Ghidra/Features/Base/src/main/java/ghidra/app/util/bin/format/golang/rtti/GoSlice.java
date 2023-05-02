@@ -65,7 +65,6 @@ public class GoSlice {
 	 * @param startElement
 	 * @param elementCount
 	 * @param elementSize
-	 * @param programContext
 	 * @return
 	 */
 	public GoSlice getSubSlice(long startElement, long elementCount, long elementSize) {
