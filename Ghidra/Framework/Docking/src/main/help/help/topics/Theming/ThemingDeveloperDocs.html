@@ -2,8 +2,6 @@
 
 <HTML>
   <HEAD>
-    <META name="generator" content=
-    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
     <TITLE>Developer's Guide</TITLE>
   </HEAD>
@@ -21,8 +19,8 @@
     want to use colors, fonts, and icons. The key idea to support theming is to never 
     <B>directly</B>
     reference those resources. Instead, the developer should create an ID string for the resource
-    and then in a <CODE><I>module</I>.theme.properties</CODE> file, provide a default value for that ID.  
-    (Also, you may define an alternate "dark" default value that will be used if the
+    and then in a <CODE><I>module</I>.theme.properties</CODE> file, provide a default value for that
+    ID. (Also, you may define an alternate "dark" default value that will be used if the
     current theme is considered a dark theme).  The way you
     define and use these IDs is a bit different depending on whether the resource is a color, font,
     or icon. Colors and icons are similar in that developers use these types by creating either 
@@ -182,6 +180,42 @@
           <LI>icon.plugin.byteviewer.provider</LI>
         </UL>
       </BLOCKQUOTE>
+      
+      <UL>
+      <LI><A NAME="System_IDs"></A><B>System IDs:</B> The following resource IDs are created and 
+      used by the system.  For a description of how these IDs are used internally by the 
+      application, see the <CODE>UiDefaultsMapper</CODE> class .   The <CODE>system.*</CODE> keys 
+      allow users to quickly change many Look and Feel values via these high-level concepts.   The 
+      <CODE>laf.*</CODE> properties are for internal use and do not need to be changed by the user.
+      A description of the system properties can be found in the <CODE>SystemThemeIds</CODE> class.
+      </LI>
+      </UL>
+      <BLOCKQUOTE>
+
+        <UL>
+          <LI>laf.color.*</LI>
+          <LI>laf.font.*</LI>          
+          <LI>laf.icon.*</LI>
+        </UL>
+        
+
+        <UL>
+		  <LI>system.color.*</LI>
+          <LI>system.font.*</LI>
+        </UL>
+        
+        <P>
+        The <CODE>system</CODE> property names use the standard property names, such as <CODE>
+        font, bg</CODE> and <CODE>fg</CODE>.  These properties introduce these additional terms: 
+        <CODE>control, view, menu and tooltip</CODE>.   <CODE>control</CODE> refers to items that 
+        generally control the state of the application, such as buttons and check boxes.  
+        <CODE>view</CODE> refers to widgets that display data, such as trees, tables and text 
+        fields.  <CODE>menu</CODE> and <CODE>tooltip</CODE> work with the items after which they are
+        named.
+        </P>
+
+      </BLOCKQUOTE>
+      
     </BLOCKQUOTE>
 
     <H2>Theme Property Files</H2>
@@ -198,7 +232,7 @@
       they exist in a module's data directory and are named with the 
       <CODE>.theme.properties</CODE> suffix.</P>
 
-      <H3>Theme Properties File Naming Convention</H3>
+      <H3><A NAME="Theme_Property_Names"></A>Theme Properties File Naming Convention</H3>
 
       <P>To promote consistency, theme property files should use the following naming
       convention:</P>
@@ -260,7 +294,7 @@ color.bg.listing = color.bg
 color.fg.listing.address = black
 color.fg.listing.bytes = #00ff00
  
-font.global = courirer-BOLD-12
+font.global = courier-BOLD-12
 font.global.listing = font.global
  
 icon.error = defaultError.png
@@ -295,11 +329,22 @@ color.fg.listing.bytes = orange
       example, a reference color entry might be something like "color.bg.listing = color.bg". This
       says that the listing's background color should be whatever "color.bg" is defined to be. Note
       that all of the application's defined properties start with either "color.", "font.", or
-      "icon.". Properties defined by a Java Look and Feel don't follow this pattern. To reference a
-      property that does not have a standard prefix, an ID can be prefixed with "[color]",
-      "[font]", or "[icon] as appropriate to allow the theme property parser to recognize the
-      values as IDs to other properties. So to refer to a Java property named "table.background", 
-      you would use the following definition: "color.bg.table = [color]table.background".</P>
+      "icon.". 
+      
+      <P>
+      Properties defined by the theming system do not follow this pattern. To reference a
+      property that does not have a standard prefix, an ID can be prefixed with <COD>[color]
+      </CODE>, <CODE>[font]</CODE>, or <CODE>[icon]</CODE> as appropriate to allow the theme 
+      property parser to recognize the values as IDs to other properties. For example, to refer to a
+      system property named<CODE>system.color.bg.view</CODE>, 
+      you would use the following definition: 
+      <P>
+      <BLOCKUOTE>
+      <P>
+      <CODE>color.bg.tree = [color]system.color.bg.view</CODE>
+      </P>
+      </BLOCKQUOTE>
+      
 
       <H3>Color Values</H3>
 
@@ -319,8 +364,8 @@ color.fg.listing.bytes = orange
 
           <LI>rgba(red, green, blue, alpha)</LI>
 
-          <LI><I>web color name</I> // the case-insensitive name of a web color such as red, olive, or 
-          purple</LI>
+          <LI><I>web color name</I> // the case-insensitive name of a web color such as red, olive, 
+          or purple</LI>
         </UL>
       </BLOCKQUOTE>
 
@@ -447,6 +492,126 @@ color.fg.listing.bytes = orange
 <PRE>
         icon.overlay.flag = EMPTY_ICON[size(16,16)]{flag.png[size(6,6)][move(10,10)]}
 </PRE>
+
+
+
+	
+    <H2>Useful Concepts</H2>
+    
+    
+    	<H3>GThemeDefaults</H3>
+    	
+    	<BLOCKQUOTE>
+    	<P>
+    	This class contains many common application theme values for developers to use, such as 
+    	the default background color.   These values can be used directly so developers do not have
+    	to instantiate theme objects using theme IDs.
+    	</P>
+    	</BLOCKQUOTE>
+    	
+    	<H3>Icons</H3>
+    	
+    	<BLOCKQUOTE>
+    	<p>
+    	When adding icons to the application, consider using standard icons provided by the 
+    	<CODE>Icons</CODE> class.   Many generic concepts that require icons are in this class.
+    	</P>
+    	</BLOCKQUOTE>
+    	
+    	<H3>Palette Colors</H3>
+    	
+    	<BLOCKQUOTE>
+    	<P>
+    	A list of palette colors has been defined in <CODE>gui.palette.theme.properties.</CODE>.  
+    	These palette colors values are meant to be used by developers to reduce the total number
+    	of colors used in the application.   These color ids and values are viewable in the 
+    	<A href="ThemingUserDocs.html#Edit_Theme">Theme Editor Dialog</A>.
+    	</P>
+    	<P>
+    	One of the benefits of using the palette system is that it is easy for end-users to change
+    	one palette color to update all widgets in the application.
+    	</P>
+    	<P>
+    	We recommend you use the existing palette colors when picking colors for your widgets.
+    	</P>
+    	</BLOCKQUOTE>
+
+
+		<H3>HTML Foreground Colors in Messages</H3>
+		
+		<BLOCKQUOTE>
+		<P>
+		Some developers use HTML messages in labels, tables, tooltips, and in calls to system APIs, 
+		like <CODE>Msg</CODE>.   Using HTML text allows clients to control the formatting of the
+		text, including the usage of color.  If you use color in your HTML, then we suggest you do
+		so using GColors, like this:
+		<PRE>
+    String message = "Some text: &LT;FONT COLOR=\"" + Messages.ERROR + "\"&GT;" + errorText + "</FONT>";
+		</PRE>
+		
+		<P>
+		In this example, an HTML message is created and part of that text is colored with the 
+		standard error message color, which is red in a light mode theme.	You can also use your
+		own <CODE>GColor</CODE> object in your HTML messages.  Using standard system colors or 
+		GColors allows these colors to be updated as the theme changes.  We do not 
+		recommend the use of hard-coded color values.  	
+		</P>
+		</BLOCKQUOTE>
+
+
+
+		<H3>Options Usage of Colors and Fonts</H3>
+
+
+		<BLOCKQUOTE>
+		<P>
+		The <CODE>Options</CODE> class in Ghidra facilitates user-configurable options in the 
+		application.   Previously, developers could use options to allow end-users to control color
+		values.  In the new theme-based system, all colors are controlled via theming.  However, to
+		make the transition to theming easier for developers, we added methods to the options class
+		that allow the developer to bind color editing via the options UI.  These color options will
+		write any changes directly to the theme system. 
+		</P>
+		<P> See: <CODE>Options.registerThemeColorBinding()</CODE> and 
+		<CODE>Options.registerThemeFontBinding()</CODE> 
+		</P>
+		</BLOCKQUOTE>
+
+
+
+    	<H3>UiDefaultsMapper</H3>
+    	
+    	<BLOCKQUOTE>
+    	<P>This class discusses some of the plumbing the application uses to unify the various Look 
+    	and Feel concepts presented by the different LaFs.
+    	</P>
+    	</BLOCKQUOTE>
+    	
+    	
+    	<H3>SystemThemeIds</H3>
+    	
+    	<BLOCKQUOTE>
+    	<P>This class is used by the <CODE>UiDefaultsMapper</CODE> class and presents a set of resource IDs common across all
+    	LaFs. These values can be changed by the user.   See also the description of 
+    	<A NAME="#System_IDs">System IDs in this document</A>.
+    	</P>
+    	
+    	</BLOCKQUOTE>
+    	
+    	
+    	
+    	<H3>Known Issues</H3>
+    	
+    	<BLOCKQUOTE>
+    	<P>
+    	Sometimes switching between themes does not reset all widgets.  When
+    	this happens, you may notice odd UI artifacts.  These will go away when the application is
+    	restarted and often when you again switch the theme.
+    	</P>
+    	</BLOCKQUOTE>
+    	
+    	
+    	
 
 
 	  <P class="providedbyplugin">Provided by: <I>Theme Manager</I></P>

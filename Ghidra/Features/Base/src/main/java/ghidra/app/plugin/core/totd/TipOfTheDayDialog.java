@@ -28,7 +28,6 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.Gui;
 
 class TipOfTheDayDialog extends ReusableDialogComponentProvider {
@@ -88,7 +87,7 @@ class TipOfTheDayDialog extends ReusableDialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		Border panelBorder =
 			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10),
-				BorderFactory.createLineBorder(Java.BORDER));
+				BorderFactory.createLineBorder(Colors.BORDER));
 		panel.setBorder(panelBorder);
 
 		JLabel label = new GLabel("Did you know...", tipIcon, SwingConstants.LEFT);

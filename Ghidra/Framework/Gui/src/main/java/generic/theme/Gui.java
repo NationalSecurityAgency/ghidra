@@ -161,8 +161,18 @@ public class Gui {
 		return themeManager.isDarkTheme();
 	}
 
+	/**
+	 * Returns true if the given id is a system-defined id, such as those starting with
+	 * {@code laf.color} or {@code system.color}.
+	 *
+	 * @param id the id
+	 * @return true if the given id is a system-defined id
+	 */
+	public static boolean isSystemId(String id) {
+		return id.startsWith("laf.") || id.startsWith("system.");
+	}
+
 	static void setThemeManager(ThemeManager manager) {
 		themeManager = manager;
 	}
-
 }

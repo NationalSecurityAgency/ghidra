@@ -77,13 +77,13 @@ public class FidSearchDebugDialog extends DialogComponentProvider {
 
 	private JLabel getPreparedLabel(String text) {
 		JLabel label = new GDLabel(text, SwingConstants.RIGHT);
-		label.setFont(Gui.getFont(Fonts.MONOSPACED));
+		Gui.registerFont(label, Fonts.MONOSPACED);
 		return label;
 	}
 
 	private JTextField getPreparedTextField() {
 		JTextField textField = new JTextField(25);
-		textField.setFont(Gui.getFont(Fonts.MONOSPACED));
+		Gui.registerFont(textField, Fonts.MONOSPACED);
 		return textField;
 	}
 

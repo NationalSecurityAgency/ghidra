@@ -27,7 +27,9 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GDLabel;
 import docking.wizard.*;
-import generic.theme.*;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Ids.Fonts;
+import generic.theme.Gui;
 import ghidra.app.util.task.OpenProgramTask;
 import ghidra.app.util.task.OpenProgramTask.OpenProgramRequest;
 import ghidra.framework.main.DataTreeDialog;
@@ -74,7 +76,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		folderLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		folderLabel.setToolTipText("The folder to store the new Version Tracking Session");
 		folderNameField = new JTextField();
-		Gui.registerFont(folderNameField, GThemeDefaults.Ids.Fonts.MONOSPACED);
+		Gui.registerFont(folderNameField, Fonts.MONOSPACED);
 		folderNameField.setEditable(false); // force user to browse to choose
 
 		JButton browseFolderButton = new BrowseButton();

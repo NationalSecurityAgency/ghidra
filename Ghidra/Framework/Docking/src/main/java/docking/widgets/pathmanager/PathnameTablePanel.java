@@ -29,7 +29,6 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -265,8 +264,7 @@ public class PathnameTablePanel extends JPanel {
 
 				label.setText(pathName.toString());
 				if (!fileExists) {
-					label.setForeground(data.isSelected() ? Tables.FG_ERROR_SELECTED
-							: Tables.FG_ERROR_UNSELECTED);
+					label.setForeground(getErrorForegroundColor(data.isSelected()));
 				}
 
 				return label;

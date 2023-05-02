@@ -128,7 +128,7 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 			bounds.height + (offset * 2));
 
 		if (isGraphScaledEnoughToBeDifficultToSee(rc)) {
-			g.setColor(Colors.Java.BORDER);
+			g.setColor(Colors.BORDER);
 			g.drawOval(bounds.x - offset, bounds.y - offset, bounds.width + (offset * 2),
 				bounds.height + (offset * 2));
 			g.drawOval(bounds.x - offset - 1, bounds.y - offset - 1,

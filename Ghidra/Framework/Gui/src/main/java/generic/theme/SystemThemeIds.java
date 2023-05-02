@@ -18,17 +18,19 @@ package generic.theme;
 import generic.theme.laf.UiDefaultsMapper;
 
 /**
- * These are the standard system ids defined to represent general LookAndFeel color and font
- * concepts. Various LaF have different names for these concepts and even defines additional 
- * concepts. These are the ones we use regardless of the LookAndFeel being used. When we
- * load a specific LookAndFeel, a {@link UiDefaultsMapper}, specific to that LaF is used to map
- * its system ids to our standard system ids. Also, {@link GThemeDefaults} uses these system
- * ids to define colors that can be used throughout the application without using these ids
+ * This class provides a set of IDs that can be used in the application, regardless of which Look
+ * and Feel (LaF) is being used.
+ * <P>
+ * Various LaFs have different names for common concepts and even define additional concepts not
+ * listed here. The values in this class are those the application used use regardless of the LaF
+ * being used. When we load a specific LaF, a {@link UiDefaultsMapper} specific to that LaF is used
+ * to map its common LaF ids to these standard system ids. The {@link GThemeDefaults} uses these
+ * system ids to define colors that can be used throughout the application without using these ids
  * directly.
  * <P>
  * The ids are assigned to categories as follows:
  * <UL>
- * 		<LI>CONTROL- these ids are used for colors and fonts for general system components such as
+ *      <LI>CONTROL- these ids are used for colors and fonts for general system components such as
  * 				Buttons, Checkboxes, or anything that doesn't fit into one of the other areas</LI>
  *  	<LI>VIEW - these ids are used for the colors and fonts used for widgets that display data
  *  			such as Trees, Tables, TextFieds, and Lists</LI>
@@ -45,7 +47,6 @@ import generic.theme.laf.UiDefaultsMapper;
  * 		<LI> FG_DISABLED - the foreground color when the component is disabled
  * 		<LI> BG_BORDER - the border color
  * 		<LI> FONT - the font
- * 		
  * </UL>
  */
 public class SystemThemeIds {

@@ -16,8 +16,7 @@
 package docking.theme.gui;
 
 import java.awt.Component;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 import javax.swing.*;
@@ -40,11 +39,40 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	private GThemeValueMap themeValues;
 	private GThemeValueMap defaultValues;
 	private GThemeValuesCache valuesProvider;
+	private boolean showSystemValues;
 
 	public ThemeIconTableModel(GThemeValuesCache valuesProvider) {
 		super(new ServiceProviderStub());
 		this.valuesProvider = valuesProvider;
 		load();
+	}
+
+	public void setShowSystemValues(boolean show) {
+		this.showSystemValues = show;
+	}
+
+	public boolean isShowingSystemValues() {
+		return showSystemValues;
+	}
+
+	protected void filter() {
+
+		List<IconValue> filtered = new ArrayList<>();
+
+		for (IconValue iconValue : icons) {
+			String id = iconValue.getId();
+			if (showSystemValues) {
+				filtered.add(iconValue);
+				continue;
+			}
+
+			if (!Gui.isSystemId(id)) {
+				filtered.add(iconValue);
+			}
+
+		}
+
+		icons = filtered;
 	}
 
 	/**
@@ -70,6 +98,8 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 		icons = currentValues.getIcons();
 		themeValues = valuesProvider.getThemeValues();
 		defaultValues = valuesProvider.getDefaultValues();
+
+		filter();
 	}
 
 	@Override
@@ -242,6 +272,6 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 		}
 	}
 
-	private record ResolvedIcon(String id, String refId, Icon icon) {/**/}
-
+	private record ResolvedIcon(String id, String refId, Icon icon) {
+		/**/}
 }

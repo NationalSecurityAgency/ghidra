@@ -33,42 +33,42 @@ import generic.theme.*;
 import ghidra.util.Msg;
 
 /**
- * The purpose of this class is to introduce multiple levels of indirection into the Java 
- * {@code LookAndFeel} (LaF), which allows the user to change these values.  Further, when 
+ * The purpose of this class is to introduce multiple levels of indirection into the Java
+ * {@code LookAndFeel} (LaF), which allows the user to change these values.  Further, when
  * introducing this indirection we combine the Java settings into user-friendly system ids to make
  * changing these values easier.
  * <P>
  * This class defines these user-friendly groups.  The default system assignments are based on the
  * {@link BasicLookAndFeel} values.
  * <P>
- * Subclasses can override the mapping of these standard system values for particular LaFs that have 
- * different keys or color assignments.
+ * Subclasses can override the mapping of these standard system values for particular LaFs that have
+ * different ids or color assignments.
  * <P>
  * Some basic concepts:
  *  <UL>
  *  	<LI>UI Defaults - key-value pairs defined by the Java LaF; there are 2 key types, widget
  *                        keys and Java group/reusable keys (e.g., Button.background; control)
- *      <LI>UI Indirection - UI Defaults values are changed to point to custom terms we created to 
+ *      <LI>UI Indirection - UI Defaults values are changed to point to custom terms we created to
  *                        allow for indirection (e.g., Button.background -> laf.color.Button.background)
  *      <LI>Normalized Keys - keys we created to facilitate the UI Indirection, based upon the Java
  *                        keys (e.g., laf.color.Button.background)
- *  	<LI>System Color/Font Keys - user facing terms for common color or font concepts into an 
- *  					easy-to-change setting (e.g., system.color.fg.text) 
+ *  	<LI>System Color/Font Keys - user facing terms for common color or font concepts into an
+ *  					easy-to-change setting (e.g., system.color.fg.text)
  *      <LI>Palette Keys - dynamically generated color palette keys based on the LaF for any colors
- *      				  and fonts that were not mapped into an system color or font (e.g., 
+ *      				  and fonts that were not mapped into an system color or font (e.g.,
  *      				  laf.palette.color.01)
  *  </UL>
- * 
+ *
  * <P>
  *  The mapper performs the following operations:
  *  <OL>
  * <LI>Extracts all color, font, and icon values from the UI Defaults.</LI>
  * <LI>Use the current LaF values to populate the pre-defined system colors and fonts.</LI>
- * <LI>Any UI Defaults values not assigned in the previous step will be assigned to a dynamic shared 
+ * <LI>Any UI Defaults values not assigned in the previous step will be assigned to a dynamic shared
  *     palette color or font.
  * <LI>Update Java UI Defaults to use our indirection and system values.</LI>
  * </OL>
- * 
+ *
  */
 public class UiDefaultsMapper {
 	public static final String LAF_COLOR_ID_PREFIX = "laf.color.";
@@ -96,17 +96,17 @@ public class UiDefaultsMapper {
 
 	// @formatter:off
 	protected ColorMatcher viewColorMatcher = new ColorMatcher(BG_VIEW_ID,
-							 								   FG_VIEW_ID, 
-							 								   BG_VIEW_SELECTED_ID, 
+							 								   FG_VIEW_ID,
+							 								   BG_VIEW_SELECTED_ID,
 							 								   FG_VIEW_SELECTED_ID);
 	protected ColorMatcher tooltipColorMatcher = new ColorMatcher(BG_TOOLTIP_ID,
 																  FG_TOOLTIP_ID);
 	protected ColorMatcher defaultColorMatcher = new ColorMatcher(BG_CONTROL_ID,
-							 									  FG_CONTROL_ID, 
-							 									  BG_VIEW_ID, 
-							 									  FG_VIEW_ID, 
+							 									  FG_CONTROL_ID,
+							 									  BG_VIEW_ID,
+							 									  FG_VIEW_ID,
 							 									  FG_DISABLED_ID,
-							 									  BG_VIEW_SELECTED_ID,	
+							 									  BG_VIEW_SELECTED_ID,
 							 									  FG_VIEW_SELECTED_ID,
 							 									  BG_TOOLTIP_ID,
 							 									  BG_BORDER_ID);
@@ -187,7 +187,7 @@ public class UiDefaultsMapper {
 	/**
 	 * Registers any {@link LookAndFeel} ids that are not used directly (e.g. "control", "text",
 	 * etc.) so that these values won't get mapped to any normalized id. There is no need for these
-	 * values to show up in the theme values, since changing them will have no effect. They are 
+	 * values to show up in the theme values, since changing them will have no effect. They are
 	 * used to seed the values for the system color and fonts. Subclasses should
 	 * override this method to add additional ids so they won't show up in the theme values.
 	 */
@@ -228,11 +228,11 @@ public class UiDefaultsMapper {
 	protected void assignSystemColorValues() {
 		// Originally, these values were assigned to the corresponding concepts as defined
 		// in the BasicLookAndFeel such as "control", "text", etc. Unfortunately, those
-		// conventions are rarely used by specific look and feels.  It was discovered that using a 
+		// conventions are rarely used by specific look and feels.  It was discovered that using a
 		// representative component value worked much better. So each Look and Feel was examined and
 		// those component values chosen here are the ones that seemed to work for the most look and
-		// feels. If a specific look and feel needs different values, this class is designed to be 
-		// subclassed where the values can be overridden. See the NimbusUiDefaultsMapper as an 
+		// feels. If a specific look and feel needs different values, this class is designed to be
+		// subclassed where the values can be overridden. See the NimbusUiDefaultsMapper as an
 		// example.
 
 		assignSystemColorFromLafId(BG_CONTROL_ID, "Button.background");
@@ -325,7 +325,7 @@ public class UiDefaultsMapper {
 	/**
 	 * Assigns every component name in the component group to the given ColorValueMatcher
 	 * @param componentGroups a list of component names
-	 * @param matcher the ColorMatcher that will provide the precedence of system ids to 
+	 * @param matcher the ColorMatcher that will provide the precedence of system ids to
 	 * search when replacing LaF component specific values
 	 */
 	private void defineComponentColorMatcher(String[] componentGroups, ColorMatcher matcher) {
@@ -337,7 +337,7 @@ public class UiDefaultsMapper {
 	/**
 	 * Assigns every component name in a component group to the given FontValueMapper
 	 * @param componentGroups a list of component names
-	 * @param matcher the FontValueMatcher that will provide the precedence of ststem font ids to 
+	 * @param matcher the FontValueMatcher that will provide the precedence of ststem font ids to
 	 * search when replacing LaF component specific fonts with a system Font
 	 */
 	private void defineComponentFontMatcher(String[] componentGroups, FontMatcher matcher) {
@@ -477,7 +477,7 @@ public class UiDefaultsMapper {
 	}
 
 	/**
-	 * Attempts to find a system color id that matches the given color. The order system ids are 
+	 * Attempts to find a system color id that matches the given color. The order system ids are
 	 * searched depends on the component (Button, Menu, etc.) which is derived from the given
 	 * lafId.
 	 * @param lafId the lafId we are attempting to get a system color for
@@ -499,7 +499,7 @@ public class UiDefaultsMapper {
 	}
 
 	/**
-	 * Attempts to find a system font id that matches the given font. The order system fonts are 
+	 * Attempts to find a system font id that matches the given font. The order system fonts are
 	 * searched depends on the component (Button, Menu, etc.) which is derived from the given
 	 * lafId.
 	 * @param lafId the lafId we are attempting to get a system font for

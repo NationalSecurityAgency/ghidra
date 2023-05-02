@@ -27,6 +27,7 @@ import docking.widgets.HyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
 import generic.theme.*;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.*;
@@ -130,7 +131,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			initializeLabelSection();
 			initializeDescriptionSection();
 
-			setBorder(BorderFactory.createLineBorder(GThemeDefaults.Colors.Java.BORDER));
+			setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 			updateCheckBoxState();
 		}
 

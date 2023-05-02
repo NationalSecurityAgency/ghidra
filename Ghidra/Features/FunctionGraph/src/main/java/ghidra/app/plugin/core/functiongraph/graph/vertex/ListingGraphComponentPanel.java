@@ -40,6 +40,7 @@ import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Tooltips;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
@@ -203,7 +204,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		boolean useFullSizeTooltip = options.useFullSizeTooltip();
 		previewListingPanel = new FGVertexListingPanel(controller,
 			getFormatManager(useFullSizeTooltip), program, addressSet);
-		previewListingPanel.setTextBackgroundColor(FGVertex.TOOLTIP_BACKGROUND_COLOR);
+		previewListingPanel.setTextBackgroundColor(Tooltips.BACKGROUND);
 		previewListingPanel.getFieldPanel().setCursorOn(false);
 
 		// keep the tooltip window from getting too big; use an arbitrary, reasonable max
@@ -216,14 +217,14 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		tooltipTitleLabel = new GDLabel();
 		tooltipTitleLabel.setHorizontalAlignment(SwingConstants.LEADING);
-		tooltipTitleLabel.setBackground(FGVertex.TOOLTIP_BACKGROUND_COLOR);
+		tooltipTitleLabel.setBackground(Tooltips.BACKGROUND);
 		tooltipTitleLabel.setOpaque(true);
 		Font labelFont = tooltipTitleLabel.getFont();
 		tooltipTitleLabel.setFont(labelFont.deriveFont(Font.BOLD));
 
 		JPanel headerPanel = new JPanel(new BorderLayout());
 		headerPanel.add(tooltipTitleLabel);
-		headerPanel.setBorder(BorderFactory.createLineBorder(Colors.Java.BORDER));
+		headerPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 
 		panel.add(headerPanel, BorderLayout.NORTH);
 		panel.add(previewListingPanel, BorderLayout.CENTER);

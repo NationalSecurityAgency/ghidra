@@ -17,15 +17,13 @@ package docking.theme.gui;
 
 import java.awt.Component;
 import java.awt.Font;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 import javax.swing.JLabel;
 
 import docking.widgets.table.*;
-import generic.theme.FontValue;
-import generic.theme.GThemeValueMap;
+import generic.theme.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
@@ -41,11 +39,40 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 	private GThemeValueMap themeValues;
 	private GThemeValueMap defaultValues;
 	private GThemeValuesCache valuesProvider;
+	private boolean showSystemValues;
 
 	public ThemeFontTableModel(GThemeValuesCache valuesProvider) {
 		super(new ServiceProviderStub());
 		this.valuesProvider = valuesProvider;
 		load();
+	}
+
+	public void setShowSystemValues(boolean show) {
+		this.showSystemValues = show;
+	}
+
+	public boolean isShowingSystemValues() {
+		return showSystemValues;
+	}
+
+	protected void filter() {
+
+		List<FontValue> filtered = new ArrayList<>();
+
+		for (FontValue fontValue : fonts) {
+			String id = fontValue.getId();
+			if (showSystemValues) {
+				filtered.add(fontValue);
+				continue;
+			}
+
+			if (!Gui.isSystemId(id)) {
+				filtered.add(fontValue);
+			}
+
+		}
+
+		fonts = filtered;
 	}
 
 	/**
@@ -71,6 +98,8 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 		fonts = currentValues.getFonts();
 		themeValues = valuesProvider.getThemeValues();
 		defaultValues = valuesProvider.getDefaultValues();
+
+		filter();
 	}
 
 	@Override
@@ -172,6 +201,7 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 			return renderer;
 		}
 
+		@Override
 		public Comparator<ResolvedFont> getComparator() {
 			return (v1, v2) -> {
 				if (v1 == null && v2 == null) {
@@ -220,5 +250,6 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 
 	}
 
-	private record ResolvedFont(String id, String refId, Font font) {/**/}
+	private record ResolvedFont(String id, String refId, Font font) {
+		/**/}
 }
