@@ -96,61 +96,61 @@ ext.deps = [
 	[
 		name: "vs2012_x64.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2012_x64.fidb",
-		sha256: "80d1c31c636b1775dd06001747dfb7e2ff60ff716299a8fcc232b8d2faa53a21",
+		sha256: "d4e98ab3f790b831793218430bba0d8b24a5fbf4da65b0c1ffa8cb0cfbeb0cdc",
 		destination: FID_DIR
 	],
 	[
 		name: "vs2012_x86.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2012_x86.fidb",
-		sha256: "8fc7ea9451b3a201ac3623b4a0924427cbb6bba410bdf9ebba4f2dfe8e77dfad",
+		sha256: "a490ed7e2ed21e587459feaeace7036b7ede4ce84e72e10dfd8c57434a6918b6",
 		destination: FID_DIR
 	],
 	[
 		name: "vs2015_x64.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2015_x64.fidb",
-		sha256: "c3c16d23517c233d6950d5d43e34cdfa1b15c1ee2e066c8e9a53b4f75a907a87",
+		sha256: "e04e9e40f9ecb601c85f4d84ed9bf66b45363be1d1e82c162e4c9902b8cb508f",
 		destination: FID_DIR
 	],
 	[
 		name: "vs2015_x86.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2015_x86.fidb",
-		sha256: "6fc0a61e935a0060ab33bd6406c9ca5f215ac3dff655f83c18f3d144ad389fe5",
+		sha256: "b66ee696653e2ed365919deaaef885103120c792e22e79af70d1209d7e1d8644",
 		destination: FID_DIR
 	],
 	[
 		name: "vs2017_x64.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2017_x64.fidb",
-		sha256: "5b0f8b8dee110d8c54fc27ed808ea28c2c675e95f3809e33eb99f03672741833",
+		sha256: "d5fa5f697298174fa53d247d3599e6a12884605ad181c7b954e2380ec1f0bd89",
 		destination: FID_DIR
 	],
 	[
 		name: "vs2017_x86.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2017_x86.fidb",
-		sha256: "2a81615d588aa80043f7bc3a35db04580c990c90398e77399fcffc66f053e5ac",
+		sha256: "d389cb8d76ff4a59ca35f891b8521c72ad5f0df96e253973a2d21a8614a4cc81",
 		destination: FID_DIR
 	],
 	[
 		name: "vs2019_x64.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2019_x64.fidb",
-		sha256: "80413b57ae20fc1850d15a401d1cec87ac61b1809a1dafc2fa4403bf2029ec94",
+		sha256: "150007796fc36a4069660ad62449aadaaf3dd11b3864a5ef21e79831c9ce9118",
 		destination: FID_DIR
 	],
 	[
 		name: "vs2019_x86.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2019_x86.fidb",
-		sha256: "68b96a4e13ee2c157517636aa1c7841f750fbfc0026188f6123af017f3fa3117",
+		sha256: "eb630a36faa586a371eb734dc0bbd8d13ccaef697f3db5872596358f3dd2432a",
 		destination: FID_DIR
 	],
 	[
 		name: "vsOlder_x64.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vsOlder_x64.fidb",
-		sha256: "2466595f6e74d9599e16095cc61c6de769461c935c20a442db1d2dfd2d7bde9b",
+		sha256: "8c3b51f4660cd27e1a0d610a9f3f2d5fbc833a66ac9ee4393ee2f2481e855866",
 		destination: FID_DIR
 	],
 	[
 		name: "vsOlder_x86.fidb",
 		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vsOlder_x86.fidb",
-		sha256: "5b97f786eaebc785aaa365f17eb7cc9a1dd2b5a15b277a5229157ea76945fdc1",
+		sha256: "98605c6b6b9214a945d844e41c85860d54649a45bca7873ef6991c0e93720787",
 		destination: FID_DIR
 	]
 ]
