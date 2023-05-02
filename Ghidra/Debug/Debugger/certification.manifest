@@ -114,6 +114,7 @@ src/main/resources/images/debugger32.png||GHIDRA||||END|
 src/main/resources/images/delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/detach.png||GHIDRA||||END|
 src/main/resources/images/disconnect.png||GHIDRA||||END|
+src/main/resources/images/emulator32.png||GHIDRA||||END|
 src/main/resources/images/interrupt.png||GHIDRA||||END|
 src/main/resources/images/kill.png||GHIDRA||||END|
 src/main/resources/images/launch.png||GHIDRA||||END|
@@ -123,7 +124,6 @@ src/main/resources/images/object-running.png||GHIDRA||||END|
 src/main/resources/images/object-terminated.png||GHIDRA||||END|
 src/main/resources/images/object-unpopulated.png||GHIDRA||||END|
 src/main/resources/images/process.png||GHIDRA||||END|
-src/main/resources/images/process32.png||GHIDRA||||END|
 src/main/resources/images/record.png||GHIDRA||||END|
 src/main/resources/images/register-marker.png||GHIDRA||||END|
 src/main/resources/images/registers.png||GHIDRA||||END|
@@ -162,6 +162,7 @@ src/main/svg/console.svg||GHIDRA||||END|
 src/main/svg/debugger.svg||GHIDRA||||END|
 src/main/svg/detach.svg||GHIDRA||||END|
 src/main/svg/disconnect.svg||GHIDRA||||END|
+src/main/svg/emulator32.svg||GHIDRA||||END|
 src/main/svg/interrupt.svg||GHIDRA||||END|
 src/main/svg/kill.svg||GHIDRA||||END|
 src/main/svg/launch.svg||GHIDRA||||END|

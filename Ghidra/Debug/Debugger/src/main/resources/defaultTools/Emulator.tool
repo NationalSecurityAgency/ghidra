@@ -3,7 +3,7 @@
     <SUPPORTED_DATA_TYPE CLASS_NAME="ghidra.program.model.listing.Program" />
     <SUPPORTED_DATA_TYPE CLASS_NAME="ghidra.program.model.listing.DataTypeArchive" />
     <SUPPORTED_DATA_TYPE CLASS_NAME="ghidra.trace.model.Trace" />
-    <ICON LOCATION="process32.png" />
+    <ICON LOCATION="emulator32.png" />
     <TOOL TOOL_NAME="Emulator" INSTANCE_NAME="">
         <OPTIONS />
         <PACKAGE NAME="Ghidra Core">
