@@ -565,8 +565,7 @@ public class DataTypeWriter {
 	private void writeEnum(Enum enumm, TaskMonitor monitor) throws IOException {
 
 		String enumName = enumm.getDisplayName();
-		if (enumName.startsWith("define_") && enumName.length() > 7 && enumm.getCount() == 1 &&
-			enumm.getLength() == 8) {
+		if (enumName.startsWith("define_") && enumName.length() > 7 && enumm.getCount() == 1) {
 			long val = enumm.getValues()[0];
 			writer.append("#define " + enumName.substring(7) + " " + Long.toString(val));
 			writer.write(EOL);
