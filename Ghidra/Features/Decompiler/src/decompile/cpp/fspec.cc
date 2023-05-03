@@ -4554,6 +4554,23 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
   updateThisPointer();
 }
 
+/// \brief Add a an input parameter that will resolve to the current stack offset for \b this call site
+///
+/// A LOAD from a free reference to the \e spacebase pointer of the given AddrSpace is created and
+/// its output is added as a parameter to the call.  Later the LOAD should resolve to a COPY from
+/// a Varnode in the AddrSpace, whose offset is then the current offset.
+/// \param data is the function where the LOAD is created
+/// \param spacebase is the given (stack) AddrSpace
+void FuncCallSpecs::createPlaceholder(Funcdata &data,AddrSpace *spacebase)
+
+{
+  int4 slot = op->numInput();
+  Varnode *loadval = data.opStackLoad(spacebase,0,1,op,(Varnode *)0,false);
+  data.opInsertInput(op,loadval,slot);
+  setStackPlaceholderSlot(slot);
+  loadval->setSpacebasePlaceholder();
+}
+
 /// \brief Calculate the stack offset of \b this call site
 ///
 /// The given Varnode must be the input to the CALL in the \e placeholder slot
@@ -4577,8 +4594,7 @@ void FuncCallSpecs::resolveSpacebaseRelative(Funcdata &data,Varnode *phvn)
 
   if (stackPlaceholderSlot >= 0) {
     if (op->getIn(stackPlaceholderSlot) == phvn) {
-      data.opRemoveInput(op,stackPlaceholderSlot);
-      clearStackPlaceholderSlot();
+      abortSpacebaseRelative(data);
       return;
     }
   }
@@ -4610,8 +4626,12 @@ void FuncCallSpecs::abortSpacebaseRelative(Funcdata &data)
 
 {
   if (stackPlaceholderSlot >= 0) {
+    Varnode *vn = op->getIn(stackPlaceholderSlot);
     data.opRemoveInput(op,stackPlaceholderSlot);
     clearStackPlaceholderSlot();
+    // Remove the op producing the placeholder as well
+    if (vn->hasNoDescend() && vn->getSpace()->getType() == IPTR_INTERNAL && vn->isWritten())
+      data.opDestroy(vn->getDef());
   }
 }
 
