@@ -828,6 +828,13 @@ public class PreProcessor {
 			println("False");
 		return false;
 	}
+	
+	void bufAppendWithComment(PPToken buf, Token u) {
+	    if (emitExecSwitch==true)
+	        buf.append(u.image,true);
+	    else
+	        buf.append("//// " + u.image, false);
+	}
 
 	// Parse include file
 	private void includeFile(PPToken inc, boolean xsym) throws ParseException {
@@ -1863,23 +1870,28 @@ PPToken Text() :
 {Token u, nl, t = new Token(); PPToken buf = new PPToken(""); t.image="";}
 {
     ( LOOKAHEAD(3)
-      (LOOKAHEAD(2)(u=<OUTER_TEXT>{ if (emitExecSwitch==true) buf.append(u.image,true); else buf.append("//// " + u.image, false); }
-                    (LOOKAHEAD(2)nl=NewLines(){if (emitExecSwitch==true) buf.append(nl.image,true); else buf.append((u.image.length() == 0 ? "//// " : "") + nl.image, false); } )* |
+      (LOOKAHEAD(2)(u=<OUTER_TEXT>{ bufAppendWithComment(buf,u); }
+                    (LOOKAHEAD(2)nl=NewLines() {if (emitExecSwitch==true) buf.append(nl.image,true); else buf.append((u.image.length() == 0 ? "//// " : "") + nl.image, false); } )* |
 
-                    u=<OTHER_TEXT>{if (emitExecSwitch==true)  buf.append(u.image,true); else buf.append("//// " + u.image, false); } )
-       [LOOKAHEAD(2)u=NewLines(){ if (emitExecSwitch==true) buf.append(u.image,true); else buf.append("//// " + u.image, false); }]
-       [LOOKAHEAD(2)u=QuotedText(){if (emitExecSwitch==true)  buf.append(u.image,true); else buf.append("//// " + u.image, false);}]
-       [LOOKAHEAD(2)u=<OTHER_TEXT>{if (emitExecSwitch==true)  buf.append(u.image, true); else buf.append("//// " + u.image, false); }
-        (LOOKAHEAD(2)u=NewLines(){ if (emitExecSwitch==true) buf.append(u.image, true); else buf.append("//// " + u.image, false);})*])+|
+                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); } )
+       [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }]
+       [(LOOKAHEAD(2)(u=QuotedText() {bufAppendWithComment(buf,u); }
+                    [LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u); }] |
+                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); })
+           [LOOKAHEAD(2)t=NewLines() {if (emitExecSwitch==true) buf.append(t.image,true); else buf.append("//// " + u.image, false); }]
+           [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }]
+           [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }])+]
+       [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }
+        (LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u);})*])+|
                 
-      (LOOKAHEAD(2)(u=QuotedText(){if (emitExecSwitch==true)  buf.append(u.image,true); else buf.append("//// " + u.image, false); }
-                    [LOOKAHEAD(2)u=NewLines(){ if (emitExecSwitch==true) buf.append(u.image,true); else buf.append("//// " + u.image, false); }]|
-                    u=<OTHER_TEXT>{if (emitExecSwitch==true)  buf.append(u.image,true); else buf.append("//// " + u.image, false); })
-       [LOOKAHEAD(2)t=NewLines(){ if (emitExecSwitch==true) buf.append(t.image,true); else buf.append("//// " + u.image, false); }]
-       [LOOKAHEAD(2)u=<OTHER_TEXT>{if (emitExecSwitch==true)  buf.append(u.image,true); else buf.append("//// " + u.image, false); }]
-       [LOOKAHEAD(2)u=NewLines(){ if (emitExecSwitch==true) buf.append(u.image,true); else buf.append("//// " + u.image, false); }])+ |
+      (LOOKAHEAD(2)(u=QuotedText() {bufAppendWithComment(buf,u); }
+                    [LOOKAHEAD(2)u=NewLines(){ bufAppendWithComment(buf,u); }] |
+                    u=<OTHER_TEXT> {bufAppendWithComment(buf,u); })
+       [LOOKAHEAD(2)t=NewLines() {if (emitExecSwitch==true) buf.append(t.image,true); else buf.append("//// " + u.image, false); }]
+       [LOOKAHEAD(2)u=<OTHER_TEXT> {bufAppendWithComment(buf,u); }]
+       [LOOKAHEAD(2)u=NewLines() {bufAppendWithComment(buf,u); }])+ |
        
-      u=NewLines(){ if (emitExecSwitch==true) buf.append(u.image,true); else buf.append("//// " + u.image, false); }
+      u=NewLines() {bufAppendWithComment(buf,u); }
     ) { return buf;}
 }
 
@@ -1907,10 +1919,19 @@ PPToken NewLines() :
 }
 
 PPToken QuotedText() :
-{Token u;}
+{Token t = null; Token r = null; }
 {
-    (u=<QUOTED_TEXT>)
-     {return new PPToken(u);}
+    (t=<QUOTED_TEXT>
+      {
+        if (r == null) {
+           r = t;
+        } else {
+    	  r.image = r.image.substring(0,r.image.length()) + t.image.substring(1);
+        }
+       }
+     )+
+    
+    { return new PPToken(r); }
 }
 
 
