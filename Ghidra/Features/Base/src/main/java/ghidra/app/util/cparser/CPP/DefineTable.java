@@ -714,8 +714,10 @@ public class DefineTable {
 	public void populateDefineEquate(DataTypeManager openDTMgrs[], DataTypeManager dtMgr, String category, String prefix, String defName, long value) {
 		String enumName = prefix + defName;
 
+		// Start the Enum at 8, then resize to fit the value
 		EnumDataType enuum = new EnumDataType(enumName, 8);
 		enuum.add(defName, value);
+		enuum.setLength(enuum.getMinimumPossibleLength());
 
 		String defPath = getDefinitionPath(defName);
 		String currentCategoryName = getFileName(defPath);

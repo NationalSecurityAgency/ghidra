@@ -427,13 +427,89 @@ public class PreProcessorTest extends AbstractGenericTest {
 		assertEquals("fprintf (stderr, \"%s!\\n\" , \"I have args\")", defval);
 	}
 
-	private void checkDefine(StandAloneDataTypeManager dtMgr, CategoryPath path, long value,
+	@Test
+	public void testDefinesEnumLength() {
+		defname = "BYTE_LEN_1";
+		value = 1;
+		int length = 1;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_8";
+		value = 8;
+		length = 1;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_1F";
+		value = 0x1f;
+		length = 1;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_FF";
+		value = 0xff;
+		length = 1;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_1FF";
+		value = 0x1ff;
+		length = 2;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_7FFF";
+		value = 0x7fff;
+		length = 2;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_10000";
+		value = 0x10000;
+		length = 4;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_1000000";
+		value = 0x1000000;
+		length = 4;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_100000000";
+		value = 0x100000000L;
+		length = 8;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_10000000000";
+		value = 0x10000000000L;
+		length = 8;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_1000000000000";
+		value = 0x1000000000000L;
+		length = 8;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_100000000000000";
+		value = 0x100000000000000L;
+		length = 8;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+		
+		defname = "BYTE_LEN_neg1";
+		value = -1;
+		length = 1;
+		checkDefineEnumLength(dtMgr, path, value, defname, length);
+	}
+	
+	
+	private DataType checkDefine(StandAloneDataTypeManager dtMgr, CategoryPath path, long value,
 			String defname) {
 		DataType dataType = dtMgr.getDataType(path, "define_" + defname);
 		String msg = "Define Enum " + defname;
 		assertNotNull(msg, dataType);
 		assertTrue(msg, dataType instanceof Enum);
 		assertEquals(msg, value, ((Enum) dataType).getValue(defname));
+		return dataType;
+	}
+	
+	private void checkDefineEnumLength(StandAloneDataTypeManager dtMgr, CategoryPath path, long value,
+			String defname, int length) {
+		DataType dt = checkDefine(dtMgr, path, value, defname);
+		assertEquals("Expected " + defname + " length " + length, length, dt.getLength());
 	}
 
 	private void checkNotDefine(StandAloneDataTypeManager dtMgr, CategoryPath path,
