@@ -148,7 +148,12 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		bundleHost.activateAll(Collections.singletonList(bundle), TaskMonitor.DUMMY, writer);
 		String classname = bundle.classNameForScript(sourceFile);
-		Class<?> clazz = bundle.getOSGiBundle().loadClass(classname); // throws ClassNotFoundException
+		Bundle osgiBundle = bundle.getOSGiBundle();
+		if (osgiBundle == null) {
+			throw new ClassNotFoundException(
+				"Failed to get OSGi bundle containing script: " + sourceFile.toString());
+		}
+		Class<?> clazz = osgiBundle.loadClass(classname); // throws ClassNotFoundException
 		return clazz;
 	}
 
