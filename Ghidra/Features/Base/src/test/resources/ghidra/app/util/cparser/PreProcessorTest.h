@@ -498,5 +498,20 @@ int does_not_has_include();
 #define BEGINC  QUOTED('"')
 #define TEST_QUOTED_QUOTE    QUOTED('"')
 
+#define TEST_MULTILINE_TEXT(t) multi_line_worked(t)
 
+A = TEST_MULTILINE_TEXT("One Line")
+
+B = TEST_MULTILINE_TEXT("Some text first line"
+               "More text second line") 
+
+#define DUAL_MULTILINE(A, B) dual_line_worked(A,B)
+       
+C = DUAL_MULTILINE(1, OneLine("Caution: One Line"))
+
+D = DUAL_MULTILINE(2, "Caution: First line"
+                                      " second line"
+                                      " third line"
+                                      " fourth line")
+                                                                 
 theEnd();

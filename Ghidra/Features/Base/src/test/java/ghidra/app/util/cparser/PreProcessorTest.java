@@ -117,6 +117,16 @@ public class PreProcessorTest extends AbstractGenericTest {
 		
 		assertTrue("Expanded protected macro with args", results.contains("int (getc)(FILE * );"));
 		assertTrue("Expanded protected macro with args", results.contains("int (getchar)(void);"));
+
+		assertTrue("multi line string macro args failed ", results
+			.indexOf("0x1 = multi_line_worked(\"Some text first line\"\n" + 
+				"\"More text second line\")") != -1);
+		
+		assertTrue("multi line string macro args failed ", results
+			.indexOf("D = dual_line_worked(2,\"Caution: First line\"\n" + 
+				"\" second line\"\n" + 
+				"\" third line\"\n" + 
+				"\" fourth line\")") != -1);
 	}
 
 	@Test
