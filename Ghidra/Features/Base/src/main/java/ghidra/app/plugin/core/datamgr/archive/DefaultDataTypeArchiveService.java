@@ -169,8 +169,13 @@ public class DefaultDataTypeArchiveService implements DataTypeArchiveService {
 	protected DataTypeManagerInfo addDTM(DataTypeManagerInfo dtmInfo) throws DuplicateIdException {
 		DataTypeManagerInfo existingDTM = openDTMs.get(dtmInfo.dtm.getUniversalID());
 		if (existingDTM != null) {
-			dtmInfo.dtm.close();
-			throw new DuplicateIdException(dtmInfo.name(), existingDTM.name());
+			if (existingDTM.isClosed()) {
+				openDTMs.remove(dtmInfo.dtm.getUniversalID());
+			}
+			else {
+				dtmInfo.dtm.close();
+				throw new DuplicateIdException(dtmInfo.name(), existingDTM.name());
+			}
 		}
 		openDTMs.put(dtmInfo.dtm.getUniversalID(), dtmInfo);
 		afterAddDataTypeManager(dtmInfo);
