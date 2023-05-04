@@ -115,7 +115,7 @@ public class GoToQueryResultsTableModel extends ProgramLocationPreviewTableModel
 		AddressSet addressSet = getProgram().getAddressFactory().getAddressSet();
 		AddressIterator addrIt = refMgr.getReferenceDestinationIterator(addressSet, true);
 		while (addrIt.hasNext() && accumulator.size() < maxSearchHits) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = addrIt.next();
 			Symbol s = symbolTable.getPrimarySymbol(addr);
 			if (!s.isDynamic()) {
@@ -160,7 +160,7 @@ public class GoToQueryResultsTableModel extends ProgramLocationPreviewTableModel
 			symbolTable.getSymbolIterator(queryData.getQueryString(), queryData.isCaseSensitive());
 
 		while (it.hasNext() && accumulator.size() < maxSearchHits) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol s = it.next();
 			ProgramLocation programLocation = s.getProgramLocation();
 			if (programLocation != null) {

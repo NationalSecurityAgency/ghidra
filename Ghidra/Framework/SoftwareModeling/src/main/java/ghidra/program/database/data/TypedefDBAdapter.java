@@ -116,7 +116,7 @@ abstract class TypedefDBAdapter {
 			tmpAdapter = new TypedefDBAdapterV2(tmpHandle, tablePrefix, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
@@ -124,7 +124,7 @@ abstract class TypedefDBAdapter {
 			TypedefDBAdapter newAdapter = new TypedefDBAdapterV2(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}

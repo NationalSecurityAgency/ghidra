@@ -36,7 +36,6 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -534,7 +533,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		model = new HistoryTableModel(fromCodeUnit.getProgram());
 		displayTable = new JTable(model);
 		displayTable.setTableHeader(null);
-		displayTable.setBorder(new LineBorder(Java.BORDER));
+		displayTable.setBorder(new LineBorder(Colors.BORDER));
 		displayTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		displayTable.addMouseListener(new MouseAdapter() {

@@ -762,7 +762,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	protected static void doAddMappings(Trace trace, Collection<MapEntry<?, ?>> entries,
 			TaskMonitor monitor, boolean truncateExisting) throws CancelledException {
 		for (MapEntry<?, ?> ent : entries) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				DebuggerStaticMappingUtils.addMapping(ent, truncateExisting);
 			}

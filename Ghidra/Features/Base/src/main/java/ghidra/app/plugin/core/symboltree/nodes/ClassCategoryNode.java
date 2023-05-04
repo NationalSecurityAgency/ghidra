@@ -91,7 +91,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 		while (it.hasNext()) {
 			Symbol s = it.next();
 			if (s != null && (s.getSymbolType() == symbolType)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				list.add(SymbolNode.createNode(s, program));
 			}
 			monitor.incrementProgress(1);

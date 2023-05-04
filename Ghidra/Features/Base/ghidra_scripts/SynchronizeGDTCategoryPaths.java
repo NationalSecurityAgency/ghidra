@@ -56,6 +56,8 @@ public class SynchronizeGDTCategoryPaths extends GhidraScript {
 				}
 				finally {
 					secondArchive.endTransaction(transactionID, true);
+					secondArchive.save();
+					secondArchive.close();
 				}
 			}
 		}

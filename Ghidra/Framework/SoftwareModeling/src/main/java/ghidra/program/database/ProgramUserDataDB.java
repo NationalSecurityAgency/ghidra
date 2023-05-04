@@ -384,7 +384,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 		VersionException versionExc = null;
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// the memoryManager should always be created first because it is needed to resolve
 		// segmented addresses from longs that other manages may need while upgrading.
@@ -408,7 +408,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			}
 		}
 		addressMap.memoryMapChanged(program1.getMemory());
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		return versionExc;
 	}

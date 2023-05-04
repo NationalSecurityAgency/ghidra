@@ -36,7 +36,7 @@ public class CParserPluginScreenShots extends GhidraScreenShotGenerator {
 
 		performAction("Import C DataTypes", "CParserPlugin", false);
 		captureDialog();
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	@Test
@@ -47,7 +47,7 @@ public class CParserPluginScreenShots extends GhidraScreenShotGenerator {
 				"       near token: \"This function or variable may be unsafe. Consider using \" \n" +
 				"        Last Valid Dataype: PCUWSTR");
 		captureDialog();
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	@Test
@@ -65,7 +65,7 @@ public class CParserPluginScreenShots extends GhidraScreenShotGenerator {
 		OptionDialog useOpenArchivesDialog = waitForDialogComponent(null, OptionDialog.class, 5000);
 
 		captureDialog(useOpenArchivesDialog);
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 }

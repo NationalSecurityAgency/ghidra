@@ -35,7 +35,6 @@ import docking.dnd.StringTransferable;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.ColorUtils;
 import ghidra.util.WebColors;
@@ -151,7 +150,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		recentSwatchListener = new RecentSwatchListener();
 		recentSwatchPanel.addMouseListener(recentSwatchListener);
 
-		LineBorder border = new LineBorder(Java.BORDER);
+		LineBorder border = new LineBorder(Colors.BORDER);
 		swatchPanel.setBorder(border);
 		gbc.gridx = 0;
 		gbc.gridy = 0;
@@ -424,7 +423,7 @@ class SwatchPanel extends JPanel {
 				}
 				int y = row * (swatchSize.height + gap.height);
 				g.fillRect(x, y, swatchSize.width, swatchSize.height);
-				g.setColor(Java.BORDER);
+				g.setColor(Colors.BORDER);
 				g.drawLine(x + swatchSize.width - 1, y, x + swatchSize.width - 1,
 					y + swatchSize.height - 1);
 				g.drawLine(x, y + swatchSize.height - 1, x + swatchSize.width - 1,

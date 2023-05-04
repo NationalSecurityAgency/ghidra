@@ -594,7 +594,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		try {
 			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				PropertyMapDB<?> pm = iter.next();
 				pm.removeRange(startAddr, endAddr);
 			}
@@ -612,7 +612,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		try {
 			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				PropertyMapDB<?> pm = iter.next();
 				pm.moveRange(fromAddr, fromAddr.add(length - 1), toAddr);
 			}

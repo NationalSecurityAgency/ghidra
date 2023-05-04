@@ -54,7 +54,7 @@ public class DecompilerStackProblemsFinderScript extends GhidraScript {
 				@Override
 				public List<StackErrorRow> process(DecompileResults results, TaskMonitor tMonitor)
 						throws Exception {
-					tMonitor.checkCanceled();
+					tMonitor.checkCancelled();
 					return findStackErrors(results, tMonitor);
 				}
 			};
@@ -66,7 +66,7 @@ public class DecompilerStackProblemsFinderScript extends GhidraScript {
 		}
 		finally {
 			callback.dispose();
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 
 		TableChooserDialog tableDialog =
@@ -99,7 +99,7 @@ public class DecompilerStackProblemsFinderScript extends GhidraScript {
 		AddressSpace addrSpace = body.getMinAddress().getAddressSpace();
 		Iterator<PcodeOpAST> ops = highFunction.getPcodeOps();
 		while (ops.hasNext()) {
-			tMonitor.checkCanceled();
+			tMonitor.checkCancelled();
 			PcodeOp op = ops.next();
 			if (op.getOpcode() != PcodeOp.COPY) {
 				continue;

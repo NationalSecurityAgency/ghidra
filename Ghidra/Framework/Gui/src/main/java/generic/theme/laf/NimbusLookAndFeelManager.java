@@ -25,8 +25,8 @@ import ghidra.util.exception.AssertException;
 
 /**
  * Nimbus {@link LookAndFeelManager}. Specialized so that it can return the Nimbus installer and
- * do specialized updating when icons or fonts change. Basically, needs to re-install a new
- * instance of the Nimbus LookAndFeel each time a font or icon changes
+ * perform specialized updating when icons or fonts change. Basically, this class needs to
+ * re-install a new instance of the Nimbus LookAndFeel each time a font or icon changes.
  */
 public class NimbusLookAndFeelManager extends LookAndFeelManager {
 
@@ -60,9 +60,9 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 
 	private void reinstallNimubus() {
 		try {
-			/**
+			/*
 			 * In order to get Nimbus to honor changes to fonts and icons in the UiDefaults,
-			 * we have to reinstall nimbus. Reinstalling nimbus is a bit different that the first
+			 * we have to reinstall Nimbus. Reinstalling Nimbus is a bit different than the original
 			 * install. First, we don't want to re-install the java defaults, the current ones are
 			 * fine and we don't want loose any current theme values changes. Second, when we
 			 * get font and theme value overrides, we want to use all the current values as they
@@ -93,16 +93,16 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 
 	@Override
 	protected void processJavaDefaults() {
-		// The GNimbusLookAndFeel already extracted the java defaults and installed them in the Gui
-
+		// We already extracted the java defaults and installed them in the Gui
 	}
 
 	@Override
 	protected void fixupLookAndFeelIssues() {
 		super.fixupLookAndFeelIssues();
 
-		// fix scroll bar grabber disappearing.  See https://bugs.openjdk.java.net/browse/JDK-8134828
-		// This fix looks like it should not cause harm even if the bug is fixed on the jdk side.
+		// fix scroll bar grabber disappearing.  See
+		// https://bugs.openjdk.java.net/browse/JDK-8134828. This fix looks like it should not cause
+		// harm even if the bug is fixed on the jdk side.
 		UIDefaults defaults = UIManager.getDefaults();
 		defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
 

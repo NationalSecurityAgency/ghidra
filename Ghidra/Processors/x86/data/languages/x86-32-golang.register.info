@@ -1,0 +1,9 @@
+<golang>
+	<register_info versions="all">
+		<int_registers list=""/>
+		<float_registers list=""/>
+		<stack initialoffset="4" maxalign="4"/>
+		<current_goroutine register=""/>
+		<zero_register register=""/>
+	</register_info>
+</golang>

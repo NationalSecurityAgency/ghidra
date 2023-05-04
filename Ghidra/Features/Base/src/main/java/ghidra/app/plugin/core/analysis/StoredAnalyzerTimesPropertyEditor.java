@@ -21,7 +21,7 @@ import java.beans.PropertyEditorSupport;
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.options.CustomOptionsEditor;
 import ghidra.util.layout.PairLayout;
 
@@ -116,7 +116,7 @@ public class StoredAnalyzerTimesPropertyEditor extends PropertyEditorSupport
 			new JTextField(StoredAnalyzerTimes.formatTimeMS(times.getTotalTime()));
 		valueField.setEditable(false);
 		valueField.setHorizontalAlignment(SwingConstants.RIGHT);
-		valueField.setBorder(BorderFactory.createLineBorder(Java.BORDER, 2));
+		valueField.setBorder(BorderFactory.createLineBorder(Colors.BORDER, 2));
 		panel.add(valueField);
 
 		return panel;

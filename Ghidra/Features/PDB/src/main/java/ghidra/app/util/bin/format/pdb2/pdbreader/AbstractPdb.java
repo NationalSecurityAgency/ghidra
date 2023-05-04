@@ -474,8 +474,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * Check to see if this monitor has been canceled
 	 * @throws CancelledException if monitor has been cancelled
 	 */
-	public void checkCanceled() throws CancelledException {
-		getMonitor().checkCanceled();
+	public void checkCancelled() throws CancelledException {
+		getMonitor().checkCancelled();
 	}
 
 	/**
@@ -662,13 +662,13 @@ public abstract class AbstractPdb implements AutoCloseable {
 		nameTable.deserializeDirectory(reader);
 		// Read the parameters.
 		while (reader.hasMore()) {
-			getMonitor().checkCanceled();
+			getMonitor().checkCancelled();
 			int val = reader.parseInt();
 			parameters.add(val);
 		}
 		// Check the parameters for IDs
 		for (int param : parameters) {
-			getMonitor().checkCanceled();
+			getMonitor().checkCancelled();
 			if (param == MINIMAL_DEBUG_INFO_PARAM) {
 				minimalDebugInfo = true;
 			}

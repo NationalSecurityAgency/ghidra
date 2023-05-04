@@ -850,7 +850,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		monitor.setMessage("Clear custom storage use...");
 
 //		for (FunctionDefinition def : ImmutableList.copyOf(getAllFunctionDefinitions())) {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 //			monitor.incrementProgress(1);
 //
 //			// TODO: update function definition

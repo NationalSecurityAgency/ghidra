@@ -21,6 +21,7 @@ import static ghidra.app.util.bin.StructConverter.BYTE;
 import java.util.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -29,6 +30,7 @@ import ghidra.app.util.bin.format.elf.info.ElfInfoItem;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -57,7 +59,6 @@ public class GoBuildInfo implements ElfInfoItem {
 	private static final int FLAG_ENDIAN = (1 << 0);
 	private static final int FLAG_INLINE_STRING = (1 << 1);
 
-
 	/**
 	 * Reads a GoBuildInfo ".go.buildinfo" section from the specified Program, if present.
 	 * 
@@ -65,9 +66,20 @@ public class GoBuildInfo implements ElfInfoItem {
 	 * @return new {@link GoBuildInfo} section, if present, null if missing or error
 	 */
 	public static GoBuildInfo fromProgram(Program program) {
+		ItemWithAddress<GoBuildInfo> wrappedItem = findBuildInfo(program);
+		return wrappedItem != null ? wrappedItem.item() : null;
+	}
+
+	public static ItemWithAddress<GoBuildInfo> findBuildInfo(Program program) {
+		// try as if binary is ELF
 		ItemWithAddress<GoBuildInfo> wrappedItem =
 			ElfInfoItem.readItemFromSection(program, SECTION_NAME, GoBuildInfo::read);
-		return wrappedItem != null ? wrappedItem.item() : null;
+		if (wrappedItem == null) {
+			// if not present, try common PE location for buildinfo, using "ElfInfoItem" logic
+			// even though this might be a PE binary, cause it doesn't matter
+			wrappedItem = ElfInfoItem.readItemFromSection(program, ".data", GoBuildInfo::read);
+		}
+		return wrappedItem;
 	}
 
 	/**
@@ -93,6 +105,26 @@ public class GoBuildInfo implements ElfInfoItem {
 		}
 
 		return readStringInfo(reader, inlineStr, program, pointerSize);
+	}
+
+	/**
+	 * Probes the specified InputStream and returns true if it starts with a go buildinfo magic
+	 * signature.
+	 * 
+	 * @param is InputStream
+	 * @return true if starts with buildinfo magic signature
+	 */
+	public static boolean isPresent(InputStream is) {
+		try {
+			byte[] buffer = new byte[GO_BUILDINF_MAGIC.length];
+			int bytesRead = is.read(buffer);
+			return bytesRead == GO_BUILDINF_MAGIC.length &&
+				Arrays.equals(buffer, GO_BUILDINF_MAGIC);
+		}
+		catch (IOException e) {
+			// fall thru
+		}
+		return false;
 	}
 
 	private final int pointerSize;
@@ -154,7 +186,8 @@ public class GoBuildInfo implements ElfInfoItem {
 		try {
 			StructureDataType struct = toStructure(program.getDataTypeManager());
 			if (struct != null) {
-				program.getListing().createData(address, struct);
+				DataUtilities.createData(program, address, struct, -1, false,
+					ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
 			}
 		}
 		catch (CodeUnitInsertionException e) {
@@ -163,7 +196,7 @@ public class GoBuildInfo implements ElfInfoItem {
 	}
 
 	public void decorateProgramInfo(Options props) {
-		props.setString("Golang go version", getVersion());
+		GoVer.setProgramPropertiesWithOriginalVersionString(props, getVersion());
 		props.setString("Golang app path", getPath());
 		if (getModuleInfo() != null) {
 			getModuleInfo()
@@ -185,7 +218,7 @@ public class GoBuildInfo implements ElfInfoItem {
 
 	StructureDataType toStructure(DataTypeManager dtm) {
 		StructureDataType result =
-			new StructureDataType(GolangElfInfoProducer.GO_CATEGORYPATH, "GoBuildInfo", 0, dtm);
+			new StructureDataType(GoConstants.GOLANG_CATEGORYPATH, "GoBuildInfo", 0, dtm);
 		result.add(new ArrayDataType(ASCII, 14, -1, dtm), "magic", "\\xff Go buildinf:");
 		result.add(BYTE, "ptrSize", null);
 		result.add(BYTE, "flags", null);
@@ -211,9 +244,9 @@ public class GoBuildInfo implements ElfInfoItem {
 			reader.setPointerIndex(32 /* static start of inline strings */);
 
 			versionString = reader.readNext(GoBuildInfo::varlenString);
-			byte[] modelStringBytes = reader.readNext(GoBuildInfo::varlenBytes);
+			byte[] moduleStringBytes = reader.readNext(GoBuildInfo::varlenBytes);
 
-			moduleString = extractModuleString(modelStringBytes);
+			moduleString = extractModuleString(moduleStringBytes);
 		}
 		else {
 			reader.setPointerIndex(16 /* static start of 2 string pointers */);

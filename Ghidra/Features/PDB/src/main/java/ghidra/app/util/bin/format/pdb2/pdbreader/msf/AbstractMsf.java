@@ -180,8 +180,8 @@ public abstract class AbstractMsf implements Msf {
 	 * @throws CancelledException if monitor has been cancelled
 	 */
 	@Override
-	public void checkCanceled() throws CancelledException {
-		monitor.checkCanceled();
+	public void checkCancelled() throws CancelledException {
+		monitor.checkCancelled();
 	}
 
 	/**

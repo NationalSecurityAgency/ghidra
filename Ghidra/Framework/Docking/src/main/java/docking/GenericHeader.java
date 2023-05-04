@@ -30,7 +30,7 @@ import docking.util.AnimationUtils;
 import docking.widgets.VariableHeightPanel;
 import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 
 // TODO: should this be put into generic?
@@ -211,7 +211,7 @@ public class GenericHeader extends JPanel {
 
 	private void constructMultiLinePanel() {
 		removeAll();
-		toolbar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Java.BORDER));
+		toolbar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Colors.BORDER));
 		add(toolbar, BorderLayout.SOUTH);
 		add(titlePanel, BorderLayout.CENTER);
 		add(menuCloseToolbar, BorderLayout.EAST);

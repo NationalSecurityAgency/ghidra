@@ -177,7 +177,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 			// anonymous data types that matched by matching components.
 			Iterator<DataType> allDataTypes = newFileArchive.getAllDataTypes();
 			while (allDataTypes.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DataType newDataType = allDataTypes.next();
 				if (isAnonymousType(newDataType)) {
 					// Skip anonymous types, they are matched as components of composites or
@@ -213,7 +213,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 
 		Iterator<DataType> allDataTypes = newFileArchive.getAllDataTypes();
 		while (allDataTypes.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType newDataType = allDataTypes.next();
 			if (newDataType instanceof DataTypeDB) {
 				((DataTypeDB) newDataType).setUniversalID(UniversalIdGenerator.nextID());
@@ -229,7 +229,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		// old archive.
 		Iterator<DataType> allDataTypes = newFileArchive.getAllDataTypes();
 		while (allDataTypes.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType newDataType = allDataTypes.next();
 			if (newDataType instanceof Enum && isAnonymousType(newDataType)) {
 
@@ -697,7 +697,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 		try {
 			Iterator<DataType> allDataTypes = newFileArchive.getAllDataTypes();
 			while (allDataTypes.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DataType newDataType = allDataTypes.next();
 				fixDataTypeTimestamp(newDataType, oldFileArchive, newFileArchive);
 //				monitor.incrementProgress(1);

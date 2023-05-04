@@ -98,9 +98,9 @@ public class BinaryReader {
 		T get(InputStream is) throws IOException;
 	}
 
-	private final ByteProvider provider;
-	private DataConverter converter;
-	private long currentIndex;
+	protected final ByteProvider provider;
+	protected DataConverter converter;
+	protected long currentIndex;
 
 	/**
 	 * Constructs a reader using the given ByteProvider and endian-order.

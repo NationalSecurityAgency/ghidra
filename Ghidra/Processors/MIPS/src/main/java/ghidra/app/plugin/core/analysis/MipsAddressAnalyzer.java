@@ -25,6 +25,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -247,7 +248,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
-		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+		ConstantPropagationContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 			private Address localGPAssumptionValue = currentGPAssumptionValue;
 
 			private boolean mustStopNow = false; // if something discovered in processing, mustStop flag
@@ -267,7 +268,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 				// this was copylefted from the arm analyzer
 				Varnode raVal = context.getRegisterVarnodeValue(rareg);
 				if (raVal != null) {
-					if (raVal.isConstant()) {
+					if (context.isConstant(raVal)) {
 						long target = raVal.getAddress().getOffset();
 						Address addr = instr.getMaxAddress();
 						if (target == (addr.getOffset() + 1) && !instr.getFlowType().isCall()) {
@@ -317,22 +318,25 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 										lastSetInstr = instructionAt;
 									}
 								}
-								symEval.makeReference(context, lastSetInstr, -1,
-									instr.getMinAddress().getAddressSpace().getSpaceID(),
-									unsignedValue, 1, RefType.DATA, PcodeOp.UNIMPLEMENTED, true,
-									monitor);
-								if (localGPAssumptionValue == null) {
-									program.getBookmarkManager().setBookmark(
-										lastSetInstr.getMinAddress(), BookmarkType.WARNING,
-										"GP Global Register Set",
-										"Global GP Register is set here.");
-								}
-								if (localGPAssumptionValue != null &&
-									!localGPAssumptionValue.equals(gpRefAddr)) {
-									localGPAssumptionValue = gp_assumption_value = null;
-								}
-								else {
-									localGPAssumptionValue = gp_assumption_value = gpRefAddr;
+								// if an instruction actually set the GP
+								if (lastSetAddr != null) {
+									symEval.makeReference(context, lastSetInstr, -1,
+										instr.getMinAddress().getAddressSpace().getSpaceID(),
+										unsignedValue, 1, null, RefType.DATA, PcodeOp.UNIMPLEMENTED, true,
+										false, monitor);
+									if (localGPAssumptionValue == null) {
+										program.getBookmarkManager().setBookmark(
+											lastSetInstr.getMinAddress(), BookmarkType.WARNING,
+											"GP Global Register Set",
+											"Global GP Register is set here.");
+									}
+									if (localGPAssumptionValue != null &&
+										!localGPAssumptionValue.equals(gpRefAddr)) {
+										localGPAssumptionValue = gp_assumption_value = null;
+									}
+									else {
+										localGPAssumptionValue = gp_assumption_value = gpRefAddr;
+									}
 								}
 							}
 						}
@@ -372,9 +376,13 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType, RefType refType) {
 
 				Address addr = address;
+				
+				if (addr == Address.NO_ADDRESS) {
+					return false;
+				}
 
 				//if (instr.getFlowType().isJump() && !instr.getPrototype().hasDelaySlots()) {
 				// if this isn't straight code (thunk computation), let someone else lay down the reference
@@ -386,9 +394,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 				}
 
 				if ((refType.isJump() || refType.isCall()) & refType.isComputed()) {
-					//if (refType.isJump() || refType.isCall()) {
 					addr = mipsExtDisassembly(program, instr, context, address, monitor);
-					//addr = flowISA(program, instr, context, address);
 					if (addr == null) {
 						addr = address;
 					}
@@ -412,7 +418,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 									context.clearRegister(reg);
 
 									// need to add the reference here, register operand will no longer have a value
-									instr.addOperandReference(0, addr, refType,
+									instr.addOperandReference(0, addr, instr.getFlowType(),
 										SourceType.ANALYSIS);
 
 									// set the register value on the target address
@@ -433,7 +439,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 					}
 				}
 
-				return super.evaluateReference(context, instr, pcodeop, address, size, refType);
+				return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 			}
 
 			@Override
@@ -463,7 +469,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 					// will pick it up.
 					if (func != null) {
 						Address funcAddr = func.getEntryPoint();
-						Long value = new Long(funcAddr.getOffset());
+						Long value = Long.valueOf(funcAddr.getOffset());
 						try {
 							ProgramContext progContext = program.getProgramContext();
 							// if T9 hasn't already been set
@@ -497,6 +503,12 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 				return null;
 			}
 		};
+		
+		eval.setTrustWritableMemory(trustWriteMemOption)
+			    .setMinpeculativeOffset(minSpeculativeRefAddress)
+			    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+			    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+			    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
 
 		AddressSet resultSet = symEval.flowConstants(flowStart, null, eval, true, monitor);
 

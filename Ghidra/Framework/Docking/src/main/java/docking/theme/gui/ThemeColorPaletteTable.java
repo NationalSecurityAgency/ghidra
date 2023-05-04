@@ -33,6 +33,8 @@ public class ThemeColorPaletteTable extends ThemeColorTable {
 			@Override
 			protected void filter() {
 
+				super.filter(); // this call will update 'colors'
+
 				List<ColorValue> filtered = new ArrayList<>();
 
 				for (ColorValue colorValue : colors) {

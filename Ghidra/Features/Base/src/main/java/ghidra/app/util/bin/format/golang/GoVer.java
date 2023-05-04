@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang;
 
+import ghidra.framework.options.Options;
+import ghidra.program.model.listing.Program;
+
 /**
  * Golang version numbers
  */
@@ -88,4 +91,16 @@ public enum GoVer {
 		}
 		return UNKNOWN;
 	}
+
+	public static final String GOLANG_VERSION_PROPERTY_NAME = "Golang go version";
+	public static GoVer fromProgramProperties(Program program) {
+		Options props = program.getOptions(Program.PROGRAM_INFO);
+		String verStr = props.getString(GOLANG_VERSION_PROPERTY_NAME, null);
+		return verStr != null ? parse(verStr) : UNKNOWN;
+	}
+
+	public static void setProgramPropertiesWithOriginalVersionString(Options props, String s) {
+		props.setString(GOLANG_VERSION_PROPERTY_NAME, s);
+	}
+
 }

@@ -195,7 +195,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final JTextField editorField = (JTextField) editorComponent;
 		editorField.selectAll();
 		runSwing(() -> editorField.requestFocus());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		triggerText(editorField, ".myText\n");
 

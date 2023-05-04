@@ -57,7 +57,7 @@ public class ComplexityDepthModularizationCmd extends AbstractModularizationCmd 
 			List<CodeBlockVertex> list = partition.get(i);
 			ProgramModule levelModule = createModule(destinationModule, "Level " + i);
 			for (CodeBlockVertex v : list) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				makeFragment(program, levelModule, v);
 			}
 		}

@@ -15,10 +15,11 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.xml.sax.SAXException;
 
@@ -30,7 +31,7 @@ import ghidra.util.Msg;
 import ghidra.util.constraint.ProgramDecisionTree;
 import ghidra.xml.XmlParseException;
 
-class NonReturningFunctionNames {
+public class NonReturningFunctionNames {
 
 	private static final String CONSTRAINED_FILENAME_PROPERTY = "functionNamesFile";
 	private static final String DATA_DIR = "data";

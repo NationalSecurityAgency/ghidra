@@ -145,7 +145,7 @@ class ArrayTests{
    public Comparable[] dwarfTest2(){
        ArrayList<Comparable> arrayList = new ArrayList<>();
        Comparable[] ret = comparableArrayTest(arrayList.toArray(new Comparable[0]));
-       Integer test = new Integer(3);
+       Integer test = Integer.valueOf(3);
        return ret;
   }
 
@@ -163,7 +163,7 @@ class ArrayTests{
   }
 
   public void noArray(){
-      Integer a = new Integer(0);
+      Integer a = Integer.valueOf(0);
   }
 
 

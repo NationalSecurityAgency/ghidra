@@ -130,7 +130,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		}
 
 		String[] getEvents() {
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			synchronized (this) {
 				String[] a = new String[events.size()];
 				events.toArray(a);
@@ -140,7 +140,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		}
 
 		TransactionInfo getLastTransaction() {
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			synchronized (this) {
 				return lastTransaction;
 			}

@@ -134,7 +134,7 @@ public abstract class AbstractProgramLoader implements Loader {
 		boolean success = false;
 		try {
 			for (Loaded<Program> loadedProgram : loadedPrograms) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Program program = loadedProgram.getDomainObject();
 				applyProcessorLabels(options, program);
 				program.setEventsEnabled(true);

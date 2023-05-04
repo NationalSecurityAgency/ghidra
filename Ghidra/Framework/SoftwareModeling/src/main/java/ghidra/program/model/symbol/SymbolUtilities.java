@@ -949,6 +949,35 @@ public class SymbolUtilities {
 	}
 
 	/**
+	 * Returns the global symbol with the given name if and only if it is the only global symbol
+	 * with that name.
+	 *
+	 * @param program the program to search.
+	 * @param name the name of the global symbol to find.
+	 * @return the global symbol with the given name if and only if it is the only one.
+	 */
+	public static Symbol getUniqueSymbol(Program program, String name) {
+		return getUniqueSymbol(program, name, null);
+	}
+
+	/**
+	 * Returns the symbol in the given namespace with the given name if and only if it is the only
+	 * symbol in that namespace with that name.
+	 *
+	 * @param program the program to search.
+	 * @param name the name of the symbol to find.
+	 * @param namespace the parent namespace; may be null
+	 * @return the symbol with the given name if and only if it is the only one in that namespace
+	 */
+	public static Symbol getUniqueSymbol(Program program, String name, Namespace namespace) {
+		List<Symbol> symbols = program.getSymbolTable().getSymbols(name, namespace);
+		if (symbols.size() == 1) {
+			return symbols.get(0);
+		}
+		return null;
+	}
+
+	/**
 	 * Returns the unique global label or function symbol with the given name. Also, logs if there
 	 * is not exactly one symbol with that name.
 	 *

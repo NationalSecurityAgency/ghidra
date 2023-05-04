@@ -133,7 +133,7 @@ public class ProgramMemoryUtil {
 		// Copy each range.
 		AddressRangeIterator iter = addrSet.getAddressRanges();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange range = iter.next();
 			copyByteRange(toMem, fromMem, range);
 		}
@@ -307,7 +307,7 @@ public class ProgramMemoryUtil {
 		monitor.initialize(memory.getNumAddresses());
 		int count = 0;
 		while (addrIt.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address a = addrIt.next();
 			++count;
 			monitor.setProgress(count);
@@ -677,7 +677,7 @@ public class ProgramMemoryUtil {
 			Address end = block.getEnd();
 			Address found = null;
 			while (true) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				found = memory.findBytes(start, end, bytePattern, maskBytes, true, monitor);
 				if (found == null) {
@@ -712,7 +712,7 @@ public class ProgramMemoryUtil {
 			Address start = memBlock.getStart();
 			Address end = memBlock.getEnd();
 			while (true) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Address found = memory.findBytes(start, end, bytePattern, maskBytes, true, monitor);
 				if (found == null) {
@@ -775,7 +775,7 @@ public class ProgramMemoryUtil {
 		byte[] bytes = searchString.getBytes();
 		Memory memory = program.getMemory();
 		for (MemoryBlock memoryBlock : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address startAddress = memoryBlock.getStart();
 			Address endAddress = memoryBlock.getEnd();
 			Address foundAddress;
@@ -820,7 +820,7 @@ public class ProgramMemoryUtil {
 		Memory memory = program.getMemory();
 
 		for (MemoryBlock memoryBlock : memory.getBlocks()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			AddressSet blockSet = new AddressSet(memoryBlock.getStart(), memoryBlock.getEnd());
 			AddressSet intersection = blockSet.intersect(set);

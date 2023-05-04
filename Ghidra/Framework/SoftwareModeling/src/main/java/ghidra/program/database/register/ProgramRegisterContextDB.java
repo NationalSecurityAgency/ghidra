@@ -99,7 +99,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 			}
 			AddressRangeIterator it = oldContext.getRegisterValueAddressRanges(register);
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange range = it.next();
 				RegisterValue regValue =
 					oldContext.getNonDefaultValue(register, range.getMinAddress());
@@ -324,7 +324,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 
 		// Map all register stores to new registers
 		for (Register register : registers) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!register.isBaseRegister()) {
 				continue; // only consider non-context base registers
 			}

@@ -37,7 +37,6 @@ import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.Application;
 import ghidra.framework.LoggingInitialization;
@@ -138,7 +137,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		tool.executeBackgroundCommand(new DummyBackgroundCommand(), program);
 
 		Border inner = BorderFactory.createRaisedBevelBorder();
-		Border outer = BorderFactory.createLineBorder(Java.BORDER);
+		Border outer = BorderFactory.createLineBorder(Colors.BORDER);
 		statusBar.setBorder(BorderFactory.createCompoundBorder(outer, inner));
 		captureComponent(statusBar);
 		program.endTransaction(id, false);

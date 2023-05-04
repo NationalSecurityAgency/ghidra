@@ -65,7 +65,7 @@ public class ApplyMarkupItemTask extends VtTask {
 		monitor.initialize(markupItems.size());
 
 		for (VTMarkupItem markupItem : markupItems) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				markupItem.getAssociation().setAccepted();
 				VTMarkupItemApplyActionType actionType = getApplyActionType(markupItem, options);

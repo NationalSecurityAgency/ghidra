@@ -81,7 +81,7 @@ public class TarFileSystem implements GFileSystem {
 			TarArchiveEntry tarEntry;
 			while ((tarEntry = tarInput.getNextTarEntry()) != null) {
 				monitor.setMessage(tarEntry.getName());
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				int fileNum = fileCount++;
 				GFile newFile = fsih.storeFile(tarEntry.getName(), fileCount,

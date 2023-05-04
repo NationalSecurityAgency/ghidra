@@ -59,7 +59,7 @@ public abstract class GTreeBulkTask extends GTreeTask {
 	 * Perform bulk operations here.
 	 *
 	 * @param monitor the monitor used to report progress and check for cancelled
-	 * @throws CancelledException if the user cancelled and {@link TaskMonitor#checkCanceled()}
+	 * @throws CancelledException if the user cancelled and {@link TaskMonitor#checkCancelled()}
 	 *         gets called
 	 */
 	public abstract void runBulk(TaskMonitor monitor) throws CancelledException;

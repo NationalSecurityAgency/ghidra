@@ -15,9 +15,12 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.DW_AT_decl_line;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_formal_parameter;
+
 import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
 import ghidra.app.util.bin.format.dwarf4.DebugInfoEntry;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
+import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
 
 /**
  * Small class to hold the filename and line number info values from
@@ -34,12 +37,23 @@ public class DWARFSourceInfo {
 	 * @return new {@link DWARFSourceInfo} with filename:linenum info, or null if no info present in DIEA.
 	 */
 	public static DWARFSourceInfo create(DIEAggregate diea) {
-		String file = diea.getSourceFile();
-		int lineNum = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_decl_line, -1);
+		DIEAggregate currentDIEA = diea;
+		String file = null;
+		while (currentDIEA != null && (file = currentDIEA.getSourceFile()) == null) {
+			currentDIEA = currentDIEA.getParent();
+		}
+		if (file == null) {
+			return null;
+		}
+		DWARFNumericAttribute declLineAttr = diea.findAttributeInChildren(DW_AT_decl_line,
+			DW_TAG_formal_parameter, DWARFNumericAttribute.class); // TODO: what other children might have a line number attribute?
+		if (declLineAttr == null) {
+			return null;
+		}
 
-		return (file != null && lineNum != -1)
-				? new DWARFSourceInfo(file, lineNum)
-				: null;
+		int lineNum = (int) declLineAttr.getUnsignedValue();
+
+		return new DWARFSourceInfo(file, lineNum);
 	}
 
 	/**

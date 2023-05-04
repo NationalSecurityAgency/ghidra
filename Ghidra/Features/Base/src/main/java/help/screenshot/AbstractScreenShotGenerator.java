@@ -15,7 +15,8 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -45,10 +46,8 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.tree.GTree;
-import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.image.ImageUtils;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -121,7 +120,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		prepareTool();
 
 		runSwing(() -> tool.getToolFrame().setBounds(new Rectangle(400, 400, 1200, 600)));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		loadProgram();
 	}
@@ -138,9 +137,8 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	public void loadProgram() throws Exception {
 		loadProgram("WinHelloCPP.exe");
 
-		ResourceFile file = TestEnv.findProvidedDataTypeArchive("windows_vs12_32.gdt");
-		DataTypeManagerService dtm = tool.getService(DataTypeManagerService.class);
-		dtm.openArchive(file.getFile(false), false);
+		DataTypeManagerService dtms = tool.getService(DataTypeManagerService.class);
+		dtms.openDataTypeArchive("windows_vs12_32.gdt");
 	}
 
 	public void closeNonProgramArchives() {
@@ -255,14 +253,14 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	public void pressButtonOnDialog(String buttonText) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		DialogComponentProvider dialog = getDialog();
 		pressButtonByText(dialog, buttonText);
 	}
 
 	public void captureIsolatedComponent(final JComponent component, final int width,
 			final int height) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		runSwing(() -> {
 			JDialog dialog = new JDialog();
 			dialog.getContentPane().setLayout(new BorderLayout());
@@ -424,7 +422,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 				captureComponent(window);
 			}
 		}
-		drawBorder(Java.BORDER);
+		drawBorder(Colors.BORDER);
 	}
 
 	public JPopupMenu getPopupMenu() {
@@ -438,32 +436,32 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	public void captureProvider(Class<? extends ComponentProvider> clazz) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		runSwing(() -> {
 			ComponentProvider provider = tool.getWindowManager().getComponentProvider(clazz);
 			DockableComponent dc = getDockableComponent(provider);
 			generateImage(dc);
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public void captureProvider(final ComponentProvider provider) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		runSwing(() -> {
 			DockableComponent dc = getDockableComponent(provider);
 			generateImage(dc);
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public void captureProvider(final String name) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		runSwing(() -> {
 			ComponentProvider provider = tool.getWindowManager().getComponentProvider(name);
 			DockableComponent dc = getDockableComponent(provider);
 			generateImage(dc);
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	/**
@@ -501,7 +499,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	 * @param name the provider's name
 	 */
 	public void captureProviderWindow(String name) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		ComponentProvider provider = tool.getWindowManager().getComponentProvider(name);
 		captureProviderWindow(provider);
 	}
@@ -552,7 +550,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	 * @param height the desired height
 	 */
 	public void captureProviderWindow(String name, int width, int height) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		ComponentProvider provider = tool.getWindowManager().getComponentProvider(name);
 		assertNotNull("Unable to find provider in tool: " + name, provider);
@@ -573,7 +571,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	 * @param height the desired height
 	 */
 	public void captureProviderWindow(ComponentProvider provider, int width, int height) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		Window window = windowForComponent(provider.getComponent());
 		captureWindow(window, width, height);
 	}
@@ -583,7 +581,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		if (componentProvider != null) {
 			componentProvider.setVisible(true);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		return clazz.cast(componentProvider);
 	}
 
@@ -592,7 +590,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		if (componentProvider != null) {
 			componentProvider.setVisible(false);
 		}
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public void captureActionIcon(String actionName) {
@@ -679,7 +677,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 			final int height) {
 		DialogComponentProvider dialogProvider = waitForDialogComponent(clazz);
 		final JDialog dialog = (JDialog) getInstanceField("dialog", dialogProvider);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		paintFix(dialog);
 		if (width >= 0) {
 			runSwing(() -> dialog.setSize(width, height));
@@ -692,20 +690,20 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	public void captureWindow() {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		final JFrame toolFrame = tool.getToolFrame();
 		paintFix(toolFrame);
 		runSwing(() -> generateImage(toolFrame));
 	}
 
 	public void captureWindow(final Window window) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		paintFix(window);
 		runSwing(() -> generateImage(window));
 	}
 
 	public void captureWindow(final Window window, final int width, final int height) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		runSwing(() -> window.setSize(width, height));
 
@@ -716,7 +714,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 
 	public void captureToolWindow(final int width, final int height) {
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		runSwing(() -> {
 			JFrame toolFrame = tool.getToolFrame();
@@ -728,13 +726,13 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	public void captureDialog(final Dialog dialog) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		paintFix(dialog);
 		runSwing(() -> generateImage(dialog));
 	}
 
 	public void captureDialog(final Dialog dialog, final int width, final int height) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		runSwing(() -> dialog.setSize(width, height));
 
@@ -894,7 +892,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		CodeBrowserPlugin plugin = getPlugin(tool, CodeBrowserPlugin.class);
 		FieldPanel fieldPanel = plugin.getFieldPanel();
 		leftClick(fieldPanel, cursor.x, cursor.y);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public void rightClickCursor() {
@@ -902,7 +900,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		CodeBrowserPlugin plugin = getPlugin(tool, CodeBrowserPlugin.class);
 		FieldPanel fieldPanel = plugin.getFieldPanel();
 		rightClick(fieldPanel, cursor.x, cursor.y);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public void middleClickCursor() {
@@ -910,7 +908,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		CodeBrowserPlugin plugin = getPlugin(tool, CodeBrowserPlugin.class);
 		FieldPanel fieldPanel = plugin.getFieldPanel();
 		middleClick(fieldPanel, cursor.x, cursor.y);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public void doubleClickCursor() {
@@ -918,7 +916,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		CodeBrowserPlugin plugin = getPlugin(tool, CodeBrowserPlugin.class);
 		FieldPanel fieldPanel = plugin.getFieldPanel();
 		doubleClick(fieldPanel, cursor.x, cursor.y);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private Rectangle computeBounds(List<Component> comps) {
@@ -1262,7 +1260,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 			CodeBrowserPlugin plugin = getPlugin(tool, CodeBrowserPlugin.class);
 			plugin.goToField(addr(address), fieldName, 0, 0, 0, scrollToMiddle);
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public void positionCursor(long address) {
@@ -1274,7 +1272,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 			CodeBrowserPlugin plugin = getPlugin(tool, CodeBrowserPlugin.class);
 			plugin.goToField(addr(address), fieldName, 0, 0, 0, false);
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 	}
 
@@ -1376,7 +1374,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	public void drawRectangleWithDropShadowAround(JComponent component, Color color, int padding) {
-		Rectangle r = drawRectangleAround(component, Java.BORDER, padding);
+		Rectangle r = drawRectangleAround(component, Colors.BORDER, padding);
 
 		// move it back a bit to create the drop-shadow effect
 		r.x -= padding;
@@ -1629,7 +1627,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		g2.setColor(Java.BORDER);
+		g2.setColor(Colors.BORDER);
 		g2.setStroke(new BasicStroke(3f));
 		g2.draw(topPath);
 		g2.draw(bottomPath);

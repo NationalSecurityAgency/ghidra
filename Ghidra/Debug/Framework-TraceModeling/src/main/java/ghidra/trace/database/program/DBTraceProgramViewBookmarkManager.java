@@ -153,7 +153,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 			Collection<DBTraceBookmark> bookmarks = bookmarkManager.getBookmarksByType(type);
 			monitor.initialize(bookmarks.size());
 			for (DBTraceBookmark bm : bookmarks) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				if (!bm.getLifespan().contains(program.snap)) {
 					continue;
@@ -171,7 +171,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 		try (LockHold hold = program.trace.lockWrite()) {
 			monitor.initialize(set.getNumAddresses());
 			for (AddressRange rng : set) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(rng.getLength());
 				DBTraceBookmarkSpace space =
 					bookmarkManager.getBookmarkSpace(rng.getAddressSpace(), false);
@@ -180,7 +180,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 				}
 				for (TraceBookmark bm : space.getBookmarksIntersecting(Lifespan.at(program.snap),
 					rng)) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					if (!bm.getLifespan().contains(program.snap)) {
 						continue;
 					}

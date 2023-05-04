@@ -280,7 +280,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 				return new ArrayList<>();
 			}
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			sleep(loadDelayMillis);
 
@@ -291,7 +291,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 			int childCount = getRandomInt(MIN_CHILD_COUNT, MAX_CHILD_COUNT);
 			List<GTreeNode> children = new ArrayList<>();
 			for (int i = 0; i < childCount; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				int value = getRandomInt(0, 1);
 				if (value == 0) {
 					children.add(new TestSlowLoadingNode(loadDelayMillis, depth + 1));

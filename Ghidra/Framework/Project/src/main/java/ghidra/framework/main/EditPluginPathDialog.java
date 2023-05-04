@@ -37,7 +37,6 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
@@ -60,8 +59,6 @@ class EditPluginPathDialog extends DialogComponentProvider {
 
 	static final String ADD_DIR_BUTTON_TEXT = "Add Dir ...";
 	static final String ADD_JAR_BUTTON_TEXT = "Add Jar ...";
-	private final static Color INVALID_PATH_COLOR = Tables.FG_ERROR_UNSELECTED;
-	private final static Color INVALID_SELECTED_PATH_COLOR = Tables.FG_ERROR_SELECTED;
 	private final static Color STATUS_MESSAGE_COLOR = Messages.NORMAL;
 	final static String EMPTY_STATUS = " ";
 
@@ -467,7 +464,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 			super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 			boolean pathOK = new File(value).canRead();
 			if (!pathOK) {
-				setForeground(isSelected ? INVALID_SELECTED_PATH_COLOR : INVALID_PATH_COLOR);
+				setForeground(getErrorForegroundColor(isSelected));
 			}
 
 			return this;

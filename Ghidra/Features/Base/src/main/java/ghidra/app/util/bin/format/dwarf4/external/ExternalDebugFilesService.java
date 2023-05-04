@@ -62,7 +62,7 @@ public class ExternalDebugFilesService {
 			throws IOException {
 		try {
 			for (SearchLocation searchLoc : searchLocations) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				FSRL result = searchLoc.findDebugFile(debugInfo, monitor);
 				if (result != null) {
 					return result;

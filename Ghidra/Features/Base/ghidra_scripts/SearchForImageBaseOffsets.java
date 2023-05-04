@@ -63,7 +63,7 @@ public class SearchForImageBaseOffsets extends GhidraScript {
 		byte byteArray[] = new byte[numBytes];
 
 		for (int i = 0; i < numBytes; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			byteArray[i] = (byte) (value >> (8 * i) & 0xff);
 		}
 
@@ -74,7 +74,7 @@ public class SearchForImageBaseOffsets extends GhidraScript {
 		Address start = currentProgram.getMinAddress();
 		Address found = find(start, byteArray);
 		while (found != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			println(found.toString());
 			start = found.add(1);
 			found = find(start, byteArray);

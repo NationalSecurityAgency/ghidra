@@ -753,7 +753,7 @@ public class ConcurrentQ<I, R> {
 			}
 			else {
 				cancelScheduledJobs();
-				monitor.clearCanceled();
+				monitor.clearCancelled();
 			}
 		}
 

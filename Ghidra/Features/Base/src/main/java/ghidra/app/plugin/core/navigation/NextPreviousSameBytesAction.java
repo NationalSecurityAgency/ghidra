@@ -113,7 +113,7 @@ public class NextPreviousSameBytesAction extends AbstractNextPreviousAction {
 		iterator.next();
 		Memory memory = program.getMemory();
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = iterator.next();
 			try {
 				byte testByte = memory.getByte(addr);

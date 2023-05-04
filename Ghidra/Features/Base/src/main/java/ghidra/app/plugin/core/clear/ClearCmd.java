@@ -163,7 +163,7 @@ public class ClearCmd extends BackgroundCommand {
 			Address rangeMin = range.getMinAddress();
 			SymbolIterator symbolIter = symbolTable.getSymbolIterator(rangeMin, true);
 			while (symbolIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Symbol s = symbolIter.next();
 				if (s.getAddress().compareTo(range.getMaxAddress()) > 0) {
 					break; // done with range
@@ -201,7 +201,7 @@ public class ClearCmd extends BackgroundCommand {
 		int progress = 0;
 		while (iter.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressRange range = iter.next();
 			listing.clearComments(range.getMinAddress(), range.getMaxAddress());
 			progress += range.getLength();
@@ -238,7 +238,7 @@ public class ClearCmd extends BackgroundCommand {
 		FunctionIterator iter = manager.getFunctions(clearView, true);
 		while (iter.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function func = iter.next();
 			monitor.incrementProgress(1);
 			manager.removeFunction(func.getEntryPoint());
@@ -267,7 +267,7 @@ public class ClearCmd extends BackgroundCommand {
 		Iterator<Equate> iter = eqtbl.getEquates();
 		while (iter.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Equate eq = iter.next();
 			EquateReference[] refs = eq.getReferences();
 
@@ -354,7 +354,7 @@ public class ClearCmd extends BackgroundCommand {
 	private void removeRegisters(ProgramContext pc, AddressRange range, TaskMonitor monitor)
 			throws CancelledException {
 		for (Register reg : pc.getRegistersWithValues()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (reg.isProcessorContext()) {
 				continue; // skip context register
@@ -372,7 +372,7 @@ public class ClearCmd extends BackgroundCommand {
 			Set<SourceType> sourceTypesToClear, TaskMonitor monitor) throws CancelledException {
 		while (iter.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = iter.next();
 			Reference[] refs = refMgr.getReferencesFrom(addr);

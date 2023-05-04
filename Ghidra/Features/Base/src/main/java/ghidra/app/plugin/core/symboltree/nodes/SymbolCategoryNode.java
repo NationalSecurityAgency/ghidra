@@ -57,7 +57,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
 		SymbolType symbolType = symbolCategory.getSymbolType();
 		List<GTreeNode> list = getSymbols(symbolType, monitor);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		return OrganizationNode.organize(list, MAX_NODES_BEFORE_ORGANIZING, monitor);
 	}
 
@@ -81,7 +81,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		while (it.hasNext()) {
 			Symbol s = it.next();
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (s != null && (s.getSymbolType() == symbolType)) {
 				list.add(SymbolNode.createNode(s, program));
 			}

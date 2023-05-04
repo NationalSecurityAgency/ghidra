@@ -25,6 +25,7 @@ import org.junit.experimental.categories.Category;
 
 import db.Transaction;
 import docking.widgets.table.DynamicTableColumn;
+import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -47,6 +48,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.target.*;
@@ -469,6 +471,25 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		waitForPass(() -> assertEquals(tb.set(tb.range(0x00400000, 0x0040ffff)),
 			new AddressSet(listing.getSelection())));
+	}
+
+	@Test
+	public void testActionAddRegion() throws Exception {
+		createAndOpenTrace();
+		traceManager.activateTrace(tb.trace);
+
+		performEnabledAction(provider, provider.actionAddRegion, false);
+		DebuggerAddRegionDialog dialog = waitForDialogComponent(DebuggerAddRegionDialog.class);
+		runSwing(() -> {
+			dialog.setName("Memory[heap]");
+			dialog.setFieldLength(0x1000);
+			dialog.lengthChanged(); // simulate ENTER/focus-exited
+			dialog.okCallback();
+		});
+		waitForSwing();
+
+		TraceMemoryRegion region = Unique.assertOne(tb.trace.getMemoryManager().getAllRegions());
+		assertEquals(tb.range(0, 0xfff), region.getRange());
 	}
 
 	@Test

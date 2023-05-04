@@ -179,7 +179,7 @@ public class DecompilerCallConventionAnalyzer extends AbstractAnalyzer {
 		BookmarkManager bkMgr = program.getBookmarkManager();
 
 		for (Function function : functions) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// must not be a bookmark here, and paying attention to bookmarks
 			if (!ignoreBookmarks) {

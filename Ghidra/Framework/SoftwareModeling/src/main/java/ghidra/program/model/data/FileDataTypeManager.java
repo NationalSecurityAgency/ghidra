@@ -27,6 +27,8 @@ import ghidra.program.model.lang.Language;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
+import ghidra.util.filechooser.ExtensionFileFilter;
+import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -37,6 +39,9 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		implements FileArchiveBasedDataTypeManager {
 
 	public final static String EXTENSION = "gdt"; // Ghidra Data Types
+	public static final GhidraFileFilter GDT_FILEFILTER =
+		ExtensionFileFilter.forExtensions("Ghidra Data Type Files", EXTENSION);
+
 	/**
 	 * Suffix for an archive file.
 	 */

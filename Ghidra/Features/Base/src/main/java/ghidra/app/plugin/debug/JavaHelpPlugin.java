@@ -132,7 +132,7 @@ public class JavaHelpPlugin extends Plugin implements ApplicationLevelPlugin {
 			monitor.setMessage("Filtering help items...");
 			Iterator<Object> iter = map.keySet().iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Object helpObj = iter.next();
 				if (helpObj instanceof DockingAction) {
 					DockingAction action = (DockingAction) helpObj;
@@ -151,7 +151,7 @@ public class JavaHelpPlugin extends Plugin implements ApplicationLevelPlugin {
 			iter = map.keySet().iterator();
 			int i = 1;
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Object helpObj = iter.next();
 				HelpLocation helpLoc = map.get(helpObj);
 				HelpInfoObject helpInfoObject = new HelpInfoObject(helpObj, helpLoc);
@@ -171,7 +171,7 @@ public class JavaHelpPlugin extends Plugin implements ApplicationLevelPlugin {
 
 			monitor.setMessage("Writing items missing help...");
 			for (HelpInfoObject helpInfo : helpInfos) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				writeHelpInfo(out, helpInfo, i++);
 				monitor.initialize(1);
 			}

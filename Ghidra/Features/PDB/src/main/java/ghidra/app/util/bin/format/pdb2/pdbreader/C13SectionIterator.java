@@ -99,7 +99,7 @@ class C13SectionIterator<T extends C13Section> implements ParsingIterator<T> {
 	 */
 	public T findAndParse() throws CancelledException, PdbException {
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int index = reader.getIndex();
 			int typeVal = reader.parseInt();
 			boolean ignore = C13Type.ignore(typeVal);

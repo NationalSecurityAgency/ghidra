@@ -66,7 +66,7 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
 		ConstantPropagationContextEvaluator eval =
-			new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+			new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 				@Override
 				public boolean evaluateContext(VarnodeContext context, Instruction instr) {
 					String mnemonic = instr.getMnemonicString();
@@ -124,7 +124,7 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 
 				@Override
 				public boolean evaluateReference(VarnodeContext context, Instruction instr,
-						int pcodeop, Address address, int size, RefType refType) {
+						int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 					if (instr.getFlowType().isJump()) {
 						return false;
 					}
@@ -132,7 +132,7 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 						return false;
 					}
 
-					return super.evaluateReference(context, instr, pcodeop, address, size, refType);
+					return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 				}
 
 				@Override
@@ -153,6 +153,12 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 					return false;
 				}
 			};
+			
+		eval.setTrustWritableMemory(trustWriteMemOption)
+		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
 
 		AddressSet resultSet = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
@@ -234,13 +240,13 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 
 			@Override
 			public Address evaluateConstant(VarnodeContext context, Instruction instr, int pcodeop,
-					Address constant, int size, RefType refType) {
+					Address constant, int size, DataType dataType, RefType refType) {
 				return null;
 			}
 
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
-					Address address, int size, RefType refType) {
+					Address address, int size, DataType dataType, RefType refType) {
 				if (targetList.contains(address)) {
 					return false;
 				}
@@ -371,7 +377,7 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 
 			tableSizeMax = 64;
 			for (long assume = 0; assume < tableSizeMax; assume++) {
-				switchEvaluator.setAssume(new Long(assume));
+				switchEvaluator.setAssume(Long.valueOf(assume));
 				switchEvaluator.setGuard(false);
 				switchEvaluator.setTargetSwitchAddr(loc);
 

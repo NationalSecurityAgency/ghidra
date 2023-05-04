@@ -38,10 +38,6 @@ public class EditWindow extends JWindow {
 
 	private AssociatedComponentListener compListener = new AssociatedComponentListener();
 
-	/**
-	 * Constructor for RenameViewWindow.
-	 * @param owner
-	 */
 	EditWindow(DockingWindowManager mgr) {
 		super(mgr.getRootFrame());
 		this.mgr = mgr;
@@ -52,17 +48,11 @@ public class EditWindow extends JWindow {
 		return comp;
 	}
 
-	/**
-	 * @see java.awt.Window#isActive()
-	 */
 	@Override
 	public boolean isActive() {
 		return active;
 	}
 
-	/**
-	 * @see java.awt.Component#setVisible(boolean)
-	 */
 	@Override
 	public void setVisible(boolean state) {
 
@@ -133,8 +123,7 @@ public class EditWindow extends JWindow {
 	private void create() {
 		textField = new JTextField(" ");
 		JPanel panel = new JPanel(new BorderLayout());
-		Color bgColor = Colors.BG_TOOLTIP;
-		panel.setBackground(bgColor);
+		panel.setBackground(Colors.BACKGROUND);
 		panel.add(textField, BorderLayout.CENTER);
 
 		textField.addKeyListener(new KeyAdapter() {
@@ -167,32 +156,21 @@ public class EditWindow extends JWindow {
 
 	private class AssociatedComponentListener implements ComponentListener, ChangeListener {
 
-		/*
-		 * @see java.awt.event.ComponentListener#componentHidden(java.awt.event.ComponentEvent)
-		 */
 		@Override
 		public void componentHidden(ComponentEvent e) {
 			close();
 		}
 
-		/*
-		 * @see java.awt.event.ComponentListener#componentResized(java.awt.event.ComponentEvent)
-		 */
 		@Override
 		public void componentResized(ComponentEvent e) {
 			close();
 		}
 
-		/*
-		 * @see java.awt.event.ComponentListener#componentShown(java.awt.event.ComponentEvent)
-		 */
 		@Override
 		public void componentShown(ComponentEvent e) {
+			// stub
 		}
 
-		/*
-		 * @see java.awt.event.ComponentListener#componentMoved(java.awt.event.ComponentEvent)
-		 */
 		@Override
 		public void componentMoved(ComponentEvent e) {
 			if (comp != null && comp.isVisible()) {
@@ -200,9 +178,6 @@ public class EditWindow extends JWindow {
 			}
 		}
 
-		/*
-		 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
-		 */
 		@Override
 		public void stateChanged(ChangeEvent e) {
 			close();

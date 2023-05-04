@@ -1,0 +1,9 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/languages/eBPF.cspec||GHIDRA||||END|
+data/languages/eBPF.dwarf||GHIDRA||||END|
+data/languages/eBPF.ldefs||GHIDRA||||END|
+data/languages/eBPF.opinion||GHIDRA||||END|
+data/languages/eBPF.pspec||GHIDRA||||END|
+data/languages/eBPF.sinc||GHIDRA||||END|
+data/languages/eBPF_le.slaspec||GHIDRA||||END|

@@ -152,7 +152,7 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 			tmpAdapter = new CompositeDBAdapterV5V6(tmpHandle, DBConstants.CREATE, tablePrefix);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
@@ -164,7 +164,7 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 			}
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}

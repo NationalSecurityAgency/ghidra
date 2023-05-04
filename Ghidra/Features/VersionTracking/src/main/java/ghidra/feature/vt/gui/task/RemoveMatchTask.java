@@ -43,7 +43,7 @@ public class RemoveMatchTask extends VtTask {
 		monitor.initialize(matches.size());
 		boolean failed = false;
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTMatchSetDB matchSet = (VTMatchSetDB) match.getMatchSet();
 			boolean matchRemoved = matchSet.removeMatch(match);
 			if (!matchRemoved) {

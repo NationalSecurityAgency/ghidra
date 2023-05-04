@@ -109,7 +109,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		manageBlockNesting(this);
 
 		while (notDone()) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			MsSymbolApplier applier = applicator.getSymbolApplier(iter);
 			allAppliers.add(applier);
 			applier.manageBlockNesting(this);
@@ -448,7 +448,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			function.getProgram().getListing().getInstructions(scopeSet, true);
 		int max = 0;
 		while (instructions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction next = instructions.next();
 			int newValue = valueChange.getDepth(next.getMinAddress());
 			if (newValue < -(20 * 1024) || newValue > (20 * 1024)) {

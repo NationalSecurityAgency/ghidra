@@ -177,7 +177,7 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 		Address addr = addr(0x01001000);
 		tool.firePluginEvent(new ProgramLocationPluginEvent("test", new ProgramLocation(program,
 			addr), program));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// enter a Binary value and hit the search button
 		setValueText("01110101");

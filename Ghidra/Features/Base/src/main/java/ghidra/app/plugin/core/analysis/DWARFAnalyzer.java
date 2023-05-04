@@ -26,7 +26,6 @@ import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProvid
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.BuiltInDataTypeManager;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -180,13 +179,14 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		try (DWARFSectionProvider dsp =
-			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor)) {
-			if (dsp == null) {
-				Msg.info(this, "Unable to find DWARF information, skipping DWARF analysis");
-				return false;
-			}
+		DWARFSectionProvider dsp =
+			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor); // closed by DWARFProgram
+		if (dsp == null) {
+			Msg.info(this, "Unable to find DWARF information, skipping DWARF analysis");
+			return false;
+		}
 
+		try {
 			try (DWARFProgram prog = new DWARFProgram(program, importOptions, monitor, dsp)) {
 				if (prog.getRegisterMappings() == null && importOptions.isImportFuncs()) {
 					log.appendMsg(
@@ -195,8 +195,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 							"], function information may be incorrect / incomplete.");
 				}
 
-				DWARFParser dp =
-					new DWARFParser(prog, BuiltInDataTypeManager.getDataTypeManager(), monitor);
+				DWARFParser dp = new DWARFParser(prog, monitor);
 				DWARFImportSummary parseResults = dp.parse();
 				parseResults.logSummaryResults();
 			}

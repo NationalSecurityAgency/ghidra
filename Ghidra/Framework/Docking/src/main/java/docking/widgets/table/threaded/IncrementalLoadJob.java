@@ -80,7 +80,7 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 	private void doExecute(TaskMonitor monitor) {
 		try {
 			threadedModel.doLoad(incrementalAccumulator, monitor);
-			if (!monitor.isCancelled()) { // in case the model didn't call checkCanceled()
+			if (!monitor.isCancelled()) { // in case the model didn't call checkCancelled()
 				flush(incrementalAccumulator);
 			}
 		}

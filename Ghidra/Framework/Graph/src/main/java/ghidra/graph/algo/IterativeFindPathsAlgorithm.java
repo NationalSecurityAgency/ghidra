@@ -91,7 +91,7 @@ public class IterativeFindPathsAlgorithm<V, E extends GEdge<V>>
 
 		while (!path.isEmpty()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			Node node = path.peek();
 
@@ -149,7 +149,7 @@ public class IterativeFindPathsAlgorithm<V, E extends GEdge<V>>
 		setStatus(path, STATUS.IN_PATH);
 		accumulator.add(path);
 
-		monitor.checkCanceled(); // pause for listener
+		monitor.checkCancelled(); // pause for listener
 	}
 
 	private void setStatus(List<V> path, STATUS s) {

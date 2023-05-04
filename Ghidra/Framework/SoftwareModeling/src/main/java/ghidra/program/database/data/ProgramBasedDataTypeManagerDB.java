@@ -249,7 +249,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 				RecordIterator iter =
 					instanceSettingsAdapter.getRecords(range.minKey, range.maxKey);
 				while (iter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					DBRecord rec = iter.next();
 					tmpTable.putRecord(rec);
 					iter.delete();
@@ -258,7 +258,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 
 			RecordIterator iter = tmpTable.iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = iter.next();
 				// update address key (i.e., settings association ID) and re-introduce into table
 				Address addr = addrMap

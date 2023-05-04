@@ -208,7 +208,7 @@ public class FSUtilities {
 		}
 
 		for (GFile gFile : fs.getListing(dir)) {
-			taskMonitor.checkCanceled();
+			taskMonitor.checkCancelled();
 			if (gFile.isDirectory()) {
 				listFileSystem(fs, gFile, result, taskMonitor);
 			}
@@ -367,7 +367,7 @@ public class FSUtilities {
 			os.write(buffer, 0, bytesRead);
 			totalBytesCopied += bytesRead;
 			monitor.setProgress(totalBytesCopied);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 		os.flush();
 		return totalBytesCopied;
@@ -442,7 +442,7 @@ public class FSUtilities {
 			while ((bytesRead = is.read(buf)) >= 0) {
 				messageDigest.update(buf, 0, bytesRead);
 				monitor.incrementProgress(bytesRead);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 			return NumericUtilities.convertBytesToString(messageDigest.digest());
 		}

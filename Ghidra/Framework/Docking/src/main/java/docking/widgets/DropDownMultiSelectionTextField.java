@@ -28,9 +28,9 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
 /**
- * Extension of the {@link DropDownSelectionTextField} that allows multiple items to be selected. 
+ * Extension of the {@link DropDownSelectionTextField} that allows multiple items to be selected.
  * <p>
- * Note that multiple selection introduces some display complications that are not an issue with 
+ * Note that multiple selection introduces some display complications that are not an issue with
  * single selection. Namely:
  * <ul>
  * <li>how do you display multiple selected items in the preview pane</li>
@@ -38,7 +38,7 @@ import ghidra.util.datastruct.WeakSet;
  * </ul>
  * The solution here is to:
  * <ul>
- * <li>let the preview panel operate normally; it will simply display the preview text for whatever 
+ * <li>let the preview panel operate normally; it will simply display the preview text for whatever
  * was last selected</li>
  * <li>display all selected items in the drop down text field as a comma-delimited list</li>
  * </ul>
@@ -54,7 +54,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataModel the model for the drop down widget
 	 */
 	public DropDownMultiSelectionTextField(DropDownTextFieldDataModel<T> dataModel) {
@@ -63,7 +63,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Adds the caller to a list of subscribers who will be notified when selection changes.
-	 * 
+	 *
 	 * @param listener the subscriber to be added
 	 */
 	public void addDropDownSelectionChoiceListener(
@@ -80,7 +80,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Returns a list of all selected items in the list.
-	 * 
+	 *
 	 * @return the selected items
 	 */
 	public List<T> getSelectedValues() {
@@ -101,6 +101,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 		}
 		previewList.setOpaque(true);
 		previewList.setBackground(PREVIEW_WINDOW_BGCOLOR);
+		previewList.setForeground(PREVIEW_WINDOW_FGCOLOR);
 		previewList.setFocusable(false);
 		previewList.setModel(new DefaultListModel<String>());
 	}
@@ -161,9 +162,9 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 	}
 
 	/**
-	 * Returns a string representing all items selected in the drop-down. If multiple items are 
+	 * Returns a string representing all items selected in the drop-down. If multiple items are
 	 * selected, they will be comma-delimited.
-	 * 
+	 *
 	 * @return the comma-delimited selection
 	 */
 	private String getSelectionText() {
@@ -178,7 +179,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Notifies subscribers when the list selection has changed.
-	 * 
+	 *
 	 * @param selectedItems the list of selected items
 	 */
 	private void fireUserChoiceMade(List<T> selectedItems) {
@@ -189,7 +190,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Saves the selected list items.
-	 * 
+	 *
 	 * @param newValues the new selected items
 	 */
 	private void storeSelectedValues(List<T> newValues) {
@@ -198,7 +199,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 	}
 
 	/**
-	 * Listener for the preview panel which is kicked whenever a selection has been made in the 
+	 * Listener for the preview panel which is kicked whenever a selection has been made in the
 	 * drop down. This will prompt the preview panel to change what it displays.
 	 */
 	private class PreviewListener implements ListSelectionListener {

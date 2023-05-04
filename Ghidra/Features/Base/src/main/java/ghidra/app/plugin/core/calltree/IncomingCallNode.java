@@ -93,7 +93,7 @@ public class IncomingCallNode extends CallNode {
 			LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
 		FunctionManager functionManager = program.getFunctionManager();
 		for (Address fromAddress : addresses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Function callerFunction = functionManager.getFunctionContaining(fromAddress);
 			if (callerFunction == null) {
 				continue;

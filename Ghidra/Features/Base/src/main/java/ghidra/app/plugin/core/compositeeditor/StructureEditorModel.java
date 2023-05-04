@@ -920,7 +920,7 @@ class StructureEditorModel extends CompEditorModel {
 		try {
 
 			for (int i = 0; i < numCopies; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMessage("Inserting " + (i + 1) + " of " + numCopies);
 				viewComposite.insert(componentOrdinal, dataType, length);
 				monitor.incrementProgress(1);

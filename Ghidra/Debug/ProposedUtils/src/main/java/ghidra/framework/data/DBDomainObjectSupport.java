@@ -78,7 +78,7 @@ public abstract class DBDomainObjectSupport extends DomainObjectAdapterDB {
 
 	protected <T> T createManager(String managerName, ManagerSupplier<T> supplier)
 			throws CancelledException, IOException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		monitor.setMessage("Creating " + managerName);
 		try {
 			return supplier.create(openMode, monitor);

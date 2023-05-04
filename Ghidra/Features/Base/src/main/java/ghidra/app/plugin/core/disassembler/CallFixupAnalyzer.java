@@ -79,7 +79,7 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 		Iterator<Function> functionIter = program.getFunctionManager().getFunctions(set, true);
 
 		while (functionIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Function function = functionIter.next();
 
@@ -142,7 +142,7 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 		// for the places that were fixed, add in the functions they are found in
 		AddressIterator addresses = codeChangeSet.getAddresses(true);
 		for (Address address : addresses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Function func = program.getFunctionManager().getFunctionContaining(address);
 			if (func != null) {
@@ -360,7 +360,7 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 		AddressIterator addrIter = repairedCallLocations.getAddresses(true);
 
 		while (addrIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMaximum(numRefs);
 			monitor.setProgress(refCnt++);
 			Address fromAddr = addrIter.next();
@@ -476,9 +476,9 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 		}
 
 		@Override
-		public void checkCanceled() throws CancelledException {
+		public void checkCancelled() throws CancelledException {
 			// TODO Auto-generated method stub
-			parentMonitor.checkCanceled();
+			parentMonitor.checkCancelled();
 		}
 
 		@Override

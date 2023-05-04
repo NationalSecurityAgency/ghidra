@@ -121,7 +121,7 @@ public interface Msf extends AutoCloseable {
 	 * Check to see if this monitor has been canceled
 	 * @throws CancelledException if monitor has been cancelled
 	 */
-	public void checkCanceled() throws CancelledException;
+	public void checkCancelled() throws CancelledException;
 
 	/**
 	 * Returns the page size employed by this {@link Msf}

@@ -71,7 +71,7 @@ public class MatchSymbol {
 			Iterator<Match> matchIterator = entries.iterator();
 			while (matchIterator.hasNext()) {
 				monitor.incrementProgress(1);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Match match = matchIterator.next();
 				if (match.aSymbols.size() != 1 || match.bSymbols.size() != 1) {
 					// remove match if it does not contain exactly one match pair
@@ -87,7 +87,7 @@ public class MatchSymbol {
 
 		for (Match match : entries) {
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			//TODO: special namespaces for externals - unknown, etc...
 			//Library.UNKNOWN - similar to global space for normal symbols 
@@ -145,7 +145,7 @@ public class MatchSymbol {
 
 		for (Symbol symbol : program.getSymbolTable().getAllSymbols(true)) {
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			// Don't include default names except string ones (ie no FUN_*, LAB_*, etc... but 
 			// yes s_*, u_*, etc...	

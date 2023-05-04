@@ -361,13 +361,13 @@ public class PropertyListMergeManager implements MergeResolver {
 				return options.getBoolean(propertyName, false) ? Boolean.TRUE : Boolean.FALSE;
 
 			case DOUBLE_TYPE:
-				return new Double(options.getDouble(propertyName, 0d));
+				return Double.valueOf(options.getDouble(propertyName, 0d));
 
 			case INT_TYPE:
-				return new Integer(options.getInt(propertyName, 0));
+				return Integer.valueOf(options.getInt(propertyName, 0));
 
 			case LONG_TYPE:
-				return new Long(options.getLong(propertyName, 0L));
+				return Long.valueOf(options.getLong(propertyName, 0L));
 
 			case NO_TYPE:
 				return null;

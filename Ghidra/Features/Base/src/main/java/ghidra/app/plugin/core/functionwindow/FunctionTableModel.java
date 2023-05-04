@@ -111,7 +111,7 @@ public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject
 		int progress = 0;
 		while (it.hasNext()) {
 			monitor.setProgress(progress++);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long key = it.next();
 			Function f = functionMgr.getFunction(key);
 			accumulator.add(new FunctionRowObject(f));

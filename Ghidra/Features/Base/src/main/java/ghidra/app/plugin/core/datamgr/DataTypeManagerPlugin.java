@@ -45,8 +45,7 @@ import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.util.DataDropOnBrowserHandler;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
-import ghidra.app.services.CodeViewerService;
-import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.Application;
 import ghidra.framework.main.OpenVersionedFileDialog;
@@ -62,7 +61,10 @@ import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.datastruct.LRUMap;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Plugin to pop up the dialog to manage data types in the program
@@ -78,11 +80,12 @@ import ghidra.util.task.TaskLauncher;
 	description = "Provides the window for managing and categorizing dataTypes.  " +
 			"The datatype display shows all built-in datatypes, datatypes in the " +
 			"current program, and datatypes in all open archives.",
-	servicesProvided = { DataTypeManagerService.class }
+	servicesProvided = { DataTypeManagerService.class, DataTypeArchiveService.class }
 )
 //@formatter:on
 public class DataTypeManagerPlugin extends ProgramPlugin
-		implements DomainObjectListener, DataTypeManagerService, PopupActionProvider {
+		implements DomainObjectListener, DataTypeManagerService, DataTypeArchiveService,
+		PopupActionProvider {
 
 	private static final String EXTENSIONS_PATH_PREFIX = Path.GHIDRA_HOME + "/Extensions";
 
@@ -555,6 +558,20 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	public DataTypeManager openDataTypeArchive(String archiveName)
 			throws IOException, DuplicateIdException {
 		return dataTypeManagerHandler.openArchive(archiveName);
+	}
+
+	@Override
+	public DataTypeManager openArchive(ResourceFile file, boolean acquireWriteLock)
+			throws IOException, DuplicateIdException {
+		Archive archive = openArchive(file.getFile(true), acquireWriteLock);
+		return archive.getDataTypeManager();
+	}
+
+	@Override
+	public DataTypeManager openArchive(DomainFile domainFile, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException, DuplicateIdException {
+		DataTypeArchive archive = openArchive(domainFile);
+		return archive.getDataTypeManager();
 	}
 
 	public List<Archive> getAllArchives() {

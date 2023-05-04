@@ -308,7 +308,7 @@ public class NamespaceManager implements ManagerDB {
 
 			AddressRangeIterator rangeIter = namespaceMap.getAddressRanges(fromAddr, rangeEnd);
 			while (rangeIter.hasNext() && !addrSet.isEmpty()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AddressRange range = rangeIter.next();
 				Field field = namespaceMap.getValue(range.getMinAddress());
 				long namespaceID = field.getLongValue();
@@ -332,11 +332,11 @@ public class NamespaceManager implements ManagerDB {
 				addrSet = addrSet.subtract(intersection);
 			}
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			namespaceMap.clearRange(fromAddr, rangeEnd);
 
 			for (int i = 0; i < list.size(); i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				NamespaceHolder h = list.get(i);
 				namespaceMap.paintRange(h.range.getMinAddress(), h.range.getMaxAddress(),
 					new LongField(h.namespaceID));

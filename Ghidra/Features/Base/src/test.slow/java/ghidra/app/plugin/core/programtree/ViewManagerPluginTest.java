@@ -352,7 +352,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf renameAction = getAction(plugin, "Rename Tree View");
 
 		waitForTasks();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		setCurrentViewProvider(PluginConstants.DEFAULT_TREE_NAME);
 		SwingUtilities.invokeAndWait(() -> renameAction.actionPerformed(new ActionContext()));
@@ -394,7 +394,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf renameAction = getAction(plugin, "Rename Tree View");
 
 		waitForTasks();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		setCurrentViewProvider(PluginConstants.DEFAULT_TREE_NAME);
 		SwingUtilities.invokeAndWait(() -> renameAction.actionPerformed(new ActionContext()));

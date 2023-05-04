@@ -491,7 +491,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 		monitor.setMaximum(protoStore.getRecordCount());
 		for (Iterator<DBTraceCodePrototypeEntry> it = protoStore.asMap().values().iterator(); it
 				.hasNext();) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			DBTraceCodePrototypeEntry protoEnt = it.next();
 			if (protoEnt.prototype.getLanguage() != guest.getLanguage()) {

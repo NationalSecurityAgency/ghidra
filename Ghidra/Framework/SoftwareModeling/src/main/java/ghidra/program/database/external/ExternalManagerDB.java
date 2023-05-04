@@ -119,7 +119,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 		RecordIterator iter = oldNameAdapter.getRecords();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 
 			String name = rec.getString(OldExtNameAdapter.EXT_NAME_COL);
@@ -146,7 +146,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 		iter = oldExtRefAdapter.getRecords();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 
 			Address fromAddr =
@@ -882,7 +882,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		AddressFactory oldAddrFactory = translator.getOldLanguage().getAddressFactory();
 		SymbolIterator externalSymbols = symbolMgr.getExternalSymbols();
 		while (externalSymbols.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			SymbolDB s = (SymbolDB) externalSymbols.next();
 			ExternalData externalData = ExternalLocationDB.getExternalData(s);
 			String addrStr = externalData.getAddressString();

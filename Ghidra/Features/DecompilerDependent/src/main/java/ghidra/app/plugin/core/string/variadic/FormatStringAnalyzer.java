@@ -108,7 +108,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 			if (s.contains("%")) {
 				stringsByAddress.put(data.getAddress(), data);
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 
 		FunctionIterator functionIterator = currentProgram.getListing().getFunctions(true);
@@ -134,7 +134,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 					}
 				}
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 
 		Iterator<Function> functionsToSearchIterator = selection != null
@@ -152,7 +152,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 					break;
 				}
 			}
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 
 		decompile(currentProgram, monitor, stringsByAddress, variadicFunctionNames,
@@ -211,7 +211,7 @@ public class FormatStringAnalyzer extends AbstractAnalyzer {
 					overrideCallList(program, function, functionCallDataList, namesToParameters,
 						namesToReturn);
 				}
-				tMonitor.checkCanceled();
+				tMonitor.checkCancelled();
 				return null;
 			}
 		};

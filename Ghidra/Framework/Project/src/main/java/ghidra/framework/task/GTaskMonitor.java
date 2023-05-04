@@ -106,7 +106,7 @@ public class GTaskMonitor implements TaskMonitor, CancelledListener {
 	public boolean isIndeterminate() {
 		return indeterminate;
 	}
-
+	
 	@Override
 	public void checkCanceled() throws CancelledException {
 		if (isCancelled) {

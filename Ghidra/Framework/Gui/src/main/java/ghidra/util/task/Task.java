@@ -193,7 +193,7 @@ public abstract class Task implements MonitoredRunnable {
 	 *
 	 * @param monitor The TaskMonitor that will monitor the executing Task
 	 * @throws CancelledException if the task is cancelled.  Subclasses can trigger this exception
-	 *                            by calling {@link TaskMonitor#checkCanceled()}.  This allows
+	 *                            by calling {@link TaskMonitor#checkCancelled()}.  This allows
 	 *                            them to break out of the current work stack.
 	 */
 	public abstract void run(TaskMonitor monitor) throws CancelledException;

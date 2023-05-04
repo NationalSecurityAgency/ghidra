@@ -725,7 +725,7 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 ////			}
 //			waitForApply(window, true, 2000);
 //			pressButtonByText(window, "Apply");
-//			waitForPostedSwingRunnables();
+//			waitForSwing();
 //			waitForPrompting(false, 2000);
 //
 //		}

@@ -32,7 +32,6 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.list.GList;
 import docking.widgets.list.GListAutoLookup;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.util.exception.AssertException;
 
 class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryModelIf {
@@ -186,7 +185,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		});
 
 		listEditor = new JPanel(new BorderLayout());
-		listEditor.setBorder(BorderFactory.createLineBorder(Java.BORDER));
+		listEditor.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 
 		listEditor.add(listEditorLabel, BorderLayout.WEST);
 		listEditor.add(listEditorField, BorderLayout.CENTER);

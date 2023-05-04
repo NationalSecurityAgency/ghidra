@@ -99,7 +99,7 @@ public class RISCVAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		// follow all flows building up context
 		ConstantPropagationContextEvaluator eval =
-			new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+			new ConstantPropagationContextEvaluator(monitor, trustWriteMemOption) {
 				private boolean mustStopNow = false;
 
 				@Override
@@ -112,7 +112,13 @@ public class RISCVAddressAnalyzer extends ConstantPropagationAnalyzer {
 					return mustStopNow;
 				}
 			};
-
+			
+		eval.setTrustWritableMemory(trustWriteMemOption)
+		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
+		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
+		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
+			
 		AddressSet resultSet = symEval.flowConstants(flowStart, null, eval, true, monitor);
 
 		return resultSet;

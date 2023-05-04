@@ -2,9 +2,6 @@
 
 <HTML>
   <HEAD>
-    <META name="generator" content=
-    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
-
     <TITLE>Theming User Documentation</TITLE>
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
@@ -67,10 +64,9 @@
     	called "Button.background", it would appear in Ghidra as "laf.color.Button.background".</LI>
     	<LI>Look and Feel Palette Properties - All the color and fonts used by the Look and Feel 
     	properties are grouped into either system property values or auto-generated palette 
-    	properties, sso that groups of properties can be changed together.</LI>
+    	properties, so that groups of properties can be changed together.</LI>
     
     </UL>
-    
     
     <P>See the <A href="ThemingDeveloperDocs.html#Resource_Ids">Developer Documentation</A> for more
     details on the property ID format and naming conventions.
@@ -184,6 +180,14 @@
        invoke the <A href= "#Edit_Theme">Theme Editor Dialog</A>. To activate this
       action, press the refresh button <IMG alt="" src="images/reload3.png" border="0"> in the top
       right corner of the Theme Editor dialog.
+
+	  <H3>Toggle Showing System Values<A NAME="Toggle_Show_System_Values"></A></H3>
+	  <P>
+	  Toggles whether the given table shows system ID values (e.g, those starting with <CODE>
+	  laf.</CODE> or <CODE>system.</CODE>.  By default these values are hidden.
+	  </P>
+	  
+	  
 
       <H3>Saving Themes</H3>
 

@@ -93,7 +93,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 		// get one that has a class vftableStructure applied there
 		Address vftableWithAppliedStructure = null;
 		for (Address vftableAddress : vftablesContainingFunction) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Data dataAt = getDataAt(vftableAddress);
 			if (dataAt == null) {
@@ -134,7 +134,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			println();
 			println("Updated structures:");
 			for (Structure structure : structuresOnList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(structure.getPathName());
 			}
 		}
@@ -143,7 +143,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			println();
 			println("Updated function definition:");
 			for (FunctionDefinition functionDef : functionDefinitionsOnList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(functionDef.getPathName());
 			}
 		}
@@ -152,7 +152,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 			println();
 			println("Updated functions:");
 			for (Function functionOnList : functionsOnList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(functionOnList.getEntryPoint().toString());
 			}
 		}

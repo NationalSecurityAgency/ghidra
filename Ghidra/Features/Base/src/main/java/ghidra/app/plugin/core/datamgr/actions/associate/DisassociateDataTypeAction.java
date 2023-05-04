@@ -232,7 +232,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 		synchronizer.openTransactions();
 		try {
 			for (DataType dt : types) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMessage("Disassociating " + dt.getName());
 				dtm.disassociate(dt);
 				monitor.incrementProgress(1);

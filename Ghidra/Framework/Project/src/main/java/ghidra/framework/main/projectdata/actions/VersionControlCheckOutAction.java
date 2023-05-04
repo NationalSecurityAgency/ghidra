@@ -122,7 +122,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 			monitor.setMaximum(files.size());
 
 			for (DomainFile df : files) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				if (df.isVersioned() && !df.isCheckedOut()) {
 					results.add(df);
@@ -196,7 +196,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 				int progress = 0;
 				for (DomainFile df : versionedFiles) {
 
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					monitor.setMessage("Checkout " + progress + " of " + versionedFiles.size() +
 						": " + df.getName());
 

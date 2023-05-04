@@ -315,7 +315,7 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		program.addListener(dol);
 		AddressSetPropertyMap pm = program.createAddressSetPropertyMap("MyMap");
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_ADDED, eventType);
 		assertEquals("MyMap", mapName);
 
@@ -326,13 +326,13 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		set.addRange(getAddr(0x26), getAddr(0x30));
 		pm.add(set);
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		pm.remove(getAddr(0), getAddr(0x15));
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
@@ -340,20 +340,20 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		set.addRange(getAddr(20), getAddr(0x23));
 		pm.remove(set);
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		pm.clear();
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		// map removed
 		program.deleteAddressSetPropertyMap("MyMap");
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_REMOVED, eventType);
 		assertEquals("MyMap", mapName);
 	}

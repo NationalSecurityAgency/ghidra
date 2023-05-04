@@ -168,7 +168,7 @@ abstract class SymbolDatabaseAdapter {
 		SymbolDatabaseAdapterV3 tmpAdapter = new SymbolDatabaseAdapterV3(tmpHandle, addrMap, true);
 		RecordIterator iter = oldAdapter.getSymbols();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 			Address addr = oldAddrMap.decodeAddress(rec.getLongValue(SYMBOL_ADDR_COL));
 			rec.setLongValue(SYMBOL_ADDR_COL, addrMap.getKey(addr, true));
@@ -192,7 +192,7 @@ abstract class SymbolDatabaseAdapter {
 
 		RecordIterator iter = tmpAdapter.getSymbols();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			newAdapter.updateSymbolRecord(iter.next());
 			monitor.incrementProgress(1);
 		}

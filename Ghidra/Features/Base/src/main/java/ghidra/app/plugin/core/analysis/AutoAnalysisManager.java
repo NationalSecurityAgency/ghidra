@@ -1369,11 +1369,11 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			throw new UnsupportedOperationException(
 				"AutoAnalysisManager.scheduleWorker may not be invoked from Swing thread");
 		}
-		workerMonitor.checkCanceled();
+		workerMonitor.checkCancelled();
 
 		AnalysisWorkerCommand cmd =
 			new AnalysisWorkerCommand(worker, workerContext, analyzeChanges, workerMonitor);
-		workerMonitor.checkCanceled();
+		workerMonitor.checkCancelled();
 
 		// NOTE: It is very important that the worker cmd not run concurrent with analysis
 		if (SystemUtilities.isInHeadlessMode()) {
@@ -1402,7 +1402,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			}
 		}
 
-		workerMonitor.checkCanceled();
+		workerMonitor.checkCancelled();
 		Msg.debug(this, "Analysis worker completed (" + cmd.worker.getWorkerName() + "): " +
 			cmd.worker.getClass());
 
@@ -1556,11 +1556,11 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		public long getMaximum() {
 			return Math.max(primaryMonitor.getMaximum(), secondaryMonitor.getMaximum());
 		}
-
+		
 		@Override
 		public void checkCanceled() throws CancelledException {
-			primaryMonitor.checkCanceled();
-			secondaryMonitor.checkCanceled();
+			primaryMonitor.checkCancelled();
+			secondaryMonitor.checkCancelled();
 		}
 
 		@Override
@@ -1603,8 +1603,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 		@Override
 		public void clearCanceled() {
-			primaryMonitor.clearCanceled();
-			secondaryMonitor.clearCanceled();
+			primaryMonitor.clearCancelled();
+			secondaryMonitor.clearCancelled();
 		}
 	}
 
@@ -1747,7 +1747,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 					analysisMonitor.removeCancelledListener(this);
 					analysisMonitor.setCancelEnabled(true);
 					// prevent cancel from affecting other queued analysis
-					analysisMonitor.clearCanceled();
+					analysisMonitor.clearCancelled();
 				}
 
 				synchronized (this) {

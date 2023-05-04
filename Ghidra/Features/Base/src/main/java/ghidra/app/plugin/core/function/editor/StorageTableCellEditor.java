@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
@@ -53,8 +54,7 @@ class StorageTableCellEditor extends AbstractCellEditor implements TableCellEdit
 			boolean isSelected, int row, int column) {
 		String stringValue = value == null ? "" : value.toString();
 		JTextField field = new JTextField(stringValue);
-		field.setBackground(
-			isSelected ? Tables.FG_UNEDITABLE_SELECTED : Tables.FG_UNEDITABLE_UNSELECTED);
+		field.setBackground(getUneditableForegroundColor(isSelected));
 		field.setEditable(false);
 		ParameterTableModel tableModel = (ParameterTableModel) table.getModel();
 		FunctionVariableData rowData = tableModel.getRowObject(row);
@@ -78,4 +78,9 @@ class StorageTableCellEditor extends AbstractCellEditor implements TableCellEdit
 		});
 		return field;
 	}
+
+	protected Color getUneditableForegroundColor(boolean isSelected) {
+		return isSelected ? Tables.UNEDITABLE_SELECTED : Tables.UNEDITABLE_UNSELECTED;
+	}
+
 }

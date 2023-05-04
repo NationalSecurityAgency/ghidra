@@ -289,7 +289,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		// open the structure
 		cb.goToField(addr(0x0100689b), "+", 0, 0);
 		click(cb, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		ProgramSelection sel = new ProgramSelection(addr(0x0100688c), addr(0x010068a3));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("test", sel, program));
@@ -366,12 +366,12 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 			program.endTransaction(transactionID, true);
 		}
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// open the structure
 		cb.goToField(addr(0x0100689b), "+", 0, 0);
 		click(cb, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		ProgramSelection sel = new ProgramSelection(addr(0x0100688c), addr(0x0100689f));
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("test", sel, program));
@@ -456,12 +456,12 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 			program.endTransaction(transactionID, true);
 		}
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// open the structure
 		cb.goToField(addr(0x0100689b), "+", 0, 0);
 		click(cb, 1);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		AddressSet set = new AddressSet();
 		set.addRange(addr(0x0100688c), addr(0x0100688f));

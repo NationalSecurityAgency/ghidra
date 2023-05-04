@@ -60,7 +60,7 @@ public class ComplexTypeApplierMapper {
 		monitor.initialize(indexLimit - indexNumber);
 		monitor.setMessage("PDB: Mapping Composites...");
 		while (indexNumber < indexLimit) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			//PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier =
 				applicator.getTypeApplier(RecordNumber.typeRecordNumber(indexNumber++));

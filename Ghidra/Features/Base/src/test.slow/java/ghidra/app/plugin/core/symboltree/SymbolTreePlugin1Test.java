@@ -227,10 +227,10 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		Object selectedObject = selectionPath.getLastPathComponent();
 		assertEquals(fNode, selectedObject);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		performAction(goToExtLocAction, util.getSymbolTreeContext(), false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		OptionDialog d = waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
 		assertNotNull(d);
@@ -310,7 +310,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		nsNode = nsParentNode.getChild(0);
 		util.expandNode(nsNode);
 		util.waitForTree();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		util.waitForTree();
 		gNode = nsNode.getChild(0);
 
@@ -357,7 +357,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode fredNode = labelsNode.getChild("fred");
 		util.selectNode(fredNode);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertTrue(cutAction.isEnabledForContext(util.getSymbolTreeContext()));
 		performAction(cutAction, util.getSymbolTreeContext(), true);
 
@@ -401,11 +401,11 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(util.getClipboardContents());
 
 		util.waitForTree();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		util.selectNode(functionsNode);
 		util.waitForTree();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// verify node selected
 		assertEquals("Node not selected.", functionsNode, util.getSelectedNode());
@@ -790,7 +790,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		executeOnSwingWithoutBlocking(
 			() -> dragNDropHandler.drop(destinationNode, transferable, dragAction));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private GTreeNode createNewNamespace() throws Exception {
@@ -954,7 +954,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void flushAndWaitForTree() {
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		util.waitForTree();
 	}
 }

@@ -254,7 +254,7 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 		String message = model.getMessage();
 		setStatusText(message);
 		setOkEnabled(message.length() == 0);
-		lengthField.setValue(new Long(model.getLength()));
+		lengthField.setValue(Long.valueOf(model.getLength()));
 		Address startAddr = model.getStartAddress();
 		Address endAddr = model.getEndAddress();
 		isChanging = true;

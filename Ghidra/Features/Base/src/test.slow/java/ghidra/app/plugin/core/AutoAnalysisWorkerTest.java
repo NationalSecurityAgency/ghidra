@@ -366,7 +366,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 					pressButtonByText(confirmDialog, "Yes");
 					waitForSwing();
 
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 
 					Assert.fail("CancelledException expected");
 

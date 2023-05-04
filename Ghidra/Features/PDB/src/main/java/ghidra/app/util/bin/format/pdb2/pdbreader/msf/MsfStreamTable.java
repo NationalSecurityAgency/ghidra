@@ -89,7 +89,7 @@ abstract class MsfStreamTable {
 
 		// Get stream lengths and create streams.
 		for (int streamNum = 0; streamNum < numStreams; streamNum++) {
-			msf.checkCanceled();
+			msf.checkCancelled();
 			int streamLength = reader.parseInt();
 			parseExtraField(reader);
 			MsfStream stream = new MsfStream(msf, streamLength);
@@ -98,7 +98,7 @@ abstract class MsfStreamTable {
 
 		// Populate the streams with their page information.
 		for (int streamNum = 0; streamNum < numStreams; streamNum++) {
-			msf.checkCanceled();
+			msf.checkCancelled();
 			MsfStream stream = mapStreamNumberToStream.get(streamNum);
 			if (stream != null) {
 				stream.deserializePageNumbers(reader);
@@ -125,7 +125,7 @@ abstract class MsfStreamTable {
 		}
 		else {
 			for (int i = mapStreamNumberToStream.size(); i < index; i++) {
-				msf.checkCanceled();
+				msf.checkCancelled();
 				mapStreamNumberToStream.add(null);
 			}
 			mapStreamNumberToStream.add(stream);

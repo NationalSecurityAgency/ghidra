@@ -37,7 +37,6 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.*;
 import generic.theme.GColor;
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.app.util.SelectionTransferable;
@@ -115,7 +114,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 		/**
 		 * Set drag feedback according to the ok parameter.
-		 * 
+		 *
 		 * @param ok true means the drop action is OK
 		 * @param e event that has current state of drag and drop operation
 		 */
@@ -127,7 +126,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		/**
 		 * Return true if is OK to drop the transferable at the location
 		 * specified the event.
-		 * 
+		 *
 		 * @param e event that has current state of drag and drop operation
 		 */
 		@Override
@@ -136,8 +135,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 				Memory memory = currentCodeUnit.getProgram().getMemory();
 				try {
 					Object data = e.getTransferable()
-							.getTransferData(
-								SelectionTransferable.localProgramSelectionFlavor);
+							.getTransferData(SelectionTransferable.localProgramSelectionFlavor);
 					AddressSetView view = ((SelectionTransferData) data).getAddressSet();
 					if (memory.contains(view)) {
 						return true;
@@ -164,7 +162,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		/**
 		 * Add the object to the droppable component. The DropTargetAdapter
 		 * calls this method from its drop() method.
-		 * 
+		 *
 		 * @param obj Transferable object that is to be dropped; in this case,
 		 *            it is an AddressSetView
 		 * @param e has current state of drop operation
@@ -289,8 +287,8 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 					enableGotoReferenceLocation(gotoReferenceLocationToggleAction.isSelected());
 				}
 			};
-		gotoReferenceLocationToggleAction.setToolBarData(
-			new ToolBarData(SEND_LOCATION_ICON, "NavAction"));
+		gotoReferenceLocationToggleAction
+				.setToolBarData(new ToolBarData(SEND_LOCATION_ICON, "NavAction"));
 		gotoReferenceLocationToggleAction.setEnabled(true);
 		tool.addLocalAction(this, gotoReferenceLocationToggleAction);
 
@@ -527,7 +525,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 	/**
 	 * Find the Data at the currentCuAddress
-	 * 
+	 *
 	 * @param data place to begin searching
 	 * @return Data starting at currentCuAddress
 	 */
@@ -852,7 +850,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/** Fun little storage object */
 	private class ReferenceInfo {
@@ -890,8 +888,8 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 			}
 
 			Reference ref = tableModel.getReference(row);
-			RefType[] refTypes = EditReferencesModel.getAllowedRefTypes(
-				EditReferencesProvider.this.currentProgram, ref);
+			RefType[] refTypes = EditReferencesModel
+					.getAllowedRefTypes(EditReferencesProvider.this.currentProgram, ref);
 
 			comboBox.removeAllItems();
 			int selectedIndex = -1;
@@ -912,10 +910,6 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 	}
 
 	private class CellEditComboBox extends JComboBox<RefType> {
-
-		public CellEditComboBox() {
-			super();
-		}
 
 		@Override
 		public void setSelectedIndex(int anIndex) {
@@ -1035,40 +1029,27 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 			super.getTableCellRendererComponent(data);
 
-			JTable table = data.getTable();
 			int row = data.getRowViewIndex();
 			boolean isSelected = data.isSelected();
 
 			Reference ref = tableModel.getReference(row);
-
 			Address addr = ref.getToAddress();
 			Memory memory = tableModel.getProgram().getMemory();
 			boolean bad = addr.isMemoryAddress() ? !memory.contains(addr) : false;
 
-			setOpaque(false); // disable table striping
-			setFont(table.getFont());
+			// disable table striping when not selected to reduce clutter
+			setOpaque(isSelected);
 
-			if (isSelected) {
-				if (bad) {
-					setForeground(Tables.FG_ERROR_SELECTED);
-					setFont(boldFont);
-				}
-				else {
-					setFont(defaultFont);
-				}
-
-				setOpaque(true);
+			if (bad) {
+				setForeground(getErrorForegroundColor(isSelected));
+				setFont(boldFont);
 			}
 			else {
-				// set color to red if address does not exist in memory
+				setFont(defaultFont);
+			}
 
-				if (bad) {
-					setForeground(Tables.FG_ERROR_UNSELECTED);
-					setFont(boldFont);
-				}
-				else {
-					setFont(defaultFont);
-				}
+			// use a special color when not selected to show which row matches the operand
+			if (!isSelected) {
 				if (ref.getOperandIndex() == instrPanel.getSelectedOpIndex()) {
 					setBackground(BG_COLOR_ACTIVE_OPERAND);
 					setOpaque(true);

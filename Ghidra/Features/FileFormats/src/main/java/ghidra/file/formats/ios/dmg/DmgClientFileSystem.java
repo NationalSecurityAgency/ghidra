@@ -158,7 +158,7 @@ public class DmgClientFileSystem implements GFileSystem {
 		monitor.setMessage("Indexing " + dir.getName());
 		List<GFile> files = getRawListing(dir);
 		for (GFile f : files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			// throw away the gfileimpl from getrawlisting(), create new gfile in rafi

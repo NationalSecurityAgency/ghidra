@@ -51,7 +51,7 @@ public class ClassFinder {
 
 		Iterator<String> pathIterator = pathSet.iterator();
 		while (pathIterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String path = pathIterator.next();
 			String lcPath = path.toLowerCase();
 			File file = new File(path);
@@ -77,12 +77,12 @@ public class ClassFinder {
 		Set<Class<?>> classSet = new HashSet<>();
 
 		for (ClassDir dir : classDirs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			dir.getClasses(classSet, monitor);
 		}
 
 		for (ClassJar jar : classJars) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			jar.getClasses(classSet, monitor);
 		}
 

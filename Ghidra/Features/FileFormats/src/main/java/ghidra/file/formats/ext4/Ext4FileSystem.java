@@ -78,7 +78,7 @@ public class Ext4FileSystem implements GFileSystem {
 		monitor.setMessage("Reading inode tables");
 		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[numGroups];
 		for (int i = 0; i < numGroups; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			groupDescriptors[i] = new Ext4GroupDescriptor(reader, superBlock.is64Bit());
 			monitor.incrementProgress(1);
 		}
@@ -128,7 +128,7 @@ public class Ext4FileSystem implements GFileSystem {
 		BinaryReader reader = new BinaryReader(directoryStream, true /* LE */);
 		Ext4DirEntry dirEnt;
 		while ((dirEnt = isdir2 ? Ext4DirEntry2.read(reader) : Ext4DirEntry.read(reader)) != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (dirEnt.isUnused()) {
 				continue;
 			}
@@ -336,7 +336,7 @@ public class Ext4FileSystem implements GFileSystem {
 		int inodeIndex = 1;
 
 		for (int i = 0; i < groupDescriptors.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long inodeTableBlockOffset = groupDescriptors[i].getBg_inode_table();
 			long offset = inodeTableBlockOffset * blockSize;
 			reader.setPointerIndex(offset);
@@ -344,7 +344,7 @@ public class Ext4FileSystem implements GFileSystem {
 				"Reading inode table " + i + " of " + (groupDescriptors.length - 1) + "...");
 			monitor.initialize(inodesPerGroup);
 			for (int j = 0; j < inodesPerGroup; j++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 
 				Ext4Inode inode = new Ext4Inode(reader, superBlock.getS_inode_size());

@@ -82,7 +82,7 @@ public abstract class OutgoingCallNode extends CallNode {
 			LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
 		FunctionManager functionManager = program.getFunctionManager();
 		for (Reference reference : references) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address toAddress = reference.getToAddress();
 			if (toAddress.equals(entryPoint)) {
 				continue;

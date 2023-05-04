@@ -4614,6 +4614,23 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
   updateThisPointer();
 }
 
+/// \brief Add a an input parameter that will resolve to the current stack offset for \b this call site
+///
+/// A LOAD from a free reference to the \e spacebase pointer of the given AddrSpace is created and
+/// its output is added as a parameter to the call.  Later the LOAD should resolve to a COPY from
+/// a Varnode in the AddrSpace, whose offset is then the current offset.
+/// \param data is the function where the LOAD is created
+/// \param spacebase is the given (stack) AddrSpace
+void FuncCallSpecs::createPlaceholder(Funcdata &data,AddrSpace *spacebase)
+
+{
+  int4 slot = op->numInput();
+  Varnode *loadval = data.opStackLoad(spacebase,0,1,op,(Varnode *)0,false);
+  data.opInsertInput(op,loadval,slot);
+  setStackPlaceholderSlot(slot);
+  loadval->setSpacebasePlaceholder();
+}
+
 /// \brief Calculate the stack offset of \b this call site
 ///
 /// The given Varnode must be the input to the CALL in the \e placeholder slot
@@ -4637,8 +4654,7 @@ void FuncCallSpecs::resolveSpacebaseRelative(Funcdata &data,Varnode *phvn)
 
   if (stackPlaceholderSlot >= 0) {
     if (op->getIn(stackPlaceholderSlot) == phvn) {
-      data.opRemoveInput(op,stackPlaceholderSlot);
-      clearStackPlaceholderSlot();
+      abortSpacebaseRelative(data);
       return;
     }
   }
@@ -4670,8 +4686,12 @@ void FuncCallSpecs::abortSpacebaseRelative(Funcdata &data)
 
 {
   if (stackPlaceholderSlot >= 0) {
+    Varnode *vn = op->getIn(stackPlaceholderSlot);
     data.opRemoveInput(op,stackPlaceholderSlot);
     clearStackPlaceholderSlot();
+    // Remove the op producing the placeholder as well
+    if (vn->hasNoDescend() && vn->getSpace()->getType() == IPTR_INTERNAL && vn->isWritten())
+      data.opDestroy(vn->getDef());
   }
 }
 
@@ -4843,21 +4863,23 @@ PcodeOp *FuncCallSpecs::transferLockedOutputParam(ProtoParameter *param)
   return (PcodeOp *)0;
 }
 
-/// \brief List and/or create a Varnode for each input parameter of \b this prototype
+/// \brief List and/or create a Varnode for each input parameter of matching a source prototype
 ///
-/// Varnodes will be passed back in order that match current input parameters.
+/// Varnodes are taken for current trials associated with \b this call spec.
+/// Varnodes will be passed back in the order that they match the source input parameters.
 /// A NULL Varnode indicates a stack parameter. Varnode dimensions may not match
 /// parameter dimensions exactly.
 /// \param newinput will hold the resulting list of Varnodes
+/// \param source is the source prototype
 /// \return \b false only if the list needs to indicate stack variables and there is no stack-pointer placeholder
-bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput)
+bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput,const FuncProto &source)
 
 {
   newinput.push_back(op->getIn(0)); // Always keep the call destination address
-  int4 numparams = numParams();
+  int4 numparams = source.numParams();
   Varnode *stackref = (Varnode *)0;
   for(int4 i=0;i<numparams;++i) {
-    int4 reuse = transferLockedInputParam(getParam(i));
+    int4 reuse = transferLockedInputParam(source.getParam(i));
     if (reuse == 0) return false;
     if (reuse > 0)
       newinput.push_back(op->getIn(reuse));
@@ -4872,17 +4894,18 @@ bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput)
   return true;
 }
 
-/// \brief Pass back the Varnode needed to match the output parameter (return value)
+/// \brief Pass back the Varnode needed to match the output parameter (return value) of a source prototype
 ///
-/// Search for the Varnode matching the current output parameter and pass
+/// Search for the Varnode matching the output parameter and pass
 /// it back. The dimensions of the Varnode may not exactly match the return value.
-/// If the return value is e void, a NULL is passed back.
+/// If the return value is \e void, a NULL is passed back.
 /// \param newoutput will hold the passed back Varnode
+/// \param source is the source prototype
 /// \return \b true if the passed back value is accurate
-bool FuncCallSpecs::transferLockedOutput(Varnode *&newoutput)
+bool FuncCallSpecs::transferLockedOutput(Varnode *&newoutput,const FuncProto &source)
 
 {
-  ProtoParameter *param = getOutput();
+  ProtoParameter *param = source.getOutput();
   if (param->getType()->getMetatype() == TYPE_VOID) {
     newoutput = (Varnode *)0;
     return true;
@@ -5138,16 +5161,17 @@ bool FuncCallSpecs::lateRestriction(const FuncProto &restrictedProto,vector<Varn
   }
 
   if (!isCompatible(restrictedProto)) return false;
-  copy(restrictedProto);		// Convert ourselves to restrictedProto
-  //  if (!isInputLocked()) return false;
-  if (isDotdotdot() && (!isinputactive)) return false;
+  if (restrictedProto.isDotdotdot() && (!isinputactive)) return false;
 
-  // Redo all the varnode inputs (if possible)
-  if (isInputLocked())
-    if (!transferLockedInput(newinput)) return false;
-  // Redo all the varnode outputs (if possible)
-  if (isOutputLocked())
-    if (!transferLockedOutput(newoutput)) return false;
+  if (restrictedProto.isInputLocked()) {
+    if (!transferLockedInput(newinput,restrictedProto))		// Redo all the varnode inputs (if possible)
+      return false;
+  }
+  if (restrictedProto.isOutputLocked()) {
+    if (!transferLockedOutput(newoutput,restrictedProto))	// Redo all the varnode outputs (if possible)
+      return false;
+  }
+  copy(restrictedProto);		// Convert ourselves to restrictedProto
 
   return true;
 }

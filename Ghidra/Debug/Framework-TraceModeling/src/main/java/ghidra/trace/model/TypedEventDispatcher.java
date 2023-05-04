@@ -168,8 +168,12 @@ public class TypedEventDispatcher {
 	public void handleChangeRecord(DomainObjectChangeRecord rec) {
 		//String typeName = DefaultTraceChangeType.getName(rec.getEventType());
 		//CountsByType.compute(typeName, (k, v) -> v == null ? 1 : v + 1);
-		if (rec instanceof TraceChangeRecord) {
-			handleTraceChangeRecord((TraceChangeRecord<?, ?>) rec);
+		if (rec.getEventType() == DomainObject.DO_OBJECT_RESTORED && restoredHandler != null) {
+			restoredHandler.accept(rec);
+			return;
+		}
+		if (rec instanceof TraceChangeRecord<?, ?> cr) {
+			handleTraceChangeRecord(cr);
 			return;
 		}
 		Consumer<DomainObjectChangeRecord> handler;

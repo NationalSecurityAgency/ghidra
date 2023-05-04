@@ -15,8 +15,10 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import com.google.common.primitives.Bytes;
 
@@ -24,6 +26,8 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.format.golang.GoBuildInfo;
+import ghidra.app.util.bin.format.golang.PEGoBuildId;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
@@ -878,6 +882,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			BorlandCpp("borland:c++", "borlandcpp"),
 			BorlandUnk("borland:unknown", "borlandcpp"),
 			CLI("cli", "cli"),
+			GOLANG("golang", "golang"),
 			Unknown("unknown", "unknown"),
 
 			// The following values represent the presence of ambiguous indicators
@@ -1011,6 +1016,10 @@ public class PeLoader extends AbstractPeDebugLoader {
 //					return CompilerEnum.VisualStudio
 //				}
 
+				if (isGolang(pe, provider)) {
+					return CompilerEnum.GOLANG;
+				}
+
 				// Now look for PointerToSymbols (0 for VS, non-zero for gcc)
 				int ptrSymTable = br.readInt(dh.e_lfanew() + 12);
 				if (ptrSymTable != 0) {
@@ -1061,6 +1070,32 @@ public class PeLoader extends AbstractPeDebugLoader {
 			}
 
 			return CompilerEnum.Unknown;
+		}
+
+		private static boolean isGolang(PortableExecutable pe, ByteProvider provider) {
+			boolean buildIdPresent = false;
+			boolean buildInfoPresent = false;
+
+			SectionHeader textSection = pe.getNTHeader().getFileHeader().getSectionHeader(".text");
+			if (textSection != null) {
+				try (InputStream is = textSection.getDataStream()) {
+					PEGoBuildId buildId = PEGoBuildId.read(is);
+					buildIdPresent = buildId != null;
+				}
+				catch (IOException e) {
+					// fail
+				}
+			}
+			SectionHeader dataSection = pe.getNTHeader().getFileHeader().getSectionHeader(".data");
+			if (dataSection != null) {
+				try (InputStream is = dataSection.getDataStream()) {
+					buildInfoPresent = GoBuildInfo.isPresent(is);
+				}
+				catch (IOException e) {
+					// fail
+				}
+			}
+			return buildIdPresent || buildInfoPresent;
 		}
 	}
 }

@@ -71,7 +71,7 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			if (resultProgram != null) {
 				resultProgram.flushEvents();
 			}
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 		}
 		catch (Exception e) {

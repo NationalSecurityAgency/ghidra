@@ -298,7 +298,7 @@ abstract class RelocationDBAdapter {
 		
 		// Update status/length of each relocation record
 		for (int i = 0; i < list.size(); i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = list.get(i);
 			int byteLength = 0;
 			Status status;

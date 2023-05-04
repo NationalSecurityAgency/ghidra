@@ -225,7 +225,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		int colNum = model.getLengthColumn();
 
 		clickTableCell(getTable(), 1, colNum, 2);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertNotEditingField();
 		assertEquals(1, model.getRow());
 		assertStatus("Length field is not editable");
@@ -523,14 +523,14 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		int rowNum = model.getNumComponents() - 1;
 		int colNum = model.getDataTypeColumn() + 1;
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		clickTableCell(getTable(), rowNum, colNum, 2);
 		assertIsEditingField(rowNum, colNum);
 
 		while (rowNum > 0) {
 			triggerActionInCellEditor(KeyEvent.VK_UP);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			rowNum--;
 //			DataTypeComponent dtc = model.getComponent(rowNum);
 //			if (dtc.getOffset() < ((StackEditorModel) model).getParameterOffset()) {
@@ -541,7 +541,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		}
 		while (rowNum > 0) {
 			triggerActionInCellEditor(KeyEvent.VK_UP);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			rowNum--;
 			clickTableCell(getTable(), rowNum, colNum, 2);
 			DataTypeComponent dtc = model.getComponent(rowNum);
@@ -555,12 +555,12 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		}
 		while (rowNum > 0) {
 			triggerActionInCellEditor(KeyEvent.VK_UP);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			rowNum--;
 			assertIsEditingField(rowNum, colNum);
 		}
 		triggerActionInCellEditor(KeyEvent.VK_UP);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertNotEditingField();
 		assertEquals(0, model.getRow());
 	}
@@ -571,14 +571,14 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		int rowNum = 0;
 		int colNum = model.getNameColumn();
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		clickTableCell(getTable(), rowNum, colNum, 2);
 		assertIsEditingField(rowNum, colNum);
 
 		while (rowNum < model.getNumComponents() - 1) {
 			triggerActionInCellEditor(KeyEvent.VK_DOWN);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			rowNum++;
 //			DataTypeComponent dtc = model.getComponent(rowNum);
 //			if (dtc.getOffset() == 0) {
@@ -589,7 +589,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		}
 		while (rowNum < model.getNumComponents() - 1) {
 			triggerActionInCellEditor(KeyEvent.VK_DOWN);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			rowNum++;
 			clickTableCell(getTable(), rowNum, colNum, 2);
 //			DataTypeComponent dtc = model.getComponent(rowNum);
@@ -601,12 +601,12 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		}
 		while (rowNum < model.getNumComponents() - 1) {
 			triggerActionInCellEditor(KeyEvent.VK_DOWN);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			rowNum++;
 			assertIsEditingField(rowNum, colNum);
 		}
 		triggerActionInCellEditor(KeyEvent.VK_DOWN);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertNotEditingField();
 		assertEquals(model.getNumComponents() - 1, model.getRow());
 	}
@@ -1195,7 +1195,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertEquals(model.getNameColumn(), model.getColumn());
 //
 //		typeActionKey(0, KeyEvent.VK_DOWN);
-//		waitForPostedSwingRunnables();
+//		waitForSwing();
 //
 //		assertIsEditingField();
 //		assertEquals(5, model.getRow());
@@ -1203,7 +1203,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertNull(getFieldName(5));
 //
 //		typeActionKey(0, KeyEvent.VK_UP);
-//		waitForPostedSwingRunnables();
+//		waitForSwing();
 //
 //		assertIsEditingField();
 //		assertEquals(4, model.getRow());
@@ -1211,7 +1211,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertNull(getFieldName(4));
 //			
 //		typeActionKey(KeyEvent.SHIFT_DOWN_MASK, KeyEvent.VK_TAB);
-//		waitForPostedSwingRunnables();
+//		waitForSwing();
 //
 //		assertIsEditingField();
 //		assertEquals(3, model.getRow());

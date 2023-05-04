@@ -22,7 +22,7 @@ package ghidra.util.task;
  * <P>This class wants the following methods related to cancelling to work normally:
  * <UL>
  *  <LI>isCancelled()</LI>
- *	<LI>checkCanceled()</LI>
+ *	<LI>checkCancelled()</LI>
  *	<LI>cancel()</LI>
  *	<LI>addCancelledListener(CancelledListener)</LI>
  *	<LI>removeCancelledListener(CancelledListener)</LI>
@@ -92,7 +92,7 @@ public class CancelOnlyWrappingTaskMonitor extends WrappingTaskMonitor {
 	}
 
 	@Override
-	public void clearCanceled() {
+	public void clearCancelled() {
 		// ignore
 	}
 }

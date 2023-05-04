@@ -165,7 +165,7 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		DockingActionIf action = getAction(tool, "ProgramManagerPlugin", "Close File");
 		performAction(action, new ProgramActionContext(null, program), false);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void waitForCommandToStart(ControllableBackgroundCommand cmd) {
@@ -179,7 +179,7 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void closeTool(final PluginTool tool) {
 		executeOnSwingWithoutBlocking(() -> tool.close());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 //==================================================================================================

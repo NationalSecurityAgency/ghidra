@@ -153,7 +153,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 				AddressIterator addrIter = oldFallThroughs.getPropertyIterator();
 				while (addrIter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					Address addr = addrIter.next();
 					try {
 						long offset = oldFallThroughs.getLong(addr);
@@ -722,18 +722,18 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		boolean success = false;
 		try {
 			compositeMgr.removeRange(start, end);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			instAdapter.deleteRecords(start, end);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			dataAdapter.deleteRecords(start, end);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			lengthMgr.removeRange(start, end);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!keepComments) {
 				commentAdapter.deleteRecords(start, end);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				historyAdapter.deleteRecords(start, end);
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 			}
 
 			cache.delete(addrMap.getKeyRanges(start, end, false));
@@ -1593,7 +1593,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 			for (AddressRange range : searchSet.getAddressRanges()) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Address start = range.getMinAddress();
 				Address rangeMax = range.getMaxAddress();
@@ -2641,7 +2641,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			List<Address> addrs = new ArrayList<>();
 			RecordIterator it = dataAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				long id = rec.getLongValue(DataDBAdapter.DATA_TYPE_ID_COL);
 				for (long dataTypeID : dataTypeIDs) {
@@ -2652,7 +2652,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				}
 			}
 			for (Address addr : addrs) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				clearCodeUnits(addr, addr, false, monitor);
 			}
 		}
@@ -2791,10 +2791,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			Address endAddr = startAddr.add(length - 1);
 
 			compositeMgr.moveRange(startAddr, endAddr, newStartAddr);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			lengthMgr.moveRange(startAddr, endAddr, newStartAddr);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			instAdapter.moveAddressRange(startAddr, newStartAddr, length, monitor);
 			dataAdapter.moveAddressRange(startAddr, newStartAddr, length, monitor);
@@ -2813,7 +2813,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 		RecordIterator iter = instAdapter.getRecords(start, end, true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			InstructionDB inst = getInstructionDB(iter.next());
 			addReferencesForInstruction(inst);
 		}
@@ -2827,7 +2827,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 		RecordIterator iter = dataAdapter.getRecords(start, end, true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 			Data data = getDataDB(rec);
 			addDataReferences(data, new ArrayList<Address>());
@@ -3540,7 +3540,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				}
 
 				if ((++count % 1000) == 0) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					monitor.setProgress(count);
 				}
 			}

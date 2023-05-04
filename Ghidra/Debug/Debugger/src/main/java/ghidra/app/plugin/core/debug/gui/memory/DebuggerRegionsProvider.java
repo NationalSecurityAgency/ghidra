@@ -24,15 +24,18 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSelectAddressesAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.SelectRowsAction;
 import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider;
 import ghidra.app.plugin.core.debug.service.modules.MapRegionsBackgroundCommand;
@@ -76,7 +79,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
 					.popupMenuPath(NAME)
 					.popupMenuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
@@ -91,7 +95,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+			return new ActionBuilder(NAME_PREFIX, ownerName)
+					.description(DESCRIPTION)
 					.popupMenuPath(NAME_PREFIX + "...")
 					.popupMenuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
@@ -107,9 +112,58 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+			return new ActionBuilder(NAME_PREFIX, ownerName)
+					.description(DESCRIPTION)
 					.popupMenuPath(NAME_PREFIX + "...")
 					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface AddRegionAction {
+		String NAME = "Add Region";
+		String DESCRIPTION = "Manually add a region to the memory map";
+		String GROUP = DebuggerResources.GROUP_MAINTENANCE;
+		String HELP_ANCHOR = "add_region";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface DeleteRegionsAction {
+		String NAME = "Delete Regions";
+		String DESCRIPTION = "Delete one or more regions from the memory map";
+		String GROUP = DebuggerResources.GROUP_MAINTENANCE;
+		String HELP_ANCHOR = "delete_regions";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.popupMenuGroup(GROUP)
+					.popupMenuPath(NAME, "Yes, really. Delete them!")
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ForceFullViewAction {
+		String NAME = "Force Full View";
+		String DESCRIPTION = "Ignore regions and fiew full address spaces";
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "force_full_view";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuPath(NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -175,12 +229,16 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	// TODO: Lazy construction of these dialogs?
 	private final DebuggerBlockChooserDialog blockChooserDialog;
 	private final DebuggerRegionMapProposalDialog regionProposalDialog;
+	private final DebuggerAddRegionDialog addRegionDialog;
+
 	DockingAction actionMapRegions;
 	DockingAction actionMapRegionTo;
 	DockingAction actionMapRegionsTo;
 
 	SelectAddressesAction actionSelectAddresses;
 	DockingAction actionSelectRows;
+	DockingAction actionAddRegion;
+	DockingAction actionDeleteRegions;
 	ToggleDockingAction actionForceFullView;
 
 	public DebuggerRegionsProvider(DebuggerRegionsPlugin plugin) {
@@ -198,6 +256,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 		blockChooserDialog = new DebuggerBlockChooserDialog(tool);
 		regionProposalDialog = new DebuggerRegionMapProposalDialog(this);
+		addRegionDialog = new DebuggerAddRegionDialog();
 
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 		setVisible(true);
@@ -236,6 +295,14 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 				.description("Select regions by dynamic selection")
 				.enabledWhen(ctx -> current.getTrace() != null)
 				.onAction(this::activatedSelectCurrent)
+				.buildAndInstallLocal(this);
+		actionAddRegion = AddRegionAction.builder(plugin)
+				.enabledWhen(ctx -> current.getTrace() != null)
+				.onAction(this::activatedAddRegion)
+				.buildAndInstallLocal(this);
+		actionDeleteRegions = DeleteRegionsAction.builder(plugin)
+				.enabledWhen(this::isContextNonEmpty)
+				.onAction(this::activatedDeleteRegions)
 				.buildAndInstallLocal(this);
 		actionForceFullView = ForceFullViewAction.builder(plugin)
 				.enabledWhen(ctx -> current.getTrace() != null)
@@ -381,6 +448,25 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			if (reg != null) {
 				setSelectedRegions(Set.of(reg));
 				return;
+			}
+		}
+	}
+
+	private void activatedAddRegion(ActionContext ignored) {
+		if (current.getTrace() == null) {
+			return;
+		}
+		addRegionDialog.show(tool, current.getTrace(), current.getSnap());
+	}
+
+	private void activatedDeleteRegions(ActionContext ctx) {
+		Set<TraceMemoryRegion> sel = getSelectedRegions(ctx);
+		if (sel.isEmpty()) {
+			return;
+		}
+		try (Transaction tx = current.getTrace().openTransaction("Delete regions")) {
+			for (TraceMemoryRegion region : sel) {
+				region.delete();
 			}
 		}
 	}

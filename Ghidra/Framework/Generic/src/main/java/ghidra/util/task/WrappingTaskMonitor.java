@@ -135,7 +135,7 @@ public class WrappingTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void checkCanceled() throws CancelledException {
-		delegate.checkCanceled();
+		delegate.checkCancelled();
 	}
 
 	@Override
@@ -177,6 +177,6 @@ public class WrappingTaskMonitor implements TaskMonitor {
 
 	@Override
 	public synchronized void clearCanceled() {
-		delegate.clearCanceled();
+		delegate.clearCancelled();
 	}
 }

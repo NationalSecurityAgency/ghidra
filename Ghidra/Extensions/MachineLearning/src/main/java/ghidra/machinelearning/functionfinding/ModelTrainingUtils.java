@@ -116,7 +116,7 @@ public class ModelTrainingUtils {
 			TaskMonitor monitor) throws CancelledException {
 		AddressSet following = new AddressSet();
 		for (Address addr : addresses.getAddresses(true)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeUnit cu = program.getListing().getCodeUnitAfter(addr);
 			if (cu == null) {
 				continue;
@@ -149,7 +149,7 @@ public class ModelTrainingUtils {
 			TaskMonitor monitor) throws CancelledException {
 		AddressSet preceding = new AddressSet();
 		for (Address addr : addresses.getAddresses(true)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeUnit cu = program.getListing().getCodeUnitBefore(addr);
 			if (cu == null) {
 				continue;
@@ -182,7 +182,7 @@ public class ModelTrainingUtils {
 			program.getListing().getDefinedData(program.getMemory().getExecuteSet(), true);
 		AddressSet definedData = new AddressSet();
 		for (Data d : dataIter) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			definedData.add(
 				new AddressRangeImpl(d.getAddress(), d.getAddress().add(d.getLength() - 1)));
 		}
@@ -210,7 +210,7 @@ public class ModelTrainingUtils {
 		monitor.initialize(source.getNumAddresses());
 		Iterator<Address> addressIter = source.getAddresses(true);
 		while (addressIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = addressIter.next();
 			monitor.incrementProgress(1L);
 			List<Feature> trainingVector =

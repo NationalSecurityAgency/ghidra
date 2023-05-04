@@ -73,13 +73,13 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 
 		try {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Function f = decompilerResults.getFunction();
 			HighFunction hfunction = decompilerResults.getHighFunction();
 			processBranchIND(f, hfunction, monitor);
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			String errMsg = getStatusMsg();
 			if (decompilerResults.getHighFunction() == null) {
@@ -124,7 +124,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 			boolean foundNotThere = false;
 			int tableIndx;
 			for (tableIndx = 0; tableIndx < tableDest.length; tableIndx++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				boolean foundit = false;
 				if (containingBody != null && !containingBody.contains(tableDest[tableIndx])) {
 					// switch case missing from owner function's body
@@ -174,7 +174,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 			Address[] cases = table.getCases();
 			AddressSet disSetList = new AddressSet();
 			for (Address caseStart : cases) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				instr.addMnemonicReference(caseStart, flowType, SourceType.ANALYSIS);
 
 				// if conflict skip case
@@ -264,7 +264,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 		Symbol[] caseSymbols = new Symbol[caseLabels.length];
 		SymbolTable symTable = program.getSymbolTable();
 		for (int i = 0; i < switchCases.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			int offset = (i >= caseLabels.length ? i : caseLabels[i]);
 			String caseName = "caseD_" + Integer.toHexString(offset);
 			if (offset == DEFAULT_CASE_VALUE) { // magic constant to indicate default case
@@ -365,7 +365,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 
 		// Create load table data
 		for (int i = 0; i < num; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = tableAddr.addWrap(i * size);
 			Data defData = program.getListing().getDefinedDataAt(addr);
 			if (defData != null) {
@@ -382,7 +382,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 		if (pointers != null && !usingPointers) {
 			ReferenceManager refMgr = program.getReferenceManager();
 			for (int i = 0; i < num; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				int tableOffset = size * i;
 				Address addr = tableAddr.add(tableOffset);
 				refMgr.addMemoryReference(addr, switchCases[i], RefType.DATA, SourceType.ANALYSIS,

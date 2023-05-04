@@ -200,7 +200,7 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	private void deserializeAddressMap(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			addressMapSymbolOffsets.add((long) reader.parseInt());
 		}
 	}
@@ -229,7 +229,7 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 			throws PdbException, CancelledException {
 		int count = 0;
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			int targetOffset = reader.parseInt();
 			int mapTableOffset = count * thunkSize + offsetThunkTable;
 			thunkTargetOffsetsByTableOffset.put(mapTableOffset, targetOffset);
@@ -259,7 +259,7 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	private void deserializeSectionMap(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			int offset = reader.parseInt();
 			int section = reader.parseUnsignedShortVal();
 			reader.skip(2); // padding
@@ -277,7 +277,7 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 		builder.append(
 			"numAbsoluteOffsetsBySectionNumber: " + absoluteOffsetsBySectionNumber.size() + "\n");
 		for (Map.Entry<Integer, Integer> entry : absoluteOffsetsBySectionNumber.entrySet()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
 		}
 		builder.append("\nEnd SectionMap----------------------------------------------\n");

@@ -381,7 +381,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 			deactivateBundlesTask.run(monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			// partition bundles into system (bundles.get(true)) / non-system (bundles.get(false))
 			Map<Boolean, List<GhidraBundle>> bundles = statuses.stream()
 					.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
@@ -485,7 +485,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 			monitor.setMaximum(bundles.size());
 			for (GhidraBundle bundle : bundles) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				try {
 					bundleHost.deactivateSynchronously(bundle.getLocationIdentifier());
 					bundleHost.disable(bundle);

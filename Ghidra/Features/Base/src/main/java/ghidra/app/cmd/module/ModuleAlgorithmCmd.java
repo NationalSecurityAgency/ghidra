@@ -173,7 +173,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 				parent.moveChild(newName, index);
 			}
 			while (cbi.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				CodeBlock cb = cbi.next();
 				monitor.setMessage("Processing code block @ " + cb.getMinAddress().toString(true));
 				ArrayList<CodeBlock> list = new ArrayList<CodeBlock>();
@@ -190,7 +190,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 					parentModule = module;
 				}
 				for (CodeBlock codeBlock : list) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					ProgramFragment fragment = createFragment(parentModule, codeBlock);
 					moveCodeUnits(fragment, codeBlock, monitor);
 				}
