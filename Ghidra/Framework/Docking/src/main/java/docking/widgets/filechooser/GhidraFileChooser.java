@@ -1212,6 +1212,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 				currentPathTextField.setText(directory.getAbsolutePath());
 			}
 			currentPathTextField.setToolTipText(currentPathTextField.getText());
+			currentPathTextField.setEditable(true);
 			updateNavigationButtons();
 		});
 	}
