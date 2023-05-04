@@ -25,10 +25,15 @@ import javax.swing.Icon;
 
 import generic.theme.GIcon;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 public class AudioPlayer implements Playable, LineListener {
 
 	private static final Icon AUDIO_ICON = new GIcon("icon.data.type.audio.player");
+
+	// This currently only allows one clip to be played for the entire application, which seems
+	// good enough.  This variable is currently synchronized by the Swing thread.
+	private static volatile Clip currentClip;
 
 	private byte[] bytes;
 
@@ -43,9 +48,18 @@ public class AudioPlayer implements Playable, LineListener {
 
 	@Override
 	public void clicked(MouseEvent event) {
+
+		// any new request should stop any previous clip being played
+		if (currentClip != null) {
+			currentClip.stop();
+			currentClip = null; // this field is also updated when the sound thread calls back
+			return;
+		}
+
 		try (AudioInputStream stream =
 			AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes))) {
 			Clip clip = AudioSystem.getClip();
+			currentClip = clip;
 			clip.addLineListener(this);
 			clip.open(stream);
 			clip.start();
@@ -66,6 +80,11 @@ public class AudioPlayer implements Playable, LineListener {
 		if (event.getSource() instanceof Clip clip) {
 			clip.removeLineListener(this);
 			clip.close();
+			Swing.runNow(() -> {
+				if (currentClip == clip) {
+					currentClip = null;
+				}
+			});
 		}
 	}
 }
