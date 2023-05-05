@@ -39,17 +39,16 @@ bool RangeHint::reconcile(const RangeHint *b) const
     b = a;			// Make sure b is smallest
     a = tmp;
   }
-  intb mod = (b->sstart - a->sstart) % a->type->getSize();
+  int8 mod = (b->sstart - a->sstart) % a->type->getSize();
   if (mod < 0)
     mod += a->type->getSize();
 
   Datatype *sub = a->type;
-  uintb umod = mod;
   while((sub!=(Datatype *)0)&&(sub->getSize() > b->type->getSize()))
-    sub = sub->getSubType(umod,&umod);
+    sub = sub->getSubType(mod,&mod);
 
   if (sub == (Datatype *)0) return false;
-  if (umod != 0) return false;
+  if (mod != 0) return false;
   if (sub->getSize() == b->type->getSize()) return true;
   if ((b->flags & Varnode::typelock)!=0) return false;
   // If we reach here, component sizes do not match
@@ -469,7 +468,7 @@ string ScopeLocal::buildVariableName(const Address &addr,
       addr.getSpace() == space) {
     if (fd->getFuncProto().getLocalRange().inRange(addr,1)) {
       intb start = (intb) AddrSpace::byteToAddress(addr.getOffset(),space->getWordSize());
-      sign_extend(start,addr.getAddrSize()*8-1);
+      start = sign_extend(start,addr.getAddrSize()*8-1);
       if (stackGrowsNegative)
 	start = -start;
       ostringstream s;
@@ -814,7 +813,7 @@ void MapState::addRange(uintb st,Datatype *ct,uint4 fl,RangeHint::RangeType rt,i
   if (!range.inRange(Address(spaceid,st),sz))
     return;
   intb sst = (intb)AddrSpace::byteToAddress(st,spaceid->getWordSize());
-  sign_extend(sst,spaceid->getAddrSize()*8-1);
+  sst = sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   RangeHint *newRange = new RangeHint(st,sz,sst,ct,fl,rt,hi);
   maplist.push_back(newRange);
@@ -943,7 +942,7 @@ bool MapState::initialize(void)
   if (maplist.empty()) return false;
   uintb high = spaceid->wrapOffset(lastrange->getLast()+1);
   intb sst = (intb)AddrSpace::byteToAddress(high,spaceid->getWordSize());
-  sign_extend(sst,spaceid->getAddrSize()*8-1);
+  sst = sign_extend(sst,spaceid->getAddrSize()*8-1);
   sst = (intb)AddrSpace::addressToByte(sst,spaceid->getWordSize());
   // Add extra range to bound any final open entry
   RangeHint *termRange = new RangeHint(high,1,sst,defaultType,0,RangeHint::endpoint,-2);

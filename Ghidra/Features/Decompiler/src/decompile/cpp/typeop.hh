@@ -745,16 +745,23 @@ public:
 
 /// \brief Information about the PIECE op-code
 class TypeOpPiece : public TypeOpFunc {
+  int4 nearPointerSize;		///< Size of near (truncated) pointer (if not 0)
+  int4 farPointerSize;		///< Size of far (extended) pointer (if not 0)
 public:
   TypeOpPiece(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
+  virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
+				  int4 inslot,int4 outslot);
   virtual string getOperatorName(const PcodeOp *op) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPiece(op); }
+  static int4 computeByteOffsetForComposite(const PcodeOp *op,int4 slot);
 };
 
 /// \brief Information about the SUBPIECE op-code
 class TypeOpSubpiece : public TypeOpFunc {
+  int4 nearPointerSize;		///< Size of near (truncated) pointer (if not 0)
+  int4 farPointerSize;		///< Size of far (extended) pointer (if not 0)
 public:
   TypeOpSubpiece(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;

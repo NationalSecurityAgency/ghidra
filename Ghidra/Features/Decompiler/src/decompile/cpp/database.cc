@@ -3335,10 +3335,9 @@ void Database::decode(Decoder &decoder)
   for(;;) {
     uint4 subId = decoder.openElement();
     if (subId != ELEM_SCOPE) break;
-    string name;
+    string name;		// Name of global scope by default
     string displayName;
-    uint8 id = 0;
-    bool seenId = false;
+    uint8 id = 0;		// Id of global scope by default
     for(;;) {
       uint4 attribId = decoder.getNextAttributeId();
       if (attribId == 0) break;
@@ -3346,13 +3345,10 @@ void Database::decode(Decoder &decoder)
 	name = decoder.readString();
       else if (attribId == ATTRIB_ID) {
 	id = decoder.readUnsignedInteger();
-	seenId = true;
       }
       else if (attribId == ATTRIB_LABEL)
 	displayName = decoder.readString();
     }
-    if (name.empty() || !seenId)
-      throw DecoderError("Missing name and id attributes in scope");
     Scope *parentScope = (Scope *)0;
     uint4 parentId = decoder.peekElement();
     if (parentId == ELEM_PARENT) {

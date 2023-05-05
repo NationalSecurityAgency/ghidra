@@ -584,9 +584,9 @@ intb TokenField::getValue(ParserWalker &walker) const
   
   res >>= shift;
   if (signbit)
-    sign_extend(res,bitend-bitstart);
+    res = sign_extend(res,bitend-bitstart);
   else
-    zero_extend(res,bitend-bitstart);
+    res = zero_extend(res,bitend-bitstart);
   return res;
 }
 
@@ -668,9 +668,9 @@ intb ContextField::getValue(ParserWalker &walker) const
   intb res = getContextBytes(walker,startbyte,endbyte);
   res >>= shift;
   if (signbit)
-    sign_extend(res,endbit-startbit);
+    res = sign_extend(res,endbit-startbit);
   else
-    zero_extend(res,endbit-startbit);
+    res = zero_extend(res,endbit-startbit);
   return res;
 }
 

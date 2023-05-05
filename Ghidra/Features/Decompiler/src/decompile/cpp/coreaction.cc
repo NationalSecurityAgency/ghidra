@@ -3036,6 +3036,10 @@ ActionMarkExplicit::OpStackElement::OpStackElement(Varnode *v)
     }
     else if (opc == CPUI_PTRADD)
       slotback = 1;			// Don't traverse the multiplier slot
+    else if (opc == CPUI_SEGMENTOP) {
+      slot = 2;
+      slotback = 3;
+    }
     else
       slotback = v->getDef()->numInput();
   }

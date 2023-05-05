@@ -1150,19 +1150,19 @@ Datatype *TypeOpIntAdd::propagateAddIn2Out(Datatype *alttype,TypeFactory *typegr
 
 {
   TypePointer *pointer = (TypePointer *)alttype;
-  uintb uoffset;
-  int4 command = propagateAddPointer(uoffset,op,inslot,pointer->getPtrTo()->getSize());
+  uintb offset;
+  int4 command = propagateAddPointer(offset,op,inslot,pointer->getPtrTo()->getSize());
   if (command == 2) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
   TypePointer *parent = (TypePointer *)0;
-  uintb parentOff;
+  int8 parentOff;
   if (command != 3) {
-    uoffset = AddrSpace::addressToByte(uoffset,pointer->getWordSize());
+    int8 typeOffset = AddrSpace::addressToByteInt(offset,pointer->getWordSize());
     bool allowWrap = (op->code() != CPUI_PTRSUB);
     do {
-      pointer = pointer->downChain(uoffset,parent,parentOff,allowWrap,*typegrp);
+      pointer = pointer->downChain(typeOffset,parent,parentOff,allowWrap,*typegrp);
       if (pointer == (TypePointer *)0)
 	break;
-    } while(uoffset != 0);
+    } while(typeOffset != 0);
   }
   if (parent != (TypePointer *)0) {
     // If the innermost containing object is a TYPE_STRUCT or TYPE_ARRAY
@@ -1905,6 +1905,10 @@ TypeOpPiece::TypeOpPiece(TypeFactory *t)
 {
   opflags = PcodeOp::binary;
   behave = new OpBehaviorPiece();
+  nearPointerSize = 0;
+  farPointerSize = t->getSizeOfAltPointer();
+  if (farPointerSize != 0)
+    nearPointerSize = t->getSizeOfPointer();
 }
 
 string TypeOpPiece::getOperatorName(const PcodeOp *op) const
@@ -1933,11 +1937,57 @@ Datatype *TypeOpPiece::getOutputToken(const PcodeOp *op,CastStrategy *castStrate
   return tlst->getBase(vn->getSize(),TYPE_UINT);	// If output is unknown or pointer, treat as cast to uint
 }
 
+Datatype *TypeOpPiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
+				     int4 inslot,int4 outslot)
+{
+  if (nearPointerSize != 0 && alttype->getMetatype() == TYPE_PTR) {
+    if (inslot == 1 && outslot == -1) {
+      if (invn->getSize() == nearPointerSize && outvn->getSize() == farPointerSize)
+        return tlst->resizePointer((TypePointer *)alttype, farPointerSize);
+    }
+    else if (inslot == -1 && outslot == 1) {
+      if (invn->getSize() == farPointerSize && outvn->getSize() == nearPointerSize)
+        return tlst->resizePointer((TypePointer *)alttype, nearPointerSize);
+    }
+    return (Datatype *)0;
+  }
+  if (inslot != -1) return (Datatype *)0;
+  int8 byteOff = computeByteOffsetForComposite(op,outslot);
+  while(alttype != (Datatype *)0 && (byteOff != 0 || alttype->getSize() != outvn->getSize())) {
+    alttype = alttype->getSubType(byteOff, &byteOff);
+  }
+  return alttype;
+}
+
+/// \brief Compute the byte offset into an assumed composite data-type for an input to the given CPUI_PIECE
+///
+/// If the output Varnode is a composite data-type, the an input to PIECE represents a
+/// range of bytes starting at a particular offset within the data-type.  Return this offset, which
+/// depends on endianness of the output and the particular input.
+/// \param op is the given CPUI_PIECE
+/// \param slot is the slot of the particular input
+/// \return the byte offset into the composite represented by the input of the PIECE
+int4 TypeOpPiece::computeByteOffsetForComposite(const PcodeOp *op,int4 slot)
+
+{
+  const Varnode *inVn0 = op->getIn(0);
+  int byteOff;
+  if (inVn0->getSpace()->isBigEndian())
+    byteOff = (slot==0) ? 0 : inVn0->getSize();
+  else
+    byteOff = (slot==0) ? op->getIn(1)->getSize() : 0;
+  return byteOff;
+}
+
 TypeOpSubpiece::TypeOpSubpiece(TypeFactory *t)
   : TypeOpFunc(t,CPUI_SUBPIECE,"SUB",TYPE_UNKNOWN,TYPE_UNKNOWN)
 {
   opflags = PcodeOp::binary;
   behave = new OpBehaviorSubpiece();
+  nearPointerSize = 0;
+  farPointerSize = t->getSizeOfAltPointer();
+  if (farPointerSize != 0)
+    nearPointerSize = t->getSizeOfPointer();
 }
 
 string TypeOpSubpiece::getOperatorName(const PcodeOp *op) const
@@ -1961,8 +2011,8 @@ Datatype *TypeOpSubpiece::getOutputToken(const PcodeOp *op,CastStrategy *castStr
   const Varnode *outvn = op->getOut();
   const TypeField *field;
   Datatype *ct = op->getIn(0)->getHighTypeReadFacing(op);
-  int4 offset;
-  int4 byteOff = computeByteOffsetForComposite(op);
+  int8 offset;
+  int8 byteOff = computeByteOffsetForComposite(op);
  field = ct->findTruncation(byteOff,outvn->getSize(),op,1,offset);	// Use artificial slot
   if (field != (const TypeField *)0) {
     if (outvn->getSize() == field->type->getSize())
@@ -1977,27 +2027,28 @@ Datatype *TypeOpSubpiece::getOutputToken(const PcodeOp *op,CastStrategy *castStr
 Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 					int4 inslot,int4 outslot)
 {
+  if (nearPointerSize != 0 && alttype->getMetatype() == TYPE_PTR && inslot == -1 && outslot == 0) {
+    // Try to propagate UP, producing a far pointer input from a near pointer output of the SUBPIECE
+    // The case of propagating DOWN is handled by the getSubType below
+    if (op->getIn(1)->getOffset() != 0)
+      return (Datatype *)0;
+    if (invn->getSize() == nearPointerSize && outvn->getSize() == farPointerSize)
+      return tlst->resizePointer((TypePointer *)alttype, farPointerSize);
+    return (Datatype *)0;
+  }
   if (inslot != 0 || outslot != -1) return (Datatype *)0;	// Propagation must be from in0 to out
-  int4 byteOff;
-  int4 newoff;
-  const TypeField *field;
+  int8 byteOff = computeByteOffsetForComposite(op);
   type_metatype meta = alttype->getMetatype();
   if (meta == TYPE_UNION || meta == TYPE_PARTIALUNION) {
     // NOTE: We use an artificial slot here to store the field being truncated to
     // as the facing data-type for slot 0 is already to the parent (this TYPE_UNION)
-    byteOff = computeByteOffsetForComposite(op);
-    field = alttype->resolveTruncation(byteOff,op,1,newoff);
+    const TypeField *field = alttype->resolveTruncation(byteOff,op,1,byteOff);
+    alttype = (field != (const TypeField *)0) ? field->type : (Datatype *)0;
   }
-  else if (alttype->getMetatype() == TYPE_STRUCT) {
-    int4 byteOff = computeByteOffsetForComposite(op);
-    field = alttype->findTruncation(byteOff, outvn->getSize(), op, 1, newoff);
+  while(alttype != (Datatype *)0 && (byteOff != 0 || alttype->getSize() != outvn->getSize())) {
+    alttype = alttype->getSubType(byteOff, &byteOff);
   }
-  else
-    return (Datatype *)0;
-  if (field != (const TypeField *)0  && newoff == 0 && field->type->getSize() == outvn->getSize()) {
-    return field->type;
-  }
-  return (Datatype *)0;
+  return alttype;
 }
 
 /// \brief Compute the byte offset into an assumed composite data-type produced by the given CPUI_SUBPIECE
@@ -2013,7 +2064,7 @@ int4 TypeOpSubpiece::computeByteOffsetForComposite(const PcodeOp *op)
   int4 outSize = op->getOut()->getSize();
   int4 lsb = (int4)op->getIn(1)->getOffset();
   const Varnode *vn = op->getIn(0);
-  int byteOff;
+  int4 byteOff;
   if (vn->getSpace()->isBigEndian())
     byteOff = vn->getSize() - outSize - lsb;
   else
@@ -2143,8 +2194,8 @@ Datatype *TypeOpPtrsub::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 {
   TypePointer *ptype = (TypePointer *)op->getIn(0)->getHighTypeReadFacing(op);
   if (ptype->getMetatype() == TYPE_PTR) {
-    uintb offset = AddrSpace::addressToByte(op->getIn(1)->getOffset(),ptype->getWordSize());
-    uintb unusedOffset;
+    int8 offset = AddrSpace::addressToByte((int8)op->getIn(1)->getOffset(),ptype->getWordSize());
+    int8 unusedOffset;
     TypePointer *unusedParent;
     Datatype *rettype = ptype->downChain(offset,unusedParent,unusedOffset,false,*tlst);
     if ((offset==0)&&(rettype != (Datatype *)0))
@@ -2229,9 +2280,7 @@ Datatype *TypeOpSegment::propagateType(Datatype *alttype,PcodeOp *op,Varnode *in
   if (invn->isSpacebase()) return (Datatype *)0;
   type_metatype metain = alttype->getMetatype();
   if (metain != TYPE_PTR) return (Datatype *)0;
-  AddrSpace *spc = tlst->getArch()->getDefaultDataSpace();
-  Datatype *btype = ((TypePointer *)alttype)->getPtrTo();
-  return tlst->getTypePointer(outvn->getSize(),btype,spc->getWordSize());
+  return tlst->resizePointer((TypePointer *)alttype, outvn->getSize());
 }
 
 TypeOpCpoolref::TypeOpCpoolref(TypeFactory *t) : TypeOp(t,CPUI_CPOOLREF,"cpoolref")
