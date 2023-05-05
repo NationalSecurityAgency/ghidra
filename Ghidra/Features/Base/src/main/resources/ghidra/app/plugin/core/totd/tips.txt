@@ -36,7 +36,7 @@ Ghidra can extract datatype and function signatures from C header files using th
 You can drag datatypes from the datatype manager and drop them into the browser to apply at address.
 You can apply multiple copies of a data type by making a selection and then dragging that data type from the Data Type Manager onto the selection.
 
-You can find view information about your current program by selecting "Help -> About {program name}...".
+You can find view information about your current program by selecting "Help->About {program name}...".
 You can edit program information and analysis options by selecting "Edit->Options for {program name}".
 You can compare any two Ghidra programs (or Ghidra versions of a program) using the "Open Diff View" action from the Listing's toolbar.
 Did you know that Ghidra does version tracking? It includes data version tracking as well as function version tracking. It also has numerous algorithms for finding matches. Use the "Footprint" tool to get started. 
@@ -73,7 +73,7 @@ You can clean up those pesky runs of cc's, ff's, 90's, and/or 00's by placing th
 In 1992, the Antarctic Ozone hole was larger than the continent of North America.
 Did you know you can see where a register is initialized in its current scope by clicking on it with the middle mouse button? All instances of the register in the current scope will highlight in bright yellow. The mustard yellow one is where it is initialized in the current scope. 
 You can perform a program memory search using a regular expression (regex).
-If a Windows executable contains Icons or Bitmap Resources, they are displayed in the CodeBrowser. Do a Search -> Program Text on Labels for "Rsrc_Icon*" and "Rsrc_Bitmap*" to find them.
+If a Windows executable contains Icons or Bitmap Resources, they are displayed in the CodeBrowser. Do a Search->Program Text on Labels for "Rsrc_Icon*" and "Rsrc_Bitmap*" to find them.
 
 The average temperature on Earth is 15 degrees celsius.
 
@@ -93,5 +93,13 @@ You can reconfigure the browser display by adding / removing / moving / resizing
 Did you know that you can run Ghidra from the command line without invoking the user interface?  (See analyzeHeadlessREADME.html in the {Install Dir}/support folder.
 
 You can use the following keys with an open menu or popup menu to quickly move through the menu: Page Up/Down, Home, End, and number keys 1-9.
+
+Did you know Ghidra supports a Dark Mode? You can change the theme via Edit->Theme->Switch...
+
+Ghidra allows full customization of all colors, fonts and icons via Edit->Theme->Configure.
+
+You can quickly change the font size of the Listing, Decompiler or the Bytes windows by pressing Ctrl-+ or Ctrl-- while inside of those windows.
+
+You can quickly control the font size from the Theme Editor dialog via Edit->Theme->Configure.
 
 This is the last tip.  You can turn them off now.
