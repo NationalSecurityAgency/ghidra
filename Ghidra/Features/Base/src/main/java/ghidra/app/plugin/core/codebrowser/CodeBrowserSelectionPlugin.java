@@ -25,7 +25,7 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.util.HelpTopics;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
@@ -128,7 +128,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 		Icon markerIcon = new GIcon("icon.plugin.codebrowser.cursor.marker");
 		TableComponentProvider<Address> tableProvider =
 			tableService.showTableWithMarkers(title + " " + model.getName(), "Selection",
-				model, PluginConstants.SEARCH_HIGHLIGHT_COLOR, markerIcon, title, null);
+				model, SearchConstants.SEARCH_HIGHLIGHT_COLOR, markerIcon, title, null);
 		tableProvider.installRemoveItemsAction();
 	}
 
@@ -158,7 +158,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 			ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 			int resultsLimit = options.getInt(GhidraOptions.OPTION_SEARCH_LIMIT,
-				PluginConstants.DEFAULT_SEARCH_LIMIT);
+				SearchConstants.DEFAULT_SEARCH_LIMIT);
 
 			long size = selection.getNumAddresses();
 			monitor.initialize(size);

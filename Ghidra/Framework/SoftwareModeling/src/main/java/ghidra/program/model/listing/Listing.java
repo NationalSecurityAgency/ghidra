@@ -20,7 +20,8 @@ import java.util.List;
 
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.Namespace;
@@ -36,6 +37,14 @@ import ghidra.util.task.TaskMonitor;
  */
 
 public interface Listing {
+
+	/**
+	 * The name of the default tree in the display.
+	 * 
+	 * @see #removeTree(String)
+	 */
+	public static final String DEFAULT_TREE_NAME = "Program Tree";
+
 	/**
 	 * get the code unit that starts at the given address.
 	 *
@@ -167,7 +176,7 @@ public interface Listing {
 	 *            PLATE_COMMENT, or REPEATABLE_COMMENT
 	 * @param address the address of the comment.
 	 * @return the comment string of the appropriate type or null if no comment
-	 *         of that type exists for this codeunit
+	 *         of that type exists for this code unit
 	 * @throws IllegalArgumentException if type is not one of the types of
 	 *             comments supported
 	 */
@@ -694,7 +703,7 @@ public interface Listing {
 	 * Clears the comments in the given range.
 	 * 
 	 * @param startAddr the start address of the range to be cleared
-	 * @param endAddr the end address of the range to be cleard
+	 * @param endAddr the end address of the range to be cleared
 	 */
 	public void clearComments(Address startAddr, Address endAddr);
 
@@ -702,7 +711,7 @@ public interface Listing {
 	 * Clears the properties in the given range.
 	 * 
 	 * @param startAddr the start address of the range to be cleared
-	 * @param endAddr the end address of the range to be cleard
+	 * @param endAddr the end address of the range to be cleared
 	 * @param monitor task monitor for cancelling operation.
 	 * @throws CancelledException if the operation was cancelled.
 	 */

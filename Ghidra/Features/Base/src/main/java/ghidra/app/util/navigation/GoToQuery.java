@@ -31,7 +31,7 @@ import ghidra.app.plugin.core.gotoquery.GoToQueryResultsTableModel;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.services.*;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.Plugin;
@@ -82,9 +82,9 @@ public class GoToQuery {
 		this.goToService = goToService;
 		this.navigationOptions = navigationOptions;
 
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		this.maxHits =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
 		this.fromAddress = fromAddr;
 		this.monitor = monitor;
 
@@ -354,7 +354,7 @@ public class GoToQuery {
 	}
 
 	private boolean processWildCard() {
-		if (!isWildCard()) {
+		if (!queryData.isWildCard()) {
 			return false;
 		}
 
@@ -387,12 +387,6 @@ public class GoToQuery {
 			}
 		}
 		return false;
-	}
-
-	public boolean isWildCard() {
-		String queryInput = queryData.getQueryString();
-		return queryInput.indexOf(PluginConstants.ANYSUBSTRING_WILDCARD_CHAR) > -1 ||
-			queryInput.indexOf(PluginConstants.ANYSINGLECHAR_WILDCARD_CHAR) > -1;
 	}
 
 	private boolean isAddressExpression(String input) {
