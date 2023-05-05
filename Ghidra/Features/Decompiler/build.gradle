@@ -29,11 +29,29 @@ eclipse.project.name = 'Features Decompiler'
 dependencies {
 	api project(':Base')
 	api project(':SoftwareModeling')
+
+	// for GhidraChatGPT
+	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.0'
+	implementation 'com.fasterxml.jackson.core:jackson-core:2.15.0'
+	implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.0'
+	implementation 'com.squareup.okhttp3:okhttp:3.14.9'
+	implementation 'com.squareup.okio:okio:3.3.0'
+	implementation 'com.squareup.okio:okio-jvm:3.3.0'
+	implementation 'com.squareup.retrofit2:adapter-rxjava2:2.9.0'
+	implementation 'com.squareup.retrofit2:converter-jackson:2.9.0'
+	implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+	implementation 'com.theokanning.openai-gpt3-java:api:0.12.0'
+	implementation 'com.theokanning.openai-gpt3-java:client:0.12.0'
+	implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
+	implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.21'
+	implementation 'org.json:json:20230227'
+	implementation 'org.reactivestreams:reactive-streams:1.0.3'
+
 	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
 	integrationTestImplementation project(path: ':Base', configuration: 'testArtifacts')
 	integrationTestImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 	
-    helpPath project(path: ":Base", configuration: 'helpPath')
+	helpPath project(path: ":Base", configuration: 'helpPath')
 }
 
 // Include buildable native source in distribution

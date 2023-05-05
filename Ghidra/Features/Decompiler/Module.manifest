@@ -1,0 +1,16 @@
+#for GhidraChatGPT
+MODULE FILE LICENSE: lib/api-0.12.0.jar MIT
+MODULE FILE LICENSE: lib/client-0.12.0.jar MIT
+MODULE FILE LICENSE: lib/adapter-rxjava2-2.9.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/converter-jackson-2.9.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jackson-annotations-2.15.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jackson-core-2.15.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/jackson-databind-2.15.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/json-20230227.jar Public Domain
+MODULE FILE LICENSE: lib/kotlin-stdlib-1.8.21.jar Apache License 2.0
+MODULE FILE LICENSE: lib/okhttp-3.14.9.jar Apache License 2.0
+MODULE FILE LICENSE: lib/okio-3.3.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/okio-jvm-3.3.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/reactive-streams-1.0.3.jar MIT
+MODULE FILE LICENSE: lib/retrofit-2.9.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/rxjava-2.2.21.jar Apache License 2.0

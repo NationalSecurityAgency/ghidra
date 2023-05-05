@@ -73,6 +73,7 @@ if (flatRepo.isDirectory()) {
 			mavenCentral()
 			jcenter()
 			flatDir name: "flat", dirs:["$flatRepo"]
+			maven { url "https://repo1.maven.org/maven2" }
 		}
 	}
 }
