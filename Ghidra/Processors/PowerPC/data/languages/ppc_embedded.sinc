@@ -49,13 +49,12 @@
 	dataCacheBlockClearToZero(ea);
 }
 
-@ifdef IS_ISA
-# binutils: 476.d 474:  7c 00 06 ac     mbar
-# binutils: 476.d 47c:  7c 20 06 ac     mbar    1
-# "mbar",	X(31,854),	X_MASK, BOOKE|PPCA2|PPC476, PPCNONE,	{MO}
-define pcodeop mbarOp;
-:mbar MO is OP=31 & XOP_1_10=854 & MO  { mbarOp(); }
-@endif
+define pcodeop memoryBarrier;
+#mbar 0         7c 00 06 ac
+:mbar MO        is OP=31 & MO & XOP_1_10=854
+{
+	memoryBarrier(MO:1);
+}
 
 #icbi r0,r0		0x7c 00 07 ac
 :icbi RA_OR_ZERO,B		is OP=31 & BITS_21_25=0 & B & XOP_1_10=982 & BIT_0=0 & RA_OR_ZERO
