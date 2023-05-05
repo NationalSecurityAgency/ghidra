@@ -246,7 +246,11 @@ public class PlateFieldFactory extends FieldFactory {
 			commentsList.add(CommentUtils.parseTextForAnnotations(c, p, prototype, row++));
 		}
 		if (isWordWrap) {
-			commentsList = FieldUtils.wordWrapList(new CompositeFieldElement(commentsList), width);
+			int charWidth = getMetrics().charWidth(' ');
+			int paddingWidth = CONTENT_PADDING * charWidth;
+			commentsList = FieldUtils.wordWrapList(
+				new CompositeFieldElement(commentsList),
+				Math.max(width - paddingWidth, charWidth));
 		}
 		boolean isClipped = addSideBorders(commentsList);
 		elements.addAll(commentsList);
