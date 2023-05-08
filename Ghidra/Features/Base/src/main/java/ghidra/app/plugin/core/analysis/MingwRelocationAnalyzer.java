@@ -21,11 +21,15 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.InvalidDataException;
 import ghidra.app.util.bin.format.elf.relocation.ElfRelocationHandler;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.PeLoader.CompilerOpinion.CompilerEnum;
+import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.reloc.Relocation.Status;
@@ -52,13 +56,16 @@ public class MingwRelocationAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		if (!MinGWPseudoRelocationHandler.canHandle(program)) {
+		if (!MinGWPseudoRelocationHandler.isSupportedProgram(program)) {
 			return false;
 		}
 		if (!program.hasExclusiveAccess()) {
 			// Exclusive access required since relocation table lacks merge support
-			Msg.warn(this,
-				NAME + " analysis requires exclusive access to " + program.getDomainFile());
+			if (!alreadyProcessed(program)) {
+				Msg.error(this,
+					NAME + " analyzer disabled; requires exclusive access to " +
+						program.getDomainFile());
+			}
 			return false;
 		}
 		return true;
@@ -67,85 +74,105 @@ public class MingwRelocationAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-		if (MinGWPseudoRelocationHandler.isRelocTableWithinSet(program, set)) {
+		if (alreadyProcessed(program)) {
+			return true;
+		}
+		try {
 			MinGWPseudoRelocationHandler handler = new MinGWPseudoRelocationHandler(program);
-			handler.processRelocations(log, monitor);
+			boolean success = handler.processRelocations(log, monitor);
+			markAsProcessed(program, handler.listLabelsFound(), success);
+		}
+		catch (InvalidDataException e) {
+			markAsNotFound(program);
+			log.appendMsg(NAME + ": " + e.getMessage());
+			Msg.error(this, e.getMessage());
+			return false;
 		}
 		return true;
 	}
 
+	private static boolean alreadyProcessed(Program program) {
+		Options propList = program.getOptions(Program.PROGRAM_INFO);
+		String status = propList.getString(NAME, null);
+		return !StringUtils.isBlank(status);
+	}
+
+	private static void markAsProcessed(Program program, boolean listLabelsFound, boolean success) {
+		Options propList = program.getOptions(Program.PROGRAM_INFO);
+		String text = success ? "Applied" : "Failed";
+		if (listLabelsFound) {
+			text += " using labels";  // psudeo reloc list labels were used
+		}
+		propList.setString(NAME, text);
+	}
+
+	private static void markAsNotFound(Program program) {
+		Options propList = program.getOptions(Program.PROGRAM_INFO);
+		propList.setString(NAME, "Unsupported");
+	}
 }
 
-/**
- * MinGW pseudo-relocation handler
- */
-class MinGWPseudoRelocationHandler {
+class MinGWPseudoRelocList {
 
-	private static final String PSEUDO_RELOC_LIST_START_NAME = "__RUNTIME_PSEUDO_RELOC_LIST__";
-	private static final String PSEUDO_RELOC_LIST_END_NAME = "__RUNTIME_PSEUDO_RELOC_LIST_END__";
-
-	private static final int RP_VERSION_V1 = 0;
-	private static final int RP_VERSION_V2 = 1;
-
-	private static final int OLD_STYLE_ENTRY_SIZE = 8;
-	private static final int NEW_STYLE_ENTRY_HEADER_SIZE = 12;
-
-	private static final String RELOC_TABLE_HEADER_STRUCT_NAME = "pseudoRelocTableHeader";
-	private static final String V1_RELOC_ITEM_STRUCT_NAME = "pseudoRelocItemV1";
-	private static final String V2_RELOC_ITEM_STRUCT_NAME = "pseudoRelocItemV2";
+	static final String PSEUDO_RELOC_LIST_START_NAME = "__RUNTIME_PSEUDO_RELOC_LIST__";
+	static final String PSEUDO_RELOC_LIST_END_NAME = "__RUNTIME_PSEUDO_RELOC_LIST_END__";
 
 	private Program program;
-	private int pointerSize;
-	private DataType dwAddressDataType;
+	private Address pdwListStartAddr;
+	private Address pdwListEndAddr;
+	private boolean listLabelsFound;
 
-	/**
-	 * Determine if the specified Program contains MingGW pseud-relocations that can be processed.
-	 * This does not check if they were previously processed.
-	 * @param program program to be processed.
-	 * @return true if Program contains MingGW pseud-relocations that can be processed.
-	 */
-	static boolean canHandle(Program program) {
-		return isSupportedProgram(program) &&
-			getLabel(program, PSEUDO_RELOC_LIST_START_NAME) != null &&
-			getLabel(program, PSEUDO_RELOC_LIST_END_NAME) != null;
-	}
-
-	/**
-	 * Determine if the relocation table is contained within the specified address set.
-	 * @param program program to be processed
-	 * @param set address set
-	 * @return true if table contained within set of addresses
-	 */
-	static boolean isRelocTableWithinSet(Program program, AddressSetView set) {
-
-		Symbol pdwTableBegin = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			PSEUDO_RELOC_LIST_START_NAME, m -> {
-				/* ignore */});
-		Symbol pdwTableEnd = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			PSEUDO_RELOC_LIST_END_NAME, m -> {
-				/* ignore */});
-		if (pdwTableBegin == null || pdwTableEnd == null) {
-			return false;
-		}
-		Address pdwTableBeginAddr = pdwTableBegin.getAddress();
-		Address pdwTableEndAddr = pdwTableEnd.getAddress();
-		if (pdwTableBeginAddr.getAddressSpace() != pdwTableEndAddr.getAddressSpace()) {
-			return false;
-		}
-		return set.contains(pdwTableBeginAddr, pdwTableEndAddr);
-	}
-
-	/**
-	 * Construct MinGW pseudo-relocation handler for a Program.
-	 * @param program program to be processed
-	 */
-	MinGWPseudoRelocationHandler(Program program) {
+	MinGWPseudoRelocList(Program program) throws InvalidDataException {
 		this.program = program;
+		if (!findLabeledPseudoRelocList()) {
+			if (program.getDefaultPointerSize() == 8) {
+				findUnlabeledPseudoRelocList64Bit();
+			}
+			else {
+				findUnlabeledPseudoRelocList32Bit();
+			}
+		}
+		if (getDataBlock(pdwListStartAddr) != getDataBlock(pdwListEndAddr)) {
+			throw new InvalidDataException("Mismatched MinGW relocation list start/end: " +
+				pdwListStartAddr + " / " + pdwListEndAddr);
+		}
 	}
 
-	private static boolean isSupportedProgram(Program program) {
-		return "x86".equals(program.getLanguage().getProcessor().toString()) &&
-			"windows".equals(program.getCompilerSpec().getCompilerSpecID().toString());
+	private MemoryBlock getDataBlock(Address addr) throws InvalidDataException {
+		MemoryBlock block = program.getMemory().getBlock(addr);
+		if (block == null || !block.isInitialized()) {
+			throw new InvalidDataException("Invalid MinGW relocation list location: " + addr);
+		}
+		return block;
+	}
+
+	boolean listLabelsFound() {
+		return listLabelsFound;
+	}
+
+	private void findUnlabeledPseudoRelocList64Bit() throws InvalidDataException {
+		// TODO: add logic for finding relocation list within stripped binary
+		throw new InvalidDataException("MinGW pseudo-relocation list not found");
+	}
+
+	private void findUnlabeledPseudoRelocList32Bit() throws InvalidDataException {
+		// TODO: add logic for finding relocation list within stripped binary
+		throw new InvalidDataException("MinGW pseudo-relocation list not found");
+	}
+
+	private boolean findLabeledPseudoRelocList() throws InvalidDataException {
+		Symbol pdwListStart = getLabel(program, PSEUDO_RELOC_LIST_START_NAME);
+		if (pdwListStart == null) {
+			return false;
+		}
+		Symbol pdwListEnd = getLabel(program, PSEUDO_RELOC_LIST_END_NAME);
+		if (pdwListEnd != null) {
+			listLabelsFound = true;
+			pdwListStartAddr = pdwListStart.getAddress();
+			pdwListEndAddr = pdwListEnd.getAddress();
+			return true;
+		}
+		throw new InvalidDataException("Missing MinGW " + PSEUDO_RELOC_LIST_END_NAME + " symbol");
 	}
 
 	private static Symbol getLabel(Program program, String name) {
@@ -153,10 +180,68 @@ class MinGWPseudoRelocationHandler {
 			/* ignore */});
 	}
 
+	Address getListStartAddress() {
+		return pdwListStartAddr;
+	}
+
+	Address getListEndAddress() {
+		return pdwListEndAddr;
+	}
+}
+
+/**
+ * MinGW pseudo-relocation handler
+ */
+class MinGWPseudoRelocationHandler {
+
+	private static final int RP_VERSION_V1 = 0;
+	private static final int RP_VERSION_V2 = 1;
+
+	private static final int OLD_STYLE_ENTRY_SIZE = 8;
+	private static final int NEW_STYLE_ENTRY_HEADER_SIZE = 12;
+
+	static final String RELOC_TABLE_HEADER_STRUCT_NAME = "pseudoRelocListHeader";
+	static final String V1_RELOC_ITEM_STRUCT_NAME = "pseudoRelocItemV1";
+	static final String V2_RELOC_ITEM_STRUCT_NAME = "pseudoRelocItemV2";
+
+	private Program program;
+	private MinGWPseudoRelocList relocList;
+	private int pointerSize;
+	private DataType dwAddressDataType;
+
+	/**
+	 * Construct MinGW pseudo-relocation handler for a Program.
+	 * @param program program to be processed
+	 * @throws InvalidDataException failed to locate pseudo relocation list in program memory
+	 */
+	MinGWPseudoRelocationHandler(Program program) throws InvalidDataException {
+		this.program = program;
+		relocList = new MinGWPseudoRelocList(program);
+	}
+
+	boolean listLabelsFound() {
+		return relocList.listLabelsFound();
+	}
+
+	static boolean isSupportedProgram(Program program) {
+		Language language = program.getLanguage();
+		int size = language.getLanguageDescription().getSize();
+		return "x86".equals(language.getProcessor().toString()) &&
+			(size == 32 || size == 64) &&
+			"windows".equals(program.getCompilerSpec().getCompilerSpecID().toString()) &&
+			CompilerEnum.GCC.label.equals(program.getCompiler()) &&
+			getRDataBlock(program) != null;
+	}
+
+	private static MemoryBlock getRDataBlock(Program program) {
+		Memory mem = program.getMemory();
+		return mem.getBlock(".rdata");
+	}
+
 	private Symbol createPrimaryLabel(Address address, String name) {
 		try {
-			SymbolTable symbolTable = program.getSymbolTable();
-			Symbol symbol = symbolTable.createLabel(address, name, null, SourceType.ANALYSIS);
+			SymbolTable SymbolList = program.getSymbolTable();
+			Symbol symbol = SymbolList.createLabel(address, name, null, SourceType.ANALYSIS);
 			if (!symbol.isPrimary()) {
 				symbol.setPrimary();
 			}
@@ -167,31 +252,19 @@ class MinGWPseudoRelocationHandler {
 		}
 	}
 
+
 	boolean processRelocations(MessageLog log, TaskMonitor monitor) throws CancelledException {
-		if (!isSupportedProgram(program)) {
-			return false;
+
+		Address pdwListBeginAddr = relocList.getListStartAddress();
+		Address pdwListEndAddr = relocList.getListEndAddress();
+		if (pdwListBeginAddr.equals(pdwListEndAddr)) {
+			return true; // empty list
 		}
 
 		pointerSize = program.getDefaultPointerSize();
 		dwAddressDataType = new IBO32DataType(program.getDataTypeManager());
 
-		Symbol pdwTableBegin = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			PSEUDO_RELOC_LIST_START_NAME, m -> {
-				/* ignore */});
-		Symbol pdwTableEnd = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			PSEUDO_RELOC_LIST_END_NAME, m -> {
-				/* ignore */});
-		if (pdwTableBegin == null || pdwTableEnd == null) {
-			return false;
-		}
-
-		Address pdwTableBeginAddr = pdwTableBegin.getAddress();
-		Address pdwTableEndAddr = pdwTableEnd.getAddress();
-		if (pdwTableBeginAddr.getAddressSpace() != pdwTableEndAddr.getAddressSpace()) {
-			return false;
-		}
-
-		long size = pdwTableEndAddr.subtract(pdwTableBeginAddr);
+		long size = pdwListEndAddr.subtract(pdwListBeginAddr);
 
 		Memory memory = program.getMemory();
 
@@ -199,23 +272,23 @@ class MinGWPseudoRelocationHandler {
 		int version;
 
 		try {
-			if (size >= OLD_STYLE_ENTRY_SIZE && memory.getLong(pdwTableBeginAddr) != 0) {
+			if (size >= OLD_STYLE_ENTRY_SIZE && memory.getLong(pdwListBeginAddr) != 0) {
 				version = RP_VERSION_V1; // header not used
 			}
 			else if (size >= NEW_STYLE_ENTRY_HEADER_SIZE) {
-				applyPseudoRelocHeader(program, pdwTableBeginAddr, log);
-				version = memory.getInt(pdwTableBeginAddr.add(8)); // 3rd DWORD is version
+				applyPseudoRelocHeader(pdwListBeginAddr, log);
+				version = memory.getInt(pdwListBeginAddr.add(8)); // 3rd DWORD is version
 				// update table pointer to first item
-				pdwTableBeginAddr = pdwTableBeginAddr.add(NEW_STYLE_ENTRY_HEADER_SIZE);
+				pdwListBeginAddr = pdwListBeginAddr.add(NEW_STYLE_ENTRY_HEADER_SIZE);
 				size -= NEW_STYLE_ENTRY_HEADER_SIZE; // reduce size by header size
 			}
 			else {
-				log.appendMsg("Unsupported MinGW relocation table at " + pdwTableBeginAddr);
+				log.appendMsg("Unsupported MinGW relocation table at " + pdwListBeginAddr);
 				return false;
 			}
 		}
 		catch (MemoryAccessException | AddressOutOfBoundsException e) {
-			String msg = "MinGW relocation table processing failed at " + pdwTableBeginAddr;
+			String msg = "MinGW relocation table processing failed at " + pdwListBeginAddr;
 			log.appendMsg(msg);
 			Msg.error(this, msg, e);
 			return false;
@@ -224,23 +297,23 @@ class MinGWPseudoRelocationHandler {
 		boolean success;
 		switch (version) {
 			case RP_VERSION_V1:
-				success = relocateV1(pdwTableBeginAddr, (int) (size / OLD_STYLE_ENTRY_SIZE), log,
+				success = relocateV1(pdwListBeginAddr, (int) (size / OLD_STYLE_ENTRY_SIZE), log,
 					monitor);
 				break;
 			case RP_VERSION_V2:
-				success = relocateV2(pdwTableBeginAddr, (int) (size / NEW_STYLE_ENTRY_HEADER_SIZE),
+				success = relocateV2(pdwListBeginAddr, (int) (size / NEW_STYLE_ENTRY_HEADER_SIZE),
 					log, monitor);
 				break;
 			default:
 				log.appendMsg("Unsupported MinGW relocation table (Version: " + version + ") at " +
-					pdwTableBeginAddr);
+					pdwListBeginAddr);
 				return false;
 		}
 
 		// Cleanup duplicate External Import symbols
 		ExternalManager extMgr = program.getExternalManager();
 		ReferenceManager refMgr = program.getReferenceManager();
-		SymbolTable symbolTable = program.getSymbolTable();
+		SymbolTable SymbolList = program.getSymbolTable();
 		for (Symbol extSym : program.getSymbolTable().getExternalSymbols()) {
 			monitor.checkCancelled();
 			ExternalLocation extLoc = extMgr.getExternalLocation(extSym);
@@ -250,7 +323,7 @@ class MinGWPseudoRelocationHandler {
 			if (refMgr.hasReferencesTo(extSym.getAddress())) {
 				continue; // skip - reference exists
 			}
-			List<Symbol> globalSymbols = symbolTable.getGlobalSymbols(extSym.getName());
+			List<Symbol> globalSymbols = SymbolList.getGlobalSymbols(extSym.getName());
 			if (globalSymbols.size() != 1) {
 				continue;
 			}
@@ -369,7 +442,7 @@ class MinGWPseudoRelocationHandler {
 	}
 
 	/**
-	 * External Import Address Table (IAT) Symbol Record
+	 * External Import Address List (IAT) Symbol Record
 	 */
 	private static record ExternalIATSymbol(Address extAddr, ExternalLocation extLoc) {
 		// record only
@@ -380,11 +453,11 @@ class MinGWPseudoRelocationHandler {
 			-1);
 	}
 
-	private boolean relocateV2(Address pdwTableBeginAddr, int entryCount, MessageLog log,
+	private boolean relocateV2(Address pdwListBeginAddr, int entryCount, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
 
 		Listing listing = program.getListing();
-		Data d = listing.getDefinedDataAt(pdwTableBeginAddr);
+		Data d = listing.getDefinedDataAt(pdwListBeginAddr);
 		if (d != null && (d.isArray() || d.isStructure())) {
 			return false; // silent - appears to have been previously processed
 		}
@@ -395,7 +468,7 @@ class MinGWPseudoRelocationHandler {
 		RelocationTable relocationTable = program.getRelocationTable();
 
 		// Determine number of unique IAT symbol locations referenced
-		Address addr = pdwTableBeginAddr;
+		Address addr = pdwListBeginAddr;
 		MemoryBufferImpl buf = new MemoryBufferImpl(memory, addr);
 		HashSet<Address> uniqueIATAddressSet = new HashSet<>();
 		for (int i = 0; i < entryCount; i++) {
@@ -430,7 +503,7 @@ class MinGWPseudoRelocationHandler {
 		int unsupported = 0;
 
 		// Process relocations
-		addr = pdwTableBeginAddr; // 1st dword of item is symbol address
+		addr = pdwListBeginAddr; // 1st dword of item is symbol address
 		buf.setPosition(addr);
 		for (int i = 0; i < entryCount; i++) {
 			monitor.checkCancelled();
@@ -547,17 +620,17 @@ class MinGWPseudoRelocationHandler {
 		Array a = new ArrayDataType(relocEntryStruct, entryCount, -1, dtm);
 
 		try {
-			DataUtilities.createData(program, pdwTableBeginAddr, a, -1, false,
+			DataUtilities.createData(program, pdwListBeginAddr, a, -1, false,
 				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		}
 		catch (CodeUnitInsertionException e) {
 			log.appendMsg(
-				"Failed to markup Mingw pseudo-relocation Table at: " + pdwTableBeginAddr);
+				"Failed to markup Mingw pseudo-relocation List at: " + pdwListBeginAddr);
 		}
 		return true;
 	}
 
-	private void applyPseudoRelocHeader(Program program, Address relocHeaderAddr, MessageLog log) {
+	private void applyPseudoRelocHeader(Address relocHeaderAddr, MessageLog log) {
 
 		Structure relocHeaderStruct =
 			new StructureDataType(RELOC_TABLE_HEADER_STRUCT_NAME, 0, program.getDataTypeManager());
@@ -572,7 +645,7 @@ class MinGWPseudoRelocationHandler {
 		}
 		catch (CodeUnitInsertionException e) {
 			log.appendMsg(
-				"Failed to markup Mingw pseudo-relocation Table header at: " + relocHeaderAddr);
+				"Failed to markup Mingw pseudo-relocation List header at: " + relocHeaderAddr);
 		}
 	}
 
@@ -620,11 +693,11 @@ class MinGWPseudoRelocationHandler {
 		throw new MemoryAccessException("Failed to allocate block: " + blockName);
 	}
 
-	private boolean relocateV1(Address pdwTablePayloadAddr, int entryCount, MessageLog log,
+	private boolean relocateV1(Address pdwListPayloadAddr, int entryCount, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
 
 		Listing listing = program.getListing();
-		Data d = listing.getDefinedDataAt(pdwTablePayloadAddr);
+		Data d = listing.getDefinedDataAt(pdwListPayloadAddr);
 		if (d != null && (d.isArray() || d.isStructure())) {
 			return false; // silent - appears to have been previously processed
 		}
@@ -633,8 +706,8 @@ class MinGWPseudoRelocationHandler {
 		DataTypeManager dtm = program.getDataTypeManager();
 		RelocationTable relocationTable = program.getRelocationTable();
 
-		Address addr = pdwTablePayloadAddr;
-		DumbMemBufferImpl buf = new DumbMemBufferImpl(memory, pdwTablePayloadAddr);
+		Address addr = pdwListPayloadAddr;
+		DumbMemBufferImpl buf = new DumbMemBufferImpl(memory, pdwListPayloadAddr);
 
 		RelocationResult appliedResult = new RelocationResult(Status.APPLIED_OTHER, 4);
 
@@ -692,12 +765,12 @@ class MinGWPseudoRelocationHandler {
 		Array a = new ArrayDataType(s, entryCount, -1, dtm);
 
 		try {
-			DataUtilities.createData(program, pdwTablePayloadAddr, a, -1, false,
+			DataUtilities.createData(program, pdwListPayloadAddr, a, -1, false,
 				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		}
 		catch (CodeUnitInsertionException e) {
 			Msg.error(this,
-				"Failed to markup Mingw pseudo-relocation Table at: " + pdwTablePayloadAddr);
+				"Failed to markup Mingw pseudo-relocation List at: " + pdwListPayloadAddr);
 		}
 		return true;
 	}
