@@ -204,6 +204,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Msg.debug(this, "Could not create special vtables");
 			return null;
 		}
+		
+		if(specialVtables.size() != specialTypeinfos.size()) {
+			Msg.debug(this, "Not equal number of special vtables and special typeinfos");
+			return null;
+		}
 
 		setComponentOffset();
 
@@ -3382,6 +3387,13 @@ private Address getReferencedAddress(Address address) {
 			if (specialTypeinfoAddrSet.contains(refTo)) {
 				continue;
 			}
+
+			// all special vtables have zeros just before the ref to typeinfo
+			Address vtableAddress = refTo.subtract(defaultPointerSize);
+			if (!isPossibleNullPointer(vtableAddress)) {
+				continue;
+			}
+
 			possibleRefsInVtable.add(refTo);
 		}
 		if (possibleRefsInVtable.size() != 1) {
