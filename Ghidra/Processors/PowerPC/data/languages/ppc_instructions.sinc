@@ -41,8 +41,8 @@
 :addc. D,A,B	is OP=31 & D & A & B & OE=0 & XOP_1_9=10 & Rc=1	
 { 	
 	xer_ca = carry(A,B);
-	D = A + B; 
-	cr0flags(D); 
+	D = A + B;
+	cr0flags(D);
 }
 
 #addco r1,r2,r3  0x7c 22 1c 14
@@ -67,7 +67,7 @@
 {	
 	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
 	addExtendedCarry(A,B);
-	D=A + B + zextCarry; 
+	D=A + B + zextCarry;
 }
 
 #adde. r1,r2,r3  0x7c 22 19 15
@@ -127,14 +127,14 @@
 :addic D,A,SIMM		is $(NOTVLE) & OP=12 & D & A & SIMM_SIGN=0 & SIMM
 {
 	xer_ca=carry(A,SIMM);
-	D = A + SIMM; 
+	D = A + SIMM;
 }
 
 #subic r0,r0,2 0x30 00 FF FE	# addi simplified mnemonic
 :subic D,A,tmp		is $(NOTVLE) & OP=12 & D & A & SIMM_SIGN=1 & SIMM [ tmp = -SIMM; ]
 {
 	xer_ca=carry(A,SIMM);
-	D = A + SIMM; 
+	D = A + SIMM;
 }
 
 #addic. r0,r0,5 0x34 00 00 05
@@ -149,7 +149,7 @@
 :subic. D,A,tmp		is $(NOTVLE) & OP=13 & D & A & SIMM_SIGN=1 & SIMM [ tmp = -SIMM; ]
 {
 	xer_ca=carry(A,SIMM);
-	D = A + SIMM; 
+	D = A + SIMM;
 	cr0flags( D );
 }
 
@@ -183,7 +183,7 @@
 	local zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
 	local BVal:$(REGISTER_SIZE) = ~(0);
 	addExtendedCarry(A,BVal);
-	D=A + BVal + zextCarry; 
+	D=A + BVal + zextCarry;
 }
 
 #addme. r0,r0 0x7c 00 01 D5
@@ -192,7 +192,7 @@
 	local zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
 	local BVal:$(REGISTER_SIZE) = ~(0);
 	addExtendedCarry(A,BVal);
-	D=A + BVal + zextCarry; 
+	D=A + BVal + zextCarry;
 	cr0flags(D);
 }
 
@@ -203,7 +203,7 @@
 	local BVal:$(REGISTER_SIZE) = ~(0);
 	addExtendedOverflow(A,BVal);
 	addExtendedCarry(A,BVal);
-	D=A + BVal + zextCarry; 
+	D=A + BVal + zextCarry;
 }
 
 #addmeo. r0,r0 0x7C 00 05 D5
@@ -380,14 +380,14 @@
 								    REL_ABS & LK=0
 								    [ linkreg=0; globalset(inst_start,linkreg); ] # affects both flows, but not at this instruction
 {
-	if (CC) goto addressBD; 
+	if (CC) goto addressBD;
 }
 ## do a special linkreg setting only if linkreg is set, since this happens all over the code
 :b^CC^REL_ABS addressBD 	is linkreg=1 & OP=16 & CC & addressBD & BO_0=0 & BO_2=1 & BI_CR= 0 &
 								    REL_ABS & LK=0
 								    [ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (CC) goto addressBD; 
+	if (CC) goto addressBD;
 }
 
 #bltl LAB_0000		0x41 80 00 01
@@ -395,8 +395,8 @@
 								    REL_ABS & LK=1
 								    [ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call addressBD;
 }
 
@@ -413,8 +413,8 @@
 										REL_ABS & LK=1
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call addressBD;
 }
 
@@ -429,8 +429,8 @@
 :bd^CTR_DEC^"l"^REL_ABS addressBD 		is $(NOTVLE) & OP=16 & CTR_DEC & REL_ABS & addressBD & BO_0=1 & BO_2=0 & LK=1
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next; 
 	LR = inst_next;
+	if (!CTR_DEC) goto inst_next;
 	call addressBD;
 }
 
@@ -446,8 +446,8 @@
 :bd^CTR_DEC^CC_TF^"l"^REL_ABS CC_OP,addressBD 		is $(NOTVLE) & OP=16 & CC_TF & CTR_DEC & REL_ABS & CC_OP & addressBD & BO_0=0 & BO_2=0 & LK=1
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
 	LR = inst_next;
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	call addressBD;
 }
 
@@ -494,12 +494,12 @@
 #bgectr		0x4c 80 04 20
 :b^CC^"ctr" 	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [CTR];
 }
 :b^CC^"ctr" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [CTR];
 }
 
@@ -507,29 +507,29 @@
 :b^CC^"ctrl"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [CTR];
 }
 :b^CC^"ctrl" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR= 0 & BH & BH_BITS!=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [CTR];
 }
 
 #bgectr cr3		0x4c 8c 04 20
 :b^CC^"ctr" BI_CR  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=528
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [CTR];
 }
 
 #bnectr cr2,#0x3 0x4c 8c 1c 20
 :b^CC^"ctr" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=0 & BITS_13_15=0 & XOP_1_10=528
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [CTR];
 }
 
@@ -537,8 +537,8 @@
 :b^CC^"ctrl" BI_CR 		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=528
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [CTR];
 }
 
@@ -546,8 +546,8 @@
 :b^CC^"ctrl" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=1 & BITS_13_15=0 & XOP_1_10=528
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [CTR];
 }
 
@@ -585,13 +585,13 @@
 :b^CC^"lr"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	return [LR];
 }
 :b^CC^"lr" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [LR];
 }
 
@@ -599,17 +599,17 @@
 :b^CC^"lrl"  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [tmp];
 }
 :b^CC^"lrl" BH  	is $(NOTVLE) & OP=19 & CC & BO_0=0 & BO_2=1 & BI_CR=0 & BH & BH_BITS!=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
 	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [tmp];
 }
 
@@ -617,7 +617,7 @@
 :b^CC^"lr" BI_CR  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	return [LR];
 }
 
@@ -625,7 +625,7 @@
 :b^CC^"lr" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & BH_BITS!=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
+	if (!CC) goto inst_next;
 	goto [LR];
 }
 
@@ -633,9 +633,9 @@
 :b^CC^"lrl" BI_CR 		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next;
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [tmp];
 }
 
@@ -643,9 +643,9 @@
 :b^CC^"lrl" BI_CR,BH  		is $(NOTVLE) & OP=19 & CC & BI_CR & BO_0=0 & BO_2=1 & BH & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CC) goto inst_next; 
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CC) goto inst_next;
 	call [tmp];
 }
 
@@ -655,13 +655,13 @@
 :bd^CTR_DEC^"lr"  		is $(NOTVLE) & OP=19 & BH=0 & CTR_DEC & BO_0=1 & BO_2=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next; 
+	if (!CTR_DEC) goto inst_next;
 	goto [LR];
 }
 :bd^CTR_DEC^"lr" BH  		is $(NOTVLE) & OP=19 & BH & CTR_DEC & BO_0=1 & BO_2=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next; 
+	if (!CTR_DEC) goto inst_next;
 	goto [LR];
 }
 
@@ -669,17 +669,17 @@
 :bd^CTR_DEC^"lrl" 		is $(NOTVLE) & OP=19 & CTR_DEC & BH=0 & BO_0=1 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next;
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CTR_DEC) goto inst_next;
 	call [tmp];
 }
 :bd^CTR_DEC^"lrl" BH 		is $(NOTVLE) & OP=19 & CTR_DEC & BH & BO_0=1 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!CTR_DEC) goto inst_next;
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!CTR_DEC) goto inst_next;
 	call [tmp];
 }
 
@@ -688,7 +688,7 @@
 :bd^CTR_DEC^CC_TF^"lr" CC_OP 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BO_0=0 & BO_2=0 & BH=0 & LK=0 & BITS_13_15=0 & XOP_1_10=16 
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	goto [LR];
 }
 
@@ -697,7 +697,7 @@
 :bd^CTR_DEC^CC_TF^"lr" CC_OP,BH 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BO_0=0 & BO_2=0 & BH & LK=0 & BITS_13_15=0 & XOP_1_10=16 
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	goto [LR];
 }
 
@@ -706,9 +706,9 @@
 :bd^CTR_DEC^CC_TF^"lrl" CC_OP 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BH=0 & BO_0=0 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	call [tmp];
 }
 
@@ -717,9 +717,9 @@
 :bd^CTR_DEC^CC_TF^"lrl" CC_OP,BH 		is $(NOTVLE) & OP=19 & CC_TF & CTR_DEC & CC_OP & BH & BO_0=0 & BO_2=0 & LK=1 & BITS_13_15=0 & XOP_1_10=16
 										[ linkreg=0; globalset(inst_start,linkreg); ]
 {
-	if (!(CTR_DEC && CC_OP)) goto inst_next; 
-	tmp:$(REGISTER_SIZE) = LR; 
+	tmp:$(REGISTER_SIZE) = LR;
 	LR = inst_next;
+	if (!(CTR_DEC && CC_OP)) goto inst_next;
 	call [tmp];
 }
 
@@ -2976,7 +2976,7 @@ define pcodeop lswxOp;
 			zext(cr4 & 0xf) << 12 |
 			zext(cr5 & 0xf) << 8 |
 			zext(cr6 & 0xf) << 4 |
-			zext(cr7 & 0xf); 
+			zext(cr7 & 0xf);
 @ifdef BIT_64
 	D = zext(tmp);
 @else
@@ -3029,7 +3029,7 @@ define pcodeop lswxOp;
 @else
 	tmp:$(REGISTER_SIZE) = (B >> 28);
 @endif
-	D = *[register]:4 ($(SEG_REGISTER_BASE)+tmp); 
+	D = *[register]:4 ($(SEG_REGISTER_BASE)+tmp);
 }
 
 #mtcrf 10,r0		0x7c 01 01 20
@@ -3088,13 +3088,13 @@ define pcodeop lswxOp;
 	tmp:4 = 0;
 	packFPSCR(tmp);
 	
-	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28; 
-	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24; 
-	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20; 
-	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16; 
-	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12; 
-	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8; 
-	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4; 
+	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28;
+	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24;
+	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20;
+	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16;
+	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12;
+	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8;
+	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4;
 	mask7:4 = zext((FM7:1 == 1)* 0xf);
 	
 	mask:4 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
@@ -3110,13 +3110,13 @@ define pcodeop lswxOp;
 	tmp:4 = 0;
 	packFPSCR(tmp);
 	
-	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28; 
-	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24; 
-	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20; 
-	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16; 
-	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12; 
-	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8; 
-	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4; 
+	mask0:4 = zext((FM0:1 == 1)* 0xf) << 28;
+	mask1:4 = zext((FM1:1 == 1)* 0xf) << 24;
+	mask2:4 = zext((FM2:1 == 1)* 0xf) << 20;
+	mask3:4 = zext((FM3:1 == 1)* 0xf) << 16;
+	mask4:4 = zext((FM4:1 == 1)* 0xf) << 12;
+	mask5:4 = zext((FM5:1 == 1)* 0xf) << 8;
+	mask6:4 = zext((FM6:1 == 1)* 0xf) << 4;
 	mask7:4 = zext((FM7:1 == 1)* 0xf);
 	
 	mask:4 = mask0 | mask1 | mask2 | mask3 | mask4 | mask5 | mask6 | mask7;
@@ -3314,26 +3314,26 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 :mulhwu D,A,B		is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=11 & Rc=0	
 { 
 @ifdef BIT_64
-	tmp:8 = zext(A:4) * zext(B:4); 
-	tmp2:4 = tmp(4); 
+	tmp:8 = zext(A:4) * zext(B:4);
+	tmp2:4 = tmp(4);
 	D=zext(tmp2);
 @else
 	tmp:8 = zext(A) * zext(B);
-	D = tmp(4); 
+	D = tmp(4);
 @endif 
 }
 #mulhwu.	r0,r0,r0	0x7c 00 00 17
 :mulhwu. D,A,B		is OP=31 & D & A & B & BIT_10=0 & XOP_1_9=11 & Rc=1	
 { 
 @ifdef BIT_64
-	tmp:8 = zext(A:4) * zext(B:4); 
-	tmp2:4 = tmp(4); 
+	tmp:8 = zext(A:4) * zext(B:4);
+	tmp2:4 = tmp(4);
 	D=zext(tmp2);
 @else
 	tmp:8 = zext(A) * zext(B);
-	D = tmp(4); 
+	D = tmp(4);
 @endif 
-	cr0flags(D); 
+	cr0flags(D);
 }
 
 @ifdef BIT_64
@@ -3374,7 +3374,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 #mulli r0,r0,r0		0x1C 00 00 00
 :mulli D,A,SIMM		is $(NOTVLE) & OP=7 & D & A & SIMM				
 {
- 	D = A * SIMM; 
+ 	D = A * SIMM;
 }
 
 #mullw r0,r0,r0		0x7C 00 01 D6
@@ -3395,7 +3395,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 @else
 	D = A*B;
 @endif
-	cr0flags(D); 
+	cr0flags(D);
 }
 
 #mullwo r0,r0,r0		0x7C 00 05 D6
@@ -3422,7 +3422,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	mulOverflow64(tmp);
 	D = tmp:4;
 @endif
-	cr0flags(D); 
+	cr0flags(D);
 }
 
 #nand r0,r0,r0 0x7C 00 03 B8
@@ -3529,30 +3529,30 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 #rldcl r0,r0,r0,0	0x78 00 00 10
 :rldcl A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=8 & Rc=0
 { 
-	shift:$(REGISTER_SIZE) = B & 0x3f; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff >> MB);
 }
 #rldcl. r0,r0,r0,0	0x78 00 00 11
 :rldcl. A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=8 & Rc=1
 { 
-	shift:$(REGISTER_SIZE) = B & 0x3f; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff >> MB);
 	cr0flags(A);
 }
 #rldcr r0,r0,r0,0	0x78 00 00 12
 :rldcr A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=0 & rotmask_Z
 { 
-	shift:$(REGISTER_SIZE) = B & 0x3f; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & rotmask_Z; 
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & rotmask_Z;
 }
 #rldcr. r0,r0,r0,0	0x78 00 00 13
 :rldcr. A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=1 & rotmask_Z
 { 
-	shift:$(REGISTER_SIZE) = B & 0x3f; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	shift:$(REGISTER_SIZE) = B & 0x3f;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
 	A = tmp & rotmask_Z;  
 	cr0flags(A);
 }
@@ -3561,15 +3561,15 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 :rldic A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=0 & rotmask_SH
 { 
 	shift:4 = SH;
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
 	A = tmp & rotmask_SH;
 }
 #rldic. r0,r0,r0,0	0x78 00 00 09
 :rldic. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=1 & rotmask_SH
 { 
-	shift:4 = SH; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & rotmask_SH; 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & rotmask_SH;
 	cr0flags(A);
 }
 
@@ -3577,44 +3577,44 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 :rldicl A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=0 & Rc=0
 { 
 	shift:4 = SH;
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff >> MB);
 }
 #rldicl. r0,r0,r0,0	0x78 00 00 01
 :rldicl. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=0 & Rc=1
 { 
-	shift:4 = SH; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff >> MB);
 	cr0flags(A);
 }
 #rldicr r0,r0,r0,0	0x78 00 00 04
 :rldicr A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=1 & Rc=0
 { 
 	shift:4 = SH;
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff << (63-MB)); 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff << (63-MB));
 }
 #rldicr. r0,r0,r0,0	0x78 00 00 05
 :rldicr. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=1 & Rc=1
 { 
-	shift:4 = SH; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff << (63-MB)); 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
+	A = tmp & (0xffffffffffffffff << (63-MB));
 	cr0flags(A);
 }
 #rldimi r0,r0,r0,0	0x78 00 00 0c
 :rldimi A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=0 & rotmask_SH
 { 
 	shift:4 = SH;
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
 	A = (tmp & rotmask_SH) | (A & ~rotmask_SH);
 }
 #rldimi. r0,r0,r0,0	0x78 00 00 0d
 :rldimi. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=1 & rotmask_SH
 { 
-	shift:4 = SH; 
-	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
+	shift:4 = SH;
+	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift));
 	A = (tmp & rotmask_SH) | (A & ~rotmask_SH);
 	cr0flags(A);
 }
@@ -3631,7 +3631,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = (tmp2 & rotmask) | (A & ~(rotmask));
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask) | (A & ~rotmask);
 @endif
 }
@@ -3645,7 +3645,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = (tmp2 & rotmask) | (A & ~(rotmask));
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask) | (A & ~rotmask);
 @endif
 	cr0flags(A);
@@ -3660,7 +3660,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = tmp2 & rotmask;
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask);
 @endif
 }
@@ -3674,7 +3674,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = tmp2 & rotmask;
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask);
 @endif
 	cr0flags(A);
@@ -3689,7 +3689,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = tmp2 & rotmask;
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask);
 @endif
 }
@@ -3703,7 +3703,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
 	A = tmp2 & rotmask;
 @else
-	tmp = (S<<shift)|(S>>(32-shift)); 
+	tmp = (S<<shift)|(S>>(32-shift));
 	A = (tmp & rotmask);
 @endif
 	cr0flags(A);
@@ -4088,7 +4088,7 @@ CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 :sthbrx S,RA_OR_ZERO,B			is OP=31 & S & RA_OR_ZERO & B & XOP_1_10=918 & BIT_0=0
 {
 	tmp:2 = zext(S:1) <<8;
-	tmp2:2 = S:2 >>8; 
+	tmp2:2 = S:2 >>8;
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	*:2(ea) = tmp2 | tmp;
 }
@@ -4246,7 +4246,7 @@ define pcodeop stswxOp;
 { 	
 	xer_ca = (A <= B);
 	D = B - A;
-	cr0flags(D); 
+	cr0flags(D);
 }
 
 #subfco r0,r0,r0  0x7c 00 04 10
@@ -4269,15 +4269,15 @@ define pcodeop stswxOp;
 #subfe r0,r0,r0  0x7c 00 01 10
 :subfe D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=136 & Rc=0
 {	
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	subExtendedCarry(B,A);
-	D = B - tmp; 
+	D = B - tmp;
 }
 
 #subfe. r0,r0,r0  0x7c 00 01 11
 :subfe. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=136 & Rc=1	
 { 	
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	subExtendedCarry(B,A);
 	D = B - tmp;
 	cr0flags(D);
@@ -4287,7 +4287,7 @@ define pcodeop stswxOp;
 :subfeo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=136 & Rc=0
 { 
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
-	subExtendedOverflow(B,A); 
+	subExtendedOverflow(B,A);
 	subExtendedCarry(B,A);
 	D = B - tmp;
 }
@@ -4295,7 +4295,7 @@ define pcodeop stswxOp;
 #subfeo. r0,r0,r0  0x7c 00 05 11
 :subfeo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=136 & Rc=1
 { 	
-	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
 	subExtendedOverflow(B,A);
 	subExtendedCarry(B,A);
 	D = B - tmp;
@@ -4305,14 +4305,14 @@ define pcodeop stswxOp;
 #subfic r0,r0,2 0x20 00 00 02
 :subfic D,A,SIMM		is $(NOTVLE) & OP=8 & D & A & SIMM
 {
-	xer_ca = !(SIMM<A); 
+	xer_ca = !(SIMM<A);
 	D = SIMM - A;
 }
 
 #subfme r0,r0	0x7c 00 01 d0
 :subfme D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=0
 {
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	Bval:$(REGISTER_SIZE) = ~(0);
 	subExtendedCarry(Bval,A);
 	D = Bval - tmp;
@@ -4321,7 +4321,7 @@ define pcodeop stswxOp;
 #subfme. r0,r0	0x7c 00 01 d1
 :subfme. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=1
 {
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	Bval:$(REGISTER_SIZE) = ~(0);
 	subExtendedCarry(Bval,A);
 	D = Bval - tmp;
@@ -4330,7 +4330,7 @@ define pcodeop stswxOp;
 
 :subfmeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=232 & Rc=0
 {
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	Bval:$(REGISTER_SIZE) = ~(0);
 	subExtendedOverflow(Bval,A);
 	subExtendedCarry(Bval,A);
@@ -4340,7 +4340,7 @@ define pcodeop stswxOp;
 #subfmeo. r0,r0	0x7c 00 05 d1
 :subfmeo. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=232 & Rc=1
 {
-	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca);
 	Bval:$(REGISTER_SIZE) = ~(0);
 	subExtendedOverflow(Bval,A);
 	subExtendedCarry(Bval,A);
