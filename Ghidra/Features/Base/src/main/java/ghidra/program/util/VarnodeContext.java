@@ -782,13 +782,13 @@ public class VarnodeContext implements ProcessorContext {
 				
 				String spaceName = out.getAddress().getAddressSpace().getName();
 				Register register = getRegister(out);
-				if (register == null) {
-					spaceName = out.toString();
-				} else {
+				// if the register is worth tracking as a potential address space
+				// with stores/loads of constants to it, create a fake address space for it
+				if (shouldTrackRegister(register)) {
 					spaceName = register.getName();
+					int newRegSpaceID = getAddressSpace(spaceName+"-"+currentAddress);
+					result = createVarnode(0, newRegSpaceID, out.getSize());
 				}
-				int newRegSpaceID = getAddressSpace(spaceName+"-"+currentAddress);
-				result = createVarnode(0, newRegSpaceID, out.getSize());
 			}
 			tempVals.put(out, result);
 		}
@@ -800,6 +800,25 @@ public class VarnodeContext implements ProcessorContext {
 		if (mustClear) {
 			clearVals.add(out);
 		}
+	}
+
+	/**
+	 * Check if the register should be tracked for symbolic offset tracking.
+	 * A flag or register not likely to be used as an offset into a space to store/load
+	 * constant values should not be tracked.
+	 * 
+	 * @param register the register
+	 * @return true if register should be tracked symbolically, false otherwise
+	 */
+	private boolean shouldTrackRegister(Register register) {
+		if (register == null) {
+			return false;
+		}
+		// if the register is small, and not part of a larger register
+		if (register.getBitLength() <= 8 && register.getParentRegister() == null) {
+			return false;
+		}
+		return true;
 	}
 
 	public boolean readExecutableCode() {
@@ -1376,6 +1395,10 @@ public class VarnodeContext implements ProcessorContext {
 		if (regSpace == null) {
 			regSpace = ((OffsetAddressFactory) addrFactory).createNewOffsetSpace(name);
 		}
+		if (regSpace == null) {
+			Msg.error(this,  "VarnodeContext: out of address spaces for: " + name);
+			return BAD_SPACE_ID_VALUE;
+		}
 		spaceID = regSpace.getSpaceID();
 		return spaceID;
 	}
@@ -1745,12 +1768,21 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 		return maxID + 1;
 	}
 
+	/**
+	 * Create a new address space
+	 * 
+	 * @param name of address space
+	 * @return new address space, or null if no spaces left to allocate
+	 */
 	public AddressSpace createNewOffsetSpace(String name) {
 		AddressSpace space = null;
 		try {
 			space = new GenericAddressSpace(name, this.getConstantSpace().getSize(),
 				AddressSpace.TYPE_SYMBOL, getNextUniqueID());
 			super.addAddressSpace(space);
+		}
+		catch (IllegalArgumentException e) {
+			return null; // out of address spaces
 		}
 		catch (DuplicateNameException e) {
 			space = getAddressSpace(name);
