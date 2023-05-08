@@ -301,7 +301,7 @@ public class MarkerManager implements MarkerService {
 	List<String> getMarkerTooltipLines(Program program, int y, int x, Address minAddr,
 			Address maxAddr) {
 		MarkerSetCacheEntry entry = markerSetCache.get(program);
-		return entry.getTooltipLines(y, x, minAddr, maxAddr);
+		return entry == null ? List.of() : entry.getTooltipLines(y, x, minAddr, maxAddr);
 	}
 
 	static String getMarkerToolTip(MarkerSetImpl marker, Address a, int x, int y) {
