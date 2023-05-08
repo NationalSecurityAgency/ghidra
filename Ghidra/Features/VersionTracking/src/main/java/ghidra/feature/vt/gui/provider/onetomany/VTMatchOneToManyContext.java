@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.feature.vt.gui.provider.onetomany;
 
-import ghidra.feature.vt.api.main.VTMatch;
-
 import java.util.List;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
+import ghidra.feature.vt.api.main.VTMatch;
 
-public class VTMatchOneToManyContext extends ActionContext {
+public class VTMatchOneToManyContext extends DefaultActionContext {
 
 	private final List<VTMatch> selectedItems;
 

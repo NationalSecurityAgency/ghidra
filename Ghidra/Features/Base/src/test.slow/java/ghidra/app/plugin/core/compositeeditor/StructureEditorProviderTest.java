@@ -22,7 +22,7 @@ import java.awt.Window;
 import org.junit.Assert;
 import org.junit.Test;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
 import ghidra.framework.options.Options;
@@ -118,7 +118,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			runSwingLater(() -> {
 				getTable().requestFocus();
 				setSelection(new int[] { 4, 5 });
-				deleteAction.actionPerformed(new ActionContext());
+				deleteAction.actionPerformed(new DefaultActionContext());
 				try {
 					model.add(new WordDataType());
 				}
@@ -137,8 +137,8 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			runSwingLater(() -> {
 				getTable().requestFocus();
 				setSelection(new int[] { 1 });
-				clearAction.actionPerformed(new ActionContext());
-				deleteAction.actionPerformed(new ActionContext());// Must be undefined before it can delete.
+				clearAction.actionPerformed(new DefaultActionContext());
+				deleteAction.actionPerformed(new DefaultActionContext());// Must be undefined before it can delete.
 			});
 			waitForSwing();
 			assertFalse(complexStructure.isEquivalent(model.viewComposite));
@@ -454,7 +454,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			runSwingLater(() -> {
 				getTable().requestFocus();
 				setSelection(new int[] { 4, 5 });
-				deleteAction.actionPerformed(new ActionContext());
+				deleteAction.actionPerformed(new DefaultActionContext());
 				try {
 					model.add(new WordDataType());
 				}
@@ -509,7 +509,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		runSwingLater(() -> {
 			getTable().requestFocus();
 			setSelection(new int[] { 4, 5 });
-			deleteAction.actionPerformed(new ActionContext());
+			deleteAction.actionPerformed(new DefaultActionContext());
 			try {
 				model.add(new WordDataType());
 			}
@@ -545,7 +545,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		runSwing(() -> {
 			getTable().requestFocus();
 			setSelection(new int[] { 4, 5 });
-			deleteAction.actionPerformed(new ActionContext());
+			deleteAction.actionPerformed(new DefaultActionContext());
 			try {
 				model.add(new WordDataType());
 			}
@@ -571,7 +571,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		runSwingLater(() -> {
 			getTable().requestFocus();
 			setSelection(new int[] { 4, 5 });
-			deleteAction.actionPerformed(new ActionContext());
+			deleteAction.actionPerformed(new DefaultActionContext());
 			try {
 				model.add(new WordDataType());
 			}
@@ -705,7 +705,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertEquals("0x145", model.getLengthAsString());
 
 		DockingActionIf action = getAction(plugin, "Editor: Show Numbers In Hex");
-		setToggleActionSelected((ToggleDockingActionIf) action, new ActionContext(), false);
+		setToggleActionSelected((ToggleDockingActionIf) action, new DefaultActionContext(), false);
 
 		assertEquals(false, model.isShowingNumbersInHex());
 		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));

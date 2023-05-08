@@ -25,6 +25,7 @@ import javax.swing.JMenuItem;
 import javax.swing.event.ChangeListener;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.*;
 import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
@@ -201,7 +202,7 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 		}
 
 		try {
-			ActionContext context = new ActionContext();
+			ActionContext context = new DefaultActionContext();
 			context.setSourceObject(e.getSource());
 			if (action.isEnabledForContext(context)) {
 				if (action instanceof ToggleDockingActionIf) {

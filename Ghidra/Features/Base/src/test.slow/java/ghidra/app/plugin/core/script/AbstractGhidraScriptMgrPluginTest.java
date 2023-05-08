@@ -36,7 +36,7 @@ import javax.swing.undo.UndoableEdit;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.filter.FilterTextField;
@@ -307,7 +307,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		DockingActionIf runLastAction = getRunLastScriptAction();
 		final AtomicReference<Boolean> ref = new AtomicReference<>();
-		runSwing(() -> ref.set(runLastAction.isEnabledForContext(new ActionContext())));
+		runSwing(() -> ref.set(runLastAction.isEnabledForContext(new DefaultActionContext())));
 		assertEquals("Run Last Action not enabled as expected", enabled, ref.get());
 	}
 
@@ -988,10 +988,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		// destroy any NewScriptxxx files...and Temp ones too
 		List<ResourceFile> paths = provider.getBundleHost()
-				.getBundleFiles()
-				.stream()
-				.filter(ResourceFile::isDirectory)
-				.collect(Collectors.toList());
+			.getBundleFiles()
+			.stream()
+			.filter(ResourceFile::isDirectory)
+			.collect(Collectors.toList());
 
 		for (ResourceFile path : paths) {
 			File file = path.getFile(false);

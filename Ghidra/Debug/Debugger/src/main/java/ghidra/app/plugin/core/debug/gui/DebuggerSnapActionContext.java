@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.trace.model.Trace;
 
-public class DebuggerSnapActionContext extends ActionContext {
+public class DebuggerSnapActionContext extends DefaultActionContext {
 	private final Trace trace;
 	private final long snap;
 

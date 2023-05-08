@@ -24,7 +24,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import generic.theme.GIcon;
 import ghidra.program.database.ProgramBuilder;
@@ -721,7 +721,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setSelectionPaths(new TreePath[] { rsrcNode.getTreePath(), textNode.getTreePath() });
 
 		// cut Strings
-		runSwing(() -> cutAction.actionPerformed(new ActionContext()));
+		runSwing(() -> cutAction.actionPerformed(new DefaultActionContext()));
 
 		// select Strings (has no fragments)
 		ProgramNode stringsNode = root.getChild("Strings");

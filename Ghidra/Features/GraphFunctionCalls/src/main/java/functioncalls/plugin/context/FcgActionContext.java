@@ -15,14 +15,14 @@
  */
 package functioncalls.plugin.context;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import functioncalls.graph.FunctionCallGraph;
 import functioncalls.plugin.FcgProvider;
 
 /**
  * Context for the {@link FunctionCallGraph}
  */
-public class FcgActionContext extends ActionContext {
+public class FcgActionContext extends DefaultActionContext {
 
 	public FcgActionContext(FcgProvider provider) {
 		this(provider, null);

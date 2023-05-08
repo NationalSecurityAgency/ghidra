@@ -1345,7 +1345,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf action = getAction(plugin, "Byte Viewer Options");
 		assertTrue(action.isEnabled());
 
-		SwingUtilities.invokeLater(() -> action.actionPerformed(new ActionContext()));
+		SwingUtilities.invokeLater(() -> action.actionPerformed(new DefaultActionContext()));
 		waitForSwing();
 		ByteViewerOptionsDialog d = waitForDialogComponent(ByteViewerOptionsDialog.class);
 		return d;

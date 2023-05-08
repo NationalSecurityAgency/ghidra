@@ -75,8 +75,7 @@ public class PdbPlugin extends Plugin {
 
 	private void createActions() {
 		new ActionBuilder("Load PDB File", this.getName())
-			.supportsDefaultToolContext(true)
-			.withContext(ProgramActionContext.class)
+			.withContext(ProgramActionContext.class, true)
 			.validContextWhen(pac -> pac.getProgram() != null &&
 				PdbAnalyzerCommon.canAnalyzeProgram(pac.getProgram()))
 			.menuPath(ToolConstants.MENU_FILE, "Load PDB File...")

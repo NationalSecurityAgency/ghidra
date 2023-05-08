@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -411,6 +411,31 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	public void setDefaultComponent(ComponentProvider provider) {
 		winMgr.setDefaultComponent(provider);
+	}
+
+	/**
+	 * Registers an action context provider as the default provider for a specific action
+	 * context type. Note that this registers a default provider for exactly
+	 * that type and not a subclass of that type. If the provider want to support a hierarchy of
+	 * types, then it must register separately for each type. See {@link ActionContext} for details
+	 * on how the action context system works.
+	 * @param type the ActionContext class to register a default provider for
+	 * @param provider the ActionContextProvider that provides default tool context for actions
+	 * that consume the given ActionContext type
+	 */
+	public void registerDefaultContextProvider(Class<? extends ActionContext> type,
+			ActionContextProvider provider) {
+		winMgr.registerDefaultContextProvider(type, provider);
+	}
+
+	/**
+	 * Removes the default provider for the given ActionContext type.
+	 * @param type the subclass of ActionContext to remove a provider for
+	 * @param provider the ActionContextProvider to remove for the given ActionContext type
+	 */
+	public void unregisterDefaultContextProvider(Class<? extends ActionContext> type,
+			ActionContextProvider provider) {
+		winMgr.unregisterDefaultContextProvider(type, provider);
 	}
 
 	public ToolTemplate getToolTemplate(boolean includeConfigState) {
@@ -1027,7 +1052,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 		saveAsAction.setEnabled(true);
 		saveAsAction
-				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
+			.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
 
 		addAction(saveAction);
 		addAction(saveAsAction);
@@ -1053,7 +1078,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		menuData.setMenuSubGroup(Integer.toString(subGroup++));
 		exportToolAction.setMenuBarData(menuData);
 		exportToolAction
-				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
+			.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
 		addAction(exportToolAction);
 
 		DockingAction exportDefautToolAction =
@@ -1076,42 +1101,42 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void addHelpActions() {
 		new ActionBuilder("About Ghidra", ToolConstants.TOOL_OWNER)
-				.menuPath(ToolConstants.MENU_HELP, "&About Ghidra")
-				.menuGroup("ZZA")
-				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "About_Ghidra"))
-				.inWindow(ActionBuilder.When.ALWAYS)
-				.onAction(c -> DockingWindowManager.showDialog(new AboutDialog()))
-				.buildAndInstall(this);
+			.menuPath(ToolConstants.MENU_HELP, "&About Ghidra")
+			.menuGroup("ZZA")
+			.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "About_Ghidra"))
+			.inWindow(ActionBuilder.When.ALWAYS)
+			.onAction(c -> DockingWindowManager.showDialog(new AboutDialog()))
+			.buildAndInstall(this);
 
 		new ActionBuilder("User Agreement", ToolConstants.TOOL_OWNER)
-				.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
-				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
-				.inWindow(ActionBuilder.When.ALWAYS)
-				.onAction(
-					c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
-				.buildAndInstall(this);
+			.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
+			.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+			.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
+			.inWindow(ActionBuilder.When.ALWAYS)
+			.onAction(
+				c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
+			.buildAndInstall(this);
 
 		final ErrorReporter reporter = ErrLogDialog.getErrorReporter();
 		if (reporter != null) {
 			new ActionBuilder("Report Bug", ToolConstants.TOOL_OWNER)
-					.menuPath(ToolConstants.MENU_HELP, "&Report Bug...")
-					.menuGroup("BBB")
-					.helpLocation(new HelpLocation("ErrorReporting", "Report_Bug"))
-					.inWindow(ActionBuilder.When.ALWAYS)
-					.onAction(c -> reporter.report(getToolFrame(), "User Bug Report", null))
-					.buildAndInstall(this);
+				.menuPath(ToolConstants.MENU_HELP, "&Report Bug...")
+				.menuGroup("BBB")
+				.helpLocation(new HelpLocation("ErrorReporting", "Report_Bug"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> reporter.report(getToolFrame(), "User Bug Report", null))
+				.buildAndInstall(this);
 		}
 
 		HelpService help = Help.getHelpService();
 
 		new ActionBuilder("Contents", ToolConstants.TOOL_OWNER)
-				.menuPath(ToolConstants.MENU_HELP, "&Contents")
-				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-				.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
-				.inWindow(ActionBuilder.When.ALWAYS)
-				.onAction(c -> help.showHelp(null, false, getToolFrame()))
-				.buildAndInstall(this);
+			.menuPath(ToolConstants.MENU_HELP, "&Contents")
+			.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+			.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
+			.inWindow(ActionBuilder.When.ALWAYS)
+			.onAction(c -> help.showHelp(null, false, getToolFrame()))
+			.buildAndInstall(this);
 	}
 
 	/**
@@ -1488,11 +1513,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	public void removePreferenceState(String name) {
 		winMgr.removePreferenceState(name);
-	}
-
-	@Override
-	public ActionContext getDefaultToolContext() {
-		return winMgr.getDefaultToolContext();
 	}
 
 	@Override

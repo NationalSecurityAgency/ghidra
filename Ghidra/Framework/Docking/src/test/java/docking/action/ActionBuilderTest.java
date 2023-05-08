@@ -21,7 +21,7 @@ import javax.swing.KeyStroke;
 
 import org.junit.Test;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
 import resources.Icons;
 
@@ -31,18 +31,18 @@ public class ActionBuilderTest {
 	@Test
 	public void testDescription() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.description("foo")
-				.onAction(e -> actionCount++)
-				.build();
+			.description("foo")
+			.onAction(e -> actionCount++)
+			.build();
 		assertEquals("foo", action.getDescription());
 	}
 
 	@Test
 	public void testMenuPath() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.menuPath("foo", "bar")
-				.onAction(e -> actionCount++)
-				.build();
+			.menuPath("foo", "bar")
+			.onAction(e -> actionCount++)
+			.build();
 
 		MenuData data = action.getMenuBarData();
 		assertEquals("foo->bar", data.getMenuPathAsString());
@@ -51,10 +51,10 @@ public class ActionBuilderTest {
 	@Test
 	public void testMenuGroup() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.menuPath("foo", "bar")
-				.menuGroup("A", "B")
-				.onAction(e -> actionCount++)
-				.build();
+			.menuPath("foo", "bar")
+			.menuGroup("A", "B")
+			.onAction(e -> actionCount++)
+			.build();
 
 		MenuData data = action.getMenuBarData();
 		assertEquals("A", data.getMenuGroup());
@@ -64,10 +64,10 @@ public class ActionBuilderTest {
 	@Test
 	public void testMenuIcon() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.menuPath("foo", "bar")
-				.menuIcon(Icons.ADD_ICON)
-				.onAction(e -> actionCount++)
-				.build();
+			.menuPath("foo", "bar")
+			.menuIcon(Icons.ADD_ICON)
+			.onAction(e -> actionCount++)
+			.build();
 
 		MenuData data = action.getMenuBarData();
 		assertEquals(Icons.ADD_ICON, data.getMenuIcon());
@@ -76,10 +76,10 @@ public class ActionBuilderTest {
 	@Test
 	public void testMenuMnemonic() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.menuPath("foo", "bar")
-				.menuMnemonic(5)
-				.onAction(e -> actionCount++)
-				.build();
+			.menuPath("foo", "bar")
+			.menuMnemonic(5)
+			.onAction(e -> actionCount++)
+			.build();
 
 		MenuData data = action.getMenuBarData();
 		assertEquals(5, data.getMnemonic());
@@ -88,9 +88,9 @@ public class ActionBuilderTest {
 	@Test
 	public void testPopupPath() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.popupMenuPath("foo", "bar")
-				.onAction(e -> actionCount++)
-				.build();
+			.popupMenuPath("foo", "bar")
+			.onAction(e -> actionCount++)
+			.build();
 
 		MenuData data = action.getPopupMenuData();
 		assertEquals("foo->bar", data.getMenuPathAsString());
@@ -99,10 +99,10 @@ public class ActionBuilderTest {
 	@Test
 	public void testPopupGroup() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.popupMenuPath("foo", "bar")
-				.popupMenuGroup("A", "B")
-				.onAction(e -> actionCount++)
-				.build();
+			.popupMenuPath("foo", "bar")
+			.popupMenuGroup("A", "B")
+			.onAction(e -> actionCount++)
+			.build();
 
 		MenuData data = action.getPopupMenuData();
 		assertEquals("A", data.getMenuGroup());
@@ -112,10 +112,10 @@ public class ActionBuilderTest {
 	@Test
 	public void testPopupIcon() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.popupMenuPath("foo", "bar")
-				.popupMenuIcon(Icons.ADD_ICON)
-				.onAction(e -> actionCount++)
-				.build();
+			.popupMenuPath("foo", "bar")
+			.popupMenuIcon(Icons.ADD_ICON)
+			.onAction(e -> actionCount++)
+			.build();
 
 		MenuData data = action.getPopupMenuData();
 		assertEquals(Icons.ADD_ICON, data.getMenuIcon());
@@ -124,9 +124,9 @@ public class ActionBuilderTest {
 	@Test
 	public void testToolbarIcon() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.toolBarIcon(Icons.ADD_ICON)
-				.onAction(e -> actionCount++)
-				.build();
+			.toolBarIcon(Icons.ADD_ICON)
+			.onAction(e -> actionCount++)
+			.build();
 
 		ToolBarData data = action.getToolBarData();
 		assertEquals(Icons.ADD_ICON, data.getIcon());
@@ -135,10 +135,10 @@ public class ActionBuilderTest {
 	@Test
 	public void testToolbarGroup() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.toolBarIcon(Icons.ADD_ICON)
-				.toolBarGroup("A", "B")
-				.onAction(e -> actionCount++)
-				.build();
+			.toolBarIcon(Icons.ADD_ICON)
+			.toolBarGroup("A", "B")
+			.onAction(e -> actionCount++)
+			.build();
 
 		ToolBarData data = action.getToolBarData();
 		assertEquals("A", data.getToolBarGroup());
@@ -148,9 +148,9 @@ public class ActionBuilderTest {
 	@Test
 	public void testKeyBindingKeyStroke() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.keyBinding(KeyStroke.getKeyStroke("A"))
-				.onAction(e -> actionCount++)
-				.build();
+			.keyBinding(KeyStroke.getKeyStroke("A"))
+			.onAction(e -> actionCount++)
+			.build();
 
 		assertEquals(KeyStroke.getKeyStroke("A"), action.getKeyBinding());
 	}
@@ -158,9 +158,9 @@ public class ActionBuilderTest {
 	@Test
 	public void testKeyBindingKeyString() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.keyBinding("ALT A")
-				.onAction(e -> actionCount++)
-				.build();
+			.keyBinding("ALT A")
+			.onAction(e -> actionCount++)
+			.build();
 
 		assertEquals(KeyStroke.getKeyStroke("alt pressed A"), action.getKeyBinding());
 	}
@@ -168,26 +168,26 @@ public class ActionBuilderTest {
 	@Test
 	public void testOnAction() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.onAction(e -> actionCount = 6)
-				.build();
+			.onAction(e -> actionCount = 6)
+			.build();
 
 		assertEquals(0, actionCount);
-		action.actionPerformed(new ActionContext());
+		action.actionPerformed(new DefaultActionContext());
 		assertEquals(6, actionCount);
 	}
 
 	@Test
 	public void testEnabled() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.enabled(true)
-				.onAction(e -> actionCount++)
-				.build();
+			.enabled(true)
+			.onAction(e -> actionCount++)
+			.build();
 		assertTrue(action.isEnabled());
 
 		action = new ActionBuilder("Test", "Test")
-				.enabled(false)
-				.onAction(e -> actionCount++)
-				.build();
+			.enabled(false)
+			.onAction(e -> actionCount++)
+			.build();
 		assertFalse(action.isEnabled());
 
 	}
@@ -195,63 +195,63 @@ public class ActionBuilderTest {
 	@Test
 	public void testEnabledWhen() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.enabledWhen(c -> c.getContextObject() == this)
-				.onAction(e -> actionCount++)
-				.build();
+			.enabledWhen(c -> c.getContextObject() == this)
+			.onAction(e -> actionCount++)
+			.build();
 
-		assertTrue(action.isEnabledForContext(new ActionContext(null, this, null)));
-		assertFalse(action.isEnabledForContext(new ActionContext()));
+		assertTrue(action.isEnabledForContext(new DefaultActionContext(null, this, null)));
+		assertFalse(action.isEnabledForContext(new DefaultActionContext()));
 	}
 
 	@Test
 	public void testValidContextWhen() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.validContextWhen(c -> c.getContextObject() == this)
-				.onAction(e -> actionCount++)
-				.build();
+			.validContextWhen(c -> c.getContextObject() == this)
+			.onAction(e -> actionCount++)
+			.build();
 
-		assertTrue(action.isValidContext(new ActionContext(null, this, null)));
-		assertFalse(action.isValidContext(new ActionContext()));
+		assertTrue(action.isValidContext(new DefaultActionContext(null, this, null)));
+		assertFalse(action.isValidContext(new DefaultActionContext()));
 	}
 
 	@Test
 	public void testPopupWhen() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.popupWhen(c -> c.getContextObject() == this)
-				.onAction(e -> actionCount++)
-				.build();
+			.popupWhen(c -> c.getContextObject() == this)
+			.onAction(e -> actionCount++)
+			.build();
 
-		assertTrue(action.isAddToPopup(new ActionContext(null, this, null)));
-		assertFalse(action.isAddToPopup(new ActionContext()));
+		assertTrue(action.isAddToPopup(new DefaultActionContext(null, this, null)));
+		assertFalse(action.isAddToPopup(new DefaultActionContext()));
 	}
 
 	@Test
 	public void testWithContext() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.withContext(FooActionContext.class)
-				.enabledWhen(c -> c.foo())
-				.onAction(e -> actionCount++)
-				.build();
+			.withContext(FooActionContext.class)
+			.enabledWhen(c -> c.foo())
+			.onAction(e -> actionCount++)
+			.build();
 
-		assertFalse(action.isEnabledForContext(new ActionContext()));
+		assertFalse(action.isEnabledForContext(new DefaultActionContext()));
 		assertTrue(action.isEnabledForContext(new FooActionContext()));
 	}
 
 	@Test
 	public void testManualEnablement() {
 		DockingAction action = new ActionBuilder("Test", "Test")
-				.onAction(e -> actionCount++)
-				.enabled(false)
-				.build();
+			.onAction(e -> actionCount++)
+			.enabled(false)
+			.build();
 
-		assertFalse(action.isEnabledForContext(new ActionContext()));
+		assertFalse(action.isEnabledForContext(new DefaultActionContext()));
 		action.setEnabled(true);
-		assertTrue(action.isEnabledForContext(new ActionContext()));
+		assertTrue(action.isEnabledForContext(new DefaultActionContext()));
 		action.setEnabled(true);
-		assertTrue(action.isEnabledForContext(new ActionContext()));
+		assertTrue(action.isEnabledForContext(new DefaultActionContext()));
 	}
 
-	static class FooActionContext extends ActionContext {
+	static class FooActionContext extends DefaultActionContext {
 		public boolean foo() {
 			return true;
 		}

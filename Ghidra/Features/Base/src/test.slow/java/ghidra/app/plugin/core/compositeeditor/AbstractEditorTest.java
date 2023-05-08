@@ -29,7 +29,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.DockingDialog;
 import docking.action.DockingActionIf;
 import docking.widgets.dialogs.NumberInputDialog;
@@ -320,7 +320,7 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 			Msg.debug(this, "Calling actionPerformed() on a disabled action: " + action.getName(),
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
-		runSwing(() -> action.actionPerformed(new ActionContext()), wait);
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()), wait);
 		waitForSwing();
 	}
 

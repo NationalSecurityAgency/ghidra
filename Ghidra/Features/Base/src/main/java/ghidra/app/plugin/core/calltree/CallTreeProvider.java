@@ -23,8 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.*;
 import docking.resources.icons.NumberIcon;
 import docking.widgets.dialogs.NumberInputDialog;
@@ -352,7 +351,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			}
 		};
 		goToSourceAction
-				.setPopupMenuData(new MenuData(new String[] { "Go To Call Source" }, goToMenu));
+			.setPopupMenuData(new MenuData(new String[] { "Go To Call Source" }, goToMenu));
 		goToSourceAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Context_Action_Goto_Source"));
 		tool.addLocalAction(this, goToSourceAction);
@@ -367,11 +366,11 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			}
 		};
 		filterDuplicates
-				.setToolBarData(new ToolBarData(new GIcon("icon.plugin.calltree.filter.duplicates"),
-					filterOptionsToolbarGroup, "1"));
+			.setToolBarData(new ToolBarData(new GIcon("icon.plugin.calltree.filter.duplicates"),
+				filterOptionsToolbarGroup, "1"));
 		filterDuplicates.setSelected(true);
 		filterDuplicates
-				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter"));
+			.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter"));
 		tool.addLocalAction(this, filterDuplicates);
 
 		//
@@ -395,7 +394,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				"<br> will go.  Example operations include <b>Expand All</b> and filtering");
 		recurseIcon = new NumberIcon(recurseDepth.get());
 		recurseDepthAction
-				.setToolBarData(new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "2"));
+			.setToolBarData(new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "2"));
 		recurseDepthAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Action_Recurse_Depth"));
 
@@ -416,7 +415,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		navigationOutgoingAction.setToolBarData(new ToolBarData(
 			Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON, navigationOptionsToolbarGroup, "1"));
 		navigationOutgoingAction
-				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Navigation"));
+			.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Navigation"));
 		tool.addLocalAction(this, navigationOutgoingAction);
 
 		//
@@ -597,7 +596,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		refreshAction.setDescription("<html>Push at any time to refresh the current trees.<br>" +
 			"This is highlighted when the data <i>may</i> be stale.<br>");
 		refreshAction
-				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Refresh"));
+			.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Refresh"));
 		tool.addLocalAction(this, refreshAction);
 
 		//
@@ -712,7 +711,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	@Override
 	public ActionContext getActionContext(MouseEvent e) {
 		if (e == null) {
-			return new ActionContext(this, getActiveComponent());
+			return new DefaultActionContext(this, getActiveComponent());
 		}
 
 		Object source = e.getSource();
@@ -722,7 +721,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			if (outgoingTree.isMyJTree(jTree)) {
 				gTree = outgoingTree;
 			}
-			return new ActionContext(this, gTree);
+			return new DefaultActionContext(this, gTree);
 		}
 
 		return null;

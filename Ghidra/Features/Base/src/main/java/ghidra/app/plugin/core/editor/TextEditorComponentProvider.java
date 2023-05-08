@@ -26,8 +26,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.undo.UndoableEdit;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontEditor;
@@ -256,7 +255,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 		ActionContextProvider acp = e -> {
 			ComponentProvider p = TextEditorComponentProvider.this;
-			return new ActionContext(p);
+			return new DefaultActionContext(p);
 		};
 
 		KeyBindingUtils.registerAction(textarea, saveAction, acp);

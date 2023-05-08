@@ -28,7 +28,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.Test;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -456,7 +456,7 @@ public class DiffTest extends DiffTestAdapter {
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
 
-		runSwing(() -> replaceView.actionPerformed(new ActionContext()));
+		runSwing(() -> replaceView.actionPerformed(new DefaultActionContext()));
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -482,11 +482,11 @@ public class DiffTest extends DiffTestAdapter {
 		JTree tree = getProgramTree();
 		selectTreeNodeByText(tree, ".data");
 
-		runSwing(() -> replaceView.actionPerformed(new ActionContext()));
+		runSwing(() -> replaceView.actionPerformed(new DefaultActionContext()));
 
 		selectTreeNodeByText(tree, ".rsrc");
 
-		runSwing(() -> goToView.actionPerformed(new ActionContext()));
+		runSwing(() -> goToView.actionPerformed(new DefaultActionContext()));
 
 		topOfFile(fp1);
 		assertEquals(addr("1008000"), cb.getCurrentAddress());
@@ -874,7 +874,7 @@ public class DiffTest extends DiffTestAdapter {
 	private void clickDiffButton() {
 		runSwing(() -> {
 			openClosePgm2.setSelected(!openClosePgm2.isSelected());
-			openClosePgm2.actionPerformed(new ActionContext());
+			openClosePgm2.actionPerformed(new DefaultActionContext());
 		}, false);
 		waitForSwing();
 	}

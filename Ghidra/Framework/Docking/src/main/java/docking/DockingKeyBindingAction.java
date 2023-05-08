@@ -68,7 +68,7 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 
 	protected ActionContext getLocalContext(ComponentProvider localProvider) {
 		if (localProvider == null) {
-			return new ActionContext();
+			return new DefaultActionContext();
 		}
 
 		ActionContext actionContext = localProvider.getActionContext(null);
@@ -76,6 +76,6 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 			return actionContext;
 		}
 
-		return new ActionContext(localProvider, null);
+		return new DefaultActionContext(localProvider, null);
 	}
 }

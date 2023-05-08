@@ -27,7 +27,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -274,7 +274,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
 			currentComponent.keyPressed(ev, loc.getIndex(), loc.getFieldNum(), loc.getRow(),
@@ -417,7 +417,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
@@ -463,7 +463,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 
 			KeyEvent ev =
 				new KeyEvent(currentComponent, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
@@ -821,7 +821,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		final DockingActionIf action = getAction(plugin, "Byte Viewer Options");
 		assertTrue(action.isEnabled());
 
-		runSwing(() -> action.actionPerformed(new ActionContext()), false);
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()), false);
 		waitForSwing();
 		ByteViewerOptionsDialog d = waitForDialogComponent(ByteViewerOptionsDialog.class);
 		return d;

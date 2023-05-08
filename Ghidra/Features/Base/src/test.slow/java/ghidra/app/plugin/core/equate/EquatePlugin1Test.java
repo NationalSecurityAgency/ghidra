@@ -25,8 +25,7 @@ import javax.swing.table.TableModel;
 
 import org.junit.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
@@ -673,7 +672,7 @@ public class EquatePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		env.close(program);
 
-		assertFalse(setAction.isEnabledForContext(new ActionContext()));
+		assertFalse(setAction.isEnabledForContext(new DefaultActionContext()));
 	}
 
 	/*

@@ -275,14 +275,14 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf deleteAction = getAction(plugin, "Delete Enum Value");
 		assertTrue(deleteAction.isEnabled());
 
-		runSwing(() -> deleteAction.actionPerformed(new ActionContext()));
+		runSwing(() -> deleteAction.actionPerformed(new DefaultActionContext()));
 		waitForSwing();
 		assertTrue(table.isRowSelected(3));
 
 		final DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
 
-		runSwing(() -> applyAction.actionPerformed(new ActionContext()));
+		runSwing(() -> applyAction.actionPerformed(new DefaultActionContext()));
 		program.flushEvents();
 		waitForSwing();
 
@@ -304,7 +304,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int i = 0; i < count; i++) {
 
-			runSwing(() -> deleteAction.actionPerformed(new ActionContext()));
+			runSwing(() -> deleteAction.actionPerformed(new DefaultActionContext()));
 			waitForSwing();
 		}
 		assertEquals(0, model.getRowCount());
@@ -326,7 +326,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int i = 0; i < count; i++) {
 
-			runSwing(() -> deleteAction.actionPerformed(new ActionContext()));
+			runSwing(() -> deleteAction.actionPerformed(new DefaultActionContext()));
 			waitForSwing();
 		}
 		applyChanges(true);
@@ -352,7 +352,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int i = 0; i < count; i++) {
 
-			runSwing(() -> deleteAction.actionPerformed(new ActionContext()));
+			runSwing(() -> deleteAction.actionPerformed(new DefaultActionContext()));
 			waitForSwing();
 		}
 
@@ -387,7 +387,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int i = 0; i < count; i++) {
 
-			runSwing(() -> deleteAction.actionPerformed(new ActionContext()));
+			runSwing(() -> deleteAction.actionPerformed(new DefaultActionContext()));
 			waitForSwing();
 		}
 
@@ -416,7 +416,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int i = 0; i < count; i++) {
 
-			runSwing(() -> deleteAction.actionPerformed(new ActionContext()));
+			runSwing(() -> deleteAction.actionPerformed(new DefaultActionContext()));
 			waitForSwing();
 		}
 
@@ -448,7 +448,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf deleteAction = getAction(plugin, "Delete Enum Value");
 		assertTrue(deleteAction.isEnabled());
 
-		runSwing(() -> deleteAction.actionPerformed(new ActionContext()));
+		runSwing(() -> deleteAction.actionPerformed(new DefaultActionContext()));
 		waitForSwing();
 
 		assertTrue(table.isRowSelected(0));
@@ -456,7 +456,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
 
-		runSwing(() -> applyAction.actionPerformed(new ActionContext()));
+		runSwing(() -> applyAction.actionPerformed(new DefaultActionContext()));
 		program.flushEvents();
 		waitForSwing();
 
@@ -635,7 +635,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		table.setRowSelectionInterval(0, 0);
 		runSwing(() -> {
 			DockingActionIf action = getAction(plugin, "Delete Enum Value");
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		applyChanges(true);
 		assertNull(enumDt.getName(0));
@@ -660,16 +660,16 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		int origRowCount = model.getRowCount();
 		runSwing(() -> {
 			DockingActionIf action = getAction(plugin, "Add Enum Value");
-			action.actionPerformed(new ActionContext());
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
 		applyChanges(true);
 		// make more changes
 		runSwing(() -> {
 			DockingActionIf action = getAction(plugin, "Add Enum Value");
-			action.actionPerformed(new ActionContext());
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
 		undo(false);
@@ -698,8 +698,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 				table.addRowSelectionInterval(lastRow, lastRow);
 			}
 			DockingActionIf action = getAction(plugin, "Add Enum Value");
-			action.actionPerformed(new ActionContext());
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
 		applyChanges(true);
@@ -710,8 +710,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 				table.addRowSelectionInterval(lastRow, lastRow);
 			}
 			DockingActionIf action = getAction(plugin, "Add Enum Value");
-			action.actionPerformed(new ActionContext());
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
 		int rowCount = model.getRowCount();
@@ -784,7 +784,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 				table.addRowSelectionInterval(lastRow, lastRow);
 			}
 			DockingActionIf addAction = getAction(plugin, "Add Enum Value");
-			addAction.actionPerformed(new ActionContext());
+			addAction.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
 		final int newRow = model.getRowCount() - 1;
@@ -823,7 +823,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		final DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
-		Runnable r = () -> applyAction.actionPerformed(new ActionContext());
+		Runnable r = () -> applyAction.actionPerformed(new DefaultActionContext());
 		if (doWait) {
 			runSwing(r);
 			program.flushEvents();

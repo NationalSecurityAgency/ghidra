@@ -25,8 +25,7 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import docking.ActionContext;
-import docking.ComponentProviderActivationListener;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.table.AbstractSortedTableModel;
@@ -156,7 +155,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
 		selectionNavigationAction
-				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+			.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
 		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
 			@Override
@@ -394,7 +393,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, threadedPanel.getTable());
+		return new DefaultActionContext(this, threadedPanel.getTable());
 	}
 
 }

@@ -21,28 +21,47 @@ import java.awt.event.*;
 import docking.action.DockingActionIf;
 
 /**
- * Action context is a class that contains state information that is given to 
- * {@link DockingActionIf}s for them to decide if they are enabled for a given user action.  User
- * actions are toolbar button presses, menu bar item presses and popup menu item presses.   As
- * the user changes focus in the system, all actions are queried with the current context.  Thus,
- * <b>toolbar buttons and menu items will enable and disable as the user interacts with the system.
- * Further, popup menu items will not be added to popup menus when they report false for 
- * {@link DockingActionIf#isAddToPopup(ActionContext)}; they will appear in the popup, but be 
- * disabled if they report <code>true</code> for the above call, but <code>false</code> for 
- * {@link DockingActionIf#isEnabledForContext(ActionContext)}.</b>
- * When the user executes an action, the current context will be passed to the backing 
- * {@link DockingActionIf}.   Ultimately, context serves to control action enablement and to 
- * allow plugins to share state with actions without having to store that state information 
- * in class fields of the plugin.
+ * ActionContext is an interface used by {@link DockingActionIf}s that contains tool and
+ * plugin state information that allows an action to operate. Actions can use the context to get the
+ * information it needs to perform its intended purpose. Context is also used to determine if
+ * an action should be enabled, should be added to a popup menu, or if it is even valid for the 
+ * current context.
  * 
- * <p>ComponentProviders are required to return Objects of this type in their getActionContext()
- * methods.  Generally, ComponentProviders have two ways to use this class.  They can either create
- * an ActionContext instance and pass in a contextObject that will be useful to its actions or,
- * subclass the ActionContext object to include specific methods to provide the information that
- * actions will require. 
+ * <P>
+ * The concept of an action being valid or invalid is critical to how the action system works. The
+ * reason is that actions can get their context from two different sources. The first
+ * source of action context is the current active (focused) {@link ComponentProvider}. This is
+ * always the preferred source of context for an action. However, if that context is not valid
+ * for an action, the action has the option of specifying that it works on default context. In this
+ * case, the tool will use the action's declared context type to see if anyone has registered a
+ * default  provider for that type. If so, the action will be given that context 
+ * to work on instead of the active context.
+ *
+ * <P>
+ * Whenever the user moves the focus around by clicking on different components or locations in 
+ * the tool, all actions are given the opportunity to change their enablement state. The tool 
+ * calls each action's {@link DockingActionIf#isEnabledForContext(ActionContext)} method
+ * with the new active context (or default context as explained above).  Thus, toolbar 
+ * buttons and menu items will enable and disable as the user interacts with the system.
+ *
+ * <P>
+ * When the user executes an action, the current context will be passed to the 
+ * {@link DockingActionIf}, again using a possible default context if the active context isn't valid
+ * for that action.  Ultimately, context serves to manage actions and to 
+ * allow plugins to share state with actions without them being directly coupled together.
+
+ * <P>
+ * {@link ComponentProvider}s are required to return ActionContext objects in their 
+ * {@link ComponentProvider#getActionContext(MouseEvent)} methods.  Generally, ComponentProviders 
+ * have two ways to use this class. They can either create an {@link DefaultActionContext} instance
+ * and pass in a contextObject that will be useful to its actions or, subclass the ActionContext
+ * object to include specific methods to provide the information that actions will require. If 
+ * actions want to work with default context, then they must declare a action context type that is
+ * more specific than just ActionContext.
  * 
- * <p>The data contained by this class has meaning that can change relative to the code that
- * created it.  The intended purpose for the fields of this class is as follows:
+ * <P>
+ * The generic data that all instances of ActionContxt provide is as follows:
+ * 
  * <ul>
  * 	<li><b>provider</b> - the component provider to which this context belongs; the provider that
  *                        contains the component that is the source of the user action
@@ -68,101 +87,19 @@ import docking.action.DockingActionIf;
  *                          triggered by a key binding.
  *  </li>
  * </ul>
- * 
- * <p>Ultimately, clients can pass any values they wish for the fields of this class, even if 
- * that changes the meaning of the fields outlined above.
+ * <P>
+ * Typically, component providers will define more specific types of ActionContext where they 
+ * can include any additional information that an action might need to work with that component.
  */
+public interface ActionContext {
 
-public class ActionContext {
-	private ComponentProvider provider;
-	private MouseEvent mouseEvent;
-	private Object contextObject;
-	private Object sourceObject;
-	private int eventClickModifiers;
-	private ActionContext globalContext;
-
-	// Note: the setting of this object is delayed.  This allows clients to build-up the state
-	//       of this context.  This object will be set when getSourceComponent() is called if it
-	//       has not already been set.
-	private Component sourceComponent;
-
-	public ActionContext() {
-		this(null, null);
-	}
-
-	public ActionContext(ComponentProvider cp) {
-		this(cp, null);
-	}
-
-	/** 
-	 * Basic constructor for ActionContext
-	 * @param provider the ComponentProvider that generated this context.
-	 * @param sourceComponent an optional source object; this is intended to be the component that
-	 *        is the source of the context, usually the focused component
-	 */
-	public ActionContext(ComponentProvider provider, Component sourceComponent) {
-		this(provider, sourceComponent, sourceComponent);
-	}
-
-	/**
-	 * Constructor
-	 * 
-	 * @param provider the ComponentProvider that generated this context.
-	 * @param contextObject an optional contextObject that the ComponentProvider can provide; this 
-	 *        can be anything that actions wish to later retrieve
-	 * @param sourceComponent an optional source object; this is intended to be the component that
-	 *        is the source of the context, usually the focused component
-	 */
-	public ActionContext(ComponentProvider provider, Object contextObject,
-			Component sourceComponent) {
-		this.provider = provider;
-		this.contextObject = contextObject;
-		this.sourceObject = sourceComponent;
-		this.sourceComponent = sourceComponent;
-	}
-
-	private void lazyDeriveSourceComponent() {
-
-		if (sourceComponent != null) {
-			// Do not allow this to change once set.  This prevents the value from getting changed
-			// when the user clicks a menu item.
-			return;
-		}
-
-		// check this in order of preference
-		if (sourceObject instanceof Component) {
-			sourceComponent = (Component) sourceObject;
-			return;
-		}
-
-		if (mouseEvent != null) {
-			sourceComponent = mouseEvent.getComponent();
-			return;
-		}
-
-		if (contextObject instanceof Component) {
-			sourceComponent = (Component) contextObject;
-		}
-	}
-
-	/**
-	 * Returns the {@link ComponentProvider} that generated this ActionContext
-	 * @return the provider
-	 */
-	public ComponentProvider getComponentProvider() {
-		return provider;
-	}
+	public ComponentProvider getComponentProvider();
 
 	/**
 	 * Returns the object that was included by the ComponentProvider when this context was created.
 	 * @return the object that was included by the ComponentProvider when this context was created.
 	 */
-	public Object getContextObject() {
-		if (contextObject != null) {
-			return contextObject;
-		}
-		return this;
-	}
+	public Object getContextObject();
 
 	/**
 	 * Sets the context object for this context.  This can be any object of the creator's 
@@ -171,18 +108,13 @@ public class ActionContext {
 	 * @param contextObject Sets the context object for this context.
 	 * @return this context
 	 */
-	public ActionContext setContextObject(Object contextObject) {
-		this.contextObject = contextObject;
-		return this;
-	}
+	public ActionContext setContextObject(Object contextObject);
 
 	/**
 	 * Returns the sourceObject from the actionEvent that triggered this context to be generated.
 	 * @return the sourceObject from the actionEvent that triggered this context to be generated.
 	 */
-	public Object getSourceObject() {
-		return sourceObject;
-	}
+	public Object getSourceObject();
 
 	/**
 	 * Sets the modifiers for this event that were present when the item was clicked on.
@@ -190,9 +122,7 @@ public class ActionContext {
 	 * @param modifiers bit-masked int, see {@link ActionEvent#getModifiers()} or
 	 * {@link MouseEvent#getModifiersEx()}
 	 */
-	public void setEventClickModifiers(int modifiers) {
-		this.eventClickModifiers = modifiers;
-	}
+	public void setEventClickModifiers(int modifiers);
 
 	/**
 	 * Returns the click modifiers for this event.
@@ -202,9 +132,7 @@ public class ActionContext {
 	 * 
 	 * @return bit-masked int, see {@link InputEvent#SHIFT_MASK}, etc
 	 */
-	public int getEventClickModifiers() {
-		return eventClickModifiers;
-	}
+	public int getEventClickModifiers();
 
 	/**
 	 * Tests the click modifiers for this event to see if they contain any bit from the
@@ -213,9 +141,7 @@ public class ActionContext {
 	 * @param modifiersMask bitmask to test
 	 * @return boolean true if any bit in the eventClickModifiers matches the mask
 	 */
-	public boolean hasAnyEventClickModifiers(int modifiersMask) {
-		return (eventClickModifiers & modifiersMask) != 0;
-	}
+	public boolean hasAnyEventClickModifiers(int modifiersMask);
 
 	/**
 	 * Sets the sourceObject for this ActionContext.  This method is used internally by the 
@@ -225,10 +151,7 @@ public class ActionContext {
 	 * @param sourceObject the source object
 	 * @return this context
 	 */
-	public ActionContext setSourceObject(Object sourceObject) {
-		this.sourceObject = sourceObject;
-		return this;
-	}
+	public ActionContext setSourceObject(Object sourceObject);
 
 	/**
 	 * Updates the context's mouse event.  Contexts that are based upon key events will have no 
@@ -238,13 +161,7 @@ public class ActionContext {
 	 * @param e the event that triggered this context.
 	 * @return this context
 	 */
-	public ActionContext setMouseEvent(MouseEvent e) {
-		if (e != null) {
-			this.mouseEvent = e;
-			this.eventClickModifiers = e.getModifiersEx();
-		}
-		return this;
-	}
+	public ActionContext setMouseEvent(MouseEvent e);
 
 	/**
 	 * Returns the context's mouse event.  Contexts that are based upon key events will have no 
@@ -252,9 +169,7 @@ public class ActionContext {
 	 * 
 	 * @return the mouse event that triggered this context; null implies a key event-based context
 	 */
-	public MouseEvent getMouseEvent() {
-		return mouseEvent;
-	}
+	public MouseEvent getMouseEvent();
 
 	/**
 	 * Returns the component that is the target of this context.   This value should not change
@@ -262,48 +177,6 @@ public class ActionContext {
 	 *   
 	 * @return the component; may be null
 	 */
-	public Component getSourceComponent() {
-		lazyDeriveSourceComponent();
-		return sourceComponent;
-	}
-
-	@Override
-	public String toString() {
-
-		//@formatter:off
-		return "{\n" +
-			"\tprovider: " + provider + ",\n" + 
-			"\tcontextObject: " + contextObject + ",\n" +
-			"\tsourceObject: " + sourceObject + ",\n" +
-			"\tsourceComponent: " + sourceComponent + ",\n" +
-			"\tmouseEvent: " + mouseEvent + "\n" +
-		"}";
-		//@formatter:on
-	}
-
-	/**
-	 * Returns the global action context for the tool.  The global context is the context of
-	 * the default focused component, instead of the normal action context which is the current
-	 * focused component.
-	 * @return  the global action context for the tool
-	 */
-	public ActionContext getGlobalContext() {
-		if (globalContext == null) {
-			Tool tool = getTool();
-			globalContext = tool == null ? new ActionContext() : tool.getDefaultToolContext();
-		}
-		return globalContext;
-	}
-
-	private Tool getTool() {
-		if (provider != null) {
-			return provider.getTool();
-		}
-		DockingWindowManager manager = DockingWindowManager.getActiveInstance();
-		if (manager != null) {
-			return manager.getTool();
-		}
-		return null;
-	}
+	public Component getSourceComponent();
 
 }

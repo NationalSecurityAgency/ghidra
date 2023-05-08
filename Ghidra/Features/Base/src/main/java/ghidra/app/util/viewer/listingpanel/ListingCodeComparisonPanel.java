@@ -1561,8 +1561,8 @@ public class ListingCodeComparisonPanel
 		if (programs[LEFT] != null) {
 			AddressIndexMap indexMap = listingPanels[LEFT].getAddressIndexMap();
 			listingPanels[LEFT].getFieldPanel()
-					.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
-						markerManagers[LEFT], programs[LEFT], indexMap));
+				.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
+					markerManagers[LEFT], programs[LEFT], indexMap));
 			unmatchedCodeMarkers[LEFT] =
 				markerManagers[LEFT].createAreaMarker("Listing1 Unmatched Code",
 					"Instructions that are not matched to an instruction in the other function.",
@@ -1575,8 +1575,8 @@ public class ListingCodeComparisonPanel
 		if (programs[RIGHT] != null) {
 			AddressIndexMap rightIndexMap = listingPanels[RIGHT].getAddressIndexMap();
 			listingPanels[RIGHT].getFieldPanel()
-					.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
-						markerManagers[RIGHT], programs[RIGHT], rightIndexMap));
+				.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
+					markerManagers[RIGHT], programs[RIGHT], rightIndexMap));
 			unmatchedCodeMarkers[RIGHT] =
 				markerManagers[RIGHT].createAreaMarker("Listing2 Unmatched Code",
 					"Instructions that are not matched to an instruction in the other function.",
@@ -1676,8 +1676,8 @@ public class ListingCodeComparisonPanel
 		indexMaps[LEFT] = new AddressIndexMap(addressSets[LEFT]);
 		markerManagers[LEFT].getOverviewProvider().setProgram(getLeftProgram(), indexMaps[LEFT]);
 		listingPanels[LEFT].getFieldPanel()
-				.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(markerManagers[LEFT],
-					programs[LEFT], indexMaps[LEFT]));
+			.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(markerManagers[LEFT],
+				programs[LEFT], indexMaps[LEFT]));
 	}
 
 	private void updateRightAddressSet(Function rightFunction) {
@@ -1693,8 +1693,8 @@ public class ListingCodeComparisonPanel
 		indexMaps[RIGHT] = new AddressIndexMap(addressSets[RIGHT]);
 		markerManagers[RIGHT].getOverviewProvider().setProgram(getRightProgram(), indexMaps[RIGHT]);
 		listingPanels[RIGHT].getFieldPanel()
-				.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
-					markerManagers[RIGHT], programs[RIGHT], indexMaps[RIGHT]));
+			.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
+				markerManagers[RIGHT], programs[RIGHT], indexMaps[RIGHT]));
 	}
 
 	@Override
@@ -2085,18 +2085,18 @@ public class ListingCodeComparisonPanel
 
 		Object leftMarginContext = getContextForMarginPanels(leftPanel, event);
 		if (leftMarginContext != null) {
-			return new ActionContext(provider).setContextObject(leftMarginContext);
+			return new DefaultActionContext(provider).setContextObject(leftMarginContext);
 		}
 		Object rightMarginContext = getContextForMarginPanels(rightPanel, event);
 		if (rightMarginContext != null) {
-			return new ActionContext(provider).setContextObject(rightMarginContext);
+			return new DefaultActionContext(provider).setContextObject(rightMarginContext);
 		}
 
 		Object source = event.getSource();
 		if (source instanceof FieldHeaderComp) {
 			FieldHeaderLocation fieldHeaderLocation =
 				leftPanel.getFieldHeader().getFieldHeaderLocation(event.getPoint());
-			return new ActionContext(provider).setContextObject(fieldHeaderLocation);
+			return new DefaultActionContext(provider).setContextObject(fieldHeaderLocation);
 		}
 
 		Navigatable focusedNavigatable = dualListingPanel.getFocusedNavigatable();
@@ -2689,13 +2689,15 @@ public class ListingCodeComparisonPanel
 			// Are we on a marker margin of the left listing? Return that margin's context.
 			Object sourceMarginContextObject = getContextObjectForMarginPanels(sourcePanel, event);
 			if (sourceMarginContextObject != null) {
-				return new ActionContext(provider).setContextObject(sourceMarginContextObject);
+				return new DefaultActionContext(provider)
+					.setContextObject(sourceMarginContextObject);
 			}
 			// Are we on a marker margin of the right listing? Return that margin's context.
 			Object destinationMarginContextObject =
 				getContextObjectForMarginPanels(destinationPanel, event);
 			if (destinationMarginContextObject != null) {
-				return new ActionContext(provider).setContextObject(destinationMarginContextObject);
+				return new DefaultActionContext(provider)
+					.setContextObject(destinationMarginContextObject);
 			}
 
 			// If the action is on the Field Header of the left listing panel return an
@@ -2703,7 +2705,7 @@ public class ListingCodeComparisonPanel
 			if (sourceComponent instanceof FieldHeaderComp) {
 				FieldHeaderLocation fieldHeaderLocation =
 					sourcePanel.getFieldHeader().getFieldHeaderLocation(event.getPoint());
-				return new ActionContext(provider).setContextObject(fieldHeaderLocation);
+				return new DefaultActionContext(provider).setContextObject(fieldHeaderLocation);
 			}
 		}
 		return null;

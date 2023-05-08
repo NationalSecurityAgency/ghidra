@@ -25,6 +25,7 @@ import javax.swing.Action;
 import javax.swing.Icon;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.ActionContextProvider;
 import docking.action.DockingActionIf;
 
@@ -121,7 +122,7 @@ public class ActionAdapter implements Action, PropertyChangeListener {
 			context = contextProvider.getActionContext(null);
 		}
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 			context.setSourceObject(e.getSource());
 		}
 		if (dockingAction.isEnabledForContext(context)) {

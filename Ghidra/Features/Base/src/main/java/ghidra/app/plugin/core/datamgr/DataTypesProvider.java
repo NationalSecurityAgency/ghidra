@@ -26,8 +26,7 @@ import javax.swing.event.*;
 import javax.swing.event.HyperlinkEvent.EventType;
 import javax.swing.tree.TreePath;
 
-import docking.ActionContext;
-import docking.DockingWindowManager;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.event.mouse.GMouseListenerAdapter;
@@ -348,7 +347,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			Object source = event.getSource();
 			if (source instanceof JTextField || source instanceof JTextPane) {
 				Component component = (Component) source;
-				return new ActionContext(this, source, component);
+				return new DefaultActionContext(this, source, component);
 			}
 
 			Point point = event.getPoint();
@@ -493,8 +492,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		previewScrollPane = new JScrollPane(previewPane);
 
 		DockingWindowManager.getHelpService()
-				.registerHelp(previewScrollPane,
-					new HelpLocation("DataTypeManagerPlugin", "Preview_Window"));
+			.registerHelp(previewScrollPane,
+				new HelpLocation("DataTypeManagerPlugin", "Preview_Window"));
 	}
 
 	private DataType locateDataType(HyperlinkEvent event) {

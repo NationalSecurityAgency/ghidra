@@ -858,7 +858,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 							  new Object[] { minCrossState });
 		//@formatter:on
 
-		runSwing(() -> action.actionPerformed(new ActionContext()));
+		runSwing(() -> action.actionPerformed(new DefaultActionContext()));
 
 		// wait for the threaded graph layout code
 		FGController controller = getFunctionGraphController();
