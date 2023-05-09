@@ -366,9 +366,7 @@ public class DecompileOptions {
 	private final static GColor HIGHLIGHT_DEFAULT_COLOR =  new GColor("color.fg.decompiler");
 
 	private static final String SEARCH_HIGHLIGHT_MSG = "Display.Color for Highlighting Find Matches";
-	private static final GColor SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.decompiler.highlights.search");
-
-
+	private static final GColor SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.decompiler.highlights.find");
 	//@formatter:on
 
 	private static final String BACKGROUND_COLOR_MSG = "Display.Background Color";
@@ -906,7 +904,7 @@ public class DecompileOptions {
 	}
 
 	/**
-	 * @return color used on tokens that need to warn of an error or other unusual conditions 
+	 * @return color used on tokens that need to warn of an error or other unusual conditions
 	 */
 	public Color getErrorColor() {
 		return ERROR_COLOR;
