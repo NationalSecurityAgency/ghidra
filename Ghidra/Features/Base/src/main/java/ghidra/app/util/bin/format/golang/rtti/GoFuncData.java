@@ -33,7 +33,7 @@ import ghidra.util.exception.InvalidInputException;
 @StructureMapping(structureName = "runtime._func")
 public class GoFuncData implements StructureMarkup<GoFuncData> {
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoFuncData> context;

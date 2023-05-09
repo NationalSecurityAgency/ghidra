@@ -26,7 +26,8 @@ import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -84,13 +85,13 @@ public class GoPcHeader {
 	 * Searches (possibly slowly) for a pclntab structure in the specified memory range, which
 	 * is typically necessary in stripped PE binaries.
 	 * 
-	 * @param programContext {@link GoRttiContext} 
+	 * @param programContext {@link GoRttiMapper} 
 	 * @param range memory range to search (typically .rdata or .noptrdata sections)
 	 * @param monitor {@link TaskMonitor} that will let the user cancel
 	 * @return {@link Address} of the found pclntab structure, or null if not found
 	 * @throws IOException
 	 */
-	public static Address findPclntabAddress(GoRttiContext programContext, AddressRange range,
+	public static Address findPclntabAddress(GoRttiMapper programContext, AddressRange range,
 			TaskMonitor monitor) throws IOException {
 		if (range == null) {
 			return null;
@@ -141,7 +142,7 @@ public class GoPcHeader {
 	}
 
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoPcHeader> context;

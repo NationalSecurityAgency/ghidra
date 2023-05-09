@@ -23,7 +23,7 @@ import ghidra.program.model.address.Address;
 @StructureMapping(structureName = "runtime.functab")
 public class GoFunctabEntry {
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoFunctabEntry> context;

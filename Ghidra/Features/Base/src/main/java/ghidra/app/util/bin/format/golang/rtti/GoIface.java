@@ -22,7 +22,7 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
 @StructureMapping(structureName = "runtime.iface")
 public class GoIface {
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoIface> context;

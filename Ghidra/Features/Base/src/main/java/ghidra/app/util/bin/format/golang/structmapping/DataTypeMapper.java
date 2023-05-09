@@ -38,19 +38,19 @@ import ghidra.util.task.TaskMonitor;
  * Information about {@link StructureMapping} classes and their metadata, as well as
  * accumulated information about structure instances that have been deserialized.
  * <p>
- * To use the full might and majesty of StructureMapping(tm), a ProgramContext must be created. It
+ * To use the full might and majesty of StructureMapping(tm), a DataTypeMapper must be created. It
  * must be able to {@link #addArchiveSearchCategoryPath(CategoryPath...) find} 
  * ({@link #addProgramSearchCategoryPath(CategoryPath...) more find}) the Ghidra structure data
  * types being used, and it must {@link #registerStructure(Class) know} about all classes that are
  * going to participate during deserialization and markup.
  * <p>
- * Structure mapped classes can receive a reference to the specific ProgramContext type that 
- * created them by declaring a {@code ProgramContext} field, and tagging it with 
+ * Structure mapped classes can receive a reference to the specific DataTypeMapper type that 
+ * created them by declaring a {@code DataTypeMapper} field, and tagging it with 
  * the @{@link ContextField} annotation:
  * 
  * <pre>
- * class MyProgramContext extends ProgramContext {
- *  public MyProgramContext() {
+ * class MyDataTypeMapper extends DataTypeMapper {
+ *  public MyDataTypeMapper() {
  *    ...
  *   registerStructure(MyDataType.class);
  *  }
@@ -61,7 +61,7 @@ import ghidra.util.task.TaskMonitor;
  * class MyDataType {
  * 
  *  &#64;ContextField
- *  private MyProgramContext myProgramContext;
+ *  private MyDataTypeMapper myDataTypeMapper;
  *  
  *  &#64;ContextField
  *  private StructureContext&lt;MyDataType&gt; context;
@@ -70,13 +70,13 @@ import ghidra.util.task.TaskMonitor;
  *  private long someField;
  * 
  * void bar() {
- *  context.getProgramContext().getProgram(); // can only access methods defined on base ProgramContext type
- *  myProgramContext.foo(); // same context as previous line, but typed correctly
+ *  context.getDataTypeMapper().getProgram(); // can only access methods defined on base DataTypeMapper type
+ *  myDataTypeMapper.foo(); // same context as previous line, but typed correctly
  * ...
  * </pre>
  * 
  */
-public class ProgramContext implements AutoCloseable {
+public class DataTypeMapper implements AutoCloseable {
 	protected Program program;
 	protected DataTypeManager programDTM;
 	protected DataTypeManager archiveDTM;
@@ -92,7 +92,7 @@ public class ProgramContext implements AutoCloseable {
 	 * @param archiveGDT
 	 * @throws IOException
 	 */
-	protected ProgramContext(Program program, ResourceFile archiveGDT) throws IOException {
+	protected DataTypeMapper(Program program, ResourceFile archiveGDT) throws IOException {
 		this.program = program;
 		this.programDTM = program.getDataTypeManager();
 		this.archiveDTM = archiveGDT != null
@@ -126,12 +126,12 @@ public class ProgramContext implements AutoCloseable {
 		return DataConverter.getInstance(program.getMemory().isBigEndian());
 	}
 
-	public ProgramContext addProgramSearchCategoryPath(CategoryPath... paths) {
+	public DataTypeMapper addProgramSearchCategoryPath(CategoryPath... paths) {
 		programSearchCPs.addAll(Arrays.asList(paths));
 		return this;
 	}
 
-	public ProgramContext addArchiveSearchCategoryPath(CategoryPath... paths) {
+	public DataTypeMapper addArchiveSearchCategoryPath(CategoryPath... paths) {
 		archiveSearchCPs.addAll(Arrays.asList(paths));
 		return this;
 	}
@@ -401,6 +401,6 @@ public class ProgramContext implements AutoCloseable {
 
 	@Override
 	public String toString() {
-		return "ProgramContext { program: %s}".formatted(program.getName());
+		return "DataTypeMapper { program: %s}".formatted(program.getName());
 	}
 }

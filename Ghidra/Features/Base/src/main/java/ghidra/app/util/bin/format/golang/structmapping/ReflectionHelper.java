@@ -95,24 +95,24 @@ public class ReflectionHelper {
 	 * @param fieldType
 	 * @param length
 	 * @param signedness
-	 * @param programContext
+	 * @param dataTypeMapper
 	 * @return
 	 */
 	public static DataType getArrayOutputDataType(Object array_value, Class<?> fieldType, int length,
-			Signedness signedness, ProgramContext programContext) {
+			Signedness signedness, DataTypeMapper dataTypeMapper) {
 		int arrayLen = array_value != null ? Array.getLength(array_value) : 0;
 		Class<?> elementType = fieldType.getComponentType();
 		DataType elementDT =
-			getPrimitiveOutputDataType(elementType, length, signedness, programContext);
+			getPrimitiveOutputDataType(elementType, length, signedness, dataTypeMapper);
 
-		return new ArrayDataType(elementDT, arrayLen, -1, programContext.getDTM());
+		return new ArrayDataType(elementDT, arrayLen, -1, dataTypeMapper.getDTM());
 	}
 
 	public static DataType getPrimitiveOutputDataType(Class<?> fieldType, int length,
-			Signedness signedness, ProgramContext programContext) {
+			Signedness signedness, DataTypeMapper dataTypeMapper) {
 
 		boolean isChar = (fieldType == Character.class || fieldType == Character.TYPE);
-		DataTypeManager dtm = programContext.getDTM();
+		DataTypeManager dtm = dataTypeMapper.getDTM();
 
 		if (length == -1) {
 			length = getPrimitiveSizeof(fieldType);
@@ -125,7 +125,7 @@ public class ReflectionHelper {
 		if (isChar && length == 1) {
 			defaultDtName = "char";
 		}
-		DataType dt = programContext.getType(defaultDtName, DataType.class);
+		DataType dt = dataTypeMapper.getType(defaultDtName, DataType.class);
 		if (dt == null && isChar) {
 			dt = switch (length) {
 				case 1 -> CharDataType.dataType;

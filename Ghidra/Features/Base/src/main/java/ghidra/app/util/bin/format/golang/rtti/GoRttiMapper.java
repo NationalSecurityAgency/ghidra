@@ -26,7 +26,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.app.util.bin.format.golang.*;
 import ghidra.app.util.bin.format.golang.rtti.types.*;
-import ghidra.app.util.bin.format.golang.structmapping.ProgramContext;
+import ghidra.app.util.bin.format.golang.structmapping.DataTypeMapper;
 import ghidra.app.util.bin.format.golang.structmapping.StructureMapping;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.ElfLoader;
@@ -45,15 +45,15 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 
 /**
- * {@link ProgramContext} for golang binaries. 
+ * {@link DataTypeMapper} for golang binaries. 
  * <p>
  * When bootstrapping golang binaries, the following steps are used:
  * <ul>
  * 	<li>Find the GoBuildInfo struct.  This struct is the easiest to locate, even when the binary
  * 	is stripped.  This gives us the go pointerSize (probably same as ghidra pointer size) and the
  * 	goVersion.  This struct does not rely on StructureMapping, allowing its use before a
- * 	ProgramContext is created.
- * 	<li>Create ProgramContext
+ * 	DataTypeMapper is created.
+ * 	<li>Create DataTypeMapper
  * 	<li>Find the runtime.firstmoduledata structure.
  * 		<ul>
  *			<li>If there are symbols, just use the symbol or named memory block.
@@ -70,18 +70,18 @@ import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
  * 		</ul>
  * </ul>
  */
-public class GoRttiContext extends ProgramContext {
+public class GoRttiMapper extends DataTypeMapper {
 
 	/**
-	 * Returns a new {@link GoRttiContext} for the specified program, or null if the binary
+	 * Returns a new {@link GoRttiMapper} for the specified program, or null if the binary
 	 * is not a supported golang binary.
 	 * 
 	 * @param program {@link Program}
 	 * @param log 
-	 * @return new {@link GoRttiContext}, or null if not a golang binary
+	 * @return new {@link GoRttiMapper}, or null if not a golang binary
 	 * @throws IOException
 	 */
-	public static GoRttiContext getContextFor(Program program, MessageLog log) throws IOException {
+	public static GoRttiMapper getMapperFor(Program program, MessageLog log) throws IOException {
 		GoBuildInfo buildInfo = GoBuildInfo.fromProgram(program);
 		GoVer goVer;
 		if (buildInfo == null || (goVer = buildInfo.getVerEnum()) == GoVer.UNKNOWN) {
@@ -90,11 +90,11 @@ public class GoRttiContext extends ProgramContext {
 		ResourceFile gdtFile =
 			findGolangBootstrapGDT(goVer, buildInfo.getPointerSize(), getGolangOSString(program));
 		if (gdtFile == null) {
-			Msg.error(GoRttiContext.class, "Missing golang gdt archive for " + goVer);
+			Msg.error(GoRttiMapper.class, "Missing golang gdt archive for " + goVer);
 		}
 
 		try {
-			return new GoRttiContext(program, buildInfo.getPointerSize(), buildInfo.getEndian(),
+			return new GoRttiMapper(program, buildInfo.getPointerSize(), buildInfo.getEndian(),
 				buildInfo.getVerEnum(), gdtFile);
 		}
 		catch (IllegalArgumentException e) {
@@ -185,7 +185,7 @@ public class GoRttiContext extends ProgramContext {
 	private GoType mapGoType;
 	private GoType chanGoType;
 
-	public GoRttiContext(Program program, int ptrSize, Endian endian, GoVer goVersion,
+	public GoRttiMapper(Program program, int ptrSize, Endian endian, GoVer goVersion,
 			ResourceFile archiveGDT) throws IOException {
 		super(program, archiveGDT);
 

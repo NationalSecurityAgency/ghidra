@@ -38,8 +38,8 @@ public record FieldContext<T> (
 		return structureContext.getStructureInstance();
 	}
 
-	public ProgramContext getProgramContext() {
-		return structureContext().getProgramContext();
+	public DataTypeMapper getDataTypeMapper() {
+		return structureContext().getDataTypeMapper();
 	}
 
 	public void appendComment(int commentType, String prefix, String comment, String sep)

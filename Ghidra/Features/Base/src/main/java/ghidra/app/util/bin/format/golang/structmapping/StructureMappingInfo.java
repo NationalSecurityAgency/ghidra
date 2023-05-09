@@ -86,7 +86,7 @@ public class StructureMappingInfo<T> {
 			markupFuncs.add(context -> {
 				T obj = context.getStructureInstance();
 				Object val = ReflectionHelper.callGetter(markupGetterMethod, obj);
-				context.getProgramContext().markup(val, false);
+				context.getDataTypeMapper().markup(val, false);
 			});
 		}
 
@@ -158,10 +158,10 @@ public class StructureMappingInfo<T> {
 		// used to create a structure that has variable length fields
 
 		Structure newStruct = new StructureDataType(
-			context.getProgramContext().getDefaultVariableLengthStructCategoryPath(),
+			context.getDataTypeMapper().getDefaultVariableLengthStructCategoryPath(),
 			structureName,
 			0,
-			context.getProgramContext().getDTM());
+			context.getDataTypeMapper().getDTM());
 
 		// TODO: set struct packing?
 
@@ -200,14 +200,14 @@ public class StructureMappingInfo<T> {
 	 * @throws IOException
 	 */
 	public void assignContextFieldValues(StructureContext<T> context) throws IOException {
-		Class<?> programContextType = context.getProgramContext().getClass();
+		Class<?> dataTypeMapperType = context.getDataTypeMapper().getClass();
 		Class<?> structureContextType = context.getClass();
 		T obj = context.getStructureInstance();
 
 		for (Field f : contextFields) {
 			Class<?> fieldType = f.getType();
-			if (fieldType.isAssignableFrom(programContextType)) {
-				ReflectionHelper.assignField(f, obj, context.getProgramContext());
+			if (fieldType.isAssignableFrom(dataTypeMapperType)) {
+				ReflectionHelper.assignField(f, obj, context.getDataTypeMapper());
 			}
 			else if (fieldType.isAssignableFrom(structureContextType)) {
 				ReflectionHelper.assignField(f, obj, context);

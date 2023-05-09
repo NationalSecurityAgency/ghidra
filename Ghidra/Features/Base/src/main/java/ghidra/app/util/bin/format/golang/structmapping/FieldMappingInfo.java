@@ -251,7 +251,7 @@ public class FieldMappingInfo<T> {
 
 	private Object readStructureMappedTypeFunc(FieldContext<T> context) throws IOException {
 		return context.structureContext()
-				.getProgramContext()
+				.getDataTypeMapper()
 				.readStructure(field.getType(), context.reader());
 	}
 
@@ -299,7 +299,7 @@ public class FieldMappingInfo<T> {
 //	}
 
 	private void markupNestedStructure(FieldContext<T> fieldContext) throws IOException {
-		fieldContext.getProgramContext().markup(fieldContext.getValue(Object.class), true);
+		fieldContext.getDataTypeMapper().markup(fieldContext.getValue(Object.class), true);
 	}
 
 	private FieldMarkupFunction<T> makeMarkupReferenceFunc(String getterName) {
@@ -317,7 +317,7 @@ public class FieldMappingInfo<T> {
 		if (getterValue != null) {
 			Address addr = getterValue instanceof Address getterAddr
 					? getterAddr
-					: fieldContext.getProgramContext().getExistingStructureAddress(getterValue);
+					: fieldContext.getDataTypeMapper().getExistingStructureAddress(getterValue);
 			if (addr != null) {
 				fieldContext.addReference(addr);
 			}

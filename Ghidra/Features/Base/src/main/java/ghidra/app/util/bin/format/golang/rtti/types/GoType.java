@@ -20,7 +20,7 @@ import java.util.Set;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.golang.rtti.GoRttiContext;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.rtti.GoSlice;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
@@ -38,7 +38,7 @@ public abstract class GoType implements StructureMarkup<GoType> {
 			Map.entry(GoKind.Map, GoMapType.class),
 			Map.entry(GoKind.Interface, GoInterfaceType.class));
 
-	public static Class<? extends GoType> getSpecializedTypeClass(GoRttiContext programContext,
+	public static Class<? extends GoType> getSpecializedTypeClass(GoRttiMapper programContext,
 			long offset) throws IOException {
 		GoTypeDetector typeDetector = programContext.readStructure(GoTypeDetector.class, offset);
 		Class<? extends GoType> result = specializedTypeClasses.get(typeDetector.getKind());
@@ -49,7 +49,7 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	}
 
 	@ContextField
-	protected GoRttiContext programContext;
+	protected GoRttiMapper programContext;
 
 	@ContextField
 	protected StructureContext<GoType> context;

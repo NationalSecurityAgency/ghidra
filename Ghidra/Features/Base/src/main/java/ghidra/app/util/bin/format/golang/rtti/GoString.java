@@ -36,7 +36,7 @@ public class GoString {
 	private long len;
 
 	public Address getStringAddr() {
-		return context.getProgramContext().getDataAddress(str);
+		return context.getDataTypeMapper().getDataAddress(str);
 	}
 
 	public long getLength() {
@@ -44,7 +44,7 @@ public class GoString {
 	}
 
 	public String getStringValue() throws IOException {
-		BinaryReader reader = context.getProgramContext().getReader(str);
+		BinaryReader reader = context.getDataTypeMapper().getReader(str);
 		return reader.readNextUtf8String((int) len);
 	}
 }
