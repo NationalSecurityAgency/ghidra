@@ -54,8 +54,6 @@
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,7 +80,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
@@ -212,8 +209,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 							nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
-			println("Before popping up dialog..");
-			printTime();
 			boolean runGcc= askYesNo("Gcc Class Recovery Still Under Development",
 				"I understand that Gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
 	
@@ -1539,13 +1534,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		return stringBuffer;
 	}
-
-
-    private void printTime() {
-    	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
-    	LocalDateTime now = LocalDateTime.now(); 
-    	println(dtf.format(now));  
-    }
     
 	private boolean isStringInProgramMemory(String string) {
 
