@@ -56,18 +56,10 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import classrecovery.DecompilerScriptUtils;
-import classrecovery.RTTIClassRecoverer;
-import classrecovery.RTTIGccClassRecoverer;
-import classrecovery.RTTIWindowsClassRecoverer;
-import classrecovery.RecoveredClass;
-import classrecovery.RecoveredClassHelper;
+import classrecovery.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -75,6 +67,7 @@ import ghidra.app.plugin.core.analysis.DecompilerFunctionAnalyzer;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.GraphDisplayBroker;
+import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunctionImporter;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProvider;
@@ -84,29 +77,14 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.program.util.GhidraProgramUtilities;
-import ghidra.service.graph.AttributedEdge;
-import ghidra.service.graph.AttributedGraph;
-import ghidra.service.graph.AttributedVertex;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayOptions;
-import ghidra.service.graph.GraphDisplayOptionsBuilder;
-import ghidra.service.graph.GraphDisplayProvider;
-import ghidra.service.graph.GraphType;
-import ghidra.service.graph.GraphTypeBuilder;
-import ghidra.service.graph.VertexShape;
+import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.TaskMonitor;
@@ -391,7 +369,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			DWARFProgram.DWARF_ROOT_NAME) || options.getBoolean("DWARF Loaded", false));
 	}
 
-	public String validate() {
+	public String validate() throws CancelledException {
 
 		if (currentProgram == null) {
 			return ("There is no open program");
@@ -424,6 +402,25 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		defaultPointerSize = currentProgram.getDefaultPointerSize();
 		if (defaultPointerSize != 4 && defaultPointerSize != 8) {
 			return ("This script only works on 32 or 64 bit programs");
+		}
+		
+		// check that gcc loader or mingw analyzer has fixed the relocations correctly
+		if(isGcc()) {
+
+			// first check that there is even rtti by searching the special string in memory
+			if (!isStringInProgramMemory("class_type_info")) {
+				return ("This program does not contain RTTI.");
+			}
+				
+			// then check to see if the special typeinfo namespace is in external space
+			// if so then relocations are present and have not been fixed up because when fixed up
+			// the namespace gets moved to inside program space
+			if(isExternalNamespace("__cxxabiv1::__class_type_info")) {
+				return ("This program's relocations were not correctly fixed so the script cannot " +
+						"continue. If this program is mingw this is a known issue and " +
+						"will be fixed in a later release. For all other gcc programs please " +
+						"contact the Ghidra team so this issue can be fixed.");
+			}
 		}
 		return new String();
 	}
@@ -1549,6 +1546,31 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
     	LocalDateTime now = LocalDateTime.now(); 
     	println(dtf.format(now));  
     }
+    
+	private boolean isStringInProgramMemory(String string) {
 
+		byte[] byteArrray = string.getBytes();
+
+		Address findBytes = currentProgram.getMemory()
+				.findBytes(currentProgram.getMinAddress(), byteArrray, null, true, monitor);
+		if (findBytes != null) {
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isExternalNamespace(String path) throws CancelledException {
+		
+		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
+
+		for(Symbol symbol : symbols) {
+			monitor.checkCancelled();
+			if(symbol.isExternal() && symbol.getSymbolType().isNamespace()) {
+				return true;
+			}
+		}
+		
+        return false;
+    }
 
 }
