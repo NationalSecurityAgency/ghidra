@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#navigation" id="toc-navigation">Navigation</a>
+<ul>
+<li><a href="#coordinates" id="toc-coordinates">Coordinates</a></li>
+<li><a href="#threads" id="toc-threads">Threads</a>
+<ul>
+<li><a href="#trace-tabs" id="toc-trace-tabs">Trace Tabs</a></li>
+</ul></li>
+<li><a href="#stack" id="toc-stack">Stack</a>
+<ul>
+<li><a href="#exercise-name-the-function"
+id="toc-exercise-name-the-function">Exercise: Name the Function</a></li>
+</ul></li>
+<li><a href="#time" id="toc-time">Time</a>
+<ul>
+<li><a href="#sparse-vs.-full-snapshots"
+id="toc-sparse-vs.-full-snapshots">Sparse vs. Full Snapshots</a></li>
+<li><a href="#comparing-snapshots"
+id="toc-comparing-snapshots">Comparing Snapshots</a></li>
+<li><a href="#exercise-find-the-time"
+id="toc-exercise-find-the-time">Exercise: Find the Time</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<section id="navigation" class="level1">
+<h1>Navigation</h1>
+<p>This module assumes you know how to launch <code>termmines</code> in
+Ghidra using GDB, and know where to find the basic Debugger GUI
+components. It also assumes you are familiar with the concepts of
+breakpoints and machine state in Ghidra. If not, please refer to the
+previous modules.</p>
+<p>This module will address the following features in more depth:</p>
+<ul>
+<li>The Threads window</li>
+<li>The Stack window</li>
+<li>The Time window</li>
+</ul>
+<section id="coordinates" class="level2">
+<h2>Coordinates</h2>
+<p>The term <em>location</em> is already established in Ghidra to refer
+to the current program and current address. There are more elements to a
+“location” in a dynamic session, so we add additional elements to form
+the concept of your current <em>coordinates</em>. All of these elements
+can affect the information displayed in other windows, especially those
+dealing with machine state.</p>
+<ul>
+<li>The current <em>trace</em>. A trace database is where all of the
+Debugger windows (except Targets and Objects) gather their information.
+It is the analog of the program database, but for dynamic analysis.</li>
+<li>The current <em>thread</em>. A thread is a unit of execution, either
+a processor core or a platform-defined virtual thread. Each thread has
+its own register context. In Ghidra, this means each has its own
+instance of the processor specification’s “register” space.</li>
+<li>The current <em>frame</em>. A frame is a call record on the stack.
+For example, <code>main</code> may call <code>getc</code>, which may in
+turn call <code>read</code>. If you wish to examine the state of
+<code>main</code>, you would navigate 2 frames up the stack. Because
+functions often save registers to the stack, the back-end debugger may
+“unwind” the stack and present the restored registers.</li>
+<li>The current <em>time</em>. In general, time refers to the current
+snapshot. Whenever the target becomes suspended, Ghidra creates a
+snapshot in the current trace. If you wish to examine the machine state
+at a previous time, you would navigate to an earlier snapshot. “Time”
+may also include steps of emulation, but that is covered in the <a
+href="B2-Emulation.html">Emulation</a> module.</li>
+</ul>
+<p>In general, there is a window dedicated to navigating each element of
+your current coordinates.</p>
+</section>
+<section id="threads" class="level2">
+<h2>Threads</h2>
+<p>If you do not have an active session already, launch
+<code>termmines</code>.</p>
+<figure>
+<img src="images/Navigation_ThreadsInCallRand.png"
+alt="Threads window" />
+<figcaption aria-hidden="true">Threads window</figcaption>
+</figure>
+<p>The Threads window displays a list of all threads ever observed in
+the target. This includes threads which have been terminated.
+Unfortunately, <code>termmines</code> is a single-threaded application,
+so you will only see one row. If there were more, you could switch to a
+different thread by double-clicking it in the table. The columns
+are:</p>
+<ul>
+<li>The <strong>Name</strong> column gives the name of the thread. This
+may include the back-end debugger’s thread id, the target platform’s
+system thread id, and/or the back-end debugger’s display text for the
+thread.</li>
+<li>The <strong>Created</strong> column gives the snapshot when the
+thread was first observed.</li>
+<li>The <strong>Destroyed</strong> column gives the snapshot when the
+thread was first observed as terminated. If this is empty, the thread is
+still alive.</li>
+<li>The <strong>State</strong> column gives the state of the thread.
+This may be one of ALIVE, RUNNING, STOPPED, TERMINATED, or UNKNOWN.</li>
+<li>The <strong>Comment</strong> column allows you to annotate the
+thread, e.g., if you discover it has a dedicated purpose.</li>
+<li>The <strong>Plot</strong> column plots the threads’ life spans in a
+chart.</li>
+</ul>
+<p><strong>NOTE</strong>: Most of the time, switching threads will also
+change what thread is being controlled by the Control actions in the
+global toolbar. This may vary subtly, depending on the action and the
+target. For example, the <img src="images/resume.png" alt="resume" />
+Resume button will usually allow all threads to execute; whereas the
+<img src="images/stepinto.png" alt="step into" /> Step Into button will
+usually step only the current thread. If the target’s thread scheduler
+cannot schedule your current thread, the behavior is not clearly
+defined: It may step a different thread, it may cause the target to
+block until the thread can be scheduled, or it may do something
+else.</p>
+<p>When you switch threads, everything that depends on the current
+thread may change, in particular the Stack window and any machine-state
+window that involves register values. The Registers window will display
+the values for the new thread, the Watches window will re-evaluate all
+expressions, and the Dynamic Listing and Memory views may seek to
+different addresses, depending on their location tracking
+configurations.</p>
+<section id="trace-tabs" class="level3">
+<h3>Trace Tabs</h3>
+<p>The Threads window also has a row of tabs at the very top. This is a
+list of open traces, i.e., of targets you are debugging. You can also
+open old traces to examine a target’s machine state <em>post
+mortem</em>. In general, you should only have one trace open at a time,
+but there are use cases where you might have multiple. For example, you
+could debug both the client and server of a network application. To
+switch to another trace, single-click its tab.</p>
+<p>When you switch traces, every Debugger window that depends on the
+current trace will update. That’s every window except Targets and
+Objects. The Breakpoints window may change slightly, depending on its
+configuration, because it is designed to present all breakpoints in the
+session.</p>
+</section>
+</section>
+<section id="stack" class="level2">
+<h2>Stack</h2>
+<p>Ensure your breakpoint on <code>rand</code> is enabled, and resume
+until you hit it.</p>
+<figure>
+<img src="images/Navigation_StackInCallRand.png" alt="Stack window" />
+<figcaption aria-hidden="true">Stack window</figcaption>
+</figure>
+<p>The stack window displays a list of all the frames for the current
+thread. Each thread has its own execution stack, so the frame element is
+actually dependent on the thread element. The call records are listed
+from innermost to outermost. Here, <code>main</code> has called an
+unnamed function, which has in turn called <code>rand</code>. The
+columns are:</p>
+<ul>
+<li>The <strong>Level</strong> column gives the frame number. This is
+the number of calls that must be unwound from the current machine state
+to reach the frame.</li>
+<li>The <strong>PC</strong> column gives the address of the next
+instruction in that frame. The PC of frame 0 is the value of the PC
+register. Then, the PC of frame 1 is the return address of frame 0, and
+so on.</li>
+<li>The <strong>Function</strong> column gives the name of the function
+containing the PC mapped to its static program database, if
+available.</li>
+<li>The <strong>Comment</strong> column allows you to annotate the
+frame.</li>
+</ul>
+<p>Double-click the row with the unnamed function (frame 1) to switch to
+it. When you switch frames, any machine-state window that involves
+register values may change. <strong>NOTE</strong>: Some back-end
+debuggers do not recover register values when unwinding stack frames.
+For those targets, some windows may display stale meaningless values in
+frames other than 0.</p>
+<section id="exercise-name-the-function" class="level3">
+<h3>Exercise: Name the Function</h3>
+<p>Your Dynamic and Static Listings should now be in the unknown
+function. If you have not already done so, reverse engineer this
+function and give it a name.</p>
+</section>
+</section>
+<section id="time" class="level2">
+<h2>Time</h2>
+<p>Re-launch <code>termmines</code>, ensure both of your breakpoints at
+<code>srand</code> and <code>rand</code> are enabled, and resume until
+you hit <code>rand</code>, then step out. Now, switch to the Time
+window.</p>
+<figure>
+<img src="images/Navigation_TimeAfterCallSRandCallRand.png"
+alt="Time window" />
+<figcaption aria-hidden="true">Time window</figcaption>
+</figure>
+<p>It displays a list of all the snapshots for the current trace. In
+general, every event generates a snapshot. By default, the most recent
+snapshot is at the bottom. The columns are:</p>
+<ul>
+<li>The <strong>Snap</strong> column numbers each snapshot. Other
+windows that indicate life spans refer to these numbers.</li>
+<li>The <strong>Timestamp</strong> column gives the time when the
+snapshot was created, i.e., the time when the event occurred.</li>
+<li>The <strong>Event Thread</strong> column indicates which thread
+caused the target to break. This only applies to snapshots that were
+created because of an event, which is most.</li>
+<li>The <strong>Schedule</strong> column describes the snapshot in
+relation to another. It typically only applies to emulator / scratch
+snapshots, which are covered later in this course.</li>
+<li>The <strong>Description</strong> column describes the event that
+generated the snapshot.</li>
+</ul>
+<p>Switch to the snapshot where you hit <code>srand</code> (snapshot 2
+in our screenshot) by double-clicking it in the table. This will cause
+all the machine-state windows to update including the Stack window. If
+you try navigating around the Dynamic Listing, you will likely find
+stale areas indicated by a grey background.</p>
+<p><strong>NOTE</strong>: Navigating into the past will automatically
+change the Control mode. This is to avoid confusion, since you may
+perform a control action based on the state you see, which is no longer
+the state of the live target. Switch back by using the Control mode
+drop-down button in the global toolbar. When you select <strong>Control
+Target</strong> (with or without edits), the Debugger will navigate
+forward to the latest snapshot.</p>
+<section id="sparse-vs.-full-snapshots" class="level3">
+<h3>Sparse vs. Full Snapshots</h3>
+<p>Regarding the stale areas: the Debugger cannot request the back-end
+debugger provide machine state from the past. (Integration with timeless
+back-end debuggers is not yet supported.) Remember, the trace is used as
+a cache, so it will only be populated with the pages and registers that
+you observed at the time. Thus, most snapshots are <em>sparse</em>
+snapshots. The most straightforward way to capture a <em>full</em>
+snapshot is the
+<img alt="refresh" src="images/view-refresh.png" width="16px"> Refresh
+button with a broad selection in the Dynamic Listing. We give the exact
+steps in the next heading. To capture registers, ensure you navigate to
+each thread whose registers you want to capture.</p>
+</section>
+<section id="comparing-snapshots" class="level3">
+<h3>Comparing Snapshots</h3>
+<p>A common technique for finding the address of a variable is to take
+and compare snapshots. Ideally, the snapshots are taken when only the
+variable you are trying to locate has changed. Depending on the program,
+this is not always possible, but the technique can be repeated to rule
+out many false positives. The actual variable should show up in the
+difference every time.</p>
+<p>For example, to find the variable that holds the number of mines, we
+can try to compare memory before and after parsing the command-line
+arguments. Because parsing happens before waiting for user input, we
+will need to launch (not attach) the target.</p>
+<ol type="1">
+<li><p>Launch <code>termmines -M 15</code> in the Debugger. (See <a
+href="A1-GettingStarted.html">Getting Started</a> to review launching
+with custom parameters.)</p></li>
+<li><p>Ensure your breakpoint at <code>srand</code> is enabled.</p></li>
+<li><p>Use <strong>Ctrl-A</strong> to Select All the addresses.</p></li>
+<li><p>Click the
+<img alt="refresh" src="images/view-refresh.png" width="16px"> Refresh
+button. <strong>NOTE</strong>: It is normal for some errors to occur
+here. We note a more surgical approach below.</p></li>
+<li><p>Wait a moment for the capture to finish.</p></li>
+<li><p>Optionally, press <strong>Ctrl-Shift-N</strong> to rename the
+snapshot so you can easily identify it later. Alternatively, edit the
+snapshot’s Description from the table in the Time window.</p></li>
+<li><p>Press <img src="images/resume.png" alt="resume" /> Resume,
+expecting it to break at <code>srand</code>.</p></li>
+<li><p>Capture another full snapshot using Select All and
+Refresh.</p></li>
+<li><p>Click the <img src="images/table_relationship.png"
+alt="compare" /> Compare button in the Dynamic Listing.</p></li>
+<li><p>In the dialog, select the first snapshot you took.</p>
+<figure>
+<img src="images/Navigation_DialogCompareTimes.png"
+alt="The compare times dialog" />
+<figcaption aria-hidden="true">The compare times dialog</figcaption>
+</figure></li>
+<li><p>Click OK.</p></li>
+</ol>
+<p>The result is a side-by-side listing of the two snapshots with
+differences highlighted in orange. Unlike the Static program comparison
+tool, this only highlights differences in <em>byte</em> values. You can
+now use the Next and Previous Difference buttons in the Dynamic Listing
+to find the variable.</p>
+<figure>
+<img src="images/Navigation_CompareTimes.png"
+alt="The listing with comparison" />
+<figcaption aria-hidden="true">The listing with comparison</figcaption>
+</figure>
+<p>Notice that you see the command-line specified value 15 on the left,
+and the default value 10 on the right. This confirms we have very likely
+found the variable.</p>
+<p><strong>NOTE</strong>: Using Select All to create your snapshots can
+be a bit aggressive. Instead, we might guess the variable is somewhere
+in the <code>.data</code> section and narrow our search. For one,
+including so much memory increases the prevalence of false positives,
+not to mention the wasted time and disk space. Second, many of the pages
+in the memory map are not actually committed, leading to tons of errors
+trying to capture them all. Granted, there are use cases where a full
+snapshot is appropriate. Some alternatives, which we will cover in the
+<a href="A6-MemoryMap.html">Memory Map</a> module, allow you to zero in
+on the <code>.data</code> section:</p>
+<ul>
+<li>Use the Memory Map window (borrowed from the CodeBrowser) to
+navigate to the <code>.data</code> section. The Dynamic Listing will
+stay in sync and consequently capture the contents of the first page.
+This specimen has a small enough <code>.data</code> section to fit in a
+single page, but that is generally not the case in practice.</li>
+<li>Use the Regions window to select the addresses in the
+<code>.data</code> section, then click Refresh in the Dynamic Listing.
+This will capture the full <code>.data</code> section, no matter how
+many pages.</li>
+<li>Use the lower pane of the Modules window to select the addresses in
+the <code>.data</code> section, then click Refresh in the Dynamic
+Listing. This will also capture the full <code>.data</code>
+section.</li>
+</ul>
+</section>
+<section id="exercise-find-the-time" class="level3">
+<h3>Exercise: Find the Time</h3>
+<p>In <code>termmines</code>, unlike other Minesweeper clones, your
+score is not printed until you win. Your goal is to achieve a remarkable
+score by patching a variable right before winning. Considering it is a
+single-threaded application, take a moment to think about how your time
+might be measured. <strong>TIP</strong>: Because you will need to play
+the game, you will need to attach rather than launch. Use the snapshot
+comparison method to locate the variable. Then place an appropriate
+breakpoint, win the game, patch the variable, and score 0 seconds!</p>
+<p>If you chose a poor breakpoint or have no breakpoint at all, you
+should still score better than 3 seconds. Once you know where the
+variable is, you can check its XRefs in the Static Listing and devise a
+better breakpoint. You have completed this exercise when you can
+reliably score 0 seconds for games you win.</p>
+<p><strong>NOTE</strong>: If you are following and/or adapting this
+course using a different specimen, the timing implementation and
+threading may be different, but the technique still works.</p>
+</section>
+</section>
+</section>
+</body>
+</html>

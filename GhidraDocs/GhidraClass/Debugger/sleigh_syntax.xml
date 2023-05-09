@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language
+[
+    <!ENTITY int "(?:[0-9](?:'?[0-9]++)*+)">
+    <!ENTITY hex_int "(?:[0-9A-Fa-f](?:'?[0-9A-Fa-f]++)*+)">
+
+    <!ENTITY symbols ":!&#37;&amp;()+,-/.*&lt;=&gt;?[]|~^;">
+]>
+<language name="Sleigh" section="Sources"
+          version="1" kateversion="5.79"
+          extensions="*.sla;*.sinc"
+          priority="5">
+  <highlighting>
+    <list name="controlflow">
+      <item>goto</item>
+      <item>if</item>
+      <item>return</item>
+    </list>
+
+    <list name="keywords">
+      <item>scarry</item>
+      <item>carry</item>
+      <item>sborrow</item>
+    </list>
+
+    <contexts>
+      <context attribute="Normal Text" lineEndContext="#stay" name="Normal">
+        <DetectSpaces />
+        <!-- Match symbols (partial for fast path) -->
+        <AnyChar attribute="Symbol" context="#stay" String=":()]+-*=&gt;!|&amp;~^,;" />
+
+        <IncludeRules context="match keywords" />
+        <DetectIdentifier />
+
+        <DetectChar attribute="Symbol" context="Attribute" char="&lt;" />
+
+        <!-- Match numbers -->
+        <RegExpr context="Number" String="\.?[0-9]" lookAhead="1" />
+
+        <AnyChar attribute="Symbol" context="#stay" String="&symbols;"/>
+      </context>
+
+      <context name="match keywords" attribute="Normal Text" lineEndContext="#pop">
+        <keyword attribute="Control Flow" context="#stay" String="controlflow"/>
+        <keyword attribute="Keyword" context="#stay" String="keywords"/>
+      </context>
+
+      <context name="Attribute" attribute="Attribute" lineEndContext="#pop" fallthroughContext="#pop">
+        <DetectChar attribute="Symbol" context="#pop" char="&gt;" />
+        <RegExpr attribute="Attribute" context="#stay" String="[0-9A-Za-z]" />
+      </context>
+
+      <context name="Number" attribute="Normal Text" lineEndContext="#pop" fallthroughContext="#pop">
+        <WordDetect attribute="Decimal" context="#pop" String="0" weakDeliminator="."/>
+        <IncludeRules context="Integer" />
+      </context>
+
+      <context name="Integer" attribute="Normal Text" lineEndContext="#pop">
+        <DetectChar context="#pop!IntStartsWith0" char="0" lookAhead="1"/>
+        <RegExpr attribute="Decimal" context="#pop" String="&int;" />
+        <RegExpr attribute="Error" context="#pop" String="[._0-9A-Za-z']++" />
+      </context>
+      <context name="IntStartsWith0" attribute="Normal Text" lineEndContext="#pop">
+        <RegExpr attribute="Hex" context="#pop" String="0[xX]&hex_int;" />
+        <RegExpr attribute="Octal" context="#pop" String="0(?:'?[0-7]++)++" />
+        <DetectChar attribute="Decimal" context="#pop" char="0"/>
+      </context>
+
+    </contexts>
+    <itemDatas>
+      <itemData name="Normal Text"  defStyleNum="dsNormal" spellChecking="false"/>
+      <itemData name="Control Flow" defStyleNum="dsControlFlow" spellChecking="false"/>
+      <itemData name="Keyword"      defStyleNum="dsKeyword" spellChecking="false"/>
+      <itemData name="Attribute"    defStyleNum="dsAttribute" spellChecking="false"/>
+      <itemData name="Decimal"      defStyleNum="dsDecVal" spellChecking="false"/>
+      <itemData name="Octal"        defStyleNum="dsBaseN" spellChecking="false"/>
+      <itemData name="Hex"          defStyleNum="dsBaseN" spellChecking="false"/>
+      <itemData name="Error"        defStyleNum="dsError" spellChecking="false"/>
+    </itemDatas>
+  </highlighting>
+  <general>
+    <keywords casesensitive="1" additionalDeliminator="#'&quot;" />
+  </general>
+</language>
+<!-- kate: replace-tabs on; tab-width 2; indent-width 2; -->
