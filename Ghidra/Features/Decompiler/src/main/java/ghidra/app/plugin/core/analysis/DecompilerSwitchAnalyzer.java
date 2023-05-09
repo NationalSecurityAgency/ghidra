@@ -369,9 +369,11 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 						// go ahead and place the reference, since it is a constant.
 						if (refType.isComputed() && refType.isFlow() &&
 							program.getMemory().contains(address)) {
-							propogateCodeMode(context, address);
 							foundCount.incrementAndGet();
-							return true;
+							// don't propagate low code mode, let something else do that
+							// propogateCodeMode(context, address);
+							// don't make references, let other analysis do this
+							//return true;
 						}
 						return false;
 					}
