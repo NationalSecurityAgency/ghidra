@@ -72,9 +72,8 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(display.getSelectedVertices().isEmpty());
 
 		DockingActionIf action = getAction(tool, "Select Vertex");
-		VertexGraphActionContext context =
-			new VertexGraphActionContext(graphComponentProvider, graph, null, null,
-				graph.getVertex("B"));
+		VertexGraphActionContext context = new VertexGraphActionContext(graphComponentProvider,
+			graph, null, null, graph.getVertex("B"));
 		performAction(action, context, true);
 
 		Set<AttributedVertex> selectedVertices = display.getSelectedVertices();
@@ -102,9 +101,8 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(4, display.getSelectedVertices().size());
 
 		DockingActionIf action = getAction(tool, "Deselect Vertex");
-		VertexGraphActionContext context =
-			new VertexGraphActionContext(graphComponentProvider, graph, null, null,
-				graph.getVertex("B"));
+		VertexGraphActionContext context = new VertexGraphActionContext(graphComponentProvider,
+			graph, null, null, graph.getVertex("B"));
 		performAction(action, context, true);
 
 		Set<AttributedVertex> selected = display.getSelectedVertices();
@@ -121,9 +119,8 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(display.getSelectedVertices().isEmpty());
 
 		DockingActionIf action = getAction(tool, "Select Edge");
-		EdgeGraphActionContext context =
-			new EdgeGraphActionContext(graphComponentProvider, graph, null, null,
-				graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
+		EdgeGraphActionContext context = new EdgeGraphActionContext(graphComponentProvider, graph,
+			null, null, graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
 		performAction(action, context, true);
 
 		Set<AttributedVertex> selectedVerticeIds = display.getSelectedVertices();
@@ -135,9 +132,8 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testDeSelectEdgeAction() {
 		DockingActionIf action = getAction(tool, "Select Edge");
-		EdgeGraphActionContext context =
-			new EdgeGraphActionContext(graphComponentProvider, graph, null, null,
-				graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
+		EdgeGraphActionContext context = new EdgeGraphActionContext(graphComponentProvider, graph,
+			null, null, graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
 		performAction(action, context, true);
 
 		Set<AttributedVertex> selectedVertices = display.getSelectedVertices();
@@ -155,9 +151,8 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSelectEdgeSource() {
 		setFocusedVertex(d);
 		DockingActionIf action = getAction(tool, "Edge Source");
-		EdgeGraphActionContext context =
-			new EdgeGraphActionContext(graphComponentProvider, graph, null, null,
-				graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
+		EdgeGraphActionContext context = new EdgeGraphActionContext(graphComponentProvider, graph,
+			null, null, graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
 		performAction(action, context, true);
 
 		assertEquals(a, display.getFocusedVertex());
@@ -167,9 +162,8 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSelectEdgeTarget() {
 		setFocusedVertex(d);
 		DockingActionIf action = getAction(tool, "Edge Target");
-		EdgeGraphActionContext context =
-			new EdgeGraphActionContext(graphComponentProvider, graph, null, null,
-				graph.getEdge(a, b));
+		EdgeGraphActionContext context = new EdgeGraphActionContext(graphComponentProvider, graph,
+			null, null, graph.getEdge(a, b));
 		performAction(action, context, true);
 
 		assertEquals(b, display.getFocusedVertex());
@@ -524,11 +518,6 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	private class TestGraphDisplayListener implements GraphDisplayListener {
 
 		@Override
-		public void graphClosed() {
-			// do nothing
-		}
-
-		@Override
 		public void selectionChanged(Set<AttributedVertex> vertices) {
 			graphSpy.setSelection(vertices);
 		}
@@ -545,7 +534,7 @@ public class GraphActionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public void dispose() {
-			// do nothing
+			// stub
 		}
 
 	}
