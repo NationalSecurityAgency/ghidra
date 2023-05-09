@@ -23,8 +23,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.mem.MemoryBufferImpl;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -220,8 +219,10 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		}
 
 		// if flowing to an address, disassemble it
+		// only disassemble in executable memory
+		Memory memory = program.getMemory();
 		if (refType.isFlow() && !refType.isIndirect() &&
-			!program.getMemory().isExternalBlockAddress(address)) {
+			!memory.isExternalBlockAddress(address) && memory.getExecuteSet().contains(address)) {
 			Data udata = program.getListing().getUndefinedDataAt(address);
 			if (udata != null) {
 				DisassembleCommand cmd = new DisassembleCommand(address, null, true);

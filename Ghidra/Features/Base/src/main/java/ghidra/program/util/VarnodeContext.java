@@ -530,7 +530,8 @@ public class VarnodeContext implements ProcessorContext {
 			}
 
 			// If the memory is Writeable, then maybe don't trust it
-			if (!isReadOnly(addr)) {
+			boolean isReadOnly = isReadOnly(addr);
+			if (!isReadOnly) {
 				// don't try to see how far away if it is in a different space.
 				if (addr.getAddressSpace()
 						.equals(this.spaceContext.getAddress().getAddressSpace())) {
@@ -572,8 +573,10 @@ public class VarnodeContext implements ProcessorContext {
 					value = (value << 8 * (8 - size)) >> 8 * (8 - size);
 				}
 
-				//  constants pulled from memory are always suspect
-				return createVarnode(value, SUSPECT_OFFSET_SPACEID, size);
+				//  constants pulled from memory are suspec
+				// unless memory is readonly, or given access from evaluator (trustWriteAccess)
+				int spaceId = (isReadOnly || evaluator.allowAccess(this, addr)) ? 0 : SUSPECT_OFFSET_SPACEID;
+				return createVarnode(value, spaceId, size);
 
 			}
 			catch (MemoryAccessException e) {
