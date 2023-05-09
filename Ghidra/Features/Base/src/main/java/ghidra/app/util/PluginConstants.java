@@ -97,6 +97,6 @@ public interface PluginConstants {
 	public static final String SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME =
 		"Highlight Color for Current Match";
 	public static final GColor SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR =
-		new GColor("color.bg.search.current.line.highlight");
+		new GColor("color.bg.search.highlight.current.line");
 
 }
