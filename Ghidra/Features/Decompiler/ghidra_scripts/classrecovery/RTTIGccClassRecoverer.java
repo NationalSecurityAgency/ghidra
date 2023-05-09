@@ -703,8 +703,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		for (GccTypeinfo typeinfo : typeinfos) {
 			monitor.checkCancelled();
 
-			Msg.debug(this, typeinfo.getNamespace().getName());
-
 			Address typeinfoAddress = typeinfo.getAddress();
 			Structure typeinfoStructure = getTypeinfoStructure(typeinfoAddress);
 
@@ -2643,10 +2641,6 @@ private Address getReferencedAddress(Address address) {
 			return null;
 		}
 
-		Msg.debug(this, "numBases for typeinfo: " + typeinfoAddress.toString() + " at address "
-				+ typeinfoAddress.add(offsetOfNumBases) + " numbases: " + numBases);
-		;
-
 		// get or create the vmiClassTypeInfoStruct
 		Structure vmiClassTypeinfoStructure = (Structure) dataTypeManager.getDataType(classDataTypesCategoryPath,
 				VMI_CLASS_TYPE_INFO_STRUCTURE + numBases);
@@ -2722,8 +2716,6 @@ private Address getReferencedAddress(Address address) {
 		}
 
 		Namespace classNamespace = typeinfoNameSymbol.getParentNamespace();
-
-		Msg.debug(this, typeinfoAddress.toString() + " " + classNamespace.getName());
 
 		if (classNamespace.isGlobal()) {
 			Msg.debug(this,
