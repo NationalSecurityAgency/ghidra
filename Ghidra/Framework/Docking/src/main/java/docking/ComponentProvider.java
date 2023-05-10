@@ -828,6 +828,18 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
+	 * Tells the provider to reset the font size for this provider.
+	 * <p>
+	 * See {@link #adjustFontSize(boolean)}
+	 */
+	public void resetFontSize() {
+		if (registeredFontId == null) {
+			return;
+		}
+		ThemeManager.getInstance().restoreFont(registeredFontId);
+	}
+
+	/**
 	 * Registers a fontId for the font that will be automatically adjusted when
 	 * {@link #adjustFontSize(boolean)} is called.
 	 * @param fontId the id of the theme font to be adjusted

@@ -51,6 +51,10 @@ public class FontAdjustPlugin extends Plugin {
 				.onAction(this::decrementFont)
 				.buildAndInstall(tool);
 
+		new ActionBuilder("Reset Font", "tool")
+				.keyBinding("ctrl 0")
+				.onAction(this::resetFontSize)
+				.buildAndInstall(tool);
 	}
 
 	private void incrementFont(ActionContext context) {
@@ -67,4 +71,10 @@ public class FontAdjustPlugin extends Plugin {
 		}
 	}
 
+	private void resetFontSize(ActionContext context) {
+		ComponentProvider provider = context.getComponentProvider();
+		if (provider != null) {
+			provider.resetFontSize();
+		}
+	}
 }
