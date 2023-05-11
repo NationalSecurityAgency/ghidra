@@ -111,10 +111,7 @@ public class AddEditDialog extends DialogComponentProvider {
 	 * @param targetProgram the program containing the symbol
 	 */
 	public void editLabel(Symbol targetSymbol, Program targetProgram) {
-		ComponentProvider componentProvider =
-			tool.getComponentProvider(PluginConstants.CODE_BROWSER);
-		JComponent component = componentProvider.getComponent();
-		editLabel(targetSymbol, targetProgram, component);
+		editLabel(targetSymbol, targetProgram, (Component) null);
 	}
 
 	/**

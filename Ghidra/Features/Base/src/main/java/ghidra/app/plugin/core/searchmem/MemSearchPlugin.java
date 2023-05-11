@@ -85,6 +85,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 	private static final int MAX_PRE_POPULTATE_BYTE_COUNT = 20;
 
+	private static final String PRE_POPULATE_MEM_SEARCH = "Pre-populate Memory Search";
+
+	private static final String AUTO_RESTRICT_SELECTION =
+		"Auto Restrict Memory Search on Selection";
+
 	private DockingAction searchAction;
 	private DockingAction searchAgainAction;
 	private MemSearchDialog searchDialog;
@@ -124,7 +129,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		ToolOptions opt = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		opt.removeOptionsChangeListener(this);
 
-		opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.removeOptionsChangeListener(this);
 
 		if (searchAction != null) {
@@ -374,21 +379,21 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 	}
 
 	private void initializeOptionListeners() {
-		ToolOptions opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
-		opt.registerOption(PluginConstants.PRE_POPULATE_MEM_SEARCH, true, null,
+		ToolOptions opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
+		opt.registerOption(PRE_POPULATE_MEM_SEARCH, true, null,
 			"Initializes memory search byte sequence from " +
 				"the current selection provided the selection is less than 10 bytes.");
-		opt.registerOption(PluginConstants.AUTO_RESTRICT_SELECTION, true, null,
+		opt.registerOption(AUTO_RESTRICT_SELECTION, true, null,
 			"Automactically adjusts memory searches restricted" +
 				" to the current selection, as selections comes and goes");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, null,
+		opt.registerOption(SearchConstants.SEARCH_HIGHLIGHT_NAME, true, null,
 			"Toggles highlight search results");
 
-		opt.registerThemeColorBinding(PluginConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR.getId(), null,
+		opt.registerThemeColorBinding(SearchConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
+			SearchConstants.SEARCH_HIGHLIGHT_COLOR.getId(), null,
 			"The search result highlight color");
-		opt.registerThemeColorBinding(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR.getId(), null,
+		opt.registerThemeColorBinding(SearchConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
+			SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR.getId(), null,
 			"The search result highlight color for the currently selected match");
 
 		opt.addOptionsChangeListener(this);
@@ -399,9 +404,9 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 	private void loadOptions() {
 
-		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		int newSearchLimit =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
 		if (newSearchLimit <= 0) {
 			throw new OptionsVetoException("Search limit must be greater than 0");
 		}
@@ -411,9 +416,9 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			searchInfo.setSearchLimit(newSearchLimit);
 		}
 
-		prepopulateSearch = opt.getBoolean(PluginConstants.PRE_POPULATE_MEM_SEARCH, true);
-		autoRestrictSelection = opt.getBoolean(PluginConstants.AUTO_RESTRICT_SELECTION, true);
-		doHighlight = opt.getBoolean(PluginConstants.SEARCH_HIGHLIGHT_NAME, true);
+		prepopulateSearch = opt.getBoolean(PRE_POPULATE_MEM_SEARCH, true);
+		autoRestrictSelection = opt.getBoolean(AUTO_RESTRICT_SELECTION, true);
+		doHighlight = opt.getBoolean(SearchConstants.SEARCH_HIGHLIGHT_NAME, true);
 
 		opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		byteGroupSize = opt.getInt(BytesFieldFactory.BYTE_GROUP_SIZE_MSG, 1);
@@ -506,7 +511,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		String type = "Search";
 		if (navigatable.supportsMarkers()) {
 			return tableService.showTableWithMarkers(title, type, model,
-				PluginConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, type, navigatable);
+				SearchConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, type, navigatable);
 		}
 		return tableService.showTable(title, type, model, type, navigatable);
 	}
@@ -747,7 +752,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		private Color getHighlightColor(Address highlightStart, int highlightLength) {
 			ProgramLocation location = navigatable != null ? navigatable.getLocation() : null;
 			if (!(location instanceof BytesFieldLocation)) {
-				return PluginConstants.SEARCH_HIGHLIGHT_COLOR;
+				return SearchConstants.SEARCH_HIGHLIGHT_COLOR;
 			}
 
 			BytesFieldLocation byteLoc = (BytesFieldLocation) location;
@@ -756,11 +761,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 				long diff = byteAddress.subtract(highlightStart);
 				if (diff >= 0 && diff < highlightLength) {
 					// the current location is in the highlight
-					return PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
+					return SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
 				}
 			}
 
-			return PluginConstants.SEARCH_HIGHLIGHT_COLOR;
+			return SearchConstants.SEARCH_HIGHLIGHT_COLOR;
 		}
 
 		private boolean checkRemoveHighlights() {

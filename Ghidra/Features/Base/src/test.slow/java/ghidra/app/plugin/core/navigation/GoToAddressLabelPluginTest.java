@@ -46,7 +46,7 @@ import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.QueryData;
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.navigation.GoToAddressLabelDialog;
 import ghidra.framework.options.*;
@@ -576,7 +576,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testQueryResultsMaxHitsDynamicFound() throws Exception {
 		loadProgram("x86");
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 20);
 
 		setText("L*");
@@ -588,7 +588,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testQueryResultsMaxHitsDefinedFound() throws Exception {
 		loadProgram("x86");
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 5);
 
 		createLabel("1006960", "abc1");

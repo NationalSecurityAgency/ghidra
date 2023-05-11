@@ -37,7 +37,6 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
-import ghidra.app.util.PluginConstants;
 import ghidra.app.util.bean.SetEquateDialog;
 import ghidra.app.util.viewer.field.ListingTextField;
 import ghidra.app.util.viewer.field.OperandFieldFactory;
@@ -1021,7 +1020,7 @@ public class EquatePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testConvertToUnsignedDecimal() {
 		// create an unsigned decimal as the equate name
 		putCursorOnOperand(0x010059ef, 1);
-		ComponentProvider provider = tool.getComponentProvider(PluginConstants.CODE_BROWSER);
+		ComponentProvider provider = cb.getProvider();
 
 		Instruction inst = listing.getInstructionAt(addr(0x010059ef));
 		Scalar scalar = inst.getScalar(1);

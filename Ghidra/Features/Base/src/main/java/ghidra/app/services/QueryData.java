@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +16,17 @@
 package ghidra.app.services;
 
 public class QueryData {
+
+	/**
+	 * Wildcard char for any string.
+	 */
+	private String ANY_STRING_WILDCARD = "*";
+
+	/**
+	 * Wildcard char for a single char.
+	 */
+	private String ANY_CHAR_WILDCARD = "?";
+
 	private final String queryString;
 	private final boolean caseSensitive;
 	private final boolean includeDynamicLables;
@@ -44,4 +54,7 @@ public class QueryData {
 		return includeDynamicLables;
 	}
 
+	public boolean isWildCard() {
+		return queryString.contains(ANY_STRING_WILDCARD) || queryString.contains(ANY_CHAR_WILDCARD);
+	}
 }

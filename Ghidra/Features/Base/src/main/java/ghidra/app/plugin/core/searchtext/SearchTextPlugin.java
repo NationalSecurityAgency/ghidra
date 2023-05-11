@@ -179,7 +179,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		ToolOptions opt = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 		opt.removeOptionsChangeListener(this);
 
-		opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.removeOptionsChangeListener(this);
 
 		navigatable = null;
@@ -339,7 +339,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		if (navigatable.supportsMarkers()) {
 			return query.showTableWithMarkers(
 				"Search Text - \"" + searchString + "\"  [" + matchType + "]", "Search", model,
-				PluginConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, "Search", navigatable);
+				SearchConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, "Search", navigatable);
 		}
 		return query.showTable("Search Text - \"" + searchString + "\"  [" + matchType + "]",
 			"Search", model, "Search", navigatable);
@@ -430,29 +430,29 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			}
 			searchLimit = newSearchLimit;
 		}
-		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_NAME)) {
+		else if (optionName.equals(SearchConstants.SEARCH_HIGHLIGHT_NAME)) {
 			doHighlight = ((Boolean) newValue).booleanValue();
 		}
 	}
 
 	private void initializeOptions() {
 
-		ToolOptions opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		ToolOptions opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		HelpLocation loc = new HelpLocation(HelpTopics.SEARCH, "HighlightText");
 
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, loc,
+		opt.registerOption(SearchConstants.SEARCH_HIGHLIGHT_NAME, true, loc,
 			"Determines whether to highlight the matched string for a search in the listing.");
-		opt.registerThemeColorBinding(PluginConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR.getId(), null,
+		opt.registerThemeColorBinding(SearchConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
+			SearchConstants.SEARCH_HIGHLIGHT_COLOR.getId(), null,
 			"The search result highlight color");
-		opt.registerThemeColorBinding(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR.getId(), null,
+		opt.registerThemeColorBinding(SearchConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
+			SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR.getId(), null,
 			"The search result highlight color for the currently selected match");
 
 		searchLimit =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
 
-		doHighlight = opt.getBoolean(PluginConstants.SEARCH_HIGHLIGHT_NAME, true);
+		doHighlight = opt.getBoolean(SearchConstants.SEARCH_HIGHLIGHT_NAME, true);
 
 		opt.setOptionsHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Search_Text"));
 
@@ -673,10 +673,10 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			while (matcher.find()) {
 				int start = matcher.start();
 				int end = matcher.end() - 1;
-				Color hlColor = PluginConstants.SEARCH_HIGHLIGHT_COLOR;
+				Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
 				if (start <= cursorTextOffset && end >= cursorTextOffset) {
 					// change the highlight color when in the field so it stands out
-					hlColor = PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
+					hlColor = SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
 				}
 				list.add(new Highlight(start, end, hlColor));
 			}
@@ -715,10 +715,10 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				// ensure the particular regex match is the actual search result
 				if (start == searchStart && end == searchEnd) {
 
-					Color hlColor = PluginConstants.SEARCH_HIGHLIGHT_COLOR;
+					Color hlColor = SearchConstants.SEARCH_HIGHLIGHT_COLOR;
 					if (start <= cursorTextOffset && end >= cursorTextOffset) {
 						// change the highlight color when in the field so it stands out
-						hlColor = PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
+						hlColor = SearchConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
 					}
 
 					// this is the matching search hit for a single search
