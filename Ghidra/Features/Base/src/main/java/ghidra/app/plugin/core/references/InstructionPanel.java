@@ -32,6 +32,8 @@ import docking.actions.KeyBindingUtils;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.program.model.address.Address;
@@ -43,15 +45,13 @@ import ghidra.program.model.symbol.*;
 
 class InstructionPanel extends JPanel implements ChangeListener {
 
-	private static final int ETCHED_BORDER_THICKNESS = 2;
+	private static final int BORDER_SIZE = 2;
+	private static final Border EMPTY_BORDER = new EmptyBorder(BORDER_SIZE,
+		BORDER_SIZE, BORDER_SIZE, BORDER_SIZE);
+	private static final Border ETCHED_BORDER = new EtchedBorder();
 
-	private static final Border ETCHED_BORDER = new EtchedBorder(Color.BLACK, Color.GRAY);
-	private static final Border EMPTY_BORDER = new EmptyBorder(ETCHED_BORDER_THICKNESS,
-		ETCHED_BORDER_THICKNESS, ETCHED_BORDER_THICKNESS, ETCHED_BORDER_THICKNESS);
-
-	private final static Color UNLOCKED_LABEL_COLOR = Color.blue;
-	private final static Color NOT_IN_MEMORY_COLOR = Color.red;
-	private final static Color DEFAULT_FG_COLOR = Color.black;
+	private final static Color NOT_IN_MEMORY_COLOR = Colors.ERROR;
+	private final static Color DEFAULT_FG_COLOR = Colors.FOREGROUND;
 
 	private static final DataFlavor[] ACCEPTABLE_DROP_FLAVORS =
 		new DataFlavor[] { SelectionTransferable.localProgramSelectionFlavor };
@@ -65,7 +65,6 @@ class InstructionPanel extends JPanel implements ChangeListener {
 	private JLabel[] operandLabels;
 	private DropTarget[] dropTargets; // 0: mnemonic, >= 1: operands
 	private JPanel innerPanel;
-	private Font monoFont;
 	private int activeIndex;
 	private int activeSubIndex;
 	private CodeUnit currentCodeUnit;
@@ -85,13 +84,13 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		 */
 		@Override
 		public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
+			// stub
 		}
 
 		/**
 		 * Return true if is OK to drop the transferable at the location
 		 * specified the event.
 		 * @param e event that has current state of drag and drop operation
-		 * @param data data that is being dragged
 		 */
 		@Override
 		public boolean isDropOk(DropTargetDragEvent e) {
@@ -102,26 +101,27 @@ class InstructionPanel extends JPanel implements ChangeListener {
 				updateLabels(getLabelIndex((JLabel) targetComp), -1);
 
 				try {
-					Object data = e.getTransferable().getTransferData(
-						SelectionTransferable.localProgramSelectionFlavor);
+					Object data = e.getTransferable()
+							.getTransferData(
+								SelectionTransferable.localProgramSelectionFlavor);
 					AddressSetView view = ((SelectionTransferData) data).getAddressSet();
 					if (memory.contains(view)) {
 						return true;
 					}
 				}
 				catch (UnsupportedFlavorException e1) {
+					// return false
 				}
 				catch (IOException e1) {
+					// return false
 				}
 			}
 			return false;
 		}
 
-		/**
-		 * Revert back to normal if any drag feedback was set.
-		 */
 		@Override
 		public void undoDragUnderFeedback() {
+			// stub
 		}
 
 		/**
@@ -156,9 +156,6 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		create(topPad, leftPad, bottomPad, rightPad);
 	}
 
-	/**
-	 * Returns the current code unit displayed.
-	 */
 	CodeUnit getCurrentCodeUnit() {
 		return currentCodeUnit;
 	}
@@ -168,14 +165,6 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		updateLabels(activeIndex, activeSubIndex);
 	}
 
-	/**
-	 * Set the code unit location.
-	 * @param cu code unit
-	 * @param loc location
-	 * @param opIndex operand index
-	 * @param showBlockID ID for what to show for the block name in the
-	 * operand
-	 */
 	void setCodeUnitLocation(CodeUnit cu, int opIndex, int subIndex, boolean locked) {
 		if (cu != null) {
 			this.locked = locked;
@@ -218,14 +207,11 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		setBorder(border);
 
 		addressLabel = new GDLabel("FFFFFFFF"); // use a default
-
-		Font font = addressLabel.getFont();
-		monoFont = new Font("monospaced", font.getStyle(), font.getSize());
-		addressLabel.setFont(monoFont);
+		Gui.registerFont(addressLabel, "font.monospaced");
 		addressLabel.setName("addressLabel");
 
 		mnemonicLabel = new GDLabel("movl");
-		mnemonicLabel.setFont(monoFont);
+		Gui.registerFont(mnemonicLabel, "font.monospaced");
 		mnemonicLabel.setName("mnemonicLabel");
 		mnemonicLabel.addMouseListener(mouseListener);
 
@@ -233,8 +219,8 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		for (int i = 0; i < operandLabels.length; i++) {
 			operandLabels[i] = new GDLabel("%ebp, ");
 			operandLabels[i].setName("operandLabels[" + i + "]");
-			operandLabels[i].setFont(monoFont);
 			operandLabels[i].addMouseListener(mouseListener);
+			Gui.registerFont(operandLabels[i], "font.monospaced");
 		}
 
 		innerPanel = new JPanel();
@@ -286,7 +272,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 	/**
 	 * Enable drop on specified number of operands.
 	 * A value of -1 will disable all drop targets.
-	 * @param numOperands
+	 * @param numOperands the number of operands
 	 */
 	private void updateDropTargets(int numOperands) {
 		++numOperands;
@@ -374,7 +360,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 
 		if (activeIndex == opIndex) {
 			operandLabels[opIndex].setBorder(ETCHED_BORDER);
-			operandLabels[opIndex].setBackground(EditReferencesProvider.HIGHLIGHT_COLOR);
+			operandLabels[opIndex].setBackground(EditReferencesProvider.BG_COLOR_ACTIVE_OPERAND);
 			operandLabels[opIndex].setOpaque(true);
 		}
 		else {
@@ -393,7 +379,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		mnemonicLabel.setForeground(DEFAULT_FG_COLOR);
 
 		if (activeIndex == ReferenceManager.MNEMONIC) {
-			mnemonicLabel.setBackground(EditReferencesProvider.HIGHLIGHT_COLOR);
+			mnemonicLabel.setBackground(EditReferencesProvider.BG_COLOR_ACTIVE_OPERAND);
 			mnemonicLabel.setBorder(ETCHED_BORDER);
 			mnemonicLabel.setOpaque(true);
 		}

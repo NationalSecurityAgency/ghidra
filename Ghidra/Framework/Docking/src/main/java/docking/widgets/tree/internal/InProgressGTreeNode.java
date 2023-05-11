@@ -18,11 +18,10 @@ package docking.widgets.tree.internal;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeNode;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 public class InProgressGTreeNode extends GTreeNode {
-	private static final Icon ICON = ResourceManager.loadImage("images/magnifier.png");
+	private static final Icon ICON = new GIcon("icon.search");
 
 	public InProgressGTreeNode() {
 	}

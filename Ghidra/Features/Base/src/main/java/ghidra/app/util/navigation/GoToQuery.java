@@ -651,7 +651,7 @@ public class GoToQuery {
 			SwingUtilities.invokeLater(() -> Msg.showWarn(getClass(), parent,
 				"Search Limit Exceeded!",
 				"Stopped search after finding " + matchCount + " matches.\n" +
-					"The Search limit can be changed in the Edit->Options, under Tool Options"));
+					"The search limit can be changed at Edit->Tool Options, under Search."));
 		}
 	}
 

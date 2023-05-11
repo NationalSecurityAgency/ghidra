@@ -1196,6 +1196,36 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertEquals(10, arr.getNumElements());
 	}
 	
+	@Test
+	public void testArrayWithZeroLenDataType()
+			throws CancelledException, IOException, DWARFException {
+		// Tests that an array with non-zero elements, but with zero-len data type
+		// becomes a zero-element array.  (yuck)
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
+		DebugInfoEntry arrayDIE = newArrayUsingCount(cu, emptyStructDIE, 10);
+
+		importAllDataTypes();
+
+		Structure emptyStruct = (Structure) dwarfDTM.getDataType(emptyStructDIE.getOffset(), null);
+		Array arr = (Array) dwarfDTM.getDataType(arrayDIE.getOffset(), null);
+		assertTrue(emptyStruct.isZeroLength());
+		assertEquals(0, arr.getNumElements());
+		assertTrue(arr.isZeroLength());
+	}
+
+	@Test
+	public void testArrayWithZeroElements()
+			throws CancelledException, IOException, DWARFException {
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry arrayDIE = newArrayUsingCount(cu, intDIE, 0);
+
+		importAllDataTypes();
+
+		Array arr = (Array) dwarfDTM.getDataType(arrayDIE.getOffset(), null);
+		assertEquals(0, arr.getNumElements());
+		assertTrue(arr.isZeroLength());
+	}
+
 	// not implemented yet
 	public void testSubr() {
 		// func ptrs

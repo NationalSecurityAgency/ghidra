@@ -97,22 +97,59 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			return;
 		}
 
-		dataType = createEmptyComposite((AbstractCompositeMsType) msType);
-		String mangledName = ((AbstractCompositeMsType) msType).getMangledName();
-		classType = new CppCompositeType((Composite) dataType, mangledName);
-		classType.setName(getName());
-		classType.setSize(DefaultPdbApplicator.bigIntegerToInt(applicator, getSize()));
-		if (msType instanceof AbstractClassMsType) {
-			classType.setClass();
-		}
-		else if (msType instanceof AbstractStructureMsType) {
-			classType.setStruct();
-		}
-		else if (msType instanceof AbstractUnionMsType) {
-			classType.setUnion();
-		}
-		classType.setFinal(isFinal());
+		SymbolPath sp = getFixedSymbolPath();
+		CategoryPath categoryPath = applicator.getCategory(sp.getParent());
+		ComboType c = getOrCreateComposite(applicator, this, (AbstractCompositeMsType) msType,
+			categoryPath, sp);
+		dataType = c.dt();
+		classType = c.ct();
+	}
 
+	private record ComboType(DataType dt, CppCompositeType ct) {
+	}
+
+	// DefaultPdbApplicator is passed in for bigIntegerToInt...
+	//  TODO: find a better way... maybe eventually eliminate PdbMsgLog
+	private static ComboType getOrCreateComposite(DefaultPdbApplicator myApplicator,
+			AbstractComplexTypeApplier myCompositeApplier, AbstractCompositeMsType compositeMsType,
+			CategoryPath categoryPath, SymbolPath fixedSymbolPath) {
+
+		Composite myComposite;
+		CppCompositeType myClassType;
+
+		String mangledName = compositeMsType.getMangledName();
+
+		if (compositeMsType instanceof AbstractClassMsType) {
+			myApplicator.predefineClass(fixedSymbolPath);
+			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), 0,
+				myApplicator.getDataTypeManager());
+			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType.setClass();
+		}
+		else if (compositeMsType instanceof AbstractStructureMsType) {
+			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), 0,
+				myApplicator.getDataTypeManager());
+			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType.setStruct();
+		}
+		else if (compositeMsType instanceof AbstractUnionMsType) {
+			myComposite = new UnionDataType(categoryPath, fixedSymbolPath.getName(),
+				myApplicator.getDataTypeManager());
+			myClassType = new CppCompositeType(myComposite, mangledName);
+			myClassType.setUnion();
+		}
+		else { // InterfaceMsType
+			String message = "Unsupported datatype (" + compositeMsType.getClass().getSimpleName() +
+				"): " + fixedSymbolPath.getPath();
+			myApplicator.appendLogMsg(message);
+			return null;
+		}
+		myClassType.setName(myCompositeApplier.getMsType().getName());
+		myClassType.setSize(
+			DefaultPdbApplicator.bigIntegerToInt(myApplicator, myCompositeApplier.getSize()));
+		myClassType.setFinal(compositeMsType.getMsProperty().isSealed());
+
+		return new ComboType(myComposite, myClassType);
 	}
 
 	@Override
@@ -146,9 +183,16 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		// TODO: Dome some output comparisons with and without the !isNested()
 		// test which is intended to ignore nested anonymous composites.
 
-		if (!isForwardReference() && !isNested()) {
+		if (!isForwardReference() && !isNested() && !isUnnamed()) {
 			super.resolve();
 		}
+	}
+
+	private boolean isUnnamed() {
+		if (msType instanceof AbstractClassMsType) {
+			return false;
+		}
+		return "__unnamed".equals(((AbstractComplexMsType) msType).getName());
 	}
 
 	private void applyOrDeferForDependencies() throws PdbException, CancelledException {
@@ -189,7 +233,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			}
 		}
 		for (MsTypeApplier memberTypeApplierIterated : fieldListApplier.getMemberList()) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			if (memberTypeApplierIterated instanceof MemberTypeApplier) {
 				MemberTypeApplier memberTypeApplier = (MemberTypeApplier) memberTypeApplierIterated;
 				MsTypeApplier fieldApplier = memberTypeApplier.getFieldTypeApplier();
@@ -202,7 +246,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				applicator.addApplierDependency(this, memberTypeApplierIterated);
 			}
 		}
-		if (!isDeferred()) {
+		if (!isDeferred() || isUnnamed()) {
 			applyInternal();
 		}
 	}
@@ -260,7 +304,11 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		if (isApplied()) {
 			return;
 		}
-		Composite composite = (Composite) dataType;
+		applyInternal((Composite) dataType);
+		setApplied();
+	}
+
+	private void applyInternal(Composite composite) throws CancelledException, PdbException {
 
 		AbstractCompositeMsType type = (AbstractCompositeMsType) msType;
 
@@ -272,13 +320,16 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					"Unexpected base classes for union type: " + type.getName());
 			}
 		}
+		if (isUnnamed()) {
+			applyCpp = false;
+		}
+
 		if (applyCpp) {
 			applyCpp(composite, type);
 		}
 		else {
 			applyBasic(composite, type);
 		}
-		setApplied();
 	}
 
 	//==============================================================================================
@@ -384,6 +435,35 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return dataType;
 	}
 
+	/**
+	 * Returns a datatype or a newly minted datatype if it is an unnamed datatype.  In the latter
+	 * case, the type is put into an internal category of the parent and the name is given
+	 * a suffix based on the ordinal within the parent
+	 * @param categoryPath the CategoryPath
+	 * @param ordinal the ordinal
+	 * @return the Datatype
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon error
+	 */
+	DataType getDataType(CategoryPath categoryPath, int ordinal)
+			throws CancelledException, PdbException {
+		if (!isUnnamed()) {
+			return getDataType();
+		}
+		return mintNestedUnnamedDataType(categoryPath, ordinal);
+	}
+
+	private DataType mintNestedUnnamedDataType(CategoryPath categoryPath, int ordinal)
+			throws CancelledException, PdbException {
+		SymbolPath sp = getFixedSymbolPath();
+		SymbolPath modifiedSymbolPath =
+			new SymbolPath(sp.getParent(), sp.getName() + "_" + ordinal);
+		ComboType c = getOrCreateComposite(applicator, this, (AbstractCompositeMsType) msType,
+			categoryPath, modifiedSymbolPath);
+		applyInternal((Composite) c.dt());
+		return c.dt();
+	}
+
 	@Override
 	DataType getCycleBreakType() {
 		if (isForwardReference() && definitionApplier != null && definitionApplier.isApplied()) {
@@ -414,34 +494,6 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				composite.delete(0);
 			}
 		}
-	}
-
-	private Composite createEmptyComposite(AbstractCompositeMsType type) {
-
-		SymbolPath fixedPath = getFixedSymbolPath();
-		CategoryPath categoryPath = applicator.getCategory(fixedPath.getParent());
-
-		Composite composite;
-		if (type instanceof AbstractClassMsType) {
-			applicator.predefineClass(fixedPath);
-			composite = new StructureDataType(categoryPath, fixedPath.getName(), 0,
-				applicator.getDataTypeManager());
-		}
-		else if (type instanceof AbstractStructureMsType) {
-			composite = new StructureDataType(categoryPath, fixedPath.getName(), 0,
-				applicator.getDataTypeManager());
-		}
-		else if (type instanceof AbstractUnionMsType) {
-			composite = new UnionDataType(categoryPath, fixedPath.getName(),
-				applicator.getDataTypeManager());
-		}
-		else { // InterfaceMsType
-			String message = "Unsupported datatype (" + type.getClass().getSimpleName() + "): " +
-				fixedPath.getPath();
-			applicator.appendLogMsg(message);
-			return null;
-		}
-		return composite;
 	}
 
 	private boolean hasBaseClasses() {
@@ -644,7 +696,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return new CppCompositeType.ClassFieldAttributes(myAccess, myProperty);
 	}
 
-	private void addMembers(Composite composite, FieldListTypeApplier fieldListApplier) {
+	private void addMembers(Composite composite, FieldListTypeApplier fieldListApplier)
+			throws CancelledException, PdbException {
 
 		AbstractCompositeMsType type = (AbstractCompositeMsType) msType;
 
@@ -660,6 +713,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				memberAttributes.getAccess(); // TODO: do something with this and other attributes
 				MsTypeApplier fieldApplier = memberTypeApplier.getFieldTypeApplier();
 
+				DataType fieldDataType = null;
 				if (fieldApplier instanceof CompositeTypeApplier) {
 					CompositeTypeApplier defApplier =
 						((CompositeTypeApplier) fieldApplier).getDefinitionApplier(
@@ -667,8 +721,12 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					if (defApplier != null) {
 						fieldApplier = defApplier;
 					}
+					fieldDataType = ((CompositeTypeApplier) fieldApplier).getDataType(
+						ClassTypeUtils.getInternalsCategoryPath(this), members.size());
 				}
-				DataType fieldDataType = fieldApplier.getDataType();
+				if (fieldDataType == null) {
+					fieldDataType = fieldApplier.getDataType();
+				}
 				boolean isFlexibleArray;
 				if (fieldApplier instanceof ArrayTypeApplier) {
 					isFlexibleArray = ((ArrayTypeApplier) fieldApplier).isFlexibleArray();
@@ -676,7 +734,13 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				else {
 					isFlexibleArray = false;
 				}
-				if (fieldDataType == null) {
+				if (fieldApplier instanceof CompositeTypeApplier &&
+					((CompositeTypeApplier) fieldApplier).isUnnamed()) {
+					DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(applicator,
+						memberName, fieldDataType, offset);
+					members.add(member);
+				}
+				else if (fieldDataType == null) {
 					if (fieldApplier instanceof PrimitiveTypeApplier &&
 						((PrimitiveTypeApplier) fieldApplier).isNoType()) {
 						DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(applicator,
@@ -691,11 +755,15 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					}
 				}
 				else {
-					DefaultPdbUniversalMember member =
-						new DefaultPdbUniversalMember(applicator, memberName, fieldApplier, offset);
+					String memberComment = null;
+					if (fieldApplier instanceof PointerTypeApplier ptrApplier) {
+						memberComment = ptrApplier.getPointerCommentField();
+					}
+					DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(applicator,
+						memberName, fieldApplier, offset, memberComment);
 					members.add(member);
 					classType.addMember(memberName, fieldDataType, isFlexibleArray,
-						convertAttributes(memberAttributes), offset);
+						convertAttributes(memberAttributes), offset, memberComment);
 				}
 			}
 			else if (memberTypeApplierIterated instanceof EnumerateTypeApplier) {

@@ -214,7 +214,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		int txId = dtm.startTransaction("Associate Data Types");
 		try {
 			for (GTreeNode node : copyMoveNodes) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				if (node instanceof DataTypeNode) {
 					DataType dt = ((DataTypeNode) node).getDataType();
@@ -256,7 +256,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		monitor.setMessage("Checking for types to associate");
 		monitor.initialize(copyMoveNodes.size());
 		for (GTreeNode node : copyMoveNodes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (node instanceof DataTypeNode) {
 				DataType dt = ((DataTypeNode) node).getDataType();
@@ -281,7 +281,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 		DataType[] types = cat.getDataTypes();
 		for (DataType dt : types) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (isLocal(dt)) {
 				return true; // local means it is not associated
 			}
@@ -289,7 +289,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 		Category[] categories = cat.getCategories();
 		for (Category child : categories) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (containsUnassociatedTypes(child, monitor)) {
 				return true;
 			}
@@ -361,6 +361,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		DataTypeManager dtm = toCategory.getDataTypeManager();
 		DataTypeManager nodeDtm = dataType.getDataTypeManager();
 		boolean sameManager = (dtm == nodeDtm);
+
 		DataType newDt = !sameManager ? dataType.clone(nodeDtm) : dataType.copy(nodeDtm);
 
 		if (!sameManager && toCategory.isRoot()) {

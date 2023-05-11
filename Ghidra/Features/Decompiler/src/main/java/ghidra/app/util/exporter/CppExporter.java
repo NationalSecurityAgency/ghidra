@@ -124,7 +124,7 @@ public class CppExporter extends Exporter {
 			if (emitDataTypeDefinitions) {
 				writeProgramDataTypes(program, header, headerWriter, cFileWriter, chunkingMonitor);
 			}
-			chunkingMonitor.checkCanceled();
+			chunkingMonitor.checkCancelled();
 
 			decompileAndExport(addrSet, program, headerWriter, cFileWriter, parallelDecompiler,
 				chunkingMonitor);
@@ -207,14 +207,14 @@ public class CppExporter extends Exporter {
 
 	private void writeResults(List<CPPResult> results, PrintWriter headerWriter,
 			PrintWriter cFileWriter, TaskMonitor monitor) throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		Collections.sort(results);
 
 		StringBuilder headers = new StringBuilder();
 		StringBuilder bodies = new StringBuilder();
 		for (CPPResult result : results) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (result == null) {
 				continue;
 			}
@@ -231,7 +231,7 @@ public class CppExporter extends Exporter {
 			}
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		if (headerWriter != null) {
 			headerWriter.println(headers.toString());
@@ -566,8 +566,8 @@ public class CppExporter extends Exporter {
 		}
 
 		@Override
-		public void checkCanceled() throws CancelledException {
-			monitor.checkCanceled();
+		public void checkCancelled() throws CancelledException {
+			monitor.checkCancelled();
 		}
 
 		@Override

@@ -39,6 +39,7 @@ abstract class VariableStorageDBAdapter {
 	 * @param openMode the openmode
 	 * @param addrMap the address map
 	 * @param monitor the progress monitor.
+	 * @return variable storage table adapter
 	 * @throws VersionException if the database table does not match the adapter.
 	 * @throws CancelledException if the user cancels an upgrade.
 	 * @throws IOException if a database io error occurs.
@@ -94,5 +95,7 @@ abstract class VariableStorageDBAdapter {
 	abstract RecordIterator getRecords() throws IOException;
 
 	abstract int getRecordCount();
+
+	abstract void deleteTable() throws IOException;
 
 }

@@ -21,11 +21,13 @@ import java.util.concurrent.CompletableFuture;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.iface2.DbgModelTargetBreakpointContainer;
 import agent.dbgeng.model.iface2.DbgModelTargetBreakpointSpec;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
@@ -84,8 +86,9 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 	private final ListenerSet<TargetBreakpointAction> actions =
 		new ListenerSet<>(TargetBreakpointAction.class) {
 			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
+			// The values may be weak, but the keys, which are the same objects, are strong
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
 			}
 		};
 
@@ -161,7 +164,7 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getInfo().thenAccept(i -> {
 			synchronized (this) {
 				setBreakpointInfo(i);

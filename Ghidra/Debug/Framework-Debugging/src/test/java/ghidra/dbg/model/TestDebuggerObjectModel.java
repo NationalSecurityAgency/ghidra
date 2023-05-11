@@ -70,7 +70,7 @@ public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 	}
 
 	protected TestTargetSession newTestTargetSession(String rootHint) {
-		return new TestTargetSession(this, rootHint, ROOT_SCHEMA);
+		return new TestTargetSession(this, rootHint, getRootSchema());
 	}
 
 	protected TestTargetEnvironment newTestTargetEnvironment(TestTargetSession session) {
@@ -154,6 +154,11 @@ public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 	protected TestTargetRegister newTestTargetRegister(TestTargetRegisterContainer container,
 			Register register) {
 		return TestTargetRegister.fromLanguageRegister(container, register);
+	}
+
+	protected TestTargetRegister newTestTargetRegister(TestTargetRegisterContainer container,
+			String index, Register register) {
+		return TestTargetRegister.fromLanguageRegister(container, index, register);
 	}
 
 	protected TestTargetThreadContainer newTestTargetThreadContainer(TestTargetProcess process) {

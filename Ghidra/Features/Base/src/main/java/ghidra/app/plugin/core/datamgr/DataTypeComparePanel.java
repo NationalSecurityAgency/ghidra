@@ -18,10 +18,9 @@ package ghidra.app.plugin.core.datamgr;
 import java.awt.*;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.HTMLDataTypeRepresentation;
 import ghidra.program.model.data.DataType;
@@ -41,13 +40,6 @@ class DataTypeComparePanel extends JPanel {
 	private String clientName;
 	private String sourceName;
 
-	/**
-	 * Creates a panel for viewing two data types side by side.
-	 * @param dataType1 the first data type to display.
-	 * @param dataType2 the second data type to display.
-	 * @param one_to_two true if this panel should display an arrow from data type 1 to data type 2.
-	 * 		false if the should be from 2 to 1.
-	 */
 	DataTypeComparePanel(String clientName, String sourceName) {
 		super(new GridLayout(0, 2));
 		this.clientName = clientName;
@@ -72,12 +64,12 @@ class DataTypeComparePanel extends JPanel {
 		add(rightPanel);
 		dtLabel1 = new GDHtmlLabel();
 		dtLabel1.setOpaque(true);
-		dtLabel1.setBackground(Color.WHITE);
+		dtLabel1.setBackground(Colors.BACKGROUND);
 		dtLabel1.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
 		dtLabel1.setVerticalAlignment(SwingConstants.TOP);
 		dtLabel2 = new GDHtmlLabel();
 		dtLabel2.setOpaque(true);
-		dtLabel2.setBackground(Color.WHITE);
+		dtLabel2.setBackground(Colors.BACKGROUND);
 		dtLabel2.setBorder(BorderFactory.createEmptyBorder(2, 8, 0, 0));
 		dtLabel2.setVerticalAlignment(SwingConstants.TOP);
 
@@ -96,19 +88,13 @@ class DataTypeComparePanel extends JPanel {
 	private void syncScrollers(JScrollPane leftScrollPane, JScrollPane rightScrollPane) {
 		final JViewport viewport1 = leftScrollPane.getViewport();
 		final JViewport viewport2 = rightScrollPane.getViewport();
-		viewport1.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				int y = viewport1.getViewPosition().y;
-				viewport2.setViewPosition(new Point(0, y));
-			}
+		viewport1.addChangeListener(e -> {
+			int y = viewport1.getViewPosition().y;
+			viewport2.setViewPosition(new Point(0, y));
 		});
-		viewport2.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				int y = viewport2.getViewPosition().y;
-				viewport1.setViewPosition(new Point(0, y));
-			}
+		viewport2.addChangeListener(e -> {
+			int y = viewport2.getViewPosition().y;
+			viewport1.setViewPosition(new Point(0, y));
 		});
 	}
 

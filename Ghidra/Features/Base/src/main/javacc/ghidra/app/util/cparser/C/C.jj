@@ -84,6 +84,7 @@ package ghidra.app.util.cparser.C;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -137,6 +138,8 @@ public class CParser {
 
     // true if parse was successful
     private boolean parseSuccess = false;
+    
+    private TaskMonitor monitor = null;
     
     // packing size for structures
     private int packSize = 0;
@@ -221,8 +224,15 @@ public class CParser {
             }
         }
 
-        dt = new TypedefDataType(getCurrentCategoryPath(), type, dt, dtMgr);
-        dt = addDef(types, type, dt);
+        // TODO: for builtin-Types, override with the built-in
+        //       wchar_t, etc...
+        if (type.equals("wchar_t")) {
+        	dt = WideCharDataType.dataType;
+        } else {
+        	dt = new TypedefDataType(getCurrentCategoryPath(), type, dt, dtMgr);
+        }
+    	dt = addDef(types, type, dt);
+    	
         return dt;
     }
 
@@ -257,12 +267,11 @@ public class CParser {
         }    
         
         // check the BuiltinTypeManager
-        // Don't check, left in in case basic types like uint64_t are in builtins
-        // BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
-        // DataType bdt = findDataType(builtInMgr, type);
-        // if (bdt != null) {
-        //    return bdt;
-        // }
+        BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
+        DataType bdt = findDataType(builtInMgr, type);
+        if (bdt != null) {
+            return bdt;
+        }
         
         possiblyUndefinedType = type;
         return null;
@@ -307,6 +316,8 @@ public class CParser {
     private DataType addDef(Map<String, DataType> table, String name, DataType dt) {
         // System.out.println("** addDef " + name + " = " + (dt != null ? dt.getName() : " - no type -") );
 
+		lastDataType = dt;
+		
         DataType existingDT = table.get(name);
         if (existingDT != null && dt.isEquivalent(existingDT)) {
             return existingDT;
@@ -426,7 +437,7 @@ public class CParser {
 
                     hasNoComponents = (dtComp.getNumDefinedComponents() == 0 ? true : false);
 
-                    hasSameSourceArchive = dt.getSourceArchive().equals(dtMgr.getLocalSourceArchive());
+                    hasSameSourceArchive = Objects.equals(dt.getSourceArchive(), dtMgr.getLocalSourceArchive());
             }
 
             // make sure comp is a Composite, if existing dt is empty, in same category and archive
@@ -503,6 +514,39 @@ public class CParser {
 
         return null;
     }
+    
+
+    private DataType allocateEnumDT(Token t, ArrayList<EnumMember> list) {
+    	String enumName = (t != null ? t.image : ("enum_" + cnt++));
+    	
+    	// get the normal enum size, which is an int
+    	// TODO: allow for packing of enum to smallest value with either dataOrganization, or packing flag
+        int normalEnumLen = (dtMgr != null ? dtMgr.getDataOrganization().getIntegerSize() : 4);
+        
+        // create an initial enum and add all new members
+        EnumDataType enumDT= new EnumDataType(getCurrentCategoryPath(), enumName, 8, dtMgr);
+        if (list != null) {
+            for (EnumMember member : list) {
+                try {
+                        enumDT.add(member.name, member.value);
+                } catch (IllegalArgumentException exc) {
+                    addNearParseMessage("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
+                }
+            }
+            // get the minimum length to represent the values and resize if too big
+            int minLen = enumDT.getMinimumPossibleLength();
+            if (minLen > normalEnumLen) {
+                enumDT.setLength(minLen);
+            } else {
+                enumDT.setLength(normalEnumLen);
+            }
+        } else {
+            // length doesn't really matter, forward declaration with no values
+            enumDT.setLength(normalEnumLen);
+        }
+        
+        return addDef(enums, enumDT.getName(), enumDT);
+    }
 
     private DataType getDef(Map<String, DataType> table, String name) {
         return table.get(name);
@@ -543,6 +587,10 @@ public class CParser {
 
     public boolean didParseSucceed() {
       return parseSuccess;
+    }
+    
+    public void setMonitor(TaskMonitor monitor) {
+      this.monitor = monitor;
     }
 
     private FunctionDefinitionDataType newAnonymousFunction(FunctionDefinitionDataType currentFuncDT) {
@@ -607,11 +655,12 @@ public class CParser {
    * @param dec Declaration
    * @param funcDT function data type to qualify
    */
-    private void applyFunctionQualifiers(Declaration dec, FunctionDefinitionDataType funcDT) {
+    private void applyFunctionQualifiers(Declaration dec, FunctionDefinition funcDT) {
         List<Integer> qualifierList = dec.getQualifiers();
         if (qualifierList.contains(NORETURN) ) {
-            // TODO: set no return on function
+            funcDT.setNoReturn(true);
         }
+        // TODO: switch to setting calling convention by string identifier
         for (Integer qualifier : qualifierList) {
                 switch (qualifier) {
                     case CDECL:
@@ -1175,8 +1224,6 @@ TOKEN :
     |
     <W64 : "__w64">
     |
-    <WCHAR : "wchar_t">
-    |
     <ENUM : "enum"> 
     |
     <AUTO : "auto"> 
@@ -1422,8 +1469,8 @@ void TranslationUnit() : {}
 void ExternalDeclaration() : {}
 {
     (
-        LOOKAHEAD(FunctionDefinition() )
-        FunctionDefinition() 
+        LOOKAHEAD( FunctionDefinition() "{" )
+          (FunctionDefinition() "{" [ StatementList() ] "}")
         |
 //        <INLINE> FunctionDefinition() 
 //        |
@@ -1438,6 +1485,9 @@ void ExternalDeclaration() : {}
         ";"
     )
     {
+        if (monitor != null && monitor.isCancelled()) {
+           throw new ParseException("Parsing Canceled");
+        }
         typedefParsingStack.clear();
     }
 }
@@ -1475,7 +1525,7 @@ void FunctionDefinition() : {
         retDT = DeclarationSpecifiers(retDT) 
     ]
     {typedefParsingStack.push(Boolean.FALSE);}
-    dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();} CompoundStatement() 
+    dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();}
     {
         if (dec.getDataType() instanceof FunctionDefinition) {
             addDef(functions, dec.getName(), dec.getDataType());
@@ -1602,8 +1652,6 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
                                 }
                                 dec.setDataType(dt);
                             }
-        |
-        <WCHAR>             { dec.setDataType(resolveInternal(WideCharDataType.dataType)); }
         |
         <SHORT>             { dt = dec.getDataType();
                            if (dt == null) {
@@ -1758,18 +1806,18 @@ Declaration TypeQualifier(Declaration dec) : {}
       <STATIC> |
       <PACKED> |
       <UNALIGNED> |
-      ( DeclSpec() )
+      ( DeclSpec(dec) )
     )
     {
         return dec;
     }
 }
 
-void AttributeSpec() : {}
+void AttributeSpec(Declaration dec) : {}
 {
-      ( <ATTRIBUTE> ("(") SubIdent() (")") ) |
+      ( <ATTRIBUTE> ("(") SubIdent(dec) (")") ) |
       AsmStatement() |
-      ( "[" "[" AttributeList() "]" "]" ) |
+      ( "[" "[" AttributeList(dec) "]" "]" ) |
       AlignmentSpecifier()
 
 }
@@ -1779,48 +1827,59 @@ void AlignmentSpecifier() : { Declaration dt = new Declaration(); }
     < ALIGNAS > "(" ( TypeQualifier(dt) | AssignmentExpression() ) ")"
 }
 
-void AttributeList() : { }
+void AttributeList(Declaration dec) : { }
 {
-    AttributeToken() [ ("," AttributeToken())+ ]
+    AttributeToken(dec) [ ("," AttributeToken(dec))+ ]
 }
 
-void AttributeToken() : { Declaration dt = new Declaration(); }
+void AttributeToken(Declaration dec) : { }
 {
-    ( < IDENTIFIER > | TypeQualifier(dt) ) [ ":" ":" ( < IDENTIFIER > | TypeQualifier(dt) ) ] [ "(" ( < IDENTIFIER > | Constant() ) [ ( ","  (< IDENTIFIER > | Constant()) )+ ] ")" ] 
+    ( < IDENTIFIER > | TypeQualifier(dec) ) [ ":" ":" ( < IDENTIFIER > | TypeQualifier(dec) ) ] [ "(" ( < IDENTIFIER > | Constant() ) [ ( ","  (< IDENTIFIER > | Constant()) )+ ] ")" ] 
 }
 
-void AttributeSpecList() : {}
+void AttributeSpecList(Declaration dec) : {}
 {
-    ( AttributeSpec() )+
+    ( AttributeSpec(dec) )+
 }
 
-void SubIdent() : { Declaration dt = new Declaration(); }
+void SubIdent(Declaration dec) : {
+   Token id = null;
+   Declaration dt = new Declaration();
+}
 {
-    ( ( "(" [SubIdent()] ")" ) |
-      (<IDENTIFIER> | TypeQualifier(dt)) [ ( "(" [SubIdent()] ")") | ("=" SubIdent()) ]
+    ( ( "(" [SubIdent(dec)] ")" ) |
+      (id=<IDENTIFIER> | TypeQualifier(dec)) [ ( "(" [SubIdent(dt)] ")") | ("=" SubIdent(dt)) ]
                    [ "," 
-                        SubIdent()   
+                        SubIdent(dt)   
                        ] |            
       Constant() [ "," 
-                        SubIdent()   
+                        SubIdent(dt)   
                        ]
     )
+    {
+        if (id != null && "noreturn".equals(id.image.replace("_", ""))) {
+            dec.addQualifier(NORETURN);
+            if (dec.getDataType() instanceof FunctionDefinition) {
+               applyFunctionQualifiers(dec, (FunctionDefinition) dec.getDataType());
+            }
+        }
+    }
 }
 
-void DeclSpec() : {
+void DeclSpec(Declaration dec) : {
 }
 {
-  ( ( <DECLSPEC> | <READABLETO> ) "(" DeclSpecifier() ")" )  |
-  AttributeSpecList()
+  ( ( <DECLSPEC> | <READABLETO> ) "(" DeclSpecifier(dec) ")" )  |
+  AttributeSpecList(dec)
 }
 
-void DeclSpecifier() : {
+void DeclSpecifier(Declaration dec) : {
+   Token id = null;
 }
 {
-  "(" DeclSpecifier() ")" |
-      (<IDENTIFIER>)+ [ "(" 
-                        DeclConstant() ( DeclConstant() )* 
-                     ")" ]
+  "(" DeclSpecifier(dec) ")" |
+      (id=<IDENTIFIER> { if (id != null && "noreturn".equals(id.image)) dec.addQualifier(NORETURN); } )+
+                 [ "(" DeclConstant() ( DeclConstant() )* ")" ]
 }
 
 void DeclConstant() : {}
@@ -1956,6 +2015,7 @@ DataType StructOrUnionSpecifier() : {
     Token parent;
     Token sname;
     Composite comp;
+    Declaration dec = new Declaration();
 }
 {
     {
@@ -1968,7 +2028,7 @@ DataType StructOrUnionSpecifier() : {
         LOOKAHEAD(3)
         [ t= <IDENTIFIER>  [ ":" parent=<IDENTIFIER>]
               { comp=defineNamedComposite(t, null, comp); } // no parent yet, since there are no guts
-        ] "{" [StructDeclarationList(comp)] "}" [ AttributeSpecList() ]
+        ] "{" [StructDeclarationList(comp)] "}" [ AttributeSpecList(dec) ]
         |
         sname= <IDENTIFIER> 
     )
@@ -1983,10 +2043,13 @@ DataType StructOrUnionSpecifier() : {
     }
 }
 
-Composite StructOrUnion() : {Composite comp;}
+Composite StructOrUnion() : {
+    Composite comp;
+    Declaration dec = new Declaration();
+}
 {
     (
-        <STRUCT> ( DeclSpec() | PragmaSpec() )*
+        <STRUCT> ( DeclSpec(dec) | PragmaSpec() )*
         {
             comp =  new StructureDataType(getCurrentCategoryPath(), ANONYMOUS_STRUCT_PREFIX + cnt++, 0, dtMgr);
 
@@ -2000,7 +2063,7 @@ Composite StructOrUnion() : {Composite comp;}
                                    
         }
         |
-        <UNION>  ( DeclSpec() )* {
+        <UNION>  ( DeclSpec(dec) )* {
             comp = new UnionDataType(getCurrentCategoryPath(), ANONYMOUS_UNION_PREFIX  + cnt++, dtMgr); 
         
             // Always set the packing, because by default structures should be aligned
@@ -2053,6 +2116,7 @@ void InitDeclarator(Declaration dt) : { Declaration dec; }
 
 void StructDeclaration(Composite comp, CompositeHandler compositeHandler) : {
     Declaration dt = null;
+    Declaration dec = new Declaration();
 }
 {
     LineDef() |
@@ -2063,7 +2127,7 @@ void StructDeclaration(Composite comp, CompositeHandler compositeHandler) : {
         [
             StructDeclaratorList(dt, comp, compositeHandler)     { dt= null; }
         ]
-        [ AttributeSpecList() ]
+        [ AttributeSpecList(dec) ]
         ";" 
     )
     {
@@ -2159,27 +2223,25 @@ DataType EnumSpecifier() : {
     Token t= null;
     DataType dt;
     ArrayList<EnumMember> list;
+    Declaration dec = new Declaration();
 }
 {
     <ENUM> 
     (
         LOOKAHEAD(3)
-        [AttributeSpecList()] [ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
+        [AttributeSpecList(dec)] [ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
         {
-            String enumName= (t != null ? t.image : ("enum_" + cnt++));
-            EnumDataType enuum= new EnumDataType(getCurrentCategoryPath(), enumName, 4, dtMgr);
-            for (EnumMember member : list) {
-                try {
-                    enuum.add(member.name, member.value);
-                } catch (IllegalArgumentException exc) {
-                    addNearParseMessage("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
-                }
-            }
-            dt= enuum;
-            dt= addDef(enums, enumName, enuum);
+            dt = allocateEnumDT(t, list);
         }
         |
-        t= <IDENTIFIER>             { dt= getEnumDef(t.image); }
+        t= <IDENTIFIER>
+        {
+            dt= getEnumDef(t.image);
+            // not defined yet, define an empty one
+            if (dt == null) {
+            	dt = allocateEnumDT(t, null);
+            }
+        }
     )
     {
         return dt;
@@ -2224,6 +2286,7 @@ int Enumerator(ArrayList<EnumMember> list, int value) : {
         if (evalue != null) {
             value = evalue;
         }
+        list.add(new EnumMember(t.image, value));
         return value;
     }
 }
@@ -2233,7 +2296,7 @@ Declaration Declarator(Declaration dt, DataType container) : {
 }
 {
     (
-        [ dt = TypeQualifierList(dt) ]  [ dt = Pointer(dt) ] dec= DirectDeclarator(dt, container) [ AttributeSpecList() ] 
+        [ dt = TypeQualifierList(dt) ]  [ dt = Pointer(dt) ] dec= DirectDeclarator(dt, container) [ AttributeSpecList(dec) ] 
     )
     {
         return dec;

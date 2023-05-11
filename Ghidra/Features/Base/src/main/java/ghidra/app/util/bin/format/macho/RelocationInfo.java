@@ -31,9 +31,15 @@ public class RelocationInfo implements StructConverter {
 
 	/**
 	 * Mask to be applied to the r_address field of a relocation_info structure to tell that it is 
-	 * really a scattered_relocation_info structure
+	 * really a scattered_relocation_info structure (little endian)
 	 */
-	private static int R_SCATTERED = 0x80000000;
+	private static int R_SCATTERED_LE = 0x80000000;
+
+	/**
+	 * Mask to be applied to the r_address field of a relocation_info structure to tell that it is 
+	 * really a scattered_relocation_info structure (big endian)
+	 */
+	private static int R_SCATTERED_BE = 0x00000001;
 
 	/**
 	 * 1=scattered, 0=non-scattered
@@ -76,7 +82,16 @@ public class RelocationInfo implements StructConverter {
 		int i1 = reader.readNextInt();
 		int i2 = reader.readNextInt();
 
-		if ((i1 & R_SCATTERED) != 0) {
+		if (reader.isBigEndian() && (i1 & R_SCATTERED_BE) != 0) {
+			r_scattered = 1;
+			r_pcrel = (i1 >> 1) & 0x1;
+			r_length = (i1 >> 2) & 0x3;
+			r_type = (i1 >> 4) & 0xf;
+			r_address = (i1 >> 8) & 0xffffff;
+			r_extern = 1;
+			r_value = i2;
+		}
+		else if ((i1 & R_SCATTERED_LE) != 0) {
 			r_scattered = 1;
 			r_extern = 1;
 			r_address = i1 & 0xffffff;

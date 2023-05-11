@@ -31,6 +31,7 @@ import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.options.editor.DefaultOptionComponent;
 import docking.widgets.table.GTable;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.services.*;
@@ -42,6 +43,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.ColorUtils;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -59,7 +61,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 	private static final String OLD_OPTION_DEFAULT_VALUE = "Old Default Value";
 	private static final String UNCHANGING_OPTION_DEFAULT_VALUE = "Unchanging Default Value";
 
-	private static final Color NEW_OPTION_DEFAULT_VALUE_AS_COLOR = Color.GREEN;
+	private static final Color NEW_OPTION_DEFAULT_VALUE_AS_COLOR = Palette.GREEN;
 
 	private TestEnv env;
 	private PluginTool tool;
@@ -349,7 +351,7 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		int r = Integer.parseInt(parts[0]);
 		int g = Integer.parseInt(parts[1]);
 		int b = Integer.parseInt(parts[2]);
-		return new Color(r, g, b);
+		return ColorUtils.getColor(r, g, b);
 	}
 
 	private void selectAnalyzer(String name) {

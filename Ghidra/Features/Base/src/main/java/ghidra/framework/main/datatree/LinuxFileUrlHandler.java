@@ -15,7 +15,6 @@
  */
 package ghidra.framework.main.datatree;
 
-import java.awt.Component;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
@@ -26,62 +25,41 @@ import java.util.List;
 import java.util.function.Function;
 
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.services.FileImporterService;
-import ghidra.app.util.FileOpenDataFlavorHandler;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.Msg;
 
 /**
- * A special handler to deal with files dragged from Linux to Ghidra.   This class does double
- * duty in that it opens files for DataTrees and for Tools (signaled via the interfaces it
- * implements).
+ * A handler to facilitate drag-n-drop for a Linux URL-based file list which is dropped
+ * onto the Project data tree or a running Ghidra Tool (see {@link #linuxFileUrlFlavor}).
  */
-public final class LinuxFileUrlHandler implements DataTreeFlavorHandler, FileOpenDataFlavorHandler {
+public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
+
+	/**
+	 * Linux URL-based file list {@link DataFlavor} to be used during handler registration
+	 * using {@link DataTreeDragNDropHandler#addActiveDataFlavorHandler}.
+	 */
+	public static final DataFlavor linuxFileUrlFlavor =
+		new DataFlavor("application/x-java-serialized-object;class=java.lang.String",
+			"String file URL");
+
+	@Override
+	// This is for the FileOpenDataFlavorHandler for handling file drops from Linux to a Tool
+	public void handle(PluginTool tool, Object transferData, DropTargetDropEvent e, DataFlavor f) {
+		List<File> files = toFiles(transferData);
+		doImport(null, files, tool, tool.getToolFrame());
+	}
 
 	@Override
 	// This is for the DataFlavorHandler interface for handling node drops in DataTrees
 	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
-
-		DomainFolder folder = getDomainFolder(destinationNode);
-		doImport(dataTree, transferData, tool, folder);
-	}
-
-	@Override
-	// This is for the FileOpenDataFlavorHandler for handling file drops from Linux to a Tool
-	public void handle(PluginTool tool, Object transferData, DropTargetDropEvent e, DataFlavor f) {
-
-		DomainFolder folder = tool.getProject().getProjectData().getRootFolder();
-		doImport(tool.getToolFrame(), transferData, tool, folder);
-	}
-
-	private void doImport(Component component, Object transferData, ServiceProvider sp,
-			DomainFolder folder) {
-
-		FileImporterService im = sp.getService(FileImporterService.class);
-		if (im == null) {
-			Msg.showError(this, component, "Could Not Import", "Could not find importer service.");
-			return;
-		}
-
 		List<File> files = toFiles(transferData);
-		if (files.isEmpty()) {
-			return;
-		}
-
-		if (files.size() == 1 && files.get(0).isFile()) {
-			im.importFile(folder, files.get(0));
-		}
-		else {
-			im.importFiles(folder, files);
-		}
+		doImport(getDomainFolder(destinationNode), files, tool, dataTree);
 	}
 
 	private List<File> toFiles(Object transferData) {
 
-		return toUrls(transferData, s -> {
+		return toFiles(transferData, s -> {
 			try {
 				return new File(new URL(s).toURI());
 			}
@@ -98,29 +76,17 @@ public final class LinuxFileUrlHandler implements DataTreeFlavorHandler, FileOpe
 		});
 	}
 
-	private List<File> toUrls(Object transferData, Function<String, File> converter) {
+	private List<File> toFiles(Object transferData, Function<String, File> urlToFileConverter) {
 
 		List<File> files = new ArrayList<>();
 		String string = (String) transferData;
 		String[] urls = string.split("\\n");
 		for (String url : urls) {
-			File file = converter.apply(url);
+			File file = urlToFileConverter.apply(url);
 			if (file != null) {
 				files.add(file);
 			}
 		}
-
 		return files;
-	}
-
-	private DomainFolder getDomainFolder(GTreeNode destinationNode) {
-		if (destinationNode instanceof DomainFolderNode) {
-			return ((DomainFolderNode) destinationNode).getDomainFolder();
-		}
-		else if (destinationNode instanceof DomainFileNode) {
-			DomainFolderNode parent = (DomainFolderNode) destinationNode.getParent();
-			return parent.getDomainFolder();
-		}
-		return null;
 	}
 }

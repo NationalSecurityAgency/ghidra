@@ -19,14 +19,12 @@ import javax.swing.JComponent;
 
 import db.DBHandle;
 import docking.WindowPosition;
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class DbViewerProvider extends ComponentProviderAdapter {
-
-	private static final String ICON_IMAGE = "images/zoom.png";
 
 	private DBHandle dbh;
 	private String dbName;
@@ -35,7 +33,7 @@ public class DbViewerProvider extends ComponentProviderAdapter {
 	public DbViewerProvider(Plugin plugin) {
 		super(plugin.getTool(), "Database Viewer", plugin.getName());
 
-		setIcon(ResourceManager.loadImage(ICON_IMAGE));
+		setIcon(new GIcon("icon.plugin.debug.dbviewer.provider"));
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 
 		setHelpLocation(new HelpLocation(plugin.getName(), "DbViewer"));

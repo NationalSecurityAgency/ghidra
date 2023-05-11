@@ -18,19 +18,18 @@ package ghidra.trace.database.listing;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.database.*;
+import ghidra.trace.database.DBTraceCacheForContainingQueries;
 import ghidra.trace.database.DBTraceCacheForContainingQueries.GetKey;
+import ghidra.trace.database.DBTraceCacheForSequenceQueries;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapAddressSetView;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
-import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceBaseDefinedUnitsView;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
@@ -169,7 +168,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	 * @param set2 a temporary set for working
 	 * @return the result of subtraction, identical to one of the temporary working sets
 	 */
-	protected Set<TraceAddressSnapRange> subtractFrom(Range<Long> span, AddressRange range,
+	protected Set<TraceAddressSnapRange> subtractFrom(Lifespan span, AddressRange range,
 			Set<TraceAddressSnapRange> cur, Set<TraceAddressSnapRange> set1,
 			Set<TraceAddressSnapRange> set2) {
 		Set<TraceAddressSnapRange> prevLeftOver = cur;
@@ -197,11 +196,11 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 				}
 				if (lo.getY1().compareTo(intersection.getY1()) < 0) {
 					nextLeftOver.add(new ImmutableTraceAddressSnapRange(intersection.getRange(),
-						Range.closed(lo.getY1(), intersection.getY1() - 1)));
+						Lifespan.span(lo.getY1(), intersection.getY1() - 1)));
 				}
 				if (lo.getY2().compareTo(intersection.getY2()) > 0) {
 					nextLeftOver.add(new ImmutableTraceAddressSnapRange(intersection.getRange(),
-						Range.closed(intersection.getY2() + 1, lo.getY2())));
+						Lifespan.span(intersection.getY2() + 1, lo.getY2())));
 				}
 			}
 			if (nextLeftOver.isEmpty()) {
@@ -217,7 +216,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	}
 
 	@Override
-	public boolean coversRange(Range<Long> span, AddressRange range) {
+	public boolean coversRange(Lifespan span, AddressRange range) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			Set<TraceAddressSnapRange> set1 = new HashSet<>();
 			Set<TraceAddressSnapRange> set2 = new HashSet<>();
@@ -228,7 +227,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	}
 
 	@Override
-	public boolean intersectsRange(Range<Long> lifespan, AddressRange range) {
+	public boolean intersectsRange(Lifespan lifespan, AddressRange range) {
 		return !mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).isEmpty();
 	}
 
@@ -293,7 +292,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	 * @param span the lifespan of the box
 	 * @param range the address range of the box
 	 */
-	protected void clearContext(Range<Long> span, AddressRange range) {
+	protected void clearContext(Lifespan span, AddressRange range) {
 		DBTraceRegisterContextSpace ctxSpace =
 			space.trace.getRegisterContextManager().get(space, false);
 		if (ctxSpace == null) {
@@ -303,22 +302,21 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	}
 
 	/**
-	 * @see TraceBaseDefinedUnitsView#clear(Range, AddressRange, boolean, TaskMonitor)
+	 * @see TraceBaseDefinedUnitsView#clear(Lifespan, AddressRange, boolean, TaskMonitor)
 	 */
-	public void clear(Range<Long> span, AddressRange range, boolean clearContext,
+	public void clear(Lifespan span, AddressRange range, boolean clearContext,
 			TaskMonitor monitor) throws CancelledException {
-		long startSnap = DBTraceUtils.lowerEndpoint(span);
+		long startSnap = span.lmin();
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			cacheForContaining.invalidate();
 			cacheForSequence.invalidate();
 			for (T unit : mapSpace.reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (unit.getStartSnap() < startSnap) {
-					Range<Long> oldSpan = unit.getLifespan();
+					Lifespan oldSpan = unit.getLifespan();
 					if (clearContext) {
-						clearContext(DBTraceUtils.toRange(DBTraceUtils.lowerEndpoint(span),
-							DBTraceUtils.upperEndpoint(oldSpan)), unit.getRange());
+						clearContext(Lifespan.span(span.lmin(), oldSpan.lmax()), unit.getRange());
 					}
 					unit.setEndSnap(startSnap - 1);
 				}
@@ -351,7 +349,7 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	 * @param oldSpan the old snap
 	 * @param unit the unit (having the new span)
 	 */
-	protected void unitSpanChanged(Range<Long> oldSpan, T unit) {
+	protected void unitSpanChanged(Lifespan oldSpan, T unit) {
 		cacheForContaining.notifyEntryShapeChanged(unit.getLifespan(), unit.getRange(), unit);
 		cacheForSequence.notifyEntryShapeChanged(unit.getLifespan(), unit.getRange(), unit);
 		space.undefinedData.invalidateCache();
@@ -363,29 +361,57 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	 * Select a sub-lifespan from that given so that the box does not overlap an existing unit
 	 * 
 	 * <p>
-	 * The selected lifespan will have the same start snap at that given. The box is the bounding
+	 * The selected lifespan will have the same start snap as that given. The box is the bounding
 	 * box of a unit the client is trying to create.
 	 * 
 	 * @param span the lifespan of the box
+	 * @param extending if applicable, the unit whose lifespan is being extended
 	 * @param range the address range of the box
 	 * @return the selected sub-lifespan
 	 * @throws CodeUnitInsertionException if the start snap is contained in an existing unit
 	 */
-	protected Range<Long> truncateSoonestDefined(Range<Long> span, AddressRange range)
-			throws CodeUnitInsertionException {
+	protected Lifespan truncateSoonestDefined(Lifespan span, AbstractDBTraceCodeUnit<?> extending,
+			AddressRange range) throws CodeUnitInsertionException {
+		final Lifespan toScan;
+		if (extending == null) {
+			toScan = span;
+		}
+		else if (span.lmax() <= extending.getEndSnap()) {
+			// we're shrinking or staying the same, so not possible to collide with others
+			return span;
+		}
+		else {
+			toScan = span.withMin(extending.getEndSnap() + 1);
+		}
 		T truncateBy =
-			mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)
-					.starting(
-						Rectangle2DDirection.BOTTOMMOST))
+			mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, toScan)
+					.starting(Rectangle2DDirection.BOTTOMMOST))
 					.firstValue();
 		if (truncateBy == null) {
 			return span;
 		}
-		if (truncateBy.getStartSnap() <= DBTraceUtils.lowerEndpoint(span)) {
+		if (truncateBy.getStartSnap() <= span.lmin()) {
 			throw new CodeUnitInsertionException("Code units cannot overlap");
 		}
-		return DBTraceUtils.toRange(DBTraceUtils.lowerEndpoint(span),
-			truncateBy.getStartSnap() - 1);
+		return span.withMax(truncateBy.getStartSnap() - 1);
+	}
+
+	protected long computeTruncatedMax(Lifespan lifespan, T extending, AddressRange range)
+			throws CodeUnitInsertionException {
+		// First, truncate lifespan to the next code unit when upper bound is max
+		if (!lifespan.maxIsFinite()) {
+			lifespan = space.instructions.truncateSoonestDefined(lifespan, extending, range);
+			lifespan = space.definedData.truncateSoonestDefined(lifespan, extending, range);
+		}
+		// Second, truncate lifespan to the next change of bytes in the range
+		DBTraceMemorySpace memSpace =
+			space.trace.getMemoryManager().getMemorySpace(space.space, true);
+		Lifespan fullSpan = extending == null ? lifespan : lifespan.bound(extending.getLifespan());
+		long endSnap = memSpace.getFirstChange(fullSpan, range);
+		if (endSnap == Long.MIN_VALUE) {
+			return lifespan.lmax();
+		}
+		return endSnap - 1;
 	}
 
 	/**

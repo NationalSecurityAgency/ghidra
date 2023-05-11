@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.bridge;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.bridge.HostDataModelAccess;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.bridge.IHostDataModelAccess;
 import agent.dbgmodel.jna.dbgmodel.bridge.WrapIHostDataModelAccess;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface HostDataModelAccessInternal extends HostDataModelAccess {
 	Map<Pointer, HostDataModelAccessInternal> CACHE = new WeakValueHashMap<>();
 
 	static HostDataModelAccessInternal instanceFor(WrapIHostDataModelAccess data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, HostDataModelAccessImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, HostDataModelAccessImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIHostDataModelAccess>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIHostDataModelAccess>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IHostDataModelAccess.IID_IHOST_DATA_MODEL_ACCESS),
-					WrapIHostDataModelAccess.class) //
-				.build();
+	List<Preferred<WrapIHostDataModelAccess>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IHostDataModelAccess.IID_IHOST_DATA_MODEL_ACCESS,
+			WrapIHostDataModelAccess.class));
 
 	static HostDataModelAccessInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(HostDataModelAccessInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(HostDataModelAccessInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import generic.util.image.ImageUtils;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
@@ -33,7 +34,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * The NextPrevCodeUnitPlugin generates a GoTo event based on where the cursor
@@ -135,9 +136,9 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 	private class InvertStateAction extends ToggleDockingAction {
 
 		private final Icon INVERTED_ICON_OFF = ImageUtils.makeTransparent(
-			ResourceManager.loadImage("images/dialog-cancel.png"));
+			Icons.NOT_ALLOWED_ICON);
 		private final Icon INVERTED_ICON_ON = ImageUtils.makeTransparent(
-			ResourceManager.loadImage("images/dialog-cancel.png"), .8f);
+			Icons.NOT_ALLOWED_ICON, .8f);
 		private boolean isInverted = false;
 
 		public InvertStateAction(String subGroup) {
@@ -146,10 +147,7 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 			setToolBarData(new ToolBarData(INVERTED_ICON_OFF,
 				ToolConstants.TOOLBAR_GROUP_FOUR, subGroup));
 
-			// TODO add help entry
 			setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, getName()));
-
-			// TODO setDescriptoin("...");
 			setSelected(false);
 
 			addToWindowWhen(NavigatableActionContext.class);
@@ -169,8 +167,8 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 	}
 
 	private class ToggleDirectionAction extends NavigatableContextAction {
-		private final Icon FORWARD_ICON = ResourceManager.loadImage("images/down.png");
-		private final Icon BACKWARD_ICON = ResourceManager.loadImage("images/up.png");
+		private final Icon FORWARD_ICON = new GIcon("icon.down");
+		private final Icon BACKWARD_ICON = new GIcon("icon.up");
 		private boolean isForward = true;
 
 		ToggleDirectionAction(String subGroup) {

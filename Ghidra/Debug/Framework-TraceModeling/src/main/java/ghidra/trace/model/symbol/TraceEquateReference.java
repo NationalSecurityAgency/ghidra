@@ -15,14 +15,13 @@
  */
 package ghidra.trace.model.symbol;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.EquateReference;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 
 public interface TraceEquateReference extends EquateReference {
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	TraceThread getThread();
 

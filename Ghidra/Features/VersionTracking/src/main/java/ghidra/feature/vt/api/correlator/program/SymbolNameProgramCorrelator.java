@@ -68,7 +68,7 @@ public class SymbolNameProgramCorrelator extends VTAbstractProgramCorrelator {
 		int skipAmount = 1000;
 		int count = 0;
 		for (MatchedSymbol matchedSymbol : matchedSymbols) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			++count;
 			if (count % skipAmount == 0) {
 				monitor.incrementProgress(skipAmount);
@@ -85,7 +85,7 @@ public class SymbolNameProgramCorrelator extends VTAbstractProgramCorrelator {
 		monitor.setMessage("Adding " + matchScoreMap.size() + " match objects...");
 		count = 0;
 		for (AddressMatch addressMatch : matchScoreMap.keySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			++count;
 			if (count % skipAmount == 0) {
 				monitor.incrementProgress(skipAmount);

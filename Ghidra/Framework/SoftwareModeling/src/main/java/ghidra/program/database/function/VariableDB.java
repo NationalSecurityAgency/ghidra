@@ -23,8 +23,8 @@ import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.symbol.SymbolDB;
 import ghidra.program.database.symbol.VariableSymbolDB;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.AbstractFloatDataType;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
@@ -53,12 +53,21 @@ public abstract class VariableDB implements Variable {
 		this.functionMgr = function.getFunctionManager();
 	}
 
+	protected boolean isVoidAllowed() {
+		return false;
+	}
+
 	@Override
-	public boolean isValid() {
+	public final boolean isValid() {
 		VariableStorage variableStorage = getVariableStorage();
 		DataType dt = getDataType();
-		return variableStorage.isValid() &&
-			((dt instanceof AbstractFloatDataType) || variableStorage.size() == dt.getLength());
+		if (VoidDataType.isVoidDataType(dt)) {
+			return isVoidAllowed() && variableStorage.isVoidStorage();
+		}
+		if (dt.getLength() <= 0 || !variableStorage.isValid()) {
+			return false;
+		}
+		return variableStorage.size() >= dt.getLength();
 	}
 
 	@Override

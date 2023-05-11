@@ -22,7 +22,7 @@ import javax.swing.JComponent;
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.*;
-import ghidra.app.util.viewer.format.FieldFormatModel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 
@@ -77,15 +77,6 @@ public class IndentField implements ListingField {
 	@Override
 	public FieldFactory getFieldFactory() {
 		return factory;
-	}
-
-	/**
-	 * Returns the FieldModel that contains the FieldFactory that generated this
-	 * field.
-	 */
-	@Override
-	public FieldFormatModel getFieldModel() {
-		return factory.getFieldModel();
 	}
 
 	/**
@@ -177,7 +168,7 @@ public class IndentField implements ListingField {
 	public void paint(JComponent c, Graphics g, PaintContext context,
 			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc,
 			int rowHeight) {
-		g.setColor(Color.LIGHT_GRAY);
+		g.setColor(Palette.LIGHT_GRAY);
 
 		// draw the vertical lines to the left of the data (these are shown when there are vertical
 		// bars drawn for inset data)

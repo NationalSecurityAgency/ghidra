@@ -21,18 +21,18 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.provider.onetomany.VTMatchOneToManyContext;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class SetVTMatchFromOneToManyAction extends DockingAction {
 
 	private static final String MENU_GROUP = VTPlugin.VT_MAIN_MENU_GROUP;
 	public static final Icon SET_MATCH_ICON =
-		ResourceManager.loadImage("images/text_align_justify.png");
+		new GIcon("icon.version.tracking.action.match.one.to.many");
 
 	final VTController controller;
 

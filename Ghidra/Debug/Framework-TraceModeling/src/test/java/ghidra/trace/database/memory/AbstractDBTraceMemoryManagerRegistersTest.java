@@ -21,13 +21,13 @@ import java.math.BigInteger;
 
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 public abstract class AbstractDBTraceMemoryManagerRegistersTest
 		extends AbstractDBTraceMemoryManagerTest {
@@ -45,7 +45,7 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 		Register r0l = b.language.getRegister("r0l");
 
 		TraceThread thread;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = getOrAddThread("Threads[1]", 0);
 			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 
@@ -96,7 +96,7 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 		Register counter = language.getRegister("counter");
 
 		TraceThread thread;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = getOrAddThread("Threads[1]", 0);
 			waitForSwing();
 			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
@@ -137,7 +137,7 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 	public void testManyStateEntries() throws Exception {
 		Register pc = b.language.getRegister("pc");
 		TraceThread thread;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = getOrAddThread("Threads[1]", 0);
 			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 
@@ -152,7 +152,7 @@ public abstract class AbstractDBTraceMemoryManagerRegistersTest
 	protected void runTestGuestMappingRegisterBits(LanguageID langID, CompilerSpecID cSpecID)
 			throws Throwable {
 		TraceGuestPlatform guest;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest = b.trace.getPlatformManager()
 					.addGuestPlatform(
 						getLanguageService().getLanguage(langID).getCompilerSpecByID(cSpecID));

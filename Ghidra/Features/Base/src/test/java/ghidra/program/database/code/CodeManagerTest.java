@@ -17,13 +17,13 @@ package ghidra.program.database.code;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.Iterator;
 
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -473,7 +473,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		PropertyMap map = listing.getPropertyMap("Numbers");
 		assertNotNull(map);
 
-		inst.setProperty("FavoriteColor", new SaveableColor(Color.RED));
+		inst.setProperty("FavoriteColor", new SaveableColor(Palette.RED));
 
 		map = listing.getPropertyMap("FavoriteColor");
 		assertNotNull(map);
@@ -487,10 +487,10 @@ public class CodeManagerTest extends AbstractGenericTest {
 		inst.setProperty("Numbers", 12);
 		assertEquals(12, inst.getIntProperty("Numbers"));
 
-		inst.setProperty("FavoriteColor", new SaveableColor(Color.RED));
+		inst.setProperty("FavoriteColor", new SaveableColor(Palette.RED));
 		SaveableColor c = (SaveableColor) inst.getObjectProperty("FavoriteColor");
 		assertNotNull(c);
-		assertEquals(Color.RED, c.getColor());
+		assertEquals(Palette.RED.getRGB(), c.getColor().getRGB());
 
 		Iterator<String> iter = listing.getUserDefinedProperties();
 		String name1 = iter.next();
@@ -516,7 +516,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 			// expected
 		}
 
-		inst.setProperty("FavoriteColor", new SaveableColor(Color.RED));
+		inst.setProperty("FavoriteColor", new SaveableColor(Palette.RED));
 		SaveableColor c = (SaveableColor) inst.getObjectProperty("FavoriteColor");
 		assertNotNull(c);
 		listing.removeUserDefinedProperty("FavoriteColor");
@@ -543,7 +543,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		cu.setProperty("Numbers", 12);
 		assertEquals(12, cu.getIntProperty("Numbers"));
 
-		cu.setProperty("FavoriteColor", new SaveableColor(Color.RED));
+		cu.setProperty("FavoriteColor", new SaveableColor(Palette.RED));
 		SaveableColor c = (SaveableColor) cu.getObjectProperty("FavoriteColor");
 
 		mem.moveBlock(block, addr(0x8000), new TaskMonitorAdapter());

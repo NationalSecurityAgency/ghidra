@@ -2,7 +2,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Decompiler Options</title>
-<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="Decompiler.html" title="Decompiler">
@@ -10,7 +10,7 @@
 <link rel="prev" href="DecompilerAnnotations.html" title="Program Annotations Affecting the Decompiler">
 <link rel="next" href="DecompilerWindow.html" title="Decompiler Window">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
+<body><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="DecompilerOptions"></a>Decompiler Options</h1></div></div></div>
   
@@ -294,6 +294,66 @@
 	  and a sequence of instructions can share the same predicate. The Decompiler merges the
 	  resulting <code class="code">if/else</code> blocks that share the same predicate so that the condition is only
 	  printed once.
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisSplitStruct"></a><span class="term"><span class="bold"><strong>Split combined structure fields</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When this option is active, the Decompiler attempts to identify places in the code where multiple
+	  fields of a structure data-type are being moved simultaneously with a single operation. Then it splits the
+	  operation into multiple pieces so that the logical fields can be seen individually.
+	  When this option isn't active, the Decompiler creates an artificial token to
+	  represent the combined fields being written to or read from.
+          </p>
+<div class="informalexample">
+	    <pre class="programlisting">
+	      struct1._20_4_ = 0xff00ff00;  // Auto-generated name for assigning multiple fields at once
+	        ...
+	      struct1.a = 0xff00;           // The same assignment, after splitting
+	      struct1.b = 0xff00;
+	    </pre>
+          </div>
+<p>
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisSplitArray"></a><span class="term"><span class="bold"><strong>Split combined array elements</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  When this option is active, the Decompiler attempts to identify places in the code where multiple
+	  elements of an array are being moved simultaneously with a single operation. Then it splits the
+	  operation into multiple pieces so each element of the array can be seen individually.
+	  When this option isn't active, the Decompiler creates an artificial token to
+	  represent the combined elements being written to or read from.
+          </p>
+<div class="informalexample">
+	    <pre class="programlisting">
+	      text._20_2_ = 0x4241;        // Auto-generated name for assigning multiple elements at once
+	        ...
+	      text[20] = 'A';              // The same assignment, after splitting
+	      test[21] = 'B';
+	    </pre>
+          </div>
+<p>
+	</p>
+      </dd>
+<dt>
+<a name="AnalysisSplitPointers"></a><span class="term"><span class="bold"><strong>Split pointers to combined elements</strong></span></span>
+</dt>
+<dd>
+	<p>
+	  This options affects when the Decompiler's splitting actions are applied. See
+	  the discussion above about 
+	  <a class="link" href="DecompilerOptions.html#AnalysisSplitStruct">Splitting Structure Accesses</a> and
+	  <a class="link" href="DecompilerOptions.html#AnalysisSplitArray">Splitting Array Accesses</a>.
+	  If this option is on, a split is performed whenever combined elements or combined
+	  fields are copied.  In particular, either the read access, or the write access, or both,
+	  can be through a pointer.
+	  If this option is off, splitting is limited to copies between structures or arrays at fixed
+	  locations, either at a global address, or on the local stack.
 	</p>
       </dd>
 <dt>

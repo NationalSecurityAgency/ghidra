@@ -177,7 +177,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			this.message = message;
 			this.date = date;
 			this.context = context;
-			this.actions = actions;
+			this.actions = Objects.requireNonNull(actions);
 		}
 
 		public Icon getIcon() {
@@ -205,7 +205,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			LogTableColumns, ActionContext, LogRow, LogRow> {
 
 		public LogTableModel(PluginTool tool) {
-			super(tool, "Log", LogTableColumns.class, r -> r.getActionContext(), r -> r);
+			super(tool, "Log", LogTableColumns.class, r -> r.getActionContext(), r -> r, r -> r);
 		}
 
 		@Override
@@ -453,6 +453,12 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	protected boolean logContains(ActionContext context) {
 		synchronized (buffer) {
 			return logTableModel.getMap().containsKey(context);
+		}
+	}
+
+	protected List<ActionContext> getActionContexts() {
+		synchronized (buffer) {
+			return List.copyOf(logTableModel.getMap().keySet());
 		}
 	}
 

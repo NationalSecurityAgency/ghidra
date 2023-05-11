@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetSection;
 import ghidra.dbg.target.schema.*;
@@ -59,7 +60,7 @@ public class JdiModelTargetConstantPool extends JdiModelTargetObjectImpl impleme
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		this.range = impl.getAddressRange(getClassType(), pool.length);
 		if (range != null) {

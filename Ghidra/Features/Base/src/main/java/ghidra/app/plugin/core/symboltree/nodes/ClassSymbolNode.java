@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.symboltree.nodes;
 import java.awt.datatransfer.DataFlavor;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
+import generic.theme.GIcon;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
@@ -32,9 +32,9 @@ public class ClassSymbolNode extends SymbolNode {
 	static final DataFlavor GLOBAL_DATA_FLAVOR =
 		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Classes");
 
-	private static Icon CLASS_ICON = ResourceManager.loadImage("images/class.png");
-	private static Icon DISABLED_CLASS_ICONDISABLED_CLASS_ICON =
-		ResourceManager.getDisabledIcon((ImageIcon) CLASS_ICON);
+	private static final Icon CLASS_ICON = new GIcon("icon.plugin.symboltree.node.class");
+	private static final Icon DISABLED_CLASS_ICONDISABLED_CLASS_ICON =
+		ResourceManager.getDisabledIcon(CLASS_ICON);
 
 	ClassSymbolNode(Program program, Symbol symbol) {
 		super(program, symbol);

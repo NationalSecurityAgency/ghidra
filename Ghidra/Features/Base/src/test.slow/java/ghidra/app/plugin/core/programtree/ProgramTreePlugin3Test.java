@@ -27,6 +27,7 @@ import javax.swing.JLabel;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import generic.theme.GIcon;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.app.util.SelectionTransferable;
 import ghidra.program.database.ProgramBuilder;
@@ -35,7 +36,6 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.NotFoundException;
-import resources.ResourceManager;
 
 /**
  * Tests for drag/drop/reorder for copy and move in the program tree.
@@ -183,7 +183,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(node);
 
 		AddressSet fragSet = new AddressSet(debugNode.getFragment());
-		ArrayList<ProgramNode> list = new ArrayList<ProgramNode>();
+		ArrayList<ProgramNode> list = new ArrayList<>();
 		list.add(debugNode);
 
 		//drag .debug_data to 01004a15
@@ -391,7 +391,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		int row = getRowForPath(nodes[0].getTreePath());
 
 		Component comp = getCellRendererComponentForNonLeaf(nodes[0], row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_CLOSED_FOLDER_WITH_DESC),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_CLOSED_FOLDER_WITH_DESC),
 			((JLabel) comp).getIcon());
 
 		visitNode(nodes[0]);
@@ -428,7 +428,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		waitForSwing();
 
 		Component comp = getCellRendererComponentForLeaf(n, row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_FRAGMENT),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
 			((JLabel) comp).getIcon());
 	}
 

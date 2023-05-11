@@ -49,7 +49,7 @@ public class C13CrossScopeExports extends C13Section {
 			throws CancelledException, PdbException {
 		super(ignore);
 		while (reader.numRemaining() >= CrossScopeExport.getBaseRecordSize()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CrossScopeExport crossExport = new CrossScopeExport(reader);
 			crossScopeExports.add(crossExport);
 		}

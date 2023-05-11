@@ -17,6 +17,8 @@
 #include "funcdata.hh"
 #include "crc32.hh"
 
+namespace ghidra {
+
 // Table for how to hash opcodes, lumps certain operators (i.e. ADD SUB PTRADD PTRSUB) into one hash
 // zero indicates the operator should be skipped
 const uint4 DynamicHash::transtable[] = {
@@ -55,7 +57,8 @@ const uint4 DynamicHash::transtable[] = {
 
   0,				// CAST is skipped
   CPUI_INT_ADD,  CPUI_INT_ADD, 	// PTRADD and PTRSUB hash same as INT_ADD
-  CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW, CPUI_INSERT, CPUI_EXTRACT, CPUI_POPCOUNT
+  CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW, CPUI_INSERT, CPUI_EXTRACT,
+  CPUI_POPCOUNT, CPUI_LZCOUNT
   
 };
 
@@ -762,3 +765,5 @@ void DynamicHash::clearTotalPosition(uint8 &h)
   val = ~val;
   h &= val;
 }
+
+} // End namespace ghidra

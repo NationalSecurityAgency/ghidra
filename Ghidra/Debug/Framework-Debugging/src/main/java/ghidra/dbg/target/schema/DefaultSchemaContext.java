@@ -39,6 +39,10 @@ public class DefaultSchemaContext implements SchemaContext {
 		schemas.put(schema.getName(), schema);
 	}
 
+	public synchronized void replaceSchema(TargetObjectSchema schema) {
+		schemas.put(schema.getName(), schema);
+	}
+
 	@Override
 	public synchronized TargetObjectSchema getSchemaOrNull(SchemaName name) {
 		return schemas.get(name);

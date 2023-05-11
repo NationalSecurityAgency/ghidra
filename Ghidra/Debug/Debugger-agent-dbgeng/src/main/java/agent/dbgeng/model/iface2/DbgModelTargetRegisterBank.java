@@ -21,16 +21,14 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.util.ConversionUtils;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerSet;
 
 public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, TargetRegisterBank {
 
@@ -84,17 +82,16 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 					VALUE_ATTRIBUTE_NAME, value.toString(16) //
 				), "Refreshed");
 				if (value.longValue() != 0) {
-					String newval = reg.getName() + " : " + value.toString(16);
+					String valstr = Long.toUnsignedString(value.longValue(), 16);  //value.toString(16);
+					String newval = reg.getName() + " : " + valstr;
 					reg.changeAttributes(List.of(), Map.of( //
 						DISPLAY_ATTRIBUTE_NAME, newval //
 					), "Refreshed");
-					reg.setModified(value.toString(16).equals(oldval));
+					reg.setModified(valstr.equals(oldval));
 				}
 			}
-			ListenerSet<DebuggerModelListener> listeners = getListeners();
-			if (listeners != null) {
-				listeners.fire.registersUpdated(getProxy(), result);
-			}
+
+			broadcast().registersUpdated(getProxy(), result);
 			return result;
 		});
 	}
@@ -105,6 +102,7 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 	}
 
 	public default CompletableFuture<Void> doWriteRegistersNamed(Map<String, byte[]> values) {
+		DbgManagerImpl manager = getManager();
 		DbgThread thread = getParentThread().getThread();
 		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 			requestNativeElements().handle(seq::nextIgnore);
@@ -126,7 +124,9 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 			getParentThread().getThread().writeRegisters(toWrite).handle(seq::next);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).then(seq -> {
-			getListeners().fire.registersUpdated(getProxy(), values);
+			manager.getEventListeners().fire.threadStateChanged(thread, thread.getState(),
+				DbgCause.Causes.UNCLAIMED, DbgReason.Reasons.NONE);
+			broadcast().registersUpdated(getProxy(), values);
 			seq.exit();
 		}).finish();
 	}

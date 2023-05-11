@@ -18,11 +18,10 @@ package ghidra.trace.database.target.visitors;
 import java.util.*;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.target.visitors.TreeTraversal.VisitResult;
 import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 
 public class CanonicalSuccessorsRelativeVisitor implements Visitor {
@@ -35,8 +34,8 @@ public class CanonicalSuccessorsRelativeVisitor implements Visitor {
 	}
 
 	@Override
-	public Range<Long> composeSpan(Range<Long> pre, TraceObjectValue value) {
-		return Range.all();
+	public Lifespan composeSpan(Lifespan pre, TraceObjectValue value) {
+		return Lifespan.ALL;
 	}
 
 	@Override
@@ -58,7 +57,7 @@ public class CanonicalSuccessorsRelativeVisitor implements Visitor {
 	}
 
 	protected TraceObjectValue getCanonicalValue(TraceObject parent, String key) {
-		return parent.getOrderedValues(Range.all(), key, true)
+		return parent.getOrderedValues(Lifespan.ALL, key, true)
 				.filter(TraceObjectValue::isCanonical)
 				.findFirst()
 				.orElse(null);
@@ -66,7 +65,7 @@ public class CanonicalSuccessorsRelativeVisitor implements Visitor {
 
 	@Override
 	public Stream<? extends TraceObjectValue> continueValues(TraceObject object,
-			Range<Long> span, TraceObjectValPath pre) {
+			Lifespan span, TraceObjectValPath pre) {
 		Set<String> nextKeys = predicates.getNextKeys(pre.getKeyList());
 		if (nextKeys.isEmpty()) {
 			return Stream.empty();

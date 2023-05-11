@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_MARSHAL__
-#define __CPUI_MARSHAL__
+#ifndef __MARSHAL_HH__
+#define __MARSHAL_HH__
 
 #include "xml.hh"
 #include <list>
 #include <unordered_map>
 
-using namespace std;
+namespace ghidra {
+
+using std::list;
+using std::unordered_map;
 
 /// \brief An annotation for a data element to being transferred to/from a stream
 ///
@@ -150,6 +153,15 @@ public:
   /// If all attributes have been traversed (or there are no attributes), 0 is returned.
   /// \return the id of the next attribute or 0
   virtual uint4 getNextAttributeId(void)=0;
+
+  /// \brief Get the id for the (current) attribute, assuming it is indexed
+  ///
+  /// Assuming the previous call to getNextAttributeId() returned the id of ATTRIB_UNKNOWN,
+  /// reinterpret the attribute as being an indexed form of the given attribute. If the attribute
+  /// matches, return this indexed id, otherwise return ATTRIB_UNKNOWN.
+  /// \param attribId is the attribute being indexed
+  /// \return the indexed id or ATTRIB_UNKNOWN
+  virtual uint4 getIndexedAttributeId(const AttributeId &attribId)=0;
 
   /// \brief Reset attribute traversal for the current element
   ///
@@ -321,6 +333,17 @@ public:
   /// \param val is the string to encode
   virtual void writeString(const AttributeId &attribId,const string &val)=0;
 
+  /// \brief Write an annotated string, using an indexed attribute, into the encoding
+  ///
+  /// Multiple attributes with a shared name can be written to the same element by calling this method
+  /// multiple times with a different \b index value. The encoding will use attribute ids up to the base id
+  /// plus the maximum index passed in.  Implementors must be careful to not use other attributes with ids
+  /// bigger than the base id within the element taking the indexed attribute.
+  /// \param attribId is the shared AttributeId
+  /// \param index is the unique index to associated with the string
+  /// \param val is the string to encode
+  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val)=0;
+
   /// \brief Write an address space reference into the encoding
   ///
   /// The address space is associated with the given AttributeId annotation and the current open element.
@@ -356,6 +379,7 @@ public:
   virtual void closeElementSkipping(uint4 id);
   virtual void rewindAttributes(void);
   virtual uint4 getNextAttributeId(void);
+  virtual uint4 getIndexedAttributeId(const AttributeId &attribId);
   virtual bool readBool(void);
   virtual bool readBool(const AttributeId &attribId);
   virtual intb readSignedInteger(void);
@@ -386,6 +410,7 @@ public:
   virtual void writeSignedInteger(const AttributeId &attribId,intb val);
   virtual void writeUnsignedInteger(const AttributeId &attribId,uintb val);
   virtual void writeString(const AttributeId &attribId,const string &val);
+  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val);
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
 };
 
@@ -491,6 +516,7 @@ public:
   virtual void closeElementSkipping(uint4 id);
   virtual void rewindAttributes(void);
   virtual uint4 getNextAttributeId(void);
+  virtual uint4 getIndexedAttributeId(const AttributeId &attribId);
   virtual bool readBool(void);
   virtual bool readBool(const AttributeId &attribId);
   virtual intb readSignedInteger(void);
@@ -520,6 +546,7 @@ public:
   virtual void writeSignedInteger(const AttributeId &attribId,intb val);
   virtual void writeUnsignedInteger(const AttributeId &attribId,uintb val);
   virtual void writeString(const AttributeId &attribId,const string &val);
+  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val);
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
 };
 
@@ -660,4 +687,5 @@ extern ElementId ELEM_VAL;		///< Marshaling element \<val>
 extern ElementId ELEM_VALUE;		///< Marshaling element \<value>
 extern ElementId ELEM_VOID;		///< Marshaling element \<void>
 
+} // End namespace ghidra
 #endif

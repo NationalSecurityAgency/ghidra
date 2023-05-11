@@ -26,14 +26,14 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>CompositeMember</code> provides the ability to process PDB data-type records and 
- * incrementally build-up composite structure and union data-types from a flattened offset-based 
- * list of members which may include embedded anonymous composite members.  Composite members 
+ * <code>CompositeMember</code> provides the ability to process PDB data-type records and
+ * incrementally build-up composite structure and union data-types from a flattened offset-based
+ * list of members which may include embedded anonymous composite members.  Composite members
  * correspond to either hard predefined data-types, or structure/union containers whose members
- * are added and refined incrementally.  
+ * are added and refined incrementally.
  * <p>
- * Container members are characterized by a null data-type name, zero length, and will be 
- * identified as either a structure or union. 
+ * Container members are characterized by a null data-type name, zero length, and will be
+ * identified as either a structure or union.
  */
 public class DefaultCompositeMember extends CompositeMember {
 
@@ -143,7 +143,7 @@ public class DefaultCompositeMember extends CompositeMember {
 	 * @param componentOffset member offset within parent
 	 * @param baseDataType bitfield base datatype
 	 * @param bitSize bitfield size in bits
-	 * @param bitOffsetWithinBaseType offset of bitfield within base type 
+	 * @param bitOffsetWithinBaseType offset of bitfield within base type
 	 * @throws InvalidDataTypeException invalid baseDataType for bitfield
 	 */
 	private DefaultCompositeMember(int componentOffset, DataType baseDataType, int bitSize,
@@ -220,7 +220,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			parent.memberNameChanged(oldMemberName, memberName);
 		}
 		catch (InvalidNameException | DuplicateNameException e) {
-			// exceptions are unexpected 
+			// exceptions are unexpected
 			throw new AssertException(e);
 		}
 	}
@@ -309,7 +309,7 @@ public class DefaultCompositeMember extends CompositeMember {
 	}
 
 	/**
-	 * Align container composite data type if possible.  
+	 * Align container composite data type if possible.
 	 * @param preferredSize preferred size of composite if known, else <= 0 if unknown
 	 */
 	private void alignComposite(int preferredSize) {
@@ -335,11 +335,19 @@ public class DefaultCompositeMember extends CompositeMember {
 			composite.setToDefaultPacking();
 		}
 		else {
-			pack = 1;
-			copy.setExplicitPackingValue(pack);
+			copy.setToMachineAligned();
 			alignOK = isGoodAlignment(copy, preferredSize);
 			if (alignOK) {
-				composite.setExplicitPackingValue(pack);
+				composite.setToDefaultPacking();
+				composite.setToMachineAligned();
+			}
+			else {
+				pack = 1;
+				copy.setExplicitPackingValue(pack);
+				alignOK = isGoodAlignment(copy, preferredSize);
+				if (alignOK) {
+					composite.setExplicitPackingValue(pack);
+				}
 			}
 		}
 		if (!alignOK && errorConsumer != null && !isClass) { // don't complain about Class structs which always fail
@@ -503,7 +511,7 @@ public class DefaultCompositeMember extends CompositeMember {
 	 * false if unable to resolve member's data-type or other error occurred.
 	 * NOTE: there may be complex hierarchies not yet handled.
 	 * @throws CancelledException if operation cancelled
-	 * @throws DataTypeDependencyException if child's datatype can not be resolved.  
+	 * @throws DataTypeDependencyException if child's datatype can not be resolved.
 	 * It may be possible to skip and continue with next child.
 	 */
 	private boolean addMember(PdbMember child, TaskMonitor monitor)
@@ -813,7 +821,7 @@ public class DefaultCompositeMember extends CompositeMember {
 
 	private boolean addStructureMember(DefaultCompositeMember member) {
 		try {
-			// check for conflict within structure container deferred  
+			// check for conflict within structure container deferred
 			int conflictOffset = structureMemberRangeMap.getValue(member.memberOffset);
 			if (conflictOffset < 0) {
 
@@ -1086,10 +1094,10 @@ public class DefaultCompositeMember extends CompositeMember {
 
 	/**
 	 * This method facilitates the removal and collection of all siblings of this
-	 * member from its parent container.  Only those siblings whose offset is greater 
-	 * than this member's offset will be included.  The use of this method is necessary when 
-	 * a member sequence has been added to a structure container and it is later decided to 
-	 * push this member and its siblings into a new sub-composite.  Before they can be 
+	 * member from its parent container.  Only those siblings whose offset is greater
+	 * than this member's offset will be included.  The use of this method is necessary when
+	 * a member sequence has been added to a structure container and it is later decided to
+	 * push this member and its siblings into a new sub-composite.  Before they can be
 	 * added to the new container they must be removed from their current container
 	 * using this method.
 	 * @return list of sibling structure members removed from parent
@@ -1145,8 +1153,8 @@ public class DefaultCompositeMember extends CompositeMember {
 	}
 
 	/**
-	 * Buildup an empty composite by applying datatype composite members.  
-	 * Only those children with a kind of "Member" will be processed. 
+	 * Buildup an empty composite by applying datatype composite members.
+	 * Only those children with a kind of "Member" will be processed.
 	 * @param composite empty composite to which members will be added
 	 * @param isClass true if composite corresponds to a Class structure, else false
 	 * @param preferredCompositeSize preferred size of composite, <= 0 indicates unknown
@@ -1166,7 +1174,7 @@ public class DefaultCompositeMember extends CompositeMember {
 			new DefaultCompositeMember(isClass, editComposite, errorConsumer);
 
 		for (PdbMember m : members) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				if (!rootMember.addMember(m, monitor)) {
 					return false;
@@ -1195,8 +1203,8 @@ public class DefaultCompositeMember extends CompositeMember {
 	private static enum MemberType {
 
 		//@formatter:off
-		STRUCTURE, 
-		UNION, 
+		STRUCTURE,
+		UNION,
 		MEMBER;
 		//@formatter:on
 

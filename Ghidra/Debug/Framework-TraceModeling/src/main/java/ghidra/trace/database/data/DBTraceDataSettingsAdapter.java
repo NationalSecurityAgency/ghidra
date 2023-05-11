@@ -18,8 +18,6 @@ package ghidra.trace.database.data;
 import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.address.AddressSpace;
@@ -30,6 +28,7 @@ import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceSettingsEntr
 import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -150,7 +149,7 @@ public class DBTraceDataSettingsAdapter
 			return longValue;
 		}
 
-		protected void setLifespan(Range<Long> lifespan) {
+		protected void setLifespan(Lifespan lifespan) {
 			super.doSetLifespan(lifespan);
 		}
 	}
@@ -167,7 +166,7 @@ public class DBTraceDataSettingsAdapter
 		}
 
 		@Override
-		public void makeWay(DBTraceSettingsEntry entry, Range<Long> span) {
+		public void makeWay(DBTraceSettingsEntry entry, Lifespan span) {
 			DBTraceUtils.makeWay(entry, span, (e, s) -> e.setLifespan(s), e -> deleteData(e));
 		}
 
@@ -213,7 +212,7 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	public void makeWay(DBTraceSettingsEntry entry, Range<Long> span) {
+	public void makeWay(DBTraceSettingsEntry entry, Lifespan span) {
 		DBTraceUtils.makeWay(entry, span, (e, s) -> e.setLifespan(s), e -> deleteData(e));
 	}
 }

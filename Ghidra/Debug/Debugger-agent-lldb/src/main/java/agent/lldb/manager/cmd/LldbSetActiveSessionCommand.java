@@ -38,6 +38,8 @@ public class LldbSetActiveSessionCommand extends AbstractLldbCommand<Void> {
 	public void invoke() {
 		DebugClientImpl client = (DebugClientImpl) manager.getClient();
 		SBDebugger debugger = client.getDebugger();
-		debugger.SetSelectedTarget(session);
+		if (!client.isSessionImmutable()) {
+			debugger.SetSelectedTarget(session);
+		}
 	}
 }

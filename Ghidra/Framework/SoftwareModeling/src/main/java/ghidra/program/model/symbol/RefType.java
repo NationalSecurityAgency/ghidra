@@ -258,6 +258,36 @@ public abstract class RefType {
 	private byte type;
 	private String name;
 
+	/**
+	 * Returns an easy to read display string for this ref type.
+	 * @return the string
+	 */
+	public String getDisplayString() {
+		if (this == RefType.THUNK) {
+			return "Thunk";
+		}
+
+		if (isRead() && isWrite()) {
+			return "RW";
+		}
+		if (isRead()) {
+			return "Read";
+		}
+		if (isWrite()) {
+			return "Write";
+		}
+		if (isData()) {
+			return "Data";
+		}
+		if (isCall()) {
+			return "Call";
+		}
+		if (isJump()) {
+			return (isConditional() ? "Branch" : "Jump");
+		}
+		return "Unknown";
+	}
+
 	protected RefType(byte type, String name) {
 		this.type = type;
 		this.name = name;

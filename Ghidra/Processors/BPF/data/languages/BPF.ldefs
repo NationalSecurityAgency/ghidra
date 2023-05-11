@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_definitions>
+   <language processor="BPF"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="BPF_le.sla"
+            processorspec="BPF.pspec"
+            id="BPF:LE:32:default">
+    <description>BPF processor 32-bit little-endian</description>
+    <compiler name="default" spec="BPF.cspec" id="default"/>
+  </language> 
+</language_definitions>
+

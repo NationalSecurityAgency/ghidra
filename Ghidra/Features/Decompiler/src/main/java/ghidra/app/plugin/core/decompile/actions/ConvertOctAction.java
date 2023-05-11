@@ -40,7 +40,7 @@ public class ConvertOctAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned) {
+	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
 		Scalar scalar = new Scalar(size * 8, value);
 		if (isSigned) {
 			long v = scalar.getSignedValue();

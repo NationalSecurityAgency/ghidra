@@ -24,7 +24,7 @@ import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.util.NumberUtil;
+import ghidra.util.NumericUtilities;
 
 public class BinaryReaderTest {
 
@@ -149,8 +149,7 @@ public class BinaryReaderTest {
 
 		assertEquals(1, br.readUnsignedShort(0));
 		assertEquals(Short.MAX_VALUE /* 0x7fff */, br.readUnsignedShort(2));
-		assertEquals(NumberUtil.UNSIGNED_SHORT_MASK /* ie. UNSIGNED_SHORT_MAX, 0xffff*/,
-			br.readUnsignedShort(4));
+		assertEquals(0xffff, br.readUnsignedShort(4));
 		assertEquals(Short.MAX_VALUE + 1 /* 0x8000 */, br.readUnsignedShort(6));
 		try {
 			br.readUnsignedShort(8);
@@ -184,8 +183,7 @@ public class BinaryReaderTest {
 
 		assertEquals(1, br.readNextUnsignedShort());
 		assertEquals(Short.MAX_VALUE /* 0x7fff */, br.readNextUnsignedShort());
-		assertEquals(NumberUtil.UNSIGNED_SHORT_MASK /* ie. UNSIGNED_SHORT_MAX, 0xffff*/,
-			br.readNextUnsignedShort());
+		assertEquals(0xffff, br.readNextUnsignedShort());
 		assertEquals(Short.MAX_VALUE + 1 /* 0x8000 */, br.readNextUnsignedShort());
 		try {
 			br.readNextUnsignedShort();
@@ -225,8 +223,7 @@ public class BinaryReaderTest {
 
 		assertEquals(1, br.readUnsignedInt(0));
 		assertEquals(Integer.MAX_VALUE, br.readUnsignedInt(4));
-		assertEquals(NumberUtil.UNSIGNED_INT_MASK /*ie. UNSIGNED_INT_MAX, 0xff_ff_ff_ff*/,
-			br.readUnsignedInt(8));
+		assertEquals(NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG, br.readUnsignedInt(8));
 		assertEquals((long) Integer.MAX_VALUE + 1 /* 0x80_00_00_00 */, br.readUnsignedInt(12));
 		try {
 			br.readUnsignedInt(16);
@@ -262,8 +259,7 @@ public class BinaryReaderTest {
 
 		assertEquals(1, br.readNextUnsignedInt());
 		assertEquals(Integer.MAX_VALUE, br.readNextUnsignedInt());
-		assertEquals(NumberUtil.UNSIGNED_INT_MASK /*ie. UNSIGNED_INT_MAX, 0xff_ff_ff_ff*/,
-			br.readNextUnsignedInt());
+		assertEquals(NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG, br.readNextUnsignedInt());
 		assertEquals((long) Integer.MAX_VALUE + 1 /* 0x80_00_00_00 */, br.readNextUnsignedInt());
 		try {
 			br.readNextUnsignedInt();
@@ -272,6 +268,23 @@ public class BinaryReaderTest {
 		catch (IOException ioe) {
 			// good
 		}
+	}
+
+	@Test
+	public void testUint32Max() throws IOException {
+		BinaryReader br = br(true, 0xff, 0xff, 0xff, 0x7f, 0xff);
+		int value = br.readNextUnsignedIntExact();
+		Assert.assertEquals(Integer.MAX_VALUE, value);
+	}
+
+	@Test(expected = IOException.class)
+	public void testUint32Overflow() throws IOException {
+		// Test uint32 max overflow with 0xff_ff_ff_ff
+		BinaryReader br = br(true, 0xff, 0xff, 0xff, 0xff, 0xff);
+		int value = br.readNextUnsignedIntExact();
+		Assert.fail(
+			"Should not be able to read a value that is larger than what can fit in java 32 bit int: " +
+				Integer.toUnsignedString(value));
 	}
 
 	// ------------------------------------------------------------------------------------
@@ -546,4 +559,5 @@ public class BinaryReaderTest {
 		BinaryReader br = br(true, -22, -87, 'A', 0);
 		assertEquals("\ufffdA" /* unicode replacement char, 'A'*/, br.readUtf8String(0));
 	}
+
 }

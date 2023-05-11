@@ -17,16 +17,27 @@ apply plugin: 'java-library'
 apply plugin: 'eclipse'
 eclipse.project.name = '_GhidraDocs'
 
+sourceCompatibility = "${rootProject.JAVA_COMPILER}"
+targetCompatibility = "${rootProject.JAVA_COMPILER}"
+
 sourceSets {
 	ghidraClass {
 		java {
 			srcDir 'GhidraClass/AdvancedDevelopment/contrib/gadc/ghidra_scripts'
+			srcDir 'GhidraClass/Debugger/ghidra_scripts'
+			compileClasspath += main.output
 		}
 	}
 }
 
+configurations {
+   ghidraClassImplementation.extendsFrom implementation
+}
+
 dependencies {
-	api project(':Base') 
+	api project(':Base')
+	api project(':Debugger')
+	api project(':SystemEmulation')
 }
 
 rootProject.assembleDistribution {

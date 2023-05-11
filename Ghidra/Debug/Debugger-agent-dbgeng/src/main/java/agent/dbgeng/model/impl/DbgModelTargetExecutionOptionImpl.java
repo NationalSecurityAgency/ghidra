@@ -83,7 +83,7 @@ public class DbgModelTargetExecutionOptionImpl extends DbgModelTargetObjectImpl
 	public void setAttributes() {
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getName() + " : " + optionExc.description, //
-			VALUE_ATTRIBUTE_NAME, optionExc, //
+			VALUE_ATTRIBUTE_NAME, optionExc.val, //
 			ENABLED_ATTRIBUTE_NAME,
 			optionExc.equals(DebugFilterExecutionOption.DEBUG_FILTER_BREAK)), "Refreshed");
 	}

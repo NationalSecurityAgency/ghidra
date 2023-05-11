@@ -23,6 +23,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,8 +49,9 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import generic.test.ConcurrentTestExceptionHandler;
+import generic.theme.GIcon;
 import generic.util.image.ImageUtils;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.ApplicationConfiguration;
@@ -58,11 +60,12 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.worker.Worker;
 import junit.framework.AssertionFailedError;
+import resources.icons.UrlImageIcon;
 import sun.awt.AppContext;
 import util.CollectionUtils;
 import utility.application.ApplicationLayout;
 
-public abstract class AbstractDockingTest extends AbstractGenericTest {
+public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 	static {
 		ConcurrentTestExceptionHandler.registerHandler();
@@ -76,8 +79,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		new TestFailingErrorDisplayWrapper();
 
 	public AbstractDockingTest() {
-		super();
-
 		installNonNativeSystemClipboard();
 	}
 
@@ -110,13 +111,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	@Override
-	protected ApplicationLayout createApplicationLayout() {
-		try {
-			return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
-		}
-		catch (IOException e) {
-			throw new AssertException(e);
-		}
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
 	}
 
 	@Override
@@ -445,7 +441,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * A convenience method to close all of the windows and frames that the current Java
 	 * windowing environment knows about
-	 * 
+	 *
 	 * @deprecated instead call the new {@link #closeAllWindows()}
 	 */
 	@Deprecated
@@ -727,11 +723,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		}
 
 		T t = windowManager.getComponentProvider(clazz);
-		if (t != null) {
-			return t;
-		}
-
-		return null;
+		return t;
 	}
 
 	/**
@@ -1167,10 +1159,10 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * If you do not know the owner name, then use
 	 * the call {@link #getActionsByName(Tool, String)} instead  (this will not include
 	 * reserved system actions).
-	 * 
+	 *
 	 * <P>Note: more specific test case subclasses provide other methods for finding actions
 	 * when you have an owner name (which is usually the plugin name).
-	 * 
+	 *
 	 * @param tool the tool containing all system actions
 	 * @param owner the owner of the action
 	 * @param name the name to match
@@ -1193,7 +1185,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Returns the action by the given name that belongs to the given provider
-	 * 
+	 *
 	 * @param provider the provider
 	 * @param actionName the action name
 	 * @return the action
@@ -1485,7 +1477,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Simulates a user initiated keystroke using the keybinding of the given action
-	 * 
+	 *
 	 * @param destination the component for the action being executed
 	 * @param action The action to simulate pressing
 	 */
@@ -1717,7 +1709,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * Fires a {@link KeyListener#keyPressed(KeyEvent)},
 	 * {@link KeyListener#keyTyped(KeyEvent)}
 	 * and {@link KeyListener#keyReleased(KeyEvent)} for the given key stroke
-	 * 
+	 *
 	 * @param c the destination component
 	 * @param ks the key stroke
 	 */
@@ -2141,8 +2133,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		return runSwing(() -> action.isEnabledForContext(new ActionContext()));
 	}
 
-	public static boolean isEnabled(DockingActionIf action,
-			ActionContextProvider contextProvider) {
+	public static boolean isEnabled(DockingActionIf action, ActionContextProvider contextProvider) {
 		return runSwing(() -> action.isEnabledForContext(contextProvider.getActionContext(null)));
 	}
 
@@ -2277,4 +2268,39 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		ImageUtils.writeFile(image, imageFile);
 		Msg.info(AbstractDockingTest.class, "Wrote image to " + imageFile.getCanonicalPath());
 	}
+
+	/**
+	 * Asserts that the two icons are or refer to the same icon (handles GIcon)
+	 * @param expected the expected icon
+	 * @param actual the actual icon
+	 */
+	public void assertIconsEqual(Icon expected, Icon actual) {
+		if (expected.equals(actual)) {
+			return;
+		}
+		URL url1 = getURL(expected);
+		URL url2 = getURL(actual);
+
+		if (url1 != null && url1.equals(url2)) {
+			return;
+		}
+		fail("Expected icon [" + expected.getClass().getSimpleName() + "]" + expected.toString() +
+			", but got: [" + actual.getClass().getSimpleName() + "]" + actual.toString());
+	}
+
+	/**
+	 * Gets the URL for the given icon
+	 * @param icon the icon to get a URL for
+	 * @return the URL for the given icon
+	 */
+	public URL getURL(Icon icon) {
+		if (icon instanceof UrlImageIcon urlIcon) {
+			return urlIcon.getUrl();
+		}
+		if (icon instanceof GIcon gIcon) {
+			return gIcon.getUrl();
+		}
+		return null;
+	}
+
 }

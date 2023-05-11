@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.datamgr;
 
 import java.awt.Component;
 import java.awt.datatransfer.Clipboard;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -46,8 +45,7 @@ import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.util.DataDropOnBrowserHandler;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
-import ghidra.app.services.CodeViewerService;
-import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.Application;
 import ghidra.framework.main.OpenVersionedFileDialog;
@@ -56,7 +54,6 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.database.DataTypeArchiveContentHandler;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
@@ -64,7 +61,10 @@ import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.datastruct.LRUMap;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Plugin to pop up the dialog to manage data types in the program
@@ -80,15 +80,16 @@ import ghidra.util.task.TaskLauncher;
 	description = "Provides the window for managing and categorizing dataTypes.  " +
 			"The datatype display shows all built-in datatypes, datatypes in the " +
 			"current program, and datatypes in all open archives.",
-	servicesProvided = { DataTypeManagerService.class }
+	servicesProvided = { DataTypeManagerService.class, DataTypeArchiveService.class }
 )
 //@formatter:on
 public class DataTypeManagerPlugin extends ProgramPlugin
-		implements DomainObjectListener, DataTypeManagerService, PopupActionProvider {
+		implements DomainObjectListener, DataTypeManagerService, DataTypeArchiveService,
+		PopupActionProvider {
 
 	private static final String EXTENSIONS_PATH_PREFIX = Path.GHIDRA_HOME + "/Extensions";
 
-	private static final String SEACH_PROVIDER_NAME = "Search DataTypes Provider";
+	private static final String SEARCH_PROVIDER_NAME = "Search DataTypes Provider";
 	private static final int RECENTLY_USED_CACHE_SIZE = 10;
 
 	private static final String STANDARD_ARCHIVE_MENU = "Standard Archive";
@@ -96,7 +97,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	private DataTypeManagerHandler dataTypeManagerHandler;
 	private DataTypesProvider provider;
-	private OpenVersionedFileDialog openDialog;
 
 	private Map<String, DockingAction> recentlyOpenedArchiveMap;
 	private Map<String, DockingAction> installArchiveMap;
@@ -245,8 +245,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		Project project = tool.getProjectManager().getActiveProject();
 		if (project != null && project.getName().equals(projectName)) {
 			DomainFile df = project.getProjectData().getFile(pathname);
-			if (df != null && DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
-					.equals(df.getContentType())) {
+			if (df != null && DataTypeArchive.class.isAssignableFrom(df.getDomainObjectClass())) {
 				return df;
 			}
 		}
@@ -364,21 +363,11 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	public DataTypesProvider createProvider() {
 
-		DataTypesProvider newProvider = new DataTypesProvider(this, SEACH_PROVIDER_NAME);
+		DataTypesProvider newProvider = new DataTypesProvider(this, SEARCH_PROVIDER_NAME, true);
 		newProvider.setIncludeDataTypeMembersInFilter(provider.includeDataMembersInSearch());
 		newProvider.setFilteringArrays(provider.isFilteringArrays());
 		newProvider.setFilteringPointers(provider.isFilteringPointers());
 		return newProvider;
-	}
-
-	public void closeProvider(DataTypesProvider providerToClose) {
-		if (providerToClose != provider) {
-			providerToClose.removeFromTool(); // remove any transient providers when closed
-			providerToClose.dispose();
-		}
-		else {
-			provider.setVisible(false);
-		}
 	}
 
 	public Program getProgram() {
@@ -571,33 +560,43 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return dataTypeManagerHandler.openArchive(archiveName);
 	}
 
+	@Override
+	public DataTypeManager openArchive(ResourceFile file, boolean acquireWriteLock)
+			throws IOException, DuplicateIdException {
+		Archive archive = openArchive(file.getFile(true), acquireWriteLock);
+		return archive.getDataTypeManager();
+	}
+
+	@Override
+	public DataTypeManager openArchive(DomainFile domainFile, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException, DuplicateIdException {
+		DataTypeArchive archive = openArchive(domainFile);
+		return archive.getDataTypeManager();
+	}
+
 	public List<Archive> getAllArchives() {
 		return dataTypeManagerHandler.getAllArchives();
 	}
 
 	public void openProjectDataTypeArchive() {
-		if (openDialog == null) {
-			ActionListener listener = ev -> {
-				DomainFile domainFile = openDialog.getDomainFile();
-				int version = openDialog.getVersion();
-				if (domainFile == null) {
-					openDialog.setStatusText("Please choose a Project Data Type Archive");
-				}
-				else {
-					openDialog.close();
-					openArchive(domainFile, version);
-				}
-			};
-			DomainFileFilter filter = f -> {
-				Class<?> c = f.getDomainObjectClass();
-				return DataTypeArchive.class.isAssignableFrom(c);
-			};
-			openDialog =
-				new OpenVersionedFileDialog(tool, "Open Project Data Type Archive", filter);
-			openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
-			openDialog.addOkActionListener(listener);
-		}
-		tool.showDialog(openDialog);
+
+		OpenVersionedFileDialog<DataTypeArchive> dialog =
+			new OpenVersionedFileDialog<>(tool, "Open Project Data Type Archive",
+				DataTypeArchive.class);
+		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
+		dialog.addOkActionListener(ev -> {
+			DomainFile domainFile = dialog.getDomainFile();
+			int version = dialog.getVersion();
+			if (domainFile == null) {
+				dialog.setStatusText("Please choose a Project Data Type Archive");
+			}
+			else {
+				dialog.close();
+				openArchive(domainFile, version);
+			}
+		});
+
+		tool.showDialog(dialog);
 	}
 
 	@Override

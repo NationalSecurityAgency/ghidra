@@ -15,21 +15,24 @@
  */
 package ghidra.trace.database.program;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.app.cmd.disassemble.*;
+import ghidra.app.plugin.assembler.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.disassemble.Disassembler;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.mem.MemoryBlock;
@@ -39,11 +42,12 @@ import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
+import ghidra.trace.model.*;
+import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
 import ghidra.trace.util.LanguageTestWatcher;
 import ghidra.trace.util.LanguageTestWatcher.TestLanguage;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
@@ -58,7 +62,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Before
 	public void setUp() throws IOException {
 		b = new ToyDBTraceBuilder("Testing", testLanguage.getLanguage());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getTimeManager().createSnapshot("Initialize");
 		}
 		view = b.trace.getProgramView();
@@ -72,7 +76,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	public void testSingleInstruction() throws IOException, CancelledException, VersionException,
 			DuplicateNameException, TraceOverlappedRegionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memoryManager = b.trace.getMemoryManager();
 			memoryManager.createRegion("Region", 0, b.range(0x4000, 0x4fff),
 				TraceMemoryFlag.EXECUTE, TraceMemoryFlag.READ);
@@ -103,7 +107,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 		Language x86 = getSLEIGH_X86_LANGUAGE();
 		Disassembler dis = Disassembler.getDisassembler(x86, x86.getAddressFactory(),
 			new ConsoleTaskMonitor(), msg -> System.out.println("Listener: " + msg));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemorySpace space =
 				b.trace.getMemoryManager().getMemorySpace(b.language.getDefaultSpace(), true);
 			space.putBytes(0, b.addr(0x4000), b.buf(0x90));
@@ -127,7 +131,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 				guest.getMappedMemBuffer(0, b.addr(guest, 0x00400000)), defaultContextValue, 1));
 
 			DBTraceCodeManager code = b.trace.getCodeManager();
-			code.instructions().addInstructionSet(Range.closed(0L, 0L), guest, set, false);
+			code.instructions().addInstructionSet(Lifespan.at(0), guest, set, false);
 
 			DBTraceInstruction ins = code.instructions().getAt(0, b.addr(0x4000));
 			// TODO: This is great, but probably incomplete.
@@ -141,8 +145,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	public void testThumbSampleProgramDB() throws Exception {
 		ProgramBuilder b = new ProgramBuilder(getName(), ProgramBuilder._ARM);
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(b.getProgram(), "Disassemble (THUMB)")) {
+		try (Transaction tx = b.getProgram().openTransaction("Disassemble (THUMB)")) {
 			MemoryBlock text = b.createMemory(".text", "b6fa2cd0", 32, "Sample", (byte) 0);
 			text.putBytes(b.addr(0xb6fa2cdc), new byte[] {
 				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}
@@ -168,7 +171,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage(ProgramBuilder._ARM)
 	public void testThumbSampleDBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0xb6fa2cd0, 0xb6fa2cef),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
@@ -194,7 +197,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage("MIPS:BE:64:default")
 	public void testDelaySlotSampleDBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0x120000000L, 0x120010000L),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
@@ -220,7 +223,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage(ProgramBuilder._X64)
 	public void test64BitX86DBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
@@ -250,7 +253,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage(ProgramBuilder._X64)
 	public void test32BitX64CompatDBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
@@ -286,7 +289,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage(ProgramBuilder._X86)
 	public void test32BitX86DBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
@@ -305,6 +308,138 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 			assertEquals("DEC EAX", cu1.toString());
 			CodeUnit cu2 = cuManager.getAt(0, b.addr(0x00400001));
 			assertEquals("MOV ECX,EAX", cu2.toString());
+		}
+	}
+
+	record Repetition(Lifespan lifespan, boolean overwrite) {
+	}
+
+	protected <T> List<T> toList(Iterable<? extends T> it) {
+		return StreamSupport.stream(it.spliterator(), false).collect(Collectors.toList());
+	}
+
+	protected void runTestCoalesceInstructions(List<Repetition> repetitions) throws Exception {
+		try (Transaction tx = b.startTransaction()) {
+			DBTraceMemoryManager memory = b.trace.getMemoryManager();
+			DBTraceCodeManager code = b.trace.getCodeManager();
+
+			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			Assembler asm = Assemblers.getAssembler(b.language);
+			Address entry = b.addr(0x00400000);
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+			buf.assemble("imm r0, #123");
+			buf.assemble("mov r1, r0");
+			buf.assemble("ret");
+
+			long snap = Lifespan.isScratch(repetitions.get(0).lifespan.lmin()) ? Long.MIN_VALUE : 0;
+			memory.putBytes(snap, entry, ByteBuffer.wrap(buf.getBytes()));
+
+			AddressFactory factory = b.trace.getBaseAddressFactory();
+			Disassembler dis =
+				Disassembler.getDisassembler(b.language, factory, TaskMonitor.DUMMY, null);
+			InstructionSet set = new InstructionSet(factory);
+			set.addBlock(dis.pseudoDisassembleBlock(memory.getBufferAt(snap, entry), null, 10));
+
+			List<TraceCodeUnit> units = null;
+			TraceAddressSnapRange all =
+				new ImmutableTraceAddressSnapRange(b.range(0, -1), Lifespan.ALL);
+			for (Repetition rep : repetitions) {
+				code.instructions().addInstructionSet(rep.lifespan, set, rep.overwrite);
+				if (units == null) {
+					units = toList(code.definedUnits().getIntersecting(all));
+				}
+				else {
+					/**
+					 * Technically, getIntersecting makes no guarantee regarding order.
+					 * Nevertheless, the structure shouldn't be perturbed, so I think it's fair to
+					 * expect the same order.
+					 */
+					assertEquals(units, toList(code.definedUnits().getIntersecting(all)));
+				}
+			}
+		}
+	}
+
+	@Test
+	@TestLanguage(ProgramBuilder._TOY64_BE)
+	public void testCoalesceInstructionsMinTwiceNoOverwrite() throws Exception {
+		runTestCoalesceInstructions(List.of(
+			new Repetition(Lifespan.nowOn(Long.MIN_VALUE), false),
+			new Repetition(Lifespan.nowOn(Long.MIN_VALUE), false)));
+	}
+
+	@Test
+	@TestLanguage(ProgramBuilder._TOY64_BE)
+	public void testCoalesceInstructionsMinTwiceYesOverwrite() throws Exception {
+		runTestCoalesceInstructions(List.of(
+			new Repetition(Lifespan.nowOn(Long.MIN_VALUE), true),
+			new Repetition(Lifespan.nowOn(Long.MIN_VALUE), true)));
+	}
+
+	@Test
+	@TestLanguage(ProgramBuilder._TOY64_BE)
+	public void testCoalesceInstructionsZeroTwiceYesOverwrite() throws Exception {
+		runTestCoalesceInstructions(List.of(
+			new Repetition(Lifespan.nowOn(0), true),
+			new Repetition(Lifespan.nowOn(0), true)));
+	}
+
+	@Test
+	@TestLanguage(ProgramBuilder._TOY64_BE)
+	public void testCoalesceInstructionsZeroThenOneYesOverwrite() throws Exception {
+		runTestCoalesceInstructions(List.of(
+			new Repetition(Lifespan.nowOn(0), true),
+			new Repetition(Lifespan.nowOn(1), true)));
+	}
+
+	@Test
+	@TestLanguage(ProgramBuilder._TOY64_BE)
+	public void testCoalesceInstructionsZeroOnlyThenOneNoOverwrite() throws Exception {
+		runTestCoalesceInstructions(List.of(
+			new Repetition(Lifespan.at(0), false),
+			new Repetition(Lifespan.nowOn(1), false)));
+	}
+
+	@Test
+	@TestLanguage(ProgramBuilder._TOY64_BE)
+	public void testCoalesceInstructionsZeroOnlyThenOneYesOverwrite() throws Exception {
+		runTestCoalesceInstructions(List.of(
+			new Repetition(Lifespan.at(0), true),
+			new Repetition(Lifespan.nowOn(1), true)));
+	}
+
+	@Test
+	public void testNoCoalesceAcrossByteChanges() throws Exception {
+		try (Transaction tx = b.startTransaction()) {
+			DBTraceMemoryManager memory = b.trace.getMemoryManager();
+			DBTraceCodeManager code = b.trace.getCodeManager();
+
+			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
+			Assembler asm = Assemblers.getAssembler(b.language);
+			Address entry = b.addr(0x00400000);
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+			buf.assemble("imm r0, #123");
+			buf.assemble("mov r1, r0");
+			buf.assemble("ret");
+
+			memory.putBytes(-1, entry, ByteBuffer.wrap(buf.getBytes()));
+
+			AddressFactory factory = b.trace.getBaseAddressFactory();
+			Disassembler dis =
+				Disassembler.getDisassembler(b.language, factory, TaskMonitor.DUMMY, null);
+			InstructionSet set = new InstructionSet(factory);
+			set.addBlock(dis.pseudoDisassembleBlock(memory.getBufferAt(-1, entry), null, 10));
+
+			TraceAddressSnapRange all =
+				new ImmutableTraceAddressSnapRange(b.range(0, -1), Lifespan.ALL);
+			code.instructions().addInstructionSet(Lifespan.nowOn(-1), set, true);
+			/**
+			 * This is already a bogus sort of operation: The prototypes may not match the bytes. In
+			 * any case, we should not expect coalescing.
+			 */
+			code.instructions().addInstructionSet(Lifespan.nowOn(0), set, true);
+			List<TraceCodeUnit> units = toList(code.definedUnits().getIntersecting(all));
+			assertEquals(6, units.size());
 		}
 	}
 }

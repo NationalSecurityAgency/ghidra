@@ -15,6 +15,8 @@
  */
 #include "capability.hh"
 
+namespace ghidra {
+
 /// Access static vector of CapabilityPoint objects that are registered during static initialization
 /// The list itself is created once on the first call to this method
 /// \e after all the static initializers have run
@@ -46,3 +48,4 @@ void CapabilityPoint::initializeAll(void)
   list.clear();
 }
 
+} // End namespace ghidra

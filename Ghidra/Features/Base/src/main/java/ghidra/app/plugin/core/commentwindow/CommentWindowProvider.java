@@ -88,7 +88,9 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 	}
 
 	void programClosed() {
-		commentModel.reload(null);
+		if (isVisible()) {
+			commentModel.reload(null);
+		}
 	}
 
 	void dispose() {

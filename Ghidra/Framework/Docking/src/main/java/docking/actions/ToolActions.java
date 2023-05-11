@@ -20,6 +20,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import javax.swing.Action;
 import javax.swing.KeyStroke;
@@ -28,13 +29,12 @@ import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.map.LazyMap;
 
-import com.google.common.collect.Iterators;
-
 import docking.*;
 import docking.action.*;
 import docking.tool.util.DockingToolConstants;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.options.*;
-import ghidra.util.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import util.CollectionUtils;
 
@@ -51,7 +51,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	/*
 	 	Map of Maps of Sets
 	 	
-	 	Owner Name -> 
+	 	Owner Name ->
 	 		Action Name -> Set of Actions
 	 */
 	private Map<String, Map<String, Set<DockingActionIf>>> actionsByNameByOwner = LazyMap.lazyMap(
@@ -96,11 +96,10 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		keyBindingsManager.addReservedAction(
 			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY2));
 
-		// these are diagnostic
-		if (SystemUtilities.isInDevelopmentMode()) {
-			keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
-			keyBindingsManager.addReservedAction(new ShowFocusCycleAction());
-		}
+		// helpful debugging actions
+		keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
+		keyBindingsManager.addReservedAction(new ShowFocusCycleAction());
+		keyBindingsManager.addReservedAction(new ComponentThemeInspectorAction());
 	}
 
 	public void dispose() {
@@ -117,7 +116,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/**
-	 * Add an action that works specifically with a component provider. 
+	 * Add an action that works specifically with a component provider.
 	 * @param provider provider associated with the action
 	 * @param action local action to the provider
 	 */
@@ -282,25 +281,18 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	private Iterator<DockingActionIf> getAllActionsIterator() {
-
 		// chain all items together, rather than copy the data
-		Iterator<DockingActionIf> iterator = IteratorUtils.emptyIterator();
-		Collection<Map<String, Set<DockingActionIf>>> maps = actionsByNameByOwner.values();
-		for (Map<String, Set<DockingActionIf>> actionsByName : maps) {
-			for (Set<DockingActionIf> actions : actionsByName.values()) {
-				Iterator<DockingActionIf> next = actions.iterator();
-
-				// Note: do not use apache commons here--the code below degrades exponentially
-				//iterator = IteratorUtils.chainedIterator(iterator, next);
-				iterator = Iterators.concat(iterator, next);
-			}
-		}
-
-		return Iterators.concat(iterator, sharedActionMap.values().iterator());
+		// Note: do not use Apache's IteratorUtils.chainedIterator. It degrades exponentially
+		return Stream.concat(
+			actionsByNameByOwner.values()
+					.stream()
+					.flatMap(actionsByName -> actionsByName.values().stream())
+					.flatMap(actions -> actions.stream()),
+			sharedActionMap.values().stream()).iterator();
 	}
 
 	/**
-	 * Get the keybindings for each action so that they are still registered as being used; 
+	 * Get the keybindings for each action so that they are still registered as being used;
 	 * otherwise the options will be removed because they are noted as not being used.
 	 */
 	public synchronized void restoreKeyBindings() {
@@ -323,7 +315,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/**
-	 * Remove an action that works specifically with a component provider. 
+	 * Remove an action that works specifically with a component provider.
 	 * @param provider provider associated with the action
 	 * @param action local action to the provider
 	 */
@@ -371,7 +363,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	private void updateKeyBindingsFromOptions(ToolOptions options, String optionName,
 			KeyStroke newKs) {
 
-		// note: the 'shared actions' update themselves, so we only need to handle standard actions 
+		// note: the 'shared actions' update themselves, so we only need to handle standard actions
 
 		Matcher matcher = ACTION_NAME_PATTERN.matcher(optionName);
 		matcher.find();
@@ -396,7 +388,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 		DockingActionIf action = (DockingActionIf) evt.getSource();
 		if (!action.getKeyBindingType().isManaged()) {
-			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu 
+			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu
 			// in the case that this action is one of the tool's special actions
 			keyBindingsChanged();
 			return;
@@ -443,7 +435,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/**
-	 * Allows clients to register an action by using a placeholder.  This is useful when 
+	 * Allows clients to register an action by using a placeholder.  This is useful when
 	 * an API wishes to have a central object (like a plugin) register actions for transient
 	 * providers, that may not be loaded until needed.
 	 * 

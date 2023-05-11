@@ -22,6 +22,7 @@ import java.util.List;
 import db.*;
 import ghidra.program.model.data.SourceArchive;
 import ghidra.util.UniversalID;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -32,8 +33,10 @@ import ghidra.util.task.TaskMonitor;
  */
 abstract class SourceArchiveAdapter {
 
-	static final String TABLE_NAME = "Data Type Archive IDs";
+	static final String SOURCE_ARCHIVE_TABLE_NAME = "Data Type Archive IDs";
+
 	static final Schema SCHEMA = SourceArchiveAdapterV0.V0_SCHEMA;
+
 	// Data Type Archive ID Columns
 	static final int ARCHIVE_ID_DOMAIN_FILE_ID_COL =
 		SourceArchiveAdapterV0.V0_ARCHIVE_ID_DOMAIN_FILE_ID_COL;
@@ -52,18 +55,20 @@ abstract class SourceArchiveAdapter {
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param monitor the monitor to use for displaying status or for canceling.
 	 * @return the adapter for accessing the table of data type archive ID entries.
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
+	 * @throws CancelledException if task is cancelled
 	 */
-	static SourceArchiveAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException {
+	static SourceArchiveAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		if (openMode == DBConstants.CREATE) {
-			return new SourceArchiveAdapterV0(handle, true);
+			return new SourceArchiveAdapterV0(handle, tablePrefix, true);
 		}
 		try {
-			return new SourceArchiveAdapterV0(handle, false);
+			return new SourceArchiveAdapterV0(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
@@ -71,7 +76,7 @@ abstract class SourceArchiveAdapter {
 			}
 			SourceArchiveAdapter adapter = findReadOnlyAdapter(handle);
 			if (openMode == DBConstants.UPGRADE) {
-				adapter = upgrade(handle, adapter);
+				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
 		}
@@ -83,7 +88,8 @@ abstract class SourceArchiveAdapter {
 	 * @return the read only Data Type Archive ID table adapter
 	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
 	 */
-	static SourceArchiveAdapter findReadOnlyAdapter(DBHandle handle) {
+	private static SourceArchiveAdapter findReadOnlyAdapter(DBHandle handle)
+			throws VersionException {
 		return new SourceArchiveAdapterNoTable(handle);
 	}
 
@@ -95,24 +101,28 @@ abstract class SourceArchiveAdapter {
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if the database can't be read or written.
+	 * @throws CancelledException if task is cancelled
 	 */
-	static SourceArchiveAdapter upgrade(DBHandle handle, SourceArchiveAdapter oldAdapter)
-			throws VersionException, IOException {
+	private static SourceArchiveAdapter upgrade(DBHandle handle, SourceArchiveAdapter oldAdapter,
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
 		long id = tmpHandle.startTransaction();
 		SourceArchiveAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new SourceArchiveAdapterV0(tmpHandle, true);
+			tmpAdapter = new SourceArchiveAdapterV0(tmpHandle, tablePrefix, true);
 			Iterator<DBRecord> it = oldAdapter.getRecords().iterator();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
-			SourceArchiveAdapter newAdapter = new SourceArchiveAdapterV0(handle, true);
+			SourceArchiveAdapter newAdapter = new SourceArchiveAdapterV0(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords().iterator();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec);
 			}
@@ -125,22 +135,33 @@ abstract class SourceArchiveAdapter {
 		}
 	}
 
+	/**
+	 * Delete table from database
+	 * @param handle database handle
+	 * @throws IOException if IO error occurs
+	 */
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
 	/**
 	 * Creates a new source archive record using the information from the given source archive.
 	 * @param sourceArchive the source archive from which to get the archive information.
+	 * @return new archive record which corresponds to specified sourceArchive
+	 * @throws IOException if IO error occurs
 	 */
 	abstract DBRecord createRecord(SourceArchive sourceArchive) throws IOException;
 
 	/**
 	 * Returns a list containing all records in the archive table
-	 * @return
+	 * @return list of all archive records
+	 * @throws IOException if IO error occurs
 	 */
 	abstract List<DBRecord> getRecords() throws IOException;
 
 	/**
 	 * Returns the record for the given key (sourceArchiveID)
+	 * @param key ID of data type archive record
+	 * @return archive record or null if not found
+	 * @throws IOException if IO error occurs
 	 */
 	abstract DBRecord getRecord(long key) throws IOException;
 
@@ -153,7 +174,7 @@ abstract class SourceArchiveAdapter {
 
 	/**
 	 * Remove the record for the given data type archive ID.
-	 * @param dataTypeArchiveID ID of data type archive record to delete
+	 * @param key ID of data type archive record to delete
 	 * @return true if the record was deleted
 	 * @throws IOException if there was a problem accessing the database
 	 */

@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.searchmem;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -34,10 +33,6 @@ import ghidra.program.model.listing.*;
  * Tests for searching memory for hex reg expression.
  */
 public class MemSearchRegExTest extends AbstractMemSearchTest {
-
-	public MemSearchRegExTest() {
-		super();
-	}
 
 	@Override
 	@Before
@@ -313,7 +308,7 @@ public class MemSearchRegExTest extends AbstractMemSearchTest {
 
 		waitForSearch("Search Memory - ", 3);
 
-		Highlight[] h = getByteHighlights(addr(0x1002827), "6a 01");
+		Highlight[] h = getByteHighlights(addr(0x1002826), "6a 01");
 		assertEquals(1, h.length);
 	}
 }

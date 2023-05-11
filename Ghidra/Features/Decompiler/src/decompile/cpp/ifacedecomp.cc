@@ -20,6 +20,8 @@ extern "C" {
 #include "pcodeparse.hh"
 #include "blockaction.hh"
 
+namespace ghidra {
+
 // Constructing this registers the capability
 IfaceDecompCapability IfaceDecompCapability::ifaceDecompCapability;
 
@@ -114,6 +116,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcRename(),"rename");
   status->registerCom(new IfcRetype(),"retype");
   status->registerCom(new IfcRemove(),"remove");
+  status->registerCom(new IfcIsolate(),"isolate");
   status->registerCom(new IfcLockPrototype(),"prototype","lock");
   status->registerCom(new IfcUnlockPrototype(),"prototype","unlock");
   status->registerCom(new IfcCommentInstr(),"comment","instruction");
@@ -1363,6 +1366,29 @@ void IfcRetype::execute(istream &s)
     sym->getScope()->renameSymbol(sym,newname);
     sym->getScope()->setAttribute(sym,Varnode::namelock);
   }
+}
+
+/// \class IfcIsolate
+/// \brief Mark a symbol as isolated from speculative merging: `isolate <name>`
+void IfcIsolate::execute(istream &s)
+
+{
+  string symbolName;
+
+  s >> ws >> symbolName;
+  if (symbolName.size() == 0)
+    throw IfaceParseError("Missing symbol name");
+
+  Symbol *sym;
+  vector<Symbol *> symList;
+  dcp->readSymbol(symbolName,symList);
+  if (symList.empty())
+    throw IfaceExecutionError("No symbol named: "+symbolName);
+  if (symList.size() == 1)
+    sym = symList[0];
+  else
+    throw IfaceExecutionError("More than one symbol named: "+symbolName);
+  sym->setIsolated(true);
 }
 
 /// The Varnode is selected from the \e current function.  It is specified as a
@@ -3588,3 +3614,5 @@ void IfcSource::execute(istream &s)
   s >> filename;
   status->pushScript(filename,filename+"> ");
 }
+
+} // End namespace ghidra

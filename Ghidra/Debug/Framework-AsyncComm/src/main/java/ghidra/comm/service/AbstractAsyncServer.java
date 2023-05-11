@@ -129,6 +129,15 @@ public abstract class AbstractAsyncServer<S extends AbstractAsyncServer<S, H>, H
 		}
 	}
 
+	/**
+	 * Accept no more connections, but continue servicing existing connections
+	 * 
+	 * @throws IOException if an I/O error occurs
+	 */
+	protected void closeServerSocket() throws IOException {
+		ssock.close();
+	}
+
 	protected CompletableFuture<Void> allHandlers(Function<H, CompletableFuture<?>> action) {
 		AsyncFence fence = new AsyncFence();
 		for (H h : handlers) {

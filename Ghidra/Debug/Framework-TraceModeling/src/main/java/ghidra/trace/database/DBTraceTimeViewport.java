@@ -19,11 +19,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.*;
-
 import ghidra.program.model.address.*;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceTimeViewport;
+import ghidra.trace.model.*;
+import ghidra.trace.model.Lifespan.DefaultLifeSet;
+import ghidra.trace.model.Lifespan.MutableLifeSet;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
@@ -54,14 +53,14 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	 * may need the DB's lock, esp., considering user callbacks, then it must <em>first</em> acquire
 	 * the DB lock.
 	 */
-	protected final List<Range<Long>> ordered = new ArrayList<>();
-	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
+	protected final List<Lifespan> ordered = new ArrayList<>();
+	protected final MutableLifeSet spanSet = new DefaultLifeSet();
 	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);
 
 	protected long snap = 0;
 
 	protected DBTraceTimeViewport(Trace trace) {
-		Range<Long> zero = Range.singleton(0L);
+		Lifespan zero = Lifespan.at(0);
 		spanSet.add(zero);
 		ordered.add(zero);
 
@@ -79,12 +78,12 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	@Override
-	public boolean containsAnyUpper(Range<Long> range) {
+	public boolean containsAnyUpper(Lifespan range) {
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				// NB. This should only ever visit the first range intersecting that given
-				for (Range<Long> intersecting : spanSet.subRangeSet(range).asRanges()) {
-					if (range.contains(intersecting.upperEndpoint())) {
+				for (Lifespan intersecting : spanSet.intersecting(range)) {
+					if (range.contains(intersecting.lmax())) {
 						return true;
 					}
 				}
@@ -94,15 +93,15 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	@Override
-	public <T> boolean isCompletelyVisible(AddressRange range, Range<Long> lifespan, T object,
+	public <T> boolean isCompletelyVisible(AddressRange range, Lifespan lifespan, T object,
 			Occlusion<T> occlusion) {
 		if (range == null) {
 			return false;
 		}
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
-				for (Range<Long> rng : ordered) {
-					if (lifespan.contains(rng.upperEndpoint())) {
+				for (Lifespan rng : ordered) {
+					if (lifespan.contains(rng.lmax())) {
 						return true;
 					}
 					if (occlusion.occluded(object, range, rng)) {
@@ -115,7 +114,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	@Override
-	public <T> AddressSet computeVisibleParts(AddressSetView set, Range<Long> lifespan, T object,
+	public <T> AddressSet computeVisibleParts(AddressSetView set, Lifespan lifespan, T object,
 			Occlusion<T> occlusion) {
 		try (LockHold hold = trace.lockRead()) {
 			if (!containsAnyUpper(lifespan)) {
@@ -123,8 +122,8 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 			}
 			AddressSet remains = new AddressSet(set);
 			synchronized (ordered) {
-				for (Range<Long> rng : ordered) {
-					if (lifespan.contains(rng.upperEndpoint())) {
+				for (Lifespan rng : ordered) {
+					if (lifespan.contains(rng.lmax())) {
 						return remains;
 					}
 					occlusion.remove(object, remains, rng);
@@ -141,21 +140,21 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	protected boolean isLower(long lower) {
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
-				Range<Long> range = spanSet.rangeContaining(lower);
+				Lifespan range = spanSet.spanContaining(lower);
 				if (range == null) {
 					return false;
 				}
-				return range.lowerEndpoint().longValue() == lower;
+				return range.lmin() == lower;
 			}
 		}
 	}
 
-	protected static boolean addSnapRange(long lower, long upper, RangeSet<Long> spanSet,
-			List<Range<Long>> ordered) {
+	protected static boolean addSnapRange(long lower, long upper, MutableLifeSet spanSet,
+			List<Lifespan> ordered) {
 		if (spanSet.contains(lower)) {
 			return false;
 		}
-		Range<Long> range = Range.closed(lower, upper);
+		Lifespan range = Lifespan.span(lower, upper);
 		spanSet.add(range);
 		ordered.add(range);
 		return true;
@@ -198,7 +197,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	 * @param curSnap the seed snap
 	 */
 	protected static void collectForkRanges(TraceTimeManager timeManager, long curSnap,
-			RangeSet<Long> spanSet, List<Range<Long>> ordered) {
+			MutableLifeSet spanSet, List<Lifespan> ordered) {
 		while (true) {
 			TraceSnapshot fork = locateMostRecentFork(timeManager, curSnap);
 			long prevSnap = fork == null ? Long.MIN_VALUE : fork.getKey();
@@ -213,8 +212,8 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	protected void refreshSnapRanges() {
-		RangeSet<Long> spanSet = TreeRangeSet.create();
-		List<Range<Long>> ordered = new ArrayList<>();
+		MutableLifeSet spanSet = new DefaultLifeSet();
+		List<Lifespan> ordered = new ArrayList<>();
 		try (LockHold hold = trace.lockRead()) {
 			collectForkRanges(trace.getTimeManager(), snap, spanSet, ordered);
 			synchronized (this.ordered) {
@@ -292,7 +291,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	@Override
-	public List<Range<Long>> getOrderedSpans() {
+	public List<Lifespan> getOrderedSpans() {
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				return List.copyOf(ordered);
@@ -300,7 +299,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 		}
 	}
 
-	public List<Range<Long>> getOrderedSpans(long snap) {
+	public List<Lifespan> getOrderedSpans(long snap) {
 		try (LockHold hold = trace.lockRead()) {
 			setSnap(snap);
 			return getOrderedSpans();
@@ -313,7 +312,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 			synchronized (ordered) {
 				return ordered
 						.stream()
-						.map(Range::upperEndpoint)
+						.map(Lifespan::lmax)
 						.collect(Collectors.toList());
 			}
 		}
@@ -323,10 +322,10 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	public List<Long> getReversedSnaps() {
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
-				return Lists.reverse(ordered)
-						.stream()
-						.map(Range::upperEndpoint)
-						.collect(Collectors.toList());
+				List<Long> reversed =
+					ordered.stream().map(Lifespan::lmax).collect(Collectors.toList());
+				Collections.reverse(reversed);
+				return reversed;
 			}
 		}
 	}
@@ -335,8 +334,8 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	public <T> T getTop(Function<Long, T> func) {
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
-				for (Range<Long> rng : ordered) {
-					T t = func.apply(rng.upperEndpoint());
+				for (Lifespan rng : ordered) {
+					T t = func.apply(rng.lmax());
 					if (t != null) {
 						return t;
 					}
@@ -356,7 +355,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 					return iterFunc.apply(snap);
 				}
 				iters = ordered.stream()
-						.map(rng -> iterFunc.apply(rng.upperEndpoint()))
+						.map(rng -> iterFunc.apply(rng.lmax()))
 						.collect(Collectors.toList());
 			}
 		}
@@ -372,7 +371,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 					return viewFunc.apply(snap);
 				}
 				views = ordered.stream()
-						.map(rng -> viewFunc.apply(rng.upperEndpoint()))
+						.map(rng -> viewFunc.apply(rng.lmax()))
 						.collect(Collectors.toList());
 			}
 		}

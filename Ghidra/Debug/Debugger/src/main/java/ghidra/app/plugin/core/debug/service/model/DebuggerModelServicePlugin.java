@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -40,6 +40,7 @@ import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOpinion;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.*;
 import ghidra.dbg.target.*;
@@ -61,6 +62,7 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
+//@formatter:off
 @PluginInfo(
 	shortDescription = "Debugger models manager service",
 	description = "Manage debug sessions, connections, and trace recording",
@@ -69,7 +71,9 @@ import ghidra.util.datastruct.ListenerSet;
 	status = PluginStatus.HIDDEN,
 	servicesRequired = {},
 	servicesProvided = {
-		DebuggerModelService.class, })
+		DebuggerModelService.class
+	})
+//@formatter:on
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, ApplicationLevelOnlyPlugin {
 
@@ -78,87 +82,37 @@ public class DebuggerModelServicePlugin extends Plugin
 	// Since used for naming, no ':' allowed.
 	public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss-z");
 
-	protected class ListenersForRemovalAndFocus {
-		protected final DebuggerObjectModel model;
-		protected TargetObject root;
-		protected TargetFocusScope focusScope;
+	protected class ForRemovalAndFocusListener extends AnnotatedDebuggerAttributeListener {
+		public ForRemovalAndFocusListener() {
+			super(MethodHandles.lookup());
+		}
 
-		protected DebuggerModelListener forRemoval = new DebuggerModelListener() {
-			@Override
-			public void invalidated(TargetObject object, TargetObject branch, String reason) {
-				synchronized (listenersByModel) {
-					ListenersForRemovalAndFocus listener = listenersByModel.remove(model);
-					if (listener == null) {
-						return;
-					}
-					assert listener.forRemoval == this;
-					dispose();
-				}
-				modelListeners.fire.elementRemoved(model);
+		@Override
+		public void invalidated(TargetObject object, TargetObject branch, String reason) {
+			if (!object.isRoot()) {
+				return;
+			}
+			DebuggerObjectModel model = object.getModel();
+			synchronized (models) {
+				models.remove(model);
+			}
+			model.removeModelListener(this);
+			modelListeners.fire.elementRemoved(model);
+			if (currentModel == model) {
 				activateModel(null);
 			}
-		};
-
-		protected DebuggerModelListener forFocus =
-			new AnnotatedDebuggerAttributeListener(MethodHandles.lookup()) {
-				@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
-				public void focusChanged(TargetObject object, TargetObject focused) {
-					fireFocusEvent(focused);
-					List<DebuggerModelServiceProxyPlugin> copy;
-					synchronized (proxies) {
-						copy = List.copyOf(proxies);
-					}
-					for (DebuggerModelServiceProxyPlugin proxy : copy) {
-						proxy.fireFocusEvent(focused);
-					}
-				}
-			};
-
-		protected ListenersForRemovalAndFocus(DebuggerObjectModel model) {
-			this.model = model;
 		}
 
-		protected CompletableFuture<Void> init() {
-			return model.fetchModelRoot().thenCompose(r -> {
-				synchronized (this) {
-					this.root = r;
-				}
-				boolean isInvalid = false;
-				try {
-					r.addListener(this.forRemoval);
-				}
-				catch (IllegalStateException e) {
-					isInvalid = true;
-				}
-				isInvalid |= !r.isValid();
-				if (isInvalid) {
-					forRemoval.invalidated(root, root, "Who knows?");
-				}
-				CompletableFuture<? extends TargetFocusScope> findSuitable =
-					DebugModelConventions.findSuitable(TargetFocusScope.class, r);
-				return findSuitable;
-			}).thenAccept(fs -> {
-				synchronized (this) {
-					this.focusScope = fs;
-				}
-				if (fs != null) {
-					fs.addListener(this.forFocus);
-				}
-			});
-		}
-
-		public void dispose() {
-			TargetObject savedRoot;
-			TargetFocusScope savedFocusScope;
-			synchronized (this) {
-				savedRoot = root;
-				savedFocusScope = focusScope;
+		@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
+		public void focusChanged(TargetObject object, TargetObject focused) {
+			// I don't think I care which scope
+			fireFocusEvent(focused);
+			List<DebuggerModelServiceProxyPlugin> copy;
+			synchronized (proxies) {
+				copy = List.copyOf(proxies);
 			}
-			if (savedRoot != null) {
-				savedRoot.removeListener(this.forRemoval);
-			}
-			if (savedFocusScope != null) {
-				savedFocusScope.removeListener(this.forFocus);
+			for (DebuggerModelServiceProxyPlugin proxy : copy) {
+				proxy.fireFocusEvent(focused);
 			}
 		}
 	}
@@ -195,8 +149,11 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	protected final Set<DebuggerModelFactory> factories = new HashSet<>();
 	// Keep strong references to my listeners, or they'll get torched
-	protected final Map<DebuggerObjectModel, ListenersForRemovalAndFocus> listenersByModel =
-		new LinkedHashMap<>();
+	//protected final Map<DebuggerObjectModel, ListenersForRemovalAndFocus> listenersByModel =
+	//new LinkedHashMap<>();
+	protected final Set<DebuggerObjectModel> models = new LinkedHashSet<>();
+	protected final ForRemovalAndFocusListener forRemovalAndFocusListener =
+		new ForRemovalAndFocusListener();
 	protected final Map<TargetObject, TraceRecorder> recordersByTarget = new WeakHashMap<>();
 
 	protected final ListenerSet<CollectionChangeListener<DebuggerModelFactory>> factoryListeners =
@@ -230,9 +187,18 @@ public class DebuggerModelServicePlugin extends Plugin
 		createActions();
 	}
 
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		connectDialog.dispose();
+		offerDialog.dispose();
+	}
+
 	protected void createActions() {
 		actionDisconnectAll = DisconnectAllAction.builder(this, this)
 				.menuPath("Debugger", DisconnectAllAction.NAME)
+				.menuIcon(null) // our pattern is to no use icons in the main app window
 				.onAction(this::activatedDisconnectAll)
 				.buildAndInstall(tool);
 	}
@@ -262,8 +228,8 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	@Override
 	public Set<DebuggerObjectModel> getModels() {
-		synchronized (listenersByModel) {
-			return Set.copyOf(listenersByModel.keySet());
+		synchronized (models) {
+			return Set.copyOf(models);
 		}
 	}
 
@@ -286,20 +252,19 @@ public class DebuggerModelServicePlugin extends Plugin
 	@Override
 	public boolean addModel(DebuggerObjectModel model) {
 		Objects.requireNonNull(model);
-		synchronized (listenersByModel) {
-			if (listenersByModel.containsKey(model)) {
+		synchronized (models) {
+			if (!models.add(model)) {
 				return false;
 			}
-			ListenersForRemovalAndFocus listener = new ListenersForRemovalAndFocus(model);
-			listener.init().exceptionally(e -> {
-				Msg.error(this, "Could not add model " + model, e);
-				synchronized (listenersByModel) {
-					listenersByModel.remove(model);
-					listener.dispose();
-				}
-				return null;
-			});
-			listenersByModel.put(model, listener);
+			model.addModelListener(forRemovalAndFocusListener);
+			TargetObject root = model.getModelRoot();
+			// root == null, probably means we're between model construction
+			// and root construction, but the model was not closed, so no need
+			// to invalidate
+			if (root != null && !root.isValid()) {
+				forRemovalAndFocusListener.invalidated(root, root,
+					"Invalidated before or during add to service");
+			}
 		}
 		modelListeners.fire.elementAdded(model);
 		return true;
@@ -307,14 +272,12 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	@Override
 	public boolean removeModel(DebuggerObjectModel model) {
-		ListenersForRemovalAndFocus listener;
-		synchronized (listenersByModel) {
-			listener = listenersByModel.remove(model);
-			if (listener == null) {
+		model.removeModelListener(forRemovalAndFocusListener);
+		synchronized (models) {
+			if (!models.remove(model)) {
 				return false;
 			}
 		}
-		listener.dispose();
 		modelListeners.fire.elementRemoved(model);
 		return true;
 	}
@@ -508,7 +471,8 @@ public class DebuggerModelServicePlugin extends Plugin
 		if (traceManager != null) {
 			Trace trace = recorder.getTrace();
 			traceManager.openTrace(trace);
-			traceManager.activateTrace(trace);
+			traceManager.activate(traceManager.resolveTrace(trace),
+				ActivationCause.ACTIVATE_DEFAULT);
 		}
 		return recorder;
 	}
@@ -523,7 +487,6 @@ public class DebuggerModelServicePlugin extends Plugin
 			throws IOException {
 		String traceName = nameTrace(target);
 		Trace trace = new DBTrace(traceName, mapper.getTraceCompilerSpec(), this);
-		//DefaultTraceRecorder recorder = new DefaultTraceRecorder(this, trace, target, mapper);
 		TraceRecorder recorder = mapper.startRecording(this, trace);
 		trace.release(this); // The recorder now owns it (on behalf of the service)
 		return recorder;
@@ -689,14 +652,24 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	protected CompletableFuture<DebuggerObjectModel> doShowConnectDialog(PluginTool tool,
-			DebuggerModelFactory factory) {
-		CompletableFuture<DebuggerObjectModel> future = connectDialog.reset(factory);
+			DebuggerModelFactory factory, Program program) {
+		CompletableFuture<DebuggerObjectModel> future = connectDialog.reset(factory, program);
 		tool.showDialog(connectDialog);
 		return future;
 	}
 
 	@Override
+	public CompletableFuture<DebuggerObjectModel> showConnectDialog() {
+		return doShowConnectDialog(tool, null, null);
+	}
+
+	@Override
+	public CompletableFuture<DebuggerObjectModel> showConnectDialog(Program program) {
+		return doShowConnectDialog(tool, null, program);
+	}
+
+	@Override
 	public CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory) {
-		return doShowConnectDialog(tool, factory);
+		return doShowConnectDialog(tool, factory, null);
 	}
 }

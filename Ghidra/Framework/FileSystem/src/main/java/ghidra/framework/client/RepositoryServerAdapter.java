@@ -52,6 +52,9 @@ public class RepositoryServerAdapter {
 	// Keeps track of whether the connection attempt was cancelled by the user
 	private boolean connectCancelled = false;
 
+	// Keep track of last connect error
+	private Throwable lastConnectError;
+
 	private WeakSet<RemoteAdapterListener> listenerList =
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
@@ -106,6 +109,14 @@ public class RepositoryServerAdapter {
 	}
 
 	/**
+	 * Returns the last error associated with a failed connection attempt.
+	 * @return last connect error or null
+	 */
+	public Throwable getLastConnectError() {
+		return lastConnectError;
+	}
+
+	/**
 	 * Notify listeners of a connection state change.
 	 */
 	private void fireStateChanged() {
@@ -135,7 +146,7 @@ public class RepositoryServerAdapter {
 			}
 		}
 
-		Throwable cause = null;
+		lastConnectError = null;
 		try {
 			try {
 				serverHandle = ClientUtil.connect(server);
@@ -162,22 +173,22 @@ public class RepositoryServerAdapter {
 		catch (LoginException e) {
 			Msg.showError(this, null, "Server Error",
 				"Server access denied (" + serverInfoStr + ").");
-			cause = e;
+			lastConnectError = e;
 		}
 		catch (GeneralSecurityException e) {
 			Msg.showError(this, null, "Server Error",
 				"Server access denied (" + serverInfoStr + "): " + e.getMessage());
-			cause = e;
+			lastConnectError = e;
 		}
 		catch (SocketTimeoutException | java.net.ConnectException | java.rmi.ConnectException e) {
 			Msg.showError(this, null, "Server Error",
 				"Connection to server failed (" + server + ").");
-			cause = e;
+			lastConnectError = e;
 		}
 		catch (java.net.UnknownHostException | java.rmi.UnknownHostException e) {
 			Msg.showError(this, null, "Server Error",
 				"Server Not Found (" + server.getServerName() + ").");
-			cause = e;
+			lastConnectError = e;
 		}
 		catch (RemoteException e) {
 			String msg = e.getMessage();
@@ -185,7 +196,7 @@ public class RepositoryServerAdapter {
 			while ((t = t.getCause()) != null) {
 				String err = t.getMessage();
 				msg = err != null ? err : t.toString();
-				cause = t;
+				lastConnectError = t;
 			}
 			Msg.showError(this, null, "Server Error",
 				"An error occurred on the server (" + serverInfoStr + ").\n" + msg, e);
@@ -200,7 +211,7 @@ public class RepositoryServerAdapter {
 				"An error occurred while connecting to the server (" + serverInfoStr + ").\n" + msg,
 				e);
 		}
-		throw new NotConnectedException("Not connected to repository server", cause);
+		throw new NotConnectedException("Not connected to repository server", lastConnectError);
 	}
 
 	private void checkPasswordExpiration() {

@@ -19,8 +19,7 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
@@ -30,11 +29,11 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator {
@@ -60,10 +59,10 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testCaptureDebuggerListingPlugin() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			tb.trace.getMemoryManager()
-					.addRegion(".text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+					.addRegion(".text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
 			TraceSymbolManager symbolManager = tb.trace.getSymbolManager();
@@ -124,10 +123,10 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testCaptureDebuggerGoToDialog() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getTimeManager().createSnapshot("First").getKey();
 			tb.trace.getMemoryManager()
-					.addRegion("bash:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+					.addRegion("bash:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 
 			traceManager.openTrace(tb.trace);
@@ -136,7 +135,7 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 
 		performAction(listingProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog = waitForDialogComponent(DebuggerGoToDialog.class);
-		dialog.setExpression("RAX");
+		dialog.setOffset("RAX");
 
 		captureDialog(dialog);
 	}

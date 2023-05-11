@@ -57,6 +57,12 @@ public class PairedTracePcodeExecutorStatePiece<A, L, R>
 	}
 
 	@Override
+	public PairedTracePcodeExecutorStatePiece<A, L, R> fork() {
+		return new PairedTracePcodeExecutorStatePiece<>(left.fork(), right.fork(),
+			getAddressArithmetic(), getArithmetic());
+	}
+
+	@Override
 	public void writeDown(PcodeTraceDataAccess into) {
 		left.writeDown(into);
 		right.writeDown(into);

@@ -19,8 +19,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
@@ -32,130 +30,129 @@ import ghidra.util.database.DirectedIterator.Direction;
  * {@code map.keySet().subSet(...)}.
  */
 public class DBCachedObjectStoreKeySubSet extends DBCachedObjectStoreKeySet {
-	protected final Range<Long> keyRange;
+	protected final KeySpan keySpan;
 
 	public DBCachedObjectStoreKeySubSet(DBCachedObjectStore<?> store, ErrorHandler errHandler,
-			ReadWriteLock lock, Direction direction, Range<Long> keyRange) {
+			ReadWriteLock lock, Direction direction, KeySpan keySpan) {
 		super(store, errHandler, lock, direction);
-		this.keyRange = keyRange;
+		this.keySpan = keySpan;
 	}
 
 	@Override
 	public Long first() {
-		return store.safe(lock.readLock(), () -> store.keys.first(direction, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.first(direction, keySpan));
 	}
 
 	@Override
 	public Long last() {
-		return store.safe(lock.readLock(), () -> store.keys.last(direction, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.last(direction, keySpan));
 	}
 
 	@Override
 	public int size() {
-		return store.getKeyCount(keyRange);
+		return store.getKeyCount(keySpan);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return !store.getKeysExist(keyRange);
+		return !store.getKeysExist(keySpan);
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		return store.safe(lock.readLock(), () -> store.keys.contains(o, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.contains(o, keySpan));
 	}
 
 	@Override
 	public Object[] toArray() {
-		return store.keys.toArray(direction, keyRange);
+		return store.keys.toArray(direction, keySpan);
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
-		return store.keys.toArray(direction, keyRange, a, store.getKeyCount(keyRange));
+		return store.keys.toArray(direction, keySpan, a, store.getKeyCount(keySpan));
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		return store.safe(lock.writeLock(), () -> store.keys.remove(o, keyRange));
+		return store.safe(lock.writeLock(), () -> store.keys.remove(o, keySpan));
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		return store.safe(lock.readLock(), () -> store.keys.containsAll(c, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.containsAll(c, keySpan));
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		return store.keys.retain(c, keyRange);
+		return store.keys.retain(c, keySpan);
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		return store.safe(lock.writeLock(), () -> store.keys.removeAll(c, keyRange));
+		return store.safe(lock.writeLock(), () -> store.keys.removeAll(c, keySpan));
 	}
 
 	@Override
 	public void clear() {
-		store.deleteKeys(keyRange);
+		store.deleteKeys(keySpan);
 	}
 
 	@Override
 	public Long lower(Long e) {
-		return store.safe(lock.readLock(), () -> store.keys.lower(direction, e, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.lower(direction, e, keySpan));
 	}
 
 	@Override
 	public Long floor(Long e) {
-		return store.safe(lock.readLock(), () -> store.keys.floor(direction, e, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.floor(direction, e, keySpan));
 	}
 
 	@Override
 	public Long ceiling(Long e) {
-		return store.safe(lock.readLock(), () -> store.keys.ceiling(direction, e, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.ceiling(direction, e, keySpan));
 	}
 
 	@Override
 	public Long higher(Long e) {
-		return store.safe(lock.readLock(), () -> store.keys.higher(direction, e, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.higher(direction, e, keySpan));
 	}
 
 	@Override
 	public Iterator<Long> iterator() {
-		return store.keys.iterator(direction, keyRange);
+		return store.keys.iterator(direction, keySpan);
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet descendingSet() {
 		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock,
-			Direction.reverse(direction), keyRange);
+			Direction.reverse(direction), keySpan);
 	}
 
 	@Override
 	public Iterator<Long> descendingIterator() {
-		return store.keys.iterator(Direction.reverse(direction), keyRange);
+		return store.keys.iterator(Direction.reverse(direction), keySpan);
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet subSet(Long fromElement, boolean fromInclusive,
 			Long toElement, boolean toInclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRange(fromElement, fromInclusive, toElement,
-			toInclusive, direction);
+		KeySpan span = KeySpan.sub(fromElement, fromInclusive, toElement, toInclusive, direction);
 		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction,
-			keyRange.intersection(rng));
+			keySpan.intersect(span));
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet headSet(Long toElement, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeHead(toElement, inclusive, direction);
+		KeySpan span = KeySpan.head(toElement, inclusive, direction);
 		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction,
-			keyRange.intersection(rng));
+			keySpan.intersect(span));
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet tailSet(Long fromElement, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeTail(fromElement, inclusive, direction);
+		KeySpan span = KeySpan.tail(fromElement, inclusive, direction);
 		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction,
-			keyRange.intersection(rng));
+			keySpan.intersect(span));
 	}
 }

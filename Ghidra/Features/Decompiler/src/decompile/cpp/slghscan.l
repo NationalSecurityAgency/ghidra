@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+%option prefix="sleigh"
 %{
-#include "slgh_compile.hh"
-#include "slghparse.hh"
-#define yywrap() 1
+#define sleighwrap() 1
 #define YY_SKIP_YYWRAP
 
 /* If we are building don't include unistd.h */
@@ -26,6 +25,12 @@
 #define YY_NO_UNISTD_H
 static int isatty (int fildes) { return 0; }
 #endif
+
+#include "slgh_compile.hh"
+
+namespace ghidra {
+
+#include "slghparse.hh"
 
 struct FileStreamState {
   YY_BUFFER_STATE lastbuffer;	// Last lex buffer corresponding to the stream
@@ -227,7 +232,7 @@ void expand_preprocmacros(string &str)
 int4 preprocess(int4 cur_state,int4 blank_state)
 
 {
-  string str(yytext);
+  string str(sleightext);
   string::size_type pos = str.find('#');
   if (pos != string::npos)
     str.erase(pos);
@@ -250,11 +255,11 @@ int4 preprocess(int4 cur_state,int4 blank_state)
       expand_preprocmacros(fname);
       slgh->parseFromNewFile(fname);
       fname = slgh->grabCurrentFilePath();
-      yyin = fopen(fname.c_str(),"r");
-      if (yyin == (FILE *)0)
+      sleighin = fopen(fname.c_str(),"r");
+      if (sleighin == (FILE *)0)
         preproc_error("Could not open included file "+fname);
-      filebuffers.back().file = yyin;
-      yy_switch_to_buffer( yy_create_buffer(yyin, YY_BUF_SIZE) );
+      filebuffers.back().file = sleighin;
+      sleigh_switch_to_buffer( sleigh_create_buffer(sleighin, YY_BUF_SIZE) );
       check_to_endofline(s);
     }
   }
@@ -371,81 +376,81 @@ void preproc_macroexpand(void)
   filebuffers.push_back(FileStreamState());
   filebuffers.back().lastbuffer = YY_CURRENT_BUFFER;
   filebuffers.back().file = (FILE *)0;
-  string macro(yytext);
+  string macro(sleightext);
   macro.erase(0,2);
   macro.erase(macro.size()-1,1);
   string value;
   if (!slgh->getPreprocValue(macro,value))
     preproc_error("Unknown preprocessing macro "+macro);
-  yy_switch_to_buffer( yy_scan_string( value.c_str() ) );
+  sleigh_switch_to_buffer( sleigh_scan_string( value.c_str() ) );
   slgh->parsePreprocMacro();
 }
 
 int4 find_symbol(void) {
-  string * newstring = new string(yytext);
+  string * newstring = new string(sleightext);
   SleighSymbol *sym = slgh->findSymbol(*newstring);
   if (sym == (SleighSymbol *)0) {
-    yylval.str = newstring;
+    sleighlval.str = newstring;
     return STRING;
   }
   delete newstring;
   switch(sym->getType()) {
   case SleighSymbol::section_symbol:
-    yylval.sectionsym = (SectionSymbol *)sym;
+    sleighlval.sectionsym = (SectionSymbol *)sym;
     return SECTIONSYM;
   case SleighSymbol::space_symbol:
-    yylval.spacesym = (SpaceSymbol *)sym;
+    sleighlval.spacesym = (SpaceSymbol *)sym;
     return SPACESYM;
   case SleighSymbol::token_symbol:
-    yylval.tokensym = (TokenSymbol *)sym;
+    sleighlval.tokensym = (TokenSymbol *)sym;
     return TOKENSYM;
   case SleighSymbol::userop_symbol:
-    yylval.useropsym = (UserOpSymbol *)sym;
+    sleighlval.useropsym = (UserOpSymbol *)sym;
     return USEROPSYM;
   case SleighSymbol::value_symbol:
-    yylval.valuesym = (ValueSymbol *)sym;
+    sleighlval.valuesym = (ValueSymbol *)sym;
     return VALUESYM;
   case SleighSymbol::valuemap_symbol:
-    yylval.valuemapsym = (ValueMapSymbol *)sym;
+    sleighlval.valuemapsym = (ValueMapSymbol *)sym;
     return VALUEMAPSYM;
   case SleighSymbol::name_symbol:
-    yylval.namesym = (NameSymbol *)sym;
+    sleighlval.namesym = (NameSymbol *)sym;
     return NAMESYM;
   case SleighSymbol::varnode_symbol:
-    yylval.varsym = (VarnodeSymbol *)sym;
+    sleighlval.varsym = (VarnodeSymbol *)sym;
     return VARSYM;
   case SleighSymbol::bitrange_symbol:
-    yylval.bitsym = (BitrangeSymbol *)sym;
+    sleighlval.bitsym = (BitrangeSymbol *)sym;
     return BITSYM;
   case SleighSymbol::varnodelist_symbol:
-    yylval.varlistsym = (VarnodeListSymbol *)sym;
+    sleighlval.varlistsym = (VarnodeListSymbol *)sym;
     return VARLISTSYM;
   case SleighSymbol::operand_symbol:
-    yylval.operandsym = (OperandSymbol *)sym;
+    sleighlval.operandsym = (OperandSymbol *)sym;
     return OPERANDSYM;
   case SleighSymbol::start_symbol:
-    yylval.startsym = (StartSymbol *)sym;
+    sleighlval.startsym = (StartSymbol *)sym;
     return STARTSYM;
   case SleighSymbol::end_symbol:
-    yylval.endsym = (EndSymbol *)sym;
+    sleighlval.endsym = (EndSymbol *)sym;
     return ENDSYM;
   case SleighSymbol::next2_symbol:
-    yylval.next2sym = (Next2Symbol *)sym;
+    sleighlval.next2sym = (Next2Symbol *)sym;
     return NEXT2SYM;
   case SleighSymbol::subtable_symbol:
-    yylval.subtablesym = (SubtableSymbol *)sym;
+    sleighlval.subtablesym = (SubtableSymbol *)sym;
     return SUBTABLESYM;
   case SleighSymbol::macro_symbol:
-    yylval.macrosym = (MacroSymbol *)sym;
+    sleighlval.macrosym = (MacroSymbol *)sym;
     return MACROSYM;
   case SleighSymbol::label_symbol:
-    yylval.labelsym = (LabelSymbol *)sym;
+    sleighlval.labelsym = (LabelSymbol *)sym;
     return LABELSYM;
   case SleighSymbol::epsilon_symbol:
-    yylval.specsym = (SpecificSymbol *)sym;
+    sleighlval.specsym = (SpecificSymbol *)sym;
     return SPECSYM;
   case SleighSymbol::context_symbol:
-    yylval.contextsym = (ContextSymbol *)sym;
+    sleighlval.contextsym = (ContextSymbol *)sym;
     return CONTEXTSYM;
   case SleighSymbol::dummy_symbol:
     break;
@@ -453,7 +458,7 @@ int4 find_symbol(void) {
   return -1;   // Should never reach here
 }
 
-int4 scan_number(char *numtext,YYSTYPE *lval,bool signednum)
+int4 scan_number(char *numtext,SLEIGHSTYPE *lval,bool signednum)
 
 {
   uintb val;
@@ -482,6 +487,10 @@ int4 scan_number(char *numtext,YYSTYPE *lval,bool signednum)
   return INTEGER;
 }
 
+} // End namespace ghidra
+
+using namespace ghidra;
+
 %}
 
 %x defblock
@@ -494,9 +503,9 @@ int4 scan_number(char *numtext,YYSTYPE *lval,bool signednum)
 
 ^@[^\n]*\n?  { slgh->nextLine(); BEGIN( preprocess(INITIAL,preproc) ); }
 \$\([a-zA-Z0-9_.][a-zA-Z0-9_.]*\)  { preproc_macroexpand(); }
-[(),\-] { yylval.ch = yytext[0]; return yytext[0]; }
-\:    { BEGIN(print); slgh->calcContextLayout(); yylval.ch = yytext[0]; return yytext[0]; }
-\{    { BEGIN(sem); yylval.ch = yytext[0]; return yytext[0]; }
+[(),\-] { sleighlval.ch = sleightext[0]; return sleightext[0]; }
+\:    { BEGIN(print); slgh->calcContextLayout(); sleighlval.ch = sleightext[0]; return sleightext[0]; }
+\{    { BEGIN(sem); sleighlval.ch = sleightext[0]; return sleightext[0]; }
 #.*
 [\r\ \t\v]+
 \n             { slgh->nextLine(); }
@@ -505,21 +514,21 @@ define { BEGIN(defblock); return DEFINE_KEY; }
 attach { BEGIN(defblock); slgh->calcContextLayout(); return ATTACH_KEY; }
 with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH_KEY; }
 [a-zA-Z_.][a-zA-Z0-9_.]* {  return find_symbol();  }
-.      { return yytext[0]; }
+.      { return sleightext[0]; }
 
 <macroblock>^@[^\n]*\n?  { slgh->nextLine(); BEGIN( preprocess(macroblock,preproc) ); }
 <macroblock>\$\([a-zA-Z0-9_.][a-zA-Z0-9_.]*\)  { preproc_macroexpand(); }
-<macroblock>[(),]  { yylval.ch = yytext[0]; return yytext[0]; }
-<macroblock>\{     { BEGIN(sem); return yytext[0]; }
-<macroblock>[a-zA-Z_.][a-zA-Z0-9_.]*   {  yylval.str = new string(yytext); return STRING;  }
+<macroblock>[(),]  { sleighlval.ch = sleightext[0]; return sleightext[0]; }
+<macroblock>\{     { BEGIN(sem); return sleightext[0]; }
+<macroblock>[a-zA-Z_.][a-zA-Z0-9_.]*   {  sleighlval.str = new string(sleightext); return STRING;  }
 <macroblock>[\r\ \t\v]+
 <macroblock>\n     { slgh->nextLine(); }
-<macroblock>.      { return yytext[0]; }
+<macroblock>.      { return sleightext[0]; }
 
 <defblock>^@[^\n]*\n?  { slgh->nextLine(); BEGIN( preprocess(defblock,preproc) ); }
 <defblock>\$\([a-zA-Z0-9_.][a-zA-Z0-9_.]*\)  { preproc_macroexpand(); }
-<defblock>[(),=:\[\]]  { yylval.ch = yytext[0]; return yytext[0]; }
-<defblock>\;   { BEGIN(INITIAL); yylval.ch = yytext[0]; return yytext[0]; }
+<defblock>[(),=:\[\]]  { sleighlval.ch = sleightext[0]; return sleightext[0]; }
+<defblock>\;   { BEGIN(INITIAL); sleighlval.ch = sleightext[0]; return sleightext[0]; }
 <defblock>space     { return SPACE_KEY; }
 <defblock>type      { return TYPE_KEY; }
 <defblock>ram_space { return RAM_KEY; }
@@ -545,29 +554,29 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <defblock>pcodeop   { return PCODEOP_KEY; }
 <defblock>#.*
 <defblock>[a-zA-Z_.][a-zA-Z0-9_.]* {  return find_symbol();  }
-<defblock>[0-9]|[1-9][0-9]+	{ return scan_number(yytext,&yylval,false); }
-<defblock>0x[0-9a-fA-F]+	{ return scan_number(yytext,&yylval,false); }
-<defblock>0b[01]+		{ return scan_number(yytext,&yylval,false); }
-<defblock>\"([^\"[:cntrl:]]|\"\")*\"	{ yylval.str = new string(yytext+1,strlen(yytext)-2); return STRING; }
+<defblock>[0-9]|[1-9][0-9]+	{ return scan_number(sleightext,&sleighlval,false); }
+<defblock>0x[0-9a-fA-F]+	{ return scan_number(sleightext,&sleighlval,false); }
+<defblock>0b[01]+		{ return scan_number(sleightext,&sleighlval,false); }
+<defblock>\"([^\"[:cntrl:]]|\"\")*\"	{ sleighlval.str = new string(sleightext+1,strlen(sleightext)-2); return STRING; }
 <defblock>[\r\ \t\v]+
 <defblock>\n        { slgh->nextLine(); }
-<defblock>.         { return yytext[0]; }
+<defblock>.         { return sleightext[0]; }
 
 
 <print>^@[^\n]*\n?  { slgh->nextLine(); BEGIN( preprocess(print,preproc) ); }
 <print>\$\([a-zA-Z0-9_.][a-zA-Z0-9_.]*\)  { preproc_macroexpand(); }
-<print>[~!@#$%&*()\-=+\[\]{}|;:<>?,/0-9] { yylval.ch = yytext[0]; return CHAR; }
-<print>\^           { yylval.ch = '^'; return '^'; }
+<print>[~!@#$%&*()\-=+\[\]{}|;:<>?,/0-9] { sleighlval.ch = sleightext[0]; return CHAR; }
+<print>\^           { sleighlval.ch = '^'; return '^'; }
 <print>is           { BEGIN(pattern); actionon=0; return IS_KEY; }
-<print>[a-zA-Z_.][a-zA-Z0-9_.]*   {  yylval.str = new string(yytext); return SYMBOLSTRING;  }
-<print>\"([^\"[:cntrl:]]|\"\")*\"       { yylval.str = new string(yytext+1,strlen(yytext)-2); return STRING; }
-<print>[\r\ \t\v]+  { yylval.ch = ' '; return ' '; }
+<print>[a-zA-Z_.][a-zA-Z0-9_.]*   {  sleighlval.str = new string(sleightext); return SYMBOLSTRING;  }
+<print>\"([^\"[:cntrl:]]|\"\")*\"       { sleighlval.str = new string(sleightext+1,strlen(sleightext)-2); return STRING; }
+<print>[\r\ \t\v]+  { sleighlval.ch = ' '; return ' '; }
 <print>\n           { slgh->nextLine(); return ' '; }
-<print>.            { return yytext[0]; }
+<print>.            { return sleightext[0]; }
 
 <pattern>^@[^\n]*\n?  { slgh->nextLine(); BEGIN( preprocess(pattern,preproc) ); }
 <pattern>\$\([a-zA-Z0-9_.][a-zA-Z0-9_.]*\)  { preproc_macroexpand(); }
-<pattern>\{         { BEGIN((withsection==1) ? INITIAL:sem); withsection=0; yylval.ch = yytext[0]; return yytext[0]; }
+<pattern>\{         { BEGIN((withsection==1) ? INITIAL:sem); withsection=0; sleighlval.ch = sleightext[0]; return sleightext[0]; }
 <pattern>unimpl     { BEGIN(INITIAL); return OP_UNIMPL; }
 <pattern>globalset  { return GLOBALSET_KEY; }
 <pattern>\>\>       { return OP_RIGHT; }
@@ -579,24 +588,24 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <pattern>\$or       { return OP_OR; }
 <pattern>\$xor      { return OP_XOR; }
 <pattern>\.\.\.     { return ELLIPSIS_KEY; }
-<pattern>\[         { actionon = 1; yylval.ch = yytext[0]; return yytext[0]; }
-<pattern>\]         { actionon = 0; yylval.ch = yytext[0]; return yytext[0]; }
-<pattern>\&         { yylval.ch = yytext[0];  return (actionon==0) ? yytext[0] : OP_AND; }
-<pattern>\|         { yylval.ch = yytext[0];  return (actionon==0) ? yytext[0] : OP_OR; }
+<pattern>\[         { actionon = 1; sleighlval.ch = sleightext[0]; return sleightext[0]; }
+<pattern>\]         { actionon = 0; sleighlval.ch = sleightext[0]; return sleightext[0]; }
+<pattern>\&         { sleighlval.ch = sleightext[0];  return (actionon==0) ? sleightext[0] : OP_AND; }
+<pattern>\|         { sleighlval.ch = sleightext[0];  return (actionon==0) ? sleightext[0] : OP_OR; }
 <pattern>\^         { return OP_XOR; }
-<pattern>[=(),:;+\-*/~<>]   { yylval.ch = yytext[0]; return yytext[0]; }
+<pattern>[=(),:;+\-*/~<>]   { sleighlval.ch = sleightext[0]; return sleightext[0]; }
 <pattern>#.*
 <pattern>[a-zA-Z_.][a-zA-Z0-9_.]*   { return find_symbol();   }
-<pattern>[0-9]|[1-9][0-9]+ { return scan_number(yytext,&yylval,true); }
-<pattern>0x[0-9a-fA-F]+  { return scan_number(yytext,&yylval,true); }
-<pattern>0b[01]+         { return scan_number(yytext,&yylval,true); }
+<pattern>[0-9]|[1-9][0-9]+ { return scan_number(sleightext,&sleighlval,true); }
+<pattern>0x[0-9a-fA-F]+  { return scan_number(sleightext,&sleighlval,true); }
+<pattern>0b[01]+         { return scan_number(sleightext,&sleighlval,true); }
 <pattern>[\r\ \t\v]+
 <pattern>\n        { slgh->nextLine(); }
-<pattern>.         { return yytext[0]; }
+<pattern>.         { return sleightext[0]; }
 
 <sem>^@[^\n]*\n?   { slgh->nextLine(); BEGIN( preprocess(sem,preproc) ); }
 <sem>\$\([a-zA-Z0-9_.][a-zA-Z0-9_.]*\)  { preproc_macroexpand(); }
-<sem>\}            { BEGIN(INITIAL); yylval.ch = yytext[0]; return yytext[0]; }
+<sem>\}            { BEGIN(INITIAL); sleighlval.ch = sleightext[0]; return sleightext[0]; }
 <sem>\|\|          { return OP_BOOL_OR; }
 <sem>\&\&          { return OP_BOOL_AND; }
 <sem>\^\^          { return OP_BOOL_XOR; }
@@ -641,6 +650,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <sem>cpool         { return OP_CPOOLREF; }
 <sem>newobject     { return OP_NEW; }
 <sem>popcount      { return OP_POPCOUNT; }
+<sem>lzcount       { return OP_LZCOUNT; }
 <sem>if            { return IF_KEY; }
 <sem>goto          { return GOTO_KEY; }
 <sem>call          { return CALL_KEY; }
@@ -650,23 +660,23 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <sem>export        { return EXPORT_KEY; }
 <sem>build         { return BUILD_KEY; }
 <sem>local         { return LOCAL_KEY; }
-<sem>[=(),:\[\];!&|^+\-*/%~<>]   { yylval.ch = yytext[0]; return yytext[0]; }
+<sem>[=(),:\[\];!&|^+\-*/%~<>]   { sleighlval.ch = sleightext[0]; return sleightext[0]; }
 <sem>#.*
 <sem>[a-zA-Z_.][a-zA-Z0-9_.]*   { return find_symbol();   }
-<sem>[0-9]|[1-9][0-9]+ { return scan_number(yytext,&yylval,false); }
-<sem>0x[0-9a-fA-F]+  { return scan_number(yytext,&yylval,false); }
-<sem>0b[01]+         { return scan_number(yytext,&yylval,false); }
+<sem>[0-9]|[1-9][0-9]+ { return scan_number(sleightext,&sleighlval,false); }
+<sem>0x[0-9a-fA-F]+  { return scan_number(sleightext,&sleighlval,false); }
+<sem>0b[01]+         { return scan_number(sleightext,&sleighlval,false); }
 <sem>[\r\ \t\v]+
 <sem>\n         { slgh->nextLine(); }
-<sem>.          { return yytext[0]; }
+<sem>.          { return sleightext[0]; }
 
 <preproc>^@.*\n?  { slgh->nextLine(); BEGIN( preprocess(preproc,preproc) ); }
 <preproc>^.*\n    { slgh->nextLine(); }
 
-<<EOF>> { yy_delete_buffer( YY_CURRENT_BUFFER );
+<<EOF>> { sleigh_delete_buffer( YY_CURRENT_BUFFER );
           if (filebuffers.empty())
             yyterminate(); 
-          yy_switch_to_buffer( filebuffers.back().lastbuffer );
+          sleigh_switch_to_buffer( filebuffers.back().lastbuffer );
 	  FILE *curfile = filebuffers.back().file;
 	  if (curfile != (FILE *)0)
 	    fclose(curfile);

@@ -36,7 +36,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	private static final String TEMP_NAME_PREFIX = "sourcebundle";
 
 	// the version of Guava Ghidra is currently using.
-	private static final int GUAVA_MAJOR_VERSION = 19;
+	private static final int GUAVA_MAJOR_VERSION = 31;
 
 	private BundleHost bundleHost;
 	private CapturingBundleHostListener capturingBundleHostListener;

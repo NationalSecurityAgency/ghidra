@@ -21,8 +21,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
 
 /**
- * A C code token representing a structure field.
- *
+ * A source code token representing a structure field.
  */
 public class ClangFieldToken extends ClangToken {
 	private DataType datatype;			// Structure from which this field is a part

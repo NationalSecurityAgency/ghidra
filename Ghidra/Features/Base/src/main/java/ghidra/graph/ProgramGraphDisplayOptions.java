@@ -21,7 +21,6 @@ import static ghidra.service.graph.VertexShape.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.GraphDisplayOptions;
 import ghidra.service.graph.VertexShape;
-import ghidra.util.WebColors;
 
 /** 
  * {@link GraphDisplayOptions} for {@link ProgramGraphType}
@@ -40,59 +39,64 @@ public class ProgramGraphDisplayOptions extends GraphDisplayOptions {
 	@Override
 	protected void initializeDefaults() {
 		setDefaultVertexShape(ELLIPSE);
-		setDefaultVertexColor(WebColors.RED);
-		setDefaultEdgeColor(WebColors.RED);
+		setDefaultVertexColor("color.bg.plugin.programgraph.vertex.default");
+		setDefaultEdgeColor("color.bg.plugin.programgraph.edge.default");
+		setVertexSelectionColor("color.bg.plugin.programgraph.vertex.selection");
+		setEdgeSelectionColor("color.bg.plugin.programgraph.edge.selection");
 		setFavoredEdgeType(FALL_THROUGH);
 
-		configureVertexType(BODY, RECTANGLE, WebColors.BLUE);
-		configureVertexType(ENTRY, TRIANGLE_DOWN, WebColors.DARK_ORANGE);
-		configureVertexType(EXIT, TRIANGLE_UP, WebColors.DARK_MAGENTA);
-		configureVertexType(SWITCH, DIAMOND, WebColors.DARK_CYAN);
-		configureVertexType(EXTERNAL, RECTANGLE, WebColors.DARK_GREEN);
-		configureVertexType(BAD, ELLIPSE, WebColors.RED);
-		configureVertexType(DATA, ELLIPSE, WebColors.PINK);
-		configureVertexType(ENTRY_NEXUS, ELLIPSE, WebColors.WHEAT);
-		configureVertexType(INSTRUCTION, VertexShape.HEXAGON, WebColors.BLUE);
-		configureVertexType(STACK, RECTANGLE, WebColors.GREEN);
+		//@formatter:off
+		configureVertexType(BODY, RECTANGLE, "color.bg.plugin.programgraph.vertex.body");
+		configureVertexType(ENTRY, TRIANGLE_DOWN, "color.bg.plugin.programgraph.vertex.entry");
+		configureVertexType(EXIT, TRIANGLE_UP, "color.bg.plugin.programgraph.vertex.exit");
+		configureVertexType(SWITCH, DIAMOND, "color.bg.plugin.programgraph.vertex.switch");
+		configureVertexType(EXTERNAL, RECTANGLE, "color.bg.plugin.programgraph.vertex.external");
+		configureVertexType(BAD, ELLIPSE, "color.bg.plugin.programgraph.vertex.bad");
+		configureVertexType(DATA, ELLIPSE, "color.bg.plugin.programgraph.vertex.data");
+		configureVertexType(ENTRY_NEXUS, ELLIPSE, "color.bg.plugin.programgraph.vertex.entry.nexus");
+		configureVertexType(INSTRUCTION, VertexShape.HEXAGON, "color.bg.plugin.programgraph.vertex.instruction");
+		configureVertexType(STACK, RECTANGLE, "color.bg.plugin.programgraph.vertex.stack");
 
-		configureEdgeType(ENTRY_EDGE, WebColors.GRAY);
-		configureEdgeType(FALL_THROUGH, WebColors.BLUE);
-		configureEdgeType(UNCONDITIONAL_JUMP, WebColors.DARK_GREEN);
-		configureEdgeType(UNCONDITIONAL_CALL, WebColors.DARK_ORANGE);
-		configureEdgeType(TERMINATOR, WebColors.PURPLE);
-		configureEdgeType(JUMP_TERMINATOR, WebColors.PURPLE);
-		configureEdgeType(INDIRECTION, WebColors.PINK);
+		configureEdgeType(ENTRY_EDGE, "color.bg.plugin.programgraph.edge.entry");
+		configureEdgeType(FALL_THROUGH, "color.bg.plugin.programgraph.edge.fall.through");
+		configureEdgeType(UNCONDITIONAL_JUMP, "color.bg.plugin.programgraph.edge.jump.unconditional");
+		configureEdgeType(UNCONDITIONAL_CALL, "color.bg.plugin.programgraph.edge.call.unconditional");
+		configureEdgeType(TERMINATOR, "color.bg.plugin.programgraph.edge.terminator");
+		configureEdgeType(JUMP_TERMINATOR, "color.bg.plugin.programgraph.edge.jump.terminator");
+		configureEdgeType(INDIRECTION, "color.bg.plugin.programgraph.edge.indirection");
 
-		configureEdgeType(CONDITIONAL_JUMP, WebColors.DARK_GOLDENROD);
-		configureEdgeType(CONDITIONAL_CALL, WebColors.DARK_ORANGE);
-		configureEdgeType(CONDITIONAL_TERMINATOR, WebColors.PURPLE);
-		configureEdgeType(CONDITIONAL_CALL_TERMINATOR, WebColors.PURPLE);
+		configureEdgeType(CONDITIONAL_JUMP, "color.bg.plugin.programgraph.edge.jump.conditional");
+		configureEdgeType(CONDITIONAL_CALL, "color.bg.plugin.programgraph.edge.call.conditional");
+		configureEdgeType(CONDITIONAL_TERMINATOR, "color.bg.plugin.programgraph.edge.conditional.terminator");
+		configureEdgeType(CONDITIONAL_CALL_TERMINATOR, "color.bg.plugin.programgraph.edge.call.conditional.terminator");
 
-		configureEdgeType(COMPUTED_JUMP, WebColors.CYAN);
-		configureEdgeType(COMPUTED_CALL, WebColors.CYAN);
-		configureEdgeType(COMPUTED_CALL_TERMINATOR, WebColors.PURPLE);
+		configureEdgeType(COMPUTED_JUMP, "color.bg.plugin.programgraph.edge.jump.computed");
+		configureEdgeType(COMPUTED_CALL, "color.bg.plugin.programgraph.edge.call.computed");
+		configureEdgeType(COMPUTED_CALL_TERMINATOR, "color.bg.plugin.programgraph.edge.call.computed.terminator");
 
-		configureEdgeType(CONDITIONAL_COMPUTED_CALL, WebColors.CYAN);
-		configureEdgeType(CONDITIONAL_COMPUTED_JUMP, WebColors.CYAN);
+		configureEdgeType(CONDITIONAL_COMPUTED_CALL, "color.bg.plugin.programgraph.edge.call.conditional.computed");
+		configureEdgeType(CONDITIONAL_COMPUTED_JUMP, "color.bg.plugin.programgraph.edge.jump.conitional.computed");
 
-		configureEdgeType(CALL_OVERRIDE_UNCONDITIONAL, WebColors.RED);
-		configureEdgeType(JUMP_OVERRIDE_UNCONDITIONAL, WebColors.RED);
-		configureEdgeType(CALLOTHER_OVERRIDE_CALL, WebColors.RED);
-		configureEdgeType(CALLOTHER_OVERRIDE_JUMP, WebColors.RED);
+		configureEdgeType(CALL_OVERRIDE_UNCONDITIONAL, "color.bg.plugin.programgraph.edge.call.unconditional.override");
+		configureEdgeType(JUMP_OVERRIDE_UNCONDITIONAL, "color.bg.plugin.programgraph.edge.jump.unconditional.override");
+		configureEdgeType(CALLOTHER_OVERRIDE_CALL, "color.bg.plugin.programgraph.edge.call.callother.override");
+		configureEdgeType(CALLOTHER_OVERRIDE_JUMP, "color.bg.plugin.programgraph.edge.jump.callother.override");
 
-		configureEdgeType(READ, WebColors.GREEN);
-		configureEdgeType(WRITE, WebColors.RED);
-		configureEdgeType(READ_WRITE, WebColors.DARK_GOLDENROD);
-		configureEdgeType(UNKNOWN_DATA, WebColors.BLACK);
-		configureEdgeType(EXTERNAL_REF, WebColors.PURPLE);
+		configureEdgeType(READ, "color.bg.plugin.programgraph.edge.read");
+		configureEdgeType(WRITE, "color.bg.plugin.programgraph.edge.write");
+		configureEdgeType(READ_WRITE, "color.bg.plugin.programgraph.edge.read.write");
+		configureEdgeType(UNKNOWN_DATA, "color.bg.plugin.programgraph.edge.data.unknown");
+		configureEdgeType(EXTERNAL_REF, "color.bg.plugin.programgraph.edge.external.ref");
 
-		configureEdgeType(READ_INDIRECT, WebColors.DARK_GREEN);
-		configureEdgeType(WRITE_INDIRECT, WebColors.DARK_RED);
-		configureEdgeType(READ_WRITE_INDIRECT, WebColors.BROWN);
-		configureEdgeType(DATA_INDIRECT, WebColors.DARK_ORANGE);
+		configureEdgeType(READ_INDIRECT, "color.bg.plugin.programgraph.edge.read.indirect");
+		configureEdgeType(WRITE_INDIRECT, "color.bg.plugin.programgraph.edge.write.indirect");
+		configureEdgeType(READ_WRITE_INDIRECT, "color.bg.plugin.programgraph.edge.read.write.indirect");
+		configureEdgeType(DATA_INDIRECT, "color.bg.plugin.programgraph.edge.data.indirect");
 
-		configureEdgeType(PARAM, WebColors.CYAN);
-		configureEdgeType(THUNK, WebColors.BLUE);
-
+		configureEdgeType(PARAM, "color.bg.plugin.programgraph.edge.param");
+		configureEdgeType(THUNK, "color.bg.plugin.programgraph.edge.thunk");
+		
+		setFont("font.plugin.programgraph");
+		//@formatter:on
 	}
 }

@@ -24,13 +24,11 @@ import javax.swing.JComboBox;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functioncompare.MultiFunctionComparisonPanel;
 import ghidra.app.plugin.core.functioncompare.MultiFunctionComparisonProvider;
 import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
-import resources.MultiIcon;
-import resources.ResourceManager;
-import resources.icons.TranslateIcon;
 
 /**
  * Displays the previous function in the function comparison panel. If 
@@ -39,11 +37,8 @@ import resources.icons.TranslateIcon;
 public class PreviousFunctionAction extends DockingAction {
 
 	private static final String FUNCTION_NAVIGATE_GROUP = "A9_FunctionNavigate";
-	private static final Icon PREVIOUS_ICON =
-		new TranslateIcon(ResourceManager.loadImage("images/arrow_up.png"), 3, 1);
-	private static final Icon FUNCTION_ICON =
-		new TranslateIcon(ResourceManager.loadImage("images/FunctionScope.gif"), -5, -2);
-	private static final Icon PREVIOUS_FUNCTION_ICON = new MultiIcon(PREVIOUS_ICON, FUNCTION_ICON);
+	private static final Icon PREVIOUS_FUNCTION_ICON =
+		new GIcon("icon.plugin.functioncompare.function.previous");
 
 	/**
 	 * Constructor

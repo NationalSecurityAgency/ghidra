@@ -22,5 +22,10 @@ import ghidra.framework.model.DomainObject;
  * a domainObject until it is needed.
  */
 public interface DomainObjectService {
+
+	/**
+	 * Get the domain object to be exported
+	 * @return domain object or null if export limited to domain file
+	 */
 	public DomainObject getDomainObject();
 }

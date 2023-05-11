@@ -22,9 +22,8 @@ import java.util.stream.Stream;
 
 import javax.help.UnsupportedOperationException;
 
-import com.google.common.collect.*;
-import com.google.common.primitives.UnsignedLong;
-
+import generic.ULongSpan;
+import generic.ULongSpan.*;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.emu.PcodeThread;
@@ -132,11 +131,9 @@ public class PatchStep implements Step {
 	protected static void generateMemorySleigh(List<String> result, Language language,
 			AddressSpace space, SemisparseByteArray array) {
 		byte[] data = new byte[8];
-		for (Range<UnsignedLong> range : array.getInitialized(0, -1).asRanges()) {
-			assert range.lowerBoundType() == BoundType.CLOSED;
-			Address start = space.getAddress(range.lowerEndpoint().longValue());
-			Address end = space.getAddress(range.upperEndpoint().longValue() -
-				(range.upperBoundType() == BoundType.OPEN ? 1 : 0));
+		for (ULongSpan span : array.getInitialized(0, -1).spans()) {
+			Address start = space.getAddress(span.min());
+			Address end = space.getAddress(span.max());
 			for (AddressRange chunk : new AddressRangeChunker(start, end, data.length)) {
 				Address min = chunk.getMinAddress();
 				int length = (int) chunk.getLength();
@@ -146,24 +143,22 @@ public class PatchStep implements Step {
 		}
 	}
 
-	protected static Range<UnsignedLong> rangeOfRegister(Register r) {
-		long lower = r.getAddress().getOffset();
-		long upper = lower + r.getNumBytes();
-		return Range.closedOpen(UnsignedLong.fromLongBits(lower), UnsignedLong.fromLongBits(upper));
+	protected static ULongSpan spanOfRegister(Register r) {
+		return ULongSpan.extent(r.getAddress().getOffset(), r.getNumBytes());
 	}
 
-	protected static boolean isContained(Register r, RangeSet<UnsignedLong> remains) {
-		return remains.encloses(rangeOfRegister(r));
+	protected static boolean isContained(Register r, ULongSpanSet remains) {
+		return remains.encloses(spanOfRegister(r));
 	}
 
 	protected static void generateRegisterSleigh(List<String> result, Language language,
 			AddressSpace space, SemisparseByteArray array) {
 		byte[] data = new byte[8];
-		RangeSet<UnsignedLong> remains = TreeRangeSet.create(array.getInitialized(0, -1));
+		MutableULongSpanSet remains = new DefaultULongSpanSet();
+		remains.addAll(array.getInitialized(0, -1));
 		while (!remains.isEmpty()) {
-			Range<UnsignedLong> span = remains.span();
-			assert span.lowerBoundType() == BoundType.CLOSED;
-			Address min = space.getAddress(span.lowerEndpoint().longValue());
+			ULongSpan bound = remains.bound();
+			Address min = space.getAddress(bound.min());
 			Register register = Stream.of(language.getRegisters(min))
 					.filter(r -> r.getAddress().equals(min))
 					.filter(r -> r.getNumBytes() <= data.length)
@@ -178,7 +173,7 @@ public class PatchStep implements Step {
 			array.getData(min.getOffset(), data, 0, length);
 			BigInteger value = Utils.bytesToBigInteger(data, length, language.isBigEndian(), false);
 			result.add(String.format("%s=0x%s", register, value.toString(16)));
-			remains.remove(rangeOfRegister(register));
+			remains.remove(spanOfRegister(register));
 		}
 	}
 
@@ -312,7 +307,7 @@ public class PatchStep implements Step {
 	}
 
 	@Override
-	public <T> void execute(PcodeThread<T> emuThread, Stepper<T> stepper, TaskMonitor monitor)
+	public <T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException {
 		PcodeProgram prog = emuThread.getMachine().compileSleigh("schedule", sleigh + ";");
 		emuThread.getExecutor().execute(prog, emuThread.getUseropLibrary());

@@ -17,11 +17,12 @@ package ghidra.framework.options;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+import java.util.Date;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.io.*;
-import java.util.Arrays;
-import java.util.Date;
 
 import javax.swing.KeyStroke;
 
@@ -35,6 +36,7 @@ import org.junit.Test;
 import com.google.gson.JsonObject;
 
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.overview.addresstype.AddressType;
 import ghidra.program.model.lang.Endian;
 import ghidra.util.xml.GenericXMLOutputter;
@@ -68,15 +70,15 @@ public class SaveStateTest extends AbstractGenericTest {
 
 	@Test
 	public void testColor() throws Exception {
-		ss.putColor("TEST", Color.RED);
+		ss.putColor("TEST", Palette.RED);
 		Color c = ss.getColor("TEST", null);
-		assertEquals(Color.RED, c);
+		assertEquals(Palette.RED.getRGB(), c.getRGB());
 
 		SaveState restoredState = saveAndRestoreToXml();
 
 		// make sure our value is inside
 		c = restoredState.getColor("TEST", null);
-		assertEquals(Color.RED, c);
+		assertEquals(Palette.RED.getRGB(), c.getRGB());
 	}
 
 	@Test
@@ -341,7 +343,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.putString(greaterThanLessThanKey, stringWithGreaterThanAndLessThan);
 
 		String stringWithLargeHexDigit =
-			"The following is a large hex digit: \u0128, \u0132, \307 and \253 " +
+			"The following is a large hex digit: \u0128, \u0132, \307 and \253 \uD835\uDCC8 " +
 				"with some trailing text &#xFF;";
 		String hexDigitKey = "HEX_DIGIT_KEY";
 		ss.putString(hexDigitKey, stringWithLargeHexDigit);
@@ -421,9 +423,9 @@ public class SaveStateTest extends AbstractGenericTest {
 
 	@Test
 	public void testJsonColorRoundTrip() {
-		ss.putColor("foo", Color.BLUE);
+		ss.putColor("foo", Palette.BLUE);
 		SaveState restored = jsonRoundTrip(ss);
-		assertEquals(Color.BLUE, restored.getColor("foo", null));
+		assertEquals(Palette.BLUE.getRGB(), restored.getColor("foo", null).getRGB());
 	}
 
 	@Test

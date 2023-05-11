@@ -21,7 +21,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 
 public class X86_64_CoffRelocationHandler implements CoffRelocationHandler {
 
@@ -31,15 +32,17 @@ public class X86_64_CoffRelocationHandler implements CoffRelocationHandler {
 	}
 	
 	@Override
-	public void relocate(Address address, CoffRelocation relocation,
+	public RelocationResult relocate(Address address, CoffRelocation relocation,
 			CoffRelocationContext relocationContext)
-			throws MemoryAccessException, NotFoundException, RelocationException {
+			throws MemoryAccessException, RelocationException {
 
 		Program program = relocationContext.getProgram();
 		Memory mem = program.getMemory();
 
 		int distance = 0;
 		long addend = mem.getInt(address);
+
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
 		switch (relocation.getType()) {
 
@@ -50,6 +53,7 @@ public class X86_64_CoffRelocationHandler implements CoffRelocationHandler {
 						.add(addend)
 						.getOffset();
 				mem.setLong(address, value);
+				byteLength = 8;
 				break;
 			}
 			case IMAGE_REL_AMD64_ADDR32: {
@@ -95,7 +99,7 @@ public class X86_64_CoffRelocationHandler implements CoffRelocationHandler {
 			case IMAGE_REL_AMD64_SECTION:
 			case IMAGE_REL_AMD64_SECREL:
 			case IMAGE_REL_AMD64_TOKEN: {
-				break;
+				return RelocationResult.SKIPPED;
 			}
 
 			// We haven't implemented these types yet:
@@ -104,9 +108,10 @@ public class X86_64_CoffRelocationHandler implements CoffRelocationHandler {
 			case IMAGE_REL_AMD64_PAIR:
 			case IMAGE_REL_AMD64_SSPAN32:
 			default: {
-				throw new NotFoundException();
+				return RelocationResult.UNSUPPORTED;
 			}
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 	/**

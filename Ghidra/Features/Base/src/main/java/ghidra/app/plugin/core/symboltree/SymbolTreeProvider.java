@@ -33,6 +33,7 @@ import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.GTreeBulkTask;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.actions.*;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.framework.model.*;
@@ -46,12 +47,11 @@ import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 
 public class SymbolTreeProvider extends ComponentProviderAdapter {
 
-	private static final ImageIcon ICON = ResourceManager.loadImage("images/sitemap_color.png");
-	private final static String NAME = "Symbol Tree";
+	private static final Icon ICON = new GIcon("icon.plugin.symboltree.provider");
+	private static final String NAME = "Symbol Tree";
 
 	private ClipboardOwner clipboardOwner;
 	private Clipboard localClipboard;// temporary clipboard used for the "cut" operation
@@ -196,7 +196,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	protected void treeNodeCollapsed(TreePath path) {
 		Object lastPathComponent = path.getLastPathComponent();
-		if (lastPathComponent instanceof SymbolCategoryNode) {
+		if (lastPathComponent instanceof SymbolCategoryNode && !tree.hasFilterText()) {
 			tree.runTask(m -> ((SymbolCategoryNode) lastPathComponent).unloadChildren());
 		}
 	}
@@ -553,11 +553,11 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private abstract class AbstactSymbolUpdateTask extends GTreeTask {
+	private abstract class AbstractSymbolUpdateTask extends GTreeTask {
 
 		protected final Symbol symbol;
 
-		AbstactSymbolUpdateTask(GTree tree, Symbol symbol) {
+		AbstractSymbolUpdateTask(GTree tree, Symbol symbol) {
 			super(tree);
 			this.symbol = symbol;
 		}
@@ -580,7 +580,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private class SymbolAddedTask extends AbstactSymbolUpdateTask {
+	private class SymbolAddedTask extends AbstractSymbolUpdateTask {
 
 		SymbolAddedTask(GTree tree, Symbol symbol) {
 			super(tree, symbol);
@@ -599,7 +599,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private class SymbolChangedTask extends AbstactSymbolUpdateTask {
+	private class SymbolChangedTask extends AbstractSymbolUpdateTask {
 
 		private String oldName;
 
@@ -622,7 +622,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private class SymbolRemovedTask extends AbstactSymbolUpdateTask {
+	private class SymbolRemovedTask extends AbstractSymbolUpdateTask {
 
 		SymbolRemovedTask(GTree tree, Symbol symbol) {
 			super(tree, symbol);
@@ -658,7 +658,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			}
 
 			for (GTreeTask task : tasks) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				task.run(monitor);
 			}
 		}

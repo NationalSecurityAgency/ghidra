@@ -111,9 +111,11 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 		int count = initialCount;
 		SymbolTable symbolTable = program.getSymbolTable();
+		// TODO: iterator will continually need to reinitialize due to symbol changes
+		//       consider copying primary symbols to alt storage for iteration
 		SymbolIterator it = symbolTable.getPrimarySymbolIterator(set, true);
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (++count % 100 == 0) {
 				monitor.setMessage(baseMonitorMessage + " - " + count + " symbols");
@@ -129,7 +131,27 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			DemangledObject demangled = demangle(mangled, address, options, log);
 			if (demangled != null) {
 				apply(program, address, demangled, options, log, monitor);
+				continue;
 			}
+
+			// Only attempt to demangle a non-primary symbol if primary is imported and will
+			// not demangle.
+			if (symbol.getSource() != SourceType.IMPORTED) {
+				continue;
+			}
+
+			for (Symbol altSym : symbolTable.getSymbols(address)) {
+				if (altSym.isPrimary() || skipSymbol(altSym)) {
+					continue;
+				}
+				mangled = cleanSymbol(address, altSym.getName());
+				demangled = demangle(mangled, address, options, log);
+				if (demangled != null) {
+					apply(program, address, demangled, options, log, monitor);
+					break;
+				}
+			}
+
 		}
 		return count;
 	}

@@ -66,7 +66,7 @@ public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		String arch = env.getArchitecture();
 		boolean is64Bit = arch.contains("AARCH64") || arch.contains("arm64");
 		String os = env.getOperatingSystem();
-		if (os.contains("macos")) {
+		if (os.contains("macos") || os.contains("ios")) {
 			if (is64Bit) {
 				Msg.info(this, "Using os=" + os + " arch=" + arch);
 				return Set.of(new LldbAarch64MacosOffer((TargetProcess) target));

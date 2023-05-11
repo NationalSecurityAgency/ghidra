@@ -15,13 +15,15 @@
  */
 /// \file testfunction.hh
 /// \brief Framework for decompiler data driven single function tests
-#ifndef __TESTFUNCTION__
-#define __TESTFUNCTION__
+#ifndef __TESTFUNCTION_HH__
+#define __TESTFUNCTION_HH__
 
 #include "ifaceterm.hh"
 #include "error.hh"
 #include "xml.hh"
 #include <regex>
+
+namespace ghidra {
 
 class IfaceDecompData;
 
@@ -34,7 +36,7 @@ class FunctionTestProperty {
   int4 minimumMatch;		///< Minimum number of times property is expected to match
   int4 maximumMatch;		///< Maximum number of times property is expected to match
   string name;			///< Name of the test, to be printed in test summaries
-  regex pattern;		///< Regular expression to match against a line of output
+  std::regex pattern;		///< Regular expression to match against a line of output
   mutable uint4 count;		///< Number of times regular expression has been seen
 public:
   string getName(void) const { return name; }	///< Get the name of the property
@@ -91,7 +93,8 @@ public:
   void restoreXml(DocumentStorage &store,const Element *el);	///< Load tests from a \<decompilertest> tag.
   void restoreXmlOldForm(DocumentStorage &store,const Element *el);	///< Load tests from \<binaryimage> tag.
   void runTests(list<string> &lateStream);	///< Run the script and perform the tests
-  static void runTestFiles(const vector<string> &testFiles,ostream &s);	///< Run tests for each listed file
+  static int runTestFiles(const vector<string> &testFiles,ostream &s);	///< Run tests for each listed file
 };
 
+} // End namespace ghidra
 #endif

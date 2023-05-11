@@ -15,11 +15,13 @@
  */
 /// \file varnode.hh
 /// \brief The Varnode and VarnodeBank classes
-#ifndef __CPUI_VARNODE__
-#define __CPUI_VARNODE__
+#ifndef __VARNODE_HH__
+#define __VARNODE_HH__
 
 #include "pcoderaw.hh"
 #include "cover.hh"
+
+namespace ghidra {
 
 class HighVariable;
 
@@ -109,7 +111,8 @@ public:
     indirectstorage = 0x8000000, ///< Is this Varnode storing a pointer to the actual symbol
     hiddenretparm = 0x10000000,	 ///< Does this varnode point to the return value storage location
     incidental_copy = 0x20000000, ///< Do copies of this varnode happen as a side-effect
-    autolive_hold = 0x40000000	///< Temporarily block dead-code removal of \b this
+    autolive_hold = 0x40000000,	///< Temporarily block dead-code removal of \b this
+    proto_partial = 0x80000000	///< Varnode is getting PIECEd together into an (unmapped) structure
   };
   /// Additional boolean properties on a Varnode
   enum addl_flags {
@@ -222,6 +225,7 @@ public:
   int4 contains(const Varnode &op) const; ///< Return info about the containment of \e op in \b this
   int4 characterizeOverlap(const Varnode &op) const; ///< Return 0, 1, or 2 for "no overlap", "partial overlap", "identical storage"
   int4 overlap(const Varnode &op) const;	///< Return relative point of overlap between two Varnodes
+  int4 overlapJoin(const Varnode &op) const;	///< Return relative point of overlap, where the given Varnode may be in the \e join space
   int4 overlap(const Address &op2loc,int4 op2size) const;	///< Return relative point of overlap with Address range
   uintb getNZMask(void) const { return nzm; } ///< Get the mask of bits within \b this that are known to be zero
   int4 termOrder(const Varnode *op) const; ///< Compare two Varnodes based on their term order
@@ -250,6 +254,7 @@ public:
   bool isUnaffected(void) const { return ((flags&Varnode::unaffected)!=0); } ///< Is \b this a value that is supposed to be preserved across the function?
   bool isSpacebase(void) const { return ((flags&Varnode::spacebase)!=0); } ///< Is this location used to store the base point for a virtual address space?
   bool isReturnAddress(void) const { return ((flags&Varnode::return_address)!=0); } ///< Is this storage for a calls return address?
+  bool isProtoPartial(void) const { return ((flags&Varnode::proto_partial)!=0); } ///< Is \b this getting pieced together into a larger whole
   bool isPtrCheck(void) const { return ((addlflags&Varnode::ptrcheck)!=0); } ///< Has \b this been checked as a constant pointer to a mapped symbol?
   bool isPtrFlow(void) const { return ((addlflags&Varnode::ptrflow)!=0); } ///< Does this varnode flow to or from a known pointer
   bool isSpacebasePlaceholder(void) const { return ((addlflags&Varnode::spacebase_placeholder)!=0); } ///< Is \b this used specifically to track stackpointer values?
@@ -318,6 +323,8 @@ public:
   void clearWriteMask(void) { addlflags &= ~Varnode::writemask; } ///< Clear the mark indicating \b this is not a true write
   void setAutoLiveHold(void) { flags |= Varnode::autolive_hold; }	///< Place temporary hold on dead code removal
   void clearAutoLiveHold(void) { flags &= ~Varnode::autolive_hold; }	///< Clear temporary hold on dead code removal
+  void setProtoPartial(void) { flags |= Varnode::proto_partial; }	///< Mark \b this gets pieced into larger structure
+  void clearProtoPartial(void) { flags &= ~Varnode::proto_partial; }	///< Clear mark indicating \b this gets pieced into larger structure
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
   void setLongPrint(void) { addlflags |= Varnode::longprint; }	///< Force \b this to be printed as a \e long token
   void setStopUpPropagation(void) { addlflags |= Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
@@ -331,6 +338,10 @@ public:
   Datatype *getLocalType(bool &blockup) const; ///< Calculate type of Varnode based on local information
   bool isBooleanValue(bool useAnnotation) const;	///< Does \b this Varnode hold a formal boolean value
   bool copyShadow(const Varnode *op2) const; ///< Are \b this and \b op2 copied from the same source?
+  bool findSubpieceShadow(int4 leastByte,const Varnode *whole,int4 recurse) const;
+  bool findPieceShadow(int4 leastByte,const Varnode *piece) const;
+  bool partialCopyShadow(const Varnode *op2,int4 relOff) const;	///< Is one of \b this or \b op2 a partial copy of the other?
+  Datatype *getStructuredType(void) const;	///< Get structure/array/union that \b this is a piece of
   void encode(Encoder &encoder) const; ///< Encode a description of \b this to a stream
   static bool comparePointers(const Varnode *a,const Varnode *b) { return (*a < *b); }	///< Compare Varnodes as pointers
   static void printRaw(ostream &s,const Varnode *vn);	///< Print raw info about a Varnode to stream
@@ -387,6 +398,7 @@ public:
   VarnodeLocSet::const_iterator endLoc(int4 s,const Address &addr,uint4 fl) const;
   VarnodeLocSet::const_iterator beginLoc(int4 s,const Address &addr,const Address &pc,uintm uniq) const;
   VarnodeLocSet::const_iterator endLoc(int4 s,const Address &addr,const Address &pc,uintm uniq) const;
+  uint4 overlapLoc(VarnodeLocSet::const_iterator iter,vector<VarnodeLocSet::const_iterator> &bounds) const;
   VarnodeDefSet::const_iterator beginDef(void) const { return def_tree.begin(); }	///< Beginning of Varnodes sorted by definition
   VarnodeDefSet::const_iterator endDef(void) const { return def_tree.end(); }	///< End of Varnodes sorted by definition
   VarnodeDefSet::const_iterator beginDef(uint4 fl) const;
@@ -424,4 +436,5 @@ inline AddrSpace *Varnode::getSpaceFromConst(void) const {
   return (AddrSpace *)(uintp)loc.getOffset();
 }
 
+} // End namespace ghidra
 #endif

@@ -19,13 +19,13 @@ import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 
 import docking.framework.ApplicationInformationDisplayFactory;
+import generic.theme.GIcon;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class GhidraApplicationInformationDisplayFactory
 		extends ApplicationInformationDisplayFactory {
@@ -33,15 +33,19 @@ public class GhidraApplicationInformationDisplayFactory
 	@Override
 	protected List<Image> doGetWindowIcons() {
 		List<Image> list = new ArrayList<>();
-		list.add(ResourceManager.loadImage("images/GhidraIcon16.png").getImage());
-		list.add(ResourceManager.loadImage("images/GhidraIcon24.png").getImage());
-		list.add(ResourceManager.loadImage("images/GhidraIcon32.png").getImage());
-		list.add(ResourceManager.loadImage("images/GhidraIcon40.png").getImage());
-		list.add(ResourceManager.loadImage("images/GhidraIcon48.png").getImage());
-		list.add(ResourceManager.loadImage("images/GhidraIcon64.png").getImage());
-		list.add(ResourceManager.loadImage("images/GhidraIcon128.png").getImage());
-		list.add(ResourceManager.loadImage("images/GhidraIcon256.png").getImage());
+		list.add(image("icon.base.application.16"));
+		list.add(image("icon.base.application.24"));
+		list.add(image("icon.base.application.32"));
+		list.add(image("icon.base.application.40"));
+		list.add(image("icon.base.application.48"));
+		list.add(image("icon.base.application.64"));
+		list.add(image("icon.base.application.128"));
+		list.add(image("icon.base.application.256"));
 		return list;
+	}
+
+	private Image image(String id) {
+		return new GIcon(id).getImageIcon().getImage();
 	}
 
 	@Override
@@ -65,8 +69,8 @@ public class GhidraApplicationInformationDisplayFactory
 	}
 
 	@Override
-	public ImageIcon doGetHomeIcon() {
-		return ResourceManager.loadImage("images/GhidraIcon16.png");
+	public Icon doGetHomeIcon() {
+		return new GIcon("icon.base.application.home");
 	}
 
 	@Override

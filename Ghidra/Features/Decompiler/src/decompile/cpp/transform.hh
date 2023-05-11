@@ -15,10 +15,13 @@
  */
 /// \file transform.hh
 /// \brief Classes for building large scale transforms of function data-flow
-#ifndef __TRANSFORM__
-#define __TRANSFORM__
+#ifndef __TRANSFORM_HH__
+#define __TRANSFORM_HH__
 
 #include "varnode.hh"
+
+namespace ghidra {
+
 class Funcdata;			// Forward declaration
 class TransformOp;
 
@@ -248,4 +251,5 @@ inline bool TransformManager::preexistingGuard(int4 slot,TransformVar *rvn)
   return true;			// The op was not (will not be) visited on slot 0, build now
 }
 
+} // End namespace ghidra
 #endif

@@ -16,6 +16,8 @@
 #include "fspec.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_CUSTOM = AttributeId("custom",114);
 AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",115);
 AttributeId ATTRIB_EXTENSION = AttributeId("extension",116);
@@ -78,28 +80,20 @@ void ParamEntry::resolveJoin(list<ParamEntry> &curList)
     return;
   }
   joinrec = spaceid->getManager()->findJoin(addressbase);
-  int4 mingrp = 1000;
-  int4 maxgrp = -1;
+  groupSet.clear();
   for(int4 i=0;i<joinrec->numPieces();++i) {
     const ParamEntry *entry = findEntryByStorage(curList, joinrec->getPiece(i));
     if (entry != (const ParamEntry *)0) {
-      if (entry->group < mingrp)
-	mingrp = entry->group;
-      int4 max = entry->group + entry->groupsize;
-      if (max > maxgrp)
-	maxgrp = max;
+      groupSet.insert(groupSet.end(),entry->groupSet.begin(),entry->groupSet.end());
       // For output <pentry>, if the most signifigant part overlaps with an earlier <pentry>
       // the least signifigant part is marked for extra checks, and vice versa.
       flags |= (i==0) ? extracheck_low : extracheck_high;
     }
   }
-  if (maxgrp < 0 || mingrp >= 1000)
+  if (groupSet.empty())
     throw LowlevelError("<pentry> join must overlap at least one previous entry");
-  group = mingrp;
-  groupsize = (maxgrp - mingrp);
+  sort(groupSet.begin(),groupSet.end());
   flags |= overlapping;
-  if (groupsize > joinrec->numPieces())
-    throw LowlevelError("<pentry> join must overlap sequential entries");
 }
 
 /// Search for overlaps of \b this with any previous entry.  If an overlap is discovered,
@@ -111,9 +105,7 @@ void ParamEntry::resolveOverlap(list<ParamEntry> &curList)
 {
   if (joinrec != (JoinRecord *)0)
     return;		// Overlaps with join records dealt with in resolveJoin
-  int4 grpsize = 0;
-  int4 mingrp = 1000;
-  int4 maxgrp = -1;
+  vector<int4> overlapSet;
   list<ParamEntry>::const_iterator iter,enditer;
   Address addr(spaceid,addressbase);
   enditer = curList.end();
@@ -123,12 +115,7 @@ void ParamEntry::resolveOverlap(list<ParamEntry> &curList)
     if (!entry.intersects(addr, size)) continue;
     if (contains(entry)) {	// If this contains the intersecting entry
       if (entry.isOverlap()) continue;	// Don't count resources (already counted overlapped entry)
-      if (entry.group < mingrp)
-	mingrp = entry.group;
-      int4 max = entry.group + entry.groupsize;
-      if (max > maxgrp)
-	maxgrp = max;
-      grpsize += entry.groupsize;
+      overlapSet.insert(overlapSet.end(),entry.groupSet.begin(),entry.groupSet.end());
       // For output <pentry>, if the most signifigant part overlaps with an earlier <pentry>
       // the least signifigant part is marked for extra checks, and vice versa.
       if (addressbase == entry.addressbase)
@@ -140,12 +127,34 @@ void ParamEntry::resolveOverlap(list<ParamEntry> &curList)
       throw LowlevelError("Illegal overlap of <pentry> in compiler spec");
   }
 
-  if (grpsize == 0) return;		// No overlaps
-  if (grpsize != (maxgrp - mingrp))
-    throw LowlevelError("<pentry> must overlap sequential entries");
-  group = mingrp;
-  groupsize = grpsize;
+  if (overlapSet.empty()) return;		// No overlaps
+  sort(overlapSet.begin(),overlapSet.end());
+  groupSet = overlapSet;
   flags |= overlapping;
+}
+
+/// \param op2 is the other entry to compare
+/// \return \b true if the group sets associated with each ParamEntry intersect at all
+bool ParamEntry::groupOverlap(const ParamEntry &op2) const
+
+{
+  int4 i = 0;
+  int4 j = 0;
+  int4 valThis = groupSet[i];
+  int4 valOther = op2.groupSet[j];
+  while(valThis != valOther) {
+    if (valThis < valOther) {
+      i += 1;
+      if (i >= groupSet.size()) return false;
+      valThis = groupSet[i];
+    }
+    else {
+      j += 1;
+      if (j >= op2.groupSet.size()) return false;
+      valOther = op2.groupSet[j];
+    }
+  }
+  return true;
 }
 
 /// This entry must properly contain the other memory range, and
@@ -379,7 +388,7 @@ OpCode ParamEntry::assumedExtension(const Address &addr,int4 sz,VarnodeData &res
 int4 ParamEntry::getSlot(const Address &addr,int4 skip) const
 
 {
-  int4 res = group;
+  int4 res = groupSet[0];
   if (alignment != 0) {
     uintb diff = addr.getOffset() + skip - addressbase;
     int4 baseslot = (int4)diff / alignment;
@@ -389,7 +398,7 @@ int4 ParamEntry::getSlot(const Address &addr,int4 skip) const
       res += baseslot;
   }
   else if (skip != 0) {
-    res += (groupsize-1);
+    res = groupSet.back();
   }
   return res;
 }
@@ -456,7 +465,6 @@ void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<Para
   size = minsize = -1;		// Must be filled in
   alignment = 0;		// default
   numslots = 1;
-  groupsize = 1;		// default
 
   uint4 elemId = decoder.openElement(ELEM_PENTRY);
   for(;;) {
@@ -553,7 +561,7 @@ ParamListStandard::ParamListStandard(const ParamListStandard &op2)
   maxdelay = op2.maxdelay;
   pointermax = op2.pointermax;
   thisbeforeret = op2.thisbeforeret;
-  resourceTwoStart = op2.resourceTwoStart;
+  resourceStart = op2.resourceStart;
   populateResolver();
 }
 
@@ -646,16 +654,15 @@ Address ParamListStandard::assignAddress(const Datatype *tp,vector<int4> &status
     const ParamEntry &curEntry( *iter );
     int4 grp = curEntry.getGroup();
     if (status[grp]<0) continue;
-    if ((curEntry.getType() != TYPE_UNKNOWN)&&
-	tp->getMetatype() != curEntry.getType())
+    if ((curEntry.getType() != TYPE_UNKNOWN) && tp->getMetatype() != curEntry.getType())
       continue;			// Wrong type
 
     Address res = curEntry.getAddrBySlot(status[grp],tp->getSize());
     if (res.isInvalid()) continue; // If -tp- doesn't fit an invalid address is returned
     if (curEntry.isExclusion()) {
-      int4 maxgrp = grp + curEntry.getGroupSize();
-      for(int4 j=grp;j<maxgrp;++j) // For an exclusion entry
-	status[j] = -1;		// some number of groups are taken up
+      const vector<int4> &groupSet(curEntry.getAllGroups());
+      for(int4 j=0;j<groupSet.size();++j) 	// For an exclusion entry
+	status[groupSet[j]] = -1;		// some number of groups are taken up
     }
     return res;
   }
@@ -686,12 +693,13 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,TypeFactory &t
       res.back().type = pointertp;
       res.back().flags = ParameterPieces::indirectstorage;
     }
-    else
+    else {
       res.back().addr = assignAddress(proto[i],status);
+      res.back().type = proto[i];
+      res.back().flags = 0;
+    }
     if (res.back().addr.isInvalid())
       throw ParamUnassignedError("Cannot assign parameter address for " + proto[i]->getName());
-    res.back().type = proto[i];
-    res.back().flags = 0;
   }
 }
 
@@ -818,57 +826,51 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
   active->sortTrials();
 }
 
-/// \brief Calculate the range of trials in each of the two resource sections
+/// \brief Calculate the range of trials in each resource sections
 ///
 /// The trials must already be mapped, which should put them in group order.  The sections
-/// split at the group given by \b resourceTwoStart.  We pass back the range of trial indices
-/// for each section.  If \b resourceTwoStart is 0, then there is really only one section, and
-/// the empty range [0,0] is passed back for the second section.
+/// split at the groups given by \b resourceStart.  We pass back the starting index for
+/// each range of trials.
 /// \param active is the given set of parameter trials
-/// \param oneStart will pass back the index of the first trial in the first section
-/// \param oneStop will pass back the index (+1) of the last trial in the first section
-/// \param twoStart will pass back the index of the first trial in the second section
-/// \param twoStop will pass back the index (+1) of the last trial in the second section
-void ParamListStandard::separateSections(ParamActive *active,int4 &oneStart,int4 &oneStop,int4 &twoStart,int4 &twoStop) const
+/// \param trialStart will hold the starting index for each range of trials
+void ParamListStandard::separateSections(ParamActive *active,vector<int4> &trialStart) const
 
 {
   int4 numtrials = active->getNumTrials();
-  if (resourceTwoStart == 0) {
-    // Only one section
-    oneStart = 0;
-    oneStop = numtrials;
-    twoStart = 0;
-    twoStop = 0;
-    return;
-  }
-  int4 i=0;
-  for(;i<numtrials;++i) {
-    ParamTrial &curtrial(active->getTrial(i));
+  int4 currentTrial = 0;
+  int4 nextGroup = resourceStart[1];
+  int4 nextSection = 2;
+  trialStart.push_back(currentTrial);
+  for(;currentTrial<numtrials;++currentTrial) {
+    ParamTrial &curtrial(active->getTrial(currentTrial));
     if (curtrial.getEntry()==(const ParamEntry *)0) continue;
-    if (curtrial.getEntry()->getGroup() >= resourceTwoStart) break;
+    if (curtrial.getEntry()->getGroup() >= nextGroup) {
+      if (nextSection > resourceStart.size())
+	throw LowlevelError("Missing next resource start");
+      nextGroup = resourceStart[nextSection];
+      nextSection += 1;
+      trialStart.push_back(currentTrial);
+    }
   }
-  oneStart = 0;
-  oneStop = i;
-  twoStart = i;
-  twoStop = numtrials;
+  trialStart.push_back(numtrials);
 }
 
 /// \brief Mark all the trials within the indicated groups as \e not \e used, except for one specified index
 ///
 /// Only one trial within an exclusion group can have active use, mark all others as unused.
 /// \param active is the set of trials, which must be sorted on group
-/// \param groupUpper is the biggest group number to be marked
-/// \param groupStart is the index of the first trial in the smallest group to be marked
-/// \param index is the specified trial index that is \e not to be marked
-void ParamListStandard::markGroupNoUse(ParamActive *active,int4 groupUpper,int4 groupStart,int4 index)
+/// \param activeTrial is the index of the trial whose groups are to be considered active
+/// \param trialStart is the index of the first trial to mark
+void ParamListStandard::markGroupNoUse(ParamActive *active,int4 activeTrial,int4 trialStart)
 
 {
   int4 numTrials = active->getNumTrials();
-  for(int4 i=groupStart;i<numTrials;++i) {		// Mark entries in the group range as definitely not used
-    if (i == index) continue;		// The trial NOT to mark
+  const ParamEntry *activeEntry = active->getTrial(activeTrial).getEntry();
+  for(int4 i=trialStart;i<numTrials;++i) {		// Mark entries intersecting the group set as definitely not used
+    if (i == activeTrial) continue;			// The trial NOT to mark
     ParamTrial &othertrial(active->getTrial(i));
     if (othertrial.isDefinitelyNotUsed()) continue;
-    if (othertrial.getEntry()->getGroup() > groupUpper) break;
+    if (!othertrial.getEntry()->groupOverlap(*activeEntry)) break;
     othertrial.markNoUse();
   }
 }
@@ -894,7 +896,7 @@ void ParamListStandard::markBestInactive(ParamActive *active,int4 group,int4 gro
     const ParamEntry *entry = trial.getEntry();
     int4 grp = entry->getGroup();
     if (grp != group) break;
-    if (entry->getGroupSize() > 1) continue;	// Covering multiple slots automatically give low score
+    if (entry->getAllGroups().size() > 1) continue;	// Covering multiple slots automatically give low score
     int4 score = 0;
     if (trial.hasAncestorRealistic()) {
       score += 5;
@@ -909,7 +911,7 @@ void ParamListStandard::markBestInactive(ParamActive *active,int4 group,int4 gro
     }
   }
   if (bestTrial >= 0)
-    markGroupNoUse(active, group, groupStart, bestTrial);
+    markGroupNoUse(active, bestTrial, groupStart);
 }
 
 /// \brief Enforce exclusion rules for the given set of parameter trials
@@ -937,8 +939,7 @@ void ParamListStandard::forceExclusionGroup(ParamActive *active)
       inactiveCount = 0;
     }
     if (curtrial.isActive()) {
-      int4 groupUpper = grp + curtrial.getEntry()->getGroupSize() - 1; // This entry covers some number of groups
-      markGroupNoUse(active, groupUpper, groupStart, i);
+      markGroupNoUse(active, i, groupStart);
     }
     else {
       inactiveCount += 1;
@@ -974,9 +975,9 @@ void ParamListStandard::forceNoUse(ParamActive *active, int4 start, int4 stop)
     }
     else { // First trial in a new group (or next element in same non-exclusion group)
       if (alldefnouse)	   // If all in the last group were defnotused
-	seendefnouse = true;// then force everything afterword to be defnotused
+	seendefnouse = true;// then force everything afterward to be defnotused
       alldefnouse = curtrial.isDefinitelyNotUsed();
-      curgroup = grp + curtrial.getEntry()->getGroupSize() - 1;
+      curgroup = grp;
     }
     if (seendefnouse)
       curtrial.markInactive();
@@ -1116,15 +1117,19 @@ void ParamListStandard::populateResolver(void)
 void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effectlist,
 				    int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped)
 {
+  type_metatype lastMeta = TYPE_UNION;
+  if (!entry.empty()) {
+    lastMeta = entry.back().isGrouped() ? TYPE_UNKNOWN : entry.back().getType();
+  }
   entry.emplace_back(groupid);
   entry.back().decode(decoder,normalstack,grouped,entry);
   if (splitFloat) {
-    if (!grouped && entry.back().getType() == TYPE_FLOAT) {
-      if (resourceTwoStart >= 0)
-	throw LowlevelError("parameter list floating-point entries must come first");
+    type_metatype currentMeta = grouped ? TYPE_UNKNOWN : entry.back().getType();
+    if (lastMeta != currentMeta) {
+      if (lastMeta > currentMeta)
+	throw LowlevelError("parameter list entries must be ordered by metatype");
+      resourceStart.push_back(groupid);
     }
-    else if (resourceTwoStart < 0)
-      resourceTwoStart = groupid; // First time we have seen an integer slot
   }
   AddrSpace *spc = entry.back().getSpace();
   if (spc->getType() == IPTR_SPACEBASE)
@@ -1132,7 +1137,7 @@ void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effec
   else if (autokill)	// If a register parameter AND we automatically generate killedbycall
     effectlist.push_back(EffectRecord(entry.back(),EffectRecord::killedbycall));
 
-  int4 maxgroup = entry.back().getGroup() + entry.back().getGroupSize();
+  int4 maxgroup = entry.back().getAllGroups().back() + 1;
   if (maxgroup > numgroup)
     numgroup = maxgroup;
 }
@@ -1173,16 +1178,23 @@ void ParamListStandard::fillinMap(ParamActive *active) const
 
 {
   if (active->getNumTrials() == 0) return; // No trials to check
+  if (entry.empty())
+    throw LowlevelError("Cannot derive parameter storage for prototype model without parameter entries");
 
   buildTrialMap(active); // Associate varnodes with sorted list of parameter locations
 
   forceExclusionGroup(active);
-  int4 oneStart,oneStop,twoStart,twoStop;
-  separateSections(active,oneStart,oneStop,twoStart,twoStop);
-  forceNoUse(active,oneStart,oneStop);
-  forceNoUse(active,twoStart,twoStop);	    // Definitely not used -- overrides active
-  forceInactiveChain(active,2,oneStart,oneStop,0);	// Chains of inactivity override later actives
-  forceInactiveChain(active,2,twoStart,twoStop,resourceTwoStart);
+  vector<int4> trialStart;
+  separateSections(active,trialStart);
+  int4 numSection = trialStart.size() - 1;
+  for(int4 i=0;i<numSection;++i) {
+    // Definitely not used -- overrides active
+    forceNoUse(active,trialStart[i],trialStart[i+1]);
+  }
+  for(int4 i=0;i<numSection;++i) {
+    // Chains of inactivity override later actives
+    forceInactiveChain(active,2,trialStart[i],trialStart[i+1],resourceStart[i]);
+  }
 
   // Mark every active trial as used
   for(int4 i=0;i<active->getNumTrials();++i) {
@@ -1244,7 +1256,7 @@ bool ParamListStandard::possibleParamWithSlot(const Address &loc,int4 size,int4 
   if (entryNum == (const ParamEntry *)0) return false;
   slot = entryNum->getSlot(loc,0);
   if (entryNum->isExclusion()) {
-    slotsize = entryNum->getGroupSize();
+    slotsize = entryNum->getAllGroups().size();
   }
   else {
     slotsize = ((size-1) / entryNum->getAlign()) + 1;
@@ -1354,7 +1366,6 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
       splitFloat = decoder.readBool();
     }
   }
-  resourceTwoStart = splitFloat ? -1 : 0;
   for(;;) {
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;
@@ -1366,6 +1377,7 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
     }
   }
   decoder.closeElement(elemId);
+  resourceStart.push_back(numgroup);
   calcDelay();
   populateResolver();
 }
@@ -2858,7 +2870,7 @@ ProtoStoreSymbol::~ProtoStoreSymbol(void)
 
 /// Retrieve the specified ProtoParameter object, making sure it is a ParameterSymbol.
 /// If it doesn't exist, or if the object in the specific slot is not a ParameterSymbol,
-/// allocate an (unitialized) parameter.
+/// allocate an (uninitialized) parameter.
 /// \param i is the specified input slot
 /// \return the corresponding parameter
 ParameterSymbol *ProtoStoreSymbol::getSymbolBacked(int4 i)
@@ -4542,6 +4554,23 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
   updateThisPointer();
 }
 
+/// \brief Add a an input parameter that will resolve to the current stack offset for \b this call site
+///
+/// A LOAD from a free reference to the \e spacebase pointer of the given AddrSpace is created and
+/// its output is added as a parameter to the call.  Later the LOAD should resolve to a COPY from
+/// a Varnode in the AddrSpace, whose offset is then the current offset.
+/// \param data is the function where the LOAD is created
+/// \param spacebase is the given (stack) AddrSpace
+void FuncCallSpecs::createPlaceholder(Funcdata &data,AddrSpace *spacebase)
+
+{
+  int4 slot = op->numInput();
+  Varnode *loadval = data.opStackLoad(spacebase,0,1,op,(Varnode *)0,false);
+  data.opInsertInput(op,loadval,slot);
+  setStackPlaceholderSlot(slot);
+  loadval->setSpacebasePlaceholder();
+}
+
 /// \brief Calculate the stack offset of \b this call site
 ///
 /// The given Varnode must be the input to the CALL in the \e placeholder slot
@@ -4565,8 +4594,7 @@ void FuncCallSpecs::resolveSpacebaseRelative(Funcdata &data,Varnode *phvn)
 
   if (stackPlaceholderSlot >= 0) {
     if (op->getIn(stackPlaceholderSlot) == phvn) {
-      data.opRemoveInput(op,stackPlaceholderSlot);
-      clearStackPlaceholderSlot();
+      abortSpacebaseRelative(data);
       return;
     }
   }
@@ -4598,8 +4626,12 @@ void FuncCallSpecs::abortSpacebaseRelative(Funcdata &data)
 
 {
   if (stackPlaceholderSlot >= 0) {
+    Varnode *vn = op->getIn(stackPlaceholderSlot);
     data.opRemoveInput(op,stackPlaceholderSlot);
     clearStackPlaceholderSlot();
+    // Remove the op producing the placeholder as well
+    if (vn->hasNoDescend() && vn->getSpace()->getType() == IPTR_INTERNAL && vn->isWritten())
+      data.opDestroy(vn->getDef());
   }
 }
 
@@ -4771,21 +4803,23 @@ PcodeOp *FuncCallSpecs::transferLockedOutputParam(ProtoParameter *param)
   return (PcodeOp *)0;
 }
 
-/// \brief List and/or create a Varnode for each input parameter of \b this prototype
+/// \brief List and/or create a Varnode for each input parameter of matching a source prototype
 ///
-/// Varnodes will be passed back in order that match current input parameters.
+/// Varnodes are taken for current trials associated with \b this call spec.
+/// Varnodes will be passed back in the order that they match the source input parameters.
 /// A NULL Varnode indicates a stack parameter. Varnode dimensions may not match
 /// parameter dimensions exactly.
 /// \param newinput will hold the resulting list of Varnodes
+/// \param source is the source prototype
 /// \return \b false only if the list needs to indicate stack variables and there is no stack-pointer placeholder
-bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput)
+bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput,const FuncProto &source)
 
 {
   newinput.push_back(op->getIn(0)); // Always keep the call destination address
-  int4 numparams = numParams();
+  int4 numparams = source.numParams();
   Varnode *stackref = (Varnode *)0;
   for(int4 i=0;i<numparams;++i) {
-    int4 reuse = transferLockedInputParam(getParam(i));
+    int4 reuse = transferLockedInputParam(source.getParam(i));
     if (reuse == 0) return false;
     if (reuse > 0)
       newinput.push_back(op->getIn(reuse));
@@ -4800,17 +4834,18 @@ bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput)
   return true;
 }
 
-/// \brief Pass back the Varnode needed to match the output parameter (return value)
+/// \brief Pass back the Varnode needed to match the output parameter (return value) of a source prototype
 ///
-/// Search for the Varnode matching the current output parameter and pass
+/// Search for the Varnode matching the output parameter and pass
 /// it back. The dimensions of the Varnode may not exactly match the return value.
-/// If the return value is e void, a NULL is passed back.
+/// If the return value is \e void, a NULL is passed back.
 /// \param newoutput will hold the passed back Varnode
+/// \param source is the source prototype
 /// \return \b true if the passed back value is accurate
-bool FuncCallSpecs::transferLockedOutput(Varnode *&newoutput)
+bool FuncCallSpecs::transferLockedOutput(Varnode *&newoutput,const FuncProto &source)
 
 {
-  ProtoParameter *param = getOutput();
+  ProtoParameter *param = source.getOutput();
   if (param->getType()->getMetatype() == TYPE_VOID) {
     newoutput = (Varnode *)0;
     return true;
@@ -5066,16 +5101,17 @@ bool FuncCallSpecs::lateRestriction(const FuncProto &restrictedProto,vector<Varn
   }
 
   if (!isCompatible(restrictedProto)) return false;
-  copy(restrictedProto);		// Convert ourselves to restrictedProto
-  //  if (!isInputLocked()) return false;
-  if (isDotdotdot() && (!isinputactive)) return false;
+  if (restrictedProto.isDotdotdot() && (!isinputactive)) return false;
 
-  // Redo all the varnode inputs (if possible)
-  if (isInputLocked())
-    if (!transferLockedInput(newinput)) return false;
-  // Redo all the varnode outputs (if possible)
-  if (isOutputLocked())
-    if (!transferLockedOutput(newoutput)) return false;
+  if (restrictedProto.isInputLocked()) {
+    if (!transferLockedInput(newinput,restrictedProto))		// Redo all the varnode inputs (if possible)
+      return false;
+  }
+  if (restrictedProto.isOutputLocked()) {
+    if (!transferLockedOutput(newoutput,restrictedProto))	// Redo all the varnode outputs (if possible)
+      return false;
+  }
+  copy(restrictedProto);		// Convert ourselves to restrictedProto
 
   return true;
 }
@@ -5613,3 +5649,5 @@ void FuncCallSpecs::countMatchingCalls(const vector<FuncCallSpecs *> &qlst)
   for(;lastChange<i;++lastChange)
     copyList[lastChange]->matchCallCount = num;
 }
+
+} // End namespace ghidra

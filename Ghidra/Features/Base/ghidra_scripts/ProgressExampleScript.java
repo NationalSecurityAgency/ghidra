@@ -30,7 +30,7 @@ public class ProgressExampleScript extends GhidraScript {
 		for (int i = 0; i < 10; i++) {
 			// Note: any script wishing to be responsive to a cancellation from the GUI needs to 
 			// call checkCancelled()
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Thread.sleep(1000); // pause a bit so we can see progress
 

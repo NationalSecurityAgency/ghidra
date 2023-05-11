@@ -89,19 +89,19 @@ public final class BooleanField extends PrimitiveField {
 	}
 
 	@Override
-	int write(Buffer buf, int offset) throws IOException {
+	int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		return buf.putByte(offset, value);
 	}
 
 	@Override
-	int read(Buffer buf, int offset) throws IOException {
+	int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		updatingPrimitiveValue();
 		value = buf.getByte(offset);
 		return offset + 1;
 	}
 
 	@Override
-	int readLength(Buffer buf, int offset) throws IOException {
+	int readLength(Buffer buf, int offset) {
 		return 1;
 	}
 

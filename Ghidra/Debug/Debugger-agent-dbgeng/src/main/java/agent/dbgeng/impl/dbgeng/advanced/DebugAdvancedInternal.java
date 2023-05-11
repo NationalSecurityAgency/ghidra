@@ -15,15 +15,15 @@
  */
 package agent.dbgeng.impl.dbgeng.advanced;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
 import agent.dbgeng.dbgeng.DebugAdvanced;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgeng.jna.dbgeng.advanced.*;
 import ghidra.comm.util.BitmaskUniverse;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -43,14 +43,10 @@ public interface DebugAdvancedInternal extends DebugAdvanced {
 		return DbgEngUtil.lazyWeakCache(CACHE, advanced, DebugAdvancedImpl3::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugAdvanced>> PREFERRED_ADVANCED_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugAdvanced>> PREFERRED_ADVANCED_IIDS =
-		PREFERRED_ADVANCED_IIDS_BUILDER //
-				.put(new REFIID(IDebugAdvanced3.IID_IDEBUG_ADVANCED3), WrapIDebugAdvanced3.class) //
-				.put(new REFIID(IDebugAdvanced2.IID_IDEBUG_ADVANCED2), WrapIDebugAdvanced2.class) //
-				.put(new REFIID(IDebugAdvanced.IID_IDEBUG_ADVANCED), WrapIDebugAdvanced.class) //
-				.build();
+	List<Preferred<WrapIDebugAdvanced>> PREFERRED_ADVANCED_IIDS = List.of(
+		new Preferred<>(IDebugAdvanced3.IID_IDEBUG_ADVANCED3, WrapIDebugAdvanced3.class),
+		new Preferred<>(IDebugAdvanced2.IID_IDEBUG_ADVANCED2, WrapIDebugAdvanced2.class),
+		new Preferred<>(IDebugAdvanced.IID_IDEBUG_ADVANCED, WrapIDebugAdvanced.class));
 
 	static DebugAdvancedInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugAdvancedInternal.class,

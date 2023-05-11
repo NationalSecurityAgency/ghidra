@@ -71,6 +71,22 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 	}
 
 	/**
+	 * Get the language ID
+	 * @return language ID
+	 */
+	public LanguageID getLanguageID() {
+		return languageID;
+	}
+
+	/**
+	 * Get the compiler spec ID
+	 * @return compiler spec ID
+	 */
+	public CompilerSpecID getCompilerSpecID() {
+		return compilerSpecID;
+	}
+
+	/**
 	 * Gets the {@link Language} for this object's {@link LanguageID}.
 	 * 
 	 * @return The {@link Language} for this object's {@link LanguageID}.

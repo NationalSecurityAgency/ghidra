@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
@@ -35,13 +36,13 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	private final long length;
 	private final Set<TraceBreakpointKind> kinds;
 
-	public LoneLogicalBreakpoint(TraceRecorder recorder, Address address, long length,
+	public LoneLogicalBreakpoint(PluginTool tool, Trace trace, Address address, long length,
 			Collection<TraceBreakpointKind> kinds) {
-		this.breaks = new TraceBreakpointSet(recorder, address);
+		this.breaks = new TraceBreakpointSet(tool, trace, address);
 		this.length = length;
 		this.kinds = Set.copyOf(kinds);
 
-		this.justThisTrace = Set.of(recorder.getTrace());
+		this.justThisTrace = Set.of(trace);
 	}
 
 	@Override
@@ -85,8 +86,23 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public void setTraceAddress(TraceRecorder recorder, Address address) {
+	public String getEmuSleigh() {
+		return breaks.computeSleigh();
+	}
+
+	@Override
+	public void setEmuSleigh(String sleigh) {
+		breaks.setEmuSleigh(sleigh);
+	}
+
+	@Override
+	public void setTraceAddress(Trace trace, Address address) {
 		throw new AssertionError();
+	}
+
+	@Override
+	public void setRecorder(Trace trace, TraceRecorder recorder) {
+		breaks.setRecorder(recorder);
 	}
 
 	@Override
@@ -96,7 +112,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 
 	@Override
 	public Set<TraceBreakpoint> getTraceBreakpoints() {
-		return new HashSet<>(breaks.getBreakpoints());
+		return breaks.getBreakpoints();
 	}
 
 	@Override

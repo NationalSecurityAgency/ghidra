@@ -28,15 +28,17 @@ import javax.swing.event.DocumentListener;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.DockingWindowManager;
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
-import ghidra.app.util.opinion.AbstractLibrarySupportLoader;
-import ghidra.app.util.opinion.LibraryPathsDialog;
+import ghidra.app.util.opinion.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.Project;
+import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.*;
@@ -55,7 +57,7 @@ public class OptionsEditorPanel extends JPanel {
 	 * Construct a new OptionsEditorPanel
 	 * @param options the list of options to be edited.
 	 * @param addressFactoryService a service for providing an appropriate AddressFactory if needed
-	 * for editing an options.
+	 * for editing an options.  If null, address based options will not be available.
 	 */
 	public OptionsEditorPanel(List<Option> options, AddressFactoryService addressFactoryService) {
 		super(new VerticalLayout(5));
@@ -76,10 +78,13 @@ public class OptionsEditorPanel extends JPanel {
 
 		panel.setBorder(createBorder(group));
 		for (Option option : optionGroup) {
-			panel.add(new GLabel(option.getName(), SwingConstants.RIGHT));
 			Component editorComponent = getEditorComponent(option);
-			editorComponent.setName(option.getName()); // set the component name to the option name
-			panel.add(editorComponent);
+			if (editorComponent != null) {
+				// Editor not available - omit option from panel
+				panel.add(new GLabel(option.getName(), SwingConstants.RIGHT));
+				editorComponent.setName(option.getName()); // set the component name to the option name
+				panel.add(editorComponent);
+			}
 		}
 
 		if (needsSelectAllDeselectAllButton(optionGroup)) {
@@ -178,7 +183,14 @@ public class OptionsEditorPanel extends JPanel {
 		}
 	}
 
-	public Component getEditorComponent(Option option) {
+	/**
+	 * Get the editor component for the specified option.
+	 * @param option option to be edited
+	 * @return option editor or null if prerequisite state not available to support
+	 * editor (e.g., Address or AddressSpace editor when {@link AddressFactoryService} 
+	 * is not available).
+	 */
+	private Component getEditorComponent(Option option) {
 
 		// Special cases for library link/load options
 		if (option.getName().equals(AbstractLibrarySupportLoader.LINK_SEARCH_FOLDER_OPTION_NAME) ||
@@ -241,27 +253,45 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component buildProjectFolderEditor(Option option) {
-		JPanel panel = new JPanel(new BorderLayout());
-		JTextField textField = new JTextField();
+		Project project = AppInfo.getActiveProject();
+		final SaveState state;
+		SaveState existingState = project.getSaveableData(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY);
+		if (existingState != null) {
+			state = existingState;
+		}
+		else {
+			state = new SaveState();
+			project.setSaveableData(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, state);
+		}
+		String lastFolderPath = state.getString(option.getName(), "");
+		option.setValue(lastFolderPath);
+		JTextField textField = new JTextField(lastFolderPath);
 		textField.setEditable(false);
-		JButton button = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton button = new BrowseButton();
 		button.addActionListener(e -> {
-			DataTreeDialog dataTreeDialog = new DataTreeDialog(this,
-				"Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
-			dataTreeDialog.setSelectedFolder(null);
+			DataTreeDialog dataTreeDialog =
+				new DataTreeDialog(this, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+			String folderPath = lastFolderPath.isBlank() ? "/" : lastFolderPath;
+			dataTreeDialog.setSelectedFolder(project.getProjectData().getFolder(folderPath));
 			dataTreeDialog.showComponent();
 			DomainFolder folder = dataTreeDialog.getDomainFolder();
 			if (folder != null) {
-				textField.setText(folder.getPathname());
-				option.setValue(folder.getPathname());
+				String newFolderPath = folder.getPathname();
+				textField.setText(newFolderPath);
+				option.setValue(newFolderPath);
+				state.putString(option.getName(), newFolderPath);
 			}
 		});
+		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(textField, BorderLayout.CENTER);
 		panel.add(button, BorderLayout.EAST);
 		return panel;
 	}
 
 	private Component getAddressSpaceEditorComponent(Option option) {
+		if (addressFactoryService == null) {
+			return null;
+		}
 		JComboBox<AddressSpace> combo = new GComboBox<>();
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
 		AddressSpace[] spaces =
@@ -329,6 +359,9 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component getAddressEditorComponent(Option option) {
+		if (addressFactoryService == null) {
+			return null;
+		}
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
 		AddressInput addressInput = new AddressInput();
 		addressInput.setName(option.getName());

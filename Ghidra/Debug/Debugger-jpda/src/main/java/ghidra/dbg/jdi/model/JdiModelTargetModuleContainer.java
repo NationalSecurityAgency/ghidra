@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.ModuleReference;
 
 import ghidra.async.AsyncFence;
-import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetModuleContainer;
@@ -101,7 +101,7 @@ public class JdiModelTargetModuleContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return doRefresh();
 	}
 
@@ -136,9 +136,6 @@ public class JdiModelTargetModuleContainer extends JdiModelTargetObjectImpl
 	}
 
 	public CompletableFuture<?> refreshInternal() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
 		return doRefresh().exceptionally(ex -> {
 			Msg.error(this, "Problem refreshing inferior's modules", ex);
 			return null;

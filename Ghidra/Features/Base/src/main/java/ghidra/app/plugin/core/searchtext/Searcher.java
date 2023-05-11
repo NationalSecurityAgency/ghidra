@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,27 +19,36 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Search the program text.
- * 
- * 
- *
+ * Search the program text
  */
 public interface Searcher {
 
-    /**
-     * Get the next program location.
-     * @return null if there is no next program location.
-     */
-    public ProgramLocation search();
-    
-    /**
-     * Set the task monitor.
-     * @param monitor monitor that allows the search to be canceled
-     */
-    public void setMonitor(TaskMonitor monitor);
-    
-    /**
-     * Return the search options associated with this Searcher.
-     */
-    public SearchOptions getSearchOptions();
+	/**
+	 * Get the next program location.
+	 * @return null if there is no next program location.
+	 */
+	public TextSearchResult search();
+
+	/**
+	 * Set the task monitor.
+	 * @param monitor monitor that allows the search to be canceled
+	 */
+	public void setMonitor(TaskMonitor monitor);
+
+	/**
+	 * Return the search options associated with this Searcher.
+	 * @return the search option
+	 */
+	public SearchOptions getSearchOptions();
+
+	/**
+	 * A record object that represents a single search result
+	 * 
+	 * @param programLocation the program location of the search result. 
+	 * @param offset the offset in the *model*'s text of the search result; this value will be from
+	 *        0 to text.length(), where text is a single string for all text in the given field.
+	 */
+	public record TextSearchResult(ProgramLocation programLocation, int offset) {
+		// stub
+	}
 }

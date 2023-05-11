@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.table;
 import java.awt.Color;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
@@ -153,7 +153,7 @@ public class TableServicePlugin extends ProgramPlugin
 
 	@Override
 	public <T> TableComponentProvider<T> showTableWithMarkers(String title, String tableTypeName,
-			GhidraProgramTableModel<T> model, Color markerColor, ImageIcon markerIcon,
+			GhidraProgramTableModel<T> model, Color markerColor, Icon markerIcon,
 			String windowSubMenu, Navigatable navigatable) {
 
 		GoToService gotoService = tool.getService(GoToService.class);

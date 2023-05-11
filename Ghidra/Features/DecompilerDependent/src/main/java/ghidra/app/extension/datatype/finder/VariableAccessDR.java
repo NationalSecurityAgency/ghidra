@@ -106,21 +106,27 @@ public class VariableAccessDR extends DecompilerReference {
 	private DecompilerVariable getMatch(DataType dt, FieldMatcher fieldMatcher,
 			DecompilerVariable var, DecompilerVariable potentialField) {
 
+		String indent = "\t\t";
+
 		// Note: for now, I ignore the precedence of casting; if any cast type is a match, then
 		//       signal hooray
 		boolean searchForField = !fieldMatcher.isIgnored();
 		DecompilerVariable fieldVar = searchForField ? potentialField : null;
 		DecompilerVariable match = getMatchingVarialbe(dt, var, fieldVar);
 		if (match == null) {
+			DtrfDbg.println(this, indent + "NO MATCHING VARIABLE");
 			return null; // wrong type, nothing to do
 		}
 
 		// Matches on the type, does the field match?
 		if (fieldMatcher.isIgnored()) {
+			DtrfDbg.println(this, indent + "field macher is ignored; returning match");
 			return match; // no field to match
 		}
 
 		if (potentialField == null) {
+
+			DtrfDbg.println(this, indent + "No potential field to match; name / offset match?");
 
 			// check for the case where we have not been passed a 'potential field', but the given
 			// 'var' is itself may be the field we seek, such as in an if statement like this:
@@ -129,33 +135,51 @@ public class VariableAccessDR extends DecompilerReference {
 			String name = var.getName();
 			int offset = var.getOffset();
 			if (fieldMatcher.matches(name, offset)) {
+				DtrfDbg.println(this, indent + "\tfield matcher matched on variable: " + var);
 				return var;
 			}
 
+			DtrfDbg.println(this, indent + "\tNO FIELD MATCHER MATCH");
 			return null; // we seek a field, but there is none
 		}
+
+		DtrfDbg.println(this, indent + "Checking 'potential field' match...");
 
 		String name = potentialField.getName();
 		int offset = potentialField.getOffset();
 		if (fieldMatcher.matches(name, offset)) {
+			DtrfDbg.println(this, indent + "\tMATCHED");
 			return match;
 		}
+		DtrfDbg.println(this, indent + "\tNO MATCH");
 		return null;
 	}
 
 	private DecompilerVariable getMatchingVarialbe(DataType dt, DecompilerVariable var,
 			DecompilerVariable potentialField) {
 
+		String indent = "\t\t\t";
+
+		DtrfDbg.println(this, indent + "Checking for matching variable; any casts?");
 		List<DecompilerVariable> castVariables = var.getCasts();
 		for (DecompilerVariable cast : castVariables) {
 			if (matchesType(cast, dt)) {
+				DtrfDbg.println(this, indent + "MATCHED cast: " + cast);
 				return cast;
 			}
 		}
 
+		String dtString = dt == null ? "null" : dt.toString();
+		DtrfDbg.println(this,
+			indent + "No matched casts; checking type against var:\n" +
+				StringUtilities.indentLines("type: " + dtString, indent + "\t") + "\n" +
+				StringUtilities.indentLines("var: " + var.toString(), indent + "\t"));
 		if (matchesType(var, dt)) {
+			DtrfDbg.println(this, indent + "MATCHED type: ");
 			return var;
 		}
+
+		DtrfDbg.println(this, indent + "Type did not match; checking High Variable: ");
 
 		//
 		// 						Unusual Code Alert!
@@ -170,10 +194,12 @@ public class VariableAccessDR extends DecompilerReference {
 		HighVariable highVariable = var.variable.getHighVariable();
 		if (highVariable instanceof HighGlobal) {
 			if (matchesParentType(potentialField, dt)) {
+				DtrfDbg.println(this, indent + "MATCHED on parent type: " + dt);
 				return potentialField;
 			}
 		}
 
+		DtrfDbg.println(this, indent + "NOT MATCHED");
 		return null;
 	}
 
@@ -188,7 +214,11 @@ public class VariableAccessDR extends DecompilerReference {
 	}
 
 	private boolean matchesType(DecompilerVariable var, DataType dt) {
+
+		String indent = "\t\t\t\t";
+
 		if (var == null) {
+			DtrfDbg.println(this, indent + "Types Match? no variable to check");
 			return false;
 		}
 
@@ -196,6 +226,7 @@ public class VariableAccessDR extends DecompilerReference {
 		if (varType == null) {
 			// it seems odd to me that there is no type, but I have seen this in the case
 			// statement of a switch
+			DtrfDbg.println(this, indent + "ypes Match? no variable TYPE to check");
 			return false;
 		}
 		boolean matches = isEqual(varType, dt);

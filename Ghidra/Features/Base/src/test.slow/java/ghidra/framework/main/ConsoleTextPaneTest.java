@@ -25,7 +25,7 @@ import javax.swing.text.Document;
 
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.plugintool.DummyPluginTool;
 
 public class ConsoleTextPaneTest {
@@ -110,28 +110,28 @@ public class ConsoleTextPaneTest {
 
 	private void assertCaretAtTop(ConsoleTextPane text) {
 
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 		int expectedPosition = 0;
 		assertCaretPosition(text, expectedPosition);
 	}
 
 	private void assertCaretAtBottom(ConsoleTextPane text) {
 
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 		int expectedPosition = text.getDocument().getLength();
 		assertCaretPosition(text, expectedPosition);
 	}
 
 	private void assertCaretPosition(ConsoleTextPane text, int expectedPosition) {
 
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 		Document doc = text.getDocument();
 		int actualPosition = swing(() -> text.getCaretPosition());
 		assertEquals(expectedPosition, actualPosition);
 	}
 
 	private void printEnoughLinesToOverflowTheMaxCharCount(ConsoleTextPane text) {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 
 			int charsWritten = 0;
 			for (int i = 0; charsWritten < text.getMaximumCharacterLimit(); i++) {
@@ -145,10 +145,10 @@ public class ConsoleTextPaneTest {
 	}
 
 	private void swing(Runnable r) {
-		AbstractGenericTest.runSwing(r);
+		AbstractGuiTest.runSwing(r);
 	}
 
 	private <T> T swing(Supplier<T> s) {
-		return AbstractGenericTest.runSwing(s);
+		return AbstractGuiTest.runSwing(s);
 	}
 }

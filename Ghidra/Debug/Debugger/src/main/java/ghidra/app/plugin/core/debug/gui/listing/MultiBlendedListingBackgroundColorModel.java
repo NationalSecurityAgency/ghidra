@@ -21,11 +21,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
+import generic.theme.GColor;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.util.ColorUtils.ColorBlender;
 
 public class MultiBlendedListingBackgroundColorModel implements ListingBackgroundColorModel {
+	private static final Color COLOR_BACKGROUND = new GColor("color.bg");
+
 	private final List<BackgroundColorModel> models = new ArrayList<>();
 
 	private final ColorBlender blender = new ColorBlender();
@@ -60,7 +63,7 @@ public class MultiBlendedListingBackgroundColorModel implements ListingBackgroun
 	@Override
 	public Color getDefaultBackgroundColor() {
 		if (models.isEmpty()) {
-			return Color.WHITE;
+			return COLOR_BACKGROUND;
 		}
 		return models.get(0).getDefaultBackgroundColor();
 	}

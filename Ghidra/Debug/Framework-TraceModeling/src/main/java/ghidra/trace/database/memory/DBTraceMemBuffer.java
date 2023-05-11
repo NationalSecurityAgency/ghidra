@@ -20,10 +20,10 @@ import java.nio.ByteOrder;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.mem.MemBufferAdapter;
+import ghidra.program.model.mem.MemBufferMixin;
 import ghidra.program.model.mem.Memory;
 
-public class DBTraceMemBuffer implements MemBufferAdapter {
+public class DBTraceMemBuffer implements MemBufferMixin {
 	private final DBTraceMemorySpace space;
 	private final long snap;
 	private final Address start;

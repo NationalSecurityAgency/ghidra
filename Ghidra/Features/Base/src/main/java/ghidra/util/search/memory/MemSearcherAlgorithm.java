@@ -30,7 +30,7 @@ public class MemSearcherAlgorithm implements MemorySearchAlgorithm {
 	private boolean forwardSearch;
 	private SearchData searchData;
 	private AddressSetView searchSet;
-	private int matchLimit;
+	protected int searchLimit;
 	private Program program;
 	private int alignment;
 	private CodeUnitSearchInfo codeUnitSearchInfo;
@@ -41,7 +41,7 @@ public class MemSearcherAlgorithm implements MemorySearchAlgorithm {
 		this.forwardSearch = searchInfo.isSearchForward();
 		this.alignment = searchInfo.getAlignment();
 		this.searchSet = searchSet;
-		this.matchLimit = searchInfo.getMatchLimit();
+		this.searchLimit = searchInfo.getSearchLimit();
 		this.program = program;
 		this.codeUnitSearchInfo = searchInfo.getCodeUnitSearchInfo();
 	}
@@ -58,7 +58,7 @@ public class MemSearcherAlgorithm implements MemorySearchAlgorithm {
 			searchRange(accumulator, range, monitor, progressCount);
 			progressCount += range.getLength();
 			monitor.setProgress(progressCount);
-			if (accumulator.size() >= matchLimit) {
+			if (accumulator.size() >= searchLimit) {
 				return;
 			}
 		}
@@ -78,7 +78,7 @@ public class MemSearcherAlgorithm implements MemorySearchAlgorithm {
 			if (isMatchingAddress(matchAddress)) {
 				MemSearchResult result = new MemSearchResult(matchAddress, length);
 				accumulator.add(result);
-				if (accumulator.size() >= matchLimit) {
+				if (accumulator.size() >= searchLimit) {
 					return;
 				}
 				monitor.setProgress(progressCount + getRangeDifference(range, matchAddress));

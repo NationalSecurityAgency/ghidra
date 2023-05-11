@@ -28,12 +28,15 @@ import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
+import generic.theme.GColor;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
@@ -41,13 +44,15 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	private static final String COMPLETION_WINDOW_TRIGGER_DESCRIPTION =
 		"The key binding used to show the auto-complete window " +
 			"(for those consoles that have auto-complete).";
+	private static final String FONT_ID = "font.plugin.console";
 	private static final String FONT_OPTION_LABEL = "Font";
 	private static final String FONT_DESCRIPTION =
 		"This is the font that will be used in the Console.  " +
 			"Double-click the font example to change it.";
 
-	private static final Color NORMAL_COLOR = Color.black;
-	private static final Color ERROR_COLOR = Color.red;
+	private static final Color NORMAL_COLOR = new GColor("color.fg.interpreterconsole");
+	private static final Color ERROR_COLOR = new GColor("color.fg.interpreterconsole.error");
+	private static final Color BG_COLOR = new GColor("color.bg.interpreterconsole");
 
 	public enum TextType {
 		STDOUT, STDERR, STDIN;
@@ -68,25 +73,16 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	private PrintWriter outWriter;
 	private PrintWriter errWriter;
 
-	private Font basicFont = getBasicFont();
-	private Font basicBoldFont = getBoldFont(basicFont);
 	private SimpleAttributeSet STDOUT_SET;
 	private SimpleAttributeSet STDERR_SET;
 	private SimpleAttributeSet STDIN_SET;
 
 	private CompletionWindowTrigger completionWindowTrigger = CompletionWindowTrigger.TAB;
 	private boolean highlightCompletion = false;
+	private int completionInsertionPosition;
 
 	private boolean caretGuard = true;
 	private PluginTool tool;
-
-	private static Font getBasicFont() {
-		return new Font(Font.MONOSPACED, Font.PLAIN, 20);
-	}
-
-	private static Font getBoldFont(Font font) {
-		return font.deriveFont(Font.BOLD);
-	}
 
 	private static SimpleAttributeSet createAttributes(Font font, Color color) {
 		SimpleAttributeSet attributeSet = new SimpleAttributeSet();
@@ -131,6 +127,10 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		promptTextPane = new JTextPane();
 		inputTextPane = new JTextPane();
 		inputTextPane.setName("Interpreter Input Field");
+
+		outputTextPane.setBackground(BG_COLOR);
+		promptTextPane.setBackground(BG_COLOR);
+		inputTextPane.setBackground(BG_COLOR);
 
 		history = new HistoryManagerImpl();
 
@@ -367,15 +367,14 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		}
 	}
 
-	private void updateFontAttributes(Font newFont) {
-		basicFont = newFont;
-		basicBoldFont = getBoldFont(newFont);
-		STDOUT_SET = createAttributes(basicFont, NORMAL_COLOR);
-		STDERR_SET = createAttributes(basicFont, ERROR_COLOR);
-		STDIN_SET = createAttributes(basicBoldFont, NORMAL_COLOR);
+	private void updateFontAttributes(Font font) {
+		Font boldFont = font.deriveFont(Font.BOLD);
+		STDOUT_SET = createAttributes(font, NORMAL_COLOR);
+		STDERR_SET = createAttributes(font, ERROR_COLOR);
+		STDIN_SET = createAttributes(boldFont, NORMAL_COLOR);
 
-		setTextPaneFont(inputTextPane, basicBoldFont);
-		setTextPaneFont(promptTextPane, basicFont);
+		setTextPaneFont(inputTextPane, boldFont);
+		setTextPaneFont(promptTextPane, font);
 		setPrompt(promptTextPane.getText());
 	}
 
@@ -386,13 +385,13 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
 		options.setOptionsHelpLocation(help);
 
-		options.registerOption(FONT_OPTION_LABEL, basicFont, help, FONT_DESCRIPTION);
+		options.registerThemeFontBinding(FONT_OPTION_LABEL, FONT_ID, help,
+			FONT_DESCRIPTION);
 		options.registerOption(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB, help,
 			COMPLETION_WINDOW_TRIGGER_DESCRIPTION);
 
-		basicFont = options.getFont(FONT_OPTION_LABEL, basicFont);
-		basicFont = SystemUtilities.adjustForFontSizeOverride(basicFont);
-		updateFontAttributes(basicFont);
+		Font font = Gui.getFont(FONT_ID);
+		updateFontAttributes(font);
 
 		completionWindowTrigger =
 			options.getEnum(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB);
@@ -410,8 +409,8 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 		if (optionName.equals(FONT_OPTION_LABEL)) {
-			basicFont = SystemUtilities.adjustForFontSizeOverride((Font) newValue);
-			updateFontAttributes(basicFont);
+			Font font = Gui.getFont(FONT_ID);
+			updateFontAttributes(font);
 		}
 		else if (optionName.equals(COMPLETION_WINDOW_TRIGGER_LABEL)) {
 			completionWindowTrigger = (CompletionWindowTrigger) newValue;
@@ -482,9 +481,13 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 				return;
 			}
 
+			// We save the position of the caret here in advance because the user can move it
+			// later (but before the insertion takes place) and make the completions invalid.
+			completionInsertionPosition = inputTextPane.getCaretPosition();
+
 			String text = getInputTextPaneText();
-			List<CodeCompletion> completions =
-				InterpreterPanel.this.interpreter.getCompletions(text);
+			List<CodeCompletion> completions = InterpreterPanel.this.interpreter.getCompletions(
+				text, completionInsertionPosition);
 			completionWindow.updateCompletionList(completions);
 		});
 	}
@@ -620,20 +623,27 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		}
 
 		String text = getInputTextPaneText();
-		int position = inputTextPane.getCaretPosition();
+		int position = completionInsertionPosition;
 		String insertion = completion.getInsertion();
 
 		/* insert completion string */
-		setInputTextPaneText(text.substring(0, position) + insertion + text.substring(position));
+		int insertedTextStart = Math.max(0, position - completion.getCharsToRemove());
+		int insertedTextEnd = insertedTextStart + insertion.length();
+		String inputText =
+			text.substring(0, insertedTextStart) + insertion + text.substring(position);
+		setInputTextPaneText(inputText);
 
 		/* Select what we inserted so that the user can easily
 		 * get rid of what they did (in case of a mistake). */
 		if (highlightCompletion) {
-			inputTextPane.setSelectionStart(position);
+			inputTextPane.setSelectionStart(insertedTextStart);
+			inputTextPane.moveCaretPosition(insertedTextEnd);
+		}
+		else {
+			/* Then put the caret right after what we inserted. */
+			inputTextPane.setCaretPosition(insertedTextEnd);
 		}
 
-		/* Then put the caret right after what we inserted. */
-		inputTextPane.moveCaretPosition(position + insertion.length());
 		updateCompletionList();
 	}
 
@@ -667,7 +677,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
 
 	/**
 	 * An {@link InputStream} that has as its source text strings being pushed into

@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jun 12, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
 
 import ghidra.program.model.pcode.*;
 
 /**
- * 
- *
- * A C code token which is not an operation, variable, function name, or type. Like '(' or ','
- * A SyntaxToken may be or may include spacing
+ * A source code token which is not an operation, variable, function name, or type. Like '(' or ','.
+ * A SyntaxToken may be or may include spacing.  As a special case, the token can be part of
+ * an enclosing pair of tokens, as with '(' and ')' or '{' and '}'. In this case, the token
+ * is either opening or closing and contains an id that matches it with its pair token.
  */
 public class ClangSyntaxToken extends ClangToken {
 	private int open, close;
@@ -73,10 +67,16 @@ public class ClangSyntaxToken extends ClangToken {
 		super.decode(decoder, pfactory);
 	}
 
+	/**
+	 * @return the pair id if this is an opening token, -1 otherwise
+	 */
 	public int getOpen() {
 		return open;
 	}
 
+	/**
+	 * @return the pair id if this is a closing token, -1 otherwise
+	 */
 	public int getClose() {
 		return close;
 	}

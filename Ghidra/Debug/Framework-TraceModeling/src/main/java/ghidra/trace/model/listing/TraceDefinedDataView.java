@@ -15,12 +15,11 @@
  */
 package ghidra.trace.model.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.util.TraceRegisterUtils;
 
@@ -41,7 +40,7 @@ public interface TraceDefinedDataView extends TraceBaseDefinedUnitsView<TraceDat
 	 * @return the new data unit
 	 * @throws CodeUnitInsertionException if there's a conflict
 	 */
-	TraceData create(Range<Long> lifespan, Address address, DataType dataType, int length)
+	TraceData create(Lifespan lifespan, Address address, DataType dataType, int length)
 			throws CodeUnitInsertionException;
 
 	/**
@@ -57,7 +56,7 @@ public interface TraceDefinedDataView extends TraceBaseDefinedUnitsView<TraceDat
 	 * @return the new data unit
 	 * @throws CodeUnitInsertionException if there's a conflict
 	 */
-	TraceData create(Range<Long> lifespan, Address address, DataType dataType)
+	TraceData create(Lifespan lifespan, Address address, DataType dataType)
 			throws CodeUnitInsertionException;
 
 	/**
@@ -73,7 +72,7 @@ public interface TraceDefinedDataView extends TraceBaseDefinedUnitsView<TraceDat
 	 * @return the new data unit
 	 * @throws CodeUnitInsertionException if there's a conflict
 	 */
-	default TraceData create(Range<Long> lifespan, Register register, DataType dataType)
+	default TraceData create(Lifespan lifespan, Register register, DataType dataType)
 			throws CodeUnitInsertionException {
 		TraceRegisterUtils.requireByteBound(register);
 		return create(lifespan, register.getAddress(), dataType, register.getNumBytes());
@@ -93,6 +92,6 @@ public interface TraceDefinedDataView extends TraceBaseDefinedUnitsView<TraceDat
 	 * @return the new data unit
 	 * @throws CodeUnitInsertionException if there's a conflict
 	 */
-	TraceData create(TracePlatform platform, Range<Long> lifespan, Register register,
+	TraceData create(TracePlatform platform, Lifespan lifespan, Register register,
 			DataType dataType) throws CodeUnitInsertionException;
 }

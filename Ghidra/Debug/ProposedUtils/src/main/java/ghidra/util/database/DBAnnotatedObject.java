@@ -326,4 +326,8 @@ public class DBAnnotatedObject extends DatabaseObject {
 	public boolean isDeleted() {
 		return super.isDeleted(adapter.getLock());
 	}
+
+	public String getTableName() {
+		return store.getTableName();
+	}
 }

@@ -23,6 +23,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.DBTraceUtils.OffsetSnap;
 import ghidra.trace.database.DBTraceUtils.OffsetThenSnapDBFieldCodec;
+import ghidra.trace.model.Lifespan;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 
@@ -77,7 +78,7 @@ class DBTraceMemoryBlockEntry extends DBAnnotatedObject {
 	}
 
 	public boolean isScratch() {
-		return DBTraceUtils.isScratch(location.snap);
+		return Lifespan.isScratch(location.snap);
 	}
 
 	private int getBlockNumber() {

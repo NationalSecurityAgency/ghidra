@@ -36,15 +36,33 @@ dependencies {
 
 def srcDirs =  []
 file(project.projectDir).eachDirMatch(~/.*scripts_.*/) { srcDirs << it.name }
+// Create all source sets first
+srcDirs.each{ dirName -> sourceSets.create(dirName) }
 
-srcDirs.each {dirName ->
-	sourceSets.create(dirName) {
-		java {
-			srcDir {
-				dirName
-			}
+// Examples that depend on 'org.other.lib' in 'scripts_lib'
+def script_lib_dependents = ["scripts_with_manifest", "scripts_lib_user"] as Set
+// Examples that depend on 'org.jarlib.JarUtil' in 'scripts_jar'
+def script_jar_dependents = ["scripts_uses_jar", "scripts_uses_jar_version"] as Set
+// Fixup each of the sourceSets
+srcDirs.each{ dirName ->
+	def sourceSet = sourceSets.named(dirName).get()
+	sourceSet.java {
+		srcDir {
+			dirName
 		}
 	}
+	sourceSet.compileClasspath += sourceSets.main.output
+
+	if (script_lib_dependents.contains(dirName)) {
+		sourceSet.compileClasspath += sourceSets.scripts_lib.output
+	}
+	if (script_jar_dependents.contains(dirName)) {
+		// Only use jar1 because jar2 conflicts
+		sourceSet.compileClasspath += sourceSets.scripts_jar1.output
+	}
+
+	def baseImplementation = project.configurations.maybeCreate(sourceSets.main.implementationConfigurationName)
+	project.configurations.maybeCreate(sourceSet.implementationConfigurationName).extendsFrom(baseImplementation)
 }
 
 // create and return a jar task for the given source directory

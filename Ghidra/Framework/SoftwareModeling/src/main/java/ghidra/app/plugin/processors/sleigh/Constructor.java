@@ -215,7 +215,7 @@ public class Constructor implements Comparable<Constructor> {
 				}
 				else {
 					for (int j = 0; j < element.length(); ++j) {
-						list.add(new Character(element.charAt(j)));
+						list.add(Character.valueOf(element.charAt(j)));
 					}
 				}
 			}

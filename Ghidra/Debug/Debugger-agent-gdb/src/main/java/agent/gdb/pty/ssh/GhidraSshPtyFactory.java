@@ -211,9 +211,15 @@ public class GhidraSshPtyFactory implements PtyFactory {
 			return session;
 		}
 		catch (JSchException e) {
-			if (e.getMessage().equals("Auth cancel")) {
+			String message = e.getMessage();
+			if (message.equals("Auth cancel")) {
 				Msg.error(this, "SSH connection canceled");
 				throw new CancellationException("SSH connection canceled");
+			}
+			else if (message.startsWith("reject HostKey")) {
+				String cancelMessage = "SSH " + message;
+				Msg.error(this, cancelMessage);
+				throw new CancellationException(cancelMessage);
 			}
 			Msg.error(this, "SSH connection error");
 			throw new IOException("SSH connection error", e);

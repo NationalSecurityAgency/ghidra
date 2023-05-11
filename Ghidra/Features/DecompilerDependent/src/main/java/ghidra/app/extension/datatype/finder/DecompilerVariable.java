@@ -106,7 +106,7 @@ public abstract class DecompilerVariable {
 		}
 
 		Varnode[] inputs = op.getInputs();
-		if (inputs.length == 2) {
+		if (inputs.length == 2 && inputs[0].getHigh() != null) {
 			return inputs[0].getHigh().getDataType();
 		}
 

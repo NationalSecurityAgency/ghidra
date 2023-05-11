@@ -24,6 +24,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GIcon;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -36,9 +37,7 @@ import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.EmptyIcon;
-import resources.icons.TranslateIcon;
 
 /**
  *  Generates label Fields.
@@ -58,8 +57,8 @@ public class LabelFieldFactory extends FieldFactory {
 	// These icons would normally be static, but can't be because the class searcher loads this
 	// class and it triggers swing access which is not allowed in headless.
 	private Icon EMPTY_ICON = new EmptyIcon(12, 16);
-	private Icon ANCHOR_ICON = new MultiIcon(EMPTY_ICON,
-		new TranslateIcon(ResourceManager.loadImage("images/pin.png"), 0, 4));
+	private Icon ANCHOR_ICON =
+		new MultiIcon(EMPTY_ICON, new GIcon("icon.base.util.viewer.fieldfactory.label"));
 
 	private PropertyEditor namespaceOptionsEditor = new NamespacePropertyEditor();
 
@@ -75,7 +74,6 @@ public class LabelFieldFactory extends FieldFactory {
 
 	public LabelFieldFactory() {
 		super(FIELD_NAME);
-		initIcons();
 	}
 
 	/**
@@ -85,7 +83,7 @@ public class LabelFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private LabelFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private LabelFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
@@ -103,14 +101,6 @@ public class LabelFieldFactory extends FieldFactory {
 		// Create code unit format and associated options - listen for changes
 		codeUnitFormat = new LabelCodeUnitFormat(fieldOptions);
 		codeUnitFormat.addChangeListener(codeUnitFormatListener);
-		initIcons();
-	}
-
-	private void initIcons() {
-		EMPTY_ICON = new EmptyIcon(12, 16);
-		ANCHOR_ICON = new MultiIcon(EMPTY_ICON,
-			new TranslateIcon(ResourceManager.loadImage("images/pin.png"), 0, 4));
-
 	}
 
 	private void setupNamespaceOptions(Options fieldOptions) {
@@ -198,8 +188,8 @@ public class LabelFieldFactory extends FieldFactory {
 		int nextPos = 0;
 
 		if (hasOffcuts) {
-			for (int i = 0; i < offcuts.size(); i++) {
-				AttributedString as = getAttributedOffsetText(obj, cu, currAddr, offcuts.get(i));
+			for (Address offcut : offcuts) {
+				AttributedString as = getAttributedOffsetText(obj, cu, currAddr, offcut);
 				if (as == null) {
 					as = new AttributedString(EMPTY_ICON,
 						SymbolUtilities.getDynamicOffcutName(currAddr),
@@ -260,27 +250,26 @@ public class LabelFieldFactory extends FieldFactory {
 	private String checkLabelString(Symbol symbol, Program program) {
 
 		if (!displayLocalNamespace && !displayNonLocalNamespace) {
-			return symbol.getName(); // no namespaces being shown
+			return simplifyTemplates(symbol.getName()); // no namespaces being shown
 		}
 
 		Namespace addressNamespace = program.getSymbolTable().getNamespace(symbol.getAddress());
 		Namespace symbolNamespace = symbol.getParentNamespace();
 		boolean isLocal = symbolNamespace.equals(addressNamespace);
 		if (!isLocal) {
-			return symbol.getName(displayNonLocalNamespace);
+			return simplifyTemplates(symbol.getName(displayNonLocalNamespace));
 		}
 
 		// O.K., we ARE a local namespace, how to display it?
 		if (!displayLocalNamespace) {
-			return symbol.getName();
+			return simplifyTemplates(symbol.getName());
 		}
 
 		// use the namespace name or a custom, user-defined value
 		if (useLocalPrefixOverride) {
-			return localPrefixText + symbol.getName(false);
+			return simplifyTemplates(localPrefixText + symbol.getName(false));
 		}
-		return symbol.getName(true);
-
+		return simplifyTemplates(symbol.getName(true));
 	}
 
 	private List<Address> getOffcutReferenceAddress(CodeUnit cu) {
@@ -460,9 +449,8 @@ public class LabelFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions pDisplayOptions, ToolOptions fieldOptions) {
 		return new LabelFieldFactory(formatModel, provider, pDisplayOptions, fieldOptions);
 	}
-
 }

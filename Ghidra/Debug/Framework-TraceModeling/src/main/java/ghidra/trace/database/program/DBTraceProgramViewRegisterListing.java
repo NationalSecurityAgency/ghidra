@@ -15,11 +15,10 @@
  */
 package ghidra.trace.database.program;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.program.TraceProgramViewRegisterListing;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.CancelledException;
@@ -54,16 +53,15 @@ public class DBTraceProgramViewRegisterListing extends AbstractDBTraceProgramVie
 	@Override
 	public boolean isUndefined(Address start, Address end) {
 		return codeOperations.undefinedData()
-				.coversRange(Range.closed(program.snap, program.snap),
-					new AddressRangeImpl(start, end));
+				.coversRange(Lifespan.at(program.snap), new AddressRangeImpl(start, end));
 	}
 
 	@Override
 	public void clearCodeUnits(Address startAddr, Address endAddr, boolean clearContext,
 			TaskMonitor monitor) throws CancelledException {
 		codeOperations.definedUnits()
-				.clear(Range.closed(program.snap, program.snap),
-					new AddressRangeImpl(startAddr, endAddr), clearContext, monitor);
+				.clear(Lifespan.at(program.snap), new AddressRangeImpl(startAddr, endAddr),
+					clearContext, monitor);
 	}
 
 	@Override
@@ -71,8 +69,8 @@ public class DBTraceProgramViewRegisterListing extends AbstractDBTraceProgramVie
 	public void clearAll(boolean clearContext, TaskMonitor monitor) {
 		try {
 			codeOperations.definedUnits()
-					.clear(Range.closed(program.snap, program.snap),
-						new AddressRangeImpl(minAddr, maxAddr), clearContext, monitor);
+					.clear(Lifespan.at(program.snap), new AddressRangeImpl(minAddr, maxAddr),
+						clearContext, monitor);
 		}
 		catch (CancelledException e) {
 			// This whole method is supposed to go away, anyway

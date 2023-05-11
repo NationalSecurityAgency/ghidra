@@ -15,6 +15,9 @@
  */
 package ghidra.dbg.attributes;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 public interface TargetArrayDataType extends TargetDataType {
 	public class DefaultTargetArrayDataType implements TargetArrayDataType {
 		protected final TargetDataType elementType;
@@ -33,6 +36,14 @@ public interface TargetArrayDataType extends TargetDataType {
 		@Override
 		public int getElementCount() {
 			return elementCount;
+		}
+
+		@Override
+		public JsonElement toJson() {
+			JsonObject object = new JsonObject();
+			object.add("elementType", elementType.toJson());
+			object.addProperty("elementCount", elementCount);
+			return object;
 		}
 	}
 

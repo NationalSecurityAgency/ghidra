@@ -73,7 +73,8 @@
 /* Pull parsers.  */
 #define YYPULL 1
 
-
+/* Substitute the type names.  */
+#define YYSTYPE         GRAMMARSTYPE
 /* Substitute the variable and function names.  */
 #define yyparse         grammarparse
 #define yylex           grammarlex
@@ -85,16 +86,17 @@
 #define yychar          grammarchar
 
 /* Copy the first part of user declarations.  */
-#line 16 "src/decompile/cpp/grammar.y" /* yacc.c:339  */
+
 
 #include "grammar.hh"
 
-extern int yylex(void);
-extern int yyerror(const char *str);
-static CParse *parse;
-extern int yydebug;
+namespace ghidra {
 
-#line 83 "src/decompile/cpp/grammar.cc" /* yacc.c:339  */
+extern int grammarlex(void);
+extern int grammarerror(const char *str);
+static CParse *parse;
+
+
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -114,17 +116,25 @@ extern int yydebug;
 
 
 /* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
+#ifndef GRAMMARDEBUG
+# if defined YYDEBUG
 #if YYDEBUG
+#   define GRAMMARDEBUG 1
+#  else
+#   define GRAMMARDEBUG 0
+#  endif
+# else /* ! defined YYDEBUG */
+#  define GRAMMARDEBUG 0
+# endif /* ! defined YYDEBUG */
+#endif  /* ! defined GRAMMARDEBUG */
+#if GRAMMARDEBUG
 extern int grammardebug;
 #endif
 
 /* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
+#ifndef GRAMMARTOKENTYPE
+# define GRAMMARTOKENTYPE
+  enum grammartokentype
   {
     DOTDOTDOT = 258,
     BADTOKEN = 259,
@@ -143,11 +153,11 @@ extern int grammardebug;
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if ! defined GRAMMARSTYPE && ! defined GRAMMARSTYPE_IS_DECLARED
 
-union YYSTYPE
+union GRAMMARSTYPE
 {
-#line 25 "src/decompile/cpp/grammar.y" /* yacc.c:355  */
+
 
   uint4 flags;
   TypeDeclarator *dec;
@@ -160,16 +170,16 @@ union YYSTYPE
   string *str;
   uintb *i;
 
-#line 149 "src/decompile/cpp/grammar.cc" /* yacc.c:355  */
+
 };
 
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+typedef union GRAMMARSTYPE GRAMMARSTYPE;
+# define GRAMMARSTYPE_IS_TRIVIAL 1
+# define GRAMMARSTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE grammarlval;
+extern GRAMMARSTYPE grammarlval;
 
 int grammarparse (void);
 
@@ -177,7 +187,7 @@ int grammarparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 166 "src/decompile/cpp/grammar.cc" /* yacc.c:358  */
+
 
 #ifdef short
 # undef short
@@ -358,7 +368,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined GRAMMARSTYPE_IS_TRIVIAL && GRAMMARSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
@@ -472,22 +482,22 @@ static const yytype_uint8 yytranslate[] =
       15
 };
 
-#if YYDEBUG
+#if GRAMMARDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    60,    60,    61,    65,    66,    70,    71,    72,    73,
-      74,    75,    76,    77,    81,    82,    86,    91,    92,    93,
-      97,    98,    99,   100,   101,   102,   106,   107,   111,   115,
-     116,   117,   118,   122,   123,   127,   132,   133,   134,   135,
-     136,   140,   141,   145,   146,   150,   151,   155,   156,   157,
-     158,   160,   165,   166,   167,   168,   172,   173,   177,   178,
-     182,   183,   187,   188,   189,   193,   194,   195,   199,   201,
-     203,   207
+       0,    62,    62,    63,    67,    68,    72,    73,    74,    75,
+      76,    77,    78,    79,    83,    84,    88,    93,    94,    95,
+      99,   100,   101,   102,   103,   104,   108,   109,   113,   117,
+     118,   119,   120,   124,   125,   129,   134,   135,   136,   137,
+     138,   142,   143,   147,   148,   152,   153,   157,   158,   159,
+     160,   162,   167,   168,   169,   170,   174,   175,   179,   180,
+     184,   185,   189,   190,   191,   195,   196,   197,   201,   203,
+     205,   209
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+#if GRAMMARDEBUG || YYERROR_VERBOSE || 0
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
@@ -706,7 +716,7 @@ while (0)
 
 
 /* Enable debugging if requested.  */
-#if YYDEBUG
+#if GRAMMARDEBUG
 
 # ifndef YYFPRINTF
 #  include <stdio.h> /* INFRINGES ON USER NAME SPACE */
@@ -827,12 +837,12 @@ do {                                    \
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
 int yydebug;
-#else /* !YYDEBUG */
+#else /* !GRAMMARDEBUG */
 # define YYDPRINTF(Args)
 # define YY_SYMBOL_PRINT(Title, Type, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
-#endif /* !YYDEBUG */
+#endif /* !GRAMMARDEBUG */
 
 
 /* YYINITDEPTH -- initial size of the parser's stacks.  */
@@ -1343,427 +1353,427 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 60 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { parse->setResultDeclarations((yyvsp[0].declist)); }
-#line 1334 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 3:
-#line 61 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { vector<TypeDeclarator *> *res = parse->newVecDeclarator(); res->push_back((yyvsp[0].dec)); parse->setResultDeclarations(res); }
-#line 1340 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 4:
-#line 65 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = parse->mergeSpecDecVec((yyvsp[-1].spec)); }
-#line 1346 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 5:
-#line 66 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = parse->mergeSpecDecVec((yyvsp[-2].spec),(yyvsp[-1].declist)); }
-#line 1352 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 6:
-#line 70 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->newSpecifier(); parse->addSpecifier((yyval.spec),(yyvsp[0].str)); }
-#line 1358 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 7:
-#line 71 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->newSpecifier(); parse->addTypeSpecifier((yyval.spec),(yyvsp[0].type)); }
-#line 1364 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 8:
-#line 72 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->newSpecifier(); parse->addSpecifier((yyval.spec),(yyvsp[0].str)); }
-#line 1370 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 9:
-#line 73 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->newSpecifier(); parse->addFuncSpecifier((yyval.spec),(yyvsp[0].str)); }
-#line 1376 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 10:
-#line 74 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->addSpecifier((yyvsp[0].spec),(yyvsp[-1].str)); }
-#line 1382 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 11:
-#line 75 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->addTypeSpecifier((yyvsp[0].spec),(yyvsp[-1].type)); }
-#line 1388 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 12:
-#line 76 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->addSpecifier((yyvsp[0].spec),(yyvsp[-1].str)); }
-#line 1394 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 13:
-#line 77 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->addFuncSpecifier((yyvsp[0].spec),(yyvsp[-1].str)); }
-#line 1400 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 14:
-#line 81 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = parse->newVecDeclarator(); (yyval.declist)->push_back((yyvsp[0].dec)); }
-#line 1406 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 15:
-#line 82 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = (yyvsp[-2].declist); (yyval.declist)->push_back((yyvsp[0].dec)); }
-#line 1412 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 16:
-#line 86 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = (yyvsp[0].dec); }
-#line 1418 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 17:
-#line 91 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = (yyvsp[0].type); }
-#line 1424 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 18:
-#line 92 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = (yyvsp[0].type); }
-#line 1430 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 19:
-#line 93 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = (yyvsp[0].type); }
-#line 1436 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 20:
-#line 97 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->newStruct("",(yyvsp[-1].declist)); }
-#line 1442 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 21:
-#line 98 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->newStruct(*(yyvsp[-3].str),(yyvsp[-1].declist)); }
-#line 1448 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 22:
-#line 99 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->oldStruct(*(yyvsp[0].str)); }
-#line 1454 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 23:
-#line 100 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->newUnion("",(yyvsp[-1].declist)); }
-#line 1460 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 24:
-#line 101 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->newUnion(*(yyvsp[-3].str),(yyvsp[-1].declist)); }
-#line 1466 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 25:
-#line 102 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->oldUnion(*(yyvsp[0].str)); }
-#line 1472 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 26:
-#line 106 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = (yyvsp[0].declist); }
-#line 1478 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 27:
-#line 107 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = (yyvsp[-1].declist); (yyval.declist)->insert((yyval.declist)->end(),(yyvsp[0].declist)->begin(),(yyvsp[0].declist)->end()); }
-#line 1484 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 28:
-#line 111 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = parse->mergeSpecDecVec((yyvsp[-2].spec),(yyvsp[-1].declist)); }
-#line 1490 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 29:
-#line 115 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->newSpecifier(); parse->addTypeSpecifier((yyval.spec),(yyvsp[0].type)); }
-#line 1496 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 30:
-#line 116 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->addTypeSpecifier((yyvsp[0].spec),(yyvsp[-1].type)); }
-#line 1502 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 31:
-#line 117 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->newSpecifier(); parse->addSpecifier((yyval.spec),(yyvsp[0].str)); }
-#line 1508 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 32:
-#line 118 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.spec) = parse->addSpecifier((yyvsp[0].spec),(yyvsp[-1].str)); }
-#line 1514 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 33:
-#line 122 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = parse->newVecDeclarator(); (yyval.declist)->push_back((yyvsp[0].dec)); }
-#line 1520 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 34:
-#line 123 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = (yyvsp[-2].declist); (yyval.declist)->push_back((yyvsp[0].dec)); }
-#line 1526 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 35:
-#line 127 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = (yyvsp[0].dec); }
-#line 1532 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 36:
-#line 132 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->newEnum(*(yyvsp[-3].str),(yyvsp[-1].vecenum)); }
-#line 1538 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 37:
-#line 133 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->newEnum("",(yyvsp[-1].vecenum)); }
-#line 1544 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 38:
-#line 134 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->newEnum(*(yyvsp[-4].str),(yyvsp[-2].vecenum)); }
-#line 1550 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 39:
-#line 135 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->newEnum("",(yyvsp[-2].vecenum)); }
-#line 1556 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 40:
-#line 136 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.type) = parse->oldEnum(*(yyvsp[0].str)); }
-#line 1562 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 41:
-#line 140 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.vecenum) = parse->newVecEnumerator(); (yyval.vecenum)->push_back((yyvsp[0].enumer)); }
-#line 1568 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 42:
-#line 141 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.vecenum) = (yyvsp[-2].vecenum); (yyval.vecenum)->push_back((yyvsp[0].enumer)); }
-#line 1574 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 43:
-#line 145 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.enumer) = parse->newEnumerator(*(yyvsp[0].str)); }
-#line 1580 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 44:
-#line 146 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.enumer) = parse->newEnumerator(*(yyvsp[-2].str),*(yyvsp[0].i)); }
-#line 1586 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 45:
-#line 150 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = (yyvsp[0].dec); }
-#line 1592 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 46:
-#line 151 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->mergePointer((yyvsp[-1].ptrspec),(yyvsp[0].dec)); }
-#line 1598 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 47:
-#line 155 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->newDeclarator((yyvsp[0].str)); }
-#line 1604 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 48:
-#line 156 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = (yyvsp[-1].dec); }
-#line 1610 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 49:
-#line 157 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->newArray((yyvsp[-4].dec),(yyvsp[-2].flags),(yyvsp[-1].i)); }
-#line 1616 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 50:
-#line 158 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->newArray((yyvsp[-3].dec),0,(yyvsp[-1].i)); }
-#line 1622 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 51:
-#line 160 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->newFunc((yyvsp[-3].dec),(yyvsp[-1].declist)); }
-#line 1628 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 52:
-#line 165 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.ptrspec) = parse->newPointer(); (yyval.ptrspec)->push_back(0); }
-#line 1634 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 53:
-#line 166 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.ptrspec) = parse->newPointer(); (yyval.ptrspec)->push_back((yyvsp[0].flags)); }
-#line 1640 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 54:
-#line 167 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.ptrspec) = (yyvsp[0].ptrspec); (yyval.ptrspec)->push_back(0); }
-#line 1646 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 55:
-#line 168 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.ptrspec) = (yyvsp[0].ptrspec); (yyval.ptrspec)->push_back((yyvsp[-1].flags)); }
-#line 1652 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 56:
-#line 172 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.flags) = parse->convertFlag((yyvsp[0].str)); }
-#line 1658 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 57:
-#line 173 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.flags) = (yyvsp[-1].flags); (yyval.flags) |= parse->convertFlag((yyvsp[0].str)); }
-#line 1664 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 58:
-#line 177 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = (yyvsp[0].declist); }
-#line 1670 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 59:
-#line 178 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = (yyvsp[-2].declist); (yyval.declist)->push_back((TypeDeclarator *)0); }
-#line 1676 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 60:
-#line 182 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = parse->newVecDeclarator(); (yyval.declist)->push_back((yyvsp[0].dec)); }
-#line 1682 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 61:
-#line 183 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.declist) = (yyvsp[-2].declist); (yyval.declist)->push_back((yyvsp[0].dec)); }
-#line 1688 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 62:
-#line 187 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->mergeSpecDec((yyvsp[-1].spec),(yyvsp[0].dec)); }
-#line 1694 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 63:
-#line 188 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->mergeSpecDec((yyvsp[0].spec)); }
-#line 1700 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 64:
-#line 189 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->mergeSpecDec((yyvsp[-1].spec),(yyvsp[0].dec)); }
-#line 1706 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 65:
-#line 193 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->newDeclarator(); parse->mergePointer((yyvsp[0].ptrspec),(yyval.dec)); }
-#line 1712 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 66:
-#line 194 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = (yyvsp[0].dec); }
-#line 1718 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 67:
-#line 195 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->mergePointer((yyvsp[-1].ptrspec),(yyvsp[0].dec)); }
-#line 1724 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 68:
-#line 199 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = (yyvsp[-1].dec); }
-#line 1730 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 69:
-#line 201 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->newArray((yyvsp[-3].dec),0,(yyvsp[-1].i)); }
-#line 1736 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 70:
-#line 203 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.dec) = parse->newFunc((yyvsp[-3].dec),(yyvsp[-1].declist)); }
-#line 1742 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
   case 71:
-#line 207 "src/decompile/cpp/grammar.y" /* yacc.c:1646  */
+
     { (yyval.i) = (yyvsp[0].i); }
-#line 1748 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
     break;
 
 
-#line 1752 "src/decompile/cpp/grammar.cc" /* yacc.c:1646  */
+
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1991,7 +2001,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 210 "src/decompile/cpp/grammar.y" /* yacc.c:1906  */
+
 
 
 void GrammarToken::set(uint4 tp)
@@ -3114,13 +3124,13 @@ bool CParse::parseStream(istream &s,uint4 doctype)
   return runParse(doctype);
 }
 
-int yylex(void)
+int grammarlex(void)
 
 {
   return parse->lex();
 }
 
-int yyerror(const char *str)
+int grammarerror(const char *str)
 
 {
   return 0;
@@ -3352,3 +3362,4 @@ Address parse_machaddr(istream &s,int4 &defaultsize,const TypeFactory &typegrp,b
   return res;
 }
 
+} // End namespace ghidra

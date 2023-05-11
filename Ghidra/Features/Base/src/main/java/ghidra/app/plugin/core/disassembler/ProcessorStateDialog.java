@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.disassembler;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.math.BigInteger;
 import java.util.ArrayList;
 
@@ -86,18 +84,8 @@ public class ProcessorStateDialog extends DialogComponentProvider {
 		group.add(decimalButton);
 		radioPanel.add(hexButton);
 		radioPanel.add(decimalButton);
-		hexButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setRadix(16);
-			}
-		});
-		decimalButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setRadix(10);
-			}
-		});
+		hexButton.addActionListener(e -> setRadix(16));
+		decimalButton.addActionListener(e -> setRadix(10));
 
 		addWorkPanel(mainPanel);
 		setHelpLocation(new HelpLocation("DisassemblerPlugin", "ProcessorOptions"));
@@ -130,10 +118,6 @@ public class ProcessorStateDialog extends DialogComponentProvider {
 			}
 		}
 		programContext.setDefaultDisassemblyContext(newValue);
-		close();
-	}
-
-	public void dispose() {
 		close();
 	}
 }

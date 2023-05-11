@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.Location;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
 
@@ -63,7 +64,7 @@ public class JdiModelTargetLocationContainer extends JdiModelTargetObjectImpl {
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		Map<String, Location> map = new HashMap<>();
 		if (locations != null) {
 			for (Location loc : locations) {

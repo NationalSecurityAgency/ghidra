@@ -17,8 +17,7 @@ package ghidra.trace.database.target.visitors;
 
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 
 /**
@@ -90,7 +89,7 @@ public enum TreeTraversal {
 	 * Traversal starts at a seed object or value (node or edge, respectively) and proceeds in
 	 * alternating fashion from object to value to object and so on via
 	 * {@link #continueObject(TraceObjectValue)} and
-	 * {@link #continueValues(TraceObject, Range, TraceObjectValPath)}. Filtering is performed on
+	 * {@link #continueValues(TraceObject, Lifespan, TraceObjectValPath)}. Filtering is performed on
 	 * values via {@link #visitValue(TraceObjectValue, TraceObjectValPath)}. As traversal descends,
 	 * paths and spans are composed to inform filtering and construct the final result stream. Note
 	 * that some traversals start at a seed and "descend" along the ancestry.
@@ -106,7 +105,7 @@ public enum TreeTraversal {
 		 * @param value the current value
 		 * @return the span composed from values from seed to and including the current value
 		 */
-		Range<Long> composeSpan(Range<Long> pre, TraceObjectValue value);
+		Lifespan composeSpan(Lifespan pre, TraceObjectValue value);
 
 		/**
 		 * When descending in a value, what path leads to the value
@@ -155,25 +154,18 @@ public enum TreeTraversal {
 		 * @return the next values
 		 */
 		Stream<? extends TraceObjectValue> continueValues(TraceObject object,
-				Range<Long> span, TraceObjectValPath path);
+				Lifespan span, TraceObjectValPath path);
 	}
 
 	/**
-	 * A visitor providing default {@link #composeSpan(Range, TraceObjectValue)} that intersects the
-	 * spans
+	 * A visitor providing default {@link #composeSpan(Lifespan, TraceObjectValue)} that intersects
+	 * the spans
 	 */
 	public interface SpanIntersectingVisitor extends Visitor {
 		@Override
-		default Range<Long> composeSpan(Range<Long> pre, TraceObjectValue value) {
-			Range<Long> valSpan = value.getLifespan();
-			if (!pre.isConnected(valSpan)) {
-				return null;
-			}
-			Range<Long> span = pre.intersection(valSpan);
-			if (span.isEmpty()) {
-				return null;
-			}
-			return span;
+		default Lifespan composeSpan(Lifespan pre, TraceObjectValue value) {
+			Lifespan span = pre.intersect(value.getLifespan());
+			return span.isEmpty() ? null : span;
 		}
 	}
 
@@ -187,8 +179,8 @@ public enum TreeTraversal {
 	 * @return the result stream of the value and subtree walked
 	 */
 	public Stream<? extends TraceObjectValPath> walkValue(Visitor visitor,
-			TraceObjectValue value, Range<Long> span, TraceObjectValPath path) {
-		Range<Long> compSpan = visitor.composeSpan(span, value);
+			TraceObjectValue value, Lifespan span, TraceObjectValPath path) {
+		Lifespan compSpan = visitor.composeSpan(span, value);
 		if (compSpan == null) {
 			return Stream.empty();
 		}
@@ -225,7 +217,7 @@ public enum TreeTraversal {
 	 * @return the result stream of the object and subtree walked
 	 */
 	public Stream<? extends TraceObjectValPath> walkObject(Visitor visitor, TraceObject object,
-			Range<Long> span, TraceObjectValPath path) {
+			Lifespan span, TraceObjectValPath path) {
 		return visitor.continueValues(object, span, path)
 				.flatMap(v -> walkValue(visitor, v, span, path));
 	}

@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.*;
 
 import db.*;
-import ghidra.framework.data.ContentHandler;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.map.AddressMapDB;
@@ -43,6 +42,8 @@ import ghidra.util.task.TaskMonitor;
 class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData {
 
 // TODO: WARNING! This implementation does not properly handle undo/redo in terms of cache invalidation
+
+	private static ProgramContentHandler programContentHandler = new ProgramContentHandler();
 
 	/**
 	 * DB_VERSION should be incremented any time a change is made to the overall
@@ -137,7 +138,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			if (createManagers(CREATE, program, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
-			//initManagers(CREATE, TaskMonitor.DUMMY);
+			//initManagers(CREATE, TaskMonitorAdapter.DUMMY_MONITOR);
 
 			endTransaction(id, true);
 			changed = false;
@@ -383,7 +384,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 		VersionException versionExc = null;
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// the memoryManager should always be created first because it is needed to resolve
 		// segmented addresses from longs that other manages may need while upgrading.
@@ -407,7 +408,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			}
 		}
 		addressMap.memoryMapChanged(program1.getMemory());
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		return versionExc;
 	}
@@ -647,6 +648,11 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	}
 
 	@Override
+	public Transaction openTransaction() {
+		return openTransaction("Property Change");
+	}
+
+	@Override
 	public int startTransaction() {
 		return startTransaction("Property Change");
 	}
@@ -669,10 +675,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			else {
 				FileSystem userfs = program.getAssociatedUserFilesystem();
 				if (userfs != null) {
-					ContentHandler contentHandler = getContentHandler(program);
-					if (contentHandler != null) {
-						contentHandler.saveUserDataFile(program, dbh, userfs, monitor);
-					}
+					programContentHandler.saveUserDataFile(program, dbh, userfs, monitor);
 					setChanged(false);
 				}
 			}

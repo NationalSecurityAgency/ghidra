@@ -44,6 +44,21 @@ public class SchemaBuilder {
 		this.name = name;
 	}
 
+	public SchemaBuilder(DefaultSchemaContext context, TargetObjectSchema schema) {
+		this(context, schema.getName());
+		setType(schema.getType());
+		setInterfaces(schema.getInterfaces());
+		setCanonicalContainer(schema.isCanonicalContainer());
+
+		elementSchemas.putAll(schema.getElementSchemas());
+		setDefaultElementSchema(schema.getDefaultElementSchema());
+		setElementResyncMode(schema.getElementResyncMode());
+
+		attributeSchemas.putAll(schema.getAttributeSchemas());
+		setDefaultAttributeSchema(schema.getDefaultAttributeSchema());
+		setAttributeResyncMode(schema.getAttributeResyncMode());
+	}
+
 	public SchemaBuilder setType(Class<?> type) {
 		this.type = type;
 		return this;

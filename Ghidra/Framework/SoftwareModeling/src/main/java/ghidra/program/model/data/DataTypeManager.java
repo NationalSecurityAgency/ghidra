@@ -17,6 +17,12 @@ package ghidra.program.model.data;
 
 import java.util.*;
 
+import db.Transaction;
+import ghidra.program.database.SpecExtension;
+import ghidra.program.database.map.AddressMap;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
@@ -57,6 +63,21 @@ public interface DataTypeManager {
 	 * @return the universal ID for this dataType manager
 	 */
 	public UniversalID getUniversalID();
+
+	/**
+	 * Get the optional program architecture details associated with this archive
+	 * @return program architecture details or null if none
+	 */
+	public ProgramArchitecture getProgramArchitecture();
+
+	/**
+	 * Get the program architecture information which has been associated with this 
+	 * datatype manager.  If {@link #getProgramArchitecture()} returns null this method
+	 * may still return information if the program architecture was set on an archive but unable
+	 * to properly instantiate.
+	 * @return program architecture summary if it has been set
+	 */
+	public String getProgramArchitectureSummary();
 
 	/**
 	 * Returns true if the given category path exists in this datatype manager
@@ -136,6 +157,12 @@ public interface DataTypeManager {
 	 * @return the iterator
 	 */
 	public Iterator<Composite> getAllComposites();
+
+	/**
+	 * Returns an iterator over all function definition data types in this manager
+	 * @return the iterator
+	 */
+	public Iterator<FunctionDefinition> getAllFunctionDefinitions();
 
 	/**
 	 * Begin searching at the root category for all data types with the
@@ -318,17 +345,31 @@ public interface DataTypeManager {
 	public void setName(String name) throws InvalidNameException;
 
 	/**
+	 * Returns true if this DataTypeManager can be modified.
+	 * @return true if this DataTypeMangaer can be modified.
+	 */
+	public boolean isUpdatable();
+
+	/**
+	 * Open new transaction.  This should generally be done with a try-with-resources block:
+	 * <pre>
+	 * try (Transaction tx = dtm.openTransaction(description)) {
+	 * 	// ... Do something
+	 * }
+	 * </pre>
+	 * 
+	 * @param description a short description of the changes to be made.
+	 * @return transaction object
+	 * @throws IllegalStateException if this {@link DataTypeManager} has already been closed.
+	 */
+	public Transaction openTransaction(String description) throws IllegalStateException;
+
+	/**
 	 * Starts a transaction for making changes in this data type manager.
 	 * @param description a short description of the changes to be made.
 	 * @return the transaction ID
 	 */
 	public int startTransaction(String description);
-
-	/**
-	 * Returns true if this DataTypeManager can be modified.
-	 * @return true if this DataTypeMangaer can be modified.
-	 */
-	public boolean isUpdatable();
 
 	/**
 	 * Ends the current transaction
@@ -508,6 +549,13 @@ public interface DataTypeManager {
 	public DataOrganization getDataOrganization();
 
 	/**
+	 * Returns the associated AddressMap used by this datatype manager.
+	 * @return the AddressMap used by this datatype manager or null if 
+	 * one has not be established.
+	 */
+	public AddressMap getAddressMap();
+
+	/**
 	 * Returns a list of source archives not including the builtin or the program's archive.
 	 * @return a list of source archives not including the builtin or the program's archive.
 	 */
@@ -553,4 +601,49 @@ public interface DataTypeManager {
 	 * @return true if BuiltIn Settings are permitted
 	 */
 	public boolean allowsDefaultComponentSettings();
+
+	/**
+	 * Get the ordered list of known calling convention names.  The reserved names 
+	 * "unknown" and "default" are not included.  The returned collection will include all names 
+	 * ever used or resolved by associated {@link Function} and {@link FunctionDefinition} objects, 
+	 * even if not currently defined by the associated {@link CompilerSpec} or {@link Program} 
+	 * {@link SpecExtension}.  To get only those calling conventions formally defined, the method 
+	 * {@link CompilerSpec#getCallingConventions()} should be used.
+	 *
+	 * @return all known calling convention names.
+	 */
+	public Collection<String> getKnownCallingConventionNames();
+
+	/**
+	 * Get the ordered list of defined calling convention names.  The reserved names 
+	 * "unknown" and "default" are not included.  The returned collection may not include all names 
+	 * referenced by various functions and function-definitions.  This set is generally limited to 
+	 * those defined by the associated compiler specification.  If this instance does not have an 
+	 * assigned architecture the {@link GenericCallingConvention} names will be returned.
+	 * <p>
+	 * For a set of all known names (including those that are not defined by compiler spec)
+	 * see {@link #getKnownCallingConventionNames()}.
+	 *
+	 * @return the set of defined calling convention names.
+	 */
+	public Collection<String> getDefinedCallingConventionNames();
+
+	/**
+	 * Get the default calling convention's prototype model in this datatype manager if known.
+	 *
+	 * @return the default calling convention prototype model or null.
+	 */
+	public PrototypeModel getDefaultCallingConvention();
+
+	/**
+	 * Get the prototype model of the calling convention with the specified name from the 
+	 * associated compiler specification.  If an architecture has not been established this method 
+	 * will return null.  If {@link Function#DEFAULT_CALLING_CONVENTION_STRING}
+	 * is specified {@link #getDefaultCallingConvention()} will be returned.
+	 * 
+	 * @param name the calling convention name
+	 * @return the named function calling convention prototype model or null.
+	 */
+	public PrototypeModel getCallingConvention(String name);
+
 }

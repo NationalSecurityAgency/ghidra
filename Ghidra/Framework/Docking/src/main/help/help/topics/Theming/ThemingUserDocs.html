@@ -1,0 +1,309 @@
+<!DOCTYPE doctype>
+
+<HTML>
+  <HEAD>
+    <TITLE>Theming User Documentation</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY>
+    <H1 align="center">Themes</H1>
+
+    <H2>Description</H2>
+	<BlOCKQUOTE>
+
+    <P>The Theming feature allows users to customize the colors, fonts, and icons used throughout
+    the application. The active theme determines the Java Look and Feel, whether the theme should
+    use light or dark defaults, and any custom colors, fonts, and icons that override the default
+    values. Users can can easily switch between any of the built-in themes or any saved themes found
+    in their home application directory</P>
+
+    <P>Users can also edit and create their own themes using the Theme Editor. Custom themes are
+    stored in the user's <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code> directory. 
+    These theme files are simple text files that can
+    easily be modified using any text editor. Also, users can share themes by exporting them to a
+    file that can be given to other users who can them import them into their application.</P>
+
+	</BlOCKQUOTE>
+    <H2>Theme Chooser Dialog<A name="Switch_Theme"></A></H2>
+ 	<BlOCKQUOTE>
+    <P>The Theme Chooser allows users to switch themes.
+
+    <P align="center"><IMG alt="" src="images/ThemeChooserDialog.png"><BR>
+     &nbsp;</P>
+
+    <P>The Theme Chooser dialog displays a list of all the know themes, both built-in and custom.
+    As you pick different themes, the application will switch to that theme. Press the "OK" button
+    when the desired theme is selected. Pressing the "Cancel" button will restore the theme to
+    the what it was when the dialog was invoked.</P>
+    
+    </BlOCKQUOTE>
+    
+    <H2>Theme Editor Dialog<A name="Edit_Theme"></A></H2>
+	<BlOCKQUOTE>
+
+    <P>The Theme Editor Dialog is the primary means for creating and editing themes.</P>
+
+    <P align="center"><IMG alt="" src="images/ThemeEditorDialog.png"><BR>
+     &nbsp;</P>
+
+    <P>The Theme Editor Dialog consists of a Look And Feel drop-down and a tabbed set of tables that
+    display the values for every color property, font property, and icon property defined by either 
+    the Java look and feel or the application. The properties fall into one of the following 
+    groups</P>
+    <UL>
+    	<LI>Application Properties - these are application defined properties. They all start with
+    	either "color.", "font.", or "icon.", depending on whether the property is a color, font,or
+    	icon respectively.</LI>
+    	<LI>System Properties - these are well defined Look and Feel concepts such as various 
+    	standard background and foreground colors, border color, and fonts. These all start with
+    	"system." and their values are mapped to specific values for each Java Look and Feel.</LI>
+    	<LI>Look and Feel Properties - these are the properties defined by the current Java
+    	Look and Feel. Ghidra prepends these properties with prefixes that start with either 
+    	"laf.color.", "laf.font"., or "laf.icon." For example, if the Look and Feel defines a property 
+    	called "Button.background", it would appear in Ghidra as "laf.color.Button.background".</LI>
+    	<LI>Look and Feel Palette Properties - All the color and fonts used by the Look and Feel 
+    	properties are grouped into either system property values or auto-generated palette 
+    	properties, so that groups of properties can be changed together.</LI>
+    
+    </UL>
+    
+    <P>See the <A href="ThemingDeveloperDocs.html#Resource_Ids">Developer Documentation</A> for more
+    details on the property ID format and naming conventions.
+    </P>
+
+    <P>Each table entry shows the property ID string, the current value, the theme value,
+    and the default value. Most often, the three values are equal. If the theme value is different
+    from the default value, that means that the active theme has overridden the default value for
+    that property. If the current value is different from the theme value, that means the user has
+    changed that value, but not yet saved the changes back to the theme.</P>
+
+    <P>Individual values can be changed by double-clicking the value in the ID or Current Value 
+    column. This will bring up an appropriate editor for changing the value. When editing a value, 
+    the change
+    takes place immediately in the application so you can see the effect. When you leave the
+    specific property editor, you have the choice of keeping the change or canceling and having it
+    revert back to its previous value.</P>
+
+    <P>If any values have been changed, the <B>Save</B> button will become enabled, allowing you to save
+    any changes you have made. (Pressing the <B>Dismiss</B> button will also give the the option to 
+    save.) When saving, if the
+    current theme is a built-in theme, you will first have to supply a new theme name. If the
+    current theme is a not a built-in theme, you will have the option to overwrite the existing
+    theme or supplying a new name to save it as a new theme.</P>
+    
+    <H3>Theme Editor actions</H3>
+    <UL>
+    	<LI><A name="Increment_Fonts"></A><IMG border="0" src="icon.theme.font.increment" >&nbsp;Increment All Fonts - Increases all fonts in the system by one.</LI>
+    	<LI><A name="Decrement_Fonts"></A><IMG border="0" src="icon.theme.font.decrement" >&nbsp;Decrement All Fonts - Decreases all fonts in the system by one.</LI>
+    	<LI><A name="Reload_Theme"></A><IMG border="0" src="icon.refresh" >&nbsp;Reload Theme - Restores all color, font, and icon values back to the original theme values.</LI>
+    </UL>
+
+      <H3>Color Editor</H3>
+
+      <P>When you double-click on a color value, the Edit Color dialog appears.</P>
+
+      <P align="center"><IMG alt="" src="images/ColorEditor.png"><BR>
+       &nbsp;</P>
+
+      <P>Any change you make in the editor is applied to the application immediately. If you press
+      the <B>OK</B> button, the change will stay. If you press the <B>Cancel</B> button, the color 
+      will revert back to the original color.</P>
+
+      <H3>Font Editor</H3>
+
+      <P>When you double-click on a font value, the Edit Font dialog appears.</P>
+
+      <P align="center"><IMG alt="" src="images/FontEditor.png"><BR>
+       &nbsp;</P>
+
+      <P>Any change you make in the editor is applied to the application immediately. If you press
+      the <B>OK</B> button, the change will stay. If you press the <B>Cancel</B> button, the font 
+      will revert back to the original font.</P>
+
+      <H3>Icon Editor</H3>
+
+      <P>When you double-click on an Icon value, the Edit Icon dialog appears.</P>
+
+      <P align="center"><IMG alt="" src="images/IconEditor.png"><BR>
+       &nbsp;</P>
+
+      <P>The Edit Icon dialog has a drop-down text field where you can find any existing icon on
+      the classpath. If you want to choose an Icon from the file system, press the <B>...</B> button
+      and a File Chooser will appear, allowing you to pick an icon file from anywhere on the filesystem.
+      Any change you make in the editor is applied to the application immediately. If you press the
+      <B>OK</B> button, the change will stay. If you press the <B>Cancel</B> button, the icon will 
+      revert back to the original icon.</P>
+    </BLOCKQUOTE>
+
+    <H2>Theme Actions</H2>
+
+    <BLOCKQUOTE>
+      <H3>Switching Themes</H3>
+
+      <P>To change the current theme, invoke the
+       <B>Edit<IMG alt="" src="help/shared/arrow.gif" border="0">Theme<IMG alt="" 
+       src="help/shared/arrow.gif" border="0">Change..." </b>menu option
+       from the main project window. This will bring up the <A href="#Switch_Theme">
+       Theme Chooser Dialog </A>which allows you to pick a new theme.</P> 
+
+      <H3>Modifying Theme Values</H3>
+
+      <P>All the colors, fonts, and icons that have been registered with the theme API can be 
+      modified using the <A href="#Edit_Theme">Theme Editor Dialog</A>. The Theme Editor Dialog
+      can be invoked from the main application menu using the
+      <B>Edit<IMG alt="" src="help/shared/arrow.gif" border="0">Theme<IMG alt="" 
+       src="help/shared/arrow.gif" border="0">Configure..." </b> menu. Choose the
+      tab for the appropriate type and double-click on the ID column or Current Value column of the
+      item you want to change. An editor for that type will appear.</P>
+
+      <H3>Creating New Themes<A NAME="New_Theme"></A></H3>
+
+      <P>To create a new theme, invoke  <B>Edit<IMG alt="" src="help/shared/arrow.gif" 
+      border="0">Theme<IMG alt="" 
+      src="help/shared/arrow.gif" border="0">New..." </b>menu option. This will bring up a new 
+      dialog where you can enter the new theme name and select another theme as a starting point.
+      When the <B>OK</B> button is pressed, the Theme Editor Dialog will appear, allowing you
+      to begin making changes to theme values.</P> 
+
+
+      <H3>Reseting Theme Values<A NAME="Restore_Value"></A></H3>
+
+      <P>To reset an individual value back to its original theme value, invoke the <A href=
+      "#Edit_Theme">Theme Editor Dialog</A>. Choose the tab for the appropriate type and 
+      right-click the one the row in the able you want to reset, then choose the 
+      <B>Restore Value</B> menu item from the popup menu.</P>
+
+      <H3>Reseting All Theme Values<A name="Reset_Theme_Values"></A></H3>
+
+      <P>To reset all values back to the original values established by the current theme, 
+       invoke the <A href= "#Edit_Theme">Theme Editor Dialog</A>. To activate this
+      action, press the refresh button <IMG alt="" src="images/reload3.png" border="0"> in the top
+      right corner of the Theme Editor dialog.
+
+	  <H3>Toggle Showing System Values<A NAME="Toggle_Show_System_Values"></A></H3>
+	  <P>
+	  Toggles whether the given table shows system ID values (e.g, those starting with <CODE>
+	  laf.</CODE> or <CODE>system.</CODE>.  By default these values are hidden.
+	  </P>
+	  
+	  
+
+      <H3>Saving Themes</H3>
+
+      <P>After making changes to one or more theme values, the <A href="#Edit_Theme">Theme
+      Editor Dialog's</A> <B>Save</B> button will be enabled. Pressing the <B>Save</B> button will give
+      the user the option of creating a new theme or overwriting the current them (if the current
+      theme is not a built-in theme). Also, users will have the option of saving a theme if they
+      dismiss the Theme Dialog while there are changes to one or more theme values.</P>
+
+      <H3>Deleting Themes<A name="Delete_Theme"></A></H3>
+
+      <P>Only custom non-built-in themes can be deleted. To delete a custom theme, invoke the 
+      <B>Edit</B><IMG alt="" src=
+      "help/shared/arrow.gif" border="0"><B>Theme</B> <IMG alt="" src=
+      "help/shared/arrow.gif" border="0"><B>Delete...</B> menu from the main application 
+      menu. This will bring up a dialog
+      with a list of themes that can be deleted. Select the theme to delete and press the <B>Ok</B>
+      button.</P>
+
+      <H3>Exporting Themes<A name="Export_Theme"></A></H3>
+
+      <P>To export a theme so that it can be shared with others, invoke the <B>Edit</B> <IMG alt=""
+      src="help/shared/arrow.gif" border="0"><B>Theme</B> <IMG alt="" src=
+      "help/shared/arrow.gif" border="0"><B>Export..</B> menu from the main application
+      window. You will first be asked if
+      you want to export as a regular theme file or as a Zip file. The Zip file option is useful if
+      the current theme has icon values that are not included with standard application. In that case,
+      the Zip file will include those non-standard icon files.</P>
+
+      <H3>Importing Themes<A name="Import_Theme"></A></H3>
+
+      <P>To import a theme, 
+      invoke the <B>Edit</B> <IMG alt="" src="help/shared/arrow.gif" border=
+      "0"><B>Theme</B> <IMG alt="" src="help/shared/arrow.gif" border="0"><B>Import...</B>
+       menu from the main application menu. A file chooser dialog will appear
+      allowing the user to choose a theme file
+      to import. The selected file can be either a standard theme file or a Zip file containing the
+      theme file and any non-standard icon files defined by that theme.</P>
+
+    </BLOCKQUOTE>
+
+    <H2>Theme Property Names</H2>
+	<BlOCKQUOTE>
+
+    <P>Theme Property Names (also referred to as IDs or keys) that are defined by the application
+    use a common format to help make sorting and viewing properties more intuitive as to their use. See
+    the <A href="ThemingDeveloperDocs.html#Resource_Ids">Developer Documentation</A> for more details on the property ID
+    format and naming conventions.</P>
+
+	</BlOCKQUOTE>
+    <H2>Theme Files</H2>
+    <BLOCKQUOTE>
+
+      <P>Theme Files are used to store saved custom themes. They are simple text files and are 
+      stored in the user's home application directory under 
+      <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code>. The first three properties are always the
+      theme name, the Look and Feel name, and whether the theme uses standard defaults or dark
+      defaults. Finally, there is a list of overridden property "name = value" lines. The format
+      is:</P>
+    <CODE>
+	<PRE>
+        name = [theme name]
+        Look and Feel = [Look and Feel name]
+        useDarkDefaults = [true or false]
+        
+        [theme id 1]= [color, icon, or font value]
+        [theme id 2]= [color, icon, or font value]
+        [theme id 3]= [color, icon, or font value]
+        [theme id 4]= [color, icon, or font value]
+        ...
+	</PRE>
+	</CODE>
+
+     <BLOCKQUOTE>
+        <P>Example:</P>
+	<PRE>
+        name = BigFontTheme
+        Look and Feel = Nimbus
+        useDarkDefaults = false
+		
+        color.bg = Black
+        color.bg.foo = #012345
+        [color]Panel.background = Red
+        font.button = dialog-PLAIN-14
+        icon.refresh = images/reload3.png    
+        color.bg.bar = color.bg.foo   
+        color.bg.xxx = [color]Panel.background
+	</PRE>
+
+
+      <P>Each property line is expected to begin with either "color.", "font.", or "icon." Since
+      java defined properties don't start with these prefixes, they will have "[color]", "[font]",
+      or "[icon]" prepended to their property name. These brackets are only used to aid in 
+      parsing this file. When the properties are used in Ghidra, the bracketed prefixes are
+      removed.</P>
+
+      <P>Also, note that the values of these properties can reference other property names. If the
+      right side of the assignment is a property name and not a value, then it must also use the
+      bracketed prefix if the property name doesn't start with "color.", "font.", or "icon."</P>
+
+      <H3>Specifying Theme Property Values</H3>
+      
+      <P>Specifying property values varies depending on whether it is a color, font, or icon. Fonts
+      and icons also support specifying modifiers. For a complete description of how to specify
+      these values, see the <A href="ThemingDeveloperDocs.html#Theme_Property_Values">Developer Documentation</A>.
+
+    </BLOCKQUOTE>
+    
+    
+    <P class="providedbyplugin">Provided by: <I>Theme Manager</I></P>
+    
+    <P class="relatedtopic">Related Topics</P>
+    <UL>
+      <LI><A href="ThemingOverview.html">Theming Overview</A></LI>
+      <LI><A href="ThemingDeveloperDocs.html">Theming Developer's Guide</A></LI>
+      <LI><A href="ThemingInternals.html">Theming Architecture</A></LI>
+    </UL><BR>
+  </BODY>
+</HTML>

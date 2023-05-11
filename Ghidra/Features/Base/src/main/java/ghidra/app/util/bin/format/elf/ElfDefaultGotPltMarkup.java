@@ -79,7 +79,7 @@ public class ElfDefaultGotPltMarkup {
 		// look for .got section blocks
 		MemoryBlock[] blocks = memory.getBlocks();
 		for (MemoryBlock gotBlock : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (!gotBlock.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
 				continue;
@@ -369,28 +369,36 @@ public class ElfDefaultGotPltMarkup {
 			return; // evidence of prior markup - skip GOT processing
 		}
 
-		try {
-			// Fixup first GOT entry which frequently refers to _DYNAMIC but generally lacks relocation (e.g. .got.plt)
-			ElfDynamicTable dynamicTable = elf.getDynamicTable();
-			long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
-			if (dynamicTable != null && imageBaseAdj != 0) {
+		// Fixup first GOT entry which frequently refers to _DYNAMIC but generally lacks relocation (e.g. .got.plt)
+		ElfDynamicTable dynamicTable = elf.getDynamicTable();
+		long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
+		if (dynamicTable != null && imageBaseAdj != 0) {
+			try {
 				long entry1Value = elfLoadHelper.getOriginalValue(gotStart, false);
 				if (entry1Value == dynamicTable.getAddressOffset()) {
 					// TODO: record artificial relative relocation for reversion/export concerns
 					entry1Value += imageBaseAdj; // adjust first entry value
 					if (elf.is64Bit()) {
-						elfLoadHelper.addFakeRelocTableEntry(gotStart, 8);
+						elfLoadHelper.addArtificialRelocTableEntry(gotStart, 8);
 						memory.setLong(gotStart, entry1Value);
 					}
 					else {
-						elfLoadHelper.addFakeRelocTableEntry(gotStart, 4);
+						elfLoadHelper.addArtificialRelocTableEntry(gotStart, 4);
 						memory.setInt(gotStart, (int) entry1Value);
 					}
 				}
 			}
+			catch (Exception e) {
+				String msg =
+					"Failed to process first GOT entry at " + gotStart + ": " + e.getMessage();
+				log(msg);
+				Msg.error(this, msg, e);
+			}
+		}
 
-			boolean imageBaseAlreadySet = elf.isPreLinked();
+		boolean imageBaseAlreadySet = elf.isPreLinked();
 
+		try {
 			Address newImageBase = null;
 			Address nextGotAddr = gotStart;
 			while (nextGotAddr.compareTo(gotEnd) <= 0) {
@@ -498,8 +506,8 @@ public class ElfDefaultGotPltMarkup {
 
 	/**
 	 * Convert all symbols over a specified range to thunks to external functions. 
-	 * @param minAddress
-	 * @param maxAddress
+	 * @param minAddress range minimum address
+	 * @param maxAddress range maximum address (inclusive)
 	 * @return number of symbols converted
 	 */
 	private int convertSymbolsToExternalFunctions(Address minAddress, Address maxAddress) {
@@ -537,7 +545,7 @@ public class ElfDefaultGotPltMarkup {
 		Disassembler disassembler = Disassembler.getDisassembler(prog, monitor, m -> {
 			/* silent */});
 		while (!set.isEmpty()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AddressSet disset = disassembler.disassemble(set.getMinAddress(), null, true);
 			if (disset.isEmpty()) {
 				// Stop on first error but discard error bookmark since

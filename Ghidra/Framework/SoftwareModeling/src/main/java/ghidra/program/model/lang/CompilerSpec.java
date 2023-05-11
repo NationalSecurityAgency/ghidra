@@ -21,7 +21,6 @@ import java.util.Set;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataOrganization;
-import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.pcode.Encoder;
@@ -39,6 +38,9 @@ import ghidra.program.model.pcode.Encoder;
  *   - Context and register values known to the compiler over specific memory ranges
  */
 public interface CompilerSpec {
+
+	public static final String CALLING_CONVENTION_unknown = "unknown";
+	public static final String CALLING_CONVENTION_default = "default";
 
 	public final static String CALLING_CONVENTION_cdecl = "__cdecl";
 	public final static String CALLING_CONVENTION_pascal = "__pascal";
@@ -174,15 +176,16 @@ public interface CompilerSpec {
 	public PcodeInjectLibrary getPcodeInjectLibrary();
 
 	/**
-	 * Get the PrototypeModel corresponding to the given generic calling convention
-	 * @param genericCallingConvention is the given generic calling convention
+	 * Get the PrototypeModel which corresponds to the given calling convention name.
+	 * If no match is found the default prototype model is returned.
+	 * @param conventionName calling convention name.
 	 * @return the matching model or the defaultModel if nothing matches
 	 */
-	public PrototypeModel matchConvention(GenericCallingConvention genericCallingConvention);
+	public PrototypeModel matchConvention(String conventionName);
 
 	/**
 	 * Find the best guess at a calling convention model from this compiler spec
-	 * given an ordered list of (potential) parameters.
+	 * given an ordered list of (potential) parameters with storage assignments.
 	 * @param params is the ordered list of parameters
 	 * @return prototype model corresponding to the specified function signature
 	 */

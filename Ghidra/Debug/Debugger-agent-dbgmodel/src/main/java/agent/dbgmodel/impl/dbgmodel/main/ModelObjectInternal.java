@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.main;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.main.IModelObject;
 import agent.dbgmodel.jna.dbgmodel.main.WrapIModelObject;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,18 +32,14 @@ public interface ModelObjectInternal extends ModelObject {
 	Map<Pointer, ModelObjectInternal> CACHE = new WeakValueHashMap<>();
 
 	static ModelObjectInternal instanceFor(WrapIModelObject data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, ModelObjectImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, ModelObjectImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIModelObject>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIModelObject>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IModelObject.IID_IMODEL_OBJECT), WrapIModelObject.class) //
-				.build();
+	List<Preferred<WrapIModelObject>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IModelObject.IID_IMODEL_OBJECT, WrapIModelObject.class));
 
 	static ModelObjectInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(ModelObjectInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(ModelObjectInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

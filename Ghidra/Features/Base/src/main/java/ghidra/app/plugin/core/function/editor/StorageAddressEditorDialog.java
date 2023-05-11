@@ -29,6 +29,8 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.datatype.DataTypeSelectionEditor;
+import ghidra.app.util.datatype.NavigationDirection;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -129,13 +131,39 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 	private void setDataType(DataType dt) {
 		currentDataType = dt;
 		size = dt.getLength();
-		boolean unconstrained =
-			(dt instanceof AbstractFloatDataType) || Undefined.isUndefined(dt);
+		boolean unconstrained = (dt instanceof AbstractFloatDataType) || Undefined.isUndefined(dt);
 		model.setRequiredSize(size, unconstrained);
 		if (sizeLabel != null) {
 			sizeLabel.setText(Integer.toString(size));
 			dataChanged();
 		}
+	}
+
+	private void maybeHandleTabNavigation() {
+		DataTypeSelectionEditor internalEditor = dataTypeEditor.getEditor();
+		NavigationDirection navigationDirection = internalEditor.getNavigationDirection();
+		if (navigationDirection == NavigationDirection.BACKWARD) {
+			// Not all buttons are always enabled.  Walk backwards until we find one
+			if (downButton.isEnabled()) {
+				downButton.requestFocusInWindow();
+			}
+			else if (upButton.isEnabled()) {
+				upButton.requestFocusInWindow();
+			}
+			else if (removeButton.isEnabled()) {
+				removeButton.requestFocusInWindow();
+			}
+			else if (addButton.isEnabled()) {
+				addButton.requestFocusInWindow();
+			}
+			else {
+				varnodeTable.requestFocusInWindow();
+			}
+		}
+		else if (navigationDirection == NavigationDirection.FORWARD) {
+			varnodeTable.requestFocusInWindow();
+		}
+		// navigationDirection == null implies that no navigation event happened
 	}
 
 	private Component buildInfoPanel(DataTypeManagerService service) {
@@ -152,11 +180,12 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 			public void editingStopped(ChangeEvent e) {
 				DataType dt = (DataType) dataTypeEditor.getCellEditorValue();
 				setDataType(dt);
+				maybeHandleTabNavigation();
 			}
 
 			@Override
 			public void editingCanceled(ChangeEvent e) {
-				// ignore
+				maybeHandleTabNavigation();
 			}
 		});
 

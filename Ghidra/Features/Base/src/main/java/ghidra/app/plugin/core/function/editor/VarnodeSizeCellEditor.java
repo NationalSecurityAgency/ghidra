@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.*;
 import java.math.BigInteger;
@@ -25,6 +24,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.textfield.IntegerTextField;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 class VarnodeSizeCellEditor extends AbstractCellEditor implements TableCellEditor {
 
@@ -70,14 +70,9 @@ class VarnodeSizeCellEditor extends AbstractCellEditor implements TableCellEdito
 			};
 			input.getComponent().addFocusListener(focusListener);
 		}
-		input.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopCellEditing();
-			}
-		});
+		input.addActionListener(e -> stopCellEditing());
 		JComponent component = input.getComponent();
-		component.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+		component.setBorder(BorderFactory.createLineBorder(Palette.GRAY, 1));
 		return component;
 	}
 

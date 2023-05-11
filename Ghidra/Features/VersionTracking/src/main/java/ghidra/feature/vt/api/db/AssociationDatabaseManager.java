@@ -125,7 +125,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 
 			RecordIterator records = markupItemTableAdapter.getRecords(associationDB.getKey());
 			while (records.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord record = records.next();
 				items.add(getMarkupItemForRecord(record));
 				monitor.incrementProgress(1);

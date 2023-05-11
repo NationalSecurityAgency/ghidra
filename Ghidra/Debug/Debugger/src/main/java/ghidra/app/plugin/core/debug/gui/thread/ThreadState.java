@@ -19,6 +19,7 @@ public enum ThreadState {
 	/**
 	 * The last recorded state is alive, but the recorder is not tracking the live thread
 	 * 
+	 * <p>
 	 * This state is generally erroneous. If it is seen, the recorder has fallen out of sync with
 	 * the live session and/or the trace.
 	 */
@@ -26,7 +27,6 @@ public enum ThreadState {
 	/**
 	 * The last recorded state is alive, but there is no live session to know STOPPED or RUNNING
 	 */
-	// TODO: Should the thread state transitions be recorded?
 	ALIVE,
 	/**
 	 * The thread is alive, but suspended

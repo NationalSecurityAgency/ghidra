@@ -2,7 +2,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>P-Code Operation Reference</title>
-<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
@@ -672,6 +672,49 @@ contained in the input varnode, the number of 1 bits are counted and then return
 output varnode. A value of 0 returns 0, a 4-byte varnode containing the value 2<sup>32</sup>-1
 (all bits set) returns 32, for instance. The input and output varnodes can have any size. The resulting
 count is zero extended into the output varnode.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="cpui_lzcount"></a>LZCOUNT</h3></div></div></div>
+<div class="informalexample"><div class="table">
+<a name="lzcount.htmltable"></a><table xml:id="lzcount.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Parameters</strong></span></td>
+  <td><span class="bold"><strong>Description</strong></span></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right">input0</td>
+  <td></td>
+  <td>Input varnode to count.</td>
+</tr>
+<tr>
+  <td align="right">output</td>
+  <td></td>
+  <td>Resulting integer varnode containing count.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Semantic statement</strong></span></td>
+  <td></td>
+</tr>
+<tr>
+  <td></td>
+  <td colspan="2"><code class="code">output = lzcount(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</div></div>
+<p>
+This operator counts the number of zeros starting at the most significant bit.
+For instance, for a 4-byte varnode, a value of 0 returns 32, a value of 1
+returns 31, and the value 2<sup>31</sup> returns 0.
+The resulting count is zero extended into the output varnode.
 </p>
 </div>
 <div class="sect2">

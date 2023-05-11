@@ -133,7 +133,7 @@ public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 //			        MemBuffer memBuf = new ProgramStructureProviderContext(program,addr, 
 //    	    	    					struct, struct.getComponent(index).getOffset());
 					DataTypeInstance dti =
-						DataTypeInstance.getDataTypeInstance(newDataType, length);
+						DataTypeInstance.getDataTypeInstance(newDataType, length, true);
 					if (dti == null || dti.getLength() > length) {
 						break;
 					}

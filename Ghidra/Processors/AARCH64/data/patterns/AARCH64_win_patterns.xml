@@ -1,0 +1,50 @@
+<patternlist>
+  
+  <!-- Special functions with side-effects -->
+  <!--                                     -->
+  
+  <pattern> <!-- __security_push_cookie -->
+      <data> 0xff 0x43 0x00 0xd1 
+             ...10001 ........ ........ 1..10000 
+             00110001 ......10 01...... 11111001
+             0xf1 0x63 0x31 0xcb 
+             0xf1 0x07 0x00 0xf9 
+             0xc0 0x03 0x5f 0xd6  </data>
+      <!--
+          sub      sp,sp,#0x10
+          adrp     x17,0x........
+          ldr      x17,[x17, #0x...]
+          sub      x17,sp,x17
+          str      x17,[sp, #0x8]
+          ret
+       -->
+      <align mark="0" bits="3"/>
+      <funcstart label="__security_push_cookie"/>
+  </pattern>
+  
+  <pattern> <!-- __security_pop_cookie -->
+      <data> ...10001 ........ ........ 1..10000 
+             0xf0 0x07 0x40 0xf9 
+             00110001 ......10 01...... 11111001
+             0xf0 0x63 0x30 0xcb 
+             0x1f 0x02 0x11 0xeb 
+             ...00001 ........ ........ 01010100
+             0xff 0x43 0x00 0x91 
+             0xc0 0x03 0x5f 0xd6 
+             0x1f 0x20 0x03 0xd5   </data>
+      <!--
+           adrp     x17,0x........
+           ldr      x16,[sp, #0x8]
+           ldr      x17,[x17, #0x...]
+           sub      x16,sp,x16
+           cmp      x16,x17
+           b.ne     LAB_14020e5a4
+           add      sp,sp,#0x10
+            ret
+
+       -->
+      <align mark="0" bits="3"/>
+      <funcstart label="__security_pop_cookie"/>
+  </pattern>
+  
+</patternlist>

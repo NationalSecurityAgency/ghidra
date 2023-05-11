@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostSymbolEnumerator;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.IDebugHostSymbolEnumerator;
 import agent.dbgmodel.jna.dbgmodel.debughost.WrapIDebugHostSymbolEnumerator;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface DebugHostSymbolEnumeratorInternal extends DebugHostSymbolEnumer
 	Map<Pointer, DebugHostSymbolEnumeratorInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostSymbolEnumeratorInternal instanceFor(WrapIDebugHostSymbolEnumerator data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostSymbolEnumeratorImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostSymbolEnumeratorImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostSymbolEnumerator>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugHostSymbolEnumerator>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostSymbolEnumerator.IID_IDEBUG_HOST_SYMBOL_ENUMERATOR),
-					WrapIDebugHostSymbolEnumerator.class) //
-				.build();
+	List<Preferred<WrapIDebugHostSymbolEnumerator>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostSymbolEnumerator.IID_IDEBUG_HOST_SYMBOL_ENUMERATOR,
+			WrapIDebugHostSymbolEnumerator.class));
 
 	static DebugHostSymbolEnumeratorInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostSymbolEnumeratorInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostSymbolEnumeratorInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

@@ -98,4 +98,6 @@ public final class DWARFTag
 	public static final int DW_TAG_gnu_call_site_parameter = 0x410a;
 	public static final int DW_TAG_hi_user = 0xffff;
 
+	public static final int DW_TAG_APPLE_ptrauth_type = 0x4300; // Apple proprietary
+
 }

@@ -15,165 +15,12 @@
  */
 package ghidra.trace.model;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
-
 import ghidra.framework.model.*;
-import ghidra.trace.util.*;
 import ghidra.util.TimedMsg;
 
-public class TraceDomainObjectListener implements DomainObjectListener {
+public class TraceDomainObjectListener extends TypedEventDispatcher
+		implements DomainObjectListener {
 
-	public interface EventRecordHandler<T, U> {
-		void handle(TraceChangeRecord<T, U> record);
-	}
-
-	public interface FullEventRecordHandler<T, U> extends EventRecordHandler<T, U> {
-		void handle(TraceAddressSpace space, T affectedObject, U oldValue, U newValue);
-
-		@Override
-		default void handle(TraceChangeRecord<T, U> record) {
-			handle(record.getSpace(), record.getAffectedObject(), record.getOldValue(),
-				record.getNewValue());
-		}
-	}
-
-	public interface AffectedObjectHandler<T> extends EventRecordHandler<T, Void> {
-		void handle(TraceAddressSpace space, T affectedObject);
-
-		@Override
-		default void handle(TraceChangeRecord<T, Void> record) {
-			handle(record.getSpace(), record.getAffectedObject());
-		}
-	}
-
-	public interface AffectedObjectOnlyHandler<T> extends EventRecordHandler<T, Void> {
-		void handle(T affectedObject);
-
-		@Override
-		default void handle(TraceChangeRecord<T, Void> record) {
-			handle(record.getAffectedObject());
-		}
-	}
-
-	public interface AffectedAndValuesOnlyHandler<T, U> extends EventRecordHandler<T, U> {
-		void handle(T affectedObject, U oldValue, U newValue);
-
-		@Override
-		default void handle(TraceChangeRecord<T, U> record) {
-			handle(record.getAffectedObject(), record.getOldValue(), record.getNewValue());
-		}
-	}
-
-	public interface SpaceValuesHandler<U> extends EventRecordHandler<Void, U> {
-		void handle(TraceAddressSpace space, U oldValue, U newValue);
-
-		@Override
-		default void handle(TraceChangeRecord<Void, U> record) {
-			handle(record.getSpace(), record.getOldValue(), record.getNewValue());
-		}
-	}
-
-	public interface ValuesOnlyHandler<U> extends EventRecordHandler<Void, U> {
-		void handle(U oldValue, U newValue);
-
-		@Override
-		default void handle(TraceChangeRecord<Void, U> record) {
-			handle(record.getOldValue(), record.getNewValue());
-		}
-	}
-
-	public interface IgnoreValuesHandler extends EventRecordHandler<Object, Object> {
-		void handle(TraceAddressSpace space);
-
-		@Override
-		default void handle(TraceChangeRecord<Object, Object> record) {
-			handle(record.getSpace());
-		}
-	}
-
-	public interface IgnoreAllHandler extends EventRecordHandler<Object, Object> {
-		void handle();
-
-		@Override
-		default void handle(TraceChangeRecord<Object, Object> record) {
-			handle();
-		}
-	}
-
-	private Map<TraceChangeType<?, ?>, EventRecordHandler<?, ?>> typedMap = new HashMap<>();
-	private Map<Integer, Consumer<DomainObjectChangeRecord>> untypedMap = new HashMap<>();
-	private Consumer<DomainObjectChangeRecord> restoredHandler = null;
-
-	protected <T, U> void listenFor(TraceChangeType<T, U> type, EventRecordHandler<T, U> handler) {
-		typedMap.put(type, handler);
-	}
-
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
-			FullEventRecordHandler<? super T, ? super U> handler) {
-		typedMap.put(type, handler);
-	}
-
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
-			AffectedObjectHandler<? super T> handler) {
-		typedMap.put(type, handler);
-	}
-
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
-			AffectedObjectOnlyHandler<? super T> handler) {
-		typedMap.put(type, handler);
-	}
-
-	/**
-	 * Listen for the given event, taking the affected object, the old value, and the new value
-	 * 
-	 * @param <T> the type of the affected object
-	 * @param <U> the type of the values
-	 * @param type the event type
-	 * @param handler the handler
-	 */
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
-			AffectedAndValuesOnlyHandler<? super T, ? super U> handler) {
-		typedMap.put(type, handler);
-	}
-
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
-			ValuesOnlyHandler<? super U> handler) {
-		typedMap.put(type, handler);
-	}
-
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
-			SpaceValuesHandler<? super U> handler) {
-		typedMap.put(type, handler);
-	}
-
-	protected void listenFor(TraceChangeType<?, ?> type, IgnoreValuesHandler handler) {
-		typedMap.put(type, handler);
-	}
-
-	protected void listenFor(TraceChangeType<?, ?> type, IgnoreAllHandler handler) {
-		typedMap.put(type, handler);
-	}
-
-	protected void listenForUntyped(int type, Consumer<DomainObjectChangeRecord> handler) {
-		if (type == DomainObject.DO_OBJECT_RESTORED) {
-			restoredHandler = handler;
-		}
-		else {
-			untypedMap.put(type, handler);
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	public void handleTraceChangeRecord(TraceChangeRecord<?,?> rec) {
-		@SuppressWarnings("rawtypes")
-		EventRecordHandler handler = typedMap.get(rec.getType());
-		if (handler != null) {
-			handler.handle(rec);
-		}
-	}
-	
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		//TimedMsg.info(this, "Handing (" + this + "): " + ev);
@@ -189,23 +36,8 @@ public class TraceDomainObjectListener implements DomainObjectListener {
 		}
 		//Map<String, Integer> CountsByType = new TreeMap<>();
 		for (DomainObjectChangeRecord rec : ev) {
-			//String typeName = DefaultTraceChangeType.getName(rec.getEventType());
-			//CountsByType.compute(typeName, (k, v) -> v == null ? 1 : v + 1);
-			if (rec instanceof TraceChangeRecord) {
-				handleTraceChangeRecord((TraceChangeRecord<?, ?>) rec);
-				continue;
-			}
-			Consumer<DomainObjectChangeRecord> handler;
-			if (null != (handler = untypedMap.get(rec.getEventType()))) {
-				handler.accept(rec);
-				continue;
-			}
-			unhandled(rec);
+			handleChangeRecord(rec);
 		}
 		//TimedMsg.info(this, "  Done: " + CountsByType);
-	}
-
-	protected void unhandled(DomainObjectChangeRecord rec) {
-		// Extension point
 	}
 }

@@ -294,6 +294,30 @@
 	R2731 = trunc(floor(R1115));
 }
 
+# FMAF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10011100000
+:fmaf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100111 & op1620=0b00000
+{
+	R2731 = (R1115 f* R0004) f+ R2731;
+}
+
+# FMSF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10011100010
+:fmsf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100111 & op1620=0b00010
+{
+	R2731 = (R1115 f* R0004) f- R2731;
+}
+
+# FNMAF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10011100100
+:fnmaf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100111 & op1620=0b00100
+{
+	R2731 = -1 f* ((R1115 f* R0004) f+ R2731);
+}
+
+# FNMSF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10011100110
+:fnmfs.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100111 & op1620=0b00110
+{
+	R2731 = -1 f* ((R1115 f* R0004) f- R2731);
+}
+
 # MADDF.S reg1, reg2, reg3, reg4 - rrrrr111111RRRRR|wwwww101W00WWWW0
 :maddf.s R0004, R1115, R2731, reg4 is R0004 & op0510=0x3F & R1115; R2731 & op2426=0b101 & op2122=0b00 & op1616=0 & reg4
 {

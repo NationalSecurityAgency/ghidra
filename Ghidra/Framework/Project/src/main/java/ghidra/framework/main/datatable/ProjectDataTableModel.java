@@ -62,12 +62,12 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 			TaskMonitor monitor) throws CancelledException {
 		DomainFile[] files = folder.getFiles();
 		for (DomainFile domainFile : files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			accumulator.add(new DomainFileInfo(domainFile));
 		}
 		DomainFolder[] folders = folder.getFolders();
 		for (DomainFolder domainFolder : folders) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			addFiles(accumulator, domainFolder, monitor);
 		}
 	}

@@ -150,7 +150,7 @@ public class DataBuffer implements Buffer, Externalizable {
 
 	@Override
 	public void get(int offset, byte[] bytes, int dataOffset, int length)
-			throws ArrayIndexOutOfBoundsException {
+			throws IndexOutOfBoundsException {
 		System.arraycopy(data, offset, bytes, dataOffset, length);
 	}
 
@@ -160,7 +160,7 @@ public class DataBuffer implements Buffer, Externalizable {
 	}
 
 	@Override
-	public byte[] get(int offset, int length) throws ArrayIndexOutOfBoundsException {
+	public byte[] get(int offset, int length) throws IndexOutOfBoundsException {
 		byte[] bytes = new byte[length];
 		System.arraycopy(data, offset, bytes, 0, bytes.length);
 		return bytes;
@@ -255,7 +255,7 @@ public class DataBuffer implements Buffer, Externalizable {
 	 * @param src source offset within this buffer
 	 * @param dest destination offset within this buffer
 	 * @param length length of data to be moved
-	 * @throws ArrayIndexOutOfBoundsException is thrown if parameters result in
+	 * @throws IndexOutOfBoundsException is thrown if parameters result in
 	 * data access beyond the buffer size.
 	 */
 	public void move(int src, int dest, int length) {
@@ -269,7 +269,7 @@ public class DataBuffer implements Buffer, Externalizable {
 	 * @param buf source buffer
 	 * @param bufOffset source buffer offset
 	 * @param length amount of data to copy.
-	 * @throws ArrayIndexOutOfBoundsException is thrown if parameters result in
+	 * @throws IndexOutOfBoundsException is thrown if parameters result in
 	 * data access beyond the buffer size.
 	 */
 	public void copy(int offset, DataBuffer buf, int bufOffset, int length) {
@@ -386,7 +386,7 @@ public class DataBuffer implements Buffer, Externalizable {
 	 * @param offset offset within this buffer
 	 * @param len length of data within this buffer
 	 * @return unsigned comparison result
-	 * @throws ArrayIndexOutOfBoundsException if specified region is not 
+	 * @throws IndexOutOfBoundsException if specified region is not 
 	 * contained within this buffer.
 	 */
 	public int unsignedCompareTo(byte[] otherData, int offset, int len) {

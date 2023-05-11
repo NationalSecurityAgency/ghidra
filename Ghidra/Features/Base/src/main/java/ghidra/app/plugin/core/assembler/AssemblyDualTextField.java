@@ -27,6 +27,8 @@ import docking.EmptyBorderToggleButton;
 import docking.widgets.autocomplete.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.TextFieldLinker;
+import generic.theme.*;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.app.plugin.assembler.Assembler;
@@ -41,7 +43,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Instruction;
 import ghidra.util.NumericUtilities;
-import resources.ResourceManager;
 
 /**
  * A pair of text fields suitable for guided assembly
@@ -60,6 +61,14 @@ import resources.ResourceManager;
  * Otherwise, the usual autocompletion behavior is applied automatically.
  */
 public class AssemblyDualTextField {
+	private static final String FONT_ID = "font.plugin.assembly.dual.text.field";
+	private static Color FG_PREFERENCE_MOST =
+		new GColor("color.fg.plugin.assembler.completion.most");
+	private static Color FG_PREFERENCE_MIDDLE =
+		new GColor("color.fg.plugin.assembler.completion.middle");
+	private static Color FG_PREFERENCE_LEAST =
+		new GColor("color.fg.plugin.assembler.completion.least");
+
 	protected final TextFieldLinker linker = new TextFieldLinker();
 	protected final JTextField mnemonic = new JTextField();
 	protected final JTextField operands = new JTextField();
@@ -179,8 +188,8 @@ public class AssemblyDualTextField {
 		public AssemblyInstruction(String text, byte[] data, int preference) {
 			// TODO?: Description to display constructor tree information
 			super("", NumericUtilities.convertBytesToString(data, " "),
-				preference == 10000 ? Color.BLUE
-						: preference == 5000 ? new Color(0, 0, 128) : new Color(0, 128, 0),
+				preference == 10000 ? FG_PREFERENCE_MOST
+						: preference == 5000 ? FG_PREFERENCE_MIDDLE : FG_PREFERENCE_LEAST,
 				-preference);
 			this.data = data;
 		}
@@ -220,7 +229,7 @@ public class AssemblyDualTextField {
 		private String text;
 
 		public AssemblyError(String text, String desc) {
-			super(text, desc, Color.RED, 1);
+			super(text, desc, Colors.ERROR, 1);
 			this.text = text;
 		}
 
@@ -326,7 +335,7 @@ public class AssemblyDualTextField {
 		@Override
 		protected void addContent(JPanel content) {
 			Box controls = Box.createHorizontalBox();
-			Icon icon = ResourceManager.loadImage("images/question_zero.png");
+			Icon icon = new GIcon("icon.plugin.assembler.question");
 			EmptyBorderToggleButton button = new EmptyBorderToggleButton(icon);
 			button.setToolTipText("Exhaust unspecified bits, otherwise zero them");
 			button.addActionListener((e) -> {
@@ -442,7 +451,7 @@ public class AssemblyDualTextField {
 	 * Set the "existing" instruction used for ordering proposed instructions by "most similar"
 	 * 
 	 * @see #computePreference(AssemblyResolvedPatterns)
-	 * @param existing
+	 * @param existing the existing instruction
 	 */
 	public void setExisting(Instruction existing) {
 		this.existing = existing;
@@ -468,6 +477,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * For single mode: Get the text field containing the full assembly text
+	 * @return the text field
 	 */
 	public JTextField getAssemblyField() {
 		return assembly;
@@ -550,18 +560,13 @@ public class AssemblyDualTextField {
 			if (assembly.isVisible()) {
 				throw new AssertionError();
 			}
-			else {
-				return VisibilityMode.DUAL_VISIBLE;
-			}
+			return VisibilityMode.DUAL_VISIBLE;
 		}
-		else {
-			if (assembly.isVisible()) {
-				return VisibilityMode.SINGLE_VISIBLE;
-			}
-			else {
-				return VisibilityMode.INVISIBLE;
-			}
+
+		if (assembly.isVisible()) {
+			return VisibilityMode.SINGLE_VISIBLE;
 		}
+		return VisibilityMode.INVISIBLE;
 	}
 
 	/**
@@ -653,8 +658,7 @@ public class AssemblyDualTextField {
 	 * @param field the field to configure
 	 */
 	protected void configureField(JTextField field) {
-		Font mono = new Font(Font.MONOSPACED, Font.PLAIN, 12); // TODO: Font size from options
-		field.setFont(mono);
+		Gui.registerFont(field, FONT_ID);
 	}
 
 	/**
@@ -695,7 +699,6 @@ public class AssemblyDualTextField {
 	 * one are preferred. Last, the shortest instructions are preferred.
 	 * 
 	 * @param rc a resolved instruction
-	 * @param existing the instruction, if any, currently under the user's cursor
 	 * @return a preference
 	 */
 	protected int computePreference(AssemblyResolvedPatterns rc) {
@@ -807,7 +810,7 @@ public class AssemblyDualTextField {
 
 			AssemblyDualTextField input = new AssemblyDualTextField();
 
-			SleighLanguageProvider provider = new SleighLanguageProvider();
+			SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 			SleighLanguage lang = (SleighLanguage) provider.getLanguage(DEMO_LANG_ID);
 			curAddr = lang.getDefaultSpace().getAddress(0);
 

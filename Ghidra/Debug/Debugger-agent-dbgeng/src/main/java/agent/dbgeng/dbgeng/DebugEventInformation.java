@@ -27,8 +27,8 @@ public class DebugEventInformation {
 
 	public DebugEventInformation(int type, int pid, int tid) {
 		this.type = type;
-		this.pid = new DebugProcessId(pid);
-		this.tid = new DebugThreadId(tid);
+		this.pid = new DebugProcessRecord(pid);
+		this.tid = new DebugThreadRecord(tid);
 	}
 
 	public int getType() {

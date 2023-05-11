@@ -18,7 +18,6 @@ package db;
 import java.io.IOException;
 
 import db.buffers.DataBuffer;
-import generic.util.UnsignedDataUtils;
 import ghidra.util.BigEndianDataConverter;
 
 /**
@@ -102,26 +101,22 @@ public class FixedField10 extends FixedField {
 			throw new UnsupportedOperationException("may only compare similar Field types");
 		}
 		FixedField10 f = (FixedField10) o;
-		if (hi8 != f.hi8) {
-			return UnsignedDataUtils.unsignedLessThan(hi8, f.hi8) ? -1 : 1;
+		int result = Long.compareUnsigned(hi8, f.hi8);
+		if (result == 0) {
+			result = Short.compareUnsigned(lo2, f.lo2);
 		}
-		if (lo2 != f.lo2) {
-			return UnsignedDataUtils.unsignedLessThan(lo2, f.lo2) ? -1 : 1;
-		}
-		return 0;
+		return result;
 	}
 
 	@Override
 	int compareTo(DataBuffer buffer, int offset) {
 		long otherHi8 = buffer.getLong(offset);
-		if (hi8 != otherHi8) {
-			return UnsignedDataUtils.unsignedLessThan(hi8, otherHi8) ? -1 : 1;
+		int result = Long.compareUnsigned(hi8, otherHi8);
+		if (result == 0) {
+			short otherLo2 = buffer.getShort(offset + 8);
+			result = Short.compareUnsigned(lo2, otherLo2);
 		}
-		short otherLo2 = buffer.getShort(offset + 8);
-		if (lo2 != otherLo2) {
-			return UnsignedDataUtils.unsignedLessThan(lo2, otherLo2) ? -1 : 1;
-		}
-		return 0;
+		return result;
 	}
 
 	@Override
@@ -193,7 +188,7 @@ public class FixedField10 extends FixedField {
 	}
 
 	@Override
-	int write(Buffer buf, int offset) throws IOException {
+	int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		if (data != null) {
 			return buf.put(offset, data);
 		}
@@ -202,7 +197,7 @@ public class FixedField10 extends FixedField {
 	}
 
 	@Override
-	int read(Buffer buf, int offset) throws IOException {
+	int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		updatingValue();
 		data = null; // be lazy
 		hi8 = buf.getLong(offset);
@@ -211,7 +206,7 @@ public class FixedField10 extends FixedField {
 	}
 
 	@Override
-	int readLength(Buffer buf, int offset) throws IOException {
+	int readLength(Buffer buf, int offset) {
 		return 10;
 	}
 

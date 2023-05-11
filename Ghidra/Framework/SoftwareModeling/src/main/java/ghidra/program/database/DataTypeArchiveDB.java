@@ -23,16 +23,13 @@ import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
-import ghidra.program.database.data.ProjectDataTypeManager;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Database implementation for Data Type Archive. 
@@ -43,12 +40,19 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	/**
 	 * DB_VERSION should be incremented any time a change is made to the overall
 	 * database schema associated with any of the managers.
-	 * 18-Sep-2008 - version 1 - added fields for synchronizing program data types with project archives.
+	 * 18-Sep-2008 - version 1 - Added fields for synchronizing program data types with project archives.
 	 * 03-Dec-2009 - version 2 - Added source archive updating (consolidating windows.gdt, clib.gdt, ntddk.gdt)
 	 * 14-Nov-2019 - version 3 - Corrected fixed length indexing implementation causing change
 	 *                           in index table low-level storage for newly created tables. 
+	 * 20-Apr-2023 - version 4 - Added architecture support and string-based function calling
+	 *                           convention specification.
+	 *                           
+	 * NOTE: The true versioning is based on the underlying {@link StandAloneDataTypeManager}
+	 * implementation and its ability to detect and manage versioning concerns.  Due to the need to
+	 * always support opening in a read-only fashion we are unable to impose a forced upgrade
+	 * requirement.
 	 */
-	static final int DB_VERSION = 3;
+	static final int DB_VERSION = 4;
 
 	/**
 	 * UPGRADE_REQUIRED_BEFORE_VERSION should be changed to DB_VERSION any time the
@@ -484,7 +488,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 			throws CancelledException, IOException {
 
 		VersionException versionExc = null;
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 //		try {
 		checkOldProperties(openMode);
@@ -493,20 +497,19 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 //		}
 
 		try {
-			dataTypeManager = new ProjectDataTypeManager(dbh, openMode, this, lock, monitor);
+			dataTypeManager = new ProjectDataTypeManager(this, dbh, openMode, this, lock, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 		}
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		return versionExc;
 	}
 
 	private void initManagers(int openMode, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		monitor.checkCanceled();
-		dataTypeManager.setDataTypeArchive(this);
+		monitor.checkCancelled();
 		dataTypeManager.archiveReady(openMode, monitor);
 	}
 

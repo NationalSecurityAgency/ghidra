@@ -15,6 +15,8 @@
  */
 #include "translate.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_CODE = AttributeId("code",43);
 AttributeId ATTRIB_CONTAIN = AttributeId("contain",44);
 AttributeId ATTRIB_DEFAULTSPACE = AttributeId("defaultspace",45);
@@ -849,18 +851,32 @@ void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size)
     return;
   }
   vector<VarnodeData> newPieces;
-  newPieces.push_back(joinRecord->pieces[pos1]);
   int4 sizeTrunc1 = (int4)(addr1.getOffset() - joinRecord->pieces[pos1].offset);
-  pos1 += 1;
-  while(pos1 <= pos2) {
+  int4 sizeTrunc2 = joinRecord->pieces[pos2].size - (int4)(addr2.getOffset() - joinRecord->pieces[pos2].offset) - 1;
+
+  if (pos2 < pos1) {		// Little endian
+    newPieces.push_back(joinRecord->pieces[pos2]);
+    pos2 += 1;
+    while(pos2 <= pos1) {
+      newPieces.push_back(joinRecord->pieces[pos2]);
+      pos2 += 1;
+    }
+    newPieces.back().offset = addr1.getOffset();
+    newPieces.back().size -= sizeTrunc1;
+    newPieces.front().size -= sizeTrunc2;
+  }
+  else {
     newPieces.push_back(joinRecord->pieces[pos1]);
     pos1 += 1;
+    while(pos1 <= pos2) {
+      newPieces.push_back(joinRecord->pieces[pos1]);
+      pos1 += 1;
+    }
+    newPieces.front().offset = addr1.getOffset();
+    newPieces.front().size -= sizeTrunc1;
+    newPieces.back().size -= sizeTrunc2;
   }
-  int4 sizeTrunc2 = joinRecord->pieces[pos2].size - (int4)(addr2.getOffset() - joinRecord->pieces[pos2].offset) - 1;
-  newPieces.front().offset = addr1.getOffset();
-  newPieces.front().size -= sizeTrunc1;
-  newPieces.back().size -= sizeTrunc2;
-  JoinRecord *newJoinRecord = findAddJoin(newPieces, size);
+  JoinRecord *newJoinRecord = findAddJoin(newPieces, 0);
   addr = Address(newJoinRecord->unified.space,newJoinRecord->unified.offset);
 }
 
@@ -963,3 +979,5 @@ void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
   decoder.closeElement(elemId);
   dump(addr,(OpCode)opcode,outptr,invar,isize);
 }
+
+} // End namespace ghidra

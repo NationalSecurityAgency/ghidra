@@ -19,13 +19,11 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.services.DebuggerStateEditingService;
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
@@ -34,12 +32,10 @@ import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeEncodeException;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.ByteMemBufferImpl;
-import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
@@ -99,7 +95,8 @@ public class WatchRow {
 			return;
 		}
 		try {
-			compiled = SleighProgramCompiler.compileExpression(provider.language, expression);
+			compiled = DebuggerPcodeUtils.compileExpression(provider.getTool(), provider.current,
+				expression);
 		}
 		catch (Exception e) {
 			error = e;
@@ -109,7 +106,6 @@ public class WatchRow {
 
 	protected void reevaluate() {
 		blank();
-		SleighLanguage language = provider.language;
 		PcodeExecutor<WatchValue> executor = provider.asyncWatchExecutor;
 		PcodeExecutor<byte[]> prevExec = provider.prevValueExecutor;
 		if (executor == null) {
@@ -117,9 +113,7 @@ public class WatchRow {
 			return;
 		}
 		CompletableFuture.runAsync(() -> {
-			if (compiled == null || compiled.getLanguage() != language) {
-				recompile();
-			}
+			recompile();
 			if (compiled == null) {
 				provider.contextChanged();
 				return;
@@ -129,7 +123,7 @@ public class WatchRow {
 			prevValue = prevExec == null ? null : compiled.evaluate(prevExec);
 
 			TracePlatform platform = provider.current.getPlatform();
-			value = fullValue.bytes();
+			value = fullValue.bytes().bytes();
 			error = null;
 			state = fullValue.state();
 			// TODO: Optional column for guest address?
@@ -150,11 +144,20 @@ public class WatchRow {
 		}, AsyncUtils.SWING_EXECUTOR);
 	}
 
+	private ByteMemBufferImpl createMemBuffer() {
+		return new ByteMemBufferImpl(address, value, provider.language.isBigEndian()) {
+			@Override
+			public Memory getMemory() {
+				return provider.current.getTrace().getProgramView().getMemory();
+			}
+		};
+	}
+
 	protected String parseAsDataTypeStr() {
 		if (dataType == null || value == null) {
 			return "";
 		}
-		MemBuffer buffer = new ByteMemBufferImpl(address, value, provider.language.isBigEndian());
+		MemBuffer buffer = createMemBuffer();
 		return dataType.getRepresentation(buffer, settings, value.length);
 	}
 
@@ -162,8 +165,8 @@ public class WatchRow {
 		if (dataType == null || value == null) {
 			return null;
 		}
-		MemBuffer buffer = new ByteMemBufferImpl(address, value, provider.language.isBigEndian());
-		return dataType.getValue(buffer, SettingsImpl.NO_SETTINGS, value.length);
+		MemBuffer buffer = createMemBuffer();
+		return dataType.getValue(buffer, settings, value.length);
 	}
 
 	public void setExpression(String expression) {
@@ -212,12 +215,33 @@ public class WatchRow {
 	}
 
 	public void setDataType(DataType dataType) {
+		if (dataType instanceof Pointer ptrType && address != null &&
+			address.isRegisterAddress()) {
+			/**
+			 * NOTE: This will not catch it if the expression cannot be evaluated. When it can later
+			 * be evaluated, no check is performed.
+			 * 
+			 * TODO: This should be for the current platform. These don't depend on the trace's code
+			 * storage, so it should be easier to implement. Still, I'll wait to tackle that all at
+			 * once.
+			 */
+			AddressSpace space =
+				provider.current.getTrace().getBaseAddressFactory().getDefaultAddressSpace();
+			DataTypeManager dtm = ptrType.getDataTypeManager();
+			dataType =
+				new PointerTypedef(null, ptrType.getDataType(), ptrType.getLength(), dtm, space);
+			if (dtm != null) {
+				try (Transaction tid = dtm.openTransaction("Resolve data type")) {
+					dataType = dtm.resolve(dataType, DataTypeConflictHandler.DEFAULT_HANDLER);
+				}
+			}
+		}
 		this.typePath = dataType == null ? null : dataType.getPathName();
 		this.dataType = dataType;
+		settings.setDefaultSettings(dataType == null ? null : dataType.getDefaultSettings());
 		valueString = parseAsDataTypeStr();
 		valueObj = parseAsDataTypeObj();
 		provider.contextChanged();
-		settings.setDefaultSettings(dataType == null ? null : dataType.getDefaultSettings());
 		if (dataType != null) {
 			savedSettings.read(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
 		}
@@ -318,11 +342,11 @@ public class WatchRow {
 		if (address == null) {
 			return false;
 		}
-		DebuggerStateEditingService editingService = provider.editingService;
-		if (editingService == null) {
+		DebuggerControlService controlService = provider.controlService;
+		if (controlService == null) {
 			return false;
 		}
-		StateEditor editor = editingService.createStateEditor(provider.current);
+		StateEditor editor = controlService.createStateEditor(provider.current);
 		return editor.isVariableEditable(address, getValueLength());
 	}
 
@@ -369,11 +393,11 @@ public class WatchRow {
 			System.arraycopy(bytes, 0, fillOld, 0, bytes.length);
 			bytes = fillOld;
 		}
-		DebuggerStateEditingService editingService = provider.editingService;
-		if (editingService == null) {
-			throw new AssertionError("No editing service");
+		DebuggerControlService controlService = provider.controlService;
+		if (controlService == null) {
+			throw new AssertionError("No control service");
 		}
-		StateEditor editor = editingService.createStateEditor(provider.current);
+		StateEditor editor = controlService.createStateEditor(provider.current);
 		editor.setVariable(address, bytes).exceptionally(ex -> {
 			Msg.showError(this, null, "Write Failed",
 				"Could not modify watch value (on target)", ex);
@@ -428,7 +452,7 @@ public class WatchRow {
 			return null;
 		}
 		TraceLocation dloc =
-			new DefaultTraceLocation(trace, null, Range.singleton(current.getSnap()), address);
+			new DefaultTraceLocation(trace, null, Lifespan.at(current.getSnap()), address);
 		ProgramLocation sloc = provider.mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;

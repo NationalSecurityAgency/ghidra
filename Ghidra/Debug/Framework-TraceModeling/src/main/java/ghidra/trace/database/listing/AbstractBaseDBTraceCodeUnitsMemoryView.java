@@ -15,19 +15,14 @@
  */
 package ghidra.trace.database.listing;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.locks.Lock;
-
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
 
 import generic.NestedIterator;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.listing.TraceBaseCodeUnitsView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
@@ -42,7 +37,6 @@ import ghidra.util.LockHold;
 public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCodeUnitAdapter, M extends AbstractBaseDBTraceCodeUnitsView<T>>
 		implements DBTraceDelegatingManager<M> {
 	protected final DBTraceCodeManager manager;
-	protected final Collection<M> activeSpacesView;
 
 	/**
 	 * Construct a composite view
@@ -51,8 +45,6 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 */
 	public AbstractBaseDBTraceCodeUnitsMemoryView(DBTraceCodeManager manager) {
 		this.manager = manager;
-		this.activeSpacesView =
-			Collections2.transform(manager.getActiveMemorySpaces(), this::getView);
 	}
 
 	public AddressSpace getSpace() {
@@ -244,8 +236,8 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 */
 	public int size() {
 		int sum = 0;
-		for (M m : activeSpacesView) {
-			sum += m.size();
+		for (DBTraceCodeSpace space : manager.getActiveMemorySpaces()) {
+			sum += getView(space).size();
 		}
 		return sum;
 	}
@@ -427,9 +419,9 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	}
 
 	/**
-	 * @see TraceBaseCodeUnitsView#coversRange(Range, AddressRange)
+	 * @see TraceBaseCodeUnitsView#coversRange(Lifespan, AddressRange)
 	 */
-	public boolean coversRange(Range<Long> span, AddressRange range) {
+	public boolean coversRange(Lifespan span, AddressRange range) {
 		return delegateRead(range.getAddressSpace(), m -> m.coversRange(span, range),
 			falseOrTrueUndefined());
 	}
@@ -443,9 +435,9 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	}
 
 	/**
-	 * @see TraceBaseCodeUnitsView#intersectsRange(Range, AddressRange)
+	 * @see TraceBaseCodeUnitsView#intersectsRange(Lifespan, AddressRange)
 	 */
-	public boolean intersectsRange(Range<Long> span, AddressRange range) {
+	public boolean intersectsRange(Lifespan span, AddressRange range) {
 		return delegateRead(range.getAddressSpace(), m -> m.intersectsRange(span, range),
 			falseOrTrueUndefined());
 	}

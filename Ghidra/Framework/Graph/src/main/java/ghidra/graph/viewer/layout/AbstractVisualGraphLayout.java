@@ -107,7 +107,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 	/**
 	 * This is the method that is called to perform the actual layout.  While this method is
 	 * running, the {@link #monitor} variable has been set so that you can call
-	 * {@link TaskMonitor#checkCanceled()}.
+	 * {@link TaskMonitor#checkCancelled()}.
 	 *
 	 * @param g the graph
 	 * @return the new grid location
@@ -353,7 +353,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 		// centered)
 		Map<V, Point2D> newLocations = new HashMap<>();
 		for (V vertex : vertices) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Row<V> row = layoutLocations.row(vertex);
 			Column column = layoutLocations.col(vertex);
@@ -406,7 +406,7 @@ public abstract class AbstractVisualGraphLayout<V extends VisualVertex,
 
 		Map<E, List<Point2D>> newEdgeArticulations = new HashMap<>();
 		for (E edge : edges) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<Point2D> newArticulations = new ArrayList<>();
 			for (Point gridPoint : layoutLocations.articulations(edge)) {

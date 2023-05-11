@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __INJECT_SLEIGH__
-#define __INJECT_SLEIGH__
+#ifndef __INJECT_SLEIGH_HH__
+#define __INJECT_SLEIGH_HH__
 
 #include "pcodeinject.hh"
 #include "sleigh.hh"
+
+namespace ghidra {
 
 class InjectContextSleigh : public InjectContext {
 public:
@@ -109,4 +111,5 @@ public:
   virtual const vector<OpBehavior *> &getBehaviors(void);
 };
 
+} // End namespace ghidra
 #endif

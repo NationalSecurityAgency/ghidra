@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.memory;
 
 import java.awt.Cursor;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.*;
@@ -54,12 +53,6 @@ class SplitBlockDialog extends DialogComponentProvider {
 	private AddressFactory addrFactory;
 	private MemoryMapPlugin plugin;
 
-	/**
-	 * Constructor
-	 * @param parent
-	 * @param block
-	 * @param af
-	 */
 	SplitBlockDialog(MemoryMapPlugin plugin, MemoryBlock block, AddressFactory af) {
 		super("Split Block");
 		this.plugin = plugin;
@@ -74,9 +67,6 @@ class SplitBlockDialog extends DialogComponentProvider {
 		addListeners();
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
 	protected void okCallback() {
 		// call plugin to do the work
@@ -173,7 +163,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockOneEnd.setAddress(endAddr);
 		blockOneEnd.setAddressSpaceEditable(false);
 
-		blockOneLengthField.setValue(new Long(block.getSize()));
+		blockOneLengthField.setValue(Long.valueOf(block.getSize()));
 
 		blockTwoNameField.setText(name + ".split");
 
@@ -195,12 +185,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockOneEnd.addChangeListener(new AddressChangeListener(blockOneEnd));
 		blockTwoStart.addChangeListener(new AddressChangeListener(blockTwoStart));
 
-		ActionListener al = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setStatusText("");
-			}
-		};
+		ActionListener al = e -> setStatusText("");
 		blockOneLengthField.addActionListener(al);
 		blockTwoLengthField.addActionListener(al);
 		blockOneEnd.addActionListener(al);
@@ -273,7 +258,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 				blockTwoStart.setAddress(b2Start);
 				long b2Length = block.getEnd().subtract(b2Start) + 1;
 
-				blockTwoLengthField.setValue(new Long(b2Length));
+				blockTwoLengthField.setValue(Long.valueOf(b2Length));
 
 			}
 			catch (Exception e) {
@@ -305,7 +290,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 				blockOneEnd.setAddress(b1End);
 				length = (int) b1End.subtract(block.getStart()) + 1;
 
-				blockOneLengthField.setValue(new Long(length));
+				blockOneLengthField.setValue(Long.valueOf(length));
 
 			}
 			catch (Exception e) {
@@ -386,13 +371,13 @@ class SplitBlockDialog extends DialogComponentProvider {
 					"End address must be less than original block end (" + block.getEnd() + ")");
 				return false;
 			}
-			blockOneLengthField.setValue(new Long(length));
+			blockOneLengthField.setValue(Long.valueOf(length));
 
 			try {
 				Address b2Start = end.addNoWrap(1);
 				blockTwoStart.setAddress(b2Start);
 				length = block.getEnd().subtract(b2Start) + 1;
-				blockTwoLengthField.setValue(new Long(length));
+				blockTwoLengthField.setValue(Long.valueOf(length));
 			}
 			catch (Exception e) {
 				if (e instanceof AddressOverflowException) {
@@ -428,12 +413,12 @@ class SplitBlockDialog extends DialogComponentProvider {
 
 			// change block Two length, blockOneEnd, block One length
 			long length = end.subtract(start) + 1;
-			blockTwoLengthField.setValue(new Long(length));
+			blockTwoLengthField.setValue(Long.valueOf(length));
 			try {
 				Address b1End = start.subtractNoWrap(1);
 				blockOneEnd.setAddress(b1End);
 				length = b1End.subtract(block.getStart()) + 1;
-				blockOneLengthField.setValue(new Long(length));
+				blockOneLengthField.setValue(Long.valueOf(length));
 			}
 			catch (Exception e) {
 				if (e instanceof AddressOverflowException) {

@@ -166,7 +166,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 		triggerText(textField, "3");
 		pressButtonByText(dialog, "OK");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(27, model.getNumComponents());
 		assertTrue(getDataType(0).isEquivalent(dt4));
 		assertEquals(341, model.getLength());

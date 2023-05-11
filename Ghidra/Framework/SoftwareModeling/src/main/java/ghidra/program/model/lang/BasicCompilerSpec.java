@@ -32,9 +32,9 @@ import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.DefaultProgramContext;
-import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.data.DataOrganization;
+import ghidra.program.model.data.DataOrganizationImpl;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -77,7 +77,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	private List<Varnode> preferSplit;	// List of registers the decompiler prefers to split
 	private AddressSet noHighPtr;		// Memory regions the decompiler treats as not addressable
 	private AddressSet readOnlySet;		// (Additional) memory ranges the decompiler treats as read-only
-	private Varnode returnAddress;		// Register/memory where decompiler expects return address to be stored
+	protected Varnode returnAddress;		// Register/memory where decompiler expects return address to be stored
 	private int funcPtrAlign;			// Alignment of function pointers,  0=no alignment (default)
 	private List<Pair<AddressSpace, Integer>> deadCodeDelay;
 	private List<AddressRange> inferPtrBounds;	// Restrictions on where decompiler can infer pointers
@@ -312,6 +312,12 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 	@Override
 	public PrototypeModel getCallingConvention(String name) {
+		if (name == null || Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(name)) {
+			return null;
+		}
+		if (Function.DEFAULT_CALLING_CONVENTION_STRING.equals(name)) {
+			return getDefaultCallingConvention();
+		}
 		return callingConventionMap.get(name);
 	}
 
@@ -1066,6 +1072,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 			model = new PrototypeModel();
 			model.restoreXml(parser, this);
 		}
+		setDefaultReturnAddressIfNeeded(model);
 		modelList.add(model);
 		return model;
 	}
@@ -1076,12 +1083,14 @@ public class BasicCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public PrototypeModel matchConvention(GenericCallingConvention genericCallingConvention) {
-		if (genericCallingConvention == GenericCallingConvention.unknown) {
+	public PrototypeModel matchConvention(String conventionName) {
+		if (conventionName == null ||
+			CALLING_CONVENTION_unknown.equals(conventionName) ||
+			CALLING_CONVENTION_default.equals(conventionName)) {
 			return defaultModel;
 		}
 		for (PrototypeModel model : models) {
-			if (model.getGenericCallingConvention() == genericCallingConvention) {
+			if (model.getName().equals(conventionName)) {
 				return model;
 			}
 		}
@@ -1167,6 +1176,19 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 */
 	protected static void markPrototypeAsExtension(PrototypeModel model) {
 		model.isExtension = true;
+	}
+
+	/**
+	 * Sets the {@code returnaddress} of {@code model} to the {@code returnAddress}
+	 * of {@code this} if the model does not have a return address set.
+	 * @param model prototype
+	 */
+	protected void setDefaultReturnAddressIfNeeded(PrototypeModel model) {
+		if (model.getReturnAddress() == null) {
+			Varnode[] retAddr =
+				(returnAddress == null) ? new Varnode[0] : new Varnode[] { returnAddress };
+			model.setReturnAddress(retAddr);
+		}
 	}
 
 	@Override

@@ -23,6 +23,7 @@ import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
 import ghidra.graph.viewer.renderer.ArticulatedEdgeRenderer;
+import ghidra.program.model.symbol.FlowType;
 
 /**
  * A renderer used by the Function Graph API to provide additional edge coloring, as 
@@ -31,13 +32,21 @@ import ghidra.graph.viewer.renderer.ArticulatedEdgeRenderer;
 public class FGEdgeRenderer extends ArticulatedEdgeRenderer<FGVertex, FGEdge> {
 
 	@Override
-	public Color getBaseColor(Graph<FGVertex, FGEdge> g, FGEdge e) {
+	public Color getDrawColor(Graph<FGVertex, FGEdge> g, FGEdge e) {
+		FunctionGraphOptions options = getOptions(g);
+		FlowType flowType = e.getFlowType();
+		Color color = options.getColor(flowType);
+		return color;
+	}
+
+	@Override
+	public Color getFocusedColor(Graph<FGVertex, FGEdge> g, FGEdge e) {
 		FunctionGraphOptions options = getOptions(g);
 		return options.getColor(e.getFlowType());
 	}
 
 	@Override
-	public Color getHighlightColor(Graph<FGVertex, FGEdge> g, FGEdge e) {
+	public Color getSelectedColor(Graph<FGVertex, FGEdge> g, FGEdge e) {
 		FunctionGraphOptions options = getOptions(g);
 		return options.getHighlightColor(e.getFlowType());
 	}

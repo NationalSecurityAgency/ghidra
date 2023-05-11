@@ -52,7 +52,7 @@ public class GetAddressesToClassifyTask extends Task {
 		monitor.initialize(prog.getFunctionManager().getFunctionCount());
 		FunctionIterator fIter = prog.getFunctionManager().getFunctions(true);
 		while (fIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			Function func = fIter.next();
 			execNonFunc = execNonFunc.subtract(func.getBody());

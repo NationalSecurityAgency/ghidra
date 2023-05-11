@@ -15,15 +15,14 @@
  */
 package ghidra.app.plugin.core.help;
 
-import java.util.*;
-
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
+import java.util.*;
 
 import javax.swing.*;
 
 import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.dnd.GClipboard;
@@ -70,6 +69,10 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 	public void dispose() {
 		tool.removeAction(processorListAction);
 		processorListAction.dispose();
+
+		if (dialogProvider != null) {
+			dialogProvider.dispose();
+		}
 		super.dispose();
 	}
 
@@ -92,11 +95,11 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 		tool.addAction(processorListAction);
 	}
 
-	private synchronized void dialogClosed() {
+	private void dialogClosed() {
 		dialogProvider = null;
 	}
 
-	private synchronized void showProcessorList() {
+	private void showProcessorList() {
 		if (dialogProvider == null) {
 			dialogProvider = new ProcessorListDialogProvider();
 		}
@@ -154,7 +157,7 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 		return strBuilder.toString();
 	}
 
-	class ProcessorListDialogProvider extends DialogComponentProvider {
+	private class ProcessorListDialogProvider extends ReusableDialogComponentProvider {
 
 		ProcessorListDialogProvider() {
 			super("Installed Processor Modules", false, false, true, false);
@@ -162,7 +165,6 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 				new ProcessorListTableProvider(tool, getName());
 			setRememberLocation(true);
 			addWorkPanel(tableProvider.getComponent());
-//			addWorkPanel(buildList());
 
 			setHelpLocation(new HelpLocation(HelpTopics.ABOUT, "ProcessorList"));
 

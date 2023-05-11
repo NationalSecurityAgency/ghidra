@@ -46,31 +46,33 @@ import ghidra.util.task.TaskMonitor;
  * For example, the createCodeUnit() method of listing will fail if memory is
  * undefined at the address where the codeUnit is to be created.
  */
-public interface Program extends DataTypeManagerDomainObject {
+public interface Program extends DataTypeManagerDomainObject, ProgramArchitecture {
 
 	public static final String ANALYSIS_PROPERTIES = "Analyzers";
 	public static final String DISASSEMBLER_PROPERTIES = "Disassembler";
 
-	/** Name of program information property list */
+	/** Options for storing program info */
 	public static final String PROGRAM_INFO = "Program Information";
-	/** Name of program settings property list */
-	public static final String PROGRAM_SETTINGS = "Program Settings";
+
 	/** Name of boolean analyzed property */
-	public static final String ANALYZED = "Analyzed";
-	/** Name of date created property */
+	public static final String ANALYZED_OPTION_NAME = "Analyzed";
+	/** Property to control if user should be asked to analyze when unanalyzed program opened  */
+	public static final String ASK_TO_ANALYZE_OPTION_NAME = "Should Ask To Analyze";
+
+	/** Date created property */
 	public static final String DATE_CREATED = "Date Created";
-	/** Name of ghidra version property */
+	/** Ghidra version property */
 	public static final String CREATED_WITH_GHIDRA_VERSION = "Created With Ghidra Version";
-	/** Name of ghidra preferred root namespace category property */
+	/** Ghidra preferred root namespace category property */
 	public static final String PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY =
 		"Preferred Root Namespace Category";
-	/** Creation date to ask for analysis */
+
+	/** Creation date for analysis */
 	public static final String ANALYSIS_START_DATE = "2007-Jan-01";
 	/** Format string of analysis date */
 	public static final String ANALYSIS_START_DATE_FORMAT = "yyyy-MMM-dd";
 	/** A date from January 1, 1970 */
 	public static final Date JANUARY_1_1970 = new Date(0);
-
 	/** The maximum number of operands for any assembly language */
 	public final static int MAX_OPERANDS = 16;
 
@@ -83,8 +85,10 @@ public interface Program extends DataTypeManagerDomainObject {
 	/**
 	 * Get the internal program address map
 	 * @return internal address map
+	 * @deprecated Method intended for internal ProgramDB use and is not intended for general use.
+	 * This method may be removed from this interface in a future release.
 	 */
-	// FIXME!! Should not expose on interface - anything using this should use ProgramDB or avoid using map!
+	@Deprecated(forRemoval = true)
 	public AddressMap getAddressMap();
 
 	/**

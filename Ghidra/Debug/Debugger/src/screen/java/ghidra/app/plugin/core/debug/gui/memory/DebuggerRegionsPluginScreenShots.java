@@ -19,8 +19,7 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -32,8 +31,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -75,21 +74,21 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 	}
 
 	private void populateTrace() throws Exception {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("/bin/bash (400000:40ffff)", Range.atLeast(snap),
+			mm.addRegion("/bin/bash (400000:40ffff)", Lifespan.nowOn(snap),
 				tb.range(0x00400000, 0x0040ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			mm.addRegion("/bin/bash (600000:60ffff)", Range.atLeast(snap),
+			mm.addRegion("/bin/bash (600000:60ffff)", Lifespan.nowOn(snap),
 				tb.range(0x00600000, 0x0060ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
-			mm.addRegion("/lib/libc (7fac0000:7facffff)", Range.atLeast(snap),
+			mm.addRegion("/lib/libc (7fac0000:7facffff)", Lifespan.nowOn(snap),
 				tb.range(0x7fac0000, 0x7facffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			mm.addRegion("/lib/libc (7fcc0000:7fccffff)", Range.atLeast(snap),
+			mm.addRegion("/lib/libc (7fcc0000:7fccffff)", Lifespan.nowOn(snap),
 				tb.range(0x7fcc0000, 0x7fccffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
 		}
@@ -103,7 +102,7 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 		progBash = createDefaultProgram("bash", ProgramBuilder._X64, this);
 		progLibC = createDefaultProgram("libc.so.6", ProgramBuilder._X64, this);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(progBash, "Add memory")) {
+		try (Transaction tx = progBash.openTransaction("Add memory")) {
 			progBash.setImageBase(addr(progBash, 0x00400000), true);
 			progBash.getMemory()
 					.createInitializedBlock(".text", addr(progBash, 0x00400000), 0x10000, (byte) 0,
@@ -113,7 +112,7 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 						TaskMonitor.DUMMY, false);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(progLibC, "Add memory")) {
+		try (Transaction tx = progLibC.openTransaction("Add memory")) {
 			progLibC.setImageBase(addr(progLibC, 0x00400000), true);
 			progLibC.getMemory()
 					.createInitializedBlock(".text", addr(progLibC, 0x00400000), 0x10000, (byte) 0,

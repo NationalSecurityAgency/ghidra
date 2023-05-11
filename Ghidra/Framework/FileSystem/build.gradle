@@ -23,7 +23,6 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework FileSystem'
 
 dependencies {
-	api project(':Generic')
 	api project(':DB')
 	api project(':Docking')
 }

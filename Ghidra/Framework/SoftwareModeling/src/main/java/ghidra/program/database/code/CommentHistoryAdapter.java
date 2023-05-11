@@ -101,7 +101,7 @@ abstract class CommentHistoryAdapter {
 				new CommentHistoryAdapterV0(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.getAllRecords();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getLongValue(HISTORY_ADDRESS_COL));
 				rec.setLongValue(HISTORY_ADDRESS_COL, addrMap.getKey(addr, true));
@@ -114,7 +114,7 @@ abstract class CommentHistoryAdapter {
 
 			iter = tmpAdapter.getAllRecords();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = iter.next();
 				newAdapter.updateRecord(rec);
 				monitor.setProgress(++count);

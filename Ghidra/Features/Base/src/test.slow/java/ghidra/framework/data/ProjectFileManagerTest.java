@@ -91,7 +91,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 	private void flushFileSystemEventsAndClearTestQueue() {
 		flushFileSystemEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		events.clear();
 	}
 
@@ -121,12 +121,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		// If there are queued actions, then we have to kick the handling thread and 
 		// let it finish running.
 
-		try {
-			assertTrue(eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS));
-		}
-		catch (InterruptedException e) {
-			failWithException("Interrupted waiting for filesystem events", e);
-		}
+		assertTrue(eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS));
 	}
 
 	private void deleteAll(File file) {
@@ -625,7 +620,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	private void assertEventsSize(int size) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		int eventCount = events.size();
 		if (eventCount == size) {
 			return; // all is well

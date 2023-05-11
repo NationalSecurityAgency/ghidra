@@ -136,6 +136,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 				continue;
 			}
 			markPrototypeAsExtension(model);
+			setDefaultReturnAddressIfNeeded(model);
 			finalList.add(model);
 			usermodels.put(model.getName(), model);
 		}

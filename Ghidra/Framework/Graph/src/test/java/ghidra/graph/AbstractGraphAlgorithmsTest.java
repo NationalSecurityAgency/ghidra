@@ -15,8 +15,7 @@
  */
 package ghidra.graph;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -24,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 
 import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.graph.algo.ChkDominanceAlgorithm;
 import ghidra.graph.algo.ChkPostDominanceAlgorithm;
 import ghidra.util.exception.CancelledException;
@@ -65,7 +65,7 @@ public abstract class AbstractGraphAlgorithmsTest extends AbstractGenericTest {
 			while (true) {
 
 				sleep(1000);
-				printMemory();
+				AbstractGuiTest.printMemory();
 			}
 
 		}, "Memory Monitor");

@@ -18,6 +18,7 @@ package ghidra.app.util.pdb;
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.GhidraProgramUtilities;
 
 /**
  * Storage of PDB-related attributes
@@ -47,9 +48,7 @@ public class PdbProgramAttributes {
 		pdbLoaded = propList.contains(PdbParserConstants.PDB_LOADED)
 				? propList.getBoolean(PdbParserConstants.PDB_LOADED, false)
 				: false;
-		programAnalyzed = propList.contains(Program.ANALYZED)
-				? propList.getBoolean(Program.ANALYZED, false)
-				: false;
+		programAnalyzed = GhidraProgramUtilities.isAnalyzed(program);
 		pdbSignature = propList.contains(PdbParserConstants.PDB_SIGNATURE)
 				? propList.getString(PdbParserConstants.PDB_SIGNATURE, null)
 				: null;
@@ -140,6 +139,5 @@ public class PdbProgramAttributes {
 	public boolean isProgramAnalyzed() {
 		return programAnalyzed;
 	}
-
 
 }

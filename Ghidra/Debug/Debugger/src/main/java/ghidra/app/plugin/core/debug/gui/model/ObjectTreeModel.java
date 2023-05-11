@@ -20,17 +20,14 @@ import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.dbg.target.*;
+import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.framework.model.DomainObjectClosedListener;
-import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.target.*;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -85,7 +82,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		private void valueCreated(TraceObjectValue value) {
-			if (!DBTraceUtils.intersect(value.getLifespan(), span)) {
+			if (!value.getLifespan().intersects(span)) {
 				return;
 			}
 			AbstractNode node = nodeCache.getByObject(value.getParent());
@@ -102,7 +99,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		private void valueDeleted(TraceObjectValue value) {
-			if (!DBTraceUtils.intersect(value.getLifespan(), span)) {
+			if (!value.getLifespan().intersects(span)) {
 				return;
 			}
 			AbstractNode node = nodeCache.getByObject(value.getParent());
@@ -118,10 +115,10 @@ public class ObjectTreeModel implements DisplaysModified {
 			node.childDeleted(value);
 		}
 
-		private void valueLifespanChanged(TraceObjectValue value, Range<Long> oldSpan,
-				Range<Long> newSpan) {
-			boolean inOld = DBTraceUtils.intersect(oldSpan, span);
-			boolean inNew = DBTraceUtils.intersect(newSpan, span);
+		private void valueLifespanChanged(TraceObjectValue value, Lifespan oldSpan,
+				Lifespan newSpan) {
+			boolean inOld = oldSpan.intersects(span);
+			boolean inNew = newSpan.intersects(span);
 			if (inOld == inNew) {
 				return;
 			}
@@ -193,6 +190,19 @@ public class ObjectTreeModel implements DisplaysModified {
 	public abstract class AbstractNode extends GTreeLazyNode {
 		public abstract TraceObjectValue getValue();
 
+		@Override
+		public int compareTo(GTreeNode node) {
+			return TargetObjectKeyComparator.CHILD.compare(this.getName(), node.getName());
+		}
+
+		@Override
+		public String getName() {
+			return getValue().getEntryKey();
+		}
+
+		@Override
+		public abstract String getDisplayText();
+
 		protected void childCreated(TraceObjectValue value) {
 			if (getParent() == null || !isLoaded()) {
 				return;
@@ -253,6 +263,11 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		public String getName() {
+			return "Root";
+		}
+
+		@Override
+		public String getDisplayText() {
 			if (trace == null) {
 				return "<html><em>No trace is active</em>";
 			}
@@ -336,7 +351,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
+		public String getDisplayText() {
 			String html = HTMLUtilities.escapeHTML(
 				value.getEntryKey() + ": " + display.getPrimitiveValueDisplay(value.getValue()));
 			return "<html>" + html;
@@ -384,7 +399,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
+		public String getDisplayText() {
 			return "<html>" + HTMLUtilities.escapeHTML(value.getEntryKey()) + ": <em>" +
 				HTMLUtilities.escapeHTML(display.getObjectLinkDisplay(value)) + "</em>";
 		}
@@ -426,7 +441,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
+		public String getDisplayText() {
 			return "<html>" + HTMLUtilities.escapeHTML(display.getObjectDisplay(value));
 		}
 
@@ -488,7 +503,7 @@ public class ObjectTreeModel implements DisplaysModified {
 	private long snap;
 	private Trace diffTrace;
 	private long diffSnap;
-	private Range<Long> span = Range.all();
+	private Lifespan span = Lifespan.ALL;
 	private boolean showHidden;
 	private boolean showPrimitives;
 	private boolean showMethods;
@@ -589,7 +604,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		if (!showMethods && value.isObject() && value.getChild().isMethod(snap)) {
 			return false;
 		}
-		if (!DBTraceUtils.intersect(value.getLifespan(), span)) {
+		if (!value.getLifespan().intersects(span)) {
 			return false;
 		}
 		return true;
@@ -610,6 +625,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		List<GTreeNode> result = ObjectTableModel
 				.distinctCanonical(object.getValues().stream().filter(this::isValueVisible))
 				.map(v -> nodeCache.getOrCreateNode(v))
+				.sorted()
 				.collect(Collectors.toList());
 		return result;
 	}
@@ -737,7 +753,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		reload();
 	}
 
-	public void setSpan(Range<Long> span) {
+	public void setSpan(Lifespan span) {
 		if (Objects.equals(this.span, span)) {
 			return;
 		}
@@ -745,7 +761,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		spanChanged();
 	}
 
-	public Range<Long> getSpan() {
+	public Lifespan getSpan() {
 		return span;
 	}
 

@@ -21,12 +21,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import db.*;
 import ghidra.app.util.task.OpenProgramTask;
+import ghidra.app.util.task.OpenProgramTask.OpenProgramRequest;
 import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
 import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
 import ghidra.feature.vt.api.impl.*;
 import ghidra.feature.vt.api.main.*;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
+import ghidra.framework.model.TransactionInfo.Status;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.DBObjectCache;
@@ -309,7 +311,8 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 
 		TaskLauncher.launch(openTask);
 
-		return openTask.getOpenProgram();
+		OpenProgramRequest openProgram = openTask.getOpenProgram();
+		return openProgram != null ? openProgram.getProgram() : null;
 	}
 
 	@Override
@@ -693,9 +696,9 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 
 	@Override
 	public void endTransaction(int transactionID, boolean commit) {
-		Transaction transaction = getCurrentTransaction();
+		TransactionInfo transaction = getCurrentTransactionInfo();
 		super.endTransaction(transactionID, commit);
-		if (changeSetsModified && transaction.getStatus() == Transaction.COMMITTED) {
+		if (changeSetsModified && transaction.getStatus() == Status.COMMITTED) {
 			changeSetsModified = false;
 		}
 	}

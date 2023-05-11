@@ -672,7 +672,7 @@ public class HighFunctionDBUtil {
 		}
 
 		try {
-			return DataUtilities.createData(program, addr, dt, -1, false,
+			return DataUtilities.createData(program, addr, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 		}
 		catch (CodeUnitInsertionException e) {
@@ -696,10 +696,11 @@ public class HighFunctionDBUtil {
 
 		ParameterDefinition[] params = sig.getArguments();
 		FunctionDefinitionDataType fsig = new FunctionDefinitionDataType("tmpname"); // Empty datatype, will get renamed later
-		fsig.setGenericCallingConvention(sig.getGenericCallingConvention());
+		fsig.setCallingConvention(sig.getCallingConventionName());
 		fsig.setArguments(params);
 		fsig.setReturnType(sig.getReturnType());
 		fsig.setVarArgs(sig.hasVarArgs());
+		fsig.setNoReturn(sig.hasNoReturn());
 
 		DataTypeSymbol datsym = new DataTypeSymbol(fsig, "prt", AUTO_CAT);
 		Program program = function.getProgram();
@@ -734,11 +735,11 @@ public class HighFunctionDBUtil {
 	 * Get the Address referred to by a spacebase reference. Address-of references are encoded in
 	 * the p-code syntax tree as: {@code vn = PTRSUB(<spacebase>, #const)}.  This decodes the reference and
 	 * returns the Address
-	 * @param program is the program containing the Address
+	 * @param addrFactory is the factory used to construct the Address
 	 * @param op is the PTRSUB op encoding the reference
 	 * @return the recovered Address (or null if not correct form)
 	 */
-	public static Address getSpacebaseReferenceAddress(Program program, PcodeOp op) {
+	public static Address getSpacebaseReferenceAddress(AddressFactory addrFactory, PcodeOp op) {
 		Address storageAddress = null;
 		if (op == null) {
 			return storageAddress;
@@ -747,13 +748,13 @@ public class HighFunctionDBUtil {
 			Varnode vnode = op.getInput(0);
 			Varnode cnode = op.getInput(1);
 			if (vnode.isRegister()) {
-				AddressSpace stackspace = program.getAddressFactory().getStackSpace();
+				AddressSpace stackspace = addrFactory.getStackSpace();
 				if (stackspace != null) {
 					storageAddress = stackspace.getAddress(cnode.getOffset());
 				}
 			}
 			else {
-				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+				AddressSpace space = addrFactory.getDefaultAddressSpace();
 				if (space instanceof SegmentedAddressSpace) {
 					// Assume this is a "full" encoding of the offset
 					int innersize = space.getPointerSize();

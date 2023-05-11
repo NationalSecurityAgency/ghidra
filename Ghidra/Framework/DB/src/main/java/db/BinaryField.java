@@ -92,7 +92,7 @@ public class BinaryField extends Field {
 	}
 
 	@Override
-	int write(Buffer buf, int offset) throws IOException {
+	int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		if (data == null) {
 			return buf.putInt(offset, -1);
 		}
@@ -101,7 +101,7 @@ public class BinaryField extends Field {
 	}
 
 	@Override
-	int read(Buffer buf, int offset) throws IOException {
+	int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		checkImmutable();
 		int len = buf.getInt(offset);
 		offset += 4;
@@ -116,7 +116,7 @@ public class BinaryField extends Field {
 	}
 
 	@Override
-	int readLength(Buffer buf, int offset) throws IOException {
+	int readLength(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		int len = buf.getInt(offset);
 		return (len < 0 ? 0 : len) + 4;
 	}

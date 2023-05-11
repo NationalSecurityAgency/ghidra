@@ -25,6 +25,7 @@ import org.python.core.PyInstance;
 import org.python.core.PyObject;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.Options;
 import ghidra.util.Msg;
@@ -57,19 +58,21 @@ public class PythonCodeCompletionFactory {
 	private final static boolean INCLUDE_TYPES_DEFAULT = true;
 	private static boolean includeTypes = INCLUDE_TYPES_DEFAULT;
 
-	public static final Color NULL_COLOR = new Color(255, 0, 0);
-	public static final Color FUNCTION_COLOR = new Color(0, 128, 0);
-	public static final Color PACKAGE_COLOR = new Color(128, 0, 0);
-	public static final Color CLASS_COLOR = new Color(0, 0, 255);
-	public static final Color METHOD_COLOR = new Color(0, 128, 128);
+	//@formatter:off
+	public static final Color NULL_COLOR = new GColor("color.fg.plugin.python.syntax.null");
+	public static final Color FUNCTION_COLOR = new GColor("color.fg.plugin.python.syntax.function");
+	public static final Color PACKAGE_COLOR = new GColor("color.fg.plugin.python.syntax.package");
+	public static final Color CLASS_COLOR = new GColor("color.fg.plugin.python.syntax.class");
+	public static final Color METHOD_COLOR = new GColor("color.fg.plugin.python.syntax.method");
 	/* anonymous code chunks */
-	public static final Color CODE_COLOR = new Color(0, 64, 0);
-	public static final Color INSTANCE_COLOR = new Color(128, 0, 128);
-	public static final Color SEQUENCE_COLOR = new Color(128, 96, 64);
-	public static final Color MAP_COLOR = new Color(64, 96, 128);
-	public static final Color NUMBER_COLOR = new Color(64, 64, 64);
+	public static final Color CODE_COLOR = new GColor("color.fg.plugin.python.syntax.code");
+	public static final Color INSTANCE_COLOR = new GColor("color.fg.plugin.python.syntax.instance");
+	public static final Color SEQUENCE_COLOR = new GColor("color.fg.plugin.python.syntax.sequence");
+	public static final Color MAP_COLOR = new GColor("color.fg.plugin.python.syntax.map");
+	public static final Color NUMBER_COLOR = new GColor("color.fg.plugin.python.syntax.number");
 	/* for weird Jython-specific stuff */
-	public static final Color SPECIAL_COLOR = new Color(64, 96, 64);
+	public static final Color SPECIAL_COLOR = new GColor("color.fg.plugin.python.syntax.special");
+	//@formatter:on
 
 	static {
 		/* Order matters!  This is the order in which classes are checked for
@@ -183,9 +186,28 @@ public class PythonCodeCompletionFactory {
 	 * @param insertion what will be inserted to make the code complete
 	 * @param pyObj a Python Object
 	 * @return A new CodeCompletion from the given Python objects.
+	 * @deprecated use {@link #newCodeCompletion(String, String, PyObject, String)} instead,
+	 *             it allows creation of substituting code completions
 	 */
+	@Deprecated
 	public static CodeCompletion newCodeCompletion(String description, String insertion,
 			PyObject pyObj) {
+		return newCodeCompletion(description, insertion, pyObj, "");
+	}
+
+	/**
+	 * Creates a new CodeCompletion from the given Python objects.
+	 * 
+	 * @param description description of the new CodeCompletion
+	 * @param insertion what will be inserted to make the code complete
+	 * @param pyObj a Python Object
+	 * @param userInput a word we want to complete, can be an empty string.
+	 *        It's used to determine which part (if any) of the input should be 
+	 *        removed before the insertion of the completion
+	 * @return A new CodeCompletion from the given Python objects.
+	 */
+	public static CodeCompletion newCodeCompletion(String description, String insertion,
+			PyObject pyObj, String userInput) {
 		JComponent comp = null;
 
 		if (pyObj != null) {
@@ -213,7 +235,9 @@ public class PythonCodeCompletionFactory {
 				}
 			}
 		}
-		return new CodeCompletion(description, insertion, comp);
+
+		int charsToRemove = userInput.length();
+		return new CodeCompletion(description, insertion, comp, charsToRemove);
 	}
 
 	/**
@@ -225,18 +249,6 @@ public class PythonCodeCompletionFactory {
 		includeTypes = options.getBoolean(INCLUDE_TYPES_LABEL, INCLUDE_TYPES_DEFAULT);
 		options.registerOption(INCLUDE_TYPES_LABEL, INCLUDE_TYPES_DEFAULT, null,
 			INCLUDE_TYPES_DESCRIPTION);
-
-		Iterator<?> iter = classes.iterator();
-		while (iter.hasNext()) {
-			Class<?> currentClass = (Class<?>) iter.next();
-			options.registerOption(
-				COMPLETION_LABEL + Options.DELIMITER + getSimpleName(currentClass),
-				classToColorMap.get(currentClass), null,
-				"Color to use for " + classDescription.get(currentClass) + ".");
-			classToColorMap.put(currentClass,
-				options.getColor(COMPLETION_LABEL + Options.DELIMITER + getSimpleName(currentClass),
-					classToColorMap.get(currentClass)));
-		}
 	}
 
 	/**
@@ -255,13 +267,7 @@ public class PythonCodeCompletionFactory {
 	 */
 	public static void changeOptions(Options options, String name, Object oldValue,
 			Object newValue) {
-		String classSimpleName = name.substring((COMPLETION_LABEL + Options.DELIMITER).length());
-		Class<?> klass = simpleNameToClass.get(classSimpleName);
-
-		if (classToColorMap.containsKey(klass)) {
-			classToColorMap.put(klass, (Color) newValue);
-		}
-		else if (name.equals(INCLUDE_TYPES_LABEL)) {
+		if (name.equals(INCLUDE_TYPES_LABEL)) {
 			includeTypes = ((Boolean) newValue).booleanValue();
 		}
 		else {

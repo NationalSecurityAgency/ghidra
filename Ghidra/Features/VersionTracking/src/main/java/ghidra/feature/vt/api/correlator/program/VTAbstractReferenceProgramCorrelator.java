@@ -70,7 +70,8 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * @param correlatorName the correlator name
 	 * @param options the tool options
 	 */
-	VTAbstractReferenceProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
+	public VTAbstractReferenceProgramCorrelator(ServiceProvider serviceProvider,
+			Program sourceProgram,
 			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, String correlatorName, ToolOptions options) {
 		// Call the constructor for the parent class.
@@ -129,7 +130,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 			destVectorsByAddress.entrySet();
 		for (Entry<Address, LSHCosineVectorAccum> destEntry : destEntries) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			// Get the function containing the ACCEPTED match destination address
@@ -196,7 +197,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 		List<VTMatchInfo> result = new ArrayList<>();
 
 		for (Entry<Address, DominantPair<Double, VectorCompare>> neighbor : neighbors.entrySet()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address sourceAddr = neighbor.getKey();
 
@@ -411,7 +412,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 			Collection<VTMatch> matches = ms.getMatches();
 			for (VTMatch match : matches) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 
 				accumulateMatchFunctionReferences(sourceRefMap, destinationRefMap, match);
@@ -424,7 +425,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 		// score each match that passed the filter above
 		for (VTMatch match : sourceRefMap.keySet()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			if (sourceRefMap.get(match).isEmpty()) {

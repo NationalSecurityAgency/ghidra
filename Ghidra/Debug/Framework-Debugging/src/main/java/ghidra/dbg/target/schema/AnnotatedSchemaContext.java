@@ -25,6 +25,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
+import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
 import ghidra.dbg.target.schema.EnumerableTargetObjectSchema.MinimalSchemaContext;
@@ -100,7 +102,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 	static Set<Class<? extends TargetObject>> getBoundsOfFetchElements(
 			Class<? extends TargetObject> cls) {
 		try {
-			Method method = cls.getMethod("fetchElements", new Class<?>[] { boolean.class });
+			Method method = cls.getMethod("fetchElements", new Class<?>[] { RefreshBehavior.class });
 			Type ret = method.getGenericReturnType();
 			Map<TypeVariable<?>, Type> argsCf =
 				TypeUtils.getTypeArguments(ret, CompletableFuture.class);
@@ -198,6 +200,51 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 		}
 	}
 
+	protected void addExportedTargetMethodsFromClass(SchemaBuilder builder,
+			Class<? extends TargetObject> declCls, Class<? extends TargetObject> cls) {
+		for (Method declMethod : declCls.getDeclaredMethods()) {
+			int mod = declMethod.getModifiers();
+			if (!Modifier.isPublic(mod)) {
+				continue;
+			}
+
+			TargetMethod.Export export = declMethod.getAnnotation(TargetMethod.Export.class);
+			if (export == null) {
+				continue;
+			}
+
+			AttributeSchema exists = builder.getAttributeSchema(export.value());
+			if (exists != null) {
+				continue;
+			}
+
+			SchemaName snMethod = new SchemaName("Method");
+			if (getSchemaOrNull(snMethod) == null) {
+				builder(snMethod)
+						.addInterface(TargetMethod.class)
+						.setDefaultElementSchema(EnumerableTargetObjectSchema.VOID.getName())
+						.addAttributeSchema(
+							new DefaultAttributeSchema(TargetObject.DISPLAY_ATTRIBUTE_NAME,
+								EnumerableTargetObjectSchema.STRING.getName(), true, true, true),
+							"default")
+						.addAttributeSchema(
+							new DefaultAttributeSchema(TargetMethod.RETURN_TYPE_ATTRIBUTE_NAME,
+								EnumerableTargetObjectSchema.TYPE.getName(), true, true, true),
+							"default")
+						.addAttributeSchema(
+							new DefaultAttributeSchema(TargetMethod.PARAMETERS_ATTRIBUTE_NAME,
+								EnumerableTargetObjectSchema.MAP_PARAMETERS.getName(), true, true,
+								true),
+							"default")
+						.setDefaultAttributeSchema(AttributeSchema.DEFAULT_VOID)
+						.buildAndAdd();
+			}
+
+			builder.addAttributeSchema(
+				new DefaultAttributeSchema(export.value(), snMethod, true, true, true), declMethod);
+		}
+	}
+
 	protected TargetObjectSchema fromAnnotatedClass(Class<? extends TargetObject> cls) {
 		synchronized (namesByClass) {
 			SchemaName name = nameFromAnnotatedClass(cls);
@@ -268,27 +315,24 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 				throw new IllegalArgumentException(
 					"Could not identify unique element class (" + bounds + ") for " + cls);
 			}
-			else {
-				Class<? extends TargetObject> bound = bounds.iterator().next();
-				SchemaName schemaName;
-				try {
-					schemaName = nameFromClass(bound);
-				}
-				catch (IllegalArgumentException e) {
-					throw new IllegalArgumentException(
-						"Could not get schema name from bound " + bound + " of " + cls +
-							".fetchElements()",
-						e);
-				}
-				builder.setDefaultElementSchema(schemaName);
+			Class<? extends TargetObject> bound = bounds.iterator().next();
+			SchemaName schemaName;
+			try {
+				schemaName = nameFromClass(bound);
 			}
+			catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(
+					"Could not get schema name from bound " + bound + " of " + cls +
+						".fetchElements()",
+					e);
+			}
+			builder.setDefaultElementSchema(schemaName);
 		}
 
 		addPublicMethodsFromClass(builder, cls, cls);
 		for (Class<?> parent : allParents) {
 			if (TargetObject.class.isAssignableFrom(parent)) {
-				addPublicMethodsFromClass(builder, parent.asSubclass(TargetObject.class),
-					cls);
+				addPublicMethodsFromClass(builder, parent.asSubclass(TargetObject.class), cls);
 			}
 		}
 		for (TargetAttributeType at : info.attributes()) {
@@ -298,6 +342,13 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 				attrSchema = attrSchema.lower((AnnotatedAttributeSchema) exists);
 			}
 			builder.replaceAttributeSchema(attrSchema, at);
+		}
+		addExportedTargetMethodsFromClass(builder, cls, cls);
+		for (Class<?> parent : allParents) {
+			if (TargetObject.class.isAssignableFrom(parent)) {
+				addExportedTargetMethodsFromClass(builder, parent.asSubclass(TargetObject.class),
+					cls);
+			}
 		}
 		return builder;
 	}

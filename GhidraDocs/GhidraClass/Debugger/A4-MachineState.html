@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#examining-machine-state-memory-registers-and-variables"
+id="toc-examining-machine-state-memory-registers-and-variables">Examining
+Machine State: Memory, Registers, and Variables</a>
+<ul>
+<li><a href="#machine-state" id="toc-machine-state">Machine State</a>
+<ul>
+<li><a href="#patching" id="toc-patching">Patching</a></li>
+</ul></li>
+<li><a href="#the-dynamic-listing" id="toc-the-dynamic-listing">The
+Dynamic Listing</a>
+<ul>
+<li><a href="#cache-status-indication"
+id="toc-cache-status-indication">Cache Status Indication</a></li>
+<li><a href="#address-tracking" id="toc-address-tracking">Address
+Tracking</a></li>
+<li><a href="#module-region-indicator"
+id="toc-module-region-indicator">Module / Region Indicator</a></li>
+<li><a href="#go-to" id="toc-go-to">Go To</a></li>
+<li><a href="#compare" id="toc-compare">Compare</a></li>
+<li><a href="#exercise-reverse-engineer-the-board"
+id="toc-exercise-reverse-engineer-the-board">Exercise: Reverse Engineer
+the Board</a></li>
+</ul></li>
+<li><a href="#the-memory-viewer" id="toc-the-memory-viewer">The Memory
+Viewer</a>
+<ul>
+<li><a href="#exercise-display-the-board-in-hex"
+id="toc-exercise-display-the-board-in-hex">Exercise: Display the Board
+in Hex</a></li>
+</ul></li>
+<li><a href="#registers" id="toc-registers">Registers</a>
+<ul>
+<li><a href="#exercise-reduce-the-mines"
+id="toc-exercise-reduce-the-mines">Exercise: Reduce the Mines</a></li>
+</ul></li>
+<li><a href="#watches" id="toc-watches">Watches</a></li>
+<li><a href="#sleigh-expressions" id="toc-sleigh-expressions">Sleigh
+Expressions</a>
+<ul>
+<li><a href="#variables-and-constants"
+id="toc-variables-and-constants">Variables and Constants</a></li>
+<li><a href="#operators" id="toc-operators">Operators</a></li>
+<li><a href="#exercise-find-and-modify-the-board-dimensions"
+id="toc-exercise-find-and-modify-the-board-dimensions">Exercise: Find
+and Modify the Board Dimensions</a></li>
+<li><a href="#exercise-watch-the-cell-to-be-mined"
+id="toc-exercise-watch-the-cell-to-be-mined">Exercise: Watch the Cell to
+be Mined</a></li>
+</ul></li>
+<li><a href="#variable-hovers" id="toc-variable-hovers">Variable
+Hovers</a></li>
+</ul></li>
+</ul>
+</nav>
+<section id="examining-machine-state-memory-registers-and-variables"
+class="level1">
+<h1>Examining Machine State: Memory, Registers, and Variables</h1>
+<p>This module assumes you know how to launch <code>termmines</code> in
+Ghidra using GDB, and know where to find the basic Debugger GUI
+components. It also assumes you know the basic control commands, e.g.,
+Resume, Step, and Interrupt; as well as some basics for breakpoints. If
+not, please refer to the previous modules.</p>
+<p>This module will address the following features in more depth:</p>
+<ul>
+<li>Dynamic Listing window</li>
+<li>Dynamic Bytes window</li>
+<li>Registers window</li>
+<li>Watches window</li>
+<li>Sleigh expressions</li>
+<li>Variable value hovers</li>
+</ul>
+<section id="machine-state" class="level2">
+<h2>Machine State</h2>
+<p>There are at least two ways to define machine state. One way based on
+a high-level understanding of a program is the collective values of all
+variables. Another based on a low-level understanding of a program is
+the collective values of all memory and all registers of all threads.
+Because Ghidra is primarily concerned with examining software at the low
+level, albeit to obtain a high-level understanding, we will generally
+stick with the low-level definition. One could argue that machine state
+also includes the underlying system and hardware, including peripherals.
+When debugging user-space applications, Ghidra cannot generally inspect
+the underlying system, except for a few things granted by the back-end
+debugger, e.g., the virtual memory map. Thus, as far as we are
+concerned, the machine state does not include the underlying system, but
+it is still something you must be aware of while debugging.</p>
+<p>Note that we also treat <em>registers</em> as something separate from
+<em>memory</em>. While technically, one could argue registers are the
+closest and smallest memory to the CPU, we think of memory as an
+addressable array, e.g., DIMMs and flash ROMs. If applicable,
+<em>memory-mapped</em> registers are considered part of memory by
+Ghidra.</p>
+<p>The Ghidra Debugger provides mechanisms for viewing and modifying
+machine state at both the low and high levels. The Dynamic Listing and
+Memory viewer provide access to memory, the Registers window provides
+access to registers, and the Watches window provides access to memory
+and registers via expressions. The only means of accessing high-level
+variables is through value hovers, which are available in all listings
+and the Decompiler.</p>
+<section id="patching" class="level3">
+<h3>Patching</h3>
+<p>Many of the features allow you to edit the values, i.e.,
+<em>patch</em> the live target. The windows that are adaptations of
+their static counterparts work more or less as expected. Edits in any
+<em>dynamic</em> window will attempt to patch the live target. Edits in
+any <em>static</em> window will <strong>not</strong> patch the live
+target; they modify the program database as usual. Some dynamic windows
+may present tables with editable cells. These will often include a
+<em>write-lock</em> toggle, like the static Byte viewer, to avoid
+accidental patching. Furthermore, you must use the <img
+src="images/record.png" alt="control mode" /> Control Mode toggle in the
+global toolbar (next to the control actions) to enable patching
+throughout the Debugger tool. For now, please only use the “Control
+Target” and “Control Target w/ Edits Disabled” options. The write toggle
+is included here so that actions like copy-paste do not lead to
+accidental patching.</p>
+</section>
+</section>
+<section id="the-dynamic-listing" class="level2">
+<h2>The Dynamic Listing</h2>
+<p>Up to this point, we have only used the Dynamic Listing to display
+the instructions at the program counter. It can actually view and mark
+up any part of the machine state in memory, e.g., mapped images, heap
+pages, stack pages. Where the memory is mapped to images, Ghidra
+attempts to synchronize the Static Listing and, by extension, the other
+static analysis windows. The Dynamic Listing has most of the same
+features as the Static Listing.</p>
+<p>Re-launch <code>termmines</code> and then navigate to
+<code>rand</code>. You may notice that the Static Listing has
+disassembly, but the Dynamic Listing does not. This is because Ghidra
+has not observed the program counter at <code>rand</code> yet, so it has
+not automatically disassembled it. To manually disassemble in the
+Dynamic Listing, place your cursor where you expect an instruction and
+press <strong>D</strong>, just like you would in the Static Listing.</p>
+<figure>
+<img src="images/State_ListingAfterCallRand.png"
+alt="The dynamic listing after a call to rand" />
+<figcaption aria-hidden="true">The dynamic listing after a call to
+rand</figcaption>
+</figure>
+<p>This action differs in that it does not follow flow. It proceeds
+linearly, stopping at any control transfer instruction.</p>
+<p>Now, we will examine the stack segment. Click the <img
+src="images/register-marker.png" alt="location tracking" /> Track
+Location drop-down and select <strong>Track Stack Pointer</strong>. The
+window should seek to (and highlight in pale green) the address in the
+stack pointer. Since the target has just entered <code>main</code>, we
+should expect a return address at the top of the stack. With your cursor
+at the stack pointer, press <strong>P</strong> to place a pointer there,
+just like you would in the Static Listing. You can now navigate to that
+address by double-clicking it. To return to the stack pointer, you can
+use the back arrow in the global toolbar, you can click the <img
+src="images/register-marker.png" alt="track location" /> Track Location
+button, or you can double-click the <code>sp = [Address]</code> label in
+the top right of the Dynamic Listing.</p>
+<p>To examine a more complicated stack segment, we will break at
+<code>rand</code>. Ensure your breakpoint at <code>rand</code> is
+enabled and press <img src="images/resume.png" alt="resume" /> Resume.
+Your Dynamic Listing should follow the stack pointer. In the menus,
+select <strong>Debugger → Analysis → Unwind Stack</strong> or press
+<strong>U</strong>.</p>
+<figure>
+<img src="images/State_ListingStackAfterCallRand.png"
+alt="The dynamic listing of the stack after a call to rand" />
+<figcaption aria-hidden="true">The dynamic listing of the stack after a
+call to rand</figcaption>
+</figure>
+<p><strong>NOTE</strong>: We will cover the Stack window later in the
+course, which is probably a more suitable way to navigate stack frames.
+It is populated by the back-end debugger, which can usually unwind the
+stack more reliably than Ghidra. The Unwind Stack action is useful when
+you want an in-depth understanding of the actual contents of the stack,
+or when you are emulating.</p>
+<p>Now, switch back to <strong>Track Program Counter</strong>. If you
+would like to track both the Program Counter and the Stack Pointer,
+click the <img src="images/camera-photo.png" alt="clone" /> Clone button
+in the local toolbar. Like the Static Listing, this clones an instance
+of the Dynamic Listing, which you can configure differently than the
+primary Dynamic Listing. Only the primary Dynamic Listing will
+synchronize, and it does so only with the primary Static Listing.
+<strong>NOTE</strong>: For the sake of disambiguation, we will use the
+term <em>clone</em>, not <em>snapshot</em> when referring to multiple
+instances of a Ghidra window. While this is inconsistent with the Ghidra
+Beginner course materials, it is necessary to avoid confusion with
+snapshots of the machine state, discussed later in this module.</p>
+<p>The dynamic listing offers several additional features:</p>
+<section id="cache-status-indication" class="level3">
+<h3>Cache Status Indication</h3>
+<p>The listing’s contents are read from a live target, which may become
+unresponsive or otherwise temperamental. The Debugger uses a database,
+which acts as a cache separating the GUI from the live target. The UI
+requests memory pages from the target, the target asynchronously
+retrieves those pages and stores them into the database, then the
+database updates the UI. This sequence does not always go as expected;
+thus, pages with stale data are displayed with a grey background. This
+may also happen if auto-read is disabled. Typically, user-space targets
+are not so temperamental, but others may be, or memory reads could be
+expensive, in which case disabling automatic memory reads may be
+advantageous. If the back-end debugger reports an error while reading
+memory, the first address of the page will have a red background. To
+refresh the visible or selected page(s), click the
+<img alt="refresh" src="images/view-refresh.png" width="16px"/> Refresh
+button. Examine the Debug Console window for errors / warnings before
+spamming this button. To toggle auto read, use the
+<img src="images/autoread.png" alt="auto-read" width="16px"/> Auto-Read
+drop-down button from the local toolbar.</p>
+</section>
+<section id="address-tracking" class="level3">
+<h3>Address Tracking</h3>
+<p>We have already demonstrated this, but there are some finer details.
+Some of the tracking options depend on the Watches window, discussed
+later in this module. On occasion, the location cannot be displayed in
+the listing, typically because it falls outside of the memory map. If
+this happens, the address label at the top right of the listing will
+have red text.</p>
+</section>
+<section id="module-region-indicator" class="level3">
+<h3>Module / Region Indicator</h3>
+<p>In the top left a label will display the name of the section
+containing the cursor. If there is no containing section, it will fall
+back to the containing module and then to the containing region. Rarely,
+this label will be empty. This can happen when the cursor is outside any
+known region, which only happens if you configure Ghidra to ignore the
+memory map.</p>
+</section>
+<section id="go-to" class="level3">
+<h3>Go To</h3>
+<p>The Go To action in the Dynamic Listing differs from the one in the
+Static Listing. Like the static one, it accepts an address in
+hexadecimal, possibly prefixed with the address space and a colon.
+However, it also accepts Sleigh expressions, allowing you to treat
+<code>RAX</code> as a pointer and go to that address, for example. We
+cover Sleigh expressions later in this module.</p>
+</section>
+<section id="compare" class="level3">
+<h3>Compare</h3>
+<p>The Compare action in the Dynamic Listing also differs from the one
+in the Static Listing. It allows the comparison of two machine state
+snapshots, covered in the <a href="A5-Navigation.html">Navigation</a>
+module.</p>
+</section>
+<section id="exercise-reverse-engineer-the-board" class="level3">
+<h3>Exercise: Reverse Engineer the Board</h3>
+<p>All of the features in the default CodeBrowser tool are also in the
+default Debugger tool, providing you Ghidra’s full suite of static
+analysis tools during your dynamic sessions, albeit they are not as
+immediately accessible. Your task is to reverse engineer the game
+board’s layout in memory. Because you are in a dynamic session, you have
+an example board to work with. As you navigate the <code>.data</code>
+section of <code>termmines</code> in the Static Listing, the Dynamic
+Listing will follow along showing you the live values in memory. You can
+also experiment by placing code units in the Dynamic Listing before
+committing to them in the Static Listing.</p>
+<section id="questions" class="level4">
+<h4>Questions:</h4>
+<ol type="1">
+<li>How are the cells allocated?</li>
+<li>How are the cells indexed? Row major, color major? 0-up, 1-up?</li>
+<li>What is happening around the “border” of the board? Why might the
+programmer have chosen this design?</li>
+</ol>
+</section>
+</section>
+</section>
+<section id="the-memory-viewer" class="level2">
+<h2>The Memory Viewer</h2>
+<figure>
+<img src="images/State_BytesStackAfterCallRand.png"
+alt="The dynamic memory view of the stack after a call to rand" />
+<figcaption aria-hidden="true">The dynamic memory view of the stack
+after a call to rand</figcaption>
+</figure>
+<p>Just as the Dynamic Listing is the analog of the Static Listing, the
+Memory viewer is the analog of the Byte viewer. It is not visible by
+default. To open it, use <strong>Windows → Byte Viewer → Memory
+…</strong> in the menus. Its default configuration should be Auto PC,
+the same as the Dynamic Listing’s default. It has all the same
+additional Debugger features as the Dynamic Listing. Furthermore, bytes
+that have changed are displayed in red text.</p>
+<section id="exercise-display-the-board-in-hex" class="level3">
+<h3>Exercise: Display the Board in Hex</h3>
+<p>This is a bit quick and dirty, but it works and can be useful. Your
+task is to configure the Memory viewer so that (within the memory
+allocated to the board) the rows and columns of the Memory viewer
+correspond to the rows and columns of the game board.
+<strong>TIP</strong>: Use the <em>Alignment Address</em> and <em>Bytes
+Per Line</em> settings.</p>
+</section>
+</section>
+<section id="registers" class="level2">
+<h2>Registers</h2>
+<figure>
+<img src="images/State_RegistersAfterCallRand.png"
+alt="The registers after a call to rand" />
+<figcaption aria-hidden="true">The registers after a call to
+rand</figcaption>
+</figure>
+<p>The Registers window gives a view of all the registers on the target
+and their current values. The register set can be very large, so there
+are a few ways to sift and sort. As in most Ghidra tables, you can
+filter using the box below the registers table. Additionally, you can
+use the column headers to sort. The columns are:</p>
+<ul>
+<li>The <strong>Favorite</strong> column indicates which registers are
+your favorite. By default, this includes the instruction pointer and the
+stack pointer. You can quickly choose your favorite(s) by toggling the
+check boxes in this column. Because this column is sorted by default,
+your favorites are positioned at the top.</li>
+<li>The <strong>Number</strong> column gives the number assigned to the
+register by Ghidra’s processor specification. This is mostly just to
+make the default sorting deterministic.</li>
+<li>The <strong>Name</strong> column gives Ghidra’s name for the
+register. This usually matches the name given by the back-end debugger,
+but may not. For example, on x86-64, what Ghidra calls
+<code>rflags</code> GDB calls <code>eflags</code>.</li>
+<li>The <strong>Value</strong> column gives the register’s current value
+in hexadecimal. Values in gray are stale. Values in red have changed.
+Right-clicking this column will present options to Go To the address, as
+if the register were a pointer.</li>
+<li>The <strong>Type</strong> column allows you to assign a type to,
+i.e., create a data unit on, the register. This has more utility for
+float types than integers, but it may still help you record what you
+know about how a register is being used.</li>
+<li>The <strong>Representation</strong> column displays the register’s
+value according to its assigned type, if applicable. If the type is a
+pointer, then double-clicking this value will go to the address in the
+Dynamic Listing.</li>
+</ul>
+<p>If you would like to adjust the list of registers in the table, use
+the <img src="images/select-registers.png" alt="select registers" />
+Select Registers button in the local toolbar. This will present all the
+registers in Ghidra’s processor specification, including those which are
+just artifacts of Sleigh. Typically, this is not necessary, since the
+table will include all registers recognized by both Ghidra and the
+back-end debugger. Nevertheless, if you believe a register is missing,
+it is wise to check this selection.</p>
+<section id="exercise-reduce-the-mines" class="level3">
+<h3>Exercise: Reduce the Mines</h3>
+<p>If you have not already reverse engineered the mine placement
+algorithm, do that now. Think up a strategy you might employ, by
+patching a register, to reduce the number of mines placed on the board.
+The strategy need not result in a permanent change. It should only
+affect the round being set up. For this exercise, you cannot patch
+memory, but you may place a breakpoint. Verify your work by playing the
+round.</p>
+</section>
+</section>
+<section id="watches" class="level2">
+<h2>Watches</h2>
+<figure>
+<img src="images/State_WatchesInCallSRand.png"
+alt="The watches window in a call to srand" />
+<figcaption aria-hidden="true">The watches window in a call to
+srand</figcaption>
+</figure>
+<p>The Watches window gives the values of several user-specified Sleigh
+expressions. This can provide an alternative to the Registers window
+when you are really only interested in a couple of registers. It can
+also watch values in memory. Furthermore, when a watch has a memory
+address, the expression will appear as an option in the Location
+Tracking menus of the Listing and Memory viewers. Selecting that option
+will cause the window to follow that watch as its address changes.</p>
+<p>To add a watch, click the <img src="images/add.png" alt="add" /> Add
+button. A new entry will appear. Double-click the left-most cell of the
+row to set or edit the Sleigh expression. For starters, try something
+like <code>RDI</code>. (Conventionally, this is the location for the
+first parameter on Linux x86-64 systems.) The context menus for the
+Listing and Registers windows include a “Watch” action, which adds the
+current selection to the Watches window.</p>
+<p>The columns are:</p>
+<ul>
+<li>The <strong>Expression</strong> column is the user-defined Sleigh
+expression.</li>
+<li>The <strong>Address</strong> column is the address of the resulting
+value, if applicable. This may be in <code>register</code> space.
+Double-clicking this cell will go to the address in the Dynamic
+Listing.</li>
+<li>The <strong>Symbol</strong> column gives the symbol in a mapped
+static image closest to or containing the address, if applicable.</li>
+<li>The <strong>Value</strong> column gives the “raw” value of the
+expression. If the result is in memory, it displays a byte array;
+otherwise, it displays an integer.</li>
+<li>The <strong>Type</strong> and <strong>Representation</strong>
+columns work the same as in the Registers window, except they do
+<em>not</em> save the data unit to the database. This has more uses than
+the Registers window. For example, try <code>*:30 RDI</code> and set
+this to <code>TerminatedCString</code>. Whenever <code>RDI</code> is a
+string pointer, this will display the string up to 30 characters.</li>
+<li>The <strong>Error</strong> column reports any errors in compiling or
+evaluating the expression.</li>
+</ul>
+</section>
+<section id="sleigh-expressions" class="level2">
+<h2>Sleigh Expressions</h2>
+<p>Watches and Go-To commands are expressed using Ghidra’s Sleigh
+language. More precisely, expressions are the sub-language of Sleigh for
+the right-hand side of assignment statements in semantic sections. If
+you already know this language, then there is little more to learn. Of
+note, you may use labels from mapped program images in your expression.
+For example, to see how far a return address is into <code>main</code>,
+you could use <code>*:8 RSP - main</code>.</p>
+<p>For the complete specification, see the Semantic Section in the <a
+href="../../../Ghidra/Features/Decompiler/src/main/doc/sleigh.xml">Sleigh
+documentation</a>.</p>
+<p>Sleigh is a bit unconventional in that its operators are typed rather
+than its variables. All variables are fix-length bit vectors. Their
+sizes are specified in bytes, but they have no other type
+information.</p>
+<section id="variables-and-constants" class="level3">
+<h3>Variables and Constants</h3>
+<p>Here are some examples of things you can reference by name:</p>
+<ul>
+<li><strong>Register</strong>: <code>RAX</code></li>
+<li><strong>Label</strong>: <code>main</code></li>
+<li><strong>Constant</strong>: <code>1234:8</code> or
+<code>0x42d:8</code> — the value 1234 encoded as an 8-byte integer</li>
+</ul>
+<p>Registers vary by processor, but any register known to Ghidra’s
+specification is allowed. (Due to limitations in Sleigh, you cannot
+refer to the <code>contextreg</code> or any of its sub-registers.) A
+label may come from any Ghidra program database that is mapped to the
+current target. Due to limitations in Sleigh, you cannot specify a
+label’s namespace. The compiler will search only by name and select
+arbitrarily from multiple matches.</p>
+</section>
+<section id="operators" class="level3">
+<h3>Operators</h3>
+<p>Here we will demonstrate each operator by example:</p>
+<ul>
+<li><strong>Integer Addition</strong>: <code>RAX + RCX</code></li>
+<li><strong>Integer Subtraction</strong>: <code>RAX - RCX</code></li>
+<li><strong>Integer Negation</strong>: <code>-RAX</code></li>
+<li><strong>Integer Multiplication</strong>: <code>RAX * RCX</code></li>
+<li><strong>Unsigned Integer Division</strong>:
+<code>RAX / RCX</code></li>
+<li><strong>Unsigned Integer Remainder</strong>:
+<code>RAX % RCX</code></li>
+<li><strong>Signed Integer Division</strong>:
+<code>RAX s/ RCX</code></li>
+<li><strong>Signed Integer Remainder</strong>:
+<code>RAX s% RCX</code></li>
+<li><strong>Left Shift</strong>: <code>RAX &lt;&lt; RCX</code></li>
+<li><strong>Unsigned Right Shift</strong>:
+<code>RAX &gt;&gt; RCX</code></li>
+<li><strong>Signed Right Shift</strong>
+<code>RAX s&gt;&gt; RCX</code></li>
+<li><strong>Integer Comparison</strong>: <code>RAX == RCX</code> or
+<code>RAX != RCX</code></li>
+<li><strong>Unsigned Integer Comparison</strong>:
+<code>RAX &lt; RCX</code> or <code>RAX &gt; RCX</code> or
+<code>RAX &lt;= RCX</code> or <code>RAX &gt;= RCX</code></li>
+<li><strong>Signed Integer Comparison</strong>:
+<code>RAX s&lt; RCX</code> etc.</li>
+<li><strong>Float Addition</strong>: <code>MM0 f+ MM1</code></li>
+<li><strong>Float Subtraction</strong>: <code>MM0 f- MM1</code></li>
+<li><strong>Float Negation</strong>: <code>f-MM0</code></li>
+<li><strong>Float Multiplication</strong>: <code>MM0 f* MM1</code></li>
+<li><strong>Float Division</strong>: <code>MM0 f/ MM1</code></li>
+<li><strong>Float Absolute Value</strong>: <code>abs(MM0)</code></li>
+<li><strong>Float Square Root</strong>: <code>sqrt(MM0)</code></li>
+<li><strong>Float Comparison</strong>: <code>RAX f== RCX</code> or
+<code>RAX f&lt; RCX</code> etc.</li>
+<li><strong>Bitwise And</strong>: <code>RAX &amp; RCX</code></li>
+<li><strong>Bitwise Or</strong>: <code>RAX | RCX</code></li>
+<li><strong>Bitwise Xor</strong>: <code>RAX ^ RCX</code></li>
+<li><strong>Bitwise Not</strong>: <code>~RAX</code></li>
+<li><strong>Boolean And</strong>: <code>RAX &amp;&amp; RCX</code></li>
+<li><strong>Boolean Or</strong>: <code>RAX || RCX</code></li>
+<li><strong>Boolean Xor</strong>: <code>RAX ^^ RCX</code></li>
+<li><strong>Boolean Not</strong>: <code>!RAX</code></li>
+</ul>
+<p><strong>NOTE</strong>: If the result of your expression is in
+floating point, you will need to set the type of the watch accordingly.
+The “raw” display will render the bit vector as an integer or byte
+array. To read memory:</p>
+<ul>
+<li><strong>Dereference</strong>: <code>*:8 RSP</code> or
+<code>*[ram]:8 RSP</code></li>
+</ul>
+<p><strong>NOTE</strong> The <code>[ram]</code> part is optional. On
+x86, you will rarely if ever specify the space, since there is only one
+physical RAM space. The <code>:8</code> part specifies the number of
+bytes to read from memory. It is also optional, but only if the size can
+be inferred from the rest of the expression. To manipulate variable
+size:</p>
+<ul>
+<li><strong>Zero Extension</strong>: <code>RAX + zext(EBX)</code></li>
+<li><strong>Sign Extension</strong>: <code>RAX + sext(EBX)</code></li>
+<li><strong>Truncation</strong>: <code>RAX:4</code> — Equivalent to
+<code>EAX</code></li>
+<li><strong>Truncation</strong>: <code>AL + RBX(4)</code> — AL added to
+the the 5th byte of RBX</li>
+<li><strong>Bit Extraction</strong>: <code>RAX[7,8]</code> — Equivalent
+to <code>AL</code></li>
+</ul>
+<p><strong>NOTE</strong>: The second form of truncation drops the
+least-significant 4 bytes of RBX and takes as many of the remaining
+bytes (1 in this case) as necessary to match size with AL.</p>
+<p><strong>NOTE</strong>: Need for these next miscellaneous operators in
+Watch expressions is rare:</p>
+<ul>
+<li><strong>Unsigned Carry</strong>: <code>carry(RAX,RBX)</code></li>
+<li><strong>Signed Carry</strong>: <code>scarry(RAX,RBX)</code></li>
+<li><strong>Signed Borrow</strong>: <code>sborrow(RAX,RBX)</code></li>
+<li><strong>Float NaN</strong>: <code>nan(MM0)</code></li>
+<li><strong>Convert Integer to Float</strong>:
+<code>MM0 + int2float(RAX)</code> — Context required to infer the float
+size</li>
+<li><strong>Convert Float to Integer</strong>:
+<code>RAX + trunc(MM0)</code> — Context required to infer the integer
+size</li>
+<li><strong>Convert Float Size</strong>:
+<code>MM0 + float2float(MM0_Da)</code> — Context required to infer the
+new float size</li>
+<li><strong>Float Round Ceiling</strong>: <code>ceil(MM0)</code></li>
+<li><strong>Float Round Floor</strong>: <code>floor(MM0)</code></li>
+<li><strong>Float Round Nearest</strong>: <code>round(MM0)</code></li>
+</ul>
+</section>
+<section id="exercise-find-and-modify-the-board-dimensions"
+class="level3">
+<h3>Exercise: Find and Modify the Board Dimensions</h3>
+<p>Your task is to set up watches on the width and height of the game
+board, and then use those watches to change the size of the board. This
+may involve some trial and error, and it may not work perfectly due to
+the way <code>ncurses</code> refreshes the screen. For this exercise,
+patching memory is expected, and the change should last until the target
+is terminated.</p>
+<p><strong>TIP</strong>: If the <code>termmines</code> image is subject
+to ASLR, and you want your watch expression to generalize over
+re-launches, try using <code>main</code> as an anchor for the image
+base.</p>
+</section>
+<section id="exercise-watch-the-cell-to-be-mined" class="level3">
+<h3>Exercise: Watch the Cell to be Mined</h3>
+<p>Your task is to watch the byte value of the cell that is about to
+have a mine placed in it. You will probably want to set a breakpoint
+somewhere in the mine placement algorithm. It is okay if the watch does
+not <em>always</em> display the correct byte. However, it must be
+correct whenever the program counter is at your breakpoint. Register
+allocations are fairly volatile, and as a result, watch expressions that
+refer to registers are only valid in a limited scope. The rest of the
+time, even though the watch may evaluate successfully, its value may
+have no real meaning. Check your work by observing the mine bit being
+ORed in as you step the target.</p>
+<p><strong>TIP</strong>: Try creating watches for the row and column
+indices, first. Then, perhaps referring to the Decompiler, formulate the
+expression that dereferences that cell in the board.</p>
+</section>
+</section>
+<section id="variable-hovers" class="level2">
+<h2>Variable Hovers</h2>
+<p>You may have already used these if you completed the exercises in the
+<a href="A3-Breakpoints.html">Breakpoints</a> module. If you hover over
+a variable in any listing or the Decompiler, the Debugger will attempt
+to evaluate it and display information about it. In some cases,
+evaluation may involve unwinding the stack. Unwinding proceeds until the
+Debugger finds an invocation of the function containing or defining the
+variable. If unwinding fails, the Debugger may disregard the stack. In
+dynamic windows, the Debugger generally disregards the stack. In static
+windows, the Debugger still uses dynamic information to unwind the stack
+and evaluate the variable. A variable may be any of the following:</p>
+<ul>
+<li>A register in the listing. In this case, the hover will report the
+register’s value in the function’s frame.</li>
+<li>A local or parameter in the listing. If the variable is allocated in
+a register, this behaves the same as hovering that register, except with
+additional information presented. If the variable is allocated in stack
+space, this only succeeds if unwinding succeeds.</li>
+<li>A global variable in the listing. Unwinding is unnecessary for
+these.</li>
+<li>A local or parameter in the Decompiler. This behaves similarly to
+hovering a variable in the Static Listing.</li>
+<li>A global in the Decompiler. This behaves similarly to hovering a
+global variable in the Static Listing.</li>
+<li>A field reference in the Decompiler. A field reference is
+essentially a C expression in terms of other variables. This will
+evaluate those variables and then evaluate the expression.</li>
+</ul>
+<p>Depending on the particular variable and other circumstances, the
+hover will contain some combination of these rows:</p>
+<ul>
+<li><strong>Name</strong>: The name of the variable</li>
+<li><strong>Type</strong>: The type of the variable</li>
+<li><strong>Location</strong>: The static location of the variable,
+e.g., <code>Stack[0x4]</code></li>
+<li><strong>Status</strong>: A progress indicator</li>
+<li><strong>Frame</strong>: If evaluation required unwinding, a
+description of the frame used for context</li>
+<li><strong>Storage</strong>: The dynamic, physical location of the
+variable, e.g., <code>7fffffffe618</code></li>
+<li><strong>Bytes</strong>: The raw bytes currently stored in the memory
+allocated to the variable</li>
+<li><strong>Integer</strong>: The “raw” integer value of the variable,
+rendered with varyied signedness and radix</li>
+<li><strong>Value</strong>: The value of the variable, according to its
+type</li>
+<li><strong>Instruction</strong>: If the variable points to code, the
+target instruction</li>
+<li><strong>Warnings</strong>: Warnings emitted during evaluation</li>
+<li><strong>Error</strong>: If the value could not be evaluated, an
+explanation or the exception</li>
+</ul>
+<p>The Name, Type, and Location entries are informational. They tell you
+about the variable and its static definition. The Status, Frame, and
+Storage entries are also informational, but tell you about the
+variable’s dynamic evaluation. The Bytes, Integer, Value, and
+Instruction entries tell you the dynamic value of the variable. Finally,
+the Warnings and Error entries provide diagnostics. If there are many
+warnings, then the value may not be accurate.</p>
+</section>
+</section>
+</body>
+</html>

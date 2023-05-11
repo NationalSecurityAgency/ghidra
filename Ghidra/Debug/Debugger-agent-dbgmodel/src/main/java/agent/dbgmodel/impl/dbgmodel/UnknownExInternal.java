@@ -15,36 +15,31 @@
  */
 package agent.dbgmodel.impl.dbgmodel;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
-
-import agent.dbgmodel.dbgmodel.UnknownEx;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
-import agent.dbgmodel.jna.dbgmodel.WrapIUnknownEx;
-
 import com.sun.jna.platform.win32.COM.IUnknown;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
+import agent.dbgmodel.dbgmodel.UnknownEx;
+import agent.dbgmodel.jna.dbgmodel.WrapIUnknownEx;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 public interface UnknownExInternal extends UnknownEx {
 	Map<Pointer, UnknownExInternal> CACHE = new WeakValueHashMap<>();
 
 	static UnknownExInternal instanceFor(WrapIUnknownEx data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, UnknownExImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, UnknownExImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIUnknownEx>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIUnknownEx>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IUnknown.IID_IUNKNOWN), WrapIUnknownEx.class) //
-				.build();
+	List<Preferred<WrapIUnknownEx>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IUnknown.IID_IUNKNOWN, WrapIUnknownEx.class));
 
 	static UnknownExInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(UnknownExInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(UnknownExInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

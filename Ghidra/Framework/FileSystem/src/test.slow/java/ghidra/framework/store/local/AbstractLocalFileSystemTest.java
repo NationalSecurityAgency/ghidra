@@ -929,12 +929,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		FileSystemEventManager eventManager =
 			(FileSystemEventManager) TestUtils.getInstanceField("eventManager", fs);
 
-		try {
-			eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
-		}
-		catch (InterruptedException e) {
-			failWithException("Interrupted waiting for filesystem events", e);
-		}
+		eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 }
 

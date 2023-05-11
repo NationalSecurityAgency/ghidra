@@ -23,8 +23,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.address.*;
@@ -38,8 +36,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.context.TraceRegisterContextSpace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
@@ -211,11 +208,11 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		}
 		if (from.getY1().compareTo(inter.getY1()) < 0) {
 			diff.add(new ImmutableTraceAddressSnapRange(from.getRange(),
-				Range.closed(from.getY1(), inter.getY1() - 1)));
+				Lifespan.span(from.getY1(), inter.getY1() - 1)));
 		}
 		if (from.getY2().compareTo(inter.getY2()) > 0) {
 			diff.add(new ImmutableTraceAddressSnapRange(from.getRange(),
-				Range.closed(inter.getY2() + 1, from.getY2())));
+				Lifespan.span(inter.getY2() + 1, from.getY2())));
 		}
 		return diff;
 	}
@@ -241,7 +238,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		}
 	}
 
-	protected void doSetBaseValue(Language language, RegisterValue baseValue, Range<Long> lifespan,
+	protected void doSetBaseValue(Language language, RegisterValue baseValue, Lifespan lifespan,
 			AddressRange range) {
 		TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(range, lifespan);
 		Register base = baseValue.getRegister();
@@ -271,7 +268,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
-	public void setValue(Language language, RegisterValue value, Range<Long> lifespan,
+	public void setValue(Language language, RegisterValue value, Lifespan lifespan,
 			AddressRange range) {
 		assertInSpace(range);
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
@@ -281,7 +278,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
-	public void removeValue(Language language, Register register, Range<Long> span,
+	public void removeValue(Language language, Register register, Lifespan span,
 			AddressRange range) {
 		Register base = register.getBaseRegister();
 		TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(range, span);
@@ -410,7 +407,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 			return new DBTraceAddressSnapRangePropertyMapAddressSetView<>(within.getAddressSpace(),
 				lock,
 				valueMap.reduce(
-					TraceAddressSnapRangeQuery.intersecting(within, Range.closed(snap, snap))),
+					TraceAddressSnapRangeQuery.intersecting(within, Lifespan.at(snap))),
 				val -> new RegisterValue(base, val).getRegisterValue(register).hasAnyValue());
 		}
 	}
@@ -432,8 +429,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 				return false;
 			}
 			for (Entry<TraceAddressSnapRange, byte[]> entry : valueMap.reduce(
-				TraceAddressSnapRangeQuery.intersecting(within,
-					Range.closed(snap, snap))).entries()) {
+				TraceAddressSnapRangeQuery.intersecting(within, Lifespan.at(snap))).entries()) {
 				RegisterValue baseValue = new RegisterValue(base, entry.getValue());
 				if (baseValue.getRegisterValue(register).hasAnyValue()) {
 					return true;
@@ -449,7 +445,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range) {
+	public void clear(Lifespan span, AddressRange range) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> valueMap : registerValueMaps
 					.values()) {

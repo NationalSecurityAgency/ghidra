@@ -74,7 +74,7 @@ public class VTMatchTableTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setActionState(action, TableSelectionTrackingState.MAINTAIN_SELECTED_ROW_INDEX);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		int selectedRow = 3;
 		List<VTMatch> matches = env.selectMatchesInMatchTable(selectedRow);
@@ -97,7 +97,7 @@ public class VTMatchTableTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(action.isEnabled()); // always enabled
 
 		setActionState(action, TableSelectionTrackingState.MAINTAIN_SELECTED_ROW_VALUE);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		int selectedRow = 3;
 		List<VTMatch> matches = env.selectMatchesInMatchTable(selectedRow);
@@ -120,7 +120,7 @@ public class VTMatchTableTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(action.isEnabled()); // always enabled
 
 		setActionState(action, TableSelectionTrackingState.NO_SELECTION_TRACKING);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		int selectedRow = 3;
 		List<VTMatch> matches = env.selectMatchesInMatchTable(selectedRow);

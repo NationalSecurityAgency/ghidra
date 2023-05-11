@@ -15,21 +15,21 @@
  */
 package ghidra.app.plugin.core.datamgr.archive;
 
+import java.awt.Component;
+import java.io.IOException;
+import java.util.Objects;
+
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 
-import java.awt.Component;
-import java.io.IOException;
-
-import javax.swing.ImageIcon;
-
-import resources.ResourceManager;
-
 public class ProjectArchive implements DomainFileArchive {
 
-	private static ImageIcon CLOSED_ICON = ResourceManager.loadImage("images/closedBookBlue.png");
-	private static ImageIcon OPEN_ICON = ResourceManager.loadImage("images/openBookBlue.png");
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.project.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.project.open");
 	private DataTypeArchive dataTypeArchive;
 	private DomainFile originalDomainFile;
 	DataTypeManagerChangeListener categoryListener; // hold on to since it is stored in a weak set
@@ -65,6 +65,30 @@ public class ProjectArchive implements DomainFileArchive {
 			return getName().compareToIgnoreCase(archive.getName());
 		}
 		return -1; // Project Archives appear between the ProgramArchive and FileArchives.
+	}
+
+	@Override
+	public int hashCode() {
+		return originalDomainFile.getFileID().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		ProjectArchive other = (ProjectArchive) obj;
+		return Objects.equals(originalDomainFile.getFileID(), other.originalDomainFile.getFileID());
+	}
+
+	public boolean hasExclusiveAccess() {
+		return dataTypeArchive.hasExclusiveAccess();
 	}
 
 	@Override
@@ -115,7 +139,7 @@ public class ProjectArchive implements DomainFileArchive {
 	}
 
 	@Override
-	public ImageIcon getIcon(boolean expanded) {
+	public Icon getIcon(boolean expanded) {
 		return expanded ? OPEN_ICON : CLOSED_ICON;
 	}
 
@@ -140,7 +164,8 @@ public class ProjectArchive implements DomainFileArchive {
 		}
 
 		@Override
-		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
+		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath,
+				CategoryPath newPath) {
 			if (!oldPath.equals(newPath)) {
 				fireStateChanged();
 			}
@@ -167,7 +192,8 @@ public class ProjectArchive implements DomainFileArchive {
 		}
 
 		@Override
-		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
+		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath,
+				DataTypePath newPath) {
 			fireStateChanged();
 		}
 
@@ -189,6 +215,11 @@ public class ProjectArchive implements DomainFileArchive {
 
 		@Override
 		public void sourceArchiveChanged(DataTypeManager dtm, SourceArchive dataTypeSource) {
+			fireStateChanged();
+		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dtm) {
 			fireStateChanged();
 		}
 	}

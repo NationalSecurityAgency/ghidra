@@ -229,7 +229,7 @@ public class ResultsState {
 		try {
 			while (nextSeq != null || !todoList.isEmpty()) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				if (nextSeq == null) {
 					assert currentState == null;
@@ -266,7 +266,7 @@ public class ResultsState {
 				SequenceNumber lastSeq = flowFrom;
 
 				for (PcodeOp pcodeOp : instr.getPcode(true)) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					if (pcodeOp.getSeqnum().getTime() < nextSeq.getTime()) {
 						// skip forward to PcodeOp associated with nextSeq
 						continue;
@@ -1567,7 +1567,7 @@ public class ResultsState {
 	private static Varnode simplifyWithIntAndMask(SequenceNumber seq, Varnode varnode,
 			long andMask, AddressFactory addrFactory, TaskMonitor monitor)
 			throws CancelledException {
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 		if (!(varnode instanceof VarnodeOperation)) {
 			if (varnode.isConstant()) {
 				return new Varnode(addrFactory.getConstantAddress(andMask & varnode.getOffset()),
@@ -1765,7 +1765,7 @@ public class ResultsState {
 		}
 		DisassembleCommand cmd = new DisassembleCommand(address, null, true);
 		cmd.applyTo(program, monitor);
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 	}
 
 	/**
@@ -2168,7 +2168,7 @@ public class ResultsState {
 		}
 		else {
 			returnType = func.getReturnType();
-			if (VoidDataType.dataType.isEquivalent(returnType)) {
+			if (VoidDataType.isVoidDataType(returnType)) {
 				return;
 			}
 		}

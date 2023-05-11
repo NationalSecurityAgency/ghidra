@@ -136,12 +136,5 @@ public abstract class WeakSet<T> implements Iterable<T> {
 	 * Returns a stream of the values of this collection.
 	 * @return a stream of the values of this collection.
 	 */
-	public Stream<T> stream() {
-		return values().stream();
-	}
-
-	@Override
-	public String toString() {
-		return values().toString();
-	}
+	public abstract Stream<T> stream();
 }

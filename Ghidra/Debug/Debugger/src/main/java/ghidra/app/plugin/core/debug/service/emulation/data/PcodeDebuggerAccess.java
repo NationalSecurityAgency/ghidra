@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.service.emulation.data;
 
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.trace.data.PcodeTraceAccess;
+import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A trace-and-debugger access shim
@@ -34,4 +35,7 @@ public interface PcodeDebuggerAccess extends PcodeTraceAccess {
 
 	@Override
 	PcodeDebuggerRegistersAccess getDataForLocalState(PcodeThread<?> thread, int frame);
+
+	@Override
+	PcodeDebuggerRegistersAccess getDataForLocalState(TraceThread thread, int frame);
 }

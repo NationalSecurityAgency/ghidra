@@ -18,26 +18,26 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.widgets.dialogs.NumberInputDialog;
+import generic.theme.GIcon;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Action that allows the user to make multiple duplicates of the selected item
  */
 public class DuplicateMultipleAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon ICON =
-		ResourceManager.loadImage("images/MultiDuplicateData.png");
+	private final static Icon ICON =
+		new GIcon("icon.plugin.composite.editor.duplicate.multiple");
 	public final static String ACTION_NAME = "Duplicate Multiple of Component";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Duplicate multiple of the selected component";

@@ -16,10 +16,12 @@
 /// \file pcodeinject.hh
 /// \brief Classes for managing \b p-code \b injection.
 
-#ifndef __PCODEINJECT__
-#define __PCODEINJECT__
+#ifndef __PCODEINJECT_HH__
+#define __PCODEINJECT_HH__
 
 #include "emulateutil.hh"
+
+namespace ghidra {
 
 class Architecture;
 
@@ -271,4 +273,5 @@ public:
   virtual const vector<OpBehavior *> &getBehaviors(void)=0;
 };
 
+} // End namespace ghidra
 #endif

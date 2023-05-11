@@ -22,6 +22,7 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -33,15 +34,12 @@ import ghidra.program.util.ChangeManager;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
-import resources.ResourceManager;
 
 public class RegisterManagerProvider extends ComponentProviderAdapter {
-	private static final Icon DELETE_REGISTER_VALUES_ICON =
-		ResourceManager.loadImage("images/edit-delete.png");
-	private static final Icon SELECT_REGISTER_VALUES_ICON =
-		ResourceManager.loadImage("images/text_align_justify.png");
-	private static final Icon FILTER_ICON = ResourceManager.loadImage("images/textfield.png");
-	static final ImageIcon REGISTER_ICON = ResourceManager.loadImage("images/registerGroup.png");
+	private static final Icon DELETE_REGISTER_VALUES_ICON = Icons.DELETE_ICON;
+	private static final Icon SELECT_REGISTER_VALUES_ICON = Icons.MAKE_SELECTION_ICON;
+	private static final Icon FILTER_ICON = Icons.CONFIGURE_FILTER_ICON;
+	static final Icon REGISTER_ICON = new GIcon("icon.plugin.register.provider");
 	private static Icon RECV_LOCATION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
 
 	private Program program;

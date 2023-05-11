@@ -64,7 +64,7 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 
 		env.showTool();
 		env.getTool().getToolFrame().setSize(new Dimension(1024, 768));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		provider = plugin.getProvider();
 		loadProgram("notepad");
 
@@ -89,12 +89,12 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.openProgram(program.getDomainFile());
 		builder.dispose();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		addrFactory = program.getAddressFactory();
 
 		runSwing(() -> tool.showComponentProvider(provider, true));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		ComponentProvider commentWindowProvider = tool.getComponentProvider("Comment Window");
 		Container container = commentWindowProvider.getComponent().getParent();
 		assertNotNull(container);
@@ -116,7 +116,7 @@ public class CommentWindowPluginTest extends AbstractGhidraHeadedIntegrationTest
 		int numRows = commentTable.getRowCount();
 		for (int i = 0; i < numRows; i++) {
 			clickTableCell(commentTable, i, CommentTableModel.LOCATION_COL, 2);
-			waitForPostedSwingRunnables();
+			waitForSwing();
 			Address addr = browser.getCurrentAddress();
 			Object tableAddr = addr.getAddress(
 				commentTable.getValueAt(i, CommentTableModel.LOCATION_COL).toString());

@@ -15,7 +15,8 @@
  */
 package ghidra.feature.fid.plugin;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,9 +25,10 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.script.SelectLanguageDialog;
@@ -147,16 +149,17 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		symbolsFileTextField = new JTextField();
 		panel.add(symbolsFileTextField, BorderLayout.CENTER);
-		JButton browseButton = createBrowseButton();
+		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> {
 			GhidraFileChooser chooser = new GhidraFileChooser(tool.getToolFrame());
 			chooser.setTitle("Choose Common Symbols File");
-			chooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
+			chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 //			chooser.setFileFilter(null);
 			File selectedFile = chooser.getSelectedFile();
 			if (selectedFile != null) {
 				symbolsFileTextField.setText(selectedFile.getAbsolutePath());
 			}
+			chooser.dispose();
 		});
 		symbolsFileTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
 		panel.add(browseButton, BorderLayout.EAST);
@@ -167,7 +170,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		languageIdField = new JTextField();
 		panel.add(languageIdField, BorderLayout.CENTER);
-		JButton browseButton = createBrowseButton();
+		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> {
 			SelectLanguageDialog selectLanguageDialog =
 				new SelectLanguageDialog("Select Language", "Ok");
@@ -219,7 +222,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 		domainFolderField = new JTextField();
 		domainFolderField.setEditable(false);
 		panel.add(domainFolderField, BorderLayout.CENTER);
-		JButton browseButton = createBrowseButton();
+		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> {
 			final DataTreeDialog dialog = new DataTreeDialog(tool.getToolFrame(),
 				"Choose Root Folder", DataTreeDialog.CHOOSE_FOLDER);
@@ -276,13 +279,6 @@ public class PopulateFidDialog extends DialogComponentProvider {
 			return false;
 		}
 		return true;
-	}
-
-	private JButton createBrowseButton() {
-		JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
-		Font font = browseButton.getFont();
-		browseButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
-		return browseButton;
 	}
 
 	private static class LibraryChoice {

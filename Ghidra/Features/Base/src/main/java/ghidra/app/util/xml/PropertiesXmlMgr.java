@@ -29,6 +29,7 @@ import ghidra.framework.options.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.*;
+import ghidra.util.ColorUtils;
 import ghidra.util.XmlProgramUtilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -208,7 +209,8 @@ class PropertiesXmlMgr {
 		String listName = getPropertyList(pathname);
 		String name = getPropertyName(pathname);
 		if (listName == null || name == null) {
-			log.appendMsg("Property NAME attribute must contain both category prefix and property name");
+			log.appendMsg(
+				"Property NAME attribute must contain both category prefix and property name");
 			return;
 		}
 		Options list = program.getOptions(listName);
@@ -252,7 +254,8 @@ class PropertiesXmlMgr {
 			list.setDate(name, new Date(value));
 		}
 		else if ("color".equals(type)) {
-			Color color = new Color(XmlUtilities.parseInt(element.getAttribute("VALUE")));
+			Color color =
+				ColorUtils.getColor(XmlUtilities.parseInt(element.getAttribute("VALUE")));
 			list.setColor(name, color);
 		}
 		else if ("file".equals(type)) {
@@ -310,7 +313,8 @@ class PropertiesXmlMgr {
 	//   						 XML WRITE CURRENT DTD                                   //
 	///////////////////////////////////////////////////////////////////////////////////////
 
-	void write(XmlWriter writer, AddressSetView set, TaskMonitor monitor) throws CancelledException {
+	void write(XmlWriter writer, AddressSetView set, TaskMonitor monitor)
+			throws CancelledException {
 		monitor.setMessage("Writing PROPERTIES ...");
 		writer.startElement("PROPERTIES");
 		writePropertyMaps(writer, set, monitor);
@@ -322,11 +326,11 @@ class PropertiesXmlMgr {
 			throws CancelledException {
 		List<String> listNames = program.getOptionsNames();
 		Collections.sort(listNames);
-		for (int i = 0; i < listNames.size(); i++) {
-			Options propList = program.getOptions(listNames.get(i));
+		for (String listName : listNames) {
+			Options propList = program.getOptions(listName);
 			List<String> propNames = propList.getOptionNames();
 			Collections.sort(propNames);
-			String prefix = listNames.get(i) + PROPERTY_LIST_CATEGORY_DELIMITER;
+			String prefix = listName + PROPERTY_LIST_CATEGORY_DELIMITER;
 			for (String name : propNames) {
 				if (monitor.isCancelled()) {
 					throw new CancelledException();

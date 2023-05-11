@@ -17,9 +17,8 @@ package ghidra.trace.database.listing;
 
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.*;
 
 /**
@@ -39,13 +38,13 @@ public class DBTraceCodeUnitsView extends
 	}
 
 	@Override
-	public boolean coversRange(Range<Long> span, AddressRange range) {
+	public boolean coversRange(Lifespan span, AddressRange range) {
 		// Every address has a code unit, defined or undefined
 		return true;
 	}
 
 	@Override
-	public boolean intersectsRange(Range<Long> span, AddressRange range) {
+	public boolean intersectsRange(Lifespan span, AddressRange range) {
 		// Every address has a code unit, defined or undefined
 		return true;
 	}

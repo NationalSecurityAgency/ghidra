@@ -425,16 +425,6 @@ public class LocalSymbolMap {
 		return (HighParam) paramSymbols[i].getHighVariable();
 	}
 
-	public boolean containsVariableWithName(String name) {
-		Collection<HighSymbol> values = symbolMap.values();
-		for (HighSymbol sym : values) {
-			if (sym.getName().equals(name)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	protected HighSymbol newMappedSymbol(long id, String nm, DataType dt, VariableStorage store,
 			Address pcaddr, int slot) {
 		if (id == 0) {

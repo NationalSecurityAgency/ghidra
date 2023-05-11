@@ -219,6 +219,11 @@ public class UndefinedFunction implements Function {
 	}
 
 	@Override
+	public boolean hasUnknownCallingConventionName() {
+		return true;
+	}
+
+	@Override
 	public String getCallingConventionName() {
 		return Function.UNKNOWN_CALLING_CONVENTION_STRING;
 	}
@@ -231,11 +236,6 @@ public class UndefinedFunction implements Function {
 	@Override
 	public String[] getCommentAsArray() {
 		return new String[0];
-	}
-
-	@Override
-	public String getDefaultCallingConventionName() {
-		return p.getCompilerSpec().getDefaultCallingConvention().getName();
 	}
 
 	@Override
@@ -327,11 +327,8 @@ public class UndefinedFunction implements Function {
 	public Parameter getReturn() {
 		try {
 			DataType dt = getReturnType();
-			if (dt instanceof TypeDef) {
-				dt = ((TypeDef) dt).getBaseDataType();
-			}
 			return new ReturnParameterImpl(dt,
-				(dt instanceof VoidDataType) ? VariableStorage.VOID_STORAGE
+				VoidDataType.isVoidDataType(dt) ? VariableStorage.VOID_STORAGE
 						: VariableStorage.UNASSIGNED_STORAGE,
 				getProgram());
 		}

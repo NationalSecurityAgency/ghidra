@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.util.*;
 
@@ -127,8 +126,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 //==================================================================================================
 
 	private class ContextTableColumn
-			extends
-			AbstractProgramBasedDynamicTableColumn<LocationReference, LocationReference> {
+			extends AbstractProgramBasedDynamicTableColumn<LocationReference, LocationReference> {
 
 		private ContextCellRenderer renderer = new ContextCellRenderer();
 
@@ -171,7 +169,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			super.getTableCellRendererComponent(data);
 
 			LocationReference rowObject = (LocationReference) data.getRowObject();
-			String refTypeString = getRefTypeString(rowObject);
+			String refTypeString = getRefTypeString(rowObject, data.isSelected());
 			if (refTypeString != null) {
 				setText(refTypeString);
 				return this;
@@ -184,12 +182,12 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			return this;
 		}
 
-		private String getRefTypeString(LocationReference rowObject) {
+		private String getRefTypeString(LocationReference rowObject, boolean isSelected) {
 			String refType = rowObject.getRefTypeString();
 			if (!StringUtils.isBlank(refType)) {
 				String trailingText = "";
 				if (rowObject.isOffcutReference()) {
-					setForeground(Color.RED);
+					setForeground(getErrorForegroundColor(isSelected));
 					trailingText = OFFCUT_STRING;
 				}
 				return refType + trailingText;
@@ -199,7 +197,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 
 		@Override
 		public String getFilterString(LocationReference rowObject, Settings settings) {
-			String refTypeString = getRefTypeString(rowObject);
+			String refTypeString = getRefTypeString(rowObject, false);
 			if (refTypeString != null) {
 				return refTypeString;
 			}

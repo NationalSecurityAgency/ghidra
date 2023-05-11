@@ -29,7 +29,10 @@ import javax.swing.KeyStroke;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import docking.test.AbstractDockingTest;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.ThemeManager;
 import ghidra.framework.options.*;
 import ghidra.framework.options.OptionsTest.FRUIT;
 import ghidra.program.database.ProgramBuilder;
@@ -37,11 +40,12 @@ import ghidra.program.database.ProgramDB;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.InvalidInputException;
 
-public class OptionsDBTest extends AbstractGenericTest {
+public class OptionsDBTest extends AbstractDockingTest {
 
 	private OptionsDB options;
 	private ProgramBuilder builder;
 	private int txID;
+	private GColor testColor;
 
 	public enum fruit {
 		Apple, Pear, Orange
@@ -57,6 +61,8 @@ public class OptionsDBTest extends AbstractGenericTest {
 		ProgramDB program = builder.getProgram();
 		txID = program.startTransaction("Test");
 		options = new OptionsDB(program);
+		ThemeManager.getInstance().setColor("color.test", Palette.MAGENTA);
+		testColor = new GColor("color.test");
 	}
 
 	private void saveAndRestoreOptions() {
@@ -194,9 +200,9 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testSaveColorOption() {
-		options.setColor("Foo", Color.RED);
+		options.setColor("Foo", Palette.RED);
 		saveAndRestoreOptions();
-		assertEquals(Color.RED, options.getColor("Foo", Color.BLUE));
+		assertEquals(Palette.RED.getRGB(), options.getColor("Foo", Palette.BLUE).getRGB());
 	}
 
 	@Test
@@ -262,7 +268,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testRemove() {
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 		assertTrue(options.contains("COLOR"));
 		options.removeOption("COLOR");
 		assertTrue(!options.contains("COLOR"));
@@ -271,7 +277,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetOptionNames() {
-		options.setColor("COLOR", Color.red);
+		options.setColor("COLOR", Palette.RED);
 		options.setInt("INT", 3);
 		List<String> optionNames = options.getOptionNames();
 		assertTrue(optionNames.contains("COLOR"));
@@ -280,18 +286,26 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDefaultValue() {
-		options.registerOption("Foo", Color.RED, null, "description");
+		options.registerOption("Foo", 5, null, "description");
+		options.setInt("Foo", 10);
+		assertEquals(10, options.getInt("Foo", 0));
+		assertEquals(Integer.valueOf(5), options.getDefaultValue("Foo"));
+	}
+
+	@Test
+	public void testGetDefaultValueWithThemeValues() {
+		options.registerThemeColorBinding("Foo", "color.test", null, "description");
 		options.setColor("Foo", Color.BLUE);
-		assertEquals(Color.BLUE, options.getColor("Foo", null));
-		assertEquals(Color.RED, options.getDefaultValue("Foo"));
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
+		assertColorsEqual(Color.BLUE, (Color) options.getDefaultValue("Foo"));
 	}
 
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("color", OptionType.COLOR_TYPE, Color.RED, null, "description",
+		options.registerOption("foo", OptionType.INT_TYPE, 5, null, "description",
 			editor);
-		assertEquals(editor, options.getRegisteredPropertyEditor("color"));
+		assertEquals(editor, options.getRegisteredPropertyEditor("foo"));
 
 	}
 
@@ -304,12 +318,20 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testRestoreOptionValue() {
-		options.registerOption("Foo", Color.RED, null, "description");
-		options.setColor("Foo", Color.BLUE);
-		assertEquals(Color.BLUE, options.getColor("Foo", null));
+		options.registerOption("Foo", 4, null, "description");
+		options.setInt("Foo", 7);
+		assertEquals(7, options.getInt("Foo", 0));
 		options.restoreDefaultValue("Foo");
-		assertEquals(Color.RED, options.getColor("Foo", null));
+		assertEquals(4, options.getInt("Foo", 0));
+	}
 
+	@Test
+	public void testRestoreThemeOptionValue() {
+		options.registerThemeColorBinding("Foo", "color.test", null, "description");
+		options.setColor("Foo", Palette.BLUE);
+		assertColorsEqual(Palette.BLUE, options.getColor("Foo", null));
+		options.restoreDefaultValue("Foo");
+		assertColorsEqual(Palette.MAGENTA, options.getColor("Foo", null));
 	}
 
 	@Test
@@ -403,11 +425,11 @@ public class OptionsDBTest extends AbstractGenericTest {
 	@Test
 	public void testCopyOptions() {
 		options.setInt("INT", 3);
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 		ToolOptions options2 = new ToolOptions("aaa");
 		options2.copyOptions(options);
 		assertEquals(3, options.getInt("INT", 3));
-		assertEquals(Color.RED, options.getColor("COLOR", null));
+		assertEquals(Palette.RED, options.getColor("COLOR", null));
 	}
 
 	@Test
@@ -550,17 +572,32 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testSettingValueToNull() {
-		options.registerOption("Bar", Color.BLUE, null, "description");
-		options.setColor("Bar", Color.red);
-		options.setColor("Bar", null);
-		assertEquals(null, options.getColor("Bar", null));
+		// this will cause the palette color LAVENDER to be null - make sure to not use it in other
+		//tests
+		options.registerOption("Bar", "HEY", null, "description");
+		options.setString("Bar", null);
+		assertEquals(null, options.getString("Bar", null));
+	}
+
+	@Test
+	public void testSettingThemeValueToNull() {
+		// this will cause the palette color LAVENDER to be null - make sure to not use it in other
+		//tests
+		options.registerThemeColorBinding("Bar", "color.test", null, "description");
+		try {
+			options.setColor("Bar", null);
+			fail("Expected exception setting theme value to null");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
 	}
 
 	@Test
 	public void testNullValueWillUsedPassedInDefault() {
-		options.setColor("Bar", Color.red);
+		options.setColor("Bar", Palette.RED);
 		options.setColor("Bar", null);
-		assertEquals(Color.BLUE, options.getColor("Bar", Color.BLUE));
+		assertEquals(Palette.BLUE, options.getColor("Bar", Palette.BLUE));
 	}
 
 	@Test

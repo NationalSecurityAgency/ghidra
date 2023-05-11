@@ -18,7 +18,9 @@ package ghidra.app.util.exporter;
 import java.io.*;
 import java.util.ArrayList;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.DisplayableEol;
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -84,7 +86,8 @@ class ProgramTextWriter {
 			writer.print("<HTML><BODY BGCOLOR=#ffffe0>");
 			writer.println("<FONT FACE=COURIER SIZE=3><STRONG><PRE>");
 		}
-
+		TemplateSimplifier simplifier = new TemplateSimplifier();
+		simplifier.setEnabled(false);
 		CodeUnitFormatOptions formatOptions = new CodeUnitFormatOptions(
 			options.isShowBlockNameInOperands() ? CodeUnitFormatOptions.ShowBlockName.NON_LOCAL
 					: CodeUnitFormatOptions.ShowBlockName.NEVER,
@@ -94,7 +97,8 @@ class ProgramTextWriter {
 			true, // include extended reference markup
 			true, // include scalar adjustment
 			true, // include library names in namespace
-			true // follow referenced pointers
+			true, // follow referenced pointers
+			simplifier // disabled simplifier
 		);
 
 		CodeUnitFormat cuFormat = new CodeUnitFormat(formatOptions);
@@ -284,7 +288,7 @@ class ProgramTextWriter {
 			processAddress(currentCodeUnit.getMinAddress(), null);
 			processBytes(currentCodeUnit);
 			processMnemonic(currentCodeUnit);
-			processOperand(currentCodeUnit, cuFormat);
+			processOperands(currentCodeUnit, cuFormat);
 
 			//// End of Line Area //////////////////////////////////////////
 
@@ -372,7 +376,7 @@ class ProgramTextWriter {
 
 		buffy = new StringBuilder();
 		if (options.isHTML()) {
-			writer.print("<FONT COLOR=#ff0000>");
+			writer.print("<FONT COLOR=\"" + Messages.ERROR + "\">");
 		}
 		processAddress(bytesRemovedRangeStart, null);
 		buffy.append(" -> ");
@@ -582,7 +586,7 @@ class ProgramTextWriter {
 		}
 	}
 
-	private void processOperand(CodeUnit cu, CodeUnitFormat cuFormat) {
+	private void processOperands(CodeUnit cu, CodeUnitFormat cuFormat) {
 
 		int width = options.getOperandWidth();
 		if (width < 1) {
@@ -596,40 +600,49 @@ class ProgramTextWriter {
 			Instruction inst = (Instruction) cu;
 
 			int opCnt = inst.getNumOperands();
-			int opLens = opCnt - 1; // factor-in operand separators
-			if (opCnt > 0) {
+			String firstSeparator = ((Instruction) cu).getSeparator(0);
 
-				String[] opReps = new String[opCnt];
-				for (int i = 0; i < opCnt; ++i) {
-					opReps[i] = cuFormat.getOperandRepresentationString(cu, i);
-					opLens += opReps[i].length();
+			int opLens = 0;
+			int sepLens = firstSeparator != null ? firstSeparator.length() : 0;
+			String[] opSeparators = new String[opCnt];
+			String[] opReps = new String[opCnt];
+			for (int i = 0; i < opCnt; ++i) {
+				opReps[i] = cuFormat.getOperandRepresentationString(cu, i);
+				opLens += opReps[i].length();
+				opSeparators[i] = ((Instruction) cu).getSeparator(i + 1);
+				if (opSeparators[i] == null) {
+					opSeparators[i] = "";
 				}
-				boolean clipRequired = (opLens > width);
-
-				opLens = opCnt - 1; // reset - factor-in operand separators
-				for (int i = 0; i < opCnt; ++i) {
-					if (i > 0) {
-						buffy.append(",");
-					}
-					if (clipRequired) {
-						opReps[i] = clip(opReps[i], (width - opLens) / (opCnt - i), false, true);
-					}
-					opLens += opReps[i].length();
-
-					if (options.isHTML()) {
-						Reference ref =
-							cu.getProgram()
-									.getReferenceManager()
-									.getPrimaryReferenceFrom(cuAddress,
-										i);
-						addReferenceLinkedText(ref, opReps[i], true);
-					}
-					else {
-						buffy.append(opReps[i]);
-					}
-				}
+				sepLens += opSeparators[i].length();
 			}
-			String fill = genFill(width - opLens);
+			boolean clipRequired = (opLens + sepLens) > width;
+
+			// NOTE: Use InstructionDB.toString() as formatting guide
+			int len = sepLens; // reserve space for separator pieces
+			if (firstSeparator != null) {
+				buffy.append(firstSeparator);
+			}
+			for (int i = 0; i < opCnt; ++i) {
+				if (clipRequired) {
+					opReps[i] = clip(opReps[i], (width - len) / (opCnt - i), false, true);
+				}
+				len += opReps[i].length();
+
+				if (options.isHTML()) {
+					Reference ref =
+						cu.getProgram()
+							.getReferenceManager()
+							.getPrimaryReferenceFrom(cuAddress,
+								i);
+					addReferenceLinkedText(ref, opReps[i], true);
+				}
+				else {
+					buffy.append(opReps[i]);
+				}
+				buffy.append(opSeparators[i]);
+			}
+
+			String fill = genFill(width - len);
 			buffy.append(fill);
 		}
 		else if (cu instanceof Data) {
@@ -660,7 +673,7 @@ class ProgramTextWriter {
 			processAddress(component.getMinAddress(), fill + STRUCT_PREFIX);
 			processDataFieldName(component);
 			processMnemonic(component);
-			processOperand(component, cuFormat);
+			processOperands(component, cuFormat);
 			//processEOLComment();
 			//processXREFs();
 			writer.println(buffy.toString());

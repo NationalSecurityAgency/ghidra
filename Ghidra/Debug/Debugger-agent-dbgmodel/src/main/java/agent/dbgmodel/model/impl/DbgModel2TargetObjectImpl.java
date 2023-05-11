@@ -15,29 +15,63 @@
  */
 package agent.dbgmodel.model.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.dbgeng.manager.DbgEventsListener;
-import agent.dbgeng.manager.DbgStateListener;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
-import agent.dbgeng.model.iface2.*;
-import agent.dbgeng.model.impl.*;
+import agent.dbgeng.model.iface2.DbgModelTargetBreakpointSpec;
+import agent.dbgeng.model.iface2.DbgModelTargetDebugContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetEventContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetExceptionContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetMemoryContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetModule;
+import agent.dbgeng.model.iface2.DbgModelTargetObject;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
+import agent.dbgeng.model.iface2.DbgModelTargetSession;
+import agent.dbgeng.model.iface2.DbgModelTargetStackFrame;
+import agent.dbgeng.model.iface2.DbgModelTargetTTD;
+import agent.dbgeng.model.iface2.DbgModelTargetThread;
+import agent.dbgeng.model.impl.DbgModelTargetEventContainerImpl;
+import agent.dbgeng.model.impl.DbgModelTargetExceptionContainerImpl;
+import agent.dbgeng.model.impl.DbgModelTargetMemoryContainerImpl;
+import agent.dbgeng.model.impl.DbgModelTargetProcessImpl;
+import agent.dbgeng.model.impl.DbgModelTargetThreadImpl;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.TypeKind;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerModelListener;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetAccessConditioned;
+import ghidra.dbg.target.TargetAttacher;
+import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetEnvironment;
+import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.TargetInterpreter;
+import ghidra.dbg.target.TargetModule;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.TargetProcess;
+import ghidra.dbg.target.TargetRegister;
+import ghidra.dbg.target.TargetRegisterBank;
+import ghidra.dbg.target.TargetStackFrame;
+import ghidra.dbg.target.TargetSteppable;
+import ghidra.dbg.target.TargetThread;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
@@ -109,11 +143,11 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	@Override
 	public CompletableFuture<Void> requestAugmentedAttributes() {
-		return requestAttributes(false);
+		return requestAttributes(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		List<TargetObject> nlist = new ArrayList<>();
 		List<String> rlist = new ArrayList<>();
 		return requestNativeElements().thenCompose(list -> {
@@ -156,7 +190,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 		Map<String, Object> nmap = new HashMap<>();
 		List<String> rlist = new ArrayList<>();
 		return requestNativeAttributes().thenCompose(map -> {
@@ -203,7 +237,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			if (proxy instanceof TargetStackFrame || //
 				proxy instanceof TargetModule || //
 				proxy instanceof TargetBreakpointSpec) {
-				return delegate.requestAttributes(false);
+				return delegate.requestAttributes(RefreshBehavior.REFRESH_NEVER);
 			}
 		}
 		return CompletableFuture.completedFuture(null);
@@ -250,14 +284,9 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			}
 			if (proxy instanceof TargetExecutionStateful) {
 				if (isValid()) {
-					if (attributes.containsKey(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)) {
-						TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
-						TargetExecutionState state = stateful.getExecutionState();
-						attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
-					} else {
-						attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME,
-							TargetExecutionState.INACTIVE);
-					}
+					TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
+					TargetExecutionState state = stateful.getExecutionState();
+					attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
 				}
 			}
 			if (proxy instanceof TargetAttacher) {
@@ -300,13 +329,16 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					memory = new DbgModelTargetMemoryContainerImpl((DbgModelTargetProcess) proxy);
 				}
 				attrs.put(memory.getName(), memory);
-				memory.requestElements(true);
+				memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
 			}
 			if (proxy instanceof TargetThread) {
 				DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;
-				String executionType =
-					targetThread.getThread().getExecutingProcessorType().description;
-				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
+				DbgThread thread = targetThread.getThread();
+				if (thread != null) {
+					String executionType =
+						thread.getExecutingProcessorType().description;
+					attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
+				}
 			}
 			if (proxy instanceof TargetRegister) {
 				DbgModelTargetObject bank = (DbgModelTargetObject) getParent();
@@ -363,7 +395,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				if (elements.containsKey(trimKey)) {
 					return CompletableFuture.completedFuture(elements.get(trimKey));
 				}
-				return requestElements(false).thenApply(__ -> getCachedElements().get(trimKey));
+				return requestElements(RefreshBehavior.REFRESH_NEVER).thenApply(__ -> getCachedElements().get(trimKey));
 			}
 		}
 		synchronized (attributes) {
@@ -381,7 +413,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					return obj;
 				});
 			}
-			return requestAttributes(false).thenApply(__ -> getCachedAttribute(key));
+			return requestAttributes(RefreshBehavior.REFRESH_NEVER).thenApply(__ -> getCachedAttribute(key));
 		}
 	}
 
@@ -410,11 +442,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				ex);
 			return null;
 		});
-	}
-
-	@Override
-	public void removeListener(DebuggerModelListener l) {
-		listeners.remove(l);
 	}
 
 	@Override

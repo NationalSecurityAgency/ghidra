@@ -21,9 +21,8 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.Highlight;
-import docking.widgets.fieldpanel.support.HighlightFactory;
+import docking.widgets.fieldpanel.support.FieldHighlightFactory;
 import ghidra.app.plugin.core.format.*;
-import ghidra.app.util.HighlightProvider;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 
 /**
@@ -45,7 +44,7 @@ class FieldFactory {
 	private Color editColor;
 	private Color separatorColor;
 	private int unitByteSize;
-	private HighlightFactory highlightFactory;
+	private FieldHighlightFactory highlightFactory;
 
 	/**
 	 * Constructor
@@ -54,15 +53,15 @@ class FieldFactory {
 	 * @param label label that is used as a renderer in the field viewer
 	 */
 	FieldFactory(DataFormatModel model, int bytesPerLine, int fieldOffset, FontMetrics fm,
-			HighlightProvider highlightProvider) {
+			ByteViewerHighlighter highlightProvider) {
 		this.model = model;
 		this.fieldOffset = fieldOffset;
 		this.fm = fm;
 		this.highlightFactory = new SimpleHighlightFactory(highlightProvider);
 		charWidth = fm.charWidth('W');
 		width = charWidth * model.getDataUnitSymbolSize();
-		editColor = ByteViewerComponentProvider.DEFAULT_EDIT_COLOR;
-		separatorColor = ByteViewerComponentProvider.DEFAULT_MISSING_VALUE_COLOR;
+		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
+		separatorColor = ByteViewerComponentProvider.SEPARATOR_COLOR;
 		unitByteSize = model.getUnitByteSize();
 	}
 
@@ -81,6 +80,22 @@ class FieldFactory {
 	}
 
 	/**
+	 * Returns true if this FieldFactory will return a non-null value at the given line index. 
+	 * If the index is the first index for a block, then there may be non active fields at the 
+	 * beginning of the line. Similarly, the last line of a block may have inactive fields at 
+	 * the end of the line.
+	 *
+	 * @param index the line index
+	 * @return true if this FieldFactory will produce a non-null value at the given line index.
+	 */
+	public boolean isActive(BigInteger index) {
+		if (indexMap == null) {
+			return false;
+		}
+		return indexMap.getBlockInfo(index, fieldOffset) != null;
+	}
+
+	/**
 	 * Gets a Field object for the given index.
 	 * This method is called for the given index and the fieldOffset
 	 * that is defined in the constructor.
@@ -92,7 +107,7 @@ class FieldFactory {
 		// translate index to block and offset into the block
 		ByteBlockInfo info = indexMap.getBlockInfo(index, fieldOffset);
 		if (info == null) {
-			if (indexMap.showSeparator(index)) {
+			if (indexMap.isBlockSeparatorIndex(index)) {
 				ByteField bf = new ByteField(noValueStr, fm, startX, width, false, fieldOffset,
 					index, highlightFactory);
 				bf.setForeground(separatorColor);
@@ -188,7 +203,6 @@ class FieldFactory {
 		separatorColor = c;
 	}
 
-	///////////////////////////////////////////////////////////////////
 	/**
 	 * Get the padded string that has the given char value.
 	 */
@@ -205,16 +219,16 @@ class FieldFactory {
 		return new ByteField(value, fm, startX, width, false, fieldOffset, index, highlightFactory);
 	}
 
-	static class SimpleHighlightFactory implements HighlightFactory {
-		private final HighlightProvider provider;
+	static class SimpleHighlightFactory implements FieldHighlightFactory {
+		private final ByteViewerHighlighter provider;
 
-		public SimpleHighlightFactory(HighlightProvider provider) {
+		public SimpleHighlightFactory(ByteViewerHighlighter provider) {
 			this.provider = provider;
 		}
 
 		@Override
-		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
-			return provider.getHighlights(text, null, null, -1);
+		public Highlight[] createHighlights(Field field, String text, int cursorTextOffset) {
+			return provider.createHighlights(text);
 		}
 	}
 }

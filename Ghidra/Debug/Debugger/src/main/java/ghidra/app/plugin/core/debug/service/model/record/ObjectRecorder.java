@@ -21,35 +21,38 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
-import com.google.common.collect.Range;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
+import db.Transaction;
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.attributes.TargetDataType;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceUniqueObject;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import utilities.util.IDKeyed;
 
 class ObjectRecorder {
 	protected final ObjectBasedTraceRecorder recorder;
 	protected final TraceObjectManager objectManager;
 	protected final boolean isSupportsFocus;
+	protected final boolean isSupportsActivation;
 
 	private final BidiMap<IDKeyed<TargetObject>, IDKeyed<TraceObject>> objectMap =
 		new DualHashBidiMap<>();
@@ -59,9 +62,9 @@ class ObjectRecorder {
 		this.objectManager = recorder.trace.getObjectManager();
 		TargetObjectSchema schema = recorder.target.getSchema();
 		this.isSupportsFocus = !schema.searchFor(TargetFocusScope.class, false).isEmpty();
+		this.isSupportsActivation = !schema.searchFor(TargetActiveScope.class, false).isEmpty();
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(recorder.trace, "Create root")) {
+		try (Transaction tx = recorder.trace.openTransaction("Create root")) {
 			objectManager.createRootObject(schema);
 		}
 	}
@@ -111,7 +114,7 @@ class ObjectRecorder {
 		}
 		String extras = computeExtraInterfaces(object);
 		// Note: null extras will erase previous value, if necessary.
-		traceObject.setAttribute(Range.atLeast(snap),
+		traceObject.setAttribute(Lifespan.nowOn(snap),
 			TraceObject.EXTRA_INTERFACES_ATTRIBUTE_NAME, extras);
 	}
 
@@ -127,7 +130,7 @@ class ObjectRecorder {
 			Msg.error(this, "Unknown object was invalidated: " + object);
 			return;
 		}
-		traceObject.obj.removeTree(Range.atLeast(snap));
+		traceObject.obj.removeTree(Lifespan.nowOn(snap));
 	}
 
 	protected String encodeEnum(Enum<?> e) {
@@ -175,6 +178,11 @@ class ObjectRecorder {
 		if (attribute instanceof TargetBreakpointKindSet) {
 			return encodeEnumSet((TargetBreakpointKindSet) attribute);
 		}
+		if (attribute instanceof TargetDataType dataType) {
+			// NOTE: some are also TargetObject, but that gets checked first
+			JsonElement element = dataType.toJson();
+			return new Gson().toJson(element);
+		}
 		if (attribute instanceof TargetExecutionState) {
 			return encodeEnum((TargetExecutionState) attribute);
 		}
@@ -209,7 +217,7 @@ class ObjectRecorder {
 			}
 		}
 		for (Map.Entry<String, Object> entry : traceAdded.entrySet()) {
-			traceObject.setAttribute(Range.atLeast(snap), entry.getKey(), entry.getValue());
+			traceObject.setAttribute(Lifespan.nowOn(snap), entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -241,7 +249,7 @@ class ObjectRecorder {
 			}
 		}
 		for (Map.Entry<String, Object> entry : traceAdded.entrySet()) {
-			traceObject.setElement(Range.atLeast(snap), entry.getKey(), entry.getValue());
+			traceObject.setElement(Lifespan.nowOn(snap), entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -291,7 +299,7 @@ class ObjectRecorder {
 			return null;
 		}
 		TraceObjectValPath found = object
-				.getSuccessors(Range.singleton(recorder.getSnap()), applied)
+				.getSuccessors(Lifespan.at(recorder.getSnap()), applied)
 				.findAny()
 				.orElse(null);
 		if (found == null) {
@@ -305,13 +313,14 @@ class ObjectRecorder {
 	}
 
 	protected <T extends TargetObject> List<T> collectTargetSuccessors(TargetObject targetSeed,
-			Class<T> targetIf) {
+			Class<T> targetIf, boolean requireCanonical) {
 		// TODO: Should this really go through the database?
 		TraceObject seed = toTrace(targetSeed);
 		if (seed == null) {
 			return List.of();
 		}
-		return seed.querySuccessorsTargetInterface(Range.singleton(recorder.getSnap()), targetIf)
+		return seed.querySuccessorsTargetInterface(Lifespan.at(recorder.getSnap()), targetIf,
+			requireCanonical)
 				.map(p -> toTarget(p.getDestination(seed)).as(targetIf))
 				.collect(Collectors.toList());
 	}

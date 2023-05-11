@@ -15,14 +15,13 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Range;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
@@ -32,6 +31,7 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.symbol.DBTraceReference;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
@@ -50,7 +50,7 @@ import ghidra.util.exception.NoValueException;
  * This behaves somewhat like a mixin, allowing it to be used on code units as well as data
  * components, e.g., fields of a struct data unit.
  */
-public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter {
+public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 
 	@Override
 	DBTrace getTrace();
@@ -171,7 +171,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 				return false;
 			}
 			// NOTE: Properties all defined at start snap
-			return map.getAddressSetView(Range.singleton(getStartSnap())).contains(getAddress());
+			return map.getAddressSetView(Lifespan.at(getStartSnap())).contains(getAddress());
 		}
 	}
 
@@ -189,14 +189,14 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 			if (space == null) {
 				return false;
 			}
-			return map.getAddressSetView(Range.singleton(getStartSnap())).contains(getAddress());
+			return map.getAddressSetView(Lifespan.at(getStartSnap())).contains(getAddress());
 		}
 	}
 
 	@Override
 	default Iterator<String> propertyNames() {
-		Range<Long> span = Range.singleton(getStartSnap());
-		return Iterators.transform(Iterators.filter(
+		Lifespan span = Lifespan.at(getStartSnap());
+		return IteratorUtils.transformedIterator(IteratorUtils.filteredIterator(
 			getTrace().getInternalAddressPropertyManager().getAllProperties().entrySet().iterator(),
 			e -> e.getValue().getAddressSetView(span).contains(getAddress())), Entry::getKey);
 	}

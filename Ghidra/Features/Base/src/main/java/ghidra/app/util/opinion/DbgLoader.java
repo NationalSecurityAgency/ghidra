@@ -94,7 +94,7 @@ public class DbgLoader extends AbstractPeDebugLoader {
 				sectionToAddress.put(sectionHeader,
 					imageBase.add(sectionHeader.getVirtualAddress()));
 			}
-			processDebug(debug.getParser(), parentPE.getNTHeader(), sectionToAddress, prog,
+			processDebug(debug.getParser(), parentPE.getNTHeader(), sectionToAddress, prog, options,
 				monitor);
 		}
 		finally {

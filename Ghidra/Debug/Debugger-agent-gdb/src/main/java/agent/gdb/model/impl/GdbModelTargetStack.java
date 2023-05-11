@@ -24,6 +24,7 @@ import agent.gdb.manager.GdbStackFrame;
 import agent.gdb.manager.GdbThread;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.schema.TargetAttributeType;
@@ -53,7 +54,7 @@ public class GdbModelTargetStack extends
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return thread.listStackFrames().thenAccept(f -> {
 			List<GdbModelTargetStackFrame> frames;
 			synchronized (this) {
@@ -92,7 +93,7 @@ public class GdbModelTargetStack extends
 	 * target. Thus, every time we're STOPPED, this method should be called.
 	 */
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
-		return requestElements(true).thenCompose(__ -> {
+		return requestElements(RefreshBehavior.REFRESH_ALWAYS).thenCompose(__ -> {
 			GdbModelTargetStackFrame innermost = framesByLevel.get(0);
 			if (innermost != null) {
 				return innermost.stateChanged(sco);

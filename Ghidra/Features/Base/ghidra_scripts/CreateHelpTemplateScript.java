@@ -66,7 +66,7 @@ public class CreateHelpTemplateScript extends GhidraScript {
 			printWriter.println("<head>");
 			printWriter.println("\t" + "<title>" + plugin.getName() + "</title>");
 			printWriter.println("\t" +
-				"<link rel=\"stylesheet\" type=\"text/css\" href=\"../../shared/Frontpage.css\">");
+				"<link rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">");
 			printWriter.println("</head>");
 			printWriter.println("");
 			printWriter.println("<body>");
@@ -83,7 +83,7 @@ public class CreateHelpTemplateScript extends GhidraScript {
 			printWriter.println("<blockquote>");
 			List<DockingActionIf> actions = getActions(tool, plugin);
 			for (DockingActionIf action : actions) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				printWriter.println("\t" + "<h3><A name=\"" + action.getName().replace(' ', '_') +
 					"\"></A>" + action.getName() + "</h3>");
 				printWriter.println("\t\t" + "<blockquote>");

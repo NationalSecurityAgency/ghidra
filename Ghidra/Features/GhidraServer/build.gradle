@@ -21,7 +21,7 @@ apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features GhidraServer'
 
-def yajswRelease = "yajsw-stable-13.05"
+def yajswRelease = "yajsw-stable-13.09"
 
 configurations {
 	runGhidraServer
@@ -150,6 +150,7 @@ task generateDevGhidraServerClasspath {
 			int idx = 0
 			configurations.runGhidraServer.each { jarFile ->
 				def JAR_PATH = jarFile.absolutePath
+				def JAR_PATH_ECLIPSE = null
 				
 				// There might be dependencies in the gradle cache, which could be anywhere
 				// (including a different drive). We can only use relative paths if the jar is in 
@@ -160,10 +161,16 @@ task generateDevGhidraServerClasspath {
 				JAR_PATH = JAR_PATH.replace('\\','/') // necessary for windows
 				def index = JAR_PATH.indexOf("/build/")
 				if (index != -1) {
-					// Use Module's bin/ class directory (produced by Eclipse) instead of jar 
-					JAR_PATH = JAR_PATH.substring(0, index) + "/bin/main"
+					// Also use Module's bin/ class directory (produced by Eclipse) in addition to 
+					// jar (even if Eclipse will not be used)
+					JAR_PATH_ECLIPSE = JAR_PATH.substring(0, index) + "/bin/main"
 				}
 				if (!jarFile.path.contains("/libsForBuild/")) {
+					// Ensure Eclipse's compiled classes have precedence over the jars built by
+					// Gradle by putting them first
+					if (JAR_PATH_ECLIPSE) {
+						out.println("wrapper.java.classpath.${++idx}=${JAR_PATH_ECLIPSE}")
+					}
 					out.println("wrapper.java.classpath.${++idx}=${JAR_PATH}")
 				}
 			}

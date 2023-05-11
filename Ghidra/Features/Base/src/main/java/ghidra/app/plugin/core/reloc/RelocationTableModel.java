@@ -25,6 +25,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.util.NumericUtilities;
@@ -51,15 +52,19 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 		};
 
 	static final int ADDRESS_COL = 0;
-	static final int TYPE_COL = 1;
-	static final int VALUE_COL = 2;
-	static final int BYTES_COL = 3;
-	static final int NAME_COL = 4;
+	static final int STATUS_COL = 1;
+	static final int TYPE_COL = 2;
+	static final int VALUE_COL = 3;
+	static final int ORIGINAL_BYTES_COL = 4;
+	static final int MODIFIED_BYTES_COL = 5;
+	static final int NAME_COL = 6;
 
 	static final String RELOCATION_ADDRESS = "Address";
+	static final String RELOCATION_STATUS = "Status";
 	static final String RELOCATION_TYPE = "Type";
 	static final String RELOCATION_VALUE = "Values";
-	static final String RELOCATION_BYTES = "Original Bytes";
+	static final String RELOCATION_ORIGINAL_BYTES = "Original Bytes";
+	static final String RELOCATION_CURRENT_BYTES = "Current Bytes";
 	static final String RELOCATION_NAME = "Name";
 
 	public RelocationTableModel(ServiceProvider serviceProvider, Program program,
@@ -73,9 +78,11 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new AddressTableColumn()), 1, true);
+		descriptor.addVisibleColumn(new RelocationStatusColumn());
 		descriptor.addVisibleColumn(new RelocationTypeColumn());
 		descriptor.addVisibleColumn(new RelocationValueColumn());
-		descriptor.addVisibleColumn(new RelocationBytesColumn());
+		descriptor.addVisibleColumn(new RelocationOriginalBytesColumn());
+		descriptor.addHiddenColumn(new RelocationCurrentBytesColumn());
 		descriptor.addVisibleColumn(new RelocationNameColumn());
 
 		return descriptor;
@@ -118,6 +125,24 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 		return rowObject.relocation.getAddress();
 	}
 
+	private static String packBytes(byte[] bytes) {
+		if (bytes == null) {
+			return "";
+		}
+		StringBuffer buf = new StringBuffer();
+		for (long b : bytes) {
+			if (buf.length() != 0) {
+				buf.append(' ');
+			}
+			String byteStr = Long.toHexString(b & 0xff);
+			if (byteStr.length() == 1) {
+				buf.append('0');
+			}
+			buf.append(byteStr);
+		}
+		return buf.toString();
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================    
@@ -135,6 +160,22 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 			this.relocationIndex = relocationIndex;
 			this.relocation = r;
 		}
+	}
+
+	private static class RelocationStatusColumn extends
+			AbstractProgramBasedDynamicTableColumn<RelocationRowObject, String> {
+
+		@Override
+		public String getColumnName() {
+			return RELOCATION_STATUS;
+		}
+
+		@Override
+		public String getValue(RelocationRowObject rowObject, Settings settings, Program program,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			return rowObject.relocation.getStatus().name();
+		}
+
 	}
 
 	private static class RelocationTypeColumn extends
@@ -182,12 +223,12 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 		}
 	}
 
-	private static class RelocationBytesColumn extends
+	private static class RelocationOriginalBytesColumn extends
 			AbstractProgramBasedDynamicTableColumn<RelocationRowObject, String> {
 
 		@Override
 		public String getColumnName() {
-			return RELOCATION_BYTES;
+			return RELOCATION_ORIGINAL_BYTES;
 		}
 
 		@Override
@@ -195,23 +236,33 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return packBytes(rowObject.relocation.getBytes());
 		}
+	}
 
-		private String packBytes(byte[] bytes) {
-			if (bytes == null) {
-				return "";
+	private static class RelocationCurrentBytesColumn extends
+			AbstractProgramBasedDynamicTableColumn<RelocationRowObject, String> {
+
+		@Override
+		public String getColumnName() {
+			return RELOCATION_CURRENT_BYTES;
+		}
+
+		@Override
+		public String getValue(RelocationRowObject rowObject, Settings settings, Program program,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+
+			Relocation relocation = rowObject.relocation;
+			byte[] originalBytes = rowObject.relocation.getBytes();
+			if (originalBytes == null) {
+				return null;
 			}
-			StringBuffer buf = new StringBuffer();
-			for (long b : bytes) {
-				if (buf.length() != 0) {
-					buf.append(' ');
-				}
-				String byteStr = Long.toHexString(b & 0xff);
-				if (byteStr.length() == 1) {
-					buf.append('0');
-				}
-				buf.append(byteStr);
+			byte[] bytes = new byte[originalBytes.length];
+			try {
+				program.getMemory().getBytes(relocation.getAddress(), bytes);
 			}
-			return buf.toString();
+			catch (MemoryAccessException e) {
+				return null;
+			}
+			return packBytes(bytes);
 		}
 	}
 

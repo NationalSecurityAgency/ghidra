@@ -37,6 +37,7 @@ import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.block.*;
+import ghidra.util.WebColors;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -95,9 +96,9 @@ public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 
 			ColorizingService colorizer = tool.getService(ColorizingService.class);
 
-			Color c1 = new Color(0xE8F2FE);
-
-			Color c2 = new Color(170, 204, 245);
+			// note: 2 colors that look good together and are just used for this example
+			Color c1 = WebColors.ALICE_BLUE;
+			Color c2 = WebColors.LIGHT_SKY_BLUE;
 			Color color = c1;
 
 			BasicBlockModel basicBlockModel = new BasicBlockModel(program);
@@ -176,8 +177,9 @@ public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 					if (fieldFactory.getFieldName().indexOf("XRef") != -1) {
 						formatModel.removeFactory(row, col);
 					}
-					else if (fieldFactory.getFieldName().equals(
-						EolCommentFieldFactory.FIELD_NAME)) {
+					else if (fieldFactory.getFieldName()
+							.equals(
+								EolCommentFieldFactory.FIELD_NAME)) {
 						formatModel.removeFactory(row, col);
 					}
 					else if (fieldFactory.getFieldName().equals(AddressFieldFactory.FIELD_NAME)) {

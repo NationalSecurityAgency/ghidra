@@ -201,4 +201,18 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 	public void setFiterText(String text) {
 		filterPanel.setFilterText(text);
 	}
+
+	public int getRow(Point point) {
+		return table.rowAtPoint(point);
+	}
+
+	public int getColumn(Point point) {
+		return table.columnAtPoint(point);
+	}
+
+	public Object getCellValue(Point point) {
+		int row = getRow(point);
+		int col = getColumn(point);
+		return table.getValueAt(row, col);
+	}
 }

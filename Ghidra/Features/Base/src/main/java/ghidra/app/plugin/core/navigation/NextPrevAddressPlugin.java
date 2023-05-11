@@ -21,12 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.menu.HorizontalRuleAction;
 import docking.menu.MultiActionDockingAction;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.ProgramActionContext;
@@ -37,7 +38,6 @@ import ghidra.app.services.GoToService;
 import ghidra.app.services.NavigationHistoryService;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
-import ghidra.base.actions.HorizontalRuleAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -46,7 +46,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 /**
  * <CODE>NextPrevAddressPlugin</CODE> allows the user to go back and forth in
@@ -65,13 +64,12 @@ import resources.ResourceManager;
 public class NextPrevAddressPlugin extends Plugin {
 
 	private static final String HISTORY_MENU_GROUP = "1_Menu_History_Group";
-	private static ImageIcon previousIcon = ResourceManager.loadImage("images/left.png");
-	private static ImageIcon nextIcon = ResourceManager.loadImage("images/right.png");
+	private static Icon PREVIOUS_ICON = new GIcon("icon.plugin.navigation.location.previous");
+	private static Icon NEXT_ICON = new GIcon("icon.plugin.navigation.location.next");
 
 	private static final String PREVIOUS_ACTION_NAME = "Previous Location in History";
 	private static final String NEXT_ACTION_NAME = "Next Location in History";
-	private static final String PREVIOUS_FUNCTION_ACTION_NAME =
-		"Previous Function in History";
+	private static final String PREVIOUS_FUNCTION_ACTION_NAME = "Previous Function in History";
 	private static final String NEXT_FUNCTION_ACTION_NAME = "Next Function in History";
 	private static final String[] CLEAR_MENUPATH = { "Navigation", "Clear History" };
 
@@ -113,6 +111,10 @@ public class NextPrevAddressPlugin extends Plugin {
 
 	DockingAction getNextFunctionAction() {
 		return nextFunctionAction;
+	}
+
+	DockingAction getClearHistoryAction() {
+		return clearAction;
 	}
 
 //==================================================================================================
@@ -301,7 +303,7 @@ public class NextPrevAddressPlugin extends Plugin {
 			super(name, owner);
 			this.isNext = isNext;
 
-			setToolBarData(new ToolBarData(isNext ? nextIcon : previousIcon,
+			setToolBarData(new ToolBarData(isNext ? NEXT_ICON : PREVIOUS_ICON,
 				ToolConstants.TOOLBAR_GROUP_TWO));
 			setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, name));
 			int keycode = isNext ? KeyEvent.VK_RIGHT : KeyEvent.VK_LEFT;

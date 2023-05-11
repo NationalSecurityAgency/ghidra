@@ -53,8 +53,8 @@ public class StubMsf implements Msf {
 	}
 
 	@Override
-	public void checkCanceled() throws CancelledException {
-		TaskMonitor.DUMMY.checkCanceled();
+	public void checkCancelled() throws CancelledException {
+		TaskMonitor.DUMMY.checkCancelled();
 	}
 
 	@Override

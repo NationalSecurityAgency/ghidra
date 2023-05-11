@@ -17,7 +17,6 @@ package ghidra.trace.database;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,9 +27,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import db.DBHandle;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
@@ -56,7 +55,6 @@ import ghidra.trace.model.symbol.TraceReferenceManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
 
@@ -170,7 +168,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	/**
 	 * Get the named register
 	 * 
-	 * @param the platform
+	 * @param platform the platform
 	 * @param name the name
 	 * @return the register or null if it doesn't exist
 	 */
@@ -192,7 +190,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	/**
 	 * Create an address in the given language's default space
 	 * 
-	 * @param lang the langauge
+	 * @param lang the language
 	 * @param offset the offset
 	 * @return the address
 	 */
@@ -254,7 +252,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Create an address range: shortcut for {@link new AddressRangeImpl(start, end)}
+	 * Create an address range: shortcut for {@link AddressRangeImpl}
 	 * 
 	 * @param start the start address
 	 * @param end the end address
@@ -434,8 +432,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * @return the transaction handle
 	 */
-	public UndoableTransaction startTransaction() {
-		return UndoableTransaction.start(trace, "Testing");
+	public Transaction startTransaction() {
+		return trace.openTransaction("Testing");
 	}
 
 	/**
@@ -446,7 +444,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public DBTraceBookmarkType getOrAddBookmarkType(String name) {
 		DBTraceBookmarkManager manager = trace.getBookmarkManager();
-		return manager.defineBookmarkType(name, null, Color.red, 1);
+		return manager.defineBookmarkType(name, null, Messages.ERROR, 1);
 	}
 
 	/**
@@ -464,9 +462,9 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		DBTraceBookmarkType type = getOrAddBookmarkType(typeName);
 		DBTraceBookmarkManager manager = trace.getBookmarkManager();
 		DBTraceBookmark bm =
-			manager.addBookmark(Range.atLeast(snap), addr(addr), type, category, comment);
+			manager.addBookmark(Lifespan.nowOn(snap), addr(addr), type, category, comment);
 		assertNull(bm.getThread());
-		assertEquals(snap, bm.getLifespan().lowerEndpoint().longValue());
+		assertEquals(snap, bm.getLifespan().lmin());
 		assertEquals(addr(addr), bm.getAddress());
 		assertEquals(typeName, bm.getTypeString());
 		assertEquals(category, bm.getCategory());
@@ -479,7 +477,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * @param snap the starting snap
 	 * @param threadName the name of the thread
-	 * @param registerName the name of the regsiter
+	 * @param registerName the name of the register
 	 * @param typeName the name of its type
 	 * @param category the category
 	 * @param comment an optional comment
@@ -493,10 +491,10 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		DBTraceBookmarkType type = getOrAddBookmarkType(typeName);
 		DBTraceBookmarkManager manager = trace.getBookmarkManager();
 		DBTraceBookmarkSpace space = manager.getBookmarkRegisterSpace(thread, true);
-		DBTraceBookmark bm = (DBTraceBookmark) space.addBookmark(Range.atLeast(snap), register,
+		DBTraceBookmark bm = (DBTraceBookmark) space.addBookmark(Lifespan.nowOn(snap), register,
 			type, category, comment);
 		assertSame(thread, bm.getThread());
-		assertEquals(snap, bm.getLifespan().lowerEndpoint().longValue());
+		assertEquals(snap, bm.getLifespan().lmin());
 		assertEquals(register.getAddress(), bm.getAddress());
 		assertEquals(typeName, bm.getTypeString());
 		assertEquals(category, bm.getCategory());
@@ -516,7 +514,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceDataAdapter addData(long snap, Address start, DataType type, int length)
 			throws CodeUnitInsertionException {
 		DBTraceCodeManager code = trace.getCodeManager();
-		return code.definedData().create(Range.atLeast(snap), start, type, length);
+		return code.definedData().create(Lifespan.nowOn(snap), start, type, length);
 	}
 
 	/**
@@ -551,18 +549,19 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceInstruction addInstruction(long snap, Address start,
 			TracePlatform platform) throws CodeUnitInsertionException {
 		DBTraceCodeManager code = trace.getCodeManager();
-		Language language = platform.getLanguage();
-		Disassembler dis = Disassembler.getDisassembler(language, language.getAddressFactory(),
-			new ConsoleTaskMonitor(), msg -> Msg.info(this, "Listener: " + msg));
+		Language platformLanguage = platform.getLanguage();
+		Disassembler dis =
+			Disassembler.getDisassembler(platformLanguage, platformLanguage.getAddressFactory(),
+				new ConsoleTaskMonitor(), msg -> Msg.info(this, "Listener: " + msg));
 		RegisterValue defaultContextValue = trace.getRegisterContextManager()
-				.getDefaultContext(language)
+				.getDefaultContext(platformLanguage)
 				.getDefaultDisassemblyContext();
 
 		MemBuffer memBuf = platform.getMappedMemBuffer(snap, platform.mapHostToGuest(start));
 		InstructionBlock block = dis.pseudoDisassembleBlock(memBuf, defaultContextValue, 1);
 		Instruction pseudoIns = block.iterator().next();
 		return code.instructions()
-				.create(Range.atLeast(snap), start, platform, pseudoIns.getPrototype(), pseudoIns);
+				.create(Lifespan.nowOn(snap), start, platform, pseudoIns.getPrototype(), pseudoIns);
 	}
 
 	/**
@@ -630,7 +629,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addMemoryReference(long creationSnap, Address from, Address to,
 			int operandIndex) {
 		return trace.getReferenceManager()
-				.addMemoryReference(Range.atLeast(creationSnap), from, to,
+				.addMemoryReference(Lifespan.nowOn(creationSnap), from, to,
 					RefType.DATA, SourceType.DEFAULT, operandIndex);
 	}
 
@@ -648,7 +647,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addOffsetReference(long creationSnap, Address from, Address to,
 			boolean toAddrIsBase, long offset) {
 		return trace.getReferenceManager()
-				.addOffsetReference(Range.atLeast(creationSnap), from, to, toAddrIsBase,
+				.addOffsetReference(Lifespan.nowOn(creationSnap), from, to, toAddrIsBase,
 					offset, RefType.DATA, SourceType.DEFAULT, -1);
 	}
 
@@ -670,7 +669,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addShiftedReference(long creationSnap, Address from, Address to,
 			int shift) {
 		return trace.getReferenceManager()
-				.addShiftedReference(Range.atLeast(creationSnap), from,
+				.addShiftedReference(Lifespan.nowOn(creationSnap), from,
 					to, shift, RefType.DATA, SourceType.DEFAULT, -1);
 	}
 
@@ -679,7 +678,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * <p>
 	 * See
-	 * {@link TraceReferenceManager#addRegisterReference(Range, Address, Register, RefType, SourceType, int)}
+	 * {@link TraceReferenceManager#addRegisterReference(Lifespan, Address, Register, RefType, SourceType, int)}
 	 * regarding potential confusion of the word "register" in this context.
 	 * 
 	 * @param creationSnap the starting snap
@@ -689,7 +688,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public DBTraceReference addRegisterReference(long creationSnap, Address from, String to) {
 		return trace.getReferenceManager()
-				.addRegisterReference(Range.atLeast(creationSnap), from,
+				.addRegisterReference(Lifespan.nowOn(creationSnap), from,
 					language.getRegister(to), RefType.DATA, SourceType.DEFAULT, -1);
 	}
 
@@ -698,7 +697,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * <p>
 	 * See
-	 * {@link TraceReferenceManager#addStackReference(Range, Address, int, RefType, SourceType, int)}
+	 * {@link TraceReferenceManager#addStackReference(Lifespan, Address, int, RefType, SourceType, int)}
 	 * regarding potential confusion of the word "stack" in this context.
 	 * 
 	 * @param creationSnap the starting snap
@@ -708,7 +707,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public DBTraceReference addStackReference(long creationSnap, Address from, int to) {
 		return trace.getReferenceManager()
-				.addStackReference(Range.atLeast(creationSnap), from, to,
+				.addStackReference(Lifespan.nowOn(creationSnap), from, to,
 					RefType.DATA, SourceType.DEFAULT, -1);
 	}
 
@@ -727,10 +726,10 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Get the language with the given ID, as in {@link LangaugeID}
+	 * Get the language with the given ID, as in {@link LanguageID}
 	 * 
 	 * @param id the ID
-	 * @return the langauge
+	 * @return the language
 	 * @throws LanguageNotFoundException if the language does not exist
 	 */
 	public Language getLanguage(String id) throws LanguageNotFoundException {
@@ -744,7 +743,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param compID the compiler ID as in {@link CompilerSpecID}
 	 * @return the compiler spec
 	 * @throws CompilerSpecNotFoundException if the compiler spec does not exist
-	 * @throws LanguageNotFoundException if the langauge does not exist
+	 * @throws LanguageNotFoundException if the language does not exist
 	 */
 	public CompilerSpec getCompiler(String langID, String compID)
 			throws CompilerSpecNotFoundException, LanguageNotFoundException {

@@ -22,10 +22,12 @@ import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.jdi.model.JdiModelImpl;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 
-@FactoryDescription( //
-	brief = "JDI debugger", //
-	htmlDetails = "Debug a Java or Dalvik VM (supports JDWP)" //
-)
+@FactoryDescription(
+	brief = "PROTOTYPE: JDWP (Java or Dalvik)",
+	htmlDetails = """
+			Connect to a Java or Dalvik VM via JDWP.
+			This is the same debugging protocol used by most Java IDEs.
+			Support for debugging Java and Dalvik is still experimental.""")
 public class JdiDebuggerModelFactory implements DebuggerModelFactory {
 
 	@Override

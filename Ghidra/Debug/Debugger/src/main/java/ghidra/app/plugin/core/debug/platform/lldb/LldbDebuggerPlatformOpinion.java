@@ -86,6 +86,33 @@ public class LldbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 		}
 	}
 
+	protected static class LldbDebuggerPlatformOffer extends AbstractDebuggerPlatformOffer {
+		public static LldbDebuggerPlatformOffer fromArchLCSP(String arch,
+				LanguageCompilerSpecPair lcsp)
+				throws CompilerSpecNotFoundException, LanguageNotFoundException {
+			return new LldbDebuggerPlatformOffer("Default LLDB for " + arch, lcsp.getCompilerSpec());
+		}
+
+		public LldbDebuggerPlatformOffer(String description, CompilerSpec cSpec) {
+			super(description, cSpec);
+		}
+
+		@Override
+		public int getConfidence() {
+			return 10;
+		}
+
+		@Override
+		public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
+			return new LldbDebuggerPlatformMapper(tool, trace, cSpec);
+		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == LldbDebuggerPlatformMapper.class;
+		}
+	}
+
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
 			String debugger, String arch, String os, Endian endian, boolean includeOverrides) {
@@ -95,7 +122,7 @@ public class LldbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 		}
 		String lcOS = os.toLowerCase();
 		boolean isLinux = lcOS.contains("linux");
-		boolean isMacOS = lcOS.contains("darwin") || lcOS.contains("macos");
+		boolean isMacOS = lcOS.contains("darwin") || lcOS.contains("macos") || lcOS.contains("ios");
 		boolean isWindows = lcOS.contains("windows");
 		String lcArch = arch.toLowerCase();
 		// "arm" subsumes "arm64"

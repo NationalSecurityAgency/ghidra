@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,6 +27,7 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
@@ -35,7 +35,7 @@ import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -64,10 +64,6 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	private CodeBrowserPlugin cbPlugin;
 	private CodeViewerProvider provider;
 	private GoToService goToService;
-
-	public SearchTextPlugin3Test() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -216,31 +212,29 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		goToService.goTo(new ProgramLocation(program, getAddr(0x01002c92)));
 
-		ActionListener listener = tf.getActionListeners()[0];
-		runSwing(() -> {
-			tf.setText("eax");
-			listener.actionPerformed(null);
-		});
+		triggerText(tf, "eax");
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
+
 		ProgramLocation loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.PRE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof LabelFieldLocation);
 		assertEquals(3, ((LabelFieldLocation) loc).getCharOffset());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 
 		loc = cbPlugin.getCurrentLocation();
@@ -248,14 +242,14 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, ((OperandFieldLocation) loc).getOperandIndex());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.EOL_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
@@ -286,10 +280,8 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Functions");
 		setToggleButtonSelected(cb, true);
 
-		runSwing(() -> {
-			tf.setText("sscanf");
-			searchButton.getActionListeners()[0].actionPerformed(null);
-		});
+		triggerText(tf, "sscanf");
+		triggerEnter(searchButton);
 
 		waitForSearchTasks(dialog);
 
@@ -297,20 +289,19 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 
-		ActionListener listener = searchButton.getActionListeners()[0];
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(searchButton);
 
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof FunctionSignatureFieldLocation);
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(searchButton);
 
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof VariableCommentFieldLocation);
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(searchButton);
 
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
@@ -396,8 +387,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Collections.sort(list);
 		Collections.reverse(list);
-		for (int i = 0; i < list.size(); i++) {
-			Address addr = list.get(i);
+		for (Address addr : list) {
 			pressSearchButton(dialog, searchButton);
 			ProgramLocation loc = cbPlugin.getCurrentLocation();
 			assertEquals(addr, loc.getAddress());
@@ -505,11 +495,8 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		setToggleButtonSelected(cb, true);
 
 		String searchText = "param_";
-		runSwing(() -> {
-			tf.setText(searchText);
-			ActionListener[] listeners = tf.getActionListeners();
-			listeners[0].actionPerformed(null);
-		});
+		triggerText(tf, searchText);
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 
 		ProgramLocation loc = plugin.getNavigatable().getLocation();
@@ -519,18 +506,20 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		String signature = ((FunctionSignatureFieldLocation) loc).getSignature();
 
-		Function function = listing.getFunctionAt(loc.getAddress());
-		HighlightProvider highlightProvider =
+		ListingHighlightProvider highlightProvider =
 			cbPlugin.getFormatManager().getFormatHighlightProvider();
-		Highlight[] h = highlightProvider.getHighlights(signature, function,
-			FunctionSignatureFieldFactory.class, signature.indexOf(searchText));
+
+		FieldPanel fieldPanel = cbPlugin.getFieldPanel();
+		ListingField field = (ListingField) fieldPanel.getCurrentField();
+		int offset = signature.indexOf(searchText);
+		Highlight[] h = highlightProvider.createHighlights(signature, field, offset);
+
 		assertEquals(1, h.length);
 
 		runSwing(() -> dialog.close());
 
 		// highlights should be gone
-		h = highlightProvider.getHighlights(signature, function,
-			FunctionSignatureFieldFactory.class, -1);
+		h = highlightProvider.createHighlights(signature, field, offset);
 		assertEquals(0, h.length);
 
 	}
@@ -574,10 +563,14 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		String signature = ((FunctionSignatureFieldLocation) loc).getSignature();
 		Function function = listing.getFunctionAt(loc.getAddress());
-		HighlightProvider highlightProvider =
+		ListingHighlightProvider highlightProvider =
 			cbPlugin.getFormatManager().getFormatHighlightProvider();
-		Highlight[] h = highlightProvider.getHighlights(signature, function,
-			FunctionSignatureFieldFactory.class, -1);
+
+		FieldPanel fieldPanel = cbPlugin.getFieldPanel();
+		ListingField field = (ListingField) fieldPanel.getCurrentField();
+		FieldFactory factory = field.getFieldFactory();
+		Highlight[] h = highlightProvider.createHighlights(signature, field, -1);
+
 		int numberOfHighlights = h.length;
 		assertTrue("Did not find highlights at expected field.", (numberOfHighlights > 0));
 
@@ -600,13 +593,12 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		cbPlugin.goToField(addr, "Operands", 0, 2);
 		waitForSwing();
 		loc = plugin.getNavigatable().getLocation();
-
 		assertTrue(loc instanceof OperandFieldLocation);
-		OperandFieldLocation operandLocation = (OperandFieldLocation) loc;
-		Instruction instruction = listing.getInstructionAt(addr);
 
-		h = highlightProvider.getHighlights(operandLocation.getOperandRepresentation(), instruction,
-			OperandFieldFactory.class, 0);
+		field = (ListingField) fieldPanel.getCurrentField();
+		factory = field.getFieldFactory();
+		h = highlightProvider.createHighlights(signature, field, -1);
+
 		assertTrue("Did not update highlights for new search.", (numberOfHighlights != h.length));
 	}
 
@@ -636,7 +628,8 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		setToggleButtonSelected(cb, true);
 
 		// install our own task monitor so we can cancel before the task finishes
-		CancellingStubTaskMonitorComponent testMonitor = new CancellingStubTaskMonitorComponent();
+		CancellingStubTaskMonitorComponent testMonitor =
+			runSwing(() -> new CancellingStubTaskMonitorComponent());
 		setInstanceField("taskMonitorComponent", dialog, testMonitor);
 
 		setText(tf, "hello");
@@ -708,7 +701,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 	private class CancellingStubTaskMonitorComponent extends TaskMonitorComponent {
 
 		@Override
-		public void checkCanceled() throws CancelledException {
+		public void checkCancelled() throws CancelledException {
 			if (calledFromSearchTask()) {
 				throw new CancelledException();
 			}

@@ -44,7 +44,6 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationModel;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.picking.PickedState;
-import generic.test.AbstractGenericTest;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
@@ -79,6 +78,8 @@ import ghidra.util.task.RunManager;
 public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedIntegrationTest {
 
 	protected static final Transferable DUMMY_TRANSFERABLE = new DummyTransferable();
+
+	protected static final String SATELLITE_NAME = "Function Graph Satellite";
 
 	protected PluginTool tool;
 	protected FunctionGraphPlugin graphPlugin;
@@ -171,12 +172,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// 01002239
 
 		/*
-		
+
 		 A
 		 |->B
 		 C
-		
-		
+
+
 		 */
 
 		// A
@@ -211,7 +212,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	private void build_ghidra(ToyProgramBuilder builder) throws MemoryAccessException {
 		/*
 		 Originally from notepad 'ghidra'
-		
+
 		 	A
 		 	|->	B
 		 	|-> C
@@ -223,7 +224,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		 	|->	G
 		 	|
 		 	H
-		
+
 		 */
 
 		// A -
@@ -310,7 +311,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	private void build_sscanf(ToyProgramBuilder builder) throws MemoryAccessException {
 		/*
 		 Originally from notepad 'sscanf'
-		
+
 		 	A
 		 	|->	B
 		 	|
@@ -321,7 +322,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		 	F
 		 	|
 		 	G
-		
+
 		 */
 
 		// A - 9 code units
@@ -1449,14 +1450,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		//
 
 		/*
-		
+
 		 0) Initial Graph
-		
+
 		 1 -> 2 -> 3 -> 4
 		           |
 		           *
 		           5
-		
+
 		*/
 
 		create12345Graph();
@@ -1480,12 +1481,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 1) Create two separate group vertices (A and B), such that A has an edge to B.
-		
+
 		 A (v:{1,2} e:{1->2, 2->3}) -> B (v:{3,4} e:{2->3,3->4,3->5})
 		                               |
 		                               *
 		                               5
-		
+
 		 */
 
 		GroupedFunctionGraphVertex groupA = group("A", v1, v2);
@@ -1498,12 +1499,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		/*
 		 2) Create a third group vertex (Z) that contains a non-grouped vertex *and* one
 		    of the other groups (B).
-		
+
 		 A (v:{1,2} e:{1->2, 2->3}) -> Z (
 		 									v:{B (v:{3,4} e:{2->3,3->4,3->5}), 5}
 		 									e:{2->3, 3->5}
 		 								  )
-		
+
 		*/
 
 		GroupedFunctionGraphVertex groupZ = group("Z", groupB, v5);
@@ -1513,12 +1514,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 3) Now, ungroup the 1 remaining originally grouped vertex (A).
-		
+
 		 1 -> 2 -> Z (
 						v:{B (v:{3,4} e:{2->3,3->4,3->5}), 5}
 						e:{2->3, 3->5}
 					  )
-		
+
 		 */
 
 		ungroup(groupA);
@@ -1528,14 +1529,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		verifyEdgeCount(2);
 
 		/*
-		
+
 		 4) Now, ungroup Z and go back to having one remaining group vertex (B)
-		
+
 		 1 -> 2 -> -> B (v:{3,4} e:{2->3,3->4,3->5})
 		              |
 		              *
 		              5
-		
+
 		*/
 
 		ungroup(groupZ);
@@ -1547,12 +1548,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 5) Finally, ungroup the last group and make sure the graph is restored
-		
+
 		 1 -> 2 -> 3 -> 4
 		           |
 		           *
 		           5
-		
+
 		 */
 
 		ungroup(groupB);
@@ -2082,8 +2083,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void verifyColor(FGVertex vertex, Color expectedColor) {
 		Color currentBackgroundColor = vertex.getBackgroundColor();
-		assertEquals("Color of vertex is not as expected - vertex: " + vertex, expectedColor,
-			currentBackgroundColor);
+		assertColorsEqual(expectedColor, currentBackgroundColor);
 	}
 
 	protected void verifyDefaultColor(FGVertex... vertices) {
@@ -2122,12 +2122,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void assertNoUndockedProvider() {
-		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
+		ComponentProvider provider = tool.getComponentProvider(SATELLITE_NAME);
 		assertNull("Undocked satellite provider is installed when it should not be", provider);
 	}
 
 	protected void assertUndockedProviderNotShowing() {
-		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
+		ComponentProvider provider = tool.getComponentProvider(SATELLITE_NAME);
 		if (provider == null) {
 			return; // no provider; not showing
 		}
@@ -2135,7 +2135,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void assertUndockedProviderShowing() {
-		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
+		ComponentProvider provider = tool.getComponentProvider(SATELLITE_NAME);
 		assertUndockedProviderShowing(provider);
 	}
 
@@ -2175,7 +2175,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void closeUndockedProvider() {
-		ComponentProvider provider = tool.getComponentProvider(FGSatelliteUndockedProvider.NAME);
+		ComponentProvider provider = tool.getComponentProvider(SATELLITE_NAME);
 		assertNotNull("Undocked provider is not installed when it should be", provider);
 		tool.showComponentProvider(provider, false);
 		waitForSwing();
@@ -2313,11 +2313,11 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void swing(Runnable r) {
-		AbstractGenericTest.runSwing(r);
+		runSwing(r);
 	}
 
 	protected <T> T swing(Supplier<T> s) {
-		return AbstractGenericTest.runSwing(s);
+		return runSwing(s);
 	}
 
 	static class DummyTransferable implements Transferable {

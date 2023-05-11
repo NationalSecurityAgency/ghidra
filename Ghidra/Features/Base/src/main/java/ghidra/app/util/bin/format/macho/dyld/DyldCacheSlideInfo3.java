@@ -122,7 +122,7 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 		monitor.setMaximum(pageStartsCount);
 		for (int index = 0; index < pageStartsCount; index++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			long page = dataPageStart + (pageSize * index);
 
@@ -172,11 +172,9 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 		List<Address> unchainedLocList = new ArrayList<>(1024);
 
-		byte origBytes[] = new byte[8];
-
 		long delta = -1;
 		while (delta != 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address chainLoc = chainStart.add(nextOff);
 			long chainValue = memory.getLong(chainLoc);
@@ -201,7 +199,7 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 			if (addRelocation) {
 				addRelocationTableEntry(program, chainLoc, 3 * (isAuthenticated ? -1 : 1),
-					chainValue, origBytes, null);
+					chainValue, 8, null);
 			}
 			memory.setLong(chainLoc, chainValue);
 

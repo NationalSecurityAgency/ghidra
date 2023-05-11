@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package ghidra.program.database.util;
 
-import ghidra.program.model.address.Address;
-
 import java.io.IOException;
 
 import db.RecordIterator;
@@ -29,11 +26,15 @@ import db.RecordIterator;
 public interface DBRecordAdapter {
 
 	/**
-	 * Get a record iterator.
-	 * @param start start of iterator
-	 * @param end end of iterator
-	 * @param colIndex index column
+	 * Get a record iterator for all records.
+	 * @return record iterator
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	public RecordIterator getRecords(Address start, Address end, int colIndex) throws IOException;
+	public RecordIterator getRecords() throws IOException;
+
+	/**
+	 * Get the number of records in table
+	 * @return total record count
+	 */
+	public int getRecordCount();
 }

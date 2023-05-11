@@ -20,6 +20,8 @@ import static ghidra.util.HTMLUtilities.*;
 import java.awt.Color;
 import java.util.*;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.diff.*;
 import ghidra.program.model.data.*;
@@ -162,7 +164,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		Iterator<String> warnings = warningLines.iterator();
 		for (; warnings.hasNext();) {
 			String warning = warnings.next();
-			String warningLine = wrapStringInColor(warning, Color.RED);
+			String warningLine = wrapStringInColor(warning, Messages.ERROR);
 
 			//@formatter:off
 			append(fullHtml, truncatedHtml, lineCount++, warningLine, BR);
@@ -226,7 +228,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 			if (!(line instanceof DataTypeLine)) {
 				append(fullHtml, truncatedHtml, lineCount++, TR_OPEN,
-					"<TD COLSPAN=3><FONT COLOR=\"gray\">", TAB, TAB,
+					"<TD COLSPAN=3><FONT COLOR=\"" + Palette.GRAY + "\">", TAB, TAB,
 					line.getText(), "</FONT>", TD_CLOSE, TR_CLOSE);
 				continue;
 			}

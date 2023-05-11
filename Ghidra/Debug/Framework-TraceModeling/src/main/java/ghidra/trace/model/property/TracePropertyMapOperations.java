@@ -18,11 +18,8 @@ package ghidra.trace.model.property;
 import java.util.Collection;
 import java.util.Map;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 
 /**
  * A map from address-snap pairs to user-defined values in a {@link Trace}
@@ -38,12 +35,12 @@ public interface TracePropertyMapOperations<T> {
 	/**
 	 * Set a value at the given address over the given lifespan
 	 * 
-	 * @see #set(Range, AddressRange, Object)
+	 * @see #set(Lifespan, AddressRange, Object)
 	 * @param lifespan the lifespan
 	 * @param address the address
 	 * @param value the value
 	 */
-	void set(Range<Long> lifespan, Address address, T value);
+	void set(Lifespan lifespan, Address address, T value);
 
 	/**
 	 * Set a value over the given ranges
@@ -63,7 +60,7 @@ public interface TracePropertyMapOperations<T> {
 	 * @param range the address range
 	 * @param value the value
 	 */
-	void set(Range<Long> lifespan, AddressRange range, T value);
+	void set(Lifespan lifespan, AddressRange range, T value);
 
 	/**
 	 * Get the value at the given address-snap pair
@@ -94,7 +91,7 @@ public interface TracePropertyMapOperations<T> {
 	 * @param range the range of addresses
 	 * @return the entries
 	 */
-	Collection<Map.Entry<TraceAddressSnapRange, T>> getEntries(Range<Long> lifespan,
+	Collection<Map.Entry<TraceAddressSnapRange, T>> getEntries(Lifespan lifespan,
 			AddressRange range);
 
 	/**
@@ -103,18 +100,18 @@ public interface TracePropertyMapOperations<T> {
 	 * @param span the range of snaps
 	 * @return the address set
 	 */
-	AddressSetView getAddressSetView(Range<Long> span);
+	AddressSetView getAddressSetView(Lifespan span);
 
 	/**
 	 * Remove or truncate entries so that the given box contains no entries
 	 * 
 	 * <p>
-	 * This applies the same truncation rule as in {@link #set(Range, AddressRange, Object)}, except
-	 * that no replacement entry is created.
+	 * This applies the same truncation rule as in {@link #set(Lifespan, AddressRange, Object)},
+	 * except that no replacement entry is created.
 	 * 
 	 * @param span the range of snaps
 	 * @param range the address range
 	 * @return true if any entry was affected
 	 */
-	boolean clear(Range<Long> span, AddressRange range);
+	boolean clear(Lifespan span, AddressRange range);
 }

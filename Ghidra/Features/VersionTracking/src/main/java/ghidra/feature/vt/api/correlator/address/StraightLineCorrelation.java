@@ -80,7 +80,7 @@ public class StraightLineCorrelation implements AddressCorrelation {
 			String srcMnemonic = srcCodeUnit.getMnemonicString();
 			String destMnemonic = destCodeUnit.getMnemonicString();
 			if (srcMnemonic.equals(destMnemonic)) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(srcCodeUnit.getLength());
 				defineRange(cachedForwardAddressMap, srcCodeUnit, destCodeUnit);				
 			}

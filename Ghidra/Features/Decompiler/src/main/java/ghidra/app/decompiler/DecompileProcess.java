@@ -22,9 +22,12 @@ import java.io.*;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.InjectPayload;
+import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 
@@ -374,6 +377,9 @@ public class DecompileProcess {
 					currentResponse = null;		// Reset current buffer as a native message may follow
 					break;
 				case 16:			// Beginning of any native message from the decompiler
+					if (currentResponse != null) {	// Beginning of native message before end of main response
+						currentResponse.clear();	// Don't try to parse main response
+					}
 					currentResponse = stringDecoder;
 					currentResponse.open(1 << 20, programSource);
 					break;
@@ -705,7 +711,8 @@ public class DecompileProcess {
 		write(query_response_end);
 	}
 
-	private void getPcodeInject(int type) throws IOException, DecoderException {
+	private void getPcodeInject(int type) throws IOException, DecoderException,
+			UnknownInstructionException, MemoryAccessException, NotFoundException {
 		resultEncoder.clear();
 		String name = paramDecoder.readString(ATTRIB_NAME);
 		callback.getPcodeInject(name, paramDecoder, type, resultEncoder);

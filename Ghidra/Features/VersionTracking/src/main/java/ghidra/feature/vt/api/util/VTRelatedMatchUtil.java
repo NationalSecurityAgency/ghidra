@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +61,7 @@ public class VTRelatedMatchUtil {
 		for (VTMatchSet matchSet : matchSets) {
 			Collection<VTMatch> matches = matchSet.getMatches();
 			for (VTMatch otherMatch : matches) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				VTAssociation otherAssociation = otherMatch.getAssociation();
 				VTAssociationStatus associationStatus = otherAssociation.getStatus();
 				Address otherSourceAddress = otherAssociation.getSourceAddress();

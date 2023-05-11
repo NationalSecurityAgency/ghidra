@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +39,7 @@ public class AddressSetTableModel extends AddressPreviewTableModel {
 		monitor.initialize(addressSet.getNumAddresses());
 		AddressIterator iterator = addressSet.getAddresses(true);
 		for (Address address : iterator) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			accumulator.add(address);
 			monitor.incrementProgress(1);
 		}

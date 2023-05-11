@@ -28,14 +28,16 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 
 import docking.DockingWindowManager;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
+import docking.widgets.button.GButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.textfield.HintTextField;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
 import ghidra.util.layout.PairLayout;
@@ -46,11 +48,13 @@ import resources.Icons;
 import utilities.util.FileUtilities;
 
 /**
- * Panel that allows the user to configure a SymbolServerService: a local 
+ * Panel that allows the user to configure a SymbolServerService: a local
  * symbol storage directory and a list of search locations.
  */
 class SymbolServerPanel extends JPanel {
 	private static final String MS_SYMBOLSERVER_ENVVAR = "_NT_SYMBOL_PATH";
+
+	private static final Dimension BUTTON_SIZE = new Dimension(32, 32);
 
 	private static List<WellKnownSymbolServerLocation> knownSymbolServers =
 		WellKnownSymbolServerLocation.loadAll();
@@ -62,7 +66,6 @@ class SymbolServerPanel extends JPanel {
 	private GTable table;
 	private JPanel additionalSearchLocationsPanel;
 	private JPanel defaultConfigNotice;
-	private GhidraFileChooser chooser;
 	private Consumer<SymbolServerService> changeCallback;
 
 	private JButton refreshSearchLocationsStatusButton;
@@ -107,13 +110,11 @@ class SymbolServerPanel extends JPanel {
 		JPanel buttonPanel = buildButtonPanel();
 		JScrollPane tableScrollPane = buildTable();
 		defaultConfigNotice = new JPanel();
-		defaultConfigNotice.add(
-			new GHtmlLabel(
-				"<html><center><font color=red><br>" +
-					"Missing / invalid configuration.<br><br>" +
-					"Using default search location:<br>" +
-					"Program's Import Location<br>",
-				SwingConstants.CENTER));
+		GHtmlLabel label = new GHtmlLabel("<html><center><font color=\"" +
+			Messages.ERROR.toHexString() + "\"><br>Missing / invalid configuration.<br><br>" +
+			"Using default search location:<br>Program's Import Location<br>");
+		label.setHorizontalAlignment(SwingConstants.CENTER);
+		defaultConfigNotice.add(label);
 		defaultConfigNotice.setPreferredSize(tableScrollPane.getPreferredSize());
 
 		additionalSearchLocationsPanel = new JPanel();
@@ -140,7 +141,7 @@ class SymbolServerPanel extends JPanel {
 	/**
 	 * Returns a new {@link SymbolServerService} instance representing the currently
 	 * displayed configuration, or null if the displayed configuration is not valid.
-	 * 
+	 *
 	 * @return new {@link SymbolServerService} or null
 	 */
 	SymbolServerService getSymbolServerService() {
@@ -156,7 +157,7 @@ class SymbolServerPanel extends JPanel {
 	/**
 	 * The union of the changed status of the local storage path and the additional
 	 * search paths table model changed status.
-	 * 
+	 *
 	 * @return boolean true if the config has changed
 	 */
 	boolean isConfigChanged() {
@@ -199,55 +200,45 @@ class SymbolServerPanel extends JPanel {
 	}
 
 	private JPanel buildButtonPanel() {
-		refreshSearchLocationsStatusButton = createImageButton(Icons.REFRESH_ICON, "Refresh Status",
-				ButtonPanelFactory.ARROW_SIZE);
+
+		refreshSearchLocationsStatusButton =
+			createImageButton(Icons.REFRESH_ICON, "Refresh Status");
 		refreshSearchLocationsStatusButton.addActionListener(e -> refreshSearchLocationStatus());
 		DockingWindowManager.getHelpService()
-				.registerHelp(refreshSearchLocationsStatusButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig Refresh Status"));
+				.registerHelp(refreshSearchLocationsStatusButton, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig Refresh Status"));
 
-		moveLocationUpButton = ButtonPanelFactory.createButton(ButtonPanelFactory.ARROW_UP_TYPE);
+		moveLocationUpButton = createImageButton(Icons.UP_ICON, "Up");
 		moveLocationUpButton.addActionListener(e -> moveLocation(-1));
 		moveLocationUpButton.setToolTipText("Move location up");
 		DockingWindowManager.getHelpService()
-				.registerHelp(moveLocationUpButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig MoveUpDown"));
+				.registerHelp(moveLocationUpButton, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig MoveUpDown"));
 
-		moveLocationDownButton =
-			ButtonPanelFactory.createButton(ButtonPanelFactory.ARROW_DOWN_TYPE);
+		moveLocationDownButton = createImageButton(Icons.DOWN_ICON, "Down");
 		moveLocationDownButton.addActionListener(e -> moveLocation(1));
 		moveLocationDownButton.setToolTipText("Move location down");
 		DockingWindowManager.getHelpService()
-				.registerHelp(moveLocationDownButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig MoveUpDown"));
+				.registerHelp(moveLocationDownButton, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig MoveUpDown"));
 
-		deleteLocationButton = createImageButton(Icons.DELETE_ICON, "Delete",
-			ButtonPanelFactory.ARROW_SIZE);
+		deleteLocationButton = createImageButton(Icons.DELETE_ICON, "Delete");
 		deleteLocationButton.addActionListener(e -> deleteLocation());
 		DockingWindowManager.getHelpService()
 				.registerHelp(deleteLocationButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig Delete"));
+					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig Delete"));
 
-		addLocationButton = createImageButton(Icons.ADD_ICON, "Add",
-			ButtonPanelFactory.ARROW_SIZE);
+		addLocationButton = createImageButton(Icons.ADD_ICON, "Add");
 		addLocationButton.addActionListener(e -> addLocation());
 		DockingWindowManager.getHelpService()
 				.registerHelp(addLocationButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig Add"));
+					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig Add"));
 
-		saveSearchLocationsButton =
-			ButtonPanelFactory.createImageButton(Icons.get("images/disk.png"),
-				"Save Configuration", ButtonPanelFactory.ARROW_SIZE);
+		saveSearchLocationsButton = createImageButton(Icons.SAVE_ICON, "Save Configuration");
 		saveSearchLocationsButton.addActionListener(e -> saveConfig());
 		DockingWindowManager.getHelpService()
 				.registerHelp(saveSearchLocationsButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig Save"));
+					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig Save"));
 
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
@@ -269,8 +260,7 @@ class SymbolServerPanel extends JPanel {
 		symbolStorageLocationTextField
 				.setToolTipText("User-specified directory where PDB files are stored.  Required.");
 
-		chooseSymbolStorageLocationButton =
-			ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		chooseSymbolStorageLocationButton = new BrowseButton();
 		chooseSymbolStorageLocationButton.addActionListener(e -> chooseSymbolStorageLocation());
 
 		symbolStorageLocationPanel = new JPanel(new PairLayout(5, 5));
@@ -325,8 +315,7 @@ class SymbolServerPanel extends JPanel {
 		}
 
 		if (allowGUIPrompt && isEmptyDirectory(symbolStorageDir)) {
-			if (OptionDialog.showYesNoDialog(this,
-				"Initialize Symbol Storage Directory?",
+			if (OptionDialog.showYesNoDialog(this, "Initialize Symbol Storage Directory?",
 				"<html>Initialize new directory as Microsoft symbol storage directory?") == OptionDialog.YES_OPTION) {
 				try {
 					LocalSymbolStore.create(symbolStorageDir,
@@ -355,8 +344,10 @@ class SymbolServerPanel extends JPanel {
 
 	private void chooseSymbolStorageLocation() {
 		configChanged = true;
-		setSymbolStorageLocation(getChooser().getSelectedFile(), true);
+		GhidraFileChooser chooser = getChooser();
+		setSymbolStorageLocation(chooser.getSelectedFile(), true);
 		updateButtonEnablement();
+		chooser.dispose();
 	}
 
 	private void importLocations() {
@@ -407,8 +398,8 @@ class SymbolServerPanel extends JPanel {
 		String[] envParts = envString.split("[*;]");
 		List<String> results = new ArrayList<>();
 		Set<String> locationStringDeduplicationSet = new HashSet<>();
-		for (int i = 0; i < envParts.length; i++) {
-			String locationString = envParts[i].trim();
+		for (String envPart : envParts) {
+			String locationString = envPart.trim();
 			if (!locationString.isBlank() && !locationString.equalsIgnoreCase("srv") &&
 				!locationStringDeduplicationSet.contains(locationString)) {
 				results.add(locationString);
@@ -495,8 +486,8 @@ class SymbolServerPanel extends JPanel {
 	}
 
 	private void addDirectoryLocation() {
-		File dir = FilePromptDialog.chooseDirectory("Enter Path", "Symbol Storage Location: ",
-			null);
+		File dir =
+			FilePromptDialog.chooseDirectory("Enter Path", "Symbol Storage Location: ", null);
 		if (dir == null) {
 			return;
 		}
@@ -504,8 +495,8 @@ class SymbolServerPanel extends JPanel {
 			Msg.showError(this, this, "Bad path", "Invalid path: " + dir);
 			return;
 		}
-		LocalSymbolStore localSymbolStore = new LocalSymbolStore(dir);
-		tableModel.addSymbolServer(localSymbolStore);
+		LocalSymbolStore symbolStore = new LocalSymbolStore(dir);
+		tableModel.addSymbolServer(symbolStore);
 	}
 
 	private void deleteLocation() {
@@ -540,13 +531,11 @@ class SymbolServerPanel extends JPanel {
 
 	private GhidraFileChooser getChooser() {
 
-		if (chooser == null) {
-			chooser = new GhidraFileChooser(this);
-			chooser.setMultiSelectionEnabled(false);
-			chooser.setApproveButtonText("Choose");
-			chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
-			chooser.setTitle("Select Symbol Storage Dir");
-		}
+		GhidraFileChooser chooser = new GhidraFileChooser(this);
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setApproveButtonText("Choose");
+		chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
+		chooser.setTitle("Select Symbol Storage Dir");
 
 		return chooser;
 	}
@@ -562,7 +551,7 @@ class SymbolServerPanel extends JPanel {
 	/**
 	 * Returns true if the given file path is a directory that contains no files.
 	 * <p>
-	 * 
+	 *
 	 * @param directory path to a location on the file system
 	 * @return true if is a directory and it contains no files
 	 */
@@ -574,17 +563,15 @@ class SymbolServerPanel extends JPanel {
 		return false;
 	}
 
-	private static JButton createImageButton(ImageIcon buttonIcon, String alternateText,
-			Dimension preferredSize) {
+	private static JButton createImageButton(Icon buttonIcon, String alternateText) {
 
-		JButton button = ButtonPanelFactory.createButton("");
-		button.setIcon(buttonIcon);
+		JButton button = new GButton(buttonIcon);
 		button.setToolTipText(alternateText);
-		button.setPreferredSize(preferredSize);
+		button.setPreferredSize(BUTTON_SIZE);
 
 		return button;
 	}
-	
+
 	static StatusText getSymbolServerWarnings(List<SymbolServer> symbolServers) {
 		Map<String, String> warningsByLocation = new HashMap<>();
 		for (WellKnownSymbolServerLocation ssloc : knownSymbolServers) {
@@ -592,8 +579,7 @@ class SymbolServerPanel extends JPanel {
 				warningsByLocation.put(ssloc.getLocation(), ssloc.getWarning());
 			}
 		}
-		String warning = symbolServers
-				.stream()
+		String warning = symbolServers.stream()
 				.map(symbolServer -> warningsByLocation.get(symbolServer.getName()))
 				.filter(Objects::nonNull)
 				.distinct()

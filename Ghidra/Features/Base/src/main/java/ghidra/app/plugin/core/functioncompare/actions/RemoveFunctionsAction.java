@@ -25,13 +25,11 @@ import javax.swing.JComboBox;
 
 import docking.ActionContext;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functioncompare.MultiFunctionComparisonPanel;
 import ghidra.app.plugin.core.functioncompare.MultiFunctionComparisonProvider;
 import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
-import resources.MultiIcon;
-import resources.ResourceManager;
-import resources.icons.TranslateIcon;
 
 /**
  * Removes the currently-selected function from the comparison panel. If no 
@@ -39,12 +37,9 @@ import resources.icons.TranslateIcon;
  */
 public class RemoveFunctionsAction extends DockingAction {
 
-	private static final Icon FUNCTION_ICON =
-		new TranslateIcon(ResourceManager.loadImage("images/FunctionScope.gif"), -5, -2);
-	private static final Icon REMOVE_ICON =
-		new TranslateIcon(ResourceManager.loadImage("images/edit-delete.png"), 3, 3);
 	private static final String REMOVE_FUNCTION_GROUP = "A9_RemoveFunctions";
-	private static final Icon REMOVE_FUNCTION_ICON = new MultiIcon(REMOVE_ICON, FUNCTION_ICON);
+	private static final Icon REMOVE_FUNCTION_ICON =
+		new GIcon("icon.plugin.functioncompare.function.remove");
 
 	/**
 	 * Constructor

@@ -59,9 +59,14 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	 */
 	protected abstract void initialize();
 
+	@Override
+	public final int getAlignedLength() {
+		return getLength();
+	}
+
 	/**
-	 * Get the preferred length for a new component. For Unions and internally
-	 * aligned structures the preferred component length for a fixed-length dataType
+	 * Get the preferred length for a new component. For Unions and packed
+	 * structures the preferred component length for a fixed-length dataType
 	 * will be the length of that dataType. Otherwise the length returned will be no
 	 * larger than the specified length.
 	 * 
@@ -78,18 +83,7 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		if ((isPackingEnabled() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
 			length = -1; // force use of datatype size
 		}
-		int dtLength = dataType.getLength();
-		if (length <= 0) {
-			length = dtLength;
-		}
-		else if (dtLength > 0 && dtLength < length) {
-			length = dtLength;
-		}
-		if (length <= 0) {
-			throw new IllegalArgumentException("Positive length must be specified for " +
-				dataType.getDisplayName() + " component");
-		}
-		return length;
+		return DataTypeComponentImpl.getPreferredComponentLength(dataType, length);
 	}
 	
 	@Override

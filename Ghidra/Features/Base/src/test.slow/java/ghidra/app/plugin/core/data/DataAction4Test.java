@@ -487,11 +487,11 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		Runnable r = () -> dlg1.setInput(0x20);
 		runSwing(r);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressButtonByText(dlg1, "OK");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnArray(actions, null, 0x20);
@@ -516,11 +516,11 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		r = () -> dlg2.setInput(0x10);
 		runSwing(r);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressButtonByText(dlg2, "OK");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		actions = getDataPluginActions();
 		checkOnArray(actions, new ByteDataType(), 0x10);
@@ -746,11 +746,11 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		Runnable r = () -> dlg1.setInput(5);
 		runSwing(r);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressButtonByText(dlg1, "OK");
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		Set<DockingActionIf> actions = getDataPluginActions();
 		checkOnArray(actions, structDt, 5);

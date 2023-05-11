@@ -18,6 +18,7 @@ package ghidra.trace.database.bookmark;
 import java.awt.Color;
 import java.util.*;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import ghidra.trace.model.bookmark.TraceBookmark;
@@ -33,14 +34,14 @@ public class DBTraceBookmarkType implements TraceBookmarkType {
 
 	protected final DBTraceBookmarkManager manager;
 	protected final String name;
-	protected ImageIcon icon;
+	protected Icon icon;
 	protected Color color;
 	protected int priority;
 
 	protected final int id = nextId();
 	protected final Collection<TraceBookmark> bookmarkView;
 
-	public DBTraceBookmarkType(DBTraceBookmarkManager manager, String name, ImageIcon icon,
+	public DBTraceBookmarkType(DBTraceBookmarkManager manager, String name, Icon icon,
 			Color color, int priority) {
 		this.manager = manager;
 		this.name = name;
@@ -62,7 +63,7 @@ public class DBTraceBookmarkType implements TraceBookmarkType {
 	}
 
 	@Override
-	public ImageIcon getIcon() {
+	public Icon getIcon() {
 		return icon;
 	}
 

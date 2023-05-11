@@ -149,7 +149,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		for (Instruction instruction : instructions) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			if (tooManyResults()) {
@@ -160,7 +160,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 			for (int opIndex = 0; opIndex <= numOperands; opIndex++) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Object[] opObjs = instruction.getOpObjects(opIndex);
 				Reference[] operandReferences = instruction.getOperandReferences(opIndex);
@@ -177,7 +177,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		while (dataIterator.hasNext()) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			if (tooManyResults()) {
@@ -201,7 +201,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			TaskMonitor monitor) throws CancelledException {
 
 		for (Object opObj : opObjs) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Scalar scalar = getScalarFromOperand(opObj, monitor);
 			if (scalar != null) {
@@ -234,7 +234,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		for (int i = 0; i < numComponents; i++) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data component = data.getComponent(i);
 			getScalarsFromCompositeData(data, component, monitor);
 		}
@@ -251,7 +251,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		for (int i = 0; i < numSubComponents; i++) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Data subComponent = component.getComponent(i);
 			getScalarsFromCompositeData(data, subComponent, monitor);
 		}
@@ -339,9 +339,10 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 				return (o1.isSigned() ? 1 : -1);
 			}
 
-			return o1.compareTo(o2);
+			return o1.isSigned()
+					? Long.compare(o1.getSignedValue(), o2.getSignedValue())
+					: Long.compareUnsigned(o1.getUnsignedValue(), o2.getUnsignedValue());
 		}
-
 	}
 
 	private abstract class AbstractScalarValueRenderer extends AbstractGColumnRenderer<Scalar> {

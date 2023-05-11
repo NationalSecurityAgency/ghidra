@@ -55,6 +55,7 @@ public abstract class ProgramPlugin extends Plugin {
 	public ProgramPlugin(PluginTool plugintool) {
 		super(plugintool);
 		internalRegisterEventConsumed(ProgramActivatedPluginEvent.class);
+		internalRegisterEventConsumed(ProgramPostActivatedPluginEvent.class);
 		internalRegisterEventConsumed(ProgramLocationPluginEvent.class);
 		internalRegisterEventConsumed(ProgramSelectionPluginEvent.class);
 		internalRegisterEventConsumed(ProgramHighlightPluginEvent.class);
@@ -160,18 +161,36 @@ public abstract class ProgramPlugin extends Plugin {
 			}
 			highlightChanged(currentHighlight);
 		}
+		else if (event instanceof ProgramPostActivatedPluginEvent ev) {
+			postProgramActivated(ev.getActiveProgram());
+		}
+
 	}
 
 	/**
 	 * Subclass should override this method if it is interested when programs become active.
 	 * Note: this method is called in response to a ProgramActivatedPluginEvent.
-	 *
+	 * <P>
 	 * At the time this method is called,
 	 * the "currentProgram" variable will be set the new active program.
 	 *
 	 * @param program the new program going active.
 	 */
 	protected void programActivated(Program program) {
+		// override
+	}
+
+	/**
+	 * Subclass should override this method if it is interested when programs become active and
+	 * all plugins have had a chance to process the {@link ProgramActivatedPluginEvent}.
+	 * Note: this method is called in response to a {@link ProgramPostActivatedPluginEvent}
+	 * <P>
+	 * At the time this method is called,
+	 * the "currentProgram" variable will be set the new active program.
+	 *
+	 * @param program the new program going active.
+	 */
+	protected void postProgramActivated(Program program) {
 		// override
 	}
 

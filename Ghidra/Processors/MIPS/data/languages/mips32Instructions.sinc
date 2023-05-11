@@ -407,30 +407,9 @@ define pcodeop special2;
     RD = sext(*[ram]:1 INDEX_BASE);
 }
 
-:lbux RD, INDEX_BASE		is $(AMODE) & prime=0x1F & RD & fct=10 & fct2=6 & INDEX_BASE {
-    RD = zext(*[ram]:1 INDEX_BASE);
-}
-
-@ifdef MIPS64
-:ldx RD, INDEX_BASE		is $(AMODE) & prime=0x1F & RD & fct=10 & fct2=8 & INDEX_BASE {
-    RD = *[ram]:8 INDEX_BASE;
-}
-@endif
-
-:lhx RD, INDEX_BASE		is $(AMODE) & prime=0x1F & RD & fct=10 & fct2=4 & INDEX_BASE {
-    RD = sext(*[ram]:2 INDEX_BASE);
-}
 
 :lhux RD, INDEX_BASE		is $(AMODE) & prime=0x1F & RD & fct=10 & fct2=20 & INDEX_BASE {
     RD = zext(*[ram]:2 INDEX_BASE);
-}
-
-:lwx RD, INDEX_BASE		is $(AMODE) & prime=0x1F & RD & fct=10 & fct2=0 & INDEX_BASE {
-@ifdef MIPS64
-    RD = sext(*[ram]:4 INDEX_BASE);
-@else
-    RD = *[ram]:4 INDEX_BASE;
-@endif
 }
 
 @ifdef MIPS64
@@ -1001,13 +980,13 @@ define pcodeop SYNC;
 # 0111 00ss ssst tttt dddd d000 0010 0001
 :clo RD, RSsrc                  is $(AMODE) & REL6=0 & prime=0x1C & sa=0x0 & fct=0x21 & RD & RSsrc {
     # Count leading ones in a word
-    RD = countLeadingOnes( RSsrc );
+    RD = lzcount( ~RSsrc );
 }
 
 # 0111 00ss ssst tttt dddd d000 0010 0000
 :clz RD, RSsrc                  is $(AMODE) & REL6=0 & prime=0x1C & sa=0x0 & fct=0x20 & RD & RSsrc {
     # Count leading zeros in a word
-    RD = countLeadingZeros( RSsrc );
+    RD = lzcount( RSsrc );
 }
 
 # 0000 00ss ssst tttt 0000 0000 0001 1010
@@ -1140,7 +1119,7 @@ define pcodeop SYNC;
 @endif
 
 # 0111 00ss ssst tttt 000a a000 0000 0000
-:madd RS32src, RT32src              is $(AMODE) & REL6=0 & prime=0x1C & zero1315=0x0 & fct2=0x0 & fct=0x0 & RS32src & RT32src & achi & aclo {
+:madd RS32src, RT32src              is $(AMODE) & REL6=0 & prime=0x1C & zero1315=0x0 & fct2=0x0 & fct=0x0 & RS32src & RT32src & ac=0 & achi & aclo {
     tmp1:8 = sext(RS32src);
     tmp2:8 = sext(RT32src);
     prod:8 = tmp1 * tmp2;
@@ -1152,7 +1131,7 @@ define pcodeop SYNC;
 }
 
 # 0111 00ss ssst tttt 000a a000 0000 0001
-:maddu RS32src, RT32src             is $(AMODE) & REL6=0 & prime=0x1C & zero1315=0x0 & fct2=0x0 & fct=0x01 & RS32src & RT32src & achi & aclo {
+:maddu RS32src, RT32src             is $(AMODE) & REL6=0 & prime=0x1C & zero1315=0x0 & fct2=0x0 & fct=0x01 & RS32src & RT32src & ac=0 & achi & aclo {
     tmp1:8 = zext(RS32src);
     tmp2:8 = zext(RT32src);
     prod:8 = tmp1 * tmp2;
@@ -1164,12 +1143,12 @@ define pcodeop SYNC;
 }
 
 # 0000 0000 0aa0 0000 dddd d000 0001 0000
-:mfhi RD                        is $(AMODE) & REL6=0 & prime=0 & fct=0x10 & RD & zero5=0 & zero1620=0 & zero2325=0 & acfhi {
+:mfhi RD                        is $(AMODE) & REL6=0 & prime=0 & fct=0x10 & RD & zero5=0 & zero1620=0 & zero2325=0 & acf=0 & acfhi {
     RD = acfhi;
 }
 
 # 0000 0000 0aa0 0000 dddd d000 0001 0010
-:mflo RD                        is $(AMODE) & REL6=0 & prime=0 & fct=0x12 & RD & zero5=0 & zero1620=0 & zero2325=0 & acflo {
+:mflo RD                        is $(AMODE) & REL6=0 & prime=0 & fct=0x12 & RD & zero5=0 & zero1620=0 & zero2325=0 & acf=0 & acflo {
     RD = acflo;
 }
 
@@ -1201,7 +1180,7 @@ define pcodeop SYNC;
 }
 
 # 0111 00ss ssst tttt 000a a000 0000 0101
-:msubu RS32src, RT32src             is $(AMODE) & REL6=0 & prime=0x1C & fct2=0 & fct=0x05 & RS32src & RT32src & zero1315=0 & aclo & achi {
+:msubu RS32src, RT32src             is $(AMODE) & REL6=0 & prime=0x1C & fct2=0 & fct=0x05 & RS32src & RT32src & zero1315=0 & ac=0 & aclo & achi {
     tmp1:8 = zext(RS32src);
     tmp2:8 = zext(RT32src);
     prod:8 = tmp1 * tmp2;
@@ -1213,12 +1192,12 @@ define pcodeop SYNC;
 }
 
 # 0000 00ss sss0 0000 000a a000 0001 0001
-:mthi RSsrc                     is $(AMODE) & REL6=0 & prime=0 & fct=0x11 & RSsrc & zero5=0 & zero1320=0 & achi {
+:mthi RSsrc                     is $(AMODE) & REL6=0 & prime=0 & fct=0x11 & RSsrc & zero5=0 & zero1320=0 & ac=0 & achi {
     achi = RSsrc;
 }
 
 # 0000 00ss sss0 0000 000a a000 0001 0011
-:mtlo RSsrc                     is $(AMODE) & REL6=0 & prime=0 & fct=0x13 & RSsrc & zero5=0 & zero1320=0 & aclo {
+:mtlo RSsrc                     is $(AMODE) & REL6=0 & prime=0 & fct=0x13 & RSsrc & zero5=0 & zero1320=0 & ac=0 & aclo {
     aclo = RSsrc;
 }
 
@@ -1594,11 +1573,11 @@ define pcodeop SYNC;
 }
 
 :clo RD, RSsrc                  	is $(AMODE) & REL6=1 & prime=0x00 & op=0 & sa=0x1 & fct=0x11 & RD & RSsrc {
-    RD = countLeadingOnes( RSsrc );
+    RD = lzcount( ~RSsrc );
 }
 
 :clz RD, RSsrc                  	is $(AMODE) & REL6=1 & prime=0x00 & op=0 & sa=0x1 & fct=0x10 & RD & RSsrc {
-    RD = countLeadingZeros( RSsrc );
+    RD = lzcount( RSsrc );
 }
 
 :div RD, RS32src, RT32src           is $(AMODE) & REL6=1 & prime=0x00 & fct=0x1A & fct2=0x02 & RD & RS32src & RT32src {

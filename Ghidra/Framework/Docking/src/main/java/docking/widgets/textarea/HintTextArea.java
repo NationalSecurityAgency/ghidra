@@ -19,6 +19,9 @@ import java.awt.*;
 
 import javax.swing.JTextArea;
 
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
+
 /**
  * Simple text area that shows a text hint when the field is empty. 
  * 
@@ -32,16 +35,16 @@ public class HintTextArea extends JTextArea {
 	/**
 	 * Constructs the class with the hint text to be shown.
 	 * 
-	 * @param hint
+	 * @param hint the hint
 	 */
-	public HintTextArea(final String hint) {
+	public HintTextArea(String hint) {
 		this.hint = hint;
 	}
 
 	/**
 	 * Need to override the setText method so we can set font attributes.
 	 * 
-	 * @param text
+	 * @param text the text
 	 */
 	@Override
 	public void setText(String text) {
@@ -56,7 +59,7 @@ public class HintTextArea extends JTextArea {
 		if (getText().isEmpty()) {
 			if (g instanceof Graphics2D) {
 				Graphics2D g2 = (Graphics2D) g;
-				g2.setColor(Color.gray);
+				g2.setColor(Messages.HINT);
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 					RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -67,16 +70,11 @@ public class HintTextArea extends JTextArea {
 		}
 	}
 
-	/*********************************************************************************************
-	 * PRIVATE METHODS
-	 ********************************************************************************************/
-
 	/**
 	 * Sets the text attributes to be used when NOT viewing the hint.
 	 */
 	protected void setAttributes() {
 		this.setFont(getFont().deriveFont(Font.PLAIN));
-		setForeground(Color.BLACK);
+		setForeground(Colors.FOREGROUND);
 	}
-
 }

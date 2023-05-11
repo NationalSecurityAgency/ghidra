@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * 
+ *
  */
 package ghidra.app.plugin.core.functiongraph.graph.vertex;
 
@@ -26,6 +26,7 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
 
 import docking.ActionContext;
 import docking.GenericHeader;
@@ -36,6 +37,10 @@ import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import docking.widgets.label.GDLabel;
+import generic.theme.GColor;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Tooltips;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
@@ -56,9 +61,7 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.HelpLocation;
-import resources.ResourceManager;
+import ghidra.util.*;
 
 public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
@@ -113,10 +116,10 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		setLayout(new BorderLayout());
 		listingPanel = new FGVertexListingPanel(controller, controller.getMinimalFormatManager(),
 			program, addressSet);
-		listingPanel.addButtonPressedListener(
-			new FieldNavigator(tool, controller.getNavigatable()));
-		listingPanel.addButtonPressedListener(
-			controller.getSharedHighlighterButtonPressedListener());
+		listingPanel
+				.addButtonPressedListener(new FieldNavigator(tool, controller.getNavigatable()));
+		listingPanel
+				.addButtonPressedListener(controller.getSharedHighlighterButtonPressedListener());
 		listingPanel.setStringSelectionListener(controller.getSharedStringSelectionListener());
 
 		fieldPanel = listingPanel.getFieldPanel();
@@ -133,10 +136,8 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		add(listingPanel, BorderLayout.CENTER);
 
-		BevelBorder beveledBorder =
-			(BevelBorder) BorderFactory.createBevelBorder(BevelBorder.RAISED,
-				new Color(225, 225, 225), new Color(155, 155, 155), new Color(96, 96, 96),
-				new Color(0, 0, 0));
+		Border beveledBorder = BorderFactory.createBevelBorder(BevelBorder.RAISED,
+			new GColor("color.border.bevel.highlight"), new GColor("color.border.bevel.shadow"));
 		setBorder(beveledBorder);
 
 		addKeyListener(new FieldPanelKeyListener());
@@ -166,7 +167,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		createActions();
 
-		// Sets the initial view of the graph to NOT be full-screen, and show 
+		// Sets the initial view of the graph to NOT be full-screen, and show
 		// the full function graph.
 		setFormat(false);
 
@@ -203,8 +204,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		boolean useFullSizeTooltip = options.useFullSizeTooltip();
 		previewListingPanel = new FGVertexListingPanel(controller,
 			getFormatManager(useFullSizeTooltip), program, addressSet);
-		previewListingPanel.setTextBackgroundColor(FGVertex.TOOLTIP_BACKGROUND_COLOR);
-		//            previewListingPanel.getFieldPanel().setSelectionMode( FieldPanel.NO_SELECTION );
+		previewListingPanel.setTextBackgroundColor(Tooltips.BACKGROUND);
 		previewListingPanel.getFieldPanel().setCursorOn(false);
 
 		// keep the tooltip window from getting too big; use an arbitrary, reasonable max
@@ -217,14 +217,14 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		tooltipTitleLabel = new GDLabel();
 		tooltipTitleLabel.setHorizontalAlignment(SwingConstants.LEADING);
-		tooltipTitleLabel.setBackground(FGVertex.TOOLTIP_BACKGROUND_COLOR);
+		tooltipTitleLabel.setBackground(Tooltips.BACKGROUND);
 		tooltipTitleLabel.setOpaque(true);
 		Font labelFont = tooltipTitleLabel.getFont();
 		tooltipTitleLabel.setFont(labelFont.deriveFont(Font.BOLD));
 
 		JPanel headerPanel = new JPanel(new BorderLayout());
 		headerPanel.add(tooltipTitleLabel);
-		headerPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		headerPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 
 		panel.add(headerPanel, BorderLayout.NORTH);
 		panel.add(previewListingPanel, BorderLayout.CENTER);
@@ -233,7 +233,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 	}
 
 	/**
-	 * Signals to rebuild this component's data model.  This call should not do any real work 
+	 * Signals to rebuild this component's data model.  This call should not do any real work
 	 * if the model is not 'dirty'.
 	 */
 	@Override
@@ -297,11 +297,11 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		String secondGroup = "group2";
 
 		setVertexMostRecentAction = new SetVertexMostRecentColorAction(controller, vertex);
-		setVertexMostRecentAction.setHelpLocation(
-			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Color"));
+		setVertexMostRecentAction
+				.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Color"));
 		ToolBarData toolBarData = setVertexMostRecentAction.getToolBarData();
-		setVertexMostRecentAction.setToolBarData(
-			new ToolBarData(toolBarData.getIcon(), firstGroup));
+		setVertexMostRecentAction
+				.setToolBarData(new ToolBarData(toolBarData.getIcon(), firstGroup));
 
 		xrefsAction = new DockingAction("Jump To XRef", FunctionGraphPlugin.class.getName()) {
 			@Override
@@ -310,7 +310,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 			}
 		};
 		xrefsAction.setDescription("Jump to a XRef");
-		ImageIcon imageIcon = ResourceManager.loadImage("images/brick_link.png");
+		Icon imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.xrefs");
 		xrefsAction.setToolBarData(new ToolBarData(imageIcon, firstGroup));
 		xrefsAction.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_XRefs"));
 
@@ -324,7 +324,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 				}
 			};
 		maximizeViewModeAction.setDescription("Reverts view from graph to fullscreen");
-		imageIcon = ResourceManager.loadImage("images/fullscreen_view.png");
+		imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.maximize");
 		maximizeViewModeAction.setToolBarData(new ToolBarData(imageIcon, firstGroup));
 		maximizeViewModeAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Full_View"));
@@ -339,7 +339,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 				}
 			};
 		minimizeViewModeAction.setDescription("Reverts view from fullscreen to graph");
-		imageIcon = ResourceManager.loadImage("images/graph_view.png");
+		imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.minimize");
 		minimizeViewModeAction.setToolBarData(new ToolBarData(imageIcon, firstGroup));
 		minimizeViewModeAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Full_View"));
@@ -351,7 +351,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 			}
 		};
 		groupAction.setDescription("Combine selected vertices into one vertex");
-		imageIcon = ResourceManager.loadImage("images/shape_handles.png");
+		imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.group");
 		groupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 		groupAction.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Group"));
 
@@ -362,11 +362,11 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 			}
 		};
 		regroupAction.setDescription("Restore vertex and siblings back to group form");
-		imageIcon = ResourceManager.loadImage("images/edit-redo.png");
+		imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.regroup");
 		regroupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 
-		regroupAction.setHelpLocation(
-			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Regroup"));
+		regroupAction
+				.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Regroup"));
 
 		genericHeader.actionAdded(setVertexMostRecentAction);
 
@@ -542,7 +542,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		previewListingPanel.getFieldPanel()
 				.setBackgroundColorModel(
-					new HighlightingColorModel(address, getColorForEdge(edge)));
+					new HighlightingColorModel(address, getToolTipColorForEdge(edge)));
 	}
 
 	private void initializeToolTipComponent(Address goToAddress) {
@@ -556,10 +556,10 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		previewListingPanel.getFieldPanel().setCursorOn(false);
 	}
 
-	private Color getColorForEdge(FGEdge edge) {
+	private Color getToolTipColorForEdge(FGEdge edge) {
 		FunctionGraphOptions options = controller.getFunctionGraphOptions();
 		Color c = options.getColor(edge.getFlowType());
-		return new Color(c.getRed(), c.getGreen(), c.getBlue(), 125);
+		return ColorUtils.withAlpha(c, 125);
 	}
 
 	private Address getPreviewAddress(boolean forward) {
@@ -672,7 +672,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 	void dispose() {
 
 		//
-		// Let's go a bit overboard and help the garbage collector cleanup by nulling out 
+		// Let's go a bit overboard and help the garbage collector cleanup by nulling out
 		// references and removing the data from Jung's graph
 		//
 
@@ -708,11 +708,10 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 //==================================================================================================
 // Inner-inner classes
-//==================================================================================================        
+//==================================================================================================
 
 	private class ListingHoverAdapter extends ListingHoverProvider {
 		public ListingHoverAdapter() {
-			super();
 		}
 
 		@Override

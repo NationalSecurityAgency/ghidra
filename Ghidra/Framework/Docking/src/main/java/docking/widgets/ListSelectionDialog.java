@@ -24,7 +24,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.AbstractGTableModel;
 import docking.widgets.table.RowObjectTableModel;
@@ -134,7 +134,7 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		panel.add(jLabel, BorderLayout.WEST);
 		panel.add(field, BorderLayout.CENTER);
 
-		JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> browse());
 		panel.add(browseButton, BorderLayout.EAST);
 		return panel;
@@ -221,8 +221,8 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		list.add("bOb");
 		list.add("bobby");
 		list.add("zzz");
-		ListSelectionDialog<String> dialog = ListSelectionDialog.getStringListSelectionDialog(
-			"String Picker", "Choose String:", list);
+		ListSelectionDialog<String> dialog = ListSelectionDialog
+				.getStringListSelectionDialog("String Picker", "Choose String:", list);
 
 		String selectedValue = dialog.show(jFrame);
 		System.out.println("Selected: " + selectedValue);

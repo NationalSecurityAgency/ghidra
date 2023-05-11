@@ -94,8 +94,9 @@ public class EditExternalLocationDialog extends DialogComponentProvider {
 	/**
 	 * Dispose of this dialog.
 	 */
+	@Override
 	public void dispose() {
-		close();
+		super.dispose();
 		cleanup();
 	}
 

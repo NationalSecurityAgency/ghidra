@@ -421,5 +421,6 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_COMMAND_GETUSEROPNAME =
 		new ElementId("command_getuseropname", COMMAND_GETUSEROPNAME);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 270);
+	public static final ElementId ELEM_SPLITDATATYPE = new ElementId("splitdatatype", 270);
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 271);
 }

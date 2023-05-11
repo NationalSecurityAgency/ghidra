@@ -299,7 +299,7 @@ class OldStackFrameDB implements StackFrame {
 
 				// find the first stack variable defined at or after 0
 				loadStackVariables();
-				Object key = new Integer(0);
+				Object key = Integer.valueOf(0);
 				int loc = Collections.binarySearch(variables, key, StackVariableComparator.get());
 				loc = (loc < 0 ? -1 - loc : loc);
 				if (loc < variables.size()) {
@@ -345,7 +345,7 @@ class OldStackFrameDB implements StackFrame {
 	public Variable getVariableContaining(int offset) {
 		synchronized (function) {
 			loadStackVariables();
-			Object key = new Integer(offset);
+			Object key = Integer.valueOf(offset);
 			int index = Collections.binarySearch(variables, key, StackVariableComparator.get());
 			if (index >= 0) {
 				return variables.get(index);

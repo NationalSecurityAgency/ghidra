@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.processors;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.datatransfer.Clipboard;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
@@ -30,6 +31,9 @@ import javax.swing.JPanel;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.dnd.GClipboard;
+import docking.dnd.StringTransferable;
+import docking.widgets.OptionDialog;
 import docking.widgets.label.GDLabel;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
@@ -217,7 +221,19 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		String missingDescription = entry.getMissingManualDescription();
 		if (filename == null || !new File(filename).exists()) {
 			String message = buildMissingManualMessage(language, filename, missingDescription);
-			Msg.showInfo(this, null, "Missing Processor Manual", message);
+
+			int choice =
+				OptionDialog.showOptionNoCancelDialog(null, "Missing Processor Manual", message,
+					"Copy \uFF06 Close", // & in Java is for mnemonics; use unicode value
+					"Close",
+					OptionDialog.INFORMATION_MESSAGE);
+			if (choice == OptionDialog.OPTION_ONE) {
+				Clipboard systemClipboard = GClipboard.getSystemClipboard();
+				String copyText = "Missing file: " + filename + "\nDetails: " + missingDescription;
+				StringTransferable transferable = new StringTransferable(copyText);
+				systemClipboard.setContents(transferable, null);
+			}
+
 			return null;
 		}
 

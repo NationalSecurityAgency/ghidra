@@ -17,44 +17,41 @@ package ghidra.trace.model.time.schedule;
 
 import ghidra.pcode.emu.PcodeThread;
 
-public interface Stepper<T> {
-	@SuppressWarnings("rawtypes")
+public interface Stepper {
 	enum Enum implements Stepper {
 		INSTRUCTION {
 			@Override
-			public void tick(PcodeThread thread) {
+			public void tick(PcodeThread<?> thread) {
 				thread.stepInstruction();
 			}
 
 			@Override
-			public void skip(PcodeThread thread) {
+			public void skip(PcodeThread<?> thread) {
 				thread.skipInstruction();
 			}
 		},
 		PCODE {
 			@Override
-			public void tick(PcodeThread thread) {
+			public void tick(PcodeThread<?> thread) {
 				thread.stepPcodeOp();
 			}
 
 			@Override
-			public void skip(PcodeThread thread) {
+			public void skip(PcodeThread<?> thread) {
 				thread.skipPcodeOp();
 			}
 		};
 	}
 
-	@SuppressWarnings("unchecked")
-	static <T> Stepper<T> instruction() {
+	static Stepper instruction() {
 		return Enum.INSTRUCTION;
 	}
 
-	@SuppressWarnings("unchecked")
-	static <T> Stepper<T> pcode() {
+	static Stepper pcode() {
 		return Enum.PCODE;
 	}
 
-	void tick(PcodeThread<T> thread);
+	void tick(PcodeThread<?> thread);
 
-	void skip(PcodeThread<T> thread);
+	void skip(PcodeThread<?> thread);
 }

@@ -16,17 +16,19 @@
 package ghidra.dbg.target.schema;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Test;
 
+import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.TargetObjectSchema.*;
 
 public class AnnotatedTargetObjectSchemaTest {
 
@@ -104,7 +106,7 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		@Override
 		public CompletableFuture<? extends Map<String, TestAnnotatedTargetProcessStub>> fetchElements(
-				boolean refresh) {
+				RefreshBehavior refresh) {
 			return null; // Doesn't matter
 		}
 	}
@@ -321,7 +323,7 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		@Override
 		public CompletableFuture<? extends Map<String, ? extends T>> fetchElements(
-				boolean refresh) {
+				RefreshBehavior refresh) {
 			return null; // Doesn't matter
 		}
 	}
@@ -383,5 +385,32 @@ public class AnnotatedTargetObjectSchemaTest {
 	public void testAnnotatedRootSchemaWithListAttrsBadType() {
 		AnnotatedSchemaContext ctx = new AnnotatedSchemaContext();
 		ctx.getSchemaForClass(TestAnnotatedTargetRootWithListedAttrsBadType.class);
+	}
+
+	@TargetObjectSchemaInfo
+	static class TestAnnotatedTargetRootWithExportedTargetMethod extends DefaultTargetModelRoot {
+		public TestAnnotatedTargetRootWithExportedTargetMethod(AbstractDebuggerObjectModel model,
+				String typeHint) {
+			super(model, typeHint);
+		}
+
+		@TargetMethod.Export("MyMethod")
+		public CompletableFuture<Void> myMethod() {
+			return AsyncUtils.NIL;
+		}
+	}
+
+	@Test
+	public void testAnnotatedRootSchemaWithExportedTargetMethod() {
+		AnnotatedSchemaContext ctx = new AnnotatedSchemaContext();
+		TargetObjectSchema schema =
+			ctx.getSchemaForClass(TestAnnotatedTargetRootWithExportedTargetMethod.class);
+
+		AttributeSchema methodSchema = schema.getAttributeSchema("MyMethod");
+		assertEquals(
+			new DefaultAttributeSchema("MyMethod", new SchemaName("Method"), true, true, true),
+			methodSchema);
+		assertTrue(
+			ctx.getSchema(new SchemaName("Method")).getInterfaces().contains(TargetMethod.class));
 	}
 }

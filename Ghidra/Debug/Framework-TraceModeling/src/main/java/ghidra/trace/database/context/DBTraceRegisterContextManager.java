@@ -22,8 +22,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.address.*;
@@ -37,6 +35,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextManager;
 import ghidra.trace.model.guest.TracePlatform;
@@ -79,7 +78,7 @@ public class DBTraceRegisterContextManager
 			return value;
 		}
 
-		void setLifespan(Range<Long> lifespan) {
+		void setLifespan(Lifespan lifespan) {
 			super.doSetLifespan(lifespan);
 		}
 	}
@@ -155,13 +154,13 @@ public class DBTraceRegisterContextManager
 	}
 
 	@Override
-	public void setValue(Language language, RegisterValue value, Range<Long> lifespan,
+	public void setValue(Language language, RegisterValue value, Lifespan lifespan,
 			AddressRange range) {
 		delegateWriteV(range.getAddressSpace(), m -> m.setValue(language, value, lifespan, range));
 	}
 
 	@Override
-	public void removeValue(Language language, Register register, Range<Long> span,
+	public void removeValue(Language language, Register register, Lifespan span,
 			AddressRange range) {
 		delegateDeleteV(range.getAddressSpace(),
 			m -> m.removeValue(language, register, span, range));
@@ -223,7 +222,7 @@ public class DBTraceRegisterContextManager
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range) {
+	public void clear(Lifespan span, AddressRange range) {
 		delegateDeleteV(range.getAddressSpace(), m -> m.clear(span, range));
 	}
 }

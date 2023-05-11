@@ -49,7 +49,7 @@ public interface DbgModelSelectableObject extends DbgModelTargetObject {
 		}
 		if (this instanceof DbgModelTargetStackFrame) {
 			DbgModelTargetStackFrame tf = (DbgModelTargetStackFrame) this;
-			TargetObject ref = tf.getThread();
+			TargetObject ref = tf.getParentThread();
 			if (ref instanceof DbgModelTargetThread) {
 				DbgModelTargetThread tt = (DbgModelTargetThread) ref;
 				DbgThread thread = tt.getThread();

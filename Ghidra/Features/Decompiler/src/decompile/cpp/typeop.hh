@@ -16,13 +16,15 @@
 /// \file typeop.hh
 /// \brief Data-type and behavior information associated with specific p-code op-codes.
 
-#ifndef __CPUI_TYPEOP__
-#define __CPUI_TYPEOP__
+#ifndef __TYPEOP_HH__
+#define __TYPEOP_HH__
 
 #include "cpool.hh"
 #include "variable.hh"
 #include "opbehavior.hh"
 #include "printlanguage.hh"
+
+namespace ghidra {
 
 class PcodeOp;
 class Translate;
@@ -39,7 +41,10 @@ public:
   enum {
     inherits_sign = 1,		///< Operator token inherits signedness from its inputs
     inherits_sign_zero = 2,	///< Only inherits sign from first operand, not the second
-    shift_op = 4		///< Shift operation
+    shift_op = 4,		///< Shift operation
+    arithmetic_op = 8,		///< Operation involving addition, multiplication, or division
+    logical_op = 0x10,		///< Logical operation
+    floatingpoint_op = 0x20	///< Floating-point operation
   };
 protected:
   TypeFactory *tlst;		///< Pointer to data-type factory
@@ -111,6 +116,15 @@ public:
 
   /// \brief Return \b true if the op-code is a shift (INT_LEFT, INT_RIGHT, or INT_SRIGHT)
   bool isShiftOp(void) const { return ((addlflags & shift_op)!=0); }
+
+  /// \brief Return \b true if the opcode is INT_ADD, INT_MULT, INT_DIV, INT_REM, or other arithmetic op
+  bool isArithmeticOp(void) const { return ((addlflags & arithmetic_op)!=0); }
+
+  /// \brief Return \b true if the opcode is INT_AND, INT_OR, INT_XOR, or other logical op
+  bool isLogicalOp(void) const { return ((addlflags & logical_op)!=0); }
+
+  /// \brief Return \b true if the opcode is FLOAT_ADD, FLOAT_MULT, or other floating-point operation
+  bool isFloatingPointOp(void) const { return ((addlflags & floatingpoint_op)!=0); }
 
   /// \brief Find the minimal (or suggested) data-type of an output to \b this op-code
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;
@@ -733,6 +747,7 @@ public:
 class TypeOpPiece : public TypeOpFunc {
 public:
   TypeOpPiece(TypeFactory *t);			///< Constructor
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
   virtual string getOperatorName(const PcodeOp *op) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPiece(op); }
@@ -742,14 +757,12 @@ public:
 class TypeOpSubpiece : public TypeOpFunc {
 public:
   TypeOpSubpiece(TypeFactory *t);			///< Constructor
-  //  virtual Datatype *getOutputLocal(const PcodeOp *op) const;
-  //  virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
+  virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual string getOperatorName(const PcodeOp *op) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opSubpiece(op); }
-  static const TypeField *testExtraction(bool useHigh,const PcodeOp *op,Datatype *&parent,int4 &offset);
   static int4 computeByteOffsetForComposite(const PcodeOp *op);
 };
 
@@ -858,4 +871,12 @@ public:
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPopcountOp(op); }
 };
 
+/// \brief Information about the LZCOUNT op-code
+class TypeOpLzcount : public TypeOpFunc {
+public:
+  TypeOpLzcount(TypeFactory *t);			///< Constructor
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opLzcountOp(op); }
+};
+
+} // End namespace ghidra
 #endif

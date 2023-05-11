@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+%define api.prefix {pcode}
 %{
 #include "pcodeparse.hh"
 
-  //#define YYERROR_VERBOSE
-  extern int yylex(void);
-  static PcodeSnippet *pcode;
-  extern int yydebug;
-  extern int yyerror(const char *str );
+//#define YYERROR_VERBOSE
+namespace ghidra {
+
+extern int pcodelex(void);
+static PcodeSnippet *pcode;
+extern int pcodeerror(const char *str );
 %}
 
 %union {
@@ -800,13 +802,15 @@ void PcodeSnippet::addOperand(const string &name,int4 index)
   addSymbol(sym);
 }
 
-int yylex(void) {
+int pcodelex(void) {
   return pcode->lex();
 }
 
-int yyerror(const char *s)
+int pcodeerror(const char *s)
 
 {
   pcode->reportError((const Location *)0,s);
   return 0;
 }
+
+} // End namespace ghidra

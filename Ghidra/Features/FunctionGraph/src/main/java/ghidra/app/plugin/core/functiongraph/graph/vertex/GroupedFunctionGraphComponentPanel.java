@@ -21,11 +21,14 @@ import java.util.Set;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
 
 import docking.ActionContext;
 import docking.GenericHeader;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
@@ -38,11 +41,10 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
 import util.CollectionUtils;
 
 /**
- * This panel looks similar in appearance to the LisGraphComponentPanel, with a header, actions 
+ * This panel looks similar in appearance to the LisGraphComponentPanel, with a header, actions
  * and a body.
  */
 public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPanel {
@@ -137,10 +139,9 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 		add(genericHeader, BorderLayout.NORTH);
 		add(contentPanel, BorderLayout.CENTER);
 
-		BevelBorder beveledBorder =
-			(BevelBorder) BorderFactory.createBevelBorder(BevelBorder.RAISED,
-				new Color(225, 225, 225), new Color(155, 155, 155), new Color(96, 96, 96),
-				new Color(0, 0, 0));
+		Border beveledBorder = BorderFactory.createBevelBorder(BevelBorder.RAISED,
+			new GColor("color.border.bevel.highlight"), new GColor("color.border.bevel.shadow"));
+
 		setBorder(beveledBorder);
 
 		createActions();
@@ -153,7 +154,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 	}
 
 	/**
-	 * A bit of a hack that triggers the text area to update its preferred height now before we 
+	 * A bit of a hack that triggers the text area to update its preferred height now before we
 	 * render so that it doesn't change later.
 	 */
 	private void updateTextAreaSizeToForceTextLayout() {
@@ -186,7 +187,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			}
 		};
 		groupAction.setDescription("Combine selected vertices into one vertex");
-		ImageIcon imageIcon = ResourceManager.loadImage("images/shape_handles.png");
+		Icon imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.group");
 		groupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 		groupAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Group_Vertex_Action_Group"));
@@ -199,10 +200,10 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			}
 		};
 		regroupAction.setDescription("Restore vertex and siblings back to group form");
-		imageIcon = ResourceManager.loadImage("images/edit-redo.png");
+		imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.regroup");
 		regroupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
-		regroupAction.setHelpLocation(
-			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Regroup"));
+		regroupAction
+				.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Regroup"));
 
 		// ungroup
 		ungroupAction = new DockingAction("Ungroup Vertices", FunctionGraphPlugin.class.getName()) {
@@ -212,10 +213,10 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			}
 		};
 		ungroupAction.setDescription("Ungroup selected vertices into individual vertex");
-		imageIcon = ResourceManager.loadImage("images/shape_ungroup.png");
+		imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.ungroup");
 		ungroupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
-		ungroupAction.setHelpLocation(
-			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Ungroup"));
+		ungroupAction
+				.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Ungroup"));
 
 		// add to group
 		addToGroupAction = new DockingAction("Add to Group", FunctionGraphPlugin.class.getName()) {
@@ -240,12 +241,12 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			}
 		};
 		addToGroupAction.setDescription("Add the selected vertices to this group");
-		imageIcon = ResourceManager.loadImage("images/shape_square_add.png");
+		imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.group.add");
 		addToGroupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 		addToGroupAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Group_Add"));
 
-		// color	
+		// color
 		setVertexMostRecentAction = new SetVertexMostRecentColorAction(controller, vertex);
 		setVertexMostRecentAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Group_Vertex_Action_Color"));
@@ -611,7 +612,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 	@Override
 	Component getMaximizedViewComponent() {
 // 7937:3 - this will need to change if we want to support showing only the vertices inside of
-//		    this group vertex.  To make this happen we probably need to be able to have the 
+//		    this group vertex.  To make this happen we probably need to be able to have the
 //		    group vertex contain its own graph that we can set on the viewer if the user hits
 //		    the full display button.
 

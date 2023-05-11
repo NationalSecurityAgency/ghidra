@@ -15,7 +15,7 @@
  */
 package ghidra.feature.vt.gui.editors;
 
-import static ghidra.feature.vt.gui.editors.TagEditorDialog.TagState.Action.ADD;
+import static ghidra.feature.vt.gui.editors.TagEditorDialog.TagState.Action.*;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -25,18 +25,19 @@ import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GIcon;
 import ghidra.feature.vt.gui.editors.TagEditorDialog.TagState;
 import ghidra.feature.vt.gui.editors.TagEditorDialog.TagStateListModel;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 public class TagEditorRenderer extends GListCellRenderer<TagState> {
 
-	private static final Icon NEW_TAG_ICON = ResourceManager.loadImage("images/tag_blue_add.png");
+	private static final Icon NEW_TAG_ICON = new GIcon("icon.version.tracking.tag.status.new");
 	private static final Icon DELETED_TAG_ICON =
-		ResourceManager.loadImage("images/tag_blue_delete.png");
-	private static final Icon EXISTING_TAG_ICON = ResourceManager.loadImage("images/tag_blue.png");
-	private static final Icon UNDO_ICON = ResourceManager.loadImage("images/undo-apply.png");
+		new GIcon("icon.version.tracking.tag.status.deleted");
+	private static final Icon EXISTING_TAG_ICON =
+		new GIcon("icon.version.tracking.tag.status.existing");
+	private static final Icon UNDO_ICON = new GIcon("icon.version.tracking.tag.button.undo");
 
 	private final JList<TagState> list;
 	private final TagStateListModel listModel;

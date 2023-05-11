@@ -21,8 +21,7 @@ import java.util.stream.Collectors;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.PreferenceState;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayProvider;
+import ghidra.service.graph.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
@@ -53,14 +52,15 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 
 	@Override
 	public GraphDisplay getGraphDisplay(boolean reuseGraph, TaskMonitor monitor) {
-
-		if (reuseGraph && !displays.isEmpty()) {
-			DefaultGraphDisplay visibleGraph = (DefaultGraphDisplay) getActiveGraphDisplay();
-			visibleGraph.restoreToDefaultSetOfActions();
-			return visibleGraph;
-		}
-
 		return Swing.runNow(() -> {
+			if (reuseGraph && !displays.isEmpty()) {
+				DefaultGraphDisplay visibleGraph = (DefaultGraphDisplay) getActiveGraphDisplay();
+				visibleGraph.setGraph(new AttributedGraph("Empty", null),
+					new DefaultGraphDisplayOptions(), "", false, monitor);
+				visibleGraph.restoreToDefaultSetOfActions();
+				return visibleGraph;
+			}
+
 			DefaultGraphDisplay display = new DefaultGraphDisplay(this, displayCounter++);
 			displays.add(display);
 			return display;
@@ -79,8 +79,8 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	public List<GraphDisplay> getAllGraphDisplays() {
 		return Swing.runNow(() -> {
 			return displays.stream()
-					.sorted((d1, d2) -> -(d1.getId() - d2.getId())) // largest/newest IDs come first
-					.collect(Collectors.toList());
+				.sorted((d1, d2) -> -(d1.getId() - d2.getId())) // largest/newest IDs come first
+				.collect(Collectors.toList());
 		});
 	}
 

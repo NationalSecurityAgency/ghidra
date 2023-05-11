@@ -15,10 +15,12 @@
  */
 /// \file subflow.hh
 /// \brief Classes for reducing/splitting Varnodes containing smaller logical values
-#ifndef __SUBVARIABLE_FLOW__
-#define __SUBVARIABLE_FLOW__
+#ifndef __SUBFLOW_HH__
+#define __SUBFLOW_HH__
 
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief Class for shrinking big Varnodes carrying smaller logical values
 ///
@@ -143,6 +145,65 @@ public:
   bool doTrace(void);			///< Trace split through data-flow, constructing transform
 };
 
+/// \brief Split a p-code COPY, LOAD, or STORE op based on underlying composite data-type
+///
+/// During the cleanup phase, if a COPY, LOAD, or STORE occurs on a partial structure or array
+/// (TypePartialStruct), try to break it up into multiple operations that each act on logical component
+/// of the structure or array.
+class SplitDatatype {
+  /// \brief A helper class describing a pair of matching data-types for the split
+  ///
+  /// Data-types being copied simultaneously are split up into these matching pairs.
+  class Component {
+    friend class SplitDatatype;
+    Datatype *inType;		///< Data-type coming into the logical COPY operation
+    Datatype *outType;		///< Data-type coming out of the logical COPY operation
+    int4 offset;		///< Offset of this logical piece within the whole
+  public:
+    Component(Datatype *in,Datatype *out,int4 off) { inType=in; outType=out; offset=off; }	///< Constructor
+  };
+  /// \brief A helper class describing the pointer being passed to a LOAD or STORE
+  ///
+  /// It makes distinction between the immediate pointer to the LOAD or STORE and a \e root pointer
+  /// to the main structure or array, which the immediate pointer may be at an offset from.
+  class RootPointer {
+    friend class SplitDatatype;
+    PcodeOp *loadStore;			///< LOAD or STORE op
+    TypePointer *ptrType;		///< Base pointer data-type of LOAD or STORE
+    Varnode *firstPointer;		///< Direct pointer input for LOAD or STORE
+    Varnode *pointer;			///< The root pointer
+    int4 baseOffset;			///< Offset of the LOAD or STORE relative to root pointer
+    bool backUpPointer(void);		///< Follow flow of \b pointer back thru INT_ADD or PTRSUB
+  public:
+    bool find(PcodeOp *op,Datatype *valueType);	///< Locate root pointer for underlying LOAD or STORE
+    void freePointerChain(Funcdata &data);	///< Remove unused pointer calculations
+  };
+  Funcdata &data;			///< The containing function
+  TypeFactory *types;			///< The data-type container
+  vector<Component> dataTypePieces;	///< Sequence of all data-type pairs being copied
+  bool splitStructures;			///< Whether or not structures should be split
+  bool splitArrays;			///< Whether or not arrays should be split
+  Datatype *getComponent(Datatype *ct,int4 offset,bool &isHole);
+  int4 categorizeDatatype(Datatype *ct);	///< Categorize if and how data-type should be split
+  bool testDatatypeCompatibility(Datatype *inBase,Datatype *outBase,bool inConstant);
+  bool testCopyConstraints(PcodeOp *copyOp);
+  bool generateConstants(Varnode *vn,vector<Varnode *> &inVarnodes);
+  void buildInConstants(Varnode *rootVn,vector<Varnode *> &inVarnodes);
+  void buildInSubpieces(Varnode *rootVn,PcodeOp *followOp,vector<Varnode *> &inVarnodes);
+  void buildOutVarnodes(Varnode *rootVn,vector<Varnode *> &outVarnodes);
+  void buildOutConcats(Varnode *rootVn,PcodeOp *previousOp,vector<Varnode *> &outVarnodes);
+  void buildPointers(Varnode *rootVn,TypePointer *ptrType,int4 baseOffset,PcodeOp *followOp,
+		     vector<Varnode *> &ptrVarnodes,bool isInput);
+  static bool isArithmeticInput(Varnode *vn);	///< Is \b this the input to an arithmetic operation
+  static bool isArithmeticOutput(Varnode *vn);	///< Is \b this defined by an arithmetic operation
+public:
+  SplitDatatype(Funcdata &func);			///< Constructor
+  bool splitCopy(PcodeOp *copyOp,Datatype *inType,Datatype *outType);	///< Split a COPY operation
+  bool splitLoad(PcodeOp *loadOp,Datatype *inType);	///< Split a LOAD operation
+  bool splitStore(PcodeOp *storeOp,Datatype *outType);	///< Split a STORE operation
+  static Datatype *getValueDatatype(PcodeOp *loadStore,int4 size,TypeFactory *tlst);
+};
+
 /// \brief Class for tracing changes of precision in floating point variables
 ///
 /// It follows the flow of a logical lower precision value stored in higher precision locations
@@ -198,4 +259,5 @@ public:
   bool doTrace(void);		///< Trace lanes as far as possible from the root Varnode
 };
 
+} // End namespace ghidra
 #endif

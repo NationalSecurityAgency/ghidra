@@ -22,9 +22,13 @@ import db.DBConstants;
 import generic.jar.ResourceFile;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
+import ghidra.util.filechooser.ExtensionFileFilter;
+import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -35,6 +39,9 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		implements FileArchiveBasedDataTypeManager {
 
 	public final static String EXTENSION = "gdt"; // Ghidra Data Types
+	public static final GhidraFileFilter GDT_FILEFILTER =
+		ExtensionFileFilter.forExtensions("Ghidra Data Type Files", EXTENSION);
+
 	/**
 	 * Suffix for an archive file.
 	 */
@@ -48,15 +55,21 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 
 	/**
 	 * Construct a new DataTypeFileManager using the default data organization.
+	 * <p>
+	 * <B>NOTE:</B> it may be appropriate to {@link #getWarning() check for warnings} after
+	 * opening an existing archive file prior to use.  While an archive will remain useable 
+	 * with a warning condition, architecture-specific data may not be available or up-to-date.
+	 * 
 	 * @param packedDbfile file to load or create based upon openMode
 	 * @param openMode one of the DBConstants: CREATE, UPDATE, READ_ONLY, UPGRADE 
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private FileDataTypeManager(ResourceFile packedDbfile, int openMode) throws IOException {
 		super(validateFilename(packedDbfile), openMode);
 		file = packedDbfile;
 		name = getRootName(file.getName());
 		packedDB = ((PackedDBHandle) dbHandle).getPackedDatabase();
+		reportWarning();
 	}
 
 	private static ResourceFile validateFilename(ResourceFile packedDbfile) {
@@ -70,18 +83,27 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	 * Create a new data-type file archive using the default data organization
 	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
 	 * @return data-type manager backed by specified packedDbFile
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public static FileDataTypeManager createFileArchive(File packedDbfile) throws IOException {
 		return new FileDataTypeManager(new ResourceFile(packedDbfile), DBConstants.CREATE);
 	}
 
 	/**
-	 * Open an existing data-type file archive using the default data organization
+	 * Open an existing data-type file archive using the default data organization.
+	 * <p>
+	 * <B>NOTE:</B> If archive has an assigned architecture, issues may arise due to a revised or
+	 * missing {@link Language}/{@link CompilerSpec} which will result in a warning but not
+	 * prevent the archive from being opened.  Such a warning condition will ne logged and may 
+	 * result in missing or stale information for existing datatypes which have architecture related
+	 * data.  In some case it may be appropriate to 
+	 * {@link FileDataTypeManager#getWarning() check for warnings} on the returned archive
+	 * object prior to its use.
+	 * 
 	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
 	 * @param openForUpdate if true archive will be open for update
 	 * @return data-type manager backed by specified packedDbFile
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public static FileDataTypeManager openFileArchive(File packedDbfile, boolean openForUpdate)
 			throws IOException {
@@ -89,11 +111,20 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	/**
-	 * Open an existing data-type file archive using the default data organization
+	 * Open an existing data-type file archive using the default data organization.
+	 * <p>
+	 * <B>NOTE:</B> If archive has an assigned architecture, issues may arise due to a revised or
+	 * missing {@link Language}/{@link CompilerSpec} which will result in a warning but not
+	 * prevent the archive from being opened.  Such a warning condition will ne logged and may 
+	 * result in missing or stale information for existing datatypes which have architecture related
+	 * data.  In some case it may be appropriate to 
+	 * {@link FileDataTypeManager#getWarning() check for warnings} on the returned archive
+	 * object prior to its use.
+	 * 
 	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
 	 * @param openForUpdate if true archive will be open for update
 	 * @return data-type manager backed by specified packedDbFile
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public static FileDataTypeManager openFileArchive(ResourceFile packedDbfile,
 			boolean openForUpdate) throws IOException {

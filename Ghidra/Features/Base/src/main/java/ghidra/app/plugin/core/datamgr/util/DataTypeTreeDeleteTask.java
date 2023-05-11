@@ -144,7 +144,7 @@ public class DataTypeTreeDeleteTask extends Task {
 		int transactionID = dataTypeManager.startTransaction("Delete Category/DataType");
 		try {
 			for (GTreeNode node : list) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				removeNode(node, monitor);
 				monitor.incrementProgress(1);
 			}

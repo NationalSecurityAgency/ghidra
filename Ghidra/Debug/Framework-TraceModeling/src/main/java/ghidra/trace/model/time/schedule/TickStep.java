@@ -66,11 +66,11 @@ public class TickStep extends AbstractStep {
 	}
 
 	@Override
-	public <T> void execute(PcodeThread<T> emuThread, Stepper<T> stepper, TaskMonitor monitor)
+	public <T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException {
 		for (int i = 0; i < tickCount; i++) {
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			stepper.tick(emuThread);
 		}
 	}

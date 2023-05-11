@@ -24,7 +24,7 @@ public class DefaultTargetObjectSchema
 		implements TargetObjectSchema, Comparable<DefaultTargetObjectSchema> {
 	private static final String INDENT = "  ";
 
-	protected static class DefaultAttributeSchema
+	public static class DefaultAttributeSchema
 			implements AttributeSchema, Comparable<DefaultAttributeSchema> {
 		private final String name;
 		private final SchemaName schema;

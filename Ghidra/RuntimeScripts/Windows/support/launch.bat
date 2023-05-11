@@ -84,17 +84,21 @@ set "DEBUG_LOG4J=%SUPPORT_DIR%\debug.log4j.xml"
 if exist "%INSTALL_DIR%\Ghidra" goto continue2
 
 ::
-:: Development Environment
+:: Development Environment (Eclipse classes or "gradle jar")
 ::
 set "INSTALL_DIR=%INSTALL_DIR%\..\..\.."
 set "CPATH=%INSTALL_DIR%\Ghidra\Framework\Utility\bin\main"
 set "LS_CPATH=%INSTALL_DIR%\GhidraBuild\LaunchSupport\bin\main"
-set "DEBUG_LOG4J=%INSTALL_DIR%\Ghidra\RuntimeScripts\Common\support\debug.log4j.xml"
 if not exist "%LS_CPATH%" (
-	echo Ghidra cannot launch in development mode because Eclipse has not compiled its class files.
+	set "CPATH=%INSTALL_DIR%\Ghidra\Framework\Utility\build\libs\Utility.jar"
+	set "LS_CPATH=%INSTALL_DIR%\GhidraBuild\LaunchSupport\build\libs\LaunchSupport.jar"
+)
+if not exist "%LS_CPATH%" (
+	echo Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle.
 	set ERRORLEVEL=1
 	goto exit1
 )
+set "DEBUG_LOG4J=%INSTALL_DIR%\Ghidra\RuntimeScripts\Common\support\debug.log4j.xml"
 
 :continue2
 

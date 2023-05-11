@@ -20,19 +20,18 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
 import SWIG.SBMemoryRegionInfo;
-import agent.lldb.manager.cmd.*;
+import agent.lldb.manager.cmd.LldbReadMemoryCommand;
+import agent.lldb.manager.cmd.LldbWriteMemoryCommand;
 import agent.lldb.manager.impl.LldbManagerImpl;
 import agent.lldb.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
@@ -56,11 +55,11 @@ public class LldbModelTargetMemoryContainerImpl extends LldbModelTargetObjectImp
 	public LldbModelTargetMemoryContainerImpl(LldbModelTargetProcess process) {
 		super(process.getModel(), process, "Memory", "MemoryContainer");
 		this.process = process;
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listMemory(process.getProcess()).thenAccept(byName -> {
 			List<TargetObject> regions;
 			synchronized (this) {
@@ -81,20 +80,20 @@ public class LldbModelTargetMemoryContainerImpl extends LldbModelTargetObjectImp
 		return new LldbModelTargetMemoryRegionImpl(this, region);
 	}
 
-	private byte[] readAssist(Address address, ByteBuffer buf, long offset, RangeSet<Long> set) {
+	private byte[] readAssist(Address address, ByteBuffer buf, AddressSetView set) {
 		if (set == null) {
 			return new byte[0];
 		}
-		Range<Long> range = set.rangeContaining(offset);
+		AddressRange range = set.getRangeContaining(address);
 		if (range == null) {
 			throw new DebuggerMemoryAccessException("Cannot read at " + address);
 		}
-		listeners.fire.memoryUpdated(getProxy(), address, buf.array());
-		return Arrays.copyOf(buf.array(), (int) (range.upperEndpoint() - range.lowerEndpoint()));
+		broadcast().memoryUpdated(getProxy(), address, buf.array());
+		return Arrays.copyOf(buf.array(), (int) range.getLength());
 	}
 
 	private void writeAssist(Address address, byte[] data) {
-		listeners.fire.memoryUpdated(getProxy(), address, data);
+		broadcast().memoryUpdated(getProxy(), address, data);
 	}
 
 	@Override
@@ -109,13 +108,12 @@ public class LldbModelTargetMemoryContainerImpl extends LldbModelTargetObjectImp
 				"Cannot process command readMemory while engine is waiting for events");
 		}
 		ByteBuffer buf = ByteBuffer.allocate(length);
-		long offset = address.getOffset();
 		if (!manager.isKernelMode() || address.getAddressSpace().getName().equals("ram")) {
 			return manager
 					.execute(new LldbReadMemoryCommand(manager, process.getProcess(), address, buf,
 						buf.remaining()))
 					.thenApply(set -> {
-						return readAssist(address, buf, offset, set);
+						return readAssist(address, buf, set);
 					});
 		}
 		return CompletableFuture.completedFuture(new byte[length]);

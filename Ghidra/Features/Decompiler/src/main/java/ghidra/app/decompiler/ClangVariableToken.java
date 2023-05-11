@@ -16,6 +16,7 @@
 package ghidra.app.decompiler;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.pcode.*;
 
 /**
@@ -76,7 +77,39 @@ public class ClangVariableToken extends ClangToken {
 			}
 			return inst.getHigh();
 		}
-		return super.getHighVariable();
+		ClangNode parent = Parent();
+		if (parent instanceof ClangVariableDecl) {
+			return ((ClangVariableDecl) parent).getHighVariable();
+		}
+		return null;
+	}
+
+	@Override
+	public HighSymbol getHighSymbol(HighFunction highFunction) {
+		Varnode inst = getVarnode();
+		if (inst != null) {
+			HighVariable hvar = inst.getHigh();
+			if (hvar != null) {
+				HighSymbol symbol = hvar.getSymbol();
+				if (symbol != null) {
+					return symbol;
+				}
+			}
+		}
+		ClangNode parent = Parent();
+		if (parent instanceof ClangVariableDecl) {
+			return ((ClangVariableDecl) parent).getHighSymbol();
+		}
+
+		if (highFunction == null) {
+			return null;
+		}
+		// Token may be from a variable reference, in which case we have to dig to find the actual symbol
+		Address storageAddress = getStorageAddress(highFunction.getAddressFactory());
+		if (storageAddress == null) {
+			return null;
+		}
+		return findHighSymbol(storageAddress, highFunction);	// Find symbol via the reference
 	}
 
 	@Override
@@ -97,5 +130,42 @@ public class ClangVariableToken extends ClangToken {
 		}
 		decoder.rewindAttributes();
 		super.decode(decoder, pfactory);
+	}
+
+	/**
+	 * Get the storage address of the variable, if any.
+	 * The variable may be directly referenced by this token, or indirectly referenced as a point.
+	 * @param addrFactory is the factory used to construct the Address
+	 * @return the storage Address or null if there is no variable attached
+	 */
+	private Address getStorageAddress(AddressFactory addrFactory) {
+		Address storageAddress = null;
+		if (varnode != null) {
+			storageAddress = varnode.getAddress();
+		}
+		// op could be a PTRSUB, need to dig it out...
+		else {
+			storageAddress = HighFunctionDBUtil.getSpacebaseReferenceAddress(addrFactory, op);
+		}
+		return storageAddress;
+	}
+
+	/**
+	 * Find the HighSymbol the decompiler associates with a specific address.
+	 * @param addr is the specific address
+	 * @param highFunction is the decompiler results in which to search for the symbol
+	 * @return the matching symbol or null if no symbol exists
+	 */
+	private static HighSymbol findHighSymbol(Address addr, HighFunction highFunction) {
+		HighSymbol highSymbol = null;
+		if (addr.isStackAddress()) {
+			LocalSymbolMap lsym = highFunction.getLocalSymbolMap();
+			highSymbol = lsym.findLocal(addr, null);
+		}
+		else {
+			GlobalSymbolMap gsym = highFunction.getGlobalSymbolMap();
+			highSymbol = gsym.getSymbol(addr);
+		}
+		return highSymbol;
 	}
 }

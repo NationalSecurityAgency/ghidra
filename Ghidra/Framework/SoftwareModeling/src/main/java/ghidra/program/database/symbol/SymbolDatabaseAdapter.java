@@ -168,7 +168,7 @@ abstract class SymbolDatabaseAdapter {
 		SymbolDatabaseAdapterV3 tmpAdapter = new SymbolDatabaseAdapterV3(tmpHandle, addrMap, true);
 		RecordIterator iter = oldAdapter.getSymbols();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DBRecord rec = iter.next();
 			Address addr = oldAddrMap.decodeAddress(rec.getLongValue(SYMBOL_ADDR_COL));
 			rec.setLongValue(SYMBOL_ADDR_COL, addrMap.getKey(addr, true));
@@ -192,7 +192,7 @@ abstract class SymbolDatabaseAdapter {
 
 		RecordIterator iter = tmpAdapter.getSymbols();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			newAdapter.updateSymbolRecord(iter.next());
 			monitor.incrementProgress(1);
 		}
@@ -365,6 +365,16 @@ abstract class SymbolDatabaseAdapter {
 	 * @throws IOException if a database io error occurs
 	 */
 	abstract RecordIterator getSymbolsByName(String name) throws IOException;
+
+	/**
+	 * Scan symbols lexicographically by name starting from the given name
+	 * <p>
+	 * This only includes memory-based stored symbols.
+	 * 
+	 * @param startName the starting name to search
+	 * @throws IOException if a database io error occurs
+	 */
+	abstract RecordIterator scanSymbolsByName(String startName) throws IOException;
 
 	/**
 	 * Get all symbols contained in the given {@link Namespace} that have the given name

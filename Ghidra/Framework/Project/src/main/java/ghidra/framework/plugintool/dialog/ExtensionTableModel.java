@@ -15,7 +15,6 @@
  */
 package ghidra.framework.plugintool.dialog;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
 import java.util.*;
@@ -47,13 +46,13 @@ import utilities.util.FileUtilities;
  * 		- Archive directory (hidden)
  * </pre>
  * <p>
- * All columns are for display purposes only, except for the <code>installed</code> column, which 
- * is a checkbox allowing users to install/uninstall a particular extension. 
- * 
+ * All columns are for display purposes only, except for the <code>installed</code> column, which
+ * is a checkbox allowing users to install/uninstall a particular extension.
+ *
  */
 class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
-	/** We don't care about the ordering of other columns, but the install/uninstall checkbox should be 
+	/** We don't care about the ordering of other columns, but the install/uninstall checkbox should be
 	 the first one and the name col is our initial sort column. */
 	final static int INSTALLED_COL = 0;
 	final static int NAME_COL = 1;
@@ -66,7 +65,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param serviceProvider the tool providing the extensions table
 	 */
 	protected ExtensionTableModel(ServiceProvider serviceProvider) {
@@ -76,8 +75,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	@Override
 	protected TableColumnDescriptor<ExtensionDetails> createTableColumnDescriptor() {
 
-		TableColumnDescriptor<ExtensionDetails> descriptor =
-			new TableColumnDescriptor<>();
+		TableColumnDescriptor<ExtensionDetails> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(new ExtensionInstalledColumn(), INSTALLED_COL, true);
 		descriptor.addVisibleColumn(new ExtensionNameColumn(), NAME_COL, true);
@@ -105,7 +103,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			return false;
 		}
 
-		// Do not allow GUI uninstallation of extensions manually installed in installation 
+		// Do not allow GUI uninstallation of extensions manually installed in installation
 		// directory
 		if (extension.getInstallPath() != null && FileUtilities.isPathContainedWithin(
 			Application.getApplicationLayout().getApplicationInstallationDir().getFile(false),
@@ -125,12 +123,12 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		super.setValueAt(aValue, rowIndex, columnIndex);
 
 		// We only care about the install column here, as it's the only one that
-		// is editable. 
+		// is editable.
 		if (columnIndex != INSTALLED_COL) {
 			return;
 		}
 
-		// If the user does not have write permissions on the installation dir, they cannot 
+		// If the user does not have write permissions on the installation dir, they cannot
 		// install.
 		ResourceFile installDir =
 			Application.getApplicationLayout().getExtensionInstallationDirs().get(0);
@@ -202,7 +200,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 	/**
 	 * Returns true if the model has changed as a result of installing or uninstalling an extension
-	 * 
+	 *
 	 * @return true if the model has changed as a result of installing or uninstalling an extension
 	 */
 	public boolean hasModelChanged() {
@@ -211,7 +209,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 	/**
 	 * Replaces the table model data with the given list.
-	 * 
+	 *
 	 * @param model the list to use as the model
 	 */
 	public void setModelData(List<ExtensionDetails> model) {
@@ -228,11 +226,11 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	}
 
 	/**
-	 * Returns the selected extension. 
+	 * Returns the selected extension.
 	 * <p>
 	 * Note that this table is single-selection only, so this will only
 	 * ever return 1 item.
-	 * 
+	 *
 	 * @param row the selected row
 	 * @return the selected extension, or null if nothing is selected
 	 */
@@ -259,8 +257,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings,
-				Object data, ServiceProvider sp) throws IllegalArgumentException {
+		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getName();
 		}
 
@@ -289,8 +287,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings,
-				Object data, ServiceProvider sp) throws IllegalArgumentException {
+		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getDescription();
 		}
 
@@ -319,8 +317,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings,
-				Object data, ServiceProvider sp) throws IllegalArgumentException {
+		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+				ServiceProvider sp) throws IllegalArgumentException {
 
 			String version = rowObject.getVersion();
 
@@ -356,8 +354,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public Boolean getValue(ExtensionDetails rowObject, Settings settings,
-				Object data, ServiceProvider sp) throws IllegalArgumentException {
+		public Boolean getValue(ExtensionDetails rowObject, Settings settings, Object data,
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.isInstalled();
 		}
 	}
@@ -379,8 +377,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings,
-				Object data, ServiceProvider sp) throws IllegalArgumentException {
+		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getInstallPath();
 		}
 	}
@@ -402,8 +400,8 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		@Override
-		public String getValue(ExtensionDetails rowObject, Settings settings,
-				Object data, ServiceProvider sp) throws IllegalArgumentException {
+		public String getValue(ExtensionDetails rowObject, Settings settings, Object data,
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getArchivePath();
 		}
 	}
@@ -415,17 +413,10 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			Component comp = super.getTableCellRendererComponent(data);
 
 			ExtensionDetails extension = getSelectedExtension(data.getRowViewIndex());
-			if (data.isSelected()) {
-				comp.setForeground(Color.WHITE);
+			if (!isValidVersion(extension)) {
+				comp.setForeground(getErrorForegroundColor(data.isSelected()));
 			}
-			else {
-				if (isValidVersion(extension) || SystemUtilities.isInDevelopmentMode()) {
-					comp.setForeground(Color.BLACK);
-				}
-				else {
-					comp.setForeground(Color.RED);
-				}
-			}
+
 			return comp;
 		}
 

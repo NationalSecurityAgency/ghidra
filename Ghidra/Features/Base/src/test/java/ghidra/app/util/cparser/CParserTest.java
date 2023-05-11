@@ -17,20 +17,20 @@ package ghidra.app.util.cparser;
 
 import static org.junit.Assert.*;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
 import ghidra.app.util.cparser.C.CParser;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 
-public class CParserTest extends AbstractGenericTest {
+public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	public CParserTest() {
 		super();
@@ -51,6 +51,21 @@ public class CParserTest extends AbstractGenericTest {
 		DataType dt = parser.getDataTypeManager().getDataType("/int32_t");
 		assertTrue(dt != null);
 		assertTrue(dt instanceof TypeDef);
+		
+		dt = parser.parse("struct mystruct {" +
+                     "    int field1;" +
+                     "    char field2;" +
+                     " };");
+		
+		assertTrue(dt != null);
+		assertTrue(dt instanceof Structure);
+		Structure sdt = (Structure) dt;
+		DataTypeComponent comp = sdt.getComponent(0);
+		assertEquals("field1", comp.getFieldName());
+		assertEquals(comp.getDataType().getName(),"int");
+		comp = sdt.getComponent(1);
+		assertEquals("field2", comp.getFieldName());
+		assertEquals(comp.getDataType().getName(),"char");
 	}
 
 	/**
@@ -79,6 +94,59 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue(pdt32 instanceof TypeDef);
 		assertTrue(pdt32.getName().equals("uint64_t"));
 		assertEquals(8, pdt32.getLength());
+	}
+	
+	@Test
+	public void testWcharT() throws Exception {
+
+		DataType dt;
+		Structure sdt;
+		DataTypeComponent comp;
+		
+		CParser parser;
+		
+		parser = new CParser();
+		dt = parser.parse("typedef int wchar_t;");
+		
+		assertTrue(dt instanceof WideCharDataType);
+
+		parser = new CParser();
+		dt = parser.parse("struct mystruct {" +
+						  "    wchar_t defined_wchar_t;" +
+				          "};");
+
+		sdt = (Structure) dt;
+		comp = sdt.getComponent(0);
+		assertTrue(comp.getDataType() instanceof WideCharDataType);
+		
+		parser = new CParser();
+		dt = parser.parse("typedef int wchar_t;" +
+		                  "struct mystruct {" +
+				          "    wchar_t defined_wchar_t;" +
+		                  "};");
+		
+		sdt = (Structure) dt;
+		comp = sdt.getComponent(0);
+		assertTrue(comp.getDataType() instanceof WideCharDataType);
+		
+
+		parser = new CParser();
+		dt = parser.parse("typedef short wchar_t;" +
+                                   "  typedef wchar_t foo;");
+
+		assertTrue(dt != null);
+		assertTrue(dt instanceof TypeDef);
+		assertTrue(dt.getName().equals("foo"));
+		assertEquals(2, dt.getLength());
+		assertTrue(((TypeDef) dt).getBaseDataType() instanceof BuiltInDataType);
+
+		parser = new CParser();
+		DataType pdt32 = parser.parse("typedef wchar_t foo;");
+		assertTrue(dt != null);
+		assertTrue(dt instanceof TypeDef);
+		assertTrue(dt.getName().equals("foo"));
+		assertEquals(2, dt.getLength());
+		assertTrue(((TypeDef) dt).getBaseDataType() instanceof BuiltInDataType);
 	}
 
 	@Test
@@ -154,11 +222,11 @@ public class CParserTest extends AbstractGenericTest {
 		String parseMessages = parser.getParseMessages();
 		System.out.println(parseMessages);
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
 
 		DataType dt;
 		DataType pointedToDT;
@@ -193,14 +261,14 @@ public class CParserTest extends AbstractGenericTest {
 		funcDef = (FunctionDefinition) dt;
 		str = funcDef.getPrototypeString();
 		assertEquals("signature not correct", "void _Once(_Once_t * , _func_anon_ * )", replaceAnonFuncName(str));
-		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getCallingConventionName());
 		funcArgs = funcDef.getArguments();
 		assertTrue("struct fstruct", funcArgs[0].getDataType() instanceof Pointer);	
 		assertTrue("ptr", funcArgs[1].getDataType() instanceof Pointer);
 		pointedToDT = ((Pointer) funcArgs[1].getDataType()).getDataType();
 		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
 		funcDef = (FunctionDefinition) pointedToDT;
-		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getCallingConventionName());
 		str = funcDef.getPrototypeString();
 		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
 
@@ -209,12 +277,12 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue("_Twice function definition", dt instanceof FunctionDefinition);
 		funcDef = (FunctionDefinition) dt;
 		str = funcDef.getPrototypeString();
-		assertEquals("calling convention _Twice", "__stdcall", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Twice", "__stdcall", funcDef.getCallingConventionName());
 		funcArgs = funcDef.getArguments();
 		pointedToDT = ((Pointer) funcArgs[0].getDataType()).getDataType();
 		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
 		funcDef = (FunctionDefinition) pointedToDT;
-		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getCallingConventionName());
 		str = funcDef.getPrototypeString();
 		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
 
@@ -223,12 +291,12 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue("_Twice function definition", dt instanceof FunctionDefinition);
 		funcDef = (FunctionDefinition) dt;
 		str = funcDef.getPrototypeString();
-		assertEquals("calling convention _Thrice", "", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Thrice", "unknown", funcDef.getCallingConventionName());
 		funcArgs = funcDef.getArguments();
 		pointedToDT = ((Pointer) funcArgs[0].getDataType()).getDataType();
 		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
 		funcDef = (FunctionDefinition) pointedToDT;
-		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getCallingConventionName());
 		str = funcDef.getPrototypeString();
 		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
 		
@@ -276,22 +344,34 @@ public class CParserTest extends AbstractGenericTest {
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "stdcall_func");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
-		assertTrue("Callee should not purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() == GenericCallingConvention.stdcall);
+		assertTrue("Callee should not purge", CompilerSpec.CALLING_CONVENTION_stdcall
+				.equals(((FunctionDefinition) dt).getCallingConventionName()));
 		assertTrue("signature not correct", str.equals("int stdcall_func(int b)"));
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "cdecl_func");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
-		assertTrue("Caller should purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() != GenericCallingConvention.stdcall);
+		assertTrue("Caller should purge", CompilerSpec.CALLING_CONVENTION_cdecl
+				.equals(((FunctionDefinition) dt).getCallingConventionName()));
 		assertTrue("signature not correct", str.equals("int cdecl_func(int a)"));
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "cdecl_func_after");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
-		assertTrue("Caller should purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() != GenericCallingConvention.stdcall);
+		assertTrue("Caller should purge", CompilerSpec.CALLING_CONVENTION_cdecl
+				.equals(((FunctionDefinition) dt).getCallingConventionName()));
 
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "_Noreturn_exit");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
+
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "win_exit");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
+
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "gcc_exit");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
+		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "UINT2");
 		assertTrue(dt instanceof TypeDef);
 		assertEquals("ushort", ((TypeDef) dt).getBaseDataType().getName());

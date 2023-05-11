@@ -15,10 +15,7 @@
  */
 package ghidra.trace.database.symbol;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.common.collect.Range;
+import java.util.*;
 
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.symbol.OverlappingNamespaceException;
@@ -26,8 +23,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.program.DBTraceProgramView;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.util.TraceChangeRecord;
@@ -89,7 +86,7 @@ public class DBTraceFunctionSymbolView
 	}
 
 	protected void assertNotOverlapping(DBTraceFunctionSymbol exclude, Address entryPoint,
-			Range<Long> span, AddressSetView proposedBody) throws OverlappingFunctionException {
+			Lifespan span, AddressSetView proposedBody) throws OverlappingFunctionException {
 		for (AddressRange rng : proposedBody) {
 			for (DBTraceFunctionSymbol overlap : manager.functions.getIntersecting(span, null, rng,
 				false, true)) {
@@ -103,7 +100,7 @@ public class DBTraceFunctionSymbolView
 	}
 
 	@Override
-	public DBTraceFunctionSymbol add(Range<Long> lifespan, Address entryPoint, AddressSetView body,
+	public DBTraceFunctionSymbol add(Lifespan lifespan, Address entryPoint, AddressSetView body,
 			String name, TraceFunctionSymbol thunked, TraceNamespaceSymbol parent,
 			SourceType source) throws InvalidInputException, OverlappingFunctionException {
 		if (name == null || name.length() == 0 || SymbolUtilities.isReservedDynamicLabelName(name,
@@ -131,8 +128,7 @@ public class DBTraceFunctionSymbolView
 
 			if (manager.trace.getCodeManager()
 					.definedData()
-					.getAt(
-						DBTraceUtils.lowerEndpoint(lifespan), entryPoint) != null) {
+					.getAt(lifespan.lmin(), entryPoint) != null) {
 				throw new IllegalArgumentException(
 					"Function entry point cannot be at defined data");
 			}
@@ -148,7 +144,7 @@ public class DBTraceFunctionSymbolView
 			name = doValidateName(name, entryPoint, source);
 
 			DBTraceLabelSymbol toPromote = manager.labels.getChildWithNameAt(name,
-				DBTraceUtils.lowerEndpoint(lifespan), null, entryPoint, dbnsParent);
+				lifespan.lmin(), null, entryPoint, dbnsParent);
 			if (toPromote != null && toPromote.getLifespan().equals(lifespan)) {
 				toPromote.delete();
 			}
@@ -168,54 +164,19 @@ public class DBTraceFunctionSymbolView
 		}
 	}
 
-	public static List<String> getCallingConventionNames(CompilerSpec cs) {
-		PrototypeModel[] namedCCs = cs.getCallingConventions();
-		List<String> names = new ArrayList<>(2 + namedCCs.length);
-		names.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
-		names.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
-		for (PrototypeModel model : namedCCs) {
-			names.add(model.getName());
-		}
-		return names;
-	}
-
 	@Override
-	public List<String> getCallingConventionNames() {
-		// TODO: Allow for user-selected compiler spec(s)
-		return getCallingConventionNames(manager.trace.getBaseCompilerSpec());
+	public Collection<String> getCallingConventionNames() {
+		return manager.dataTypeManager.getDefinedCallingConventionNames();
 	}
 
 	@Override
 	public PrototypeModel getDefaultCallingConvention() {
-		CompilerSpec cs = manager.trace.getBaseCompilerSpec();
-		if (cs == null) {
-			return null;
-		}
-		return cs.getDefaultCallingConvention();
+		return manager.dataTypeManager.getDefaultCallingConvention();
 	}
 
 	@Override
 	public PrototypeModel getCallingConvention(String name) {
-		CompilerSpec cs = manager.trace.getBaseCompilerSpec();
-		if (cs == null) {
-			return null;
-		}
-		if (Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(name)) {
-			return null;
-		}
-		if (Function.DEFAULT_CALLING_CONVENTION_STRING.equals(name)) {
-			return cs.getDefaultCallingConvention();
-		}
-		return cs.getCallingConvention(name);
-	}
-
-	@Override
-	public PrototypeModel[] getCallingConventions() {
-		CompilerSpec cs = manager.trace.getBaseCompilerSpec();
-		if (cs == null) {
-			return EMPTY_MODEL_LIST;
-		}
-		return cs.getCallingConventions();
+		return manager.dataTypeManager.getCallingConvention(name);
 	}
 
 	// TODO: Move this into a FunctionUtilities class?

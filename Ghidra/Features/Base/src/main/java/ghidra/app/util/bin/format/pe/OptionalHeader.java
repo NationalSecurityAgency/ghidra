@@ -267,10 +267,6 @@ public interface OptionalHeader extends StructConverter {
 	 */
 	public long getImageBase();
 
-	public long getOriginalImageBase();
-
-	public boolean wasRebased();
-
 	/**
 	 * @return the RVA that would be assigned to the next section following the last section
 	 */

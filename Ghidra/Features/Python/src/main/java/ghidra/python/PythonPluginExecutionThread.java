@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.python.core.PyException;
 
+import db.Transaction;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraState;
 import ghidra.framework.plugintool.PluginTool;
@@ -59,26 +60,19 @@ class PythonPluginExecutionThread extends Thread {
 		Program program = plugin.getCurrentProgram();
 
 		// Setup transaction for the execution.
-		int transaction_number = -1;
-		if (program != null) {
-			transaction_number = program.startTransaction("Python command");
-		}
+		try (Transaction tx = program != null ? program.openTransaction("Python command") : null) {
+			// Setup Ghidra state to be passed into interpreter
+			interactiveTaskMonitor.clearCancelled();
+			interactiveScript.setSourceFile(new ResourceFile(new File("python")));
+			PluginTool tool = plugin.getTool();
+			interactiveScript.set(
+				new GhidraState(tool, tool.getProject(), program, plugin.getProgramLocation(),
+					plugin.getProgramSelection(), plugin.getProgramHighlight()),
+				interactiveTaskMonitor, new PrintWriter(plugin.getConsole().getStdOut()));
 
-		// Setup Ghidra state to be passed into interpreter
-		interactiveTaskMonitor.clearCanceled();
-		interactiveScript.setSourceFile(new ResourceFile(new File("python")));
-		PluginTool tool = plugin.getTool();
-		interactiveScript.set(
-			new GhidraState(tool, tool.getProject(), program, plugin.getProgramLocation(),
-				plugin.getProgramSelection(), plugin.getProgramHighlight()),
-			interactiveTaskMonitor, new PrintWriter(plugin.getConsole().getStdOut()));
-
-		// Execute the command
-		boolean commit = false;
-		moreInputWanted.set(false);
-		try {
+			// Execute the command
+			moreInputWanted.set(false);
 			moreInputWanted.set(plugin.getInterpreter().push(cmd, plugin.getInteractiveScript()));
-			commit = true;
 		}
 		catch (PyException pye) {
 			String exceptionName = PyException.exceptionClassName(pye.type);
@@ -86,20 +80,17 @@ class PythonPluginExecutionThread extends Thread {
 				plugin.reset();
 			}
 			else {
-				plugin.getConsole().getErrWriter().println("Suppressing exception: " +
-					PyException.exceptionClassName(pye.type));
+				plugin.getConsole()
+						.getErrWriter()
+						.println(
+							"Suppressing exception: " + PyException.exceptionClassName(pye.type));
 			}
 		}
 		catch (StackOverflowError soe) {
 			plugin.getConsole().getErrWriter().println("Stack overflow!");
 		}
 		finally {
-			// Re-get the current program in case the user closed the program while a long running 
-			// command was executing.
-			program = plugin.getCurrentProgram();
-			if (program != null) {
-				program.endTransaction(transaction_number, commit);
-			}
+			interactiveScript.end(false); // end any transactions the script may have started
 		}
 	}
 }

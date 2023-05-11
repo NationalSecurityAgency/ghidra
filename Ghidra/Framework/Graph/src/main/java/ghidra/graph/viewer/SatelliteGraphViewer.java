@@ -37,7 +37,7 @@ public class SatelliteGraphViewer<V extends VisualVertex, E extends VisualEdge<V
 
 	protected GraphViewer<V, E> graphViewer;
 	private boolean docked;
-	private VisualGraphOptions options;
+	protected VisualGraphOptions options;
 
 	public SatelliteGraphViewer(GraphViewer<V, E> master, Dimension preferredSize) {
 		super(master, preferredSize);

@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.bin.format.dwarf4.DWARFException;
@@ -37,19 +38,11 @@ public class DWARFParser {
 	private DWARFProgram prog;
 	private DWARFDataTypeManager dwarfDTM;
 	private TaskMonitor monitor;
-	private DWARFImportOptions importOptions;
-	private DWARFImportSummary importSummary = new DWARFImportSummary();
 
-	public DWARFParser(DWARFProgram prog, DataTypeManager builtInDTM, TaskMonitor monitor) {
+	public DWARFParser(DWARFProgram prog, TaskMonitor monitor) {
 		this.prog = prog;
 		this.monitor = monitor;
-		this.importOptions = prog.getImportOptions();
-		this.dwarfDTM = new DWARFDataTypeManager(prog, prog.getGhidraProgram().getDataTypeManager(),
-			builtInDTM, importSummary);
-	}
-
-	public DWARFImportOptions getImportOptions() {
-		return importOptions;
+		this.dwarfDTM = prog.getDwarfDTM();
 	}
 
 	/**
@@ -83,7 +76,7 @@ public class DWARFParser {
 		CategoryPath rootCP = prog.getRootDNI().asCategoryPath();
 
 		for (DataTypePath dataTypePath : importedTypes) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			if ( (monitor.getProgress() % 5) == 0 ) {
@@ -193,8 +186,10 @@ public class DWARFParser {
 		monitor.setIndeterminate(false);
 		monitor.setShowProgressValue(true);
 
-		long start_ts = System.currentTimeMillis();
+		DWARFImportOptions importOptions = prog.getImportOptions();
+		DWARFImportSummary importSummary = prog.getImportSummary();
 
+		long start_ts = System.currentTimeMillis();
 		if (importOptions.isImportDataTypes()) {
 			dwarfDTM.importAllDataTypes(monitor);
 			prog.getGhidraProgram().flushEvents();
@@ -203,8 +198,7 @@ public class DWARFParser {
 
 		if (importOptions.isImportFuncs()) {
 			long funcstart_ts = System.currentTimeMillis();
-			DWARFFunctionImporter dfi =
-				new DWARFFunctionImporter(prog, dwarfDTM, importOptions, importSummary, monitor);
+			DWARFFunctionImporter dfi = new DWARFFunctionImporter(prog, monitor);
 			dfi.importFunctions();
 			importSummary.funcsElapsedMS = System.currentTimeMillis() - funcstart_ts;
 		}

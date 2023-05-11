@@ -61,7 +61,7 @@ class AddBlockModel {
 	private long fileBytesOffset = -1;
 
 	enum InitializedType {
-		UNITIALIZED, INITIALIZED_FROM_VALUE, INITIALIZED_FROM_FILE_BYTES;
+		UNINITIALIZED, INITIALIZED_FROM_VALUE, INITIALIZED_FROM_FILE_BYTES;
 	}
 
 	AddBlockModel(PluginTool tool, Program program) {
@@ -127,7 +127,7 @@ class AddBlockModel {
 		isOverlay = false;
 		schemeDestByteCount = blockType == MemoryBlockType.BIT_MAPPED ? 8 : 1;
 		schemeSrcByteCount = 1;
-		initializedType = InitializedType.UNITIALIZED;
+		initializedType = InitializedType.UNINITIALIZED;
 		validateInfo();
 		listener.stateChanged(null);
 	}
@@ -275,7 +275,7 @@ class AddBlockModel {
 			case INITIALIZED_FROM_VALUE:
 				return new AddInitializedMemoryBlockCmd(blockName, comment, source, startAddr,
 					length, isRead, isWrite, isExecute, isVolatile, (byte) initialValue, isOverlay);
-			case UNITIALIZED:
+			case UNINITIALIZED:
 				return new AddUninitializedMemoryBlockCmd(blockName, comment, source, startAddr,
 					length, isRead, isWrite, isExecute, isVolatile, isOverlay);
 			default:

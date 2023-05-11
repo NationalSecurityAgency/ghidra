@@ -16,6 +16,8 @@
 #include "type.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 /// The base propagation ordering associated with each meta-type.
 /// The array elements correspond to the ordering of #type_metatype.
 sub_metatype Datatype::base2sub[15] = {
@@ -1009,6 +1011,13 @@ Datatype *TypeArray::getSubType(uintb off,uintb *newoff) const
   return arrayof;
 }
 
+int4 TypeArray::getHoleSize(int4 off) const
+
+{
+  int4 newOff = off % arrayof->getSize();
+  return arrayof->getHoleSize(newOff);
+}
+
 /// Given some contiguous piece of the array, figure out which element overlaps
 /// the piece, and pass back the element index and the renormalized offset
 /// \param off is the offset into the array
@@ -1045,17 +1054,26 @@ void TypeArray::encode(Encoder &encoder) const
 Datatype *TypeArray::resolveInFlow(PcodeOp *op,int4 slot)
 
 {
-  // This is currently only called if the array size is 1
-  // in which case this should always resolve to the element data-type
-  return arrayof;
+  Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
+
+  int4 fieldNum = TypeStruct::scoreSingleComponent(this,op,slot);
+
+  ResolvedUnion compFill(this,fieldNum,*fd->getArch()->types);
+  fd->setUnionField(this, op, slot, compFill);
+  return compFill.getDatatype();
 }
 
 Datatype* TypeArray::findResolve(const PcodeOp *op,int4 slot)
 
 {
-  // This is currently only called if the array size is 1
-  // in which case this should always resolve to the element data-type
-  return arrayof;
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  const ResolvedUnion *res = fd->getUnionField(this, op, slot);
+  if (res != (ResolvedUnion *)0)
+    return res->getDatatype();
+  return arrayof;		// If not calculated before, assume referring to the element
 }
 
 int4 TypeArray::findCompatibleResolve(Datatype *ct) const
@@ -1401,6 +1419,23 @@ Datatype *TypeStruct::getSubType(uintb off,uintb *newoff) const
   return curfield.type;
 }
 
+int4 TypeStruct::getHoleSize(int4 off) const
+
+{
+  int4 i = getLowerBoundField(off);
+  if (i >= 0) {
+    const TypeField &curfield( field[i] );
+    int4 newOff = off - curfield.offset;
+    if (newOff < curfield.type->getSize())
+      return curfield.type->getHoleSize(newOff);
+  }
+  i += 1;				// advance to first field following off
+  if (i < field.size()) {
+    return field[i].offset - off;	// Distance to following field
+  }
+  return getSize() - off;		// Distance to end of structure
+}
+
 Datatype *TypeStruct::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const
 
 {
@@ -1567,14 +1602,15 @@ void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
   }
 }
 
-/// We know if this method is called that \b this structure has a single field that fills the entire
-/// structure.  The indicated Varnode can either be referred either by naming the struture or naming
-/// the field.  This method returns an indication of the best fit: either 0 for the field or
-/// -1 for the structure.
+/// If this method is called, the given data-type has a single component that fills it entirely
+/// (either a field or an element). The indicated Varnode can be resolved either by naming the
+/// data-type or naming the component. This method returns an indication of the best fit:
+/// either 0 for the component or -1 for the data-type.
+/// \param parent is the given data-type with a single component
 /// \param op is the given PcodeOp using the Varnode
 /// \param slot is -1 if the Varnode is an output or >=0 indicating the input slot
 /// \return either 0 to indicate the field or -1 to indicate the structure
-int4 TypeStruct::scoreFill(PcodeOp *op,int4 slot) const
+int4 TypeStruct::scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot)
 
 {
   if (op->code() == CPUI_COPY || op->code() == CPUI_INDIRECT) {
@@ -1583,14 +1619,14 @@ int4 TypeStruct::scoreFill(PcodeOp *op,int4 slot) const
       vn = op->getOut();
     else
       vn = op->getIn(0);
-    if (vn->isTypeLock() && vn->getType() == this)
+    if (vn->isTypeLock() && vn->getType() == parent)
       return -1;	// COPY of the structure directly, use whole structure
   }
   else if ((op->code() == CPUI_LOAD && slot == -1)||(op->code() == CPUI_STORE && slot == 2)) {
     Varnode *vn = op->getIn(1);
     if (vn->isTypeLock()) {
       Datatype *ct = vn->getTypeReadFacing(op);
-      if (ct->getMetatype() == TYPE_PTR && ((TypePointer *)ct)->getPtrTo() == this)
+      if (ct->getMetatype() == TYPE_PTR && ((TypePointer *)ct)->getPtrTo() == parent)
 	return -1;	// LOAD or STORE of the structure directly, use whole structure
     }
   }
@@ -1603,11 +1639,11 @@ int4 TypeStruct::scoreFill(PcodeOp *op,int4 slot) const
 	param = fc->getParam(slot-1);
       else if (slot < 0 && fc->isOutputLocked())
 	param = fc->getOutput();
-      if (param != (ProtoParameter *)0 && param->getType() == this)
-	return -1;	// Function signature refers to structure directly, use whole structure
+      if (param != (ProtoParameter *)0 && param->getType() == parent)
+	return -1;	// Function signature refers to parent directly, resolve to parent
     }
   }
-  return 0;	// In all other cases refer to the field
+  return 0;	// In all other cases resolve to the component
 }
 
 Datatype *TypeStruct::resolveInFlow(PcodeOp *op,int4 slot)
@@ -1618,7 +1654,7 @@ Datatype *TypeStruct::resolveInFlow(PcodeOp *op,int4 slot)
   if (res != (ResolvedUnion *)0)
     return res->getDatatype();
 
-  int4 fieldNum = scoreFill(op,slot);
+  int4 fieldNum = scoreSingleComponent(this,op,slot);
 
   ResolvedUnion compFill(this,fieldNum,*fd->getArch()->types);
   fd->setUnionField(this, op, slot, compFill);
@@ -1825,12 +1861,14 @@ const TypeField *TypeUnion::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,
 {
   Funcdata *fd = op->getParent()->getFuncdata();
   const ResolvedUnion *res = fd->getUnionField(this, op, slot);
-  if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
-    const TypeField *field = getField(res->getFieldNum());
-    newoff = offset - field->offset;
-    return field;
+  if (res != (ResolvedUnion *)0) {
+    if (res->getFieldNum() >= 0) {
+      const TypeField *field = getField(res->getFieldNum());
+      newoff = offset - field->offset;
+      return field;
+    }
   }
-  if (op->code() == CPUI_SUBPIECE && slot == 1) {	// The slot is artificial in this case
+  else if (op->code() == CPUI_SUBPIECE && slot == 1) {	// The slot is artificial in this case
     ScoreUnionFields scoreFields(*fd->getArch()->types,this,offset,op);
     fd->setUnionField(this, op, slot, scoreFields.getResult());
     if (scoreFields.getResult().getFieldNum() >= 0) {
@@ -1894,6 +1932,87 @@ int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
+TypePartialStruct::TypePartialStruct(const TypePartialStruct &op)
+  : Datatype(op)
+{
+  stripped = op.stripped;
+  container = op.container;
+  offset = op.offset;
+}
+
+TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip)
+  : Datatype(sz,TYPE_PARTIALSTRUCT)
+{
+#ifdef CPUI_DEBUG
+  if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
+    throw LowlevelError("Parent of partial struct is not a struture or array");
+#endif
+  flags |= has_stripped;
+  stripped = strip;
+  container = contain;
+  offset = off;
+}
+
+void TypePartialStruct::printRaw(ostream &s) const
+
+{
+  container->printRaw(s);
+  s << "[off=" << dec << offset << ",sz=" << size << ']';
+}
+
+Datatype *TypePartialStruct::getSubType(uintb off,uintb *newoff) const
+
+{
+  int4 sizeLeft = (size - (int4)off);
+  off += offset;
+  Datatype *ct = container;
+  do {
+    ct = ct->getSubType(off, newoff);
+    if (ct == (Datatype *)0)
+      break;
+    off = *newoff;
+    // Component can extend beyond range of this partial, in which case we go down another level
+  } while(ct->getSize() - (int4)off > sizeLeft);
+  return ct;
+}
+
+int4 TypePartialStruct::getHoleSize(int4 off) const
+
+{
+  int4 sizeLeft = size-off;
+  off += offset;
+  int4 res = container->getHoleSize(off);
+  if (res > sizeLeft)
+    res = sizeLeft;
+  return res;
+}
+
+int4 TypePartialStruct::compare(const Datatype &op,int4 level) const
+
+{
+  int4 res = Datatype::compare(op,level);
+  if (res != 0) return res;
+  // Both must be partial
+  TypePartialStruct *tp = (TypePartialStruct *) &op;
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  level -= 1;
+  if (level < 0) {
+    if (id == op.getId()) return 0;
+    return (id < op.getId()) ? -1 : 1;
+  }
+  return container->compare(*tp->container,level); // Compare the underlying union
+}
+
+int4 TypePartialStruct::compareDependency(const Datatype &op) const
+
+{
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
+  TypePartialStruct *tp = (TypePartialStruct *) &op;	// Both must be partial
+  if (container != tp->container) return (container < tp->container) ? -1 : 1;	// Compare absolute pointers
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  return (op.getSize()-size);
+}
+
 TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
   : Datatype(op)
 {
@@ -1924,13 +2043,13 @@ const TypeField *TypePartialUnion::findTruncation(int4 off,int4 sz,const PcodeOp
   return container->findTruncation(off + offset, sz, op, slot, newoff);
 }
 
-int4 TypePartialUnion::numDepend(void)
+int4 TypePartialUnion::numDepend(void) const
 
 {
   return container->numDepend();
 }
 
-Datatype *TypePartialUnion::getDepend(int4 index)
+Datatype *TypePartialUnion::getDepend(int4 index) const
 
 {
   // Treat dependents as coming from the underlying union
@@ -2058,7 +2177,7 @@ void TypePointerRel::decode(Decoder &decoder,TypeFactory &typegrp)
   offset = decoder.readSignedInteger(ATTRIB_CONTENT);
   decoder.closeElement(subId);
   if (offset == 0)
-    throw new LowlevelError("For metatype=\"ptrstruct\", <off> tag must not be zero");
+    throw LowlevelError("For metatype=\"ptrstruct\", <off> tag must not be zero");
   submeta = SUB_PTRREL;
   if (name.size() == 0)		// If the data-type is not named
     markEphemeral(typegrp);	// it is considered ephemeral
@@ -3370,6 +3489,14 @@ TypeStruct *TypeFactory::getTypeStruct(const string &n)
   return (TypeStruct *) findAdd(tmp);
 }
 
+TypePartialStruct *TypeFactory::getTypePartialStruct(Datatype *contain,int4 off,int4 sz)
+
+{
+  Datatype *strip = getBase(sz, TYPE_UNKNOWN);
+  TypePartialStruct tps(contain,off,sz,strip);
+  return (TypePartialStruct *) findAdd(tps);
+}
+
 /// The created union will be incomplete and have no fields. They must be added later.
 /// \param n is the name of the union
 /// \return the TypeUnion object
@@ -3481,6 +3608,42 @@ TypePointer *TypeFactory::getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc
   tp.id = Datatype::hashName(nm);
   TypePointer *res = (TypePointer *)findAdd(tp);
   return res;
+}
+
+/// Drill down into nested data-types until we get to a data-type that exactly matches the
+/// given offset and size, and return this data-type.  Any \e union data-type encountered
+/// terminates the process and a partial union data-type is constructed and returned.
+/// If the range indicated by the offset and size contains only a partial field or crosses
+/// field boundaries, null is returned.
+/// \param ct is the structured data-type
+/// \param offset is the starting byte offset for the piece
+/// \param size is the number of bytes in the piece
+/// \return the data-type of the piece or null
+Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
+
+{
+  if (offset + size > ct->getSize())
+    return (Datatype *)0;
+  Datatype *lastType = (Datatype *)0;
+  uintb lastOff = 0;
+  uintb curOff = offset;
+  do {
+    if (ct->getSize() <= size) {
+      if (ct->getSize() == size)
+	return ct;			// Perfect size match
+      break;
+    }
+    else if (ct->getMetatype() == TYPE_UNION) {
+      return getTypePartialUnion((TypeUnion *)ct, curOff, size);
+    }
+    lastType = ct;
+    lastOff = curOff;
+    ct = ct->getSubType(curOff,&curOff);
+  } while(ct != (Datatype *)0);
+  // If we reach here, lastType is bigger than size
+  if (lastType->getMetatype() == TYPE_STRUCT || lastType->getMetatype() == TYPE_ARRAY)
+    return getTypePartialStruct(lastType, lastOff, size);
+  return (Datatype *)0;
 }
 
 /// The indicated Datatype object is removed from this container.
@@ -3941,6 +4104,8 @@ void TypeFactory::decodeCoreTypes(Decoder &decoder)
 void TypeFactory::decodeDataOrganization(Decoder &decoder)
 
 {
+  uint4 defaultSize = glb->getDefaultSize();
+  align = 0;
   uint4 elemId = decoder.openElement(ELEM_DATA_ORGANIZATION);
   for(;;) {
     uint4 subId = decoder.openElement();
@@ -3952,14 +4117,14 @@ void TypeFactory::decodeDataOrganization(Decoder &decoder)
       sizeOfLong = decoder.readSignedInteger(ATTRIB_VALUE);
     }
     else if (subId == ELEM_SIZE_ALIGNMENT_MAP) {
-      align = 0;
       for(;;) {
 	uint4 mapId = decoder.openElement();
 	if (mapId != ELEM_ENTRY) break;
+	int4 sz = decoder.readSignedInteger(ATTRIB_SIZE);
 	int4 val = decoder.readSignedInteger(ATTRIB_ALIGNMENT);
-	decoder.closeElement(mapId);
-	if (val > align)		// Take maximum size alignment
+	if (sz <= defaultSize)
 	  align = val;
+	decoder.closeElement(mapId);
       }
     }
     else {
@@ -3986,3 +4151,5 @@ void TypeFactory::parseEnumConfig(Decoder &decoder)
     enumtype = TYPE_UINT;
   decoder.closeElement(elemId);
 }
+
+} // End namespace ghidra

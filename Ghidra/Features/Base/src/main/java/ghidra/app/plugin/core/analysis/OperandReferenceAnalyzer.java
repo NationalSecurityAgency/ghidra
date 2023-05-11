@@ -36,6 +36,7 @@ import ghidra.framework.options.Options;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -144,7 +145,17 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 			pointerEnabled = false;
 			addressTablesEnabled = false;
 		}
+		
+		boolean isArm = program.getLanguage()
+				.getProcessor()
+				.equals(Processor.findOrPossiblyCreateProcessor("ARM"));
 
+		// if arm, turn off reference to pointer analysis
+		if (isArm) {
+			pointerEnabled = false;
+			addressTablesEnabled = false;
+		}
+		
 		// only analyze programs with address spaces > 16 bits
 		int bitSize = defaultAddressSpace.getSize();
 		return bitSize > 16;
@@ -223,7 +234,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 		AddressSet checkedTargets = new AddressSet();
 
 		while (iter.hasNext() && !newCodeFound) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address addr = iter.next();
 

@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
+import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -48,7 +49,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 	//private AbstractRecorderRegisterSet threadRegisters;
 	protected TargetBreakpointSpecContainer threadBreakpointContainer;
 
-	protected Map<Integer, TargetRegisterBank> regs = new HashMap<>();
+	protected Map<Integer, Set<TargetRegisterBank>> regs = new HashMap<>();
 	protected Collection<TargetRegister> extraRegs;
 
 	protected TargetExecutionState state = TargetExecutionState.ALIVE;
@@ -163,26 +164,39 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		if (regMapper == null) {
 			throw new IllegalStateException("Have not found register descriptions for " + thread);
 		}
-		if (!regMapper.getRegistersOnTarget().containsAll(registers)) {
-			throw new IllegalArgumentException(
-				"All given registers must be recognized by the target");
+		List<TargetRegister> tRegs = registers.stream()
+				.map(regMapper::traceToTarget)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
+		if (tRegs.size() < registers.size()) {
+			Msg.warn(this,
+				"All requested registers must be recognized by the model as registers");
 		}
 		if (registers.isEmpty()) {
 			return CompletableFuture.completedFuture(Map.of());
 		}
-		List<TargetRegister> tRegs =
-			registers.stream().map(regMapper::traceToTarget).collect(Collectors.toList());
 
-		TargetRegisterBank bank = getTargetRegisterBank(thread, frameLevel);
-		if (bank == null) {
+		Set<TargetRegisterBank> banks = getTargetRegisterBank(thread, frameLevel);
+		if (banks == null) {
 			throw new IllegalArgumentException(
 				"Given thread and frame level does not have a live register bank");
 		}
 		// NOTE: Cache update, if applicable, will cause recorder to write values to trace
-		return bank.readRegisters(tRegs).thenApply(regMapper::targetToTrace);
+		AsyncFence fence = new AsyncFence();
+		Map<Register, RegisterValue> result = new HashMap<>();
+		for (TargetRegisterBank bank : banks) {
+			fence.include(bank.readRegisters(tRegs)
+					.thenApply(regMapper::targetToTrace)
+					.thenAccept(br -> {
+						synchronized (result) {
+							result.putAll(br);
+						}
+					}));
+		}
+		return fence.ready().thenApply(__ -> result);
 	}
 
-	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {
+	public Set<TargetRegisterBank> getTargetRegisterBank(TraceThread thread, int frameLevel) {
 		return regs.get(frameLevel);
 	}
 
@@ -210,18 +224,23 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 			doFetchAndInitRegMapper(bank);
 		}
 		int frameLevel = stackRecorder.getSuccessorFrameLevel(bank);
-		//System.err.println("offerRegisters " + this.targetThread.getDisplay() + ":" + frameLevel);
-		TargetRegisterBank old = regs.put(frameLevel, bank);
-		if (null != old) {
+		Set<TargetRegisterBank> set = regs.get(frameLevel);
+		if (set == null) {
+			set = new HashSet<>();
+			regs.put(frameLevel, set);
+		}
+		if (set.contains(bank)) {
 			Msg.warn(this, "Unexpected register bank replacement");
 		}
+		set.add(bank);
 	}
 
 	@Override
 	public void removeRegisters(TargetRegisterBank bank) {
 		int frameLevel = stackRecorder.getSuccessorFrameLevel(bank);
-		TargetRegisterBank old = regs.remove(frameLevel);
-		if (bank != old) {
+		Set<TargetRegisterBank> set = regs.get(frameLevel);
+		boolean remove = set.remove(bank);
+		if (!remove) {
 			Msg.warn(this, "Unexpected register bank upon removal");
 		}
 	}
@@ -261,6 +280,9 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 			}
 		}
 		int frameLevel = stackRecorder.getSuccessorFrameLevel(bank);
+		if (frameLevel < 0) {
+			return;
+		}
 		long snap = recorder.getSnap();
 		String path = bank.getJoinedPath(".");
 		TimedMsg.debug(this, "Reg values changed: " + updates.keySet());
@@ -364,13 +386,17 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 			return regMapper.traceToTarget(ent.getValue());
 		}).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 
-		TargetRegisterBank bank = getTargetRegisterBank(traceThread, frameLevel);
-		if (bank == null) {
+		Set<TargetRegisterBank> banks = getTargetRegisterBank(traceThread, frameLevel);
+		if (banks == null) {
 			throw new IllegalArgumentException(
 				"Given thread and frame level does not have a live register bank");
 		}
 		// NOTE: Model + recorder will cause applicable trace updates
-		return bank.writeRegistersNamed(tVals).thenApply(__ -> null);
+		AsyncFence fence = new AsyncFence();
+		for (TargetRegisterBank bank : banks) {
+			fence.include(bank.writeRegistersNamed(tVals).thenApply(__ -> null));
+		}
+		return fence.ready();
 	}
 
 	Address registerValueToTargetAddress(RegisterValue rv, byte[] value) {

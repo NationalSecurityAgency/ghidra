@@ -29,7 +29,7 @@ import ghidra.app.merge.tool.ListingMergePanelPlugin;
 import ghidra.app.merge.tree.ProgramTreeMergeManager;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.util.FieldNavigator;
 import ghidra.framework.model.UndoableDomainObject;
 import ghidra.framework.plugintool.ModalPluginTool;
@@ -516,12 +516,12 @@ class MergeNavigatable implements Navigatable {
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// currently unsupported
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// currently unsupported
 
 	}

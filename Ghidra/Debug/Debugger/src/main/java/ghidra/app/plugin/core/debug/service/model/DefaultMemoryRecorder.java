@@ -15,16 +15,17 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
-
-import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedMemoryRecorder;
 import ghidra.app.plugin.core.debug.service.model.record.RecorderUtils;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetMemoryRegion;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.util.Msg;
@@ -80,7 +81,7 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 				if (region.getRange().getLength() != traceRange.getLength()) {
 					Msg.warn(this, "Truncated region: " + region);
 				}
-				traceRegion = memoryManager.addRegion(path, Range.atLeast(snap), traceRange,
+				traceRegion = memoryManager.addRegion(path, Lifespan.nowOn(snap), traceRange,
 					getTraceFlags(region));
 				traceRegion.setName(region.getDisplay());
 			}

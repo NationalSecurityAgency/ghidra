@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.Location;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.*;
@@ -55,7 +56,7 @@ public class JdiModelTargetRegister extends JdiModelTargetObjectImpl implements 
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay() //

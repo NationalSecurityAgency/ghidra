@@ -146,7 +146,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 
 		try {
 			monitor = taskMonitor;
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			model = createModel(program);
 			model.validate();
@@ -228,17 +228,17 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			dt = new ArrayDataType(dt, count, dt.getLength(), program.getDataTypeManager());
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Is the data type already applied at the address?
 		if (matchingDataExists(dt, program, address)) {
 			return false;
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Create data at the address using the datatype.
-		DataUtilities.createData(program, address, dt, dt.getLength(), false, getClearDataMode());
+		DataUtilities.createData(program, address, dt, dt.getLength(), getClearDataMode());
 
 		return true;
 	}

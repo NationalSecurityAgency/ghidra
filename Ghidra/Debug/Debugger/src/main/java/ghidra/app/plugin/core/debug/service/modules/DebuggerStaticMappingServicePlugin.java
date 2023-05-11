@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.events.ProgramOpenedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.ModuleMapProposalGenerator;
 import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.services.*;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
@@ -54,7 +54,6 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -344,7 +343,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			return result;
 		}
 
-		public ProgramLocation getOpenMappedLocations(Address address, Range<Long> span) {
+		public ProgramLocation getOpenMappedLocations(Address address, Lifespan span) {
 			TraceAddressSnapRange at = new ImmutableTraceAddressSnapRange(address, span);
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
 				if (out.getKey().intersects(at)) {
@@ -357,7 +356,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			return null;
 		}
 
-		protected void collectOpenMappedPrograms(AddressRange rng, Range<Long> span,
+		protected void collectOpenMappedPrograms(AddressRange rng, Lifespan span,
 				Map<Program, Collection<MappedAddressRange>> result) {
 			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
@@ -376,7 +375,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		}
 
 		public Map<Program, Collection<MappedAddressRange>> getOpenMappedViews(AddressSetView set,
-				Range<Long> span) {
+				Lifespan span) {
 			Map<Program, Collection<MappedAddressRange>> result = new HashMap<>();
 			for (AddressRange rng : set) {
 				collectOpenMappedPrograms(rng, span, result);
@@ -384,7 +383,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			return Collections.unmodifiableMap(result);
 		}
 
-		protected void collectMappedProgramURLsInView(AddressRange rng, Range<Long> span,
+		protected void collectMappedProgramURLsInView(AddressRange rng, Lifespan span,
 				Set<URL> result) {
 			TraceAddressSnapRange tatr = new ImmutableTraceAddressSnapRange(rng, span);
 			for (Entry<TraceAddressSnapRange, MappingEntry> out : outbound.entrySet()) {
@@ -396,7 +395,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			}
 		}
 
-		public Set<URL> getMappedProgramURLsInView(AddressSetView set, Range<Long> span) {
+		public Set<URL> getMappedProgramURLsInView(AddressSetView set, Lifespan span) {
 			Set<URL> result = new HashSet<>();
 			for (AddressRange rng : set) {
 				collectMappedProgramURLsInView(rng, span, result);
@@ -547,9 +546,14 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private Set<Trace> affectedTraces = new HashSet<>();
 	private Set<Program> affectedPrograms = new HashSet<>();
 
+	private final ProgramModuleIndexer programModuleIndexer;
+	private final ModuleMapProposalGenerator moduleMapProposalGenerator;
+
 	public DebuggerStaticMappingServicePlugin(PluginTool tool) {
 		super(tool);
 		this.autoWiring = AutoService.wireServicesProvidedAndConsumed(this);
+		this.programModuleIndexer = new ProgramModuleIndexer(tool);
+		this.moduleMapProposalGenerator = new ModuleMapProposalGenerator(programModuleIndexer);
 
 		changeDebouncer.addListener(this::fireChangeListeners);
 		tool.getProject().getProjectData().addDomainFolderChangeListener(this);
@@ -729,8 +733,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	@Override
 	public void addMapping(TraceLocation from, ProgramLocation to, long length,
 			boolean truncateExisting) throws TraceConflictedMappingException {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(from.getTrace(), "Add mapping")) {
+		try (Transaction tx = from.getTrace().openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(from, to, length, truncateExisting);
 		}
 	}
@@ -738,8 +741,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	@Override
 	public void addMapping(MapEntry<?, ?> entry, boolean truncateExisting)
 			throws TraceConflictedMappingException {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(entry.getFromTrace(), "Add mapping")) {
+		try (Transaction tx = entry.getFromTrace().openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(entry, truncateExisting);
 		}
 	}
@@ -751,7 +753,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			entries.stream().collect(Collectors.groupingBy(ent -> ent.getFromTrace()));
 		for (Map.Entry<Trace, List<MapEntry<?, ?>>> ent : byTrace.entrySet()) {
 			Trace trace = ent.getKey();
-			try (UndoableTransaction tid = UndoableTransaction.start(trace, description)) {
+			try (Transaction tx = trace.openTransaction(description)) {
 				doAddMappings(trace, ent.getValue(), monitor, truncateExisting);
 			}
 		}
@@ -760,7 +762,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	protected static void doAddMappings(Trace trace, Collection<MapEntry<?, ?>> entries,
 			TaskMonitor monitor, boolean truncateExisting) throws CancelledException {
 		for (MapEntry<?, ?> ent : entries) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				DebuggerStaticMappingUtils.addMapping(ent, truncateExisting);
 			}
@@ -772,10 +774,9 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
+	public void addIdentityMapping(Trace from, Program toProgram, Lifespan lifespan,
 			boolean truncateExisting) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(from, "Add identity mappings")) {
+		try (Transaction tx = from.openTransaction("Add identity mappings")) {
 			DebuggerStaticMappingUtils.addIdentityMapping(from, toProgram, lifespan,
 				truncateExisting);
 		}
@@ -785,6 +786,23 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	public void addModuleMappings(Collection<ModuleMapEntry> entries, TaskMonitor monitor,
 			boolean truncateExisting) throws CancelledException {
 		addMappings(entries, monitor, truncateExisting, "Add module mappings");
+
+		Map<Program, List<ModuleMapEntry>> entriesByProgram = new HashMap<>();
+		for (ModuleMapEntry entry : entries) {
+			if (entry.isMemorize()) {
+				entriesByProgram.computeIfAbsent(entry.getToProgram(), p -> new ArrayList<>())
+						.add(entry);
+			}
+		}
+		for (Map.Entry<Program, List<ModuleMapEntry>> ent : entriesByProgram.entrySet()) {
+			try (Transaction tx =
+				ent.getKey().openTransaction("Memorize module mapping")) {
+				for (ModuleMapEntry entry : ent.getValue()) {
+					ProgramModuleIndexer.addModulePaths(entry.getToProgram(),
+						List.of(entry.getModule().getName()));
+				}
+			}
+		}
 	}
 
 	@Override
@@ -868,7 +886,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			TraceProgramView view = (TraceProgramView) loc.getProgram();
 			Trace trace = view.getTrace();
 			TraceLocation tloc = new DefaultTraceLocation(trace, null,
-				Range.singleton(getNonScratchSnap(view)), loc.getByteAddress());
+				Lifespan.at(getNonScratchSnap(view)), loc.getByteAddress());
 			ProgramLocation mapped = getOpenMappedLocation(tloc);
 			if (mapped == null) {
 				return null;
@@ -921,7 +939,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			if (info == null) {
 				return null;
 			}
-			return info.getOpenMappedViews(set, Range.singleton(snap));
+			return info.getOpenMappedViews(set, Lifespan.at(snap));
 		}
 	}
 
@@ -946,7 +964,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			if (info == null) {
 				return null;
 			}
-			urls = info.getMappedProgramURLsInView(set, Range.singleton(snap));
+			urls = info.getMappedProgramURLsInView(set, Lifespan.at(snap));
 		}
 		Set<Program> result = new HashSet<>();
 		for (URL url : urls) {
@@ -981,69 +999,71 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public Set<DomainFile> findProbableModulePrograms(TraceModule module) {
-		return DebuggerStaticMappingUtils.findProbableModulePrograms(module, tool.getProject());
+	public DomainFile findBestModuleProgram(AddressSpace space, TraceModule module) {
+		return programModuleIndexer.getBestMatch(space, module, programManager.getCurrentProgram());
 	}
 
 	@Override
 	public ModuleMapProposal proposeModuleMap(TraceModule module, Program program) {
-		return DebuggerStaticMappingProposals.proposeModuleMap(module, program);
+		return moduleMapProposalGenerator.proposeMap(module, program);
 	}
 
 	@Override
 	public ModuleMapProposal proposeModuleMap(TraceModule module,
 			Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeModuleMap(module, orderCurrentFirst(programs));
+		return moduleMapProposalGenerator.proposeBestMap(module, orderCurrentFirst(programs));
 	}
 
 	@Override
 	public Map<TraceModule, ModuleMapProposal> proposeModuleMaps(
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeModuleMaps(modules,
-			orderCurrentFirst(programs));
+		return moduleMapProposalGenerator.proposeBestMaps(modules, orderCurrentFirst(programs));
 	}
 
 	@Override
 	public SectionMapProposal proposeSectionMap(TraceSection section, Program program,
 			MemoryBlock block) {
-		return DebuggerStaticMappingProposals.proposeSectionMap(section, program, block);
+		return new DefaultSectionMapProposal(section, program, block);
 	}
 
 	@Override
 	public SectionMapProposal proposeSectionMap(TraceModule module, Program program) {
-		return DebuggerStaticMappingProposals.proposeSectionMap(module, program);
+		return DebuggerStaticMappingProposals.SECTIONS.proposeMap(module, program);
 	}
 
 	@Override
 	public SectionMapProposal proposeSectionMap(TraceModule module,
 			Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeSectionMap(module,
+		return DebuggerStaticMappingProposals.SECTIONS.proposeBestMap(module,
 			orderCurrentFirst(programs));
 	}
 
 	@Override
 	public Map<TraceModule, SectionMapProposal> proposeSectionMaps(
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeSectionMaps(modules,
+		return DebuggerStaticMappingProposals.SECTIONS.proposeBestMaps(modules,
 			orderCurrentFirst(programs));
 	}
 
 	@Override
 	public RegionMapProposal proposeRegionMap(TraceMemoryRegion region, Program program,
 			MemoryBlock block) {
-		return DebuggerStaticMappingProposals.proposeRegionMap(region, program, block);
+		return new DefaultRegionMapProposal(region, program, block);
 	}
 
 	@Override
 	public RegionMapProposal proposeRegionMap(Collection<? extends TraceMemoryRegion> regions,
 			Program program) {
-		return DebuggerStaticMappingProposals.proposeRegionMap(regions, program);
+		return DebuggerStaticMappingProposals.REGIONS
+				.proposeMap(Collections.unmodifiableCollection(regions), program);
 	}
 
 	@Override
 	public Map<Collection<TraceMemoryRegion>, RegionMapProposal> proposeRegionMaps(
 			Collection<? extends TraceMemoryRegion> regions,
 			Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeRegionMaps(regions, programs);
+		Set<Set<TraceMemoryRegion>> groups =
+			DebuggerStaticMappingProposals.groupRegionsByLikelyModule(regions);
+		return DebuggerStaticMappingProposals.REGIONS.proposeBestMaps(groups, programs);
 	}
 }

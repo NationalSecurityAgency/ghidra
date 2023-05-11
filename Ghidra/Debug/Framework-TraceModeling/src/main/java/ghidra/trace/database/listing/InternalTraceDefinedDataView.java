@@ -15,12 +15,11 @@
  */
 package ghidra.trace.database.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.listing.TraceDefinedDataView;
@@ -30,7 +29,7 @@ public interface InternalTraceDefinedDataView
 		extends TraceDefinedDataView, InternalTraceBaseDefinedUnitsView<TraceData> {
 
 	@Override
-	default TraceData create(TracePlatform platform, Range<Long> lifespan, Register register,
+	default TraceData create(TracePlatform platform, Lifespan lifespan, Register register,
 			DataType dataType) throws CodeUnitInsertionException {
 		TraceRegisterUtils.requireByteBound(register);
 		AddressRange range = platform.getConventionalRegisterRange(getSpace(), register);

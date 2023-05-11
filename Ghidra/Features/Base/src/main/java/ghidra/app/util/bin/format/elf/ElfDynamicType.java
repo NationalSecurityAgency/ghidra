@@ -114,7 +114,7 @@ public class ElfDynamicType {
 	//  public static ElfDynamicType DT_ENCODING = addDefaultDynamicType(32, "DT_ENCODING",
 	//	  "Start of encoded range", ElfDynamicValueType.VALUE);
 	public static ElfDynamicType DT_PREINIT_ARRAY = addDefaultDynamicType(32, "DT_PREINIT_ARRAY",
-		"Array with addresses of preinit fct", ElfDynamicValueType.VALUE);
+		"Array with addresses of preinit fct", ElfDynamicValueType.ADDRESS);
 	public static ElfDynamicType DT_PREINIT_ARRAYSZ = addDefaultDynamicType(33,
 		"DT_PREINIT_ARRAYSZ", "Size in bytes of DT_PREINIT_ARRAY", ElfDynamicValueType.VALUE);
 
@@ -245,7 +245,7 @@ public class ElfDynamicType {
 	/**
 	 * Add the specified dynamic entry type to the specified map.
 	 * @param type dynamic entry type
-	 * @param dynamicTypeMap
+	 * @param dynamicTypeMap map of dynamic types
 	 * @throws DuplicateNameException if new type name already defined within
 	 * the specified map
 	 */

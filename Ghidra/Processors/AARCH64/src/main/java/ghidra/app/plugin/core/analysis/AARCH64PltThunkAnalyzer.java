@@ -29,6 +29,7 @@ import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -165,7 +166,7 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 		}
 		// Only processing importer disassembly not yet claimed by function bodies
 		for (Function f : program.getFunctionManager().getFunctions(set, true)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			set = set.subtract(f.getBody());
 		}
 		return set;
@@ -190,7 +191,7 @@ public class AARCH64PltThunkAnalyzer extends AbstractAnalyzer {
 			
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address,
-					int size, RefType refType) {
+					int size, DataType dataType, RefType refType) {
 				return true;
 			}
 			

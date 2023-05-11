@@ -31,6 +31,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
+import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.app.util.cparser.CPP.DefineTable;
 import ghidra.app.util.cparser.CPP.ParseException;
 import ghidra.app.util.cparser.CPP.PreProcessor;
@@ -395,17 +396,14 @@ public class CreateAVR8GDTArchiveScript extends GhidraScript {
 	 */
 	private void parseProcessorDefs(String procName, FileDataTypeManager dtMgr, DataTypeManager[] openTypes)
 			throws ParseException, ghidra.app.util.cparser.C.ParseException, IOException {
-		PreProcessor cpp;
 		
 		String args[] = Arrays.append(orig_args, "-D__AVR_"+procName+"__");
-		
-        cpp = new PreProcessor();
         
-		String messages = CParserUtils.parseHeaderFiles(openTypes, filenames, args, dtMgr, "avr8:LE:16:atmega256", "gcc", cpp, monitor);
+		CParseResults results = CParserUtils.parseHeaderFiles(openTypes, filenames, args, dtMgr, "avr8:LE:16:atmega256", "gcc", monitor);
 		
-		Msg.info(this, messages);
+		Msg.info(this, results.getFormattedParseMessage(null));
 		
-		storeExtraDefinitions(procName, dtMgr, openTypes, cpp);
+		storeExtraDefinitions(procName, dtMgr, openTypes, results.preProcessor());
 	}
 
 	/**

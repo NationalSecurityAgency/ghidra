@@ -22,12 +22,15 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 
 import docking.util.GraphicsUtils;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * An icon that paints the given number
  */
 public class NumberIcon implements Icon {
 
+	private static final Color BORDER_COLOR = Palette.getColor("lightskyblue");
 	private String number;
 	private float bestFontSize = -1;
 
@@ -42,9 +45,9 @@ public class NumberIcon implements Icon {
 
 	@Override
 	public void paintIcon(Component c, Graphics g, int x, int y) {
-		g.setColor(Color.WHITE);
+		g.setColor(Colors.BACKGROUND);
 		g.fillRect(x, y, getIconWidth(), getIconHeight());
-		g.setColor(new Color(0xb5d5ff));
+		g.setColor(BORDER_COLOR);
 		g.drawRect(x, y, getIconWidth(), getIconHeight());
 
 		float fontSize = getMaxFontSize(g, getIconWidth() - 1, getIconHeight());
@@ -66,7 +69,7 @@ public class NumberIcon implements Icon {
 		int halfTextWidth = textWidth >> 1;
 		int baselineX = x + (halfWidth - halfTextWidth);
 
-		g.setColor(Color.BLACK);
+		g.setColor(Colors.FOREGROUND);
 		JComponent jc = null;
 		if (c instanceof JComponent) {
 			jc = (JComponent) c;

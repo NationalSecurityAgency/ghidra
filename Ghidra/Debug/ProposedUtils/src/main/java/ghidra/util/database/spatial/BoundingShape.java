@@ -30,7 +30,7 @@ public interface BoundingShape<S extends BoundingShape<S>> extends BoundedShape<
 
 	S unionBounds(S shape);
 
-	static <S extends BoundingShape<S>> S boundsUnion(Iterable<? extends S> shapes) {
+	static <S extends BoundingShape<S>> S unionIterable(Iterable<? extends S> shapes) {
 		S result = null;
 		for (S s : shapes) {
 			if (result == null) {

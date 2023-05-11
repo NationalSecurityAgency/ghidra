@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -313,6 +312,6 @@ public class x64AssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemblyCompat32_DEC_EAX() {
-		assertOneCompatRestExact("DEC EAX", "48", "09:00:00:00", 0x00400000, "DEC EAX");
+		assertOneCompatRestExact("DEC EAX", "48", "09:00:00:00:00:00:00:00", 0x00400000, "DEC EAX");
 	}
 }

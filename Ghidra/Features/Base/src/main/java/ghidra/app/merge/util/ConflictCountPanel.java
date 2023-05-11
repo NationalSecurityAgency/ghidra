@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +16,13 @@
 package ghidra.app.merge.util;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 
 import javax.swing.*;
 import javax.swing.text.*;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.merge.MergeConstants;
+import ghidra.util.Msg;
 
 /**
  * Panel that shows the current conflict number and the total number of
@@ -45,6 +45,7 @@ public class ConflictCountPanel extends JPanel {
 		super(new BorderLayout());
 		create();
 	}
+
 	/**
 	 * Update the counts, e.g., Conflict # 1 of 3.
 	 * @param currentCount current
@@ -52,39 +53,41 @@ public class ConflictCountPanel extends JPanel {
 	 */
 	public void updateCount(int currentCount, int totalCount) {
 		textPane.setText("");
-		
+
 		int offset = doc.getLength();
 		try {
 			doc.insertString(offset, "Conflict # ", textAttrSet);
 			offset = doc.getLength();
-			doc.insertString(offset, " "+currentCount +" ", countAttrSet);
+			doc.insertString(offset, " " + currentCount + " ", countAttrSet);
 			offset = doc.getLength();
 			doc.insertString(offset, " of ", textAttrSet);
 			offset = doc.getLength();
-			doc.insertString(offset, " "+totalCount +" ", countAttrSet);
-		} catch (BadLocationException e) {
+			doc.insertString(offset, " " + totalCount + " ", countAttrSet);
 		}
-	
+		catch (BadLocationException e) {
+			Msg.debug(this, "Exception updating text", e);
+		}
+
 	}
 
 	private void create() {
-		
+
 		setBorder(BorderFactory.createTitledBorder("Current Conflict"));
 		textPane = new JTextPane();
 		textPane.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 0));
 		textPane.setEditable(false);
 		add(textPane);
-		
+
 		doc = textPane.getStyledDocument();
-		
+
 		textPane.setBackground(getBackground());
-		
+
 		SimpleAttributeSet set = new SimpleAttributeSet();
 		set.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		set.addAttribute(StyleConstants.Foreground, Color.RED);
+		set.addAttribute(StyleConstants.Foreground, Messages.ERROR);
 
 		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		textAttrSet.addAttribute(StyleConstants.FontSize, 12);
 
 		countAttrSet = new SimpleAttributeSet();
 		countAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);

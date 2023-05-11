@@ -21,7 +21,6 @@ import java.util.Set;
 import db.DBConstants;
 import db.DBHandle;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -31,16 +30,25 @@ import ghidra.util.task.TaskMonitor;
  * 
  */
 abstract class ParentChildAdapter {
-	static final String TABLE_NAME = "DT_PARENT_CHILD";
+	static final String PARENT_CHILD_TABLE_NAME = "DT_PARENT_CHILD";
 
-	static ParentChildAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
+	/**
+	 * Gets an adapter for working with the function definition parameters database table.
+	 * @param handle handle to the database to be accessed.
+	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
+	 * @return the adapter for accessing the table of function definition parameters.
+	 * @throws VersionException if the database handle's version doesn't match the expected version.
+	 * @throws IOException if there is trouble accessing the database.
+	 */
+	static ParentChildAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix)
 			throws VersionException, IOException {
 
 		if (openMode == DBConstants.CREATE) {
-			return new ParentChildDBAdapterV0(handle, true);
+			return new ParentChildDBAdapterV0(handle, tablePrefix, true);
 		}
 		try {
-			return new ParentChildDBAdapterV0(handle, false);
+			return new ParentChildDBAdapterV0(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
@@ -48,20 +56,20 @@ abstract class ParentChildAdapter {
 			}
 			ParentChildAdapter adapter = findReadOnlyAdapter(handle);
 			if (openMode == DBConstants.UPGRADE) {
-				adapter = upgrade(handle, adapter);
+				adapter = upgrade(handle, adapter, tablePrefix);
 			}
 			return adapter;
 		}
 	}
 
-	static ParentChildAdapter findReadOnlyAdapter(DBHandle handle) {
+	private static ParentChildAdapter findReadOnlyAdapter(DBHandle handle) {
 		return new ParentChildDBAdapterNoTable(handle);
 	}
 
-	static ParentChildAdapter upgrade(DBHandle handle, ParentChildAdapter oldAdapter)
-			throws VersionException, IOException {
+	private static ParentChildAdapter upgrade(DBHandle handle, ParentChildAdapter oldAdapter,
+			String tablePrefix) throws VersionException, IOException {
 
-		ParentChildDBAdapterV0 adapter = new ParentChildDBAdapterV0(handle, true);
+		ParentChildDBAdapterV0 adapter = new ParentChildDBAdapterV0(handle, tablePrefix, true);
 		adapter.setNeedsInitializing();
 		return adapter;
 	}

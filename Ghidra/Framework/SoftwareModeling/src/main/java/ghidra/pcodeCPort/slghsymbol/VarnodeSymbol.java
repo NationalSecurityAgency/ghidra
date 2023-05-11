@@ -15,12 +15,12 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
+
+import java.io.PrintStream;
 
 import org.jdom.Element;
 
-import generic.util.UnsignedDataUtils;
 // A global varnode
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
@@ -71,9 +71,9 @@ public class VarnodeSymbol extends PatternlessSymbol {
 		int addrSize = base.getAddrSize();
 		long maxByteOffset = ((long) base.getWordSize() << (8 * addrSize)) - 1;
 		long endOffset = offset + size - 1;
-		boolean sizeError = size != 0 && UnsignedDataUtils.unsignedGreaterThan(offset, endOffset);
+		boolean sizeError = size != 0 && Long.compareUnsigned(offset, endOffset) > 0;
 		if (!sizeError && addrSize < 8) {
-			sizeError = UnsignedDataUtils.unsignedGreaterThan(endOffset, maxByteOffset);
+			sizeError = Long.compareUnsigned(endOffset, maxByteOffset) > 0;
 		}
 		if (sizeError) {
 			throw new SleighError(nm + ":" + size + " @ " + base.getName() + ":" +

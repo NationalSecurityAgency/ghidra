@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.*;
 
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.agent.InvalidatableTargetObjectIf;
 import ghidra.dbg.jdi.manager.JdiManager;
 import ghidra.dbg.jdi.model.*;
@@ -30,7 +29,6 @@ import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.CollectionUtils.Delta;
-import ghidra.util.datastruct.ListenerSet;
 
 public interface JdiModelTargetObject extends TargetObject, InvalidatableTargetObjectIf {
 
@@ -55,8 +53,6 @@ public interface JdiModelTargetObject extends TargetObject, InvalidatableTargetO
 	public CompletableFuture<? extends Map<String, ?>> fetchAttributes();
 
 	public Delta<?, ?> changeAttributes(List<String> remove, Map<String, ?> add, String reason);
-
-	public ListenerSet<DebuggerModelListener> getListeners();
 
 	public default JdiModelTargetObject getInstance(Mirror object) {
 		JdiModelTargetObject targetObject = getTargetObject(object);

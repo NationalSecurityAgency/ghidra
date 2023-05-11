@@ -34,7 +34,7 @@
 // NOTE: As this is a prototype script, the location, names, and design of data types created by 
 // this script and default vfunctions named by this script are likely to change in the future 
 // once an official design for Object Oriented representation is determined.  
-// NOTE: Windows class recovery is more complete and tested than gcc class recovery, which is still 
+// NOTE: Windows class recovery is more complete and tested than Gcc class recovery, which is still 
 // in early stages of development. Gcc class data types are only recovered for classes without 
 // virtual inheritance but if the program contains DWARF, there will be some amount of data recovered 
 // by the DWARF analyzer.
@@ -54,61 +54,41 @@
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import classrecovery.DecompilerScriptUtils;
-import classrecovery.RTTIClassRecoverer;
-import classrecovery.RTTIGccClassRecoverer;
-import classrecovery.RTTIWindowsClassRecoverer;
-import classrecovery.RecoveredClass;
-import classrecovery.RecoveredClassHelper;
+import classrecovery.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.analysis.DecompilerFunctionAnalyzer;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.GraphDisplayBroker;
+import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunctionImporter;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProvider;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.ElfLoader;
+import ghidra.app.util.opinion.PeLoader;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.service.graph.AttributedEdge;
-import ghidra.service.graph.AttributedGraph;
-import ghidra.service.graph.AttributedVertex;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayOptions;
-import ghidra.service.graph.GraphDisplayOptionsBuilder;
-import ghidra.service.graph.GraphDisplayProvider;
-import ghidra.service.graph.GraphType;
-import ghidra.service.graph.GraphTypeBuilder;
-import ghidra.service.graph.VertexShape;
-import ghidra.util.WebColors;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.util.GhidraProgramUtilities;
+import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.TaskMonitor;
 
 public class RecoverClassesFromRTTIScript extends GhidraScript {
+
+	public static final String RTTI_FOUND_OPTION = "RTTI Found";
 
 	// print c-like class definitions to the console
 	private static final boolean PRINT_CLASS_DEFINITIONS = false;
@@ -162,11 +142,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private static final String DESTRUCTOR_BOOKMARK = "DESTRUCTOR";
 
 	private static final String INDETERMINATE_BOOKMARK = "INDETERMINATE";
-
 	boolean programHasRTTIApplied = false;
-	boolean hasDebugSymbols;
-	boolean isGcc = false;
-	boolean isWindows = false;
+	boolean hasDebugSymbols = false;
 	String ghidraVersion = null;
 
 	DecompilerScriptUtils decompilerUtils;
@@ -182,14 +159,32 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
-
+		
 		String errorMsg = validate();
+		
 		if (!errorMsg.isEmpty()) {
 			println(errorMsg);
 			return;
 		}
+		
+		if (!isGcc() && isWindows()) {
+		
+			if (!isRttiAnalyzed()) {
+				println("Running the RTTIAnalyzer...");
+				analysisMode = AnalysisMode.ENABLED;
+				runScript("RunRttiAnalyzerScript.java");
+				analysisMode = AnalysisMode.SUSPENDED;
 
-		if (isWindows()) {
+				if (!isRttiAnalyzed()) {
+					println("The RTTI Analyzer did not complete successfully.");
+					return;
+				}
+
+				if (!hasRtti()) {
+					println("This program does not contain RTTI.");
+					return;
+				}
+			}
 
 			hasDebugSymbols = isPDBLoadedInProgram();
 			nameVfunctions = !hasDebugSymbols;
@@ -198,10 +193,25 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 					this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
 					nameVfunctions, hasDebugSymbols, monitor);
 		}
+		else if (isPE() && isGcc()){
+		
+			println("Program is a gcc compiled PE.");
+			boolean runGcc = askYesNo("Gcc Class Recovery Still Under Development",
+					"I understand that Gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
+				if (!runGcc) {
+					return;
+				}
+				//run fixup old elf relocations script
+				runScript("FixElfExternalOffsetDataRelocationScript.java");
+				recoverClassesFromRTTI =
+						new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
+							BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
+							nameVfunctions, hasDebugSymbols, monitor);
+		}
 		else if (isGcc()) {
-
-			boolean runGcc = askYesNo("GCC Class Recovery Still Under Development",
-				"I understand that gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
+			boolean runGcc= askYesNo("Gcc Class Recovery Still Under Development",
+				"I understand that Gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
+	
 			if (!runGcc) {
 				return;
 			}
@@ -212,7 +222,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			hasDebugSymbols = isDwarfLoadedInProgram();
 			if (hasDwarf() && !hasDebugSymbols) {
 				println(
-					"The program contains DWARF but the DWARF analyzer has not been run. Please run the DWARF analyzer to get best results from this script.");
+					"The program contains DWARF but the DWARF analyzer has not been run. Please " +
+						"run the DWARF analyzer to get best results from this script.");
 				return;
 			}
 			nameVfunctions = !hasDebugSymbols;
@@ -228,7 +239,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		if (!recoverClassesFromRTTI.containsRTTI()) {
 			println(
-				"This program does not appear to contain any processed RTTI information. Either it does not contain any or the RTTI Analyzer was not run.");
+				"This program does not appear to contain any processed RTTI information. Either " +
+					"it does not contain any or the RTTI Analyzer was not run.");
 			return;
 		}
 
@@ -267,9 +279,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			"/" + RecoveredClassHelper.DTM_CLASS_DATA_FOLDER_NAME);
 
 		if (FIXUP_PROGRAM) {
-			println(
-				"Checking for missing RTTI information and undefined constructor/destructor functions and creating if possible " +
-					"to find entry point...");
+			println("Checking for missing RTTI information and undefined constructor/destructor " +
+				"functions and creating if possible " + "to find entry point...");
 			AddressSetView beforeScriptChanges = currentProgram.getChanges().getAddressSet();
 
 			analysisMode = AnalysisMode.ENABLED;
@@ -353,10 +364,19 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			DWARFProgram.DWARF_ROOT_NAME) || options.getBoolean("DWARF Loaded", false));
 	}
 
-	public String validate() {
+	public String validate() throws CancelledException {
 
 		if (currentProgram == null) {
 			return ("There is no open program");
+		}
+
+		if (!GhidraProgramUtilities.isAnalyzed(currentProgram)) {
+			return ("The program has not been analyzed. Please run auto-analysis and make sure " +
+				"the RTTI analzer is one of the analyzers enabled.");
+		}
+
+		if (isRttiAnalyzed() && !hasRtti()) {
+			return ("This program does not contain RTTI.");
 		}
 
 		CategoryPath path =
@@ -366,17 +386,36 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 
 		if (!checkGhidraVersion()) {
-			return ("This script only works with Ghidra version 9.2, 9.2.2 and later. It does not work on Ghidra 9.2.1 or on versions prior to 9.2");
+			return ("This script only works with Ghidra version 9.2, 9.2.2 and later. It does" +
+				" not work on Ghidra 9.2.1 or on versions prior to 9.2");
 		}
 
 		if (!isGcc() && !isWindows()) {
-			return ("This script only handles Windows and gcc programs");
-
+			return ("This script only handles Windows PE and Gcc programs");
 		}
 
 		defaultPointerSize = currentProgram.getDefaultPointerSize();
 		if (defaultPointerSize != 4 && defaultPointerSize != 8) {
 			return ("This script only works on 32 or 64 bit programs");
+		}
+		
+		// check that gcc loader or mingw analyzer has fixed the relocations correctly
+		if(isGcc()) {
+
+			// first check that there is even rtti by searching the special string in memory
+			if (!isStringInProgramMemory("class_type_info")) {
+				return ("This program does not contain RTTI.");
+			}
+				
+			// then check to see if the special typeinfo namespace is in external space
+			// if so then relocations are present and have not been fixed up because when fixed up
+			// the namespace gets moved to inside program space
+			if(isExternalNamespace("__cxxabiv1::__class_type_info")) {
+				return ("This program's relocations were not correctly fixed so the script cannot " +
+						"continue. If this program is mingw this is a known issue and " +
+						"will be fixed in a later release. For all other gcc programs please " +
+						"contact the Ghidra team so this issue can be fixed.");
+			}
 		}
 		return new String();
 	}
@@ -401,13 +440,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		return analysisMode;
 
 	}
-	
-	@Override
-    public void analyzeChanges(Program program) {
-        AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
-        mgr.startAnalysis(monitor, false);
-    }
 
+	@Override
+	public void analyzeChanges(Program program) {
+		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
+		mgr.startAnalysis(monitor, false);
+	}
 
 	/**
 	 * Method to create a class hierarchy graph where the parents are at the top of the graph and 
@@ -433,7 +471,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		AttributedGraph g = new AttributedGraph("Recovered Classes Graph", graphType);
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			AttributedVertex classVertex =
 				g.addVertex(recoveredClass.getClassPath().getPath(), recoveredClass.getName());
@@ -465,7 +503,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				recoveredClass.getParentToBaseTypeMap();
 
 			for (RecoveredClass parent : parents) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				AttributedVertex parentVertex =
 					g.addVertex(parent.getClassPath().getPath(), parent.getName());
 
@@ -485,7 +523,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				else {
 					edge.setEdgeType(NON_VIRTUAL_INHERITANCE);
 				}
-
 
 			}
 		}
@@ -508,18 +545,17 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		display = service.getGraphDisplay(false, TaskMonitor.DUMMY);
 
 		GraphDisplayOptions graphOptions = new GraphDisplayOptionsBuilder(graph.getGraphType())
-				.vertex(NO_INHERITANCE, VertexShape.RECTANGLE, WebColors.BLUE)
-				.vertex(SINGLE_INHERITANCE, VertexShape.RECTANGLE, WebColors.GREEN)
-				.vertex(MULTIPLE_INHERITANCE, VertexShape.RECTANGLE, WebColors.RED)
-				.edge(NON_VIRTUAL_INHERITANCE, WebColors.LIME_GREEN)
-				.edge(VIRTUAL_INHERITANCE, WebColors.ORANGE)
-				.defaultVertexColor(WebColors.PURPLE)
-				.defaultEdgeColor(WebColors.PURPLE)
+				.vertex(NO_INHERITANCE, VertexShape.RECTANGLE, Palette.BLUE)
+				.vertex(SINGLE_INHERITANCE, VertexShape.RECTANGLE, Palette.GREEN)
+				.vertex(MULTIPLE_INHERITANCE, VertexShape.RECTANGLE, Palette.RED)
+				.edge(NON_VIRTUAL_INHERITANCE, Palette.LIME)
+				.edge(VIRTUAL_INHERITANCE, Palette.ORANGE)
+				.defaultVertexColor(Palette.PURPLE)
+				.defaultEdgeColor(Palette.PURPLE)
 				.defaultLayoutAlgorithm("Compact Hierarchical")
 				.build();
 
-		display.setGraph(graph, graphOptions,
-			"Recovered Classes Graph", false, TaskMonitor.DUMMY);
+		display.setGraph(graph, graphOptions, "Recovered Classes Graph", false, TaskMonitor.DUMMY);
 	}
 
 	/**
@@ -534,25 +570,21 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		return doOutput;
 	}
 
-
 	private void printClassHierarchyLists(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<RecoveredClass> classHierarchyList = recoveredClass.getClassHierarchy();
 			for (RecoveredClass currentClass : classHierarchyList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				println(currentClass.getName());
 			}
 
 			println("***");
 		}
 	}
-
-
-
 
 	/**
 	 * Script works on versions of ghidra including and after 9.2 except for 9.2.1 because a method 
@@ -568,20 +600,37 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		return false;
 	}
+	
+	
+	/**
+	 * Method to check if executable format is PE
+	 */
+	private boolean isPE() {
+		
+		if (!PeLoader.PE_NAME.equals(currentProgram.getExecutableFormat())) {
+			return false;
+		}
+		return true;
+		
+	}
 
 	/**
 	 * Method to set the global variable isGcc
 	 */
 	private boolean isGcc() {
 
-		if (!ElfLoader.ELF_NAME.equals(currentProgram.getExecutableFormat())) {
-			return false;
-		}
+		boolean isGcc;
 
-		boolean isCompilerSpecGcc =
-			currentProgram.getCompilerSpec().getCompilerSpecID().getIdAsString().equalsIgnoreCase(
-				"gcc");
+		boolean isCompilerSpecGcc = currentProgram.getCompilerSpec()
+				.getCompilerSpecID()
+				.getIdAsString()
+				.equalsIgnoreCase("gcc");
 		if (isCompilerSpecGcc) {
+			return true;
+		}
+		
+		String compiler = currentProgram.getCompiler();
+		if(compiler != null && compiler.contains("gcc")) {
 			return true;
 		}
 
@@ -598,8 +647,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		byte[] gccBytes = { (byte) 0x47, (byte) 0x43, (byte) 0x43, (byte) 0x3a };
 		byte[] maskBytes = { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 
-		Address found = currentProgram.getMemory().findBytes(commentBlock.getStart(),
-				commentBlock.getEnd(), gccBytes, maskBytes, true, monitor);
+		Address found = currentProgram.getMemory()
+				.findBytes(commentBlock.getStart(), commentBlock.getEnd(), gccBytes, maskBytes,
+					true, monitor);
 		if (found == null) {
 			isGcc = false;
 		}
@@ -609,6 +659,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		return isGcc;
 	}
+	
 
 	/**
 	 * Method to set the global variable isWindows
@@ -617,11 +668,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		String compilerID =
 			currentProgram.getCompilerSpec().getCompilerSpecID().getIdAsString().toLowerCase();
-		isWindows = compilerID.contains("windows");
+		boolean isWindows = compilerID.contains("windows");
 		return isWindows;
 	}
-
-
 
 	/**
 	 * Method to determine if somehow the constructor list and destructor list for a class contain 
@@ -636,13 +685,15 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		List<Function> allClassDestructors =
 			recoverClassesFromRTTI.getAllClassDestructors(recoveredClass);
 
-		List<Function> commonFunctions1 =
-			allClassConstructors.stream().distinct().filter(allClassDestructors::contains).collect(
-				Collectors.toList());
+		List<Function> commonFunctions1 = allClassConstructors.stream()
+				.distinct()
+				.filter(allClassDestructors::contains)
+				.collect(Collectors.toList());
 
-		List<Function> commonFunctions2 =
-			allClassDestructors.stream().distinct().filter(allClassConstructors::contains).collect(
-				Collectors.toList());
+		List<Function> commonFunctions2 = allClassDestructors.stream()
+				.distinct()
+				.filter(allClassConstructors::contains)
+				.collect(Collectors.toList());
 
 		if (commonFunctions1.isEmpty() && commonFunctions2.isEmpty()) {
 			return false;
@@ -661,7 +712,30 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		analyzer.added(currentProgram, set, monitor, new MessageLog());
 	}
 
+	/**
+	 * If program has the "RTTI Found" option at all it means RTTI analyzer has been run and 
+	 * does not need to be run again. If program does not have the option it means either analyzer 
+	 * has not been run or it has been run by an older version (<10.3) so we don't know and should
+	 * rerun to make sure.
+	 * @return true if RTTI analyzer has definitely been run, false otherwise
+	 */
+	private boolean isRttiAnalyzed() {
+		Options programOptions = currentProgram.getOptions(Program.PROGRAM_INFO);
+		Boolean rttiAnalyzed = (Boolean) programOptions.getObject(RTTI_FOUND_OPTION, null);
+		if (rttiAnalyzed == null) {
+			return false;
+		}
+		return true;
+	}
 
+	/**
+	 * Method to check to see if current program has RTTI based on option setting
+	 * @return true if program contains RTTI and false if not
+	 */
+	private boolean hasRtti() {
+		Options programOptions = currentProgram.getOptions(Program.PROGRAM_INFO);
+		return programOptions.getBoolean(RTTI_FOUND_OPTION, false);
+	}
 
 	/**
 	 * Get the version of Ghidra that was used to analyze this program
@@ -672,7 +746,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		Options options = currentProgram.getOptions("Program Information");
 		return options.getString("Created With Ghidra Version", null);
 	}
-
 
 	/**
 	 * Method to bookmark all of the constructor/destructor/indeterminate functions
@@ -685,7 +758,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		bookmarkDestructors(recoveredClasses);
 		bookmarkRemainingIndeterminateConstructorsAndDestructors(recoveredClasses);
 	}
-
 
 	/**
 	 * Method to print class hierarchy of the form child : parent: grandparent : etc...
@@ -707,7 +779,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		Map<RecoveredClass, List<RecoveredClass>> classHierarchyMap =
 			recoveredClass.getClassHierarchyMap();
 
-		List<RecoveredClass> parents = new ArrayList<RecoveredClass>(classHierarchyMap.keySet());
+		List<RecoveredClass> parents = new ArrayList<>(classHierarchyMap.keySet());
 
 		// if single inheritance - simple linear case
 		if (recoveredClass.hasSingleInheritance()) {
@@ -719,7 +791,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			stringBuffer.append(" : ");
 			int lastColon = stringBuffer.lastIndexOf(":");
 			for (RecoveredClass parentClass : classHierarchyMap.keySet()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (classHierarchyMap.size() == 1) {
 					//stringBuffer.append(" : ");
 					getSimpleClassHierarchyString(stringBuffer, parentClass);
@@ -730,7 +802,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 				//int lastColon = stringBuffer.lastIndexOf(":");
 				for (int i = 0; i <= lastColon; i++) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					stringBuffer.append(" ");
 				}
 				getSimpleClassHierarchyString(stringBuffer, parentClass);
@@ -741,9 +813,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		return stringBuffer;
 
 	}
-
-
-
 
 	/**
 	 * Method to retrieve the AddressSet of the current program's initialized memory
@@ -756,7 +825,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		MemoryBlock[] blocks = currentProgram.getMemory().getBlocks();
 
 		for (MemoryBlock block : blocks) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (block.isInitialized()) {
 				dataAddresses.add(block.getStart(), block.getEnd());
@@ -764,8 +833,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		return dataAddresses;
 	}
-
-
 
 	/**
 	 * Method to bookmark found constructor functions
@@ -776,7 +843,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			bookmarkFunctionsOnList(recoveredClass.getConstructorList(), CONSTRUCTOR_BOOKMARK);
 		}
 	}
@@ -790,7 +857,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			bookmarkFunctionsOnList(recoveredClass.getDestructorList(), DESTRUCTOR_BOOKMARK);
 			bookmarkFunctionsOnList(recoveredClass.getNonThisDestructors(), DESTRUCTOR_BOOKMARK);
 		}
@@ -805,11 +872,10 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			List<RecoveredClass> recoveredClasses) throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			bookmarkFunctionsOnList(recoveredClass.getIndeterminateList(), INDETERMINATE_BOOKMARK);
 		}
 	}
-
 
 	/**
 	 * Method to add/append analysis bookmarks with the given comment to the given list of functions
@@ -825,12 +891,11 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 
 		for (Function function : functions) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address address = function.getEntryPoint();
 			recoverClassesFromRTTI.bookmarkAddress(address, comment);
 		}
 	}
-
 
 	/**
 	 * Method to optionally print to console or output to file various types of class information
@@ -887,23 +952,21 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void printClassDefinitions(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!recoveredClass.hasParentClass()) {
 				println(createClassDefinitionString(recoveredClass).toString());
 			}
 		}
 	}
 
-
 	private void outputClassDefinitions(List<RecoveredClass> recoveredClasses, PrintWriter out)
 			throws CancelledException {
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!recoveredClass.hasParentClass()) {
 				out.append(createClassDefinitionString(recoveredClass));
 			}
 		}
-
 
 	}
 
@@ -915,7 +978,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 */
 	private void printClassInfo(List<RecoveredClass> recoveredClasses) throws CancelledException {
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!recoveredClass.hasParentClass()) {
 				println(createClassInfoString(recoveredClass).toString());
 			}
@@ -925,12 +988,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void printClassParents(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String printString = new String("\n" + recoveredClass.getName() + "\n");
 			if (recoveredClass.hasParentClass()) {
 				List<RecoveredClass> parentList = recoveredClass.getParentList();
 				for (RecoveredClass parent : parentList) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					printString = printString.concat("\t" + parent.getName() + "\n");
 				}
 			}
@@ -938,20 +1001,19 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 	}
 
-
 	/**
-	 * Method to print class hierarchies for the given list of classes starting with the lowest child classes in each family of classes
+	 * Method to print class hierarchies for the given list of classes starting with the lowest 
+	 * child classes in each family of classes
 	 * @param recoveredClasses the list of classes
 	 * @throws CancelledException if cancelled
 	 */
-	private void printClassHierarchiesFromLowestChildren(
-			List<RecoveredClass> recoveredClasses) throws CancelledException {
-
+	private void printClassHierarchiesFromLowestChildren(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
 
 		StringBuffer wholeBuffer = new StringBuffer();
 		wholeBuffer.append("\r\n");
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!recoveredClass.hasChildClass()) {
 
 				StringBuffer stringBuffer = new StringBuffer();
@@ -978,7 +1040,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		wholeBuffer.append("\r\n");
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!recoveredClass.hasChildClass()) {
 				StringBuffer stringBuffer = new StringBuffer();
 				wholeBuffer.append(
@@ -999,34 +1061,31 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!recoveredClass.hasParentClass()) {
 				out.append(createClassInfoString(recoveredClass).toString());
 			}
 		}
 	}
 
-
 	/**
-	 * Method to print counts of various class items for the given classes, such as number of constructors, destructors, etc...
+	 * Method to print counts of various class items for the given classes, such as number of 
+	 * constructors, destructors, etc...
 	 * @param recoveredClasses list of classes
 	 * @throws CancelledException if cancelled
 	 */
 	private void printCounts(List<RecoveredClass> recoveredClasses) throws CancelledException {
 
-
 		println("Total number of constructors: " +
 			recoverClassesFromRTTI.getNumberOfConstructors(recoveredClasses));
 		println("Total number of inlined constructors: " +
 			getNumberOfInlinedConstructors(recoveredClasses));
-		println(
-			"Total number of destructors: " +
-				recoverClassesFromRTTI.getNumberOfDestructors(recoveredClasses));
+		println("Total number of destructors: " +
+			recoverClassesFromRTTI.getNumberOfDestructors(recoveredClasses));
 		println("Total number of inlined destructors: " +
 			recoverClassesFromRTTI.getNumberOfInlineDestructors(recoveredClasses));
-		println(
-			"Total number of virtual functions: " +
-				recoverClassesFromRTTI.getNumberOfVirtualFunctions(recoveredClasses));
+		println("Total number of virtual functions: " +
+			recoverClassesFromRTTI.getNumberOfVirtualFunctions(recoveredClasses));
 		println("Total number of virtual functions that are deleting destructors: " +
 			recoverClassesFromRTTI.getNumberOfDeletingDestructors(recoveredClasses));
 
@@ -1050,7 +1109,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	}
 
-
 	/**
 	 * Method to get the total number of 
 	 * @param recoveredClasses list of classes
@@ -1062,7 +1120,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		int total = 0;
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			List<Function> constructorList = recoveredClass.getConstructorOrDestructorFunctions();
 			total += constructorList.size();
 		}
@@ -1080,7 +1138,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		int total = 0;
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			List<Function> inlineList = recoveredClass.getInlinedConstructorList();
 			total += inlineList.size();
 		}
@@ -1094,11 +1152,10 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 */
 	private void printAddresses(List<Address> addresses) throws CancelledException {
 		for (Address element : addresses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			println(element.toString());
 		}
 	}
-
 
 	/**
 	 * Method to output the class, it's parents and it's children for each of the listed classes
@@ -1110,7 +1167,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			PrintWriter out) throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			out.append(printClassParentsandChildren(recoveredClass));
 		}
 	}
@@ -1124,7 +1181,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			println(printClassParentsandChildren(recoveredClass).toString());
 		}
 	}
@@ -1132,7 +1189,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	/**
 	 * Method to get formatted string containing the given class, it's parents and it's children 
 	 * @param recoveredClass the given classes
-	 * @return StringBuffer containing the formatted string containing the given class, it's parents and it's children 
+	 * @return StringBuffer containing the formatted string containing the given class, it's parents 
+	 * and it's children 
 	 * @throws CancelledException if cancelled
 	 */
 	private StringBuffer printClassParentsandChildren(RecoveredClass recoveredClass)
@@ -1149,7 +1207,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (recoveredClass.hasParentClass()) {
 			Set<RecoveredClass> keySet = recoveredClass.getClassHierarchyMap().keySet();
 			for (RecoveredClass parent : keySet) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append("\t" + parent.getName() + "\r\n");
 			}
 		}
@@ -1160,7 +1218,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (recoveredClass.hasChildClass()) {
 			List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
 			for (RecoveredClass element : childClasses) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append("\t" + element.getName() + "\r\n");
 			}
 
@@ -1170,8 +1228,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to create a string containing class info for the given class including parents, children, constructors, destructors
-	 * inlined constructors, inlined destructors, member functions, member data and the same info for each child class
+	 * Method to create a string containing class info for the given class including parents, 
+	 * children, constructors, destructors inlined constructors, inlined destructors, member 
+	 * functions, member data and the same info for each child class
 	 * @param recoveredClass the given class
 	 * @return string buffer containing class info for the given class
 	 * @throws CancelledException if cancelled
@@ -1200,17 +1259,15 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				recoveredClass.getParentToBaseTypeMap();
 			Set<RecoveredClass> ancestors = parentToBaseTypeMap.keySet();
 			for (RecoveredClass ancestor : ancestors) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (directParents.contains(ancestor)) {
 
 					Boolean isVirtualParent = parentToBaseTypeMap.get(ancestor);
 					if (isVirtualParent != null && isVirtualParent) {
-						stringBuffer.append(
-							"\t virtual " + ancestor.getName() + "\r\n");
+						stringBuffer.append("\t virtual " + ancestor.getName() + "\r\n");
 					}
 					else {
-						stringBuffer.append(
-							"\t" + ancestor.getName() + "\r\n");
+						stringBuffer.append("\t" + ancestor.getName() + "\r\n");
 					}
 				}
 			}
@@ -1219,14 +1276,13 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			stringBuffer.append("\tNone\r\n");
 		}
 
-
 		// print child classes
 		stringBuffer.append("\r\n");
 		stringBuffer.append("child class(es):\r\n");
 		if (recoveredClass.hasChildClass()) {
 			List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
 			for (RecoveredClass element : childClasses) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append("\t" + element.getName() + "\r\n");
 			}
 
@@ -1237,7 +1293,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		stringBuffer.append("constructor(s):\r\n");
 		List<Function> constructorList = recoveredClass.getConstructorList();
 		for (Function constructorFunction : constructorList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			stringBuffer.append("\t" + constructorFunction.getName() + " " +
 				constructorFunction.getEntryPoint().toString() + "\r\n");
 		}
@@ -1248,7 +1304,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (inlinedConstructorList.size() > 0) {
 			stringBuffer.append("inlined constructor(s):\r\n");
 			for (Function inlinedConstructorFunction : inlinedConstructorList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append("\t" + inlinedConstructorFunction.getName() + " " +
 					inlinedConstructorFunction.getEntryPoint().toString() + "\r\n");
 			}
@@ -1259,7 +1315,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		stringBuffer.append("destructor(s):\r\n");
 		List<Function> destructorList = recoveredClass.getDestructorList();
 		for (Function destructorFunction : destructorList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			stringBuffer.append("\t" + destructorFunction.getName() + " " +
 				destructorFunction.getEntryPoint().toString() + "\r\n");
 		}
@@ -1270,7 +1326,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (inlinedDestructorList.size() > 0) {
 			stringBuffer.append("inlined destructor(s):\r\n");
 			for (Function inlinedDestructorFunction : inlinedDestructorList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append("\t" + inlinedDestructorFunction.getName() + " " +
 					inlinedDestructorFunction.getEntryPoint().toString() + "\r\n");
 			}
@@ -1279,9 +1335,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// print const/dest that couldn't be classified correctly
 		List<Function> indeterminateList = recoveredClass.getIndeterminateList();
 		if (indeterminateList.size() > 0) {
-		stringBuffer.append("\r\nindeterminate constructor(s) or destructor(s):\r\n");
+			stringBuffer.append("\r\nindeterminate constructor(s) or destructor(s):\r\n");
 			for (Function indeterminateFunction : indeterminateList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append("\t" + indeterminateFunction.getName() + " " +
 					indeterminateFunction.getEntryPoint().toString() + "\r\n");
 			}
@@ -1293,9 +1349,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		stringBuffer.append("member function(s):\r\n");
 		List<Function> virtualFunctions = recoveredClass.getAllVirtualFunctions();
 		for (Function vfunction : virtualFunctions) {
-			monitor.checkCanceled();
-			stringBuffer.append("\t" + vfunction.getName() + " " +
-				vfunction.getEntryPoint().toString() + "\r\n");
+			monitor.checkCancelled();
+			stringBuffer.append(
+				"\t" + vfunction.getName() + " " + vfunction.getEntryPoint().toString() + "\r\n");
 		}
 		stringBuffer.append("\r\n");
 
@@ -1312,7 +1368,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 			DataTypeComponent[] definedComponents = memberDataStructure.getDefinedComponents();
 			for (int i = 0; i < numDefinedComponents; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				stringBuffer.append("\t" + definedComponents[i].getDataType() + " " +
 					definedComponents[i].getFieldName() + "\r\n");
@@ -1324,14 +1380,13 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (recoveredClass.hasChildClass()) {
 			List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
 			for (RecoveredClass element : childClasses) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append(createClassInfoString(element));
 			}
 		}
 
 		return stringBuffer;
 	}
-
 
 	/**
 	 * Method to get the function signature string, from the decompiler if possible, otherwise from 
@@ -1372,7 +1427,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		else {
 			for (int i = autoParamCount - 1; i < paramCount; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Parameter param = function.getParameter(i);
 				stringBuffer.append(param.getDataType().getDisplayName() + " " + param.getName());
 				if (i == paramCount) {
@@ -1387,7 +1442,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		return stringBuffer.toString();
 	}
 
-
 	/**
 	 * Method to create a string containing a C++-like representation of the given class
 	 * @param recoveredClass the given class
@@ -1397,7 +1451,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private StringBuffer createClassDefinitionString(RecoveredClass recoveredClass)
 			throws CancelledException {
 
-
 		StringBuffer stringBuffer = new StringBuffer();
 		stringBuffer.append("\r\n\r\n");
 
@@ -1405,14 +1458,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		stringBuffer.append("\r\n{\r\n");
 
-
 		// print constructor signature(s)
 		stringBuffer.append("constructor(s):\r\n");
 		List<Function> constructorList = recoveredClass.getConstructorList();
 		for (Function constructorFunction : constructorList) {
-			monitor.checkCanceled();
-			String functionSignatureString =
-				getFunctionSignatureString(constructorFunction, true);
+			monitor.checkCancelled();
+			String functionSignatureString = getFunctionSignatureString(constructorFunction, true);
 
 			stringBuffer.append(functionSignatureString);
 			stringBuffer.append("\r\n");
@@ -1422,9 +1473,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		stringBuffer.append("\r\ndestructor(s):\r\n");
 		List<Function> destructorList = recoveredClass.getDestructorList();
 		for (Function destructorFunction : destructorList) {
-			monitor.checkCanceled();
-			String functionSignatureString =
-				getFunctionSignatureString(destructorFunction, true);
+			monitor.checkCancelled();
+			String functionSignatureString = getFunctionSignatureString(destructorFunction, true);
 			stringBuffer.append(functionSignatureString);
 			stringBuffer.append("\r\n");
 		}
@@ -1434,7 +1484,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (indeterminateList.size() > 0) {
 			stringBuffer.append("\r\nindeterminate constructor or destructor function(s):\r\n");
 			for (Function indeterminateFunction : indeterminateList) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				String functionSignatureString =
 					getFunctionSignatureString(indeterminateFunction, true);
 				stringBuffer.append(functionSignatureString);
@@ -1446,9 +1496,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		stringBuffer.append("\r\nmember function(s):\r\n");
 		List<Function> virtualFunctions = recoveredClass.getAllVirtualFunctions();
 		for (Function vfunction : virtualFunctions) {
-			monitor.checkCanceled();
-			String functionSignatureString =
-				getFunctionSignatureString(vfunction, true);
+			monitor.checkCancelled();
+			String functionSignatureString = getFunctionSignatureString(vfunction, true);
 			stringBuffer.append(functionSignatureString);
 			stringBuffer.append("\r\n");
 		}
@@ -1467,26 +1516,49 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 			DataTypeComponent[] definedComponents = memberDataStructure.getDefinedComponents();
 			for (int i = 0; i < numDefinedComponents; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append("\t" + definedComponents[i].getDataType() + " " +
 					definedComponents[i].getFieldName() + "\r\n");
 			}
 		}
 		stringBuffer.append("};\r\n");
 
-
 		// Then recursively process the child classes
 		if (recoveredClass.hasChildClass()) {
 			List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
 			for (RecoveredClass element : childClasses) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				stringBuffer.append(createClassDefinitionString(element));
 			}
 		}
 
 		return stringBuffer;
 	}
+    
+	private boolean isStringInProgramMemory(String string) {
 
+		byte[] byteArrray = string.getBytes();
 
+		Address findBytes = currentProgram.getMemory()
+				.findBytes(currentProgram.getMinAddress(), byteArrray, null, true, monitor);
+		if (findBytes != null) {
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isExternalNamespace(String path) throws CancelledException {
+		
+		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
+
+		for(Symbol symbol : symbols) {
+			monitor.checkCancelled();
+			if(symbol.isExternal() && symbol.getSymbolType().isNamespace()) {
+				return true;
+			}
+		}
+		
+        return false;
+    }
 
 }

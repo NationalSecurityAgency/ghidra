@@ -21,8 +21,12 @@ import java.net.URL;
 
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.client.RepositoryAdapter;
+import ghidra.framework.data.ProjectFileManager;
 import ghidra.framework.model.ProjectLocator;
-import ghidra.framework.store.FileSystem;
+import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
+import ghidra.framework.store.LockException;
+import ghidra.util.NotOwnerException;
+import ghidra.util.ReadOnlyException;
 
 /**
  * <code>DefaultLocalGhidraProtocolConnector</code> provides support for the
@@ -67,10 +71,12 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 
 	@Override
 	protected String parseItemPath() throws MalformedURLException {
-		// root folder access only - TODO: add support for specifying local item/folder path
-		folderPath = FileSystem.SEPARATOR;
-		folderItemName = null;
-		return folderPath;
+
+		String path = url.getQuery();
+
+		initFolderItemPath(path);
+
+		return path != null ? path : folderPath;
 	}
 
 	@Override
@@ -94,22 +100,47 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 
 	@Override
 	public boolean isReadOnly() throws NotConnectedException {
-		if (responseCode == -1) {
+		if (statusCode == null) {
 			throw new NotConnectedException("not connected");
 		}
 		return readOnly;
 	}
 
 	@Override
-	public int connect(boolean readOnlyAccess) throws IOException {
+	public StatusCode connect(boolean readOnlyAccess) throws IOException {
 		this.readOnly = readOnlyAccess;
 		if (!localStorageLocator.exists()) {
-			responseCode = GhidraURLConnection.GHIDRA_NOT_FOUND;
+			statusCode = StatusCode.NOT_FOUND;
 		}
 		else {
-			responseCode = GhidraURLConnection.GHIDRA_OK;
+			statusCode = StatusCode.OK;
 		}
-		return responseCode;
+		return statusCode;
+	}
+
+	/**
+	 * Connect and establish loca project project data instance.  Opening a project for
+	 * write access is subject to in-use lock restriction.
+	 * See {@link #getStatusCode()} if null is returned.
+	 * @param readOnlyAccess true if project data should be read-only
+	 * @return project data instance or null if project not found
+	 * @throws IOException if IO error occurs
+	 */
+	ProjectFileManager getLocalProjectData(boolean readOnlyAccess) throws IOException {
+		if (connect(readOnlyAccess) != StatusCode.OK) {
+			return null;
+		}
+
+		try {
+			return new ProjectFileManager(localStorageLocator, !readOnlyAccess, false);
+		}
+		catch (NotOwnerException | ReadOnlyException e) {
+			statusCode = StatusCode.UNAUTHORIZED;
+		}
+		catch (LockException e) {
+			statusCode = StatusCode.LOCKED;
+		}
+		return null;
 	}
 
 }

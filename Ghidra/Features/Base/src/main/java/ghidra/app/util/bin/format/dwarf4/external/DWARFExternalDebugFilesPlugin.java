@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf4.external;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import java.io.File;
 
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
@@ -70,6 +69,7 @@ public class DWARFExternalDebugFilesPlugin extends Plugin {
 		chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 		chooser.setTitle("Select External Debug Files Directory");
 		File selectedDir = chooser.getSelectedFile();
+		chooser.dispose();
 		if (selectedDir == null) {
 			return;
 		}

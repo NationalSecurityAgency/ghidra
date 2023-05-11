@@ -153,7 +153,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		try {
 			cb.fill(0, 1, (byte) 0x12);
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			return;
 		}
 
@@ -241,7 +241,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.put(-1, bytes2);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -249,7 +249,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.put(size - 1, bytes2);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -257,7 +257,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.put(size + 1, bytes2);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -265,7 +265,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.get(-1, bytes2);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -273,7 +273,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.get(size - 1, bytes2);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -281,7 +281,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.get(size + 1, bytes2);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}
@@ -313,7 +313,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putByte(-1, (byte) 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -321,7 +321,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putByte(size + 1, (byte) 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}
@@ -361,7 +361,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getByte(-1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -369,7 +369,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getByte(size + 1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}
@@ -418,7 +418,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putInt(-1, 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -426,7 +426,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putInt(size - 1, 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -434,7 +434,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putInt(size + 1, 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}
@@ -482,7 +482,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getInt(-1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -490,7 +490,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getInt(size - 1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -498,7 +498,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getInt(size + 1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}
@@ -559,7 +559,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putLong(-1, 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -567,7 +567,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putLong(size - 1, 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -575,7 +575,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putLong(size + 1, 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}
@@ -635,7 +635,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getLong(-1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -643,7 +643,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getLong(size - 1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -651,7 +651,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getLong(size + 1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}
@@ -694,7 +694,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putShort(-1, (short) 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -702,7 +702,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putShort(size - 1, (short) 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -710,7 +710,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.putShort(size + 1, (short) 0);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}
@@ -752,7 +752,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getShort(-1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -760,7 +760,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getShort(size - 1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 
@@ -768,7 +768,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			cb.getShort(size + 1);
 			Assert.fail();
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// good
 		}
 	}

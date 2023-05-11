@@ -15,7 +15,8 @@
  */
 #include "typeop.hh"
 #include "funcdata.hh"
-#include <cmath>
+
+namespace ghidra {
 
 /// \param inst will hold the array of TypeOp objects, indexed on op-code
 /// \param tlst is the corresponding TypeFactory for the Architecture
@@ -103,6 +104,7 @@ void TypeOp::registerInstructions(vector<TypeOp *> &inst,TypeFactory *tlst,
   inst[CPUI_INSERT] = new TypeOpInsert(tlst);
   inst[CPUI_EXTRACT] = new TypeOpExtract(tlst);
   inst[CPUI_POPCOUNT] = new TypeOpPopcount(tlst);
+  inst[CPUI_LZCOUNT] = new TypeOpLzcount(tlst);
 }
 
 /// Change basic data-type info (signed vs unsigned) and operator names ( '>>' vs '>>>' )
@@ -307,7 +309,7 @@ void TypeOpFunc::printRaw(ostream &s,const PcodeOp *op)
 TypeOpCopy::TypeOpCopy(TypeFactory *t) : TypeOp(t,CPUI_COPY,"copy")
 
 {
-  opflags = PcodeOp::unary;
+  opflags = PcodeOp::unary | PcodeOp::nocollapse;
   behave = new OpBehaviorCopy();
 }
 
@@ -1100,7 +1102,7 @@ TypeOpIntAdd::TypeOpIntAdd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_ADD,"+",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntAdd();
 }
 
@@ -1251,7 +1253,7 @@ TypeOpIntSub::TypeOpIntSub(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SUB,"-",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntSub();
 }
 
@@ -1265,6 +1267,7 @@ TypeOpIntCarry::TypeOpIntCarry(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_CARRY,"CARRY",TYPE_BOOL,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
+  addlflags = arithmetic_op;
   behave = new OpBehaviorIntCarry();
 }
 
@@ -1295,6 +1298,7 @@ TypeOpIntSborrow::TypeOpIntSborrow(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_SBORROW,"SBORROW",TYPE_BOOL,TYPE_INT)
 {
   opflags = PcodeOp::binary;
+  addlflags = arithmetic_op;
   behave = new OpBehaviorIntSborrow();
 }
 
@@ -1310,7 +1314,7 @@ TypeOpInt2Comp::TypeOpInt2Comp(TypeFactory *t)
   : TypeOpUnary(t,CPUI_INT_2COMP,"-",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::unary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorInt2Comp();
 }
 
@@ -1324,7 +1328,7 @@ TypeOpIntNegate::TypeOpIntNegate(TypeFactory *t)
   : TypeOpUnary(t,CPUI_INT_NEGATE,"~",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::unary;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntNegate();
 }
 
@@ -1338,7 +1342,7 @@ TypeOpIntXor::TypeOpIntXor(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_XOR,"^",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntXor();
 }
 
@@ -1366,7 +1370,7 @@ TypeOpIntAnd::TypeOpIntAnd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_AND,"&",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntAnd();
 }
 
@@ -1394,7 +1398,7 @@ TypeOpIntOr::TypeOpIntOr(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_OR,"|",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntOr();
 }
 
@@ -1537,7 +1541,7 @@ TypeOpIntMult::TypeOpIntMult(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_MULT,"*",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntMult();
 }
 
@@ -1551,7 +1555,7 @@ TypeOpIntDiv::TypeOpIntDiv(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_DIV,"/",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntDiv();
 }
 
@@ -1571,7 +1575,7 @@ TypeOpIntSdiv::TypeOpIntSdiv(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SDIV,"/",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntSdiv();
 }
 
@@ -1591,7 +1595,7 @@ TypeOpIntRem::TypeOpIntRem(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_REM,"%",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = arithmetic_op | inherits_sign | inherits_sign_zero;
   behave = new OpBehaviorIntRem();
 }
 
@@ -1611,7 +1615,7 @@ TypeOpIntSrem::TypeOpIntSrem(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SREM,"%",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = arithmetic_op | inherits_sign | inherits_sign_zero;
   behave = new OpBehaviorIntSrem();
 }
 
@@ -1631,6 +1635,7 @@ TypeOpBoolNegate::TypeOpBoolNegate(TypeFactory *t)
   : TypeOpUnary(t,CPUI_BOOL_NEGATE,"!",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::unary | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolNegate();
 }
 
@@ -1638,6 +1643,7 @@ TypeOpBoolXor::TypeOpBoolXor(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_XOR,"^^",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolXor();
 }
 
@@ -1645,6 +1651,7 @@ TypeOpBoolAnd::TypeOpBoolAnd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_AND,"&&",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolAnd();
 }
 
@@ -1652,6 +1659,7 @@ TypeOpBoolOr::TypeOpBoolOr(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_OR,"||",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolOr();
 }
 
@@ -1659,6 +1667,7 @@ TypeOpFloatEqual::TypeOpFloatEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_EQUAL,"==",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatEqual(trans);
 }
 
@@ -1666,6 +1675,7 @@ TypeOpFloatNotEqual::TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_NOTEQUAL,"!=",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNotEqual(trans);
 }
 
@@ -1673,6 +1683,7 @@ TypeOpFloatLess::TypeOpFloatLess(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_LESS,"<",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatLess(trans);
 }
 
@@ -1680,6 +1691,7 @@ TypeOpFloatLessEqual::TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans
   : TypeOpBinary(t,CPUI_FLOAT_LESSEQUAL,"<=",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatLessEqual(trans);
 }
 
@@ -1687,6 +1699,7 @@ TypeOpFloatNan::TypeOpFloatNan(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_NAN,"NAN",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNan(trans);
 }
 
@@ -1694,6 +1707,7 @@ TypeOpFloatAdd::TypeOpFloatAdd(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_ADD,"+",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatAdd(trans);
 }
 
@@ -1701,6 +1715,7 @@ TypeOpFloatDiv::TypeOpFloatDiv(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_DIV,"/",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatDiv(trans);
 }
 
@@ -1708,6 +1723,7 @@ TypeOpFloatMult::TypeOpFloatMult(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_MULT,"*",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatMult(trans);
 }
 
@@ -1715,6 +1731,7 @@ TypeOpFloatSub::TypeOpFloatSub(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_SUB,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatSub(trans);
 }
 
@@ -1722,6 +1739,7 @@ TypeOpFloatNeg::TypeOpFloatNeg(TypeFactory *t,const Translate *trans)
   : TypeOpUnary(t,CPUI_FLOAT_NEG,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNeg(trans);
 }
 
@@ -1729,6 +1747,7 @@ TypeOpFloatAbs::TypeOpFloatAbs(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ABS,"ABS",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatAbs(trans);
 }
 
@@ -1736,6 +1755,7 @@ TypeOpFloatSqrt::TypeOpFloatSqrt(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_SQRT,"SQRT",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatSqrt(trans);
 }
 
@@ -1743,6 +1763,7 @@ TypeOpFloatInt2Float::TypeOpFloatInt2Float(TypeFactory *t,const Translate *trans
   : TypeOpFunc(t,CPUI_FLOAT_INT2FLOAT,"INT2FLOAT",TYPE_FLOAT,TYPE_INT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatInt2Float(trans);
 }
 
@@ -1750,6 +1771,7 @@ TypeOpFloatFloat2Float::TypeOpFloatFloat2Float(TypeFactory *t,const Translate *t
   : TypeOpFunc(t,CPUI_FLOAT_FLOAT2FLOAT,"FLOAT2FLOAT",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatFloat2Float(trans);
 }
 
@@ -1757,6 +1779,7 @@ TypeOpFloatTrunc::TypeOpFloatTrunc(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_TRUNC,"TRUNC",TYPE_INT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatTrunc(trans);
 }
 
@@ -1764,6 +1787,7 @@ TypeOpFloatCeil::TypeOpFloatCeil(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_CEIL,"CEIL",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatCeil(trans);
 }
 
@@ -1771,6 +1795,7 @@ TypeOpFloatFloor::TypeOpFloatFloor(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_FLOOR,"FLOOR",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatFloor(trans);
 }
 
@@ -1778,6 +1803,7 @@ TypeOpFloatRound::TypeOpFloatRound(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ROUND,"ROUND",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatRound(trans);
 }
 
@@ -1792,15 +1818,6 @@ Datatype *TypeOpMulti::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn
 				     int4 inslot,int4 outslot)
 {
   if ((inslot!=-1)&&(outslot!=-1)) {
-    if (invn == outvn && outvn->getTempType()->needsResolution()) {
-      // If same Varnode occupies two input slots of the MULTIEQUAL
-      // the second input slot should inherit the resolution of the first
-      Funcdata *fd = op->getParent()->getFuncdata();
-      Datatype *unionType = outvn->getTempType();
-      const ResolvedUnion *res = fd->getUnionField(unionType, op, inslot);
-      if (res != (const ResolvedUnion *)0)
-	fd->setUnionField(unionType, op, outslot, *res);
-    }
     return (Datatype *)0; // Must propagate input <-> output
   }
   Datatype *newtype;
@@ -1899,6 +1916,12 @@ string TypeOpPiece::getOperatorName(const PcodeOp *op) const
   return s.str();
 }
 
+Datatype *TypeOpPiece::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
+
+{
+  return (Datatype *)0;		// Never need a cast into a PIECE
+}
+
 Datatype *TypeOpPiece::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const
 
 {
@@ -1926,21 +1949,29 @@ string TypeOpSubpiece::getOperatorName(const PcodeOp *op) const
   return s.str();
 }
 
+Datatype *TypeOpSubpiece::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
+
+{
+  return (Datatype *)0;		// Never need a cast into a SUBPIECE
+}
+
 Datatype *TypeOpSubpiece::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const
 
 {
+  const Varnode *outvn = op->getOut();
+  const TypeField *field;
+  Datatype *ct = op->getIn(0)->getHighTypeReadFacing(op);
   int4 offset;
-  Datatype *parent;
-  const Varnode *vn = op->getOut();
-  const TypeField *field = testExtraction(true, op, parent, offset);
+  int4 byteOff = computeByteOffsetForComposite(op);
+ field = ct->findTruncation(byteOff,outvn->getSize(),op,1,offset);	// Use artificial slot
   if (field != (const TypeField *)0) {
-    if (vn->getSize() == field->type->getSize())
+    if (outvn->getSize() == field->type->getSize())
       return field->type;
   }
-  Datatype *dt = vn->getHighTypeDefFacing();	// SUBPIECE prints as cast to whatever its output is
+  Datatype *dt = outvn->getHighTypeDefFacing();	// SUBPIECE prints as cast to whatever its output is
   if (dt->getMetatype() != TYPE_UNKNOWN)
     return dt;
-  return tlst->getBase(vn->getSize(),TYPE_INT);	// If output is unknown, treat as cast to int
+  return tlst->getBase(outvn->getSize(),TYPE_INT);	// If output is unknown, treat as cast to int
 }
 
 Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
@@ -1967,30 +1998,6 @@ Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *i
     return field->type;
   }
   return (Datatype *)0;
-}
-
-/// \brief Test if the given SUBPIECE PcodeOp is acting as a field extraction operator
-///
-/// For packed structures with small fields,  SUBPIECE may be used to extract the field.
-/// Test if the HighVariable being truncated is a structure and if the truncation produces
-/// part of a \e single field.  If so return the TypeField descriptor, and pass back the parent
-/// structure and the number of least significant bytes that have been truncated from the field.
-/// \param useHigh is \b true if the HighVariable data-type is checked, otherwise the Varnode data-type is used
-/// \param op is the given SUBPIECE PcodeOp
-/// \param parent holds the parent Datatype being passed back
-/// \param offset holds the LSB offset being passed back
-/// \return the TypeField if a field is being extracted or null otherwise
-const TypeField *TypeOpSubpiece::testExtraction(bool useHigh,const PcodeOp *op,Datatype *&parent,int4 &offset)
-
-{
-  const Varnode *vn = op->getIn(0);
-  Datatype *ct = useHigh ? vn->getHighTypeReadFacing(op) : vn->getTypeReadFacing(op);
-  type_metatype meta = ct->getMetatype();
-  if (meta != TYPE_STRUCT && meta != TYPE_UNION && meta != TYPE_PARTIALUNION)
-    return (const TypeField *)0;
-  parent = ct;
-  int4 byteOff = computeByteOffsetForComposite(op);
-  return ct->findTruncation(byteOff,op->getOut()->getSize(),op,1,offset);	// Use artificial slot
 }
 
 /// \brief Compute the byte offset into an assumed composite data-type produced by the given CPUI_SUBPIECE
@@ -2033,6 +2040,7 @@ TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
 
 {
   opflags = PcodeOp::ternary | PcodeOp::nocollapse;
+  addlflags = arithmetic_op;
   behave = new OpBehavior(CPUI_PTRADD,false); // Dummy behavior
 }
 
@@ -2102,6 +2110,7 @@ TypeOpPtrsub::TypeOpPtrsub(TypeFactory *t) : TypeOp(t,CPUI_PTRSUB,"->")
 				// But the typing information doesn't really
 				// allow this to be commutative.
   opflags = PcodeOp::binary|PcodeOp::nocollapse;
+  addlflags = arithmetic_op;
   behave = new OpBehavior(CPUI_PTRSUB,false); // Dummy behavior
 }
 
@@ -2346,3 +2355,12 @@ TypeOpPopcount::TypeOpPopcount(TypeFactory *t)
   opflags = PcodeOp::unary;
   behave = new OpBehaviorPopcount();
 }
+
+TypeOpLzcount::TypeOpLzcount(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_LZCOUNT,"LZCOUNT",TYPE_INT,TYPE_UNKNOWN)
+{
+  opflags = PcodeOp::unary;
+  behave = new OpBehaviorLzcount();
+}
+
+} // End namespace ghidra

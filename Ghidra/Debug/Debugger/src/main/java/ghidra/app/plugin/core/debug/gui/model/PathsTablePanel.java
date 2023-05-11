@@ -18,13 +18,13 @@ package ghidra.app.plugin.core.debug.gui.model;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.framework.plugintool.Plugin;
 
-public class PathsTablePanel extends AbstractQueryTablePanel<PathRow> {
+public class PathsTablePanel extends AbstractQueryTablePanel<PathRow, PathTableModel> {
 	public PathsTablePanel(Plugin plugin) {
 		super(plugin);
 	}
 
 	@Override
-	protected AbstractQueryTableModel<PathRow> createModel(Plugin plugin) {
+	protected PathTableModel createModel(Plugin plugin) {
 		return new PathTableModel(plugin);
 	}
 }

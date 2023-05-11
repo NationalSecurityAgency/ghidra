@@ -69,7 +69,7 @@ class BasicTaskMonitor implements TaskMonitor {
 	public boolean isCancelled() {
 		return isCancelled;
 	}
-
+	
 	@Override
 	public void checkCanceled() throws CancelledException {
 		if (isCancelled) {

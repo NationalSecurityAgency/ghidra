@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CONTEXT__
-#define __CONTEXT__
+#ifndef __CONTEXT_HH__
+#define __CONTEXT_HH__
 
 #include "globalcontext.hh"
 #include "opcodes.hh"
+
+namespace ghidra {
 
 class Token {			// A multiple-byte sized chunk of pattern in a bitstream
   string name;
@@ -198,4 +200,5 @@ inline void ParserContext::allocateOperand(int4 i,ParserWalkerChange &walker) {
   walker.breadcrumb[walker.depth] = 0;
 }
 
+} // End namespace ghidra
 #endif

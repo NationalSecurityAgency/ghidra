@@ -173,7 +173,7 @@ public class VTImpliedMatchesTableModel extends
 		monitor.initialize(matches.size());
 
 		for (VTImpliedMatchInfo impliedMatch : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			VTMatch existingMatch = ImpliedMatchUtils.resolveImpliedMatch(impliedMatch, session);
 			ImpliedMatchWrapperRowObject rowObject =

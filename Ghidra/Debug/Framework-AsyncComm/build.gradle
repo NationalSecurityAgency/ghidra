@@ -22,6 +22,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Framework-AsyncComm'
 
 dependencies {
+	api 'com.google.protobuf:protobuf-java:3.21.8'
 	api project(':Generic')
 	api project(':Graph')
 	api project(':ProposedUtils')

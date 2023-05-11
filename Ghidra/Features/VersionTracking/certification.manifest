@@ -5,25 +5,16 @@
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||reviewed||END|
+data/version.tracking.theme.properties||GHIDRA||||END|
 src/main/docs/VTClasses.png||GHIDRA||reviewed||END|
 src/main/docs/VTGuiImpl.png||GHIDRA||reviewed||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||reviewed||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/close16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/menu16.gif||GHIDRA||reviewed|Copied from GhidraIcons/menu16.gif|END|
-src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/shared/redo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/shared/undo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Correlators.html||GHIDRA||||END|
-src/main/help/help/topics/VersionTrackingPlugin/VT_Preconditions.html||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/VT_Preconditions.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Tool.html||GHIDRA||||END|
-src/main/help/help/topics/VersionTrackingPlugin/VT_Wizard.html||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/VT_Workflow.html||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/VT_Wizard.html||GHIDRA||||END|
+src/main/help/help/topics/VersionTrackingPlugin/VT_Workflow.html||GHIDRA||||END|
+src/main/help/help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/ActionsMenu_DropDown.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/ApplyAdd.png||GHIDRA|||Captured on Mac using Grab.|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/ApplyReplace.png||GHIDRA|||Captured on Mac using Grab.|END|
@@ -46,7 +37,6 @@ src/main/help/help/topics/VersionTrackingPlugin/images/MatchesTable.png||GHIDRA|
 src/main/help/help/topics/VersionTrackingPlugin/images/OneToManyDestination.png||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/OneToManySource.png||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/OptionsPanel.png||GHIDRA||||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/Plus.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/PreconditionsPanel.png||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/Same.png||GHIDRA||reviewed|Captured on Mac using Grab. Original icons were the same icon from GhidraIcons/checkmark_green.gif|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/SessionPanel.png||GHIDRA||||END|
@@ -65,35 +55,6 @@ src/main/help/help/topics/VersionTrackingPlugin/images/VersionTrackingTool.png||
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_fully_applied.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_fully_considered.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/accepted_warning.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/application_tile_horizontal.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/asterisk_orange.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/cache.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set. LGPL 2.1. Copied from nuvola/16x16/cache.png.|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/checkmark_green.gif||GHIDRA||reviewed|Copied from GhidraIcons|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/dialog-cancel.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/doubleArrowUpDown.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/edit-delete.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/edit-rename.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) copied from oxygen/16x16/edit-rename.png.|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/filter_matched.png||Tango Icons - Public Domain|||tango - with overlay|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/flag.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/function.png||GHIDRA||||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/kgpg.png||Nuvola Icons - LGPL 2.1||||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/lightbulb.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/list-remove.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) copied from oxygen/16x16/list-remove.png|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/locationIn.gif||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/locationOut.gif||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/menu16.gif||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/settings16.gif||GHIDRA||reviewed|From GhidraArchive/ImageLibrary/GhidraIcons/settings16.gif|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/start-here_16.png||Tango Icons - Public Domain|||From tango|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/sync_enabled.png||GHIDRA||||END|
-src/main/help/help/topics/VersionTrackingPlugin/images/table_delete.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/table_gear.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/table_go.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/tag_blue.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/tag_blue_delete.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/tag_blue_edit.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set - Copied from famfamfam_silk/icons/tag_blue_edit.png|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/undo-apply.png||Nuvola Icons - LGPL 2.1|||originally named undo.png|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/unknown.gif||GHIDRA||reviewed|Copied from GhidraIcons/unknown.gif|END|
-src/main/help/help/topics/VersionTrackingPlugin/images/view-filter.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/help/help/topics/VersionTrackingPlugin/providers/VT_Apply_Options.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/providers/VT_Functions_Table.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/providers/VT_Implied_Matches_Table.html||GHIDRA||||END|
@@ -104,73 +65,29 @@ src/main/resources/Version Tracking (DESTINATION TOOL).tool||GHIDRA||||END|
 src/main/resources/Version Tracking (SOURCE TOOL).tool||GHIDRA||||END|
 src/main/resources/defaultTools/VersionTracking.tool||GHIDRA||||END|
 src/main/resources/defaultTools/images/start-here.png||Tango Icons - Public Domain|||6d887d8980624122a0c763dd863c29df|END|
-src/main/resources/images/AboveAndBelow.png||GHIDRA||reviewed||END|
-src/main/resources/images/Plus.png||GHIDRA||||END|
-src/main/resources/images/SideBySide.png||GHIDRA||reviewed||END|
 src/main/resources/images/accept.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/application_tile_horizontal.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/resources/images/application_tile_vertical.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
 src/main/resources/images/application_view_detail.png||FAMFAMFAM Icons - CC 2.5|||copied application_view_detail.png from famfamfam silk icon set.|END|
 src/main/resources/images/asterisk_orange.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/bullet_black.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/bullet_error.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/bullet_green.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/cache.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set. LGPL 2.1. Copied from nuvola/16x16/cache.png.|END|
 src/main/resources/images/checkmark_yellow.gif||GHIDRA||reviewed||END|
-src/main/resources/images/delete.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/dialog-cancel.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
 src/main/resources/images/doubleArrowUpDown.png||GHIDRA||reviewed||END|
-src/main/resources/images/down.png||GHIDRA||reviewed||END|
-src/main/resources/images/dualPrograms.png||GHIDRA||reviewed||END|
-src/main/resources/images/edit-delete.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/resources/images/edit-redo.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/edit-rename.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) copied from oxygen/16x16/edit-rename.png.|END|
-src/main/resources/images/face-devilish.png||Tango Icons - Public Domain||||END|
-src/main/resources/images/face-monkey.png||Tango Icons - Public Domain||||END|
 src/main/resources/images/filter_matched.png||Tango Icons - Public Domain|||tango - with overlay|END|
-src/main/resources/images/flag-blue.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/resources/images/flag-green.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/resources/images/flag-red.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/resources/images/flag-yellow.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/resources/images/flag.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
 src/main/resources/images/function.png||GHIDRA||||END|
-src/main/resources/images/games-solve.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
 src/main/resources/images/go-down.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/go-next.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/resources/images/help-browser.png||Tango Icons - Public Domain|||tango|END|
-src/main/resources/images/kgpg.png||Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/ledblue.png||Nuvola Icons - LGPL 2.1||||END|
-src/main/resources/images/ledgreen.png||Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/ledorange.png||Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/ledpurple.png||Nuvola Icons - LGPL 2.1||||END|
-src/main/resources/images/ledred.png||Nuvola Icons - LGPL 2.1||||END|
-src/main/resources/images/ledyellow.png||Nuvola Icons - LGPL 2.1||||END|
 src/main/resources/images/lightbulb.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
 src/main/resources/images/lightbulb_off.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/list-add.png||Tango Icons - Public Domain|||tango|END|
-src/main/resources/images/lock.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/media-playback-stop.png||Tango Icons - Public Domain||||END|
-src/main/resources/images/no_small.png||GHIDRA||||END|
-src/main/resources/images/page_white_c.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/settings16.gif||GHIDRA||reviewed||END|
-src/main/resources/images/start-here.png||Tango Icons - Public Domain||||END|
 src/main/resources/images/start-here_16.png||Tango Icons - Public Domain|||From tango|END|
-src/main/resources/images/sync_enabled.png||GHIDRA||||END|
-src/main/resources/images/table_delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_gear.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/resources/images/table_go.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/resources/images/tag_blue.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
 src/main/resources/images/tag_blue_add.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
 src/main/resources/images/tag_blue_delete.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
 src/main/resources/images/tag_blue_edit.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set - Copied from famfamfam_silk/icons/tag_blue_edit.png|END|
 src/main/resources/images/undo-apply.png||Nuvola Icons - LGPL 2.1|||originally named undo.png|END|
-src/main/resources/images/user-busy.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/user-online.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/resources/images/view-refresh.png||Tango Icons - Public Domain|||tango|END|
-src/main/resources/images/view-split-left-right.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/resources/images/viewmag.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
-src/main/resources/images/warning.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/wizard.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/zoom_in.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/zoom_out.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

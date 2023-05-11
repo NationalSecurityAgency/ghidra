@@ -37,9 +37,7 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerTrackedRegisterListingBa
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncUtils;
-import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.program.util.ProgramLocation;
@@ -88,10 +86,6 @@ public class DebuggerTrackLocationTrait {
 
 	// TODO: This may already be deprecated....
 	protected class ColorModel extends DebuggerTrackedRegisterBackgroundColorModel {
-		public ColorModel() {
-			super(plugin);
-		}
-
 		@Override
 		protected ProgramLocation getTrackedLocation() {
 			return trackedLocation;
@@ -100,9 +94,8 @@ public class DebuggerTrackLocationTrait {
 
 	protected class ListingColorModel
 			extends DebuggerTrackedRegisterListingBackgroundColorModel {
-
 		public ListingColorModel(ListingPanel listingPanel) {
-			super(plugin, listingPanel);
+			super(listingPanel);
 		}
 
 		@Override
@@ -112,14 +105,7 @@ public class DebuggerTrackLocationTrait {
 	}
 
 	protected class TrackSelectionGenerator implements SelectionGenerator {
-		@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_TRACKING_MARKERS)
-		private Color trackingColor;
-		@SuppressWarnings("unused")
-		private final AutoOptions.Wiring autoOptionsWiring;
-
-		public TrackSelectionGenerator() {
-			autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
-		}
+		private final Color trackingColor = DebuggerResources.COLOR_REGISTER_MARKERS;
 
 		@Override
 		public void addSelections(BigInteger layoutIndex, SelectionTranslator translator,
@@ -272,6 +258,13 @@ public class DebuggerTrackLocationTrait {
 		});
 	}
 
+	public String computeLabelText() {
+		if (spec == null || trackedLocation == null) {
+			return "";
+		}
+		return spec.getLocationLabel() + " = " + trackedLocation.getByteAddress();
+	}
+
 	protected void doTrack() {
 		computeTrackedLocation().thenAccept(loc -> {
 			trackedLocation = loc;
@@ -320,6 +313,13 @@ public class DebuggerTrackLocationTrait {
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
 		tracker = spec.getTracker();
 		action.setCurrentActionStateByUserData(spec);
+	}
+
+	public GoToInput getDefaultGoToInput(ProgramLocation loc) {
+		if (tracker == null) {
+			return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, current, loc);
+		}
+		return tracker.getDefaultGoToInput(tool, current, loc);
 	}
 
 	protected void locationTracked() {

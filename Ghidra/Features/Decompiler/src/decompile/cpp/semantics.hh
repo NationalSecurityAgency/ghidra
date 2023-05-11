@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __SEMANTICS__
-#define __SEMANTICS__
+#ifndef __SEMANTICS_HH__
+#define __SEMANTICS_HH__
 
 #include "context.hh"
+
+namespace ghidra {
 
 // We remap these opcodes for internal use during pcode generation
 
@@ -208,4 +210,5 @@ public:
   virtual void appendCrossBuild(OpTpl *bld,int4 secnum)=0;
 };
 
+} // End namespace ghidra
 #endif

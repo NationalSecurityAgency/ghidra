@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +37,8 @@ public class ServerInfo implements Serializable {
 	}
 	
 	/**
-	 * Get the server name.
+	 * Get the server hostname or IP address as originally specified.
+	 * @return hostname or IP address as originally specified
 	 */
 	public String getServerName() {
 		return host;
@@ -46,6 +46,7 @@ public class ServerInfo implements Serializable {
 
 	/**
 	 * Get the port number.
+	 * @return port number
 	 */	
 	public int getPortNumber() {
 		return portNumber;

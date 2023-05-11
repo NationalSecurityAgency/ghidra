@@ -22,6 +22,10 @@
         <constraint primary="333"  secondary="borlanddelphi" processor="x86" endian="little" size="32" />
         <constraint primary="334"  secondary="borlanddelphi" processor="x86" endian="little" size="32" />
       </constraint>
+      <constraint compilerSpecID="golang">
+        <constraint primary="332"  secondary="golang" processor="x86" endian="little" size="32" />
+        <constraint primary="34404"  secondary="golang" processor="x86" endian="little" size="64" />
+      </constraint>
     </constraint>
     <constraint loader="Debug Symbols (DBG)" compilerSpecID="windows">
         <constraint primary="332"   processor="x86"     endian="little" size="32" />
@@ -65,17 +69,17 @@
     </constraint>
     <constraint loader="Relocatable Object Module Format (OMF)">
       <constraint compilerSpecID="windows">
-        <constraint primary="i386" processor="x86"          endian="little" size="32" />
+        <constraint primary="32bit" processor="x86"          endian="little" size="32" />
       </constraint>
       <constraint compilerSpecID="default">
-        <constraint primary="i386" processor="x86"          endian="little" size="16" />
+        <constraint primary="16bit" processor="x86"          endian="little" size="16" />
       </constraint>
       <constraint compilerSpecID="borlandcpp">
-        <constraint primary="i386" secondary="borlandcpp" processor="x86"        endian="little" size="32" />
-        <constraint primary="i386" secondary="codegearcpp" processor="x86"       endian="little" size="32" />
+        <constraint primary="32bit" secondary="borlandcpp"  processor="x86" endian="little" size="32" />
+        <constraint primary="32bit" secondary="codegearcpp" processor="x86" endian="little" size="32" />
       </constraint>
       <constraint compilerSpecID="borlanddelphi">
-        <constraint primary="i386" secondary="borlanddelphi" processor="x86"     endian="little" size="32" />
+        <constraint primary="32bit" secondary="borlanddelphi" processor="x86" endian="little" size="32" />
       </constraint>
     </constraint>
 </opinions>

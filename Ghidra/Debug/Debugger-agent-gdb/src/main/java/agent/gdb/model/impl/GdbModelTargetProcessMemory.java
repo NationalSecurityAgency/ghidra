@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.google.common.collect.Range;
-
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.impl.GdbMemoryMapping;
 import agent.gdb.manager.impl.cmd.GdbCommandError;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
+import generic.ULongSpan;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.TargetMemory;
@@ -119,7 +119,7 @@ public class GdbModelTargetProcessMemory
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		// Can't use refresh getKnownMappings is only populated by listMappings
 		return doRefresh();
 	}
@@ -155,13 +155,12 @@ public class GdbModelTargetProcessMemory
 			throw new IllegalArgumentException("address,length", e);
 		}
 		return inferior.readMemory(offset, buf).thenApply(set -> {
-			Range<Long> r = set.rangeContaining(offset);
-			if (r == null) {
+			ULongSpan s = set.spanContaining(offset);
+			if (s == null) {
 				throw new DebuggerMemoryAccessException("Cannot read at " + address);
 			}
-			byte[] content =
-				Arrays.copyOf(buf.array(), (int) (r.upperEndpoint() - r.lowerEndpoint()));
-			listeners.fire.memoryUpdated(this, address, content);
+			byte[] content = Arrays.copyOf(buf.array(), (int) s.length());
+			broadcast().memoryUpdated(this, address, content);
 			return content;
 		}).exceptionally(e -> {
 			e = AsyncUtils.unwrapThrowable(e);
@@ -169,10 +168,10 @@ public class GdbModelTargetProcessMemory
 				GdbCommandError gce = (GdbCommandError) e;
 				e = new DebuggerMemoryAccessException(
 					"Cannot read at " + address + ": " + gce.getInfo().getString("msg"));
-				listeners.fire.memoryReadError(this, range, (DebuggerMemoryAccessException) e);
+				broadcast().memoryReadError(this, range, (DebuggerMemoryAccessException) e);
 			}
 			if (e instanceof DebuggerMemoryAccessException) {
-				listeners.fire.memoryReadError(this, range, (DebuggerMemoryAccessException) e);
+				broadcast().memoryReadError(this, range, (DebuggerMemoryAccessException) e);
 			}
 			return ExceptionUtils.rethrow(e);
 		});
@@ -188,12 +187,12 @@ public class GdbModelTargetProcessMemory
 		CompletableFuture<Void> future =
 			inferior.writeMemory(address.getOffset(), ByteBuffer.wrap(data));
 		return impl.gateFuture(future.thenAccept(__ -> {
-			listeners.fire.memoryUpdated(this, address, data);
+			broadcast().memoryUpdated(this, address, data);
 		}));
 	}
 
 	protected void invalidateMemoryCaches() {
-		listeners.fire.invalidateCacheRequested(this);
+		broadcast().invalidateCacheRequested(this);
 	}
 
 	public void memoryChanged(long offset, int len) {

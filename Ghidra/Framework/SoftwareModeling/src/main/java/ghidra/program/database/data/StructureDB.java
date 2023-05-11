@@ -376,7 +376,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 					componentName, comment);
 			}
 
-			// handle aligned bitfield insertion
+			// handle aligned bitfield insertion (packing enabled)
 			BitFieldDataType bitFieldDt = new BitFieldDBDataType(baseDataType, bitSize, 0);
 			return insert(ordinal, bitFieldDt, bitFieldDt.getStorageSize(), componentName, comment);
 		}
@@ -1709,7 +1709,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			DataTypeComponent dtc = otherComponents[i];
 
 			DataType dt = resolvedDts[i]; // ancestry check already performed by caller
-			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 			if (length < 0 || dtc.isBitFieldComponent()) {
 				// TODO: bitfield truncation/expansion may be an issue if data organization changes
 				length = dtc.getLength();
@@ -1817,7 +1817,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				if (dtc.getDataType() == dt) {
 					// assume no impact to bitfields since base types should not change size
 					int dtcLen = dtc.getLength();
-					int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+					int length =
+						DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 					if (length < 0) {
 						length = dtcLen;
 					}
@@ -1860,7 +1861,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	@Override
 	protected void fixupComponents() throws IOException {
 		boolean isPacked = isPackingEnabled();
-		boolean didChange = false;
+		boolean forceRepack = false;
+		boolean changed = false;
 		boolean warn = false;
 		int n = components.size();
 		for (int i = 0; i < n; i++) {
@@ -1870,10 +1872,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				continue; // length can't change
 			}
 			if (dt instanceof BitFieldDataType) {
-				// TODO: could get messy
+				// Always repack if bitfields present and packing enabled
+				forceRepack |= isPacked;
 				continue;
 			}
-			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getLength();
+			int length = DataTypeComponent.usesZeroLengthComponent(dt) ? 0 : dt.getAlignedLength();
 			if (length < 0) {
 				continue; // illegal condition - skip
 			}
@@ -1881,18 +1884,18 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (dtcLen != length) {
 				if (isPacked) {
 					dtc.setLength(length, true);
-					didChange = true;
+					changed = true;
 				}
 				else if (length < dtcLen) {
 					dtc.setLength(length, true);
 					shiftOffsets(i + 1, dtcLen - length, 0); // updates structure record and last modified time
-					didChange = true;
+					changed = true;
 				}
 				else if (length > dtcLen) {
 					int consumed = consumeBytesAfter(i, length - dtcLen); // updates component record
 					if (consumed > 0) {
 						shiftOffsets(i + 1, -consumed, 0); // updates structure record and last modified time
-						didChange = true;
+						changed = true;
 					}
 				}
 				if (dtc.getLength() != length) {
@@ -1900,11 +1903,14 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				}
 			}
 		}
-		if (didChange) {
+		if (changed || forceRepack) {
 			// Do not notify parents - must be invoked in composite dependency order
-			repack(false, false);
-			compositeAdapter.updateRecord(record, true);
-			dataMgr.dataTypeChanged(this, false);
+			// Treat as an auto-change as a result of data organization change
+			changed |= repack(true, false);
+		}
+		if (changed) {
+			compositeAdapter.updateRecord(record, false); // force record update
+			dataMgr.dataTypeChanged(this, true);
 		}
 		if (warn) {
 			Msg.warn(this, "Failed to resize one or more structure components: " + getPathName());
@@ -2238,10 +2244,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				checkAncestry(replacementDt);
 			}
 			catch (Exception e) {
-				// TODO: should we use Undefined1 instead to avoid cases where DEFAULT datatype can
-				// not be used (bitfield, aligned structure, etc.)
-				// TODO: failing silently is rather hidden
-				replacementDt = DataType.DEFAULT;
+				// TODO: should we flag bad replacement
+				replacementDt = isPackingEnabled() ? Undefined1DataType.dataType : DataType.DEFAULT;
 			}
 
 			boolean changed = false;
@@ -2301,7 +2305,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			int nextIndex) throws IOException {
 
 		int oldLen = comp.getLength();
-		int len = DataTypeComponent.usesZeroLengthComponent(newDt) ? 0 : newDt.getLength();
+		int len = DataTypeComponent.usesZeroLengthComponent(newDt) ? 0 : newDt.getAlignedLength();
 		if (len < 0) {
 			len = oldLen;
 		}

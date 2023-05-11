@@ -24,6 +24,7 @@ import com.sun.jdi.Location;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequestManager;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
@@ -72,7 +73,7 @@ public class JdiModelTargetLocation extends JdiModelTargetObjectImpl {
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		this.declaringType = (JdiModelTargetReferenceType) getInstance(location.declaringType());
 

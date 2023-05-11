@@ -28,6 +28,7 @@ import javax.swing.event.ChangeListener;
 import docking.DialogComponentProvider;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
+import generic.theme.Gui;
 import ghidra.app.util.bean.FixedBitSizeValueField;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -92,7 +93,7 @@ public class SetRegisterValueDialog extends DialogComponentProvider {
 				registerChanged();
 			}
 		});
-		f = new Font("monospaced", Font.PLAIN, 13);
+		f = Gui.getFont("font.monospaced");
 
 		addressRangeList = new JList();
 		addressRangeList.setEnabled(false);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jul 9, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
- 
 package ghidra.app.decompiler;
 
 import ghidra.program.model.pcode.HighFunction;
 
 /**
- * 
- *
- * All the fields making up one function in the display
+ * A grouping of source code tokens representing an entire function
  */
 public class ClangFunction extends ClangTokenGroup {
-	private HighFunction hfunc;
-	
-	public ClangFunction(ClangNode par,HighFunction hf) { super(par); hfunc = hf; }
-	@Override
-    public ClangFunction getClangFunction() { return this; }
-	public HighFunction getHighFunction() { return hfunc; }
-}
-		
+	private final HighFunction hfunc;
 
+	public ClangFunction(ClangNode parent, HighFunction hfunc) {
+		super(parent);
+		this.hfunc = hfunc;
+	}
+
+	@Override
+	public ClangFunction getClangFunction() {
+		return this;
+	}
+
+	/**
+	 * @return the HighFunction object represented by this source code
+	 */
+	public HighFunction getHighFunction() {
+		return hfunc;
+	}
+}

@@ -15,6 +15,10 @@
  */
 package ghidra.app.util.query;
 
+import java.awt.Color;
+
+import javax.swing.Icon;
+
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.plugin.core.table.TableServicePlugin;
@@ -23,10 +27,6 @@ import ghidra.app.tablechooser.TableChooserExecutor;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.util.table.GhidraProgramTableModel;
-
-import java.awt.Color;
-
-import javax.swing.ImageIcon;
 
 /**
  * Service to show a component that has a JTable given a table model
@@ -65,7 +65,7 @@ public interface TableService {
 	 */
 	public <T> TableComponentProvider<T> showTableWithMarkers(String componentProviderTitle,
 			String tableTypeName, GhidraProgramTableModel<T> model, Color markerColor,
-			ImageIcon markerIcon, String windowSubMenu, Navigatable navigatable);
+			Icon markerIcon, String windowSubMenu, Navigatable navigatable);
 
 	public TableChooserDialog createTableChooserDialog(TableChooserExecutor executor,
 			Program program, String name, Navigatable navigatable);

@@ -42,11 +42,11 @@ public class MultiIteratorTest extends AbstractGenericTest {
 		MultiIterator<Integer> iterator = new MultiIterator<>(list, true);
 
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(1), iterator.next());
+		Assert.assertEquals(Integer.valueOf(1), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertFalse(iterator.hasNext());
 	}
 
@@ -58,11 +58,11 @@ public class MultiIteratorTest extends AbstractGenericTest {
 		MultiIterator<Integer> iterator = new MultiIterator<>(list, false);
 
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(1), iterator.next());
+		Assert.assertEquals(Integer.valueOf(1), iterator.next());
 		assertFalse(iterator.hasNext());
 	}
 
@@ -76,25 +76,25 @@ public class MultiIteratorTest extends AbstractGenericTest {
 		MultiIterator<Integer> iterator = new MultiIterator<>(list, true);
 
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(1), iterator.next());
+		Assert.assertEquals(Integer.valueOf(1), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(4), iterator.next());
+		Assert.assertEquals(Integer.valueOf(4), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(5), iterator.next());
+		Assert.assertEquals(Integer.valueOf(5), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(6), iterator.next());
+		Assert.assertEquals(Integer.valueOf(6), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(7), iterator.next());
+		Assert.assertEquals(Integer.valueOf(7), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(8), iterator.next());
+		Assert.assertEquals(Integer.valueOf(8), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(9), iterator.next());
+		Assert.assertEquals(Integer.valueOf(9), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(10), iterator.next());
+		Assert.assertEquals(Integer.valueOf(10), iterator.next());
 		assertFalse(iterator.hasNext());
 	}
 
@@ -108,25 +108,25 @@ public class MultiIteratorTest extends AbstractGenericTest {
 		MultiIterator<Integer> iterator = new MultiIterator<>(list, false);
 
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(10), iterator.next());
+		Assert.assertEquals(Integer.valueOf(10), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(9), iterator.next());
+		Assert.assertEquals(Integer.valueOf(9), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(8), iterator.next());
+		Assert.assertEquals(Integer.valueOf(8), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(7), iterator.next());
+		Assert.assertEquals(Integer.valueOf(7), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(6), iterator.next());
+		Assert.assertEquals(Integer.valueOf(6), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(5), iterator.next());
+		Assert.assertEquals(Integer.valueOf(5), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(4), iterator.next());
+		Assert.assertEquals(Integer.valueOf(4), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(1), iterator.next());
+		Assert.assertEquals(Integer.valueOf(1), iterator.next());
 		assertFalse(iterator.hasNext());
 	}
 
@@ -138,15 +138,15 @@ public class MultiIteratorTest extends AbstractGenericTest {
 		MultiIterator<Integer> iterator = new MultiIterator<>(list, true);
 
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(1), iterator.next());
+		Assert.assertEquals(Integer.valueOf(1), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertFalse(iterator.hasNext());
 	}
 
@@ -160,23 +160,23 @@ public class MultiIteratorTest extends AbstractGenericTest {
 		MultiIterator<Integer> iterator = new MultiIterator<>(list, true);
 
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(1), iterator.next());
+		Assert.assertEquals(Integer.valueOf(1), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(4), iterator.next());
+		Assert.assertEquals(Integer.valueOf(4), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(5), iterator.next());
+		Assert.assertEquals(Integer.valueOf(5), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(6), iterator.next());
+		Assert.assertEquals(Integer.valueOf(6), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(7), iterator.next());
+		Assert.assertEquals(Integer.valueOf(7), iterator.next());
 		assertFalse(iterator.hasNext());
 	}
 
@@ -193,11 +193,11 @@ public class MultiIteratorTest extends AbstractGenericTest {
 		iterator.hasNext();
 
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(1), iterator.next());
+		Assert.assertEquals(Integer.valueOf(1), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertFalse(iterator.hasNext());
 	}
 
@@ -214,11 +214,11 @@ public class MultiIteratorTest extends AbstractGenericTest {
 		iterator.hasNext();
 
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(3), iterator.next());
+		Assert.assertEquals(Integer.valueOf(3), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(2), iterator.next());
+		Assert.assertEquals(Integer.valueOf(2), iterator.next());
 		assertTrue(iterator.hasNext());
-		Assert.assertEquals(new Integer(1), iterator.next());
+		Assert.assertEquals(Integer.valueOf(1), iterator.next());
 		assertFalse(iterator.hasNext());
 	}
 

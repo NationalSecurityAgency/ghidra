@@ -24,6 +24,7 @@ import org.jdom.Element;
 import docking.ComponentPlaceholder;
 import docking.DockingWindowManager;
 import docking.options.editor.GhidraColorChooser;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphVertexAttributes;
 import ghidra.framework.options.SaveState;
@@ -111,8 +112,7 @@ class IndependentColorProvider implements FGColorProvider {
 			List<Element> colorElements = xmlElement.getChildren("COLOR");
 			for (Element element : colorElements) {
 				String rgbString = element.getAttributeValue("RGB");
-				int rgb = Integer.parseInt(rgbString);
-				recentColorCache.addColor(new Color(rgb, true));
+				recentColorCache.addColor(Color.decode(rgbString));
 			}
 		}
 	}
@@ -138,7 +138,9 @@ class IndependentColorProvider implements FGColorProvider {
 //==================================================================================================
 	private class RecentColorCache extends LinkedHashMap<Color, Color> implements Iterable<Color> {
 		private static final int MAX_SIZE = 10;
-		private Color mostRecentColor = Color.blue;
+
+		// not sure what the default color should be here
+		private Color mostRecentColor = new GColor("color.bg");
 
 		RecentColorCache() {
 			super(16, 0.75f, true);

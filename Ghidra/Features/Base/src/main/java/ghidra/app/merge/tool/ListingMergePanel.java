@@ -28,6 +28,8 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
+import generic.theme.GIcon;
+import ghidra.GhidraOptions;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.hover.*;
@@ -54,12 +56,11 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.NotYetImplementedException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class ListingMergePanel extends JPanel
 		implements MergeConstants, FocusListener, CodeFormatService {
-	private static Icon hideIcon = ResourceManager.loadImage("images/collapse.gif");
-	private static Icon showIcon = ResourceManager.loadImage("images/expand.gif");
+	private static final Icon HIDE_ICON = new GIcon("icon.plugin.merge.conflict.collapse");
+	private static final Icon SHOW_ICON = new GIcon("icon.plugin.merge.conflict.expand");
 
 	private JComponent topComp;
 	private JComponent bottomComp;
@@ -149,7 +150,7 @@ public class ListingMergePanel extends JPanel
 	}
 
 	private ToolOptions getFieldOptions() {
-		ToolOptions fieldOptions = new ToolOptions("field");
+		ToolOptions fieldOptions = new ToolOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		fieldOptions.setBoolean(RegisterFieldFactory.DISPLAY_HIDDEN_REGISTERS_OPTION_NAME, true);
 		return fieldOptions;
 	}
@@ -297,9 +298,8 @@ public class ListingMergePanel extends JPanel
 	}
 
 	/**
-	 * Color the background of all 4 listings to the indicated color for 
-	 * the indicated addresses.
-	 * @param addrSet
+	 * Color the background of all 4 listings to the indicated color for the indicated addresses.
+	 * @param addrSet the addresses
 	 */
 	public void paintAllBackgrounds(AddressSetView addrSet) {
 		backgroundColorModel.setAddressSet(addrSet);
@@ -383,7 +383,7 @@ public class ListingMergePanel extends JPanel
 	}
 
 	/**
-	 * Add the result program's listing model as a listener to the result program 
+	 * Add the result program's listing model as a listener to the result program
 	 * for domain object events.
 	 */
 	public void addDomainObjectListener() {
@@ -392,7 +392,7 @@ public class ListingMergePanel extends JPanel
 	}
 
 	/**
-	 * Remove the result program's listing model as a listener to the result program 
+	 * Remove the result program's listing model as a listener to the result program
 	 * for domain object events.
 	 */
 	public void removeDomainObjectListener() {
@@ -509,18 +509,18 @@ public class ListingMergePanel extends JPanel
 
 	private class ShowHeaderButton extends EmptyBorderButton {
 		ShowHeaderButton() {
-			super(showIcon);
+			super(SHOW_ICON);
 			setFocusable(false);
 			setToolTipText("Toggle Format Header");
 			addActionListener(e -> {
 				if (isSelected()) {
 					setSelected(false);
-					setIcon(showIcon);
+					setIcon(SHOW_ICON);
 					listingPanels[RESULT].showHeader(false);
 				}
 				else {
 					setSelected(true);
-					setIcon(hideIcon);
+					setIcon(HIDE_ICON);
 					listingPanels[RESULT].showHeader(true);
 				}
 			});
@@ -616,14 +616,12 @@ public class ListingMergePanel extends JPanel
 }
 
 class LockComponent extends GCheckBox {
-	private static final Icon lock = ResourceManager.loadImage("images/lock.gif");
-	private static final Icon unlock = ResourceManager.loadImage("images/unlock.gif");
 
 	LockComponent() {
-		super(unlock);
+		super(new GIcon("icon.plugin.merge.conflict.unlock"));
 		setToolTipText("Lock/Unlock with other views");
 		setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
-		setSelectedIcon(lock);
+		setSelectedIcon(new GIcon("icon.plugin.merge.conflict.lock"));
 		setSelected(true);
 	}
 
@@ -635,26 +633,3 @@ class LockComponent extends GCheckBox {
 		setSelected(lock);
 	}
 }
-/***
-// class LockComponent extends ToolbarButton {
-//	private static final Icon lock = ResourceManager.loadImage("images/lock.gif");
-//	private static final Icon unlock = ResourceManager.loadImage("images/unlock.gif");
-//	LockComponent() {
-//		super(unlock);
-//		setBorder(BorderFactory.createEmptyBorder(0,2,0,2));
-//		setSelectedIcon(lock);		
-//		setSelected(true);
-//		addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent e) {
-//				setSelected(!isSelected());
-//			}
-//		});
-//	}
-//	boolean isLocked() {
-//		return isSelected();
-//	}
-//	void setLocked(boolean lock) {
-//		setSelected(lock);
-//	}
-// }
- ***/

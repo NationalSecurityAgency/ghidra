@@ -91,7 +91,7 @@ public class LZ4ArchiveFileSystem extends GFileSystemBase {
 				upwtm.setProgress(0);
 
 				while (reader.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 
 					int compressedChunkSize = reader.readNextInt();
 					byte[] compressedChunk = reader.readNextByteArray(compressedChunkSize);

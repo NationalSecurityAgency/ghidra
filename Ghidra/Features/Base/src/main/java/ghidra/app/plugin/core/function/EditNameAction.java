@@ -23,6 +23,7 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.app.util.AddEditDialog;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
@@ -87,6 +88,11 @@ class EditNameAction extends ListingContextAction {
 			Function function =
 				functionPlugin.getFunctionInOperandField(program, (OperandFieldLocation) loc);
 			if (function != null) {
+				while (function.isThunk() &&
+					function.getSymbol().getSource() == SourceType.DEFAULT) {
+					// find source of thunk function label
+					function = function.getThunkedFunction(false);
+				}
 				AddEditDialog dialog =
 					new AddEditDialog("Edit Function Name", functionPlugin.getTool());
 				dialog.editLabel(function.getSymbol(), program);

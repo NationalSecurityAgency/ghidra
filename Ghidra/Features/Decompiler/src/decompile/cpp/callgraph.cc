@@ -16,6 +16,8 @@
 #include "callgraph.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 ElementId ELEM_CALLGRAPH = ElementId("callgraph",226);
 ElementId ELEM_NODE = ElementId("node",227);
 
@@ -463,3 +465,4 @@ void CallGraph::decoder(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
+} // End namespace ghidra

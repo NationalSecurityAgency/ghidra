@@ -15,13 +15,12 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.beans.PropertyEditor;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.*;
@@ -39,7 +38,6 @@ import ghidra.util.exception.AssertException;
   */
 public class AddressFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Address";
-	public static final Color DEFAULT_COLOR = Color.BLACK;
 	private final static String GROUP_TITLE = "Address Field";
 	public final static String DISPLAY_BLOCK_NAME =
 		GROUP_TITLE + Options.DELIMITER + "Display Block Name";
@@ -65,7 +63,7 @@ public class AddressFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private AddressFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private AddressFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 		initOptions(fieldOptions);
@@ -96,11 +94,6 @@ public class AddressFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public Color getDefaultColor() {
-		return DEFAULT_COLOR;
-	}
-
-	@Override
 	public void fieldOptionsChanged(Options options, String optionsName, Object oldValue,
 			Object newValue) {
 		if (optionsName.equals(ADDRESS_DISPLAY_OPTIONS_NAME)) {
@@ -122,8 +115,8 @@ public class AddressFieldFactory extends FieldFactory {
 		}
 		CodeUnit cu = (CodeUnit) obj;
 		String text = getAddressString(cu);
-		FieldElement as =
-			new TextFieldElement(new AttributedString(text, color, getMetrics()), 0, 0);
+		FieldElement as = new TextFieldElement(
+			new AttributedString(text, ListingColors.ADDRESS, getMetrics()), 0, 0);
 		ListingTextField ltf;
 		if (rightJustify) {
 			ltf = ListingTextField.createSingleLineTextFieldWithReverseClipping(this, proxy, as,
@@ -205,9 +198,10 @@ public class AddressFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel newModel,
-			HighlightProvider highlightStringProvider, ToolOptions toolOptions,
+			ListingHighlightProvider highlightStringProvider, ToolOptions toolOptions,
 			ToolOptions fieldOptions) {
 		return new AddressFieldFactory(newModel, highlightStringProvider, toolOptions,
 			fieldOptions);
 	}
+
 }

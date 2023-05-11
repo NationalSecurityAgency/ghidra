@@ -161,7 +161,7 @@ public class DisassociateAction extends DockingAction {
 
 			monitor.initialize(typesToDisassociate.size());
 			for (DataTypeSyncInfo info : typesToDisassociate) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMessage("Disassociating " + info.getName());
 				info.disassociate();
 				monitor.incrementProgress(1);

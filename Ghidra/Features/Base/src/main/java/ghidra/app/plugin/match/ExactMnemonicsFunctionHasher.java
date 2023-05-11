@@ -37,7 +37,7 @@ public class ExactMnemonicsFunctionHasher extends ExactInstructionsFunctionHashe
 			throws MemoryAccessException, CancelledException {
 		StringBuilder sb = new StringBuilder();
 		for (CodeUnit codeUnit : units) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (codeUnit instanceof Instruction) {
 				Instruction inst = (Instruction) codeUnit;

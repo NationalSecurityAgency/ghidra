@@ -15,8 +15,13 @@
  */
 /// \file xml_arch.hh
 /// \brief Extension to read executables based on an XML format
+#ifndef __XML_ARCH_HH__
+#define __XML_ARCH_HH__
+
 #include "sleigh_arch.hh"
 #include "loadimage_xml.hh"
+
+namespace ghidra {
 
 extern ElementId ELEM_XML_SAVEFILE;	///< Marshaling element \<xml_savefile>
 
@@ -45,3 +50,6 @@ public:
   XmlArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
   virtual ~XmlArchitecture(void) {}
 };
+
+} // End namespace ghidra
+#endif

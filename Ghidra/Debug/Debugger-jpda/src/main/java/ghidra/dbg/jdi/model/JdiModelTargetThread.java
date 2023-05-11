@@ -24,6 +24,7 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
@@ -55,7 +56,6 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 		JdiModelSelectableObject {
 
 	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
-		TargetStepKind.ADVANCE, //
 		TargetStepKind.FINISH, //
 		TargetStepKind.LINE, //
 		TargetStepKind.OVER, //
@@ -125,7 +125,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		populateAttributes();
 
@@ -346,7 +346,6 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 				depth = StepRequest.STEP_LINE;
 				break;
 			case FINISH:
-			case ADVANCE:
 				depth = StepRequest.STEP_OUT;
 				break;
 			case SKIP:

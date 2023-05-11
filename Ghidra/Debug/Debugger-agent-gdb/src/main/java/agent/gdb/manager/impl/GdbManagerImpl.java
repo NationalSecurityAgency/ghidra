@@ -680,7 +680,7 @@ public class GdbManagerImpl implements GdbManager {
 					catch (UnsupportedOperationException e) {
 						throw new IOException(
 							"Pty implementation does not support null sessions. Try " + gdbCmd +
-								" i mi2",
+								" -i mi2",
 							e);
 					}
 					cliThread.writer.print("new-ui mi2 " + ptyName + newLine);

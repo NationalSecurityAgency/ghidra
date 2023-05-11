@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Provides a definition of a Signed Quad Word within a program.
  */
-public class SignedQWordDataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class SignedQWordDataType extends AbstractSignedIntegerDataType {
 
 	/** A statically defined SignedQWordDataType instance.*/
 	public final static SignedQWordDataType dataType = new SignedQWordDataType();
@@ -30,7 +28,7 @@ public class SignedQWordDataType extends AbstractIntegerDataType {
 	}
 
 	public SignedQWordDataType(DataTypeManager dtm) {
-		super("sqword", true, dtm);
+		super("sqword", dtm);
 	}
 
 	@Override

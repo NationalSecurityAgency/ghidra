@@ -78,14 +78,12 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 	public void readConfigState(SaveState saveState) {
 		super.readConfigState(saveState);
 		provider.readConfigState(saveState);
-		GhidraScriptEditorComponentProvider.restoreState(saveState);
 	}
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
 		super.writeConfigState(saveState);
 		provider.writeConfigState(saveState);
-		GhidraScriptEditorComponentProvider.saveState(saveState);
 	}
 
 	GhidraState getCurrentState() {

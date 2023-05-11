@@ -17,67 +17,125 @@ package ghidra.app.plugin.core.debug.gui.memory;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.*;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
+import docking.widgets.table.DynamicTableColumn;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionMapProposalDialog.RegionMapTableColumns;
-import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsProvider.RegionTableColumns;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
+import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
 import ghidra.app.services.RegionMapProposal.RegionMapEntry;
-import ghidra.program.model.address.AddressSet;
+import ghidra.dbg.target.TargetMemoryRegion;
+import ghidra.dbg.target.schema.SchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.program.model.address.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.memory.*;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
-import ghidra.util.database.UndoableTransaction;
+import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
 public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	DebuggerRegionsProvider provider;
 
-	protected TraceMemoryRegion regionExeText;
-	protected TraceMemoryRegion regionExeData;
-	protected TraceMemoryRegion regionLibText;
-	protected TraceMemoryRegion regionLibData;
+	TraceObjectMemoryRegion regionExeText;
+	TraceObjectMemoryRegion regionExeData;
+	TraceObjectMemoryRegion regionLibText;
+	TraceObjectMemoryRegion regionLibData;
 
-	protected MemoryBlock blockExeText;
-	protected MemoryBlock blockExeData;
+	MemoryBlock blockExeText;
+	MemoryBlock blockExeData;
 
-	@Before
-	public void setUpRegionsTest() throws Exception {
-		addPlugin(tool, DebuggerRegionsPlugin.class);
-		provider = waitForComponentProvider(DebuggerRegionsProvider.class);
+	protected SchemaContext ctx;
+
+	@Override
+	protected void createTrace(String langID) throws IOException {
+		super.createTrace(langID);
+		try {
+			activateObjectsMode();
+		}
+		catch (Exception e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	public void activateObjectsMode() throws Exception {
+		ctx = XmlSchemaContext.deserialize("""
+				<context>
+				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Memory' schema='RegionContainer' />
+				    </schema>
+				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Region' />
+				    </schema>
+				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='MemoryRegion' />
+				        <attribute name='_display' schema='STRING' hidden='yes' />
+				        <attribute name='_range' schema='RANGE' hidden='yes' />
+				        <attribute name='_readable' schema='BOOL' hidden='yes' />
+				        <attribute name='_writable' schema='BOOL' hidden='yes' />
+				        <attribute name='_executable' schema='BOOL' hidden='yes' />
+				    </schema>
+				</context>
+				""");
+
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
+		}
+	}
+
+	protected TraceObjectMemoryRegion addRegion(String name, long loaded, AddressRange range) {
+		boolean isData = name.endsWith(".data");
+		TraceObjectManager om = tb.trace.getObjectManager();
+		TraceObjectKeyPath memPath = TraceObjectKeyPath.parse("Memory");
+		Lifespan span = Lifespan.nowOn(loaded);
+		TraceObjectMemoryRegion region = Objects.requireNonNull(om.createObject(memPath.index(name))
+				.insert(span, ConflictResolution.TRUNCATE)
+				.getDestination(null)
+				.queryInterface(TraceObjectMemoryRegion.class));
+		TraceObject obj = region.getObject();
+		obj.setAttribute(span, TargetMemoryRegion.DISPLAY_ATTRIBUTE_NAME, name);
+		obj.setAttribute(span, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range);
+		obj.setAttribute(span, TargetMemoryRegion.READABLE_ATTRIBUTE_NAME, true);
+		obj.setAttribute(span, TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME, isData);
+		obj.setAttribute(span, TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME, !isData);
+		return region;
 	}
 
 	protected void addRegions() throws Exception {
-		TraceMemoryManager mm = tb.trace.getMemoryManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			regionExeText = mm.createRegion("Memory[/bin/echo 0x55550000]", 0,
-				tb.range(0x55550000, 0x555500ff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			regionExeData = mm.createRegion("Memory[/bin/echo 0x55750000]", 0,
-				tb.range(0x55750000, 0x5575007f), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
-			regionLibText = mm.createRegion("Memory[/lib/libc.so 0x7f000000]", 0,
-				tb.range(0x7f000000, 0x7f0003ff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			regionLibData = mm.createRegion("Memory[/lib/libc.so 0x7f100000]", 0,
-				tb.range(0x7f100000, 0x7f10003f), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+		try (Transaction tx = tb.startTransaction()) {
+			regionExeText = addRegion("/bin/echo .text", 0, tb.range(0x55550000, 0x555500ff));
+			regionExeData = addRegion("/bin/echo .data", 0, tb.range(0x55750000, 0x5575007f));
+			regionLibText = addRegion("/lib/libc.so .text", 0, tb.range(0x7f000000, 0x7f0003ff));
+			regionLibData = addRegion("/lib/libc.so .data", 0, tb.range(0x7f100000, 0x7f10003f));
 		}
 	}
 
 	protected void addBlocks() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			Memory mem = program.getMemory();
 			blockExeText = mem.createInitializedBlock(".text", tb.addr(0x00400000), 0x100, (byte) 0,
 				monitor, false);
@@ -86,45 +144,82 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 	}
 
+	protected void assertTableSize(int size) {
+		assertEquals(size, provider.panel.getAllItems().size());
+	}
+
+	protected void assertRow(int position, Object object, String name, Address start,
+			Address end, long length, String flags) {
+		ValueRow row = provider.panel.getAllItems().get(position);
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
+			provider.panel.getColumnByNameAndType("Name", ValueRow.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> startCol =
+			provider.panel.getColumnByNameAndType("Start", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> endCol =
+			provider.panel.getColumnByNameAndType("End", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> lengthCol =
+			provider.panel.getColumnByNameAndType("Length", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> readCol =
+			provider.panel.getColumnByNameAndType("Read", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> writeCol =
+			provider.panel.getColumnByNameAndType("Write", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> executeCol =
+			provider.panel.getColumnByNameAndType("Execute", ValueProperty.class).getValue();
+
+		assertSame(object, row.getValue().getValue());
+		assertEquals(name, rowColDisplay(row, nameCol));
+		assertEquals(start, rowColVal(row, startCol));
+		assertEquals(end, rowColVal(row, endCol));
+		assertEquals(length, rowColVal(row, lengthCol));
+		assertEquals(flags.contains("r"), rowColVal(row, readCol));
+		assertEquals(flags.contains("w"), rowColVal(row, writeCol));
+		assertEquals(flags.contains("x"), rowColVal(row, executeCol));
+	}
+
+	@Before
+	public void setUpRegionsProviderTest() throws Exception {
+		addPlugin(tool, DebuggerRegionsPlugin.class);
+		provider = waitForComponentProvider(DebuggerRegionsProvider.class);
+	}
+
+	@After
+	public void tearDownRegionsProviderTest() throws Exception {
+		traceManager.activate(DebuggerCoordinates.NOWHERE);
+		waitForTasks();
+		runSwing(() -> traceManager.closeAllTraces());
+	}
+
 	@Test
 	public void testNoTraceEmpty() throws Exception {
-		assertEquals(0, provider.regionTableModel.getModelData().size());
+		waitForPass(() -> assertTableSize(0));
 	}
 
 	@Test
 	public void testActivateEmptyTraceEmpty() throws Exception {
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertEquals(0, provider.regionTableModel.getModelData().size());
+		waitForPass(() -> assertTableSize(0));
 	}
 
 	@Test
 	public void testAddThenActivateTracePopulates() throws Exception {
-		createTrace();
+		createAndOpenTrace();
 
-		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+		TraceObjectMemoryRegion region;
+		try (Transaction tx = tb.startTransaction()) {
+			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
 
-		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
-		assertEquals(region, row.getRegion());
-		assertEquals("Memory[bin:.text]", row.getName());
-		assertEquals(tb.addr(0x00400000), row.getMinAddress());
-		assertEquals(tb.addr(0x0040ffff), row.getMaxAddress());
-		assertEquals(tb.range(0x00400000, 0x0040ffff), row.getRange());
-		assertEquals(0x10000, row.getLength());
-		assertEquals(0L, row.getCreatedSnap());
-		assertEquals("", row.getDestroyedSnap());
-		assertEquals(Range.atLeast(0L), row.getLifespan());
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000), tb.addr(0x0040ffff),
+				0x10000, "rx");
+		});
 	}
 
 	@Test
@@ -132,65 +227,81 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
 
-		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+		waitForPass(() -> assertTableSize(0));
+
+		TraceObjectMemoryRegion region;
+		try (Transaction tx = tb.startTransaction()) {
+			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
+		waitForTasks();
 
-		waitForSwing();
-
-		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
-		assertEquals(region, row.getRegion());
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000), tb.addr(0x0040ffff),
+				0x10000, "rx");
+		});
 	}
 
 	@Test
-	public void testDeleteRemoves() throws Exception {
-		createTrace();
+	public void testRemoveRegionRemovesFromTable() throws Exception {
+		createAndOpenTrace();
 
-		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+		TraceObjectMemoryRegion region;
+		try (Transaction tx = tb.startTransaction()) {
+			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
 
-		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
-		assertEquals(region, row.getRegion());
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000), tb.addr(0x0040ffff),
+				0x10000, "rx");
+		});
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			region.delete();
+		try (Transaction tx = tb.startTransaction()) {
+			region.getObject().removeTree(Lifespan.nowOn(0));
 		}
 		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		assertEquals(0, provider.regionTableModel.getModelData().size());
+		waitForPass(() -> assertTableSize(0));
 	}
 
 	@Test
 	public void testUndoRedo() throws Exception {
-		createTrace();
+		createAndOpenTrace();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("Memory[bin:.text]", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+		TraceObjectMemoryRegion region;
+		try (Transaction tx = tb.startTransaction()) {
+			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
 
-		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		Unique.assertOne(provider.regionTableModel.getModelData());
+		waitForTasks();
+
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000), tb.addr(0x0040ffff),
+				0x10000, "rx");
+		});
 
 		undo(tb.trace);
-		assertEquals(0, provider.regionTableModel.getModelData().size());
+		waitForDomainObject(tb.trace);
+		waitForTasks();
+
+		waitForPass(() -> assertTableSize(0));
 
 		redo(tb.trace);
-		Unique.assertOne(provider.regionTableModel.getModelData());
+		waitForDomainObject(tb.trace);
+		waitForTasks();
+
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000), tb.addr(0x0040ffff),
+				0x10000, "rx");
+		});
 	}
 
 	@Test
@@ -198,17 +309,23 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("Memory[bin:.text]", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
-				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-
+		TraceObjectMemoryRegion region;
+		try (Transaction tx = tb.startTransaction()) {
+			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 			waitForDomainObject(tb.trace);
-			Unique.assertOne(provider.regionTableModel.getModelData());
-			tid.abort();
+			waitForTasks();
+
+			waitForPass(() -> {
+				assertTableSize(1);
+				assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000),
+					tb.addr(0x0040ffff), 0x10000, "rx");
+			});
+			tx.abort();
 		}
 		waitForDomainObject(tb.trace);
-		assertEquals(0, provider.regionTableModel.getModelData().size());
+		waitForTasks();
+
+		waitForPass(() -> assertTableSize(0));
 	}
 
 	@Test
@@ -216,27 +333,31 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		addPlugin(tool, DebuggerListingPlugin.class);
 		DebuggerListingProvider listing = waitForComponentProvider(DebuggerListingProvider.class);
 
-		createTrace();
+		createAndOpenTrace();
 
-		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+		TraceObjectMemoryRegion region;
+		try (Transaction tx = tb.startTransaction()) {
+			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
 
-		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitForPass(() -> assertEquals(1, provider.regionTable.getRowCount()));
+		waitForTasks();
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000), tb.addr(0x0040ffff),
+				0x10000, "rx");
+		});
+		waitForPass(() -> assertFalse(tb.trace.getProgramView().getMemory().isEmpty()));
 
-		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
-		assertEquals(region, row.getRegion());
+		int startColIdx =
+			provider.panel.getColumnByNameAndType("Start", ValueProperty.class).getKey();
+		int endColIdx = provider.panel.getColumnByNameAndType("End", ValueProperty.class).getKey();
+		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
 
-		clickTableCell(provider.regionTable, 0, RegionTableColumns.START.ordinal(), 2);
+		clickTableCell(table, 0, startColIdx, 2);
 		waitForPass(() -> assertEquals(tb.addr(0x00400000), listing.getLocation().getAddress()));
 
-		clickTableCell(provider.regionTable, 0, RegionTableColumns.END.ordinal(), 2);
+		clickTableCell(table, 0, endColIdx, 2);
 		waitForPass(() -> assertEquals(tb.addr(0x0040ffff), listing.getLocation().getAddress()));
 	}
 
@@ -257,19 +378,17 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertFalse(provider.actionMapRegions.isEnabled());
 
 		addBlocks();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
+		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setName("echo");
 		}
 		waitForDomainObject(program);
-		waitForPass(() -> assertEquals(4, provider.regionTable.getRowCount()));
+		waitForPass(() -> assertTableSize(4));
 
 		// NB. Feature works "best" when all regions of modules are selected
 		// TODO: Test cases where feature works "worst"?
 		provider.setSelectedRegions(Set.of(regionExeText, regionExeData));
 		waitForSwing();
-		assertTrue(provider.actionMapRegions.isEnabled());
-
-		performAction(provider.actionMapRegions, false);
+		performEnabledAction(provider, provider.actionMapRegions, false);
 
 		DebuggerRegionMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerRegionMapProposalDialog.class);
@@ -278,16 +397,16 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(2, proposal.size());
 		RegionMapEntry entry;
 
-		// Table sorts by name by default.
-		// Names are file name followed by min address, so .text is first.
+		// Table sorts by name by default, so .data is first
 		entry = proposal.get(0);
-		assertEquals(regionExeText, entry.getRegion());
-		assertEquals(blockExeText, entry.getBlock());
-		entry = proposal.get(1);
 		assertEquals(regionExeData, entry.getRegion());
 		assertEquals(blockExeData, entry.getBlock());
+		entry = proposal.get(1);
+		assertEquals(regionExeText, entry.getRegion());
+		assertEquals(blockExeText, entry.getBlock());
 
-		clickTableCell(propDialog.getTable(), 0, RegionMapTableColumns.CHOOSE.ordinal(), 1);
+		// Select the .text row
+		clickTableCell(propDialog.getTable(), 1, RegionMapTableColumns.CHOOSE.ordinal(), 1);
 
 		DebuggerBlockChooserDialog blockDialog =
 			waitForDialogComponent(DebuggerBlockChooserDialog.class);
@@ -295,7 +414,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(blockExeText, row.getBlock());
 
 		pressButtonByText(blockDialog, "OK", true);
-		assertEquals(blockExeData, entry.getBlock()); // Unchanged
+		assertEquals(blockExeText, entry.getBlock()); // Unchanged
 		// TODO: Test the changed case
 
 		Collection<? extends TraceStaticMapping> mappings =
@@ -305,57 +424,72 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		pressButtonByText(propDialog, "OK", true);
 		waitForDomainObject(tb.trace);
 		assertEquals(2, mappings.size());
+		// Ordered by db key. Thus, in order added
 		Iterator<? extends TraceStaticMapping> mit = mappings.iterator();
 		TraceStaticMapping sm;
 
 		sm = mit.next();
-		assertEquals(Range.atLeast(0L), sm.getLifespan());
-		assertEquals("ram:00400000", sm.getStaticAddress());
-		assertEquals(0x100, sm.getLength());
-		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
-
-		sm = mit.next();
-		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals(Lifespan.nowOn(0), sm.getLifespan());
 		assertEquals("ram:00600000", sm.getStaticAddress());
 		assertEquals(0x80, sm.getLength());
 		assertEquals(tb.addr(0x55750000), sm.getMinTraceAddress());
 
+		sm = mit.next();
+		assertEquals(Lifespan.nowOn(0), sm.getLifespan());
+		assertEquals("ram:00400000", sm.getStaticAddress());
+		assertEquals(0x100, sm.getLength());
+		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
+
 		assertFalse(mit.hasNext());
 	}
-
-	// TODO: testActionMapRegionsTo
-	// TODO: testActionMapRegionTo
 
 	@Test
 	public void testActionSelectAddresses() throws Exception {
 		addPlugin(tool, DebuggerListingPlugin.class);
 		DebuggerListingProvider listing = waitForComponentProvider(DebuggerListingProvider.class);
 
-		createTrace();
+		createAndOpenTrace();
 
-		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+		TraceObjectMemoryRegion region;
+		try (Transaction tx = tb.startTransaction()) {
+			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
 
-		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
-		waitForPass(() -> assertEquals(1, provider.regionTable.getRowCount()));
-		assertEquals(region, row.getRegion());
-		assertFalse(tb.trace.getProgramView().getMemory().isEmpty());
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000),
+				tb.addr(0x0040ffff), 0x10000, "rx");
+		});
+		waitForPass(() -> assertFalse(tb.trace.getProgramView().getMemory().isEmpty()));
 
 		provider.setSelectedRegions(Set.of(region));
 		waitForSwing();
-		assertTrue(provider.actionSelectAddresses.isEnabled());
-		performAction(provider.actionSelectAddresses);
+		performEnabledAction(provider, provider.actionSelectAddresses, true);
 
 		waitForPass(() -> assertEquals(tb.set(tb.range(0x00400000, 0x0040ffff)),
 			new AddressSet(listing.getSelection())));
+	}
+
+	@Test
+	public void testActionAddRegion() throws Exception {
+		createAndOpenTrace();
+		traceManager.activateTrace(tb.trace);
+
+		performEnabledAction(provider, provider.actionAddRegion, false);
+		DebuggerAddRegionDialog dialog = waitForDialogComponent(DebuggerAddRegionDialog.class);
+		runSwing(() -> {
+			dialog.setName("Memory[heap]");
+			dialog.setFieldLength(0x1000);
+			dialog.lengthChanged(); // simulate ENTER/focus-exited
+			dialog.okCallback();
+		});
+		waitForSwing();
+
+		TraceMemoryRegion region = Unique.assertOne(tb.trace.getMemoryManager().getAllRegions());
+		assertEquals(tb.range(0, 0xfff), region.getRange());
 	}
 
 	@Test
@@ -363,33 +497,33 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		addPlugin(tool, DebuggerListingPlugin.class);
 		DebuggerListingProvider listing = waitForComponentProvider(DebuggerListingProvider.class);
 
-		createTrace();
+		createAndOpenTrace();
 
-		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
-				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+		TraceObjectMemoryRegion region;
+		try (Transaction tx = tb.startTransaction()) {
+			region = addRegion("bin:.text", 0, tb.range(0x00400000, 0x0040ffff));
 		}
 
-		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		RegionRow row = Unique.assertOne(provider.regionTableModel.getModelData());
-		// NB. Table is debounced
-		waitForPass(() -> assertEquals(1, provider.regionTable.getRowCount()));
-		assertEquals(region, row.getRegion());
-		assertFalse(tb.trace.getProgramView().getMemory().isEmpty());
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000),
+				tb.addr(0x0040ffff), 0x10000, "rx");
+		});
+		waitForPass(() -> assertFalse(tb.trace.getProgramView().getMemory().isEmpty()));
 
 		listing.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321))));
 		waitForPass(() -> assertEquals(tb.set(tb.range(0x00401234, 0x00404321)),
 			new AddressSet(listing.getSelection())));
 
 		waitForSwing();
-		assertTrue(provider.actionSelectRows.isEnabled());
-		performAction(provider.actionSelectRows);
+		performEnabledAction(listing, provider.actionSelectRows, true);
 
-		waitForPass(() -> assertEquals(Set.of(row), Set.copyOf(provider.getSelectedRows())));
+		waitForPass(() -> {
+			List<ValueRow> allItems = provider.panel.getAllItems();
+			assertEquals(Set.of(allItems.get(0)), Set.copyOf(provider.panel.getSelectedItems()));
+		});
 	}
 }

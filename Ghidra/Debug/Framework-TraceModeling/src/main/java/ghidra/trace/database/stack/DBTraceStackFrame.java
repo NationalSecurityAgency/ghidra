@@ -18,14 +18,13 @@ package ghidra.trace.database.stack;
 import java.io.IOException;
 import java.util.Objects;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.Address;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.util.TraceChangeRecord;
@@ -119,7 +118,7 @@ public class DBTraceStackFrame extends DBAnnotatedObject
 	}
 
 	@Override
-	public void setProgramCounter(Range<Long> span, Address pc) {
+	public void setProgramCounter(Lifespan span, Address pc) {
 		//System.err.println("setPC(threadKey=" + stack.getThread().getKey() + ",snap=" +
 		//	stack.getSnap() + ",level=" + level + ",pc=" + pc + ");");
 		manager.trace.assertValidAddress(pc);

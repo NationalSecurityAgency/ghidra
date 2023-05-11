@@ -140,7 +140,14 @@ public class GhidraLauncher {
 		Map<String, GModule> modules = getOrderedModules(layout);
 
 		if (SystemUtilities.isInDevelopmentMode()) {
+
+			// First add Eclipse's module "bin" paths.  If we didn't find any, assume Ghidra was 
+			// compiled with Gradle, and add the module jars Gradle built.
 			addModuleBinPaths(classpathList, modules);
+			if (classpathList.isEmpty()) {
+				addModuleJarPaths(classpathList, modules);
+			}
+
 			addExternalJarPaths(classpathList, layout.getApplicationRootDirs());
 		}
 		else {
@@ -231,6 +238,10 @@ public class GhidraLauncher {
 				String path = line.trim();
 				if (!path.startsWith("Module:") && path.endsWith(".jar")) {
 					ResourceFile jarFile = new ResourceFile(path);
+					if (path.startsWith("#") || path.startsWith("//")) {
+						System.err.println("Skipping jar file: " + jarFile);
+						continue;
+					}
 					if (!jarFile.isFile()) {
 						System.err.println("Failed to find required jar file: " + jarFile);
 						continue;

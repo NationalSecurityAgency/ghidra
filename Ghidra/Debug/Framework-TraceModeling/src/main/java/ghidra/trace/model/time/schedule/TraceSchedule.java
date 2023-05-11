@@ -18,6 +18,7 @@ package ghidra.trace.model.time.schedule;
 import java.util.*;
 
 import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.emu.PcodeMachine.SwiMode;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -25,9 +26,18 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A sequence of emulator stepping commands, essentially comprising a "point in time."
+ */
 public class TraceSchedule implements Comparable<TraceSchedule> {
 	public static final TraceSchedule ZERO = TraceSchedule.snap(0);
 
+	/**
+	 * Create a schedule that consists solely of a snapshot
+	 * 
+	 * @param snap the snapshot key
+	 * @return the schedule
+	 */
 	public static final TraceSchedule snap(long snap) {
 		return new TraceSchedule(snap, new Sequence(), new Sequence());
 	}
@@ -337,11 +347,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 */
 	public void execute(Trace trace, PcodeMachine<?> machine, TaskMonitor monitor)
 			throws CancelledException {
+		machine.setSoftwareInterruptMode(SwiMode.IGNORE_ALL);
 		TraceThread lastThread = getEventThread(trace);
-		lastThread =
-			steps.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
-		lastThread =
-			pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
+		lastThread = steps.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
+		lastThread = pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 	}
 
 	/**
@@ -380,6 +389,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 			TaskMonitor monitor) throws CancelledException {
 		TraceThread lastThread = position.getLastThread(trace);
 		Sequence remains = steps.relativize(position.steps);
+		machine.setSoftwareInterruptMode(SwiMode.IGNORE_ALL);
 		if (remains.isNop()) {
 			Sequence pRemains = this.pSteps.relativize(position.pSteps);
 			lastThread =
@@ -388,8 +398,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		else {
 			lastThread =
 				remains.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
-			lastThread =
-				pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
+			lastThread = pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 		}
 	}
 
@@ -559,6 +568,32 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		}
 		ticks.coalescePatches(language);
 		return new TraceSchedule(snap, ticks, new Sequence());
+	}
+
+	/**
+	 * Compute the schedule resulting from this schedule advanced by the given schedule
+	 * 
+	 * <p>
+	 * This operation cannot be used to append instruction steps after p-code steps. Thus, if this
+	 * schedule contains any p-code steps and {@code} next has instruction steps, an error will be
+	 * 
+	 * @param next the schedule to append. Its snap is ignored.
+	 * @return the complete schedule
+	 * @throws IllegalArgumentException if the result would have instruction steps following p-code
+	 *             steps
+	 */
+	public TraceSchedule advanced(TraceSchedule next) {
+		if (this.pSteps.isNop()) {
+			Sequence ticks = this.steps.clone();
+			ticks.advance(next.steps);
+			return new TraceSchedule(this.snap, ticks, next.pSteps.clone());
+		}
+		else if (next.steps.isNop()) {
+			Sequence pTicks = this.steps.clone();
+			pTicks.advance(next.pSteps);
+			return new TraceSchedule(this.snap, this.steps.clone(), pTicks);
+		}
+		throw new IllegalArgumentException("Cannot have instructions steps following p-code steps");
 	}
 
 	/**

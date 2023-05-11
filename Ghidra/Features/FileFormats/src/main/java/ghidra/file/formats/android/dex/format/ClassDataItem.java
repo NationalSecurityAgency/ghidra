@@ -15,19 +15,12 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ClassDataItem implements StructConverter {
@@ -48,19 +41,19 @@ public class ClassDataItem implements StructConverter {
 	private List<EncodedMethod> virtualMethods = new ArrayList<>();
 
 	public ClassDataItem(BinaryReader reader, DexHeader dexHeader) throws IOException {
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		staticFieldsSize = leb128.asUInt32();
 		staticFieldsSizeLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		instanceFieldsSize = leb128.asUInt32();
 		instanceFieldsSizeLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		directMethodsSize = leb128.asUInt32();
 		directMethodsSizeLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		virtualMethodsSize = leb128.asUInt32();
 		virtualMethodsSizeLength = leb128.getLength();
 
@@ -137,18 +130,13 @@ public class ClassDataItem implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 //		int unique = 0;
-		String name =
-			"class_data_item" + "_" + staticFieldsSizeLength + "_" + instanceFieldsSizeLength +
-				"_" + directMethodsSizeLength + "_" + virtualMethodsSizeLength;
+		String name = "class_data_item_%d_%d_%d_%d".formatted(staticFieldsSizeLength,
+			instanceFieldsSizeLength, directMethodsSizeLength, virtualMethodsSizeLength);
 		Structure structure = new StructureDataType(name, 0);
-		structure.add(new ArrayDataType(BYTE, staticFieldsSizeLength, BYTE.getLength()),
-			"static_fields", null);
-		structure.add(new ArrayDataType(BYTE, instanceFieldsSizeLength, BYTE.getLength()),
-			"instance_fields", null);
-		structure.add(new ArrayDataType(BYTE, directMethodsSizeLength, BYTE.getLength()),
-			"direct_methods", null);
-		structure.add(new ArrayDataType(BYTE, virtualMethodsSizeLength, BYTE.getLength()),
-			"virtual_methods", null);
+		structure.add(ULEB128, staticFieldsSizeLength, "static_fields", null);
+		structure.add(ULEB128, instanceFieldsSizeLength, "instance_fields", null);
+		structure.add(ULEB128, directMethodsSizeLength, "direct_methods", null);
+		structure.add(ULEB128, virtualMethodsSizeLength, "virtual_methods", null);
 //		int index = 0;
 //		for ( EncodedField field : staticFields ) {
 //			DataType dataType = field.toDataType( );

@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStack;
@@ -52,6 +53,17 @@ public interface LocationTracker {
 	 */
 	CompletableFuture<Address> computeTraceAddress(PluginTool tool,
 			DebuggerCoordinates coordinates);
+
+	/**
+	 * Get the suggested input if the user activates "Go To" while this tracker is active
+	 *
+	 * @param tool the tool containing the provider
+	 * @param coordinates the user's current coordinates
+	 * @param location the user's current location
+	 * @return the suggested address or Sleigh expression
+	 */
+	GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+			ProgramLocation location);
 
 	// TODO: Is there a way to generalize these so that other dependencies need not
 	// have their own bespoke methods?

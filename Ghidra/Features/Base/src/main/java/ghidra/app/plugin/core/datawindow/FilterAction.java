@@ -34,6 +34,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filter.FilterListener;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.SwingUpdateManager;
@@ -50,8 +51,6 @@ class FilterAction extends ToggleDockingAction {
 	private boolean filterEnabled = false;
 	private boolean viewMode = false;
 	private boolean selectionMode = false;
-
-	private FilterDialog dialog;
 
 	private static class SortMapComparatorASC implements Comparator<String> {
 
@@ -81,10 +80,7 @@ class FilterAction extends ToggleDockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (dialog == null) {
-			dialog = new FilterDialog();
-		}
-
+		FilterDialog dialog = new FilterDialog();
 		dialog.setSelectionEnabled(plugin.getSelection() != null);
 		dialog.updateButtonEnabledState();
 		plugin.getTool().showDialog(dialog);
@@ -92,19 +88,11 @@ class FilterAction extends ToggleDockingAction {
 
 	synchronized void clearTypes() {
 		typeEnabledMap.clear();
-
-		if (dialog != null) {
-			dialog.clearTypes();
-		}
 	}
 
 	synchronized void addType(String type) {
-		Boolean bool = new Boolean(!filterEnabled);
+		Boolean bool = !filterEnabled;
 		typeEnabledMap.put(type, bool);
-
-		if (dialog != null) {
-			dialog.createCheckBox(type, type, bool.booleanValue());
-		}
 	}
 
 	synchronized boolean typeEnabled(String type) {
@@ -133,19 +121,9 @@ class FilterAction extends ToggleDockingAction {
 	}
 
 	synchronized void selectTypes(ArrayList<String> list) {
-		for (int i = 0; i < list.size(); i++) {
-			typeEnabledMap.put(list.get(i), Boolean.TRUE);
+		for (String element : list) {
+			typeEnabledMap.put(element, Boolean.TRUE);
 		}
-		if (dialog != null) {
-			dialog.selectTypes(list);
-		}
-	}
-
-	void repaint() {
-		if (dialog == null) {
-			return;
-		}
-		dialog.repaint();
 	}
 
 	boolean getViewMode() {
@@ -169,7 +147,6 @@ class FilterAction extends ToggleDockingAction {
 		filterEnabled = false;
 		viewMode = false;
 		selectionMode = false;
-		dialog = null;
 		setEnabled(false);
 		clearTypes();
 	}
@@ -222,15 +199,13 @@ class FilterAction extends ToggleDockingAction {
 		}
 
 		void selectTypes(ArrayList<String> list) {
-			for (int i = 0; i < list.size(); i++) {
-				String type = list.get(i);
+			for (String type : list) {
 				selectCheckBox(type);
 			}
 		}
 
 		private void selectCheckBox(String typeName) {
-			for (int i = 0; i < checkboxes.size(); i++) {
-				JCheckBox cb = checkboxes.get(i);
+			for (JCheckBox cb : checkboxes) {
 				if (cb.getText().equals(typeName)) {
 					cb.setSelected(true);
 					return;
@@ -302,7 +277,7 @@ class FilterAction extends ToggleDockingAction {
 			typeButtonPanel.add(selectNoneButton);
 
 			checkboxPanel = new JPanel();
-			checkboxPanel.setBackground(Color.WHITE);
+			checkboxPanel.setBackground(Colors.BACKGROUND);
 			checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
 
 			buildCheckBoxList();

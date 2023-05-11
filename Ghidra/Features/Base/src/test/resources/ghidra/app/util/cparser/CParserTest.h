@@ -40,7 +40,7 @@ void testFunc()
 {
     typedef int InternFunc(int);
     
-// TODO    InternFunc * func = (InternFunc *) 0;
+    InternFunc * func = (InternFunc *) 0;
 }
 
 
@@ -378,10 +378,16 @@ int      fputs( char * , void * ) __asm("_" "fputs" "$FPOOTS");
 
 void     _exit(int) __attribute__((noreturn));
 
+// NoReturn
+
+extern void gcc_exit (int __status) __attribute__ ((__noreturn__));
+
+__declspec(noreturn) void __cdecl win_exit(int _Code);
+
+void     _exit(int) __attribute__((noreturn));
+
 // C11 noreturn
 void     _Noreturn _Noreturn_exit(int);
-
-
 
 
 // C23 Attributes
@@ -913,6 +919,16 @@ enum options_enum {
 
 	TRINARY =  (0 ? 10 : 11),
 };
+
+/**
+ ** Predeclare Enum
+ **/
+ 
+typedef enum _PARAM_TYPE PARAM_TYPE;
+
+typedef int FuncUseEnum(PARAM_TYPE ptype);
+
+typedef enum _PARAM_TYPE { A, B, C } PARAM_TYPE;
 
 
 /**

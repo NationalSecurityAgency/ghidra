@@ -17,6 +17,8 @@
 #include "printlanguage.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 const string PrintLanguage::OPEN_PAREN = "(";
 const string PrintLanguage::CLOSE_PAREN = ")";
 
@@ -612,6 +614,19 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
       emit->tagLine();
     else if (tok=='\r') {
     }
+    else if (tok=='{' && pos < text.size() && text[pos] == '@') {
+      // Comment annotation
+      int4 count = 1;
+      while(pos < text.size()) {
+	tok = text[pos];
+	count += 1;
+	pos += 1;
+	if (tok == '}') break;	// Search for brace ending the annotation
+      }
+      // Treat annotation as one token
+      string annote = text.substr(pos-count,count);
+      emit->tagComment(annote,EmitMarkup::comment_color,spc,off);
+    }
     else {
       int4 count = 1;
       while(pos < text.size()) {
@@ -691,6 +706,19 @@ void PrintLanguage::setIntegerFormat(const string &nm)
     throw LowlevelError("Unknown integer format option: "+nm);
   mods &= ~((uint4)(force_hex|force_dec)); // Turn off any pre-existing force
   mods |= mod;			// Set any new force
+}
+
+/// This is used if a value is extracted from a structured data-type, but the natural name is not available.
+/// An artificial name is generated given just the offset into the data-type and the size in bytes.
+/// \param off is the byte offset into the data-type
+/// \param size is the number of bytes in the extracted value
+/// \return a string describing the artificial field
+string PrintLanguage::unnamedField(int4 off,int4 size)
+
+{
+  ostringstream s;
+  s << '_' << dec << off << '_' << size << '_';
+  return s.str();
 }
 
 /// Count '0' and '9' digits base 10. Count '0' and 'f' digits base 16.
@@ -785,3 +813,5 @@ void PrintLanguage::formatBinary(ostream &s,uintb val)
     mask >>= 1;
   }
 }
+
+} // End namespace ghidra

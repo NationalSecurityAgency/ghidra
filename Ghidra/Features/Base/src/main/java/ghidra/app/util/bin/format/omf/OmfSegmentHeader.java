@@ -45,9 +45,9 @@ public class OmfSegmentHeader extends OmfRecord {
 	private long vma = -1;				// assigned (by linker) starting address of segment -1 means unset
 	private ArrayList<OmfData> dataBlocks = new ArrayList<OmfData>();
 
-	OmfSegmentHeader(int num,int datatype) {
+	OmfSegmentHeader(int num, int datatype) {
 		// generate a special Borland header
-		segAttr = (byte)0xa9;
+		segAttr = (byte) 0xa9;
 		segmentLength = 0;
 		segmentNameIndex = 0;
 		classNameIndex = 0;
@@ -62,7 +62,7 @@ public class OmfSegmentHeader extends OmfRecord {
 		else {
 			segmentName = "EXTRA_";
 		}
-		segmentName = segmentName+Integer.toString(num);
+		segmentName = segmentName + Integer.toString(num);
 		if (datatype == 1) {
 			// Treat as a text segment
 			className = "TEXT";
@@ -79,7 +79,7 @@ public class OmfSegmentHeader extends OmfRecord {
 			isExecutable = false;
 		}
 	}
-	
+
 	public OmfSegmentHeader(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
 		boolean hasBigFields = hasBigFields();
@@ -88,15 +88,15 @@ public class OmfSegmentHeader extends OmfRecord {
 		if (A == 0) {
 			frameNumber = reader.readNextShort() & 0xffff;
 			offset = reader.readNextByte() & 0xff;
-			vma = (long)frameNumber + offset;
+			vma = (long) frameNumber + offset;
 		}
 		segmentLength = OmfRecord.readInt2Or4(reader, hasBigFields) & 0xffffffffL;
 		segmentNameIndex = OmfRecord.readIndex(reader);
 		classNameIndex = OmfRecord.readIndex(reader);
 		overlayNameIndex = OmfRecord.readIndex(reader);
 		readCheckSumByte(reader);
-		int B = (segAttr>>1) & 1;
-		if (B==1) {		// Ignore the segmentLength field
+		int B = (segAttr >> 1) & 1;
+		if (B == 1) {		// Ignore the segmentLength field
 			if (getRecordType() == OmfRecord.SEGDEF) {
 				segmentLength = 0x10000L;		// Exactly 64K segment
 			}
@@ -105,28 +105,28 @@ public class OmfSegmentHeader extends OmfRecord {
 			}
 		}
 	}
-	
+
 	/**
 	 * @return true if this is a code segment
 	 */
 	public boolean isCode() {
 		return isCode;
 	}
-	
+
 	/**
 	 * @return true if this segment is readable
 	 */
 	public boolean isReadable() {
 		return isReadable;
 	}
-	
+
 	/**
 	 * @return true if this segment is writable
 	 */
 	public boolean isWritable() {
 		return isWritable;
 	}
-	
+
 	/**
 	 * @return true if this segment is executable
 	 */
@@ -140,7 +140,7 @@ public class OmfSegmentHeader extends OmfRecord {
 	public int getFrameDatum() {
 		return 0;				// TODO:  Need to fill in a real segment selector
 	}
-	
+
 	/**
 	 * @param language is the Program language for this binary
 	 * @return the starting Address for this segment
@@ -150,26 +150,27 @@ public class OmfSegmentHeader extends OmfRecord {
 
 		if (isCode) {
 			addrSpace = language.getDefaultSpace();
-		} else {
+		}
+		else {
 			addrSpace = language.getDefaultDataSpace();
 		}
-		return addrSpace.getAddress(vma);		
+		return addrSpace.getAddress(vma);
 	}
-	
+
 	/**
 	 * @return the name of this segment
 	 */
 	public String getName() {
 		return segmentName;
 	}
-	
+
 	/**
 	 * @return the class name of this segment
 	 */
 	public String getClassName() {
 		return className;
 	}
-	
+
 	/**
 	 * @return the name of the overlay, or the empty string
 	 */
@@ -183,26 +184,33 @@ public class OmfSegmentHeader extends OmfRecord {
 	public long getStartAddress() {
 		return vma;
 	}
-	
+
 	/**
 	 * @return the length of the segment in bytes
 	 */
 	public long getSegmentLength() {
 		return segmentLength;
 	}
-	
+
 	/**
 	 * @return the alignment required for this segment
 	 */
 	public int getAlignment() {
 		return (segAttr >> 5) & 0x7;
 	}
-	
+
 	/**
 	 * @return special combining rules for this segment
 	 */
 	public int getCombine() {
 		return (segAttr >> 2) & 0x7;
+	}
+
+	/**
+	 * @return if 16 or 32 bit segments are used
+	 */
+	public boolean is16Bit() {
+		return (segAttr & 1) == 0;
 	}
 
 	/**
@@ -223,7 +231,7 @@ public class OmfSegmentHeader extends OmfRecord {
 	protected void sortData() {
 		Collections.sort(dataBlocks);
 	}
-	
+
 	/**
 	 * Get an InputStream that reads in the raw data for this segment
 	 * @param reader is the image file reader
@@ -234,7 +242,7 @@ public class OmfSegmentHeader extends OmfRecord {
 	public InputStream getRawDataStream(BinaryReader reader, MessageLog log) throws IOException {
 		return new SectionStream(reader, log);
 	}
-	
+
 	/**
 	 * Given the first possible address where this segment can reside, relocate the
 	 * segment based on this address and alignment considerations.
@@ -244,35 +252,35 @@ public class OmfSegmentHeader extends OmfRecord {
 	 * @throws OmfException for bad alignment information
 	 */
 	protected long relocateSegment(long firstValidAddress, int alignOverride) throws OmfException {
-		int align =  getAlignment();
+		int align = getAlignment();
 		if (alignOverride >= 0) {
 			align = alignOverride;
 		}
-		switch(align) {
-		case 0:			// Absolute segment, not relocatable
-			throw new OmfException("Trying to relocate an absolute segment");
-		case 1:			// Byte aligned
-			break;		// Keep the first valid address
-		case 2:			// 2-byte aligned
-			firstValidAddress = (firstValidAddress+1 ) & 0xfffffffffffffffeL;
-			break;
-		case 3:			// 16-byte aligned
-			firstValidAddress = (firstValidAddress+15) & 0xfffffffffffffff0L;
-			break;
-		case 4:			// "page" aligned,  assume 4096
-			firstValidAddress = (firstValidAddress+4095) & 0xfffffffffffff000L;
-			break;
-		case 5:			// 4-byte aligned
-			firstValidAddress = (firstValidAddress+3) & 0xfffffffffffffffcL;
-			break;
-		default:
-			throw new OmfException("Unsupported alignment type");
+		switch (align) {
+			case 0:			// Absolute segment, not relocatable
+				throw new OmfException("Trying to relocate an absolute segment");
+			case 1:			// Byte aligned
+				break;		// Keep the first valid address
+			case 2:			// 2-byte aligned
+				firstValidAddress = (firstValidAddress + 1) & 0xfffffffffffffffeL;
+				break;
+			case 3:			// 16-byte aligned
+				firstValidAddress = (firstValidAddress + 15) & 0xfffffffffffffff0L;
+				break;
+			case 4:			// "page" aligned,  assume 4096
+				firstValidAddress = (firstValidAddress + 4095) & 0xfffffffffffff000L;
+				break;
+			case 5:			// 4-byte aligned
+				firstValidAddress = (firstValidAddress + 3) & 0xfffffffffffffffcL;
+				break;
+			default:
+				throw new OmfException("Unsupported alignment type");
 		}
 		vma = firstValidAddress;
 		firstValidAddress = vma + segmentLength;
 		return firstValidAddress;
 	}
-	
+
 	/**
 	 * Resolve special names from the name list such as: segment, class, overlay, names.
 	 * This routine also determines the read/write/execute permissions for the segment
@@ -308,7 +316,7 @@ public class OmfSegmentHeader extends OmfRecord {
 			}
 			overlayName = nameList.get(overlayNameIndex - 1);
 		}
-		
+
 		// Once we know the class name, we can make some educated guesses about read/write/exec permissions
 		isReadable = true;
 		if (className.equals("CODE") || className.equals("code")) {
@@ -322,7 +330,7 @@ public class OmfSegmentHeader extends OmfRecord {
 			isExecutable = false;
 		}
 	}
-	
+
 	/**
 	 * Add an explicit data-block to this segment.
 	 * @param rec is the data-block
@@ -330,7 +338,7 @@ public class OmfSegmentHeader extends OmfRecord {
 	protected void addEnumeratedData(OmfEnumeratedData rec) {
 		dataBlocks.add(rec);
 	}
-	
+
 	/**
 	 * Add an explicit data-block to this segment that might extend
 	 * the length of this segment.  Borland compilers in particular produce
@@ -344,7 +352,7 @@ public class OmfSegmentHeader extends OmfRecord {
 		}
 		dataBlocks.add(rec);
 	}
-	
+
 	/**
 	 * Add a compressed-form data-block to this segment
 	 * @param rec is the data-block
@@ -352,7 +360,7 @@ public class OmfSegmentHeader extends OmfRecord {
 	protected void addIteratedData(OmfIteratedData rec) {
 		dataBlocks.add(rec);
 	}
-	
+
 	/**
 	 * An InputStream that produces the bytes for the dataBlocks in this segment.
 	 * It runs through the ordered {@link OmfData} in turn.  It pads with zeroes,
@@ -365,7 +373,7 @@ public class OmfSegmentHeader extends OmfRecord {
 		private byte[] buffer;		// Current buffer
 		private int bufferpointer;	// current index into buffer
 		private int dataUpNext;		// Index of next data section OmfIteratedData/OmfEnumeratedData to be buffered 
-		
+
 		public SectionStream(BinaryReader reader, MessageLog log) throws IOException {
 			super();
 			this.reader = reader;
@@ -376,7 +384,7 @@ public class OmfSegmentHeader extends OmfRecord {
 				establishNextBuffer();
 			}
 		}
-		
+
 		/**
 		 * Fill the next buffer of bytes being provided by this stream.
 		 * @throws IOException for problems with the file image reader
@@ -388,10 +396,11 @@ public class OmfSegmentHeader extends OmfRecord {
 					// We have some fill to produce before the next section
 					long size = data.getDataOffset() - pointer;
 					if (size > OmfLoader.MAX_UNINITIALIZED_FILL) {
-						throw new IOException("Unfilled hole in OMF data blocks for segment: "+segmentName);
+						throw new IOException(
+							"Unfilled hole in OMF data blocks for segment: " + segmentName);
 					}
-					buffer = new byte[(int)size];
-					for(int i=0;i<size;++i) {
+					buffer = new byte[(int) size];
+					for (int i = 0; i < size; ++i) {
 						buffer[i] = 0;
 					}
 					bufferpointer = 0;
@@ -416,15 +425,15 @@ public class OmfSegmentHeader extends OmfRecord {
 			// We may have filler after the last block
 			long size = segmentLength - pointer;
 			if (size > OmfLoader.MAX_UNINITIALIZED_FILL) {
-				throw new IOException("Large hole at the end of OMF segment: "+segmentName);
+				throw new IOException("Large hole at the end of OMF segment: " + segmentName);
 			}
-			buffer = new byte[(int)size];
-			for(int i=0;i<size;++i) {
+			buffer = new byte[(int) size];
+			for (int i = 0; i < size; ++i) {
 				buffer[i] = 0;
 			}
-			bufferpointer = 0;			
+			bufferpointer = 0;
 		}
-		
+
 		@Override
 		public int read() throws IOException {
 			if (pointer < segmentLength) {
@@ -443,6 +452,6 @@ public class OmfSegmentHeader extends OmfRecord {
 			}
 			return -1;
 		}
-		
+
 	}
 }

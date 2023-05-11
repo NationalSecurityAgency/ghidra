@@ -26,7 +26,7 @@ import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.picking.PickedState;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.util.Caching;
-import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.FGEdgePaintTransformer;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.FGVertexRenderer;
 import ghidra.app.plugin.core.functiongraph.graph.jung.transformer.FGVertexPickableBackgroundPaintTransformer;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;
@@ -36,8 +36,8 @@ import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.layout.LayoutListener.ChangeType;
 import ghidra.graph.viewer.layout.LayoutProvider;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
-import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.graph.viewer.renderer.VisualGraphEdgeLabelRenderer;
+import ghidra.graph.viewer.vertex.AbstractVisualVertexRenderer;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.SystemUtilities;
@@ -45,9 +45,12 @@ import ghidra.util.UndefinedFunction;
 
 public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph> {
 
-	private static final Color END_COLOR = new Color(255, 127, 127);
-	private static final Color START_COLOR = new Color(127, 255, 127);
-	private static final Color UNDEFINED_FUNCTION_COLOR = new Color(220, 220, 220);
+	//@formatter:off
+	private static final Color PICKED_COLOR = new GColor("color.bg.plugin.functiongraph.vertex.picked");
+	private static final Color START_COLOR = new GColor("color.bg.plugin.functiongraph.vertex.entry");
+	private static final Color END_COLOR = new GColor("color.bg.plugin.functiongraph.vertex.exit");
+	private static final Color UNDEFINED_FUNCTION_COLOR = new GColor("color.bg.undefined");
+	//@formatter:on
 
 	/**
 	 * A somewhat arbitrary value that is used to signal a 'big' graph, which is one that will
@@ -62,7 +65,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 	public FGComponent(FGView functionGraphView, FGData data,
 			LayoutProvider<FGVertex, FGEdge, FunctionGraph> layoutProvider) {
 
-		// Note: we cannot call super here, as we need to set our variables below before 
+		// Note: we cannot call super here, as we need to set our variables below before
 		//       the base class builds.
 		// super(data.getFunctionGraph());
 
@@ -81,8 +84,8 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 			setStatusMessage(message);
 		}
 
-		// Note: can't do this here due to timing...restoring the groups may trigger 
-		// callbacks into the view code, which at the point of this constructor has 
+		// Note: can't do this here due to timing...restoring the groups may trigger
+		// callbacks into the view code, which at the point of this constructor has
 		// not yet been initialized
 		//
 		// restoreSettings();
@@ -190,78 +193,79 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 	@Override
 	protected FGPrimaryViewer createPrimaryGraphViewer(VisualGraphLayout<FGVertex, FGEdge> layout,
 			Dimension viewerSize) {
+		return new FGPrimaryViewer(this, layout, viewerSize);
+	}
 
-		FGPrimaryViewer viewer = new FGPrimaryViewer(this, layout, viewerSize);
+	@Override
+	protected void decoratePrimaryViewer(GraphViewer<FGVertex, FGEdge> viewer,
+			VisualGraphLayout<FGVertex, FGEdge> layout) {
 
-		RenderContext<FGVertex, FGEdge> renderContext = viewer.getRenderContext();
-		FGEdgePaintTransformer edgePaintTransformer =
-			new FGEdgePaintTransformer(getFucntionGraphOptions());
-		renderContext.setEdgeDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowFillPaintTransformer(edgePaintTransformer);
+		super.decoratePrimaryViewer(viewer, layout);
 
+		// the edge renderer was set by the parent call; get the renderer to add our painter
 		Renderer<FGVertex, FGEdge> renderer = viewer.getRenderer();
-		renderer.setVertexRenderer(new FGVertexRenderer());
+		RenderContext<FGVertex, FGEdge> renderContext = viewer.getRenderContext();
 
 		// for background colors when we are zoomed to far to render the listing
 		PickedState<FGVertex> pickedVertexState = viewer.getPickedVertexState();
-		renderContext.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
-			pickedVertexState, Color.YELLOW, START_COLOR, END_COLOR));
+		FGVertexRenderer vertexRenderer = new FGVertexRenderer();
+		vertexRenderer.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
+			pickedVertexState, PICKED_COLOR, START_COLOR, END_COLOR));
+		renderer.setVertexRenderer(vertexRenderer);
 
 		// edge label rendering
 		com.google.common.base.Function<FGEdge, String> edgeLabelTransformer = e -> e.getLabel();
 		renderContext.setEdgeLabelTransformer(edgeLabelTransformer);
 
-		// note: this label renderer is the stamp for the label; we use another edge label 
+		// note: this label renderer is the stamp for the label; we use another edge label
 		//       renderer inside of the VisualGraphRenderer
-		VisualGraphEdgeLabelRenderer edgeLabelRenderer =
-			new VisualGraphEdgeLabelRenderer(Color.BLACK);
-		edgeLabelRenderer.setNonPickedForegroundColor(Color.LIGHT_GRAY);
+		VisualGraphEdgeLabelRenderer edgeLabelRenderer = new VisualGraphEdgeLabelRenderer(
+			new GColor("color.fg.plugin.functiongraph.label.picked"));
+		edgeLabelRenderer.setNonPickedForegroundColor(
+			new GColor("color.fg.plugin.functiongraph.label.non.picked"));
 		edgeLabelRenderer.setRotateEdgeLabels(false);
 		renderContext.setEdgeLabelRenderer(edgeLabelRenderer);
 
 		viewer.setGraphOptions(vgOptions);
 		Color bgColor = vgOptions.getGraphBackgroundColor();
-		if (bgColor.equals(VisualGraphOptions.DEFAULT_GRAPH_BACKGROUND_COLOR)) {
+		if (vgOptions.isDefaultBackgroundColor(bgColor)) {
 
-			// Give user notice when seeing the graph for a non-function (such as an undefined 
-			// function), as this is typical for Ghidra UI widgets.   
-			// Don't do this if the user has manually set the background color (this would require 
+			// Give user notice when seeing the graph for a non-function (such as an undefined
+			// function), as this is typical for Ghidra UI widgets.
+			// Don't do this if the user has manually set the background color (this would require
 			// another option).
 			Function function = functionGraphData.getFunction();
 			if (function instanceof UndefinedFunction) {
 				viewer.setBackground(UNDEFINED_FUNCTION_COLOR);
 			}
 			else {
-				viewer.setBackground(Color.WHITE);
+				viewer.setBackground(new GColor("color.bg.plugin.functiongraph"));
 			}
 		}
 
-		return viewer;
 	}
 
 	@Override
-	protected SatelliteGraphViewer<FGVertex, FGEdge> createSatelliteGraphViewer(
-			GraphViewer<FGVertex, FGEdge> masterViewer, Dimension viewerSize) {
+	protected void decorateSatelliteViewer(SatelliteGraphViewer<FGVertex, FGEdge> viewer,
+			VisualGraphLayout<FGVertex, FGEdge> layout) {
 
-		SatelliteGraphViewer<FGVertex, FGEdge> viewer =
-			super.createSatelliteGraphViewer(masterViewer, viewerSize);
+		super.decorateSatelliteViewer(viewer, layout);
 
-		RenderContext<FGVertex, FGEdge> renderContext = viewer.getRenderContext();
+		// the edge renderer was set by the parent call; get the renderer to add our painter
+		Renderer<FGVertex, FGEdge> renderer = viewer.getRenderer();
 
-		FGEdgePaintTransformer edgePaintTransformer =
-			new FGEdgePaintTransformer(getFucntionGraphOptions());
-		renderContext.setEdgeDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowFillPaintTransformer(edgePaintTransformer);
+		AbstractVisualVertexRenderer<FGVertex, FGEdge> vertexRenderer =
+			(AbstractVisualVertexRenderer<FGVertex, FGEdge>) renderer.getVertexRenderer();
 
 		PickedState<FGVertex> pickedVertexState = viewer.getPickedVertexState();
+
+		RenderContext<FGVertex, FGEdge> renderContext = viewer.getRenderContext();
 		renderContext.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
-			pickedVertexState, Color.YELLOW, START_COLOR, END_COLOR));
+			pickedVertexState, PICKED_COLOR, START_COLOR, END_COLOR));
+		vertexRenderer.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
+			pickedVertexState, PICKED_COLOR, START_COLOR, END_COLOR));
 
 		viewer.setGraphOptions(vgOptions);
-
-		return viewer;
 	}
 
 	@Override
@@ -271,11 +275,11 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 
 //==================================================================================================
 // Accessor Methods
-//==================================================================================================    
+//==================================================================================================
 
 	@Override
 	public void dispose() {
-		// big assumption - the components below will be disposed by the controller, so we don't 
+		// big assumption - the components below will be disposed by the controller, so we don't
 		// dispose them, as they may be cached
 		functionGraph = null;
 		functionGraphData = null;
@@ -286,7 +290,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 // FG-specific Client Methods
 //==================================================================================================
 
-	public FunctionGraphOptions getFucntionGraphOptions() {
+	public FunctionGraphOptions getFunctionGraphOptions() {
 		return (FunctionGraphOptions) vgOptions;
 	}
 
@@ -311,17 +315,17 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 	public void setVertexFocused(FGVertex v, ProgramLocation location) {
 
 		//
-		// NOTE: we must focus the vertex before we set the program location, as focusing the 
+		// NOTE: we must focus the vertex before we set the program location, as focusing the
 		// vertex will turn on the cursor, which allows the cursor to be properly set when we
-		// set the location.  Reversing these two calls will not allow the cursor to be set 
+		// set the location.  Reversing these two calls will not allow the cursor to be set
 		// properly.
-		// 
+		//
 
 		boolean wasFocused = v.isFocused();
 
 		// As per the note above, the vertex must think it is focused to update its cursor, so
-		// focus it, but DO NOT send out the event.  The 'pick to sync' will not trigger an 
-		// API-wide notification of the focused vertex. 
+		// focus it, but DO NOT send out the event.  The 'pick to sync' will not trigger an
+		// API-wide notification of the focused vertex.
 		gPickedState.pickToSync(v);
 		v.setProgramLocation(location);
 

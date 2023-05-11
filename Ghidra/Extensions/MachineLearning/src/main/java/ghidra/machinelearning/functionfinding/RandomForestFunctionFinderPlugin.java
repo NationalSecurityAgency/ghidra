@@ -97,6 +97,15 @@ public class RandomForestFunctionFinderPlugin extends ProgramPlugin
 	}
 
 	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (paramsDialog != null) {
+			paramsDialog.dispose();
+		}
+	}
+
+	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) throws OptionsVetoException {
 		switch (optionName) {

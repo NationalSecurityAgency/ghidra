@@ -38,16 +38,23 @@ import ghidra.util.task.*;
 class ProgramSaveManager {
 	private ProgramManager programMgr;
 	private PluginTool tool;
-	private DataTreeDialog dataTreeSaveDialog;
 	private boolean treeDialogCancelled;
 	private DomainFileFilter domainFileFilter;
 
 	ProgramSaveManager(PluginTool tool, ProgramManager programMgr) {
 		this.tool = tool;
 		this.programMgr = programMgr;
-		domainFileFilter = f -> {
-			Class<?> c = f.getDomainObjectClass();
-			return Program.class.isAssignableFrom(c);
+		domainFileFilter = new DomainFileFilter() {
+
+			@Override
+			public boolean accept(DomainFile df) {
+				return Program.class.isAssignableFrom(df.getDomainObjectClass());
+			}
+
+			@Override
+			public boolean followLinkedFolders() {
+				return false; // can't save to linked-folder (read-only)
+			}
 		};
 	}
 
@@ -244,7 +251,8 @@ class ProgramSaveManager {
 			return;
 		}
 		if (existingFile != null) {
-			String msg = "Program " + name + " already exists.\n" + "Do you want to overwrite it?";
+			String msg = existingFile.getContentType() + " file " + name + " already exists.\n" +
+				"Do you want to overwrite it?";
 			if (OptionDialog.showOptionDialog(tool.getToolFrame(), "Duplicate Name", msg,
 				"Overwrite", OptionDialog.QUESTION_MESSAGE) == OptionDialog.CANCEL_OPTION) {
 				return;
@@ -371,7 +379,7 @@ class ProgramSaveManager {
 			StringBuilder buf = new StringBuilder();
 			buf.append(
 				"The Program is currently being modified by the following actions/tasks:\n ");
-			Transaction t = program.getCurrentTransaction();
+			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
 			while (it.hasNext()) {
@@ -405,7 +413,7 @@ class ProgramSaveManager {
 			StringBuffer buf = new StringBuffer();
 			buf.append(
 				"The Program is currently being modified by the following actions/tasks:\n ");
-			Transaction t = program.getCurrentTransaction();
+			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
 			while (it.hasNext()) {
@@ -441,37 +449,35 @@ class ProgramSaveManager {
 	}
 
 	private DataTreeDialog getSaveDialog() {
-		if (dataTreeSaveDialog == null) {
+		DataTreeDialog dialog =
+			new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
 
-			ActionListener listener = event -> {
-				DomainFolder folder = dataTreeSaveDialog.getDomainFolder();
-				String newName = dataTreeSaveDialog.getNameText();
-				if (newName.length() == 0) {
-					dataTreeSaveDialog.setStatusText("Please enter a name");
-					return;
-				}
-				else if (folder == null) {
-					dataTreeSaveDialog.setStatusText("Please select a folder");
-					return;
-				}
+		ActionListener listener = event -> {
+			DomainFolder folder = dialog.getDomainFolder();
+			String newName = dialog.getNameText();
+			if (newName.length() == 0) {
+				dialog.setStatusText("Please enter a name");
+				return;
+			}
+			else if (folder == null) {
+				dialog.setStatusText("Please select a folder");
+				return;
+			}
 
-				DomainFile file = folder.getFile(newName);
-				if (file != null && file.isReadOnly()) {
-					dataTreeSaveDialog.setStatusText("Read Only.  Choose new name/folder");
-				}
-				else {
-					dataTreeSaveDialog.close();
-					treeDialogCancelled = false;
-				}
-			};
-			dataTreeSaveDialog =
-				new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
+			DomainFile file = folder.getFile(newName);
+			if (file != null && file.isReadOnly()) {
+				dialog.setStatusText("Read Only.  Choose new name/folder");
+			}
+			else {
+				dialog.close();
+				treeDialogCancelled = false;
+			}
+		};
 
-			dataTreeSaveDialog.addOkActionListener(listener);
-			dataTreeSaveDialog.setHelpLocation(
-				new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
-		}
-		return dataTreeSaveDialog;
+		dialog.addOkActionListener(listener);
+		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
+
+		return dialog;
 	}
 
 	class SaveFileTask extends Task {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,14 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import java.util.List;
+
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
@@ -24,19 +31,10 @@ import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
 import ghidra.feature.vt.gui.task.RemoveMatchTask;
 import ghidra.util.HelpLocation;
 
-import java.util.List;
-
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
-
 public class RemoveMatchAction extends DockingAction {
 
 	private static final String MENU_GROUP = VTPlugin.UNEDIT_MENU_GROUP;
-	private static final Icon ICON = ResourceManager.loadImage("images/edit-delete.png");
+	private static final Icon ICON = new GIcon("icon.version.tracking.action.match.remove");
 	private final VTController controller;
 
 	public RemoveMatchAction(VTController controller) {

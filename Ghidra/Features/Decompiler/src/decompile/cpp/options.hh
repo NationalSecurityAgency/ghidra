@@ -16,11 +16,13 @@
 /// \file options.hh
 /// \brief Classes for processing architecture configuration options
 
-#ifndef __ARCH_OPTIONS__
-#define __ARCH_OPTIONS__
+#ifndef __OPTIONS_HH__
+#define __OPTIONS_HH__
 
 #include "error.hh"
 #include "marshal.hh"
+
+namespace ghidra {
 
 class Architecture;
 
@@ -58,6 +60,7 @@ extern ElementId ELEM_PARAM3;			///< Marshaling element \<param3>
 extern ElementId ELEM_PROTOEVAL;		///< Marshaling element \<protoeval>
 extern ElementId ELEM_SETACTION;		///< Marshaling element \<setaction>
 extern ElementId ELEM_SETLANGUAGE;		///< Marshaling element \<setlanguage>
+extern ElementId ELEM_SPLITDATATYPE;		///< Marshaling element \<splitdatatype>
 extern ElementId ELEM_STRUCTALIGN;		///< Marshaling element \<structalign>
 extern ElementId ELEM_TOGGLERULE;		///< Marshaling element \<togglerule>
 extern ElementId ELEM_WARNING;			///< Marshaling element \<warning>
@@ -320,4 +323,18 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+class OptionSplitDatatypes : public ArchOption {
+public:
+  enum {
+    option_struct = 1,		///< Split combined structure fields
+    option_array = 2,		///< Split combined array elements
+    option_pointer = 4		///< Split combined LOAD and STORE operations
+  };
+  static uint4 getOptionBit(const string &val);		///< Translate option string to a configuration bit
+public:
+  OptionSplitDatatypes(void) { name = "splitdatatype"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+} // End namespace ghidra
 #endif

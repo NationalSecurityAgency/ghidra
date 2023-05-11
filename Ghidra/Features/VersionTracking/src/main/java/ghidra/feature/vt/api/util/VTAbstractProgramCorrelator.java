@@ -51,7 +51,7 @@ public abstract class VTAbstractProgramCorrelator implements VTProgramCorrelator
 	 * @param options An Options object that contains the set of options to be used by the 
 	 * correlating algorithm.
 	 */
-	protected VTAbstractProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
+	public VTAbstractProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
 			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, ToolOptions options) {
 		this.serviceProvider = serviceProvider;

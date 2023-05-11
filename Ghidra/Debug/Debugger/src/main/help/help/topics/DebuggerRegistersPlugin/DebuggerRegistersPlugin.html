@@ -7,7 +7,7 @@
 
     <TITLE>Debugger: Registers</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -28,6 +28,18 @@
     for the target processor. It permits for the selection, organization, display, search,
     modification, and analysis of the registers and values.</P>
 
+    <P>The register window uses colors to hint about the state of registers and their values. By
+    default, changed registers are displayed in red, and stale registers are displayed in dark
+    grey. A "stale" register is one whose current value is not known. The value displayed is the
+    last recorded value or the default value 0. Simply, a "changed" register is one whose value has
+    just changed. For example, if a register is modified as result of stepping, then that register
+    is changed. However, given the possibility of rewinding, changing thread focus, etc., "changed"
+    is actually subtly more flexible. The registers window remembers the user's last coordinates
+    (time, thread, frame, etc.) as well as the current coordinates. So, "changed" more precisely
+    refers to a register whose value differs between those two coordinates. This permits the user
+    to switch focus between different coordinates and quickly identify what is different, so long
+    as those coordinates pertain to the same processor language.</P>
+
     <H2>Table Columns</H2>
 
     <P>The table displays information about registers, including their values and types. It has the
@@ -46,9 +58,7 @@
       <LI>Value - the value of the register as recorded in the trace. When the value refers to a
       valid memory offset, right-clicking the row allows the user to navigate to that offset in a
       selected memory space. This field is user modifiable when the <B>Enable Edits</B> toggle is
-      on, and the <A href=
-      "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">editing service</A>
-      reports the register as modifiable. Edits may be directed toward a live target, the trace, or
+      on, and the register is modifiable. Edits may be directed toward a live target, the trace, or
       the emulator. Values changed by the last event are displayed in <FONT color=
       "red">red</FONT>.</LI>
 
@@ -102,29 +112,14 @@
 
     <P>This toggle is a write protector for machine state. To modify register values, this toggle
     must be enabled. Edits are directed according the to <A href=
-    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">State Editing Plugin
-    and Service</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr"
-    column cannot be edited, yet.</P>
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State
+    Plugin</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr" column
+    cannot be edited, yet.</P>
 
     <H3><A name="clone_window"></A>Clone Window</H3>
 
     <P>This button is analogous to the "snapshot" action of other Ghidra windows. It generates a
     clone of this window. The clone will no longer follow the current thread, but it will follow
     the current time.</P>
-
-    <H2><A name="colors"></A>Tool Options: Colors</H2>
-
-    <P>The register window uses colors to hint about the state of registers and their values. They
-    can be configured in the tool's options. By default, changed registers are displayed in red,
-    and stale registers are displayed in dark grey. A "stale" register is one whose current value
-    is not known. The value displayed is the last recorded value or the default value 0. Simply, a
-    "changed" register is one whose value has just changed. For example, if a register is modified
-    as result of stepping, then that register is changed. However, given the possibility of
-    rewinding, changing thread focus, etc., "changed" is actually subtly more flexible. The
-    registers window remembers the user's last coordinates (time, thread, frame, etc.) as well as
-    the current coordinates. So, "changed" more precisely refers to a register whose value differs
-    between those two coordinates. This permits the user to switch focus between different
-    coordinates and quickly identify what is different, so long as those coordinates pertain to the
-    same processor language.</P>
   </BODY>
 </HTML>

@@ -61,7 +61,25 @@ public abstract class AbstractGadpServer
 
 	@Override
 	protected GadpClientHandler newHandler(AsynchronousSocketChannel sock) {
+		try {
+			// Accept only the first connection
+			closeServerSocket();
+		}
+		catch (IOException e) {
+			Msg.error(this, "Could not close server socket", e);
+		}
 		return new GadpClientHandler(this, sock);
+	}
+
+	@Override
+	protected void removeHandler(GadpClientHandler handler) {
+		super.removeHandler(handler);
+		try {
+			terminate();
+		}
+		catch (IOException e) {
+			Msg.error(this, "Could not terminate upon disconnect");
+		}
 	}
 
 	protected AddressRange getAddressRange(Gadp.AddressRange range) {

@@ -17,8 +17,6 @@ package ghidra.util.database;
 
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
@@ -32,32 +30,32 @@ import ghidra.util.database.DirectedIterator.Direction;
  */
 public class DBCachedObjectStoreSubMap<T extends DBAnnotatedObject>
 		extends DBCachedObjectStoreMap<T> {
-	protected final Range<Long> keyRange;
+	protected final KeySpan keySpan;
 
 	public DBCachedObjectStoreSubMap(DBCachedObjectStore<T> store, ErrorHandler errHandler,
-			ReadWriteLock lock, Direction direction, Range<Long> keyRange) {
+			ReadWriteLock lock, Direction direction, KeySpan keySpan) {
 		super(store, errHandler, lock, direction);
-		this.keyRange = keyRange;
+		this.keySpan = keySpan;
 	}
 
 	@Override
 	public int size() {
-		return store.getKeyCount(keyRange);
+		return store.getKeyCount(keySpan);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return !store.getKeysExist(keyRange);
+		return !store.getKeysExist(keySpan);
 	}
 
 	@Override
 	public boolean containsKey(Object key) {
-		return store.safe(lock.readLock(), () -> store.keys.contains(key, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.contains(key, keySpan));
 	}
 
 	@Override
 	public boolean containsValue(Object value) {
-		return store.safe(lock.readLock(), () -> store.objects.contains(value, keyRange));
+		return store.safe(lock.readLock(), () -> store.objects.contains(value, keySpan));
 	}
 
 	@Override
@@ -66,7 +64,7 @@ public class DBCachedObjectStoreSubMap<T extends DBAnnotatedObject>
 			return null;
 		}
 		long kl = (Long) key;
-		if (!keyRange.contains(kl)) {
+		if (!keySpan.contains(kl)) {
 			return null;
 		}
 		return store.getObjectAt(kl);
@@ -78,7 +76,7 @@ public class DBCachedObjectStoreSubMap<T extends DBAnnotatedObject>
 			return null;
 		}
 		long kl = (Long) key;
-		if (!keyRange.contains(kl)) {
+		if (!keySpan.contains(kl)) {
 			return null;
 		}
 		return store.deleteKey(kl);
@@ -86,67 +84,67 @@ public class DBCachedObjectStoreSubMap<T extends DBAnnotatedObject>
 
 	@Override
 	public void clear() {
-		store.deleteKeys(keyRange);
+		store.deleteKeys(keySpan);
 	}
 
 	@Override
 	public Entry<Long, T> firstEntry() {
-		return store.safe(lock.readLock(), () -> store.entries.first(direction, keyRange));
+		return store.safe(lock.readLock(), () -> store.entries.first(direction, keySpan));
 	}
 
 	@Override
 	public Long firstKey() {
-		return store.safe(lock.readLock(), () -> store.keys.first(direction, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.first(direction, keySpan));
 	}
 
 	@Override
 	public Entry<Long, T> lastEntry() {
-		return store.safe(lock.readLock(), () -> store.entries.last(direction, keyRange));
+		return store.safe(lock.readLock(), () -> store.entries.last(direction, keySpan));
 	}
 
 	@Override
 	public Long lastKey() {
-		return store.safe(lock.readLock(), () -> store.keys.last(direction, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.last(direction, keySpan));
 	}
 
 	@Override
 	public Entry<Long, T> lowerEntry(Long key) {
-		return store.safe(lock.readLock(), () -> store.entries.lower(direction, key, keyRange));
+		return store.safe(lock.readLock(), () -> store.entries.lower(direction, key, keySpan));
 	}
 
 	@Override
 	public Long lowerKey(Long key) {
-		return store.safe(lock.readLock(), () -> store.keys.lower(direction, key, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.lower(direction, key, keySpan));
 	}
 
 	@Override
 	public Entry<Long, T> floorEntry(Long key) {
-		return store.safe(lock.readLock(), () -> store.entries.floor(direction, key, keyRange));
+		return store.safe(lock.readLock(), () -> store.entries.floor(direction, key, keySpan));
 	}
 
 	@Override
 	public Long floorKey(Long key) {
-		return store.safe(lock.readLock(), () -> store.keys.floor(direction, key, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.floor(direction, key, keySpan));
 	}
 
 	@Override
 	public Entry<Long, T> ceilingEntry(Long key) {
-		return store.safe(lock.readLock(), () -> store.entries.ceiling(direction, key, keyRange));
+		return store.safe(lock.readLock(), () -> store.entries.ceiling(direction, key, keySpan));
 	}
 
 	@Override
 	public Long ceilingKey(Long key) {
-		return store.safe(lock.readLock(), () -> store.keys.ceiling(direction, key, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.ceiling(direction, key, keySpan));
 	}
 
 	@Override
 	public Entry<Long, T> higherEntry(Long key) {
-		return store.safe(lock.readLock(), () -> store.entries.higher(direction, key, keyRange));
+		return store.safe(lock.readLock(), () -> store.entries.higher(direction, key, keySpan));
 	}
 
 	@Override
 	public Long higherKey(Long key) {
-		return store.safe(lock.readLock(), () -> store.keys.higher(direction, key, keyRange));
+		return store.safe(lock.readLock(), () -> store.keys.higher(direction, key, keySpan));
 	}
 
 	@Override
@@ -167,51 +165,50 @@ public class DBCachedObjectStoreSubMap<T extends DBAnnotatedObject>
 	@Override
 	public DBCachedObjectStoreValueSubCollection<T> values() {
 		return new DBCachedObjectStoreValueSubCollection<>(store, errHandler, lock, direction,
-			keyRange);
+			keySpan);
 	}
 
 	@Override
 	public DBCachedObjectStoreEntrySubSet<T> entrySet() {
-		return new DBCachedObjectStoreEntrySubSet<>(store, errHandler, lock, direction, keyRange);
+		return new DBCachedObjectStoreEntrySubSet<>(store, errHandler, lock, direction, keySpan);
 	}
 
 	@Override
 	public DBCachedObjectStoreSubMap<T> descendingMap() {
 		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock,
-			Direction.reverse(direction), keyRange);
+			Direction.reverse(direction), keySpan);
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet navigableKeySet() {
-		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction, keyRange);
+		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction, keySpan);
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet descendingKeySet() {
 		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock,
-			Direction.reverse(direction), keyRange);
+			Direction.reverse(direction), keySpan);
 	}
 
 	@Override
 	public DBCachedObjectStoreSubMap<T> subMap(Long fromKey, boolean fromInclusive, Long toKey,
 			boolean toInclusive) {
-		Range<Long> rng =
-			DBCachedObjectStore.toRange(fromKey, fromInclusive, toKey, toInclusive, direction);
+		KeySpan span = KeySpan.sub(fromKey, fromInclusive, toKey, toInclusive, direction);
 		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction,
-			keyRange.intersection(rng));
+			keySpan.intersect(span));
 	}
 
 	@Override
 	public DBCachedObjectStoreSubMap<T> headMap(Long toKey, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeHead(toKey, inclusive, direction);
+		KeySpan span = KeySpan.head(toKey, inclusive, direction);
 		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction,
-			keyRange.intersection(rng));
+			keySpan.intersect(span));
 	}
 
 	@Override
 	public DBCachedObjectStoreSubMap<T> tailMap(Long fromKey, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeTail(fromKey, inclusive, direction);
+		KeySpan span = KeySpan.tail(fromKey, inclusive, direction);
 		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction,
-			keyRange.intersection(rng));
+			keySpan.intersect(span));
 	}
 }

@@ -22,6 +22,7 @@ import java.awt.Color;
 import org.junit.Test;
 
 import docking.AbstractErrDialog;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.program.database.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.*;
@@ -64,8 +65,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		super();
 	}
 
-@Test
-    public void testAddVoidProperty() throws Exception {
+	@Test
+	public void testAddVoidProperty() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -127,8 +128,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testAddSpaceProperty() throws Exception {
+	@Test
+	public void testAddSpaceProperty() throws Exception {
 		// ********************
 		// *** DiffTestPgm2 ***
 		// ********************
@@ -217,8 +218,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testAddObjectProperty() throws Exception {
+	@Test
+	public void testAddObjectProperty() throws Exception {
 		// ********************
 		// *** DiffTestPgm1 ***
 		// ********************
@@ -334,7 +335,7 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 	}
 
 	@Test
-    public void testAddStringProperty() throws Exception {
+	public void testAddStringProperty() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
 			@Override
@@ -656,7 +657,7 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 		AbstractErrDialog errDlg = waitForErrorDialog();
 		String message = errDlg.getMessage();
-		assertEquals("Latest and Checked Out program versions do not have the same type for " + 
+		assertEquals("Latest and Checked Out program versions do not have the same type for " +
 			"'testMap' property.", message);
 		pressButtonByText(errDlg, "OK");
 
@@ -683,7 +684,7 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 	}
 
 	@Test
-    public void testRemoveSpaceProperty() throws Exception {
+	public void testRemoveSpaceProperty() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -745,8 +746,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testRemoveColorProperty() throws Exception {
+	@Test
+	public void testRemoveColorProperty() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -800,13 +801,13 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		Address address = resultProgram.getMinAddress();
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039fe"), address);
-		assertEquals(new SaveableColor(Color.GREEN), pm.get(address));
+		assertEquals(new SaveableColor(Palette.GREEN), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
 
-@Test
-    public void testRemoveVsChangeSpaceProperty() throws Exception {
+	@Test
+	public void testRemoveVsChangeSpaceProperty() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -882,8 +883,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testRemoveVsChangeTestColorProperty() throws Exception {
+	@Test
+	public void testRemoveVsChangeTestColorProperty() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -953,8 +954,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testChangeSpaceProperty() throws Exception {
+	@Test
+	public void testChangeSpaceProperty() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -1031,8 +1032,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testChangeTestColorProperty() throws Exception {
+	@Test
+	public void testChangeTestColorProperty() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -1103,8 +1104,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testApplyToAllSpacePropertyConflicts() throws Exception {
+	@Test
+	public void testApplyToAllSpacePropertyConflicts() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -1172,8 +1173,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testApplyToAllColorPropertyConflicts() throws Exception {
+	@Test
+	public void testApplyToAllColorPropertyConflicts() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -1240,8 +1241,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testMultiplePropertyTypeConflicts() throws Exception {
+	@Test
+	public void testMultiplePropertyTypeConflicts() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -1350,8 +1351,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testApplyToAllSpaceForMultipleTypeConflicts() throws Exception {
+	@Test
+	public void testApplyToAllSpaceForMultipleTypeConflicts() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -1453,8 +1454,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testApplyToAllForEachConflict() throws Exception {
+	@Test
+	public void testApplyToAllForEachConflict() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -1563,8 +1564,8 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		assertNull(address);
 	}
 
-@Test
-    public void testApplyToAllForEachConflictPickOriginal() throws Exception {
+	@Test
+	public void testApplyToAllForEachConflictPickOriginal() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
 		// 10018ce = 2
@@ -1665,16 +1666,16 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 		address = resultProgram.getMinAddress();
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x100248c"), address);
-		assertEquals(new SaveableColor(Color.WHITE), opm.get(address));
+		assertEquals(new SaveableColor(Palette.WHITE), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f1"), address);
-		assertEquals(new SaveableColor(Color.BLACK), opm.get(address));
+		assertEquals(new SaveableColor(Palette.BLACK), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f8"), address);
-		assertEquals(new SaveableColor(Color.BLACK), opm.get(address));
+		assertEquals(new SaveableColor(Palette.BLACK), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039fe"), address);
-		assertEquals(new SaveableColor(Color.GREEN), opm.get(address));
+		assertEquals(new SaveableColor(Palette.GREEN), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertNull(address);
 	}

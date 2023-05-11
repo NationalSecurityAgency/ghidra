@@ -22,8 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import agent.gdb.manager.GdbStackFrame;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetStackFrame;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
@@ -37,7 +36,7 @@ import ghidra.program.model.address.Address;
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetStackFrame
 		extends DefaultTargetObject<TargetObject, GdbModelTargetStack>
-		implements TargetStackFrame, GdbModelSelectableObject {
+		implements TargetStackFrame, TargetAggregate, GdbModelSelectableObject {
 	public static final String FUNC_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "function";
 	public static final String FROM_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "from"; // TODO
 
@@ -76,8 +75,11 @@ public class GdbModelTargetStackFrame
 
 		this.registers = new GdbModelTargetStackFrameRegisterContainer(this);
 
-		changeAttributes(List.of(), List.of(registers), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame)),
+		changeAttributes(List.of(),
+			List.of(
+				registers),
+			Map.of(
+				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame)),
 			"Initialized");
 		setFrame(frame);
 	}
@@ -100,18 +102,18 @@ public class GdbModelTargetStackFrame
 		this.func = frame.getFunction();
 		// TODO: module? "from"
 
-		changeAttributes(List.of(), List.of( //
-			registers //
-		), Map.of( //
-			PC_ATTRIBUTE_NAME, pc, //
-			FUNC_ATTRIBUTE_NAME, func, //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame), //
-			VALUE_ATTRIBUTE_NAME, pc //
-		), "Refreshed");
+		changeAttributes(List.of(),
+			List.of(
+				registers),
+			Map.of(
+				PC_ATTRIBUTE_NAME, pc,
+				FUNC_ATTRIBUTE_NAME, func,
+				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame)),
+			"Refreshed");
 	}
 
 	protected void invalidateRegisterCaches() {
-		listeners.fire.invalidateCacheRequested(this);
+		broadcast().invalidateCacheRequested(this);
 	}
 
 	@Override
@@ -120,7 +122,7 @@ public class GdbModelTargetStackFrame
 		return impl.gateFuture(frame.setActive(false));
 	}
 
-	@TargetAttributeType(name = FUNC_ATTRIBUTE_NAME)
+	@TargetAttributeType(name = FUNC_ATTRIBUTE_NAME, hidden = true)
 	public String getFunction() {
 		return func;
 	}

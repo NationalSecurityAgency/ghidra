@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import agent.gdb.manager.impl.GdbMinimalSymbol;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSymbolNamespace;
@@ -48,7 +49,7 @@ public class GdbModelTargetSymbolContainer
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return module.module.listMinimalSymbols().thenAccept(byName -> {
 			List<GdbModelTargetSymbol> symbols;
 			synchronized (this) {

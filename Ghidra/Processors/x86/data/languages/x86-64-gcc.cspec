@@ -2,7 +2,6 @@
 
 <compiler_spec>
   <data_organization>
-     <absolute_max_alignment value="0" />
      <machine_alignment value="2" />
      <default_alignment value="1" />
      <default_pointer_alignment value="8" />
@@ -14,12 +13,13 @@
      <long_long_size value="8" />
      <float_size value="4" />
      <double_size value="8" />
-     <long_double_size value="16" />
+     <long_double_size value="10" /> <!-- aligned-length=16 -->
      <size_alignment_map>
           <entry size="1" alignment="1" />
           <entry size="2" alignment="2" />
           <entry size="4" alignment="4" />
           <entry size="8" alignment="8" />
+          <entry size="16" alignment="16" />
      </size_alignment_map>
   </data_organization>
 
@@ -214,5 +214,29 @@
         <register name="RCX"/>
         <register name="R11"/>
       </killedbycall>
+    </prototype>
+	<prototype name="processEntry" extrapop="0" stackshift="0">
+      <input pointermax="8">
+        <pentry minsize="1" maxsize="8">
+          <register name="RDX"/>
+        </pentry>
+	    <pentry minsize="1" maxsize="500" align="8">
+	      <addr offset="0" space="stack"/>
+	    </pentry>
+      </input>
+      <output killedbycall="true">
+        <pentry minsize="1" maxsize="8">
+          <register name="RAX"/>
+        </pentry>
+      </output>
+      <unaffected>
+          <register name="RSP"/>
+      </unaffected>
+      <!-- Functions with this prototype don't have a return address. But, if we don't specify one, this prototype will
+           use the default, which is to have the return address on the stack. That conflicts with how this prototype actually
+           uses the stack, so we set a fake return address at a RBP, which is unspecified at process entry --> 
+      <returnaddress>
+         <register name="RBP"/>
+      </returnaddress>
     </prototype>
 </compiler_spec>

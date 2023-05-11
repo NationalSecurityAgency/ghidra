@@ -60,9 +60,7 @@ public class RenameVariableTask extends RenameTask {
 	@Override
 	public boolean isValid(String newNm) {
 		newName = newNm;
-		LocalSymbolMap localSymbolMap = hfunction.getLocalSymbolMap();
-		if (localSymbolMap.containsVariableWithName(newName) ||
-			isSymbolInFunction(function, newName)) {
+		if (isSymbolInFunction(function, newName)) {
 			errorMsg = "Duplicate name";
 			return false;
 		}

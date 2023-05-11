@@ -15,13 +15,18 @@
  */
 package agent.dbgeng.manager.cmd;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import agent.dbgeng.dbgeng.DebugSystemObjects;
+import agent.dbgeng.dbgeng.DebugSystemThreadRecord;
 import agent.dbgeng.dbgeng.DebugThreadId;
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgProcessImpl;
+import agent.dbgeng.manager.impl.DbgThreadImpl;
 import ghidra.util.Msg;
 
 public class DbgListThreadsCommand extends AbstractDbgCommand<Map<DebugThreadId, DbgThread>> {
@@ -41,30 +46,44 @@ public class DbgListThreadsCommand extends AbstractDbgCommand<Map<DebugThreadId,
 			if (cur.contains(id)) {
 				continue; // Do nothing, we're in sync
 			}
-			// Need to create the thread as if we receive =thread-created
-			Msg.warn(this, "Resync: Was missing thread: " + id);
 			DebugSystemObjects so = manager.getSystemObjects();
-			so.setCurrentThreadId(id);
-			int tid = so.getCurrentThreadSystemId();
-			manager.getThreadComputeIfAbsent(id, process, tid, false);
+			long tid;
+			if (!manager.isKernelMode()) {
+				Msg.warn(this, "Resync: Was missing thread: " + id);
+				so.setCurrentThreadId(id);
+				tid = (long) so.getCurrentThreadSystemId();
+			}
+			else {
+				id = new DebugSystemThreadRecord(id.value());
+				tid = -1;
+			}
+			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid, false);
+			Long offset = so.getCurrentThreadDataOffset();
+			thread.setOffset(offset);
 		}
 		for (DebugThreadId id : new ArrayList<>(cur)) {
 			if (updatedThreadIds.contains(id)) {
 				continue; // Do nothing, we're in sync
 			}
-			// Need to remove the thread as if we received =thread-exited
-			Msg.warn(this, "Resync: Had extra thread: " + id);
-			process.removeThread(id);
-			manager.removeThread(id);
+			if (!manager.isKernelMode()) {
+				Msg.warn(this, "Resync: Had extra thread: " + id);
+				process.removeThread(id);
+				manager.removeThread(id);
+			}
 		}
 		return process.getKnownThreads();
 	}
 
 	@Override
 	public void invoke() {
-		DebugSystemObjects so = manager.getSystemObjects();
-		so.setCurrentProcessId(process.getId());
-		updatedThreadIds = so.getThreads();
+		try {
+			setProcess(process);
+			DebugSystemObjects so = manager.getSystemObjects();
+			updatedThreadIds = so.getThreads();
+		} 
+		finally {
+			resetProcess();
+		}
 	}
 
 }

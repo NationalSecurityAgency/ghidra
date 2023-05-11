@@ -3,6 +3,7 @@
 	<schema name="Test" elementResync="NEVER" attributeResync="ONCE">
 		<interface name="EventScope" />
 		<interface name="Launcher" />
+		<interface name="ActiveScope" />
 		<interface name="FocusScope" />
 		<interface name="Aggregate" />
 		<element schema="VOID" />
@@ -408,6 +409,14 @@
 		<attribute name="_value" schema="ANY" required="yes" hidden="yes" />
 		<attribute name="_type" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Method" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Method" />
+		<element schema="VOID" />
+		<attribute name="_display" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_return_type" schema="TYPE" fixed="yes" hidden="yes" />
+		<attribute name="_parameters" schema="MAP_PARAMETERS" fixed="yes" hidden="yes" />
 		<attribute schema="VOID" />
 	</schema>
 </context>

@@ -81,7 +81,8 @@ public class ConvertCommand extends BackgroundCommand {
 
 			Instruction instruction = (Instruction) context.getCodeUnit();
 			int opIndex = action.plugin.getOperandIndex(context);
-			msg = applyEquate(instruction, opIndex);
+			int subOpIndex = action.plugin.getSubOperandIndex(context);
+			msg = applyEquate(instruction, opIndex, subOpIndex);
 		}
 		catch (Exception e) {
 			msg = "Exception applying the Convert: " + e.getMessage();
@@ -142,7 +143,7 @@ public class ConvertCommand extends BackgroundCommand {
 		String errorMessage = null;
 		for (Instruction instruction : it) {
 			for (int i = 0; i < instruction.getNumOperands(); i++) {
-				String m = applyEquate(instruction, i);
+				String m = applyEquate(instruction, i, 0);
 				if (errorMessage == null && m != null) {
 					errorMessage = m;
 				}
@@ -155,12 +156,12 @@ public class ConvertCommand extends BackgroundCommand {
 	 * Create a new equate. If already created with a different value, then we can't do anything. 
 	 * If equate name is null, i.e. selection is not letter or digit, then do nothing
 	 */
-	private String applyEquate(Instruction instruction, int opIndex) {
+	private String applyEquate(Instruction instruction, int opIndex, int subOpIndex) {
 		if (instruction == null || opIndex == -1) {
 			return null;
 		}
 
-		Scalar scalar = grabMatchingScalar(instruction, opIndex);
+		Scalar scalar = grabMatchingScalar(instruction, opIndex, subOpIndex);
 		if (scalar == null) {
 			return null;
 		}
@@ -210,12 +211,13 @@ public class ConvertCommand extends BackgroundCommand {
 	 * Gets a scalar that matches the value of the scalar at the cursor location.
 	 * @param instruction The instruction to search
 	 * @param opIndex The operand index to look at
+	 * @param subOpIndex the sub operand index
 	 * @return A scalar that matches the value of the scalar at the cursor location, or null if no
 	 * such scalar can be found.
 	 */
-	private Scalar grabMatchingScalar(Instruction instruction, int opIndex) {
+	private Scalar grabMatchingScalar(Instruction instruction, int opIndex, int subOpIndex) {
 		Scalar scalarAtCursor = action.plugin.getScalar(context);
-		Scalar scalar = instruction.getScalar(opIndex);
+		Scalar scalar = action.plugin.getScalar(instruction, opIndex, subOpIndex);
 
 		if (scalarAtCursor.equals(scalar)) {
 			return scalar;

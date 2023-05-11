@@ -1,0 +1,162 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+body {
+	font-family: sans-serif;
+	background-color: #222;
+	color: #eee;
+	padding: 0;
+	margin: 0;
+	counter-reset: figure;
+}
+
+header#title-block-header {
+	overflow: hidden;
+	background-color: #224;
+	position: fixed;
+	z-index: 1;
+	top: 0;
+	width: 100%;
+	height: 1.5cm;
+}
+
+header#title-block-header h1 {
+	padding: 0.2cm;
+	margin: 0;
+	color: #eee;
+}
+
+header#nav {
+	overflow: hidden;
+	background-color: #224;
+	position: fixed;
+	z-index: 1;
+	top: 1.5cm;
+	width: 100%;
+	height: 0.5cm;
+}
+
+header#nav a {
+	font-size: smaller;
+	padding: 0 0.5em 0 0.5em;
+}
+
+header#nav a.beginner + a.advanced {
+	border-left: 3px solid #eee;
+}
+
+nav#TOC {
+	overflow: auto;
+	background-color: #235;
+	position: fixed;
+	height: calc(100% - 2cm - 0.4cm);
+	width: calc(7cm - 0.4cm);
+	top: 2cm;
+	left: 0;
+	padding: 0.2cm;
+}
+
+nav#TOC ul {
+	padding: 0;
+	margin: 0;
+}
+
+nav#TOC ul li {
+	padding: 0;
+	margin: 0 0 0 1em;
+}
+
+section.level1 {
+	position: fixed;
+	left: 7cm;
+	top: 2cm;
+	width: calc(100% - 7cm - 0.4cm);
+	height: calc(100% - 2cm - 0.4cm);
+	overflow: auto;
+	padding: 0.2cm;
+}
+
+section h1 {
+	border-bottom: 2pt solid #234;
+}
+
+section h2 {
+	border-bottom: 1pt solid #234;
+}
+
+a {
+	color: #cec;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+img {
+	max-width: 100%;
+}
+
+div.sourceCode {
+	position: relative;
+	color: black;
+	background-color: #fff;
+	padding: 0.4cm 0.2cm 0.2cm 0.2cm;
+	border-radius: 3px;
+	box-shadow: 0 0 5px black inset;
+}
+
+pre > code.sourceCode > span > a:first-child::before {
+    text-decoration: none;
+}
+
+div.sourceCode:has(pre) > pre::before {
+	font-size: smaller;
+	font-style: italic;
+	color: #888;
+	position: absolute;
+	top: 0px;
+	right: 1em;
+}
+
+div.sourceCode:has(pre.bash) > pre::before {
+	content: 'Shell';
+}
+
+div.sourceCode:has(pre.java) > pre::before {
+	content: 'Java';
+}
+
+div.sourceCode:has(pre.c) > pre::before {
+	content: 'C';
+}
+
+div.sourceCode:has(pre.gdb) > pre::before {
+	content: 'GDB';
+}
+
+div.sourceCode:has(pre.sleigh) > pre::before {
+	content: 'Sleigh';
+}
+
+figcaption::before {
+	counter-increment: figure;
+	content: 'Figure ' counter(figure) ': ';
+	font-weight: bold;
+}
+
+figcaption {
+}
+

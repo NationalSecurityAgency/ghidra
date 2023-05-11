@@ -144,6 +144,7 @@ public class GProgressBar extends JPanel {
 	 * By default, this property is <code>false</code>.
 	 * Some look and feels might not support indeterminate progress bars;
 	 * they will ignore this property.
+	 * @param indeterminate true if indeterminate
 	 *
 	 * @see JProgressBar
 	 */
@@ -157,6 +158,7 @@ public class GProgressBar extends JPanel {
 	/**
 	 * Show or not show the progress icon (spinning globe) according to
 	 * the showIcon param.
+	 * @param showIcon true to show the icon
 	 */
 	public void showProgressIcon(final boolean showIcon) {
 		if (showIcon == showingIcon) {
@@ -254,7 +256,7 @@ public class GProgressBar extends JPanel {
 			activeProgressPanel.add(imageLabel, BorderLayout.EAST);
 		}
 
-		ImageIcon icon = Icons.STOP_ICON;
+		Icon icon = Icons.STOP_ICON;
 		cancelButton = new EmptyBorderButton(icon);
 
 		cancelButton.setName("CANCEL_TASK");

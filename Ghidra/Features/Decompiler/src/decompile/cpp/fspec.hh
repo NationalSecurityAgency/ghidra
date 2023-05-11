@@ -16,11 +16,13 @@
 /// \file fspec.hh
 /// \brief Definitions for specifying functions prototypes
 
-#ifndef __CPUI_FSPEC__
-#define __CPUI_FSPEC__
+#ifndef __FSPEC_HH__
+#define __FSPEC_HH__
 
 #include "op.hh"
 #include "rangemap.hh"
+
+namespace ghidra {
 
 class JoinRecord;
 
@@ -101,8 +103,7 @@ public:
 private:
   uint4 flags;			///< Boolean properties of the parameter
   type_metatype type;		///< Data-type class that this entry must match
-  int4 group;			///< Group of (mutually exclusive) entries that this entry belongs to
-  int4 groupsize;		///< The number of consecutive groups taken by the entry
+  vector<int4> groupSet;	///< Group(s) \b this entry belongs to
   AddrSpace *spaceid;		///< Address space containing the range
   uintb addressbase;		///< Starting offset of the range
   int4 size;			///< Size of the range in bytes
@@ -117,9 +118,10 @@ private:
   /// \brief Is the logical value left-justified within its container
   bool isLeftJustified(void) const { return (((flags&force_left_justify)!=0)||(!spaceid->isBigEndian())); }
 public:
-  ParamEntry(int4 grp) { group=grp; }			///< Constructor for use with decode
-  int4 getGroup(void) const { return group; }		///< Get the group id \b this belongs to
-  int4 getGroupSize(void) const { return groupsize; }	///< Get the number of groups occupied by \b this
+  ParamEntry(int4 grp) { groupSet.push_back(grp); }	///< Constructor for use with decode
+  int4 getGroup(void) const { return groupSet[0]; }	///< Get the group id \b this belongs to
+  const vector<int4> &getAllGroups(void) const { return groupSet; }	///< Get all group numbers \b this overlaps
+  bool groupOverlap(const ParamEntry &op2) const;	///< Check if \b this and op2 occupy any of the same groups
   int4 getSize(void) const { return size; }		///< Get the size of the memory range in bytes.
   int4 getMinSize(void) const { return minsize; }	///< Get the minimum size of a logical value contained in \b this
   int4 getAlign(void) const { return alignment; }	///< Get the alignment of \b this entry
@@ -284,7 +286,7 @@ class ParamActive {
   bool needsfinalcheck;		///< Should a final pass be made on trials (to take into account control-flow changes)
   bool recoversubcall;		///< True if \b this is being used to recover prototypes of a sub-function call
 public:
-  ParamActive(bool recoversub);	///< Constructor an empty container
+  ParamActive(bool recoversub);	///< Construct an empty container
   void clear(void);		///< Reset to an empty container
   void registerTrial(const Address &addr,int4 sz);		///< Add a new trial to the container
   int4 getNumTrials(void) const { return trial.size(); }	///< Get the number of trials in \b this container
@@ -558,7 +560,7 @@ protected:
   int4 maxdelay;			///< Maximum heritage delay across all parameters
   int4 pointermax; 			///< If non-zero, maximum size of a data-type before converting to a pointer
   bool thisbeforeret;			///< Does a \b this parameter come before a hidden return parameter
-  int4 resourceTwoStart;		///< If there are two resource sections, the group of the first entry in the second section
+  vector<int4> resourceStart;		///< The starting group for each resource section
   list<ParamEntry> entry;		///< The ordered list of parameter entries
   vector<ParamEntryResolver *> resolverMap;	///< Map from space id to resolver
   AddrSpace *spacebase;			///< Address space containing relative offset parameters
@@ -566,8 +568,8 @@ protected:
   Address assignAddress(const Datatype *tp,vector<int4> &status) const;	///< Assign storage for given parameter data-type
   const ParamEntry *selectUnreferenceEntry(int4 grp,type_metatype prefType) const;	///< Select entry to fill an unreferenced param
   void buildTrialMap(ParamActive *active) const;	///< Build map from parameter trials to model ParamEntrys
-  void separateSections(ParamActive *active,int4 &oneStart,int4 &oneStop,int4 &twoStart,int4 &twoStop) const;
-  static void markGroupNoUse(ParamActive *active,int4 groupUpper,int4 groupStart,int4 index);
+  void separateSections(ParamActive *active,vector<int4> &trialStart) const;
+  static void markGroupNoUse(ParamActive *active,int4 activeTrial,int4 trialStart);
   static void markBestInactive(ParamActive *active,int4 group,int4 groupStart,type_metatype prefType);
   static void forceExclusionGroup(ParamActive *active);
   static void forceNoUse(ParamActive *active,int4 start,int4 stop);
@@ -963,7 +965,8 @@ public:
 class UnknownProtoModel : public ProtoModel {
   ProtoModel *placeholderModel;		///< The model whose behavior \b this adopts as a behavior placeholder
 public:
-  UnknownProtoModel(const string &nm,ProtoModel *placeHold) : ProtoModel(nm,*placeHold) { placeholderModel = placeHold; }
+  UnknownProtoModel(const string &nm,ProtoModel *placeHold) : ProtoModel(nm,*placeHold) {
+    placeholderModel = placeHold; }	///< Constructor
   ProtoModel *getPlaceholderModel(void) const { return placeholderModel; }	///< Retrieve the placeholder model
   virtual bool isUnknown(void) const { return true; }
 };
@@ -1602,11 +1605,15 @@ class FuncCallSpecs : public FuncProto {
   Varnode *buildParam(Funcdata &data,Varnode *vn,ProtoParameter *param,Varnode *stackref);
   int4 transferLockedInputParam(ProtoParameter *param);
   PcodeOp *transferLockedOutputParam(ProtoParameter *param);
-  bool transferLockedInput(vector<Varnode *> &newinput);
-  bool transferLockedOutput(Varnode *&newoutput);
+  bool transferLockedInput(vector<Varnode *> &newinput,const FuncProto &source);
+  bool transferLockedOutput(Varnode *&newoutput,const FuncProto &source);
   void commitNewInputs(Funcdata &data,vector<Varnode *> &newinput);
   void commitNewOutputs(Funcdata &data,Varnode *newout);
   void collectOutputTrialVarnodes(vector<Varnode *> &trialvn);
+  void setStackPlaceholderSlot(int4 slot) { stackPlaceholderSlot = slot;
+      if (isinputactive) activeinput.setPlaceholderSlot(); }	///< Set the slot of the stack-pointer placeholder
+  void clearStackPlaceholderSlot(void) {
+    stackPlaceholderSlot = -1; if (isinputactive) activeinput.freePlaceholderSlot(); }	///< Release the stack-pointer placeholder
 public:
   enum {
     offset_unknown = 0xBADBEEF					///< "Magic" stack offset indicating the offset is unknown
@@ -1626,10 +1633,6 @@ public:
   int4 getParamshift(void) const { return paramshift; }		///< Get the parameter shift for this call site
   int4 getMatchCallCount(void) const { return matchCallCount; }	///< Get the number of calls the caller makes to \b this sub-function
   int4 getStackPlaceholderSlot(void) const { return stackPlaceholderSlot; }	///< Get the slot of the stack-pointer placeholder
-  void setStackPlaceholderSlot(int4 slot) { stackPlaceholderSlot = slot;
-      if (isinputactive) activeinput.setPlaceholderSlot(); }	///< Set the slot of the stack-pointer placeholder
-  void clearStackPlaceholderSlot(void) {
-    stackPlaceholderSlot = -1; if (isinputactive) activeinput.freePlaceholderSlot(); }	///< Release the stack-pointer placeholder
 
   void initActiveInput(void);			 ///< Turn on analysis recovering input parameters
   void clearActiveInput(void) { isinputactive = false; }	///< Turn off analysis recovering input parameters
@@ -1648,6 +1651,7 @@ public:
   void deindirect(Funcdata &data,Funcdata *newfd);
   void forceSet(Funcdata &data,const FuncProto &fp);
   void insertPcode(Funcdata &data);
+  void createPlaceholder(Funcdata &data,AddrSpace *spacebase);
   void resolveSpacebaseRelative(Funcdata &data,Varnode *phvn);
   void abortSpacebaseRelative(Funcdata &data);
   void finalInputCheck(void);
@@ -1716,4 +1720,5 @@ inline bool EffectRecord::operator!=(const EffectRecord &op2) const
   return (type != op2.type);
 }
 
+} // End namespace ghidra
 #endif

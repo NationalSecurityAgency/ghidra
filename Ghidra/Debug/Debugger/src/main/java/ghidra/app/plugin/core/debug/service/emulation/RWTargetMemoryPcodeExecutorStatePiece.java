@@ -15,10 +15,14 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import generic.ULongSpan;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerDataAccess;
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerMemoryAccess;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -66,28 +70,40 @@ public class RWTargetMemoryPcodeExecutorStatePiece
 			this.backing = backing;
 		}
 
+		protected RWTargetMemoryCachedSpace(Language language, AddressSpace space,
+				PcodeDebuggerMemoryAccess backing, SemisparseByteArray bytes, AddressSet written) {
+			super(language, space, backing, bytes, written);
+			this.backing = backing;
+		}
+
 		@Override
-		protected void fillUninitialized(AddressSet uninitialized) {
+		public RWTargetMemoryCachedSpace fork() {
+			return new RWTargetMemoryCachedSpace(language, space, backing, bytes.fork(),
+				new AddressSet(written));
+		}
+
+		@Override
+		protected ULongSpanSet readUninitializedFromTarget(ULongSpanSet uninitialized) {
 			if (space.isUniqueSpace()) {
-				return;
+				return uninitialized;
 			}
 			AddressSetView unknown;
-			unknown = backing.intersectUnknown(uninitialized);
+			AddressSet addrsUninit = addrSet(uninitialized);
+			unknown = backing.intersectUnknown(addrsUninit);
 			if (unknown.isEmpty()) {
-				return;
+				return uninitialized;
 			}
-			if (waitTimeout(backing.readFromTargetMemory(unknown))) {
-				unknown = backing.intersectUnknown(uninitialized);
+			if (backing.isLive() && waitTimeout(backing.readFromTargetMemory(unknown))) {
+				unknown = backing.intersectUnknown(addrsUninit);
 				if (unknown.isEmpty()) {
-					return;
+					return uninitialized;
 				}
 			}
 			if (backing.readFromStaticImages(bytes, unknown)) {
-				unknown = backing.intersectUnknown(uninitialized);
-				if (unknown.isEmpty()) {
-					return;
-				}
+				ULongSpan bound = uninitialized.bound();
+				return bytes.getUninitialized(bound.min(), bound.max());
 			}
+			return uninitialized;
 		}
 
 		@Override
@@ -114,14 +130,29 @@ public class RWTargetMemoryPcodeExecutorStatePiece
 		this.mode = mode;
 	}
 
+	class WRTargetMemorySpaceMap extends TargetBackedSpaceMap {
+		public WRTargetMemorySpaceMap() {
+			super();
+		}
+
+		protected WRTargetMemorySpaceMap(Map<AddressSpace, CachedSpace> spaceMap) {
+			super(spaceMap);
+		}
+
+		@Override
+		public AbstractSpaceMap<CachedSpace> fork() {
+			return new WRTargetMemorySpaceMap(fork(spaces));
+		}
+
+		@Override
+		protected CachedSpace newSpace(AddressSpace space, PcodeDebuggerDataAccess data) {
+			return new RWTargetMemoryCachedSpace(language, space,
+				(PcodeDebuggerMemoryAccess) data);
+		}
+	}
+
 	@Override
 	protected AbstractSpaceMap<CachedSpace> newSpaceMap() {
-		return new TargetBackedSpaceMap() {
-			@Override
-			protected CachedSpace newSpace(AddressSpace space, PcodeDebuggerDataAccess data) {
-				return new RWTargetMemoryCachedSpace(language, space,
-					(PcodeDebuggerMemoryAccess) data);
-			}
-		};
+		return new WRTargetMemorySpaceMap();
 	}
 }

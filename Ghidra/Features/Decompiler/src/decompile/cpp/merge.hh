@@ -13,28 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_MERGE__
-#define __CPUI_MERGE__
+#ifndef __MERGE_HH__
+#define __MERGE_HH__
 
 /// \file merge.hh
 /// \brief Utilities for merging low-level Varnodes into high-level variables
 
 #include "op.hh"
 
-/// \brief A record for caching a Cover intersection test between two HighVariable objects
-///
-/// This is just a pair of HighVariable objects that can be used as a map key. The main
-/// Merge class uses it to cache intersection test results between the two variables in
-/// a map.
-class HighEdge {
-  friend class Merge;
-  HighVariable *a;		///< First HighVariable of the pair
-  HighVariable *b;		///< Second HighVariable of the pair
-public:
-  /// \brief Comparator
-  bool operator<(const HighEdge &op2) const { if (a==op2.a) return (b<op2.b); return (a<op2.a); }
-  HighEdge(HighVariable *c,HighVariable *d) { a=c; b=d; } ///< Constructor
-};
+namespace ghidra {
 
 /// \brief Helper class associating a Varnode with the block where it is defined
 ///
@@ -79,14 +66,13 @@ class Funcdata;
 ///   - Merging Varnodes that hold the same data-type
 class Merge {
   Funcdata &data;		///< The function containing the Varnodes to be merged
-  map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
+  HighIntersectTest testCache;	///< Cached intersection tests
   vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
-  bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
-  void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
-  bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
+  vector<PcodeOp *> protoPartial;	///< Roots of unmapped CONCAT trees
   static bool mergeTestRequired(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestAdjacent(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestSpeculative(HighVariable *high_out,HighVariable *high_in);
+  static void mergeTestMust(Varnode *vn);
   static bool mergeTestBasic(Varnode *vn);
   static void findSingleCopy(HighVariable *high,vector<Varnode *> &singlelist);
   static bool compareHighByBlock(const HighVariable *a,const HighVariable *b);
@@ -113,9 +99,10 @@ class Merge {
   void markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
   void processHighDominantCopy(HighVariable *high);
   void processHighRedundantCopy(HighVariable *high);
+  void groupPartialRoot(Varnode *vn);
 public:
   Merge(Funcdata &fd) : data(fd) {} ///< Construct given a specific function
-  bool intersection(HighVariable *a,HighVariable *b);
+  void clear(void);
   bool inflateTest(Varnode *a,HighVariable *high);
   void inflate(Varnode *a,HighVariable *high);
   bool mergeTest(HighVariable *high,vector<HighVariable *> &tmplist);
@@ -124,11 +111,13 @@ public:
   void mergeByDatatype(VarnodeLocSet::const_iterator startiter,VarnodeLocSet::const_iterator enditer);
   void mergeAddrTied(void);
   void mergeMarker(void);
+  void groupPartials(void);
   void mergeAdjacent(void);
   void mergeMultiEntry(void);
   bool hideShadows(HighVariable *high);
   void processCopyTrims(void);
   void markInternalCopies(void);
+  void registerProtoPartialRoot(Varnode *vn);
 #ifdef MERGEMULTI_DEBUG
   void verifyHighCovers(void);
 #endif
@@ -148,7 +137,7 @@ public:
 inline bool Merge::compareHighByBlock(const HighVariable *a,const HighVariable *b)
 
 {
-  int4 result = a->wholecover.compareTo(b->wholecover);
+  int4 result = a->getCover().compareTo(b->getCover());
   if ( result == 0 ) {
     Varnode *v1 = a->getInstance( 0 );
     Varnode *v2 = b->getInstance( 0 );
@@ -169,4 +158,5 @@ inline bool Merge::compareHighByBlock(const HighVariable *a,const HighVariable *
   return (result < 0);
 }
 
+} // End namespace ghidra
 #endif

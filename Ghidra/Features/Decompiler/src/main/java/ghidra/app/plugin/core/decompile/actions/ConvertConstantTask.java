@@ -31,7 +31,7 @@ import utility.function.Callback;
  * Create an equate in the table for the specific Address and hash value.
  * The equate is not assumed to be attached to a particular instruction operand and
  * uses the dynamic hash value to identify the particular constant (within p-code) to label.
- * 
+ *
  * If altAddress is non-null and the other alt* fields are filled in, the task attempts
  * to set the equation on the altAddress first to get the representation of the p-code
  * constant at convertAddress to change.  After the decompilation finishes, the representation
@@ -137,7 +137,7 @@ public class ConvertConstantTask implements Callback {
 	}
 
 	/**
-	 * Remove any preexisting equate reference with the same address and hash as the
+	 * Remove any pre-existing equate reference with the same address and hash as the
 	 * primate equate.
 	 */
 	private void removePrimaryReference() {
@@ -160,7 +160,7 @@ public class ConvertConstantTask implements Callback {
 	}
 
 	/**
-	 * Remove and preexisting equate reference with the same address and hash as the
+	 * Remove and pre-existing equate reference with the same address and hash as the
 	 * alternate equate.
 	 */
 	private void removeAlternateReference() {

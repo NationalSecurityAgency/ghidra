@@ -155,7 +155,7 @@ public class FixElfExternalOffsetDataRelocationScript extends GhidraScript {
 		
 		if (isDefaultTypeApplied) {
 			// Replace undefined/default data with offset-pointer
-			DataUtilities.createData(currentProgram, address, offsetPtrDt, -1, false,
+			DataUtilities.createData(currentProgram, address, offsetPtrDt, -1,
 				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		}
 		else {

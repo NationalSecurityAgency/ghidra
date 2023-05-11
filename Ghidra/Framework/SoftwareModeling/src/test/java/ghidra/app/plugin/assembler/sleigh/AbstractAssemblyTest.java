@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -29,13 +29,15 @@ import ghidra.app.plugin.assembler.sleigh.parse.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseTreeNode;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
-import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.plugin.processors.sleigh.SleighInstructionPrototype;
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.util.PseudoInstruction;
 import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
@@ -70,8 +72,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	public void setUp() throws Exception {
 		LanguageID langID = getLanguageID();
 		if (!setupLangID.equals(langID.toString())) {
-			SleighLanguageProvider provider = new SleighLanguageProvider();
-			lang = (SleighLanguage) provider.getLanguage(langID);
+			lang = getLanguage(langID);
 			context = new AssemblyDefaultContext(lang);
 			setupLangID = langID.toString();
 		}
@@ -81,6 +82,11 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	@After
 	public void tearDown() {
 		//dbg.resetOutputStream(oldOutput).close();
+	}
+
+	private static SleighLanguage getLanguage(LanguageID langID) throws LanguageNotFoundException {
+		LanguageService languageService = DefaultLanguageService.getLanguageService();
+		return (SleighLanguage) languageService.getLanguage(langID);
 	}
 
 	/**

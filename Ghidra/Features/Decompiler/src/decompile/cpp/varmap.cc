@@ -16,6 +16,8 @@
 #include "varmap.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_LOCK = AttributeId("lock",133);
 AttributeId ATTRIB_MAIN = AttributeId("main",134);
 
@@ -87,7 +89,7 @@ bool RangeHint::contain(const RangeHint *b) const
 /// Otherwise data-type ordering is used.
 /// \param b is the other given range
 /// \param reconcile is \b true is the two ranges have \e reconciled data-types
-/// \return \b true if the \b this ranges's data-type is preferred
+/// \return \b true if \b this ranges's data-type is preferred
 bool RangeHint::preferred(const RangeHint *b,bool reconcile) const
 
 {
@@ -102,16 +104,16 @@ bool RangeHint::preferred(const RangeHint *b,bool reconcile) const
     return true;
 
   if (!reconcile) {		// If the ranges don't reconcile
-    if ((rangeType == RangeHint::open)&&(b->rangeType != RangeHint::open)) // Throw out the open range
+    if (rangeType == open && b->rangeType != open) // Throw out the open range
       return false;
-    if ((b->rangeType == RangeHint::open)&&(rangeType != RangeHint::open))
+    if (b->rangeType == open && rangeType != open)
       return true;
   }
 
   return (0>type->typeOrder(*b->type)); // Prefer the more specific
 }
 
-/// If \b this RangeHint is an array and the following details line up, adjust \b this
+/// If \b this RangeHint is an array and the following RangeHint line up, adjust \b this
 /// so that it \e absorbs the other given RangeHint and return \b true.
 /// The second RangeHint:
 ///   - must have the same element size
@@ -122,12 +124,12 @@ bool RangeHint::preferred(const RangeHint *b,bool reconcile) const
 ///
 /// \param b is the other RangeHint to absorb
 /// \return \b true if the other RangeHint was successfully absorbed
-bool RangeHint::absorb(RangeHint *b)
+bool RangeHint::attemptJoin(RangeHint *b)
 
 {
-  if (rangeType != RangeHint::open) return false;
+  if (rangeType != open) return false;
   if (highind < 0) return false;
-  if (b->rangeType == RangeHint::endpoint) return false;	// Don't merge with bounding range
+  if (b->rangeType == endpoint) return false;			// Don't merge with bounding range
   Datatype *settype = type;					// Assume we will keep this data-type
   if (settype->getSize() != b->type->getSize()) return false;
   if (settype != b->type) {
@@ -158,12 +160,27 @@ bool RangeHint::absorb(RangeHint *b)
   diffsz /= settype->getSize();
   if (diffsz > highind) return false;
   type = settype;
-  if (b->rangeType == RangeHint::open && (0 <= b->highind)) { // If b has array indexing
-    int4 trialhi = b->highind + diffsz;
-    if (highind < trialhi)
-      highind = trialhi;
-  }
+  absorb(b);
   return true;
+}
+
+/// Absorb details of the other RangeHint into \b this, except for the data-type.  Inherit an \e open range
+/// type and any indexing information. The data-type for \b this is assumed to be compatible and preferred
+/// over the other data-type and is not changed.
+/// \param b is the other RangeHint to absorb
+void RangeHint::absorb(RangeHint *b)
+
+{
+  if (b->rangeType == open && type->getSize() == b->type->getSize()) {
+    rangeType = open;
+    if (0 <= b->highind) { // If b has array indexing
+      intb diffsz = b->sstart - sstart;
+      diffsz /= type->getSize();
+      int4 trialhi = b->highind + diffsz;
+      if (highind < trialhi)
+	highind = trialhi;
+    }
+  }
 }
 
 /// Given that \b this and the other RangeHint intersect, redefine \b this so that it
@@ -178,84 +195,60 @@ bool RangeHint::absorb(RangeHint *b)
 bool RangeHint::merge(RangeHint *b,AddrSpace *space,TypeFactory *typeFactory)
 
 {
-  uintb aend,bend;
-  uintb end;
-  Datatype *resType;
-  uint4 resFlags;
   bool didReconcile;
-  int4 resHighIndex;
-  bool overlapProblems = false;
-
-  aend = space->wrapOffset(start+size);
-  bend = space->wrapOffset(b->start+b->size);
-  RangeHint::RangeType resRangeType = RangeHint::fixed;
-  resHighIndex = -1;
-  if ((aend==0)||(bend==0))
-    end = 0;
-  else
-    end = (aend > bend) ? aend : bend;
+  int4 resType;		// 0=this, 1=b, 2=confuse
 
   if (contain(b)) {			// Does one range contain the other
     didReconcile = reconcile(b);	// Can the data-type layout be reconciled
-    if (preferred(b,didReconcile)) { 	// If a's data-type is preferred over b
-      resType = type;
-      resFlags = flags;
-      resRangeType = rangeType;
-      resHighIndex = highind;
-    }
-    else {
-      resType = b->type;
-      resFlags = b->flags;
-      resRangeType = b->rangeType;
-      resHighIndex = b->highind;
-    }
-    if ((start==b->start)&&(size==b->size)) {
-      resRangeType = (rangeType==RangeHint::open || b->rangeType==RangeHint::open) ? RangeHint::open : RangeHint::fixed;
-      if (resRangeType == RangeHint::open)
-	resHighIndex = (highind < b->highind) ? b->highind : highind;
-    }
-    if (!didReconcile) { // See if two types match up
-      if ((b->rangeType != RangeHint::open)&&(rangeType != RangeHint::open))
-	overlapProblems = true;
-    }
+    if (!didReconcile && start != b->start)
+      resType = 2;
+    else
+      resType = preferred(b,didReconcile) ? 0 : 1;
   }
   else {
     didReconcile = false;
-    resType = (Datatype *)0;	// Unable to resolve the type
-    resFlags = 0;
+    resType =  ((flags & Varnode::typelock) != 0) ? 0 : 2;
   }
 				// Check for really problematic cases
   if (!didReconcile) {
-    if ((b->flags & Varnode::typelock)!=0) {
-      if ((flags & Varnode::typelock)!=0)
+    if ((flags & Varnode::typelock)!=0) {
+      if ((b->flags & Varnode::typelock)!=0)
 	throw LowlevelError("Overlapping forced variable types : " + type->getName() + "   " + b->type->getName());
+      if (start != b->start)
+	return false;		// Discard b entirely
     }
   }
-  if (resType == (Datatype *)0) // If all else fails
-    resType = typeFactory->getBase(1,TYPE_UNKNOWN); // Do unknown array (size 1)
 
-  type = resType;
-  flags = resFlags;
-  rangeType = resRangeType;
-  highind = resHighIndex;
-  if ((!didReconcile)&&(start != b->start)) { // Truncation is forced
-    if ((flags & Varnode::typelock)!=0) { // If a is locked
-      return overlapProblems;		// Discard b entirely in favor of a
-    }
-    // Concede confusion about types, set unknown type rather than a or b's type
-    rangeType = RangeHint::fixed;
-    size = space->wrapOffset(end-start);
+  if (resType == 0) {
+    if (didReconcile)
+      absorb(b);
+  }
+  else if (resType == 1) {
+    RangeHint copyRange = *this;
+    type = b->type;
+    flags = b->flags;
+    rangeType = b->rangeType;
+    highind = b->highind;
+    size = b->size;
+    absorb(&copyRange);
+  }
+  else if (resType == 2) {
+    // Concede confusion about types, set unknown type rather than this or b's type
+    flags = 0;
+    rangeType = fixed;
+    int4 diff = (int4)(b->sstart - sstart);
+    if (diff + b->size > size)
+      size = diff + b->size;
     if (size != 1 && size != 2 && size != 4 && size != 8) {
       size = 1;
-      rangeType = RangeHint::open;
+      rangeType = open;
     }
     type = typeFactory->getBase(size,TYPE_UNKNOWN);
     flags = 0;
     highind = -1;
-    return overlapProblems;
+    return false;
   }
-  size = resType->getSize();
-  return overlapProblems;
+  return false;
 }
 
 /// Compare (signed) offset, size, RangeType, type lock, and high index, in that order.
@@ -978,6 +971,9 @@ void MapState::gatherVarnodes(const Funcdata &fd)
     if (vn->isFree()) continue;
     uintb start = vn->getOffset();
     Datatype *ct = vn->getType();
+    // Assume parents are present so partials aren't needed
+    if (ct->getMetatype() == TYPE_PARTIALSTRUCT) continue;
+    if (ct->getMetatype() == TYPE_PARTIALUNION) continue;
 				// Do not force Varnode flags on the entry
 				// as the flags were inherited from the previous
 				// (now obsolete) entry
@@ -1008,6 +1004,7 @@ void MapState::gatherHighs(const Funcdata &fd)
     varvec.push_back(high);
     uintb start = vn->getOffset();
     Datatype *ct = high->getType(); // Get type from high
+    if (ct->getMetatype() == TYPE_PARTIALUNION) continue;
     addRange(start,ct,0,RangeHint::fixed,-1);
   }
   for(int4 i=0;i<varvec.size();++i)
@@ -1140,7 +1137,7 @@ bool ScopeLocal::restructure(MapState &state)
 	overlapProblems = true;
     }
     else {
-      if (!cur.absorb(next)) {
+      if (!cur.attemptJoin(next)) {
 	if (cur.rangeType == RangeHint::open)
 	  cur.size = next->sstart-cur.sstart;
 	if (adjustFit(cur))
@@ -1446,3 +1443,5 @@ void ScopeLocal::addRecommendName(Symbol *sym)
   if (sym->getCategory() < 0)
     removeSymbol(sym);
 }
+
+} // End namespace ghidra

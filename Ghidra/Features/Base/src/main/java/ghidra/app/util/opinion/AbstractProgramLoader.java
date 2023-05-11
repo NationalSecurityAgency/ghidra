@@ -33,13 +33,15 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.InvalidAddressException;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
-import ghidra.util.*;
+import ghidra.util.HashUtilities;
+import ghidra.util.MD5Utilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -56,34 +58,45 @@ public abstract class AbstractProgramLoader implements Loader {
 	public static final String ANCHOR_LABELS_OPTION_NAME = "Anchor Processor Defined Labels";
 
 	/**
-	 * A {@link Program} with its associated {@link DomainFolder destination folder}
-	 * 
-	 * @param program The {@link Program}
-	 * @param destinationFolder The {@link DomainFolder} where the program will get loaded to
-	 */
-	public record LoadedProgram(Program program, DomainFolder destinationFolder) {/**/}
-
-	/**
-	 * Loads program bytes in a particular format as a new {@link Program}. Multiple
+	 * Loads bytes in a particular format as a new {@link Loaded} {@link Program}. Multiple
 	 * {@link Program}s may end up getting created, depending on the nature of the format.
+	 * <p>
+	 * Note that when the load completes, the returned {@link Loaded} {@link Program}s are not 
+	 * saved to a project.  That is the responsibility of the caller (see 
+	 * {@link Loaded#save(Project, MessageLog, TaskMonitor)}).
+	 * <p>
+	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
+	 * {@link Program}s with {@link Loaded#release(Object)} when they are no longer
+	 * needed.
 	 *
 	 * @param provider The bytes to load.
-	 * @param programName The name of the {@link Program} that's being loaded.
-	 * @param programFolder The {@link DomainFolder} where the loaded thing should be saved.  Could
-	 *   be null if the thing should not be pre-saved.
+	 * @param loadedName A suggested name for the primary {@link Loaded} {@link Program}. 
+	 *   This is just a suggestion, and a {@link Loader} implementation reserves the right to change
+	 *   it. The {@link Loaded} {@link Program}s should be queried for their true names using 
+	 *   {@link Loaded#getName()}.
+	 * @param project The {@link Project}.  Loaders can use this to take advantage of existing
+	 *   {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
+	 *   libraries. Could be null if there is no project.
+	 * @param projectFolderPath A suggested project folder path for the {@link Loaded} 
+	 *   {@link Program}s. This is just a suggestion, and a {@link Loader} implementation 
+	 *   reserves the right to change it for each {@link Loaded} result. The  {@link Loaded} 
+	 *   {@link Program}s should be queried for their true project folder paths using 
+	 *   {@link Loaded#getProjectFolderPath()}.
 	 * @param loadSpec The {@link LoadSpec} to use during load.
 	 * @param options The load options.
 	 * @param log The message log.
-	 * @param consumer A consumer object for {@link Program}s generated.
-	 * @param monitor A cancelable task monitor.
-	 * @return A list of {@link LoadedProgram loaded programs} (element 0 corresponds to primary 
-	 *   loaded {@link Program}).
+	 * @param consumer A consumer object for generated {@link Program}s.
+	 * @param monitor A task monitor.
+	 * @return A {@link List} of one or more {@link Loaded} {@link Program}s (created but not 
+	 *   saved).
+	 * @throws LoadException if the load failed in an expected way.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected abstract List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor) throws IOException, CancelledException;
+	protected abstract List<Loaded<Program>> loadProgram(ByteProvider provider, String loadedName,
+			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, LoadException, CancelledException;
 
 	/**
 	 * Loads program bytes into the specified {@link Program}.  This method will not create any new
@@ -97,109 +110,65 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @param messageLog The message log.
 	 * @param program The {@link Program} to load into.
 	 * @param monitor A cancelable task monitor.
-	 * @return True if the file was successfully loaded; otherwise, false.
+	 * @throws LoadException if the load failed in an expected way.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected abstract boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
+	protected abstract void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
 			List<Option> options, MessageLog messageLog, Program program, TaskMonitor monitor)
-			throws IOException, CancelledException;
+			throws IOException, LoadException, CancelledException;
 
 	@Override
-	public final List<DomainObject> load(ByteProvider provider, String name, DomainFolder folder,
-			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, Object consumer,
-			TaskMonitor monitor) throws IOException, CancelledException, InvalidNameException,
-			DuplicateNameException, VersionException {
-
-		if (!isOverrideMainProgramName()) {
-			folder = ProjectDataUtils.createDomainFolderPath(folder, name);
-		}
-
-		List<DomainObject> results = new ArrayList<>();
+	public final LoadResults<? extends DomainObject> load(ByteProvider provider, String loadedName,
+			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
+			CancelledException, VersionException, LoadException {
 
 		if (!loadSpec.isComplete()) {
-			return results;
+			throw new LoadException("Load spec is incomplete");
 		}
 
-		List<LoadedProgram> loadedPrograms =
-			loadProgram(provider, name, folder, loadSpec, options, messageLog, consumer, monitor);
+		List<Loaded<Program>> loadedPrograms = loadProgram(provider, loadedName, project,
+			projectFolderPath, loadSpec, options, messageLog, consumer, monitor);
 
 		boolean success = false;
 		try {
-			monitor.checkCanceled();
-			for (LoadedProgram loadedProgram : loadedPrograms) {
-				monitor.checkCanceled();
-
-				Program program = loadedProgram.program();
-
+			for (Loaded<Program> loadedProgram : loadedPrograms) {
+				monitor.checkCancelled();
+				Program program = loadedProgram.getDomainObject();
 				applyProcessorLabels(options, program);
-
 				program.setEventsEnabled(true);
-
-				// TODO: null should not be used as a determinant for saving; don't allow null
-				// folders?
-				if (loadedProgram.destinationFolder() == null) {
-					results.add(program);
-					continue;
-				}
-
-				String domainFileName = program.getName();
-				if (isOverrideMainProgramName()) {
-					// If this is the main imported program, use the given name, otherwise, use the
-					// internal program name. The first program in the list is the main imported program
-					if (program == loadedPrograms.get(0).program()) {
-						domainFileName = name;
-					}
-				}
-
-				if (createProgramFile(program, loadedProgram.destinationFolder(), domainFileName,
-					messageLog, monitor)) {
-					results.add(program);
-				}
-				else {
-					program.release(consumer); // some kind of exception happened; see MessageLog
-				}
 			}
 
 			// Subclasses can perform custom post-load fix-ups
-			postLoadProgramFixups(loadedPrograms, options, messageLog, monitor);
+			postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
 
 			success = true;
+			return new LoadResults<Program>(loadedPrograms);
 		}
 		finally {
 			if (!success) {
 				release(loadedPrograms, consumer);
 			}
+			postLoadCleanup(success);
 		}
-
-		return results;
-	}
-
-	/**
-	 * Some loaders can return more than one program.
-	 * This method indicates whether the first (or main) program's name 
-	 * should be overridden and changed to the imported file name.
-	 * @return true if first program name should be changed
-	 */
-	protected boolean isOverrideMainProgramName() {
-		return true;
 	}
 
 	@Override
-	public final boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+	public final void loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			MessageLog messageLog, Program program, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			throws IOException, LoadException, CancelledException {
 
 		if (!loadSpec.isComplete()) {
-			return false;
+			throw new LoadException("Load spec is incomplete");
 		}
 
 		program.setEventsEnabled(false);
 		int transactionID = program.startTransaction("Loading - " + getName());
 		boolean success = false;
 		try {
-			success = loadProgramInto(provider, loadSpec, options, messageLog, program, monitor);
-			return success;
+			loadProgramInto(provider, loadSpec, options, messageLog, program, monitor);
+			success = true;
 		}
 		finally {
 			program.endTransaction(transactionID, success);
@@ -237,19 +206,35 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * This gets called after the given list of {@link LoadedProgram programs}s is finished loading.
+	 * This gets called after the given list of {@link Loaded loaded programs}s is finished loading.
 	 * It provides subclasses an opportunity to do follow-on actions to the load.
 	 *
-	 * @param loadedPrograms The {@link LoadedProgram programs} that got loaded.
+	 * @param loadedPrograms The {@link Loaded loaded programs} to be fixed up.
+	 * @param project The {@link Project} to load into.  Could be null if there is no project.
 	 * @param options The load options.
 	 * @param messageLog The message log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
-			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
-		// Default behavior is to do nothing.
+	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
+			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		// Default behavior is to do nothing
+	}
+
+	/**
+	 * This gets called as the final step of the load process.  Subclasses may override it to ensure
+	 * any resources they created can be cleaned up after the load finishes.
+	 * <p>
+	 * NOTE: Subclasses should not use this method to release any {@link Program}s they created when
+	 * failure occurs. That should be done by the subclass as soon as it detects failure has
+	 * occurred.
+	 * 
+	 * @param success True if the load completed successfully; otherwise, false
+	 */
+	protected void postLoadCleanup(boolean success) {
+		// Default behavior is to do nothing
 	}
 
 	/**
@@ -260,6 +245,35 @@ public abstract class AbstractProgramLoader implements Loader {
 	 */
 	protected boolean shouldApplyProcessorLabelsByDefault() {
 		return false;
+	}
+
+	/**
+	 * Concatenates the given path elements to form a single path.  Empty and null path elements
+	 * are ignored.
+	 * 
+	 * @param pathElements The path elements to append to one another
+	 * @return A single path consisting of the given path elements appended together
+	 */
+	protected String concatenatePaths(String... pathElements) {
+		StringBuilder sb = new StringBuilder();
+		for (String pathElement : pathElements) {
+			if (pathElement == null || pathElement.isEmpty()) {
+				continue;
+			}
+			boolean sbEndsWithSlash =
+				sb.length() > 0 && "/\\".indexOf(sb.charAt(sb.length() - 1)) != -1;
+			boolean elementStartsWithSlash = "/\\".indexOf(pathElement.charAt(0)) != -1;
+
+			if (!sbEndsWithSlash && !elementStartsWithSlash && sb.length() > 0) {
+				sb.append("/");
+			}
+			else if (elementStartsWithSlash && sbEndsWithSlash) {
+				pathElement = pathElement.substring(1);
+			}
+			sb.append(pathElement);
+		}
+
+		return sb.toString();
 	}
 
 	/**
@@ -307,25 +321,27 @@ public abstract class AbstractProgramLoader implements Loader {
 		Program prog = new ProgramDB(programName, language, compilerSpec, consumer);
 		prog.setEventsEnabled(false);
 		int id = prog.startTransaction("Set program properties");
+		boolean success = false;
 		try {
 			setProgramProperties(prog, provider, executableFormatName);
-
-			if (shouldSetImageBase(prog, imageBase)) {
-				try {
+			try {
+				if (shouldSetImageBase(prog, imageBase)) {
 					prog.setImageBase(imageBase, true);
 				}
-				catch (AddressOverflowException e) {
-					// can't happen here
-				}
-				catch (LockException e) {
-					// can't happen here
-				}
+				success = true;
+				return prog;
+			}
+			catch (LockException | AddressOverflowException e) {
+				// shouldn't ever happen here
+				throw new IOException(e);
 			}
 		}
 		finally {
-			prog.endTransaction(id, true);
+			prog.endTransaction(id, true); // More efficient to commit when program will be discarded
+			if (!success) {
+				prog.release(consumer);
+			}
 		}
-		return prog;
 	}
 
 	/**
@@ -352,7 +368,7 @@ public abstract class AbstractProgramLoader implements Loader {
 				fsrl = fsrl.withMD5(md5);
 			}
 			prog.getOptions(Program.PROGRAM_INFO)
-					.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+				.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
 		}
 		prog.setExecutableMD5(md5);
 		String sha256 = computeBinarySHA256(provider);
@@ -453,60 +469,15 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * Releases the given consumer from each of the provided {@link LoadedProgram}s.
+	 * Releases the given consumer from each of the provided {@link Loaded loaded programs}
 	 *
-	 * @param loadedPrograms A list of {@link LoadedProgram}s which are no longer being used.
-	 * @param consumer The consumer that was marking the {@link DomainObject}s as being used.
+	 * @param loadedPrograms A list of {@link Loaded loaded programs} which are no longer being used
+	 * @param consumer The consumer that was marking the {@link Program}s as being used
 	 */
-	protected final void release(List<LoadedProgram> loadedPrograms, Object consumer) {
-		for (LoadedProgram loadedProgram : loadedPrograms) {
-			loadedProgram.program().release(consumer);
+	protected final void release(List<Loaded<Program>> loadedPrograms, Object consumer) {
+		for (Loaded<Program> loadedProgram : loadedPrograms) {
+			loadedProgram.getDomainObject().release(consumer);
 		}
-	}
-
-	private boolean createProgramFile(Program program, DomainFolder programFolder,
-			String programName, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, InvalidNameException {
-
-		int uniqueNameIndex = 0;
-		String uniqueName = programName;
-		while (!monitor.isCancelled()) {
-			try {
-				programFolder.createFile(uniqueName, program, monitor);
-				break;
-			}
-			catch (DuplicateFileException e) {
-				uniqueName = programName + uniqueNameIndex;
-				++uniqueNameIndex;
-			}
-			catch (CancelledException | InvalidNameException e) {
-				throw e;
-			}
-			catch (Exception e) {
-				Throwable t = e.getCause();
-				if (t == null) {
-					t = e;
-				}
-				String msg = t.getMessage();
-				if (msg == null) {
-					msg = "";
-				}
-				else {
-					msg = "\n" + msg;
-				}
-				Msg.showError(this, null, "Create Program Failed",
-					"Failed to create program file: " + uniqueName + msg, e);
-				messageLog.appendMsg("Unexpected exception creating file: " + uniqueName);
-				messageLog.appendException(e);
-				return false;
-			}
-		}
-
-		// makes the data tree expand to show new file!
-		// The following line was disabled as it causes UI updates that are better
-		// done by the callers to this loader instead of this loader.
-		//programFolder.setActive();
-		return true;
 	}
 
 	private void applyProcessorLabels(List<Option> options, Program program) {
@@ -526,17 +497,19 @@ public abstract class AbstractProgramLoader implements Loader {
 				boolean anchorSymbols = shouldAnchorSymbols(options);
 				List<AddressLabelInfo> labels = lang.getDefaultSymbols();
 				for (AddressLabelInfo info : labels) {
-					createSymbol(program, info.getLabel(), info.getAddress(), info.isEntry(), info.isPrimary(), anchorSymbols);
+					createSymbol(program, info.getLabel(), info.getAddress(), info.isEntry(),
+						info.isPrimary(), anchorSymbols);
 				}
 			}
-			GhidraProgramUtilities.removeAnalyzedFlag(program);
+			GhidraProgramUtilities.resetAnalysisFlags(program);
 		}
 		finally {
 			program.endTransaction(id, true);
 		}
 	}
 
-	private static void createSymbol(Program program, String labelname, Address address, boolean isEntry, boolean isPrimary, boolean anchorSymbols) {
+	private static void createSymbol(Program program, String labelname, Address address,
+			boolean isEntry, boolean isPrimary, boolean anchorSymbols) {
 		SymbolTable symTable = program.getSymbolTable();
 		Address addr = address;
 		Symbol s = symTable.getPrimarySymbol(addr);

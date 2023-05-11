@@ -996,6 +996,9 @@ public abstract class PcodeCompile {
 		if ("popcount".equals(name) && hasOperands(1, operands, location, name)) {
 			return createOp(location, OpCode.CPUI_POPCOUNT, r);
 		}
+		if ("lzcount".equals(name) && hasOperands(1, operands, location, name)) {
+			return createOp(location, OpCode.CPUI_LZCOUNT, r);
+		}
 
 		return null;
 	}
@@ -1071,6 +1074,9 @@ public abstract class PcodeCompile {
 			return true;
 		}
 		if ("popcount".equals(name)) {
+			return true;
+		}
+		if ("lzcount".equals(name)) {
 			return true;
 		}
 

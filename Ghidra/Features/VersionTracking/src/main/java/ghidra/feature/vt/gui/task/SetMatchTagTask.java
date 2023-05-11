@@ -17,7 +17,7 @@ package ghidra.feature.vt.gui.task;
 
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
-import ghidra.framework.model.Transaction;
+import ghidra.framework.model.TransactionInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -72,7 +72,7 @@ public class SetMatchTagTask extends Task {
 
 	private boolean hasTransactionsOpen() {
 		Program program = sessionDB.getDestinationProgram();
-		Transaction transaction = program.getCurrentTransaction();
+		TransactionInfo transaction = program.getCurrentTransactionInfo();
 		if (transaction != null) {
 			Msg.showWarn(this, null, "Unable to Set Match Tag",
 				"The program \"" + program.getName() + "\"already has a transaction open: " +
@@ -80,7 +80,7 @@ public class SetMatchTagTask extends Task {
 			return true;
 		}
 
-		Transaction matchSetTransaction = sessionDB.getCurrentTransaction();
+		TransactionInfo matchSetTransaction = sessionDB.getCurrentTransactionInfo();
 		if (matchSetTransaction != null) {
 			Msg.showWarn(this, null, "Unable to Set Match Tag",
 				"Transaction already open for the Match Set Manager ");
@@ -93,7 +93,7 @@ public class SetMatchTagTask extends Task {
 		monitor.initialize(matches.size());
 
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTMatchTag currentTag = match.getTag();
 			if (!currentTag.equals(tag)) {
 				match.setTag(tag);

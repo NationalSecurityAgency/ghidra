@@ -516,6 +516,9 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				return null;
 			}
 			Structure structDT = VariableUtilities.findOrCreateClassStruct(f);
+			if (structDT == null) {
+				return null;
+			}
 // FIXME: How should an existing packed structure be handled? Growing and offset-based placement does not apply
 			int len = structDT.isZeroLength() ? 0 : structDT.getLength();
 			if (len < size) {

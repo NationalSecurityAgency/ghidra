@@ -24,11 +24,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HelpTopics;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.DataProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -47,7 +48,7 @@ public class PlateFieldFactory extends FieldFactory {
 
 	private static final String EMPTY_STRING = "";
 	public static final String FIELD_NAME = "Plate Comment";
-	public static final Color DEFAULT_COLOR = Color.BLUE;
+	public static final Color DEFAULT_COLOR = Palette.BLUE;
 	private final static String FIELD_GROUP_TITLE = "Plate Comments Field";
 	public final static String ENABLE_WORD_WRAP_MSG =
 		FIELD_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
@@ -111,7 +112,7 @@ public class PlateFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private PlateFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private PlateFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 		init(fieldOptions);
@@ -160,9 +161,13 @@ public class PlateFieldFactory extends FieldFactory {
 			return null;
 		}
 
+		ListingFieldHighlightFactoryAdapter hlFactory =
+			new ListingFieldHighlightFactoryAdapter(hlProvider);
 		PlateFieldTextField textField =
-			new PlateFieldTextField(elements, this, proxy, startX, width, commentText, isClipped);
-		return new PlateListingTextField(proxy, textField);
+			new PlateFieldTextField(elements, this, proxy, startX, width, commentText, isClipped,
+				hlFactory);
+		PlateListingTextField listingField = new PlateListingTextField(proxy, textField, hlFactory);
+		return listingField;
 	}
 
 	private boolean getFormattedFieldElements(CodeUnit cu, List<FieldElement> elements) {
@@ -226,7 +231,8 @@ public class PlateFieldFactory extends FieldFactory {
 			return false;
 		}
 
-		AttributedString prototype = new AttributedString(EMPTY_STRING, color, getMetrics());
+		AttributedString prototype =
+			new AttributedString(EMPTY_STRING, CommentColors.PLATE, getMetrics());
 
 		AttributedString asteriscs = getStarsString();
 		int row = elements.size();
@@ -240,7 +246,11 @@ public class PlateFieldFactory extends FieldFactory {
 			commentsList.add(CommentUtils.parseTextForAnnotations(c, p, prototype, row++));
 		}
 		if (isWordWrap) {
-			commentsList = FieldUtils.wordWrapList(new CompositeFieldElement(commentsList), width);
+			int charWidth = getMetrics().charWidth(' ');
+			int paddingWidth = CONTENT_PADDING * charWidth;
+			commentsList = FieldUtils.wordWrapList(
+				new CompositeFieldElement(commentsList),
+				Math.max(width - paddingWidth, charWidth));
 		}
 		boolean isClipped = addSideBorders(commentsList);
 		elements.addAll(commentsList);
@@ -287,19 +297,19 @@ public class PlateFieldFactory extends FieldFactory {
 		addPadding(buffy, prePadding);
 
 		FieldElement prefix = new TextFieldElement(
-			new AttributedString(buffy.toString(), color, getMetrics()), row, 0);
+			new AttributedString(buffy.toString(), CommentColors.PLATE, getMetrics()), row, 0);
 
-		FieldElement ellipsis =
-			new TextFieldElement(new AttributedString(ellipsisText, color, getMetrics()), row,
-				prefix.length() + element.length());
+		FieldElement ellipsis = new TextFieldElement(
+			new AttributedString(ellipsisText, CommentColors.PLATE, getMetrics()), row,
+			prefix.length() + element.length());
 
 		buffy.setLength(0);
 		addPadding(buffy, postPadding);
 		buffy.append(' ').append('*');
 
-		FieldElement suffix =
-			new TextFieldElement(new AttributedString(buffy.toString(), color, getMetrics()), row,
-				prefix.length() + element.length() + ellipsis.length());
+		FieldElement suffix = new TextFieldElement(
+			new AttributedString(buffy.toString(), CommentColors.PLATE, getMetrics()), row,
+			prefix.length() + element.length() + ellipsis.length());
 
 		return new FieldElementResult(
 			new CompositeFieldElement(new FieldElement[] { prefix, element, ellipsis, suffix }),
@@ -313,7 +323,8 @@ public class PlateFieldFactory extends FieldFactory {
 	}
 
 	private void addBlankLines(List<FieldElement> elements, int numberBlankLines, CodeUnit cu) {
-		AttributedString prototype = new AttributedString(EMPTY_STRING, color, getMetrics());
+		AttributedString prototype =
+			new AttributedString(EMPTY_STRING, CommentColors.PLATE, getMetrics());
 		for (int row = 0; row < numberBlankLines; row++) {
 			elements.add(0, new TextFieldElement(prototype, row, 0));
 		}
@@ -349,7 +360,8 @@ public class PlateFieldFactory extends FieldFactory {
 		elements.add(new TextFieldElement(asteriscs, row++, 0));
 
 		int commentRow = row++;
-		AttributedString as = new AttributedString(defaultComment, color, getMetrics());
+		AttributedString as =
+			new AttributedString(defaultComment, CommentColors.PLATE, getMetrics());
 		TextFieldElement commentElement = new TextFieldElement(as, commentRow, 0);
 		FieldElementResult result = addSideBorder(commentElement, commentRow, true);
 		elements.add(result.getFieldElement());
@@ -423,7 +435,7 @@ public class PlateFieldFactory extends FieldFactory {
 
 	private AttributedString getStarsString() {
 		String asteriscs = getStars();
-		return new AttributedString(asteriscs, color, getMetrics());
+		return new AttributedString(asteriscs, CommentColors.PLATE, getMetrics());
 	}
 
 	/**
@@ -546,8 +558,8 @@ public class PlateFieldFactory extends FieldFactory {
 		int dataRow = commentRow + numberBlankLines + headerCount;
 
 		ListingTextField listingTextField = (ListingTextField) listingField;
-		RowColLocation location = listingTextField.dataToScreenLocation(dataRow,
-			commentLocation.getCharOffset());
+		RowColLocation location =
+			listingTextField.dataToScreenLocation(dataRow, commentLocation.getCharOffset());
 		return new FieldLocation(index, fieldNum, location.row(), location.col());
 	}
 
@@ -563,14 +575,10 @@ public class PlateFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel formatModel,
+			ListingHighlightProvider hsProvider,
 			ToolOptions toolOptions, ToolOptions fieldOptions) {
 		return new PlateFieldFactory(formatModel, hsProvider, toolOptions, fieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.COMMENT_PLATE.getDefaultColor();
 	}
 
 	@Override
@@ -719,8 +727,9 @@ public class PlateFieldFactory extends FieldFactory {
 
 	class PlateListingTextField extends ListingTextField {
 
-		PlateListingTextField(ProxyObj<?> proxy, PlateFieldTextField field) {
-			super(PlateFieldFactory.this, proxy, field);
+		PlateListingTextField(ProxyObj<?> proxy, PlateFieldTextField field,
+				ListingFieldHighlightFactoryAdapter hlFactory) {
+			super(PlateFieldFactory.this, proxy, field, hlFactory);
 		}
 
 		PlateFieldTextField getPlateTextField() {
@@ -735,9 +744,8 @@ public class PlateFieldFactory extends FieldFactory {
 
 		PlateFieldTextField(List<FieldElement> textElements, PlateFieldFactory factory,
 				ProxyObj<?> proxy, int startX, int width, String commentText,
-				boolean isCommentClipped) {
-			super(textElements, startX, width, Integer.MAX_VALUE,
-				new FieldHighlightFactory(hlProvider, factory.getClass(), proxy.getObject()));
+				boolean isCommentClipped, FieldHighlightFactory hlFactory) {
+			super(textElements, startX, width, Integer.MAX_VALUE, hlFactory);
 			this.commentText = commentText;
 			this.isCommentClipped = isCommentClipped;
 		}

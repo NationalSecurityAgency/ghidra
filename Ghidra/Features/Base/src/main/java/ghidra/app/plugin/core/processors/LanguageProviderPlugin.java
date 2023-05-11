@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.processors;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -26,8 +27,8 @@ import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.ApplicationLevelPlugin;
+import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
@@ -220,7 +221,8 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 				Program program = (Program) dobj;
 
 				monitor.setMessage("Identify Language...");
-				SetLanguageDialog dialog = new SetLanguageDialog(tool, program);
+				SetLanguageDialog dialog = new SetLanguageDialog(tool, program,
+					"Set Language: " + program.getDomainFile().getName());
 				LanguageID langDescID = dialog.getLanguageDescriptionID();
 				CompilerSpecID compilerSpecDescID = dialog.getCompilerSpecDescriptionID();
 				if ((langDescID == null) || (compilerSpecDescID == null)) {
@@ -316,18 +318,9 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 			try {
 				SwingUtilities.invokeAndWait(() -> {
 					ToolServices toolServices = tool.getToolServices();
-					String defaultToolName = toolServices.getDefaultToolTemplate(file).getName();
-					for (PluginTool t : toolServices.getRunningTools()) {
-						if (t.getName().equals(defaultToolName)) {
-							openTool = t;
-							break;
-						}
-					}
-					if (openTool != null) {
-						openTool.acceptDomainFiles(new DomainFile[] { file });
-					}
-					else {
-						openTool = tool.getToolServices().launchDefaultTool(file);
+					if (toolServices.launchDefaultTool(List.of(domainFile)) == null) {
+						Msg.showError(this, tool.getToolFrame(), "Failed to Open Program",
+							"A suitable default tool could not found!");
 					}
 				});
 			}
@@ -336,7 +329,7 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 			}
 			catch (InvocationTargetException e) {
 				Throwable t = e.getCause();
-				Msg.showError(this, tool.getToolFrame(), "Tool Launch Failed",
+				Msg.showError(this, tool.getToolFrame(), "Failed to Open Program",
 					"An error occurred while attempting to launch your default tool!", t);
 			}
 		}

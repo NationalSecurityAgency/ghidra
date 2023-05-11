@@ -21,10 +21,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.*;
 
-import org.apache.commons.collections4.IteratorUtils;
-
-import com.google.common.collect.*;
-
 import db.DBRecord;
 import db.StringField;
 import ghidra.dbg.target.TargetObject;
@@ -32,7 +28,6 @@ import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.*;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointLocation;
 import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointSpec;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
@@ -47,6 +42,8 @@ import ghidra.trace.database.target.InternalTraceObjectValue.ValueLifespanSetter
 import ghidra.trace.database.target.visitors.*;
 import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
 import ghidra.trace.database.thread.DBTraceObjectThread;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
 import ghidra.trace.model.breakpoint.TraceObjectBreakpointSpec;
@@ -59,8 +56,7 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.util.TraceChangeRecord;
-import ghidra.util.LockHold;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 import ghidra.util.database.annot.*;
@@ -202,13 +198,13 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public RangeSet<Long> getLife() {
+	public LifeSet getLife() {
 		// TODO: This should really be cached
 		try (LockHold hold = manager.trace.lockRead()) {
-			RangeSet<Long> result = TreeRangeSet.create();
+			MutableLifeSet result = new DefaultLifeSet();
 			// NOTE: connected ranges should already be coalesced
 			// No need to apply discreet domain
-			getCanonicalParents(Range.all()).forEach(v -> result.add(v.getLifespan()));
+			getCanonicalParents(Lifespan.ALL).forEach(v -> result.add(v.getLifespan()));
 			return result;
 		}
 	}
@@ -221,7 +217,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return manager.doGetObject(path.parent());
 	}
 
-	protected DBTraceObjectValPath doInsert(Range<Long> lifespan, ConflictResolution resolution) {
+	protected DBTraceObjectValPath doInsert(Lifespan lifespan, ConflictResolution resolution) {
 		if (path.isRoot()) {
 			return DBTraceObjectValPath.of();
 		}
@@ -232,13 +228,13 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public DBTraceObjectValPath insert(Range<Long> lifespan, ConflictResolution resolution) {
+	public DBTraceObjectValPath insert(Lifespan lifespan, ConflictResolution resolution) {
 		try (LockHold hold = manager.trace.lockWrite()) {
 			return doInsert(lifespan, resolution);
 		}
 	}
 
-	protected void doRemove(Range<Long> span) {
+	protected void doRemove(Lifespan span) {
 		if (isRoot()) {
 			throw new IllegalArgumentException("Cannot remove the root object");
 		}
@@ -248,13 +244,13 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public void remove(Range<Long> span) {
+	public void remove(Lifespan span) {
 		try (LockHold hold = manager.trace.lockWrite()) {
 			doRemove(span);
 		}
 	}
 
-	protected void doRemoveTree(Range<Long> span) {
+	protected void doRemoveTree(Lifespan span) {
 		for (DBTraceObjectValue parent : getParents()) {
 			parent.doTruncateOrDeleteAndEmitLifeChange(span);
 		}
@@ -267,7 +263,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public void removeTree(Range<Long> span) {
+	public void removeTree(Lifespan span) {
 		try (LockHold hold = manager.trace.lockWrite()) {
 			doRemoveTree(span);
 		}
@@ -279,12 +275,12 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			if (isRoot()) {
 				return manager.valueStore.getObjectAt(0);
 			}
-			return getCanonicalParents(Range.singleton(snap)).findAny().orElse(null);
+			return getCanonicalParents(Lifespan.at(snap)).findAny().orElse(null);
 		}
 	}
 
 	@Override
-	public Stream<? extends DBTraceObjectValue> getCanonicalParents(Range<Long> lifespan) {
+	public Stream<? extends DBTraceObjectValue> getCanonicalParents(Lifespan lifespan) {
 		// TODO: If this is invoked often, perhaps index
 		try (LockHold hold = manager.trace.lockRead()) {
 			if (isRoot()) {
@@ -295,7 +291,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			return manager.valuesByChild.getLazily(this)
 					.stream()
 					.filter(v -> canonicalKey.equals(v.getEntryKey()))
-					.filter(v -> DBTraceUtils.intersect(v.getLifespan(), lifespan))
+					.filter(v -> v.getLifespan().intersects(lifespan))
 					.filter(v -> canonicalTail.equals(v.getParent().getCanonicalPath()));
 		}
 	}
@@ -308,7 +304,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public Stream<? extends TraceObjectValPath> getAllPaths(Range<Long> span) {
+	public Stream<? extends TraceObjectValPath> getAllPaths(Lifespan span) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			if (isRoot()) {
 				return Stream.of(DBTraceObjectValPath.of());
@@ -501,7 +497,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
-	protected void doCheckConflicts(Range<Long> span, String key, Object value) {
+	protected void doCheckConflicts(Lifespan span, String key, Object value) {
 		for (InternalTraceObjectValue val : doGetValues(span, key)) {
 			if (!Objects.equals(value, val.getValue())) {
 				throw new DuplicateKeyException(key);
@@ -510,9 +506,9 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	// TODO: Could/should this return Stream instead?
-	protected Collection<? extends InternalTraceObjectValue> doGetValues(Range<Long> span,
+	protected Collection<? extends InternalTraceObjectValue> doGetValues(Lifespan span,
 			String key) {
-		return doGetValues(DBTraceUtils.lowerEndpoint(span), DBTraceUtils.upperEndpoint(span), key);
+		return doGetValues(span.lmin(), span.lmax(), key);
 	}
 
 	protected Collection<? extends InternalTraceObjectValue> doGetValues(long lower, long upper,
@@ -556,7 +552,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public Collection<? extends InternalTraceObjectValue> getValues(Range<Long> span, String key) {
+	public Collection<? extends InternalTraceObjectValue> getValues(Lifespan span, String key) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return doGetValues(span, key);
 		}
@@ -572,11 +568,11 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return floor;
 	}
 
-	protected Stream<DBTraceObjectValue> doGetOrderedNonRangedValues(Range<Long> span, String key,
+	protected Stream<DBTraceObjectValue> doGetOrderedNonRangedValues(Lifespan span, String key,
 			boolean forward) {
 		DBCachedObjectIndex<PrimaryTriple, DBTraceObjectValue> sub = manager.valuesByTriple.sub(
-			new PrimaryTriple(this, key, DBTraceUtils.lowerEndpoint(span)), true,
-			new PrimaryTriple(this, key, DBTraceUtils.upperEndpoint(span)), true);
+			new PrimaryTriple(this, key, span.lmin()), true,
+			new PrimaryTriple(this, key, span.lmax()), true);
 		Spliterator<DBTraceObjectValue> spliterator = (forward ? sub : sub.descending())
 				.values()
 				.spliterator();
@@ -599,28 +595,25 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return null;
 	}
 
-	protected Stream<DBTraceObjectAddressRangeValue> doGetOrderedRangedValues(Range<Long> span,
+	protected Stream<DBTraceObjectAddressRangeValue> doGetOrderedRangedValues(Lifespan span,
 			String key, boolean forward) {
 		Rectangle2DDirection dir = forward
 				? Rectangle2DDirection.BOTTOMMOST
 				: Rectangle2DDirection.TOPMOST;
-		List<Iterator<DBTraceObjectAddressRangeValue>> iterators = manager.rangeValueMap
+		List<Stream<DBTraceObjectAddressRangeValue>> streams = manager.rangeValueMap
 				.getActiveMemorySpaces()
 				.stream()
-				.map(s -> IteratorUtils.filteredIterator(s
+				.map(s -> StreamSupport.stream(s
 						.reduce(TraceAddressSnapRangeQuery.intersecting(span, s.getAddressSpace())
 								.starting(dir))
 						.orderedValues()
-						.iterator(),
-					v -> key.equals(v.getEntryKey()) && this == v.getParent()))
-				.collect(Collectors.toList());
+						.spliterator(),
+					false).filter(v -> key.equals(v.getEntryKey()) && this == v.getParent()))
+				.toList();
 		Comparator<Long> order = forward ? Comparator.naturalOrder() : Comparator.reverseOrder();
 		Comparator<DBTraceObjectAddressRangeValue> comparator =
 			Comparator.comparing(v -> v.getMinSnap(), order);
-		Iterator<DBTraceObjectAddressRangeValue> merged =
-			Iterators.mergeSorted(iterators, comparator);
-		return StreamSupport
-				.stream(Spliterators.spliteratorUnknownSize(merged, Spliterator.ORDERED), false);
+		return StreamUtils.merge(streams, comparator);
 	}
 
 	@Override
@@ -634,21 +627,18 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
-	protected Stream<InternalTraceObjectValue> doGetOrderedValues(Range<Long> span, String key,
+	protected Stream<InternalTraceObjectValue> doGetOrderedValues(Lifespan span, String key,
 			boolean forward) {
 		Stream<DBTraceObjectValue> nrVals = doGetOrderedNonRangedValues(span, key, forward);
 		Stream<DBTraceObjectAddressRangeValue> rVals = doGetOrderedRangedValues(span, key, forward);
 		Comparator<Long> order = forward ? Comparator.naturalOrder() : Comparator.reverseOrder();
 		Comparator<InternalTraceObjectValue> comparator =
 			Comparator.comparing(v -> v.getMinSnap(), order);
-		Iterator<InternalTraceObjectValue> merged =
-			Iterators.mergeSorted(Arrays.asList(nrVals.iterator(), rVals.iterator()), comparator);
-		return StreamSupport
-				.stream(Spliterators.spliteratorUnknownSize(merged, Spliterator.ORDERED), false);
+		return StreamUtils.merge(List.of(nrVals, rVals), comparator);
 	}
 
 	@Override
-	public Stream<? extends InternalTraceObjectValue> getOrderedValues(Range<Long> span, String key,
+	public Stream<? extends InternalTraceObjectValue> getOrderedValues(Lifespan span, String key,
 			boolean forward) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return doGetOrderedValues(span, key, forward);
@@ -673,14 +663,14 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return getValue(snap, name);
 	}
 
-	protected Stream<? extends TraceObjectValPath> doStreamVisitor(Range<Long> span,
+	protected Stream<? extends TraceObjectValPath> doStreamVisitor(Lifespan span,
 			Visitor visitor) {
 		return TreeTraversal.INSTANCE.walkObject(visitor, this, span,
 			DBTraceObjectValPath.of());
 	}
 
 	@Override
-	public Stream<? extends TraceObjectValPath> getAncestors(Range<Long> span,
+	public Stream<? extends TraceObjectValPath> getAncestors(Lifespan span,
 			PathPredicates relativePredicates) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			Stream<? extends TraceObjectValPath> ancestors =
@@ -694,7 +684,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public Stream<? extends TraceObjectValPath> getAncestorsRoot(
-			Range<Long> span, PathPredicates rootPredicates) {
+			Lifespan span, PathPredicates rootPredicates) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return doStreamVisitor(span, new AncestorsRootVisitor(rootPredicates));
 		}
@@ -702,7 +692,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public Stream<? extends TraceObjectValPath> getSuccessors(
-			Range<Long> span, PathPredicates relativePredicates) {
+			Lifespan span, PathPredicates relativePredicates) {
 		try (LockHold hold = manager.trace.lockRead()) {
 			Stream<? extends TraceObjectValPath> succcessors =
 				doStreamVisitor(span, new SuccessorsRelativeVisitor(relativePredicates));
@@ -715,7 +705,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public Stream<? extends TraceObjectValPath> getOrderedSuccessors(Range<Long> span,
+	public Stream<? extends TraceObjectValPath> getOrderedSuccessors(Lifespan span,
 			TraceObjectKeyPath relativePath, boolean forward) {
 		DBTraceObjectValPath empty = DBTraceObjectValPath.of();
 		try (LockHold hold = manager.trace.lockRead()) {
@@ -731,7 +721,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	public Stream<? extends TraceObjectValPath> getCanonicalSuccessors(
 			PathPredicates relativePredicates) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			Stream<? extends TraceObjectValPath> successors = doStreamVisitor(Range.all(),
+			Stream<? extends TraceObjectValPath> successors = doStreamVisitor(Lifespan.ALL,
 				new CanonicalSuccessorsRelativeVisitor(relativePredicates));
 			if (relativePredicates.matches(List.of())) {
 				// Pre-cat the empty path (not the empty stream)
@@ -741,13 +731,13 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
-	protected InternalTraceObjectValue doCreateValue(Range<Long> lifespan, String key,
+	protected InternalTraceObjectValue doCreateValue(Lifespan lifespan, String key,
 			Object value) {
 		return manager.doCreateValue(lifespan, this, key, value);
 	}
 
 	@Override
-	public InternalTraceObjectValue setValue(Range<Long> lifespan, String key, Object value,
+	public InternalTraceObjectValue setValue(Lifespan lifespan, String key, Object value,
 			ConflictResolution resolution) {
 		try (LockHold hold = manager.trace.lockWrite()) {
 			if (isDeleted()) {
@@ -774,7 +764,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 				}
 
 				@Override
-				protected InternalTraceObjectValue put(Range<Long> range, Object value) {
+				protected InternalTraceObjectValue put(Lifespan range, Object value) {
 					InternalTraceObjectValue entry = super.put(range, value);
 					if (entry != null && entry.isCanonical()) {
 						canonicalLifeChanged = entry.getChild();
@@ -783,7 +773,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 				}
 
 				@Override
-				protected InternalTraceObjectValue create(Range<Long> range, Object value) {
+				protected InternalTraceObjectValue create(Lifespan range, Object value) {
 					return doCreateValue(range, key, value);
 				}
 			};
@@ -799,12 +789,12 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public TraceObjectValue setValue(Range<Long> lifespan, String key, Object value) {
+	public TraceObjectValue setValue(Lifespan lifespan, String key, Object value) {
 		return setValue(lifespan, key, value, ConflictResolution.TRUNCATE);
 	}
 
 	@Override
-	public TraceObjectValue setAttribute(Range<Long> lifespan, String name, Object value) {
+	public TraceObjectValue setAttribute(Lifespan lifespan, String name, Object value) {
 		if (!PathUtils.isName(name)) {
 			throw new IllegalArgumentException("Attribute name must not be an index");
 		}
@@ -812,12 +802,12 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public TraceObjectValue setElement(Range<Long> lifespan, String index, Object value) {
+	public TraceObjectValue setElement(Lifespan lifespan, String index, Object value) {
 		return setValue(lifespan, PathUtils.makeKey(index), value);
 	}
 
 	@Override
-	public TraceObjectValue setElement(Range<Long> lifespan, long index, Object value) {
+	public TraceObjectValue setElement(Lifespan lifespan, long index, Object value) {
 		return setElement(lifespan, PathUtils.makeIndex(index), value);
 	}
 
@@ -827,7 +817,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public Stream<? extends TraceObjectValPath> queryAncestorsTargetInterface(Range<Long> span,
+	public Stream<? extends TraceObjectValPath> queryAncestorsTargetInterface(Lifespan span,
 			Class<? extends TargetObject> targetIf) {
 		// This is a sort of meet-in-the-middle. The type search must originate from the root
 		PathMatcher matcher = getManager().getRootSchema().searchFor(targetIf, false);
@@ -835,7 +825,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public <I extends TraceObjectInterface> Stream<I> queryAncestorsInterface(Range<Long> span,
+	public <I extends TraceObjectInterface> Stream<I> queryAncestorsInterface(Lifespan span,
 			Class<I> ifClass) {
 		return queryAncestorsTargetInterface(span, TraceObjectInterfaceUtils.toTargetIf(ifClass))
 				.map(p -> p.getSource(this).queryInterface(ifClass));
@@ -874,17 +864,17 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	@Override
-	public Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Range<Long> span,
-			Class<? extends TargetObject> targetIf) {
-		PathMatcher matcher = getTargetSchema().searchFor(targetIf, true);
+	public Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Lifespan span,
+			Class<? extends TargetObject> targetIf, boolean requireCanonical) {
+		PathMatcher matcher = getTargetSchema().searchFor(targetIf, requireCanonical);
 		return getSuccessors(span, matcher).filter(p -> isActuallyInterface(p, targetIf));
 	}
 
 	@Override
-	public <I extends TraceObjectInterface> Stream<I> querySuccessorsInterface(Range<Long> span,
-			Class<I> ifClass) {
-		return querySuccessorsTargetInterface(span, TraceObjectInterfaceUtils.toTargetIf(ifClass))
-				.map(p -> p.getDestination(this).queryInterface(ifClass));
+	public <I extends TraceObjectInterface> Stream<I> querySuccessorsInterface(Lifespan span,
+			Class<I> ifClass, boolean requireCanonical) {
+		return querySuccessorsTargetInterface(span, TraceObjectInterfaceUtils.toTargetIf(ifClass),
+			requireCanonical).map(p -> p.getDestination(this).queryInterface(ifClass));
 	}
 
 	protected void doDelete() {

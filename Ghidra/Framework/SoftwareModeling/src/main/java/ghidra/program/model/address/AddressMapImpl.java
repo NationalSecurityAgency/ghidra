@@ -85,7 +85,7 @@ public class AddressMapImpl {
 		addrToIndexMap.clear();
 		for (int i = 0; i < baseAddrs.length; i++) {
 			if (!addrToIndexMap.containsKey(baseAddrs[i])) {
-				addrToIndexMap.put(baseAddrs[i], new Integer(i));
+				addrToIndexMap.put(baseAddrs[i], Integer.valueOf(i));
 			}
 		}
 	}

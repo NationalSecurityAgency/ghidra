@@ -19,16 +19,13 @@ import java.awt.Color;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.util.datastruct.Accumulator;
@@ -40,6 +37,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 
 	protected class ListenerForChanges extends TraceDomainObjectListener {
 		public ListenerForChanges() {
+			listenForUntyped(Trace.DO_OBJECT_RESTORED, this::objectRestored);
 			listenFor(TraceObjectChangeType.VALUE_CREATED, this::valueCreated);
 			listenFor(TraceObjectChangeType.VALUE_DELETED, this::valueDeleted);
 			listenFor(TraceObjectChangeType.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
@@ -48,26 +46,30 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 			listenFor(TraceSnapshotChangeType.DELETED, this::maxSnapChanged);
 		}
 
+		protected void objectRestored(DomainObjectChangeRecord record) {
+			reload();
+		}
+
 		protected void valueCreated(TraceObjectValue value) {
-			if (query != null && query.includes(span, value)) {
+			if (query != null && query.involves(span, value)) {
 				reload(); // Can I be more surgical?
 			}
 		}
 
 		protected void valueDeleted(TraceObjectValue value) {
-			if (query != null && query.includes(span, value)) {
-				reload();
+			if (query != null && query.involves(span, value)) {
+				reload(); // Can I be more surgical?
 			}
 		}
 
-		protected void valueLifespanChanged(TraceObjectValue value, Range<Long> oldSpan,
-				Range<Long> newSpan) {
+		protected void valueLifespanChanged(TraceObjectValue value, Lifespan oldSpan,
+				Lifespan newSpan) {
 			if (query == null) {
 				return;
 			}
-			boolean inOld = DBTraceUtils.intersect(oldSpan, span);
-			boolean inNew = DBTraceUtils.intersect(newSpan, span);
-			boolean queryIncludes = query.includes(Range.all(), value);
+			boolean inOld = span.intersects(oldSpan);
+			boolean inNew = span.intersects(newSpan);
+			boolean queryIncludes = query.involves(Lifespan.ALL, value);
 			if (queryIncludes) {
 				if (inOld != inNew) {
 					reload();
@@ -99,10 +101,11 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 
 	private Trace trace;
 	private long snap;
+	private TraceObject curObject;
 	private Trace diffTrace;
 	private long diffSnap;
 	private ModelQuery query;
-	private Range<Long> span = Range.all();
+	private Lifespan span = Lifespan.ALL;
 	private boolean showHidden;
 
 	private final ListenerForChanges listenerForChanges = newListenerForChanges();
@@ -169,6 +172,23 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 	@Override
 	public long getSnap() {
 		return snap;
+	}
+
+	protected void currentObjectChanged() {
+		refresh();
+	}
+
+	public void setCurrentObject(TraceObject curObject) {
+		if (this.curObject == curObject) {
+			return;
+		}
+		this.curObject = curObject;
+
+		currentObjectChanged();
+	}
+
+	public TraceObject getCurrentObject() {
+		return curObject;
 	}
 
 	protected void diffTraceChanged() {
@@ -245,7 +265,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 		reload();
 	}
 
-	public void setSpan(Range<Long> span) {
+	public void setSpan(Lifespan span) {
 		if (Objects.equals(this.span, span)) {
 			return;
 		}
@@ -254,7 +274,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 		spanChanged();
 	}
 
-	public Range<Long> getSpan() {
+	public Lifespan getSpan() {
 		return span;
 	}
 
@@ -275,7 +295,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 		return showHidden;
 	}
 
-	protected abstract Stream<T> streamRows(Trace trace, ModelQuery query, Range<Long> span);
+	protected abstract Stream<T> streamRows(Trace trace, ModelQuery query, Lifespan span);
 
 	@Override
 	protected void doLoad(Accumulator<T> accumulator, TaskMonitor monitor)
@@ -285,7 +305,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 		}
 		for (T t : (Iterable<T>) streamRows(trace, query, span)::iterator) {
 			accumulator.add(t);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 		}
 	}
 

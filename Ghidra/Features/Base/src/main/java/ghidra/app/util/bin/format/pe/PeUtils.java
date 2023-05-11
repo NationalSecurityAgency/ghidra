@@ -19,6 +19,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Pointer;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -46,6 +47,10 @@ public class PeUtils {
 		if (existingData != null) {
 			DataType existingDataType = existingData.getDataType();
 			if (existingDataType.isEquivalent(datatype)) {
+				return existingData;
+			}
+			else if (existingData.isPointer() && (datatype instanceof Pointer) &&
+				existingData.getLength() == datatype.getLength()) {
 				return existingData;
 			}
 		}

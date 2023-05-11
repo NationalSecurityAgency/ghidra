@@ -101,7 +101,8 @@ public class GhidraTool extends PluginTool {
 	@Override
 	public PluginClassManager getPluginClassManager() {
 		if (pluginClassManager == null) {
-			pluginClassManager = new PluginClassManager(Plugin.class, ApplicationLevelOnlyPlugin.class);
+			pluginClassManager =
+				new PluginClassManager(Plugin.class, ApplicationLevelOnlyPlugin.class);
 		}
 		return pluginClassManager;
 	}
@@ -206,7 +207,7 @@ public class GhidraTool extends PluginTool {
 		};
 
 		configureToolAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_FILE, "Configure..." }, null, "PrintPost_PreTool"));
+			new String[] { ToolConstants.MENU_FILE, "Configure" }, null, "PrintPost_PreTool"));
 
 		configureToolAction.setEnabled(true);
 		addAction(configureToolAction);

@@ -223,7 +223,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	}
 
 	private OptionsDialog createOptionsDialog() {
-		OptionsDialog dialog = null;
+
 		if (optionsMap.size() == 0) {
 			return null;
 		}
@@ -239,8 +239,9 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 		}
 
 		keyBindingOptions.registerOptionsEditor(new KeyBindingOptionsEditor());
-		dialog = new OptionsDialog("Options for " + tool.getName(), "Options", getEditableOptions(),
-			null, true);
+		OptionsDialog dialog =
+			new OptionsDialog("Options for " + tool.getName(), "Options", getEditableOptions(),
+				null, true);
 		dialog.setSelectedPath(path);
 		dialog.setHelpLocation(
 			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "ToolOptions_Dialog"));

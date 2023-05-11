@@ -42,7 +42,8 @@ public interface DBTraceDelegatingManager<M> {
 
 	default void checkIsInMemory(AddressSpace space) {
 		if (!space.isMemorySpace() && space != Address.NO_ADDRESS.getAddressSpace()) {
-			throw new IllegalArgumentException("Address must be in memory or NO_ADDRESS");
+			throw new IllegalArgumentException(
+				"Address must be in memory or NO_ADDRESS. Got " + space);
 		}
 	}
 

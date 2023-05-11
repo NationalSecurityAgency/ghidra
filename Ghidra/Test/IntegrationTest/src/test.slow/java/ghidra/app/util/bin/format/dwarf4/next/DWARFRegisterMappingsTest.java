@@ -15,23 +15,25 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.jdom.JDOMException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import generic.jar.ResourceFile;
 import generic.test.category.NightlyCategory;
+import ghidra.GhidraTestApplicationLayout;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.xml.XmlUtilities;
-import utilities.util.FileResolutionResult;
-import utilities.util.FileUtilities;
+import utility.application.ApplicationLayout;
 
 @Category(NightlyCategory.class)
 public class DWARFRegisterMappingsTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -44,6 +46,21 @@ public class DWARFRegisterMappingsTest extends AbstractGhidraHeadlessIntegration
 			new LanguageID("x86:LE:32:default"));
 	}
 
+	@Override
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath())) {
+			@Override
+			protected Set<String> getDependentModulePatterns() {
+				//@formatter:off
+				String processorModules = "/ghidra/Ghidra/Processors/".replace('/', File.separatorChar);
+				return new HashSet<>(Set.of(
+					processorModules
+				));
+				//@formatter:on
+			}
+		};
+	}
+
 	/**
 	 * Test reading the DWARF register mappings for every language that has a DWARF register
 	 * mapping file specified in its LDEF file.
@@ -54,20 +71,11 @@ public class DWARFRegisterMappingsTest extends AbstractGhidraHeadlessIntegration
 		for (LanguageDescription langDesc : DefaultLanguageService.getLanguageService().getLanguageDescriptions(
 			false)) {
 
-			if (!DWARFRegisterMappingsManager.hasDWARFRegisterMapping(langDesc)) {
-				continue;
-			}
-
 			Language lang =
 				DefaultLanguageService.getLanguageService().getLanguage(langDesc.getLanguageID());
 
-			ResourceFile mappingFile =
-				DWARFRegisterMappingsManager.getDWARFRegisterMappingFileFor(lang);
-			FileResolutionResult dwarfFileFRR;
-			if ((dwarfFileFRR = FileUtilities.existsAndIsCaseDependent(mappingFile)) != null &&
-				!dwarfFileFRR.isOk()) {
-				throw new IOException(
-					"DWARF register mapping filename case problem: " + dwarfFileFRR.getMessage());
+			if (!DWARFRegisterMappingsManager.hasDWARFRegisterMapping(lang)) {
+				continue;
 			}
 
 			DWARFRegisterMappings drm = DWARFRegisterMappingsManager.readMappingForLang(lang);

@@ -883,7 +883,7 @@ thsdec4: thsdec5					is thc0404=0 & thsdec5				{ }
 thsdec3: r3							is thc0303=1 & r3 & thc0415=0		{ * mult_addr=r3; mult_addr = mult_addr - 4; }
 thsdec3: r3,thsdec4					is thc0303=1 & thsdec4 & r3					{ * mult_addr=r3; mult_addr = mult_addr - 4; }
 thsdec3: thsdec4					is thc0303=0 & thsdec4				{ }
-thsdec2: r2							is thc0202=1 & r2 & thc0415=0		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
+thsdec2: r2							is thc0202=1 & r2 & thc0315=0		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
 thsdec2: r2,thsdec3					is thc0202=1 & thsdec3 & r2					{ * mult_addr=r2; mult_addr = mult_addr - 4; }
 thsdec2: thsdec3					is thc0202=0 & thsdec3				{ }
 thsdec1: r1							is thc0101=1  & r1 & thc0215=0		{ * mult_addr=r1; mult_addr = mult_addr - 4; }
@@ -1443,22 +1443,31 @@ macro th_set_carry_for_asr(op1,shift_count) {
 
 @ifndef VERSION_6T2
 
-:bl^ItCond 	"#"^off 			is TMode=1 & ItCond & op11=0x1e & soffset11 [ off = inst_start + 4 + (soffset11 << 12); ]
+:bl^ItCond "#"^off		is TMode=1 & ItCond & op11=0x1e & soffset11 [ off = inst_start + 4 + (soffset11 << 12); ]
 {
   build ItCond;
   lr = off:4;
 }
 
-:bl^ItCond 	"#"^off 			is TMode=1 & ItCond & op11=0x1f & offset11 [ off = offset11 << 1; ]
+:bl^ItCond "#"^off		is TMode=1 & ItCond & op11=0x1f & offset11 [ off = offset11 << 1; ]
 {
   build ItCond;
   local dest = lr + off:4;
   lr = inst_next|1;
   SetThumbMode(1);
-  goto [dest];
+  call [dest];
 }
 
-:blx^ItCond 	"#"^off 			is TMode=1 & ItCond & op11=0x1d & offset11 & thc0000=0 [ off = offset11 << 1; ]
+:bl^ItCond lr			is TMode=1 & ItCond & op11=0x1f & offset11=0 & lr
+{
+  build ItCond;
+  local dest = lr;
+  lr = inst_next|1;
+  SetThumbMode(1);
+  call [dest];
+}
+
+:blx^ItCond "#"^off 	is TMode=1 & ItCond & op11=0x1d & offset11 & thc0000=0 [ off = offset11 << 1; ]
 {
   build ItCond;
   local dest = (lr & (~0x3)) + off:4;
@@ -1466,6 +1475,16 @@ macro th_set_carry_for_asr(op1,shift_count) {
   SetThumbMode(0);
   call [dest];
 }
+
+:blx^ItCond lr			is TMode=1 & ItCond & op11=0x1d & offset11=0 & thc0000=0 & lr
+{
+  build ItCond;
+  local dest = (lr & (~0x3));
+  lr = inst_next|1;
+  SetThumbMode(0);
+  call [dest];
+}
+
 @endif
 
 :bl^ItCond 	ThAddr24 			is TMode=1 & CALLoverride=1 & ItCond & (op11=0x1e; part2c1415=3 & part2c1212=1) & ThAddr24
@@ -1608,7 +1627,7 @@ define pcodeop IndexCheck;
 :clz^ItCond	Rd0811,Rm0003		is TMode=1 & ItCond & op4=0xfab & Rm0003; op12=15 & Rd0811
 {
   build ItCond;
-  Rd0811 = count_leading_zeroes(Rm0003);
+  Rd0811 = lzcount(Rm0003);
 }
 
 :cmn^ItCond	Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=8 & thc0404=1 & Rn0003; thc1515=0 & thc0811=15) & ThumbExpandImm12

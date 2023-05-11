@@ -23,13 +23,14 @@ import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
  *
  * <p>
  * In particular, because this derives from {@link TracePcodeExecutorStatePiece}, such states are
- * required to implement {@link #writeDown(PcodeTraceDataAccess)}. This interface also
- * derives from {@link PcodeExecutorState} so that, as the name implies, they can be used where a
- * state is required.
+ * required to implement {@link #writeDown(PcodeTraceDataAccess)}. This interface also derives from
+ * {@link PcodeExecutorState} so that, as the name implies, they can be used where a state is
+ * required.
  * 
  * @param <T> the type of values
  */
 public interface TracePcodeExecutorState<T>
 		extends PcodeExecutorState<T>, TracePcodeExecutorStatePiece<T, T> {
-	// Nothing to add. Simply a composition of interfaces.
+	@Override
+	TracePcodeExecutorState<T> fork();
 }

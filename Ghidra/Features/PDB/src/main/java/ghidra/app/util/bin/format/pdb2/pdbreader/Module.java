@@ -336,7 +336,7 @@ public class Module {
 		writer.write("Symbols-----------------------------------------------------\n");
 		MsSymbolIterator symbolIterator = getSymbolIterator();
 		while (symbolIterator.hasNext()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			AbstractMsSymbol symbol = symbolIterator.next();
 			writer.append(symbol.toString());
 			writer.append("\n");
@@ -362,7 +362,7 @@ public class Module {
 		C13SectionIterator<C13Section> c13Iterator =
 			getC13SectionFilteredIterator(C13Section.class);
 		while (c13Iterator.hasNext()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			C13Section c13Section = c13Iterator.next();
 			c13Section.dump(writer);
 		}
@@ -373,7 +373,7 @@ public class Module {
 //		C13SectionIterator<DummyC13Symbols> c13SymbolsIterator =
 //			getC13SectionFilteredIterator(DummyC13Symbols.class);
 //		while (c13SymbolsIterator.hasNext()) {
-//			pdb.checkCanceled();
+//			pdb.checkCancelled();
 //			DummyC13Symbols dummyC13Symbols = c13SymbolsIterator.next();
 //			dummyC13Symbols.dump(writer);
 //		}
@@ -381,7 +381,7 @@ public class Module {
 //		C13SectionIterator<C13Lines> c13LinesIterator =
 //			getC13SectionFilteredIterator(C13Lines.class);
 //		while (c13LinesIterator.hasNext()) {
-//			pdb.checkCanceled();
+//			pdb.checkCancelled();
 //			C13Lines myC13Lines = c13LinesIterator.next();
 //			myC13Lines.dump(writer);
 //		}
@@ -395,7 +395,7 @@ public class Module {
 		GlobalReferenceOffsetIterator globalRefsOffsetIterator =
 			getGlobalReferenceOffsetIterator();
 		while (globalRefsOffsetIterator.hasNext()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			Long val = globalRefsOffsetIterator.next();
 			writer.append(String.format("0x%08x\n", val));
 			tmp.add(val);
@@ -421,7 +421,7 @@ public class Module {
 		GlobalReferenceIterator globalReferenceIterator =
 			getGlobalReferenceIterator();
 		while (globalReferenceIterator.hasNext()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			MsSymbolIterator symIter = globalReferenceIterator.next();
 			if (symIter.hasNext()) {
 				AbstractMsSymbol sym = symIter.next();

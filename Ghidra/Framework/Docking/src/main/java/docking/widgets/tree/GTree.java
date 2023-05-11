@@ -45,6 +45,7 @@ import docking.widgets.tree.internal.*;
 import docking.widgets.tree.support.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.*;
+import generic.theme.*;
 import generic.timer.ExpiringSwingTimer;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -56,7 +57,7 @@ import ghidra.util.worker.PriorityWorker;
  */
 
 public class GTree extends JPanel implements BusyListener {
-
+	private static final Color BACKGROUND = new GColor("color.bg.tree");
 	private AutoScrollTree tree;
 	private GTreeModel model;
 
@@ -92,6 +93,11 @@ public class GTree extends JPanel implements BusyListener {
 	private JTreeMouseListenerDelegate mouseListenerDelegate;
 	private GTreeDragNDropHandler dragNDropHandler;
 	private boolean isFilteringEnabled = true;
+	private ThemeListener themeListener = e -> {
+		if (e.isLookAndFeelChanged()) {
+			model.fireNodeStructureChanged(getModelRoot());
+		}
+	};
 
 	private ThreadLocal<TaskMonitor> threadLocalMonitor = new ThreadLocal<>();
 	private PriorityWorker worker;
@@ -134,6 +140,7 @@ public class GTree extends JPanel implements BusyListener {
 				uniquePreferenceKey));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateModelFilter());
+		Gui.addThemeListener(themeListener);
 	}
 
 	/**
@@ -208,6 +215,9 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	private void init() {
+
+		setBackground(BACKGROUND);
+
 		tree = new AutoScrollTree(model);
 
 		setLayout(new BorderLayout());
@@ -260,6 +270,8 @@ public class GTree extends JPanel implements BusyListener {
 			realViewRootNode.disposeClones();
 		}
 		model.dispose();
+
+		Gui.removeThemeListener(themeListener);
 	}
 
 	public boolean isDisposed() {
@@ -324,6 +336,10 @@ public class GTree extends JPanel implements BusyListener {
 	 * @return the saved state
 	 */
 	public GTreeState getTreeState() {
+		GTreeNode root = getViewRoot();
+		if (root == null) {
+			return null; // this can happen during initialization
+		}
 		return new GTreeState(this);
 	}
 
@@ -1075,17 +1091,17 @@ public class GTree extends JPanel implements BusyListener {
 			Consumer<GTreeNode> consumer) {
 
 		/*
-		
+
 			If the GTree were to use Java's CompletableStage API, then the code below
 			could be written thusly:
-		
+
 			tree.getNewNode(modelParent, newName)
 				.thenCompose(newModelChild -> {
 			 		tree.ignoreFilter(newModelChild);
 			 		return tree.getNewNode(viewParent, newName);
 			 	))
 			 	.thenAccept(consumer);
-		
+
 		*/
 
 		// ensure we operate on the model node which will always have the given child not the view
@@ -1391,6 +1407,7 @@ public class GTree extends JPanel implements BusyListener {
 
 		public AutoScrollTree(TreeModel model) {
 			super(model);
+			setBackground(BACKGROUND);
 			scroller = new AutoscrollAdapter(this, 5);
 
 			setRowHeight(-1);// variable size rows

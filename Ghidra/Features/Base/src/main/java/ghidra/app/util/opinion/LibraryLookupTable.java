@@ -165,7 +165,7 @@ public class LibraryLookupTable {
 			symTab.applyOrdinalFile(existingDefFile, false);
 		}
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		File f = file.getFile(true);
 		if (f == null) {

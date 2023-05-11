@@ -24,12 +24,10 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import com.google.common.collect.Range;
-
 import db.*;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.visitors.TreeTraversal;
 import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
 import ghidra.util.LockHold;
@@ -194,7 +192,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 
 	protected final DBTraceObjectManager manager;
 
-	private Range<Long> lifespan;
+	private Lifespan lifespan;
 
 	public DBTraceObjectValue(DBTraceObjectManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
@@ -207,13 +205,13 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		if (created) {
 			return;
 		}
-		lifespan = DBTraceUtils.toRange(triple.minSnap, maxSnap);
+		lifespan = Lifespan.span(triple.minSnap, maxSnap);
 	}
 
-	protected void set(Range<Long> lifespan, DBTraceObject parent, String key, Object value) {
-		this.triple = new PrimaryTriple(parent, key, DBTraceUtils.lowerEndpoint(lifespan));
-		this.maxSnap = DBTraceUtils.upperEndpoint(lifespan);
-		this.lifespan = DBTraceUtils.toRange(triple.minSnap, maxSnap);
+	protected void set(Lifespan lifespan, DBTraceObject parent, String key, Object value) {
+		this.triple = new PrimaryTriple(parent, key, lifespan.lmin());
+		this.maxSnap = lifespan.lmax();
+		this.lifespan = Lifespan.span(triple.minSnap, maxSnap);
 		if (value instanceof TraceObject) {
 			DBTraceObject child = manager.assertIsMine((TraceObject) value);
 			this.child = child;
@@ -233,15 +231,15 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	@Override
-	public void doSetLifespan(Range<Long> lifespan) {
-		long minSnap = DBTraceUtils.lowerEndpoint(lifespan);
+	public void doSetLifespan(Lifespan lifespan) {
+		long minSnap = lifespan.lmin();
 		if (this.triple.minSnap != minSnap) {
 			this.triple = triple.withMinSnap(minSnap);
 			update(TRIPLE_COLUMN);
 		}
-		this.maxSnap = DBTraceUtils.upperEndpoint(lifespan);
+		this.maxSnap = lifespan.lmax();
 		update(MAX_SNAP_COLUMN);
-		this.lifespan = DBTraceUtils.toRange(minSnap, maxSnap);
+		this.lifespan = Lifespan.span(minSnap, maxSnap);
 	}
 
 	@Override
@@ -287,7 +285,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return lifespan;
 		}
@@ -296,7 +294,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	@Override
 	public void setMinSnap(long minSnap) {
 		try (LockHold hold = manager.trace.lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(minSnap, maxSnap));
+			setLifespan(Lifespan.span(minSnap, maxSnap));
 		}
 	}
 
@@ -310,7 +308,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	@Override
 	public void setMaxSnap(long maxSnap) {
 		try (LockHold hold = manager.trace.lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(triple.minSnap, maxSnap));
+			setLifespan(Lifespan.span(triple.minSnap, maxSnap));
 		}
 	}
 
@@ -321,7 +319,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		}
 	}
 
-	protected Stream<? extends TraceObjectValPath> doStreamVisitor(Range<Long> span,
+	protected Stream<? extends TraceObjectValPath> doStreamVisitor(Lifespan span,
 			Visitor visitor) {
 		return TreeTraversal.INSTANCE.walkValue(visitor, this, span, null);
 	}
@@ -373,7 +371,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	@Override
-	public InternalTraceObjectValue truncateOrDelete(Range<Long> span) {
+	public InternalTraceObjectValue truncateOrDelete(Lifespan span) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			if (triple.parent == null) {
 				throw new IllegalArgumentException("Cannot truncate or delete root value");

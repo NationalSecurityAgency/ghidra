@@ -17,7 +17,6 @@ package agent.dbgeng.manager.cmd;
 
 import agent.dbgeng.dbgeng.DebugBreakpoint;
 import agent.dbgeng.dbgeng.DebugControl;
-import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 /**
@@ -36,9 +35,10 @@ public class DbgDeleteBreakpointsCommand extends AbstractDbgCommand<Void> {
 	public void invoke() {
 		DebugControl control = manager.getControl();
 		for (long id : numbers) {
-			manager.doBreakpointDeleted(id, DbgCause.Causes.UNCLAIMED);
 			DebugBreakpoint bp = control.getBreakpointById((int) id);
-			bp.remove();
+			if (bp != null) {
+				bp.remove();
+			}
 		}
 	}
 }

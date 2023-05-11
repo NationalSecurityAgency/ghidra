@@ -18,16 +18,21 @@ package ghidra.graph.viewer.renderer;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
+import generic.theme.GColor;
+
+/**
+ * Paints a rectangle showing the start and end points of a drag.
+ */
 public class MouseDraggedPaintableShape extends PaintableShape {
 
-	private static final Color START_COLOR = new Color(200, 0, 80, 25);
-	private static final Color END_COLOR = new Color(200, 0, 80, 200);
+	private static final GColor BASE_COLOR = new GColor("color.palette.crimson");
+	private static final Color START_COLOR = BASE_COLOR.withAlpha(25);
+	private static final Color END_COLOR = BASE_COLOR.withAlpha(200);
 
 	private Paint paint;
 
 	public MouseDraggedPaintableShape(Point start, Point end, double tx, double ty) {
 		super(tx, ty);
-		this.color = new Color(200, 0, 80, 147);
 		this.stroke = new BasicStroke(15);
 
 		int x1 = start.x;

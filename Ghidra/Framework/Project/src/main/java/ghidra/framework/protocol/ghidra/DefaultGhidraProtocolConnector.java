@@ -19,8 +19,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import ghidra.framework.client.ClientUtil;
-import ghidra.framework.client.NotConnectedException;
+import javax.security.auth.login.LoginException;
+
+import ghidra.framework.client.*;
+import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
 import ghidra.util.Msg;
 
 /**
@@ -44,36 +46,51 @@ public class DefaultGhidraProtocolConnector extends GhidraProtocolConnector {
 
 	@Override
 	public boolean isReadOnly() throws NotConnectedException {
-		if (responseCode == -1) {
+		if (statusCode == null) {
 			throw new NotConnectedException("not connected");
 		}
 		return readOnly;
 	}
 
 	@Override
-	public int connect(boolean readOnlyAccess) throws IOException {
+	public StatusCode connect(boolean readOnlyAccess) throws IOException {
 
-		if (responseCode != -1) {
+		if (statusCode != null) {
 			throw new IllegalStateException("already connected");
 		}
 
 		this.readOnly = readOnlyAccess;
 
-		responseCode = GhidraURLConnection.GHIDRA_NOT_FOUND; // just in case
+		statusCode = StatusCode.UNAVAILABLE; // if uncaught exception occurs
 
 		repositoryServerAdapter =
 			ClientUtil.getRepositoryServer(url.getHost(), url.getPort(), true);
 
 		if (repositoryName == null) {
-			responseCode = GhidraURLConnection.GHIDRA_OK;
-			return responseCode;
+			statusCode = StatusCode.OK;
+			return statusCode;
 		}
 
 		repositoryAdapter = repositoryServerAdapter.getRepository(repositoryName);
-		repositoryAdapter.connect();
+		if (repositoryServerAdapter.isConnected()) {
+			try {
+				repositoryAdapter.connect();
+			}
+			catch (RepositoryNotFoundException e) {
+				statusCode = StatusCode.NOT_FOUND;
+			}
+		}
+		else if (!repositoryServerAdapter.isCancelled()) {
+			Throwable t = repositoryServerAdapter.getLastConnectError();
+			if (t instanceof LoginException) {
+				statusCode = StatusCode.UNAUTHORIZED;
+			}
+			//throw new NotConnectedException("Not connected to repository server", t);
+			return statusCode;
+		}
 
 		if (repositoryAdapter.isConnected()) {
-			responseCode = GhidraURLConnection.GHIDRA_OK;
+			statusCode = StatusCode.OK;
 			if (!repositoryAdapter.getUser().hasWritePermission()) {
 				if (!readOnly) {
 					this.readOnly = true; // write access not permitted
@@ -84,10 +101,10 @@ public class DefaultGhidraProtocolConnector extends GhidraProtocolConnector {
 			resolveItemPath();
 		}
 		else {
-			responseCode = GhidraURLConnection.GHIDRA_UNAUTHORIZED;
+			statusCode = StatusCode.UNAUTHORIZED;
 		}
 
-		return responseCode;
+		return statusCode;
 	}
 
 	@Override

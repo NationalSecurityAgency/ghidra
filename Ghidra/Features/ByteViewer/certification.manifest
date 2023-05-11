@@ -3,17 +3,8 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||reviewed||END|
+data/byteviewer.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||reviewed||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/close16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/menu16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0). Renmaed from flag-red.png.|END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0). Renamed from flag-green.png.|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0). Renamed from flag-yellow.png.|END|
-src/main/help/help/shared/redo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0). Renamed from help-hint.png.|END|
-src/main/help/help/shared/undo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0). Renamed from dialog-warning.png.|END|
 src/main/help/help/topics/ByteViewerPlugin/ByteViewerOptions.htm||GHIDRA||||END|
 src/main/help/help/topics/ByteViewerPlugin/The_Byte_Viewer.htm||GHIDRA||||END|
 src/main/help/help/topics/ByteViewerPlugin/images/ByteViewer.png||GHIDRA||||END|
@@ -21,9 +12,5 @@ src/main/help/help/topics/ByteViewerPlugin/images/ByteViewerExample.png||GHIDRA|
 src/main/help/help/topics/ByteViewerPlugin/images/ByteViewerOptionsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/ByteViewerPlugin/images/ByteViewerResults.png||GHIDRA||||END|
 src/main/help/help/topics/ByteViewerPlugin/images/addressMark.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/ByteViewerPlugin/images/binaryData.gif||GHIDRA||reviewed||END|
 src/main/help/help/topics/ByteViewerPlugin/images/box.gif||GHIDRA||reviewed||END|
-src/main/help/help/topics/ByteViewerPlugin/images/editbytes.gif||GHIDRA||reviewed||END|
-src/main/help/help/topics/ByteViewerPlugin/images/wrench.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/binaryData.gif||GHIDRA||reviewed||END|
 src/main/resources/images/wrench.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

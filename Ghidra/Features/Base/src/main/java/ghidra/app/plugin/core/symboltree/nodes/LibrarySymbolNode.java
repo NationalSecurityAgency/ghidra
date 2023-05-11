@@ -21,16 +21,16 @@ import java.util.Comparator;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import resources.ResourceManager;
 
 public class LibrarySymbolNode extends SymbolNode {
 
 	private static final String ORDINAL_PREFIX = "Ordinal_";
 
-	private static Icon LIBRARY_ICON = ResourceManager.loadImage("images/package.png");
+	private static final Icon LIBRARY_ICON = new GIcon("icon.plugin.symboltree.node.library");
 
 	private static Comparator<GTreeNode> CHILD_COMPARATOR = (o1, o2) -> {
 		SymbolNode symbolNode1 = (SymbolNode) o1;

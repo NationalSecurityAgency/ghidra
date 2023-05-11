@@ -161,7 +161,8 @@ class StructureEditorModel extends CompEditorModel {
 		else if (columnIndex == getDataTypeColumn()) {
 			DataType dt = dtc.getDataType();
 			int dtLen = dt.getLength();
-			return DataTypeInstance.getDataTypeInstance(dt, (dtLen > 0) ? dtLen : dtc.getLength());
+			return DataTypeInstance.getDataTypeInstance(dt, (dtLen > 0) ? dtLen : dtc.getLength(),
+				true);
 		}
 		else if (columnIndex == getNameColumn()) {
 			value = dtc.getFieldName();
@@ -919,7 +920,7 @@ class StructureEditorModel extends CompEditorModel {
 		try {
 
 			for (int i = 0; i < numCopies; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setMessage("Inserting " + (i + 1) + " of " + numCopies);
 				viewComposite.insert(componentOrdinal, dataType, length);
 				monitor.incrementProgress(1);

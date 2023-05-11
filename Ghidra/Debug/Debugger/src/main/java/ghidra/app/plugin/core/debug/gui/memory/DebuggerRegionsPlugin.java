@@ -24,6 +24,7 @@ import ghidra.app.services.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
+//@formatter:off
 @PluginInfo(
 	shortDescription = "Debugger regions manager",
 	description = "GUI to manage memory regions",
@@ -37,11 +38,11 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		TraceActivatedPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerModelService.class,
 		DebuggerStaticMappingService.class,
 		DebuggerTraceManagerService.class,
 		ProgramManager.class,
 	})
+//@formatter:on
 public class DebuggerRegionsPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerRegionsProvider provider;
 
@@ -58,6 +59,7 @@ public class DebuggerRegionsPlugin extends AbstractDebuggerPlugin {
 	@Override
 	protected void dispose() {
 		tool.removeComponentProvider(provider);
+		provider.dispose();
 		super.dispose();
 	}
 
@@ -78,7 +80,7 @@ public class DebuggerRegionsPlugin extends AbstractDebuggerPlugin {
 		}
 		else if (event instanceof TraceActivatedPluginEvent) {
 			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
-			provider.setTrace(ev.getActiveCoordinates().getTrace());
+			provider.coordinatesActivated(ev.getActiveCoordinates());
 		}
 	}
 }

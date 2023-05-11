@@ -164,7 +164,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 		int fdeTableCount = analyzeEhFrameHeaderSection(program, monitor, log);
 		// If the EHFrameHeader doesn't exist, the fdeTableCount will be 0.
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		try {
 			/*
@@ -179,7 +179,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 
 			for (RegionDescriptor region : regions) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				ehProtected.add(region.getRange());
 
 				LSDACallSiteTable callSiteTable = region.getCallSiteTable();
@@ -187,7 +187,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 
 					// Process this table's call site records.
 					for (LSDACallSiteRecord cs : callSiteTable.getCallSiteRecords()) {
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 						processCallSiteRecord(program, ehProtected, region, cs);
 					}
 				}

@@ -406,7 +406,7 @@ public class TreeManager implements ManagerDB {
 			Iterator<String> keys = treeMap.keySet().iterator();
 			monitor.setMessage("Moving folders/fragments...");
 			while (keys.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				ModuleManager m = treeMap.get(keys.next());
 				m.moveAddressRange(fromAddr, toAddr, length, monitor);
 				m.invalidateCache();

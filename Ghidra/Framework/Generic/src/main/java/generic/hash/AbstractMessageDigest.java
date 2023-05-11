@@ -98,7 +98,7 @@ public abstract class AbstractMessageDigest implements MessageDigest {
 	public void update(byte[] input, int offset, int len, TaskMonitor monitor)
 			throws CancelledException {
 		for (int ii = 0; ii < len; ++ii) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			update(input[offset++]);
 		}
 	}

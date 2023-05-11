@@ -16,10 +16,12 @@
 /// \file comment.hh
 /// \brief A database interface for high-level language comments
 
-#ifndef __CPUI_COMMENT__
-#define __CPUI_COMMENT__
+#ifndef __COMMENT_HH__
+#define __COMMENT_HH__
 
 #include "address.hh"
+
+namespace ghidra {
 
 class FlowBlock;
 class PcodeOp;
@@ -249,4 +251,5 @@ public:
   Comment *getNext(void) const { Comment *res=(*start).second; ++start; return res; }	///< Advance to the next comment
 };
 
+} // End namespace ghidra
 #endif

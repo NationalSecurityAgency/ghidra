@@ -26,6 +26,7 @@ import docking.Tool;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
 import docking.widgets.table.GTable;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -43,7 +44,8 @@ import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.task.SwingUpdateManager;
-import resources.*;
+import resources.Icons;
+import resources.MultiIconBuilder;
 
 /**
  * Plugin to for adding/deleting/editing bookmarks.
@@ -75,7 +77,6 @@ public class BookmarkPlugin extends ProgramPlugin
 	private BookmarkProvider provider;
 	private DockingAction addAction;
 	private DockingAction deleteAction;
-	private CreateBookmarkDialog createDialog;
 	private GoToService goToService;
 	private MarkerService markerService;
 	private BookmarkManager bookmarkMgr;
@@ -115,7 +116,7 @@ public class BookmarkPlugin extends ProgramPlugin
 		tool.addAction(addAction);
 
 		MultiIconBuilder builder = new MultiIconBuilder(Icons.CONFIGURE_FILTER_ICON);
-		builder.addLowerRightIcon(ResourceManager.loadImage("images/check.png"));
+		builder.addLowerRightIcon(new GIcon("icon.plugin.bookmark.add"));
 		Icon filterTypesChanged = builder.build();
 		Icon filterTypesUnchanged = Icons.CONFIGURE_FILTER_ICON;
 		DockingAction filterAction = new DockingAction("Filter Bookmarks", getName()) {
@@ -150,7 +151,7 @@ public class BookmarkPlugin extends ProgramPlugin
 				provider.delete();
 			}
 		};
-		Icon icon = ResourceManager.loadImage("images/edit-delete.png");
+		Icon icon = new GIcon("icon.plugin.bookmark.delete");
 		deleteAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 		deleteAction.setPopupMenuData(new MenuData(new String[] { "Delete" }, icon));
 		deleteAction.setDescription("Delete Selected Bookmarks");
@@ -164,7 +165,7 @@ public class BookmarkPlugin extends ProgramPlugin
 				select(provider.getBookmarkLocations());
 			}
 		};
-		icon = ResourceManager.loadImage("images/text_align_justify.png");
+		icon = new GIcon("icon.plugin.bookmark.select");
 		selectionAction.setPopupMenuData(
 			new MenuData(new String[] { "Select Bookmark Locations" }, icon));
 		selectionAction.setToolBarData(new ToolBarData(icon));
@@ -203,10 +204,6 @@ public class BookmarkPlugin extends ProgramPlugin
 		if (provider != null) {
 			provider.dispose();
 			provider = null;
-		}
-		if (createDialog != null) {
-			createDialog.dispose();
-			createDialog = null;
 		}
 		goToService = null;
 
@@ -442,7 +439,7 @@ public class BookmarkPlugin extends ProgramPlugin
 			return;
 		}
 		boolean hasSelection = currentSelection != null && !currentSelection.isEmpty();
-		createDialog = new CreateBookmarkDialog(this, currCU, hasSelection);
+		CreateBookmarkDialog createDialog = new CreateBookmarkDialog(this, currCU, hasSelection);
 		tool.showDialog(createDialog);
 	}
 

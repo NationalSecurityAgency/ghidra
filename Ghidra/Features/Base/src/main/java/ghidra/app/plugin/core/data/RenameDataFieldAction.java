@@ -28,33 +28,32 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.FieldNameFieldLocation;
 import ghidra.program.util.ProgramLocation;
- 
+
 /**
  * Base class for comment actions to edit and delete comments.
  */
 class RenameDataFieldAction extends ListingContextAction {
 
 	private DataPlugin plugin;
-	private RenameDataFieldDialog dialog;
-	
-    public RenameDataFieldAction(DataPlugin plugin) {
-        super("Rename Data Field", plugin.getName()); 
-        dialog = new RenameDataFieldDialog(plugin);
 
-        setPopupMenuData( 
-        	new MenuData( 
-        	new String[] {"Data",  "Rename Field"},null,"BasicData" ) );
+	public RenameDataFieldAction(DataPlugin plugin) {
+		super("Rename Data Field", plugin.getName());
 
-        setKeyBindingData( new KeyBindingData( 
-        	KeyEvent.VK_N, 0 ) );
+		setPopupMenuData(
+			new MenuData(
+				new String[] { "Data", "Rename Field" }, null, "BasicData"));
 
-        this.plugin = plugin;
-        setEnabled(true);
-    }
+		setKeyBindingData(new KeyBindingData(
+			KeyEvent.VK_N, 0));
 
-    @Override
+		this.plugin = plugin;
+		setEnabled(true);
+	}
+
+	@Override
 	protected void actionPerformed(ListingActionContext context) {
-    	ListingActionContext programActionContext = (ListingActionContext) context.getContextObject();
+		ListingActionContext programActionContext =
+			(ListingActionContext) context.getContextObject();
 		PluginTool tool = plugin.getTool();
 		Program program = programActionContext.getProgram();
 		ProgramLocation loc = programActionContext.getLocation();
@@ -62,19 +61,22 @@ class RenameDataFieldAction extends ListingContextAction {
 		DataType type = data.getDataType();
 
 		if (type instanceof Composite) {
-			Composite comp = (Composite)type;
+			Composite comp = (Composite) type;
 			int[] compPath = loc.getComponentPath();
-			for (int i=0; i<compPath.length-1; i++) {
+			for (int i = 0; i < compPath.length - 1; i++) {
 				DataTypeComponent subComp = comp.getComponent(compPath[i]);
 				type = subComp.getDataType();
-				if (type instanceof Composite)
-					comp = (Composite)type;
-				else
+				if (type instanceof Composite) {
+					comp = (Composite) type;
+				}
+				else {
 					return;
+				}
 			}
 
 			Data instance = data.getComponent(compPath);
-			DataTypeComponent subComp = comp.getComponent(compPath[compPath.length-1]);
+			DataTypeComponent subComp = comp.getComponent(compPath[compPath.length - 1]);
+			RenameDataFieldDialog dialog = new RenameDataFieldDialog(plugin);
 			dialog.setDataComponent(program, subComp, instance.getFieldName());
 			tool.showDialog(dialog, tool.getComponentProvider(PluginConstants.CODE_BROWSER));
 		}

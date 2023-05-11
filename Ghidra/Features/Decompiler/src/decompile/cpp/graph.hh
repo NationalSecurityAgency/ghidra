@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef __GRAPH_HH__
+#define __GRAPH_HH__
+
 #include "funcdata.hh"
+
+namespace ghidra {
 
 extern void dump_dataflow_graph(Funcdata &data,ostream &s);
 extern void dump_controlflow_graph(const string &name,const BlockGraph &graph,ostream &s);
 extern void dump_dom_graph(const string &name,const BlockGraph &graph,ostream &s);
+
+} // End namespace ghidra
+#endif

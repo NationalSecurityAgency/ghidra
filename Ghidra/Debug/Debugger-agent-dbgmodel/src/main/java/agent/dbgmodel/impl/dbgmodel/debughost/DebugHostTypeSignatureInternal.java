@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostTypeSignature;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.IDebugHostTypeSignature;
 import agent.dbgmodel.jna.dbgmodel.debughost.WrapIDebugHostTypeSignature;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface DebugHostTypeSignatureInternal extends DebugHostTypeSignature {
 	Map<Pointer, DebugHostTypeSignatureInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostTypeSignatureInternal instanceFor(WrapIDebugHostTypeSignature data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostTypeSignatureImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostTypeSignatureImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostTypeSignature>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugHostTypeSignature>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostTypeSignature.IID_IDEBUG_HOST_TYPE_SIGNATURE),
-					WrapIDebugHostTypeSignature.class) //
-				.build();
+	List<Preferred<WrapIDebugHostTypeSignature>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostTypeSignature.IID_IDEBUG_HOST_TYPE_SIGNATURE,
+			WrapIDebugHostTypeSignature.class));
 
 	static DebugHostTypeSignatureInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostTypeSignatureInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostTypeSignatureInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

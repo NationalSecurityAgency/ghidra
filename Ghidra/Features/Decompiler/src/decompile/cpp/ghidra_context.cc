@@ -15,6 +15,8 @@
  */
 #include "ghidra_context.hh"
 
+namespace ghidra {
+
 const TrackedSet &ContextGhidra::getTrackedSet(const Address &addr) const
 
 {
@@ -40,3 +42,4 @@ void ContextGhidra::decodeFromSpec(Decoder &decoder)
   decoder.skipElement();	// Ignore details handled by ghidra
 }
 
+} // End namespace ghidra

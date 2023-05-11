@@ -289,7 +289,7 @@ public class ProjectDataDeleteTask extends Task {
 			Collections.sort(sortedFolders,
 				(o1, o2) -> o2.getPathname().compareTo(o1.getPathname()));
 			for (DomainFolder folder : sortedFolders) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				try {
 					folder.delete();
 					monitor.incrementProgress(1);
@@ -324,7 +324,7 @@ public class ProjectDataDeleteTask extends Task {
 
 			List<DomainFile> snapshot = new ArrayList<>(filesToDelete.keySet());
 			for (DomainFile file : snapshot) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				try {
 					if (file.isReadOnly() && !readOnlyOverride.contains(file)) {
 						// shouldn't happen normally because pre-process filters these out
@@ -363,7 +363,7 @@ public class ProjectDataDeleteTask extends Task {
 			monitor.initialize(startFiles.size());
 			monitor.setMessage("Checking files");
 			for (DomainFile file : startFiles) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				preprocessFile(file, monitor);
 				monitor.incrementProgress(1);
 			}
@@ -373,7 +373,7 @@ public class ProjectDataDeleteTask extends Task {
 				new UnknownProgressWrappingTaskMonitor(monitor, Math.max(startFolders.size(), 1));
 			monitor.setMessage("Checking folders");
 			for (DomainFolder folder : startFolders) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				preprocessFolder(folder, monitor);
 			}
 
@@ -396,13 +396,13 @@ public class ProjectDataDeleteTask extends Task {
 		monitor.setMessage("Checking " + folder.getPathname());
 		foldersToDelete.put(folder, null);
 		for (DomainFile file : folder.getFiles()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			preprocessFile(file, monitor);
 			monitor.incrementProgress(1);
 		}
 
 		for (DomainFolder subFolder : folder.getFolders()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			preprocessFolder(subFolder, monitor);
 		}
 	}

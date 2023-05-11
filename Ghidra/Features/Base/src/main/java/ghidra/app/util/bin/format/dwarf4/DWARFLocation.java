@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
+import java.util.List;
+
 public class DWARFLocation {
 	private DWARFRange addressRange;
 	private byte[] location;
@@ -35,6 +37,39 @@ public class DWARFLocation {
 
 	public byte[] getLocation() {
 		return this.location;
+	}
+
+	/**
+	 * Get the location that corresponds to the entry point of the function If
+	 * there is only a single location, assume it applies to whole function
+	 *
+	 * @param locList
+	 * @param funcAddr
+	 * @return the byte array corresponding to the location expression
+	 */
+	public static DWARFLocation getTopLocation(List<DWARFLocation> locList, long funcAddr) {
+		if (locList.size() == 1) {
+			return locList.get(0);
+		}
+		for (DWARFLocation loc : locList) {
+			if (loc.getRange().getFrom() == funcAddr) {
+				return loc;
+			}
+		}
+		return null;
+	}
+
+	public static DWARFLocation getEntryLocation(List<DWARFLocation> locList, long funcAddr) {
+		for (DWARFLocation loc : locList) {
+			if (loc.getRange().getFrom() == funcAddr) {
+				return loc;
+			}
+		}
+		return null;
+	}
+
+	public static DWARFLocation getFirstLocation(List<DWARFLocation> locList) {
+		return !locList.isEmpty() ? locList.get(0) : null;
 	}
 
 	/*

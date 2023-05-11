@@ -11,6 +11,7 @@ data/languages/cet.sinc||GHIDRA||||END|
 data/languages/clwb.sinc||GHIDRA||||END|
 data/languages/fma.sinc||GHIDRA||||END|
 data/languages/ia.sinc||GHIDRA||||END|
+data/languages/lockable.sinc||GHIDRA||||END|
 data/languages/lzcnt.sinc||GHIDRA||||END|
 data/languages/macros.sinc||GHIDRA||||END|
 data/languages/mpx.sinc||GHIDRA||||END|
@@ -31,7 +32,11 @@ data/languages/x86-16-real.pspec||GHIDRA||||END|
 data/languages/x86-16.cspec||GHIDRA||||END|
 data/languages/x86-16.gdis||GHIDRA||||END|
 data/languages/x86-16.pspec||GHIDRA||||END|
+data/languages/x86-32-golang.cspec||GHIDRA||||END|
+data/languages/x86-32-golang.register.info||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|
+data/languages/x86-64-golang.cspec||GHIDRA||||END|
+data/languages/x86-64-golang.register.info||GHIDRA||||END|
 data/languages/x86-64-win.cspec||GHIDRA||||END|
 data/languages/x86-64.dwarf||GHIDRA||||END|
 data/languages/x86-64.pspec||GHIDRA||||END|

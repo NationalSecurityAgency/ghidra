@@ -52,7 +52,7 @@ public abstract class FBPT implements StructConverter {
 		int i = 0;
 		FlatProgramAPI api = new FlatProgramAPI(program);
 		for (FBPT_Entry entry : getEntries()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType entryDataType = entry.toDataType();
 			Data entryData = program.getListing().createData(address, entryDataType);
 			if (entryData == null) {

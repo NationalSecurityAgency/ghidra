@@ -21,6 +21,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -114,7 +115,6 @@ public class ServerTestUtil {
 	private static class ShutdownHook extends Thread {
 		@Override
 		public void run() {
-			Msg.debug(ServerTestUtil.class, "\n\n\n\n\tSHUTDOWN HOOK RUNNING");
 			disposeServer();
 		}
 	}
@@ -626,7 +626,6 @@ public class ServerTestUtil {
 
 		System.setProperty(ApplicationTrustManagerFactory.GHIDRA_CACERTS_PATH_PROPERTY, "");
 
-		Msg.debug(ServerTestUtil.class, "disposeServer() - process exist? " + serverProcess);
 		if (serverProcess != null) {
 
 			cmdOut.dispose();
@@ -752,7 +751,7 @@ public class ServerTestUtil {
 	 * dispose method on the returned object.
 	 * @throws IOException 
 	 */
-	public static LocalFileSystem createRepository(String dirPath, String repoName,
+	private static LocalFileSystem createRepository(String dirPath, String repoName,
 			String... userAccessLines) throws IOException {
 
 		File repoDir = new File(dirPath, NamingUtilities.mangle(repoName));
@@ -767,7 +766,7 @@ public class ServerTestUtil {
 		return repoFileSystem;
 	}
 
-	public static void createRepositoryItem(LocalFileSystem repoFilesystem, String name,
+	private static void createRepositoryItem(LocalFileSystem repoFilesystem, String name,
 			String folderPath, int numFunctions) throws Exception {
 
 		ToyProgramBuilder builder = new ToyProgramBuilder(name, true);
@@ -787,14 +786,7 @@ public class ServerTestUtil {
 
 			setProgramHashes(program);
 
-			ContentHandler contentHandler = DomainObjectAdapter.getContentHandler(program);
-			long checkoutId = contentHandler.createFile(repoFilesystem, null, folderPath, name,
-				program, TaskMonitor.DUMMY);
-			LocalFolderItem item = repoFilesystem.getItem(folderPath, name);
-			if (item == null) {
-				throw new IOException("Item not found: " + FileSystem.SEPARATOR + name);
-			}
-			item.terminateCheckout(checkoutId, false);
+			createRepositoryItem(repoFilesystem, name, folderPath, program);
 		}
 		catch (CancelledException e) {
 			throw new RuntimeException(e); // unexpected
@@ -805,6 +797,19 @@ public class ServerTestUtil {
 		finally {
 			builder.dispose();
 		}
+	}
+
+	public static void createRepositoryItem(LocalFileSystem repoFilesystem, String name,
+			String folderPath, Program program) throws Exception {
+
+		ContentHandler contentHandler = DomainObjectAdapter.getContentHandler(program);
+		long checkoutId = contentHandler.createFile(repoFilesystem, null, folderPath, name,
+			program, TaskMonitor.DUMMY);
+		LocalFolderItem item = repoFilesystem.getItem(folderPath, name);
+		if (item == null) {
+			throw new IOException("Item not found: " + FileSystem.SEPARATOR + name);
+		}
+		item.terminateCheckout(checkoutId, false);
 	}
 
 	/**
@@ -848,6 +853,43 @@ public class ServerTestUtil {
 			createRepositoryItem(repoFilesystem, "notepad1", "/", 0);
 			createRepositoryItem(repoFilesystem, "bash1", "/f2", 0);
 			createRepositoryItem(repoFilesystem, "foo2", "/", 2);
+		}
+		finally {
+			repoFilesystem.dispose();
+		}
+	}
+
+	/**
+	 * Create and populate server test repositories "Test" and "Test1" with the specified 
+	 * users added.  The ADMIN_USER "test" is added by default. 
+	 * @param dirPath server root
+	 * @param repoName repository name
+	 * @param contentProvider repository content provider callback 
+	 * (use {@link #createRepositoryItem(LocalFileSystem, String, String, Program)} to add content.
+	 * @param users optional inclusion of USER_A and/or USER_B to be added with no authentication required
+	 * @throws Exception
+	 */
+	public static void createPopulatedTestServer(String dirPath, String repoName,
+			Consumer<LocalFileSystem> contentProvider, String... users) throws Exception {
+
+		Msg.info(ServerTestUtil.class, "Constructing Ghidra Server for testing: " + dirPath);
+
+		File rootDir = new File(dirPath);
+		FileUtilities.deleteDir(rootDir);
+		FileUtilities.mkdirs(rootDir);
+
+		String[] userArray = new String[users.length + 1];
+		userArray[0] = ADMIN_USER;
+		System.arraycopy(users, 0, userArray, 1, users.length);
+		createUsers(dirPath, userArray);
+
+		String keys[] = SSHKeyUtil.generateSSHRSAKeys();
+		addSSHKeys(dirPath, keys[0], "test.key", keys[1], "test.pub");
+
+		LocalFileSystem repoFilesystem = createRepository(dirPath, repoName, ADMIN_USER + "=ADMIN",
+			USER_A + "=READ_ONLY", USER_B + "=WRITE");
+		try {
+			contentProvider.accept(repoFilesystem);
 		}
 		finally {
 			repoFilesystem.dispose();
@@ -901,21 +943,21 @@ public class ServerTestUtil {
 		Msg.info(ServerTestUtil.class, "Generating self-signed CA cert: " + caPath);
 		PrivateKeyEntry caEntry =
 			ApplicationKeyManagerUtils.createKeyEntry("test-CA", TEST_PKI_CA_DN, 2, null, null,
-				"PKCS12", ApplicationKeyManagerFactory.DEFAULT_PASSWORD.toCharArray());
+				"PKCS12", null, ApplicationKeyManagerFactory.DEFAULT_PASSWORD.toCharArray());
 		ApplicationKeyManagerUtils.exportX509Certificates(caEntry.getCertificateChain(), caFile);
 
 		// Generate User/Client certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating test user key/cert (signed by test-CA, pwd: " +
 			TEST_PKI_USER_PASSPHRASE + "): " + userKeystorePath);
 		ApplicationKeyManagerUtils.createKeyEntry("test-sig", TEST_PKI_USER_DN, 2, caEntry,
-			userKeystoreFile, "PKCS12", TEST_PKI_USER_PASSPHRASE.toCharArray());
+			userKeystoreFile, "PKCS12", null, TEST_PKI_USER_PASSPHRASE.toCharArray());
 
 		// Generate Server certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating test server key/cert (signed by test-CA, pwd: " +
 			TEST_PKI_SERVER_PASSPHRASE + "): " + serverKeystorePath);
 
 		ApplicationKeyManagerUtils.createKeyEntry("test-sig", TEST_PKI_SERVER_DN, 2, caEntry,
-			serverKeystoreFile, "PKCS12", TEST_PKI_SERVER_PASSPHRASE.toCharArray());
+			serverKeystoreFile, "PKCS12", null, TEST_PKI_SERVER_PASSPHRASE.toCharArray());
 	}
 
 	/**

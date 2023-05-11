@@ -26,10 +26,11 @@ public class VariableStorageDBAdapterV2 extends VariableStorageDBAdapter {
 
 	private static final int TABLE_VERSION = 2;
 	private Table variableStorageTable;
+	private DBHandle handle;
 
 	VariableStorageDBAdapterV2(DBHandle handle, boolean create)
 			throws VersionException, IOException {
-
+		this.handle = handle;
 		if (create) {
 			variableStorageTable = handle.createTable(VARIABLE_STORAGE_TABLE_NAME,
 				VARIABLE_STORAGE_SCHEMA, new int[] { HASH_COL });
@@ -47,6 +48,11 @@ public class VariableStorageDBAdapterV2 extends VariableStorageDBAdapter {
 				throw new VersionException(VersionException.NEWER_VERSION, false);
 			}
 		}
+	}
+
+	@Override
+	void deleteTable() throws IOException {
+		handle.deleteTable(VARIABLE_STORAGE_TABLE_NAME);
 	}
 
 	@Override

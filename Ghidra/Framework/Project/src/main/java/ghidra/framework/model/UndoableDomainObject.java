@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package ghidra.framework.model;
 
-import ghidra.framework.store.LockException;
-
 import db.TerminatedTransactionException;
+import db.Transaction;
+import ghidra.framework.store.LockException;
 
 /**
  * <code>UndoableDomainObject</code> extends a domain object to provide transaction
@@ -34,6 +33,20 @@ import db.TerminatedTransactionException;
  * @see #endTransaction(int, boolean)
  */
 public interface UndoableDomainObject extends DomainObject, Undoable {
+
+	/**
+	 * Open new transaction.  This should generally be done with a try-with-resources block:
+	 * <pre>
+	 * try (Transaction tx = dobj.openTransaction(description)) {
+	 * 	// ... Do something
+	 * }
+	 * </pre>
+	 * 
+	 * @param description a short description of the changes to be made.
+	 * @return transaction object
+	 * @throws IllegalStateException if this {@link DomainObject} has already been closed.
+	 */
+	public Transaction openTransaction(String description) throws IllegalStateException;
 
 	/**
 	 * Start a new transaction in order to make changes to this domain object.
@@ -71,10 +84,10 @@ public interface UndoableDomainObject extends DomainObject, Undoable {
 	public void endTransaction(int transactionID, boolean commit);
 
 	/**
-	 * Returns the current transaction
-	 * @return the current transaction
+	 * Returns the current transaction info
+	 * @return the current transaction info
 	 */
-	public Transaction getCurrentTransaction();
+	public TransactionInfo getCurrentTransactionInfo();
 
 	/**
 	 * Returns true if the last transaction was terminated externally from the action that

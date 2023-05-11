@@ -121,6 +121,22 @@ public interface DbgThread
 	CompletableFuture<Void> step(Map<String, ?> args);
 
 	/**
+	 * Step (over) the thread until the specified address is reached
+	 * 
+	 * @param address the stop address
+	 * @return a future that completes once the thread is running
+	 */
+	CompletableFuture<Void> stepToAddress(String address);
+
+	/**
+	 * Trace (step into) the thread until the specified address is reached
+	 * 
+	 * @param address the stop address
+	 * @return a future that completes once the thread is running
+	 */
+	CompletableFuture<Void> traceToAddress(String address);
+
+	/**
 	 * Detach from the entire process
 	 * 
 	 * This is equivalent to the CLI command {@code detach}. It will detach the entire process, not
@@ -142,9 +158,12 @@ public interface DbgThread
 
 	/**
 	 * Get the effective architecture for the executing thread
-	 * 
-	 * @return a future that completes when GDB has executed the command
 	 */
 	Machine getExecutingProcessorType();
+
+	/**
+	 * Get the address of the associated thread structure
+	 */
+	Long getOffset();
 
 }

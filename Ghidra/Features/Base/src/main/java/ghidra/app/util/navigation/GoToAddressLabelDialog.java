@@ -24,8 +24,8 @@ import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
-import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.ReusableDialogComponentProvider;
 import docking.tool.ToolConstants;
 import docking.widgets.HyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
@@ -42,7 +42,8 @@ import ghidra.program.model.address.Address;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitorComponent;
 
-public class GoToAddressLabelDialog extends DialogComponentProvider implements GoToServiceListener {
+public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
+		implements GoToServiceListener {
 
 	//////////////////////////////////////////////////////////////////////
 	//                                                                  //
@@ -99,6 +100,9 @@ public class GoToAddressLabelDialog extends DialogComponentProvider implements G
 
 	/**
 	 * Popup up the dialog in the center of the tool.
+	 * @param nav the Navigatable
+	 * @param addr the address
+	 * @param tool the PluginTool
 	 */
 	public void show(Navigatable nav, Address addr, PluginTool tool) {
 		this.navigatable = nav;
@@ -156,9 +160,8 @@ public class GoToAddressLabelDialog extends DialogComponentProvider implements G
 
 	private void initializeContents() {
 		if (goToMemory) {
-			JTextField field = (JTextField) comboBox.getEditor().getEditorComponent();
-			field.selectAll();
-			field.requestFocus();
+			comboBox.selectAll();
+			comboBox.requestFocus();
 		}
 		else {
 			comboBox.setSelectedItem(null);
@@ -167,6 +170,7 @@ public class GoToAddressLabelDialog extends DialogComponentProvider implements G
 
 	/**
 	 * Builds the main panel for this dialog.
+	 * @return the main panel for this dialog
 	 */
 	final protected JPanel buildMainPanel() {
 
@@ -181,9 +185,8 @@ public class GoToAddressLabelDialog extends DialogComponentProvider implements G
 		gbc.insets = new Insets(5, 5, 5, 5);
 
 		hyperlink = new HyperlinkComponent("<html>Enter an address, label, <a href=\"" +
-			EXPRESSION_ANCHOR_NAME + "\">expression</a>, or " +
-			"<a href=\"" + FILE_OFFSET_ANCHOR_NAME +
-			"\">file offset</a>:");
+			EXPRESSION_ANCHOR_NAME + "\">expression</a>, or " + "<a href=\"" +
+			FILE_OFFSET_ANCHOR_NAME + "\">file offset</a>:");
 
 		HyperlinkListener hyperlinkListener = evt -> {
 			if (evt.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -375,12 +378,6 @@ public class GoToAddressLabelDialog extends DialogComponentProvider implements G
 
 	// JUnits
 	public void setText(String text) {
-		try {
-			Component comp = comboBox.getEditor().getEditorComponent();
-			((JTextField) comp).setText(text);
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		comboBox.setText(text);
 	}
 }

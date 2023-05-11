@@ -29,6 +29,8 @@ extern "C" {
 }
 #endif
 
+namespace ghidra {
+
 // Path name separator
 #ifdef _WINDOWS
 char FileManage::separator = '\\';
@@ -381,3 +383,5 @@ string FileManage::discoverGhidraRoot(const char *argv0)
   }
   return "";
 }
+
+} // End namespace ghidra

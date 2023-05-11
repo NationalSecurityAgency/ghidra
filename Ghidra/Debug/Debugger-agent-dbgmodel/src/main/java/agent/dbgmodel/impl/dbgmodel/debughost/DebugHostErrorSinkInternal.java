@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostErrorSink;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.IDebugHostErrorSink;
 import agent.dbgmodel.jna.dbgmodel.debughost.WrapIDebugHostErrorSink;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface DebugHostErrorSinkInternal extends DebugHostErrorSink {
 	Map<Pointer, DebugHostErrorSinkInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostErrorSinkInternal instanceFor(WrapIDebugHostErrorSink data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostErrorSinkImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostErrorSinkImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostErrorSink>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugHostErrorSink>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostErrorSink.IID_IDEBUG_HOST_ERROR_SINK),
-					WrapIDebugHostErrorSink.class) //
-				.build();
+	List<Preferred<WrapIDebugHostErrorSink>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostErrorSink.IID_IDEBUG_HOST_ERROR_SINK,
+			WrapIDebugHostErrorSink.class));
 
 	static DebugHostErrorSinkInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostErrorSinkInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostErrorSinkInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

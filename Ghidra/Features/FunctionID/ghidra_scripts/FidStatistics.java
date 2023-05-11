@@ -371,14 +371,18 @@ public class FidStatistics extends GhidraScript {
 			throws VersionException, CancelledException, IOException {
 		DomainFile[] files = folder.getFiles();
 		for (DomainFile domainFile : files) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
+			// Do not follow folder-links or consider program links.  Using content type
+			// to filter is best way to control this.  If program links should be considered
+			// "Program.class.isAssignableFrom(domainFile.getDomainObjectClass())"
+			// should be used.
 			if (domainFile.getContentType().equals(ProgramContentHandler.PROGRAM_CONTENT_TYPE)) {
 				programs.add(domainFile);
 			}
 		}
 		DomainFolder[] folders = folder.getFolders();
 		for (DomainFolder domainFolder : folders) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			findDomainFiles(programs, domainFolder);
 		}
 	}
@@ -527,7 +531,7 @@ public class FidStatistics extends GhidraScript {
 			throws CancelledException, VersionException, IOException {
 		ArrayList<DomainFolder> folders = new ArrayList<DomainFolder>();
 		while (true) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				DomainFolder folder =
 					askProjectFolder("Add a top-level project folder (cancel to quit)");
@@ -541,7 +545,7 @@ public class FidStatistics extends GhidraScript {
 		LinkedList<DomainFile> domainFiles = new LinkedList<DomainFile>();
 		monitor.setMessage("Finding domain files...");
 		for (DomainFolder folder : folders) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			findDomainFiles(domainFiles, folder);
 		}
 		return domainFiles;

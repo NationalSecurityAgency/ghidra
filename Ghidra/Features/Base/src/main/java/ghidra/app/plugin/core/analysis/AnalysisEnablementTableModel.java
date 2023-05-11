@@ -19,14 +19,14 @@ import java.awt.Color;
 import java.awt.Component;
 import java.util.List;
 
-import javax.swing.JComponent;
-import javax.swing.JTable;
+import javax.swing.*;
 
 import docking.widgets.table.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
-import ghidra.util.ColorUtils;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
@@ -36,8 +36,10 @@ import ghidra.util.table.column.GColumnRenderer;
 public class AnalysisEnablementTableModel
 		extends GDynamicColumnTableModel<AnalyzerEnablementState, Object> {
 
-	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT = new Color(255, 255, 200);
-	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED = new Color(177, 212, 236);
+	//@formatter:off
+	private static Color FG_COLOR_PROTOTYPE = new GColor("color.fg.analysis.options.prototype");
+	private static Color FG_COLOR_PROTOTYPE_SELECTED = new GColor("color.fg.analysis.options.prototype.selected");
+	//@formatter:on
 
 	private List<AnalyzerEnablementState> analyzerStates;
 	private AnalysisPanel panel;
@@ -109,7 +111,7 @@ public class AnalysisEnablementTableModel
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class AnalyzerEnabledColumn
 			extends AbstractDynamicTableColumn<AnalyzerEnablementState, Boolean, Object> {
@@ -173,15 +175,9 @@ public class AnalysisEnablementTableModel
 			}
 
 			// not the default enablement
-			if (isSelected) {
-				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED);
-			}
-			else {
-				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT);
-			}
-
+			JLabel label = (JLabel) component;
+			label.setText("*");
 			setToolTip(component, "This option differs from the default");
-
 			return component;
 		}
 
@@ -203,10 +199,9 @@ public class AnalysisEnablementTableModel
 			}
 
 			String analyzerName = (String) value;
-
 			if (analyzerName.endsWith(AnalysisPanel.PROTOTYPE)) {
-				component.setForeground(
-					ColorUtils.deriveForeground(component.getBackground(), ColorUtils.HUE_RED));
+				Color c = data.isSelected() ? FG_COLOR_PROTOTYPE_SELECTED : FG_COLOR_PROTOTYPE;
+				component.setForeground(c);
 			}
 
 			AnalyzerEnablementState state = (AnalyzerEnablementState) data.getRowObject();
@@ -215,15 +210,8 @@ public class AnalysisEnablementTableModel
 				return component;
 			}
 
-			// not the default enablement			
-			if (data.isSelected()) {
-				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED);
-				component.setForeground(Color.BLACK);
-			}
-			else {
-				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT);
-			}
-
+			// not the default enablement
+			component.setForeground(Palette.BLACK);
 			setToolTip(component, "This option differs from the default");
 			return component;
 		}

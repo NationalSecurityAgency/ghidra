@@ -78,7 +78,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	@Override
 	protected boolean createAssociatedData() throws CancelledException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		boolean createTerminatorSuccess;
 		try {
@@ -112,10 +112,10 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 				return false;
 			}
 			Data data = DataUtilities.createData(program, terminatorAddress,
-				PointerDataType.dataType, -1, false, getClearDataMode());
+				PointerDataType.dataType, -1, getClearDataMode());
 			TypeDescriptorModel rtti0Model = model.getRtti0Model();
 			if (rtti0Model != null) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				String demangledTypeDescriptor = rtti0Model.getDemangledTypeDescriptor();
 				String prefixString = ((demangledTypeDescriptor != null)
 						? (demangledTypeDescriptor + Namespace.DELIMITER)
@@ -142,7 +142,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		DataType metaPointer = new PointerDataType(program.getDataTypeManager());
 		try {
 			DataUtilities.createData(program, metaAddress, metaPointer, metaPointer.getLength(),
-				false, getClearDataMode());
+				getClearDataMode());
 			return true;
 		}
 		catch (CodeUnitInsertionException e) {
@@ -165,7 +165,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		Address vfTableAddress = getDataAddress();
 		Program program = model.getProgram();
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		TypeDescriptorModel rtti0Model = model.getRtti0Model();
 
@@ -192,7 +192,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		if (applyOptions.shouldCreateFunction()) {
 			int elementCount = model.getElementCount();
 			for (int tableElementIndex = 0; tableElementIndex < elementCount; tableElementIndex++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Address vfPointer = model.getVirtualFunctionPointer(tableElementIndex);
 				if (vfPointer != null) {
 					EHDataTypeUtilities.createFunctionIfNeeded(program, vfPointer);
@@ -208,7 +208,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		Program program = model.getProgram();
 		Address metaAddress = getMetaAddress(program);
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		TypeDescriptorModel rtti0Model = model.getRtti0Model();
 
@@ -216,7 +216,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 			return true;
 		}
 		
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Label
 		boolean shouldCreateComment = true;

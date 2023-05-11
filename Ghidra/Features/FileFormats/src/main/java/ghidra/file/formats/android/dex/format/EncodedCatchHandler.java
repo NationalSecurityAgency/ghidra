@@ -15,13 +15,12 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -34,7 +33,7 @@ public class EncodedCatchHandler implements StructConverter {
 	private int catchAllAddressLength;
 
 	public EncodedCatchHandler(BinaryReader reader) throws IOException {
-		LEB128 leb128 = LEB128.readSignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::signed);
 		size = leb128.asInt32();
 		sizeLength = leb128.getLength();
 
@@ -43,7 +42,7 @@ public class EncodedCatchHandler implements StructConverter {
 		}
 
 		if (size <= 0) {// This element is only present if size is non-positive.
-			leb128 = LEB128.readUnsignedValue(reader);
+			leb128 = reader.readNext(LEB128Info::unsigned);
 			catchAllAddress = leb128.asUInt32();
 			catchAllAddressLength = leb128.getLength();
 		}
@@ -79,10 +78,10 @@ public class EncodedCatchHandler implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StringBuilder builder = new StringBuilder();
-		builder.append("encoded_catch_handler_" + sizeLength + "_" + catchAllAddressLength + "_" +
-			handlers.size());
+		builder.append("encoded_catch_handler_%d_%d_%d".formatted(sizeLength, catchAllAddressLength,
+			handlers.size()));
 		Structure structure = new StructureDataType(builder.toString(), 0);
-		structure.add(new ArrayDataType(BYTE, sizeLength, BYTE.getLength()), "size", null);
+		structure.add(ULEB128, sizeLength, "size", null);
 		int index = 0;
 		for (EncodedTypeAddressPair pair : handlers) {
 			DataType dataType = pair.toDataType();
@@ -90,8 +89,7 @@ public class EncodedCatchHandler implements StructConverter {
 			builder.append(pair.getDataTypeIdString());
 		}
 		if (size <= 0) {// This element is only present if size is non-positive.
-			structure.add(new ArrayDataType(BYTE, catchAllAddressLength, BYTE.getLength()),
-				"catch_all_addr", null);
+			structure.add(ULEB128, catchAllAddressLength, "catch_all_addr", null);
 		}
 		structure.setCategoryPath(new CategoryPath("/dex/encoded_catch_handler"));
 		try {

@@ -23,6 +23,7 @@ import javax.swing.table.TableColumn;
 
 import docking.DialogComponentProvider;
 import docking.widgets.table.*;
+import generic.theme.GColor;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
@@ -37,6 +38,11 @@ import help.HelpService;
  *
  */
 public class PluginInstallerDialog extends DialogComponentProvider {
+
+	private static final Color FG_COLOR_HAS_DEPENDENTS =
+		new GColor("color.fg.plugin.installer.table.has.dependents");
+	private static final Color FG_COLOR_HAS_DEPENDENTS_SELECTED =
+		new GColor("color.fg.plugin.installer.table.has.dependents.selected");
 
 	private PluginTool tool;
 	private PluginConfigurationModel model;
@@ -231,8 +237,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 		NameCellRenderer() {
 			defaultFont = getFont();
-			boldFont = new Font(defaultFont.getName(), defaultFont.getStyle() | Font.BOLD,
-				defaultFont.getSize());
+			boldFont = defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD);
 			setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 		}
 
@@ -253,7 +258,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 			if (isSelected) {
 				if (hasDependents) {
-					renderer.setForeground(Color.pink);
+					renderer.setForeground(FG_COLOR_HAS_DEPENDENTS_SELECTED);
 					renderer.setFont(boldFont);
 				}
 				else {
@@ -264,7 +269,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 			else {
 				// set color to red if other plugins depend on this plugin
 				if (hasDependents) {
-					renderer.setForeground(Color.red);
+					renderer.setForeground(FG_COLOR_HAS_DEPENDENTS);
 					renderer.setFont(boldFont);
 				}
 				else {

@@ -73,7 +73,7 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			if (myProgram != null) {
 				myProgram.flushEvents();
 			}
-			waitForPostedSwingRunnables();
+			waitForSwing();
 
 		}
 		catch (Exception e) {

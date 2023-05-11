@@ -7,7 +7,7 @@
 
     <TITLE>Debugger: Breakpoints in the Listings</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -32,6 +32,32 @@
     the current target. <B>NOTE:</B> Depending on the connected debugger, locations resulting from
     a common specification may not be independently manipulated.</P>
 
+    <P>By default, enabled breakpoints are colored a desaturated blue, ineffective breakpoints are
+    colored grey, and disabled breakpoints have no background at all.</P>
+
+    <H2>In the Decompiler</H2>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerDecompilerBreakpointMargin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>When active in the Debugger, the <A href=
+    "help/topics/DecompilePlugin/DecompilerIntro.html">Decompiler</A> will display breakpoints in
+    its margin. Keep in mind, the relationship between machine instructions and the decompiled code
+    is not always so simple. One line may correspond to a single address, many addresses, or no
+    addresses at all. If there is a breakpoint at any address for a given line, then that line will
+    have a marker indicating the breakpoint's state. If there are multiple, then that state may be
+    mixed. In most cases, <A href="#set_breakpoint">Setting</A> a breakpoint in the decompiler will
+    suggest a Software Execution breakpoint at the minimum address of the current line. If the
+    current token is a static variable, then it will suggest a Read/Write breakpoint at the
+    variable's address. (Note that Read/Write breakpoints are not indicated in the Decompiler's
+    margin.) The other actions affect all breakpoints on the current line.</P>
+
     <H2>Actions</H2>
 
     <P>The following actions are added to all disassembly listings by the breakpoint marker plugin.
@@ -39,8 +65,8 @@
     breakpoints on arbitrary expressions, use the <A href=
     "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html#set_breakpoint">Set
     Breakpoint</A> action of the Objects window. <B>NOTE:</B> These actions may also appear in
-    other address-based contexts, e.g., the decompiler listing; however, those contexts often lack
-    any indication of breakpoint presence or state.</P>
+    other address-based contexts, but not all of those contexts include visual breakpoint
+    indicators.</P>
 
     <H3><A name="toggle_breakpoint"></A><IMG alt="" src="images/breakpoint-mixed.png"> Toggle
     Breakpoint (K)</H3>
@@ -109,12 +135,5 @@
 
     <P>This action is available when there is at least one breakpoint (in any state) at the cursor.
     It deletes those logical breakpoints.</P>
-
-    <H2><A name="colors"></A>Tool Options: Colors</H2>
-
-    <P>The background coloring of enabled and disabled, effective and ineffective breakpoints can
-    be configured in the tool's options. By default, enabled breakpoints are colored a desaturated
-    blue, ineffective breakpoints are colored grey, and disabled breakpoints have no background at
-    all.</P>
   </BODY>
 </HTML>

@@ -18,20 +18,12 @@ package ghidra.app.services;
 import java.util.List;
 
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
 
 /**
  * Simplified datatype service interface to provide query capabilities
  * to a set of open datatype managers
  */
 public interface DataTypeQueryService {
-
-	/**
-	 * Gets the open data type managers.
-	 * 
-	 * @return the open data type managers.
-	 */
-	public DataTypeManager[] getDataTypeManagers();
 
 	/**
 	 * Gets the sorted list of all datatypes known by this service via it's owned DataTypeManagers.

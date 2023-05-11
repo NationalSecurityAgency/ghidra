@@ -24,41 +24,59 @@ import java.io.File;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.data.Category;
 import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 
 public class SynchronizeGDTCategoryPaths extends GhidraScript {
 
-	private File firstFile;
-	private File secondFile;
-	private FileDataTypeManager firstArchive;
-	private FileDataTypeManager secondArchive;
-
 	@Override
 	protected void run() throws Exception {
-		firstFile = askFile("Select First GDT File", "Select 1st");
-		secondFile = askFile("Select Second GDT File", "Select 2nd");
 
-		try {
-			firstArchive = FileDataTypeManager.openFileArchive(firstFile, false);
-			secondArchive = FileDataTypeManager.openFileArchive(secondFile, true);
-
-			int transactionID = secondArchive.startTransaction("Synchronize Category Path Names");
-			Category firstCategory = firstArchive.getRootCategory();
-			Category secondCategory = secondArchive.getRootCategory();
-
-			synchronizeCategory(firstCategory, secondCategory);
-			secondArchive.endTransaction(transactionID, true);
-		}
-		finally {
-			if (firstArchive != null) {
-				firstArchive.close();
+		File firstFile = askFile("Select First GDT File", "Select 1st");
+		try (FileDataTypeManager firstArchive =
+			FileDataTypeManager.openFileArchive(firstFile, false)) {
+			if (hasWarning(firstArchive, firstFile)) {
+				return;
 			}
-			secondArchive.save();
-			if (secondArchive != null) {
-				secondArchive.close();
+
+			File secondFile = askFile("Select Second GDT File", "Select 2nd");
+			try (FileDataTypeManager secondArchive =
+				FileDataTypeManager.openFileArchive(secondFile, true)) {
+				if (hasWarning(secondArchive, secondFile)) {
+					return;
+				}
+
+				int transactionID =
+					secondArchive.startTransaction("Synchronize Category Path Names");
+				try {
+					Category firstCategory = firstArchive.getRootCategory();
+					Category secondCategory = secondArchive.getRootCategory();
+					synchronizeCategory(firstCategory, secondCategory);
+				}
+				finally {
+					secondArchive.endTransaction(transactionID, true);
+					secondArchive.save();
+					secondArchive.close();
+				}
 			}
 		}
+	}
+
+	private boolean hasWarning(FileDataTypeManager archive, File file) {
+		ArchiveWarning warning = archive.getWarning();
+		if (warning == ArchiveWarning.NONE) {
+			return false;
+		}
+		if (warning == ArchiveWarning.UPGRADED_LANGUAGE_VERSION) {
+			return !askYesNo("Archive Upgrade Confirmation",
+				"A language upgrade has been performed on archive " + file.getName() +
+					"\nIs it OK to proceed?");
+		}
+		popup(
+			"An architecture language error occured while opening archive (see log for details)\n" +
+				file.getPath());
+		return true;
 	}
 
 	private void synchronizeCategory(Category firstCategory, Category secondCategory) {

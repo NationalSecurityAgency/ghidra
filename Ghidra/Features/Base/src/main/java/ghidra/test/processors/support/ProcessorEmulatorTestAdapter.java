@@ -18,7 +18,8 @@ package ghidra.test.processors.support;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.math.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,6 +44,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -255,9 +257,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				// By default, create test output within a directory at the same level as the
 				// development repositories
 				outputRoot = Application.getApplicationRootDirectory()
-						.getParentFile()
-						.getParentFile()
-						.getCanonicalPath();
+					.getParentFile()
+					.getParentFile()
+					.getCanonicalPath();
 			}
 			catch (IOException e) {
 				throw new RuntimeException(e);
@@ -782,7 +784,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						false)
 					: LittleEndianDataConverter.INSTANCE.getBigInteger(bytes, index, elementSize,
 						false);
-			BigDecimal val = ff.round(ff.getHostFloat(encoding));
+			BigDecimal val = ff.round(ff.decodeBigFloat(encoding));
 			return val.toString();
 		}
 	}
@@ -877,7 +879,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		if (reg != null && floatRegSet.contains(reg)) {
 			FloatFormat floatFormat = FloatFormatFactory.getFloatFormat(size);
 			BigDecimal hostFloat =
-				floatFormat.round(floatFormat.getHostFloat(new BigInteger(1, values)));
+				floatFormat.round(floatFormat.decodeBigFloat(new BigInteger(1, values)));
 			floatStr = " (" + hostFloat.toString() + ")";
 		}
 
@@ -970,6 +972,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 		ResourceFile emuTestingArchive = Application.getModuleDataFile("pcodetest/EmuTesting.gdt");
 		archiveDtMgr = FileDataTypeManager.openFileArchive(emuTestingArchive, false);
+		assertEquals(ArchiveWarning.NONE, archiveDtMgr.getWarning());
 		DataType dt = archiveDtMgr.getDataType(CategoryPath.ROOT, TEST_INFO_STRUCT_NAME);
 		if (dt == null || !(dt instanceof Structure)) {
 			fail(TEST_INFO_STRUCT_NAME +
@@ -1180,6 +1183,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			// Initialize pass/fail counts at runtime to detect severe failure
 			testGroup.mainTestControlBlock.setNumberPassed(testRunner, Integer.MIN_VALUE);
 			testGroup.mainTestControlBlock.setNumberFailed(testRunner, Integer.MIN_VALUE);
+			testGroup.mainTestControlBlock.clearNumberIgnored();
 
 			boolean done;
 			if (traceDisabled) {
@@ -1190,6 +1194,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			}
 
 			int pass = testGroup.mainTestControlBlock.getNumberPassed(testRunner);
+			int ignoredPassed = testGroup.mainTestControlBlock.getNumberPassedIgnored();
+			int ignoredFailed = testGroup.mainTestControlBlock.getNumberFailedIgnored();
 			int callOtherErrors = testRunner.getCallOtherErrors();
 			int fail = testGroup.mainTestControlBlock.getNumberFailed(testRunner);
 
@@ -1199,20 +1205,30 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						pass + " fail " + fail);
 			}
 
+			pass -= ignoredPassed;
 			pass -= callOtherErrors;
+			fail -= ignoredFailed;
 
-			String passFailText = "Passed: " + pass + " Failed: " + fail;
+			String passFailText = "Passed: " + pass + " Ignored: " +
+				(ignoredFailed + ignoredPassed) + " Failed: " + fail;
 			if (callOtherErrors != 0) {
 				passFailText += " Passed(w/CALLOTHER): " + callOtherErrors;
 			}
 			passFailText += " Expected Assertions: " + totalExpectedAsserts;
 			log(testGroup, passFailText);
 
+			boolean hasFailures = false;
 			List<String> testFailures = testGroup.getTestFailures();
 			if (!testFailures.isEmpty()) {
-				log(testGroup, "TEST FAILURES:");
+				if (!traceDisabled) {
+					log(testGroup, "TEST FAILURE SUMMARY:");
+				}
 				for (String testFailure : testFailures) {
-					log(testGroup, " >>> " + testFailure);
+					if (!traceDisabled) {
+						log(testGroup, " >>> " + testFailure);
+					}
+					// failure is any entry not marked as ignored
+					hasFailures |= (testFailure.indexOf(PCodeTestGroup.IGNORED_TAG) < 0);
 				}
 			}
 
@@ -1235,12 +1251,12 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				}
 				failTest(testRunner, msg.toString());
 			}
-			int ranCnt = pass + fail + callOtherErrors;
+			int ranCnt = pass + fail + callOtherErrors + ignoredFailed + ignoredPassed;
 			if ((totalExpectedAsserts != 0) && (totalExpectedAsserts != ranCnt)) {
 				failTest(testRunner,
 					"ERROR Unexpected number of assertions ( " + passFailText + " )");
 			}
-			if (fail != 0 || callOtherErrors != 0 || testFailures.size() != 0) {
+			if (fail != 0 || callOtherErrors != 0 || hasFailures) {
 				failTest(testRunner,
 					"ERROR One or more group tests failed ( " + passFailText + " )");
 			}
@@ -1424,6 +1440,17 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 		return maxAddr;
 	}
 
+	/**
+	 * Add specified test names to the set of tests which should be ignored due to know issues
+	 * or limitations.  The tests will still be executed, if present, however they will
+	 * not be included in pass/fail counts.  They will appear in log as "(IGNORED)" test
+	 * result.
+	 * @param testNames one or more test names to be ignored
+	 */
+	protected void addIgnoredTests(String... testNames) {
+		combinedResults.addIgnoredTests(getClass().getSimpleName(), testNames);
+	}
+
 	//
 	// Protected helper methods which may be overriden
 	//
@@ -1537,7 +1564,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 		setAnalysisOptions(program.getOptions(Program.ANALYSIS_PROPERTIES));
 
-		GhidraProgramUtilities.setAnalyzedFlag(program, true);
+		GhidraProgramUtilities.markProgramAnalyzed(program);
 
 		// Remove all single-byte functions created by Elf importer
 		// NOTE: This is a known issues with optimized code and symbols marked as ElfSymbol.STT_FUNC
@@ -1645,7 +1672,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				RegisterValue thumbMode = new RegisterValue(tReg, BigInteger.ONE);
 				try {
 					program.getProgramContext()
-							.setRegisterValue(functionAddr, functionAddr, thumbMode);
+						.setRegisterValue(functionAddr, functionAddr, thumbMode);
 				}
 				catch (ContextChangeException e) {
 					throw new AssertException(e);
@@ -1659,7 +1686,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				RegisterValue thumbMode = new RegisterValue(isaModeReg, BigInteger.ONE);
 				try {
 					program.getProgramContext()
-							.setRegisterValue(functionAddr, functionAddr, thumbMode);
+						.setRegisterValue(functionAddr, functionAddr, thumbMode);
 				}
 				catch (ContextChangeException e) {
 					throw new AssertException(e);
@@ -1884,7 +1911,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 					if (absoluteGzfFilePath.exists()) {
 						program = getGzfProgram(outputDir, gzfCachePath);
 						if (program != null && !MD5Utilities.getMD5Hash(testFile.file)
-								.equals(program.getExecutableMD5())) {
+							.equals(program.getExecutableMD5())) {
 							// remove obsolete GZF cache file
 							env.release(program);
 							program = null;
@@ -1909,7 +1936,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						}
 						else {
 							program = env.getGhidraProject()
-									.importProgram(testFile.file, language, compilerSpec);
+								.importProgram(testFile.file, language, compilerSpec);
 						}
 						program.addConsumer(this);
 						env.getGhidraProject().close(program);
@@ -1930,8 +1957,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 				if (!program.getLanguageID().equals(language.getLanguageID()) ||
 					!program.getCompilerSpec()
-							.getCompilerSpecID()
-							.equals(compilerSpec.getCompilerSpecID())) {
+						.getCompilerSpecID()
+						.equals(compilerSpec.getCompilerSpecID())) {
 					throw new IOException((usingCachedGZF ? "Cached " : "") +
 						"Program has incorrect language/compiler spec (" + program.getLanguageID() +
 						"/" + program.getCompilerSpec().getCompilerSpecID() + "): " +
@@ -2096,7 +2123,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				testFileDigest.append(nameAndAddr);
 				testFileDigest.append(" (GroupInfo @ ");
 				testFileDigest
-						.append(testGroup.controlBlock.getInfoStructureAddress().toString(true));
+					.append(testGroup.controlBlock.getInfoStructureAddress().toString(true));
 				testFileDigest.append(")");
 				if (duplicateTests.contains(testGroup.testGroupName)) {
 					testFileDigest.append(" *DUPLICATE*");

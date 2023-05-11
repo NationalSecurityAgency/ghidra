@@ -26,12 +26,12 @@ import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
+import generic.theme.GIcon;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
-import resources.ResourceManager;
 
 /**
  * Tests for cut/copy/paste in the Program tree.
@@ -969,7 +969,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		int row = getRowForPath(nodes[0].getTreePath());
 
 		Component comp = getCellRendererComponentForNonLeaf(nodes[0], row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_CLOSED_FOLDER_WITH_DESC),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_CLOSED_FOLDER_WITH_DESC),
 			((JLabel) comp).getIcon());
 
 		visitNode(nodes[0]);

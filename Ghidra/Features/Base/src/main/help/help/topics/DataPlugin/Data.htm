@@ -9,7 +9,7 @@
     <META name="ProgId" content="FrontPage.Editor.Document">
 
     <TITLE>Data</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -23,7 +23,7 @@
     <H2><A name="DataTypes"></A>Data Types</H2>
 
     <BLOCKQUOTE>
-      <P><FONT color="#000000">Data is created by applying <I>Data Types</I> to bytes in
+      <P>Data is created by applying <I>Data Types</I> to bytes in
       memory.&nbsp; Data Types interpret bytes as values and provide a visual interpretation of
       those bytes based on the Data Type used, e.g., a four byte IEEE floating point number or a
       two byte <A href="../Glossary/glossary.htm#LittleEndian">little endian</A>
@@ -32,7 +32,7 @@
       (structure, array, typedef, etc) and supports dynamic data types whose structure depends on the
       underlying data.</FONT></P>
       
-      <P><IMG src="../../shared/note.yellow.png"> It is important to note that the size of many of the primitive built-in types is 
+      <P><IMG src="help/shared/note.yellow.png"> It is important to note that the size of many of the primitive built-in types is 
       determined by the language and compiler specification (e.g., the size of an integer
       can vary).</P>
 
@@ -580,10 +580,10 @@
       was created is displayed in the tool's <A href=
       "../Tool/Ghidra_Tool_Administration.htm#ToolStatus">status area</A>.</P>
 
-      <P><IMG src="../../shared/note.yellow.png">&nbsp;Regardless of how a data type is applied, data is
+      <P><IMG src="help/shared/note.yellow.png">&nbsp;Regardless of how a data type is applied, data is
       only created if the data type will fit within the available undefined bytes.&nbsp;&nbsp;</P>
 
-      <H3><FONT color="#0000ff">Drag from Data Type Manager</FONT></H3>
+      <H3>Drag from Data Type Manager</H3>
 
       <BLOCKQUOTE>
         <P>Use the <A href=
@@ -594,7 +594,7 @@
         <OL>
           <LI>
             <P style="margin-top: 6px; margin-bottom: 6px;">Open the Data Type Manager (select
-            <B>Window</B><IMG src="../../shared/arrow.gif"> <B>Data Type Manager</B>)</P>
+            <B>Window</B><IMG src="help/shared/arrow.gif"> <B>Data Type Manager</B>)</P>
           </LI>
 
           <LI>
@@ -610,8 +610,7 @@
       </BLOCKQUOTE>
 
       <H3><A name="DataCycleGroups"></A><A name="Cycle__byte_word_dword_qword"></A><A name=
-      "Cycle__float_double"></A> <A name="Cycle__char_string_unicode"></A><FONT color=
-      "#0000ff">Cycle Groups</FONT></H3>
+      "Cycle__float_double"></A> <A name="Cycle__char_string_unicode"></A>Cycle Groups</H3>
 
       <BLOCKQUOTE>
         <P>Cycle Groups are an easy way to apply <I>basic</I> data types (byte, word, float,
@@ -631,23 +630,23 @@
                 <TR>
                   <TD width="19%"><B>b</B>&nbsp;</TD>
 
-                  <TD width="81%">Byte <IMG src="../../shared/arrow.gif"> Word <IMG src=
-                  "../../shared/arrow.gif"> DoubleWord <IMG src="../../shared/arrow.gif"> QuadWord
-                  <IMG src="../../shared/arrow.gif"> Byte</TD>
+                  <TD width="81%">Byte <IMG src="help/shared/arrow.gif"> Word <IMG src=
+                  "help/shared/arrow.gif"> DoubleWord <IMG src="help/shared/arrow.gif"> QuadWord
+                  <IMG src="help/shared/arrow.gif"> Byte</TD>
                 </TR>
 
                 <TR>
                   <TD width="19%"><B>'</B> (single quote)&nbsp;</TD>
 
-                  <TD width="81%">Ascii <IMG src="../../shared/arrow.gif"> String <IMG src=
-                  "../../shared/arrow.gif"> Unicode <IMG src="../../shared/arrow.gif"> Ascii</TD>
+                  <TD width="81%">Ascii <IMG src="help/shared/arrow.gif"> String <IMG src=
+                  "help/shared/arrow.gif"> Unicode <IMG src="help/shared/arrow.gif"> Ascii</TD>
                 </TR>
 
                 <TR>
                   <TD width="19%"><B>f</B>&nbsp;</TD>
 
-                  <TD width="81%">Float <IMG src="../../shared/arrow.gif"> Double <IMG src=
-                  "../../shared/arrow.gif"> Float</TD>
+                  <TD width="81%">Float <IMG src="help/shared/arrow.gif"> Double <IMG src=
+                  "help/shared/arrow.gif"> Float</TD>
                 </TR>
               </TBODY>
             </TABLE>
@@ -679,7 +678,7 @@
         </OL>
       </BLOCKQUOTE>
 
-      <H3><A name="Favorites"></A><FONT color="#0000ff">Favorites</FONT></H3>
+      <H3><A name="Favorites"></A>Favorites</FONT></H3>
 
       <BLOCKQUOTE>
         <P>A <I>Favorite</I> data type is a data type that you use frequently and want to apply
@@ -698,12 +697,12 @@
           <LI>In the Data popup, select the favorite data type to be applied</LI>
         </OL>
 
-        <P><IMG src="../../shared/tip.png">&nbsp; To quickly assign a key binding to a favorite,
+        <P><IMG src="help/shared/tip.png">&nbsp; To quickly assign a key binding to a favorite,
         use the <A href="../Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key Bindings
         Shortcut</A>.&nbsp; Key Bindings allow you to assign "hot keys" to any menu item.</P>
       </BLOCKQUOTE>
 
-      <H3><A name="Recently_Used"></A><FONT color="#0000ff">Recently Used Data Type</FONT></H3>
+      <H3><A name="Recently_Used"></A>Recently Used Data Type</H3>
 
       <BLOCKQUOTE>
         <P>The last applied data type is always available at the bottom of the data menu.&nbsp; By
@@ -727,7 +726,7 @@
         bytes</A> from the popup menu</LI>
       </OL>
 
-      <P><IMG src="../../shared/note.png"> <A href=
+      <P><IMG src="help/shared/note.png"> <A href=
       "../DataTypeManagerPlugin/data_type_manager_description.htm#DeleteDataType">Deleting
       data types</A> from the <I>Data Type Manager</I> window is a quick way to clear every
       instance of a data type in a program.</P>
@@ -751,7 +750,7 @@
 
         <LI>Press mouse-right to bring up the popup menu</LI>
 
-        <LI>Select <B>Data</B><IMG src="../../shared/arrow.gif"> <B>Settings...</B> to bring up the
+        <LI>Select <B>Data</B><IMG src="help/shared/arrow.gif"> <B>Settings...</B> to bring up the
         settings dialog</LI>
       </OL>
     </BLOCKQUOTE>
@@ -791,7 +790,7 @@
 
         <LI>Press mouse-right to bring up the popup menu</LI>
 
-        <LI>Select <B>Data<IMG src="../../shared/arrow.gif"> Default Settings...</B> to bring up
+        <LI>Select <B>Data<IMG src="help/shared/arrow.gif"> Default Settings...</B> to bring up
         the default settings dialog</LI>
       </OL>
     </BLOCKQUOTE>
@@ -817,13 +816,13 @@
       list of valid choices for that setting.&nbsp; Choose a value from this list of choices and
       press <B>OK</B>.</P>
 
-      <P><A name="SettingsOnStructureComponents"></A> <IMG src="../../shared/note.png">
+      <P><A name="SettingsOnStructureComponents"></A> <IMG src="help/shared/note.png">
       <I>Default</I> settings on components within a structure apply to that structure only. For
       example, if Struct_1 has a byte component with its format set as Octal, then only other
       instances of Struct_1 will be affected. Settings on other occurrences of byte are <I>not</I>
       affected.</P>
 
-      <P><IMG src="../../shared/note.png">A typedef has the same set of settings as its underlying
+      <P><IMG src="help/shared/note.png">A typedef has the same set of settings as its underlying
       data type.&nbsp; For example, when you create a typedef on a byte, the default settings on
       the typedef will be the same as the original default settings of the byte. Changing the
       default settings for either the typedef or its underlying data type doesn't affect the
@@ -839,7 +838,7 @@
 
         <LI>Press mouse-right to bring up the popup menu</LI>
 
-        <LI>Select <B>Data<IMG src="../../shared/arrow.gif"> Settings...</B> to bring up the
+        <LI>Select <B>Data<IMG src="help/shared/arrow.gif"> Settings...</B> to bring up the
         settings dialog</LI>
       </OL>
 
@@ -890,7 +889,7 @@
         <OL>
           <LI>Select a set of contiguous defined or undefined Data</LI>
 
-          <LI>Use the right-mouse popup <B>Data</B><IMG src="../../shared/arrow.gif"> <B>Create
+          <LI>Use the right-mouse popup <B>Data</B><IMG src="help/shared/arrow.gif"> <B>Create
           Structure</B></LI>
 
           <LI>The Data items within the selection are used to define the structure</LI>
@@ -919,7 +918,7 @@
           a default name.&nbsp; The bottom part shows a list of matching structures.&nbsp; You can
           select from this list to use that structure instead of creating a new one.</P>
 
-          <P><IMG src="../../shared/note.png"> The method for finding matching structures is either
+          <P><IMG src="help/shared/note.png"> The method for finding matching structures is either
           by an exact match or by a match on structure size. You can change the type of matching
           used by clicking the <I>Exact</I> or <I>Size</I> radio buttons under the <I>Matching:</I>
           heading.</P>
@@ -945,7 +944,7 @@
           <P>To use an existing, matching structure, find and select the structure in the <B>Use
           Exising Structure</B> table and press OK.</P>
 
-          <P><IMG src="../../shared/note.png">You can create nested structures by following the
+          <P><IMG src="help/shared/note.png">You can create nested structures by following the
           instructions above.&nbsp; The only difference is in Step (1), select contiguous bytes
           <I>within</I> an existing structure.</P>
         </BLOCKQUOTE>
@@ -957,7 +956,7 @@
           <LI>Place the cursor on the first line of the structure</LI>
 
           <LI>Press mouse-right over the structure and choose <B>Data</B><IMG src=
-          "../../shared/arrow.gif"> <B>Edit Data Type...</B></LI>
+          "help/shared/arrow.gif"> <B>Edit Data Type...</B></LI>
 
           <LI>Change the name in the <A href=
           "../DataTypeEditors/StructureEditor.htm">Structure Editor</A></LI>
@@ -973,14 +972,14 @@
         <OL>
           <LI>Right mouse click on the field name of a structure member in the Code Browser</LI>
 
-          <LI>Choose the <B>Data</B><IMG src="../../shared/arrow.gif"> <B>Rename Field</B>
+          <LI>Choose the <B>Data</B><IMG src="help/shared/arrow.gif"> <B>Rename Field</B>
           option</LI>
 
           <LI>Enter a new name in the <B>Rename Data Field</B> dialog</LI>
         </OL>
 
         <BLOCKQUOTE>
-          <P><IMG src="../../shared/note.png">The&nbsp; "Field Name" field must be added to the
+          <P><IMG src="help/shared/note.png">The&nbsp; "Field Name" field must be added to the
           "Open Data" tab in the Code Browser <A href=
           "../CodeBrowserPlugin/Browser_Field_Formatter.htm">header</A> in order for the
           data structure field names to show up in the Code Browser.</P>
@@ -992,13 +991,13 @@
           <LI>Place the cursor on the first line of the structure</LI>
 
           <LI>Press mouse-right over the structure and choose <B>Data</B><IMG src=
-          "../../shared/arrow.gif"> <B>Edit Data Type...</B></LI>
+          "help/shared/arrow.gif"> <B>Edit Data Type...</B></LI>
 
           <LI>Edit the field name for the structure member</LI>
         </OL>
 
         <BLOCKQUOTE>
-          <P><IMG src="../../shared/note.png"> You cannot set the field name of undefined
+          <P><IMG src="help/shared/note.png"> You cannot set the field name of undefined
           member</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
@@ -1125,7 +1124,7 @@
     key-binding actions.  
     </P>
 
-	<P><IMG src="../../shared/note.png">To create a pointer of a specific size apply either
+	<P><IMG src="help/shared/note.png">To create a pointer of a specific size apply either
       pointer8, pointer16, pointer32, or pointer64 to create a pointer sizes of 1, 2, 4, 8,
       respectively.</P>
       
@@ -1148,7 +1147,7 @@
 
         <LI>Press the '[' Quick-Key,<BR>
         &nbsp;- or -<BR>
-        Press mouse-right on the data item and choose <B>Data</B><IMG src="../../shared/arrow.gif">
+        Press mouse-right on the data item and choose <B>Data</B><IMG src="help/shared/arrow.gif">
         <B>Create Array</B></LI>
 
         <LI>A dialog will prompt you for the number of elements in the array.&nbsp; It will be
@@ -1168,7 +1167,7 @@
 
         <LI>Press the '[' Quick-Key,<BR>
         &nbsp;- or -<BR>
-        Press mouse-right on the array and choose <B>Data</B><IMG src="../../shared/arrow.gif">
+        Press mouse-right on the array and choose <B>Data</B><IMG src="help/shared/arrow.gif">
         <B>Create Array</B></LI>
 
         <LI>Enter the number of elements for the next dimension, and press <B>OK</B></LI>

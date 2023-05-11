@@ -20,7 +20,8 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.AttributedString;
 import docking.widgets.fieldpanel.field.TextFieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import generic.theme.GColor;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -42,20 +43,21 @@ import ghidra.taint.model.TaintVec;
  */
 public class TaintFieldFactory extends FieldFactory {
 	public static final String PROPERTY_NAME = TaintTracePcodeExecutorStatePiece.NAME;
+	public static final GColor COLOR = new GColor("color.fg.listing.taint");
 	public static final String FIELD_NAME = "Taint";
 
 	public TaintFieldFactory() {
 		super(FIELD_NAME);
 	}
 
-	protected TaintFieldFactory(FieldFormatModel formatModel, HighlightProvider highlightProvider,
+	protected TaintFieldFactory(FieldFormatModel formatModel, ListingHighlightProvider highlightProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, formatModel, highlightProvider, displayOptions, fieldOptions);
 	}
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions displayOptions,
+			ListingHighlightProvider highlightProvider, ToolOptions displayOptions,
 			ToolOptions fieldOptions) {
 		return new TaintFieldFactory(formatModel, highlightProvider, displayOptions, fieldOptions);
 	}
@@ -90,7 +92,7 @@ public class TaintFieldFactory extends FieldFactory {
 		}
 
 		return ListingTextField.createSingleLineTextField(this, proxy,
-			new TextFieldElement(new AttributedString(vec.toDisplay(), color, getMetrics()), 0, 0),
+			new TextFieldElement(new AttributedString(vec.toDisplay(), COLOR, getMetrics()), 0, 0),
 			startX + varWidth, width, hlProvider);
 	}
 

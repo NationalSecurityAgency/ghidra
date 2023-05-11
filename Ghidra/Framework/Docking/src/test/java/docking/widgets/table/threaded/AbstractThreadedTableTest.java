@@ -178,7 +178,7 @@ public abstract class AbstractThreadedTableTest extends AbstractDockingTest {
 		testTableModelListener.reset(model);
 		Rectangle rect = header.getHeaderRect(columnToClick);
 		if (!header.isShowing()) {
-			waitForPostedSwingRunnables();
+			waitForSwing();
 		}
 
 		record("Clicking table at column " + columnToClick);

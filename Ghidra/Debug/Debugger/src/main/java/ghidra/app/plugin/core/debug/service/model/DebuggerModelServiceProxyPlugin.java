@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.builder.MultiStateActionBuilder;
@@ -39,6 +40,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.DebugProgramAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
+import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.PromptMode;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.*;
 import ghidra.async.AsyncUtils;
@@ -57,7 +59,6 @@ import ghidra.program.model.util.StringPropertyMap;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
@@ -88,7 +89,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		new DebuggerProgramLaunchOffer() {
 			@Override
 			public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor,
-					boolean prompt, LaunchConfigurator configurator) {
+					PromptMode prompt, LaunchConfigurator configurator) {
 				throw new AssertionError("Who clicked me?");
 			}
 
@@ -269,8 +270,18 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
+	public CompletableFuture<DebuggerObjectModel> showConnectDialog() {
+		return delegate.doShowConnectDialog(tool, null, null);
+	}
+
+	@Override
+	public CompletableFuture<DebuggerObjectModel> showConnectDialog(Program program) {
+		return delegate.doShowConnectDialog(tool, null, program);
+	}
+
+	@Override
 	public CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory) {
-		return delegate.doShowConnectDialog(tool, factory);
+		return delegate.doShowConnectDialog(tool, factory, null);
 	}
 
 	@Override
@@ -294,7 +305,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	protected void writeMostRecentLaunches(Program program, List<String> mrl) {
 		ProgramUserData userData = program.getProgramUserData();
-		try (UndoableTransaction tid = UndoableTransaction.start(userData)) {
+		try (Transaction tid = userData.openTransaction()) {
 			StringPropertyMap prop = userData
 					.getStringProperty(getName(), KEY_MOST_RECENT_LAUNCHES, true);
 			Address min = program.getAddressFactory().getDefaultAddressSpace().getMinAddress();
@@ -330,7 +341,8 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		return offers.sorted(Comparator.comparingInt(o -> -mrl.indexOf(o.getConfigName())));
 	}
 
-	private void debugProgram(DebuggerProgramLaunchOffer offer, Program program, boolean prompt) {
+	private void debugProgram(DebuggerProgramLaunchOffer offer, Program program,
+			PromptMode prompt) {
 		BackgroundUtils.asyncModal(tool, offer.getButtonTitle(), true, true, m -> {
 			List<String> recent = new ArrayList<>(readMostRecentLaunches(program));
 			recent.remove(offer.getConfigName());
@@ -360,7 +372,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		if (offer == null || program == null) {
 			return;
 		}
-		debugProgram(offer, program, false);
+		debugProgram(offer, program, PromptMode.ON_ERROR);
 	}
 
 	private void debugProgramStateActivated(ActionState<DebuggerProgramLaunchOffer> offer,
@@ -375,7 +387,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		if (program == null) {
 			return;
 		}
-		debugProgram(offer, program, true);
+		debugProgram(offer, program, PromptMode.ALWAYS);
 	}
 
 	private void updateActionDebugProgram() {

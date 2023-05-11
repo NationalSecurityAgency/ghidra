@@ -59,16 +59,22 @@ public interface DbgModelTargetBreakpointSpec extends //
 
 	@Override
 	public default String getExpression() {
-		return getBreakpointInfo().getExpression();
+		DbgBreakpointInfo info = getBreakpointInfo();
+		return info == null ? null : info.getExpression();
 	}
 
 	public default long getNumber() {
-		return getBreakpointInfo().getNumber();
+		DbgBreakpointInfo info = getBreakpointInfo();
+		return info == null ? null : info.getNumber();
 	}
 
 	@Override
 	public default TargetBreakpointKindSet getKinds() {
-		switch (getBreakpointInfo().getType()) {
+		DbgBreakpointInfo info = getBreakpointInfo();
+		if (info == null) {
+			return TargetBreakpointKindSet.of();
+		}
+		switch (info.getType()) {
 			case BREAKPOINT:
 				return TargetBreakpointKindSet.of(TargetBreakpointKind.SW_EXECUTE);
 			case HW_BREAKPOINT:

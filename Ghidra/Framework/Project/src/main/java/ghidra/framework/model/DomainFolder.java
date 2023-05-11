@@ -17,7 +17,11 @@ package ghidra.framework.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
 import ghidra.framework.store.FolderNotEmptyException;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
@@ -30,6 +34,13 @@ import ghidra.util.task.TaskMonitor;
  * referenced project folder.
  */
 public interface DomainFolder extends Comparable<DomainFolder> {
+
+	public static final Icon OPEN_FOLDER_ICON =
+		new GIcon("icon.datatree.node.domain.folder.open");
+
+	public static final Icon CLOSED_FOLDER_ICON =
+		new GIcon("icon.datatree.node.domain.folder.closed");
+
 	/**
 	 * Character used to separate folder and item names within a path string.
 	 */
@@ -79,6 +90,14 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	public String getPathname();
 
 	/**
+	 * Get a remote Ghidra URL for this domain folder within the associated shared
+	 * project repository.  URL path will end with "/".  A null value will be returned if not 
+	 * associated with a shared project.
+	 * @return remote Ghidra URL for this folder or null
+	 */
+	public URL getSharedProjectURL();
+
+	/**
 	 * Returns true if this file is in a writable project.
 	 * @return true if writable
 	 */
@@ -92,7 +111,7 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 
 	/**
 	 * Get DomainFolders in this folder.
-	 * This returns cached information and does not force a full refresh.
+	 * This may return cached information and does not force a full refresh.
 	 * @return list of sub-folders
 	 */
 	public DomainFolder[] getFolders();
@@ -119,7 +138,7 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 
 	/**
 	 * Get all domain files in this folder.
-	 * This returns cached information and does not force a full refresh.
+	 * This may return cached information and does not force a full refresh.
 	 * @return list of domain files
 	 */
 	public DomainFile[] getFiles();
@@ -204,7 +223,30 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 			CancelledException;
 
 	/**
+	 * Copy this folder into the newParent folder as a link file.  Restrictions:
+	 * <ul>
+	 * <li>Specified newParent must reside within a different project since internal linking is
+	 * not currently supported.</li>
+	 * </ul>
+	 * If this folder is associated with a temporary transient project (i.e., not a locally 
+	 * managed project) the generated link will refer to the remote file with a remote
+	 * Ghidra URL, otherwise a local project storage path will be used.
+	 * @param newParent new parent folder
+	 * @return newly created domain file or null if link use not supported.
+	 * @throws IOException if an IO or access error occurs.
+	 */
+	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException;
+
+	/**
 	 * Allows the framework to react to a request to make this folder the "active" one.
 	 */
 	public void setActive();
+
+	/**
+	 * Determine if this folder corresponds to a linked-folder.
+	 * @return true if folder corresponds to a linked-folder, else false.
+	 */
+	public default boolean isLinked() {
+		return false;
+	}
 }

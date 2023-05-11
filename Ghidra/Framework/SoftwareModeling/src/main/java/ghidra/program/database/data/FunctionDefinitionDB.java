@@ -24,12 +24,14 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.Msg;
 import ghidra.util.UniversalID;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.InvalidInputException;
 
 class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 
@@ -108,13 +110,17 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		try {
 			checkIsValid();
 			StringBuffer buf = new StringBuffer();
+			if (includeCallingConvention && hasNoReturn()) {
+				buf.append(NORETURN_DISPLAY_STRING);
+				buf.append(" ");
+			}
 			DataType returnType = getReturnType();
 			buf.append((returnType != null ? returnType.getDisplayName() : "void"));
 			buf.append(" ");
 			if (includeCallingConvention) {
-				GenericCallingConvention genericCallingConvention = getGenericCallingConvention();
-				if (genericCallingConvention != GenericCallingConvention.unknown) {
-					buf.append(genericCallingConvention.name());
+				String callingConvention = getCallingConventionName();
+				if (!Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(callingConvention)) {
+					buf.append(callingConvention);
 					buf.append(" ");
 				}
 			}
@@ -188,7 +194,6 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		lock.acquire();
 		try {
 			checkDeleted();
-
 			setArguments(functionDefinition.getArguments());
 			try {
 				setReturnType(functionDefinition.getReturnType());
@@ -197,7 +202,16 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 				setReturnType(DEFAULT);
 			}
 			setVarArgs(functionDefinition.hasVarArgs());
-			setGenericCallingConvention(functionDefinition.getGenericCallingConvention());
+			setNoReturn(functionDefinition.hasNoReturn());
+			try {
+				setCallingConvention(functionDefinition.getCallingConventionName(), false);
+			}
+			catch (InvalidInputException e) {
+				// will not happen
+			}
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
 		}
 		finally {
 			lock.release();
@@ -237,6 +251,11 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 
 	@Override
 	public int getLength() {
+		return -1;
+	}
+
+	@Override
+	public int getAlignedLength() {
 		return -1;
 	}
 
@@ -394,8 +413,9 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 				(comment != null && comment.equals(myComment))) &&
 			(DataTypeUtilities.isSameOrEquivalentDataType(getReturnType(),
 				signature.getReturnType())) &&
-			(getGenericCallingConvention() == signature.getGenericCallingConvention()) &&
-			(hasVarArgs() == signature.hasVarArgs())) {
+			getCallingConventionName().equals(signature.getCallingConventionName()) &&
+			(hasVarArgs() == signature.hasVarArgs()) &&
+			(hasNoReturn() == signature.hasNoReturn())) {
 			ParameterDefinition[] args = signature.getArguments();
 			ParameterDefinition[] thisArgs = this.getArguments();
 			if (args.length == thisArgs.length) {
@@ -518,6 +538,22 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
+	public boolean hasNoReturn() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			if (record == null) {
+				return false;
+			}
+			byte flags = record.getByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL);
+			return ((flags & FunctionDefinitionDBAdapter.FUNCTION_DEF_NORETURN_FLAG) != 0);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
 	public void setVarArgs(boolean hasVarArgs) {
 		lock.acquire();
 		try {
@@ -544,20 +580,17 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	public void setGenericCallingConvention(GenericCallingConvention genericCallingConvention) {
+	public void setNoReturn(boolean hasNoReturn) {
 		lock.acquire();
 		try {
 			checkDeleted();
-			int ordinal = genericCallingConvention.ordinal();
-			if (ordinal < 0 ||
-				ordinal > FunctionDefinitionDBAdapter.GENERIC_CALLING_CONVENTION_FLAG_MASK) {
-				Msg.error(this, "GenericCallingConvention ordinal unsupported: " + ordinal);
-				return;
-			}
 			byte flags = record.getByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL);
-			flags &=
-				~(FunctionDefinitionDBAdapter.GENERIC_CALLING_CONVENTION_FLAG_MASK << FunctionDefinitionDBAdapter.GENERIC_CALLING_CONVENTION_FLAG_SHIFT);
-			flags |= ordinal << FunctionDefinitionDBAdapter.GENERIC_CALLING_CONVENTION_FLAG_SHIFT;
+			if (hasNoReturn) {
+				flags |= FunctionDefinitionDBAdapter.FUNCTION_DEF_NORETURN_FLAG;
+			}
+			else {
+				flags &= ~FunctionDefinitionDBAdapter.FUNCTION_DEF_NORETURN_FLAG;
+			}
 			record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL, flags);
 			try {
 				funDefAdapter.updateRecord(record, true);
@@ -573,18 +606,70 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	public GenericCallingConvention getGenericCallingConvention() {
+	public void setGenericCallingConvention(GenericCallingConvention genericCallingConvention) {
+		lock.acquire();
+		try {
+			checkDeleted();
+			setCallingConvention(genericCallingConvention.name(), false);
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
+		}
+		catch (InvalidInputException e) {
+			throw new AssertException(e);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public void setCallingConvention(String conventionName) throws InvalidInputException {
+		lock.acquire();
+		try {
+			checkDeleted();
+			setCallingConvention(conventionName, true);
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	private void setCallingConvention(String conventionName, boolean restrictive)
+			throws InvalidInputException, IOException {
+		byte id = dataMgr.getCallingConventionID(conventionName, restrictive);
+		record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_CALLCONV_COL, id);
+		funDefAdapter.updateRecord(record, true);
+		dataMgr.dataTypeChanged(this, false);
+	}
+
+	@Override
+	public PrototypeModel getCallingConvention() {
+		ProgramArchitecture arch = dataMgr.getProgramArchitecture();
+		if (arch == null) {
+			return null;
+		}
+		String callingConvention = getCallingConventionName();
+		CompilerSpec compilerSpec = arch.getCompilerSpec();
+		return compilerSpec.getCallingConvention(callingConvention);
+	}
+
+	@Override
+	public String getCallingConventionName() {
 		lock.acquire();
 		try {
 			checkIsValid();
 			if (record == null) {
-				return GenericCallingConvention.unknown;
+				return Function.UNKNOWN_CALLING_CONVENTION_STRING;
 			}
-			byte flags = record.getByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL);
-			int ordinal =
-				(flags >> FunctionDefinitionDBAdapter.GENERIC_CALLING_CONVENTION_FLAG_SHIFT) &
-					FunctionDefinitionDBAdapter.GENERIC_CALLING_CONVENTION_FLAG_MASK;
-			return GenericCallingConvention.get(ordinal);
+			byte id = record.getByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_CALLCONV_COL);
+			if (funDefAdapter.usesGenericCallingConventionId()) {
+				return FunctionDefinitionDBAdapter.getGenericCallingConventionName(id);
+			}
+			return dataMgr.getCallingConventionName(id);
 		}
 		finally {
 			lock.release();

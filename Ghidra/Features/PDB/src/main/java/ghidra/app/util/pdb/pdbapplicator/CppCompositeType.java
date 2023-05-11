@@ -734,7 +734,7 @@ public class CppCompositeType {
 			throws CancelledException {
 		List<ClassPdbMember> myDirectClassPdbMembers = new ArrayList<>();
 		for (LayoutBaseClass base : getLayoutBaseClasses()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CppCompositeType baseComposite = base.getBaseClassType();
 			if (base instanceof DirectLayoutBaseClass) {
 				if (!baseComposite.isZeroSize()) {
@@ -757,7 +757,7 @@ public class CppCompositeType {
 			throws CancelledException, PdbException {
 		List<VirtualLayoutBaseClass> myVirtualLayoutBases = new ArrayList<>();
 		for (LayoutBaseClass base : getLayoutBaseClasses()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (base instanceof VirtualLayoutBaseClass) {
 				addPlaceholderVirtualBaseTableEntry(((VirtualLayoutBaseClass) base));
 				myVirtualLayoutBases.add((VirtualLayoutBaseClass) base);
@@ -872,7 +872,7 @@ public class CppCompositeType {
 			throws PdbException, CancelledException {
 		depth++;
 		for (LayoutBaseClass base : cppType.getLayoutBaseClasses()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CppCompositeType baseComposite = base.getBaseClassType();
 			if (base instanceof DirectLayoutBaseClass) {
 				if (isDirect) {
@@ -1119,7 +1119,7 @@ public class CppCompositeType {
 //		String accumulatedComment = "";
 //		int memberOffset = startOffset;
 //		for (VirtualLayoutBaseClass virtualBase : virtualBases) {
-//			monitor.checkCanceled();
+//			monitor.checkCancelled();
 //			Composite baseDataType = virtualBase.getDirectDataType();
 //			int virtualBaseLength = getCompositeLength(baseDataType);
 //			PlaceholderVirtualBaseTable pvbt =
@@ -1163,7 +1163,7 @@ public class CppCompositeType {
 		}
 
 		for (int index = 0; index < offsets.size(); index++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VirtualLayoutBaseClass virtualBase = orderedBases.get(index);
 			memberOffset = offsets.get(index);
 			Composite baseDataType = virtualBase.getDirectDataType();
@@ -1202,7 +1202,7 @@ public class CppCompositeType {
 			List<VirtualLayoutBaseClass> unordered, TaskMonitor monitor)
 			throws PdbException, CancelledException {
 		for (VirtualLayoutBaseClass insertBase : unordered) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			PlaceholderVirtualBaseTable pvbt =
 				getPlaceholderVirtualBaseTable(insertBase.getBasePointerOffset());
 			if (pvbt == null || !pvbt.canLookupOffset()) {
@@ -1231,7 +1231,7 @@ public class CppCompositeType {
 		String accumulatedComment = "";
 		int memberOffset = startOffset;
 		for (VirtualLayoutBaseClass virtualBase : virtualBases) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Composite baseDataType = virtualBase.getDirectDataType();
 			int virtualBaseLength = getCompositeLength(baseDataType);
 
@@ -1267,7 +1267,7 @@ public class CppCompositeType {
 
 	void addPdbMember(List<ClassPdbMember> pdbMembers, Member member) {
 		ClassPdbMember classPdbMember = new ClassPdbMember(member.getName(), member.getDataType(),
-			member.isFlexibleArray(), member.getOffset(), null);
+			member.isFlexibleArray(), member.getOffset(), member.getComment());
 		pdbMembers.add(classPdbMember);
 	}
 

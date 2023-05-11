@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-
-import java.awt.Color;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -36,9 +33,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.NewMemoryAction;
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
-import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -64,7 +59,6 @@ import ghidra.program.util.ProgramSelection;
 		TraceSelectionPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerModelService.class, // For memory capture
 		ClipboardService.class,
 	})
 public class DebuggerMemoryBytesPlugin
@@ -81,21 +75,11 @@ public class DebuggerMemoryBytesPlugin
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionConsumed(name = OPTION_NAME_COLORS_STALE_MEMORY)
-	private Color staleMemoryColor;
-	@AutoOptionConsumed(name = OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorMemoryColor;
-	@AutoOptionConsumed(name = OPTION_NAME_COLORS_TRACKING_MARKERS)
-	private Color trackingColor;
-	@SuppressWarnings("unused")
-	private AutoOptions.Wiring autoOptionsWiring;
-
 	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
 	public DebuggerMemoryBytesPlugin(PluginTool tool) {
 		super(tool);
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
-		autoOptionsWiring = AutoOptions.wireOptions(this);
 
 		createActions();
 	}

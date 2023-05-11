@@ -131,7 +131,7 @@ public class ObjectiveC1_SymbolTable implements StructConverter {
 			_state.program.getAddressFactory().getDefaultAddressSpace().getAddress(_index);
 		DataType dt = toDataType();
 		try {
-			DataUtilities.createData(_state.program, address, dt, -1, false,
+			DataUtilities.createData(_state.program, address, dt, -1,
 				ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
 		}
 		catch (Exception e) {

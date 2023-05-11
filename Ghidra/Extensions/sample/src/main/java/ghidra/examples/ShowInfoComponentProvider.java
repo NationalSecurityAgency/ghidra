@@ -23,15 +23,15 @@ import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
-import resources.ResourceManager;
 
 public class ShowInfoComponentProvider extends ComponentProviderAdapter {
-	private final static ImageIcon CLEAR_ICON = ResourceManager.loadImage("images/erase16.png");
-	private final static ImageIcon INFO_ICON = ResourceManager.loadImage("images/information.png");
+	private final static Icon CLEAR_ICON = new GIcon("icon.sample.hello.world.action.clear");
+	private final static Icon PROVIDER_ICON = new GIcon("icon.sample.provider.hello.world");
 
 	private JPanel panel;
 	private JTextArea textArea;
@@ -42,7 +42,7 @@ public class ShowInfoComponentProvider extends ComponentProviderAdapter {
 	public ShowInfoComponentProvider(PluginTool tool, String name) {
 		super(tool, name, name);
 		create();
-		setIcon(INFO_ICON);
+		setIcon(PROVIDER_ICON);
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 		setTitle("Show Info");
 		setVisible(true);

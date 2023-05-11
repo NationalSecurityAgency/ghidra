@@ -16,7 +16,7 @@
 package agent.dbgeng.dbgeng;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.*;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -848,8 +848,10 @@ public class DbgEngTest extends AbstractGhidraHeadlessIntegrationTest {
 
 			//System.out.println("Attaching...");
 			//client.attachProcess(client.getLocalServer(), proc.pid, BitmaskSet.of());
-			client.createProcess(client.getLocalServer(), specimenA,
-				BitmaskSet.of(DebugCreateFlags.DEBUG_PROCESS));
+			client.createProcess(client.getLocalServer(), specimenA, "", "",
+				BitmaskSet.of(DebugCreateFlags.DEBUG_PROCESS),
+				BitmaskSet.of(DebugEngCreateFlags.DEBUG_ECREATE_PROCESS_DEFAULT),
+				BitmaskSet.of(DebugVerifierFlags.DEBUG_VERIFIER_DEFAULT));
 
 			cb.lastReg = null;
 			//while (cb.lastReg == null) {

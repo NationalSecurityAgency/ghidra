@@ -15,15 +15,17 @@
  */
 package ghidra.pcode.exec.trace;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import com.google.common.collect.*;
-import com.google.common.primitives.UnsignedLong;
-
+import generic.ULongSpan;
+import generic.ULongSpan.*;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -43,7 +45,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 public class TraceMemoryStatePcodeExecutorStatePiece extends
 		AbstractLongOffsetPcodeExecutorStatePiece<byte[], TraceMemoryState, AddressSpace> {
 
-	protected final RangeMap<UnsignedLong, TraceMemoryState> unique = TreeRangeMap.create();
+	protected final MutableULongSpanMap<TraceMemoryState> unique;
 	protected final PcodeTraceDataAccess data;
 
 	/**
@@ -56,11 +58,22 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 			BytesPcodeArithmetic.forLanguage(data.getLanguage()),
 			TraceMemoryStatePcodeArithmetic.INSTANCE);
 		this.data = data;
+		this.unique = new DefaultULongSpanMap<>();
 	}
 
-	protected Range<UnsignedLong> range(long offset, int size) {
-		return Range.closedOpen(UnsignedLong.fromLongBits(offset),
-			UnsignedLong.fromLongBits(offset + size));
+	protected TraceMemoryStatePcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			MutableULongSpanMap<TraceMemoryState> unique) {
+		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
+			TraceMemoryStatePcodeArithmetic.INSTANCE);
+		this.data = data;
+		this.unique = unique;
+	}
+
+	@Override
+	public TraceMemoryStatePcodeExecutorStatePiece fork() {
+		MutableULongSpanMap<TraceMemoryState> copyUnique = new DefaultULongSpanMap<>();
+		copyUnique.putAll(unique);
+		return new TraceMemoryStatePcodeExecutorStatePiece(data, copyUnique);
 	}
 
 	protected AddressRange range(AddressSpace space, long offset, int size) {
@@ -74,18 +87,15 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 
 	@Override
 	protected void setUnique(long offset, int size, TraceMemoryState val) {
-		unique.put(range(offset, size), val);
+		unique.put(ULongSpan.extent(offset, size), val);
 	}
 
 	@Override
 	protected TraceMemoryState getUnique(long offset, int size, Reason reason) {
-		RangeSet<UnsignedLong> remains = TreeRangeSet.create();
-		Range<UnsignedLong> range = range(offset, size);
-		remains.add(range);
-
-		for (Map.Entry<Range<UnsignedLong>, TraceMemoryState> ent : unique.subRangeMap(range)
-				.asMapOfRanges()
-				.entrySet()) {
+		MutableULongSpanSet remains = new DefaultULongSpanSet();
+		ULongSpan span = ULongSpan.extent(offset, size);
+		remains.add(span);
+		for (Entry<ULongSpan, TraceMemoryState> ent : unique.intersectingEntries(span)) {
 			if (ent.getValue() != TraceMemoryState.KNOWN) {
 				return TraceMemoryState.UNKNOWN;
 			}
@@ -114,6 +124,17 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	@Override
 	protected TraceMemoryState getFromNullSpace(int size, Reason reason) {
 		return TraceMemoryState.UNKNOWN;
+	}
+
+	@Override
+	protected Map<Register, TraceMemoryState> getRegisterValuesFromSpace(AddressSpace s,
+			List<Register> registers) {
+		return Map.of();
+	}
+
+	@Override
+	public Map<Register, TraceMemoryState> getRegisterValues() {
+		return Map.of();
 	}
 
 	@Override

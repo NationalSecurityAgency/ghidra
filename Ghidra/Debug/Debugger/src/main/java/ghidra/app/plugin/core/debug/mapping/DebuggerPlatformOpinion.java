@@ -17,11 +17,10 @@ package ghidra.app.plugin.core.debug.mapping;
 
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.program.model.lang.Endian;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
@@ -71,7 +70,7 @@ public interface DebuggerPlatformOpinion extends ExtensionPoint {
 		if (pathToEnv == null) {
 			return null;
 		}
-		return root.getSuccessors(Range.singleton(snap), PathPredicates.pattern(pathToEnv))
+		return root.getSuccessors(Lifespan.at(snap), PathPredicates.pattern(pathToEnv))
 				.findAny()
 				.map(p -> p.getDestination(root))
 				.orElse(null);

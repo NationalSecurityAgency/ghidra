@@ -131,12 +131,12 @@ public class OpTplWalker {
 		if (curind >= maxsize)
 			return null;
 		if (oparray == null)
-			return new Integer(curind);				// Virtual build directive
+			return Integer.valueOf(curind);				// Virtual build directive
 		OpTpl op = oparray[curind];
 		if (op.getOpcode() != PcodeOp.MULTIEQUAL)	// if NOT a build directive
 			return op;								// return ordinary OpTpl
 		curind = (int)op.getInput()[0].getOffset().getReal();		// Get the operand index from the build directive
-		return new Integer(curind);
+		return Integer.valueOf(curind);
 	}
 
 }

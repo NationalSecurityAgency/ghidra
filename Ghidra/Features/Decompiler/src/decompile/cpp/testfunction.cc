@@ -15,6 +15,8 @@
  */
 #include "ifacedecomp.hh"
 
+namespace ghidra {
+
 void FunctionTestProperty::startTest(void) const
 
 {
@@ -24,7 +26,7 @@ void FunctionTestProperty::startTest(void) const
 void FunctionTestProperty::processLine(const string &line) const
 
 {
-  if (regex_search(line,pattern))
+  if (std::regex_search(line,pattern))
     count += 1;
 }
 
@@ -42,7 +44,7 @@ void FunctionTestProperty::restoreXml(const Element *el)
   s1 >> minimumMatch;
   istringstream s2(el->getAttributeValue("max"));
   s2 >> maximumMatch;
-  pattern = regex(el->getContent());
+  pattern = std::regex(el->getContent());
 }
 
 void ConsoleCommands::readLine(string &line)
@@ -304,7 +306,7 @@ void FunctionTestCollection::runTests(list<string> &lateStream)
 /// Run through all XML files in the given list, processing each in turn.
 /// \param testFiles is the given list of test files
 /// \param s is the output stream to print results to
-void FunctionTestCollection::runTestFiles(const vector<string> &testFiles,ostream &s)
+int FunctionTestCollection::runTestFiles(const vector<string> &testFiles,ostream &s)
 
 {
   int4 totalTestsApplied = 0;
@@ -344,4 +346,7 @@ void FunctionTestCollection::runTestFiles(const vector<string> &testFiles,ostrea
       if (iter == failures.end()) break;
     }
   }
+  return totalTestsApplied - totalTestsSucceeded;
 }
+
+} // End namespace ghidra

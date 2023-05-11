@@ -15,7 +15,8 @@
  */
 package docking.widgets.table.constrainteditor;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridLayout;
 import java.math.BigInteger;
 
 import javax.swing.*;
@@ -24,6 +25,7 @@ import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.RangeColumnConstraint;
 import docking.widgets.textfield.IntegerTextField;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.layout.VerticalLayout;
 
 /**
@@ -70,7 +72,7 @@ public class UnsignedLongRangeConstraintEditor extends AbstractColumnConstraintE
 		panel.add(rangeControlPanel);
 
 		infoLabel = new GDHtmlLabel();
-		infoLabel.setForeground(Color.GRAY);
+		infoLabel.setForeground(Messages.HINT);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel.add(infoLabel);
 

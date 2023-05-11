@@ -31,6 +31,8 @@ public class EquateSymbol extends HighSymbol {
 	public static final int FORMAT_OCT = 3;
 	public static final int FORMAT_BIN = 4;
 	public static final int FORMAT_CHAR = 5;
+	public static final int FORMAT_FLOAT = 6;
+	public static final int FORMAT_DOUBLE = 7;
 
 	private long value;			// Value of the equate
 	private int convert;		// Non-zero if this is a conversion equate
@@ -100,6 +102,12 @@ public class EquateSymbol extends HighSymbol {
 			else if (formString.equals("bin")) {
 				convert = FORMAT_BIN;
 			}
+			else if (formString.equals("float")) {
+				convert = FORMAT_FLOAT;
+			}
+			else if (formString.equals("double")) {
+				convert = FORMAT_DOUBLE;
+			}
 		}
 		int valel = decoder.openElement(ELEM_VALUE);
 		value = decoder.readUnsignedInteger(ATTRIB_CONTENT);
@@ -128,6 +136,13 @@ public class EquateSymbol extends HighSymbol {
 			else if (convert == FORMAT_CHAR) {
 				formString = "char";
 			}
+			else if (convert == FORMAT_FLOAT) {
+				formString = "float";
+			}
+			else if (convert == FORMAT_DOUBLE) {
+				formString = "double";
+			}
+
 			encoder.writeString(ATTRIB_FORMAT, formString);
 		}
 		encoder.openElement(ELEM_VALUE);

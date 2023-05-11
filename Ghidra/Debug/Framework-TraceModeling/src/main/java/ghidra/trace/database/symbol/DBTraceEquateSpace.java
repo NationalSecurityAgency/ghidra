@@ -19,9 +19,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.address.*;
@@ -33,6 +30,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceEquateSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
@@ -93,7 +91,7 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 			return this;
 		}
 
-		protected void setLifespan(Range<Long> lifespan) {
+		protected void setLifespan(Lifespan lifespan) {
 			doSetLifespan(lifespan);
 		}
 	}
@@ -150,14 +148,14 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	}
 
 	@Override
-	public AddressSetView getReferringAddresses(Range<Long> span) {
+	public AddressSetView getReferringAddresses(Lifespan span) {
 		return new DBTraceAddressSnapRangePropertyMapAddressSetView<>(space, lock,
 			equateMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, span)),
 			e -> true);
 	}
 
 	@Override
-	public void clearReferences(Range<Long> span, AddressSetView asv, TaskMonitor monitor)
+	public void clearReferences(Lifespan span, AddressSetView asv, TaskMonitor monitor)
 			throws CancelledException {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (AddressRange range : asv) {
@@ -167,7 +165,7 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	}
 
 	@Override
-	public void clearReferences(Range<Long> span, AddressRange range, TaskMonitor monitor)
+	public void clearReferences(Lifespan span, AddressRange range, TaskMonitor monitor)
 			throws CancelledException {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceEquateReference eref : equateMapSpace.reduce(
@@ -198,25 +196,29 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	@Override
 	public Collection<? extends DBTraceEquate> getReferenced(long snap, Address address,
 			int operandIndex) {
-		Collection<DBTraceEquateReference> refs =
-			equateMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap)).values();
-		Collection<DBTraceEquateReference> filt = Collections2.filter(refs, r -> {
-			if (r.type != EquateRefType.OP) {
-				return false;
-			}
-			if (r.opOrHash != operandIndex) {
-				return false;
-			}
-			return true;
-		});
-		return Collections2.transform(filt, r -> manager.equateStore.getObjectAt(r.equateKey));
+		return equateMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap))
+				.values()
+				.stream()
+				.filter(r -> {
+					if (r.type != EquateRefType.OP) {
+						return false;
+					}
+					if (r.opOrHash != operandIndex) {
+						return false;
+					}
+					return true;
+				})
+				.map(r -> manager.equateStore.getObjectAt(r.equateKey))
+				.toList();
 	}
 
 	@Override
 	public Collection<? extends DBTraceEquate> getReferenced(long snap, Address address) {
-		Collection<DBTraceEquateReference> refs =
-			equateMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap)).values();
-		return Collections2.transform(refs, r -> manager.equateStore.getObjectAt(r.equateKey));
+		return equateMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap))
+				.values()
+				.stream()
+				.map(r -> manager.equateStore.getObjectAt(r.equateKey))
+				.toList();
 	}
 
 	@Override

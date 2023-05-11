@@ -105,7 +105,7 @@ public final class StringField extends Field {
 	}
 
 	@Override
-	int write(Buffer buf, int offset) throws IOException {
+	int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		if (bytes == null) {
 			return buf.putInt(offset, -1);
 		}
@@ -114,7 +114,7 @@ public final class StringField extends Field {
 	}
 
 	@Override
-	int read(Buffer buf, int offset) throws IOException {
+	int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		checkImmutable();
 		int len = buf.getInt(offset);
 		offset += 4;
@@ -131,7 +131,7 @@ public final class StringField extends Field {
 	}
 
 	@Override
-	int readLength(Buffer buf, int offset) throws IOException {
+	int readLength(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		int len = buf.getInt(offset);
 		return (len < 0 ? 0 : len) + 4;
 	}
@@ -217,7 +217,7 @@ public final class StringField extends Field {
 	}
 
 	@Override
-	int compareTo(DataBuffer buffer, int offset) {
+	int compareTo(DataBuffer buffer, int offset) throws IndexOutOfBoundsException {
 		StringField f = new StringField();
 		try {
 			f.read(buffer, offset);

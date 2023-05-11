@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import agent.dbgeng.model.iface2.DbgModelTargetSessionAttributes;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
@@ -58,7 +59,7 @@ public class DbgModelTargetSessionAttributesImpl extends DbgModelTargetObjectImp
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return CompletableFuture.completedFuture(null);
 	}
 

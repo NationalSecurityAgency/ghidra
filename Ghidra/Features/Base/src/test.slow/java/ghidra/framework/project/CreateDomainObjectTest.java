@@ -117,7 +117,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 		project.close();
 		Project project2 = ProjectTestUtils.getProject(testDir, PROJECT_NAME2);
 		try {
-			project2.addProjectView(GhidraURL.makeURL(testDir, PROJECT_NAME1));
+			project2.addProjectView(GhidraURL.makeURL(testDir, PROJECT_NAME1), true);
 		}
 		catch (Exception e) {
 			Assert.fail("View Not found");

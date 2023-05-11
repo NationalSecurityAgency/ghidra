@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.datamgr.tree;
 
 import ghidra.app.plugin.core.datamgr.archive.ProjectArchive;
 import ghidra.framework.model.DomainFile;
-import ghidra.util.HTMLUtilities;
 
 public class ProjectArchiveNode extends DomainFileArchiveNode {
 
@@ -35,10 +34,7 @@ public class ProjectArchiveNode extends DomainFileArchiveNode {
 	@Override
 	public String getToolTip() {
 		DomainFile file = ((ProjectArchive) archive).getDomainFile();
-		if (file != null) {
-			return "<html>" + HTMLUtilities.escapeHTML(file.getPathname());
-		}
-		return "[Unsaved New Project Archive]";
+		return buildTooltip(file != null ? file.getPathname() : "[Unsaved New Project Archive]");
 	}
 
 	public boolean hasWriteLock() {

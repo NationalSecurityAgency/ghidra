@@ -15,6 +15,7 @@
  */
 package ghidra.app.decompiler;
 
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.decompiler.component.margin.DecompilerMarginProvider;
 
 /**
@@ -34,4 +35,11 @@ public interface DecompilerMarginService {
 	 * @param provider the margin provider
 	 */
 	void removeMarginProvider(DecompilerMarginProvider provider);
+
+	/**
+	 * Get the panel associated with this margin
+	 * 
+	 * @return the panel
+	 */
+	DecompilerPanel getDecompilerPanel();
 }

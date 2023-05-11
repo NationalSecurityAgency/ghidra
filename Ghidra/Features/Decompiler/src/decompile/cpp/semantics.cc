@@ -16,6 +16,8 @@
 #include "semantics.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 ConstTpl::ConstTpl(const_type tp)
 
 {				// Constructor for relative jump constants and uniques
@@ -976,3 +978,5 @@ void PcodeBuilder::build(ConstructTpl *construct,int4 secnum)
   }
   labelbase = oldbase;		// Restore old labelbase
 }
+
+} // End namespace ghidra

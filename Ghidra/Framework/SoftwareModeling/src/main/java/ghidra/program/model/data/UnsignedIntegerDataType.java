@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Basic implementation for an unsigned Integer dataType 
  */
-public class UnsignedIntegerDataType extends AbstractIntegerDataType {
-
-	private final static long serialVersionUID = 1;
+public class UnsignedIntegerDataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined UnsignedIntegerDataType instance.*/
 	public final static UnsignedIntegerDataType dataType = new UnsignedIntegerDataType();
@@ -30,30 +28,19 @@ public class UnsignedIntegerDataType extends AbstractIntegerDataType {
 	}
 
 	public UnsignedIntegerDataType(DataTypeManager dtm) {
-		super("uint", false, dtm);
+		super("uint", dtm);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		return getDataOrganization().getIntegerSize();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#hasLanguageDependantLength()
-	 */
 	@Override
 	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "Unsigned Integer (compiler-specific size)";

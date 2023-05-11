@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.main;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.main.KeyEnumerator;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.main.IKeyEnumerator;
 import agent.dbgmodel.jna.dbgmodel.main.WrapIKeyEnumerator;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,18 +32,14 @@ public interface KeyEnumeratorInternal extends KeyEnumerator {
 	Map<Pointer, KeyEnumeratorInternal> CACHE = new WeakValueHashMap<>();
 
 	static KeyEnumeratorInternal instanceFor(WrapIKeyEnumerator data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, KeyEnumeratorImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, KeyEnumeratorImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIKeyEnumerator>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIKeyEnumerator>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IKeyEnumerator.IID_IKEY_ENUMERATOR), WrapIKeyEnumerator.class) //
-				.build();
+	List<Preferred<WrapIKeyEnumerator>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IKeyEnumerator.IID_IKEY_ENUMERATOR, WrapIKeyEnumerator.class));
 
 	static KeyEnumeratorInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(KeyEnumeratorInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(KeyEnumeratorInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

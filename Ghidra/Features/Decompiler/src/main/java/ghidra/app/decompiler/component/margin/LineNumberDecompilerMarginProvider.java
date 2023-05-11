@@ -18,6 +18,7 @@ package ghidra.app.decompiler.component.margin;
 import java.awt.*;
 import java.math.BigInteger;
 
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 import docking.util.GraphicsUtils;
@@ -36,6 +37,10 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 	private LayoutPixelIndexMap pixmap;
 	private LayoutModel model;
 
+	public LineNumberDecompilerMarginProvider() {
+		setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
+	}
+
 	@Override
 	public void setProgram(Program program, LayoutModel model, LayoutPixelIndexMap pixmap) {
 		setLayoutManager(model);
@@ -51,7 +56,6 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 			this.model.removeLayoutModelListener(this);
 		}
 		this.model = model;
-		this.model.addLayoutModelListener(this);
 		setWidthForLastLine();
 		if (this.model != null) {
 			this.model.addLayoutModelListener(this);
@@ -87,20 +91,26 @@ public class LineNumberDecompilerMarginProvider extends JPanel
 		}
 		int lastLine = model.getNumIndexes().intValueExact();
 		int width = getFontMetrics(getFont()).stringWidth(Integer.toString(lastLine));
-		setPreferredSize(new Dimension(width, 0));
+		Insets insets = getInsets();
+		width += insets.left + insets.right;
+		setPreferredSize(new Dimension(Math.max(16, width), 0));
 		invalidate();
 	}
 
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
+
+		Insets insets = getInsets();
+		int rightEdge = getWidth() - insets.right;
 		Rectangle visible = getVisibleRect();
 		BigInteger startIdx = pixmap.getIndex(visible.y);
 		BigInteger endIdx = pixmap.getIndex(visible.y + visible.height);
 		int ascent = g.getFontMetrics().getMaxAscent();
 		for (BigInteger i = startIdx; i.compareTo(endIdx) <= 0; i = i.add(BigInteger.ONE)) {
-			GraphicsUtils.drawString(this, g, i.add(BigInteger.ONE).toString(), 0,
-				pixmap.getPixel(i) + ascent);
+			String text = i.add(BigInteger.ONE).toString();
+			int width = g.getFontMetrics().stringWidth(text);
+			GraphicsUtils.drawString(this, g, text, rightEdge - width, pixmap.getPixel(i) + ascent);
 		}
 	}
 }

@@ -15,6 +15,8 @@
  */
 #include "flow.hh"
 
+namespace ghidra {
+
 /// Prepare for tracing flow for a new function.
 /// The Funcdata object and references to its internal containers must be explicitly given.
 /// \param d is the new function to trace
@@ -753,23 +755,16 @@ void FlowInfo::generateOps(void)
   do {
     bool collapsed_jumptable = false;
     while(!tablelist.empty()) {	// For each jumptable found
-      PcodeOp *op = tablelist.back();
-      tablelist.pop_back();
-      int4 failuremode;
-      JumpTable *jt = data.recoverJumpTable(op,this,failuremode); // Recover it
-      if (jt == (JumpTable *)0) { // Could not recover jumptable
-	if ((failuremode == 3) && (!tablelist.empty()) && (!isInArray(notreached,op))) {
-	   // If the indirect op was not reachable with current flow AND there is more flow to generate,
-	  //     AND we haven't tried to recover this table before
-	  notreached.push_back(op); // Save this op so we can try to recovery table again later
-	}
-	else if (!isFlowForInline())	// Unless this flow is being inlined for something else
-	  truncateIndirectJump(op,failuremode); // Treat the indirect jump as a call
-      }
-      else {
+      vector<JumpTable *> newTables;
+      recoverJumpTables(newTables, notreached);
+      tablelist.clear();
+      for(int4 i=0;i<newTables.size();++i) {
+	JumpTable *jt = newTables[i];
+	if (jt == (JumpTable *)0) continue;
+
 	int4 num = jt->numEntries();
 	for(int4 i=0;i<num;++i)
-	  newAddress(op,jt->getAddressByIndex(i));
+	  newAddress(jt->getIndirectOp(),jt->getAddressByIndex(i));
 	if (jt->isPossibleMultistage())
 	  collapsed_jumptable = true;
 	while(!addrlist.empty())	// Try to fill in as much more as possible
@@ -1161,6 +1156,8 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
 
   bool startbasic = op->isBlockStart();
   ++iter;			// Now points to first op in the injection
+  if (iter == obank.endDead())
+    throw LowlevelError("Empty injection: " + payload->getName());
   PcodeOp *firstop = *iter;
   bool isfallthru = true;
   PcodeOp *lastop = xrefControlFlow(iter,startbasic,isfallthru,fc);
@@ -1384,3 +1381,41 @@ void FlowInfo::checkMultistageJumptables(void)
       tablelist.push_back(jt->getIndirectOp());
   }  
 }
+
+/// \brief Recover jumptables for the current set of BRANCHIND ops using existing flow
+///
+/// This method passes back a list of JumpTable objects, one for each BRANCHIND in the current
+/// \b tablelist where the jumptable can be recovered. If a particular BRANCHIND cannot be recovered
+/// because the current partial control flow cannot legally reach it, the BRANCHIND is passed back
+/// in a separate list.
+/// \param newTables will hold the list of recovered JumpTables
+/// \param notreached will hold the list of BRANCHIND ops that could not be reached
+void FlowInfo::recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *> &notreached)
+
+{
+  PcodeOp *op = tablelist[0];
+  ostringstream s1;
+  s1 << data.getName() << "@@jump@";
+  op->getAddr().printRaw(s1);
+
+  // Prepare partial Funcdata object for analysis if necessary
+  Funcdata partial(s1.str(),data.getScopeLocal()->getParent(),data.getAddress(),(FunctionSymbol *)0);
+
+  for(int4 i=0;i<tablelist.size();++i) {
+    op = tablelist[i];
+    int4 failuremode;
+    JumpTable *jt = data.recoverJumpTable(partial,op,this,failuremode); // Recover it
+    if (jt == (JumpTable *)0) { // Could not recover jumptable
+      if ((failuremode == 3) && (tablelist.size() > 1) && (!isInArray(notreached,op))) {
+	// If the indirect op was not reachable with current flow AND there is more flow to generate,
+	//     AND we haven't tried to recover this table before
+	notreached.push_back(op); // Save this op so we can try to recovery table again later
+      }
+      else if (!isFlowForInline())	// Unless this flow is being inlined for something else
+	truncateIndirectJump(op,failuremode); // Treat the indirect jump as a call
+    }
+    newTables.push_back(jt);
+  }
+}
+
+} // End namespace ghidra

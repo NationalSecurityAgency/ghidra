@@ -89,7 +89,7 @@ public class CreateEHUnwindMapBackgroundCmd extends AbstractCreateDataBackground
 		Program program = model.getProgram();
 
 		for (int unwindEntryOrdinal = 0; unwindEntryOrdinal < count; unwindEntryOrdinal++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address compAddress;
 			Address actionAddress;
 			try {

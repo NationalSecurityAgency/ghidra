@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -27,7 +28,6 @@ import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.ShortDataType;
@@ -72,10 +72,9 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		helper = new AssemblerPluginTestHelper(assemblerPlugin, codeViewer, program);
 
-		try (ProgramTransaction trans = ProgramTransaction.open(program, "Setup")) {
+		try (Transaction tx = program.openTransaction("Setup")) {
 			memory.createInitializedBlock(".text", space.getAddress(0x00400000), 0x1000, (byte) 0,
 				TaskMonitor.DUMMY, false);
-			trans.commit();
 		}
 
 		env.showTool();
@@ -98,9 +97,8 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testActionPatchInstructionExisting() throws Exception {
 		Address address = space.getAddress(0x00400000);
 		Assembler asm = Assemblers.getAssembler(program);
-		try (ProgramTransaction trans = ProgramTransaction.open(program, "Assemble pre-existing")) {
+		try (Transaction tx = program.openTransaction("Assemble pre-existing")) {
 			asm.assemble(address, "imm r0,#0x3d2");
-			trans.commit();
 		}
 
 		Instruction ins = helper.patchInstructionAt(address, "imm r0,#0x3d2", "imm r0, #123");
@@ -113,9 +111,8 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testActionPatchDataShortHexValid() throws Exception {
 		Address address = space.getAddress(0x00400000);
-		try (ProgramTransaction trans = ProgramTransaction.open(program, "Place short")) {
+		try (Transaction tx = program.openTransaction("Place short")) {
 			listing.createData(address, ShortDataType.dataType);
-			trans.commit();
 		}
 
 		Data data = helper.patchDataAt(address, "0h", "1234h");
@@ -125,10 +122,9 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testActionPatchDataShortDecValid() throws Exception {
 		Address address = space.getAddress(0x00400000);
-		try (ProgramTransaction trans = ProgramTransaction.open(program, "Place short")) {
+		try (Transaction tx = program.openTransaction("Place short")) {
 			Data data = listing.createData(address, ShortDataType.dataType);
 			FormatSettingsDefinition.DEF.setChoice(data, FormatSettingsDefinition.DECIMAL);
-			trans.commit();
 		}
 
 		Data data = helper.patchDataAt(address, "0", "1234");
@@ -138,10 +134,9 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testActionPatchDataUTF8StringSameLength() throws Exception {
 		Address address = space.getAddress(0x00400000);
-		try (ProgramTransaction trans = ProgramTransaction.open(program, "Place string")) {
+		try (Transaction tx = program.openTransaction("Place string")) {
 			memory.setBytes(address, "Hello, World!\0".getBytes("utf-8"));
 			listing.createData(address, TerminatedStringDataType.dataType);
-			trans.commit();
 		}
 
 		Data data = helper.patchDataAt(address, "\"Hello, World!\"",
@@ -152,10 +147,9 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testActionPatchDataUTF8StringShorter() throws Exception {
 		Address address = space.getAddress(0x00400000);
-		try (ProgramTransaction trans = ProgramTransaction.open(program, "Place string")) {
+		try (Transaction tx = program.openTransaction("Place string")) {
 			memory.setBytes(address, "Hello, World!\0".getBytes("utf-8"));
 			listing.createData(address, TerminatedStringDataType.dataType);
-			trans.commit();
 		}
 
 		Data data =
@@ -167,10 +161,9 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testActionPatchDataUTF8StringLonger() throws Exception {
 		Address address = space.getAddress(0x00400000);
-		try (ProgramTransaction trans = ProgramTransaction.open(program, "Place string")) {
+		try (Transaction tx = program.openTransaction("Place string")) {
 			memory.setBytes(address, "Hello, World!\0".getBytes("utf-8"));
 			listing.createData(address, TerminatedStringDataType.dataType);
-			trans.commit();
 		}
 
 		Data data = helper.patchDataAt(address, "\"Hello, World!\"", "\"Hello to you, too!\"");

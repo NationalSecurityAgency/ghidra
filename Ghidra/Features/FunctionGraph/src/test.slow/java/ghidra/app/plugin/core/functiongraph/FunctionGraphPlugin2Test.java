@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
-import static ghidra.graph.viewer.GraphViewerUtils.getPointInViewSpaceForVertex;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
@@ -30,6 +29,7 @@ import org.junit.*;
 import docking.action.DockingActionIf;
 import edu.uci.ics.jung.graph.Graph;
 import generic.test.TestUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.DeleteLabelCmd;
 import ghidra.app.cmd.refs.AddMemRefCmd;
@@ -251,7 +251,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		ListingPanel listingPanel =
 			(ListingPanel) TestUtils.getInstanceField("listingPanel", panel);
 		Color startBackgrond = listingPanel.getTextBackgroundColor();
-		Color testColor = Color.RED;
+		Color testColor = Palette.RED;
 		assertTrue("Unexpected start color--must change the test!",
 			!testColor.equals(startBackgrond));
 
@@ -277,7 +277,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		Color appliedBackgroundColor =
 			colorizingService.getBackgroundColor(vertex.getVertexAddress());
 
-		Color testColor = Color.RED;
+		Color testColor = Palette.RED;
 		assertTrue("Unexpected start color--must change the test!",
 			!testColor.equals(appliedBackgroundColor));
 
@@ -285,7 +285,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 
 		// make sure the service is also cognizant of the color change
 		appliedBackgroundColor = colorizingService.getBackgroundColor(vertex.getVertexAddress());
-		assertEquals(testColor, appliedBackgroundColor);
+		assertColorsEqual(testColor, appliedBackgroundColor);
 
 		Color vBg = vertex.getBackgroundColor();
 		assertEquals(appliedBackgroundColor, vBg);
@@ -333,8 +333,8 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 
 		Color newBackgroundColor =
 			colorizingService.getBackgroundColor(focusedVertex.getVertexAddress());
-		assertEquals("'Set Most Recent Color' action did not apply that color to the color service",
-			mostRecentColor, newBackgroundColor);
+		// "'Set Most Recent Color' action did not apply that color to the color service"
+		assertColorsEqual(mostRecentColor, newBackgroundColor);
 	}
 
 	// TODO: see SCR 9208 - we don't currently support this, although we could

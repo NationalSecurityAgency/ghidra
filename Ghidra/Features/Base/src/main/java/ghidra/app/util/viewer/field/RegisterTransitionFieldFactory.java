@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +22,8 @@ import java.util.List;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -36,15 +34,11 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.RegisterTransitionFieldLocation;
 
-/**
-  *  Generates Mnemonic Fields.
-  */
 public class RegisterTransitionFieldFactory extends FieldFactory {
 
 	private static final String FIELD_NAME = "Register Transition";
 	private static final String DISPLAY_HIDDEN_REGISTERS_OPTION_NAME =
 		RegisterFieldFactory.DISPLAY_HIDDEN_REGISTERS_OPTION_NAME;
-	private Color regColor;
 	private boolean showContextRegisters;
 
 	/**
@@ -61,16 +55,13 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private RegisterTransitionFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
+	private RegisterTransitionFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 		initOptions(displayOptions, fieldOptions);
 	}
 
 	private void initOptions(Options displayOptions, Options fieldOptions) {
-		regColor =
-			displayOptions.getColor(OptionsGui.REGISTERS.getColorOptionName(), getDefaultColor());
-
 		showContextRegisters = fieldOptions.getBoolean(DISPLAY_HIDDEN_REGISTERS_OPTION_NAME, false);
 	}
 
@@ -81,17 +72,6 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 
 		if (optionName.equals(DISPLAY_HIDDEN_REGISTERS_OPTION_NAME)) {
 			showContextRegisters = (Boolean) newValue;
-			model.update();
-		}
-	}
-
-	@Override
-	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-
-		if (optionName.equals(OptionsGui.REGISTERS.getColorOptionName())) {
-			regColor = (Color) newValue;
 			model.update();
 		}
 	}
@@ -141,12 +121,15 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 		FieldElement[] fieldElements = new FieldElement[numElements];
 		for (int i = 0; i < numRegisters; i++) {
 			Register register = transitionRegisters.get(i);
-			AttributedString str = new AttributedString("assume " + register.getName() + " = " +
-				getValueString(register, context, curAddress), regColor, getMetrics());
+			AttributedString str = new AttributedString(
+				"assume " + register.getName() + " = " +
+					getValueString(register, context, curAddress),
+				ListingColors.REGISTER, getMetrics());
 			fieldElements[i] = new TextFieldElement(str, i, 0);
 		}
 		if (stackDepthStr != null) {
-			AttributedString str = new AttributedString(stackDepthStr, regColor, getMetrics());
+			AttributedString str =
+				new AttributedString(stackDepthStr, ListingColors.REGISTER, getMetrics());
 			fieldElements[numRegisters] = new TextFieldElement(str, numRegisters, 0);
 		}
 		return ListingTextField.createMultilineTextField(this, proxy, fieldElements,
@@ -259,14 +242,9 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel fieldFormatModel, HighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel fieldFormatModel, ListingHighlightProvider hsProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new RegisterTransitionFieldFactory(fieldFormatModel, hsProvider, displayOptions,
 			fieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.MNEMONIC.getDefaultColor();
 	}
 }

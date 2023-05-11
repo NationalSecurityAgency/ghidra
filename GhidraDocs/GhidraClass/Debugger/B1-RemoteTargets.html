@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#remote-targets" id="toc-remote-targets">Remote Targets</a>
+<ul>
+<li><a href="#module-mapping-caveats"
+id="toc-module-mapping-caveats">Module Mapping Caveats</a></li>
+<li><a href="#variation-in-configuration"
+id="toc-variation-in-configuration">Variation in Configuration</a></li>
+<li><a href="#using-gdbserver" id="toc-using-gdbserver">Using
+<code>gdbserver</code></a></li>
+<li><a href="#using-ssh" id="toc-using-ssh">Using SSH</a></li>
+<li><a href="#using-gadp" id="toc-using-gadp">Using GADP</a>
+<ul>
+<li><a href="#using-gadp-locally" id="toc-using-gadp-locally">Using GADP
+Locally</a></li>
+<li><a href="#using-gadp-remotely" id="toc-using-gadp-remotely">Using
+GADP Remotely</a></li>
+</ul></li>
+<li><a href="#using-a-pty-pseudo-terminal"
+id="toc-using-a-pty-pseudo-terminal">Using a pty
+(pseudo-terminal)</a></li>
+<li><a href="#rube-goldberg-configurations"
+id="toc-rube-goldberg-configurations">Rube Goldberg
+Configurations</a></li>
+<li><a href="#exercise-debug-your-friends-termmines"
+id="toc-exercise-debug-your-friends-termmines">Exercise: Debug your
+Friend’s <code>termmines</code></a></li>
+</ul></li>
+</ul>
+</nav>
+<section id="remote-targets" class="level1">
+<h1>Remote Targets</h1>
+<p>This is the first module of the Advanced part of this course. It
+assumes you have completed the Beginner portion. At the very least, you
+should complete <a href="A1-GettingStarted.html">Getting Started</a> and
+<a href="A2-UITour.html">A Tour of the Debugger UI</a> first.</p>
+<section id="module-mapping-caveats" class="level2">
+<h2>Module Mapping Caveats</h2>
+<p>Beware! Many of the conveniences in Ghidra assume that the target is
+running from the same file system as Ghidra, which will not be the case
+when the target is remote. Be sure your current project is populated
+only with programs imported from the target’s file system. Additionally,
+if prompted to import something new, be sure to redirect to the remote
+file system, because the dialog will default to the path on the local
+file system.</p>
+</section>
+<section id="variation-in-configuration" class="level2">
+<h2>Variation in Configuration</h2>
+<p>There are a number of configurations for remote debugging with many
+moving parts. Some of those parts are contributed by Ghidra’s Debugger,
+some are not. Depending on your particular target and platform, there
+may be several options available to you. Consider a remote Linux target
+in user space. While this list is not exhaustive, some options are:</p>
+<ul>
+<li>Use <code>gdbserver</code></li>
+<li>Use SSH</li>
+<li>Use GADP</li>
+<li>Use a pty</li>
+</ul>
+<p>Generally, for each of these options it boils down to which
+components will be colocated with the target and which will be colocated
+with Ghidra.</p>
+</section>
+<section id="using-gdbserver" class="level2">
+<h2>Using <code>gdbserver</code></h2>
+<p>In this configuration, Ghidra and GDB will be located in the user’s
+local environment, while <code>gdbserver</code> and the specimen will be
+located in the target environment. The procedure follows directly from
+GDB’s manual, but with some Ghidra-specific steps. First, prepare the
+target, which for demonstration purposes has the IP address
+10.0.0.1:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">gdbserver</span> 10.0.0.1:12345 termmines</span></code></pre></div>
+<p>Then, connect from Ghidra using GDB:</p>
+<ol type="1">
+<li><p>From the Targets window, click Connect, select “gdb,” and click
+Connect.</p></li>
+<li><p>In the Interpreter, do as you would in GDB:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">target</span> <span class="kw">remote</span> 10.0.0.1:12345</span></code></pre></div></li>
+</ol>
+<p>The target should now be added to the Debugger session, and things
+should work as usual.</p>
+</section>
+<section id="using-ssh" class="level2">
+<h2>Using SSH</h2>
+<p>In this configuration, only Ghidra is required to be in the user’s
+local environment, while <code>sshd</code>, <code>gdb</code> and the
+specimen will be located in the target environment.
+<strong>NOTE</strong>: The full <code>gdb</code>, not just
+<code>gdbserver</code>, must be installed on the target system.</p>
+<ol type="1">
+<li><p>From the Targets window, click Connect, and select “gdb via
+SSH.”</p>
+<figure>
+<img src="images/RemoteTargets_GdbOverSsh.png"
+alt="Connect dialog for gdb via SSH" />
+<figcaption aria-hidden="true">Connect dialog for gdb via
+SSH</figcaption>
+</figure></li>
+<li><p>Set “GDB launch command” to the path of gdb <em>on the remote
+file system</em>.</p></li>
+<li><p>Leave “Use existing session via new-ui” unchecked.</p></li>
+<li><p>Set “SSH hostname” to the name or IP address of the target
+system.</p></li>
+<li><p>If you are not using the standard SSH port, set “SSH TCP port”
+accordingly.</p></li>
+<li><p>Set “SSH username” to your username on the target
+system.</p></li>
+<li><p>Set “Open SSH config file” to the client config file <em>on the
+local file system</em>.</p></li>
+<li><p>If the remote uses DOS line endings (unlikely for a Linux
+remote), then check the “Use DOS line endings” box.</p></li>
+<li><p>Click Connect.</p></li>
+<li><p>If prompted, enter your SSH credentials.</p></li>
+</ol>
+<p>If everything goes well, the Objects window should populate, and you
+should get an Interpreter window presenting the remote GDB CLI. You may
+use it in the usual manner to launch your target. Alternatively, in the
+Objects window, click the Launch or Quick Launch button to launch the
+current program. If prompted for the target command line, remember you
+must provide the path <em>on the remote file system</em>.</p>
+<p>The target should now be added to the Debugger session, and things
+should work as usual.</p>
+</section>
+<section id="using-gadp" class="level2">
+<h2>Using GADP</h2>
+<p>GADP (Ghidra Asynchronous Debugging Protocol) is a protocol
+contributed by the Ghidra Debugger. It allows any of Ghidra’s back-end
+connectors to be deployed as an <em>agent</em>. The agent connects to
+the back-end as usual, but then opens a TCP socket and waits for Ghidra
+to connect.</p>
+<section id="using-gadp-locally" class="level3">
+<h3>Using GADP Locally</h3>
+<p>When debugging locally, the UI may offer “GADP” as an alternative to
+“IN-VM”. If the back-end connector tends to crash Ghidra, you may prefer
+to select GADP. Typically, GADP will slow things down as information is
+marshalled across a TCP connection. However, if the connector crashes,
+Ghidra will simply drop the connection, whereas the IN-VM connector
+would crash Ghidra, too.</p>
+</section>
+<section id="using-gadp-remotely" class="level3">
+<h3>Using GADP Remotely</h3>
+<p>In this configuration, only Ghidra is required to be in the user’s
+local environment. The target environment must have <code>gdb</code>,
+<code>java</code>, and some portion of Ghidra installed.</p>
+<p>If you can install Ghidra on the remote system, there is a script to
+launch the headless agent:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /path/to/ghidra</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">support/gdbGADPServerRun</span> <span class="at">-h</span></span></code></pre></div>
+<p>This should print help for you. Typically, you can just run the agent
+without any extra command-line arguments:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">support/gdbGADPServerRun</span></span></code></pre></div>
+<p>If not, then you probably just need to tell it where you installed
+<code>gdb</code>:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">support/gdbGADPServerRun</span> <span class="at">--agent-args</span> <span class="at">-g</span> /path/to/bin/gdb</span></code></pre></div>
+<p>If you cannot install Ghidra, or do not want to, then you can build a
+standalone jar. You will still need to install the JRE on the target,
+likely the same version as recommended for Ghidra.</p>
+<p>Refer to the root README file to get started with a build from
+source. You may stop short of the <code>gradle buildGhidra</code> step,
+though it may be helpful to avoid trouble. Then, build the executable
+jar for the GDB agent:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">gradle</span> Debugger-agent-gdb:nodepJar</span></code></pre></div>
+<p>This will create the file
+<code>Ghidra/Debug/Debugger-agent-gdb/build/libs/Debugger-agent-gdb-nodep.jar</code>.
+Copy the file to the target system. Now, run it:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> <span class="at">-jar</span> Debugger-agent-gdb-nodep.jar <span class="at">-h</span></span></code></pre></div>
+<p>Once the agent is running, it should print its port number, and you
+can connect from Ghidra. For demonstration, we will assume it is
+listening at 10.0.0.2 on port 15432.</p>
+<ol type="1">
+<li>From the Targets window, click Connect.</li>
+<li>Select “Ghidra debug agent (GADP)” from the drop-down.</li>
+<li>For “Agent network address”, enter 10.0.0.2.</li>
+<li>For “Agent TCP port”, enter 15432.</li>
+<li>Click Connect.</li>
+</ol>
+<p>That should complete the connection. You should see Objects populated
+and get an Interpreter window. You can then proceed to launch or attach
+a target in that connection using either the Objects window or the
+Interpreter window.</p>
+</section>
+</section>
+<section id="using-a-pty-pseudo-terminal" class="level2">
+<h2>Using a pty (pseudo-terminal)</h2>
+<p>If your copy of GDB supports the <code>new-ui</code> command (all
+versions 8.0 and up should), then you may use any of the GDB connectors
+(including the local IN-VM one) to join Ghidra to an existing GDB
+session:</p>
+<ol type="1">
+<li><p>Run <code>gdb</code> from a proper terminal:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gdb</span> termmines</span></code></pre></div></li>
+<li><p>If needed, do whatever you would like to do before connecting
+with Ghidra.</p></li>
+<li><p>In Ghidra, from the Targets window, click Connect, and select
+<code>gdb</code>.</p></li>
+<li><p>Check the “Use existing session via new-ui” box.</p></li>
+<li><p>Click Connect.</p></li>
+<li><p>You will be prompted with the name of a pseudo terminal, e.g.,
+<code>/dev/pts/1</code>.</p></li>
+<li><p>Back in <code>gdb</code>:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">new-ui</span> /dev/pts/1</span></code></pre></div></li>
+</ol>
+<p>That should complete the connection. If there was a target active in
+the existing GDB session, Ghidra should recognize it, and things should
+work as usual. If there was not a target, then you should at least see
+Objects populated and get an Interpreter window. You can then proceed to
+launch or attach a target in that connection using either the Objects
+window or the Interpreter window.</p>
+<p>This same checkbox is available in the “gdb via SSH” connector. Note
+that the remote system must support pseudo terminals, and the name of
+the pseudo terminal is from the <em>remote file system</em>.</p>
+<p>To activate this configuration in the standalone GADP agent, use the
+<code>-x</code> option:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">java</span> <span class="at">-jar</span> Debugger-agent-gdb-node.jar <span class="at">--agent-args</span> <span class="at">-x</span></span></code></pre></div>
+</section>
+<section id="rube-goldberg-configurations" class="level2">
+<h2>Rube Goldberg Configurations</h2>
+<p>While you should always prefer the simpler configuration, it is
+possible to combine components to meet a variety of needs. For example,
+to debug a native Android target from Windows, you could run Ghidra on
+Windows, connect it to GDB via SSH to a Linux virtual machine, e.g.,
+WSL2, and then connect that to <code>gdbserver</code> running in an
+Android emulator.</p>
+</section>
+<section id="exercise-debug-your-friends-termmines" class="level2">
+<h2>Exercise: Debug your Friend’s <code>termmines</code></h2>
+<p>If you are in a classroom setting, pair up. Otherwise, play both
+roles, preferably using separate machines for Ghidra and the target.
+Using either <code>gdbserver</code>, gdb via SSH, or the GDB agent,
+debug <code>termmines</code>. One of you should prepare the target
+environment. The other should connect to it and launch the specimen.
+Then trade roles, choose a different configuration, and do it again.</p>
+</section>
+</section>
+</body>
+</html>

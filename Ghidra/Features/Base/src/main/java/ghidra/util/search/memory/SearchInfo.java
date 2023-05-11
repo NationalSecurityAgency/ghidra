@@ -25,7 +25,7 @@ import ghidra.util.task.TaskListener;
 
 public class SearchInfo {
 	private final SearchData searchData;
-	private final int matchLimit;
+	private int searchLimit;
 	private final boolean forwardSearch;
 	protected final boolean searchSelection;
 	private final int alignment;
@@ -40,11 +40,11 @@ public class SearchInfo {
 			includeNonLoadedBlocks, new CodeUnitSearchInfo(true, true, true), listener);
 	}
 
-	public SearchInfo(SearchData searchData, int matchLimit, boolean searchSelection,
+	public SearchInfo(SearchData searchData, int searchLimit, boolean searchSelection,
 			boolean forwardSearch, int alignment, boolean includeNonLoadedBlocks,
 			CodeUnitSearchInfo codeUnitSearchInfo, TaskListener listener) {
 		this.searchData = searchData;
-		this.matchLimit = matchLimit;
+		this.searchLimit = searchLimit;
 		this.searchSelection = searchSelection;
 		this.forwardSearch = forwardSearch;
 		this.alignment = alignment;
@@ -55,7 +55,7 @@ public class SearchInfo {
 
 	/**
 	 * Generate an address set which only includes initialized memory
-	 * 
+	 *
 	 * @param program the program
 	 * @param startAddress starting point for search or null to start from the top of memory
 	 * @param selection addresses to be searched or null to search all memory
@@ -111,10 +111,6 @@ public class SearchInfo {
 		return alignment;
 	}
 
-	public int getMatchLimit() {
-		return matchLimit;
-	}
-
 	public TaskListener getListener() {
 		return listener;
 	}
@@ -128,6 +124,10 @@ public class SearchInfo {
 	}
 
 	public int getSearchLimit() {
-		return matchLimit;
+		return searchLimit;
+	}
+
+	public void setSearchLimit(int searchLimit) {
+		this.searchLimit = searchLimit;
 	}
 }

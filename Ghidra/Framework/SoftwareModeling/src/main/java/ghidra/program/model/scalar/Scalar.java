@@ -18,103 +18,95 @@ package ghidra.program.model.scalar;
 import java.math.BigInteger;
 
 /**
- * <p>
- * The Scalar defines a immutable fixed bit signed integer.
- * Bit operations on a Scalar expect Scalar to act as a number in the
- * two's complement format. Scalar was designed to be used as an
- * offset (difference between two Addresses), an arithmetic operand,
- * and also potentially for simulating registers.
- * </p>
- *
- * <p>
- * If an operation varies depending on whether the Scalar is
- * treated as signed or unsigned, there are usally two version such as
- * multiply and unsignedMultiply.  Please note that this means that
- * the Comparable interface treats the number as signed.
- * </p>
+ * The Scalar defines a immutable integer stored in an arbitrary number of bits (0..64), along
+ * with a preferred signed-ness attribute.
  */
-public class Scalar implements Comparable<Scalar> {
-	private static final long[] BITMASKS = new long[65];
-
-	static {
-		// populate the BITMASKS for each possible bit length
-		// up to 64
-		long value = 1;
-		for (int i = 1; i < 65; ++i) {
-			BITMASKS[i] = value;
-			value = (value << 1) + 1;
-		}
-	}
-
-	private byte bitLength;
-	private long value;
-	private boolean signed;
+public class Scalar {
+	private final long value;
+	private final byte bitLength;
+	private final byte unusedBits; // complement of bitLength
+	private final boolean signed;
 
 	/**
-	 * Constructor
-	 * @param bitLength number of bits
-	 * @param value value of the scalar
-	 * @param signed true for a signed value, false for an unsigned value.
-	 */
-	public Scalar(int bitLength, long value, boolean signed) {
-		this.signed = signed;
-		if (!(bitLength == 0 && value == 0) && (bitLength < 1 || bitLength > 64)) {
-			throw new IllegalArgumentException("Bit length must be >= 1 and <= 64");
-		}
-		this.bitLength = (byte) bitLength;
-
-		this.value = value & BITMASKS[bitLength];
-	}
-
-	/**
-	 * Returns true if scalar was created as a signed value
-	 */
-	public boolean isSigned() {
-		return signed;
-	}
-
-	/**
-	 * Constructor a new signed scalar object.
-	 * @param bitLength number of bits
-	 * @param value value of the scalar
+	 * Construct a new signed scalar object.
+	 * 
+	 * @param bitLength number of bits, valid values are 1..64, or 0 if value is also 0
+	 * @param value value of the scalar, any bits that are set above bitLength will be ignored
 	 */
 	public Scalar(int bitLength, long value) {
 		this(bitLength, value, true);
 	}
 
 	/**
-	 * Get the value as signed.
+	 * Construct a new scalar.
+	 * 
+	 * @param bitLength number of bits, valid values are 1..64, or 0 if value is also 0
+	 * @param value value of the scalar, any bits that are set above bitLength will be ignored
+	 * @param signed true for a signed value, false for an unsigned value.
+	 */
+	public Scalar(int bitLength, long value, boolean signed) {
+		if (!(bitLength == 0 && value == 0) && (bitLength < 1 || bitLength > 64)) {
+			throw new IllegalArgumentException("Bit length must be >= 1 and <= 64");
+		}
+		this.signed = signed;
+		this.bitLength = (byte) bitLength;
+		this.unusedBits = (byte)(64 /*sizeof(long)*8*/ - bitLength);
+		this.value = (value << unusedBits) >>> unusedBits; // eliminate upper bits that are outside bitLength
+	}
+
+	/**
+	 * Returns true if scalar was created as a signed value
+	 * 
+	 * @return boolean true if this scalar was created as a signed value, false if was created as
+	 * unsigned
+	 */
+	public boolean isSigned() {
+		return signed;
+	}
+
+	/**
+	 * Get the value as a signed long, where the highest bit of the value, if set, will be 
+	 * extended to fill the remaining bits of a java long.
+	 * 
+	 * @return signed value
 	 */
 	public long getSignedValue() {
-		if (value == 0) {  // just in case the bitLength is 0
-			return 0;
-		}
-		if (testBit(bitLength - 1)) {
-			return (value | (~BITMASKS[bitLength]));
-		}
+		return (value << unusedBits) >> unusedBits; // if value has highbit set, sign extend it
+	}
+
+	/**
+	 * Get the value as an unsigned long.
+	 * 
+	 * @return unsigned value
+	 */
+	public long getUnsignedValue() {
 		return value;
 	}
 
 	/**
-	 * Get the value as unsigned.
-	 */
-	public long getUnsignedValue() {
-		if (value == 0) {  // just in case the bitLength is 0
-			return 0;
-		}
-		return (value & BITMASKS[bitLength]);
-	}
-
-	/**
-	 * Returns the value as a signed value if it was created signed, otherwise the value is
-	 * returned as an unsigned value
+	 * Returns the value in its preferred signed-ness.  See {@link #getSignedValue()} and
+	 * {@link #getUnsignedValue()}.
+	 * 
+	 * @return value, as either signed or unsigned, depending on how this instance was created
 	 */
 	public long getValue() {
 		return signed ? getSignedValue() : value;
 	}
 
 	/**
+	 * {@return the value, using the specified signedness.  Equivalent to calling getSignedValue()
+	 * or getUnsignedValue()}
+	 * 
+	 * @param signednessOverride true for a signed value, false for an unsigned value
+	 */
+	public long getValue(boolean signednessOverride) {
+		return signednessOverride ? getSignedValue() : value;
+	}
+
+	/**
 	 * Returns the BigInteger representation of the value.
+	 * 
+	 * @return new BigInteger representation of the value
 	 */
 	public BigInteger getBigInteger() {
 		int signum = (signed && testBit(bitLength - 1)) ? -1 : 1;
@@ -135,18 +127,6 @@ public class Scalar implements Comparable<Scalar> {
 	}
 
 	/**
-	 * <p>Creates a new Scalar of the same size as this scalar but with the
-	 * given value
-	 *
-	 * @param  newValue  the Scalar value which will be used to initialize
-	 *  the new Scalar.
-	 * @return  the new Scalar.
-	 */
-	public Scalar newScalar(long newValue) {
-		return new Scalar(bitLength, newValue, signed);
-	}
-
-	/**
 	 * <p>Returns a byte array representing this Scalar.  The size of
 	 * the byte array is the number of bytes required to hold the
 	 * number of bits returned by <CODE>bitLength()</CODE>.</p>
@@ -164,9 +144,6 @@ public class Scalar implements Comparable<Scalar> {
 		return data;
 	}
 
-	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
@@ -195,34 +172,7 @@ public class Scalar implements Comparable<Scalar> {
 
 	@Override
 	public int hashCode() {
-		return (int) (value ^ (value >>> 32));
-	}
-
-	/**
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(Scalar other) {
-		if (bitLength == 64 || other.bitLength == 64) {
-			return getBigInteger().compareTo(other.getBigInteger());
-		}
-		long v = getValue() - other.getValue();
-		if (v > 0) {
-			return 1;
-		}
-		else if (v < 0) {
-			return -1;
-		}
-		return 0;
-	}
-
-	/**
-	 * <p>Adds the integer n to <code>this</code>.
-	 * Computes (<code>this = this + n</code>).
-	 * @param n the value to add to this scalars value to produce a new scalar.
-	 */
-	public Scalar add(long n) {
-		return new Scalar(bitLength, (value + n) & BITMASKS[bitLength]);
+		return Long.hashCode(value);
 	}
 
 	/**
@@ -235,94 +185,6 @@ public class Scalar implements Comparable<Scalar> {
 	 */
 	public int bitLength() {
 		return bitLength;
-	}
-
-	/**
-	 * <p>The bit number n in this Scalar is set to zero.  Computes
-	 * (this = this &amp; ~(1&lt;&lt;n)).  Bits are numbered 0..bitlength()-1
-	 * with 0 being the least significant bit.</p>
-	 * @param n the bit to clear in this scalar.
-	 *
-	 * @throws  IndexOutOfBoundsException if n &gt;= bitLength().
-	 */
-	public Scalar clearBit(int n) {
-		if (n < 0 || n > bitLength - 1) {
-			throw new IllegalArgumentException();
-		}
-		return new Scalar(bitLength, value & ~(1 << n));
-	}
-
-	/**
-	 * <p>The bit number n in this Scalar is flipped.  Computes
-	 * (this = this ^ (1&lt;&lt;n)).  Bits are numbered 0..bitlength()-1
-	 * with 0 being the least significant bit.</p>
-	 * @param n the bit to flip.
-	 * @throws  IndexOutOfBoundsException if n &gt;= bitLength().
-	 */
-	public Scalar flipBit(int n) {
-		if (n < 0 || n > bitLength - 1) {
-			throw new IllegalArgumentException();
-		}
-		return new Scalar(bitLength, value ^ (1 << n));
-	}
-
-	/**
-	 * <p>The bit number n in this Scalar is set to one.  Computes
-	 * (this = this | (1&lt;&lt;n)).  Bits are numbered 0..bitlength()-1
-	 * with 0 being the least significant bit.</p>
-	 *
-	 * @param n the bit to set.
-	 * @throws  IndexOutOfBoundsException if n &gt;= bitLength().
-	 */
-	public Scalar setBit(int n) {
-		if (n < 0 || n > bitLength - 1) {
-			throw new IllegalArgumentException();
-		}
-		return new Scalar(bitLength, value | (1 << n));
-	}
-
-	/**
-	 * <p>Sets <code>this = this &lt;&lt; n</code>.</p>
-	 * @param n the number of bits to shift left.
-	 * @throws ArithmeticException if n &lt; 0.
-	 */
-	public Scalar shiftLeft(int n) {
-		if (n < 0 || n > bitLength - 1) {
-			throw new IllegalArgumentException();
-		}
-		return new Scalar(bitLength, value << n);
-	}
-
-	/**
-	 * <p>Sets <code>this = this &gt;&gt; n</code> using 0 as the fill bit.</p>
-	 * @param n the number of bits to shift right.
-	 * @throws ArithmeticException if n &lt; 0.
-	 */
-	public Scalar shiftRight(int n) {
-		if (n < 0 || n > bitLength - 1) {
-			throw new IllegalArgumentException();
-		}
-		return new Scalar(bitLength, value >>> n);
-	}
-
-	/**
-	 * <p>Sets <code>this = this &gt;&gt; n</code> replicating the sign bit.</p>
-	 * @param n the number of bits to arithmetically shift.
-	 * @throws ArithmeticException if n &lt; 0.
-	 */
-	public Scalar shiftRightSign(int n) {
-		if (n < 0 || n > bitLength - 1) {
-			throw new IllegalArgumentException();
-		}
-		return new Scalar(bitLength, value >> n);
-	}
-
-	/**
-	 * <p>Sets <code>this = this - n</code>.</p>
-	 * @param n the value to subtract from this scalar to produce a new scalar.
-	 */
-	public Scalar subtract(long n) {
-		return add(-n);
 	}
 
 	/**
@@ -339,7 +201,7 @@ public class Scalar implements Comparable<Scalar> {
 		if (n < 0 || n > bitLength - 1) {
 			throw new IllegalArgumentException();
 		}
-		return (value & (1 << n)) != 0;
+		return (value & (1L << n)) != 0;
 	}
 
 	/**
@@ -419,9 +281,6 @@ public class Scalar implements Comparable<Scalar> {
 		return new String(buf);
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return toString(16, false, true, "0x", "");

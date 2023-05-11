@@ -17,11 +17,202 @@
 #include "op.hh"
 #include "database.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_CLASS = AttributeId("class",66);
 AttributeId ATTRIB_REPREF = AttributeId("repref",67);
 AttributeId ATTRIB_SYMREF = AttributeId("symref",68);
 
 ElementId ELEM_HIGH = ElementId("high",82);
+
+/// Compare by offset within the group, then by size.
+/// \param a is the first piece to compare
+/// \param b is the other piece to compare
+/// \return \b true if \b a should be ordered before the \b b
+bool VariableGroup::PieceCompareByOffset::operator()(const VariablePiece *a,const VariablePiece *b) const
+
+{
+  if (a->getOffset() != b->getOffset())
+    return (a->getOffset() < b->getOffset());
+  return (a->getSize() < b->getSize());
+}
+
+/// The VariablePiece takes partial ownership of \b this, via refCount.
+/// \param piece is the new piece to add
+void VariableGroup::addPiece(VariablePiece *piece)
+
+{
+  piece->group = this;
+  if (!pieceSet.insert(piece).second)
+    throw LowlevelError("Duplicate VariablePiece");
+  int4 pieceMax = piece->getOffset() + piece->getSize();
+  if (pieceMax > size)
+    size = pieceMax;
+}
+
+/// The adjustment amount must be positive, and this effectively increases the size of the group.
+/// \param amt is the given amount to add to offsets
+void VariableGroup::adjustOffsets(int4 amt)
+
+{
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator iter;
+
+  for(iter=pieceSet.begin();iter!=pieceSet.end();++iter) {
+    (*iter)->groupOffset += amt;
+  }
+  size += amt;
+}
+
+void VariableGroup::removePiece(VariablePiece *piece)
+
+{
+  pieceSet.erase(piece);
+  // We currently don't adjust size here as removePiece is currently only called during clean up
+}
+
+/// Every VariablePiece in the given group is moved into \b this and the VariableGroup object is deleted.
+/// There must be no matching VariablePieces with the same size and offset between the two groups
+/// or a LowlevelError exception is thrown.
+/// \param op2 is the given VariableGroup to merge into \b this
+void VariableGroup::combineGroups(VariableGroup *op2)
+
+{
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator iter = op2->pieceSet.begin();
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator enditer = op2->pieceSet.end();
+
+  while(iter != enditer) {
+    VariablePiece *piece = *iter;
+    ++iter;
+    piece->transferGroup(this);
+  }
+}
+
+/// Construct piece given a HighVariable and its position within the whole.
+/// If \b this is the first piece in the group, allocate a new VariableGroup object.
+/// \param h is the given HighVariable to treat as a piece
+/// \param offset is the byte offset of the piece within the whole
+/// \param grp is another HighVariable in the whole, or null if \b this is the first piece
+VariablePiece::VariablePiece(HighVariable *h,int4 offset,HighVariable *grp)
+
+{
+  high = h;
+  groupOffset = offset;
+  size = h->getInstance(0)->getSize();
+  if (grp != (HighVariable *)0)
+    group = grp->piece->getGroup();
+  else
+    group = new VariableGroup();
+  group->addPiece(this);
+}
+
+VariablePiece::~VariablePiece(void)
+
+{
+  group->removePiece(this);
+  if (group->empty())
+    delete group;
+  else
+    markIntersectionDirty();
+}
+
+void VariablePiece::markIntersectionDirty(void) const
+
+{
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::const_iterator iter;
+
+  for(iter=group->pieceSet.begin();iter!=group->pieceSet.end();++iter)
+    (*iter)->high->highflags |= (HighVariable::intersectdirty | HighVariable::extendcoverdirty);
+}
+
+void VariablePiece::markExtendCoverDirty(void) const
+
+{
+  if ((high->highflags & HighVariable::intersectdirty)!=0)
+    return;	// intersection list itself is dirty, extended covers will be recomputed anyway
+  for(int4 i=0;i<intersection.size();++i) {
+    intersection[i]->high->highflags |= HighVariable::extendcoverdirty;
+  }
+  high->highflags |= HighVariable::extendcoverdirty;
+}
+
+/// Compute list of exactly the HighVariable pieces that intersect with \b this.
+void VariablePiece::updateIntersections(void) const
+
+{
+  if ((high->highflags & HighVariable::intersectdirty)==0) return;
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::const_iterator iter;
+
+  int4 endOffset = groupOffset + size;
+  intersection.clear();
+  for(iter=group->pieceSet.begin();iter!=group->pieceSet.end();++iter) {
+    VariablePiece *otherPiece = *iter;
+    if (otherPiece == this) continue;
+    if (endOffset <= otherPiece->groupOffset) continue;
+    int4 otherEndOffset = otherPiece->groupOffset + otherPiece->size;
+    if (groupOffset >= otherEndOffset) continue;
+    intersection.push_back(otherPiece);
+  }
+  high->highflags &= ~(uint4)HighVariable::intersectdirty;
+}
+
+/// Union internal covers of all pieces intersecting with \b this.
+void VariablePiece::updateCover(void) const
+
+{
+  if ((high->highflags & (HighVariable::coverdirty | HighVariable::extendcoverdirty))==0) return;
+  high->updateInternalCover();
+  cover = high->internalCover;
+  for(int4 i=0;i<intersection.size();++i) {
+    const HighVariable *high = intersection[i]->high;
+    high->updateInternalCover();
+    cover.merge(high->internalCover);
+  }
+  high->highflags &= ~(uint4)HighVariable::extendcoverdirty;
+}
+
+/// If there are no remaining references to the old VariableGroup it is deleted.
+/// \param newGroup is the new VariableGroup to transfer \b this to
+void VariablePiece::transferGroup(VariableGroup *newGroup)
+
+{
+  group->removePiece(this);
+  if (group->empty())
+    delete group;
+  newGroup->addPiece(this);
+}
+
+/// Combine the VariableGroup associated \b this and the given other VariablePiece into one group.
+/// Offsets are adjusted so that \b this and the other VariablePiece have the same offset.
+/// Combining in this way requires pieces of the same size and offset to be merged. This
+/// method does not do the merging but passes back a list of HighVariable pairs that need to be merged.
+/// The first element in the pair will have its VariablePiece in the new group, and the second element
+/// will have its VariablePiece freed in preparation for the merge.
+/// \param op2 is the given other VariablePiece
+/// \param mergePairs passes back the collection of HighVariable pairs that must be merged
+void VariablePiece::mergeGroups(VariablePiece *op2,vector<HighVariable *> &mergePairs)
+
+{
+  int4 diff = groupOffset - op2->groupOffset;	// Add to op2, or subtract from this
+  if (diff > 0)
+    op2->group->adjustOffsets(diff);
+  else if (diff < 0)
+    group->adjustOffsets(-diff);
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator iter = op2->group->pieceSet.begin();
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator enditer = op2->group->pieceSet.end();
+  while(iter != enditer) {
+    VariablePiece *piece = *iter;
+    ++iter;
+    set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator matchiter = group->pieceSet.find(piece);
+    if (matchiter != group->pieceSet.end()) {
+      mergePairs.push_back((*matchiter)->high);
+      mergePairs.push_back(piece->high);
+      piece->high->piece = (VariablePiece *)0;	// Detach HighVariable from its original VariablePiece
+      delete piece;
+    }
+    else
+      piece->transferGroup(group);
+  }
+}
 
 /// The new instance starts off with no associate Symbol and all properties marked as \e dirty.
 /// \param vn is the single Varnode member
@@ -32,6 +223,7 @@ HighVariable::HighVariable(Varnode *vn)
   highflags = flagsdirty | namerepdirty | typedirty | coverdirty;
   flags = 0;
   type = (Datatype *)0;
+  piece = (VariablePiece *)0;
   symbol = (Symbol *)0;
   nameRepresentative = (Varnode *)0;
   symboloffset = -1;
@@ -39,6 +231,13 @@ HighVariable::HighVariable(Varnode *vn)
   vn->setHigh( this, numMergeClasses-1 );
   if (vn->getSymbolEntry() != (SymbolEntry *)0)
     setSymbol(vn);
+}
+
+HighVariable::~HighVariable(void)
+
+{
+  if (piece != (VariablePiece *)0)
+    delete piece;
 }
 
 /// The given Varnode \b must be a member and \b must have a non-null SymbolEntry
@@ -55,16 +254,22 @@ void HighVariable::setSymbol(Varnode *vn) const
     }
   }
   symbol = entry->getSymbol();
-  if (entry->isDynamic())	// Dynamic symbols match whole variable
+  if (vn->isProtoPartial() && piece != (VariablePiece *)0) {
+    symboloffset = piece->getOffset() + piece->getGroup()->getSymbolOffset();
+  }
+  else if (entry->isDynamic())	// Dynamic symbols (that aren't partials) match whole variable
     symboloffset = -1;
   else if (symbol->getCategory() == Symbol::equate)
     symboloffset = -1;			// For equates, we don't care about size
   else if (symbol->getType()->getSize() == vn->getSize() &&
       entry->getAddr() == vn->getAddr() && !entry->isPiece())
     symboloffset = -1;			// A matching entry
-  else
-    symboloffset = vn->getAddr().overlap(0,entry->getAddr(),symbol->getType()->getSize()) + entry->getOffset();
+  else {
+    symboloffset = vn->getAddr().overlapJoin(0,entry->getAddr(),symbol->getType()->getSize()) + entry->getOffset();
+  }
 
+  if (type != (Datatype *)0 && type->getMetatype() == TYPE_PARTIALUNION)
+    highflags |= typedirty;
   highflags &= ~((uint4)symboldirty);		// We are no longer dirty
 }
 
@@ -82,19 +287,41 @@ void HighVariable::setSymbolReference(Symbol *sym,int4 off)
   highflags &= ~((uint4)symboldirty);
 }
 
+void HighVariable::transferPiece(HighVariable *tv2)
+
+{
+  piece = tv2->piece;
+  tv2->piece = (VariablePiece *)0;
+  piece->setHigh(this);
+  highflags |= (tv2->highflags & (intersectdirty | extendcoverdirty));
+  tv2->highflags &= ~(uint4)(intersectdirty | extendcoverdirty);
+}
+
 /// Only update if the cover is marked as \e dirty.
 /// Merge the covers of all Varnode instances.
+void HighVariable::updateInternalCover(void) const
+
+{
+  if ((highflags & coverdirty) != 0) {
+    internalCover.clear();
+    if (inst[0]->hasCover()) {
+      for(int4 i = 0;i < inst.size();++i)
+	internalCover.merge(*inst[i]->getCover());
+    }
+    highflags &= ~coverdirty;
+  }
+}
+
 /// This is \b only called by the Merge class which knows when to call it properly.
 void HighVariable::updateCover(void) const
 
 {
-  if ((highflags & coverdirty)==0) return; // Cover info is upto date
-  highflags &= ~coverdirty;
-
-  wholecover.clear();
-  if (!inst[0]->hasCover()) return;
-  for(int4 i=0;i<inst.size();++i)
-    wholecover.merge(*inst[i]->getCover());
+  if (piece == (VariablePiece *)0)
+    updateInternalCover();
+  else {
+    piece->updateIntersections();
+    piece->updateCover();
+  }
 }
 
 /// Only update if flags are marked as \e dirty.
@@ -159,9 +386,17 @@ void HighVariable::updateType(void) const
   vn = getTypeRepresentative();
 
   type = vn->getType();
-  if (type->hasStripped() && type->getMetatype() != TYPE_PARTIALUNION)
-    type = type->getStripped();
-
+  if (type->hasStripped()) {
+    if (type->getMetatype() == TYPE_PARTIALUNION) {
+      if (symbol != (Symbol *)0 && symboloffset != -1) {
+	type_metatype meta = symbol->getType()->getMetatype();
+	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
+	  type = type->getStripped();			// strip the partial union
+      }
+    }
+    else
+      type = type->getStripped();
+  }
 				// Update lock flags
   flags &= ~Varnode::typelock;
   if (vn->isTypeLock())
@@ -220,6 +455,8 @@ bool HighVariable::compareName(Varnode *vn1,Varnode *vn2)
     return vn2->isInput();
   if (vn1->isAddrTied() != vn2->isAddrTied()) // Prefer address tied
     return vn2->isAddrTied();
+  if (vn1->isProtoPartial() != vn2->isProtoPartial())	// Prefer pieces
+    return vn2->isProtoPartial();
 
   // Prefer NOT internal
   if ((vn1->getSpace()->getType() != IPTR_INTERNAL)&&
@@ -275,6 +512,8 @@ void HighVariable::remove(Varnode *vn)
       highflags |= (flagsdirty|namerepdirty|coverdirty|typedirty);
       if (vn->getSymbolEntry() != (SymbolEntry *)0)
 	highflags |= symboldirty;
+      if (piece != (VariablePiece *)0)
+	piece->markExtendCoverDirty();
       return;
     }
   }
@@ -301,18 +540,82 @@ void HighVariable::finalizeDatatype(Datatype *tp)
 
 {
   type = tp;
+  if (type->hasStripped()) {
+    if (type->getMetatype() == TYPE_PARTIALUNION) {
+      if (symbol != (Symbol *)0 && symboloffset != -1) {
+	type_metatype meta = symbol->getType()->getMetatype();
+	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
+	  type = type->getStripped();			// strip the partial union
+      }
+    }
+    else
+      type = type->getStripped();
+  }
   highflags |= type_finalized;
+}
+
+/// If one of the HighVariables is already in a group, the other HighVariable is added to this group.
+/// \param off is the relative byte offset of \b this with the other HighVariable
+/// \param hi2 is the other HighVariable
+void HighVariable::groupWith(int4 off,HighVariable *hi2)
+
+{
+  if (piece == (VariablePiece *)0 && hi2->piece == (VariablePiece *)0) {
+    hi2->piece = new VariablePiece(hi2,0);
+    piece = new VariablePiece(this,off,hi2);
+    hi2->piece->markIntersectionDirty();
+    return;
+  }
+  if (piece == (VariablePiece *)0) {
+    if ((hi2->highflags & intersectdirty) == 0)
+      hi2->piece->markIntersectionDirty();
+    highflags |= intersectdirty | extendcoverdirty;
+    off += hi2->piece->getOffset();
+    piece = new VariablePiece(this,off,hi2);
+  }
+  else if (hi2->piece == (VariablePiece *)0) {
+    int4 hi2Off = piece->getOffset() - off;
+    if (hi2Off < 0) {
+      piece->getGroup()->adjustOffsets(-hi2Off);
+      hi2Off = 0;
+    }
+    if ((highflags & intersectdirty) == 0)
+      piece->markIntersectionDirty();
+    hi2->highflags |= intersectdirty | extendcoverdirty;
+    hi2->piece = new VariablePiece(hi2,hi2Off,this);
+  }
+  else {
+    int4 offDiff = hi2->piece->getOffset() + off - piece->getOffset();
+    if (offDiff != 0)
+      piece->getGroup()->adjustOffsets(offDiff);
+    hi2->piece->getGroup()->combineGroups(piece->getGroup());
+    hi2->piece->markIntersectionDirty();
+  }
+}
+
+/// If \b this is part of a larger group and has had its \b symboloffset set, it can be used
+/// to calculate the \b symboloffset of other HighVariables in the same group, by writing it
+/// to the common VariableGroup object.
+void HighVariable::establishGroupSymbolOffset(void)
+
+{
+  VariableGroup *group = piece->getGroup();
+  int4 off = symboloffset;
+  if (off < 0)
+    off = 0;
+  off -= piece->getOffset();
+  if (off < 0)
+    throw LowlevelError("Symbol offset is incompatible with VariableGroup");
+  group->setSymbolOffset(off);
 }
 
 /// The lists of members are merged and the other HighVariable is deleted.
 /// \param tv2 is the other HighVariable to merge into \b this
 /// \param isspeculative is \b true to keep the new members in separate \e merge classes
-void HighVariable::merge(HighVariable *tv2,bool isspeculative)
+void HighVariable::mergeInternal(HighVariable *tv2,bool isspeculative)
 
 {
   int4 i;
-
-  if (tv2 == this) return;
 
   highflags |= (flagsdirty|namerepdirty|typedirty);
   if (tv2->symbol != (Symbol *)0) {		// Check if we inherit a Symbol
@@ -344,11 +647,57 @@ void HighVariable::merge(HighVariable *tv2,bool isspeculative)
   tv2->inst.clear();
 
   if (((highflags&coverdirty)==0)&&((tv2->highflags&coverdirty)==0))
-    wholecover.merge(tv2->wholecover);
+    internalCover.merge(tv2->internalCover);
   else
     highflags |= coverdirty;
 
   delete tv2;
+}
+
+/// The HighVariables are merged internally as with mergeInternal.  If \b this is part of a VariableGroup,
+/// extended covers of the group may be affected.  If both HighVariables are part of separate groups,
+/// the groups are combined into one, which may induce additional HighVariable pairs within the group to be merged.
+/// In all cases, the other HighVariable is deleted.
+/// \param tv2 is the other HighVariable to merge into \b this
+/// \param testCache if non-null is a cache of intersection tests that must be updated to reflect the merge
+/// \param isspeculative is \b true to keep the new members in separate \e merge classes
+void HighVariable::merge(HighVariable *tv2,HighIntersectTest *testCache,bool isspeculative)
+
+{
+  if (tv2 == this) return;
+
+  if (testCache != (HighIntersectTest *)0)
+    testCache->moveIntersectTests(this,tv2);
+  if (piece == (VariablePiece *)0 && tv2->piece == (VariablePiece *)0) {
+    mergeInternal(tv2,isspeculative);
+    return;
+  }
+  if (tv2->piece == (VariablePiece *)0) {
+    // Keep group that this is already in
+    piece->markExtendCoverDirty();
+    mergeInternal(tv2,isspeculative);
+    return;
+  }
+  if (piece == (VariablePiece *)0) {
+    // Move ownership of the VariablePiece object from the HighVariable that will be freed
+    transferPiece(tv2);
+    piece->markExtendCoverDirty();
+    mergeInternal(tv2,isspeculative);
+    return;
+  }
+  // Reaching here both HighVariables are part of a group
+  if (isspeculative)
+    throw LowlevelError("Trying speculatively merge variables in separate groups");
+  vector<HighVariable *> mergePairs;
+  piece->mergeGroups(tv2->piece, mergePairs);
+  for(int4 i=0;i<mergePairs.size();i+=2) {
+    HighVariable *high1 = mergePairs[i];
+    HighVariable *high2 = mergePairs[i+1];
+    if (testCache != (HighIntersectTest *)0)
+      testCache->moveIntersectTests(high1, high2);
+    high1->mergeInternal(high2, isspeculative);
+  }
+  piece->markIntersectionDirty();
 }
 
 /// All Varnode objects are assigned a HighVariable, including those that don't get names like
@@ -472,6 +821,8 @@ void HighVariable::encode(Encoder &encoder) const
   else if (!isPersist() && (symbol != (Symbol *)0)) {
     if (symbol->getCategory() == Symbol::function_parameter)
       encoder.writeString(ATTRIB_CLASS, "param");
+    else if (symbol->getScope()->isGlobal())
+      encoder.writeString(ATTRIB_CLASS, "global");
     else
       encoder.writeString(ATTRIB_CLASS, "local");
   }
@@ -575,3 +926,234 @@ void HighVariable::verifyCover(void) const
   }
 }
 #endif
+
+/// \brief Gather Varnode instances of the given HighVariable that intersect a cover on a specific block
+///
+/// \param a is the given HighVariable
+/// \param blk is the specific block number
+/// \param cover is the Cover to test for intersection
+/// \param res will hold the resulting intersecting Varnodes
+void HighIntersectTest::gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,vector<Varnode *> &res)
+
+{
+  for(int4 i=0;i<a->numInstances();++i) {
+    Varnode *vn = a->getInstance(i);
+    if (1<vn->getCover()->intersectByBlock(blk,cover))
+      res.push_back(vn);
+  }
+}
+
+/// \brief Test instances of a the given HighVariable for intersection on a specific block with a cover
+///
+/// A list of Varnodes has already been determined to intersect on the block.  For an instance that does as
+/// well, a final test of copy shadowing is performed with the Varnode list.  If there is no shadowing,
+/// a merging intersection has been found and \b true is returned.
+/// \param a is the given HighVariable
+/// \param blk is the specific block number
+/// \param cover is the Cover to test for intersection
+/// \param relOff is the relative byte offset of the HighVariable to the Varnodes
+/// \param blist is the list of Varnodes for copy shadow testing
+/// \return \b true if there is an intersection preventing merging
+bool HighIntersectTest::testBlockIntersection(HighVariable *a,int4 blk,const Cover &cover,int4 relOff,
+					      const vector<Varnode *> &blist)
+{
+  for(int4 i=0;i<a->numInstances();++i) {
+    Varnode *vn = a->getInstance(i);
+    if (2>vn->getCover()->intersectByBlock(blk,cover)) continue;
+    for(int4 j=0;j<blist.size();++j) {
+      Varnode *vn2 = blist[j];
+      if (1<vn2->getCover()->intersectByBlock(blk,*vn->getCover())) {
+	if (vn->getSize() == vn2->getSize()) {
+	  if (!vn->copyShadow(vn2))
+	    return true;
+	}
+	else {
+	  if (!vn->partialCopyShadow(vn2,relOff))
+	    return true;
+	}
+      }
+    }
+  }
+  return false;
+}
+
+/// \brief Test if two HighVariables intersect on a given BlockBasic
+///
+/// Intersections are checked only on the specified block.
+/// \param a is the first HighVariable
+/// \param b is the second HighVariable
+/// \param blk is the index of the BlockBasic on which to test intersection
+/// \return \b true if an intersection occurs in the specified block
+bool HighIntersectTest::blockIntersection(HighVariable *a,HighVariable *b,int4 blk)
+
+{
+  vector<Varnode *> blist;
+
+  const Cover &aCover(a->getCover());
+  const Cover &bCover(b->getCover());
+  gatherBlockVarnodes(b,blk,aCover,blist);
+  if (testBlockIntersection(a, blk, bCover, 0, blist))
+    return true;
+  if (a->piece != (VariablePiece *)0) {
+    int4 baseOff = a->piece->getOffset();
+    for(int4 i=0;i<a->piece->numIntersection();++i) {
+      const VariablePiece *interPiece = a->piece->getIntersection(i);
+      int4 off = interPiece->getOffset() - baseOff;
+      if (testBlockIntersection(interPiece->getHigh(), blk, bCover, off, blist))
+	return true;
+    }
+  }
+  if (b->piece != (VariablePiece *)0) {
+    int4 bBaseOff = b->piece->getOffset();
+    for(int4 i=0;i<b->piece->numIntersection();++i) {
+      blist.clear();
+      const VariablePiece *bPiece = b->piece->getIntersection(i);
+      int4 bOff = bPiece->getOffset() - bBaseOff;
+      gatherBlockVarnodes(bPiece->getHigh(),blk,aCover,blist);
+      if (testBlockIntersection(a, blk, bCover, -bOff, blist))
+	return true;
+      if (a->piece != (VariablePiece *)0) {
+	int4 baseOff = a->piece->getOffset();
+	for(int4 j=0;j<a->piece->numIntersection();++j) {
+	  const VariablePiece *interPiece = a->piece->getIntersection(j);
+	  int4 off = (interPiece->getOffset() - baseOff) - bOff;
+	  if (off > 0 && off >= bPiece->getSize()) continue;		// Do a piece and b piece intersect at all
+	  if (off < 0 && -off >= interPiece->getSize()) continue;
+	  if (testBlockIntersection(interPiece->getHigh(), blk, bCover, off, blist))
+	    return true;
+	}
+      }
+    }
+  }
+  return false;
+}
+
+/// All tests for pairs where either the first or second HighVariable matches the given one
+/// are removed.
+/// \param high is the given HighVariable to purge
+void HighIntersectTest::purgeHigh(HighVariable *high)
+
+{
+  map<HighEdge,bool>::iterator iterfirst = highedgemap.lower_bound( HighEdge(high,(HighVariable *)0) );
+  map<HighEdge,bool>::iterator iterlast = highedgemap.lower_bound( HighEdge(high,(HighVariable *)~((uintp)0)) );
+
+  if (iterfirst == iterlast) return;
+  --iterlast;			// Move back 1 to prevent deleting under the iterator
+  map<HighEdge,bool>::iterator iter;
+  for(iter=iterfirst;iter!=iterlast;++iter)
+    highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
+  highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
+  ++iterlast;			// Restore original range (with possibly new open endpoint)
+
+  highedgemap.erase(iterfirst,iterlast);
+}
+
+/// \brief Translate any intersection tests for \e high2 into tests for \e high1
+///
+/// The two variables will be merged and \e high2, as an object, will be freed.
+/// We update the cached intersection tests for \e high2 so that they will now apply to new merged \e high1
+/// \param high1 is the variable object being kept
+/// \param high2 is the variable object being eliminated
+void HighIntersectTest::moveIntersectTests(HighVariable *high1,HighVariable *high2)
+
+{
+  vector<HighVariable *> yesinter;		// Highs that high2 intersects
+  vector<HighVariable *> nointer;		// Highs that high2 does not intersect
+  map<HighEdge,bool>::iterator iterfirst = highedgemap.lower_bound( HighEdge(high2,(HighVariable *)0) );
+  map<HighEdge,bool>::iterator iterlast = highedgemap.lower_bound( HighEdge(high2,(HighVariable *)~((uintp)0)) );
+  map<HighEdge,bool>::iterator iter;
+
+  for(iter=iterfirst;iter!=iterlast;++iter) {
+    HighVariable *b = (*iter).first.b;
+    if (b == high1) continue;
+    if ((*iter).second)		// Save all high2's intersections
+      yesinter.push_back(b);	// as they are still valid for the merge
+    else {
+      nointer.push_back(b);
+      b->setMark();		// Mark that high2 did not intersect
+    }
+  }
+				// Do a purge of all high2's tests
+  if (iterfirst != iterlast) {	// Delete all the high2 tests
+    --iterlast;			// Move back 1 to prevent deleting under the iterator
+    for(iter=iterfirst;iter!=iterlast;++iter)
+      highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
+    highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
+    ++iterlast;			// Restore original range (with possibly new open endpoint)
+
+    highedgemap.erase(iterfirst,iterlast);
+  }
+
+  iter = highedgemap.lower_bound( HighEdge(high1,(HighVariable *)0) );
+  while((iter!=highedgemap.end())&&((*iter).first.a == high1)) {
+    if (!(*iter).second) {	// If test is intersection==false
+      if (!(*iter).first.b->isMark()) // and there was no test with high2
+	highedgemap.erase( iter++ ); // Delete the test
+      else
+	++iter;
+    }
+    else			// Keep any intersection==true tests
+      ++iter;
+  }
+  vector<HighVariable *>::iterator titer;
+  for(titer=nointer.begin();titer!=nointer.end();++titer)
+    (*titer)->clearMark();
+
+	// Reinsert high2's intersection==true tests for high1 now
+  for(titer=yesinter.begin();titer!=yesinter.end();++titer) {
+    highedgemap[ HighEdge(high1,*titer) ] = true;
+    highedgemap[ HighEdge(*titer,high1) ] = true;
+  }
+}
+
+/// As manipulations are made, Cover information gets out of date. A \e dirty flag is used to
+/// indicate a particular HighVariable Cover is out-of-date.  This routine checks the \e dirty
+/// flag and updates the Cover information if it is set.
+/// \param a is the HighVariable to update
+/// \return \b true if the HighVariable was not originally dirty
+bool HighIntersectTest::updateHigh(HighVariable *a)
+
+{
+  if (!a->isCoverDirty()) return true;
+
+  a->updateCover();
+  purgeHigh(a);
+  return false;
+}
+
+/// \brief Test the intersection of two HighVariables and cache the result
+///
+/// If the Covers of the two variables intersect, this routine returns \b true. To avoid
+/// expensive computation on the Cover objects themselves, the test result associated with
+/// the pair of HighVariables is cached.
+/// \param a is the first HighVariable
+/// \param b is the second HighVariable
+/// \return \b true if the variables intersect
+bool HighIntersectTest::intersection(HighVariable *a,HighVariable *b)
+
+{
+  if (a==b) return false;
+  bool ares = updateHigh(a);
+  bool bres = updateHigh(b);
+  if (ares && bres) {		// If neither high was dirty
+    map<HighEdge,bool>::iterator iter = highedgemap.find( HighEdge(a,b) );
+    if (iter != highedgemap.end()) // If previous test is present
+      return (*iter).second;	// Use it
+  }
+
+  bool res = false;
+  int4 blk;
+  vector<int4> blockisect;
+  a->getCover().intersectList(blockisect,b->getCover(),2);
+  for(blk=0;blk<blockisect.size();++blk) {
+    if (blockIntersection(a,b,blockisect[blk])) {
+      res = true;
+      break;
+    }
+  }
+  highedgemap[ HighEdge(a,b) ] = res; // Cache the result
+  highedgemap[ HighEdge(b,a) ] = res;
+  return res;
+}
+
+} // End namespace ghidra

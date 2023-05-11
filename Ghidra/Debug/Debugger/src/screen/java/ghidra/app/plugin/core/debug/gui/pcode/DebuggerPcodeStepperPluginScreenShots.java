@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.debug.gui.pcode;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
@@ -27,10 +26,10 @@ import ghidra.pcode.exec.PcodeExecutor;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGenerator {
@@ -57,11 +56,11 @@ public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGener
 
 	@Test
 	public void testCaptureDebuggerPcodeStepperPlugin() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			long snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			tb.trace.getMemoryManager()
-					.addRegion("[echo:.text]", Range.atLeast(snap0),
+					.addRegion("[echo:.text]", Lifespan.nowOn(snap0),
 						tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ,
 						TraceMemoryFlag.EXECUTE);
 

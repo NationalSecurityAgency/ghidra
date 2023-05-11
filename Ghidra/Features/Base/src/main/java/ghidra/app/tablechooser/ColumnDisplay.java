@@ -17,6 +17,8 @@ package ghidra.app.tablechooser;
 
 import java.util.Comparator;
 
+import ghidra.util.table.column.GColumnRenderer;
+
 /**
  * An interface that allows users to add columns to the {@link TableChooserDialog}.
  *
@@ -28,4 +30,18 @@ public interface ColumnDisplay<COLUMN_TYPE> extends Comparator<AddressableRowObj
 	public String getColumnName();
 
 	public Class<COLUMN_TYPE> getColumnClass();
+
+	/**
+	 * Override this method to use a custom renderer.
+	 * <p>
+	 * Use this method to perform any desired custom cell rendering for this column.  This method
+	 * may be used to enable html rendering with correct table filtering.
+	 * See {@link GColumnRenderer} and
+	 * {@link GColumnRenderer#getFilterString(Object, ghidra.docking.settings.Settings)}.
+	 *
+	 * @return the renderer
+	 */
+	public default GColumnRenderer<COLUMN_TYPE> getRenderer() {
+		return null;
+	}
 }

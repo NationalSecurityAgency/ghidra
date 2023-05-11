@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_FUNCDATA__
-#define __CPUI_FUNCDATA__
+#ifndef __FUNCDATA_HH__
+#define __FUNCDATA_HH__
 
 /// \file funcdata.hh
 /// \brief Utilities for processing data structures associated with a single function
@@ -25,6 +25,8 @@
 #include "merge.hh"
 #include "dynamic.hh"
 #include "unionresolve.hh"
+
+namespace ghidra {
 
 class FlowInfo;
 
@@ -115,7 +117,7 @@ class Funcdata {
   void pushMultiequals(BlockBasic *bb);		///< Push MULTIEQUAL Varnodes of the given block into the output block
   void clearBlocks(void);			///< Clear all basic blocks
   void structureReset(void);			///< Calculate initial basic block structures (after a control-flow change)
-  int4 stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow);
+  int4 stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow);
   void switchOverJumpTables(const FlowInfo &flow);	///< Convert jump-table addresses to basic block indices
   void clearJumpTables(void);			///< Clear any jump-table information
 
@@ -356,6 +358,10 @@ public:
   VarnodeLocSet::const_iterator endLoc(int4 s,const Address &addr,const Address &pc,uintm uniq=~((uintm)0)) const {
     return vbank.endLoc(s,addr,pc,uniq); }
 
+  /// \brief Given start, return maximal range of overlapping Varnodes
+  uint4 overlapLoc(VarnodeLocSet::const_iterator iter,vector<VarnodeLocSet::const_iterator> &bounds) const {
+    return vbank.overlapLoc(iter,bounds); }
+
   /// \brief Start of all Varnodes sorted by definition address
   VarnodeDefSet::const_iterator beginDef(void) const { return vbank.beginDef(); }
 
@@ -386,7 +392,6 @@ public:
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial,uint4 mainFlags) const;
   bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial,int4 offset,uint4 mainFlags) const;
   bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool updateDatatypes,bool unmappedAliasCheck);
-  Datatype *checkSymbolType(Varnode *vn);	///< Check for any delayed symbol data-type information on the given Varnode
   void transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image
   bool replaceVolatile(Varnode *vn);		///< Replace accesses of the given Varnode with \e volatile operations
@@ -410,6 +415,7 @@ public:
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
+  void linkProtoPartial(Varnode *vn);				///< Find or create Symbol and a partial mapping
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
   Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
   Varnode *findLinkedVarnode(SymbolEntry *entry) const;	///< Find a Varnode matching the given Symbol mapping
@@ -511,8 +517,8 @@ public:
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND
   JumpTable *findJumpTable(const PcodeOp *op) const;	///< Find a jump-table associated with a given BRANCHIND
   JumpTable *installJumpTable(const Address &addr);	///< Install a new jump-table for the given Address
+  JumpTable *recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,int4 &failuremode);
   bool earlyJumpTableFail(PcodeOp *op);	///< Try to determine, early, if jump-table analysis will fail
-  JumpTable *recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremode);
   int4 numJumpTables(void) const { return jumpvec.size(); }	///< Get the number of jump-tables for \b this function
   JumpTable *getJumpTable(int4 i) { return jumpvec[i]; }	///< Get the i-th jump-table
   void removeJumpTable(JumpTable *jt);			///< Remove/delete the given jump-table
@@ -678,4 +684,5 @@ extern PcodeOp *cseElimination(Funcdata &data,PcodeOp *op1,PcodeOp *op2);
 extern void cseEliminateList(Funcdata &data,vector< pair<uintm,PcodeOp *> > &list,
 			     vector<Varnode *> &outlist);
 
+} // End namespace ghidra
 #endif

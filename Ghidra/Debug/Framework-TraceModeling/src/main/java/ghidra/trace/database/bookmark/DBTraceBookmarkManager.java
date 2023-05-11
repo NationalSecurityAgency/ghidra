@@ -21,9 +21,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import javax.swing.ImageIcon;
-
-import com.google.common.collect.Range;
+import javax.swing.Icon;
 
 import db.DBHandle;
 import ghidra.program.model.address.*;
@@ -32,6 +30,7 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.*;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmarkManager;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
@@ -237,7 +236,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	}
 
 	@Override
-	public synchronized DBTraceBookmarkType defineBookmarkType(String typeName, ImageIcon icon,
+	public synchronized DBTraceBookmarkType defineBookmarkType(String typeName, Icon icon,
 			Color color, int priority) {
 		DBTraceBookmarkType type;
 		synchronized (this) {
@@ -293,7 +292,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	}
 
 	@Override
-	public DBTraceBookmark addBookmark(Range<Long> lifespan, Address address,
+	public DBTraceBookmark addBookmark(Lifespan lifespan, Address address,
 			TraceBookmarkType type, String category, String comment) {
 		return delegateWrite(address.getAddressSpace(),
 			m -> m.addBookmark(lifespan, address, type, category, comment));
@@ -311,14 +310,14 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	}
 
 	@Override
-	public Iterable<? extends DBTraceBookmark> getBookmarksEnclosed(Range<Long> lifespan,
+	public Iterable<? extends DBTraceBookmark> getBookmarksEnclosed(Lifespan lifespan,
 			AddressRange range) {
 		return delegateRead(range.getAddressSpace(), m -> m.getBookmarksEnclosed(lifespan, range),
 			Set.of());
 	}
 
 	@Override
-	public Iterable<? extends DBTraceBookmark> getBookmarksIntersecting(Range<Long> lifespan,
+	public Iterable<? extends DBTraceBookmark> getBookmarksIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		return delegateRead(range.getAddressSpace(),
 			m -> m.getBookmarksIntersecting(lifespan, range), Set.of());

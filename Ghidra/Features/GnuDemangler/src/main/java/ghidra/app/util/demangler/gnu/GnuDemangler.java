@@ -50,12 +50,18 @@ public class GnuDemangler implements Demangler {
 		if (isELF(executableFormat) || isMacho(executableFormat)) {
 			return true;
 		}
+		
+		String compiler = program.getCompiler(); 
+		if(compiler != null && compiler.contains("gcc")) {
+			return true;
+		}
 
 		CompilerSpec spec = program.getCompilerSpec();
 		String specId = spec.getCompilerSpecID().getIdAsString();
 		if (!specId.toLowerCase().contains("windows")) {
 			return true;
 		}
+
 		return false;
 	}
 

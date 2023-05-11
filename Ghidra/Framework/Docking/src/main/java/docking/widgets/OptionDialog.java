@@ -310,7 +310,7 @@ public class OptionDialog extends DialogComponentProvider {
 				return ps;
 			}
 		};
-		
+
 		panel.add(label, BorderLayout.WEST);
 		panel.add(textPanel, BorderLayout.CENTER);
 		return panel;
@@ -764,7 +764,7 @@ public class OptionDialog extends DialogComponentProvider {
 		return Swing.runNow(() -> {
 			OptionDialog info =
 				new OptionDialog(title, message, option1, option2, PLAIN_MESSAGE, icon, false);
-			return info.show();
+			return info.show(parent);
 		});
 	}
 
@@ -794,7 +794,39 @@ public class OptionDialog extends DialogComponentProvider {
 		return Swing.runNow(() -> {
 			OptionDialog info = new OptionDialog(title, message, option1, option2, option3,
 				messageType, null, false);
-			return info.show();
+			return info.show(parent);
+		});
+	}
+
+	/**
+	 * Static helper method to easily display an three-option dialog with no Cancel button.
+	 * The dialog will remain until the user presses the
+	 * Option1, Option 2, or Option 3 button.
+	 *
+	 * @param parent    The parent component of this dialog. If the given component is
+	 * a frame or dialog, then the component will be used to parent the option dialog.
+	 * Otherwise, the parent frame or dialog will be found by traversing up the given
+	 * component's parent hierarchy.  Also, null can be used to not parent the dialog at all,
+	 * but this promotes poor dialog behavior
+	 * @param title The String to be placed in the dialogs title area
+	 * @param message The information message to be displayed in the dialog
+	 * @param option1 The text to place on the first option button
+	 * @param option2 The text to place on the second option button
+	 * @param option3 The text to place on the third option button
+	 * @param messageType used to specify a default icon, can be ERROR_MESSAGE,
+	 * 		INFORMATION_MESSAGE, WARNING_MESSAGE, QUESTION_MESSAGE, or PLAIN_MESSAGE)
+	 * @param help The help location for this dialog
+	 * @return The options selected by the user. 1 for the first option and
+	 *  2 for the second option.  0 is returned if the operation is cancelled
+	 */
+	public static int showOptionNoCancelDialog(Component parent, String title, String message,
+			String option1, String option2, String option3, int messageType, HelpLocation help) {
+
+		return Swing.runNow(() -> {
+			OptionDialog info = new OptionDialog(title, message, option1, option2, option3,
+				messageType, null, false);
+			info.setHelpLocation(help);
+			return info.show(parent);
 		});
 	}
 

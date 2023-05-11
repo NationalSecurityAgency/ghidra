@@ -18,8 +18,6 @@ package ghidra.trace.model;
 import java.util.*;
 import java.util.function.Function;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 
 /**
@@ -28,14 +26,14 @@ import ghidra.program.model.address.*;
 public interface TraceTimeViewport {
 
 	public interface Occlusion<T> {
-		boolean occluded(T object, AddressRange range, Range<Long> span);
+		boolean occluded(T object, AddressRange range, Lifespan span);
 
-		void remove(T object, AddressSet remains, Range<Long> span);
+		void remove(T object, AddressSet remains, Lifespan span);
 	}
 
 	public interface QueryOcclusion<T> extends Occlusion<T> {
 		@Override
-		default boolean occluded(T object, AddressRange range, Range<Long> span) {
+		default boolean occluded(T object, AddressRange range, Lifespan span) {
 			for (T found : query(range, span)) {
 				if (found == object) {
 					continue;
@@ -48,7 +46,7 @@ public interface TraceTimeViewport {
 		}
 
 		@Override
-		default void remove(T object, AddressSet remains, Range<Long> span) {
+		default void remove(T object, AddressSet remains, Lifespan span) {
 			// TODO: Split query by parts of remains? Probably not worth it.
 			for (T found : query(
 				new AddressRangeImpl(remains.getMinAddress(), remains.getMaxAddress()), span)) {
@@ -62,7 +60,7 @@ public interface TraceTimeViewport {
 			}
 		}
 
-		Iterable<? extends T> query(AddressRange range, Range<Long> span);
+		Iterable<? extends T> query(AddressRange range, Lifespan span);
 
 		boolean itemOccludes(AddressRange range, T t);
 
@@ -145,7 +143,7 @@ public interface TraceTimeViewport {
 	 * @param lifespan the lifespan to consider
 	 * @return true if it contains any upper snap, false otherwise.
 	 */
-	boolean containsAnyUpper(Range<Long> lifespan);
+	boolean containsAnyUpper(Lifespan lifespan);
 
 	/**
 	 * Check if any part of the given object is occluded by more-recent objects
@@ -157,7 +155,7 @@ public interface TraceTimeViewport {
 	 * @param occlusion a mechanism for querying other like objects and checking for occlusion
 	 * @return true if completely visible, false if even partially occluded
 	 */
-	<T> boolean isCompletelyVisible(AddressRange range, Range<Long> lifespan, T object,
+	<T> boolean isCompletelyVisible(AddressRange range, Lifespan lifespan, T object,
 			Occlusion<T> occlusion);
 
 	/**
@@ -170,11 +168,11 @@ public interface TraceTimeViewport {
 	 * @param occlusion a mechanism for query other like objects and removing occluded parts
 	 * @return the set of visible addresses
 	 */
-	<T> AddressSet computeVisibleParts(AddressSetView set, Range<Long> lifespan, T object,
+	<T> AddressSet computeVisibleParts(AddressSetView set, Lifespan lifespan, T object,
 			Occlusion<T> occlusion);
 
 
-	List<Range<Long>> getOrderedSpans();
+	List<Lifespan> getOrderedSpans();
 	
 	/**
 	 * Get the snaps involved in the view in most-recent-first order

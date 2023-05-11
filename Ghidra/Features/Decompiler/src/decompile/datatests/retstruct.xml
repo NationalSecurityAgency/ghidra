@@ -1,0 +1,27 @@
+<decompilertest>
+<binaryimage arch="x86:LE:32:default:gcc">
+<!--
+    Example function returning a structure stored across multiple registers
+-->
+<bytechunk space="ram" offset="0x100000">
+5589e5538b45088b550c837d10007f05
+6bc064eb088d4007ba1e0000008d65fc
+5bc9c3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="retstruct"/>
+</binaryimage>
+<script>
+  <com>parse line struct foo { int4 a; int4 b; };</com>
+  <com>parse line extern foo retstruct(int4 x,int4 y,int4 z);</com>
+  <com>lo fu retstruct</com>
+  <com>type varnode %EAX(0x100010) int4 tmp</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="Return Structure #1" min="1" max="1">tmp = x \* 100;</stringmatch>
+<stringmatch name="Return Structure #2" min="1" max="1">tmp = x \+ 7;</stringmatch>
+<stringmatch name="Return Structure #3" min="1" max="1">y = 0x1e;</stringmatch>
+<stringmatch name="Return Structure #4" min="1" max="1">fVar1\.a = tmp;</stringmatch>
+<stringmatch name="Return Structure #5" min="1" max="1">fVar1\.b = y;</stringmatch>
+<stringmatch name="Return Structure #6" min="1" max="1">return fVar1;</stringmatch>
+</decompilertest>

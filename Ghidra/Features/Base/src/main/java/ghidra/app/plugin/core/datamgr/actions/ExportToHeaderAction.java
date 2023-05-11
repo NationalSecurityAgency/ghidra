@@ -176,6 +176,8 @@ public class ExportToHeaderAction extends DockingAction {
 				new DataTypeWriterTask(gTree, programDataTypeMgr, dataTypeList, handler, file),
 				gTree);
 		}
+
+		fileChooser.dispose();
 	}
 
 	private class DataTypeWriterTask extends Task {
@@ -209,8 +211,9 @@ public class ExportToHeaderAction extends DockingAction {
 				finally {
 					writer.close();
 				}
-				plugin.getTool().setStatusInfo(
-					"Successfully exported data type(s) to " + file.getAbsolutePath());
+				plugin.getTool()
+						.setStatusInfo(
+							"Successfully exported data type(s) to " + file.getAbsolutePath());
 			}
 			catch (CancelledException e) {
 				// user cancelled; ignore

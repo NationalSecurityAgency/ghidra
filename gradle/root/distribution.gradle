@@ -124,11 +124,6 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 	// Must add classpath for main and test source sets. Javadoc will fail if it cannot
 	// find referenced classes.
 	classpath =  rootProject.ext.ghidraPath
-	
-	// If we don't exclude module directories, the javascript search feature doesn't work
-	if (JavaVersion.current().isJava11()) {
-		options.addBooleanOption("-no-module-directories", true)
-	}
 
 	// generate documentation using html5
 	options.addBooleanOption("html5", true)
@@ -136,8 +131,7 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 	options.addBooleanOption('Xdoclint:none', true)
 	
 	// Some internal packages are not public and need to be exported.
-    options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
-    															"java.desktop/sun.awt=ALL-UNNAMED"])
+	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
 }
 
 
@@ -193,11 +187,9 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
 	options.setNoTimestamp(false)
 	
-		
-	// Some internal packages are not public and need to be exported. 
-    options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
-    															"java.desktop/sun.awt=ALL-UNNAMED"])
-	
+	// Some internal packages are not public and need to be exported.
+	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
+
 	options.doclet = "JsonDoclet"
 	doFirst {
 		options.docletpath = new ArrayList(configurations.jsondoc.files)

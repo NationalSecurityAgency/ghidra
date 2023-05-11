@@ -19,19 +19,21 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import SWIG.*;
+import SWIG.SBBreakpoint;
+import SWIG.SBStream;
 import agent.lldb.model.iface2.LldbModelTargetBreakpointContainer;
 import agent.lldb.model.iface2.LldbModelTargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
 	name = "BreakpointSpec",
 	elements = { //
-		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class) //
+		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class)
 	},
 	attributes = {
 		@TargetAttributeType(name = "Type", type = String.class),
@@ -46,8 +48,8 @@ public class LldbModelTargetBreakpointSpecImpl extends LldbModelTargetAbstractXp
 	protected final ListenerSet<TargetBreakpointAction> actions =
 		new ListenerSet<>(TargetBreakpointAction.class) {
 			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
 			};
 		};
 

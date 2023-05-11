@@ -44,17 +44,17 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	private List<Event> events = Collections.synchronizedList(new ArrayList<Event>());
 
 	private int getEventCount() {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		return events.size();
 	}
 
 	private Event getEvent(int index) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		return events.get(index);
 	}
 
 	private void clearEvents() {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		events.clear();
 	}
 
@@ -85,7 +85,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	@After
 	public void tearDown() throws Exception {
-		waitForPostedSwingRunnables();// wait for leftover datatype events
+		waitForSwing();// wait for leftover datatype events
 
 		endTransaction();
 		program.release(this);
@@ -219,7 +219,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// move c4 to c5
 		cat5.moveCategory(cat4, TaskMonitor.DUMMY);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(new CategoryPath("/c1/c2/c5/c4"), cat4.getCategoryPath());
 		assertTrue(dataMgr.containsCategory(new CategoryPath("/c1/c2/c5/c4")));
@@ -785,7 +785,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		clearEvents();
 		DataType byteAdded = root.getDataType("Enum");
 		sub2.moveDataType(byteAdded, null);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals(1, getEventCount());
 		Event ev = getEvent(0);
@@ -906,6 +906,11 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		@Override
 		public void sourceArchiveChanged(DataTypeManager dataTypeManager,
 				SourceArchive dataTypeSource) {
+			// don't care
+		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
 			// don't care
 		}
 	}

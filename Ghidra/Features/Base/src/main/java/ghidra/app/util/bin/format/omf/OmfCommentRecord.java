@@ -27,29 +27,45 @@ public class OmfCommentRecord extends OmfRecord {
 	public static final byte COMMENT_CLASS_LIBMOD = (byte) 0xA3;
 	// Default library cmd
 	public static final byte COMMENT_CLASS_DEFAULT_LIBRARY = (byte) 0x9F;
+	// Watcom compile parameters
+	public static final byte COMMENT_CLASS_WATCOM_SETTINGS = (byte) 0x9b;
+	// Microsoft compile parameters
+	public static final byte COMMENT_CLASS_MICROSOFT_SETTINGS = (byte) 0x9d;
 
 	private byte commentType;
 	private byte commentClass;
 	private String value;
-	
+
 	public OmfCommentRecord(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
 		commentType = reader.readNextByte();
 		commentClass = reader.readNextByte();
-		byte[] bytes = reader.readNextByteArray(
-			getRecordLength() - 3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
 
-		if (commentClass == COMMENT_CLASS_TRANSLATOR || commentClass == COMMENT_CLASS_LIBMOD ||
-			commentClass == COMMENT_CLASS_DEFAULT_LIBRARY) {
-			value = new String(bytes, StandardCharsets.US_ASCII); // assuming ASCII
+		switch (commentClass) {
+			case COMMENT_CLASS_TRANSLATOR:
+			case COMMENT_CLASS_DEFAULT_LIBRARY:
+				byte[] bytes = reader.readNextByteArray(getRecordLength() -
+					3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
+				value = new String(bytes, StandardCharsets.US_ASCII); // assuming ASCII
+				break;
+			case COMMENT_CLASS_LIBMOD:
+				value = readString(reader);
+				break;
+			default:
+				reader.setPointerIndex(reader.getPointerIndex() + getRecordLength() - 3);
+				break;
 		}
 		readCheckSumByte(reader);
 	}
-	
+
+	public byte getCommentType() {
+		return commentType;
+	}
+
 	public byte getCommentClass() {
 		return commentClass;
 	}
-	
+
 	public String getValue() {
 		return value;
 	}

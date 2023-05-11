@@ -15,7 +15,6 @@
  */
 package ghidra.plugins.fsbrowser;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.TextEditorService;
 import ghidra.formats.gfilesystem.*;
@@ -87,6 +87,7 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter
 				handleDoubleClick(gTree.getNodeForLocation(e.getX(), e.getY()));
 				e.consume();
 			}
+
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				super.mouseClicked(e);
@@ -127,33 +128,33 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter
 				FSRLRoot fsFSRL = nodeFSRef.getFilesystem().getFSRL();
 				String containerFilename =
 					fsFSRL.hasContainer() ? fsFSRL.getContainer().getName() : "unknown";
-				Icon image = FileIconService.getInstance().getImage(containerFilename,
-					FileIconService.OVERLAY_FILESYSTEM);
+				Icon image = FileIconService.getInstance()
+						.getIcon(containerFilename,
+							List.of(FileIconService.FILESYSTEM_OVERLAY_ICON));
 				setIcon(image);
 			}
 
 			private void renderFile(FSBFileNode node, boolean selected) {
 				FSRL fsrl = node.getFSRL();
 				String filename = fsrl.getName();
+				List<Icon> overlays = new ArrayList<>(3);
 
-				String importOverlay = ProgramMappingService.isFileImportedIntoProject(fsrl)
-						? FileIconService.OVERLAY_IMPORTED
-						: null;
-				String mountedOverlay = fsService.isFilesystemMountedAt(fsrl)
-						? FileIconService.OVERLAY_FILESYSTEM
-						: null;
+				if (ProgramMappingService.isFileImportedIntoProject(fsrl)) {
+					overlays.add(FileIconService.IMPORTED_OVERLAY_ICON);
+				}
+				if (fsService.isFilesystemMountedAt(fsrl)) {
+					overlays.add(FileIconService.FILESYSTEM_OVERLAY_ICON);
+				}
+				if (node.hasMissingPassword()) {
+					overlays.add(FileIconService.MISSING_PASSWORD_OVERLAY_ICON);
+				}
 
-				String missingPasswordOverlay = node.hasMissingPassword()
-						? FileIconService.OVERLAY_MISSING_PASSWORD
-						: null;
-
-				Icon ico = FileIconService.getInstance()
-						.getImage(filename, importOverlay, mountedOverlay, missingPasswordOverlay);
-				setIcon(ico);
+				Icon icon = FileIconService.getInstance().getIcon(filename, overlays);
+				setIcon(icon);
 
 				if (ProgramMappingService.isFileOpen(fsrl)) {
 					// TODO: change this to a OVERLAY_OPEN option when fetching icon
-					setForeground(selected ? Color.CYAN : Color.MAGENTA);
+					setForeground(selected ? Palette.CYAN : Palette.MAGENTA);
 				}
 			}
 

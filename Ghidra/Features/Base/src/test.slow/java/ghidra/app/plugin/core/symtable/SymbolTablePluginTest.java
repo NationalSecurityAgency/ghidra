@@ -1393,7 +1393,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		runSwing(() -> checkBox.setSelected(state));
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void setupSymbolTableFilterToShowParameters() throws Exception {

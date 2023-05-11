@@ -16,12 +16,14 @@
 /// \file printlanguage.hh
 /// \brief Classes for printing tokens in a high-level language
 
-#ifndef __PRINT_LANGUAGE__
-#define __PRINT_LANGUAGE__
+#ifndef __PRINTLANGUAGE_HH__
+#define __PRINTLANGUAGE_HH__
 
 #include "capability.hh"
 #include "cast.hh"
 #include "prettyprint.hh"
+
+namespace ghidra {
 
 class PrintLanguage;
 class ResolvedUnion;
@@ -554,9 +556,12 @@ public:
   virtual void opInsertOp(const PcodeOp *op)=0;				///< Emit an INSERT operator
   virtual void opExtractOp(const PcodeOp *op)=0;			///< Emit an EXTRACT operator
   virtual void opPopcountOp(const PcodeOp *op)=0;			///< Emit a POPCOUNT operator
+  virtual void opLzcountOp(const PcodeOp *op)=0;			///< Emit a LZCOUNT operator
+  virtual string unnamedField(int4 off,int4 size);			///< Generate an artificial field name
 
   static int4 mostNaturalBase(uintb val); 			///< Determine the most natural base for an integer
   static void formatBinary(ostream &s,uintb val);		///< Print a number in binary form
 };
 
+} // End namespace ghidra
 #endif

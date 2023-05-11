@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import agent.gdb.manager.*;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetRegisterContainer;
 import ghidra.dbg.target.schema.TargetAttributeType;
@@ -53,8 +54,8 @@ public class GdbModelTargetRegisterContainer
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (!refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			return completeUsingThreads(inferior.getKnownThreads());
 		}
 		return doRefresh();
@@ -96,7 +97,7 @@ public class GdbModelTargetRegisterContainer
 	}
 
 	public void stateChanged(GdbStateChangeRecord sco) {
-		requestElements(false).thenAccept(__ -> {
+		requestElements(RefreshBehavior.REFRESH_NEVER).thenAccept(__ -> {
 			for (GdbModelTargetRegister modelRegister : registersByNumber.values()) {
 				modelRegister.stateChanged(sco);
 			}

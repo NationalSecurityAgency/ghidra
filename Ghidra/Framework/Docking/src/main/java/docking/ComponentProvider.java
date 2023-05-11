@@ -15,14 +15,14 @@
  */
 package docking;
 
-import java.awt.Component;
-import java.awt.KeyboardFocusManager;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.*;
 
 import docking.action.*;
+import generic.theme.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import help.HelpDescriptor;
@@ -114,6 +114,10 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private String inceptionInformation;
 
+	private String registeredFontId;
+
+	private ThemeListener themeListener = this::themeChanged;
+
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
 	 * @param tool The tool will manage and show this provider
@@ -142,6 +146,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		this.contextType = contextType;
 
 		recordInception();
+
+		Gui.addThemeListener(themeListener);
 	}
 
 	/**
@@ -166,6 +172,24 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 		boolean supportsKeyBindings = !isTransient;
 		showProviderAction = new ShowProviderAction(supportsKeyBindings);
+	}
+
+	private void themeChanged(ThemeEvent e) {
+		if (!e.isLookAndFeelChanged()) {
+			return;  // we only care if the Look and Feel changes
+		}
+
+		if (isVisible()) {
+			// if we are visible, then we don't need to update as the system updates all 
+			// visible components
+			return;
+		}
+
+		// update this providers components ui for the new Look and Feel
+		JComponent component = getComponent();
+		if (component != null) {
+			SwingUtilities.updateComponentTreeUI(component);
+		}
 	}
 
 	/**
@@ -359,6 +383,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	public void closeComponent() {
 		if (isTransient) {
 			removeFromTool();
+			Gui.removeThemeListener(themeListener);
 		}
 		else {
 			setVisible(false);
@@ -776,6 +801,41 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return dockingTool;
 	}
 
+	/**
+	 * Tells the provider to adjust the font size for this provider. By default, this method
+	 * will adjust the font for the registered font id if it has been registered using
+	 * {@link #registeredFontId}. Subclasses can override this method to a more comprehensive
+	 * adjustment to multiple fonts if necessary.
+	 * @param bigger if true, the font should be made bigger, otherwise the font should be made 
+	 * smaller
+	 */
+	public void adjustFontSize(boolean bigger) {
+		if (registeredFontId == null) {
+			return;
+		}
+		Font font = Gui.getFont(registeredFontId);
+		if (font == null) {
+			return;
+		}
+		int size = font.getSize();
+		if (bigger) {
+			size += 1;
+		}
+		else {
+			size = Math.max(size - 1, 3);
+		}
+		ThemeManager.getInstance().setFont(registeredFontId, font.deriveFont((float) size));
+	}
+
+	/**
+	 * Registers a fontId for the font that will be automatically adjusted when
+	 * {@link #adjustFontSize(boolean)} is called.
+	 * @param fontId the id of the theme font to be adjusted
+	 */
+	protected void registerAdjustableFontId(String fontId) {
+		this.registeredFontId = fontId;
+	}
+
 	@Override
 	public String toString() {
 		return name + " - " + getTitle() + " - " + getSubTitle();
@@ -885,4 +945,5 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return inceptionInformation;
 		}
 	}
+
 }

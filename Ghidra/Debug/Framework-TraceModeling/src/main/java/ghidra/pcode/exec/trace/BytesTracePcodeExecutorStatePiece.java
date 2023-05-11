@@ -16,11 +16,11 @@
 package ghidra.pcode.exec.trace;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-import com.google.common.primitives.UnsignedLong;
-
+import generic.ULongSpan;
+import generic.ULongSpan.ULongSpanSet;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.AbstractBytesPcodeExecutorStatePiece;
 import ghidra.pcode.exec.BytesPcodeExecutorStateSpace;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece.CachedSpace;
@@ -43,11 +43,23 @@ public class BytesTracePcodeExecutorStatePiece
 
 	protected static class CachedSpace
 			extends BytesPcodeExecutorStateSpace<PcodeTraceDataAccess> {
-		protected final AddressSet written = new AddressSet();
+		protected final AddressSet written;
 
 		public CachedSpace(Language language, AddressSpace space, PcodeTraceDataAccess backing) {
 			// Backing could be null, so we need language parameter
 			super(language, space, backing);
+			this.written = new AddressSet();
+		}
+
+		protected CachedSpace(Language language, AddressSpace space, PcodeTraceDataAccess backing,
+				SemisparseByteArray bytes, AddressSet written) {
+			super(language, space, backing, bytes);
+			this.written = written;
+		}
+
+		@Override
+		public CachedSpace fork() {
+			return new CachedSpace(language, space, backing, bytes.fork(), new AddressSet(written));
 		}
 
 		@Override
@@ -64,24 +76,34 @@ public class BytesTracePcodeExecutorStatePiece
 			}
 		}
 
+		protected AddressSetView intersectViewKnown(AddressSetView set) {
+			return backing.intersectViewKnown(set, true);
+		}
+
 		@Override
-		protected void readUninitializedFromBacking(RangeSet<UnsignedLong> uninitialized) {
-			if (!uninitialized.isEmpty()) {
-				// TODO: Warn or bail when reading UNKNOWN bytes
-				// NOTE: Read without regard to gaps
-				// NOTE: Cannot write those gaps, though!!!
-				Range<UnsignedLong> toRead = uninitialized.span();
-				assert toRead.hasUpperBound() && toRead.hasLowerBound();
-				long lower = lower(toRead);
-				long upper = upper(toRead);
-				ByteBuffer buf = ByteBuffer.allocate((int) (upper - lower + 1));
-				backing.getBytes(space.getAddress(lower), buf);
-				for (Range<UnsignedLong> rng : uninitialized.asRanges()) {
-					long l = lower(rng);
-					long u = upper(rng);
-					bytes.putData(l, buf.array(), (int) (l - lower), (int) (u - l + 1));
-				}
+		protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
+			if (uninitialized.isEmpty()) {
+				return uninitialized;
 			}
+			// TODO: Warn or bail when reading UNKNOWN bytes
+			// NOTE: Read without regard to gaps
+			// NOTE: Cannot write those gaps, though!!!
+			AddressSetView knownButUninit = intersectViewKnown(addrSet(uninitialized));
+			if (knownButUninit.isEmpty()) {
+				return uninitialized;
+			}
+			AddressRange knownBound = new AddressRangeImpl(
+				knownButUninit.getMinAddress(),
+				knownButUninit.getMaxAddress());
+			ByteBuffer buf = ByteBuffer.allocate((int) knownBound.getLength());
+			backing.getBytes(knownBound.getMinAddress(), buf);
+			for (AddressRange range : knownButUninit) {
+				bytes.putData(range.getMinAddress().getOffset(), buf.array(),
+					(int) (range.getMinAddress().subtract(knownBound.getMinAddress())),
+					(int) range.getLength());
+			}
+			ULongSpan uninitBound = uninitialized.bound();
+			return bytes.getUninitialized(uninitBound.min(), uninitBound.max());
 		}
 
 		protected void warnUnknown(AddressSetView unknown) {
@@ -124,9 +146,20 @@ public class BytesTracePcodeExecutorStatePiece
 		this.data = data;
 	}
 
+	protected BytesTracePcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			AbstractSpaceMap<CachedSpace> spaceMap) {
+		super(data.getLanguage(), spaceMap);
+		this.data = data;
+	}
+
 	@Override
 	public PcodeTraceDataAccess getData() {
 		return data;
+	}
+
+	@Override
+	public BytesTracePcodeExecutorStatePiece fork() {
+		return new BytesTracePcodeExecutorStatePiece(data, spaceMap.fork());
 	}
 
 	@Override
@@ -145,6 +178,14 @@ public class BytesTracePcodeExecutorStatePiece
 	 */
 	protected class TraceBackedSpaceMap
 			extends CacheingSpaceMap<PcodeTraceDataAccess, CachedSpace> {
+		public TraceBackedSpaceMap() {
+			super();
+		}
+
+		protected TraceBackedSpaceMap(Map<AddressSpace, CachedSpace> spaces) {
+			super(spaces);
+		}
+
 		@Override
 		protected PcodeTraceDataAccess getBacking(AddressSpace space) {
 			return data;
@@ -153,6 +194,16 @@ public class BytesTracePcodeExecutorStatePiece
 		@Override
 		protected CachedSpace newSpace(AddressSpace space, PcodeTraceDataAccess backing) {
 			return new CachedSpace(language, space, backing);
+		}
+
+		@Override
+		public TraceBackedSpaceMap fork() {
+			return new TraceBackedSpaceMap(fork(spaces));
+		}
+
+		@Override
+		public CachedSpace fork(CachedSpace s) {
+			return s.fork();
 		}
 	}
 

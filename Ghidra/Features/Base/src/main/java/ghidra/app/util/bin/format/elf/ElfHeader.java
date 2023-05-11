@@ -15,20 +15,18 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.function.Consumer;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.elf.ElfRelocationTable.TableFormat;
 import ghidra.app.util.bin.format.elf.extend.ElfExtensionFactory;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NotFoundException;
@@ -37,7 +35,7 @@ import ghidra.util.exception.NotFoundException;
  * A class to represent the Executable and Linking Format (ELF)
  * header and specification.
  */
-public class ElfHeader implements StructConverter, Writeable {
+public class ElfHeader implements StructConverter {
 
 	private static final int MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE = 20;
 
@@ -55,9 +53,11 @@ public class ElfHeader implements StructConverter, Writeable {
 	private String e_ident_magic_str; //magic string
 	private byte e_ident_class; //file class
 	private byte e_ident_data; //data encoding
+	@SuppressWarnings("unused")
 	private byte e_ident_version; //file version
 	private byte e_ident_osabi; //operating system and abi
 	private byte e_ident_abiversion; //abi version
+	@SuppressWarnings("unused")
 	private byte[] e_ident_pad; //padding
 	private short e_type; //object file type
 	private short e_machine; //target architecture
@@ -2076,68 +2076,6 @@ public class ElfHeader implements StructConverter, Writeable {
 
 		e_phnum = programHeaders.length;
 
-	}
-
-	/**
-	 * @see ghidra.app.util.bin.format.Writeable#write(java.io.RandomAccessFile, ghidra.util.DataConverter)
-	 */
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		raf.seek(0);
-		raf.writeByte(e_ident_magic_num);
-		raf.write(e_ident_magic_str.getBytes());
-		raf.writeByte(e_ident_class);
-		raf.writeByte(e_ident_data);
-		raf.writeByte(e_ident_version);
-		raf.writeByte(e_ident_osabi);
-		raf.writeByte(e_ident_abiversion);
-		raf.write(e_ident_pad);
-		raf.write(dc.getBytes(e_type));
-		raf.write(dc.getBytes(e_machine));
-		raf.write(dc.getBytes(e_version));
-
-		if (is32Bit()) {
-			raf.write(dc.getBytes((int) e_entry));
-			raf.write(dc.getBytes((int) e_phoff));
-			raf.write(dc.getBytes((int) e_shoff));
-		}
-		else if (is64Bit()) {
-			raf.write(dc.getBytes(e_entry));
-			raf.write(dc.getBytes(e_phoff));
-			raf.write(dc.getBytes(e_shoff));
-		}
-
-		raf.write(dc.getBytes(e_flags));
-		raf.write(dc.getBytes(e_ehsize));
-		raf.write(dc.getBytes(e_phentsize));
-		if (e_phnum >= Short.toUnsignedInt(ElfConstants.PN_XNUM)) {
-			throw new IOException(
-				"Unsupported program header count serialization: " + e_phnum);
-		}
-		raf.write(dc.getBytes(e_phnum));
-		raf.write(dc.getBytes(e_shentsize));
-		if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
-			throw new IOException(
-				"Unsupported section header count serialization: " + e_shnum);
-		}
-		raf.write(dc.getBytes(e_shnum));
-		raf.write(dc.getBytes(e_shstrndx));
-	}
-
-	/**
-	 * Sets the section header offset.
-	 * @param offset the new section header offset
-	 */
-	public void setSectionHeaderOffset(long offset) {
-		this.e_shoff = offset;
-	}
-
-	/**
-	 * Sets the program header offset.
-	 * @param offset the new program header offset
-	 */
-	public void setProgramHeaderOffset(long offset) {
-		this.e_phoff = offset;
 	}
 
 }

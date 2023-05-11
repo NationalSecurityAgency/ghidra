@@ -96,7 +96,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 		int progress = 0;
 		while (it.hasNext()) {
 			monitor.setProgress(progress++);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long key = it.next();
 			if (filterAccepts(key)) {
 				accumulator.add(new DataRowObject(key, addressMap));
@@ -250,7 +250,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 				return null;
 			}
 
-			return new Integer(data.getLength());
+			return Integer.valueOf(data.getLength());
 		}
 
 	}

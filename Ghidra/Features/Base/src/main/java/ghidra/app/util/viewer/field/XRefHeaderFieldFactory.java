@@ -20,8 +20,9 @@ import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.XReferenceUtils;
+import ghidra.app.util.viewer.field.ListingColors.XrefColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -49,12 +50,16 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	public XRefHeaderFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	public XRefHeaderFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, ToolOptions fieldOptions) {
 		super(XREF_FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
+	}
+
+	@Override
+	protected void initDisplayOptions(Options displayOptions) {
 		colorOptionName = "XRef Color";
 		styleOptionName = "XRef Style";
-		initDisplayOptions();
+		super.initDisplayOptions(displayOptions);
 	}
 
 	@Override
@@ -68,7 +73,7 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 		if (headString == null || headString.length() == 0) {
 			return null;
 		}
-		AttributedString as = new AttributedString(headString, color, getMetrics());
+		AttributedString as = new AttributedString(headString, XrefColors.DEFAULT, getMetrics());
 		FieldElement field = new TextFieldElement(as, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, field, startX + varWidth,
 			width, hlProvider);
@@ -111,7 +116,7 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions options, ToolOptions fieldOptions) {
 		return new XRefHeaderFieldFactory(formatModel, provider, options, fieldOptions);
 	}

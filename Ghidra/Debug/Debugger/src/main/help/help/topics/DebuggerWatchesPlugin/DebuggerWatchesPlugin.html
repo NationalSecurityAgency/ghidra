@@ -7,7 +7,7 @@
 
     <TITLE>Debugger: Watches</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -30,6 +30,18 @@
     applicable, that data type can optionally be applied to the trace database. Some metadata about
     the watch is also given, e.g., the address of the value.</P>
 
+    <P>The watch window uses colors to hint about changes in and freshness of displayed values. By
+    default, changed values are displayed in red, and stale values are displayed in dark grey. A
+    "stale" value is one which depends on any register or memory whose contents are not known. The
+    value displayed is that computed from the last recorded contents, defaulting to 0 when never
+    recorded. Simply, a "changed" watch is one whose value has just changed. For example, if a
+    value changes as result of stepping, then that watch is changed. However, given the possibility
+    of rewinding, changing thread focus, etc., "changed" is actually subtly more flexible. The
+    watch remembers the evaluation from the user's last coordinates (time, thread, frame, etc.) as
+    well as the current coordinates. So, "changed" more precisely refers to a watch whose value
+    differs between those two coordinates. This permits the user to switch focus between different
+    coordinates and quickly identify what is different.</P>
+
     <H2>Examples</H2>
 
     <P>For those less familiar with Sleigh, here are some example expressions:</P>
@@ -41,6 +53,10 @@
       the <CODE>int</CODE> at address 7fff0004. The extraneous but required size specifier on the
       constant 0x7fff0004 is a known issue. Just use the target's pointer size in bytes &mdash; 8
       in the example.</LI>
+
+      <LI><CODE>*:4 my_global</CODE>: Display 4 bytes starting at the label "my_global", e.g., to
+      read the <CODE>int</CODE> value there. The label may be in the trace or in a program mapped
+      to the trace. Ambiguities are resolved arbitrarily.</LI>
 
       <LI><CODE>*:8 RSP</CODE>: Display 8 bytes of [ram] starting at the offset given by register
       RSP, e.g., to read a <CODE>long</CODE> on the stack.</LI>
@@ -74,11 +90,9 @@
 
       <LI>Value - the raw bytes of the watched buffer. If the expression is a register, then this
       is its hexadecimal value. This field is user modifiable when the <B>Enable Edits</B> toggle
-      is on, and the <A href=
-      "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">editing service</A>
-      reports the register as modifiable. Edits may be directed toward a live target, the trace, or
-      the emulator. If the value has changed since the last navigation event, this cell is rendered
-      in <FONT color="red">red</FONT>.</LI>
+      is on, and the variable is modifiable. Edits may be directed toward a live target, the trace,
+      or the emulator. If the value has changed since the last navigation event, this cell is
+      rendered in <FONT color="red">red</FONT>.</LI>
 
       <LI>Type - the user-modifiable type of the watch. Note the type is not marked up in the
       trace. Clicking the Apply Data Type action will apply it to the current trace, if
@@ -157,23 +171,8 @@
 
     <P>This toggle is a write protector for machine state. To modify a watch's value, this toggle
     must be enabled. Edits are directed according the to <A href=
-    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">State Editing Plugin
-    and Service</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr"
-    column cannot be edited, yet.</P>
-
-    <H2><A name="colors"></A>Tool Options: Colors</H2>
-
-    <P>The watch window uses colors to hint about changes in and freshness of displayed values.
-    They can be configured in the tool's options. By default, changed values are displayed in red,
-    and stale values are displayed in dark grey. A "stale" value is one which depends on any
-    register or memory whose contents are not known. The value displayed is that computed from the
-    last recorded contents, defaulting to 0 when never recorded. Simply, a "changed" watch is one
-    whose value has just changed. For example, if a value changes as result of stepping, then that
-    watch is changed. However, given the possibility of rewinding, changing thread focus, etc.,
-    "changed" is actually subtly more flexible. The watch remembers the evaluation from the user's
-    last coordinates (time, thread, frame, etc.) as well as the current coordinates. So, "changed"
-    more precisely refers to a watch whose value differs between those two coordinates. This
-    permits the user to switch focus between different coordinates and quickly identify what is
-    different.</P>
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State
+    Plugin</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr" column
+    cannot be edited, yet.</P>
   </BODY>
 </HTML>

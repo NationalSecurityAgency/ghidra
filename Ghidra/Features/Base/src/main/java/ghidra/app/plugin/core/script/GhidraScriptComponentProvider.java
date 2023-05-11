@@ -15,16 +15,16 @@
  */
 package ghidra.app.plugin.core.script;
 
-import java.awt.BorderLayout;
-import java.awt.Rectangle;
-import java.awt.event.*;
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import java.awt.BorderLayout;
+import java.awt.Rectangle;
+import java.awt.event.*;
+import java.io.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -46,6 +46,7 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.osgi.*;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
@@ -57,7 +58,6 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
@@ -126,7 +126,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		scriptList.addListener(scriptListListener);
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
-		setIcon(ResourceManager.loadImage("images/play.png"));
+		setIcon(new GIcon("icon.plugin.scriptmanager.provider"));
 		addToToolbar();
 		setWindowGroup(WINDOW_GROUP);
 
@@ -1036,20 +1036,16 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void updateDescriptionPanel() {
-		String text = "Error! no script info!";
 		ResourceFile script = getSelectedScript();
-		if (script != null) {
-			ScriptInfo info = infoManager.getExistingScriptInfo(script);
-			if (info != null) {
-				text = info.getToolTipText();
-			}
-		}
-		final String ftext = text;
+		ScriptInfo info = infoManager.getExistingScriptInfo(script); // null script is ok
+		String text = script != null
+				? (info != null ? info.getToolTipText() : "Error! no script info!")
+				: null; // no selected script
 
 		// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
 		// which will overwrite our location setting
 		SwingUtilities.invokeLater(() -> {
-			descriptionTextPane.setText(ftext);
+			descriptionTextPane.setText(text);
 			descriptionTextPane.setCaretPosition(0);
 		});
 	}

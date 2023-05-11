@@ -249,6 +249,7 @@ public class PcodeDataTypeManager {
 		else if (meta.equals("float")) {
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElement(el);
+			// NOTE: Float lookup by length must use "raw" encoding size since
 			return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
 		}
 		else if (meta.equals("partunion")) {

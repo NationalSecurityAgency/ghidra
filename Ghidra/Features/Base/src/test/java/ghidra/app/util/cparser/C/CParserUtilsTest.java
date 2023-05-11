@@ -15,33 +15,30 @@
  */
 package ghidra.app.util.cparser.C;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Messages;
 
 public class CParserUtilsTest extends AbstractGenericTest {
 
-	public CParserUtilsTest() {
-		super();
-	}
-
 	@Test
-    public void testUserMessage_OnTokenMgrError() {
+	public void testUserMessage_OnTokenMgrError() {
 		String function = "void bob@12(int a)";
 		Throwable t = getParseError(function);
 		String message = CParserUtils.handleParseProblem(t, function);
 
 		String characterInfo = "near character 8";
-		String invalidInfo = "<font color=\"red\"><b>@";
+		String invalidInfo = "<font color=\"" + Messages.ERROR + "\"><b>@";
 		assertTrue(message.contains(characterInfo));
 		assertTrue(message.contains(invalidInfo));
 	}
 
 	@Test
-    public void testUserMessage_OnParseException() {
+	public void testUserMessage_OnParseException() {
 		String function = "void bob(int a)()";
 		Throwable t = getParseError(function);
 		String message = CParserUtils.handleParseProblem(t, function);

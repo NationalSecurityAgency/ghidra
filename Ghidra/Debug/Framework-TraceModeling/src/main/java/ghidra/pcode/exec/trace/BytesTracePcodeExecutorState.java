@@ -29,4 +29,13 @@ public class BytesTracePcodeExecutorState extends DefaultTracePcodeExecutorState
 	public BytesTracePcodeExecutorState(PcodeTraceDataAccess data) {
 		super(new BytesTracePcodeExecutorStatePiece(data));
 	}
+
+	protected BytesTracePcodeExecutorState(TracePcodeExecutorStatePiece<byte[], byte[]> piece) {
+		super(piece);
+	}
+
+	@Override
+	public BytesTracePcodeExecutorState fork() {
+		return new BytesTracePcodeExecutorState(piece.fork());
+	}
 }

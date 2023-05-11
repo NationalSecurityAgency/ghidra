@@ -31,19 +31,18 @@ import javax.swing.tree.TreePath;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
+import generic.theme.GIcon;
 import ghidra.util.*;
 import ghidra.util.exception.MultipleCauses;
 import ghidra.util.html.HTMLElement;
-import resources.ResourceManager;
 import util.CollectionUtils;
 
 public class ErrLogExpandableDialog extends AbstractErrDialog {
-	public static ImageIcon IMG_REPORT = ResourceManager.loadImage("images/report.png");
-	public static ImageIcon IMG_EXCEPTION = ResourceManager.loadImage("images/exception.png");
-	public static ImageIcon IMG_FRAME_ELEMENT =
-		ResourceManager.loadImage("images/StackFrameElement.png");
-	public static ImageIcon IMG_STACK = ResourceManager.loadImage("images/StackFrame_Red.png");
-	public static ImageIcon IMG_CAUSE = ResourceManager.loadImage("images/cause.png");
+	public static Icon IMG_REPORT = new GIcon("icon.dialog.error.expandable.report");
+	public static Icon IMG_EXCEPTION = new GIcon("icon.dialog.error.expandable.exception");
+	public static Icon IMG_FRAME_ELEMENT = new GIcon("icon.dialog.error.expandable.frame");
+	public static Icon IMG_STACK = new GIcon("icon.dialog.error.expandable.stack");
+	public static Icon IMG_CAUSE = new GIcon("icon.dialog.error.expandable.cause");
 
 	private static final String SEND = "Send Report...";
 	private static final String DETAIL = "Details >>>";

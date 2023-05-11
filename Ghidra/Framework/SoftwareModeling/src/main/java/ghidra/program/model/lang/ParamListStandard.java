@@ -43,7 +43,8 @@ public class ParamListStandard implements ParamList {
 //	protected int maxdelay;
 	protected int pointermax;		// If non-zero, maximum size of a datatype before converting to a pointer
 	protected boolean thisbeforeret;	// Do hidden return pointers usurp the storage of the this pointer
-	protected int resourceTwoStart;		// Group id starting the section resource section (or 0 if only one section)
+	protected boolean splitMetatype;	// Are metatyped entries in separate resource sections
+//	protected int[] resourceStart;		// The starting group for each resource section
 	protected ParamEntry[] entry;
 	protected AddressSpace spacebase;	// Space containing relative offset parameters
 
@@ -79,11 +80,7 @@ public class ParamListStandard implements ParamList {
 		if (tp == null) {
 			tp = DataType.DEFAULT;
 		}
-		DataType baseType = tp;
-		if (baseType instanceof TypeDef) {
-			baseType = ((TypeDef) baseType).getBaseDataType();
-		}
-		if (baseType instanceof VoidDataType) {
+		if (VoidDataType.isVoidDataType(tp)) {
 			return VariableStorage.VOID_STORAGE;
 		}
 		int sz = tp.getLength();
@@ -106,10 +103,9 @@ public class ParamListStandard implements ParamList {
 				continue;	// -tp- does not fit in this entry
 			}
 			if (element.isExclusion()) {
-				int maxgrp = grp + element.getGroupSize();
-				for (int j = grp; j < maxgrp; ++j) {
+				for (int group : element.getAllGroups()) {
 					// For an exclusion entry
-					status[j] = -1;			// some number of groups are taken up
+					status[group] = -1;			// some number of groups are taken up
 				}
 				if (element.isFloatExtended()) {
 					sz = element.getSize();			// Still use the entire container size, when assigning storage
@@ -118,8 +114,13 @@ public class ParamListStandard implements ParamList {
 			VariableStorage store;
 			try {
 				if (res.space.getType() == AddressSpace.TYPE_JOIN) {
-					Varnode[] pieces = element.getJoinRecord();
-					store = new DynamicVariableStorage(program, false, pieces);
+					Varnode[] pieces = element.getJoinPieces(sz);
+					if (pieces != null) {
+						store = new DynamicVariableStorage(program, false, pieces);
+					}
+					else {
+						store = DynamicVariableStorage.getUnassignedDynamicStorage(false);
+					}
 				}
 				else {
 					Address addr = res.space.getAddress(res.offset);
@@ -212,7 +213,7 @@ public class ParamListStandard implements ParamList {
 		if (thisbeforeret) {
 			encoder.writeBool(ATTRIB_THISBEFORERETPOINTER, true);
 		}
-		if (isInput && resourceTwoStart == 0) {
+		if (isInput && !splitMetatype) {
 			encoder.writeBool(ATTRIB_SEPARATEFLOAT, false);
 		}
 		int curgroup = -1;
@@ -239,24 +240,32 @@ public class ParamListStandard implements ParamList {
 
 	private void parsePentry(XmlPullParser parser, CompilerSpec cspec, ArrayList<ParamEntry> pe,
 			int groupid, boolean splitFloat, boolean grouped) throws XmlParseException {
+		int lastMeta = -1;		// Smaller than any real metatype
+		if (!pe.isEmpty()) {
+			ParamEntry lastEntry = pe.get(pe.size() - 1);
+			lastMeta = lastEntry.isGrouped() ? ParamEntry.TYPE_UNKNOWN : lastEntry.getType();
+		}
 		ParamEntry pentry = new ParamEntry(groupid);
 		pe.add(pentry);
 		pentry.restoreXml(parser, cspec, pe, grouped);
 		if (splitFloat) {
-			if (!grouped && pentry.getType() == ParamEntry.TYPE_FLOAT) {
-				if (resourceTwoStart >= 0) {
+			int currentMeta = grouped ? ParamEntry.TYPE_UNKNOWN : pentry.getType();
+			if (lastMeta != currentMeta) {
+				if (lastMeta > currentMeta) {
 					throw new XmlParseException(
-						"parameter list floating-point entries must come first");
+						"parameter list entries must be ordered by metatype");
 				}
-			}
-			else if (resourceTwoStart < 0) {
-				resourceTwoStart = groupid;	// First time we have seen an integer slot
+//				int[] newResourceStart = new int[resourceStart.length + 1];
+//				System.arraycopy(resourceStart, 0, newResourceStart, 0, resourceStart.length);
+//				newResourceStart[resourceStart.length] = groupid;
+//				resourceStart = newResourceStart;
 			}
 		}
 		if (pentry.getSpace().isStackSpace()) {
 			spacebase = pentry.getSpace();
 		}
-		int maxgroup = pentry.getGroup() + pentry.getGroupSize();
+		int[] groupSet = pentry.getAllGroups();
+		int maxgroup = groupSet[groupSet.length - 1] + 1;
 		if (maxgroup > numgroup) {
 			numgroup = maxgroup;
 		}
@@ -293,7 +302,7 @@ public class ParamListStandard implements ParamList {
 		spacebase = null;
 		pointermax = 0;
 		thisbeforeret = false;
-		boolean splitFloat = true;
+		splitMetatype = true;
 		XmlElement mainel = parser.start();
 		String attribute = mainel.getAttribute("pointermax");
 		if (attribute != null) {
@@ -305,24 +314,28 @@ public class ParamListStandard implements ParamList {
 		}
 		attribute = mainel.getAttribute("separatefloat");
 		if (attribute != null) {
-			splitFloat = SpecXmlUtils.decodeBoolean(attribute);
+			splitMetatype = SpecXmlUtils.decodeBoolean(attribute);
 		}
-		resourceTwoStart = splitFloat ? -1 : 0;
+//		resourceStart = new int[0];
 		for (;;) {
 			XmlElement el = parser.peek();
 			if (!el.isStart()) {
 				break;
 			}
 			if (el.getName().equals("pentry")) {
-				parsePentry(parser, cspec, pe, numgroup, splitFloat, false);
+				parsePentry(parser, cspec, pe, numgroup, splitMetatype, false);
 			}
 			else if (el.getName().equals("group")) {
-				parseGroup(parser, cspec, pe, numgroup, splitFloat);
+				parseGroup(parser, cspec, pe, numgroup, splitMetatype);
 			}
 		}
 		parser.end(mainel);
 		entry = new ParamEntry[pe.size()];
 		pe.toArray(entry);
+//		int[] newResourceStart = new int[resourceStart.length + 1];
+//		System.arraycopy(resourceStart, 0, newResourceStart, 0, resourceStart.length);
+//		newResourceStart[resourceStart.length] = numgroup;
+//		resourceStart = newResourceStart;
 	}
 
 	@Override
@@ -367,7 +380,7 @@ public class ParamListStandard implements ParamList {
 		ParamEntry curentry = entry[num];
 		res.slot = curentry.getSlot(loc, 0);
 		if (curentry.isExclusion()) {
-			res.slotsize = curentry.getGroupSize();
+			res.slotsize = curentry.getAllGroups().length;
 		}
 		else {
 			res.slotsize = ((size - 1) / curentry.getAlign()) + 1;

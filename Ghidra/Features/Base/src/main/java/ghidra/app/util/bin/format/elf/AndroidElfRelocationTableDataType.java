@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.SignedLeb128DataType;
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -64,41 +63,6 @@ public class AndroidElfRelocationTableDataType extends DynamicDataType {
 		return "";
 	}
 
-	static class LEB128Info {
-
-		final int offset;
-		final long value;
-		final int byteLength;
-
-		private LEB128Info(int offset, long value, int byteLength) {
-			this.offset = offset;
-			this.value = value;
-			this.byteLength = byteLength;
-		}
-
-		DataTypeComponent getComponent(DynamicDataType parent, int ordinal, String name,
-				String comment, long relocOffset) {
-			return new ReadOnlyDataTypeComponent(
-				new AndroidElfRelocationData(parent.getDataTypeManager(), relocOffset), parent,
-				byteLength, ordinal, offset, name, comment);
-		}
-
-		DataTypeComponent getComponent(DynamicDataType parent, int ordinal, String name,
-				String comment) {
-			return new ReadOnlyDataTypeComponent(
-				new SignedLeb128DataType(parent.getDataTypeManager()), parent, byteLength, ordinal,
-				offset, name, comment);
-		}
-
-		static LEB128Info parse(BinaryReader reader, boolean signed) throws IOException {
-			long nextPos = reader.getPointerIndex();
-			long value = LEB128.readAsLong(reader, signed);
-			long pos = reader.getPointerIndex();
-			int size = (int) (pos - nextPos);
-			return new LEB128Info((int) nextPos, value, size);
-		}
-	}
-
 	@Override
 	protected DataTypeComponent[] getAllComponents(MemBuffer buf) {
 
@@ -118,13 +82,13 @@ public class AndroidElfRelocationTableDataType extends DynamicDataType {
 				null));
 			reader.setPointerIndex(4);
 
-			LEB128Info sleb128 = LEB128Info.parse(reader, true);
-			long remainingRelocations = sleb128.value;
-			list.add(sleb128.getComponent(this, list.size(), "reloc_count", null));
+			LEB128Info sleb128 = reader.readNext(LEB128Info::signed);
+			long remainingRelocations = sleb128.asLong();
+			list.add(getLEB128Component(sleb128, this, list.size(), "reloc_count", null));
 
-			sleb128 = LEB128Info.parse(reader, true);
-			long baseRelocOffset = sleb128.value;
-			list.add(sleb128.getComponent(this, list.size(), "reloc_baseOffset", null));
+			sleb128 = reader.readNext(LEB128Info::signed);
+			long baseRelocOffset = sleb128.asLong();
+			list.add(getLEB128Component(sleb128, this, list.size(), "reloc_baseOffset", null));
 
 			int groupIndex = 0;
 			long groupRelocOffset = baseRelocOffset;
@@ -132,7 +96,7 @@ public class AndroidElfRelocationTableDataType extends DynamicDataType {
 				// NOTE: assumes 2-GByte MemBuffer limit
 				int offset = (int) reader.getPointerIndex();
 
-				long groupSize = LEB128.readAsLong(reader, true);
+				long groupSize = reader.readNext(LEB128Info::signed).asLong();
 				if (groupSize > remainingRelocations) {
 					Msg.debug(this, "Group relocation count " + groupSize +
 						" exceeded total count " + remainingRelocations);
@@ -164,6 +128,20 @@ public class AndroidElfRelocationTableDataType extends DynamicDataType {
 		catch (IOException e) {
 			return null;
 		}
+	}
+
+	public static DataTypeComponent getLEB128Component(LEB128Info leb128, DynamicDataType parent,
+			int ordinal, String name, String comment, long relocOffset) {
+		return new ReadOnlyDataTypeComponent(
+			new AndroidElfRelocationData(parent.getDataTypeManager(), relocOffset), parent,
+			leb128.getLength(), ordinal, (int) leb128.getOffset(), name, comment);
+	}
+
+	public static DataTypeComponent getLEB128Component(LEB128Info leb128, DynamicDataType parent,
+			int ordinal, String name, String comment) {
+		return new ReadOnlyDataTypeComponent(
+			new SignedLeb128DataType(parent.getDataTypeManager()), parent, leb128.getLength(),
+			ordinal, (int) leb128.getOffset(), name, comment);
 	}
 
 }

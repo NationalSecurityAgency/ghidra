@@ -20,13 +20,13 @@ import static org.junit.Assert.*;
 import java.io.*;
 import java.util.HashMap;
 
-import generic.test.AbstractGTest;
+import generic.test.AbstractGenericTest;
 import ghidra.app.util.cparser.C.CParser;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.util.Msg;
 import resources.ResourceManager;
 
-abstract class AbstractCompositeTest extends AbstractGTest {
+abstract class AbstractCompositeTest extends AbstractGenericTest {
 
 	private HashMap<Long, DataType> copyMap = new HashMap<>();
 

@@ -18,7 +18,7 @@ package ghidra.program.model.listing;
 import java.awt.Color;
 import java.util.Iterator;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -64,7 +64,7 @@ public interface BookmarkManager {
 	 * @return bookmark type object
 	 * @throws IllegalArgumentException if any of the arguments are null or if the type is empty 
 	 */
-	BookmarkType defineType(String type, ImageIcon icon, Color color, int priority);
+	BookmarkType defineType(String type, Icon icon, Color color, int priority);
 
 	/**
 	 * Returns list of known bookmark types

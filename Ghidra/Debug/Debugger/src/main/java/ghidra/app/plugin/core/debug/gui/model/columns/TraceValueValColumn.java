@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceClosedException;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
@@ -48,9 +49,21 @@ public class TraceValueValColumn extends AbstractDynamicTableColumn<ValueRow, Va
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
 			ValueRow row = (ValueRow) data.getValue();
-			setText(row.getHtmlDisplay());
-			setToolTipText(row.getToolTip());
-			setForeground(getForegroundFor(data.getTable(), row.isModified(), data.isSelected()));
+			try {
+				setText(row.getHtmlDisplay());
+				setToolTipText(row.getToolTip());
+				setForeground(
+					getForegroundFor(data.getTable(), row.isModified(), data.isSelected()));
+				if (row.isCurrent()) {
+					setBold();
+				}
+			}
+			catch (TraceClosedException e) {
+				setText("ERROR: Trace Closed");
+				setToolTipText(
+					"This row is stale, since it refers to a trace that has since been closed");
+				setForeground(getForegroundFor(data.getTable(), false, data.isSelected()));
+			}
 			return this;
 		}
 
@@ -65,8 +78,8 @@ public class TraceValueValColumn extends AbstractDynamicTableColumn<ValueRow, Va
 		}
 	}
 
-	private Color diffColor = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED;
-	private Color diffColorSel = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED_SEL;
+	private Color diffColor = DebuggerResources.COLOR_VALUE_CHANGED;
+	private Color diffColorSel = DebuggerResources.COLOR_VALUE_CHANGED_SEL;
 	private final ValRenderer renderer = new ValRenderer();
 
 	@Override

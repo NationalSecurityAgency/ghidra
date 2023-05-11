@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,6 @@
  */
 package ghidra.framework.task.gui.taskview;
 
-import ghidra.framework.task.*;
-import ghidra.framework.task.gui.GProgressBar;
-import ghidra.util.SystemUtilities;
-import ghidra.util.exception.AssertException;
-import ghidra.util.task.CancelledListener;
-import ghidra.util.task.SwingUpdateManager;
-
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -34,6 +26,14 @@ import javax.swing.*;
 import org.jdesktop.animation.timing.*;
 
 import docking.util.GraphicsUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
+import ghidra.framework.task.*;
+import ghidra.framework.task.gui.GProgressBar;
+import ghidra.util.SystemUtilities;
+import ghidra.util.exception.AssertException;
+import ghidra.util.task.CancelledListener;
+import ghidra.util.task.SwingUpdateManager;
 
 /*
  * The TaskViewer manages a component for showing the running and waiting tasks of a GTaskManager.
@@ -45,10 +45,10 @@ public class TaskViewer {
 	private static final int MIN_DELAY = 250;
 	private static final int MAX_DELAY = 1000;
 
-	private Deque<AbstractTaskInfo> runningList = new LinkedList<AbstractTaskInfo>();
-	private LinkedList<AbstractTaskInfo> waitingList = new LinkedList<AbstractTaskInfo>();
-	private LinkedList<AbstractTaskInfo> scrollAwayList = new LinkedList<AbstractTaskInfo>();
-	private Queue<Runnable> runnableQueue = new ConcurrentLinkedQueue<Runnable>();
+	private Deque<AbstractTaskInfo> runningList = new LinkedList<>();
+	private LinkedList<AbstractTaskInfo> waitingList = new LinkedList<>();
+	private LinkedList<AbstractTaskInfo> scrollAwayList = new LinkedList<>();
+	private Queue<Runnable> runnableQueue = new ConcurrentLinkedQueue<>();
 	private SwingUpdateManager updateManager;
 	private GTaskManager taskManager;
 	private TaskViewerTaskListener taskListener;
@@ -70,24 +70,15 @@ public class TaskViewer {
 
 		buildComponent();
 		taskListener = new TaskViewerTaskListener();
-		updateComponentsRunnable = new Runnable() {
-			@Override
-			public void run() {
-				while (!runnableQueue.isEmpty()) {
-					Runnable runnable = runnableQueue.poll();
-					runnable.run();
-				}
-				updateComponent();
+		updateComponentsRunnable = () -> {
+			while (!runnableQueue.isEmpty()) {
+				Runnable runnable = runnableQueue.poll();
+				runnable.run();
 			}
+			updateComponent();
 		};
 		updateManager = new SwingUpdateManager(MIN_DELAY, MAX_DELAY, updateComponentsRunnable);
-		animationRunnable = new Runnable() {
-
-			@Override
-			public void run() {
-				startScrollingAwayAnimation(0);
-			}
-		};
+		animationRunnable = () -> startScrollingAwayAnimation(0);
 
 		completedTimingTarget = new TimingTargetAdapter() {
 			@Override
@@ -258,6 +249,7 @@ public class TaskViewer {
 	}
 
 	private class MessageCanvas extends JComponent {
+		private static final String FONT_ID = "font.task.viewer";
 		private Rectangle messageDimension;
 
 		@Override
@@ -268,9 +260,9 @@ public class TaskViewer {
 			Graphics2D g2 = (Graphics2D) g;
 			g2.setComposite(SCROLLED_TEXT_ALPHA_COMPOSITE);
 
-			Font font = new Font("Sanf Serif", Font.BOLD, 36);
+			Font font = Gui.getFont(FONT_ID);
 			g.setFont(font);
-			g.setColor(new Color(0, 0, 200));
+			g.setColor(Palette.BLUE);
 			if (messageDimension == null) {
 				FontMetrics fontMetrics = getFontMetrics(font);
 				messageDimension = fontMetrics.getStringBounds(TEXT, g2).getBounds();
@@ -331,19 +323,16 @@ public class TaskViewer {
 
 		@Override
 		public void suspendedStateChanged(boolean isSuspended) {
-			SystemUtilities.runSwingLater(new Runnable() {
-				@Override
-				public void run() {
-					layeredPane.invalidate();
-					layeredPane.repaint();
-				}
+			SystemUtilities.runSwingLater(() -> {
+				layeredPane.invalidate();
+				layeredPane.repaint();
 			});
 		}
 	}
 
 	private class InitializeRunnable implements Runnable {
 		private GTaskGroup currentGroup;
-		private List<GScheduledTask> scheduledTasks = new ArrayList<GScheduledTask>();
+		private List<GScheduledTask> scheduledTasks = new ArrayList<>();
 		private List<GScheduledTask> delayedTasks;
 		private GScheduledTask runningTask;
 		private List<TaskGroupScheduledRunnable> groupRunnables;
@@ -355,7 +344,7 @@ public class TaskViewer {
 			runningTask = taskManager.getRunningTask();
 			List<GTaskGroup> groups = taskManager.getScheduledGroups();
 
-			groupRunnables = new ArrayList<TaskGroupScheduledRunnable>();
+			groupRunnables = new ArrayList<>();
 			for (GTaskGroup gTaskGroup : groups) {
 				groupRunnables.add(new TaskGroupScheduledRunnable(gTaskGroup));
 			}

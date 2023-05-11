@@ -15,18 +15,16 @@
  */
 package ghidra.app.plugin.debug;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.util.layout.PairLayout;
 
-class ShowMemoryDialog extends DialogComponentProvider {
+class ShowMemoryDialog extends ReusableDialogComponentProvider {
 	private MemoryUsagePlugin plugin;
 	private JLabel maxMem;
 	private JLabel totalMem;
@@ -42,16 +40,13 @@ class ShowMemoryDialog extends DialogComponentProvider {
 		addWorkPanel(createWorkPanel());
 		plugin.getTool().showDialog(this);
 		final DecimalFormat df = new DecimalFormat();
-		timer = new Timer(2000, new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Runtime runtime = Runtime.getRuntime();
-				maxMem.setText(df.format(runtime.maxMemory() / 1000) + "K");
-				totalMem.setText(df.format(runtime.totalMemory() / 1000) + "K");
-				freeMem.setText(df.format(runtime.freeMemory() / 1000) + "K");
-				usedMem.setText(
-					df.format((runtime.totalMemory() - runtime.freeMemory()) / 1000) + "K");
-			}
+		timer = new Timer(2000, e -> {
+			Runtime runtime = Runtime.getRuntime();
+			maxMem.setText(df.format(runtime.maxMemory() / 1000) + "K");
+			totalMem.setText(df.format(runtime.totalMemory() / 1000) + "K");
+			freeMem.setText(df.format(runtime.freeMemory() / 1000) + "K");
+			usedMem.setText(
+				df.format((runtime.totalMemory() - runtime.freeMemory()) / 1000) + "K");
 		});
 		timer.start();
 	}

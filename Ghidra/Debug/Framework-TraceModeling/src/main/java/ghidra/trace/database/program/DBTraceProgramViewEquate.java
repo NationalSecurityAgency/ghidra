@@ -18,13 +18,12 @@ package ghidra.trace.database.program;
 import java.util.Collection;
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateReference;
 import ghidra.trace.database.symbol.DBTraceEquate;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceEquateReference;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.DuplicateNameException;
@@ -66,7 +65,7 @@ public class DBTraceProgramViewEquate implements Equate {
 
 	@Override
 	public void addReference(Address refAddr, int opndPosition) {
-		equate.addReference(Range.atLeast(program.snap), null, refAddr, opndPosition);
+		equate.addReference(Lifespan.nowOn(program.snap), null, refAddr, opndPosition);
 	}
 
 	@Override

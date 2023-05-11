@@ -16,6 +16,8 @@
 #include "stringmanage.hh"
 #include "architecture.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_TRUNC = AttributeId("trunc",69);
 
 ElementId ELEM_BYTES = ElementId("bytes",83);
@@ -401,3 +403,5 @@ bool StringManagerUnicode::writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 
   }
   return true;
 }
+
+} // End namespace ghidra

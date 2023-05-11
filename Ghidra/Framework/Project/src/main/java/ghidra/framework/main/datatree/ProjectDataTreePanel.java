@@ -423,6 +423,9 @@ public class ProjectDataTreePanel extends JPanel {
 		root = createRootNode(projectName);
 
 		tree = new DataTree(tool, root);
+		if (!isActiveProject) {
+			tree.setName(tree.getName() + ": " + projectName);
+		}
 
 		if (plugin != null) {
 			tree.addGTreeSelectionListener(e -> {

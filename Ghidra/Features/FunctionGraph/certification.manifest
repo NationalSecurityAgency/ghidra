@@ -5,17 +5,8 @@
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+data/functiongraph.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/close16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/menu16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0|||renamed from flag-red.png|END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||renamed from flag-green.png|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||renamed from flag-yellow.png|END|
-src/main/help/help/shared/redo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||renamed oxygen file ktip.png|END|
-src/main/help/help/shared/undo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/help/help/topics/FunctionGraphPlugin/Function_Graph.html||GHIDRA|||contains screenshots of various icons with IP and listing windows|END|
 src/main/help/help/topics/FunctionGraphPlugin/Function_Graph_Layouts.html||GHIDRA||||END|
 src/main/help/help/topics/FunctionGraphPlugin/images/FunctionGraphWindow.png||GHIDRA||||END|
@@ -41,20 +32,7 @@ src/main/help/help/topics/FunctionGraphPlugin/images/FunctionGraph_Vertex_Action
 src/main/help/help/topics/FunctionGraphPlugin/images/FunctionGraph_Vertex_Action_XRefs.png||GHIDRA|||screenshot of silk|END|
 src/main/help/help/topics/FunctionGraphPlugin/images/FunctionGraph_Vertex_Drop_Shadow.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionGraphPlugin/images/FunctionGraph_Vertex_Header.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/FunctionGraphPlugin/images/camera-photo.png||Tango Icons - Public Domain|||tango|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/edit-redo.png||Tango Icons - Public Domain|||tango|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/field.header.png||GHIDRA||reviewed|Custom icon|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/fullscreen_view.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/get-hot-new-stuff.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/house.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/network-wireless.png||Oxygen Icons - LGPL 3.0|||Oxygen|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/page_paste.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/page_white_copy.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/shape_handles.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/shape_square_add.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
-src/main/help/help/topics/FunctionGraphPlugin/images/shape_ungroup.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|
 src/main/resources/images/brick_link.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/edit-redo.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/fgblock.png||GHIDRA||reviewed||END|
 src/main/resources/images/fgin.png||GHIDRA||reviewed||END|
 src/main/resources/images/fginout.png||GHIDRA||reviewed||END|
@@ -65,12 +43,8 @@ src/main/resources/images/fgpaths.png||GHIDRA||reviewed||END|
 src/main/resources/images/fgrevblock.png||GHIDRA||reviewed||END|
 src/main/resources/images/field.header.png||GHIDRA||reviewed|Custom icon|END|
 src/main/resources/images/fullscreen_view.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/function_graph.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/function_graph_curvey.png||GHIDRA||reviewed|author eric|END|
 src/main/resources/images/graph_view.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/house.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/id.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/listing_format.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/paintbrush.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/palette.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/shape_handles.png||FAMFAMFAM Icons - CC 2.5|||famfam|END|

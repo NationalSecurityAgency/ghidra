@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import db.*;
 import ghidra.util.UniversalID;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -51,15 +52,18 @@ abstract class TypedefDBAdapter {
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param monitor the monitor to use for displaying status or for canceling.
 	 * @return the adapter for accessing the table of Typedef data types.
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
+	 * @throws CancelledException if task is cancelled
 	 */
-	static TypedefDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException {
+	static TypedefDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+			TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 		try {
-			return new TypedefDBAdapterV2(handle, openMode == DBConstants.CREATE);
+			return new TypedefDBAdapterV2(handle, tablePrefix, openMode == DBConstants.CREATE);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
@@ -67,7 +71,7 @@ abstract class TypedefDBAdapter {
 			}
 			TypedefDBAdapter adapter = findReadOnlyAdapter(handle);
 			if (openMode == DBConstants.UPGRADE) {
-				adapter = upgrade(handle, adapter);
+				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
 		}
@@ -79,7 +83,7 @@ abstract class TypedefDBAdapter {
 	 * @return the read only Typedef table adapter
 	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
 	 */
-	static TypedefDBAdapter findReadOnlyAdapter(DBHandle handle) throws VersionException {
+	private static TypedefDBAdapter findReadOnlyAdapter(DBHandle handle) throws VersionException {
 		try {
 			return new TypedefDBAdapterV1(handle);
 		}
@@ -93,28 +97,34 @@ abstract class TypedefDBAdapter {
 	 * Upgrades the Typedef data type table from the oldAdapter's version to the current version.
 	 * @param handle handle to the database whose table is to be upgraded to a newer version.
 	 * @param oldAdapter the adapter for the existing table to be upgraded.
+	 * @param tablePrefix prefix to be used with default table name
+	 * @param monitor task monitor
 	 * @return the adapter for the new upgraded version of the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if the database can't be read or written.
+	 * @throws CancelledException if task is cancelled
 	 */
-	static TypedefDBAdapter upgrade(DBHandle handle, TypedefDBAdapter oldAdapter)
-			throws VersionException, IOException {
+	private static TypedefDBAdapter upgrade(DBHandle handle, TypedefDBAdapter oldAdapter,
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
 		long id = tmpHandle.startTransaction();
 		TypedefDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new TypedefDBAdapterV2(tmpHandle, true);
+			tmpAdapter = new TypedefDBAdapterV2(tmpHandle, tablePrefix, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
-			TypedefDBAdapter newAdapter = new TypedefDBAdapterV2(handle, true);
+			TypedefDBAdapter newAdapter = new TypedefDBAdapterV2(handle, tablePrefix, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}

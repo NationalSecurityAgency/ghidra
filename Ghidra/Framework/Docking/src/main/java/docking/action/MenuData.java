@@ -235,14 +235,14 @@ public class MenuData {
 	}
 
 	/**
-	 * Sets the menu item name and the mnemonic, using the first '&' found in the text
-	 * as a marker ("S&ave As").
+	 * Sets the menu item name and the mnemonic, using the first '&amp;' found in the text
+	 * as a marker ("S&amp;ave As").
 	 * <p>
 	 * NOTE: do NOT use this method with strings that contain user-supplied text.  Instead, use
 	 * {@link #setMenuItemNamePlain(String)}, and then manually {@link #setMnemonic(Character) set}
 	 * the mnemonic.
 	 * 
-	 * @param newMenuItemName the new name for this menu item, with an optional '&' to flag one
+	 * @param newMenuItemName the new name for this menu item, with an optional '&amp;' to flag one
 	 * of the characters of the name as the new mnemonic of this item 
 	 */
 	public void setMenuItemName(String newMenuItemName) {
@@ -258,9 +258,9 @@ public class MenuData {
 	}
 
 	/**
-	 * Sets the menu item name, without parsing the name for mnemonics ("&File").
+	 * Sets the menu item name, without parsing the name for mnemonics ("&amp;File").
 	 * <p>
-	 * Use this method instead of {@link #setMenuItemName(String)} when the name may have '&'
+	 * Use this method instead of {@link #setMenuItemName(String)} when the name may have '&amp;'
 	 * characters that need to be preserved, which is typically any user supplied strings.
 	 * 
 	 * @param newMenuItemName the new name for this menu item

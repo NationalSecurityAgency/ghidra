@@ -16,11 +16,9 @@
 package ghidra.trace.database.listing;
 
 import java.util.Iterator;
-
-import com.google.common.collect.Iterators;
+import java.util.stream.StreamSupport;
 
 import ghidra.program.model.address.*;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceBaseCodeUnitsView;
 
@@ -84,9 +82,12 @@ public abstract class AbstractWithUndefinedDBTraceCodeUnitsMemoryView<T extends 
 
 	@Override
 	public Iterable<? extends T> emptyOrFullIterableUndefined(TraceAddressSnapRange tasr) {
-		Iterator<Iterator<? extends T>> itIt =
-			Iterators.transform(DBTraceUtils.iterateSpan(tasr.getLifespan()),
-				snap -> emptyOrFullIterableUndefined(snap, tasr.getRange(), true).iterator());
-		return () -> Iterators.concat(itIt);
+		return () -> StreamSupport.stream(tasr.getLifespan().spliterator(), false)
+				.flatMap(snap -> StreamSupport
+						.stream(emptyOrFullIterableUndefined(snap, tasr.getRange(), true)
+								.spliterator(),
+							false)
+						.map(t -> (T) t))
+				.iterator();
 	}
 }

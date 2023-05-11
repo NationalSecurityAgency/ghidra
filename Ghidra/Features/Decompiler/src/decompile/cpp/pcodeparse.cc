@@ -73,7 +73,8 @@
 /* Pull parsers.  */
 #define YYPULL 1
 
-
+/* Substitute the type names.  */
+#define YYSTYPE         PCODESTYPE
 /* Substitute the variable and function names.  */
 #define yyparse         pcodeparse
 #define yylex           pcodelex
@@ -85,17 +86,18 @@
 #define yychar          pcodechar
 
 /* Copy the first part of user declarations.  */
-#line 16 "pcodeparse.y" /* yacc.c:339  */
+
 
 #include "pcodeparse.hh"
 
-  //#define YYERROR_VERBOSE
-  extern int yylex(void);
-  static PcodeSnippet *pcode;
-  extern int yydebug;
-  extern int yyerror(const char *str );
+//#define YYERROR_VERBOSE
+namespace ghidra {
 
-#line 84 "pcodeparse.cc" /* yacc.c:339  */
+extern int pcodelex(void);
+static PcodeSnippet *pcode;
+extern int pcodeerror(const char *str );
+
+
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -115,17 +117,25 @@
 
 
 /* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
+#ifndef PCODEDEBUG
+# if defined YYDEBUG
 #if YYDEBUG
+#   define PCODEDEBUG 1
+#  else
+#   define PCODEDEBUG 0
+#  endif
+# else /* ! defined YYDEBUG */
+#  define PCODEDEBUG 0
+# endif /* ! defined YYDEBUG */
+#endif  /* ! defined PCODEDEBUG */
+#if PCODEDEBUG
 extern int pcodedebug;
 #endif
 
 /* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
+#ifndef PCODETOKENTYPE
+# define PCODETOKENTYPE
+  enum pcodetokentype
   {
     OP_BOOL_OR = 258,
     OP_BOOL_AND = 259,
@@ -190,11 +200,11 @@ extern int pcodedebug;
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if ! defined PCODESTYPE && ! defined PCODESTYPE_IS_DECLARED
 
-union YYSTYPE
+union PCODESTYPE
 {
-#line 26 "pcodeparse.y" /* yacc.c:355  */
+
 
   uintb *i;
   string *str;
@@ -215,16 +225,16 @@ union YYSTYPE
   VarnodeSymbol *varsym;
   SpecificSymbol *specsym;
 
-#line 204 "pcodeparse.cc" /* yacc.c:355  */
+
 };
 
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+typedef union PCODESTYPE PCODESTYPE;
+# define PCODESTYPE_IS_TRIVIAL 1
+# define PCODESTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE pcodelval;
+extern PCODESTYPE pcodelval;
 
 int pcodeparse (void);
 
@@ -232,7 +242,7 @@ int pcodeparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 221 "pcodeparse.cc" /* yacc.c:358  */
+
 
 #ifdef short
 # undef short
@@ -413,7 +423,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined PCODESTYPE_IS_TRIVIAL && PCODESTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
@@ -531,27 +541,27 @@ static const yytype_uint8 yytranslate[] =
       68,    69,    70,    71,    72,    73,    74
 };
 
-#if YYDEBUG
+#if PCODEDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   102,   102,   104,   105,   106,   107,   109,   110,   111,
-     112,   113,   114,   115,   116,   117,   118,   119,   120,   121,
-     122,   123,   124,   125,   126,   127,   129,   130,   131,   132,
-     133,   134,   135,   136,   137,   138,   139,   140,   141,   142,
-     143,   144,   145,   146,   147,   148,   149,   150,   151,   152,
-     153,   154,   155,   156,   157,   158,   159,   160,   161,   162,
-     163,   164,   165,   166,   167,   168,   169,   170,   171,   172,
-     173,   174,   175,   176,   177,   178,   179,   180,   181,   182,
-     183,   184,   185,   186,   187,   188,   189,   190,   191,   193,
-     194,   195,   196,   198,   199,   200,   201,   202,   203,   204,
-     205,   207,   208,   209,   211,   212,   213,   214,   215,   217,
-     218,   220,   221,   223,   224,   225,   226,   227,   229,   230,
-     231
+       0,   104,   104,   106,   107,   108,   109,   111,   112,   113,
+     114,   115,   116,   117,   118,   119,   120,   121,   122,   123,
+     124,   125,   126,   127,   128,   129,   131,   132,   133,   134,
+     135,   136,   137,   138,   139,   140,   141,   142,   143,   144,
+     145,   146,   147,   148,   149,   150,   151,   152,   153,   154,
+     155,   156,   157,   158,   159,   160,   161,   162,   163,   164,
+     165,   166,   167,   168,   169,   170,   171,   172,   173,   174,
+     175,   176,   177,   178,   179,   180,   181,   182,   183,   184,
+     185,   186,   187,   188,   189,   190,   191,   192,   193,   195,
+     196,   197,   198,   200,   201,   202,   203,   204,   205,   206,
+     207,   209,   210,   211,   213,   214,   215,   216,   217,   219,
+     220,   222,   223,   225,   226,   227,   228,   229,   231,   232,
+     233
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+#if PCODEDEBUG || YYERROR_VERBOSE || 0
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
@@ -1203,7 +1213,7 @@ while (0)
 
 
 /* Enable debugging if requested.  */
-#if YYDEBUG
+#if PCODEDEBUG
 
 # ifndef YYFPRINTF
 #  include <stdio.h> /* INFRINGES ON USER NAME SPACE */
@@ -1324,12 +1334,12 @@ do {                                    \
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
 int yydebug;
-#else /* !YYDEBUG */
+#else /* !PCODEDEBUG */
 # define YYDPRINTF(Args)
 # define YY_SYMBOL_PRINT(Title, Type, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
-#endif /* !YYDEBUG */
+#endif /* !PCODEDEBUG */
 
 
 /* YYINITDEPTH -- initial size of the parser's stacks.  */
@@ -1587,69 +1597,69 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
   switch (yytype)
     {
           case 65: /* INTEGER  */
-#line 92 "pcodeparse.y" /* yacc.c:1257  */
+
       { delete ((*yyvaluep).i); }
-#line 1578 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 66: /* STRING  */
-#line 93 "pcodeparse.y" /* yacc.c:1257  */
+
       { delete ((*yyvaluep).str); }
-#line 1584 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 84: /* rtlmid  */
-#line 95 "pcodeparse.y" /* yacc.c:1257  */
+
       { delete ((*yyvaluep).sem); }
-#line 1590 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 85: /* statement  */
-#line 96 "pcodeparse.y" /* yacc.c:1257  */
+
       { if (((*yyvaluep).stmt) != (vector<OpTpl *> *)0) { for(int4 i=0;i<((*yyvaluep).stmt)->size();++i) delete (*((*yyvaluep).stmt))[i]; delete ((*yyvaluep).stmt);} }
-#line 1596 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 86: /* expr  */
-#line 97 "pcodeparse.y" /* yacc.c:1257  */
+
       { delete ((*yyvaluep).tree); }
-#line 1602 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 87: /* sizedstar  */
-#line 99 "pcodeparse.y" /* yacc.c:1257  */
+
       { delete ((*yyvaluep).starqual); }
-#line 1608 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 88: /* jumpdest  */
-#line 98 "pcodeparse.y" /* yacc.c:1257  */
+
       { if (((*yyvaluep).varnode) != (VarnodeTpl *)0) delete ((*yyvaluep).varnode); }
-#line 1614 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 89: /* varnode  */
-#line 98 "pcodeparse.y" /* yacc.c:1257  */
+
       { if (((*yyvaluep).varnode) != (VarnodeTpl *)0) delete ((*yyvaluep).varnode); }
-#line 1620 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 90: /* integervarnode  */
-#line 98 "pcodeparse.y" /* yacc.c:1257  */
+
       { if (((*yyvaluep).varnode) != (VarnodeTpl *)0) delete ((*yyvaluep).varnode); }
-#line 1626 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 91: /* lhsvarnode  */
-#line 98 "pcodeparse.y" /* yacc.c:1257  */
+
       { if (((*yyvaluep).varnode) != (VarnodeTpl *)0) delete ((*yyvaluep).varnode); }
-#line 1632 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
     case 94: /* paramlist  */
-#line 94 "pcodeparse.y" /* yacc.c:1257  */
+
       { for(int4 i=0;i<((*yyvaluep).param)->size();++i) delete (*((*yyvaluep).param))[i]; delete ((*yyvaluep).param); }
-#line 1638 "pcodeparse.cc" /* yacc.c:1257  */
+
         break;
 
 
@@ -1911,721 +1921,721 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 102 "pcodeparse.y" /* yacc.c:1646  */
+
     { pcode->setResult((yyvsp[-1].sem)); }
-#line 1902 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 3:
-#line 104 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.sem) = new ConstructTpl(); }
-#line 1908 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 4:
-#line 105 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.sem) = (yyvsp[-1].sem); if (!(yyval.sem)->addOpList(*(yyvsp[0].stmt))) { delete (yyvsp[0].stmt); yyerror("Multiple delayslot declarations"); YYERROR; } delete (yyvsp[0].stmt); }
-#line 1914 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 5:
-#line 106 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.sem) = (yyvsp[-3].sem); pcode->newLocalDefinition((yyvsp[-1].str)); }
-#line 1920 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 6:
-#line 107 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.sem) = (yyvsp[-5].sem); pcode->newLocalDefinition((yyvsp[-3].str),*(yyvsp[-1].i)); delete (yyvsp[-1].i); }
-#line 1926 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 7:
-#line 109 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyvsp[-1].tree)->setOutput((yyvsp[-3].varnode)); (yyval.stmt) = ExprTree::toVector((yyvsp[-1].tree)); }
-#line 1932 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 8:
-#line 110 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->newOutput(true,(yyvsp[-1].tree),(yyvsp[-3].str)); }
-#line 1938 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 9:
-#line 111 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->newOutput(false,(yyvsp[-1].tree),(yyvsp[-3].str)); }
-#line 1944 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 10:
-#line 112 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->newOutput(true,(yyvsp[-1].tree),(yyvsp[-5].str),*(yyvsp[-3].i)); delete (yyvsp[-3].i); }
-#line 1950 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 11:
-#line 113 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->newOutput(true,(yyvsp[-1].tree),(yyvsp[-5].str),*(yyvsp[-3].i)); delete (yyvsp[-3].i); }
-#line 1956 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 12:
-#line 114 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = (vector<OpTpl *> *)0; string errmsg = "Redefinition of symbol: "+(yyvsp[-1].specsym)->getName(); yyerror(errmsg.c_str()); YYERROR; }
-#line 1962 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 13:
-#line 115 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->createStore((yyvsp[-4].starqual),(yyvsp[-3].tree),(yyvsp[-1].tree)); }
-#line 1968 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 14:
-#line 116 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->createUserOpNoOut((yyvsp[-4].useropsym),(yyvsp[-2].param)); }
-#line 1974 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 15:
-#line 117 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->assignBitRange((yyvsp[-8].varnode),(uint4)*(yyvsp[-6].i),(uint4)*(yyvsp[-4].i),(yyvsp[-1].tree)); delete (yyvsp[-6].i), delete (yyvsp[-4].i); }
-#line 1980 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 16:
-#line 118 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = (vector<OpTpl *> *)0; delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); yyerror("Illegal truncation on left-hand side of assignment"); YYERROR; }
-#line 1986 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 17:
-#line 119 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = (vector<OpTpl *> *)0; delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); yyerror("Illegal subpiece on left-hand side of assignment"); YYERROR; }
-#line 1992 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 18:
-#line 120 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->createOpNoOut(CPUI_BRANCH,new ExprTree((yyvsp[-1].varnode))); }
-#line 1998 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 19:
-#line 121 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->createOpNoOut(CPUI_CBRANCH,new ExprTree((yyvsp[-1].varnode)),(yyvsp[-3].tree)); }
-#line 2004 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 20:
-#line 122 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->createOpNoOut(CPUI_BRANCHIND,(yyvsp[-2].tree)); }
-#line 2010 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 21:
-#line 123 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->createOpNoOut(CPUI_CALL,new ExprTree((yyvsp[-1].varnode))); }
-#line 2016 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 22:
-#line 124 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->createOpNoOut(CPUI_CALLIND,(yyvsp[-2].tree)); }
-#line 2022 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 23:
-#line 125 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = (vector<OpTpl *> *)0; yyerror("Must specify an indirect parameter for return"); YYERROR; }
-#line 2028 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 24:
-#line 126 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->createOpNoOut(CPUI_RETURN,(yyvsp[-2].tree)); }
-#line 2034 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 25:
-#line 127 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.stmt) = pcode->placeLabel( (yyvsp[0].labelsym) ); }
-#line 2040 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 26:
-#line 129 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = new ExprTree((yyvsp[0].varnode)); }
-#line 2046 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 27:
-#line 130 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createLoad((yyvsp[-1].starqual),(yyvsp[0].tree)); }
-#line 2052 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 28:
-#line 131 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = (yyvsp[-1].tree); }
-#line 2058 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 29:
-#line 132 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_ADD,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2064 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 30:
-#line 133 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SUB,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2070 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 31:
-#line 134 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_EQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2076 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 32:
-#line 135 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_NOTEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2082 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 33:
-#line 136 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_LESS,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2088 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 34:
-#line 137 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_LESSEQUAL,(yyvsp[0].tree),(yyvsp[-2].tree)); }
-#line 2094 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 35:
-#line 138 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_LESSEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2100 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 36:
-#line 139 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_LESS,(yyvsp[0].tree),(yyvsp[-2].tree)); }
-#line 2106 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 37:
-#line 140 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SLESS,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2112 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 38:
-#line 141 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SLESSEQUAL,(yyvsp[0].tree),(yyvsp[-2].tree)); }
-#line 2118 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 39:
-#line 142 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SLESSEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2124 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 40:
-#line 143 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SLESS,(yyvsp[0].tree),(yyvsp[-2].tree)); }
-#line 2130 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 41:
-#line 144 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_2COMP,(yyvsp[0].tree)); }
-#line 2136 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 42:
-#line 145 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_NEGATE,(yyvsp[0].tree)); }
-#line 2142 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 43:
-#line 146 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_XOR,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2148 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 44:
-#line 147 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_AND,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2154 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 45:
-#line 148 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_OR,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2160 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 46:
-#line 149 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_LEFT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2166 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 47:
-#line 150 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_RIGHT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2172 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 48:
-#line 151 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SRIGHT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2178 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 49:
-#line 152 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_MULT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2184 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 50:
-#line 153 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_DIV,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2190 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 51:
-#line 154 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SDIV,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2196 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 52:
-#line 155 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_REM,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2202 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 53:
-#line 156 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SREM,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2208 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 54:
-#line 157 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_BOOL_NEGATE,(yyvsp[0].tree)); }
-#line 2214 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 55:
-#line 158 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_BOOL_XOR,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2220 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 56:
-#line 159 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_BOOL_AND,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2226 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 57:
-#line 160 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_BOOL_OR,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2232 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 58:
-#line 161 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_EQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2238 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 59:
-#line 162 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_NOTEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2244 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 60:
-#line 163 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_LESS,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2250 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 61:
-#line 164 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_LESS,(yyvsp[0].tree),(yyvsp[-2].tree)); }
-#line 2256 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 62:
-#line 165 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_LESSEQUAL,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2262 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 63:
-#line 166 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_LESSEQUAL,(yyvsp[0].tree),(yyvsp[-2].tree)); }
-#line 2268 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 64:
-#line 167 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_ADD,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2274 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 65:
-#line 168 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_SUB,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2280 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 66:
-#line 169 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_MULT,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2286 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 67:
-#line 170 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_DIV,(yyvsp[-2].tree),(yyvsp[0].tree)); }
-#line 2292 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 68:
-#line 171 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_NEG,(yyvsp[0].tree)); }
-#line 2298 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 69:
-#line 172 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_ABS,(yyvsp[-1].tree)); }
-#line 2304 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 70:
-#line 173 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_SQRT,(yyvsp[-1].tree)); }
-#line 2310 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 71:
-#line 174 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SEXT,(yyvsp[-1].tree)); }
-#line 2316 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 72:
-#line 175 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_ZEXT,(yyvsp[-1].tree)); }
-#line 2322 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 73:
-#line 176 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_CARRY,(yyvsp[-3].tree),(yyvsp[-1].tree)); }
-#line 2328 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 74:
-#line 177 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SCARRY,(yyvsp[-3].tree),(yyvsp[-1].tree)); }
-#line 2334 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 75:
-#line 178 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_INT_SBORROW,(yyvsp[-3].tree),(yyvsp[-1].tree)); }
-#line 2340 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 76:
-#line 179 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_FLOAT2FLOAT,(yyvsp[-1].tree)); }
-#line 2346 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 77:
-#line 180 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_INT2FLOAT,(yyvsp[-1].tree)); }
-#line 2352 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 78:
-#line 181 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_NAN,(yyvsp[-1].tree)); }
-#line 2358 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 79:
-#line 182 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_TRUNC,(yyvsp[-1].tree)); }
-#line 2364 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 80:
-#line 183 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_CEIL,(yyvsp[-1].tree)); }
-#line 2370 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 81:
-#line 184 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_FLOOR,(yyvsp[-1].tree)); }
-#line 2376 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 82:
-#line 185 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_FLOAT_ROUND,(yyvsp[-1].tree)); }
-#line 2382 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 83:
-#line 186 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_NEW,(yyvsp[-1].tree)); }
-#line 2388 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 84:
-#line 187 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_NEW,(yyvsp[-3].tree),(yyvsp[-1].tree)); }
-#line 2394 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 85:
-#line 188 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createOp(CPUI_SUBPIECE,new ExprTree((yyvsp[-3].specsym)->getVarnode()),new ExprTree((yyvsp[-1].varnode))); }
-#line 2400 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 86:
-#line 189 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createBitRange((yyvsp[-2].specsym),0,(uint4)(*(yyvsp[0].i) * 8)); delete (yyvsp[0].i); }
-#line 2406 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 87:
-#line 190 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createBitRange((yyvsp[-5].specsym),(uint4)*(yyvsp[-3].i),(uint4)*(yyvsp[-1].i)); delete (yyvsp[-3].i), delete (yyvsp[-1].i); }
-#line 2412 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 88:
-#line 191 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.tree) = pcode->createUserOp((yyvsp[-3].useropsym),(yyvsp[-1].param)); }
-#line 2418 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 89:
-#line 193 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.starqual) = new StarQuality; (yyval.starqual)->size = *(yyvsp[0].i); delete (yyvsp[0].i); (yyval.starqual)->id=ConstTpl((yyvsp[-3].spacesym)->getSpace()); }
-#line 2424 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 90:
-#line 194 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.starqual) = new StarQuality; (yyval.starqual)->size = 0; (yyval.starqual)->id=ConstTpl((yyvsp[-1].spacesym)->getSpace()); }
-#line 2430 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 91:
-#line 195 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.starqual) = new StarQuality; (yyval.starqual)->size = *(yyvsp[0].i); delete (yyvsp[0].i); (yyval.starqual)->id=ConstTpl(pcode->getDefaultSpace()); }
-#line 2436 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 92:
-#line 196 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.starqual) = new StarQuality; (yyval.starqual)->size = 0; (yyval.starqual)->id=ConstTpl(pcode->getDefaultSpace()); }
-#line 2442 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 93:
-#line 198 "pcodeparse.y" /* yacc.c:1646  */
+
     { VarnodeTpl *sym = (yyvsp[0].startsym)->getVarnode(); (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
-#line 2448 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 94:
-#line 199 "pcodeparse.y" /* yacc.c:1646  */
+
     { VarnodeTpl *sym = (yyvsp[0].endsym)->getVarnode(); (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
-#line 2454 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 95:
-#line 200 "pcodeparse.y" /* yacc.c:1646  */
+
     { VarnodeTpl *sym = (yyvsp[0].next2sym)->getVarnode(); (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
-#line 2460 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 96:
-#line 201 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,*(yyvsp[0].i)),ConstTpl(ConstTpl::j_curspace_size)); delete (yyvsp[0].i); }
-#line 2466 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 97:
-#line 202 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::j_curspace_size)); yyerror("Parsed integer is too big (overflow)"); }
-#line 2472 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 98:
-#line 203 "pcodeparse.y" /* yacc.c:1646  */
+
     { AddrSpace *spc = (yyvsp[-1].spacesym)->getSpace(); (yyval.varnode) = new VarnodeTpl(ConstTpl(spc),ConstTpl(ConstTpl::real,*(yyvsp[-3].i)),ConstTpl(ConstTpl::real,spc->getAddrSize())); delete (yyvsp[-3].i); }
-#line 2478 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 99:
-#line 204 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = new VarnodeTpl(ConstTpl(pcode->getConstantSpace()),ConstTpl(ConstTpl::j_relative,(yyvsp[0].labelsym)->getIndex()),ConstTpl(ConstTpl::real,sizeof(uintm))); (yyvsp[0].labelsym)->incrementRefCount(); }
-#line 2484 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 100:
-#line 205 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Unknown jump destination: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
-#line 2490 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 101:
-#line 207 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = (yyvsp[0].specsym)->getVarnode(); }
-#line 2496 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 102:
-#line 208 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = (yyvsp[0].varnode); }
-#line 2502 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 103:
-#line 209 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Unknown varnode parameter: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
-#line 2508 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 104:
-#line 211 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = new VarnodeTpl(ConstTpl(pcode->getConstantSpace()),ConstTpl(ConstTpl::real,*(yyvsp[0].i)),ConstTpl(ConstTpl::real,0)); delete (yyvsp[0].i); }
-#line 2514 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 105:
-#line 212 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = new VarnodeTpl(ConstTpl(pcode->getConstantSpace()),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::real,0)); yyerror("Parsed integer is too big (overflow)"); }
-#line 2520 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 106:
-#line 213 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = new VarnodeTpl(ConstTpl(pcode->getConstantSpace()),ConstTpl(ConstTpl::real,*(yyvsp[-2].i)),ConstTpl(ConstTpl::real,*(yyvsp[0].i))); delete (yyvsp[-2].i); delete (yyvsp[0].i); }
-#line 2526 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 107:
-#line 214 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = pcode->addressOf((yyvsp[0].varnode),0); }
-#line 2532 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 108:
-#line 215 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = pcode->addressOf((yyvsp[0].varnode),*(yyvsp[-1].i)); delete (yyvsp[-1].i); }
-#line 2538 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 109:
-#line 217 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = (yyvsp[0].specsym)->getVarnode(); }
-#line 2544 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 110:
-#line 218 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.varnode) = (VarnodeTpl *)0; string errmsg = "Unknown assignment varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
-#line 2550 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 111:
-#line 220 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.labelsym) = (yyvsp[-1].labelsym); }
-#line 2556 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 112:
-#line 221 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.labelsym) = pcode->defineLabel( (yyvsp[-1].str) ); }
-#line 2562 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 113:
-#line 223 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.specsym) = (yyvsp[0].varsym); }
-#line 2568 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 114:
-#line 224 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.specsym) = (yyvsp[0].operandsym); }
-#line 2574 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 115:
-#line 225 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.specsym) = (yyvsp[0].startsym); }
-#line 2580 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 116:
-#line 226 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.specsym) = (yyvsp[0].endsym); }
-#line 2586 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 117:
-#line 227 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.specsym) = (yyvsp[0].next2sym); }
-#line 2592 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 118:
-#line 229 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.param) = new vector<ExprTree *>; }
-#line 2598 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 119:
-#line 230 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.param) = new vector<ExprTree *>; (yyval.param)->push_back((yyvsp[0].tree)); }
-#line 2604 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
   case 120:
-#line 231 "pcodeparse.y" /* yacc.c:1646  */
+
     { (yyval.param) = (yyvsp[-2].param); (yyval.param)->push_back((yyvsp[0].tree)); }
-#line 2610 "pcodeparse.cc" /* yacc.c:1646  */
+
     break;
 
 
-#line 2614 "pcodeparse.cc" /* yacc.c:1646  */
+
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2853,7 +2863,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 233 "pcodeparse.y" /* yacc.c:1906  */
+
 
 
 #define IDENTREC_SIZE 46
@@ -3424,13 +3434,15 @@ void PcodeSnippet::addOperand(const string &name,int4 index)
   addSymbol(sym);
 }
 
-int yylex(void) {
+int pcodelex(void) {
   return pcode->lex();
 }
 
-int yyerror(const char *s)
+int pcodeerror(const char *s)
 
 {
   pcode->reportError((const Location *)0,s);
   return 0;
 }
+
+} // End namespace ghidra

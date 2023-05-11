@@ -43,11 +43,7 @@ public class UndoActionDialog extends DialogComponentProvider {
 	private JCheckBox saveCopyCB;
 	private int actionID;
 
-	/**
-	 * Constructor
-	 * @param fileList list of DomainFile objects to show in the list
-	 */
-	public UndoActionDialog(String title, ImageIcon icon, String helpTag, String actionString,
+	public UndoActionDialog(String title, Icon icon, String helpTag, String actionString,
 			List<DomainFile> fileList) {
 		super(title, true);
 		setHelpLocation(new HelpLocation(GenericHelpTopics.REPOSITORY, helpTag));
@@ -58,28 +54,18 @@ public class UndoActionDialog extends DialogComponentProvider {
 		addCancelButton();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#cancelCallback()
-	 */
 	@Override
 	protected void cancelCallback() {
 		actionID = CANCEL;
 		close();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
 	protected void okCallback() {
 		actionID = OK;
 		close();
 	}
 
-	/**
-	 * Show the dialog; return an ID for the action that the user chose.
-	 * @return OK, or CANCEL
-	 */
 	public int showDialog(PluginTool tool) {
 		tool.showDialog(this);
 		return actionID;
@@ -93,7 +79,7 @@ public class UndoActionDialog extends DialogComponentProvider {
 		return saveCopyCB.isSelected();
 	}
 
-	private JPanel buildMainPanel(String actionString, ImageIcon icon) {
+	private JPanel buildMainPanel(String actionString, Icon icon) {
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.Y_AXIS));
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));

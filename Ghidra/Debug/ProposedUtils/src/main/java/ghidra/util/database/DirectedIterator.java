@@ -17,10 +17,8 @@ package ghidra.util.database;
 
 import java.io.IOException;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
-
 import db.Table;
+import generic.End.Point;
 
 /**
  * An iterator over some component of a {@link Table}
@@ -61,72 +59,6 @@ public interface DirectedIterator<T> {
 		static Direction reverse(Direction direction) {
 			return direction.reverse();
 		}
-	}
-
-	/**
-	 * Get the discrete lower bound of the given range
-	 * 
-	 * @param range the range
-	 * @return the lower bound
-	 */
-	static long toIteratorMin(Range<Long> range) {
-		if (range == null) {
-			return Long.MIN_VALUE;
-		}
-		else if (!range.hasLowerBound()) {
-			return Long.MIN_VALUE;
-		}
-		else if (range.lowerBoundType() == BoundType.CLOSED) {
-			return range.lowerEndpoint();
-		}
-		else {
-			return range.lowerEndpoint() + 1;
-		}
-	}
-
-	/**
-	 * Get the discrete upper bound of the given range
-	 * 
-	 * @param range the range
-	 * @return the upper bound
-	 */
-	static long toIteratorMax(Range<Long> range) {
-		if (range == null) {
-			return Long.MAX_VALUE;
-		}
-		else if (!range.hasUpperBound()) {
-			return Long.MAX_VALUE;
-		}
-		else if (range.upperBoundType() == BoundType.CLOSED) {
-			return range.upperEndpoint();
-		}
-		else {
-			return range.upperEndpoint() - 1;
-		}
-	}
-
-	/**
-	 * Compute the effective starting point for a forward iterator starting at the given bound
-	 * 
-	 * @param range the range describing a limited view of keys
-	 * @param bound the starting key
-	 * @param inclusive whether the starting key is included
-	 * @return the starting point, inclusive
-	 */
-	static long clampLowerBound(Range<Long> range, long bound, boolean inclusive) {
-		return Math.max(toIteratorMin(range), inclusive ? bound : bound + 1);
-	}
-
-	/**
-	 * Compute the effective starting point for a backward iterator starting at the given bound
-	 * 
-	 * @param range the range describing a limited view of keys
-	 * @param bound the starting key
-	 * @param inclusive whether the starting key is included
-	 * @return the starting point, inclusive
-	 */
-	static long clampUpperBound(Range<Long> range, long bound, boolean inclusive) {
-		return Math.min(toIteratorMax(range), inclusive ? bound : bound - 1);
 	}
 
 	/**

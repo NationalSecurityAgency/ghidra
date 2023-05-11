@@ -18,21 +18,21 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
+import generic.theme.GIcon;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Action to duplicate the selected row
  */
 public class DuplicateAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon ICON = ResourceManager.loadImage("images/DuplicateData.png");
+	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.duplicate");
 	public final static String ACTION_NAME = "Duplicate Component";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Duplicate the selected component";

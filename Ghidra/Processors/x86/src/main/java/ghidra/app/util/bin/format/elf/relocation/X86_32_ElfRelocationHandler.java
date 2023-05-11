@@ -20,6 +20,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.exception.NotFoundException;
 
 public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
@@ -35,12 +37,13 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
+	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
 		if (elf.e_machine() != ElfConstants.EM_386) {
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		Program program = elfRelocationContext.getProgram();
@@ -48,7 +51,7 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int type = relocation.getType();
 		if (type == X86_32_ElfRelocationConstants.R_386_NONE) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 
 		int symbolIndex = relocation.getSymbolIndex();
@@ -64,13 +67,14 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 
 		long offset = (int) relocationAddress.getOffset();
 
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 		int value;
 
 		switch (type) {
 			case X86_32_ElfRelocationConstants.R_386_32:
 				value = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, value);
-				if (addend != 0) {
+				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
 					warnExternalOffsetRelocation(program, relocationAddress,
 						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
 					applyComponentOffsetPointer(program, relocationAddress, addend);
@@ -95,9 +99,15 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setInt(relocationAddress, value);
 				break;
 			case X86_32_ElfRelocationConstants.R_386_GOTOFF:
-				long dotgot = elfRelocationContext.getGOTValue();
-				value = (int) symbolValue + (int) addend - (int) dotgot;
-				memory.setInt(relocationAddress, value);
+				try {
+					long dotgot = elfRelocationContext.getGOTValue();
+					value = (int) symbolValue + (int) addend - (int) dotgot;
+					memory.setInt(relocationAddress, value);
+				}
+				catch (NotFoundException e) {
+					markAsError(program, relocationAddress, "R_386_GOTOFF", symbolName,
+						e.getMessage(), elfRelocationContext.getLog());
+				}
 				break;
 			case X86_32_ElfRelocationConstants.R_386_COPY:
 				markAsWarning(program, relocationAddress, "R_386_COPY", symbolName, symbolIndex,
@@ -106,24 +116,24 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 			// Thread Local Symbol relocations (unimplemented concept)
 			case X86_32_ElfRelocationConstants.R_386_TLS_DTPMOD32:
 				markAsWarning(program, relocationAddress, "R_386_TLS_DTPMOD32", symbolName,
-					symbolIndex, "Thread Local Symbol relocation not support",
+					symbolIndex, "Thread Local Symbol relocation not supported",
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 			case X86_32_ElfRelocationConstants.R_386_TLS_DTPOFF32:
 				markAsWarning(program, relocationAddress, "R_386_TLS_DTPOFF32", symbolName,
-					symbolIndex, "Thread Local Symbol relocation not support",
+					symbolIndex, "Thread Local Symbol relocation not supported",
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 			case X86_32_ElfRelocationConstants.R_386_TLS_TPOFF32:
 				markAsWarning(program, relocationAddress, "R_386_TLS_TPOFF32", symbolName,
-					symbolIndex, "Thread Local Symbol relocation not support",
+					symbolIndex, "Thread Local Symbol relocation not supported",
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 			case X86_32_ElfRelocationConstants.R_386_TLS_TPOFF:
 				markAsWarning(program, relocationAddress, "R_386_TLS_TPOFF", symbolName,
-					symbolIndex, "Thread Local Symbol relocation not support",
+					symbolIndex, "Thread Local Symbol relocation not supported",
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 
 			// cases which do not use symbol value
 
@@ -145,13 +155,19 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 				// compute the relocation value (i.e., indirect)
 				markAsError(program, relocationAddress, "R_386_IRELATIVE", symbolName,
 					"indirect computed relocation not supported", elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 
 			case X86_32_ElfRelocationConstants.R_386_GOTPC:
 				// similar to R_386_PC32 but uses .got address instead of symbol address
-				dotgot = elfRelocationContext.getGOTValue();
-				value = (int) (dotgot + addend - offset);
-				memory.setInt(relocationAddress, value);
+				try {
+					long dotgot = elfRelocationContext.getGOTValue();
+					value = (int) (dotgot + addend - offset);
+					memory.setInt(relocationAddress, value);
+				}
+				catch (NotFoundException e) {
+					markAsError(program, relocationAddress, "R_386_GOTPC", symbolName,
+						e.getMessage(), elfRelocationContext.getLog());
+				}
 				break;
 
 			// TODO: Cases not yet examined
@@ -178,8 +194,8 @@ public class X86_32_ElfRelocationHandler extends ElfRelocationHandler {
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 		}
-
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 }

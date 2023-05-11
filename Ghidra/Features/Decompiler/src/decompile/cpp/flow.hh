@@ -16,10 +16,12 @@
 /// \file flow.hh
 /// \brief Utilities for following control-flow in p-code generated from machine instructions
 
-#ifndef __CPUI_FLOW__
-#define __CPUI_FLOW__
+#ifndef __FLOW_HH__
+#define __FLOW_HH__
 
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief A class for generating the control-flow structure for a single function
 ///
@@ -133,6 +135,7 @@ private:
   bool injectSubFunction(FuncCallSpecs *fc);		///< Perform \e injection replacing the CALL at the given call site
   void checkContainedCall(void);
   void checkMultistageJumptables(void);
+  void recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *> &notreached);
   void deleteCallSpec(FuncCallSpecs *fc);		///< Remove the given call site from the list for \b this function
   void truncateIndirectJump(PcodeOp *op,int4 failuremode);  	///< Treat indirect jump as indirect call that never returns
   static bool isInArray(vector<PcodeOp *> &array,PcodeOp *op);
@@ -164,4 +167,5 @@ public:
   bool doesJumpRecord(void) const { return ((flags & record_jumploads)!=0); }	///< Should jump table structure be recorded
 };
 
+} // End namespace ghidra
 #endif

@@ -32,6 +32,7 @@ import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.symbol.*;
 import ghidra.util.DataConverter;
 import ghidra.util.LittleEndianDataConverter;
@@ -126,11 +127,13 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	/**
 	 * Stores a relocation's fixup information
 	 * 
+	 * @param relocation The original relocation info
 	 * @param address The {@link SegmentedAddress} of the relocation
 	 * @param fileOffset The file offset of the relocation
 	 * @param segment The fixed-up segment after the relocation is applied
 	 */
-	private record RelocationFixup(SegmentedAddress address, int fileOffset, int segment) {}
+	private record RelocationFixup(MzRelocation relocation, SegmentedAddress address,
+			int fileOffset, int segment) {}
 
 	private void markupHeaders(Program program, FileBytes fileBytes, MzExecutable mz,
 			MessageLog log, TaskMonitor monitor) {
@@ -145,7 +148,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			Address addr = headerBlock.getStart();
 
 			// Header
-			DataUtilities.createData(program, addr, mz.getHeader().toDataType(), -1, false,
+			DataUtilities.createData(program, addr, mz.getHeader().toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 
 			// Relocation Table
@@ -155,8 +158,8 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				int len = relocationType.getLength();
 				addr = addr.add(header.e_lfarlc());
 				for (int i = 0; i < relocations.size(); i++) {
-					monitor.checkCanceled();
-					DataUtilities.createData(program, addr.add(i * len), relocationType, -1, false,
+					monitor.checkCancelled();
+					DataUtilities.createData(program, addr.add(i * len), relocationType, -1,
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 			}
@@ -263,7 +266,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		MemoryBlock[] blocks = memory.getBlocks();
 
 		for (int i = 1; i < blocks.length; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			MemoryBlock block = blocks[i];
 			if (!block.isInitialized()) {
 				continue;
@@ -276,7 +279,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				mIndex = (int) block.getSize() - 2;
 			}
 			for (; mIndex >= 0; mIndex--) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				Address offAddr = block.getStart().add(mIndex);
 				int val = block.getByte(offAddr);
 				val &= 0xff;
@@ -302,20 +305,22 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 		for (RelocationFixup relocationFixup : relocationFixups) {
 			SegmentedAddress relocationAddress = relocationFixup.address();
+			Status status = Status.FAILURE;
 			try {
-				byte[] origBytes = new byte[2];
-				memory.getBytes(relocationAddress, origBytes);
 				memory.setShort(relocationAddress, (short) relocationFixup.segment());
-
-				// Add to relocation table
-				program.getRelocationTable()
-						.add(relocationAddress, 0, new long[] { relocationAddress.getSegment(),
-							relocationAddress.getSegmentOffset() }, origBytes, null);
+				status = Status.APPLIED;
 			}
-			catch (AddressOutOfBoundsException | MemoryAccessException e) {
+			catch (MemoryAccessException e) {
 				log.appendMsg(String.format("Failed to apply relocation: %s (%s)",
 					relocationAddress, e.getMessage()));
 			}
+
+			// Add to relocation table
+			program.getRelocationTable()
+					.add(relocationAddress, status, 0,
+						new long[] { relocationFixup.relocation.getSegment(),
+							relocationFixup.relocation.getOffset(), relocationFixup.segment },
+						2, null);
 		}
 	}
 
@@ -327,7 +332,8 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 		int ipValue = Short.toUnsignedInt(header.e_ip());
 
-		Address addr = space.getAddress(INITIAL_SEGMENT_VAL, ipValue);
+		Address addr =
+			space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, ipValue);
 		SymbolTable symbolTable = program.getSymbolTable();
 
 		try {
@@ -429,21 +435,20 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		BinaryReader reader = mz.getBinaryReader();
 
 		for (MzRelocation relocation : mz.getRelocations()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			int seg = relocation.getSegment();
 			int off = relocation.getOffset();
 
-			int relativeSegment = (seg - Short.toUnsignedInt(header.e_cs())) & 0xffff;
-			int relocationFileOffset = addressToFileOffset(relativeSegment, off, header);
+			int relocationFileOffset = addressToFileOffset(seg, off, header);
 			SegmentedAddress relocationAddress =
-				space.getAddress((relativeSegment + INITIAL_SEGMENT_VAL) & 0xffff, off);
+				space.getAddress((INITIAL_SEGMENT_VAL + seg) & 0xffff, off);
 
 			try {
 				int value = Short.toUnsignedInt(reader.readShort(relocationFileOffset));
-				int relocatedSegment = (value + INITIAL_SEGMENT_VAL) & 0xffff;
-				fixups.add(
-					new RelocationFixup(relocationAddress, relocationFileOffset, relocatedSegment));
+				int relocatedSegment = (INITIAL_SEGMENT_VAL + value) & 0xffff;
+				fixups.add(new RelocationFixup(relocation, relocationAddress, relocationFileOffset,
+					relocatedSegment));
 			}
 			catch (AddressOutOfBoundsException | IOException e) {
 				log.appendMsg(String.format("Failed to process relocation: %s (%s)",
@@ -463,7 +468,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	 * @return The segmented addresses converted to a file offset
 	 */
 	private int addressToFileOffset(int segment, int offset, OldDOSHeader header) {
-		return (segment << 4) + offset + paragraphsToBytes(header.e_cparhdr());
+		return (short) segment * 16 + offset + paragraphsToBytes(header.e_cparhdr());
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -276,10 +276,10 @@ public class AutoVersionTrackingTask extends Task {
 		int numDataMatches = 0;
 		List<VTMatchSet> matchSets = session.getMatchSets();
 		for (VTMatchSet matchSet : matchSets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Collection<VTMatch> matches = matchSet.getMatches();
 			for (VTMatch match : matches) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (match.getAssociation().getStatus() == VTAssociationStatus.ACCEPTED &&
 					match.getAssociation().getType() == VTAssociationType.DATA) {
 					numDataMatches++;
@@ -294,10 +294,10 @@ public class AutoVersionTrackingTask extends Task {
 		int numFunctionMatches = 0;
 		List<VTMatchSet> matchSets = session.getMatchSets();
 		for (VTMatchSet matchSet : matchSets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Collection<VTMatch> matches = matchSet.getMatches();
 			for (VTMatch match : matches) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (match.getAssociation().getStatus() == VTAssociationStatus.ACCEPTED &&
 					match.getAssociation().getType() == VTAssociationType.FUNCTION) {
 					numFunctionMatches++;
@@ -318,7 +318,7 @@ public class AutoVersionTrackingTask extends Task {
 	private boolean correlateAndPossiblyApply(VTProgramCorrelatorFactory factory, VTOptions options,
 			TaskMonitor monitor) throws CancelledException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		monitor.setMessage(
 			"Finding and applying good " + factory.getName() + " matches and markup.");
@@ -384,7 +384,7 @@ public class AutoVersionTrackingTask extends Task {
 		// Note: no need to check score/confidence because they are passed into the correlator
 		// ahead of time so correlator only returns matches higher than given score/threshold
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTAssociation association = match.getAssociation();
 
 			if (!association.getStatus().canApply()) {
@@ -454,7 +454,7 @@ public class AutoVersionTrackingTask extends Task {
 		int n = matches.size();
 		Iterator<VTMatch> it = matches.iterator();
 		for (int i = 0; it.hasNext(); i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage(String.format(message, i, n));
 
 			VTMatch match = it.next();
@@ -490,7 +490,7 @@ public class AutoVersionTrackingTask extends Task {
 
 			// loop through all the source functions
 			for (Address sourceAddress : uniqueSourceFunctionAddresses) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// find all destination functions with equivalent operands to source function
 				Set<VTMatch> matchesWithEquivalentOperands = getMatchesWithEquivalentOperands(
@@ -594,7 +594,7 @@ public class AutoVersionTrackingTask extends Task {
 		// create set of related duplicate matches and remove all related matches from the
 		// copied set of all matches so they are not processed more than once
 		for (VTAssociation relatedAssociation : relatedAssociations) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			VTMatch relMatch = getMatch(matches, relatedAssociation.getSourceAddress(),
 				relatedAssociation.getDestinationAddress());
 			if (relMatch != null) {
@@ -633,7 +633,7 @@ public class AutoVersionTrackingTask extends Task {
 
 		Set<Address> sourceAddresses = new HashSet<>();
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			sourceAddresses.add(match.getSourceAddress());
 		}
 		return sourceAddresses;
@@ -651,7 +651,7 @@ public class AutoVersionTrackingTask extends Task {
 
 		Set<Address> destAddresses = new HashSet<>();
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			destAddresses.add(match.getDestinationAddress());
 		}
 		return destAddresses;
@@ -690,7 +690,7 @@ public class AutoVersionTrackingTask extends Task {
 
 		Set<VTMatch> results = new HashSet<>();
 		for (VTMatch match : matches) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (sourceAddresses.contains(match.getSourceAddress()) &&
 				destAddresses.contains(match.getDestinationAddress())) {
 				results.add(match);
@@ -735,7 +735,7 @@ public class AutoVersionTrackingTask extends Task {
 		listingDiff.setIgnoreRegisters(false);
 
 		while (func1InstIter.hasNext() && func2InstIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Instruction inst1 = func1InstIter.next();
 			Instruction inst2 = func2InstIter.next();
@@ -829,7 +829,7 @@ public class AutoVersionTrackingTask extends Task {
 		listingDiff.setIgnoreRegisters(false);
 
 		while (sourceFuncCodeUnitIter.hasNext() && destFuncCodeUnitIter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CodeUnit srcCodeUnit = sourceFuncCodeUnitIter.next();
 			CodeUnit dstCodeUnit = destFuncCodeUnitIter.next();
 
@@ -877,7 +877,7 @@ public class AutoVersionTrackingTask extends Task {
 			}
 
 			for (int j = i + 1; j < list.size(); j++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				Address address2 = list.get(j);
 

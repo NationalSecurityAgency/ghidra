@@ -173,6 +173,11 @@ public class StubSymbolTable implements SymbolTable {
 	}
 
 	@Override
+	public SymbolIterator scanSymbolsByName(String startName) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public int getNumSymbols() {
 		throw new UnsupportedOperationException();
 	}

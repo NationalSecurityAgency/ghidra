@@ -28,12 +28,12 @@ import docking.WindowPosition;
 import docking.widgets.VariableHeightPanel;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.diff.DiffApplySettingsOptionManager.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.util.ProgramMergeFilter;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 /**
  * The DiffSettingsDialog is used to change the types of differences currently 
@@ -43,7 +43,7 @@ import resources.ResourceManager;
 public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 
 	public static final String APPLY_FILTER_CHANGED_ACTION = "Apply Filter Changed";
-	public static final ImageIcon ICON = ResourceManager.loadImage("images/settings16.gif");
+	public static final Icon ICON = new GIcon("icon.plugin.programdiff.settings");
 	public static final String TITLE = "Diff Apply Settings";
 
 	private ProgramDiffPlugin plugin;
@@ -106,8 +106,9 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 	}
 
 	public void addActions() {
-		plugin.getTool().addLocalAction(this,
-			new SaveApplySettingsAction(this, plugin.applySettingsMgr));
+		plugin.getTool()
+				.addLocalAction(this,
+					new SaveApplySettingsAction(this, plugin.applySettingsMgr));
 		plugin.getTool().addLocalAction(this, new DiffIgnoreAllAction(this));
 		plugin.getTool().addLocalAction(this, new DiffReplaceAllAction(this));
 		plugin.getTool().addLocalAction(this, new DiffMergeAllAction(this));
@@ -351,10 +352,6 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		listenerList.remove(listener);
 	}
 
-	/**
-	 * Return true if at least one of the checkboxes for the filter
-	 * has been selected.
-	 */
 	boolean hasApplySelection() {
 		return ((applyProgramContext | applyBytes | applyCodeUnits | applyReferences |
 			applyPlateComments | applyPreComments | applyEolComments | applyRepeatableComments |
@@ -366,8 +363,7 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		if (adjustingApplyFilter) {
 			return;
 		}
-		for (int i = 0; i < listenerList.size(); i++) {
-			ActionListener listener = listenerList.get(i);
+		for (ActionListener listener : listenerList) {
 			listener.actionPerformed(new ActionEvent(this, 0, APPLY_FILTER_CHANGED_ACTION));
 		}
 	}
@@ -383,9 +379,6 @@ public class DiffApplySettingsProvider extends ComponentProviderAdapter {
 		return applyPanel;
 	}
 
-	/**
-	 * Gets the plugin associated with this provider.
-	 */
 	Plugin getPlugin() {
 		return plugin;
 	}

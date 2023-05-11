@@ -64,9 +64,8 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 	private TestEnv env;
 	private SaveToolConfigDialog saveDialog;
 	private JTextField toolNameField;
-	private JList iconList;
+	private JList<?> iconList;
 	private JTextField iconNameField;
-	private PluginTool newtool;
 
 	public SaveToolConfigDialogTest() {
 		super();
@@ -161,11 +160,13 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		ToolTemplate template = tc.getToolTemplate("MyTestTool");
 		tc.remove("MyTestTool");
 
-		ImageIcon icon = ResourceManager.getScaledIcon(
-			ResourceManager.loadImage("defaultTools/images/Caution.png"),
+		Icon icon = ResourceManager.getScaledIcon(
+			ResourceManager.loadIcon("defaultTools/images/Caution.png"),
 			ToolIconURL.LARGE_ICON_SIZE, ToolIconURL.LARGE_ICON_SIZE);
 
-		assertEquals(icon.getDescription(), template.getIcon().getDescription());
+		String expected = ResourceManager.getIconName(icon);
+		String actual = ResourceManager.getIconName(template.getIcon());
+		assertEquals(expected, actual);
 	}
 
 	@Test
@@ -323,7 +324,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 
 		assertNotNull(saveDialog);
 		toolNameField = (JTextField) findComponentByName(saveDialog, "ToolName");
-		iconList = (JList) findComponentByName(saveDialog, "IconList");
+		iconList = (JList<?>) findComponentByName(saveDialog, "IconList");
 		iconNameField = (JTextField) findComponentByName(saveDialog, "IconName");
 	}
 

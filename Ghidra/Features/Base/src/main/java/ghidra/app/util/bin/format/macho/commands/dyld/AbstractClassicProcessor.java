@@ -25,8 +25,10 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.symbol.*;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
+import ghidra.util.SystemUtilities;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractClassicProcessor {
@@ -70,12 +72,9 @@ public abstract class AbstractClassicProcessor {
 
 		long offset = symbol.getAddress().getOffset();
 
-		boolean handled = false;
-
 		int fileType = header.getFileType();
 
-		byte originalBytes[] = new byte[0];
-
+		int byteLength = 0;
 		switch (fileType) {
 
 			case MachHeaderFileTypes.MH_EXECUTE:
@@ -85,13 +84,8 @@ public abstract class AbstractClassicProcessor {
 
 				byte[] bytes = (program.getDefaultPointerSize() == 8) ? converter.getBytes(offset)
 						: converter.getBytes((int) offset);
-
-				originalBytes = new byte[bytes.length];
-				memory.getBytes(address, originalBytes);
 				memory.setBytes(address, bytes);
-
-				handled = true;
-
+				byteLength = bytes.length;
 				break;
 			}
 			case MachHeaderFileTypes.MH_KEXT_BUNDLE: {
@@ -108,20 +102,15 @@ public abstract class AbstractClassicProcessor {
 
 							long difference = offset - addressValue - 4;
 							byte[] bytes = converter.getBytes((int) difference);
-							originalBytes = new byte[bytes.length];
-							memory.getBytes(address, originalBytes);
 							memory.setBytes(address, bytes);
-							handled = true;
+							byteLength = bytes.length;
 						}
 					}
 					else {
 						byte[] bytes = (program.getDefaultPointerSize() == 8)
 								? converter.getBytes(offset) : converter.getBytes((int) offset);
-
-						originalBytes = new byte[bytes.length];
-						memory.getBytes(address, originalBytes);
 						memory.setBytes(address, bytes);
-						handled = true;
+						byteLength = bytes.length;
 					}
 				}
 				else if (header.getCpuType() == CpuTypes.CPU_TYPE_POWERPC) {//TODO powerpc kext files
@@ -140,11 +129,8 @@ public abstract class AbstractClassicProcessor {
 			case MachHeaderFileTypes.MH_OBJECT: {
 				byte[] bytes = (program.getDefaultPointerSize() == 8) ? converter.getBytes(offset)
 						: converter.getBytes((int) offset);
-
-				originalBytes = new byte[bytes.length];
-				memory.getBytes(address, originalBytes);
 				memory.setBytes(address, bytes);
-				handled = true;
+				byteLength = bytes.length;
 				break;
 			}
 			default: {
@@ -152,15 +138,21 @@ public abstract class AbstractClassicProcessor {
 			}
 		}
 
-		// put an entry in the relocation table, handled or not
-		String symbolName = symbol.getName();
-		program.getRelocationTable().add(address, fileType, new long[0], originalBytes, symbolName);
-
-		if (!handled) {
+		Status status;
+		if (byteLength <= 0) {
 			program.getBookmarkManager().setBookmark(address, BookmarkType.ERROR,
 				"Unhandled Classic Binding", "Unable to fixup classic binding. " +
 					"This instruction will contain an invalid destination / fixup.");
+			status = Status.UNSUPPORTED;
 		}
+		else {
+			status = Status.APPLIED_OTHER;
+		}
+
+		// put an entry in the relocation table, handled or not
+		String symbolName = symbol.getName();
+		program.getRelocationTable()
+				.add(address, status, fileType, null, byteLength, symbolName);
 	}
 
 	/**

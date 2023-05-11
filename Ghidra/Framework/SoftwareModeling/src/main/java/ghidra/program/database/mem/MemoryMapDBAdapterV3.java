@@ -54,7 +54,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	static final byte V3_SUB_TYPE_BIT_MAPPED = 0;
 	static final byte V3_SUB_TYPE_BYTE_MAPPED = 1;
 	static final byte V3_SUB_TYPE_BUFFER = 2;
-	static final byte V3_SUB_TYPE_UNITIALIZED = 3;
+	static final byte V3_SUB_TYPE_UNINITIALIZED = 3;
 	static final byte V3_SUB_TYPE_FILE_BYTES = 4;
 
 	static Schema V3_BLOCK_SCHEMA = new Schema(V3_VERSION, "Key",
@@ -215,7 +215,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		if (initializeBytes) {
 			return createInitializedBlock(name, startAddr, null, length, permissions);
 		}
-		return createUnitializedBlock(name, startAddr, length, permissions);
+		return createUninitializedBlock(name, startAddr, length, permissions);
 	}
 
 	@Override
@@ -238,7 +238,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		return newBlock;
 	}
 
-	MemoryBlockDB createUnitializedBlock(String name, Address startAddress, long length,
+	MemoryBlockDB createUninitializedBlock(String name, Address startAddress, long length,
 			int permissions) throws IOException, AddressOverflowException {
 		updateAddressMapForAllAddresses(startAddress, length);
 
@@ -246,7 +246,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
 		long key = blockRecord.getKey();
 
-		DBRecord subRecord = createSubBlockRecord(key, 0, length, V3_SUB_TYPE_UNITIALIZED, 0, 0);
+		DBRecord subRecord = createSubBlockRecord(key, 0, length, V3_SUB_TYPE_UNINITIALIZED, 0, 0);
 		subBlocks.add(new UninitializedSubMemoryBlock(this, subRecord));
 
 		memBlockTable.putRecord(blockRecord);
@@ -420,7 +420,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 				return new ByteMappedSubMemoryBlock(this, record);
 			case V3_SUB_TYPE_BUFFER:
 				return new BufferSubMemoryBlock(this, record);
-			case V3_SUB_TYPE_UNITIALIZED:
+			case V3_SUB_TYPE_UNINITIALIZED:
 				return new UninitializedSubMemoryBlock(this, record);
 			case V3_SUB_TYPE_FILE_BYTES:
 				return new FileBytesSubMemoryBlock(this, record);

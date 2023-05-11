@@ -15,17 +15,17 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
-import resources.ResourceManager;
 
 class OptionsAction extends DockingAction {
-	public static final ImageIcon OPTIONS_ICON = ResourceManager.loadImage("images/wrench.png");
+	public static final Icon OPTIONS_ICON = new GIcon("icon.plugin.byteviewer.options");
 
 	private final ByteViewerComponentProvider provider;
 

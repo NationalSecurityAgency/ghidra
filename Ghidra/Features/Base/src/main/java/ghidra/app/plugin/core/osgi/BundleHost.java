@@ -15,9 +15,7 @@
  */
 package ghidra.app.plugin.core.osgi;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
@@ -42,6 +40,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * Hosts the embedded OSGi framework and manages {@link GhidraBundle}s.
@@ -373,9 +372,11 @@ public class BundleHost {
 	}
 
 	private static String makeCacheDir() throws IOException {
-		Path cacheDir = getCacheDir();
-		Files.createDirectories(cacheDir);
-		return cacheDir.toAbsolutePath().toString();
+		File cacheDir = getCacheDir().toFile();
+		if (!FileUtilities.mkdirs(cacheDir)) {
+			throw new IOException("Failed to make cache directory: " + cacheDir);
+		}
+		return cacheDir.getAbsolutePath();
 	}
 
 	private void createAndConfigureFramework() throws IOException {
@@ -456,6 +457,10 @@ public class BundleHost {
 
 		frameworkBundleContext = felixFramework.getBundleContext();
 
+		if (frameworkBundleContext == null) {
+			throw new OSGiException("Felix OSGi framework has no bundle context");
+		}
+
 		addDebuggingListeners();
 
 		Bundle bundle = frameworkBundleContext.getBundle();
@@ -511,6 +516,11 @@ public class BundleHost {
 	 * @return the OSGi bundle or null
 	 */
 	Bundle getOSGiBundle(String bundleLocation) {
+		// TODO: Is it safe/better to return null when the framework isn't started?
+		// 'frameworkBundleContext' is currently not set to null when it gets stopped.
+		if (frameworkBundleContext == null) {
+			return null;
+		}
 		return frameworkBundleContext.getBundle(bundleLocation);
 	}
 
@@ -666,7 +676,7 @@ public class BundleHost {
 			}
 			catch (Exception e) {
 				// write the error to the console or log file
-				console.println("Unexpected error activating bundles: " + bundles);
+				console.println("Unexpected error activating bundle: " + bundle);
 				e.printStackTrace(console);
 			}
 			monitor.incrementProgress(1);
@@ -735,7 +745,7 @@ public class BundleHost {
 				}
 				catch (Exception e) {
 					// write the error to the console or log file
-					console.println("Unexpected error activating bundles: " + bundles);
+					console.println("Unexpected error activating bundle: " + bundle);
 					e.printStackTrace(console);
 				}
 				monitor.incrementProgress(1);

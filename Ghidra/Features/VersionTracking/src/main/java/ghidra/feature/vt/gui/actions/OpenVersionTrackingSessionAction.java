@@ -15,6 +15,10 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
@@ -23,10 +27,6 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFileFilter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
-import docking.tool.ToolConstants;
 
 public class OpenVersionTrackingSessionAction extends DockingAction {
 
@@ -59,6 +59,11 @@ public class OpenVersionTrackingSessionAction extends DockingAction {
 		public boolean accept(DomainFile f) {
 			Class<?> c = f.getDomainObjectClass();
 			return VTSession.class.isAssignableFrom(c);
+		}
+
+		@Override
+		public boolean followLinkedFolders() {
+			return false;
 		}
 	}
 }

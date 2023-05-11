@@ -19,7 +19,9 @@ import java.awt.Color;
 
 import javax.swing.text.*;
 
+import generic.theme.GColor;
 import ghidra.app.plugin.core.interpreter.AnsiParser.AnsiParserHandler;
+import ghidra.util.ColorUtils;
 
 /**
  * An object for parsing and rendering ANSI-styled strings into a Swing {@link Document}.
@@ -32,22 +34,6 @@ import ghidra.app.plugin.core.interpreter.AnsiParser.AnsiParserHandler;
  * renderers prevents the corruption of those escape sequences when interleaving the output streams.
  */
 public class AnsiRenderer {
-	public static final Color BLACK = new Color(0, 0, 0);
-	public static final Color RED = new Color(194, 54, 33);
-	public static final Color GREEN = new Color(37, 188, 36);
-	public static final Color YELLOW = new Color(173, 173, 39);
-	public static final Color BLUE = new Color(73, 46, 225);
-	public static final Color MAGENTA = new Color(211, 56, 211);
-	public static final Color CYAN = new Color(51, 187, 200);
-	public static final Color WHITE = new Color(203, 204, 205);
-	public static final Color HI_BLACK = new Color(129, 131, 131);
-	public static final Color HI_RED = new Color(252, 57, 31);
-	public static final Color HI_GREEN = new Color(49, 231, 34);
-	public static final Color HI_YELLOW = new Color(234, 236, 35);
-	public static final Color HI_BLUE = new Color(88, 51, 255);
-	public static final Color HI_MAGENTA = new Color(249, 53, 248);
-	public static final Color HI_CYAN = new Color(20, 240, 240);
-	public static final Color HI_WHITE = new Color(233, 235, 235);
 
 	/**
 	 * These colors are taken from Terminal.app as documented on Wikipedia as of 26 April 2022.
@@ -58,23 +44,23 @@ public class AnsiRenderer {
 	 */
 	private static final Color[] BASIC_COLORS = {
 		// standard colors
-		BLACK,
-		RED,
-		GREEN,
-		YELLOW,
-		BLUE,
-		MAGENTA,
-		CYAN,
-		WHITE,
+		new GColor("color.fg.plugin.interpreter.renderer.color.standard.1"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.standard.2"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.standard.3"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.standard.4"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.standard.5"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.standard.6"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.standard.7"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.standard.8"),
 		// high intensity colors
-		HI_BLACK,
-		HI_RED,
-		HI_GREEN,
-		HI_YELLOW,
-		HI_BLUE,
-		HI_MAGENTA,
-		HI_CYAN,
-		HI_WHITE,
+		new GColor("color.fg.plugin.interpreter.renderer.color.intense.1"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.intense.2"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.intense.3"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.intense.4"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.intense.5"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.intense.6"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.intense.7"),
+		new GColor("color.fg.plugin.interpreter.renderer.color.intense.8"),
 	};
 	/**
 	 * This aids the implementation of the 6x6x6 color cube.
@@ -98,12 +84,12 @@ public class AnsiRenderer {
 		}
 
 		/**
-		 * Get the 8-bit ansi color.
+		 * Get the 8-bit ANSI color.
 		 * 
 		 * <p>
-		 * Colors 0-15 are the {@link AnsiRenderer#BASIC_COLORS: standard + high-intensity. Colors
+		 * Colors 0-15 are the {@link AnsiRenderer#AnsiRenderer}: standard + high-intensity. Colors
 		 * 16-231 come from a 6x6x6 RGB cube; see {@link AnsiRenderer#CUBE_STEPS}. Finally, colors
-		 * 232-255 are 24 steps of grayscale.
+		 * 232-255 are 24 steps of gray scale.
 		 * 
 		 * @param v an 8-bit number
 		 * @return the ANSI color
@@ -117,12 +103,12 @@ public class AnsiRenderer {
 				int b = v % 6;
 				int g = (v / 6) % 6;
 				int r = (v / 36) % 6;
-				return new Color(CUBE_STEPS[r], CUBE_STEPS[g], CUBE_STEPS[b]);
+				return ColorUtils.getColor(CUBE_STEPS[r], CUBE_STEPS[g], CUBE_STEPS[b]);
 			}
 			else if (v < 256) {
 				v -= 232;
 				int gray = v * 10 + 8;
-				return new Color(gray, gray, gray);
+				return ColorUtils.getColor(gray, gray, gray);
 			}
 			else {
 				/* invalid */
@@ -146,7 +132,7 @@ public class AnsiRenderer {
 		private int handleSGRAttribute(String[] bits, int pos) throws NumberFormatException {
 			int code = Integer.parseInt(bits[pos]);
 			if (code >= 30 && code < 50) {
-				/* Colour codes */
+				/* Color codes */
 				Object attributeName =
 					(code < 40) ? StyleConstants.Foreground : StyleConstants.Background;
 				int colorCode = code % 10;
@@ -172,7 +158,7 @@ public class AnsiRenderer {
 						int r = Integer.parseInt(bits[pos + 2]);
 						int g = Integer.parseInt(bits[pos + 3]);
 						int b = Integer.parseInt(bits[pos + 4]);
-						attributes.addAttribute(attributeName, new Color(r, g, b));
+						attributes.addAttribute(attributeName, ColorUtils.getColor(r, g, b));
 						return 5;
 					}
 					return 1;
@@ -314,6 +300,7 @@ public class AnsiRenderer {
 	 * @param document Document to render the string to
 	 * @param text A text string which may contain 7-bit ANSI escape codes
 	 * @param attributes Current text attributes; may be modified by this function
+	 * @throws BadLocationException if there is an error parsing the text
 	 */
 	public void renderString(StyledDocument document, String text, MutableAttributeSet attributes)
 			throws BadLocationException {

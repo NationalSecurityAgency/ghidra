@@ -20,10 +20,11 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.app.services.GraphDisplayBroker;
@@ -34,13 +35,12 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class DisplayFilteredGraphAction extends DisplayFilteredAction {
 
 	protected GraphDisplayBroker graphBroker;
 
-	protected static ImageIcon ICON_GRAPH = ResourceManager.loadImage("images/breakpoints.png");
+	protected static final Icon ICON_GRAPH = new GIcon("icon.debugger.display.xml.filtered");
 
 	public DisplayFilteredGraphAction(PluginTool tool, String owner,
 			DebuggerObjectsProvider provider) {

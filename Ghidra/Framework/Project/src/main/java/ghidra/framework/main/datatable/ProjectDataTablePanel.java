@@ -182,9 +182,12 @@ public class ProjectDataTablePanel extends JPanel {
 			this.projectData.removeDomainFolderChangeListener(changeListener);
 			model.setProjectData(null);
 			SystemUtilities.runSwingLater(() -> {
-				GGlassPane glassPane = (GGlassPane) gTable.getRootPane().getGlassPane();
-				glassPane.removePainter(painter);
-				glassPane.addPainter(painter);
+				JRootPane rootPane = gTable.getRootPane();
+				if (rootPane != null) {
+					GGlassPane glassPane = (GGlassPane) rootPane.getGlassPane();
+					glassPane.removePainter(painter);
+					glassPane.addPainter(painter);
+				}
 			});
 		}
 	}

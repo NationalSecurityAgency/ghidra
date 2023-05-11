@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostScriptHost;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.IDebugHostScriptHost;
 import agent.dbgmodel.jna.dbgmodel.debughost.WrapIDebugHostScriptHost;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface DebugHostScriptHostInternal extends DebugHostScriptHost {
 	Map<Pointer, DebugHostScriptHostInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostScriptHostInternal instanceFor(WrapIDebugHostScriptHost data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostScriptHostImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostScriptHostImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostScriptHost>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugHostScriptHost>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostScriptHost.IID_IDEBUG_HOST_SCRIPT_HOST),
-					WrapIDebugHostScriptHost.class) //
-				.build();
+	List<Preferred<WrapIDebugHostScriptHost>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostScriptHost.IID_IDEBUG_HOST_SCRIPT_HOST,
+			WrapIDebugHostScriptHost.class));
 
 	static DebugHostScriptHostInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostScriptHostInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostScriptHostInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

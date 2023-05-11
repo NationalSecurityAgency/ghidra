@@ -75,7 +75,7 @@ public class AlgorithmFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 
 	@Override
 	protected void createCheckBoxInfos() {
-		List<String> algorithmNames = getKnowAlgorithms();
+		List<String> algorithmNames = getKnownAlgorithms();
 
 		ItemListener listener = new ItemListener() {
 			@Override
@@ -92,7 +92,7 @@ public class AlgorithmFilter extends CheckBoxBasedAncillaryFilter<VTMatch> {
 		}
 	}
 
-	private List<String> getKnowAlgorithms() {
+	private List<String> getKnownAlgorithms() {
 		List<String> list = new ArrayList<>();
 
 		// add the manual match correlator, which doesn't have a factory, since it is only through an action.

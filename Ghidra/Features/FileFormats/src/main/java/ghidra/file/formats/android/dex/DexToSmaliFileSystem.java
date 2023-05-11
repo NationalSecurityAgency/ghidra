@@ -22,8 +22,11 @@ import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.jf.baksmali.baksmali;
-import org.jf.dexlib.DexFile;
+import org.jf.baksmali.Baksmali;
+import org.jf.baksmali.BaksmaliOptions;
+import org.jf.dexlib2.Opcodes;
+import org.jf.dexlib2.dexbacked.DexBackedDexFile;
+import org.jf.dexlib2.iface.DexFile;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.FileByteProvider;
@@ -31,6 +34,7 @@ import ghidra.file.formats.android.dex.format.DexConstants;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.factory.GFileSystemBaseFactory;
+import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
@@ -85,48 +89,31 @@ public class DexToSmaliFileSystem extends GFileSystemBase {
 	public void open(TaskMonitor monitor) throws IOException, CryptoException, CancelledException {
 		monitor.setMessage("Converting DEX to SMALI...");
 
-		File dexFileFile = provider.getFile();
-		boolean isFixRegisters = false;
-		boolean isNoParameterRegisters = false;
-		boolean isUseLocalsDirective = false;
-		boolean isUseSequentialLabels = false;
-		boolean isOutputDebugInfo = true;
-		boolean isAddCodeOffsets = false;
-		boolean isDeOdex = false;//TODO DexConstants.isODEX( provider );
-		boolean isVerify = false;
-		boolean isIgnoreErrors = false;
-		int registerInfo = 0;
-		boolean isNoAccessorComments = false;//TODO
-		String inlineTable = null;//TODO
-		boolean isCheckPackagePrivateAccess = false;
-
-		final String baseTempPath = System.getProperty("java.io.tmpdir");
 		int rand = new Random().nextInt() & 0xffff;
-		File tempOutputDirectory =
-			new File(baseTempPath + File.separator + "ghidra_file_system_" + rand);
+		File outputDir = new File(Application.getUserTempDirectory(), "ghidra_file_system_" + rand);
 
-		String bootClassPath = "core.jar:ext.jar:framework.jar:android.policy.jar:services.jar";
-		StringBuffer extraBootClassPathEntries = new StringBuffer();
+		DexFile dexFile =
+			DexBackedDexFile.fromInputStream(Opcodes.getDefault(), provider.getInputStream(0));
 
-		List<String> bootClassPathDirs = new ArrayList<>();
-		bootClassPathDirs.add(".");
-//TODO	bootClassPathDirs.add( "~/Android/smali/required-libs/" );
+		BaksmaliOptions options = new BaksmaliOptions();
+		options.apiLevel = 15;
+		options.parameterRegisters = true;
+		options.localsDirective = false;
+		options.sequentialLabels = false;
+		options.debugInfo = true;
+		options.codeOffsets = false;
+		options.accessorComments = true;
+		options.allowOdex = false;
+		options.deodex = false;
+		options.implicitReferences = false;
+		options.normalizeVirtualMethods = false;
+		options.registerInfo = 0;
 
-		DexFile dexFile = new DexFile(dexFileFile, !isFixRegisters, false);
-
-		String[] bootClassPathDirsArray = new String[bootClassPathDirs.size()];
-		for (int i = 0; i < bootClassPathDirsArray.length; i++) {
-			bootClassPathDirsArray[i] = bootClassPathDirs.get(i);
+		if (!Baksmali.disassembleDexFile(dexFile, outputDir, 1, options)) {
+			throw new IOException("Failed to disassemble DEX file: " + provider.getName());
 		}
 
-		baksmali.disassembleDexFile(dexFileFile.getPath(), dexFile, isDeOdex,
-			tempOutputDirectory.getPath(), bootClassPathDirsArray, bootClassPath,
-			extraBootClassPathEntries.toString(), isNoParameterRegisters, isUseLocalsDirective,
-			isUseSequentialLabels, isOutputDebugInfo, isAddCodeOffsets, isNoAccessorComments,
-			registerInfo, isVerify, isIgnoreErrors, inlineTable, isCheckPackagePrivateAccess);
-
-		getFileListing(tempOutputDirectory, root, monitor);
-
+		getFileListing(outputDir, root, monitor);
 	}
 
 	private void getFileListing(File startingDirectory, GFileImpl currentRoot,

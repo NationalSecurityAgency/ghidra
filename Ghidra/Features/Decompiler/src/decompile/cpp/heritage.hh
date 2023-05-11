@@ -17,10 +17,12 @@
 /// \file heritage.hh
 /// \brief Utilities for building Static Single Assignment (SSA) form 
 
-#ifndef __CPUI_HERITAGE__
-#define __CPUI_HERITAGE__
+#ifndef __HERITAGE_HH__
+#define __HERITAGE_HH__
 
 #include "block.hh"
+
+namespace ghidra {
 
 /// Container holding the stack system for the renaming algorithm.  Every disjoint address
 /// range (indexed by its initial address) maps to its own Varnode stack.
@@ -294,4 +296,5 @@ public:
   const LoadGuard *getStoreGuard(PcodeOp *op) const;	///< Get LoadGuard record associated with given PcodeOp
 };
 
+} // End namespace ghidra
 #endif

@@ -17,9 +17,7 @@ package ghidra.file.formats.android.dex.format;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -32,11 +30,11 @@ public class EncodedTypeAddressPair implements StructConverter {
 	private int addressLength;// in bytes
 
 	public EncodedTypeAddressPair(BinaryReader reader) throws IOException {
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		typeIndex = leb128.asUInt32();
 		typeIndexLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		address = leb128.asUInt32();
 		addressLength = leb128.getLength();
 	}
@@ -60,9 +58,9 @@ public class EncodedTypeAddressPair implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = new StructureDataType(
-			"encoded_type_addr_pair_" + typeIndexLength + "_" + addressLength, 0);
-		structure.add(new ArrayDataType(BYTE, typeIndexLength, BYTE.getLength()), "type_idx", null);
-		structure.add(new ArrayDataType(BYTE, addressLength, BYTE.getLength()), "addr", null);
+			"encoded_type_addr_pair_%d_%d".formatted(typeIndexLength, addressLength), 0);
+		structure.add(ULEB128, typeIndexLength, "type_idx", null);
+		structure.add(ULEB128, addressLength, "addr", null);
 		structure.setCategoryPath(new CategoryPath("/dex/encoded_type_addr_pair"));
 		return structure;
 	}

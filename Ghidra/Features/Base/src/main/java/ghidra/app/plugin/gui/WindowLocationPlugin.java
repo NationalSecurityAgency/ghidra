@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import docking.ComponentProvider;
 import docking.Tool;
+import generic.theme.GColor;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
 import ghidra.app.DeveloperPluginPackage;
@@ -45,6 +46,18 @@ import ghidra.util.Swing;
 )
 //@formatter:on
 public class WindowLocationPlugin extends Plugin {
+
+	private static final Color BG_COLOR = new GColor("color.bg.plugin.windowlocation");
+	private static final Color BG_COLOR_BOUNDS_VIRTUAL =
+		new GColor("color.bg.plugin.windowlocation.bounds.virtual");
+	private static final Color BG_COLOR_BOUNDS_VISIBLE =
+		new GColor("color.bg.plugin.windowlocation.bounds.visible");
+	private static final Color BG_COLOR_SCREENS =
+		new GColor("color.bg.plugin.windowlocation.screens");
+	private static final Color BG_COLOR_WINDOW_SELECTED =
+		new GColor("color.bg.plugin.windowlocation.window.selected");
+	private static final Color FG_COLOR_WINDOW_TEXT =
+		new GColor("color.fg.plugin.windowlocation.window.text");
 
 	static final String NAME = "Window Locations";
 
@@ -75,12 +88,7 @@ public class WindowLocationPlugin extends Plugin {
 			windowPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			AWTEventListener listener = new AWTEventListener() {
-				@Override
-				public void eventDispatched(AWTEvent event) {
-					windowPanel.repaint();
-				}
-			};
+			AWTEventListener listener = event -> windowPanel.repaint();
 			toolkit.addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
 			toolkit.addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK);
 		}
@@ -124,7 +132,7 @@ public class WindowLocationPlugin extends Plugin {
 			Dimension size = getSize();
 			double panelWidth = size.getWidth();
 			double panelHeight = size.getHeight();
-			setBackground(Color.BLACK);
+			setBackground(BG_COLOR);
 			g.fillRect(0, 0, (int) panelWidth, (int) panelHeight);
 
 			Graphics2D g2d = (Graphics2D) g;
@@ -135,9 +143,9 @@ public class WindowLocationPlugin extends Plugin {
 				clone.concatenate(newxform);
 				g2d.setTransform(clone);
 
-				paintVirtualBounds(g2d, Color.RED);
-				paintVisibleBounds(g2d, Color.GREEN);
-				paintScreens(g2d, Color.ORANGE);
+				paintVirtualBounds(g2d, BG_COLOR_BOUNDS_VIRTUAL);
+				paintVisibleBounds(g2d, BG_COLOR_BOUNDS_VISIBLE);
+				paintScreens(g2d, BG_COLOR_SCREENS);
 				paintWindows(g2d, newxform);
 			}
 			finally {
@@ -183,7 +191,7 @@ public class WindowLocationPlugin extends Plugin {
 			Font f = g2d.getFont();
 			Font biggerFont = f.deriveFont(40f);
 			g2d.setFont(biggerFont);
-			g2d.setColor(Color.GRAY);
+			g2d.setColor(FG_COLOR_WINDOW_TEXT);
 
 			Window[] windows = Window.getWindows();
 
@@ -380,8 +388,7 @@ public class WindowLocationPlugin extends Plugin {
 
 				Color bg = g2d.getColor();
 				try {
-					Color withAlpha = new Color(0, 255, 0, 200);
-					g2d.setColor(withAlpha);
+					g2d.setColor(BG_COLOR_WINDOW_SELECTED);
 					g2d.fill(b);
 				}
 				finally {

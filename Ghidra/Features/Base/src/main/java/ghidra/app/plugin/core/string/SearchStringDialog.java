@@ -16,8 +16,6 @@
 package ghidra.app.plugin.core.string;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
@@ -25,7 +23,7 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -194,9 +192,9 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		JLabel alignLabel = new GLabel("Alignment: ");
 		alignLabel.setName("alignment");
-		alignLabel.setToolTipText(
-			"<html>Searches for strings that start on the given alignment<br>" +
-				"value. The default alignment is processor dependent.");
+		alignLabel
+				.setToolTipText("<html>Searches for strings that start on the given alignment<br>" +
+					"value. The default alignment is processor dependent.");
 		panel.add(alignLabel);
 
 		alignField = new IntegerTextField(5, 1L);
@@ -210,7 +208,7 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 	/**
 	 * Creates the panel containing the Word Model options field.
-	 * 
+	 *
 	 * @param panel the parent panel this is to be added to (uses Pair layout)
 	 */
 	private void createModelFieldPanel(JPanel panel) {
@@ -230,24 +228,22 @@ public class SearchStringDialog extends DialogComponentProvider {
 		modelFieldPanel.add(wordModelField);
 
 		// Set up a file chooser that allows the user to select a new *.sng file.
-		JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
-		browseButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				GhidraFileChooser chooser = new GhidraFileChooser(panel);
-				chooser.setTitle("Select Word Model File");
-				chooser.setMultiSelectionEnabled(false);
-				chooser.setFileFilter(new ExtensionFileFilter("sng", "Word File"));
+		JButton browseButton = new BrowseButton();
+		browseButton.addActionListener(e -> {
+			GhidraFileChooser chooser = new GhidraFileChooser(panel);
+			chooser.setTitle("Select Word Model File");
+			chooser.setMultiSelectionEnabled(false);
+			chooser.setFileFilter(new ExtensionFileFilter("sng", "Word File"));
 
-				File selectedFile = chooser.getSelectedFile();
-				if (selectedFile == null) {
-					return;
-				}
-
-				// Important to only save off the name of the file. The NGramUtils call that
-				// loads the file will search for the file given this name.
-				wordModelField.setText(selectedFile.getName());
+			File selectedFile = chooser.getSelectedFile();
+			chooser.dispose();
+			if (selectedFile == null) {
+				return;
 			}
+
+			// Important to only save off the name of the file. The NGramUtils call that
+			// loads the file will search for the file given this name.
+			wordModelField.setText(selectedFile.getName());
 		});
 
 		modelFieldPanel.add(browseButton);
@@ -273,10 +269,10 @@ public class SearchStringDialog extends DialogComponentProvider {
 		memoryBlockGroup.add(loadedBlocksRB);
 		memoryBlockGroup.add(allBlocksRB);
 
-		loadedBlocksRB.setToolTipText(HTMLUtilities.toHTML(
-			"Only searches memory blocks that are loaded in a running executable.\n  " +
-				"Ghidra now includes memory blocks for other data such as section headers.\n" +
-				"This option exludes these other (non-loaded) blocks."));
+		loadedBlocksRB.setToolTipText(HTMLUtilities
+				.toHTML("Only searches memory blocks that are loaded in a running executable.\n  " +
+					"Ghidra now includes memory blocks for other data such as section headers.\n" +
+					"This option exludes these other (non-loaded) blocks."));
 		allBlocksRB.setToolTipText(
 			"Searches all memory blocks including blocks that are not actually loaded in a running executable");
 

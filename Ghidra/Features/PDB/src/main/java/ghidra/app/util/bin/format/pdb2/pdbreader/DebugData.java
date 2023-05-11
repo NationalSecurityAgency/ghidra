@@ -146,7 +146,7 @@ public class DebugData {
 	public void deserializeHeader(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			int debugStreamNumber = reader.parseUnsignedShortVal();
 			debugStreams.add(debugStreamNumber);
 		}
@@ -219,7 +219,7 @@ public class DebugData {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
 		framePointerOmissionData = new ArrayList<>();
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			FramePointerOmissionRecord framePointerOmissionRecord =
 				new FramePointerOmissionRecord();
 			framePointerOmissionRecord.parse(reader);
@@ -232,7 +232,7 @@ public class DebugData {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
 		SortedMap<Long, Long> omap = new TreeMap<>();
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			long v1 = reader.parseUnsignedIntVal();
 			long v2 = reader.parseUnsignedIntVal();
 			omap.put(v1, v2);
@@ -245,7 +245,7 @@ public class DebugData {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
 		List<ImageSectionHeader> sectionHeaders = new ArrayList<>();
 		while (reader.hasMore()) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			ImageSectionHeader imageSectionHeader = new ImageSectionHeader(pdb);
 			imageSectionHeader.parse(reader);
 			sectionHeaders.add(imageSectionHeader);
@@ -307,7 +307,7 @@ public class DebugData {
 		// TODO: current partial implementation does not work (throws exception)
 		//  for ucrtbase.dll arm64.  Need to look at this closer.
 //		while (reader.hasMore()) {
-//			pdb.checkCanceled();
+//			pdb.checkCancelled();
 //			ImageFunctionEntry entry = new ImageFunctionEntry();
 //			entry.deserialize(reader);
 //			pData.add(entry);
@@ -349,7 +349,7 @@ public class DebugData {
 		writer.write("FramePointerOmissionData------------------------------------\n");
 		if (framePointerOmissionData != null) {
 			for (FramePointerOmissionRecord framePointerOmissionRecord : framePointerOmissionData) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				framePointerOmissionRecord.dump(writer);
 			}
 		}
@@ -359,7 +359,7 @@ public class DebugData {
 //		if (omapToSource != null) {
 //			int num = 0;
 //			for (Map.Entry<Long, Long> entry : omapToSource.entrySet()) {
-//				pdb.checkCanceled();
+//				pdb.checkCancelled();
 //				writer.write(String.format("0X%08X: 0X%012X,  0X%012X\n", num++, entry.getKey(),
 //					entry.getValue()));
 //			}
@@ -370,7 +370,7 @@ public class DebugData {
 		if (omapFromSource != null) {
 			int num = 0;
 			for (Map.Entry<Long, Long> entry : omapFromSource.entrySet()) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				writer.write(String.format("0X%08X: 0X%012X,  0X%012X\n", num++, entry.getKey(),
 					entry.getValue()));
 			}
@@ -381,7 +381,7 @@ public class DebugData {
 		if (imageSectionHeaders != null) {
 			int sectionNum = 0;
 			for (ImageSectionHeader imageSectionHeader : imageSectionHeaders) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				imageSectionHeader.dump(writer, sectionNum++);
 			}
 		}
@@ -391,7 +391,7 @@ public class DebugData {
 		if (imageSectionHeadersOrig != null) {
 			int sectionNum = 0;
 			for (ImageSectionHeader imageSectionHeader : imageSectionHeadersOrig) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				imageSectionHeader.dump(writer, sectionNum++);
 			}
 		}
@@ -400,7 +400,7 @@ public class DebugData {
 		writer.write("PData-------------------------------------------------------\n");
 		if (pData != null) {
 			for (ImageFunctionEntry entry : pData) {
-				pdb.checkCanceled();
+				pdb.checkCancelled();
 				// TODO: need to output more if/when more PData is available (e.g., interpretation
 				//  of XData.
 				writer.append(entry.toString());
@@ -421,7 +421,7 @@ public class DebugData {
 		writer.write("StreamList--------------------------------------------------\n");
 		int i = 0;
 		for (int strmNumber : debugStreams) {
-			pdb.checkCanceled();
+			pdb.checkCancelled();
 			writer.write(String.format("StrmNumber[%02d]: %04x\n", i++, strmNumber));
 		}
 		writer.write("End StreamList----------------------------------------------\n");

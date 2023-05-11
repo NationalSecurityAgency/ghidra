@@ -25,7 +25,7 @@ import javax.swing.*;
 import org.jdom.Element;
 
 import docking.ComponentProvider;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.label.GIconLabel;
@@ -33,9 +33,9 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.layout.*;
-import resources.ResourceManager;
+import resources.Icons;
 
-public class FilterDialog extends DialogComponentProvider {
+public class FilterDialog extends ReusableDialogComponentProvider {
 	private NewSymbolFilter filter;
 	private JPanel advancedPanel;
 	private JPanel advancedFilterPanel;
@@ -48,7 +48,7 @@ public class FilterDialog extends DialogComponentProvider {
 	private PluginTool tool;
 
 	public FilterDialog(PluginTool tool) {
-		super("Symbol Table Filter", false);
+		super("Symbol Table Filter", false, true, true, false);
 		this.tool = tool;
 		filter = new NewSymbolFilter();
 		addWorkPanel(buildWorkPanel());
@@ -162,7 +162,7 @@ public class FilterDialog extends DialogComponentProvider {
 		advancedPanel = new JPanel(new BorderLayout());
 
 		JPanel infoPanel = new JPanel(new HorizontalLayout(20));
-		Icon icon = ResourceManager.loadImage("images/information.png");
+		Icon icon = Icons.INFO_ICON;
 
 		infoPanel.add(new GIconLabel(icon));
 		infoPanel.add(new GHtmlLabel(

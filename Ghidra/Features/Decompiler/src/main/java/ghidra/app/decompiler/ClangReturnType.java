@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jun 12, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
 
 import ghidra.program.model.data.DataType;
@@ -26,9 +20,7 @@ import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
 
 /**
- * 
- *
- * A group of C code tokens representing the return type of a function
+ * A grouping of source code tokens representing the "return type" of a function,
  * as at the beginning of a function prototype.
  */
 public class ClangReturnType extends ClangTokenGroup {
@@ -41,10 +33,16 @@ public class ClangReturnType extends ClangTokenGroup {
 		datatype = null;
 	}
 
+	/**
+	 * @return the data-type represented by this text
+	 */
 	public DataType getDataType() {
 		return datatype;
 	}
 
+	/**
+	 * @return a Varnode representing the return value in the function's data-flow
+	 */
 	public Varnode getVarnode() {
 		return varnode;
 	}

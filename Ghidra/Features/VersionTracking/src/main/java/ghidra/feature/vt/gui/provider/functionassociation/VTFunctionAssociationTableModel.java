@@ -273,7 +273,7 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 		LongIterator it = new FunctionKeyIterator(functionManager);
 		while (it.hasNext()) {
 			monitor.incrementProgress(1);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			long key = it.next();
 			Function f = functionManager.getFunction(key);
 			if (!f.isThunk()) {
@@ -353,7 +353,7 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 		FunctionManager functionManager = getProgram().getFunctionManager();
 		List<VTAssociation> associations = associationManager.getAssociations();
 		for (VTAssociation association : associations) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			Address functionAddress = null;
 			if (isSourceProgram) {
@@ -375,7 +375,7 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 		monitor.setMessage("Setting filter data...");
 		monitor.initialize(data.size());
 		for (VTFunctionRowObject rowObject : data) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			FunctionAssociationInfo info = rowObject.getInfo();
 			Long functionID = info.getFunctionID();

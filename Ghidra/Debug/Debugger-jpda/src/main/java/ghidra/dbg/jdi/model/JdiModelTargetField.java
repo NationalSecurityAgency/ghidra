@@ -22,6 +22,7 @@ import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.Field;
 import com.sun.jdi.request.*;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
@@ -78,7 +79,7 @@ public class JdiModelTargetField extends JdiModelTargetObjectImpl {
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 		this.declaringType = (JdiModelTargetReferenceType) getInstance(field.declaringType());
 
 		populateAttributes();

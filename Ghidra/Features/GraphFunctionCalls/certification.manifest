@@ -1,17 +1,8 @@
 ##VERSION: 2.0
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 Module.manifest||GHIDRA||||END|
+data/functioncallgraph.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||||END|
-src/main/help/help/shared/close16.gif||GHIDRA||||END|
-src/main/help/help/shared/menu16.gif||GHIDRA||||END|
-src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/help/help/shared/redo.png||GHIDRA||||END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/help/help/shared/undo.png||GHIDRA||||END|
-src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/help/help/topics/FunctionCallGraphPlugin/Function_Call_Graph.html||GHIDRA||||END|
 src/main/help/help/topics/FunctionCallGraphPlugin/images/FunctionCallGraphProvider.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionCallGraphPlugin/images/TooManyReferences.png||GHIDRA||reviewed||END|

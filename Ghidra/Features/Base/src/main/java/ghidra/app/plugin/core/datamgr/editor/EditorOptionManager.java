@@ -21,19 +21,19 @@ import ghidra.framework.options.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.HelpLocation;
 
-public class EditorOptionManager implements OptionsChangeListener, StructureEditorOptionManager,
-		UnionEditorOptionManager {
+public class EditorOptionManager
+		implements OptionsChangeListener, StructureEditorOptionManager, UnionEditorOptionManager {
 
 	private final static String STRUCTURE_EDITOR_NAME = "Structure Editor";
 	private final static String UNION_EDITOR_NAME = "Union Editor";
-	private final static String HEX_STRUCT_NUMBERS_OPTION_NAME = STRUCTURE_EDITOR_NAME +
-			Options.DELIMITER + "Show Numbers In Hex";
-	private final static String HEX_UNION_NUMBERS_OPTION_NAME = UNION_EDITOR_NAME +
-			Options.DELIMITER + "Show Numbers In Hex";
+	private final static String HEX_STRUCT_NUMBERS_OPTION_NAME =
+		STRUCTURE_EDITOR_NAME + Options.DELIMITER + "Show Numbers In Hex";
+	private final static String HEX_UNION_NUMBERS_OPTION_NAME =
+		UNION_EDITOR_NAME + Options.DELIMITER + "Show Numbers In Hex";
 
 	private Plugin plugin;
-	private boolean showStructureNumbersInHex = false;
-	private boolean showUnionNumbersInHex = false;
+	private boolean showStructureNumbersInHex = true;
+	private boolean showUnionNumbersInHex = true;
 	private String HELP_TOPIC = "DataTypeEditors";
 
 	public EditorOptionManager(Plugin plugin) {
@@ -50,14 +50,14 @@ public class EditorOptionManager implements OptionsChangeListener, StructureEdit
 		options.getOptions(UNION_EDITOR_NAME).setOptionsHelpLocation(help);
 
 		options.registerOption(HEX_STRUCT_NUMBERS_OPTION_NAME, showStructureNumbersInHex, help,
-			"Toggle for whether numeric values in the Structure Editor "
-				+ "should be displayed in hexadecimal or decimal "
-				+ "when you initially begin editing a structure.");
+			"Toggle for whether numeric values in the Structure Editor " +
+				"should be displayed in hexadecimal or decimal " +
+				"when you initially begin editing a structure.");
 
 		options.registerOption(HEX_UNION_NUMBERS_OPTION_NAME, showUnionNumbersInHex, help,
-			"Toggle for whether numeric values in the Union Editor "
-				+ "should be displayed in hexadecimal or decimal "
-				+ "when you initially begin editing a union.");
+			"Toggle for whether numeric values in the Union Editor " +
+				"should be displayed in hexadecimal or decimal " +
+				"when you initially begin editing a union.");
 
 		setOptions(options);
 		options.addOptionsChangeListener(this);

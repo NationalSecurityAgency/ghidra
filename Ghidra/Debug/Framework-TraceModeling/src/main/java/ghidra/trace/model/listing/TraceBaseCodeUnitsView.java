@@ -15,12 +15,9 @@
  */
 package ghidra.trace.model.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.IntersectionAddressSetView;
@@ -209,7 +206,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * @param range the address range
 	 * @return true if covered, false otherwise
 	 */
-	boolean coversRange(Range<Long> span, AddressRange range);
+	boolean coversRange(Lifespan span, AddressRange range);
 
 	/**
 	 * Check if the given address-snap range is covered by the units
@@ -234,7 +231,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * @param range the address range
 	 * @return true if intersecting, false otherwise
 	 */
-	boolean intersectsRange(Range<Long> span, AddressRange range);
+	boolean intersectsRange(Lifespan span, AddressRange range);
 
 	/**
 	 * Check if the given span of snaps and range of addresses intersects any unit

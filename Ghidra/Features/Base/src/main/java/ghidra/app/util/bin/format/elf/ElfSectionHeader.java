@@ -15,18 +15,19 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.function.BiConsumer;
+import java.util.zip.InflaterInputStream;
 
-import java.io.*;
-
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
-import ghidra.app.util.bin.format.Writeable;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.DataConverter;
+import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 
 /**
@@ -70,7 +71,7 @@ import ghidra.util.StringUtilities;
  * </pre>
  */
 
-public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoadable {
+public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 
 	private int sh_name;
 	private int sh_type;
@@ -90,6 +91,8 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	private byte[] data;
 	private boolean modified = false;
 	private boolean bytesChanged = false;
+
+	private ElfCompressedSectionHeader compressedHeader;
 
 	public ElfSectionHeader(BinaryReader reader, ElfHeader header)
 			throws IOException {
@@ -123,7 +126,38 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 			sh_addralign = reader.readNextLong();
 			sh_entsize = reader.readNextLong();
 		}
+
+		if ((sh_flags & ElfSectionHeaderConstants.SHF_COMPRESSED) != 0) {
+			compressedHeader = readCompressedSectionHeader();
+		}
 		//checkSize();
+	}
+
+	private ElfCompressedSectionHeader readCompressedSectionHeader() {
+		try {
+			if (!isValidForCompressed(reader.length())) {
+				throw new IOException(
+					"Invalid compressed section: %s".formatted(getNameAsString()));
+			}
+			ElfCompressedSectionHeader result =
+				ElfCompressedSectionHeader.read(getRawSectionReader(), header);
+			if (!isSupportedCompressionType(result.getCh_type())) {
+				throw new IOException("Unknown ELF section compression type 0x%x for section %s"
+						.formatted(compressedHeader.getCh_type(), getNameAsString()));
+			}
+			return result;
+		}
+		catch (IOException e) {
+			Msg.warn(this, "Error reading compressed section information: " + e);
+			Msg.debug(this, "Error reading compressed section information", e);
+		}
+		return null;
+	}
+
+	private boolean isValidForCompressed(long streamLength) {
+		long endOffset = sh_offset + sh_size;
+		return !isAlloc() && sh_offset >= 0 && sh_size > 0 && endOffset > 0 &&
+			endOffset <= streamLength;
 	}
 
 	ElfSectionHeader(ElfHeader header, MemoryBlock block, int sh_name, long imageBase)
@@ -185,40 +219,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * @see ghidra.app.util.bin.format.Writeable#write(java.io.RandomAccessFile, ghidra.util.DataConverter)
-	 */
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		raf.write(dc.getBytes(sh_name));
-		raf.write(dc.getBytes(sh_type));
-
-		if (header.is32Bit()) {
-			raf.write(dc.getBytes((int) sh_flags));
-			raf.write(dc.getBytes((int) sh_addr));
-			raf.write(dc.getBytes((int) sh_offset));
-			raf.write(dc.getBytes((int) sh_size));
-		}
-		else if (header.is64Bit()) {
-			raf.write(dc.getBytes(sh_flags));
-			raf.write(dc.getBytes(sh_addr));
-			raf.write(dc.getBytes(sh_offset));
-			raf.write(dc.getBytes(sh_size));
-		}
-
-		raf.write(dc.getBytes(sh_link));
-		raf.write(dc.getBytes(sh_info));
-
-		if (header.is32Bit()) {
-			raf.write(dc.getBytes((int) sh_addralign));
-			raf.write(dc.getBytes((int) sh_entsize));
-		}
-		else if (header.is64Bit()) {
-			raf.write(dc.getBytes(sh_addralign));
-			raf.write(dc.getBytes(sh_entsize));
-		}
-	}
-
-	/**
 	 * If the section will appear in the memory image of a process, this 
 	 * member gives the address at which the section's first byte 
 	 * should reside. Otherwise, the member contains 0.
@@ -237,7 +237,9 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 * @return the section address alignment constraints
 	 */
 	public long getAddressAlignment() {
-		return sh_addralign;
+		return compressedHeader == null
+				? sh_addralign
+				: compressedHeader.getCh_addralign();
 	}
 
 	/**
@@ -281,6 +283,28 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 */
 	public boolean isAlloc() {
 		return header.getLoadAdapter().isSectionAllocated(this);
+	}
+
+	/**
+	 * Returns true if this section is compressed in a supported manner.  This does NOT include
+	 * sections that carry compressed data, such as ".zdebuginfo" type sections.
+	 * 
+	 * @return true if the section was compressed and needs to be decompressed, false if normal
+	 * section
+	 */
+	public boolean isCompressed() {
+		return compressedHeader != null;
+	}
+
+	private boolean isSupportedCompressionType(int compressionType) {
+		return switch ( compressionType ) {
+			case ElfCompressedSectionHeader.ELFCOMPRESS_ZLIB -> true;
+			default -> false;
+		};
+	}
+
+	private boolean isNoBits() {
+		return sh_type == ElfSectionHeaderConstants.SHT_NOBITS;
 	}
 
 	/**
@@ -408,15 +432,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * Sets the section's size.
-	 * @param size the new size of the section
-	 */
-	public void setSize(long size) {
-		this.sh_size = size;
-		checkSize();
-	}
-
-	/**
 	 * This member gives the section's size in bytes. Unless the section type is
 	 * SHT_NOBITS, the section occupies sh_size bytes in the file. A section of type
 	 * SHT_NOBITS may have a non-zero size, but it occupies no space in the file.
@@ -427,14 +442,35 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * Get the adjusted size of the section in bytes (i.e., memory block) which relates to this section header; it may be zero
-	 * if no block should be created.  The returned value reflects any adjustment the ElfExtension may require
-	 * based upon the specific processor/language implementation which may require filtering of file bytes
-	 * as read into memory.
-	 * @return the number of bytes in the resulting memory block
+	 * Returns the logical size of this section, possibly affected by compression.
+	 * 
+	 * @return logical size of this section, see {@link #getSize()}
 	 */
-	public long getAdjustedSize() {
-		return header.getLoadAdapter().getAdjustedSize(this);
+	public long getLogicalSize() {
+		return compressedHeader == null
+				? sh_size
+				: compressedHeader.getCh_size();
+	}
+
+	@Override
+	public boolean hasFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, Address start) {
+		return isCompressed() ||
+			header.getLoadAdapter().hasFilteredLoadInputStream(elfLoadHelper, this, start);
+	}
+
+	@Override
+	public InputStream getFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, Address start,
+			long dataLength, BiConsumer<String, Throwable> errorConsumer) throws IOException {
+		InputStream is = isCompressed()
+				? getDecompressedDataStream(dataLength, errorConsumer)
+				: getRawInputStream();
+		return header.getLoadAdapter()
+				.getFilteredLoadInputStream(elfLoadHelper, this, start, dataLength, is);
+	}
+
+	@Override
+	public InputStream getRawInputStream() throws IOException {
+		return getRawSectionByteProvider().getInputStream(0);
 	}
 
 	/**
@@ -458,36 +494,46 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		return "SHT_0x" + StringUtilities.pad(Integer.toHexString(sh_type), '0', 8);
 	}
 
-	/**
-	 * Returns the actual data bytes from the file for this section
-	 * @return the actual data bytes from the file for this section
-	 * @throws IOException if an I/O error occurs while reading the file
-	 */
-	public byte[] getData() throws IOException {
-		if (sh_type == ElfSectionHeaderConstants.SHT_NOBITS) {
-			return new byte[0];
+	private InputStream getDecompressedDataStream(long dataLength,
+			BiConsumer<String, Throwable> errorConsumer) throws IOException {
+		if (compressedHeader == null || dataLength != compressedHeader.getCh_size()) {
+			throw new UnsupportedOperationException();
 		}
-		if (data != null) {
-			return data;
-		}
-		if (reader == null) {
-			throw new UnsupportedOperationException("This ElfSectionHeader does not have a reader");
-		}
-		return reader.readByteArray(sh_offset, (int) sh_size);
+
+		int skip = compressedHeader.getHeaderSize();
+		InputStream is = getRawSectionByteProvider().getInputStream(skip);
+
+		is = getDecompressionStream(is);
+
+		return new FaultTolerantInputStream(is, compressedHeader.getCh_size(), errorConsumer);
 	}
 
-	/**
-	 * Returns an input stream starting at offset into
-	 * the byte provider.
-	 * NOTE: Do not use this method if you have called setData().
-	 * @return the input stream 
-	 * @throws IOException if an I/O error occurs
-	 */
-	public InputStream getDataStream() throws IOException {
+	private ByteProvider getRawSectionByteProvider() {
 		if (reader == null) {
 			throw new UnsupportedOperationException("This ElfSectionHeader does not have a reader");
 		}
-		return reader.getByteProvider().getInputStream(sh_offset);
+		if (isNoBits()) {
+			return ByteProvider.EMPTY_BYTEPROVIDER;
+		}
+		return new ByteProviderWrapper(reader.getByteProvider(), sh_offset, sh_size);
+	}
+
+	private BinaryReader getRawSectionReader() throws IOException {
+		return new BinaryReader(getRawSectionByteProvider(), header.isLittleEndian());
+	}
+
+	private InputStream getDecompressionStream(InputStream compressedStream) throws IOException {
+		switch (compressedHeader.getCh_type()) {
+			case ElfCompressedSectionHeader.ELFCOMPRESS_ZLIB:
+				Msg.debug(this,
+					"Decompressing ELF section %s, original/decompressed size: 0x%x/0x%x"
+							.formatted(getNameAsString(), sh_size, compressedHeader.getCh_size()));
+				return new InflaterInputStream(compressedStream);
+			default:
+				throw new IOException("Unknown ELF section compression type 0x%x for section %s"
+						.formatted(compressedHeader.getCh_type(), getNameAsString()));
+		}
+
 	}
 
 	/**
@@ -496,28 +542,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 */
 	public BinaryReader getReader() {
 		return reader;
-	}
-
-	/**
-	 * Sets the actual data bytes for this section.
-	 * If the data is larger than the previous data, then 
-	 * the offset is set to -1 and the section will
-	 * need to be relocated.
-	 * @param data the new data byte for this section
-	 */
-	public void setData(byte[] data) {
-		bytesChanged = true;
-		if (sh_type == ElfSectionHeaderConstants.SHT_NOBITS) {
-			throw new IllegalArgumentException("Cannot set data on section with type: SHT_NOBITS");
-		}
-		this.data = data;
-		//if the data has been increased, then this section
-		//will need to be relocated in the file
-		if (data.length > sh_size) {
-			modified = true;
-			sh_offset = -1;
-		}
-		sh_size = data.length;
 	}
 
 	/**
@@ -539,21 +563,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * Sets the offset of this section. The offset is the actual byte
-	 * offset into the file.
-	 * @param offset the file byte offset
-	 * @throws IOException if an I/O occurs
-	 */
-	public void setOffset(long offset) throws IOException {
-		modified = true;
-		/*if we are overriding the offset, we must cache the section data*/
-		if (data == null) {
-			data = getData();
-		}
-		this.sh_offset = offset;
-	}
-
-	/**
 	 * Sets the start address of this section.
 	 * @param addr the new start address of this section
 	 */
@@ -564,15 +573,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		}
 		this.sh_addr = header.unadjustAddressForPrelink(addr);
 	}
-
-	/**
-	 * Sets the name of this section (may get changed due to conflict)
-	 * @param name section name
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
-
+	
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
@@ -627,13 +628,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 			typeEnum.add(type.name, type.value);
 		}
 		return typeEnum;
-	}
-
-	private void checkSize() {
-		if (sh_size > Integer.toUnsignedLong(Integer.MAX_VALUE)) {
-			throw new UnsupportedOperationException(
-				"ELF Section is too large: 0x" + Long.toHexString(sh_size));
-		}
 	}
 
 	@Override

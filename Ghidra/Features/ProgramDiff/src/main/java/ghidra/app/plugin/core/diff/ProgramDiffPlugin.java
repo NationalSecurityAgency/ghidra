@@ -17,9 +17,9 @@ package ghidra.app.plugin.core.diff;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -32,6 +32,8 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.FieldMouseListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
@@ -48,6 +50,7 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.app.util.viewer.util.FieldNavigator;
+import ghidra.framework.main.GetDomainObjectTask;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
@@ -57,12 +60,11 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
 import ghidra.util.task.*;
 import help.Help;
 import help.HelpService;
-import resources.ResourceManager;
 
 /**
  * Plugin that shows the differences between two programs, and allows the user to apply differences
@@ -81,7 +83,8 @@ import resources.ResourceManager;
 			"the current program.  This plugin also computes differences between the two " +
 			"programs and allows the user to apply differences from the second program onto" +
 			"the first.",
-	servicesRequired = { GoToService.class, CodeViewerService.class, MarkerService.class },
+	servicesRequired = { GoToService.class, CodeViewerService.class, MarkerService.class, 
+		ProgramManager.class },
 	servicesProvided = { DiffService.class },
 	eventsProduced = { ProgramSelectionPluginEvent.class, ViewChangedPluginEvent.class },
 	eventsConsumed = { ProgramClosedPluginEvent.class, ViewChangedPluginEvent.class }
@@ -91,14 +94,16 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		implements ProgramLocationListener, ProgramSelectionListener, DiffControllerListener,
 		DiffService, OptionsChangeListener, DomainObjectListener {
 
-	private ImageIcon CURSOR_LOC_ICON = ResourceManager.loadImage("images/cursor_arrow.gif");
+	private static final Icon CURSOR_LOC_ICON =
+		new GIcon("icon.plugin.programdiff.cursor.location");
 	private static final String SELECTION_GROUP = "Selection Colors";
 	private static final String DIFF_HIGHLIGHT_COLOR_NAME =
 		SELECTION_GROUP + Options.DELIMITER + "Difference Color";
-	private Color diffHighlightColor = new Color(255, 230, 180); // light orange
-	private Color cursorHighlightColor;
+	private GColor diffHighlightColor = new GColor("color.bg.plugin.programdiff.highlight");
+	private Color cursorHighlightColor = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	protected static final HelpService help = Help.getHelpService();
 
+	private ProgramManager programManagerService;
 	private GoToService goToService;
 	private CodeViewerService codeViewerService;
 	private MarkerManager markerManager;
@@ -137,7 +142,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	private DiffDetailsProvider diffDetailsProvider;
 	private boolean settingLocation;
 
-	private ActionListener okListener;
 	private DiffTaskListener diffTaskListener = DiffTaskListener.NULL_LISTENER;
 	private ProgramLocation previousP1Location;
 
@@ -146,7 +150,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	DiffApplySettingsOptionManager applySettingsMgr;
 	private boolean isHighlightCursorLine;
 	private Program activeProgram;
-	private OpenVersionedFileDialog openProgramDialog;
+	private OpenVersionedFileDialog<Program> openVersionedFileDialog;
 
 	/**
 	 * Creates the plugin for indicating program differences to the user.
@@ -287,7 +291,11 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			ProgramSelection previousP2DiffHighlight = p2DiffHighlight;
 			ProgramSelection previousP2Selection = p2Selection;
 
+			AddressSet p2ViewAddrSet =
+				DiffUtility.getCompatibleAddressSet(p1ViewAddrSet, secondaryDiffProgram);
+			diffListingPanel.setView(p2ViewAddrSet);
 			FieldPanel fp = diffListingPanel.getFieldPanel();
+
 			AddressSet p1AddressSetAsP2 =
 				DiffUtility.getCompatibleAddressSet(p1AddressSet, secondaryDiffProgram);
 			AddressIndexMap p2IndexMap = new AddressIndexMap(p1AddressSetAsP2);
@@ -325,8 +333,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public boolean inProgress() {
-		return taskInProgress;
+	public boolean isDiffActive() {
+		return secondaryDiffProgram != null;
 	}
 
 	private boolean launchDiffOnOpenProgram() {
@@ -334,7 +342,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			if (diffControl != null) { // There is currently a Diff already so clear it.
 				clearDiff();
 			}
-			diff(p1ViewAddrSet);
+			diff();
 			return true;
 		}
 		catch (Exception e) {
@@ -345,6 +353,13 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 	@Override
 	public boolean launchDiff(DomainFile otherProgram) {
+		if (taskInProgress) {
+			Msg.error(this, "Diff is busy and can't be launched");
+			return false;
+		}
+		if (isDiffActive()) {
+			closeProgram2();
+		}
 		if (openSecondProgram(otherProgram)) {
 			return launchDiffOnOpenProgram();
 		}
@@ -353,20 +368,18 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 	@Override
 	public boolean launchDiff(Program otherProgram) {
-		try {
-			if (diffControl != null) { // There is currently a Diff already so clear it.
-				clearDiff();
-			}
-			if (openSecondProgram(otherProgram, null)) {
-				secondaryDiffProgram.addConsumer(this);
-				diff(p1ViewAddrSet);
-			}
-			return true;
-		}
-		catch (Exception e) {
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+		if (taskInProgress) {
+			Msg.error(this, "Diff is busy and can't be launched");
 			return false;
 		}
+		if (isDiffActive()) {
+			closeProgram2();
+		}
+		otherProgram.addConsumer(this);
+		if (openSecondProgram(otherProgram, null)) {
+			launchDiffOnOpenProgram();
+		}
+		return true;
 	}
 
 	@Override
@@ -375,11 +388,9 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		boolean diffHighlightChanged = false;
 		if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
 			if (optionsName.equals(DIFF_HIGHLIGHT_COLOR_NAME)) {
-				diffHighlightColor = ((Color) newValue);
 				diffHighlightChanged = true;
 			}
 			else if (optionsName.equals(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR)) {
-				cursorHighlightColor = (Color) newValue;
 				if (p2CursorMarkers != null) {
 					p2CursorMarkers.setMarkerColor(cursorHighlightColor);
 				}
@@ -396,7 +407,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		}
 
 		if (diffHighlightChanged) {
-			diffHighlightColor = ((Color) newValue);
 
 			MarkerSet diffMarkers = getDiffMarkers();
 			diffMarkers.setMarkerColor(diffHighlightColor);
@@ -488,8 +498,12 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		}
 	}
 
-	void setOpenDiffProgramDialog(OpenVersionedFileDialog dialog) {
-		this.openProgramDialog = dialog;
+	/**
+	 * Used for testing to force file selection dialog instance.
+	 * @param dialog project file selection dialog
+	 */
+	void setDiffOpenVersionedFileDialog(OpenVersionedFileDialog<Program> dialog) {
+		this.openVersionedFileDialog = dialog;
 	}
 
 	private void setActiveProgram(Program newActiveProgram) {
@@ -566,6 +580,11 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		if (diffDetailsProvider != null) {
 			diffDetailsProvider.removeActionListener(diffDetailsListener);
 		}
+
+		if (executeDiffDialog != null) {
+			executeDiffDialog.dispose();
+		}
+
 		actionManager.dispose();
 		applySettingsMgr.dispose();
 		markerManager.dispose();
@@ -576,6 +595,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	protected void init() {
 		codeViewerService = tool.getService(CodeViewerService.class);
 		goToService = tool.getService(GoToService.class);
+		programManagerService = tool.getService(ProgramManager.class);
 
 		FormatManager formatManager = codeViewerService.getFormatManager();
 		ServiceProvider diffServiceProvider =
@@ -789,7 +809,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			return;
 		}
 
-		if (primaryProgram.getCurrentTransaction() != null) {
+		if (primaryProgram.getCurrentTransactionInfo() != null) {
 			String msg = "Cannot apply differences while another task is modifying \"" +
 				primaryProgram.getName() + "\"." +
 				"\nTry again when the currently executing task has completed.";
@@ -936,20 +956,10 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Computes the differences between program1 and program2 that are displayed in the browser
-	 * using the current Limiting set. It allows the user to specify the Diff settings to use.
-	 */
-	void diff() {
-		diff(createLimitingSet());
-	}
-
-	/**
 	 * Computes the differences between program1 and program2 that are displayed in the browser. It
 	 * allows the user to specify the Diff settings to use.
-	 *
-	 * @param p1LimitSet an address set to use to limit the extent of the Diff.
 	 */
-	void diff(AddressSetView p1LimitSet) {
+	void diff() {
 		if (taskInProgress) {
 			Msg.showInfo(getClass(), tool.getToolFrame(), "Can't Start Another Diff",
 				"A Diff or Apply is already in progress.");
@@ -957,10 +967,10 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		}
 		boolean reload = diffControl != null;
 		if (reload) {
-			reloadDiff(p1LimitSet);
+			reloadDiff();
 		}
 		else {
-			createDiff(p1LimitSet);
+			createDiff();
 		}
 	}
 
@@ -1088,50 +1098,77 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			return;
 		}
 
-		final OpenVersionedFileDialog dialog = getOpenProgramDialog();
-		okListener = e -> {
-			tool.clearStatusInfo();
-			JComponent component = dialog.getComponent();
+		selectAndOpenProgram2();
 
-			DomainObject dobj = dialog.getVersionedDomainObject(ProgramDiffPlugin.this, false);
-			if (dobj != null) {
-				if (openSecondProgram((Program) dobj, component)) {
-					dialog.close();
-					launchDiffOnOpenProgram();
-				}
-				return;
-			}
-
-			DomainFile df = dialog.getDomainFile();
-			if (df != null) {
-				if (openSecondProgram(df)) {
-					dialog.close();
-					launchDiffOnOpenProgram();
-				}
-				return;
-			}
-
-			displayStatus(component, "Can't Open Selected Program",
-				"Please select a file, not a folder.", OptionDialog.INFORMATION_MESSAGE);
-		};
-		dialog.addOkActionListener(okListener);
-
-		dialog.showComponent();
 		actionManager.setOpenCloseActionSelected(secondaryDiffProgram != null);
 		getDiffDetailsProvider();
 	}
 
-	private OpenVersionedFileDialog getOpenProgramDialog() {
+	/**
+	 * Generate a list of programs which are currently open in the tool which are compatible
+	 * with the primaryProgram to be diff'd.  The top/primary entries correspond to this 
+	 * programs which have the same name (see {@link Program#getName()}) as the primaryProgram, 
+	 * while the remaining compatible programs will be considered secondary.  Each of these
+	 * two groups will be sorted by its domain file name then concatenated to form a single list.  
+	 * @return ordered open program list for use with the {@link OpenVersionedFileDialog}.
+	 */
+	private List<Program> getOpenProgramList() {
+		List<Program> primaryList = new ArrayList<>();
+		List<Program> secondaryList = new ArrayList<>();
+		for (Program p : programManagerService.getAllOpenPrograms()) {
+			if (!programManagerService.isVisible(p) || p == activeProgram ||
+				!ProgramMemoryComparator.similarPrograms(activeProgram, p)) {
+				continue;
+			}
+			if (p.getName().equals(activeProgram.getName())) {
+				primaryList.add(p);
+			}
+			else {
+				secondaryList.add(p);
+			}
+		}
+		Comparator<Program> programComparator = (a, b) -> {
+			return a.getDomainFile().getName().compareTo(b.getDomainFile().getName());
+		};
+		Collections.sort(primaryList, programComparator);
+		Collections.sort(secondaryList, programComparator);
 
-		if (openProgramDialog != null) {
-			return openProgramDialog;
+		List<Program> programList = new ArrayList<>();
+		programList.addAll(primaryList);
+		programList.addAll(secondaryList);
+		return programList;
+	}
+
+	private void selectAndOpenProgram2() {
+		final OpenVersionedFileDialog<Program> dialog = getOpenVersionedFileDialog();
+
+		List<Program> openProgramList = getOpenProgramList();
+		dialog.setOpenObjectChoices(openProgramList.isEmpty() ? null : openProgramList);
+
+		dialog.addOkActionListener(e -> {
+			tool.clearStatusInfo();
+			JComponent component = dialog.getComponent();
+
+			Program dobj = dialog.getDomainObject(ProgramDiffPlugin.this, true);
+			if (dobj != null) {
+				if (openSecondProgram(dobj, component)) {
+					dialog.close();
+					launchDiffOnOpenProgram();
+				}
+				return;
+			}
+		});
+		dialog.showComponent();
+	}
+
+	private OpenVersionedFileDialog<Program> getOpenVersionedFileDialog() {
+
+		if (openVersionedFileDialog != null) {
+			return openVersionedFileDialog;
 		}
 
-		OpenVersionedFileDialog dialog =
-			new OpenVersionedFileDialog(tool, "Select Other Program", f -> {
-				Class<?> c = f.getDomainObjectClass();
-				return Program.class.isAssignableFrom(c);
-			});
+		OpenVersionedFileDialog<Program> dialog =
+			new OpenVersionedFileDialog<>(tool, "Select Other Program", Program.class);
 		dialog.setTreeSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		dialog.setHelpLocation(new HelpLocation("Diff", "Open_Close_Program_View"));
 		return dialog;
@@ -1145,12 +1182,10 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			executeDiffDialog = new ExecuteDiffDialog();
 			executeDiffDialog.addActionListener(new DiffActionListener());
 		}
-		if (executeDiffDialog != null) {
-			executeDiffDialog.configure(primaryProgram, secondaryDiffProgram, currentSelection,
-				execDiffFilter);
-			executeDiffDialog.setPgmContextEnabled(sameProgramContext);
-			tool.showDialog(executeDiffDialog);
-		}
+		executeDiffDialog.configure(primaryProgram, secondaryDiffProgram, currentSelection,
+			execDiffFilter);
+		executeDiffDialog.setPgmContextEnabled(sameProgramContext);
+		tool.showDialog(executeDiffDialog);
 	}
 
 	void setP1SelectionOnP2() {
@@ -1253,7 +1288,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		if (primaryProgram == null) {
 			return null;
 		}
-		if (executeDiffDialog != null) {
+		if (executeDiffDialog != null) { // TODO: don't reuse if it could change
 			return executeDiffDialog.getAddressSet();
 		}
 		AddressSet limitSet = new AddressSet(primaryProgram.getMemory());
@@ -1267,37 +1302,28 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	/**
 	 * Reload the marked differences in the diff panel.
 	 */
-	private void reloadDiff(AddressSetView p1LimitSet) {
+	private void reloadDiff() {
 		if (diffControl == null) {
-			createDiff(p1LimitSet);
+			createDiff();
 		}
 		else {
 			tool.clearStatusInfo();
-			if (p1LimitSet == null) {
-				p1LimitSet = createLimitingSet();
-			}
 			displayExecuteDiff();
 		}
 	}
 
-	private void createDiff(AddressSetView p1LimitSet) {
+	private void createDiff() {
 		Frame frame = tool.getToolFrame();
 		try {
 			frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 			tool.clearStatusInfo();
 
 			if (secondaryDiffProgram == null) {
-				selectProgram2();
-				if (secondaryDiffProgram == null) {
-					return;
-				}
+				throw new AssertException("Expected secondaryDiffProgram");
 			}
 			if (executeDiffDialog != null) {
 				executeDiffDialog.close();
 				executeDiffDialog = null;
-			}
-			if (p1LimitSet == null) {
-				p1LimitSet = createLimitingSet();
 			}
 			displayExecuteDiff();
 		}
@@ -1397,14 +1423,11 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	private void setupOptions() {
 		String OPTIONS_TITLE = GhidraOptions.CATEGORY_BROWSER_FIELDS;
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
-		opt.registerOption(DIFF_HIGHLIGHT_COLOR_NAME, diffHighlightColor,
+		opt.registerThemeColorBinding(DIFF_HIGHLIGHT_COLOR_NAME, diffHighlightColor.getId(),
 			new HelpLocation("CodeBrowserPlugin", "Browser_Fields"),
 			"Color used to highlight differences between two programs.");
-		Color c = opt.getColor(DIFF_HIGHLIGHT_COLOR_NAME, diffHighlightColor);
-		diffHighlightColor = c;
 		opt.addOptionsChangeListener(this);
 
-		cursorHighlightColor = opt.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR, null);
 		isHighlightCursorLine = opt.getBoolean(GhidraOptions.HIGHLIGHT_CURSOR_LINE, false);
 	}
 
@@ -1511,43 +1534,46 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	}
 
 	private boolean openSecondProgram(DomainFile df) {
+		if (!Program.class.isAssignableFrom(df.getDomainObjectClass())) {
+			Msg.error(this, "Failed to launch Diff for non-Program file: " + df.getName());
+			return false;
+		}
 
-		OpenSecondProgramTask task = new OpenSecondProgramTask(df);
+		GetDomainObjectTask task =
+			new GetDomainObjectTask(this, df, DomainFile.DEFAULT_VERSION, true);
 		new TaskLauncher(task, tool.getToolFrame(), 500);
 		// block until the task completes
 
-		if (!task.wasCanceled()) {
-			Program newProgram = task.getDiffProgram();
-			if (newProgram != null) {
-				return openSecondProgram(newProgram, null);
-			}
+		Program newProgram = (Program) task.getDomainObject();
+		if (newProgram != null) {
+			return openSecondProgram(newProgram, null);
 		}
 		return false;
 	}
 
-	private boolean openSecondProgram(Program newProgram, JComponent selectDialog) {
+	private boolean openSecondProgram(Program newProgram, JComponent popupParent) {
 		if (newProgram == null) {
-			displayStatus(selectDialog, "Can't Open Selected Program",
+			displayStatus(popupParent, "Can't Open Selected Program",
 				"Couldn't open second program.", OptionDialog.ERROR_MESSAGE);
 			return false;
 		}
 
 		if (!ProgramMemoryComparator.similarPrograms(currentProgram, newProgram)) {
-			newProgram.release(this);
 			String message = "Programs languages don't match.\n" + currentProgram.getName() + " (" +
 				currentProgram.getLanguageID() + ")\n" + newProgram.getName() + " (" +
 				newProgram.getLanguageID() + ")";
-			displayStatus(selectDialog, "Can't Open Selected Program", message,
+			displayStatus(popupParent, "Can't Open Selected Program", message,
 				OptionDialog.ERROR_MESSAGE);
+			newProgram.release(this);
 			return false;
 		}
 		ProgramMemoryComparator programMemoryComparator = null;
 		try {
-
 			programMemoryComparator = new ProgramMemoryComparator(currentProgram, newProgram);
 		}
 		catch (ProgramConflictException e) {
 			Msg.error(this, "Unexpected exception creating memory comparator", e);
+			newProgram.release(this);
 			return false;
 		}
 		addressesOnlyInP1 = programMemoryComparator.getAddressesOnlyInOne();
@@ -1556,7 +1582,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		AddressSet combinedAddresses =
 			ProgramMemoryComparator.getCombinedAddresses(currentProgram, newProgram);
 		if (addressesInCommon.isEmpty()) {
-			int selectedOption = OptionDialog.showYesNoDialog(selectDialog, "No Memory In Common",
+			int selectedOption = OptionDialog.showYesNoDialog(popupParent, "No Memory In Common",
 				"The two programs have no memory addresses in common.\n" +
 					"Do you want to continue?");
 			if (selectedOption != OptionDialog.YES_OPTION) {
@@ -1828,71 +1854,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 					EventTrigger.GUI_ACTION);
 				updatePgm2Enablement();
 			}
-		}
-	}
-
-	private class OpenSecondProgramTask extends Task {
-		private DomainFile domainFile;
-		private Program diffProgram;
-		private TaskMonitor monitor;
-
-		OpenSecondProgramTask(DomainFile domainFile) {
-			super("Opening Program for Diff", true, true, true);
-			this.domainFile = domainFile;
-		}
-
-		@Override
-		public void run(TaskMonitor tm) {
-			this.monitor = tm;
-			try {
-				try {
-					monitor.setMessage("Waiting on program file...");
-					diffProgram =
-						(Program) domainFile.getImmutableDomainObject(ProgramDiffPlugin.this,
-							DomainFile.DEFAULT_VERSION, monitor);
-				}
-				catch (VersionException e) {
-					if (e.isUpgradable()) {
-						try {
-							diffProgram =
-								(Program) domainFile.getReadOnlyDomainObject(ProgramDiffPlugin.this,
-									DomainFile.DEFAULT_VERSION, monitor);
-						}
-						catch (VersionException exc) {
-							Msg.showError(this, null, "Error Getting Diff Program",
-								"Getting read only file failed");
-						}
-						catch (IOException exc) {
-							if (!monitor.isCancelled()) {
-								Msg.showError(this, null, "Error Getting Diff Program",
-									"Getting read only file failed", exc);
-							}
-						}
-					}
-					else {
-						Msg.showError(this, null, "Error Getting Diff Program",
-							"File cannot be upgraded.");
-
-					}
-				}
-				catch (IOException e) {
-					Msg.showError(this, null, "Error Getting Diff Program",
-						"Getting read only file failed", e);
-				}
-			}
-			catch (CancelledException e) {
-				// For now do nothing if user cancels
-			}
-
-			monitor.setMessage("");
-		}
-
-		boolean wasCanceled() {
-			return monitor.isCancelled();
-		}
-
-		Program getDiffProgram() {
-			return diffProgram;
 		}
 	}
 

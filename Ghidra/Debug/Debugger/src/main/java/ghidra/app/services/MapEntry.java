@@ -15,13 +15,10 @@
  */
 package ghidra.app.services;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceLocation;
+import ghidra.trace.model.*;
 
 public interface MapEntry<T, P> {
 	Trace getFromTrace();
@@ -30,7 +27,7 @@ public interface MapEntry<T, P> {
 
 	AddressRange getFromRange();
 
-	Range<Long> getFromLifespan();
+	Lifespan getFromLifespan();
 
 	TraceLocation getFromTraceLocation();
 

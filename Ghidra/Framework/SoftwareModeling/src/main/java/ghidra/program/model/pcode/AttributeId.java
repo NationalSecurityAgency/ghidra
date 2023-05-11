@@ -175,15 +175,7 @@ public record AttributeId(String name, int id) {
 	public static final AttributeId ATTRIB_DELAY = new AttributeId("delay", 91);
 	public static final AttributeId ATTRIB_LOGICALSIZE = new AttributeId("logicalsize", 92);
 	public static final AttributeId ATTRIB_PHYSICAL = new AttributeId("physical", 93);
-	public static final AttributeId ATTRIB_PIECE1 = new AttributeId("piece1", 94);	// piece attributes must have sequential ids
-	public static final AttributeId ATTRIB_PIECE2 = new AttributeId("piece2", 95);
-	public static final AttributeId ATTRIB_PIECE3 = new AttributeId("piece3", 96);
-	public static final AttributeId ATTRIB_PIECE4 = new AttributeId("piece4", 97);
-	public static final AttributeId ATTRIB_PIECE5 = new AttributeId("piece5", 98);
-	public static final AttributeId ATTRIB_PIECE6 = new AttributeId("piece6", 99);
-	public static final AttributeId ATTRIB_PIECE7 = new AttributeId("piece7", 100);
-	public static final AttributeId ATTRIB_PIECE8 = new AttributeId("piece8", 101);
-	public static final AttributeId ATTRIB_PIECE9 = new AttributeId("piece9", 102);
+	public static final AttributeId ATTRIB_PIECE = new AttributeId("piece", 94);
 
 	// architecture
 	public static final AttributeId ATTRIB_ADJUSTVMA = new AttributeId("adjustvma", 103);

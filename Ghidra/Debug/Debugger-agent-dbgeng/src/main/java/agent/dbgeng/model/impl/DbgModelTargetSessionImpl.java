@@ -52,7 +52,7 @@ public class DbgModelTargetSessionImpl extends DbgModelTargetObjectImpl
 	// NB: This should almost certainly always be implemented by the root of the object tree
 
 	protected static String indexSession(DebugSessionId debugSystemId) {
-		return PathUtils.makeIndex(debugSystemId.id);
+		return debugSystemId.id();
 	}
 
 	protected static String indexSession(DbgSession session) {

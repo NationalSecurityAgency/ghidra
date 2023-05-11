@@ -26,6 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -129,11 +130,11 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 			throws MemoryAccessException, CancelledException;
 
 	protected void addRelocationTableEntry(Program program, Address chainLoc, int type,
-			long chainValue, byte[] origBytes, String name) throws MemoryAccessException {
+			long chainValue, int appliedByteLength, String name) {
 		// Add entry to relocation table for the pointer fixup
-		program.getMemory().getBytes(chainLoc, origBytes);
 		program.getRelocationTable()
-				.add(chainLoc, type, new long[] { chainValue }, origBytes, name);
+				.add(chainLoc, Status.APPLIED, type, new long[] { chainValue }, appliedByteLength,
+					name);
 	}
 
 	/**
@@ -153,7 +154,7 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 
 		// Create pointers at any fixed-up addresses
 		for (Address addr : unchainedLocList) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			try {
 				program.getListing().createData(addr, Pointer64DataType.dataType);
 			}

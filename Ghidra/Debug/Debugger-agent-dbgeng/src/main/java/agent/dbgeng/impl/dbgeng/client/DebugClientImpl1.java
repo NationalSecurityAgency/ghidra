@@ -193,9 +193,19 @@ public class DebugClientImpl1 implements DebugClientInternal {
 
 	@Override
 	public void createProcess(DebugServerId si, String commandLine,
-			BitmaskSet<DebugCreateFlags> createFlags) {
+			String unusedInitialDirectory, String unusedEnvironment,
+			BitmaskSet<DebugCreateFlags> createFlags,
+			BitmaskSet<DebugEngCreateFlags> unusedEngCreateFlags,
+			BitmaskSet<DebugVerifierFlags> unusedVerifierFlags) {
 		ULONGLONG ullServer = new ULONGLONG(si.id);
 		ULONG ulFlags = new ULONG(createFlags.getBitmask());
+		if (unusedInitialDirectory != null) {
+			throw new UnsupportedOperationException(
+				"IDebugClient1 does not support 'initial directory'");
+		}
+		if (unusedEnvironment != null) {
+			throw new UnsupportedOperationException("IDebugClient1 does not support 'environment'");
+		}
 		COMUtils.checkRC(jnaClient.CreateProcess(ullServer, commandLine, ulFlags));
 	}
 

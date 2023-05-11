@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -37,7 +38,6 @@ import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Assuming a function <b>foo</b>, this plugin will show all callers of <b>foo</b> and all 
@@ -58,9 +58,8 @@ import resources.ResourceManager;
 public class CallTreePlugin extends ProgramPlugin {
 
 	static final Icon PROVIDER_ICON = Icons.ARROW_DOWN_RIGHT_ICON;
-	static final Icon FUNCTION_ICON = ResourceManager.loadImage("images/FunctionScope.gif");
-	static final Icon RECURSIVE_ICON =
-		ResourceManager.loadImage("images/arrow_rotate_clockwise.png");
+	static final Icon FUNCTION_ICON = new GIcon("icon.plugin.calltree.function");
+	static final Icon RECURSIVE_ICON = new GIcon("icon.plugin.calltree.recursive");
 
 	private List<CallTreeProvider> providers = new ArrayList<>();
 	private DockingAction showCallTreeFromMenuAction;

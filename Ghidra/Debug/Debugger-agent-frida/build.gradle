@@ -19,6 +19,8 @@ apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 
+apply from: "$rootProject.projectDir/gradle/debugger/hasExecutableJar.gradle"
+
 apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-frida'
 
@@ -33,68 +35,14 @@ dependencies {
 	testImplementation project(path: ':Debugger-gadp', configuration: 'testArtifacts')
 }
 
-def boolean filterJar(File jarfile) {
-	if (jarfile.name.contains("gradle-api")) {
-		return false
-	} else if (jarfile.name.contains("groovy-all")) {
-		return false
-	} else if (jarfile.name.contains("gradle-installation-beacon")) {
-		return false
-	}
-	return true
-}
-
-jar {
+tasks.nodepJar {
 	manifest {
 		attributes['Main-Class'] = 'agent.lldb.gadp.FridaGadpServer'
 	}
 }
 
-task configureNodepJar {
-	doLast {
-		configurations.default.files.forEach {
-			if (filterJar(it)) {
-				nodepJar.from(zipTree(it))
-			}
-		}
-	}
-}
-
-task nodepJar(type: Jar) {
-	inputs.file(file(jar.archivePath))
-	dependsOn(configureNodepJar)
-	dependsOn(jar)
-	
-	archiveAppendix = 'nodep'
-	manifest {
-		attributes['Main-Class'] = 'agent.lldb.gadp.FridaGadpServer'
-	}
-
-	from(zipTree(jar.archivePath))
-}
-
-task executableJar {
-	ext.execsh = file("src/main/sh/execjar.sh")
-	ext.jarfile = file(nodepJar.archivePath)
+tasks.executableJar {
 	ext.outjar = file("${buildDir}/bin/gadp-agent-frida")
-	dependsOn(nodepJar)
-	inputs.file(execsh)
-	inputs.file(jarfile)
-	outputs.file(outjar)
-	doLast {
-		outjar.parentFile.mkdirs()
-		outjar.withOutputStream { output ->
-			execsh.withInputStream { input ->
-				output << input
-			}
-			jarfile.withInputStream { input ->
-				output << input
-			}
-		}
-		exec {
-			commandLine("chmod", "+x", outjar)
-		}
-	}
 }
 
 test {

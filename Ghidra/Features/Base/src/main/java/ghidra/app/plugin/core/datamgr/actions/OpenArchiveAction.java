@@ -36,7 +36,6 @@ import ghidra.framework.GenericRunInfo;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.util.Msg;
-import ghidra.util.filechooser.ExtensionFileFilter;
 
 public class OpenArchiveAction extends DockingAction {
 
@@ -59,14 +58,14 @@ public class OpenArchiveAction extends DockingAction {
 		GhidraFileChooser fileChooser = new GhidraFileChooser(tree);
 
 		File archiveDirectory = getArchiveDirectory();
-		fileChooser.setFileFilter(new ExtensionFileFilter(
-			new String[] { FileDataTypeManager.EXTENSION }, "Ghidra Data Type Files"));
+		fileChooser.setFileFilter(FileDataTypeManager.GDT_FILEFILTER);
 		fileChooser.setCurrentDirectory(archiveDirectory);
 		fileChooser.setApproveButtonText("Open DataType Archive File");
 		fileChooser.setApproveButtonToolTipText("Open DataType Archive File");
 
 		DataTypeManagerHandler manager = plugin.getDataTypeManagerHandler();
 		File file = fileChooser.getSelectedFile();
+		fileChooser.dispose();
 		if (file == null) {
 			return;
 		}

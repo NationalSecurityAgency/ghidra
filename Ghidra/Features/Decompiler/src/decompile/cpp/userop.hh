@@ -16,10 +16,12 @@
 /// \file userop.hh
 /// \brief Classes for more detailed definitions of user defined p-code operations
 
-#ifndef __CPUI_USEROP__
-#define __CPUI_USEROP__
+#ifndef __USEROP_HH__
+#define __USEROP_HH__
 
 #include "typeop.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_FARPOINTER;	///< Marshaling attribute "farpointer"
 extern AttributeId ATTRIB_INPUTOP;	///< Marshaling attribute "inputop"
@@ -44,6 +46,7 @@ extern ElementId ELEM_SEGMENTOP;	///< Marshaling element \<segmentop>
 /// its CALLOTHER index.  A facility for reading in implementation details is provided via decode().
 class UserPcodeOp {
 public:
+  /// \brief Enumeration of different boolean properties that can be assigned to a CALLOTHER
   enum userop_flags {
     annotation_assignment = 1,	///< Displayed as assignment, `in1 = in2`, where the first parameter is an annotation
     no_operator = 2		///< Don't emit special token, just emit the first input parameter as expression
@@ -300,4 +303,5 @@ public:
 			    const vector<string> &inname,const string &snippet,Architecture *glb);
 };
 
+} // End namespace ghidra
 #endif

@@ -16,12 +16,12 @@
 package ghidra.app.plugin.core.symboltree.actions;
 
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.app.context.ProgramSymbolActionContext;
 import ghidra.app.context.ProgramSymbolContextAction;
 import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.*;
-import resources.ResourceManager;
 
 public class GoToExternalLocationAction extends ProgramSymbolContextAction {
 
@@ -32,7 +32,7 @@ public class GoToExternalLocationAction extends ProgramSymbolContextAction {
 		this.plugin = plugin;
 
 		setPopupMenuData(new MenuData(new String[] { "Go to External Location" },
-			ResourceManager.loadImage("images/searchm_obj.gif"), "0External"));
+			new GIcon("icon.plugin.symboltree.goto"), "0External"));
 	}
 
 	@Override

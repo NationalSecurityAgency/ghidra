@@ -27,7 +27,9 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
-import docking.framework.*;
+import docking.framework.ApplicationInformationDisplayFactory;
+import docking.framework.DockingApplicationConfiguration;
+import generic.application.GenericApplicationLayout;
 import ghidra.framework.*;
 import ghidra.framework.model.ToolServices;
 import ghidra.util.Msg;
@@ -61,7 +63,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	 * @throws IOException error causing application initialization failure
 	 */
 	public StandAloneApplication(String propertiesFilename) throws IOException {
-		this(new DockingApplicationLayout(readApplicationProperties(propertiesFilename)));
+		this(new GenericApplicationLayout(readApplicationProperties(propertiesFilename)));
 	}
 
 	/**
@@ -72,7 +74,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	 * @throws IOException error causing application initialization failure
 	 */
 	public StandAloneApplication(String name, String version) throws IOException {
-		this(new DockingApplicationLayout(name, version));
+		this(new GenericApplicationLayout(name, version));
 	}
 
 	/**

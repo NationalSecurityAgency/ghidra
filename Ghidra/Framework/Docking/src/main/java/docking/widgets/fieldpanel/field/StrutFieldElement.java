@@ -21,6 +21,7 @@ import java.awt.Graphics;
 import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.theme.GThemeDefaults.Colors;
 
 /**
  * Used to force a clip to happen by using this field with space characters and size that far
@@ -68,7 +69,7 @@ public class StrutFieldElement implements FieldElement {
 
 	@Override
 	public Color getColor(int charIndex) {
-		return Color.BLACK;
+		return Colors.FOREGROUND;
 	}
 
 	@Override

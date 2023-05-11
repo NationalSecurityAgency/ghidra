@@ -143,7 +143,7 @@ public class MakeStringsTask extends ProgramTask {
 		Data stringData = null;
 		try {
 			// TODO: Clearing all conflicts might be overly aggressive
-			stringData = DataUtilities.createData(program, address, dataTypeToCreate, length, false,
+			stringData = DataUtilities.createData(program, address, dataTypeToCreate, length,
 				DataUtilities.ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 			events.add(new StringAddedEvent(dataTypeToCreate, address, stringData.getLength()));
 		}

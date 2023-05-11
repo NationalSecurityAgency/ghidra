@@ -17,7 +17,6 @@ package ghidra.app.util;
 
 import java.awt.BorderLayout;
 import java.awt.FontMetrics;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -27,13 +26,14 @@ import javax.swing.border.Border;
 import javax.swing.event.*;
 
 import docking.widgets.combobox.GComboBox;
+import docking.widgets.table.FocusableEditor;
 import ghidra.program.model.address.*;
 
 /**
  * Panel for user input of addresses.  Handles case with multiple address
  * spaces.
  */
-public class AddressInput extends JPanel {
+public class AddressInput extends JPanel implements FocusableEditor {
 	private JTextField textField;
 	private JComboBox<AddressSpace> combo;
 	private boolean comboAdded;
@@ -45,19 +45,16 @@ public class AddressInput extends JPanel {
 	private JTextField spaceField;
 
 	private static final Comparator<AddressSpace> ADDRESS_SPACE_SORT_COMPARATOR =
-		new Comparator<>() {
-			@Override
-			public int compare(AddressSpace s1, AddressSpace s2) {
-				if (s1.isOverlaySpace()) {
-					if (!s2.isOverlaySpace()) {
-						return 1;
-					}
+		(s1, s2) -> {
+			if (s1.isOverlaySpace()) {
+				if (!s2.isOverlaySpace()) {
+					return 1;
 				}
-				else if (s2.isOverlaySpace()) {
-					return -1;
-				}
-				return s1.getName().compareTo(s2.getName());
 			}
+			else if (s2.isOverlaySpace()) {
+				return -1;
+			}
+			return s1.getName().compareTo(s2.getName());
 		};
 
 	/**
@@ -101,12 +98,7 @@ public class AddressInput extends JPanel {
 			}
 		});
 
-		combo.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ev) {
-				stateChanged();
-			}
-		});
+		combo.addActionListener(ev -> stateChanged());
 	}
 
 	/**
@@ -351,6 +343,16 @@ public class AddressInput extends JPanel {
 
 	public boolean isEditable() {
 		return textField.isEditable();
+	}
+
+	@Override
+	public void focusEditor() {
+		if (comboAdded) {
+			combo.requestFocusInWindow();
+		}
+		else {
+			textField.requestFocusInWindow();
+		}
 	}
 
 	private void stateChanged() {

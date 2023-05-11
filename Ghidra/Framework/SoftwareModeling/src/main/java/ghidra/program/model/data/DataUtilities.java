@@ -129,6 +129,22 @@ public final class DataUtilities {
 	}
 
 	/**
+	 * Create data where existing data may already exist.  Pointer datatype stacking will not
+	 * be performed.
+	 * @param program the program
+	 * @param addr data address (offcut data address only allowed if clearMode == ClearDataMode.CLEAR_ALL_CONFLICT_DATA)
+	 * @param newType new data-type being applied
+	 * @param length data length (used only for Dynamic newDataType which has canSpecifyLength()==true)
+	 * @param clearMode see CreateDataMode
+	 * @return new data created
+	 * @throws CodeUnitInsertionException if data creation failed
+	 */
+	public static Data createData(Program program, Address addr, DataType newType, int length,
+			ClearDataMode clearMode) throws CodeUnitInsertionException {
+		return createData(program, addr, newType, length, false, clearMode);
+	}
+
+	/**
 	 * Create data where existing data may already exist.
 	 * @param program the program
 	 * @param addr data address (offcut data address only allowed if clearMode == ClearDataMode.CLEAR_ALL_CONFLICT_DATA)
@@ -243,10 +259,10 @@ public final class DataUtilities {
 		DataTypeInstance dti;
 		if (length > 0 && (realType instanceof Dynamic) &&
 			((Dynamic) realType).canSpecifyLength()) {
-			dti = DataTypeInstance.getDataTypeInstance(newType, memBuf, length);
+			dti = DataTypeInstance.getDataTypeInstance(newType, memBuf, length, false);
 		}
 		else {
-			dti = DataTypeInstance.getDataTypeInstance(newType, memBuf);
+			dti = DataTypeInstance.getDataTypeInstance(newType, memBuf, false);
 		}
 
 		if (dti == null) {

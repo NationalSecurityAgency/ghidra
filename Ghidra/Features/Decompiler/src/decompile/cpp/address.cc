@@ -16,6 +16,8 @@
 #include "address.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_FIRST = AttributeId("first",27);
 AttributeId ATTRIB_LAST = AttributeId("last",28);
 AttributeId ATTRIB_UNIQ = AttributeId("uniq",29);
@@ -184,7 +186,7 @@ bool Address::isContiguous(int4 sz,const Address &loaddr,int4 losz) const
 }
 
 /// If \b this is (originally) a \e join address, reevaluate it in terms of its new
-/// \e offset and \e siz, changing the space and offset if necessary.
+/// \e offset and \e size, changing the space and offset if necessary.
 /// \param size is the new size in bytes of the underlying object
 void Address::renormalize(int4 size) {
   if (base->getType() == IPTR_JOIN)
@@ -991,3 +993,5 @@ int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r)
   }
   return 0;
 }
+
+} // End namespace ghidra

@@ -15,11 +15,11 @@
  */
 package ghidra.graph.support;
 
-import java.awt.Color;
 import java.awt.Dimension;
 
-import ghidra.graph.graphs.TestEdge;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.graphs.AbstractTestVertex;
+import ghidra.graph.graphs.TestEdge;
 import ghidra.graph.viewer.GraphViewer;
 
 /**
@@ -29,7 +29,7 @@ public class TestGraphViewer extends GraphViewer<AbstractTestVertex, TestEdge> {
 
 	public TestGraphViewer(TestGraphLayout layout, Dimension size) {
 		super(layout, size);
-		setBackground(Color.WHITE);
+		setBackground(Palette.WHITE);
 	}
 
 }

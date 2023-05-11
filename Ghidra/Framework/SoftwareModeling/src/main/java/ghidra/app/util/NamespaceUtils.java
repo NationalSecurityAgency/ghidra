@@ -166,18 +166,31 @@ public class NamespaceUtils {
 		}
 
 		List<String> namespaceNames = path.asList();
-		List<Namespace> namespaces = doGetNamespaces(namespaceNames, parent, program);
+		List<Namespace> namespaces = doGetNamespaces(namespaceNames, parent, program, false);
 		return namespaces;
 	}
 
 	private static List<Namespace> doGetNamespaces(List<String> namespaceNames,
-			Namespace root, Program program) {
+			Namespace root, Program program, boolean searchWithinAllLibraries) {
 
 		if (root == null) {
 			root = program.getGlobalNamespace();
 		}
 
 		List<Namespace> parents = Arrays.asList(root);
+
+		if (searchWithinAllLibraries && root.isGlobal() && !namespaceNames.isEmpty()) {
+			ExternalManager extMgr = program.getExternalManager();
+			String ns = namespaceNames.get(0); // only consider if first namespace is not Library
+			if (extMgr.getExternalLibrary(ns) == null) {
+				parents = new ArrayList<>();
+				parents.add(root);
+				for (String libraryName : extMgr.getExternalLibraryNames()) {
+					parents.add(extMgr.getExternalLibrary(libraryName));
+				}
+			}
+		}
+
 		for (String name : namespaceNames) {
 			List<Namespace> matches = getMatchingNamespaces(name, parents, program);
 			parents = matches;
@@ -228,8 +241,9 @@ public class NamespaceUtils {
 	}
 
 	/**
-	 * Returns a list of all symbols that match the given path. The path consists of a series
-	 * of namespaces names separated by "::" followed by a label or function name.
+	 * Returns a list of all symbols that match the given path within the global namespace. 
+	 * The path consists of a series of namespaces names separated by "::" followed by a label 
+	 * or function name.
 	 *
 	 * @param symbolPath the names of namespaces and symbol separated by "::".
 	 * @param program the program to search
@@ -237,6 +251,22 @@ public class NamespaceUtils {
 	 * if none found.
 	 */
 	public static List<Symbol> getSymbols(String symbolPath, Program program) {
+		return getSymbols(symbolPath, program, false);
+	}
+
+	/**
+	 * Returns a list of all symbols that match the given path. The path consists of a series
+	 * of namespaces names separated by "::" followed by a label or function name.
+	 *
+	 * @param symbolPath the names of namespaces and symbol separated by "::".
+	 * @param program the program to search
+	 * @param searchWithinAllLibraries if true all libraries will be searched provided first element 
+	 * of symbolPath is not a library name, else search symbolPath within global namespace only.
+	 * @return the list of symbols that match the given symbolPath.  An empty list is returned
+	 * if none found.
+	 */
+	public static List<Symbol> getSymbols(String symbolPath, Program program,
+			boolean searchWithinAllLibraries) {
 
 		List<String> namespaceNames = new SymbolPath(symbolPath).asList();
 		if (namespaceNames.isEmpty()) {
@@ -245,12 +275,13 @@ public class NamespaceUtils {
 
 		String symbolName = namespaceNames.remove(namespaceNames.size() - 1);
 		List<Namespace> parents =
-			doGetNamespaces(namespaceNames, program.getGlobalNamespace(), program);
+			doGetNamespaces(namespaceNames, program.getGlobalNamespace(), program,
+				searchWithinAllLibraries);
 		return searchForAllSymbolsInAnyOfTheseNamespaces(parents, symbolName, program);
 	}
 
 	/**
-	 * Returns a list of Symbol that match the given symbolPath.
+	 * Returns a list of Symbol that match the given symbolPath within the global namespace.
 	 *
 	 * @param symbolPath the symbol path that specifies a series of namespace and symbol names.
 	 * @param program the program to search for symbols with the given path.
@@ -258,11 +289,27 @@ public class NamespaceUtils {
 	 * if none found.
 	 */
 	public static List<Symbol> getSymbols(SymbolPath symbolPath, Program program) {
+		return getSymbols(symbolPath, program, false);
+	}
+
+	/**
+	 * Returns a list of Symbol that match the given symbolPath.
+	 *
+	 * @param symbolPath the symbol path that specifies a series of namespace and symbol names.
+	 * @param program the program to search for symbols with the given path.
+	 * @param searchWithinAllLibraries if true all libraries will be searched provided first element 
+	 * of symbolPath is not a library name, else search symbolPath within global namespace only.
+	 * @return  a list of Symbol that match the given symbolPath.  An empty list is returned
+	 * if none found.
+	 */
+	public static List<Symbol> getSymbols(SymbolPath symbolPath, Program program,
+			boolean searchWithinAllLibraries) {
 		SymbolPath parentPath = symbolPath.getParent();
 		if (parentPath == null) {
 			return program.getSymbolTable().getGlobalSymbols(symbolPath.getName());
 		}
-		List<Namespace> parents = doGetNamespaces(parentPath.asList(), null, program);
+		List<Namespace> parents =
+			doGetNamespaces(parentPath.asList(), null, program, searchWithinAllLibraries);
 		return searchForAllSymbolsInAnyOfTheseNamespaces(parents, symbolPath.getName(), program);
 	}
 

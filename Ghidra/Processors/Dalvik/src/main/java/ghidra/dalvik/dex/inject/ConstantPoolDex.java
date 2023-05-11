@@ -23,10 +23,12 @@ import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.ConstantPool;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * Map Ghidra's generic ConstantPool interface onto the Dex specific constant pool 
@@ -121,8 +123,14 @@ public class ConstantPoolDex extends ConstantPool {
 		String defName = res.token + '_' + Integer.toHexString(methodID);
 		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(defName, dtManager);
 		res.type = new PointerDataType(funcDef);
-		funcDef.setGenericCallingConvention(
-			isStatic ? GenericCallingConvention.stdcall : GenericCallingConvention.thiscall);
+		try {
+			funcDef.setCallingConvention(
+				isStatic ? CompilerSpec.CALLING_CONVENTION_stdcall
+						: CompilerSpec.CALLING_CONVENTION_thiscall);
+		}
+		catch (InvalidInputException e) {
+			// unexpected
+		}
 
 		int prototypeIndex = methodIDItem.getProtoIndex() & 0xffff;
 		PrototypesIDItem prototype = dexHeader.getPrototypes().get(prototypeIndex);

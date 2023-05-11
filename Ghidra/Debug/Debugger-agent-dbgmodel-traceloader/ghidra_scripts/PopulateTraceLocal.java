@@ -19,19 +19,19 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import agent.dbgeng.dbgeng.DebugClient;
 import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgmodel.dbgmodel.DbgModel;
 import agent.dbgmodel.dbgmodel.bridge.HostDataModelAccess;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.impl.dbgmodel.bridge.HDMAUtil;
+import db.Transaction;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
@@ -40,7 +40,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 
 /**
  * This script populates a trace database for demonstrations purposes and opens it in the current
@@ -190,8 +189,7 @@ public class PopulateTraceLocal extends GhidraScript {
 		client.openDumpFileWide(f.getAbsolutePath());
 		control.waitForEvent();
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Populate Events")) {
+		try (Transaction tx = trace.openTransaction("Populate Events")) {
 
 			List<ModelObject> children =
 				util.getElements(List.of("Debugger", "State", "DebuggerVariables", "curprocess",
@@ -226,7 +224,7 @@ public class PopulateTraceLocal extends GhidraScript {
 						buf = ByteBuffer.allocate(sz.intValue()).order(ByteOrder.LITTLE_ENDIAN);
 						AddressRange rng = rng(start, start + sz - 1);
 						modules.addLoadedModule(moduleId, moduleId, rng, snap);
-						memory.addRegion(moduleId, Range.atLeast(snap), rng,
+						memory.addRegion(moduleId, Lifespan.nowOn(snap), rng,
 							TraceMemoryFlag.READ, TraceMemoryFlag.WRITE, TraceMemoryFlag.EXECUTE);
 						try {
 							int read =
@@ -261,7 +259,7 @@ public class PopulateTraceLocal extends GhidraScript {
 					String threadId = id.getValueString();
 					display += " " + threadId;
 					if (display.contains("ThreadCreated")) {
-						threads.addThread(threadId, Range.atLeast(snap));
+						threads.addThread(threadId, Lifespan.nowOn(snap));
 					}
 					else {
 						if (snap >= 0) {
@@ -283,8 +281,7 @@ public class PopulateTraceLocal extends GhidraScript {
 			}
 		}
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Populate Registers")) {
+		try (Transaction tx = trace.openTransaction("Populate Registers")) {
 			//for (Long tick : tickManager.getAllTicks()) {
 			for (Long snap : eventSnaps) {
 				control.execute("!tt " + Long.toHexString(snap) + ":0");
@@ -332,7 +329,7 @@ public class PopulateTraceLocal extends GhidraScript {
 		}
 
 		/*
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Populate Heap", true)) {
+		try (Transaction tx = trace.openTransaction("Populate Heap")) {
 			ModelObject currentSession = util.getCurrentSession();
 			ModelObject data = currentSession.getKeyValue("TTD").getKeyValue("Data");
 			ModelMethod heap = data.getMethod("Heap");

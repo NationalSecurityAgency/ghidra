@@ -28,9 +28,11 @@ dependencies {
 	api project(':Framework-TraceModeling')
 	api project(':Base')
 	api project(':ByteViewer')
+	api project(':Decompiler')
 	api project(':ProposedUtils')
 
 	helpPath project(path: ':Base', configuration: 'helpPath')
+	helpPath project(path: ':Decompiler', configuration: 'helpPath')
 	helpPath project(path: ':ProgramDiff', configuration: 'helpPath')
 
 	testImplementation project(path: ':Base', configuration: 'testArtifacts')

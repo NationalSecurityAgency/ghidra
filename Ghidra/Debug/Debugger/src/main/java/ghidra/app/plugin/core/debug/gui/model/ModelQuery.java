@@ -15,20 +15,20 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
+import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.dbg.util.*;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
 
 public class ModelQuery {
+	public static final ModelQuery EMPTY = new ModelQuery(PathPredicates.EMPTY);
 	// TODO: A more capable query language, e.g., with WHERE clauses.
 	// Could also want math expressions for the conditionals... Hmm.
 	// They need to be user enterable, so just a Java API won't suffice.
@@ -92,7 +92,7 @@ public class ModelQuery {
 	 * @param span the span of snapshots to search, usually all or a singleton
 	 * @return the stream of resulting objects
 	 */
-	public Stream<TraceObject> streamObjects(Trace trace, Range<Long> span) {
+	public Stream<TraceObject> streamObjects(Trace trace, Lifespan span) {
 		TraceObjectManager objects = trace.getObjectManager();
 		TraceObject root = objects.getRootObject();
 		return objects.getValuePaths(span, predicates)
@@ -101,7 +101,7 @@ public class ModelQuery {
 				.map(v -> (TraceObject) v);
 	}
 
-	public Stream<TraceObjectValue> streamValues(Trace trace, Range<Long> span) {
+	public Stream<TraceObjectValue> streamValues(Trace trace, Lifespan span) {
 		TraceObjectManager objects = trace.getObjectManager();
 		return objects.getValuePaths(span, predicates).map(p -> {
 			TraceObjectValue last = p.getLastEntry();
@@ -109,8 +109,25 @@ public class ModelQuery {
 		});
 	}
 
-	public Stream<TraceObjectValPath> streamPaths(Trace trace, Range<Long> span) {
+	public Stream<TraceObjectValPath> streamPaths(Trace trace, Lifespan span) {
 		return trace.getObjectManager().getValuePaths(span, predicates).map(p -> p);
+	}
+
+	public List<TargetObjectSchema> computeSchemas(Trace trace) {
+		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		return predicates.getPatterns()
+				.stream()
+				.map(p -> rootSchema.getSuccessorSchema(p.asPath()))
+				.distinct()
+				.collect(Collectors.toList());
+	}
+
+	public TargetObjectSchema computeSingleSchema(Trace trace) {
+		List<TargetObjectSchema> schemas = computeSchemas(trace);
+		if (schemas.size() != 1) {
+			return EnumerableTargetObjectSchema.OBJECT;
+		}
+		return schemas.get(0);
 	}
 
 	/**
@@ -123,13 +140,29 @@ public class ModelQuery {
 	 * @return the list of attributes
 	 */
 	public Stream<AttributeSchema> computeAttributes(Trace trace) {
-		TraceObjectManager objects = trace.getObjectManager();
-		TargetObjectSchema schema =
-			objects.getRootSchema().getSuccessorSchema(predicates.getSingletonPattern().asPath());
+		TargetObjectSchema schema = computeSingleSchema(trace);
 		return schema.getAttributeSchemas()
 				.values()
 				.stream()
 				.filter(as -> !"".equals(as.getName()));
+	}
+
+	protected static boolean includes(Lifespan span, PathPattern pattern, TraceObjectValue value) {
+		List<String> asPath = pattern.asPath();
+		if (asPath.isEmpty()) {
+			// If the pattern is the root, then only match the "root value"
+			return value.getParent() == null;
+		}
+		if (!PathPredicates.keyMatches(PathUtils.getKey(asPath), value.getEntryKey())) {
+			return false;
+		}
+		TraceObject parent = value.getParent();
+		if (parent == null) {
+			// Value is the root. We would already have matched above
+			return false;
+		}
+		return parent.getAncestors(span, pattern.removeRight(1))
+				.anyMatch(v -> v.getSource(parent).isRoot());
 	}
 
 	/**
@@ -144,22 +177,58 @@ public class ModelQuery {
 	 * @param value the value to examine
 	 * @return true if the value would be accepted
 	 */
-	public boolean includes(Range<Long> span, TraceObjectValue value) {
-		List<String> path = predicates.getSingletonPattern().asPath();
-		if (path.isEmpty()) {
-			return value.getParent() == null;
-		}
-		if (!PathPredicates.keyMatches(PathUtils.getKey(path), value.getEntryKey())) {
+	public boolean includes(Lifespan span, TraceObjectValue value) {
+		if (!span.intersects(value.getLifespan())) {
 			return false;
 		}
-		if (!DBTraceUtils.intersect(span, value.getLifespan())) {
-			return false;
+		for (PathPattern pattern : predicates.getPatterns()) {
+			if (includes(span, pattern, value)) {
+				return true;
+			}
 		}
+		return false;
+	}
+
+	protected static boolean involves(Lifespan span, PathPattern pattern, TraceObjectValue value) {
 		TraceObject parent = value.getParent();
+		// Every query involves the root
 		if (parent == null) {
+			return true;
+		}
+
+		// Check if any of the value's paths could be an ancestor of a result
+		List<String> asPath = new ArrayList<>(pattern.asPath());
+		// Destroy the pattern from the right, thus iterating each ancestor
+		while (!asPath.isEmpty()) {
+			// The value's key much match somewhere in the pattern to be involved
+			if (!PathPredicates.keyMatches(PathUtils.getKey(asPath), value.getEntryKey())) {
+				asPath.remove(asPath.size() - 1);
+				continue;
+			}
+			// If it does, then check if any path to the value's parent matches the rest
+			asPath.remove(asPath.size() - 1);
+			if (parent.getAncestors(span, new PathPattern(asPath))
+					.anyMatch(v -> v.getSource(parent).isRoot())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Determine whether the query results could depend on the given value
+	 * 
+	 * @return true if the query results depend on the given value
+	 */
+	public boolean involves(Lifespan span, TraceObjectValue value) {
+		if (!span.intersects(value.getLifespan())) {
 			return false;
 		}
-		return parent.getAncestors(span, predicates.removeRight(1))
-				.anyMatch(v -> v.getSource(parent).isRoot());
+		for (PathPattern pattern : predicates.getPatterns()) {
+			if (involves(span, pattern, value)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

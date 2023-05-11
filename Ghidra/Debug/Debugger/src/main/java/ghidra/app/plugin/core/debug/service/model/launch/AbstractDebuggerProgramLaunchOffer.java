@@ -15,8 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.service.model.launch;
 
+import static ghidra.async.AsyncUtils.*;
+
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -26,8 +29,10 @@ import javax.swing.JOptionPane;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.async.*;
 import ghidra.dbg.*;
@@ -49,7 +54,6 @@ import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -239,7 +243,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		}
 		if (program != null) {
 			ProgramUserData userData = program.getProgramUserData();
-			try (UndoableTransaction tid = UndoableTransaction.start(userData)) {
+			try (Transaction tx = userData.openTransaction()) {
 				Element element = state.saveToXml();
 				userData.setStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
 					XmlUtilities.toString(element));
@@ -267,7 +271,12 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		if (program == null) {
 			return Map.of();
 		}
-		return Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, program.getExecutablePath());
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
+		for (Entry<String, ParameterDescription<?>> entry : params.entrySet()) {
+			map.put(entry.getKey(), entry.getValue().defaultValue);
+		}
+		map.put(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, program.getExecutablePath());
+		return map;
 	}
 
 	/**
@@ -282,20 +291,30 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		DebuggerMethodInvocationDialog dialog =
 			new DebuggerMethodInvocationDialog(tool, getButtonTitle(), "Launch", getIcon());
 		// NB. Do not invoke read/writeConfigState
-		Map<String, ?> args = configurator.configureLauncher(launcher,
-			loadLastLauncherArgs(launcher, true), RelPrompt.BEFORE);
-		for (ParameterDescription<?> param : params.values()) {
-			Object val = args.get(param.name);
-			if (val != null) {
-				dialog.setMemorizedArgument(param.name, param.type.asSubclass(Object.class), val);
+		Map<String, ?> args;
+		boolean reset = false;
+		do {
+			args = configurator.configureLauncher(launcher,
+				loadLastLauncherArgs(launcher, true), RelPrompt.BEFORE);
+			for (ParameterDescription<?> param : params.values()) {
+				Object val = args.get(param.name);
+				if (val != null) {
+					dialog.setMemorizedArgument(param.name, param.type.asSubclass(Object.class),
+						val);
+				}
 			}
+			args = dialog.promptArguments(params);
+			if (args == null) {
+				// Cancelled
+				return null;
+			}
+			reset = dialog.isResetRequested();
+			if (reset) {
+				args = generateDefaultLauncherArgs(params);
+			}
+			saveLauncherArgs(args, params);
 		}
-		args = dialog.promptArguments(params);
-		if (args == null) {
-			// Cancelled
-			return null;
-		}
-		saveLauncherArgs(args, params);
+		while (reset);
 		return args;
 	}
 
@@ -328,12 +347,15 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 				try {
 					Element element = XmlUtilities.fromString(property);
 					SaveState state = new SaveState(element);
+					List<String> names = List.of(state.getNames());
 					Map<String, Object> args = new LinkedHashMap<>();
 					for (ParameterDescription<?> param : params.values()) {
-						Object configState =
-							ConfigStateField.getState(state, param.type, param.name);
-						if (configState != null) {
-							args.put(param.name, configState);
+						if (names.contains(param.name)) {
+							Object configState =
+								ConfigStateField.getState(state, param.type, param.name);
+							if (configState != null) {
+								args.put(param.name, configState);
+							}
 						}
 					}
 					if (!args.isEmpty()) {
@@ -347,7 +369,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 							e);
 					}
 					Msg.error(this,
-						"Saved launcher args are corrup, or launcher parameters changed. Defaulting.",
+						"Saved launcher args are corrupt, or launcher parameters changed. Defaulting.",
 						e);
 				}
 			}
@@ -463,12 +485,14 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	// Eww.
 	protected CompletableFuture<Void> launch(TargetLauncher launcher,
-			boolean prompt, LaunchConfigurator configurator) {
+			boolean prompt, LaunchConfigurator configurator, TaskMonitor monitor) {
 		Map<String, ?> args = getLauncherArgs(launcher, prompt, configurator);
 		if (args == null) {
 			throw new CancellationException();
 		}
-		return launcher.launch(args);
+		return AsyncTimer.DEFAULT_TIMER.mark()
+				.timeOut(
+					launcher.launch(args), getTimeoutMillis(), () -> onTimedOutLaunch(monitor));
 	}
 
 	protected void checkCancelled(TaskMonitor monitor) {
@@ -530,7 +554,8 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			Trace trace = recorder.getTrace();
 			Swing.runLater(() -> {
 				traceManager.openTrace(trace);
-				traceManager.activateTrace(trace);
+				traceManager.activate(traceManager.resolveTrace(trace),
+					ActivationCause.START_RECORDING);
 			});
 		}
 		return recorder;
@@ -560,7 +585,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	}
 
 	@Override
-	public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, boolean prompt,
+	public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, PromptMode mode,
 			LaunchConfigurator configurator) {
 		DebuggerModelService service = tool.getService(DebuggerModelService.class);
 		DebuggerStaticMappingService mappingService =
@@ -573,12 +598,13 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			TargetObject target;
 			TraceRecorder recorder;
 			Throwable exception;
+			boolean prompt = mode == PromptMode.ALWAYS;
 
 			LaunchResult getResult() {
 				return new LaunchResult(model, target, recorder, exception);
 			}
 		};
-		return connect(service, prompt, configurator).thenCompose(m -> {
+		return connect(service, locals.prompt, configurator).thenCompose(m -> {
 			checkCancelled(monitor);
 			locals.model = m;
 			monitor.incrementProgress(1);
@@ -591,12 +617,14 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			monitor.incrementProgress(1);
 			monitor.setMessage("Launching");
 			locals.futureTarget = listenForTarget(l.getModel());
-			if (prompt) {
-				return launch(l, true, configurator);
-			}
-			return AsyncTimer.DEFAULT_TIMER.mark()
-					.timeOut(launch(l, false, configurator), getTimeoutMillis(),
-						() -> onTimedOutLaunch(monitor));
+			return loop(TypeSpec.VOID, (loop) -> {
+				launch(l, locals.prompt, configurator, monitor).thenAccept(loop::exit)
+						.exceptionally(ex -> {
+							loop.repeat();
+							return null;
+						});
+				locals.prompt = mode != PromptMode.NEVER;
+			});
 		}).thenCompose(__ -> {
 			checkCancelled(monitor);
 			monitor.incrementProgress(1);
@@ -636,4 +664,5 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			return locals.getResult();
 		});
 	}
+
 }

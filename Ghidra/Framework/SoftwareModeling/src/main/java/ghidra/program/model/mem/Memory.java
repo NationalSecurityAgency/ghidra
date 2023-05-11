@@ -392,14 +392,14 @@ public interface Memory extends AddressSetView {
 	/**
 	 * Convert an existing uninitialized block with an
 	 * initialized block.
-	 * @param unitializedBlock unitialized block to convert
+	 * @param uninitializedBlock uninitialized block to convert
 	 * @param initialValue initial value for the bytes
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryBlockException if there is no block in memory
 	 * at the same address as block or if the block lengths are not
 	 * the same.
 	 */
-	public MemoryBlock convertToInitialized(MemoryBlock unitializedBlock, byte initialValue)
+	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
 			throws LockException, MemoryBlockException, NotFoundException;
 
 	public MemoryBlock convertToUninitialized(MemoryBlock itializedBlock)
@@ -476,6 +476,7 @@ public interface Memory extends AddressSetView {
 	 * @param size the number of bytes to get.
 	 * @return the number of bytes put into dest.  May be less than
 	 * size if the requested number extends beyond initialized / available memory.
+	 * @throws IndexOutOfBoundsException if an invalid index is specified
 	 * @throws MemoryAccessException if the starting address is
 	 * not contained in any memory block or is an uninitialized location.
 	 */

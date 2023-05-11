@@ -726,6 +726,92 @@ macro extendedResultFlags(result) {
   ZF = (result == 0) && (ZF == 1);
 }
 
+macro arithmeticShiftLeft(count, register, width) {
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (width - modcount) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
+	register = register << modcount;
+	resflags(register);
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
+}
+
+macro arithmeticShiftRight(count, register, width) {
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (modcount-1) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
+	register = register s>> modcount;
+	resflags(register);
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
+}
+
+macro logicalShiftLeft(count, register, width) {
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (width - modcount) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
+	register = register << modcount;
+	resflags(register);
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
+}
+
+macro logicalShiftRight(count, register, width) {
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (modcount-1) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
+	register = register >> modcount;
+	resflags(register);
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
+}
+
+macro rotateLeft(count, register, width) {
+	local modcount = count & 63;
+	register = (register << modcount) | (register >> (width - modcount));
+	resflags(register);
+	CF = (register & 1) != 0;
+	VF = 0;
+}
+
+macro rotateRight(count, register, width) {
+	local modcount = count & 63;
+	register = (register << (width - modcount)) | (register >> modcount);
+	resflags(register);
+	CF = zext(register s< 0);
+	VF = 0;
+}
+
+macro rotateLeftExtended(count, register, width) {
+	local modcount = count & 63;
+	local xflag = (register & (1 << (width - modcount))) != 0;
+	local result = (register << modcount) | (zext(XF) << (modcount - 1)) | (register >> (width - modcount + 1));
+	register = (zext(modcount != 0) * result) + (zext(modcount == 0) * register);
+	resflags(register);
+	XF = (zext(modcount != 0) * xflag) + (zext(modcount == 0) * XF);
+	CF = XF;
+	VF = 0;
+}
+
+macro rotateRightExtended(count, register, width) {
+	local modcount = count & 63;
+	local xflag = (register & (1 << (modcount - 1))) != 0;
+	local result = (zext(XF) << (width - modcount)) | (register >> modcount) | (register << (width - modcount + 1));
+	register = (zext(modcount != 0) * result) + (zext(modcount == 0) * register);
+	resflags(register);
+	XF = (zext(modcount != 0) * xflag) + (zext(modcount == 0) * XF);
+	CF = XF;
+	VF = 0;
+}
+
 :^instruction is  extGUARD=0 & mode2 & reg9an & mode & regan & instruction
            [ extGUARD=1; regtfan=regan; savmod1=mode; regtsan=reg9an; savmod2=mode2; ]	{}
 
@@ -733,7 +819,12 @@ macro extendedResultFlags(result) {
 
 with : extGUARD=1 {
 
-:abcd Tyb,Txb			is op=12 & op48=16 & Tyb & Txb					{ CF = carry(Tyb,carry(Txb,XF)); Tyb = Tyb + Txb + XF; Tyb = bcdAdjust(Tyb); bcdflags(Tyb); }
+:abcd Tyb,Txb			is op=12 & op48=16 & Tyb & Txb {
+	CF = carry(Txb,carry(Tyb,XF));
+	Txb = Txb + Tyb + XF;
+	XF = bcdAdjust(Txb);
+	bcdflags(Txb);
+}
 
 :add.b eab,reg9dnb		is (op=13 & reg9dnb & op68=0)... & eab				{ addflags(eab,reg9dnb); reg9dnb = reg9dnb + eab; resflags(reg9dnb); }
 :add.w eaw,reg9dnw		is (op=13 & reg9dnw & op68=1)... & eaw				{ addflags(eaw,reg9dnw); reg9dnw = reg9dnw + eaw; resflags(reg9dnw); }
@@ -777,15 +868,35 @@ with : extGUARD=1 {
 :andi const8,"CCR"			is d16=0x23c; const8						{ packflags(SR); SR = SR & zext(const8); unpackflags(SR); }
 :andi const16,SR			is opbig=0x2 & d8base=0x7c; const16 & SR				{ packflags(SR); SR = SR & const16; unpackflags(SR); }
 
-:asl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=0 & regdnb		{ getbit(CF,regdnb,8-cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
-:asl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=0 & regdnw		{ getbit(CF,regdnw,16-cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
-:asl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=0 & regdn		{ getbit(CF,regdn,32-cntreg); regdn=regdn<<cntreg; resflags(regdn); }
-:asl eaw			is (opbig=0xe1 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); eaw=eaw<<1; resflags(eaw); }
+:asl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=0 & regdnb		{ arithmeticShiftLeft(cntreg, regdnb, 8); }
+:asl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=0 & regdnw		{ arithmeticShiftLeft(cntreg, regdnw, 16); }
+:asl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=0 & regdn		{ arithmeticShiftLeft(cntreg, regdn, 32); }
+:asl eaw			is (opbig=0xe1 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	local msbBefore = value & 0x8000;
+	getbit(CF, value, 15);
+	value = value << 1;
+	resflags(value);
+	local msbAfter = value & 0x8000;
+	VF = (msbBefore ^ msbAfter) != 0;
+	eaw = value;
+	XF = CF;
+}
 
-:asr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=0 & regdnb		{ getbit(CF,regdnb,cntreg-1);regdnb=regdnb s>>cntreg; resflags(regdnb);}
-:asr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=0 & regdnw		{ getbit(CF,regdnw,cntreg-1);regdnw=regdnw s>>cntreg; resflags(regdnw);}
-:asr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=0 & regdn		{ getbit(CF,regdn,cntreg-1); regdn=regdn s>>cntreg; resflags(regdn); }
-:asr eaw			is (opbig=0xe0 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,0); eaw=eaw s>>1; resflags(eaw); }
+:asr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=0 & regdnb		{ arithmeticShiftRight(cntreg, regdnb, 8); }
+:asr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=0 & regdnw		{ arithmeticShiftRight(cntreg, regdnw, 16); }
+:asr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=0 & regdn		{ arithmeticShiftRight(cntreg, regdn, 32); }
+:asr eaw			is (opbig=0xe0 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	local msbBefore = value & 0x8000;
+	getbit(CF, value, 0);
+	value = value s>> 1;
+	resflags(value);
+	local msbAfter = value & 0x8000;
+	VF = (msbBefore ^ msbAfter) != 0;
+	eaw = value;
+	XF = CF;
+}	
 
 :b^cc^".b" addr8		is op=6 & cc & addr8						{ if (cc) goto addr8; }
 :b^cc^".w" addr16		is op=6 & cc & d8base=0; addr16					{ if (cc) goto addr16; }
@@ -825,8 +936,6 @@ with : extGUARD=1 {
    logflags(); tmp:4 = e2l; getbitfield(tmp, f_off, f_wd); f_reg = tmp; resbitflags(f_reg, f_wd-1);
 }
 
-define pcodeop countLeadingZeros;
-
 :bfffo e2l{f_off:f_wd},f_reg	is opbig=0xed & op67=3 & $(DAT_DIR_CTL_ADDR_MODES); f_off & f_wd & f_reg & flddo=0 & fldoffdat=0 & flddw=0 & fldwddat=0; e2l
 					[ savmod2=savmod1; regtsan=regtfan; ] {
 	# "Find First One in Bit Field" pronounced "boo-foe"
@@ -839,7 +948,7 @@ define pcodeop countLeadingZeros;
 	ZF = (tmp == 0);
 	VF = 0;
 	CF = 0;
-	tmp2:4 = countLeadingZeros(tmp);
+	tmp2:4 = lzcount(tmp);
 	# NB- it seems the MSB left most bit is really at offset 0,
 	# and the right LSB is at offset 31
 	tmp3:4 = tmp2 % 32:4; # need mod for when there are all zeros, when tmp2 would = 32
@@ -1186,6 +1295,10 @@ subdiv: regdr:regdq		is regdq & regdr & divsz=1 & divsgn=1				{ divi:8 = (sext(r
 :ext.l regdn			is op=4 & reg9dn=4 & op68=3 & op35=0 & regdn			{ local tmp =regdn:2; regdn = sext(tmp); }
 :extb.l regdn			is op=4 & reg9dn=4 & op68=7 & op35=0 & regdn			{ local tmp =regdn:1; regdn = sext(tmp); }
 
+@ifdef COLDFIRE
+:halt			is d16=0x4ac8							unimpl
+@endif
+
 :illegal			is d16=0x4afc							unimpl
 
 # jump addresses derived from effective address calculation
@@ -1219,15 +1332,31 @@ macro shiftCXFlags(cntreg) {
 		XF = CF * (cntreg != 0) + XF * (cntreg == 0);
 }
 
-:lsl.b cntreg,regdnb               is op=14 & cntreg & op8=1 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,8-cntreg); shiftCXFlags(cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
-:lsl.w cntreg,regdnw               is op=14 & cntreg & op8=1 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,16-cntreg); shiftCXFlags(cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
-:lsl.l cntreg,regdn                is op=14 & cntreg & op8=1 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,32-cntreg); shiftCXFlags(cntreg); regdn=regdn<<cntreg; resflags(regdn); }
-:lsl eaw                           is (opbig=0xe3 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); shiftCXFlags(eaw); eaw=eaw<<1; resflags(eaw); }
+:lsl.b cntreg,regdnb               is op=14 & cntreg & op8=1 & op67=0 & op34=1 & regdnb		{ logicalShiftLeft(cntreg, regdnb, 8); }
+:lsl.w cntreg,regdnw               is op=14 & cntreg & op8=1 & op67=1 & op34=1 & regdnw		{ logicalShiftLeft(cntreg, regdnw, 16); }
+:lsl.l cntreg,regdn                is op=14 & cntreg & op8=1 & op67=2 & op34=1 & regdn		{ logicalShiftLeft(cntreg, regdn, 32); }
+:lsl eaw                           is (opbig=0xe3 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	getbit(CF, value, 15);
+	value = value << 1;
+	resflags(value);
+	eaw = value;
+	VF = 0;
+	XF = CF;
+}
 
-:lsr.b cntreg,regdnb               is op=14 & cntreg & op8=0 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,cntreg-1); shiftCXFlags(cntreg); regdnb=regdnb >>cntreg; resflags(regdnb);}
-:lsr.w cntreg,regdnw               is op=14 & cntreg & op8=0 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,cntreg-1); shiftCXFlags(cntreg); regdnw=regdnw >>cntreg; resflags(regdnw);}
-:lsr.l cntreg,regdn                is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,cntreg-1); shiftCXFlags(cntreg); regdn=regdn >>cntreg; resflags(regdn); }
-:lsr eaw                           is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw	{ getbit(CF,eaw,0); shiftCXFlags(eaw); eaw=eaw >>1; resflags(eaw); }
+:lsr.b cntreg,regdnb               is op=14 & cntreg & op8=0 & op67=0 & op34=1 & regdnb		{ logicalShiftRight(cntreg, regdnb, 8); }
+:lsr.w cntreg,regdnw               is op=14 & cntreg & op8=0 & op67=1 & op34=1 & regdnw		{ logicalShiftRight(cntreg, regdnw, 16); }
+:lsr.l cntreg,regdn                is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ logicalShiftRight(cntreg, regdn, 32); }
+:lsr eaw                           is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	getbit(CF, value, 0);
+	value = value >> 1;
+	resflags(value);
+	eaw = value;
+	VF = 0;
+	XF = CF;
+}
 
 :move.b eab,e2b			is (op=1 & $(DAT_ALTER_ADDR_MODES2))... & eab ; e2b	{ build eab; local tmp = eab; build e2b; e2b = tmp; resflags(tmp); logflags(); }
 :move.w eaw,e2w			is (op=3 & $(DAT_ALTER_ADDR_MODES2))... & eaw ; e2w	{ build eaw; local tmp = eaw; build e2w; e2w = tmp; resflags(tmp); logflags(); }
@@ -1562,7 +1691,7 @@ submul: regdr-regdq		is regdq & divsgn=0 & divsz=1 & regdr			{ tmp1:8 = zext(glb
 :mul^mulsize e2l,submul		is opbig=0x4c & op67=0 & $(DAT_ALTER_ADDR_MODES); submul & mulsize; e2l [ savmod2=savmod1; regtsan=regtfan; ] { glbdenom=e2l; build submul; }
 
 :nbcd eab			is (opbig=0x48 & op67=0 & $(DAT_ALTER_ADDR_MODES))... & eab
-                   {  tmp:1 = eab; CF = (tmp != 0) || (XF == 1);  tmp = 0 - tmp - XF; eab = bcdAdjust(tmp); bcdflags(tmp); }
+{  tmp:1 = eab; CF = (tmp != 0) || (XF == 1);  tmp = 0 - tmp - XF; eab = bcdAdjust(tmp); bcdflags(tmp); }
 
 
 # NB: For the neg insn the CF carry flag is not set like other insns, from the manual:
@@ -1736,37 +1865,57 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :reset				is d16=0x4e70						{ reset(); }
 
-:rol.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=3 & regdnb	{ regdnb=(regdnb<<cntreg)|(regdnb>>(8-cntreg));
-											  getbit(CF,regdnb,0); VF=0; resflags(regdnb); }
-:rol.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=3 & regdnw	{ regdnw=(regdnw<<cntreg)|(regdnw>>(16-cntreg));
-											  getbit(CF,regdnw,0); VF=0; resflags(regdnw); }
-:rol.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=3 & regdn 	{ regdn=(regdn<<cntreg)|(regdn>>(32-cntreg));
-											  getbit(CF,regdn,0); VF=0; resflags(regdn); }
-:rol eaw			is (opbig=0xe7 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw			{ eaw = (eaw<<1)|(eaw>>15); getbit(CF,eaw,0); VF=0; resflags(eaw); }
+:rol.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=3 & regdnb		{ rotateLeft(cntreg, regdnb, 8); }
+:rol.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=3 & regdnw		{ rotateLeft(cntreg, regdnw, 16); }
+:rol.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=3 & regdn		{ rotateLeft(cntreg, regdn, 32); }
+:rol eaw			is (opbig=0xe7 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	value = (value << 1) | (value >> 15);
+	getbit(CF, value, 0);
+	resflags(value);
+	eaw = value;
+	VF = 0;
+}
 
-:ror.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=3 & regdnb	{ regdnb=(regdnb<<(8-cntreg))|(regdnb>>cntreg);
-											  getbit(CF,regdnb,7); VF=0; resflags(regdnb); }
-:ror.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=3 & regdnw	{ regdnw=(regdnw<<(16-cntreg))|(regdnw>>cntreg);
-											  getbit(CF,regdnw,15); VF=0; resflags(regdnw); }
-:ror.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=3 & regdn 	{ regdn=(regdn<<(32-cntreg))|(regdn>>cntreg);
-											  getbit(CF,regdn,31); VF=0; resflags(regdn); }
-:ror eaw			is (opbig=0xe6 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw			{ eaw = (eaw<<15)|(eaw>>1); getbit(CF,eaw,15); VF=0; resflags(eaw); }
+:ror.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=3 & regdnb		{ rotateRight(cntreg, regdnb, 8); }
+:ror.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=3 & regdnw		{ rotateRight(cntreg, regdnw, 16); }
+:ror.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=3 & regdn 		{ rotateRight(cntreg, regdn, 32); }
+:ror eaw			is (opbig=0xe6 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	value = (value << 15) | (value >> 1);
+	getbit(CF, value, 15);
+	resflags(value);
+	eaw = value;
+	VF = 0;
+}
 
-:roxl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=2 & regdnb	{ CF=(regdnb&(1<<( 8-cntreg)))!=0; regdnb=(zext(XF)<<(cntreg-1))|(regdnb<<cntreg)|(regdnb>>(9-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdnb); }
-:roxl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=2 & regdnw	{ CF=(regdnw&(1<<(16-cntreg)))!=0; regdnw=(zext(XF)<<(cntreg-1))|(regdnw<<cntreg)|(regdnw>>(17-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdnw); }
-:roxl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=2 & regdn 	{ CF=(regdn &(1<<(32-cntreg)))!=0; regdn =(zext(XF)<<(cntreg-1))|(regdn <<cntreg)|(regdn >>(33-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdn ); }
-:roxl eaw			is (opbig=0xe5 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw		{ CF=(eaw&0x8000)!=0; eaw=zext(XF)|(eaw<<1)|(eaw>>16); XF=CF; VF=0; resflags(eaw); }
+:roxl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=2 & regdnb		{ rotateLeftExtended(cntreg, regdnb, 8); }
+:roxl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=2 & regdnw		{ rotateLeftExtended(cntreg, regdnw, 16); }
+:roxl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=2 & regdn		{ rotateLeftExtended(cntreg, regdn, 32); }
+:roxl eaw			is (opbig=0xe5 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	local xflag = (value & 0x8000) != 0;
+	value = (value << 1) | zext(XF);
+	resflags(value);
+	eaw = value;
+	VF = 0;
+	XF = xflag;
+	CF = XF;
+}
 
-:roxr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=2 & regdnb	{ CF=(regdnb&(1<<(cntreg-1)))!=0; regdnb=(zext(XF)<<( 8-cntreg))|(regdnb>>cntreg)|(regdnb<<(9 -cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdnb); }
-:roxr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=2 & regdnw	{ CF=(regdnw&(1<<(cntreg-1)))!=0; regdnw=(zext(XF)<<(16-cntreg))|(regdnw>>cntreg)|(regdnw<<(17-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdnw); }
-:roxr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=2 & regdn 	{ CF=(regdn &(1<<(cntreg-1)))!=0; regdn =(zext(XF)<<(32-cntreg))|(regdn >>cntreg)|(regdn <<(33-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdn); }
-:roxr eaw			is (opbig=0xe4 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw		{ CF=(eaw&1)!=0; eaw=(zext(XF)<<15)|(eaw>>1); XF=CF; VF=0; resflags(eaw); }
+:roxr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=2 & regdnb		{ rotateRightExtended(cntreg, regdnb, 8); }
+:roxr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=2 & regdnw		{ rotateRightExtended(cntreg, regdnw, 16); }
+:roxr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=2 & regdn		{ rotateRightExtended(cntreg, regdn, 32); }
+:roxr eaw			is (opbig=0xe4 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	local xflag = (value & 0x0001) != 0;
+	value = (zext(XF) << 15) | (value >> 1);
+	resflags(value);
+	eaw = value;
+	VF = 0;
+	XF = xflag;
+	CF = XF;
+}
 
 :rtd "#"^d16			is opbig=0x4e & op37=14 & op02=4; d16				{ PC = *SP; SP = SP + 4 + d16; return [PC]; }
 :rte				is d16=0x4e73							{ tmp:4 = 0; return [tmp]; }
@@ -1778,8 +1927,12 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :rts				is opbig=0x4e & op37=14 & op02=5				{ PC = *SP; SP = SP+4; return [PC]; }
 
-:sbcd Tyb,Txb			is op=8 & op48=16 & Txb & Tyb
-                    {  CF = (Tyb < Txb) || ( (XF == 1) && (Tyb == Txb) );  Tyb = Tyb - Txb - XF; Tyb = bcdAdjust(Tyb); bcdflags(Tyb); }
+:sbcd Tyb,Txb			is op=8 & op48=16 & Txb & Tyb {
+	CF = (Txb < Tyb) || ( (XF == 1) && (Txb == Tyb) );
+	Txb = Txb - Tyb - XF;
+	Txb = bcdAdjust(Txb);
+	bcdflags(Txb);
+}
 
 :s^cc eab			is (op=5 & cc & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eab				{ eab = -cc; }
 
@@ -1857,7 +2010,7 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 :tst.l eal			is (opbig=0x4a & op67=2)... & eal				{ logflags(); resflags(eal); }
 
 @ifdef COLDFIRE
-:tas eab			is (opbig=0x4a & op67=3)... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; } 
+:tas eab			is (opbig=0x4a & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; }
 @endif # COLDFIRE
 
 :unlk regan			is opbig=0x4e & op37=11 & regan					{ SP = regan; regan = *SP; SP = SP+4; }
@@ -1914,7 +2067,7 @@ fcc: "un"	is fcode=0x08			{ tmp:1 = $(NAN_FP); clearflags_fp(); export tmp; }
 
 fcc: "f"	is fcode=0x00			{ export 0:1; }
 fcc: "t"	is fcode=0x0f			{ export 1:1; }
-fcc: "sf"	is fcode=0x10			{ export 0:0; }
+fcc: "sf"	is fcode=0x10			{ export 0:1; }
 fcc: "st"	is fcode=0x1f			{ export 1:1; }
 fcc: "seq"	is fcode=0x11			{ tmp:1 = $(Z_FP); clearflags_fp(); export tmp; }
 fcc: "sne"	is fcode=0x1e			{ tmp:1 = $(Z_FP); clearflags_fp(); export tmp; }

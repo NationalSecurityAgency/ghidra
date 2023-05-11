@@ -17,14 +17,14 @@ package ghidra.app.plugin.core.symboltree.nodes;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import resources.ResourceManager;
 
 public class LocalVariableSymbolNode extends SymbolNode {
 
 	public static final Icon LOCAL_VARIABLE_ICON =
-		ResourceManager.loadImage("images/LocalVariable.gif");
+		new GIcon("icon.plugin.symboltree.node.local.variable");
 
 	LocalVariableSymbolNode(Program program, Symbol symbol) {
 		super(program, symbol);

@@ -21,8 +21,8 @@ import java.util.List;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
 
 public class ProjectDataOpenDefaultToolAction extends FrontendProjectTreeAction {
@@ -37,7 +37,7 @@ public class ProjectDataOpenDefaultToolAction extends FrontendProjectTreeAction 
 	@Override
 	protected void actionPerformed(ProjectDataContext context) {
 		List<DomainFile> selectedFiles = context.getSelectedFiles();
-		AppInfo.getActiveProject().getToolServices().launchDefaultTool(selectedFiles.get(0));
+		AppInfo.getActiveProject().getToolServices().launchDefaultTool(selectedFiles);
 	}
 
 	@Override

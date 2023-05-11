@@ -53,7 +53,7 @@ public interface LldbModelTargetSession extends //
 		if (output.contains("loaded *kernel* extension dll for usermode")) {
 			return;
 		}
-		getListeners().fire.consoleOutput(getProxy(), chan, output);
+		broadcast().consoleOutput(getProxy(), chan, output);
 	}
 
 	@Override

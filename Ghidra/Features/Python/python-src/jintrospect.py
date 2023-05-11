@@ -166,7 +166,7 @@ def getCallTipJava(command='', locals=None):
                 for args in object.argslist:
                     if args is not None:
                         # for now
-                        tipList.append(str(args.data))
+                        tipList.append(str(args.method))
 #            elif callable(object):
 #                argspec = str(object.__call__)
 #                # these don't seem to be very accurate

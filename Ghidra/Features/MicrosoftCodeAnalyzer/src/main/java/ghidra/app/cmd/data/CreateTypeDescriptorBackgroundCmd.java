@@ -112,7 +112,7 @@ public class CreateTypeDescriptorBackgroundCmd
 		// Create 'name' char[0] data at the address immediately following structure
 		Program program = model.getProgram();
 		Data nameData = DataUtilities.createData(program, arrayAddr, charArray,
-			charArray.getLength(), false, getClearDataMode());
+			charArray.getLength(), getClearDataMode());
 
 		nameData.setComment(CodeUnit.EOL_COMMENT, "TypeDescriptor.name");
 
@@ -129,7 +129,7 @@ public class CreateTypeDescriptorBackgroundCmd
 	@Override
 	protected boolean createMarkup() throws CancelledException, InvalidInputException {
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		Program program = model.getProgram();
 		String demangledName = model.getDemangledTypeDescriptor();
@@ -142,7 +142,7 @@ public class CreateTypeDescriptorBackgroundCmd
 		EHDataTypeUtilities.createPlateCommentIfNeeded(program, prefix, RTTI_0_NAME, null,
 			getDataAddress(), applyOptions);
 
-		monitor.checkCanceled();
+		monitor.checkCancelled();
 
 		// Label
 		Namespace classNamespace = model.getDescriptorAsNamespace();

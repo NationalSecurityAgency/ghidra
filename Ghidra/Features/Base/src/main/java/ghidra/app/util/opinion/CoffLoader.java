@@ -35,10 +35,13 @@ import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class CoffLoader extends AbstractLibrarySupportLoader {
@@ -46,14 +49,11 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	public final static String COFF_NAME = "Common Object File Format (COFF)";
 	public static final String FAKE_LINK_OPTION_NAME = "Attempt to link sections located at 0x0";
 	static final boolean FAKE_LINK_OPTION_DEFAULT = true;
-	private static final int COFF_NULL_SANITY_CHECK_LEN = 64;
 
 	// where do sections start if they're all zero???  this affects object files
 	// and if we're high enough (!!!) the scalar operand analyzer will work
 	// properly with external symbols laid down
 	private static final int EMPTY_START_OFFSET = 0x2000;
-
-	private static final long MIN_BYTE_LENGTH = 22;
 
 	/**
 	 * @return true if this loader assumes the Microsoft variant of the COFF format
@@ -97,47 +97,27 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
-		if (provider.length() < MIN_BYTE_LENGTH) {
+		if (!CoffFileHeader.isValid(provider)) {
 			return loadSpecs;
 		}
 
 		CoffFileHeader header = new CoffFileHeader(provider);
+		header.parseSectionHeaders(provider);
 
-		// Check to prevent false positives when the file is full of '\0' bytes.
-		// If the machine type is unknown (0), check the first 64 bytes of the file and bail if
-		// they are also all 0.
-		if (header.getMagic() == CoffMachineType.IMAGE_FILE_MACHINE_UNKNOWN /* ie. == 0 */ &&
-			provider.length() > COFF_NULL_SANITY_CHECK_LEN) {
-			byte[] headerBytes = provider.readBytes(0, COFF_NULL_SANITY_CHECK_LEN);
-			boolean allZeros = true;
-			for (byte b : headerBytes) {
-				allZeros = (b == 0);
-				if (!allZeros) {
-					break;
-				}
-			}
-			if (allZeros) {
-				return loadSpecs;
-			}
+		if (isVisualStudio(header) != isMicrosoftFormat()) {
+			// Only one of the CoffLoader/MSCoffLoader will survive this check
+			return loadSpecs;
+		}
+		String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
+		List<QueryResult> results =
+			QueryOpinionService.query(getName(), header.getMachineName(), secondary);
+		for (QueryResult result : results) {
+			loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
+		}
+		if (loadSpecs.isEmpty()) {
+			loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
 		}
 
-		if (CoffMachineType.isMachineTypeDefined(header.getMagic())) {
-			header.parseSectionHeaders(provider);
-
-			if (isVisualStudio(header) != isMicrosoftFormat()) {
-				// Only one of the CoffLoader/MSCoffLoader will survive this check
-				return loadSpecs;
-			}
-			String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
-			List<QueryResult> results =
-				QueryOpinionService.query(getName(), header.getMachineName(), secondary);
-			for (QueryResult result : results) {
-				loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
-			}
-			if (loadSpecs.isEmpty()) {
-				loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
-			}
-		}
 		return loadSpecs;
 	}
 
@@ -196,21 +176,15 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
-		int id = program.startTransaction("loading program from COFF");
-		boolean success = false;
 		try {
 			processSectionHeaders(provider, header, program, fileBytes, monitor, log, sectionsMap,
 				performFakeLinking);
 			processSymbols(header, program, monitor, log, sectionsMap, symbolsMap);
 			processEntryPoint(header, program, monitor, log);
 			processRelocations(header, program, sectionsMap, symbolsMap, log, monitor);
-			success = true;
 		}
 		catch (AddressOverflowException e) {
 			throw new IOException(e);
-		}
-		finally {
-			program.endTransaction(id, success);
 		}
 	}
 
@@ -689,6 +663,9 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 					sectionStartAddr.add(relocation.getAddress() - section.getVirtualAddress());
 				short relocationType = relocation.getType();
 
+				Status status = Status.FAILURE;
+				int byteLength = 0;
+
 				if (handler == null) {
 					++failureCount;
 					handleRelocationError(program, address, relocationType,
@@ -700,6 +677,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 							// skip relocation if previous failed relocation was at the same address
 							// since it is likely dependent on the previous failed relocation result
 							++failureCount;
+							status = Status.SKIPPED;
 
 							String logMessage =
 								String.format("Skipped dependent COFF Relocation type 0x%x at %s",
@@ -707,20 +685,24 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 							Msg.error(this, program.getName() + ": " + logMessage);
 						}
 						else {
-							handler.relocate(address, relocation, relocationContext);
+							RelocationResult result =
+								handler.relocate(address, relocation, relocationContext);
+							status = result.status();
+							byteLength = result.byteLength();
+
+							if (status == Status.UNSUPPORTED) {
+								++failureCount;
+								failedAddr = address;
+								handleRelocationError(program, address, relocationType,
+									"Unsupported COFF relocation type", null);
+							}
 						}
 					}
 					catch (MemoryAccessException e) {
 						++failureCount;
 						failedAddr = address;
 						handleRelocationError(program, address, relocationType,
-							"Error accessing memory", null);
-					}
-					catch (NotFoundException e) {
-						++failureCount;
-						failedAddr = address;
-						handleRelocationError(program, address, relocationType,
-							"Unsupported COFF relocation type", null);
+							"error accessing memory", null);
 					}
 					catch (RelocationException e) {
 						++failureCount;
@@ -728,7 +710,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 						handleRelocationError(program, address, relocationType, e.getMessage(),
 							null);
 					}
-					catch (Exception e) {
+					catch (Exception e) { // handle unexpected exceptions
 						++failureCount;
 						failedAddr = address;
 						String msg = e.getMessage();
@@ -744,13 +726,9 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 				Symbol symbol =
 					symbolsMap.get(header.getSymbolAtIndex(relocation.getSymbolIndex()));
 
-				// TODO: There may be multiple relocations at the same address.  
-				// The RelocationTable for retaining relocations needs to be revised to handle
-				// this.  At present only the last one will remain in the DB-backed address-based 
-				// table. (see GP-2128)
 				program.getRelocationTable()
-						.add(address, relocation.getType(),
-							new long[] { relocation.getSymbolIndex() }, null,
+						.add(address, status, relocation.getType(),
+							new long[] { relocation.getSymbolIndex() }, byteLength,
 							symbol != null ? symbol.getName() : "<null>");
 			}
 		}

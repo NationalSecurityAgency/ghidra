@@ -28,10 +28,11 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.pathmanager.PathnameTablePanel;
+import generic.theme.GIcon;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.filechooser.ExtensionFileFilter;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * 
@@ -45,6 +46,11 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 	private JFrame frame;
 	private String[] tablePaths =
 		{ "c:\\path_one", "c:\\path_two", "c:\\path_three", "c:\\path_four", "c:\\path_five" };
+	private JButton resetButton;
+	private JButton removeButton;
+	private JButton addButton;
+	private JButton upButton;
+	private JButton downButton;
 
 	@Before
 	public void setUp() throws Exception {
@@ -54,6 +60,12 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		frame = new JFrame("Test");
 		frame.getContentPane().add(panel);
 		runSwing(() -> frame.setVisible(true));
+
+		resetButton = findButtonByIcon(panel, new GIcon("icon.widget.pathmanager.reset"));
+		removeButton = findButtonByIcon(panel, Icons.DELETE_ICON);
+		addButton = findButtonByIcon(panel, Icons.ADD_ICON);
+		upButton = findButtonByIcon(panel, Icons.UP_ICON);
+		downButton = findButtonByIcon(panel, Icons.DOWN_ICON);
 	}
 
 	@After
@@ -64,29 +76,28 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 	@Test
 	public void testUpArrow() throws Exception {
 		selectRow(3);
-		JButton upButton = findButtonByIcon(panel, ResourceManager.loadImage("images/up.png"));
 		assertNotNull(upButton);
 		pressButton(upButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		int row = table.getSelectedRow();
 		assertEquals(2, row);
 		assertEquals("c:\\path_four", table.getModel().getValueAt(row, 0));
 
 		pressButton(upButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(1, row);
 		assertEquals("c:\\path_four", table.getModel().getValueAt(row, 0));
 
 		pressButton(upButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(0, row);
 		assertEquals("c:\\path_four", table.getModel().getValueAt(row, 0));
 
 		pressButton(upButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(4, row);
 		assertEquals("c:\\path_four", table.getModel().getValueAt(row, 0));
@@ -96,29 +107,28 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 	public void testDownArrow() throws Exception {
 		selectRow(2);
 
-		JButton downButton = findButtonByIcon(panel, ResourceManager.loadImage("images/down.png"));
 		assertNotNull(downButton);
 		pressButton(downButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		int row = table.getSelectedRow();
 		assertEquals(3, row);
 		assertEquals("c:\\path_three", table.getModel().getValueAt(row, 0));
 
 		pressButton(downButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(4, row);
 		assertEquals("c:\\path_three", table.getModel().getValueAt(row, 0));
 
 		pressButton(downButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(0, row);
 		assertEquals("c:\\path_three", table.getModel().getValueAt(row, 0));
 
 		pressButton(downButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(1, row);
 		assertEquals("c:\\path_three", table.getModel().getValueAt(row, 0));
@@ -128,51 +138,48 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 	public void testRemove() throws Exception {
 		selectRow(4);
 
-		JButton button =
-			findButtonByIcon(panel, ResourceManager.loadImage("images/edit-delete.png"));
-		assertNotNull(button);
-		pressButton(button, true);
-		waitForPostedSwingRunnables();
+		assertNotNull(removeButton);
+		pressButton(removeButton, true);
+		waitForSwing();
 		int row = table.getSelectedRow();
 		assertEquals(3, row);
 
-		pressButton(button, true);
-		waitForPostedSwingRunnables();
+		pressButton(removeButton, true);
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(2, row);
 
-		pressButton(button, true);
-		waitForPostedSwingRunnables();
+		pressButton(removeButton, true);
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(1, row);
 
-		pressButton(button, true);
-		waitForPostedSwingRunnables();
+		pressButton(removeButton, true);
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(0, row);
 
-		pressButton(button, true);
-		waitForPostedSwingRunnables();
+		pressButton(removeButton, true);
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(-1, row);
 
-		assertTrue(!button.isEnabled());
+		assertTrue(!removeButton.isEnabled());
 	}
 
 	@Test
 	public void testAddButton() throws Exception {
 		File temp = createTempFileForTest();
 
-		Preferences.setProperty(Preferences.LAST_IMPORT_DIRECTORY, temp.getParent());
-		panel.setFileChooserProperties("Select Source Files", Preferences.LAST_IMPORT_DIRECTORY,
+		Preferences.setProperty(Preferences.LAST_PATH_DIRECTORY, temp.getParent());
+		panel.setFileChooserProperties("Select Source Files", Preferences.LAST_PATH_DIRECTORY,
 			GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
-		JButton button = findButtonByIcon(panel, ResourceManager.loadImage("images/Plus.png"));
-		assertNotNull(button);
-		pressButton(button, false);
+		assertNotNull(addButton);
+		pressButton(addButton, false);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		selectFromFileChooser();
 
 		assertEquals(6, table.getRowCount());
@@ -186,16 +193,15 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 
 		File temp = createTempFileForTest();
 
-		Preferences.setProperty(Preferences.LAST_IMPORT_DIRECTORY, temp.getParent());
-		panel.setFileChooserProperties("Select Source Files", Preferences.LAST_IMPORT_DIRECTORY,
+		Preferences.setProperty(Preferences.LAST_PATH_DIRECTORY, temp.getParent());
+		panel.setFileChooserProperties("Select Source Files", Preferences.LAST_PATH_DIRECTORY,
 			GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
-		JButton button = findButtonByIcon(panel, ResourceManager.loadImage("images/Plus.png"));
-		assertNotNull(button);
-		pressButton(button, false);
+		assertNotNull(addButton);
+		pressButton(addButton, false);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		GhidraFileChooser fileChooser = waitForDialogComponent(GhidraFileChooser.class);
 		assertNotNull(fileChooser);
 
@@ -221,16 +227,15 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 
 		panel.setAddToTop(true);
 		File temp = createTempFileForTest();
-		Preferences.setProperty(Preferences.LAST_IMPORT_DIRECTORY, temp.getParent());
-		panel.setFileChooserProperties("Select Source Files", Preferences.LAST_IMPORT_DIRECTORY,
+		Preferences.setProperty(Preferences.LAST_PATH_DIRECTORY, temp.getParent());
+		panel.setFileChooserProperties("Select Source Files", Preferences.LAST_PATH_DIRECTORY,
 			GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
-		JButton button = findButtonByIcon(panel, ResourceManager.loadImage("images/Plus.png"));
-		assertNotNull(button);
-		pressButton(button, false);
+		assertNotNull(addButton);
+		pressButton(addButton, false);
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		selectFromFileChooser();
 
 		assertEquals(6, table.getRowCount());
@@ -242,11 +247,6 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 
 	@Test
 	public void testReset() throws Exception {
-		JButton removeButton =
-			findButtonByIcon(panel, ResourceManager.loadImage("images/edit-delete.png"));
-		JButton addButton = findButtonByIcon(panel, ResourceManager.loadImage("images/Plus.png"));
-		JButton resetButton =
-			findButtonByIcon(panel, ResourceManager.loadImage("images/trash-empty.png"));
 
 		assertNotNull(removeButton);
 		assertNotNull(addButton);
@@ -255,17 +255,17 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		selectRow(4);
 
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		int row = table.getSelectedRow();
 		assertEquals(3, row);
 
 		pressButton(removeButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(2, row);
 
 		pressButton(resetButton, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressResetConfirmation();
 
@@ -273,7 +273,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertEquals(5, rowCount);
 
 		pressButton(addButton, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		selectFromFileChooser();
 
@@ -281,7 +281,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertEquals(6, rowCount);
 
 		pressButton(resetButton, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		pressResetConfirmation();
 
@@ -301,7 +301,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		assertNotNull(yesButton);
 
 		pressButton(yesButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void selectFromFileChooser() throws Exception {
@@ -319,7 +319,7 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		waitForUpdateOnChooser(fileChooser);
 
 		pressButton(chooseButton, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private void reset() {

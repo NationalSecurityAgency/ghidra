@@ -109,7 +109,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		manageBlockNesting(this);
 
 		while (notDone()) {
-			applicator.checkCanceled();
+			applicator.checkCancelled();
 			MsSymbolApplier applier = applicator.getSymbolApplier(iter);
 			allAppliers.add(applier);
 			applier.manageBlockNesting(this);
@@ -258,10 +258,12 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		}
 
 		boolean succeededSetFunctionSignature = false;
-		if (!function.isThunk() &&
-			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
-			succeededSetFunctionSignature = setFunctionDefinition(monitor);
-			function.setNoReturn(isNonReturning);
+		if (thunkSymbol == null) {
+			function.setThunkedFunction(null);
+			if (function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+				succeededSetFunctionSignature = setFunctionDefinition(monitor);
+				function.setNoReturn(isNonReturning);
+			}
 		}
 		// If signature was set, then override existing primary mangled symbol with
 		// the global symbol that provided this signature so that Demangler does not overwrite
@@ -353,9 +355,14 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	private Function createFunctionCommand(TaskMonitor monitor) {
 		CreateFunctionCmd funCmd = new CreateFunctionCmd(address);
 		if (!funCmd.applyTo(applicator.getProgram(), monitor)) {
-			applicator.appendLogMsg("Failed to apply function at address " + address.toString() +
-				"; attempting to use possible existing function");
-			return applicator.getProgram().getListing().getFunctionAt(address);
+			funCmd = new CreateFunctionCmd(null, address, new AddressSet(address, address),
+				SourceType.DEFAULT);
+			if (!funCmd.applyTo(applicator.getProgram(), monitor)) {
+				applicator
+						.appendLogMsg("Failed to apply function at address " + address.toString() +
+							"; attempting to use possible existing function");
+				return applicator.getProgram().getListing().getFunctionAt(address);
+			}
 		}
 		return funCmd.getFunction();
 	}
@@ -441,7 +448,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			function.getProgram().getListing().getInstructions(scopeSet, true);
 		int max = 0;
 		while (instructions.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction next = instructions.next();
 			int newValue = valueChange.getDepth(next.getMinAddress());
 			if (newValue < -(20 * 1024) || newValue > (20 * 1024)) {

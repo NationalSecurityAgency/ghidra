@@ -16,10 +16,7 @@
 package ghidra.app.util.parser;
 
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.help.UnsupportedOperationException;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -98,7 +95,6 @@ public class FunctionSignatureParser {
 	 */
 	public FunctionDefinitionDataType parse(FunctionSignature originalSignature,
 			String signatureText) throws ParseException, CancelledException {
-
 		dtMap.clear();
 		nameMap.clear();
 		if (dtmService != null) {
@@ -236,18 +232,18 @@ public class FunctionSignatureParser {
 	}
 
 	private String replaceDataTypeIfNeeded(String text, DataType dataType, String replacementName) {
-		String displayName = dataType.getDisplayName();
-		if (canParse(displayName)) {
+		String datatypeName = dataType.getName();
+		if (canParseType(datatypeName)) {
 			return text;
 		}
 
 		dtMap.put(replacementName, dataType);
 
-		return substitute(text, displayName, replacementName);
+		return substitute(text, datatypeName, replacementName);
 	}
 
 	private String replaceNameIfNeeded(String text, String name, String replacementName) {
-		if (canParse(name)) {
+		if (canParseName(name)) {
 			return text;
 		}
 		nameMap.put(replacementName, name);
@@ -272,34 +268,9 @@ public class FunctionSignatureParser {
 		return dt;
 	}
 
-	// The following regex pattern attempts to isolate the parameter name from
-	// the beginning of a parameter specification. Since the name is optional,
-	// additional steps must be taken in code to ensure that the trailing word of
-	// a multi-word type-specified is not treated as a name (e.g., unsigned long).
-	//
-	// The regex pattern attempts to isolate the following fields:
-	//
-	// <type-specifier> [<array-specifier>|<pointer-specifier>]* [param-name]
-	//     group-1                     group-3                     group-4
-	//
-	// Note: group-2 is an inner group to group-3 is not useful
-	//
-	private static final Pattern parameterNameCapturePattern =
-		Pattern.compile("(.+?)((\\[\\d*\\]|\\*\\d*)\\s*)*([^\\s\\[\\*]+)");
-
 	private DataType resolveDataType(String dataTypeName) throws CancelledException {
 		if (dtMap.containsKey(dataTypeName)) {
 			return dtMap.get(dataTypeName);
-		}
-
-		Matcher m = parameterNameCapturePattern.matcher(dataTypeName);
-		if (m.matches()) {
-			boolean hasPointerOrArraySpec = m.group(3) != null;
-			boolean hasName = (m.group(4) != null) && (m.group(4).length() != 0);
-			if (hasPointerOrArraySpec && hasName) {
-				// name after array/pointer spec - dataTypeName is not a valid datatype
-				return null;
-			}
 		}
 
 		DataType dataType = null;
@@ -330,7 +301,7 @@ public class FunctionSignatureParser {
 		if (nameMap.containsKey(name)) {
 			return nameMap.get(name);
 		}
-		if (!canParse(name)) {
+		if (!canParseName(name)) {
 			throw new ParseException("Can't parse name: " + name);
 		}
 		return name;
@@ -340,8 +311,12 @@ public class FunctionSignatureParser {
 		return text.replaceFirst(Pattern.quote(searchString), replacementString);
 	}
 
-	private boolean canParse(String text) {
+	private boolean canParseName(String text) {
 		return !StringUtils.containsAny(text, "()*[], ");
+	}
+
+	private boolean canParseType(String text) {
+		return !StringUtils.containsAny(text, "()<>,");
 	}
 
 	/**
@@ -369,11 +344,6 @@ public class FunctionSignatureParser {
 
 		void clearCache() {
 			dtCache.clear();
-		}
-
-		@Override
-		public DataTypeManager[] getDataTypeManagers() {
-			throw new UnsupportedOperationException();
 		}
 
 		@Override

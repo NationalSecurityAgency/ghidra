@@ -24,13 +24,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.RangeSet;
-
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbCause.Causes;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.impl.cmd.*;
 import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
@@ -44,7 +43,7 @@ public class GdbInferiorImpl implements GdbInferior {
 			"0x(?<end>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<size>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<offset>[0-9,A-F,a-f]+)\\s+" +
-			"(?<file>\\S*)\\s*");
+			"(?<file>.*)");
 
 	protected static final Pattern MEMORY_MAPPING_LINE_PATTERN =
 		Pattern.compile("\\s*" + //
@@ -53,7 +52,7 @@ public class GdbInferiorImpl implements GdbInferior {
 			"0x(?<size>[0-9,A-F,a-f]+)\\s+" +
 			"0x(?<offset>[0-9,A-F,a-f]+)\\s+" +
 			"(?<flags>[rwsxp\\-]+)\\s+" +
-			"(?<file>\\S*)\\s*");
+			"(?<file>.*)");
 
 	protected final GdbManagerImpl manager;
 	private final int id;
@@ -480,7 +479,7 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	@Override
-	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
+	public CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len) {
 		return execute(new GdbReadMemoryCommand(manager, null, addr, buf, len));
 	}
 

@@ -17,13 +17,16 @@ package ghidra.app.plugin.core.functiongraph.graph.jung.transformer;
 
 import java.awt.Color;
 import java.awt.Paint;
+import java.util.Objects;
 
 import com.google.common.base.Function;
 
 import edu.uci.ics.jung.visualization.picking.PickedInfo;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.functiongraph.graph.FGVertexType;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.ColorUtils;
 
 public class FGVertexPickableBackgroundPaintTransformer implements Function<FGVertex, Paint> {
 
@@ -31,26 +34,22 @@ public class FGVertexPickableBackgroundPaintTransformer implements Function<FGVe
 	private final Color pickedColor;
 	private final Color entryColor;
 	private final Color exitColor;
-	private final Color pickedStartColor;
-	private final Color pickedEndColor;
+	private final Color pickedEntryColor;
+	private final Color pickedExitColor;
 
 	private static Color mix(Color c1, Color c2) {
-		return new Color((c1.getRed() + c2.getRed()) / 2, (c1.getGreen() + c2.getGreen()) / 2,
-			(c1.getBlue() + c2.getBlue()) / 2);
+		return ColorUtils.blend(c1, c2, .5f);
 	}
 
 	public FGVertexPickableBackgroundPaintTransformer(PickedInfo<FGVertex> info, Color pickedColor,
 			Color startColor, Color endColor) {
 
-		if (info == null) {
-			throw new IllegalArgumentException("PickedInfo instance must be non-null");
-		}
-		this.info = info;
+		this.info = Objects.requireNonNull(info);
 		this.pickedColor = pickedColor;
 		this.entryColor = startColor;
 		this.exitColor = endColor;
-		this.pickedStartColor = mix(pickedColor, startColor);
-		this.pickedEndColor = mix(pickedColor, endColor);
+		this.pickedEntryColor = mix(pickedColor, startColor);
+		this.pickedExitColor = mix(pickedColor, endColor);
 	}
 
 	@Override
@@ -69,20 +68,31 @@ public class FGVertexPickableBackgroundPaintTransformer implements Function<FGVe
 		if (info.isPicked(v)) {
 			if (v.isDefaultBackgroundColor()) {
 				if (vertexType.isEntry()) {
-					return pickedStartColor;
+					return pickedEntryColor;
 				}
 				if (vertexType.isExit()) {
-					return pickedEndColor;
+					return pickedExitColor;
 				}
 				return pickedColor;
 			}
 			if (vertexType.isEntry()) {
-				return pickedStartColor.darker();
+				// this is a vertex that has a non-default, user-defined color; making the value
+				// darker() is meant to signal that the 'picked entry color' is on top of a vertex
+				// that has another color underneath
+				return Gui.darker(pickedEntryColor);
 			}
 			if (vertexType.isExit()) {
-				return pickedEndColor.darker();
+				// this is a vertex that has a non-default, user-defined color; making the value
+				// darker() is meant to signal that the 'picked exit color' is on top of a vertex
+				// that has another color underneath
+				return Gui.darker(pickedExitColor);
 			}
-			return pickedColor.darker();
+
+			// this is a vertex that has a non-default, user-defined color; making the value
+			// darker() is meant to signal that the 'picked color' is on top of a vertex that has 
+			// another color underneath
+			Color mixed = mix(pickedColor, backgroundColor);
+			return Gui.darker(mixed);
 		}
 
 		if (vertexType.isEntry()) {

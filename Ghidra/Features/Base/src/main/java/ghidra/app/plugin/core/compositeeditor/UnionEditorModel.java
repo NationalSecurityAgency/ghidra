@@ -398,7 +398,7 @@ class UnionEditorModel extends CompEditorModel {
 
 		monitor.initialize(numCopies);
 		for (int i = 0; i < numCopies; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			insert(rowIndex + i, dataType, length, null, null);
 			monitor.incrementProgress(1);
 		}

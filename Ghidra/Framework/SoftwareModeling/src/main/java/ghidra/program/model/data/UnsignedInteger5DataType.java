@@ -15,9 +15,7 @@
  */
 package ghidra.program.model.data;
 
-public class UnsignedInteger5DataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class UnsignedInteger5DataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined UnsignedInteger5DataType instance.*/
 	public final static UnsignedInteger5DataType dataType = new UnsignedInteger5DataType();
@@ -27,7 +25,7 @@ public class UnsignedInteger5DataType extends AbstractIntegerDataType {
 	}
 
 	public UnsignedInteger5DataType(DataTypeManager dtm) {
-		super("uint5", false, dtm);
+		super("uint5", dtm);
 	}
 
 	@Override

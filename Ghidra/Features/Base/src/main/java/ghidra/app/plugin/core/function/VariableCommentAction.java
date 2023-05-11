@@ -60,16 +60,12 @@ class VariableCommentAction extends ListingContextAction {
 			return;
 		}
 		VariableCommentDialog dialog = funcPlugin.getVariableCommentDialog();
-		if (dialog == null) {
-			dialog = new VariableCommentDialog(funcPlugin);
-		}
 		dialog.showDialog(function.getProgram(), var);
 	}
 
-	/////////////////////////////////////////////////////////////
 	/**
 	 * Get a variable using the current location.
-	 * @param function
+	 * @param function the function
 	 * @return null if function is null or if current location is not
 	 * a stack variable location.
 	 */

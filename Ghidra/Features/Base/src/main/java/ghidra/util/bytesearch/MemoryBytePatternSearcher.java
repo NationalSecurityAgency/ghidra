@@ -187,7 +187,7 @@ public class MemoryBytePatternSearcher {
 		AddressRangeIterator addressRanges = doneSet.getAddressRanges();
 		long numDone = 0;
 		while (addressRanges.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage(searchName + " Search");
 			monitor.setProgress(progress + (long) (numInBlock * ((float) numDone / numInDoneSet)));
 			AddressRange addressRange = addressRanges.next();
@@ -217,7 +217,7 @@ public class MemoryBytePatternSearcher {
 			data.skip(blockOffset);
 
 			rootState.apply(data, maxBlockSearchLength, mymatches, monitor);
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			monitor.setMessage(searchName + " (Examine Matches)");
 
@@ -225,7 +225,7 @@ public class MemoryBytePatternSearcher {
 			//       should be OK, since they are all relative to the block.
 			long matchProgress = progress + (long) (numInBlock * ((float) numDone / numInDoneSet));
 			for (int i = 0; i < mymatches.size(); ++i) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setProgress(
 					matchProgress + (long) (numAddressesInRange * ((float) i / mymatches.size())));
 				Match match = mymatches.get(i);

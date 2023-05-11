@@ -27,6 +27,7 @@ import javax.swing.table.TableColumnModel;
 import docking.widgets.GenericDateCellRenderer;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.Gui;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.LabelHistory;
 import ghidra.util.table.GhidraTable;
@@ -126,16 +127,11 @@ class LabelHistoryPanel extends JPanel {
 
 		private Font monoFont;
 
-		LabelCellRenderer() {
-			Font f = getFont();
-			monoFont = new Font("monospaced", f.getStyle(), f.getSize());
-		}
-
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
 			Component c = super.getTableCellRendererComponent(data);
-			c.setFont(monoFont);
+			c.setFont(Gui.getFont("font.monospaced"));
 			return c;
 		}
 	}

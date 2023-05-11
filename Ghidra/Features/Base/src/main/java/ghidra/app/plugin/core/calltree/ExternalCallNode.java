@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.FunctionSignatureFieldLocation;
@@ -29,12 +30,11 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.TranslateIcon;
 
 public class ExternalCallNode extends CallNode {
 
-	private static final Icon EXTERNAL_ICON = ResourceManager.loadImage("images/package.png");
+	private static final Icon EXTERNAL_ICON = new GIcon("icon.plugin.calltree.node.external");
 	private final Icon EXTERNAL_FUNCTION_ICON;
 	private final Icon baseIcon;
 
@@ -77,7 +77,7 @@ public class ExternalCallNode extends CallNode {
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
-		return new ArrayList<GTreeNode>();
+		return new ArrayList<>();
 	}
 
 	@Override

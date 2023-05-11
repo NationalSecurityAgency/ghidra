@@ -16,20 +16,18 @@
 #include "space.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_BASE = AttributeId("base",89);
 AttributeId ATTRIB_DEADCODEDELAY = AttributeId("deadcodedelay",90);
 AttributeId ATTRIB_DELAY = AttributeId("delay", 91);
 AttributeId ATTRIB_LOGICALSIZE = AttributeId("logicalsize",92);
 AttributeId ATTRIB_PHYSICAL = AttributeId("physical",93);
-AttributeId ATTRIB_PIECE1 = AttributeId("piece1",94);	// piece attributes must have sequential ids
-AttributeId ATTRIB_PIECE2 = AttributeId("piece2",95);
-AttributeId ATTRIB_PIECE3 = AttributeId("piece3",96);
-AttributeId ATTRIB_PIECE4 = AttributeId("piece4",97);
-AttributeId ATTRIB_PIECE5 = AttributeId("piece5",98);
-AttributeId ATTRIB_PIECE6 = AttributeId("piece6",99);
-AttributeId ATTRIB_PIECE7 = AttributeId("piece7",100);
-AttributeId ATTRIB_PIECE8 = AttributeId("piece8",101);
-AttributeId ATTRIB_PIECE9 = AttributeId("piece9",102);
+
+// ATTRIB_PIECE is a special attribute for supporting the legacy attributes "piece1", "piece2", ..., "piece9",
+// It is effectively a sequence of indexed attributes for use with Encoder::writeStringIndexed.
+// The index starts at the ids reserved for "piece1" thru "piece9" but can extend farther.
+AttributeId ATTRIB_PIECE = AttributeId("piece",94);	// Open slots 94-102
 
 /// Calculate \e highest based on \e addressSize, and \e wordsize.
 /// This also calculates the default pointerLowerBound
@@ -124,6 +122,30 @@ void AddrSpace::truncateSpace(uint4 newsize)
   addressSize = newsize;
   minimumPointerSize = newsize;
   calcScaleMask();
+}
+
+/// \brief Determine if a given point is contained in an address range in \b this address space
+///
+/// The point is specified as an address space and offset pair plus an additional number of bytes to "skip".
+/// A non-negative value is returned if the point falls in the address range.
+/// If the point falls on the first byte of the range, 0 is returned. For the second byte, 1 is returned, etc.
+/// Otherwise -1 is returned.
+/// \param offset is the starting offset of the address range within \b this space
+/// \param size is the size of the address range in bytes
+/// \param pointSpace is the address space of the given point
+/// \param pointOff is the offset of the given point
+/// \param pointSkip is the additional bytes to skip
+/// \return a non-negative value indicating where the point falls in the range, or -1
+int4 AddrSpace::overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const
+
+{
+  if (this != pointSpace)
+    return -1;
+
+  uintb dist = wrapOffset(pointOff+pointSkip-offset);
+
+  if (dist >= size) return -1; // but must fall before op+size
+  return (int4) dist;
 }
 
 /// Write the main attributes for an address within \b this space.
@@ -363,6 +385,12 @@ ConstantSpace::ConstantSpace(AddrSpaceManager *m,const Translate *t)
     setFlags(big_endian);
 }
 
+int4 ConstantSpace::overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const
+
+{
+  return -1;
+}
+
 /// Constants are always printed as hexidecimal values in
 /// the debugger and console dumps
 void ConstantSpace::printRaw(ostream &s,uintb offset) const
@@ -471,6 +499,49 @@ JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
   clearFlags(heritaged); // This space is never heritaged, but does dead-code analysis
 }
 
+int4 JoinSpace::overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOffset,int4 pointSkip) const
+
+{
+  if (this == pointSpace) {
+    // If the point is in the join space, translate the point into the piece address space
+    JoinRecord *pieceRecord = getManager()->findJoin(pointOffset);
+    int4 pos;
+    Address addr = pieceRecord->getEquivalentAddress(pointOffset + pointSkip, pos);
+    pointSpace = addr.getSpace();
+    pointOffset = addr.getOffset();
+  }
+  else {
+    if (pointSpace->getType() == IPTR_CONSTANT)
+      return -1;
+    pointOffset = pointSpace->wrapOffset(pointOffset + pointSkip);
+  }
+  JoinRecord *joinRecord = getManager()->findJoin(offset);
+  // Set up so we traverse pieces in data order
+  int4 startPiece,endPiece,dir;
+  if (isBigEndian()) {
+    startPiece = 0;
+    endPiece = joinRecord->numPieces();
+    dir = 1;
+  }
+  else {
+    startPiece = joinRecord->numPieces() - 1;
+    endPiece = -1;
+    dir = -1;
+  }
+  int4 bytesAccum = 0;
+  for(int4 i=startPiece;i!=endPiece;i += dir) {
+    const VarnodeData &vData(joinRecord->getPiece(i));
+    if (vData.space == pointSpace && pointOffset >= vData.offset && pointOffset <= vData.offset + (vData.size-1)) {
+      int4 res = (int4)(pointOffset - vData.offset) + bytesAccum;
+      if (res >= size)
+	return -1;
+      return res;
+    }
+    bytesAccum += vData.size;
+  }
+  return -1;
+}
+
 /// Encode a \e join address to the stream.  This method in the interface only
 /// outputs attributes for a single element, so we are forced to encode what should probably
 /// be recursive elements into an attribute.
@@ -479,20 +550,17 @@ JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
 void JoinSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 
 {
-  static AttributeId *pieceArray[] = { &ATTRIB_PIECE1, &ATTRIB_PIECE2, &ATTRIB_PIECE3, &ATTRIB_PIECE4,
-	&ATTRIB_PIECE5, &ATTRIB_PIECE6, &ATTRIB_PIECE7, &ATTRIB_PIECE8, &ATTRIB_PIECE9 };
   JoinRecord *rec = getManager()->findJoin(offset); // Record must already exist
   encoder.writeSpace(ATTRIB_SPACE, this);
   int4 num = rec->numPieces();
-  if (num >= 8)
-    throw LowlevelError("Cannot encode more than 8 pieces");
+  if (num > MAX_PIECES)
+    throw LowlevelError("Exceeded maximum pieces in one join address");
   for(int4 i=0;i<num;++i) {
     const VarnodeData &vdata( rec->getPiece(i) );
     ostringstream t;
-    AttributeId *attribId = pieceArray[i];
     t << vdata.space->getName() << ":0x";
     t << hex << vdata.offset << ':' << dec << vdata.size;
-    encoder.writeString(*attribId, t.str());
+    encoder.writeStringIndexed(ATTRIB_PIECE, i, t.str());
   }
   if (num == 1)
     encoder.writeUnsignedInteger(ATTRIB_LOGICALSIZE, rec->getUnified().size);
@@ -529,9 +597,13 @@ uintb JoinSpace::decodeAttributes(Decoder &decoder,uint4 &size) const
       logicalsize = decoder.readUnsignedInteger();
       continue;
     }
-    if (attribId < ATTRIB_PIECE1.getId() || attribId > ATTRIB_PIECE9.getId())
+    else if (attribId == ATTRIB_UNKNOWN)
+      attribId = decoder.getIndexedAttributeId(ATTRIB_PIECE);
+    if (attribId < ATTRIB_PIECE.getId())
       continue;
-    int4 pos = (int4)(attribId - ATTRIB_PIECE1.getId());
+    int4 pos = (int4)(attribId - ATTRIB_PIECE.getId());
+    if (pos > MAX_PIECES)
+      continue;
     while(pieces.size() <= pos)
       pieces.emplace_back();
     VarnodeData &vdat( pieces[pos] );
@@ -670,3 +742,5 @@ void OverlaySpace::decode(Decoder &decoder)
   if (baseSpace->hasPhysical())
     setFlags(hasphysical);
 }
+
+} // End namespace ghidra

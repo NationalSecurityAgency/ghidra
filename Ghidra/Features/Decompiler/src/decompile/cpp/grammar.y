@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+%define api.prefix {grammar}
 %{
 #include "grammar.hh"
 
-extern int yylex(void);
-extern int yyerror(const char *str);
+namespace ghidra {
+
+extern int grammarlex(void);
+extern int grammarerror(const char *str);
 static CParse *parse;
-extern int yydebug;
 %}
 
 %union {
@@ -1329,13 +1331,13 @@ bool CParse::parseStream(istream &s,uint4 doctype)
   return runParse(doctype);
 }
 
-int yylex(void)
+int grammarlex(void)
 
 {
   return parse->lex();
 }
 
-int yyerror(const char *str)
+int grammarerror(const char *str)
 
 {
   return 0;
@@ -1567,3 +1569,4 @@ Address parse_machaddr(istream &s,int4 &defaultsize,const TypeFactory &typegrp,b
   return res;
 }
 
+} // End namespace ghidra

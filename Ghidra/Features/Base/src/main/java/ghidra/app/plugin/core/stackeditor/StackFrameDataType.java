@@ -186,7 +186,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 		if (offset < getMinOffset() || offset > getMaxOffset()) {
 			throw new ArrayIndexOutOfBoundsException(offset);
 		}
-		int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 		if (index >= 0) {
 			return components.get(index);
 		}
@@ -205,7 +205,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 		if (ordinal < 0 || ordinal >= getNumComponents()) {
 			throw new ArrayIndexOutOfBoundsException(ordinal);
 		}
-		int index = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(ordinal), ordinalComparator);
 		if (index >= 0) {
 			return components.get(index);
 		}
@@ -298,7 +298,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	}
 
 //	private int getFirstParameterLength() {
-//		Object offsetKey = new Integer(0);
+//		Object offsetKey = Integer.valueOf(0);
 //		DataTypeComponent[] variables = getDefinedComponents();
 //		int loc = Arrays.binarySearch(variables, offsetKey, offsetComparator);
 //		loc = (loc < 0 ? -1 - loc : loc);
@@ -315,7 +315,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 //	}
 
 	void shiftParamOffset(int offset, int deltaOrdinal, int deltaLength) {
-		int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 		if (index < 0) {
 			index = -index - 1;
 		}
@@ -333,11 +333,11 @@ public class StackFrameDataType extends BiDirectionDataType {
 	 */
 	@SuppressWarnings("unused")
 	private void clearRange(int minOffset, int maxOffset) {
-		int first = Collections.binarySearch(components, new Integer(minOffset), offsetComparator);
+		int first = Collections.binarySearch(components, Integer.valueOf(minOffset), offsetComparator);
 		if (first < 0) {
 			first = -first - 1;
 		}
-		int last = Collections.binarySearch(components, new Integer(maxOffset), offsetComparator);
+		int last = Collections.binarySearch(components, Integer.valueOf(maxOffset), offsetComparator);
 		if (last < 0) {
 			last = -last - 2;
 		}
@@ -379,7 +379,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 		if (offset < getMinOffset() || offset > getMaxOffset()) {
 			throw new ArrayIndexOutOfBoundsException(offset);
 		}
-		int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 		if (index >= 0) {
 			clearComponent(index);
 		}
@@ -596,7 +596,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 		}
 
 		int nextOffset = offset;
-		int index = Collections.binarySearch(components, new Integer(offset), offsetComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(offset), offsetComparator);
 		if (index >= 0) {
 			index++;
 		}
@@ -694,7 +694,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 		if (ordinal < 0 || ordinal >= getNumComponents()) {
 			return false;
 		}
-		int index = Collections.binarySearch(components, new Integer(ordinal), ordinalComparator);
+		int index = Collections.binarySearch(components, Integer.valueOf(ordinal), ordinalComparator);
 		if (index >= 0) {
 			return true;
 		}

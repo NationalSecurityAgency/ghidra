@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.concept;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.concept.IndexableConcept;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.concept.IIndexableConcept;
 import agent.dbgmodel.jna.dbgmodel.concept.WrapIIndexableConcept;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,14 @@ public interface IndexableConceptInternal extends IndexableConcept {
 	Map<Pointer, IndexableConceptInternal> CACHE = new WeakValueHashMap<>();
 
 	static IndexableConceptInternal instanceFor(WrapIIndexableConcept data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, IndexableConceptImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, IndexableConceptImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIIndexableConcept>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIIndexableConcept>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IIndexableConcept.IID_IINDEXABLE_CONCEPT),
-					WrapIIndexableConcept.class) //
-				.build();
+	List<Preferred<WrapIIndexableConcept>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IIndexableConcept.IID_IINDEXABLE_CONCEPT, WrapIIndexableConcept.class));
 
 	static IndexableConceptInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(IndexableConceptInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(IndexableConceptInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

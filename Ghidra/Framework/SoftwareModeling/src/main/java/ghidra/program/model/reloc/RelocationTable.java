@@ -21,6 +21,7 @@ import java.util.List;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.reloc.Relocation.Status;
 
 /**
  * An interface for storing the relocations defined in a program.
@@ -32,19 +33,40 @@ public interface RelocationTable {
 	public static final String RELOCATABLE_PROP_NAME = "Relocatable";
 
 	/**
-	 * Creates and adds a new relocation with the specified
-	 * address, type, and value. 
+	 * Adds a new relocation entry when the original bytes being replaced are to be specified.
 	 * 
-	 * @param addr the address where the relocation is required
+	 * @param addr the memory address where the relocation is required
+	 * @param status relocation status (use {@link Status#UNKNOWN} if not known).
 	 * @param type the type of relocation to perform
-	 * @param values the values needed when performing the relocation.  Definition of values is
-	 * specific to loader used and relocation type.
-	 * @param bytes original instruction bytes affected by relocation.  A null value should be
-	 * passed to rely on original underlying {@link FileBytes}.
+	 * @param values relocation-specific values which may be useful in diagnosing relocation; 
+	 * may be null.
+	 * @param bytes original memory bytes affected by relocation.  A null value may be
+	 * passed but this case is deprecated (see {@link #add(Address, Status, int, long[], int, String)}.
+	 * If null is specified and {@link Status#hasBytes()} is true a default number of original
+	 * bytes will be assumed and obtained from the underlying memory {@link FileBytes} if possible.
 	 * @param symbolName the name of the symbol being relocated; may be null 
 	 * @return the newly added relocation object
 	 */
-	public Relocation add(Address addr, int type, long[] values, byte[] bytes, String symbolName);
+	public Relocation add(Address addr, Status status, int type, long[] values, byte[] bytes,
+			String symbolName);
+
+	/**
+	 * Adds a new relocation entry when the original bytes being replaced should be determined
+	 * from the underlying {@link FileBytes}.
+	 * 
+	 * @param addr the memory address where the relocation is required
+	 * @param status relocation status (use {@link Status#UNKNOWN} if not known).
+	 * @param type the type of relocation to perform
+	 * @param values relocation-specific values which may be useful in diagnosing relocation; 
+	 * may be null.
+	 * @param byteLength the number of bytes affected by this relocation.  This value is only
+	 * used with a status of {@link Status#UNKNOWN}, {@link Status#APPLIED} or 
+	 * {@link Status#APPLIED_OTHER}.  Valid range is 1..8 bytes.
+	 * @param symbolName the name of the symbol being relocated; may be null 
+	 * @return the newly added relocation object
+	 */
+	public Relocation add(Address addr, Status status, int type, long[] values, int byteLength,
+			String symbolName);
 
 	/**
 	 * Returns the ordered list of relocations which have been defined for the specified address.

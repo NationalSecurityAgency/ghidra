@@ -236,7 +236,7 @@ public class FridaModelTargetProcessImpl extends FridaModelTargetObjectImpl
 				STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
 				EXIT_CODE_ATTRIBUTE_NAME, exitDesc //
 			), "Exited");
-			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
+			broadcast().event(getProxy(), null, TargetEventType.PROCESS_EXITED,
 				"Process " + FridaClient.getId(getProcess()) + " exited code=" + exitDesc,
 				List.of(getProxy()));
 		}

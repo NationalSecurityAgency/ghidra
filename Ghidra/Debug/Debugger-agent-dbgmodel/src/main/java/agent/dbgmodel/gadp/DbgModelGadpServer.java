@@ -28,47 +28,35 @@ import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
 /**
- * The interface for the SCTL-{@code dbgeng.dll} server
+ * The interface for the GADP-{@code dbgeng.dll} server
  * 
+ * <p>
  * This is just an interface to specify the truly public methods. This is also a convenient place to
  * put all the command-line parsing logic.
  * 
- * This server implements the SCTL commands necessary to have a smooth debugging experience in
+ * <p>
+ * This server implements the GADP commands necessary to have a smooth debugging experience in
  * Ghidra. It implements almost every command that has use on a binary without debugging
  * information. It operates as a standalone debugging server based on {@code dbgeng.dll}, which can
- * accept other {@code dbgeng.dll}-based clients as well as SCTL clients.
+ * accept other {@code dbgeng.dll}-based clients as well as GADP clients.
  * 
+ * <p>
  * Without limitation, the caveats are listed here:
  * 
- * 1) The {@code Tnames} request in not implemented. The only namespaces available are those given
- * in the {@code Rstat} response.
- * 
- * 2) For binaries without a debugging database (pdb file), the symbol commands only search the
- * exported symbols.
- * 
- * 3) The type commands are not implemented. Ghidra can read most PDB files directly.
- * 
- * 4) While SCTL presents thread-specific control, {@code dbgeng.dll} does not. Continue ("g" in
- * {@code dbgeng.dll}) affects all debugged targets, except those with higher suspect counts and
+ * <ol>
+ * <li>For binaries without a debugging database (pdb file), the symbol commands only search the
+ * exported symbols.</li>
+ * <li>The type commands are not implemented. Ghidra can read most PDB files directly.</li>
+ * <li>While GADP presents thread-specific control, {@code dbgeng.dll} does not. Continue ("g" in
+ * {@code dbgeng.dll}) affects all debugged targets, except those with higher suspend counts and
  * those that are frozen. The API makes it impossible to perfectly track which threads are actually
- * executed by "g". The server thus assumes that all threads run when any thread runs, and it will
- * synthesize the commands to reflect that in the connected clients.
- * 
- * 5) The {@code Ttrace} command is not supported. The user can configure filters in the host
- * debugger; however, some events will always be trapped by the SCTL server. Future versions may
- * adjust this.
- * 
- * 6) Snapshots are not supported. {@code dbgeng.dll} as no equivalent.
- * 
- * 7) System calls are no yet reported. Windows programs do not use {@code fork} and {@code exec}.
- * Instead, calls to {@code CreateProcess} cause the server to synthesize {@code Tattach} commands.
- * 
- * 8) The {@code Tunwind1} command is not supported. Ghidra should unwind instead.
+ * executed by "g". The server thus assumes that all threads run when any thread runs.</li>
+ * </ol>
  */
 public interface DbgModelGadpServer extends DbgEngGadpServer {
 
 	/**
-	 * The entry point for the SCTL-DBGENG server in stand-alone mode
+	 * The entry point for the GADP-DBGMODEL server in stand-alone mode
 	 * 
 	 * Run it to see help.
 	 * 
@@ -90,7 +78,7 @@ public interface DbgModelGadpServer extends DbgEngGadpServer {
 	/**
 	 * Create a new instance of the server
 	 * 
-	 * @param addr the address to bind the SCTL server to
+	 * @param addr the address to bind the GADP server to
 	 * @param busId the client ID the server should use on the bus for synthesized commands
 	 * @param dbgSrvTransport the transport specification for the {@code dbgeng.dll} server
 	 * @return the server instance

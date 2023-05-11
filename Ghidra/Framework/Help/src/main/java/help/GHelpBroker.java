@@ -24,9 +24,12 @@ import javax.help.*;
 import javax.swing.*;
 import javax.swing.text.Document;
 
+import generic.theme.GIcon;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
-import resources.ResourceManager;
+import resources.Icons;
+import resources.MultiIconBuilder;
+import resources.icons.EmptyIcon;
 
 // NOTE: for JH 2.0, this class has been rewritten to not
 // access the 'frame' and 'dialog' variable directly
@@ -38,14 +41,14 @@ import resources.ResourceManager;
 public class GHelpBroker extends DefaultHelpBroker {
 
 	// Create the zoom in/out icons that will be added to the default jHelp toolbar.
-	private static final ImageIcon ZOOM_OUT_ICON =
-		ResourceManager.loadImage("images/list-remove.png");
-	private static final ImageIcon ZOOM_IN_ICON = ResourceManager.loadImage("images/list-add.png");
+	private static final Icon ZOOM_OUT_ICON = new GIcon("icon.subtract");
+	private static final Icon ZOOM_IN_ICON = Icons.ADD_ICON;
 
 	private Dimension windowSize = new Dimension(1100, 700);
 
 	protected JEditorPane htmlEditorPane;
 	private Window activationWindow;
+	private boolean initialized;
 
 	/**
 	 * Construct a new GhidraHelpBroker.
@@ -86,6 +89,22 @@ public class GHelpBroker extends DefaultHelpBroker {
 		}
 		catch (IOException e) {
 			Msg.error(this, "Unexpected error loading help page: " + url, e);
+		}
+	}
+
+	public void reload() {
+		clearHighlights();
+		initialized = false;
+		if (isDisplayed()) {
+			setDisplayed(false);
+			setDisplayed(true);
+		}
+	}
+
+	private void clearHighlights() {
+		TextHelpModel helpModel = (TextHelpModel) getCustomHelpModel();
+		if (helpModel != null) {
+			helpModel.removeAllHighlights();
 		}
 	}
 
@@ -134,7 +153,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 	}
 
 	private void initializeScreenDevice() {
-		if (isInitialized()) {
+		if (initialized) {
 			return;
 		}
 
@@ -179,20 +198,21 @@ public class GHelpBroker extends DefaultHelpBroker {
 		initializeUIComponents(contentPane);
 	}
 
-	private boolean isInitialized() {
-		return htmlEditorPane != null;
-	}
-
 	private void initializeUIComponents(Container contentPane) {
 
-		if (isInitialized()) {
+		if (initialized) {
 			return;// already initialized
 		}
 
 		Component[] components = contentPane.getComponents();
 		JHelp jHelp = (JHelp) components[0];
-		addCustomToolbarItems(jHelp);
 		JHelpContentViewer contentViewer = jHelp.getContentViewer();
+		JEditorPane activeHtmlPane = getHTMLEditorPane(contentViewer);
+		if (activeHtmlPane == htmlEditorPane && initialized) {
+			return; // already initialized
+		}
+
+		addCustomToolbarItems(jHelp);
 		htmlEditorPane = getHTMLEditorPane(contentViewer);
 
 		// just creating the search wires everything together
@@ -203,6 +223,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 		}
 
 		installActions(jHelp);
+		initialized = true;
 	}
 
 	protected void installHelpSearcher(JHelp jHelp, HelpModel helpModel) {
@@ -220,7 +241,11 @@ public class GHelpBroker extends DefaultHelpBroker {
 				JToolBar toolbar = (JToolBar) component;
 				toolbar.addSeparator();
 
-				ImageIcon zoomOutIcon = ResourceManager.getScaledIcon(ZOOM_OUT_ICON, 24, 24);
+				ImageIcon icon = new MultiIconBuilder(new EmptyIcon(24, 24))
+						.addCenteredIcon(ZOOM_OUT_ICON)
+						.build();
+
+				Icon zoomOutIcon = icon;
 				JButton zoomOutBtn = new JButton(zoomOutIcon);
 				zoomOutBtn.setToolTipText("Zoom out");
 				zoomOutBtn.addActionListener(e -> {
@@ -232,7 +257,10 @@ public class GHelpBroker extends DefaultHelpBroker {
 				});
 				toolbar.add(zoomOutBtn);
 
-				ImageIcon zoomInIcon = ResourceManager.getScaledIcon(ZOOM_IN_ICON, 24, 24);
+				icon = new MultiIconBuilder(new EmptyIcon(24, 24))
+						.addCenteredIcon(ZOOM_IN_ICON)
+						.build();
+				Icon zoomInIcon = icon;
 				JButton zoomInBtn = new JButton(zoomInIcon);
 				zoomInBtn.setToolTipText("Zoom in");
 				zoomInBtn.addActionListener(e -> {

@@ -94,7 +94,7 @@ public class FunctionStartClassifier {
 			results = classifyQ.waitForResults();
 		}
 		catch (InterruptedException e) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Msg.error(this, "Exception while classifying functions: " + e.getMessage());
 		}
 		long end = System.nanoTime();

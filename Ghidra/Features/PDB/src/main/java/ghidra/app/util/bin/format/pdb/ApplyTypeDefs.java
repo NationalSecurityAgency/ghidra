@@ -62,7 +62,7 @@ class ApplyTypeDefs {
 		monitor.setMessage("Pre-processing typedefs...");
 
 		while (xmlParser.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			XmlElement elem = xmlParser.next();
 			if (elem.isStart()) {
 				todo.add(elem);
@@ -83,7 +83,7 @@ class ApplyTypeDefs {
 		// NOTE: PDB does not appear to contain typedefs of typedefs.  Such definitions do not convey
 		// so we are saved from having dependency ordering issues for typedef elements.
 		for (XmlElement elem : todo) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			String datatypeName =
 				SymbolUtilities.replaceInvalidChars(elem.getAttribute("name"), false);

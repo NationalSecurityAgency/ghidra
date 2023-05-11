@@ -18,11 +18,14 @@ package ghidra.framework.protocol.ghidra;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * <code>DefaultGhidraProtocolHandler</code> provides the default protocol 
  * handler which corresponds to the original RMI-based Ghidra Server
  * and local file-based Ghidra projects.
- * {@literal ghidra://host/repo/... or ghidra:/path/projectName}
+ * {@literal ghidra://host/repo/... or ghidra:/path/projectName/...}
+ * See {@link DefaultGhidraProtocolConnector} and {@link DefaultLocalGhidraProtocolConnector}
  */
 public class DefaultGhidraProtocolHandler extends GhidraProtocolHandler {
 
@@ -35,7 +38,7 @@ public class DefaultGhidraProtocolHandler extends GhidraProtocolHandler {
 	public GhidraProtocolConnector getConnector(URL ghidraUrl) throws MalformedURLException {
 		String protocol = ghidraUrl.getProtocol();
 		if (protocol != null) {
-			if (ghidraUrl.getAuthority() == null) {
+			if (StringUtils.isBlank(ghidraUrl.getAuthority())) {
 				return new DefaultLocalGhidraProtocolConnector(ghidraUrl);
 			}
 			return new DefaultGhidraProtocolConnector(ghidraUrl);

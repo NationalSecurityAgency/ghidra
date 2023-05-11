@@ -15,6 +15,7 @@
  */
 package ghidra.dbg.agent;
 
+import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
 
 public interface SpiTargetObject extends TargetObject, InvalidatableTargetObjectIf {
@@ -35,4 +36,6 @@ public interface SpiTargetObject extends TargetObject, InvalidatableTargetObject
 	default SpiTargetObject getDelegate() {
 		return this;
 	}
+
+	DebuggerModelListener broadcast();
 }

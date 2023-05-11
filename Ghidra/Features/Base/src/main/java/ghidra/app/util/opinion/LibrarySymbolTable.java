@@ -105,7 +105,7 @@ class LibrarySymbolTable {
 		//    get the number and name for the symbol
 		SymbolIterator iter = symTab.getSymbolIterator(SymbolUtilities.ORDINAL_PREFIX + "*", true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Symbol sym = iter.next();
 
 			// Only consider ordinal exports, not ordinal imports
@@ -448,7 +448,7 @@ class LibrarySymbolTable {
 
 				exportList.add(sym);
 				symMap.put(name, sym);
-				ordMap.put(new Integer(ordinal), sym);
+				ordMap.put(Integer.valueOf(ordinal), sym);
 			}
 		}
 		catch (JDOMException e) {
@@ -476,7 +476,7 @@ class LibrarySymbolTable {
 		//            LibraryExportedSymbol sym = new LibraryExportedSymbol(tableName, ord, funcName, purge, comment);
 		//            exportList.add(sym);
 		//            symMap.put(funcName, sym);
-		//            ordMap.put(new Integer(ord), sym);
+		//            ordMap.put(Integer.valueOf(ord), sym);
 		//        }
 		//    }
 		//}

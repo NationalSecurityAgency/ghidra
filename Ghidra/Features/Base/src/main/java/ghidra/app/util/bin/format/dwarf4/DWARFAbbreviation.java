@@ -15,15 +15,17 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
+import java.util.*;
+
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFChildren;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
+import ghidra.program.model.data.LEB128;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * This class represents the 'schema' for a DWARF DIE record.
@@ -43,18 +45,18 @@ public class DWARFAbbreviation
 			TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		int ac = LEB128.readAsUInt32(reader);
+		int ac = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		if (ac == 0) {
 			return null;
 		}
-		int tag = LEB128.readAsUInt32(reader);
+		int tag = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		DWARFChildren hasChildren = DWARFChildren.find((int) reader.readNextByte());
 
 		// Read each attribute specification until attribute and its value is 0
 		List<DWARFAttributeSpecification> tmpAttrSpecs = new ArrayList<>();
 		DWARFAttributeSpecification attr;
 		while ((attr = DWARFAttributeSpecification.read(reader)) != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			tmpAttrSpecs.add(prog.internAttributeSpec(attr));
 		}
 		DWARFAttributeSpecification[] attrSpecArray =
@@ -73,7 +75,7 @@ public class DWARFAbbreviation
 		// Read all abbreviations for this compilation unit and add to a map
 		DWARFAbbreviation abbrev = null;
 		while ((abbrev = DWARFAbbreviation.read(reader, prog, monitor)) != null) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			result.put(abbrev.getAbbreviationCode(), abbrev);
 		}
 

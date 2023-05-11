@@ -145,7 +145,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 
 		monitor.setMaximum(pageStartsCount);
 		for (int index = 0; index < pageStartsCount; index++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			long page = dataPageStart + (pageSize * index);
 
@@ -212,13 +212,11 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 		Memory memory = program.getMemory();
 		List<Address> unchainedLocList = new ArrayList<>(1024);
 
-		byte origBytes[] = new byte[8];
-
 		long valueMask = 0xffffffffffffffffL >>> (64 - deltaShift);
 
 		long delta = -1;
 		while (delta != 0) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Address chainLoc = chainStart.add(nextOff);
 			long chainValue = memory.getLong(chainLoc);
@@ -230,7 +228,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 				// chainValue += slideAmount - if we were sliding
 			}
 			if (addRelocations) {
-				addRelocationTableEntry(program, chainLoc, 2, chainValue, origBytes, null);
+				addRelocationTableEntry(program, chainLoc, 2, chainValue, 8, null);
 			}
 
 			memory.setLong(chainLoc, chainValue);

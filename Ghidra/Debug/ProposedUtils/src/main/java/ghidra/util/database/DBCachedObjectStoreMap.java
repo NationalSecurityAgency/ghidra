@@ -20,8 +20,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import org.apache.commons.collections4.ComparatorUtils;
 
-import com.google.common.collect.Range;
-
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
@@ -226,21 +224,20 @@ public class DBCachedObjectStoreMap<T extends DBAnnotatedObject> implements Navi
 	@Override
 	public DBCachedObjectStoreSubMap<T> subMap(Long fromKey, boolean fromInclusive, Long toKey,
 			boolean toInclusive) {
-		Range<Long> rng =
-			DBCachedObjectStore.toRange(fromKey, fromInclusive, toKey, toInclusive, direction);
-		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.sub(fromKey, fromInclusive, toKey, toInclusive, direction);
+		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction, span);
 	}
 
 	@Override
 	public DBCachedObjectStoreSubMap<T> headMap(Long toKey, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeHead(toKey, inclusive, direction);
-		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.head(toKey, inclusive, direction);
+		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction, span);
 	}
 
 	@Override
 	public DBCachedObjectStoreSubMap<T> tailMap(Long fromKey, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeTail(fromKey, inclusive, direction);
-		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.tail(fromKey, inclusive, direction);
+		return new DBCachedObjectStoreSubMap<>(store, errHandler, lock, direction, span);
 	}
 
 	@Override

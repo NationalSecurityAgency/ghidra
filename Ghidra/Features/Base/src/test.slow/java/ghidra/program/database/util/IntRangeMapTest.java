@@ -254,7 +254,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		program.addListener(dol);
 		IntRangeMap map = program.createIntRangeMap("MyMap");
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_ADDED, eventType);
 		assertEquals("MyMap", mapName);
 		int value = 0x11223344;
@@ -266,13 +266,13 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		set.addRange(getAddr(0x26), getAddr(0x30));
 		map.setValue(set, value);
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		map.clearValue(getAddr(0), getAddr(0x15));
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
@@ -280,20 +280,20 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		set.addRange(getAddr(20), getAddr(0x23));
 		map.clearValue(set);
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		map.clearAll();
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED, eventType);
 		assertEquals("MyMap", mapName);
 
 		// map removed
 		program.deleteIntRangeMap("MyMap");
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_REMOVED, eventType);
 		assertEquals("MyMap", mapName);
 	}

@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.viewer.proxy;
 
+import java.util.Objects;
+
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Pointer;
@@ -23,7 +25,7 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.Reference;
 
 /**
- * Stores information about a variable in a program such that the variable can 
+ * Stores information about a variable in a program such that the variable can
  * be retrieved when needed.
  */
 public class VariableProxy extends ProxyObj<Variable> {
@@ -59,9 +61,6 @@ public class VariableProxy extends ProxyObj<Variable> {
 		firstUseOffset = var.getFirstUseOffset();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.proxy.ProxyObj#getObject()
-	 */
 	@Override
 	public Variable getObject() {
 
@@ -107,12 +106,12 @@ public class VariableProxy extends ProxyObj<Variable> {
 		}
 
 		Variable[] vars = function.getLocalVariables();
-		for (int i = 0; i < vars.length; i++) {
-			if (firstUseOffset != vars[i].getFirstUseOffset()) {
+		for (Variable var2 : vars) {
+			if (firstUseOffset != var2.getFirstUseOffset()) {
 				continue;
 			}
-			if (storageAddr.equals(vars[i].getMinAddress())) {
-				var = vars[i];
+			if (storageAddr.equals(var2.getMinAddress())) {
+				var = var2;
 				return var;
 			}
 		}
@@ -127,4 +126,12 @@ public class VariableProxy extends ProxyObj<Variable> {
 		return functionAddr;
 	}
 
+	@Override
+	public boolean contains(Address a) {
+		Variable v = getObject();
+		if (v == null) {
+			return false;
+		}
+		return Objects.equals(v.getMinAddress(), a);
+	}
 }

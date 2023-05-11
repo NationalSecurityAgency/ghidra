@@ -28,12 +28,11 @@ import agent.lldb.manager.LldbReason;
 import agent.lldb.model.iface1.LldbModelTargetConfigurable;
 import agent.lldb.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
 	name = "ProcessContainer",
@@ -70,7 +69,7 @@ public class LldbModelTargetProcessContainerImpl extends LldbModelTargetObjectIm
 		LldbModelTargetProcess process = getTargetProcess(proc);
 		changeElements(List.of(), List.of(process), Map.of(), "Added");
 		process.processStarted(proc);
-		getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_CREATED,
+		broadcast().event(getProxy(), null, TargetEventType.PROCESS_CREATED,
 			"Process " + DebugClient.getId(proc) + " started " + process.getName(),
 			List.of(process));
 	}
@@ -143,7 +142,7 @@ public class LldbModelTargetProcessContainerImpl extends LldbModelTargetObjectIm
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listProcesses(session.getSession()).thenAccept(byIID -> {
 			List<TargetObject> processes;
 			synchronized (this) {

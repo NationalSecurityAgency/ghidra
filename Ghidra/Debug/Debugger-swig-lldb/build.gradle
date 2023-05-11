@@ -45,6 +45,7 @@ sourceSets {
 rootProject.assembleDistribution {
     from (this.project.projectDir.toString()) {
 		include "src/**"
+		include "*.sh"
 		include "*.txt"
 		into  { getZipPath(this.project) }
     }

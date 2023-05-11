@@ -28,6 +28,8 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.CodeViewerService;
+import ghidra.app.util.viewer.field.ListingColors;
+import ghidra.app.util.viewer.field.ListingColors.FlowArrowColors;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.util.AddressIndexMap;
@@ -434,8 +436,7 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 		List<FlowArrow> results = new ArrayList<>();
 		ArrowCache arrowCache = new ArrowCache();
 		CodeUnitIterator it = program.getListing()
-				.getCodeUnitIterator(
-					CodeUnit.INSTRUCTION_PROPERTY, screenAddresses, true);
+				.getCodeUnitIterator(CodeUnit.INSTRUCTION_PROPERTY, screenAddresses, true);
 
 		while (it.hasNext()) {
 			CodeUnit cu = it.next();
@@ -545,9 +546,8 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 		Address bottomAddr = layoutToPixel.getLayoutAddress(n - 1);
 		if (bottomAddr != null) {
 			AddressSpace testSpace = bottomAddr.getAddressSpace();
-			validState = (program.getAddressFactory()
-					.getAddressSpace(
-						testSpace.getSpaceID()) == testSpace);
+			validState =
+				(program.getAddressFactory().getAddressSpace(testSpace.getSpaceID()) == testSpace);
 		}
 	}
 
@@ -642,31 +642,20 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 	private void getOptions() {
 		ToolOptions opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 
-		opt.registerOption(OptionsGui.FLOW_ARROW_NON_ACTIVE.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_NON_ACTIVE.getDefaultColor(), null,
+		opt.registerThemeColorBinding(OptionsGui.FLOW_ARROW_NON_ACTIVE.getColorOptionName(),
+			OptionsGui.FLOW_ARROW_NON_ACTIVE.getThemeColorId(), null,
 			"The color for an arrow with no endpoint at the current address");
-		opt.registerOption(OptionsGui.FLOW_ARROW_ACTIVE.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_ACTIVE.getDefaultColor(), null,
+		opt.registerThemeColorBinding(OptionsGui.FLOW_ARROW_ACTIVE.getColorOptionName(),
+			OptionsGui.FLOW_ARROW_ACTIVE.getThemeColorId(), null,
 			"The color for an arrow with an endpoint at the current address");
-		opt.registerOption(OptionsGui.FLOW_ARROW_SELECTED.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_SELECTED.getDefaultColor(), null,
+		opt.registerThemeColorBinding(OptionsGui.FLOW_ARROW_SELECTED.getColorOptionName(),
+			OptionsGui.FLOW_ARROW_SELECTED.getThemeColorId(), null,
 			"The color for an arrow that has been selected by the user");
 
-		Color c = opt.getColor(OptionsGui.BACKGROUND.getColorOptionName(),
-			OptionsGui.BACKGROUND.getDefaultColor());
-		flowArrowPanel.setBackground(c);
-
-		c = opt.getColor(OptionsGui.FLOW_ARROW_NON_ACTIVE.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_NON_ACTIVE.getDefaultColor());
-		flowArrowPanel.setForeground(c);
-
-		c = opt.getColor(OptionsGui.FLOW_ARROW_ACTIVE.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_ACTIVE.getDefaultColor());
-		flowArrowPanel.setHighlightColor(c);
-
-		c = opt.getColor(OptionsGui.FLOW_ARROW_SELECTED.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_SELECTED.getDefaultColor());
-		flowArrowPanel.setSelectedColor(c);
+		flowArrowPanel.setBackground(ListingColors.BACKGROUND);
+		flowArrowPanel.setForeground(FlowArrowColors.INACTIVE);
+		flowArrowPanel.setHighlightColor(FlowArrowColors.ACTIVE);
+		flowArrowPanel.setSelectedColor(FlowArrowColors.SELECTED);
 
 		opt.addOptionsChangeListener(this);
 	}

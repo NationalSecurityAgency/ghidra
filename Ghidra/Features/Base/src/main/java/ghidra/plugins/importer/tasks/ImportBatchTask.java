@@ -15,9 +15,8 @@
  */
 package ghidra.plugins.importer.tasks;
 
-import java.util.List;
-
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -26,8 +25,9 @@ import ghidra.app.services.ProgramManager;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.LoadSpec;
+import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.plugin.importer.ProgramMappingService;
@@ -36,7 +36,8 @@ import ghidra.plugins.importer.batch.BatchGroup.BatchLoadConfig;
 import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
@@ -146,20 +147,21 @@ public class ImportBatchTask extends Task {
 			Object consumer = new Object();
 			try {
 				MessageLog messageLog = new MessageLog();
-				List<DomainObject> importedObjects = loadSpec.getLoader()
-						.load(byteProvider,
-							fixupProjectFilename(destInfo.second), destInfo.first, loadSpec,
+				Project project = AppInfo.getActiveProject();
+				LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
+						.load(byteProvider, fixupProjectFilename(destInfo.second), project,
+							destInfo.first.getPathname(), loadSpec,
 							getOptionsFor(batchLoadConfig, loadSpec, byteProvider), messageLog,
-							consumer,
-							monitor);
+							consumer, monitor);
 
 				// TODO: accumulate batch results
-				if (importedObjects != null) {
+				if (loadResults != null) {
 					try {
-						processImportResults(importedObjects, batchLoadConfig, monitor);
+						loadResults.save(project, consumer, messageLog, monitor);
+						processImportResults(loadResults, batchLoadConfig, monitor);
 					}
 					finally {
-						releaseAll(importedObjects, consumer);
+						loadResults.release(consumer);
 					}
 				}
 				totalAppsImported++;
@@ -173,8 +175,7 @@ public class ImportBatchTask extends Task {
 			catch (CancelledException e) {
 				Msg.debug(this, "Batch Import cancelled");
 			}
-			catch (DuplicateNameException | InvalidNameException | VersionException
-					| IOException | IllegalArgumentException e) {
+			catch (IOException | VersionException | IllegalArgumentException e) {
 				Msg.error(this, "Import failed for " + batchLoadConfig.getPreferredFileName(), e);
 			}
 		}
@@ -190,24 +191,15 @@ public class ImportBatchTask extends Task {
 		return sb.toString();
 	}
 
-	private void releaseAll(List<DomainObject> importedObjects, Object consumer) {
-		for (DomainObject obj : importedObjects) {
-			if (obj.isUsedBy(consumer)) {
-				obj.release(consumer);
-			}
-		}
-	}
-
 	/*
 	 * creates fsrl associations, updates task statistics, opens the imported program (if allowed)
 	 */
-	private void processImportResults(List<DomainObject> importedObjects, BatchLoadConfig appInfo,
-			TaskMonitor monitor) throws CancelledException, IOException {
+	private void processImportResults(LoadResults<? extends DomainObject> loadResults,
+			BatchLoadConfig appInfo, TaskMonitor monitor) {
 
-		for (DomainObject obj : importedObjects) {
-			if (obj instanceof Program) {
-				Program program = (Program) obj;
-
+		for (Loaded<? extends DomainObject> loaded : loadResults) {
+			DomainObject obj = loaded.getDomainObject();
+			if (obj instanceof Program program) {
 				if (programManager != null && totalObjsImported < MAX_PROGRAMS_TO_OPEN) {
 					programManager.openProgram(program,
 						totalObjsImported == 0 ? ProgramManager.OPEN_CURRENT

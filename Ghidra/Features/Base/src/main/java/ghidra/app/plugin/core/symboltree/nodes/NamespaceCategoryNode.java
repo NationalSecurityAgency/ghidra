@@ -19,18 +19,18 @@ import java.awt.datatransfer.DataFlavor;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
-import resources.ResourceManager;
 
 public class NamespaceCategoryNode extends SymbolCategoryNode {
 
 	public static final Icon OPEN_FOLDER_NAMESPACES_ICON =
-		ResourceManager.loadImage("images/openFolderNamespaces.png");
+		new GIcon("icon.plugin.symboltree.node.category.namespace.open");
 	public static final Icon CLOSED_FOLDER_NAMESPACES_ICON =
-		ResourceManager.loadImage("images/closedFolderNamespaces.png");
+		new GIcon("icon.plugin.symboltree.node.category.namespace.closed");
 
 	NamespaceCategoryNode(Program program) {
 		super(SymbolCategory.NAMESPACE_CATEGORY, program);

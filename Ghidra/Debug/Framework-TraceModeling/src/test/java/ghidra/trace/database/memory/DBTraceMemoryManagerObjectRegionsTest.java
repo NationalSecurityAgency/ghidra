@@ -17,10 +17,10 @@ package ghidra.trace.database.memory;
 
 import org.junit.Before;
 
+import db.Transaction;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceMemoryManagerObjectRegionsTest extends DBTraceMemoryManagerRegionsTest {
 
@@ -43,7 +43,7 @@ public class DBTraceMemoryManagerObjectRegionsTest extends DBTraceMemoryManagerR
 				</context>
 				""");
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
 	}

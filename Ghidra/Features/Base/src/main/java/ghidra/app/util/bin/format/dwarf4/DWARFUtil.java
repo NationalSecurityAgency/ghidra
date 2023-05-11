@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import generic.jar.ResourceFile;
+import ghidra.app.cmd.comments.AppendCommentCmd;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeValue;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
@@ -30,9 +32,13 @@ import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.listing.Program;
+import ghidra.program.database.data.DataTypeUtilities;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.*;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.Conv;
 
@@ -451,6 +457,38 @@ public class DWARFUtil {
 		dtc.setComment(prev + description);
 	}
 
+	public static void appendComment(Program program, Address address, int commentType,
+			String prefix, String comment, String sep) {
+		if (comment == null || comment.isBlank()) {
+			return;
+		}
+		CodeUnit cu = getCodeUnitForComment(program, address);
+		if (cu != null) {
+			String existingComment = cu.getComment(commentType);
+			if (existingComment != null && existingComment.contains(comment)) {
+				// don't add same comment twice
+				return;
+			}
+		}
+		AppendCommentCmd cmd = new AppendCommentCmd(address, commentType,
+			Objects.requireNonNullElse(prefix, "") + comment, sep);
+		cmd.applyTo(program);
+	}
+
+	public static CodeUnit getCodeUnitForComment(Program program, Address address) {
+		Listing listing = program.getListing();
+		CodeUnit cu = listing.getCodeUnitContaining(address);
+		if (cu == null) {
+			return null;
+		}
+		Address cuAddr = cu.getMinAddress();
+		if (cu instanceof Data && !address.equals(cuAddr)) {
+			Data data = (Data) cu;
+			return data.getPrimitiveAt((int) address.subtract(cuAddr));
+		}
+		return cu;
+	}
+
 	/**
 	 * Read an offset value who's size depends on the DWARF format: 32 vs 64.
 	 * <p>
@@ -520,29 +558,6 @@ public class DWARFUtil {
 	}
 
 	/**
-	 * Read the value of an address.
-	 * @param reader BinaryReader pointing to the value to read
-	 * @param pointerSize the size of a pointer
-	 * @return the address value
-	 * @throws IOException if an I/O error occurs
-	 * @throws IllegalArgumentException if an unknown pointer size is given
-	 */
-	public static Number readAddress(BinaryReader reader, byte pointerSize) throws IOException {
-		switch (pointerSize) {
-			case 1:
-				return Byte.valueOf(reader.readNextByte());
-			case 2:
-				return Short.valueOf(reader.readNextShort());
-			case 4:
-				return Integer.valueOf(reader.readNextInt());
-			case 8:
-				return Long.valueOf(reader.readNextLong());
-		}
-		throw new IllegalArgumentException(
-			"Unknown pointer size: 0x" + Integer.toHexString(pointerSize));
-	}
-
-	/**
 	 * Reads a variable-sized unsigned 'address' value from a {@link BinaryReader} and
 	 * returns it as a 64 bit java long.
 	 * <p>
@@ -581,15 +596,41 @@ public class DWARFUtil {
 		// A DW_AT_object_pointer property in the parent function is an explict way of
 		// referencing the param that points to the object instance (ie. "this").
 		//
+		String paramName = paramDIEA.getName();
 		if (paramDIEA.getBool(DWARFAttribute.DW_AT_artificial, false) ||
-			"this".equals(paramDIEA.getName())) {
+			Function.THIS_PARAM_NAME.equals(paramName)) {
 			return true;
 		}
 
+		DIEAggregate funcDIEA = paramDIEA.getParent();
 		DWARFAttributeValue dwATObjectPointer =
-			paramDIEA.getParent().getAttribute(DWARFAttribute.DW_AT_object_pointer);
-		return dwATObjectPointer != null && dwATObjectPointer instanceof DWARFNumericAttribute &&
-			paramDIEA.hasOffset(((DWARFNumericAttribute) dwATObjectPointer).getUnsignedValue());
+			funcDIEA.getAttribute(DWARFAttribute.DW_AT_object_pointer);
+		if (dwATObjectPointer != null && dwATObjectPointer instanceof DWARFNumericAttribute dnum &&
+			paramDIEA.hasOffset(dnum.getUnsignedValue())) {
+			return true;
+		}
+
+		// If the variable is not named, check to see if the parent of the function
+		// is a struct/class, and the parameter points to it
+		DIEAggregate classDIEA = funcDIEA.getParent();
+		if (paramName == null && classDIEA != null && classDIEA.isStructureType()) {
+			// Check to see if the parent data type equals the parameters' data type
+			return isPointerTo(classDIEA, paramDIEA.getTypeRef());
+		}
+
+		return false;
+	}
+
+	public static boolean isPointerTo(DIEAggregate targetDIEA, DIEAggregate testDIEA) {
+		return testDIEA != null && testDIEA.getTag() == DWARFTag.DW_TAG_pointer_type &&
+			testDIEA.getTypeRef() == targetDIEA;
+	}
+
+	public static boolean isPointerDataType(DIEAggregate diea) {
+		while (diea.getTag() == DWARFTag.DW_TAG_typedef) {
+			diea = diea.getTypeRef();
+		}
+		return diea.getTag() == DWARFTag.DW_TAG_pointer_type;
 	}
 
 	/**
@@ -655,7 +696,7 @@ public class DWARFUtil {
 			// it writes a raw 64bit long (BE). The upper 32 bits (already read as length) will 
 			// always be 0 since super-large binaries from that system weren't really possible.
 			// The next 32 bits will be the remainder of the value.
-			if ( reader.isBigEndian() && program.getDefaultPointerSize() == 8) {
+			if (reader.isBigEndian() && program.getDefaultPointerSize() == 8) {
 				length = reader.readNextUnsignedInt();
 				format = DWARFCompilationUnit.DWARF_64;
 			}
@@ -669,6 +710,153 @@ public class DWARFUtil {
 		}
 
 		return new LengthResult(length, format);
+	}
+
+	/**
+	 * Returns a file that has been referenced in the specified {@link Language language's}
+	 * ldefs description via a
+	 * <pre>&lt;external_name tool="<b>name</b>" name="<b>value</b>"/&gt;</pre>
+	 * entry.
+	 *  
+	 * @param lang {@link Language} to query
+	 * @param name name of the option in the ldefs file
+	 * @return file pointed to by the specified external_name tool entry 
+	 * @throws IOException
+	 */
+	public static ResourceFile getLanguageExternalFile(Language lang, String name)
+			throws IOException {
+		String filename = getLanguageExternalNameValue(lang, name);
+		return filename != null
+				? new ResourceFile(getLanguageDefinitionDirectory(lang), filename)
+				: null;
+	}
+
+	/**
+	 * Returns the base directory of a language definition.
+	 * 
+	 * @param lang {@link Language} to get base definition directory
+	 * @return base directory for language definition files
+	 * @throws IOException
+	 */
+	public static ResourceFile getLanguageDefinitionDirectory(Language lang) throws IOException {
+		LanguageDescription langDesc = lang.getLanguageDescription();
+		if (!(langDesc instanceof SleighLanguageDescription)) {
+			throw new IOException("Not a Sleigh Language: " + lang.getLanguageID());
+		}
+		SleighLanguageDescription sld = (SleighLanguageDescription) langDesc;
+		ResourceFile defsFile = sld.getDefsFile();
+		ResourceFile parentFile = defsFile.getParentFile();
+		return parentFile;
+	}
+
+	/**
+	 * Returns a value specified in a {@link Language} definition via a
+	 * <pre>&lt;external_name tool="<b>name</b>" name="<b>value</b>"/&gt;</pre>
+	 * entry.
+	 * <p>
+	 * @param lang {@link Language} to query
+	 * @param name name of the value
+	 * @return String value
+	 * @throws IOException
+	 */
+	public static String getLanguageExternalNameValue(Language lang, String name)
+			throws IOException {
+		LanguageDescription langDesc = lang.getLanguageDescription();
+		if (!(langDesc instanceof SleighLanguageDescription)) {
+			throw new IOException("Not a Sleigh Language: " + lang.getLanguageID());
+		}
+		List<String> values = langDesc.getExternalNames(name);
+		if (values == null || values.isEmpty()) {
+			return null;
+		}
+		if (values.size() > 1) {
+			throw new IOException(
+				String.format("Multiple external name values for %s found in language %s", name,
+					lang.getLanguageID()));
+		}
+		return values.get(0);
+	}
+
+	public static void packCompositeIfPossible(Composite original, DataTypeManager dtm) {
+		if (original.isZeroLength() || original.getNumComponents() == 0) {
+			// don't try to pack empty structs, this would throw off conflicthandler logic.
+			// also don't pack sized structs with no fields because when packed down to 0 bytes they
+			// cause errors when used as a param type
+			return;
+		}
+
+		Composite copy = (Composite) original.copy(dtm);
+		copy.setToDefaultPacking();
+		if (copy.getLength() != original.getLength()) {
+			// so far, typically because trailing zero-len flex array caused toolchain to
+			// bump struct size to next alignment value in a way that doesn't mesh with ghidra's
+			// logic
+			return;  // fail
+		}
+
+		DataTypeComponent[] preComps = original.getDefinedComponents();
+		DataTypeComponent[] postComps = copy.getDefinedComponents();
+		if (preComps.length != postComps.length) {
+			return; // fail
+		}
+		for (int index = 0; index < preComps.length; index++) {
+			DataTypeComponent preDTC = preComps[index];
+			DataTypeComponent postDTC = postComps[index];
+			if (preDTC.getOffset() != postDTC.getOffset() ||
+				preDTC.getLength() != postDTC.getLength() ||
+				preDTC.isBitFieldComponent() != postDTC.isBitFieldComponent()) {
+				return;  // fail
+			}
+			if (preDTC.isBitFieldComponent()) {
+				BitFieldDataType preBFDT = (BitFieldDataType) preDTC.getDataType();
+				BitFieldDataType postBFDT = (BitFieldDataType) postDTC.getDataType();
+				if (preBFDT.getBitOffset() != postBFDT.getBitOffset() ||
+					preBFDT.getBitSize() != postBFDT.getBitSize()) {
+					return;  // fail
+				}
+			}
+		}
+
+		original.setToDefaultPacking();
+	}
+
+	public static List<Varnode> convertRegisterListToVarnodeStorage(List<Register> registers,
+			int dataTypeSize) {
+		List<Varnode> results = new ArrayList<>();
+		for (Register reg : registers) {
+			int regSize = reg.getMinimumByteSize();
+			int bytesUsed = Math.min(dataTypeSize, regSize);
+			Address addr = reg.getAddress();
+			if (reg.isBigEndian() && bytesUsed < regSize) {
+				addr = addr.add(regSize - bytesUsed);
+			}
+			results.add(new Varnode(addr, bytesUsed));
+			dataTypeSize -= bytesUsed;
+		}
+		return results;
+	}
+
+	public static boolean isEmptyArray(DataType dt) {
+		return dt instanceof Array array && array.getNumElements() == 0;
+	}
+
+	public static boolean isZeroByteDataType(DataType dt) {
+		if (VoidDataType.dataType.isEquivalent(dt)) {
+			return true;
+		}
+		if (!dt.isZeroLength() && dt instanceof Array) {
+			dt = DataTypeUtilities.getArrayBaseDataType((Array) dt);
+		}
+		return dt.isZeroLength();
+	}
+
+	public static boolean isVoid(DataType dt) {
+		return VoidDataType.dataType.isEquivalent(dt);
+	}
+
+	public static boolean isStackVarnode(Varnode varnode) {
+		return varnode != null &&
+			varnode.getAddress().getAddressSpace().getType() == AddressSpace.TYPE_STACK;
 	}
 
 }

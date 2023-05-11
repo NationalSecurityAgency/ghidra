@@ -141,6 +141,8 @@ public class ElfSectionHeaderConstants {
 	public static final int SHF_GROUP = (1 << 9);
 	/**The section that holds thread-local data.*/
 	public static final int SHF_TLS = (1 << 10);
+	/**The bytes of the section are compressed */
+	public static final int SHF_COMPRESSED = (1 << 11);
 	/**This section is excluded from the final executable or shared library.*/
 	public static final int SHF_EXCLUDE = 0x80000000;
 	/**The section contains OS-specific data.*/

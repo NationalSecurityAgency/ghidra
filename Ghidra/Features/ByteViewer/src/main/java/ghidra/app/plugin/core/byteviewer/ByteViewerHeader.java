@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,6 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import ghidra.util.table.GhidraTable;
-
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,6 +23,9 @@ import javax.swing.*;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.*;
 
+import generic.theme.Gui;
+import ghidra.util.table.GhidraTable;
+
 /**
  * JTableHeader that uses the default table column model to manage 
  * TableColumns. Sizes the column according to its corresponding viewer
@@ -33,6 +33,7 @@ import javax.swing.table.*;
  */
 class ByteViewerHeader extends JTableHeader implements Scrollable {
 
+	private static final String FONT_ID = "font.byteviewer.header";
 	private TableColumnModel columnModel;
 	private Component container;
 
@@ -50,8 +51,7 @@ class ByteViewerHeader extends JTableHeader implements Scrollable {
 
 		this.container = container;
 		components = new HashMap<Component, TableColumn>();
-		Font font = new Font("Tahoma", Font.PLAIN, 11);
-		setFont(font);
+		Gui.registerFont(this, FONT_ID);
 		setResizingAllowed(false);
 		table = new GhidraTable();
 		setTable(table);

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -33,7 +34,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Navigates to the same byte pattern value under the current code unit.  When negated, the search
@@ -42,7 +42,7 @@ import resources.ResourceManager;
  */
 public class NextPreviousSameBytesAction extends AbstractNextPreviousAction {
 
-	private static final Icon ICON = ResourceManager.loadImage("images/V.png");
+	private static final Icon ICON = new GIcon("icon.plugin.navigation.bytes");
 
 	NextPreviousSameBytesAction(PluginTool tool, String owner, String subGroup) {
 		super(tool, "Next Matching Byte Values", owner, subGroup);
@@ -113,7 +113,7 @@ public class NextPreviousSameBytesAction extends AbstractNextPreviousAction {
 		iterator.next();
 		Memory memory = program.getMemory();
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Address addr = iterator.next();
 			try {
 				byte testByte = memory.getByte(addr);

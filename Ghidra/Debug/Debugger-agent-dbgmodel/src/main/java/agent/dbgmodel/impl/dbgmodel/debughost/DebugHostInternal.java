@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHost;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.IDebugHost;
 import agent.dbgmodel.jna.dbgmodel.debughost.WrapIDebugHost;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,18 +32,14 @@ public interface DebugHostInternal extends DebugHost {
 	Map<Pointer, DebugHostInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostInternal instanceFor(WrapIDebugHost data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHost>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugHost>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHost.IID_IDEBUG_HOST), WrapIDebugHost.class) //
-				.build();
+	List<Preferred<WrapIDebugHost>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHost.IID_IDEBUG_HOST, WrapIDebugHost.class));
 
 	static DebugHostInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

@@ -17,10 +17,12 @@ package ghidra.app.util.bin.format.elf;
 
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.InvalidInputException;
@@ -73,7 +75,7 @@ public interface ElfLoadHelper {
 	/**
 	 * Mark this location as code in the CodeMap.
 	 * The analyzers will pick this up and disassemble the code.
-	 * @param address
+	 * @param address code memory address to be marked
 	 */
 	void markAsCode(Address address);
 
@@ -105,6 +107,7 @@ public interface ElfLoadHelper {
 	 * Create an undefined data item to reserve the location as data, without specifying the type
 	 * @param address  location of undefined data to create
 	 * @param length  size of the undefined data item
+	 * @return {@link Data} which was created or null if conflict occurs
 	 */
 	Data createUndefinedData(Address address, int length);
 
@@ -112,7 +115,7 @@ public interface ElfLoadHelper {
 	 * Create a data item using the specified data type
 	 * @param address  location of undefined data to create
 	 * @param dt data type
-	 * @return data or null if not successful
+	 * @return {@link Data} which was created or null if conflict occurs
 	 */
 	Data createData(Address address, DataType dt);
 
@@ -138,7 +141,7 @@ public interface ElfLoadHelper {
 	 * @param pinAbsolute true if address is absolute and should not change 
 	 * @param namespace symbol namespace (should generally be null for global namespace)
 	 * @return program symbol
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if an invalid name is specified
 	 */
 	Symbol createSymbol(Address addr, String name, boolean isPrimary, boolean pinAbsolute,
 			Namespace namespace) throws InvalidInputException;
@@ -175,7 +178,7 @@ public interface ElfLoadHelper {
 	 * Returns the appropriate .got (Global Offset Table) section address using the
 	 * DT_PLTGOT value defined in the .dynamic section.
 	 * If the dynamic value is not defined, the symbol offset for _GLOBAL_OFFSET_TABLE_
-	 * will be used, otherwise null will be returned.
+	 * will be used, otherwise null will be returned.  See {@link ElfConstants#GOT_SYMBOL_NAME}.
 	 * @return the .got section address offset
 	 */
 	public Long getGOTValue();
@@ -212,17 +215,18 @@ public interface ElfLoadHelper {
 			throws MemoryAccessException;
 
 	/**
-	 * Add a fake relocation table entry if none previously existed for the specified address.
+	 * Add an artificial relocation table entry if none previously existed for the specified address.
 	 * This is intended to record original file bytes when forced modifications have been
-	 * performed during the ELF import processing.  A relocation type of 0 will be specified for
-	 * fake entry.
+	 * performed during the ELF import processing.  A relocation type of 0 and a status of 
+	 * {@link Status#APPLIED_OTHER} will be applied to the relocation entry.  
+	 * NOTE: The number of recorded original FileBytes currently ignores the specified length.
+	 * However, the length is still used to verify that that the intended modification region
+	 * dose not intersect another relocation.
 	 * @param address relocation address
 	 * @param length number of bytes affected
-	 * @return true if recorded successfully, or false if conflict with existing relocation entry occurs
-	 * @throws MemoryAccessException if unable to read bytes from memory
-	 * @throws AddressOverflowException if range address wrap occurs
+	 * @return true if recorded successfully, or false if conflict with existing relocation 
+	 * entry and memory addressing error occurs
 	 */
-	public boolean addFakeRelocTableEntry(Address address, int length)
-			throws MemoryAccessException, AddressOverflowException;
+	public boolean addArtificialRelocTableEntry(Address address, int length);
 
 }

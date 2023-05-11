@@ -37,7 +37,7 @@ import ghidra.file.formats.android.xml.AndroidXmlFileSystem;
 import ghidra.file.formats.zip.ZipFileSystem;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.formats.gfilesystem.GFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.Project;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -64,12 +64,13 @@ public class ApkLoader extends DexLoader {
 	}
 
 	@Override
-	protected List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor) throws CancelledException, IOException {
+	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
+			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, LoadException, CancelledException {
 
 		boolean success = false;
-		List<LoadedProgram> allLoadedPrograms = new ArrayList<>();
+		List<Loaded<Program>> allLoadedPrograms = new ArrayList<>();
 		int dexIndex = 1;//DEX file numbering starts at 1
 		try (ZipFileSystem zipFS = openAPK(provider, monitor)) {
 			while (!monitor.isCancelled()) {
@@ -86,9 +87,10 @@ public class ApkLoader extends DexLoader {
 				try (ByteProvider dexProvider =
 					zipFS.getByteProvider(classesDexFile, monitor)) {
 					// defer to the super class (DexLoader) to actually load the DEX file
-					List<LoadedProgram> loadedPrograms =
-						super.loadProgram(dexProvider, classesDexFile.getName(), programFolder,
-							loadSpec, options, log, consumer, monitor);
+					List<Loaded<Program>> loadedPrograms =
+						super.loadProgram(dexProvider, classesDexFile.getName(), project,
+							concatenatePaths(programFolderPath, programName), loadSpec, options,
+							log, consumer, monitor);
 
 					allLoadedPrograms.addAll(loadedPrograms);
 				}
@@ -104,14 +106,16 @@ public class ApkLoader extends DexLoader {
 				release(allLoadedPrograms, consumer);
 			}
 		}
-		link(allLoadedPrograms.stream().map(e -> e.program()).toList(), log, monitor);
+		if (allLoadedPrograms.isEmpty()) {
+			throw new LoadException("Operation finished with no programs to load");
+		}
+		link(allLoadedPrograms.stream().map(e -> e.getDomainObject()).toList(), log, monitor);
 		return allLoadedPrograms;
 	}
 
 	@Override
-	protected boolean isOverrideMainProgramName() {
-		//preserve the classesX.dex file names...
-		return false;
+	public boolean loadsIntoNewFolder() {
+		return true;
 	}
 
 	/**

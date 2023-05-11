@@ -22,10 +22,6 @@ import ghidra.program.model.listing.*;
 
 class ParameterDB extends VariableDB implements Parameter {
 
-	/**
-	 * @param function
-	 * @param s
-	 */
 	ParameterDB(FunctionDB function, SymbolDB s) {
 		super(function, s);
 	}

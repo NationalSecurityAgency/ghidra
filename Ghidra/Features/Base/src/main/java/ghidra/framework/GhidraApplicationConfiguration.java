@@ -15,16 +15,13 @@
  */
 package ghidra.framework;
 
-import java.awt.Taskbar;
-import java.awt.Toolkit;
-import java.lang.reflect.Field;
-
 import docking.DockingErrorDisplay;
 import docking.DockingWindowManager;
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.SplashScreen;
 import docking.widgets.PopupKeyStorePasswordProvider;
-import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import generic.theme.ApplicationThemeManager;
+import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.formats.gfilesystem.crypto.CryptoProviders;
 import ghidra.formats.gfilesystem.crypto.PopupGUIPasswordProvider;
 import ghidra.framework.main.GhidraApplicationInformationDisplayFactory;
@@ -33,6 +30,7 @@ import ghidra.framework.preferences.Preferences;
 import ghidra.net.ApplicationKeyManagerFactory;
 import ghidra.util.ErrorDisplay;
 import ghidra.util.SystemUtilities;
+import ghidra.util.task.TaskMonitorAdapter;
 
 public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationConfiguration {
 
@@ -46,32 +44,20 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 
 	@Override
 	protected void initializeApplication() {
-
-		DockingWindowsLookAndFeelUtils.loadFromPreferences();
-
-		platformSpecificFixups();
+		ApplicationThemeManager.initialize();
+		LookAndFeelUtils.performPlatformSpecificFixups();
 
 		if (showSplashScreen) {
 			showUserAgreement();
 			SplashScreen.showSplashScreen();
+			this.monitor = new StatusReportingTaskMonitor();
 		}
 
 		super.initializeApplication();
 
-		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(
-			new PopupKeyStorePasswordProvider());
+		ApplicationKeyManagerFactory
+				.setKeyStorePasswordProvider(new PopupKeyStorePasswordProvider());
 		CryptoProviders.getInstance().registerCryptoProvider(new PopupGUIPasswordProvider());
-	}
-
-	private static void platformSpecificFixups() {
-
-		// Set the dock icon for macOS
-		if (Taskbar.isTaskbarSupported()) {
-			Taskbar taskbar = Taskbar.getTaskbar();
-			if (taskbar.isSupported(Taskbar.Feature.ICON_IMAGE)) {
-				taskbar.setIconImage(ApplicationInformationDisplayFactory.getLargestWindowIcon());
-			}
-		}
 	}
 
 	private static void showUserAgreement() {
@@ -105,4 +91,17 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 	public ErrorDisplay getErrorDisplay() {
 		return new DockingErrorDisplay();
 	}
+
+	private static class StatusReportingTaskMonitor extends TaskMonitorAdapter {
+		@Override
+		public synchronized void setCancelEnabled(boolean enable) {
+			// Not permitted
+		}
+
+		@Override
+		public void setMessage(String message) {
+			SplashScreen.updateSplashScreenStatus(message);
+		}
+	}
+
 }

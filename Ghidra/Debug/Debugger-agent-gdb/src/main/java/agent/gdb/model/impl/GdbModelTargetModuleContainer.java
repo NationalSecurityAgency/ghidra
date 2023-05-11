@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.GdbModule;
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.*;
@@ -99,7 +100,7 @@ public class GdbModelTargetModuleContainer
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		// Ignore 'refresh' because inferior.getKnownModules may exclude executable
 		return doRefresh();
 	}

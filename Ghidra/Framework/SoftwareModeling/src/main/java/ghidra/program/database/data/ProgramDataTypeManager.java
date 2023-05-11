@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import db.DBConstants;
-import db.DBHandle;
+import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.Options;
@@ -32,8 +31,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.*;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -62,7 +60,7 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 	public ProgramDataTypeManager(DBHandle handle, AddressMap addrMap, int openMode,
 			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
-		super(handle, addrMap, openMode, errHandler, lock, monitor);
+		super(handle, addrMap, openMode, null, errHandler, lock, monitor);
 		upgrade = (openMode == DBConstants.UPGRADE);
 	}
 
@@ -80,8 +78,16 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 	@Override
 	public void setProgram(ProgramDB p) {
 		this.program = p;
-		dataOrganization = p.getCompilerSpec().getDataOrganization();
-		removeOldFileNameList();
+		try {
+			setProgramArchitecture(p, p.getSymbolTable().getVariableStorageManager(), false,
+				TaskMonitor.DUMMY);
+		}
+		catch (CancelledException e) {
+			throw new AssertException(e); // unexpected - no IO performed
+		}
+		catch (IOException e) {
+			errHandler.dbError(e);
+		}
 		if (upgrade) {
 			removeOldFileNameList();
 		}
@@ -103,11 +109,22 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (openMode == DBConstants.UPGRADE) {
-			doSourceArchiveUpdates(program.getCompilerSpec(), monitor);
+			doSourceArchiveUpdates(monitor);
 			migrateOldFlexArrayComponentsIfRequired(monitor);
 		}
 	}
 
+	/**
+	 * Update program-architecture information following a language upgrade/change
+	 * @param monitor task monitor
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if task monitor cancelled
+	 */
+	public void languageChanged(TaskMonitor monitor) throws IOException, CancelledException {
+		setProgramArchitecture(program, program.getSymbolTable().getVariableStorageManager(), true,
+			monitor);
+	}
+	
 	@Override
 	public String getName() {
 		return program.getName();
@@ -244,6 +261,11 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 	}
 
 	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		return program.openTransaction(description);
+	}
+
+	@Override
 	public int startTransaction(String description) {
 		return program.startTransaction(description);
 	}
@@ -290,14 +312,6 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 	@Override
 	public ArchiveType getType() {
 		return ArchiveType.PROGRAM;
-	}
-
-	@Override
-	public DataOrganization getDataOrganization() {
-		if (dataOrganization == null) {
-			dataOrganization = program.getCompilerSpec().getDataOrganization();
-		}
-		return dataOrganization;
 	}
 
 }

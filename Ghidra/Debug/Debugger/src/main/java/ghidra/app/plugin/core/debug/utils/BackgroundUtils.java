@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.utils;
 
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -166,20 +166,24 @@ public enum BackgroundUtils {
 	}
 
 	public static class PluginToolExecutorService extends AbstractExecutorService {
-		private final PluginTool tool;
-		private String name;
-		private boolean canCancel;
-		private boolean hasProgress;
-		private boolean isModal;
-		private final int delay;
+		public enum TaskOpt {
+			CAN_CANCEL, HAS_PROGRESS, IS_MODAL, IS_BACKGROUND;
+		}
 
-		public PluginToolExecutorService(PluginTool tool, String name, boolean canCancel,
-				boolean hasProgress, boolean isModal, int delay) {
+		private final PluginTool tool;
+		private final String name;
+		private final UndoableDomainObject obj;
+		private final int delay;
+		private final EnumSet<TaskOpt> opts;
+
+		private TaskMonitor lastMonitor;
+
+		public PluginToolExecutorService(PluginTool tool, String name, UndoableDomainObject obj,
+				int delay, TaskOpt... opts) {
 			this.tool = tool;
 			this.name = name;
-			this.canCancel = canCancel;
-			this.hasProgress = hasProgress;
-			this.isModal = isModal;
+			this.obj = obj;
+			this.opts = EnumSet.copyOf(Arrays.asList(opts));
 			this.delay = delay;
 		}
 
@@ -210,13 +214,45 @@ public enum BackgroundUtils {
 
 		@Override
 		public void execute(Runnable command) {
-			Task task = new Task(name, canCancel, hasProgress, isModal) {
+			if (opts.contains(TaskOpt.IS_BACKGROUND)) {
+				executeBackground(command);
+			}
+			else {
+				executeForeground(command);
+			}
+		}
+
+		protected void executeForeground(Runnable command) {
+			Task task = new Task(name,
+				opts.contains(TaskOpt.CAN_CANCEL),
+				opts.contains(TaskOpt.HAS_PROGRESS),
+				opts.contains(TaskOpt.IS_MODAL)) {
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
+					lastMonitor = monitor;
 					command.run();
 				}
 			};
 			tool.execute(task, delay);
+		}
+
+		protected void executeBackground(Runnable command) {
+			BackgroundCommand cmd = new BackgroundCommand(name,
+				opts.contains(TaskOpt.HAS_PROGRESS),
+				opts.contains(TaskOpt.CAN_CANCEL),
+				opts.contains(TaskOpt.IS_MODAL)) {
+				@Override
+				public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+					lastMonitor = monitor;
+					command.run();
+					return true;
+				}
+			};
+			tool.executeBackgroundCommand(cmd, obj);
+		}
+
+		public TaskMonitor getLastMonitor() {
+			return lastMonitor;
 		}
 	}
 }

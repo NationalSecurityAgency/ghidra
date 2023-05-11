@@ -23,9 +23,12 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 import docking.DialogComponentProvider;
+import generic.theme.GColor;
 import ghidra.util.HelpLocation;
 
 public class SelectColumnsDialog extends DialogComponentProvider {
+
+	private static final Color BG_NON_DEFAULT = new GColor("color.fg.disabled");
 	private static final String DISCOVERED_TABLE_COLUMN_NAME = "Non-default";
 
 	private GTable ghidraTable;
@@ -150,6 +153,7 @@ public class SelectColumnsDialog extends DialogComponentProvider {
 //==================================================================================================
 
 	private class ColumnSelectorStringRenderer extends GTableCellRenderer {
+
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -164,7 +168,7 @@ public class SelectColumnsDialog extends DialogComponentProvider {
 
 			TableColumnWrapper tableColumnWrapper = columnList.get(row);
 			if (!tableColumnWrapper.isDefault()) {
-				c.setBackground(c.getBackground().darker());
+				c.setBackground(BG_NON_DEFAULT);
 				c.setOpaque(true);
 			}
 
@@ -188,7 +192,7 @@ public class SelectColumnsDialog extends DialogComponentProvider {
 
 			TableColumnWrapper tableColumnWrapper = columnList.get(row);
 			if (!tableColumnWrapper.isDefault()) {
-				c.setBackground(c.getBackground().darker());
+				c.setBackground(BG_NON_DEFAULT);
 				c.setOpaque(true);
 			}
 

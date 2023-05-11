@@ -50,6 +50,9 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	 * @param handle open database  handle
 	 * @param addrMap the address map (instance settings not supported if null)
 	 * @param openMode the program open mode (see {@link DBConstants})
+	 * @param tablePrefix DB table prefix to be applied to all associated table names.  This 
+	 *                    need only be specified when using multiple instances with the same
+	 *                    DB handle (null or empty string for no-prefix).
 	 * @param errHandler the database io error handler
 	 * @param lock the program synchronization lock
 	 * @param monitor the progress monitor
@@ -57,18 +60,18 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 	 * @throws VersionException if the database does not match the expected version.
 	 * @throws IOException if a database IO error occurs.
 	 */
-	public ProgramBasedDataTypeManagerDB(DBHandle handle, AddressMap addrMap, int openMode,
-			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
+	protected ProgramBasedDataTypeManagerDB(DBHandle handle, AddressMap addrMap, int openMode,
+			String tablePrefix, ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
-		super(handle, addrMap, openMode, errHandler, lock, monitor);
+		super(handle, addrMap, openMode, tablePrefix, errHandler, lock, monitor);
 	}
 
 	protected void initializeOtherAdapters(int openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 		if (addrMap != null) {
 			instanceSettingsAdapter =
-				SettingsDBAdapter.getAdapter(INSTANCE_SETTINGS_TABLE_NAME, dbHandle, openMode,
-					addrMap, monitor);
+				SettingsDBAdapter.getAdapter(tablePrefix + INSTANCE_SETTINGS_TABLE_NAME, dbHandle,
+					openMode, addrMap, monitor);
 		}
 	}
 
@@ -246,7 +249,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 				RecordIterator iter =
 					instanceSettingsAdapter.getRecords(range.minKey, range.maxKey);
 				while (iter.hasNext()) {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					DBRecord rec = iter.next();
 					tmpTable.putRecord(rec);
 					iter.delete();
@@ -255,7 +258,7 @@ public abstract class ProgramBasedDataTypeManagerDB extends DataTypeManagerDB
 
 			RecordIterator iter = tmpTable.iterator();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = iter.next();
 				// update address key (i.e., settings association ID) and re-introduce into table
 				Address addr = addrMap

@@ -396,7 +396,7 @@ public abstract class Database {
 			}
 			String v = fname.substring(ix1 + 1, ix2);
 			try {
-				list.add(new Integer(v));
+				list.add(Integer.valueOf(v));
 			}
 			catch (NumberFormatException e) {
 				log.error(dbDir + ": bad file name: " + fname);

@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import java.math.BigInteger;
 
 import generic.concurrent.*;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -30,6 +31,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -115,8 +117,11 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 
+			monitor.checkCancelled();
 			runDecompilerAnalysis(program, definedFunctions, monitor);
+			monitor.checkCancelled();
 			runDecompilerAnalysis(program, undefinedFunctions, monitor);
+			monitor.checkCancelled();
 		}
 		catch (CancelledException ce) {
 			throw ce;
@@ -230,7 +235,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		Listing list = program.getListing();
 		InstructionIterator iterator = list.getInstructions(set, true);
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Instruction instruction = iterator.next();
 			FlowType flowType = instruction.getFlowType();
@@ -360,13 +365,15 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				new ContextEvaluatorAdapter() {
 					@Override
 					public boolean evaluateReference(VarnodeContext context, Instruction instr,
-							int pcodeop, Address address, int size, RefType refType) {
+							int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 						// go ahead and place the reference, since it is a constant.
 						if (refType.isComputed() && refType.isFlow() &&
 							program.getMemory().contains(address)) {
-							propogateCodeMode(context, address);
 							foundCount.incrementAndGet();
-							return true;
+							// don't propagate low code mode, let something else do that
+							// propogateCodeMode(context, address);
+							// don't make references, let other analysis do this
+							//return true;
 						}
 						return false;
 					}

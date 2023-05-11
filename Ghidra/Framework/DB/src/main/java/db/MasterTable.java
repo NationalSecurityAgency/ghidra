@@ -51,7 +51,7 @@ class MasterTable {
 		try {
 			masterRecord.setRootBufferId(dbParms.get(DBParms.MASTER_TABLE_ROOT_BUFFER_ID_PARM));
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			throw new IOException("Corrupt database parameters", e);
 		}
 
@@ -157,7 +157,7 @@ class MasterTable {
 				table.tableRecordChanged();
 			}
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			throw new IOException("Corrupt database parameters", e);
 		}
 

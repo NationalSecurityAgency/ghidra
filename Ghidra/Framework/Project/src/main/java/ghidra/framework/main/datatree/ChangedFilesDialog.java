@@ -16,10 +16,8 @@
 package ghidra.framework.main.datatree;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -27,6 +25,7 @@ import docking.DialogComponentProvider;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -37,32 +36,29 @@ import ghidra.util.task.TaskMonitor;
  */
 public class ChangedFilesDialog extends DialogComponentProvider {
 
-	private ArrayList<DomainFile> fileList;
-    private DomainFilesPanel filePanel;
-    private PluginTool tool;
-    private boolean saveSelected;
- 
+	private List<DomainFile> fileList;
+	private DomainFilesPanel filePanel;
+	private PluginTool tool;
+	private boolean saveSelected;
+
 	/** 
 	 * Constructor 
 	 * @param tool tool to execute task and log messages in status window
 	 * @param list list of domain files that have changes
 	 */
-	public ChangedFilesDialog(PluginTool tool, ArrayList<DomainFile> list) { 
+	public ChangedFilesDialog(PluginTool tool, List<DomainFile> list) {
 		super("Save Changed Files?", true);
 		this.tool = tool;
 		this.fileList = list;
 		addWorkPanel(buildMainPanel());
 
 		JButton saveButton = new JButton("Save");
-		saveButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				save();
-			}
-		});
-		saveButton.setToolTipText("Save files that have selected check boxes"); 
-		addButton(saveButton);				
-        addCancelButton();	
-	}	
+		saveButton.addActionListener(e -> save());
+		saveButton.setToolTipText("Save files that have selected check boxes");
+		addButton(saveButton);
+		addCancelButton();
+	}
+
 	/**
 	 * Set the tool tip on the cancel button.
 	 * @param toolTip tool tip to set on the cancel button
@@ -70,7 +66,7 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 	public void setCancelToolTipText(String toolTip) {
 		setCancelToolTip(toolTip);
 	}
-	
+
 	/**
 	 * Show ChangedFilesDialog.
 	 * @return whether the save button was selected; return false if the user
@@ -78,21 +74,22 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 	 */
 	public boolean showDialog() {
 		saveSelected = false;
-		tool.showDialog(this);	
+		tool.showDialog(this);
 		return saveSelected;
 	}
+
 	private JPanel buildMainPanel() {
-        JPanel outerPanel = new JPanel(new BorderLayout());
-        outerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
+		JPanel outerPanel = new JPanel(new BorderLayout());
+		outerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
 		filePanel = new DomainFilesPanel(fileList, "Changed Files");
 		outerPanel.add(filePanel, BorderLayout.CENTER);
 
-        return outerPanel;
+		return outerPanel;
 	}
 
 	private void save() {
-		saveSelected=true;
+		saveSelected = true;
 		DomainFile[] files = filePanel.getSelectedDomainFiles();
 		if (files.length > 0) {
 			SaveTask task = new SaveTask(files);
@@ -104,36 +101,34 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 	}
 
 	@Override
-    protected void cancelCallback() {
+	protected void cancelCallback() {
 		close();
 	}
-	/**
-	 * Task to save files.
-	 */
+
 	private class SaveTask extends Task {
 		private DomainFile[] files;
-		
+
 		SaveTask(DomainFile[] files) {
-			super(files.length>1?"Saving Files..." : "Saving File", 
+			super(files.length > 1 ? "Saving Files..." : "Saving File",
 				true, true, true);
 			this.files = files;
 		}
-		
+
 		@Override
-        public void run(TaskMonitor monitor) {
+		public void run(TaskMonitor monitor) {
 			for (DomainFile file : files) {
 				if (monitor.isCancelled()) {
-			  		break;
-			  	}
-			  	String name = file.getName();
-			  	monitor.setProgress(0);
+					break;
+				}
+				String name = file.getName();
+				monitor.setProgress(0);
 				monitor.setMessage("Saving " + name);
 				Msg.info(this, "Successfully saved file: " + name);
 				try {
 					file.save(monitor);
 				}
 				catch (CancelledException e) {
-					// Move on (TODO: should we break?)
+					return;
 				}
 				catch (IOException e) {
 					Msg.showError(this, tool.getToolFrame(), "Error Saving File",
@@ -141,15 +136,10 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 				}
 			}
 			if (monitor.isCancelled()) {
-				saveSelected=false;
+				saveSelected = false;
 			}
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					ChangedFilesDialog.this.close();
-				}
-			});
+			Swing.runLater(() -> ChangedFilesDialog.this.close());
 		}
 	}
-
 
 }

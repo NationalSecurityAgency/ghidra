@@ -33,6 +33,7 @@ import docking.action.ToggleDockingAction;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
@@ -42,7 +43,8 @@ import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.main.*;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -271,10 +273,10 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		builder.setIntProperty("10018ff", "Space", 1);
 		builder.setIntProperty("100248c", "Space", 1);
 
-		builder.setObjectProperty("100248c", "testColor", new SaveableColor(Color.CYAN));
-		builder.setObjectProperty("10039dd", "testColor", new SaveableColor(Color.BLACK));
-		builder.setObjectProperty("10039f8", "testColor", new SaveableColor(Color.BLACK));
-		builder.setObjectProperty("10039fe", "testColor", new SaveableColor(Color.RED));
+		builder.setObjectProperty("100248c", "testColor", new SaveableColor(Palette.CYAN));
+		builder.setObjectProperty("10039dd", "testColor", new SaveableColor(Palette.BLACK));
+		builder.setObjectProperty("10039f8", "testColor", new SaveableColor(Palette.BLACK));
+		builder.setObjectProperty("10039fe", "testColor", new SaveableColor(Palette.RED));
 
 		AbstractGenericTest.setInstanceField("recordChanges", builder.getProgram(), Boolean.TRUE);
 
@@ -450,10 +452,10 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		builder.setIntProperty("1002428", "Space", 1);
 		builder.setIntProperty("100248c", "Space", 1);
 
-		builder.setObjectProperty("100248c", "testColor", new SaveableColor(Color.WHITE));
-		builder.setObjectProperty("10039f1", "testColor", new SaveableColor(Color.BLACK));
-		builder.setObjectProperty("10039f8", "testColor", new SaveableColor(Color.BLACK));
-		builder.setObjectProperty("10039fe", "testColor", new SaveableColor(Color.GREEN));
+		builder.setObjectProperty("100248c", "testColor", new SaveableColor(Palette.WHITE));
+		builder.setObjectProperty("10039f1", "testColor", new SaveableColor(Palette.BLACK));
+		builder.setObjectProperty("10039f8", "testColor", new SaveableColor(Palette.BLACK));
+		builder.setObjectProperty("10039fe", "testColor", new SaveableColor(Palette.GREEN));
 
 		AbstractGenericTest.setInstanceField("recordChanges", builder.getProgram(), Boolean.TRUE);
 
@@ -478,7 +480,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		diffListingPanel = diffPlugin.getListingPanel();
 		fp1 = cb.getFieldPanel();
 		fp2 = diffListingPanel.getFieldPanel();
-		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Program View");
+		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Diff View");
 
 		tool.addPlugin(ProgramTreePlugin.class.getName());
 		pt = env.getPlugin(ProgramTreePlugin.class);
@@ -663,10 +665,8 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 	void pickSecondProgram(final Program program2) {
 
-		program2.addConsumer(diffPlugin);
-
 		OpenVersionedFileDialogTestFake dialog = new OpenVersionedFileDialogTestFake(program2);
-		diffPlugin.setOpenDiffProgramDialog(dialog);
+		diffPlugin.setDiffOpenVersionedFileDialog(dialog);
 
 		launchDiffByAction();
 
@@ -1153,13 +1153,13 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 // Inner Classes
 //==================================================================================================
 
-	private class OpenVersionedFileDialogTestFake extends OpenVersionedFileDialog {
+	private class OpenVersionedFileDialogTestFake extends OpenVersionedFileDialog<Program> {
 
 		private ActionListener listener;
 		private Program chosenProgram;
 
 		OpenVersionedFileDialogTestFake(Program program) {
-			super(tool, "Select Other Program", null);
+			super(tool, "Select Other Program", Program.class);
 			this.chosenProgram = program;
 		}
 
@@ -1182,7 +1182,10 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		@Override
-		public DomainObject getVersionedDomainObject(Object consumer, boolean readOnly) {
+		public Program getDomainObject(Object consumer, boolean readOnly) {
+			if (chosenProgram != null) {
+				chosenProgram.addConsumer(consumer);
+			}
 			return chosenProgram;
 		}
 

@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.watch;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -32,6 +31,7 @@ import javax.swing.table.TableColumnModel;
 
 import org.jdom.Element;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
@@ -39,6 +39,7 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import generic.theme.GColor;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.core.data.AbstractSettingsDialog;
@@ -57,8 +58,6 @@ import ghidra.docking.settings.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.AutoOptionDefined;
-import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.pcode.exec.DebuggerPcodeUtils;
@@ -83,7 +82,6 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -93,6 +91,15 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		implements DebuggerWatchesService {
 	private static final String KEY_ROW_COUNT = "rowCount";
 	private static final String PREFIX_ROW = "row";
+
+	private static final Color COLOR_FOREGROUND_STALE =
+		new GColor("color.debugger.plugin.resources.watch.stale");
+	private static final Color COLOR_FOREGROUND_STALE_SEL =
+		new GColor("color.debugger.plugin.resources.watch.stale.selected");
+	private static final Color COLOR_FOREGROUND_CHANGED =
+		new GColor("color.debugger.plugin.resources.watch.changed");
+	private static final Color COLOR_FOREGROUND_CHANGED_SEL =
+		new GColor("color.debugger.plugin.resources.watch.changed.selected");
 
 	interface WatchTypeSettings {
 		String NAME = DebuggerResources.NAME_WATCH_TYPE_SETTINGS;
@@ -273,8 +280,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			if (dataType == null) {
 				return null;
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(currentTrace, "Resolve DataType")) {
+			try (Transaction tx = currentTrace.openTransaction("Resolve DataType")) {
 				return currentTrace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
@@ -287,18 +293,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			WatchRow row = (WatchRow) data.getRowObject();
 			if (!row.isKnown()) {
 				if (data.isSelected()) {
-					setForeground(watchStaleSelColor);
+					setForeground(COLOR_FOREGROUND_STALE_SEL);
 				}
 				else {
-					setForeground(watchStaleColor);
+					setForeground(COLOR_FOREGROUND_STALE);
 				}
 			}
 			else if (row.isChanged()) {
 				if (data.isSelected()) {
-					setForeground(watchChangesSelColor);
+					setForeground(COLOR_FOREGROUND_CHANGED_SEL);
 				}
 				else {
-					setForeground(watchChangesColor);
+					setForeground(COLOR_FOREGROUND_CHANGED);
 				}
 			}
 			return this;
@@ -332,32 +338,11 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager; // For goto time (emu mods)
 	@AutoServiceConsumed
-	protected DebuggerStateEditingService editingService;
+	protected DebuggerControlService controlService;
 	@AutoServiceConsumed
 	DebuggerStaticMappingService mappingService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
-
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_WATCH_STALE, //
-		description = "Text color for watches whose value is not known", //
-		help = @HelpInfo(anchor = "colors"))
-	protected Color watchStaleColor = DebuggerResources.DEFAULT_COLOR_WATCH_STALE;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_WATCH_STALE_SEL, //
-		description = "Selected text color for watches whose value is not known", //
-		help = @HelpInfo(anchor = "colors"))
-	protected Color watchStaleSelColor = DebuggerResources.DEFAULT_COLOR_WATCH_STALE_SEL;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_WATCH_CHANGED, //
-		description = "Text color for watches whose value just changed", //
-		help = @HelpInfo(anchor = "colors"))
-	protected Color watchChangesColor = DebuggerResources.DEFAULT_COLOR_WATCH_CHANGED;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_WATCH_CHANGED_SEL, //
-		description = "Selected text color for watches whose value just changed", //
-		help = @HelpInfo(anchor = "colors"))
-	protected Color watchChangesSelColor = DebuggerResources.DEFAULT_COLOR_WATCH_CHANGED_SEL;
 
 	private final AddressSet changed = new AddressSet();
 	private final AsyncDebouncer<Void> changeDebouncer =
@@ -428,10 +413,17 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		watchTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() != 2 || e.getButton() != MouseEvent.BUTTON1) {
-					return;
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					navigateToSelectedWatch();
 				}
-				navigateToSelectedWatch();
+			}
+		});
+		watchTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					navigateToSelectedWatch();
+				}
 			}
 		});
 
@@ -612,8 +604,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 					return;
 				}
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(current.getTrace(), "Apply Watch Data Type")) {
+			try (Transaction tx =
+				current.getTrace().openTransaction("Apply Watch Data Type")) {
 				try {
 					listing.clearCodeUnits(row.getAddress(), row.getRange().getMaxAddress(), false);
 					Data data = listing.createData(address, dataType, size);

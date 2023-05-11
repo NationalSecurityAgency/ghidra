@@ -17,28 +17,22 @@ package ghidra.program.util;
 
 import java.util.*;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.program.model.lang.*;
-import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.TaskBuilder;
 
 /**
  * Default Language service used gather up all the languages that were found
  * during the class search (search was for language providers)
  */
-public class DefaultLanguageService implements LanguageService, ChangeListener {
+public class DefaultLanguageService implements LanguageService {
 	private static final Logger log = LogManager.getLogger(DefaultLanguageService.class);
 
 	private List<LanguageInfo> languageInfos = new ArrayList<>();
 	private HashMap<LanguageID, LanguageInfo> languageMap = new HashMap<>();
-	private boolean searchCompleted = false;
 
 	private static DefaultLanguageService languageService;
 
@@ -50,59 +44,18 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 		if (languageService == null) {
 			languageService = new DefaultLanguageService();
 		}
-		else if (!languageService.searchCompleted) {
-			languageService.searchForProviders();
-		}
-		return languageService;
-	}
-
-	/**
-	 * Return the single instance of the DefaultLanguageService.  If not already
-	 * instantiated in the default mode, the factory will be lazy and limit 
-	 * it set of languages to those defined by the specified Sleigh language definition
-	 * file (*.ldefs) or those provided by subsequent calls to this method.
-	 * @param sleighLdefsFile sleigh language definition file
-	 * @return language factory instance
-	 * @throws Exception if an error occurs while parsing the specified definition file
-	 */
-	public static synchronized LanguageService getLanguageService(ResourceFile sleighLdefsFile)
-			throws Exception {
-		SleighLanguageProvider provider = new SleighLanguageProvider(sleighLdefsFile);
-		if (languageService == null) {
-			languageService = new DefaultLanguageService(provider);
-		}
-		languageService.addLanguages(provider);
 		return languageService;
 	}
 
 	private DefaultLanguageService() {
-		searchForProviders();
-		ClassSearcher.addChangeListener(this);
+		addLanguages(SleighLanguageProvider.getSleighLanguageProvider());
 	}
 
 	private DefaultLanguageService(LanguageProvider provider) {
 		addLanguages(provider);
 	}
 
-	private void searchForProviders() {
-		List<LanguageProvider> languageProviders =
-			ClassSearcher.getInstances(LanguageProvider.class);
-
-		searchCompleted = true;
-
-		//@formatter:off
-		TaskBuilder.withRunnable(monitor -> {			
-				processProviders(languageProviders); // load and cache
-			})
-			.setTitle("Language Search")
-			.setCanCancel(false)
-			.setHasProgress(false)
-			.launchModal()
-			;
-		//@formatter:on
-	}
-
-		@Override
+	@Override
 	public Language getLanguage(LanguageID languageID) throws LanguageNotFoundException {
 		LanguageInfo info = languageMap.get(languageID);
 		if (info == null) {
@@ -338,12 +291,6 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 		throw new LanguageNotFoundException(processor);
 	}
 
-	private void processProviders(List<LanguageProvider> providers) {
-		for (LanguageProvider provider : providers) {
-			addLanguages(provider);
-		}
-	}
-
 	private void addLanguages(LanguageProvider provider) {
 		LanguageDescription[] lds = provider.getLanguageDescriptions();
 		for (LanguageDescription description : lds) {
@@ -414,10 +361,4 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 		}
 	}
 
-		@Override
-	public void stateChanged(ChangeEvent e) {
-		// NOTE: this is only intended to pickup new language providers 
-		// which is not really supported with the introduction of Sleigh.
-		searchForProviders();
-	}
 }

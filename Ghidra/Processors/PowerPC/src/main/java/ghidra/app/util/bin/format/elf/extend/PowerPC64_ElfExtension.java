@@ -187,7 +187,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 				dynamicTable.getDynamicValue(ElfDynamicType.DT_PLTRELSZ) / relEntrySize;
 
 			for (int i = 0; i < pltEntryCount; i++) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				pltAddr = pltAddr.addNoWrap(24);
 				Symbol refSymbol = markupDescriptorEntry(pltAddr, false, elfLoadHelper);
 				if (refSymbol != null && refSymbol.getSymbolType() == SymbolType.FUNCTION &&
@@ -263,7 +263,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		Address addr = pltBlock.getStart().add(PLT_HEAD_SIZE);
 		try {
 			while (addr.compareTo(pltBlock.getEnd()) < 0) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (elfLoadHelper.createData(addr, PointerDataType.dataType) == null) {
 					break; // stop early if failed to create a pointer
 				}
@@ -296,7 +296,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 
 		try {
 			while (addr.compareTo(endAddr) < 0) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.setProgress(++count);
 				processOPDEntry(elfLoadHelper, addr);
 				addr = addr.addNoWrap(24);
@@ -445,7 +445,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 
 			FunctionManager functionMgr = program.getFunctionManager();
 			for (Address addr : program.getSymbolTable().getExternalEntryPointIterator()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (functionMgr.getFunctionAt(addr) != null) {
 					// assume r12 set to function entry for all global functions
 					setPPC64v2GlobalFunctionR12Context(program, addr);

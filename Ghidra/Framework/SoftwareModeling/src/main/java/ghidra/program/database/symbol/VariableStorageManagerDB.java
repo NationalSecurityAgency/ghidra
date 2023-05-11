@@ -19,10 +19,13 @@ import java.io.IOException;
 import java.util.List;
 
 import db.*;
-import ghidra.program.database.*;
+import db.util.ErrorHandler;
+import ghidra.program.database.DBObjectCache;
+import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.ProgramArchitecture;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.util.LanguageTranslator;
@@ -32,11 +35,11 @@ import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class VariableStorageManagerDB {
+public class VariableStorageManagerDB implements VariableStorageManager {
 
-	private ProgramDB program;
-	private AddressMap addrMap;
+	private ProgramArchitecture arch;
 	private Lock lock;
+	private ErrorHandler errorHandler;
 
 	private VariableStorageDBAdapter adapter;
 
@@ -47,44 +50,54 @@ public class VariableStorageManagerDB {
 	/**
 	 * Construct a new variable manager.
 	 * @param handle the database handle.
-	 * @param addrMap the address map
+	 * @param addrMap the address map (required for legacy adpter use only)
 	 * @param openMode the open mode
+	 * @param errorHandler database error handler
 	 * @param lock the program synchronization lock
 	 * @param monitor the task monitor.
 	 * @throws IOException if a database error occurs.
 	 * @throws VersionException if the table version is different from this adapter.
-	 * @throws IOException 
+	 * @throws IOException if an IO error occurs
 	 * @throws CancelledException if the user cancels the upgrade.
 	 */
-	public VariableStorageManagerDB(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
-			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
-
-		this.addrMap = addrMap;
+	public VariableStorageManagerDB(DBHandle handle, AddressMap addrMap, int openMode,
+			ErrorHandler errorHandler, Lock lock, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
+		this.errorHandler = errorHandler;
 		this.lock = lock;
-
 		adapter = VariableStorageDBAdapter.getAdapter(handle, openMode, addrMap, monitor);
+	}
+
+	/**
+	 * Set program architecture.
+	 * @param arch program architecture
+	 */
+	public void setProgramArchitecture(ProgramArchitecture arch) {
+		this.arch = arch;
+	}
+
+	/**
+	 * Delete the DB table which correspnds to this variable storage implementation
+	 * @param dbHandle database handle
+	 * @throws IOException if an IO error occurs
+	 */
+	public static void delete(DBHandle dbHandle) throws IOException {
+		dbHandle.deleteTable(VariableStorageDBAdapter.VARIABLE_STORAGE_TABLE_NAME);
+	}
+
+	/**
+	 * Determine if the variable storage manager table already exists
+	 * @param dbHandle database handle
+	 * @return true if storage table exists
+	 */
+	public static boolean exists(DBHandle dbHandle) {
+		return dbHandle.getTable(VariableStorageDBAdapter.VARIABLE_STORAGE_TABLE_NAME) != null;
 	}
 
 	void invalidateCache(boolean all) {
 		cache.invalidate();
 		cacheMap.clear();
 	}
-
-	void setProgram(ProgramDB program) {
-		this.program = program;
-	}
-
-//	private void cacheNamespaceStorage(long namespaceID) throws IOException {
-//		variableAddrLookupCache.clear();
-//		storageLookupCache.clear();
-//		lastNamespaceCacheID = namespaceID;
-//		Record[] records = adapter.getRecordsForNamespace(namespaceID);
-//		for (Record rec : records) {
-//			MyVariableStorage varStore = new MyVariableStorage(rec);
-//			variableAddrLookupCache.put(varStore.getVariableAddress(), varStore);
-//			storageLookupCache.put(varStore.getVariableStorage(), varStore);
-//		}
-//	}
 
 	private MyVariableStorage getMyVariableStorage(Address variableAddr) throws IOException {
 		if (!variableAddr.isVariableAddress()) {
@@ -103,6 +116,14 @@ public class VariableStorageManagerDB {
 		return varStore;
 	}
 
+	/**
+	 * Get the list of varnodes associated with the specified variable storage address.
+	 * NOTE: The program architecture and error handler must be set appropriately prior to 
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
+	 * @param variableAddr variable storage address
+	 * @return storage varnode list or null if address unknown
+	 * @throws IOException if a database IO error occurs
+	 */
 	List<Varnode> getStorageVarnodes(Address variableAddr) throws IOException {
 		if (!variableAddr.isVariableAddress()) {
 			throw new IllegalArgumentException();
@@ -112,7 +133,7 @@ public class VariableStorageManagerDB {
 			return null;
 		}
 		try {
-			return VariableStorage.getVarnodes(program.getAddressFactory(),
+			return VariableStorage.getVarnodes(arch.getAddressFactory(),
 				rec.getString(VariableStorageDBAdapter.STORAGE_COL));
 		}
 		catch (InvalidInputException e) {
@@ -121,6 +142,14 @@ public class VariableStorageManagerDB {
 		return null;
 	}
 
+	/**
+	 * Get the variable storage object associated with the specified variable storage address.
+	 * NOTE: The program architecture and error handler must be set appropriately prior to 
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
+	 * @param variableAddr variable storage address
+	 * @return variable storage object or null if address unknown
+	 * @throws IOException if a database IO error occurs
+	 */
 	VariableStorage getVariableStorage(Address variableAddr) throws IOException {
 		MyVariableStorage myStorage = getMyVariableStorage(variableAddr);
 		if (myStorage != null) {
@@ -129,6 +158,17 @@ public class VariableStorageManagerDB {
 		return null;
 	}
 
+	/**
+	 * Get a variable address for the given storage specification.
+	 * NOTE: The program architecture and error handler must be set appropriately prior to 
+	 * invocation of this method (see {@link #setProgramArchitecture(ProgramArchitecture)}.
+	 * @param storage variable storage specification
+	 * @param create if true a new variable address will be allocated if needed
+	 * @return variable address which corresponds to the storage specification or null if not found
+	 * and create is false.
+	 * @throws IOException if an IO error occurs
+	 */
+	@Override
 	public Address getVariableStorageAddress(VariableStorage storage, boolean create)
 			throws IOException {
 		long hash = storage.getLongHash();
@@ -215,7 +255,7 @@ public class VariableStorageManagerDB {
 			super(cache, record.getKey());
 			this.record = record;
 			try {
-				storage = VariableStorage.deserialize(program,
+				storage = VariableStorage.deserialize(arch,
 					record.getString(VariableStorageDBAdapter.STORAGE_COL));
 			}
 			catch (InvalidInputException e) {
@@ -250,7 +290,7 @@ public class VariableStorageManagerDB {
 					}
 					record = rec;
 					try {
-						storage = VariableStorage.deserialize(program,
+						storage = VariableStorage.deserialize(arch,
 							record.getString(VariableStorageDBAdapter.STORAGE_COL));
 					}
 					catch (InvalidInputException e) {
@@ -260,7 +300,7 @@ public class VariableStorageManagerDB {
 				}
 			}
 			catch (IOException e) {
-				program.dbError(e);
+				errorHandler.dbError(e);
 			}
 			finally {
 				lock.release();
@@ -272,10 +312,13 @@ public class VariableStorageManagerDB {
 
 	/**
 	 * Perform language translation.
+	 * Following the invocation of this method it is important to ensure that the program 
+	 * architecure is adjusted if neccessary.
 	 * Update variable storage specifications to reflect address space and register mappings
-	 * @param translator
-	 * @param monitor
-	 * @throws CancelledException 
+	 * @param translator language translator to be used for mapping storage varnodes to new
+	 * architecture.
+	 * @param monitor task monitor
+	 * @throws CancelledException if task is cancelled
 	 */
 	public void setLanguage(LanguageTranslator translator, TaskMonitor monitor)
 			throws CancelledException {
@@ -287,7 +330,7 @@ public class VariableStorageManagerDB {
 		try {
 			RecordIterator recIter = adapter.getRecords();
 			while (recIter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				DBRecord rec = recIter.next();
 				// NOTE: addrMap has already been switched-over to new language and its address spaces
@@ -308,7 +351,7 @@ public class VariableStorageManagerDB {
 			}
 		}
 		catch (IOException e) {
-			program.dbError(e);
+			errorHandler.dbError(e);
 		}
 		finally {
 			invalidateCache(true);

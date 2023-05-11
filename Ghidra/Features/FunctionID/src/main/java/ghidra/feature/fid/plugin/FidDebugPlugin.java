@@ -181,6 +181,7 @@ public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 		chooser.setTitle("Where do you want to create the read-only installable database?");
 		chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 		File selectedFile = chooser.getSelectedFile();
+		chooser.dispose();
 		if (selectedFile == null) {
 			return;
 		}

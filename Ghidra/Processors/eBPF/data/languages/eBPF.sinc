@@ -1,0 +1,359 @@
+###############################################################################
+# eBPF Processor Specification for Ghidra
+###############################################################################
+
+#eBPF is a RISC register machine with a total of 11 64-bit registers, a program counter and a 512 byte fixed-size stack. 
+#9 registers are general purpose read-write, one is a read-only stack pointer and the program counter is implicit,
+#i.e. we can only jump to a certain offset from it. The eBPF registers are always 64-bit wide.
+
+define space ram type=ram_space size=8 default;
+define space register type=register_space size=4;
+define space syscall type=ram_space size=4;
+
+define register offset=0 size=8 [ R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  PC ];
+
+# Instruction encoding: Insop:8, dst_reg:4, src_reg:4, off:16, imm:32 - from lsb to msb
+define token instr(64)
+    imm=(32, 63) signed
+    off=(16, 31) signed
+    src=(12, 15)
+    dst=(8, 11)
+    op_alu_jmp_opcode=(4, 7)
+    op_alu_jmp_source=(3, 3)
+    op_ld_st_mode=(5, 7)
+    op_ld_st_size=(3, 4)
+    op_insn_class=(0, 2)
+;
+
+#We'll need this token to operate with LDDW instruction, which has 64 bit imm value
+define token immtoken(64)
+    imm2=(32, 63)		
+;
+
+#To operate with registers
+attach variables [ src dst ] [  R0  R1  R2  R3  R4  R5  R6  R7  R8  R9  R10  _  _  _  _  _  ];
+
+#Arithmetic instructions
+#BPF_ALU64
+###############################################################################
+
+SRC8: src is src & op_alu_jmp_source=1 { export src; }
+SRC8: imm is imm & op_alu_jmp_source=0 { export *[const]:8 imm; }
+
+SRC4: src is src & op_alu_jmp_source=1 { local tmp:4 = src:4; export tmp; }
+SRC4: imm is imm & op_alu_jmp_source=0 { export *[const]:4 imm; }
+
+DST4: dst is dst { local tmp:4 = dst:4; export tmp; }
+
+:MOV dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0xb & op_insn_class=0x7 { dst = SRC8; }
+
+:ADD dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x0 & op_insn_class=0x7 { dst = dst + SRC8; }
+
+:SUB dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x1 & op_insn_class=0x7 { dst = dst - SRC8; }
+
+:MUL dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x2 & op_insn_class=0x7 { dst = dst * SRC8; }
+
+:DIV dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x3 & op_insn_class=0x7 { dst = dst / SRC8; }
+
+:OR dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x4 & op_insn_class=0x7 { dst = dst | SRC8; }
+
+:AND dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x5 & op_insn_class=0x7 { dst = dst & SRC8; }
+
+:LSH dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x6 & op_insn_class=0x7 { dst = dst << SRC8; }
+
+:RSH dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x7 & op_insn_class=0x7 { dst = dst >> SRC8; }
+
+:NEG dst  is dst & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x7 { dst = -dst; }
+
+:MOD dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0x9 & op_insn_class=0x7 { dst = dst % SRC8; }
+
+:XOR dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0xa & op_insn_class=0x7 { dst = dst ^ SRC8; }
+
+:ARSH dst, SRC8  is SRC8 & dst & op_alu_jmp_opcode=0xc & op_insn_class=0x7 { dst = dst s>> SRC8; }
+
+
+#BPF_ALU
+###############################################################################
+
+:MOV dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0xb & op_insn_class=0x4 { dst = zext(SRC4); }
+
+:ADD dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x0 & op_insn_class=0x4 { dst = zext(dst:4 + SRC4); }
+
+:SUB dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x1 & op_insn_class=0x4 { dst = zext(dst:4 - SRC4); }
+
+:MUL dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x2 & op_insn_class=0x4 { dst = zext(dst:4 * SRC4); }
+
+:DIV dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x3 & op_insn_class=0x4 { dst = zext(dst:4 / SRC4); }
+
+:OR dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x4 & op_insn_class=0x4 { dst = zext(dst:4 | SRC4); }
+
+:AND dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x5 & op_insn_class=0x4 { dst = zext(dst:4 & SRC4); }
+
+:LSH dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x6 & op_insn_class=0x4 { dst = zext(dst:4 << SRC4); }
+
+:RSH dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x7 & op_insn_class=0x4 { dst = zext(dst:4 >> SRC4); }
+
+:NEG dst  is dst & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x4 { dst = zext(-dst:4); }
+
+:MOD dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0x9 & op_insn_class=0x4 { dst = zext(dst:4 % SRC4); }
+
+:XOR dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0xa & op_insn_class=0x4 { dst = zext(dst:4 ^ SRC4); }
+
+:ARSH dst, SRC4  is SRC4 & dst & op_alu_jmp_opcode=0xc & op_insn_class=0x4 { dst = zext(dst:4 s>> SRC4); }
+
+
+#Bytewasp instructions
+###############################################################################
+# BPF_ALU   | BPF_K   | BPF_END
+:LE16 dst  is imm=0x10 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x4 { dst=((dst) >> 8) | ((dst) << 8); }
+:LE32 dst  is imm=0x20 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x4 { dst=((dst) >> 24) | (((dst) & 0x00FF0000) >> 8)  | (((dst) & 0x0000FF00) << 8) | ((dst) << 24); }
+:LE64 dst  is imm=0x40 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=0 & op_insn_class=0x4 {
+    dst=( (dst << 56) & 0xff00000000000000 ) |
+    ( (dst << 40) & 0x00ff000000000000 ) |
+    ( (dst << 24) & 0x0000ff0000000000 ) |
+    ( (dst <<  8) & 0x000000ff00000000 ) |
+    ( (dst >>  8) & 0x00000000ff000000 ) |
+    ( (dst >> 24) & 0x0000000000ff0000 ) |
+    ( (dst >> 40) & 0x000000000000ff00 ) |
+    ( (dst >> 56) & 0x00000000000000ff );
+}
+
+# BPF_ALU   | BPF_X   | BPF_END
+:BE16 dst  is imm=0x10 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x4 { dst=((dst) >> 8) | ((dst) << 8); }
+:BE32 dst  is imm=0x20 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x4 { dst=((dst) >> 24) | (((dst) & 0x00FF0000) >> 8)  | (((dst) & 0x0000FF00) << 8) | ((dst) << 24); }
+:BE64 dst  is imm=0x40 & dst & op_alu_jmp_opcode=0xd & op_alu_jmp_source=1 & op_insn_class=0x4 {
+    dst=( (dst << 56) & 0xff00000000000000 ) |
+    ( (dst << 40) & 0x00ff000000000000 ) |
+    ( (dst << 24) & 0x0000ff0000000000 ) |
+    ( (dst <<  8) & 0x000000ff00000000 ) |
+    ( (dst >>  8) & 0x00000000ff000000 ) |
+    ( (dst >> 24) & 0x0000000000ff0000 ) |
+    ( (dst >> 40) & 0x000000000000ff00 ) |
+    ( (dst >> 56) & 0x00000000000000ff );
+}
+    
+#Memory instructions - Load and Store
+###############################################################################
+
+#LDDW is the only 16-byte eBPF instruction which consists of two consecutive 8-byte blocks ('struct bpf_insn') 
+#and interpreted as single instruction which loads 64-bit imm value into dst. Encoding of LDDW:
+#LSR                                                                                                MSR
+#           opcode      src     dst     offset      Low 8-byte imm      zero-block      High 8-byte imm
+#bits          8         4       4        16               32               32                 32
+# So, imm64 consists of concatination of high 8-byte imm and low 8-byte imm.
+
+:LDDW dst, concat  is imm & dst &  op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 [ concat= (imm2 << 32) | ((imm) & 0xFFFFFFFF); ] { dst = concat; }
+
+#BPF_LD_MAP_FD(DST, MAP_FD) -> second LDDW = pseudo LDDW insn used to refer to process-local map_fd 
+#For each instruction which needs relocation, it inject corresponding file descriptor to imm field. 
+#As a part of protocol, src_reg is set to BPF_PSEUDO_MAP_FD (which defined as 1) to notify kernel this is a map loading instruction.
+
+:LDDW dst, imm  is imm & src=1 & dst & op_ld_st_mode=0x0 & op_ld_st_size=0x3 & op_insn_class=0x0; imm2 { dst = *:8 imm:8; }
+
+:LDABSW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x0 & op_insn_class=0x0 { dst=*:4 imm:8; }
+
+:LDABSH dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x1 & op_insn_class=0x0 { dst=*:2 imm:8; }
+
+:LDABSB dst, imm  is imm & dst &  op_ld_st_mode=0x1 & op_ld_st_size=0x2 & op_insn_class=0x0 { dst=*:1 imm:8; }
+
+:LDABSDW dst, imm  is imm & dst & op_ld_st_mode=0x1 & op_ld_st_size=0x3 & op_insn_class=0x0 { dst=*:8 imm:8; }
+
+:LDINDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x0 & op_insn_class=0x0  { dst=*:4 (src + imm); }
+
+:LDINDH src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x1 & op_insn_class=0x0 { dst=*:2 (src + imm); }
+
+:LDINDB src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x2 & op_insn_class=0x0 { dst=*:1 (src + imm); }
+
+:LDINDDW src, dst, imm  is imm & src & dst & op_ld_st_mode=0x2 & op_ld_st_size=0x3 & op_insn_class=0x0 { dst=*:8 (src + imm); }
+
+:LDXW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x1 { dst=*:4 (src + off); }
+
+:LDXH dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x1 { dst=*:2 (src + off); }
+
+:LDXB dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x1 { dst=*:1 (src + off); }
+
+:LDXDW dst, [src + off]  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x3 & op_insn_class=0x1 { dst=*:8 (src + off); }
+
+:STW [dst + off], imm  is imm & off & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x2 { *:4 (dst + off)=imm:4; }
+
+:STH [dst + off], imm  is imm & off & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x2 { *:2 (dst + off)=imm:2; }
+
+:STB [dst + off], imm  is imm & off & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x2 { *:1 (dst + off)=imm:1; }
+
+:STDW [dst + off], imm  is imm & off & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x3 & op_insn_class=0x2 { *:8 (dst + off)=imm:8; }
+
+:STXW [dst + off], src  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x0 & op_insn_class=0x3 { *:4 (dst + off)=src:4; }
+
+:STXH [dst + off], src  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x1 & op_insn_class=0x3 { *:2 (dst + off)=src:2; }
+
+:STXB [dst + off], src  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x2 & op_insn_class=0x3 { *:1 (dst + off)=src:1; }
+
+:STXDW [dst + off], src  is off & src & dst & op_ld_st_mode=0x3 & op_ld_st_size=0x3 & op_insn_class=0x3 { *:8 (dst + off)=src:8; }
+
+# BPF_ATOMIC
+# BPF_ADD:
+
+# BPF_STX  | BPF_ATOMIC | BPF_W
+:STXXADDW [dst + off], src  is imm=0x0 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { *:4 (dst + off) = *:4 (dst + off) + src:4; }
+
+# BPF_STX  | BPF_ATOMIC | BPF_DW
+:STXXADDDW [dst + off], src  is imm=0x0 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { *:8 (dst + off) = *:8 (dst + off) + src; }
+
+# BPF_OR:
+
+:STXXADDW [dst + off], src  is imm=0x40 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { *:4 (dst + off) = *:4 (dst + off) | src:4; }
+
+:STXXADDDW [dst + off], src  is imm=0x40 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { *:8 (dst + off) = *:8 (dst + off) | src; }
+
+# BPF_AND:
+
+:STXXADDW [dst + off], src  is imm=0x50 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { *:4 (dst + off) = *:4 (dst + off) & src:4; }
+
+:STXXADDDW [dst + off], src  is imm=0x50 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { *:8 (dst + off) = *:8 (dst + off) & src; }
+
+# BPF_XOR:
+
+:STXXADDW [dst + off], src  is imm=0xa0 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { *:4 (dst + off) = *:4 (dst + off) ^ src:4; }
+
+:STXXADDDW [dst + off], src  is imm=0xa0 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { *:8 (dst + off) = *:8 (dst + off) ^ src; }
+
+# BPF_ADD | BPF_FETCH -> src = atomic_fetch_add(dst + off, src):
+
+:STXXADDW [dst + off], src  is imm=0x1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { 
+    local tmp:4 = *:4 (dst + off);
+    *:4 (dst + off) = *:4 (dst + off) + src:4;
+    src = zext(tmp);
+}
+
+:STXXADDDW [dst + off], src  is imm=0x1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { 
+    local tmp:8 = *:8 (dst + off);
+    *:8 (dst + off) = *:8 (dst + off) + src; 
+    src = tmp;
+}
+
+# BPF_OR | BPF_FETCH -> src = atomic_fetch_or(dst + off, src):
+
+:STXXADDW [dst + off], src  is imm=0x41 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { 
+    local tmp:4 = *:4 (dst + off);
+    *:4 (dst + off) = *:4 (dst + off) | src:4;
+    src = zext(tmp);
+}
+
+:STXXADDDW [dst + off], src  is imm=0x41 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { 
+    local tmp:8 = *:8 (dst + off);
+    *:8 (dst + off) = *:8 (dst + off) | src; 
+    src = tmp;
+}
+
+# BPF_AND | BPF_FETCH -> src = atomic_fetch_and(dst + off, src):
+
+:STXXADDW [dst + off], src  is imm=0x51 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { 
+    local tmp:4 = *:4 (dst + off);
+    *:4 (dst + off) = *:4 (dst + off) & src:4;
+    src = zext(tmp);
+}
+
+:STXXADDDW [dst + off], src  is imm=0x51 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { 
+    local tmp:8 = *:8 (dst + off);
+    *:8 (dst + off) = *:8 (dst + off) & src; 
+    src = tmp;
+}
+
+# BPF_XOR | BPF_FETCH -> src = atomic_fetch_xor(dst + off, src):
+
+:STXXADDW [dst + off], src  is imm=0xa1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { 
+    local tmp:4 = *:4 (dst + off);
+    *:4 (dst + off) = *:4 (dst + off) ^ src:4;
+    src = zext(tmp);
+}
+
+:STXXADDDW [dst + off], src  is imm=0xa1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { 
+    local tmp:8 = *:8 (dst + off);
+    *:8 (dst + off) = *:8 (dst + off) ^ src; 
+    src = tmp;
+}
+
+# BPF_XCHG -> src_reg = atomic_xchg(dst + off, src):
+
+:STXXADDW [dst + off], src  is imm=0xe1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { 
+    local tmp:4 = *:4 (dst + off);
+    *:4 (dst + off) = src:4;
+    src = zext(tmp);
+}
+
+:STXXADDDW [dst + off], src  is imm=0xe1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { 
+    local tmp:8 = *:8 (dst + off);
+    *:8 (dst + off) = src;
+    src = tmp;
+}
+
+# BPF_CMPXCHG -> R0 = atomic_cmpxchg(dst + off, R0, src):
+
+:STXXADDW [dst + off], src  is imm=0xf1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x0 & op_insn_class=0x3 { 
+    local tmp:4 = *:4 (dst + off);
+    if (R0:4 == tmp) goto <equal>;
+    R0 = zext(tmp);    
+<equal>
+    *:4 (dst + off) = src:4;
+}
+
+:STXXADDDW [dst + off], src  is imm=0xf1 & off & src & dst & op_ld_st_mode=0x6 & op_ld_st_size=0x3 & op_insn_class=0x3 { 
+    local tmp:8 = *:8 (dst + off);
+    if (R0 == tmp) goto <equal>;
+    R0 = tmp;    
+<equal>
+    *:8 (dst + off) = src; 
+}
+
+#Jump instructions (BPF_JMP, BPF_JMP32)
+###############################################################################
+
+joff: reloc  is off [ reloc = inst_next + off * 8; ] { export *:8 reloc; }
+
+cond: "EQ" is op_alu_jmp_opcode=0x1 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  == SRC8; export cmp; }
+cond: "EQ" is op_alu_jmp_opcode=0x1 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 == SRC4; export cmp; }
+cond: "GT" is op_alu_jmp_opcode=0x2 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  > SRC8; export cmp; }
+cond: "GT" is op_alu_jmp_opcode=0x2 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 > SRC4; export cmp; }
+cond: "GE" is op_alu_jmp_opcode=0x3 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  >= SRC8; export cmp; }
+cond: "GE" is op_alu_jmp_opcode=0x3 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 >= SRC4; export cmp; }
+cond: "LT" is op_alu_jmp_opcode=0xa & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  <  SRC8; export cmp; }
+cond: "LT" is op_alu_jmp_opcode=0xa & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 <  SRC4; export cmp; }
+cond: "LE" is op_alu_jmp_opcode=0xb & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  <= SRC8; export cmp; }
+cond: "LE" is op_alu_jmp_opcode=0xb & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 <= SRC4; export cmp; }
+cond: "NE" is op_alu_jmp_opcode=0x5 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  != SRC8; export cmp; }
+cond: "NE" is op_alu_jmp_opcode=0x5 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 != SRC4; export cmp; }
+cond: "SET" is op_alu_jmp_opcode=0x4 & op_insn_class=0x5 & dst & SRC8 { local cmp = (dst & SRC8) != 0; export cmp; }
+cond: "SET" is op_alu_jmp_opcode=0x4 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = (DST4 & SRC4) != 0; export cmp; }
+
+cond: "SGT" is op_alu_jmp_opcode=0x6 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  s> SRC8; export cmp; }
+cond: "SGT" is op_alu_jmp_opcode=0x6 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 s> SRC4; export cmp; }
+cond: "SGE" is op_alu_jmp_opcode=0x7 & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  s>= SRC8; export cmp; }
+cond: "SGE" is op_alu_jmp_opcode=0x7 & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 s>= SRC4; export cmp; }
+cond: "SLT" is op_alu_jmp_opcode=0xc & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  s<  SRC8; export cmp; }
+cond: "SLT" is op_alu_jmp_opcode=0xc & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 s<  SRC4; export cmp; }
+cond: "SLE" is op_alu_jmp_opcode=0xd & op_insn_class=0x5 & dst & SRC8 { local cmp = dst  s<= SRC8; export cmp; }
+cond: "SLE" is op_alu_jmp_opcode=0xd & op_insn_class=0x6 & DST4 & SRC4 { local cmp = DST4 s<= SRC4; export cmp; }
+
+
+:JA joff  is joff & op_alu_jmp_opcode=0x0 & op_alu_jmp_source=0 & op_insn_class=0x5 {	
+    goto joff;
+}
+
+:J^cond dst, SRC8, joff  is joff & SRC8 & dst & cond {	  
+    if (cond) goto joff;
+}
+
+
+SysCall:  imm is imm { export *[syscall]:1 imm; }
+
+:CALL SysCall  is imm & src=0 & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 & SysCall {
+    call SysCall;
+}
+
+disp32: reloc is imm [ reloc = inst_next + imm; ] { export *:4 reloc; }
+
+:CALL disp32 is imm & src=1 & op_alu_jmp_opcode=0x8 & op_alu_jmp_source=0 & op_insn_class=0x5 & disp32 {
+    call disp32;
+}
+
+:EXIT is op_alu_jmp_opcode=0x9 & op_alu_jmp_source=0 & op_insn_class=0x5 { return [*:8 R10]; }

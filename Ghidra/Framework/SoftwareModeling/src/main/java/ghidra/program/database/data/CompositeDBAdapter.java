@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.database.util.DBRecordAdapter;
 import ghidra.program.model.data.CompositeInternal;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
@@ -27,7 +28,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Adapter to access the Composite database table.
  */
-abstract class CompositeDBAdapter {
+abstract class CompositeDBAdapter implements DBRecordAdapter {
 
 	static final String COMPOSITE_TABLE_NAME = "Composite Data Types";
 	static final Schema COMPOSITE_SCHEMA = CompositeDBAdapterV5V6.V5V6_COMPOSITE_SCHEMA;
@@ -73,24 +74,25 @@ abstract class CompositeDBAdapter {
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param monitor the monitor to use for displaying status or for canceling.
 	 * @return the adapter for accessing the table of composite data types.
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException task cancelled
 	 */
-	static CompositeDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor)
-			throws VersionException, IOException, CancelledException {
+	static CompositeDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		try {
-			return new CompositeDBAdapterV5V6(handle, openMode);
+			return new CompositeDBAdapterV5V6(handle, openMode, tablePrefix);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
 				throw e;
 			}
-			CompositeDBAdapter adapter = findReadOnlyAdapter(handle);
+			CompositeDBAdapter adapter = findReadOnlyAdapter(handle, tablePrefix);
 			if (openMode == DBConstants.UPGRADE) {
-				return upgrade(handle, adapter, monitor);
+				return upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
 		}
@@ -99,14 +101,15 @@ abstract class CompositeDBAdapter {
 	/**
 	 * Tries to get a read only adapter for the database whose handle is passed to this method.
 	 * @param handle handle to prior version of the database.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @return the read only Composite data type table adapter
 	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
 	 * @throws IOException if IO error occurs
 	 */
-	static CompositeDBAdapter findReadOnlyAdapter(DBHandle handle)
+	private static CompositeDBAdapter findReadOnlyAdapter(DBHandle handle, String tablePrefix)
 			throws VersionException, IOException {
 		try {
-			return new CompositeDBAdapterV5V6(handle, DBConstants.READ_ONLY);
+			return new CompositeDBAdapterV5V6(handle, DBConstants.READ_ONLY, tablePrefix);
 		}
 		catch (VersionException e) {
 			// ignore
@@ -130,6 +133,7 @@ abstract class CompositeDBAdapter {
 	 * Upgrades the Composite data type table from the oldAdapter's version to the current version.
 	 * @param handle handle to the database whose table is to be upgraded to a newer version.
 	 * @param oldAdapter the adapter for the existing table to be upgraded.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param monitor task monitor
 	 * @return the adapter for the new upgraded version of the table.
 	 * @throws VersionException if the the table's version does not match the expected version
@@ -137,28 +141,30 @@ abstract class CompositeDBAdapter {
 	 * @throws IOException if the database can't be read or written.
 	 * @throws CancelledException user cancelled upgrade
 	 */
-	static CompositeDBAdapter upgrade(DBHandle handle, CompositeDBAdapter oldAdapter,
-			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+	private static CompositeDBAdapter upgrade(DBHandle handle, CompositeDBAdapter oldAdapter,
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
 		long id = tmpHandle.startTransaction();
 		CompositeDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new CompositeDBAdapterV5V6(tmpHandle, DBConstants.CREATE);
+			tmpAdapter = new CompositeDBAdapterV5V6(tmpHandle, DBConstants.CREATE, tablePrefix);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				tmpAdapter.updateRecord(rec, false);
 			}
 			oldAdapter.deleteTable(handle);
-			CompositeDBAdapter newAdapter = new CompositeDBAdapterV5V6(handle, DBConstants.CREATE);
+			CompositeDBAdapter newAdapter =
+				new CompositeDBAdapterV5V6(handle, DBConstants.CREATE, tablePrefix);
 			if (oldAdapter.getVersion() < FLEX_ARRAY_ELIMINATION_SCHEMA_VERSION) {
 				newAdapter.flexArrayMigrationRequired = true;
 			}
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = it.next();
 				newAdapter.updateRecord(rec, false);
 			}
@@ -211,7 +217,7 @@ abstract class CompositeDBAdapter {
 	 * @return the composite data type record iterator.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract RecordIterator getRecords() throws IOException;
+	public abstract RecordIterator getRecords() throws IOException;
 
 	/**
 	 * Updates the composite data type table with the provided record.
@@ -269,6 +275,6 @@ abstract class CompositeDBAdapter {
 	 * Get the number of composite records
 	 * @return total number of composite records
 	 */
-	abstract int getRecordCount();
+	public abstract int getRecordCount();
 
 }

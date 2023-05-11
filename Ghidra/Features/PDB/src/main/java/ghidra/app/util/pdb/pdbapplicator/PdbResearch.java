@@ -25,8 +25,10 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import mdemangler.*;
 import mdemangler.object.MDObjectCPP;
@@ -399,7 +401,7 @@ public class PdbResearch {
 			throws CancelledException, PdbException {
 		initDeveloperOrderRecordNumbers();
 		for (int indexNumber : developerDebugOrderIndexNumbers) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier =
 				applicator.getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
@@ -430,7 +432,7 @@ public class PdbResearch {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			if (!childWalkSym(applicator, symbolGroup.getModuleNumber(), iter)) {
 				break;
@@ -498,7 +500,7 @@ public class PdbResearch {
 	//==============================================================================================
 	//==============================================================================================
 	static void studyDataTypeConflicts(DefaultPdbApplicator applicator, TaskMonitor monitor)
-			throws CancelledException {
+			throws CancelledException, InvalidInputException {
 		DataTypeConflictHandler handler =
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER;
 		DataTypeManager dtm = applicator.getDataTypeManager();
@@ -510,7 +512,7 @@ public class PdbResearch {
 		FunctionDefinitionDataType fn1 =
 			new FunctionDefinitionDataType(CategoryPath.ROOT, "____fn1____", dtm);
 		fn1.setReturnType(pointer1);
-		fn1.setGenericCallingConvention(GenericCallingConvention.cdecl);
+		fn1.setCallingConvention(CompilerSpec.CALLING_CONVENTION_cdecl);
 		fn1.setArguments(new ParameterDefinition[0]);
 
 		Composite internalStruct1 = createComposite(dtm, "____internal____");
@@ -526,7 +528,7 @@ public class PdbResearch {
 		FunctionDefinitionDataType fn2 =
 			new FunctionDefinitionDataType(CategoryPath.ROOT, "____fn2____", dtm);
 		fn2.setReturnType(pointer2);
-		fn2.setGenericCallingConvention(GenericCallingConvention.cdecl);
+		fn2.setCallingConvention(CompilerSpec.CALLING_CONVENTION_cdecl);
 		fn2.setArguments(new ParameterDefinition[0]);
 
 		Composite internalStruct2 = createComposite(dtm, "____internal____");
@@ -648,7 +650,7 @@ public class PdbResearch {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			if (!iter.hasNext()) {
 				break;
@@ -682,7 +684,7 @@ public class PdbResearch {
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
 		for (long offset : offsets) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
 			if (!iter.hasNext()) {
 				break;
@@ -706,7 +708,7 @@ public class PdbResearch {
 		int totalCount = 0;
 		int num = debugInfo.getNumModules();
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			SymbolGroup symbolGroup = applicator.getSymbolGroupForModule(moduleNumber);
 			if (symbolGroup == null) {
 				continue;
@@ -719,7 +721,7 @@ public class PdbResearch {
 
 		// Process symbols list for each module
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 //			String moduleName =
 //				pdb.getDebugInfo().getModuleInformation(index).getModuleName();
@@ -741,7 +743,7 @@ public class PdbResearch {
 			TaskMonitor monitor) throws CancelledException {
 		iter.initGet();
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			AbstractMsSymbol symbol = iter.next();
 			if (symbol != null) {
 				processPublicSymbol(applicator, map, symbol);
@@ -878,7 +880,7 @@ public class PdbResearch {
 		PdbLog.message("STUDY_START: studyCompositeFwdRefDef");
 		//System.out.println("STUDY_START");
 		while (indexNumber < indexLimit) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			if (!covered[indexNumber]) {
 				AbstractMsType type = pdb.getTypeRecord(RecordNumber.typeRecordNumber(indexNumber));
 				covered[indexNumber] = true;
@@ -926,7 +928,7 @@ public class PdbResearch {
 					//System.out.println("----------\n" + name + "\n" + c);
 					int innerIndexNumber = indexNumber + 1;
 					while (innerIndexNumber < indexLimit) {
-						monitor.checkCanceled();
+						monitor.checkCancelled();
 						if (!covered[innerIndexNumber]) {
 							AbstractMsType innerType =
 								pdb.getTypeRecord(RecordNumber.typeRecordNumber(innerIndexNumber));
@@ -1038,7 +1040,7 @@ public class PdbResearch {
 		monitor.initialize(indexLimit - indexNumber);
 		monitor.setMessage("Study: NAMES_START");
 		while (indexNumber < indexLimit) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			String name;
 			String record;
 			AbstractMsType type = pdb.getTypeRecord(RecordNumber.typeRecordNumber(indexNumber));
@@ -1079,7 +1081,7 @@ public class PdbResearch {
 		monitor.initialize(orderedNames.size());
 		for (String name : orderedNames) {
 			for (String record : orderedRecords) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (record.startsWith(name)) {
 					System.out.println(record);
 				}

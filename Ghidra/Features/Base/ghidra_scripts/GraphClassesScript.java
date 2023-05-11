@@ -19,12 +19,12 @@
 import java.util.ArrayList;
 import java.util.List;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.service.graph.*;
-import ghidra.util.WebColors;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -36,7 +36,7 @@ public class GraphClassesScript extends GhidraScript {
 	private static final String VIRTUAL_INHERITANCE = "Virtual Inheritance";
 	private static final String NON_VIRTUAL_INHERITANCE = "Non-virtual Inheritance";
 
-	List<Structure> classStructures = new ArrayList<Structure>();
+	List<Structure> classStructures = new ArrayList<>();
 
 	@Override
 	public void run() throws Exception {
@@ -81,10 +81,10 @@ public class GraphClassesScript extends GhidraScript {
 	private void getClassStructures(Category[] categories) throws CancelledException {
 
 		for (Category category : categories) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType[] dataTypes = category.getDataTypes();
 			for (DataType dataType : dataTypes) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				if (dataType.getName().equals(category.getName()) &&
 					dataType instanceof Structure) {
 
@@ -107,9 +107,8 @@ public class GraphClassesScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to create a graph using preconfigured information found in class structure descriptions. 
-	 * The structure descriptions are created using 
-	 * {@link RecoveredClassUtils#createParentStringBuffer(RecoveredClass)}
+	 * Method to create a graph using pre-configured information found in class structure 
+	 * descriptions.
 	 * @return the newly created graph
 	 */
 	private AttributedGraph createGraph() throws Exception {
@@ -126,7 +125,7 @@ public class GraphClassesScript extends GhidraScript {
 
 		for (Structure classStructure : classStructures) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			String description = classStructure.getDescription();
 
@@ -271,7 +270,7 @@ public class GraphClassesScript extends GhidraScript {
 		DataTypeComponent[] components = childStructure.getComponents();
 		for (DataTypeComponent component : components) {
 
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			DataType componentDataType = component.getDataType();
 			if (componentDataType instanceof Structure &&
 				componentDataType.getName().equals(parentName)) {
@@ -290,9 +289,9 @@ public class GraphClassesScript extends GhidraScript {
 	private Structure getParentStructureFromClassStructures(String parentName)
 			throws CancelledException {
 
-		List<Structure> parentStructures = new ArrayList<Structure>();
+		List<Structure> parentStructures = new ArrayList<>();
 		for (Structure classStructure : classStructures) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			if (classStructure.getName().equals(parentName)) {
 				parentStructures.add(classStructure);
@@ -315,13 +314,13 @@ public class GraphClassesScript extends GhidraScript {
 		display = service.getGraphDisplay(false, TaskMonitor.DUMMY);
 
 		GraphDisplayOptions graphOptions = new GraphDisplayOptionsBuilder(graph.getGraphType())
-				.vertex(NO_INHERITANCE, VertexShape.RECTANGLE, WebColors.BLUE)
-				.vertex(SINGLE_INHERITANCE, VertexShape.RECTANGLE, WebColors.GREEN)
-				.vertex(MULTIPLE_INHERITANCE, VertexShape.RECTANGLE, WebColors.RED)
-				.edge(NON_VIRTUAL_INHERITANCE, WebColors.LIME_GREEN)
-				.edge(VIRTUAL_INHERITANCE, WebColors.ORANGE)
-				.defaultVertexColor(WebColors.PURPLE)
-				.defaultEdgeColor(WebColors.PURPLE)
+				.vertex(NO_INHERITANCE, VertexShape.RECTANGLE, Palette.BLUE)
+				.vertex(SINGLE_INHERITANCE, VertexShape.RECTANGLE, Palette.GREEN)
+				.vertex(MULTIPLE_INHERITANCE, VertexShape.RECTANGLE, Palette.RED)
+				.edge(NON_VIRTUAL_INHERITANCE, Palette.LIME)
+				.edge(VIRTUAL_INHERITANCE, Palette.ORANGE)
+				.defaultVertexColor(Palette.PURPLE)
+				.defaultEdgeColor(Palette.PURPLE)
 				.defaultLayoutAlgorithm("Compact Hierarchical")
 				.maxNodeCount(1000)
 				.build();
@@ -329,7 +328,6 @@ public class GraphClassesScript extends GhidraScript {
 		display.setGraph(graph, graphOptions,
 			"Recovered Classes Graph", false, TaskMonitor.DUMMY);
 	}
-
 
 	private String getClassName(String description) {
 

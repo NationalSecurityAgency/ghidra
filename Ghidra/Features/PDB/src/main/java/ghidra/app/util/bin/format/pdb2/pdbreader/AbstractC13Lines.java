@@ -52,7 +52,7 @@ public class AbstractC13Lines extends C13Section {
 		boolean hasColumn = ((flags & 0X0001) != 0);
 
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			FileRecord fileRecord = FileRecord.parse(reader, hasColumn, monitor);
 			if (fileRecord == null) {
 				break;

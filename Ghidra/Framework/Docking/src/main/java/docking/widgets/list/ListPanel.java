@@ -24,8 +24,9 @@ import javax.swing.event.ListSelectionListener;
 
 /**
  * This class provides a panel that contains a JList component.
+ * @param <T> The type for the items in this list
  */
-public class ListPanel extends JPanel {
+public class ListPanel<T> extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	private static final String DEFAULT_WARNING = "You must first select an item from the list.";
@@ -33,7 +34,7 @@ public class ListPanel extends JPanel {
 	private ActionListener doubleClickActionListener;
 	private MouseListener mouseListener;
 	private JScrollPane scrollpane;
-	private JList list;
+	private JList<T> list;
 
 	/**
 	 * Constructs a new ListPanel.
@@ -45,7 +46,7 @@ public class ListPanel extends JPanel {
 
 		// Enforce a minimum size, for some amount of consistency.  The magic value was
 		// discovered via trial-and-error.
-		list = new JList() {
+		list = new JList<>() {
 			@Override
 			public Dimension getPreferredSize() {
 				Dimension d = super.getPreferredSize();
@@ -56,10 +57,9 @@ public class ListPanel extends JPanel {
 
 		scrollpane = new JScrollPane(list);
 
-		// the next two lines of code cause the scroll bar not to
-		// work properly
-		//list.setBorder(emptyborder);
-		//scrollpane.setBorder(compoundborder);
+		// the next two lines of code cause the scroll bar not to work properly
+		// list.setBorder(emptyborder);
+		// scrollpane.setBorder(compoundborder);
 
 		add(scrollpane, BorderLayout.CENTER);
 
@@ -107,22 +107,40 @@ public class ListPanel extends JPanel {
 	}
 
 	/**
+	 * Adds a {@link ListSelectionListener}
+	 * @param listener the listener to add
+	 */
+	public void addListSelectionListener(ListSelectionListener listener) {
+		list.addListSelectionListener(listener);
+	}
+
+	/**
+	 * Removes a {@link ListSelectionListener}
+	 * @param listener the listener to remove
+	 */
+	public void removeListSelectionListener(ListSelectionListener listener) {
+		list.removeListSelectionListener(listener);
+	}
+
+	/**
 	 * Returns true if no list items are selected.
+	 * @return true if no list items are selected.
 	 */
 	public boolean isSelectionEmpty() {
 		return list.isSelectionEmpty();
 	}
 
 	/**
-	 * Returns the first selected value in the list or null if nothing
-	 * is selected.
+	 * Returns the first selected value in the list or null if nothing is selected.
+	 * @return the first selected value in the list or null if nothing is selected.
 	 */
-	public Object getSelectedValue() {
+	public T getSelectedValue() {
 		return list.getSelectedValue();
 	}
 
 	/**
 	 * Get the index of the selected item in the list.
+	 * @return the index of the selected item in the list.
 	 */
 	public int getSelectedIndex() {
 		return list.getSelectedIndex();
@@ -140,50 +158,57 @@ public class ListPanel extends JPanel {
 	 * Selects the item.
 	 * @param item the item to select
 	 */
-	public void setSelectedValue(Object item) {
+	public void setSelectedValue(T item) {
 		list.setSelectedValue(item, true);
 	}
 
 	/**
 	 * Returns an array of all the selected items.
+	 * @return an array of all the selected items.
 	 */
-	public Object[] getSelectedValues() {
-		return list.getSelectedValues();
+	public java.util.List<T> getSelectedValues() {
+		return list.getSelectedValuesList();
 	}
 
 	/** 
 	 * replaces the list contents with the new list.
 	 * @param dataList the new list for the contents.
 	 */
-	public void refreshList(Object[] dataList) {
+	public void refreshList(T[] dataList) {
 		list.setListData(dataList);
 		list.clearSelection();
 	}
 
-	public void setListData(Object[] data) {
+	/**
+	 * Sets the list data
+	 * @param data the data
+	 */
+	public void setListData(T[] data) {
 		list.setListData(data);
 	}
 
 	/**
-	 * Sets a ListModel for the internal Jlist to use.
+	 * Sets a list model for the internal list to use.
 	 * @param listModel the list model to use.
 	 */
-	public void setListModel(ListModel listModel) {
+	public void setListModel(ListModel<T> listModel) {
 		list.setModel(listModel);
 		list.clearSelection();
 	}
 
 	/**
 	 * Get the list model for the list.
+	 * @return the list model for the list.
 	 */
-	public ListModel getListModel() {
+	public ListModel<T> getListModel() {
 		return (list.getModel());
 	}
 
 	/**
 	 * Return the JList component.
+	 * @return the JList component.
 	 */
-	public JList getList() {
+	public JList<T> getList() {
 		return list;
 	}
 
@@ -191,7 +216,7 @@ public class ListPanel extends JPanel {
 	 * Get the cell renderer for the list.
 	 * @param r the cell renderer to use.
 	 */
-	public void setCellRenderer(ListCellRenderer r) {
+	public void setCellRenderer(ListCellRenderer<T> r) {
 		list.setCellRenderer(r);
 	}
 
@@ -201,10 +226,12 @@ public class ListPanel extends JPanel {
 	 * means no one is to be notified.
 	 */
 	public void setListSelectionListener(ListSelectionListener listener) {
-		if (listSelectionListener != null)
+		if (listSelectionListener != null) {
 			list.removeListSelectionListener(listSelectionListener);
-		if (listener != null)
+		}
+		if (listener != null) {
 			list.addListSelectionListener(listener);
+		}
 		listSelectionListener = listener;
 	}
 
@@ -236,7 +263,8 @@ public class ListPanel extends JPanel {
 	 * in the list.  
 	 */
 	public void issueWarning() {
-		JOptionPane.showMessageDialog(null, DEFAULT_WARNING, "Warning", JOptionPane.WARNING_MESSAGE);
+		JOptionPane.showMessageDialog(null, DEFAULT_WARNING, "Warning",
+			JOptionPane.WARNING_MESSAGE);
 	}
 
 	/**
@@ -273,7 +301,7 @@ public class ListPanel extends JPanel {
 		final JFrame frame = new JFrame("ListPanel");
 		frame.getContentPane().setLayout(new GridLayout(1, 1));
 
-		final ListPanel lbp = new ListPanel();
+		final ListPanel<String> lbp = new ListPanel<>();
 		final DefaultListModel<String> listModel = new DefaultListModel<>();
 		frame.getContentPane().add(lbp);
 		frame.addWindowListener(new WindowAdapter() {

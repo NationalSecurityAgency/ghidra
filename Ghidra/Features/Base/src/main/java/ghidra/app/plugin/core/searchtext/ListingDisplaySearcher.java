@@ -38,19 +38,19 @@ import ghidra.util.UserSearchUtils;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class attempts to search for text as it is rendered on the screen.  This in in 
- * contrast to the Program Database Searcher which searches the database.  This is 
- * needed because some information on the screen is rendered "on the fly" and not 
- * stored in the database.  This searcher is much slower, but delivers 
+ * This class attempts to search for text as it is rendered on the screen.  This in in
+ * contrast to the Program Database Searcher which searches the database.  This is
+ * needed because some information on the screen is rendered "on the fly" and not
+ * stored in the database.  This searcher is much slower, but delivers
  * results that are in-line with what the user sees.
  * <p>
- * The search is performed in two steps.  First it uses Instruction and Data iterators to 
+ * The search is performed in two steps.  First it uses Instruction and Data iterators to
  * find possible addresses where where information would be rendered.  Then for each of those
  * addresses, it uses the code browsers rendering engine to produce a textual representation
  * for that address.  The textual representation also maintains information about the field
  * that generated it so that the search can be constrained to specific fields such as the
- * label or comment field. 
- * 
+ * label or comment field.
+ *
  */
 class ListingDisplaySearcher implements Searcher {
 
@@ -63,8 +63,8 @@ class ListingDisplaySearcher implements Searcher {
 	private AddressSetView searchAddresses;
 	private TaskMonitor monitor;
 
-	private List<ProgramLocation> locationList;
-	private ListIterator<ProgramLocation> locationIterator;
+	private List<TextSearchResult> results;
+	private ListIterator<TextSearchResult> locationIterator;
 
 	private ProgramLocation startLocation;
 	private int startIndex;
@@ -80,7 +80,7 @@ class ListingDisplaySearcher implements Searcher {
 
 	/**
 	 * Constructor
-	 * @param codeViewerService service to get the Layouts
+	 * @param tool the tool
 	 * @param program current program
 	 * @param startLocation location from where to begin searching
 	 * @param set address set; may be null
@@ -103,8 +103,8 @@ class ListingDisplaySearcher implements Searcher {
 		searchPattern =
 			UserSearchUtils.createSearchPattern(options.getText(), options.isCaseSensitive());
 
-		locationList = new ArrayList<>();
-		locationIterator = locationList.listIterator();
+		results = new ArrayList<>();
+		locationIterator = results.listIterator();
 
 		CodeViewerService service = tool.getService(CodeViewerService.class);
 		listingModel = service.getListingModel();
@@ -143,7 +143,7 @@ class ListingDisplaySearcher implements Searcher {
 	private AddressIterator[] getSearchIterators() {
 		//
 		// This code used to get specific iterators for labels, comments, etc, depending
-		// on what options were selected (which is the fastest way to search).  However, 
+		// on what options were selected (which is the fastest way to search).  However,
 		// this approach missed auto comments and structure comments.
 		//
 		// The idea now is to get iterators that will return addresses for every defined
@@ -168,44 +168,41 @@ class ListingDisplaySearcher implements Searcher {
 			iterators.add(listing.getCommentAddressIterator(searchAddresses, options.isForward()));
 		}
 		if (options.searchLabels() || all) {
-			SymbolIterator labels = program.getSymbolTable().getPrimarySymbolIterator(
-				searchAddresses, options.isForward());
+			SymbolIterator labels = program.getSymbolTable()
+					.getPrimarySymbolIterator(searchAddresses, options.isForward());
 			iterators.add(new LabelSearchAddressIterator(labels));
 		}
 		return iterators.toArray(new AddressIterator[iterators.size()]);
 	}
 
-	/**
-	 * Get the next location.
-	 */
-	ProgramLocation next() {
-		if (locationList.size() == 0) {
+	TextSearchResult next() {
+		if (results.size() == 0) {
 			findNext();
 		}
 
 		boolean isForward = options.isForward();
 		if (isForward && locationIterator.hasNext()) {
-			ProgramLocation loc = locationIterator.next();
+			TextSearchResult result = locationIterator.next();
 			if (!locationIterator.hasNext()) {
-				locationList.clear();
-				locationIterator = locationList.listIterator();
+				results.clear();
+				locationIterator = results.listIterator();
 			}
-			return loc;
+			return result;
 		}
 
 		if (!isForward && locationIterator.hasPrevious()) {
-			ProgramLocation loc = locationIterator.previous();
+			TextSearchResult result = locationIterator.previous();
 			if (!locationIterator.hasPrevious()) {
-				locationList.clear();
-				locationIterator = locationList.listIterator();
+				results.clear();
+				locationIterator = results.listIterator();
 			}
-			return loc;
+			return result;
 		}
 		return null;
 	}
 
 	boolean hasNext() {
-		if (locationList.size() == 0) {
+		if (results.size() == 0) {
 			findNext();
 		}
 		return options.isForward() ? locationIterator.hasNext() : locationIterator.hasPrevious();
@@ -217,7 +214,7 @@ class ListingDisplaySearcher implements Searcher {
 	}
 
 	@Override
-	public ProgramLocation search() {
+	public TextSearchResult search() {
 		try {
 			if (hasNext()) {
 				return next();
@@ -230,7 +227,7 @@ class ListingDisplaySearcher implements Searcher {
 				tool.setStatusInfo("Search failed: try search when tool is not " +
 					"executing commands that may change the program");
 			}
-			else if (!program.isClosed() && program.getCurrentTransaction() != null) {
+			else if (!program.isClosed() && program.getCurrentTransactionInfo() != null) {
 				tool.setStatusInfo("Search failed: try search when program is not being changed");
 			}
 			else if (!program.isClosed() && !(e instanceof DomainObjectException)) {
@@ -248,7 +245,7 @@ class ListingDisplaySearcher implements Searcher {
 	private void findNext() {
 		if (currentLayout != null) {
 			findNextMatch();
-			if (locationList.size() > 0) {
+			if (results.size() > 0) {
 				return;
 			}
 		}
@@ -259,7 +256,7 @@ class ListingDisplaySearcher implements Searcher {
 		currentCodeUnit = null;
 		Listing listing = program.getListing();
 		while (!monitor.isCancelled() && currentLayout == null && addressIterator.hasNext() &&
-			locationList.size() == 0) {
+			results.size() == 0) {
 
 			currentAddress = addressIterator.next();
 			monitor.setMessage("Checking address " + currentAddress);
@@ -290,14 +287,14 @@ class ListingDisplaySearcher implements Searcher {
 			}
 
 			if (options.isForward()) {
-				while (!monitor.isCancelled() && locationList.size() == 0 &&
+				while (!monitor.isCancelled() && results.size() == 0 &&
 					currentLayout != null && currentFieldIndex < currentLayout.getNumFields()) {
 					findNextMatch();
 				}
 			}
 			else {
 				currentFieldIndex = currentLayout.getNumFields() - 1;
-				while (!monitor.isCancelled() && locationList.size() == 0 &&
+				while (!monitor.isCancelled() && results.size() == 0 &&
 					currentLayout != null && currentFieldIndex >= 0) {
 					findNextMatch();
 				}
@@ -318,8 +315,8 @@ class ListingDisplaySearcher implements Searcher {
 	}
 
 	private void searchForward() {
-		for (int i =
-			currentFieldIndex; i < currentLayout.getNumFields(); i++, currentFieldIndex++) {
+		for (int i = currentFieldIndex; i < currentLayout
+				.getNumFields(); i++, currentFieldIndex++) {
 			int matchingFieldCount = findLocations(i);
 			if (matchingFieldCount != 0) {
 				currentFieldIndex += matchingFieldCount;
@@ -355,7 +352,7 @@ class ListingDisplaySearcher implements Searcher {
 
 		int fieldCount = 1; // we always match on one field, unless it is the Mnemonic/Operand combo
 
-		// if field is the Mnemonic, and instructions or data are 
+		// if field is the Mnemonic, and instructions or data are
 		// being searched, get the next field as well
 		boolean isMnemonic = fieldName.equals(MnemonicFieldFactory.FIELD_NAME);
 		boolean isInstructionsOrData =
@@ -375,7 +372,7 @@ class ListingDisplaySearcher implements Searcher {
 			findLocations(field);
 		}
 
-		if (locationList.size() > 0) {
+		if (results.size() > 0) {
 			// we found a match!
 			return fieldCount;
 		}
@@ -422,13 +419,6 @@ class ListingDisplaySearcher implements Searcher {
 		isInitialized = true;
 	}
 
-	/**
-	 * Sets the currentFieldIndex of the field that corresponds to the
-	 * startLoc program location
-	 * @param field
-	 * @param fieldIndex
-	 * @return true if this field corresponds to the startLoc program location
-	 */
 	private boolean getFieldForLocation(ListingField field, int fieldIndex) {
 		FieldFactory ff = field.getFieldFactory();
 		FieldLocation floc = ff.getFieldLocation(field, BigInteger.ZERO, fieldIndex, startLocation);
@@ -539,7 +529,9 @@ class ListingDisplaySearcher implements Searcher {
 			if (index == mnemonicLength) {
 				col++;
 			}
-			locationList.add(fieldFactory.getProgramLocation(rc.row(), col, mnemonicField));
+
+			ProgramLocation loc = fieldFactory.getProgramLocation(rc.row(), col, mnemonicField);
+			results.add(new TextSearchResult(loc, index));
 		}
 
 		adjustIterator();
@@ -569,8 +561,8 @@ class ListingDisplaySearcher implements Searcher {
 			RowColLocation rc = field.textOffsetToScreenLocation(index);
 			FieldFactory fieldFactory = field.getFieldFactory();
 			ProgramLocation loc = fieldFactory.getProgramLocation(rc.row(), rc.col(), field);
-			if ((loc != null) && !isSameLocation(loc)) { // loc will be null if field is clipped.
-				locationList.add(loc);
+			if ((loc != null) && !isSameLocation(loc)) { // loc will be null if field is clipped.			
+				results.add(new TextSearchResult(loc, index));
 			}
 		}
 
@@ -580,7 +572,7 @@ class ListingDisplaySearcher implements Searcher {
 	}
 
 	private void adjustIterator() {
-		locationIterator = locationList.listIterator();
+		locationIterator = results.listIterator();
 		if (!options.isForward()) {
 			// position iterator to end so that previous() will work
 			while (locationIterator.hasNext()) {

@@ -15,25 +15,23 @@
  */
 package ghidra.app.plugin.core.instructionsearch.ui;
 
-import java.awt.Color;
 import java.awt.Font;
 
 import docking.widgets.textarea.HintTextArea;
+import generic.theme.GThemeDefaults.Colors;
 
 /**
  * Allows users to provide a text hint in a text field, shown only when the text is empty. 
- * 
+ * <p>
  * Hint text will be shown in light grey, italicized, and in angle brackets.  Normal text will
  * be plain black.
  */
 public class HintTextAreaIS extends HintTextArea {
 
-	private String hint;
-
 	/**
 	 * Constructs the class with the hint text to be shown.
 	 * 
-	 * @param hint
+	 * @param hint the hint
 	 */
 	public HintTextAreaIS(final String hint) {
 		super(hint);
@@ -53,16 +51,12 @@ public class HintTextAreaIS extends HintTextArea {
 		setAttributes();
 	}
 
-	/*********************************************************************************************
-	 * PRIVATE METHODS
-	 ********************************************************************************************/
-
 	/**
 	 * Sets the text attributes to be used when there is an error in the input.
 	 */
 	private void setErrorAttributes() {
 		this.setFont(getFont().deriveFont(Font.PLAIN));
-		setForeground(Color.RED);
+		setForeground(Colors.ERROR);
 	}
 
 }

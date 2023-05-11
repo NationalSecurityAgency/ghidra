@@ -210,6 +210,11 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return dataType.getAlignedLength();
+	}
+
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return dataType.getRepresentation(buf, settings, length);
 	}

@@ -15,15 +15,19 @@
  */
 package docking.widgets.label;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
-import docking.widgets.GComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.checkbox.GHtmlCheckBox;
 
 /**
  * A 'dynamic' label (the text can be changed), with HTML rendering allowed.
  * <p>
+ * Clients do not need to prefix label text with "&lt;html&gt;", as is required for a standard
+ * JLabel.
+ * <p>
+ *
  * See also:
  * <table border=1><caption></caption>
  * 	<tr><th>Class</th><th>Mutable text</th><th>HTML rendering</th><th>Description</th></tr>
@@ -37,7 +41,7 @@ import docking.widgets.checkbox.GHtmlCheckBox;
  *  <tr><td>{@link GHtmlCheckBox}</td><td></td><td>YES</td><td>Html checkbox</td></tr>
  * </table>
  */
-public class GDHtmlLabel extends JLabel implements GComponent {
+public class GDHtmlLabel extends AbstractHtmlLabel {
 
 	/**
 	 * Creates a label with no image and no text, with {@link SwingConstants#LEADING} horizontal
@@ -47,7 +51,6 @@ public class GDHtmlLabel extends JLabel implements GComponent {
 	 * <p>
 	 */
 	public GDHtmlLabel() {
-		super();
 	}
 
 	/**
@@ -61,43 +64,4 @@ public class GDHtmlLabel extends JLabel implements GComponent {
 	public GDHtmlLabel(String text) {
 		super(text);
 	}
-
-	/**
-	 * Creates a label with the specified text and horizontal alignment, 
-	 * with HTML rendering allowed.
-	 * <p>
-	 * See {@link JLabel#JLabel(String, int)}.
-	 * <p>
-	 * @param text string to be displayed by the label
-	 * @param horizontalAlignment One of
-	 *           {@link SwingConstants#LEFT},
-	 *           {@link SwingConstants#CENTER},
-	 *           {@link SwingConstants#RIGHT},
-	 *           {@link SwingConstants#LEADING},
-	 *           {@link SwingConstants#TRAILING}
-	 */
-	public GDHtmlLabel(String text, int horizontalAlignment) {
-		super(text, horizontalAlignment);
-	}
-
-	/**
-	 * Creates a label with the specified text, image and horizontal alignment, 
-	 * with HTML rendering allowed.
-	 * <p>
-	 * See {@link JLabel#JLabel(String, Icon, int)}.
-	 * <p>
-	 *
-	 * @param text string to be displayed by the label
-	 * @param icon image to be displayed by the label
-	 * @param horizontalAlignment  One of
-	 *           {@link SwingConstants#LEFT},
-	 *           {@link SwingConstants#CENTER},
-	 *           {@link SwingConstants#RIGHT},
-	 *           {@link SwingConstants#LEADING},
-	 *           {@link SwingConstants#TRAILING} 
-	 */
-	public GDHtmlLabel(String text, Icon icon, int horizontalAlignment) {
-		super(text, icon, horizontalAlignment);
-	}
-
 }

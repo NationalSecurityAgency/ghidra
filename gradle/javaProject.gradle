@@ -123,6 +123,7 @@ sourceSets {
 		java {
 			srcDir 'developer_scripts'
 			srcDir 'ghidra_scripts'
+			compileClasspath += main.output
 		}
 	}
 }
@@ -131,18 +132,19 @@ configurations {
 	integrationTestImplementation.extendsFrom testImplementation
 	integrationTestRuntimeOnly.extendsFrom testRuntimeOnly, integrationTestImplementation
 	pcodeTestImplementation.extendsFrom implementation
+	scriptsImplementation.extendsFrom implementation
 	testArtifacts.extendsFrom testRuntimeOnly
 	integrationTestArtifacts.extendsFrom integrationTestRuntimeOnly
-	screenShotsImplementation.extendsFrom integrationTestImplemenation
+	screenShotsImplementation.extendsFrom integrationTestImplementation
 }
 
 task testJar(type: Jar) {
-	classifier "test" // value part of file name
+	archiveClassifier.set("test") // value part of file name
 	from sourceSets.test.output
 }
 
 task integrationTestJar(type: Jar) {
-	classifier "integrationTest" // value part of file name
+	archiveClassifier.set("integrationTest") // value part of file name
 	from sourceSets.integrationTest.output
 }
 artifacts {
@@ -183,18 +185,25 @@ ext.addExports = { List<String> exports ->
 	}
 }
 
-// Fixup generated Eclipse projects
+// Customize generated Eclipse projects
 apply plugin: 'eclipse'
-eclipse.classpath.file.whenMerged { classpath ->
-	// Prevent Gradle 5.6 from setting the 'test' attribute on our test source folders and jars. 
-	// If we don't do this, things that we have outside of test directories that depend on test 
-	// libraries (like junit) will not compile in Eclipse.
-	// Also prevent Gradle 7.0 from adding jars to the modulepath instead of the classpath.
-	classpath.entries.findAll {
-		it.kind == 'src' || it.kind == 'lib'
-	}.each { 
-		it.entryAttributes['test'] = 'false' 
-		it.entryAttributes['module'] = 'false'
+eclipse {
+	classpath {
+	
+		// Expose test classes to dependent projects
+		containsTestFixtures = true 
+		
+		// Customizing which Eclipse source directories should be marked as test.
+		// Only screenShots must be added...test and integrationTest are automatically picked up.
+		// NOTE: When we upgrade to Gradle 7.5+, we can just set the "testSourceSets" property
+		file {
+			whenMerged { classpath ->
+				classpath.entries.findAll {
+					it.kind == 'src' &&  it.path.startsWith('src/screen/')
+				}.each {
+					it.entryAttributes['test'] = 'true'
+				}
+			}
+		}
 	}
 }
-

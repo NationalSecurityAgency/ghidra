@@ -18,11 +18,8 @@ package ghidra.trace.database;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 
 public abstract class DBTraceCacheForSequenceQueries<T> {
 	//protected static long hits = 0;
@@ -172,17 +169,17 @@ public abstract class DBTraceCacheForSequenceQueries<T> {
 		return result;
 	}
 
-	public void notifyNewEntry(Range<Long> lifespan, AddressRangeImpl range, T item) {
+	public void notifyNewEntry(Lifespan lifespan, AddressRangeImpl range, T item) {
 		// TODO: Can this be smarter?
 		invalidate();
 	}
 
-	public void notifyEntryRemoved(Range<Long> lifespan, AddressRange range, T item) {
+	public void notifyEntryRemoved(Lifespan lifespan, AddressRange range, T item) {
 		// TODO: Can this be smarter?
 		invalidate();
 	}
 
-	public void notifyEntryShapeChanged(Range<Long> lifespan, AddressRange range, T item) {
+	public void notifyEntryShapeChanged(Lifespan lifespan, AddressRange range, T item) {
 		// TODO: Can this be smarter?
 		invalidate();
 	}

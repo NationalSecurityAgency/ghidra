@@ -17,7 +17,6 @@ package ghidra.program.emulation;
 
 import ghidra.pcode.emulate.Emulate;
 import ghidra.pcode.emulate.EmulateInstructionStateModifier;
-import ghidra.pcode.emulate.callother.CountLeadingZerosOpBehavior;
 import ghidra.pcode.emulate.callother.OpBehaviorOther;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcodeCPort.error.LowlevelError;
@@ -45,10 +44,6 @@ public class m68kEmulateInstructionStateModifier extends EmulateInstructionState
 		ISA_MODE0 = new RegisterValue(isaModeReg, BigInteger.ZERO);
 */
 
-		// These classes are defined here:
-		// ghidra/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/pcode/emulate/callother
-
-		registerPcodeOpBehavior("countLeadingZeros", new CountLeadingZerosOpBehavior());
 		registerPcodeOpBehavior("findFirstOne", new FindFirstOneOpBehavior());
 	}
 

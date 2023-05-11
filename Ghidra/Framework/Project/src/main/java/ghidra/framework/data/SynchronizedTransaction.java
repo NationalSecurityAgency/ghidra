@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,17 @@
  */
 package ghidra.framework.data;
 
-import ghidra.framework.model.AbortedTransactionListener;
-import ghidra.framework.model.Transaction;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import ghidra.framework.model.AbortedTransactionListener;
+import ghidra.framework.model.TransactionInfo;
 
 /**
  * <code>SynchronizedTransaction</code> represents an atomic undoable operation performed
  * on a synchronized set of domain objects.
  */
-class SynchronizedTransaction implements Transaction {
+class SynchronizedTransaction implements TransactionInfo {
 
 	private DomainObjectTransactionManager[] managers;
 	private int[] holdTransactionIds;
@@ -34,7 +33,7 @@ class SynchronizedTransaction implements Transaction {
 	private String[] descriptions;
 	private int[] activeCounts;
 
-	private int status = NOT_DONE;
+	private Status status = Status.NOT_DONE;
 	private final long id;
 
 	SynchronizedTransaction(DomainObjectTransactionManager[] managers) {
@@ -81,13 +80,13 @@ class SynchronizedTransaction implements Transaction {
 	@Override
 	public ArrayList<String> getOpenSubTransactions() {
 		ArrayList<String> list = new ArrayList<String>();
-		int status = getStatus();
-		if (status == ABORTED || status == COMMITTED) {
+		Status status = getStatus();
+		if (status == Status.ABORTED || status == Status.COMMITTED) {
 			return list;
 		}
 		for (int i = 0; i < managers.length; i++) {
 			String name = getDomainObjectName(managers[i]);
-			for (String str : managers[i].getCurrentTransaction().getOpenSubTransactions()) {
+			for (String str : managers[i].getCurrentTransactionInfo().getOpenSubTransactions()) {
 				list.add(name + ": " + str);
 			}
 		}
@@ -104,9 +103,9 @@ class SynchronizedTransaction implements Transaction {
 	}
 
 	@Override
-	public int getStatus() {
-		if (status == ABORTED && isActive()) {
-			return NOT_DONE_BUT_ABORTED;
+	public Status getStatus() {
+		if (status == Status.ABORTED && isActive()) {
+			return Status.NOT_DONE_BUT_ABORTED;
 		}
 		return status;
 	}
@@ -126,11 +125,11 @@ class SynchronizedTransaction implements Transaction {
 		int index = findDomainObject(domainObj);
 		managers[index].endTransaction(domainObj, transactionID, commit, false);
 		if (!commit) {
-			status = ABORTED;
+			status = Status.ABORTED;
 		}
 		--activeCounts[index];
-		if (!isActive() && status == NOT_DONE) {
-			status = COMMITTED;
+		if (!isActive() && status == Status.NOT_DONE) {
+			status = Status.COMMITTED;
 		}
 	}
 
@@ -153,7 +152,7 @@ class SynchronizedTransaction implements Transaction {
 	boolean endAll(boolean commit) {
 		boolean hasChange = false;
 		for (int i = 0; i < managers.length; i++) {
-			Transaction transaction = managers[i].endTransaction(managers[i].getDomainObject(),
+			TransactionInfo transaction = managers[i].endTransaction(managers[i].getDomainObject(),
 				holdTransactionIds[i], commit, false);
 			if (commit && transaction.hasCommittedDBTransaction()) {
 				hasChanges[i] = true;

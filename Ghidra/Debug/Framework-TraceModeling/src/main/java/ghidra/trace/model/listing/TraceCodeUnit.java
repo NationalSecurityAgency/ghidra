@@ -17,13 +17,10 @@ package ghidra.trace.model.listing;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.TraceReference;
@@ -98,9 +95,9 @@ public interface TraceCodeUnit extends CodeUnit {
 	/**
 	 * Get the lifespan of this code unit
 	 * 
-	 * @return the lifepsna
+	 * @return the lifespan
 	 */
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	/**
 	 * Get the start snap of this code unit

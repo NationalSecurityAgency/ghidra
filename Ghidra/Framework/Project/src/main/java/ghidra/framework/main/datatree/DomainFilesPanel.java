@@ -25,6 +25,7 @@ import javax.swing.*;
 
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.model.DomainFile;
 
 /**
@@ -35,11 +36,12 @@ class DomainFilesPanel extends JPanel {
 
 	private List<DomainFile> fileList;
 	private GCheckBox[] checkboxes;
-	private ListPanel listPanel;
+	private ListPanel<JCheckBox> listPanel;
 
 	/**
 	 * Constructor
 	 * @param fileList list of DomainFile objects
+	 * @param listTitle the title
 	 */
 	DomainFilesPanel(List<DomainFile> fileList, String listTitle) {
 		super();
@@ -52,13 +54,13 @@ class DomainFilesPanel extends JPanel {
 		for (int i = 0; i < fileList.size(); i++) {
 			DomainFile df = fileList.get(i);
 			checkboxes[i] = new GCheckBox(df.getPathname(), true);
-			checkboxes[i].setBackground(Color.white);
+			checkboxes[i].setBackground(Colors.BACKGROUND);
 		}
 
 		//
 		// List Panel
 		//
-		listPanel = new ListPanel();
+		listPanel = new ListPanel<>();
 		listPanel.setCellRenderer(new DataCellRenderer());
 		listPanel.setMouseListener(new ListMouseListener());
 		if (listTitle != null) {
@@ -120,7 +122,7 @@ class DomainFilesPanel extends JPanel {
 				return;
 			}
 
-			JList list = (JList) e.getSource();
+			JList<?> list = (JList<?>) e.getSource();
 			int index = list.locationToIndex(e.getPoint());
 			if (index < 0) {
 				return;

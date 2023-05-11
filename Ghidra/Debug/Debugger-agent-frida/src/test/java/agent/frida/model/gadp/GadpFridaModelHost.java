@@ -17,7 +17,7 @@ package agent.frida.model.gadp;
 
 import static org.junit.Assume.assumeFalse;
 
-import agent.frida.gadp.FridaLocalDebuggerModelFactory;
+import agent.frida.gadp.FridaGadpDebuggerModelFactory;
 import agent.frida.model.AbstractFridaModelHost;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.util.SystemUtilities;
@@ -26,6 +26,6 @@ class GadpFridaModelHost extends AbstractFridaModelHost {
 	@Override
 	public DebuggerModelFactory getModelFactory() {
 		assumeFalse("Not ready for CI", SystemUtilities.isInTestingBatchMode());
-		return new FridaLocalDebuggerModelFactory();
+		return new FridaGadpDebuggerModelFactory();
 	}
 }

@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_CALLGRAPH__
-#define __CPUI_CALLGRAPH__
+#ifndef __CALLGRAPH_HH__
+#define __CALLGRAPH_HH__
 
 #include "address.hh"
+
+namespace ghidra {
 
 // Forward declarations
 class Architecture;
@@ -122,4 +124,5 @@ public:
   void decoder(Decoder &decoder);
 };
 
+} // End namespace ghidra
 #endif

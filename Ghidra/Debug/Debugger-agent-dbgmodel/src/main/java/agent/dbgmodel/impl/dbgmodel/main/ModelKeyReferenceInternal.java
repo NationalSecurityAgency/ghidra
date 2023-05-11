@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.main;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.main.ModelKeyReference1;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.main.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -31,25 +31,19 @@ public interface ModelKeyReferenceInternal extends ModelKeyReference1 {
 	Map<Pointer, ModelKeyReferenceInternal> CACHE = new WeakValueHashMap<>();
 
 	static ModelKeyReferenceInternal instanceFor(WrapIModelKeyReference1 data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, ModelKeyReferenceImpl1::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, ModelKeyReferenceImpl1::new);
 	}
 
 	static ModelKeyReferenceInternal instanceFor(WrapIModelKeyReference2 data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, ModelKeyReferenceImpl2::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, ModelKeyReferenceImpl2::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIModelKeyReference1>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIModelKeyReference1>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IModelKeyReference2.IID_IMODEL_REFERENCE2),
-					WrapIModelKeyReference2.class) //
-				.put(new REFIID(IModelKeyReference.IID_IMODEL_REFERENCE),
-					WrapIModelKeyReference1.class) //
-				.build();
+	List<Preferred<WrapIModelKeyReference1>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IModelKeyReference2.IID_IMODEL_REFERENCE2, WrapIModelKeyReference2.class),
+		new Preferred<>(IModelKeyReference.IID_IMODEL_REFERENCE, WrapIModelKeyReference1.class));
 
 	static ModelKeyReferenceInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(ModelKeyReferenceInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(ModelKeyReferenceInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

@@ -116,7 +116,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		Swing.allowSwingToProcessEvents();
 		for (Data stringInstance : DefinedDataIterator.definedStrings(localProgram)) {
 			accumulator.add(createIndexedStringInstanceLocation(localProgram, stringInstance));
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 		}
 	}
@@ -132,6 +132,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		ProgramLocation progLoc = rowsIndexedByAddress.get(addr);
 		if (progLoc != null) {
 			removeObject(progLoc);
+			rowsIndexedByAddress.remove(addr);
 		}
 	}
 

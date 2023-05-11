@@ -37,10 +37,13 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.StandAloneDataTypeManager.LanguageUpdateOption;
+import ghidra.program.model.lang.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -93,6 +96,45 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		waitForTree();
 	}
 
+	protected DataType resolveDataType(StandAloneDataTypeManager archiveDtm, DataType dt)
+			throws Exception {
+		int id = archiveDtm.startTransaction("resolve datatype");
+		try {
+			return archiveDtm.resolve(dt, null);
+		}
+		finally {
+			archiveDtm.endTransaction(id, true);
+			waitForTree();
+		}
+	}
+
+	protected void setArchitecture(StandAloneDataTypeManager archiveDtm, String languageId,
+			String compilerSpecId) throws Exception {
+		LanguageService languageService = getLanguageService();
+		Language language = languageService.getLanguage(new LanguageID(languageId));
+
+		int id = archiveDtm.startTransaction("set architecture");
+		try {
+			archiveDtm.setProgramArchitecture(language, new CompilerSpecID(compilerSpecId),
+				LanguageUpdateOption.CLEAR, TaskMonitor.DUMMY);
+		}
+		finally {
+			archiveDtm.endTransaction(id, true);
+		}
+		waitForTree();
+	}
+
+	protected void removeArchitecture(StandAloneDataTypeManager archiveDtm) throws Exception {
+		int id = archiveDtm.startTransaction("remove architecture");
+		try {
+			archiveDtm.clearProgramArchitecture(TaskMonitor.DUMMY);
+		}
+		finally {
+			archiveDtm.endTransaction(id, true);
+		}
+		waitForTree();
+	}
+
 	protected void createNewArchive(String archiveName, boolean deleteExisting) throws Exception {
 		File archiveFile = new File(getTestDirectoryPath(), archiveName);
 		if (deleteExisting && archiveFile.exists()) {
@@ -104,9 +146,9 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 
 			if (!didDelete) {
 				// try one more time
-				waitForPostedSwingRunnables();
+				waitForSwing();
 				sleep(1000);
-				waitForPostedSwingRunnables();
+				waitForSwing();
 				didDelete = archiveFile.delete();
 				Msg.trace(this, "\t\t" + testName.getMethodName() +
 					"after sleeping: did it get deleted?: " + didDelete);
@@ -131,7 +173,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		JButton createArchiveButton = findButtonByText(chooser, "Create Archive");
 		pressButton(createArchiveButton);
 		Msg.trace(this, testName.getMethodName() + ":\tpressed the button on the swing thread");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		Msg.trace(this,
 			"\t" + testName.getMethodName() + ":\tdone waiting for thread - created archive");
 
@@ -190,14 +232,16 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 	@After
 	public void tearDown() throws Exception {
 
-		SwingUtilities.invokeLater(() -> {
-			ProgramManager pm = tool.getService(ProgramManager.class);
-			pm.closeProgram();
-		});
-		waitForPostedSwingRunnables();
+		if (tool != null) {
+			SwingUtilities.invokeLater(() -> {
+				ProgramManager pm = tool.getService(ProgramManager.class);
+				pm.closeProgram();
+			});
+		}
+		waitForSwing();
 
 		// this handles the save changes dialog and potential analysis dialogs
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 		env.release(program);
 		env.dispose();
 	}
@@ -208,7 +252,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 
 	protected void waitForUpdateOnDirectory(GhidraFileChooser chooser) throws Exception {
 		// make sure swing has handled any pending changes
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// artificially high wait period that won't be reached most of the time
 		int timeoutMillis = 5000;
@@ -223,7 +267,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		}
 
 		// make sure swing has handled any pending changes
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	protected File writeTempFile(String filename) throws IOException {

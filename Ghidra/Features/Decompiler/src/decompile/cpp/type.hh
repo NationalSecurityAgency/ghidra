@@ -16,10 +16,12 @@
 /// \file type.hh
 /// \brief Classes for describing and printing data-types
 
-#ifndef __CPUI_TYPE__
-#define __CPUI_TYPE__
+#ifndef __TYPE_HH__
+#define __TYPE_HH__
 
 #include "address.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_ALIGNMENT;	///< Marshaling attribute "alignment"
 extern AttributeId ATTRIB_ARRAYSIZE;	///< Marshaling attribute "arraysize"
@@ -99,23 +101,23 @@ enum sub_metatype {
   SUB_VOID = 22,		///< Compare as a TYPE_VOID
   SUB_SPACEBASE = 21,		///< Compare as a TYPE_SPACEBASE
   SUB_UNKNOWN = 20,		///< Compare as a TYPE_UNKNOWN
-  SUB_INT_CHAR = 19,		///< Signed 1-byte character, sub-type of TYPE_INT
-  SUB_UINT_CHAR = 18,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
-  SUB_INT_PLAIN = 17,		///< Compare as a plain TYPE_INT
-  SUB_UINT_PLAIN = 16,		///< Compare as a plain TYPE_UINT
-  SUB_INT_ENUM = 15,		///< Signed enum, sub-type of TYPE_INT
-  SUB_UINT_ENUM = 14,		///< Unsigned enum, sub-type of TYPE_UINT
-  SUB_INT_UNICODE = 13,		///< Signed wide character, sub-type of TYPE_INT
-  SUB_UINT_UNICODE = 12,	///< Unsigned wide character, sub-type of TYPE_UINT
-  SUB_BOOL = 11,		///< Compare as TYPE_BOOL
-  SUB_CODE = 10,		///< Compare as TYPE_CODE
-  SUB_FLOAT = 9,		///< Compare as TYPE_FLOAT
-  SUB_PTRREL_UNK = 8,		///< Pointer to unknown field of struct, sub-type of TYPE_PTR
-  SUB_PTR = 7,			///< Compare as TYPE_PTR
-  SUB_PTRREL = 6,		///< Pointer relative to another data-type, sub-type of TYPE_PTR
-  SUB_PTR_STRUCT = 5,		///< Pointer into struct, sub-type of TYPE_PTR
-  SUB_ARRAY = 4,		///< Compare as TYPE_ARRAY
-  SUB_PARTIALSTRUCT = 3,	///< Compare as TYPE_PARTIALSTRUCT
+  SUB_PARTIALSTRUCT = 19,	///< Compare as TYPE_PARTIALSTRUCT
+  SUB_INT_CHAR = 18,		///< Signed 1-byte character, sub-type of TYPE_INT
+  SUB_UINT_CHAR = 17,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
+  SUB_INT_PLAIN = 16,		///< Compare as a plain TYPE_INT
+  SUB_UINT_PLAIN = 15,		///< Compare as a plain TYPE_UINT
+  SUB_INT_ENUM = 14,		///< Signed enum, sub-type of TYPE_INT
+  SUB_UINT_ENUM = 13,		///< Unsigned enum, sub-type of TYPE_UINT
+  SUB_INT_UNICODE = 12,		///< Signed wide character, sub-type of TYPE_INT
+  SUB_UINT_UNICODE = 11,	///< Unsigned wide character, sub-type of TYPE_UINT
+  SUB_BOOL = 10,		///< Compare as TYPE_BOOL
+  SUB_CODE = 9,			///< Compare as TYPE_CODE
+  SUB_FLOAT = 8,		///< Compare as TYPE_FLOAT
+  SUB_PTRREL_UNK = 7,		///< Pointer to unknown field of struct, sub-type of TYPE_PTR
+  SUB_PTR = 6,			///< Compare as TYPE_PTR
+  SUB_PTRREL = 5,		///< Pointer relative to another data-type, sub-type of TYPE_PTR
+  SUB_PTR_STRUCT = 4,		///< Pointer into struct, sub-type of TYPE_PTR
+  SUB_ARRAY = 3,		///< Compare as TYPE_ARRAY
   SUB_STRUCT = 2,		///< Compare as TYPE_STRUCT
   SUB_UNION = 1,		///< Compare as TYPE_UNION
   SUB_PARTIALUNION = 0		///< Compare as a TYPE_PARTIALUNION
@@ -207,6 +209,7 @@ public:
   virtual Datatype *getSubType(uintb off,uintb *newoff) const; ///< Recover component data-type one-level down
   virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual int4 getHoleSize(int4 off) const { return 0; }	///< Get number of bytes at the given offset that are padding
   virtual int4 numDepend(void) const { return 0; }	///< Return number of component sub-types
   virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }	///< Return the i-th component sub-type
   virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
@@ -222,6 +225,7 @@ public:
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
   int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
   void encodeRef(Encoder &encoder) const;	///< Encode a reference of \b this to a stream
+  bool isPieceStructured(void) const;		///< Does \b this data-type consist of separate pieces?
   static uint4 encodeIntegerFormat(const string &val);
   static string decodeIntegerFormat(uint4 val);
 };
@@ -383,6 +387,7 @@ public:
   Datatype *getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const;	///< Figure out what a byte range overlaps
   virtual void printRaw(ostream &s) const;
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual int4 getHoleSize(int4 off) const;
   virtual int4 numDepend(void) const { return 1; }
   virtual Datatype *getDepend(int4 index) const { return arrayof; }
   virtual void printNameBase(ostream &s) const { s << 'a'; arrayof->printNameBase(s); }
@@ -433,7 +438,6 @@ protected:
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
   void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
-  int4 scoreFill(PcodeOp *op,int4 slot) const;	///< Determine best type fit for given PcodeOp use
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
   TypeStruct(void) : Datatype(0,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
@@ -443,6 +447,7 @@ public:
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
   virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual int4 getHoleSize(int4 off) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
@@ -453,6 +458,7 @@ public:
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
   static void assignFieldOffsets(vector<TypeField> &list,int4 align);	///< Assign field offsets given a byte alignment
+  static int4 scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot);	///< Determine best type fit for given PcodeOp use
 };
 
 /// \brief A collection of overlapping Datatype objects: A \b union of component \b fields
@@ -483,6 +489,25 @@ public:
   virtual const TypeField *resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff);
 };
 
+/// \brief A data-type that holds \e part of a TypeStruct or TypeArray
+class TypePartialStruct : public Datatype {
+  friend class TypeFactory;
+  Datatype *stripped;		///< The \e undefined data-type to use if a formal data-type is required.
+  Datatype *container;		///< Parent structure or array of which \b this is a part
+  int4 offset;			///< Byte offset within the parent where \b this starts
+public:
+  TypePartialStruct(const TypePartialStruct &op);	///< Construct from another TypePartialStruct
+  TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
+  Datatype *getParent(void) const { return container; }	///< Get the data-type containing \b this piece
+  virtual void printRaw(ostream &s) const;
+  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual int4 getHoleSize(int4 off) const;
+  virtual int4 compare(const Datatype &op,int4 level) const;
+  virtual int4 compareDependency(const Datatype &op) const;
+  virtual Datatype *clone(void) const { return new TypePartialStruct(*this); }
+  virtual Datatype *getStripped(void) const { return stripped; }
+};
+
 /// \brief An internal data-type for holding information about a variable's relative position within a union data-type
 ///
 /// This is a data-type that can be assigned to a Varnode offset into a Symbol, where either the Symbol itself or
@@ -499,10 +524,10 @@ public:
   TypePartialUnion(const TypePartialUnion &op);			///< Construct from another TypePartialUnion
   TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
   TypeUnion *getParentUnion(void) const { return container; }	///< Get the union which \b this is part of
-  virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
+  virtual void printRaw(ostream &s) const;
   virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
-  virtual int4 numDepend(void);
-  virtual Datatype *getDepend(int4 index);
+  virtual int4 numDepend(void) const;
+  virtual Datatype *getDepend(int4 index) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePartialUnion(*this); }
@@ -680,6 +705,7 @@ public:
   TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure
+  TypePartialStruct *getTypePartialStruct(Datatype *contain,int4 off,int4 sz);	///< Create a partial structure
   TypeUnion *getTypeUnion(const string &n);			///< Create an (empty) union
   TypePartialUnion *getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz);	///< Create a partial union
   TypeEnum *getTypeEnum(const string &n);			///< Create an (empty) enumeration
@@ -691,6 +717,7 @@ public:
   TypePointerRel *getTypePointerRel(TypePointer *parentPtr,Datatype *ptrTo,int4 off);	///< Get pointer offset relative to a container
   TypePointerRel *getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm);
   TypePointer *getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc,const string &nm);
+  Datatype *getExactPiece(Datatype *ct,int4 offset,int4 size);	///< Get the data-type associated with piece of a structured data-type
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order
@@ -745,6 +772,18 @@ inline int4 Datatype::typeOrderBool(const Datatype &op) const
   return compare(op,10);
 }
 
+/// If a value with \b this data-type is put together from multiple pieces, is it better to display
+/// this construction as a sequence of separate assignments or as a single concatenation.
+/// Generally a TYPE_STRUCT or TYPE_ARRAY should be represented with separate assignments.
+/// \return \b true if the data-type is put together with multiple assignments
+inline bool Datatype::isPieceStructured(void) const
+
+{
+//  if (metatype == TYPE_STRUCT || metatype == TYPE_ARRAY || metatype == TYPE_UNION ||
+//      metatype == TYPE_PARTIALUNION || metatype == TYPE_PARTIALSTRUCT)
+  return (metatype <= TYPE_ARRAY);
+}
+
 inline TypeArray::TypeArray(int4 n,Datatype *ao) : Datatype(n*ao->getSize(),TYPE_ARRAY)
 
 {
@@ -775,4 +814,5 @@ inline void TypePointerRel::markEphemeral(TypeFactory &typegrp)
     submeta = SUB_PTRREL_UNK;
 }
 
+} // End namespace ghidra
 #endif

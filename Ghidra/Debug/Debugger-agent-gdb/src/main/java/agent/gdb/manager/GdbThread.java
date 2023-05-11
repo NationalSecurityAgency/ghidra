@@ -124,6 +124,30 @@ public interface GdbThread
 	CompletableFuture<Void> step(StepCmd suffix);
 
 	/**
+	 * Advance the thread to the given location
+	 * 
+	 * <p>
+	 * This is equivalent to the CLI command {@code advance}.
+	 * 
+	 * <p>
+	 * Note that the command can complete before the thread has finished advancing. The command
+	 * completes as soon as the thread is running. A separate stop event is emitted when the thread
+	 * has stopped.
+	 * 
+	 * @param loc the location to stop at, same syntax as breakpoint locations
+	 * @return a future that completes once the thread is running
+	 */
+	CompletableFuture<Void> advance(String loc);
+
+	/**
+	 * Advance the thread to the given address
+	 * 
+	 * @param addr the address
+	 * @see #advance(String)
+	 */
+	CompletableFuture<Void> advance(long addr);
+
+	/**
 	 * Detach from the entire process
 	 * 
 	 * <p>

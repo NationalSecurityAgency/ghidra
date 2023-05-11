@@ -17,9 +17,7 @@ package ghidra.program.model.data;
 
 import ghidra.util.classfinder.ClassTranslator;
 
-public class UnsignedInteger3DataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class UnsignedInteger3DataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined UnsignedInteger3DataType instance.*/
 	public final static UnsignedInteger3DataType dataType = new UnsignedInteger3DataType();
@@ -34,7 +32,7 @@ public class UnsignedInteger3DataType extends AbstractIntegerDataType {
 	}
 
 	public UnsignedInteger3DataType(DataTypeManager dtm) {
-		super("uint3", false, dtm);
+		super("uint3", dtm);
 	}
 
 	@Override

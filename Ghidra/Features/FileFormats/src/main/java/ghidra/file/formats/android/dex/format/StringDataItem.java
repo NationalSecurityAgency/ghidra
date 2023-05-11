@@ -18,15 +18,10 @@ package ghidra.file.formats.android.dex.format;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -45,9 +40,10 @@ public class StringDataItem implements StructConverter {
 
 		reader = reader.clone(DexUtil.adjustOffset(stringItem.getStringDataOffset(), dexHeader));
 
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		stringLength = leb128.asUInt32();
 		lebLength = leb128.getLength();
+
 		long nullTermIndex =
 			getIndexOfByteValue(reader, reader.getPointerIndex(), MAX_STRING_LEN, (byte) 0);
 		actualLength = (int) (nullTermIndex - reader.getPointerIndex() + 1);
@@ -73,11 +69,17 @@ public class StringDataItem implements StructConverter {
 	}
 
 	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
+	public DataType toDataType() {
 		Structure structure = new StructureDataType("string_data_item_" + actualLength, 0);
-		structure.add(new ArrayDataType(BYTE, lebLength, BYTE.getLength()), "utf16_size", null);
+		structure.add(ULEB128, lebLength, "utf16_size", null);
 		structure.add(UTF8, actualLength, "data", null);
-		structure.setCategoryPath(new CategoryPath("/dex/string_data_item"));
+		try {
+			structure.setCategoryPath(new CategoryPath("/dex/string_data_item"));
+		}
+		catch (DuplicateNameException e) {
+			// will not occur for new StructureDataType
+			throw new AssertException(e);
+		}
 		return structure;
 	}
 

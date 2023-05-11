@@ -87,14 +87,20 @@ import help.HelpService;
  * manner.
  */
 public class FrontEndTool extends PluginTool implements OptionsChangeListener {
+	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
 	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
 	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
+	private static final String SHOW_TOOLTIPS_OPTION_NAME = "Show Tooltips";
 
 	// TODO: Experimental Option !!
 	private static final String ENABLE_COMPRESSED_DATABUFFER_OUTPUT =
 		"Use DataBuffer Output Compression";
 
+	private static final String RESTORE_PREVIOUS_PROJECT_NAME = "Restore Previous Project";
+	private boolean shouldRestorePreviousProject;
+
 	private static final int MIN_HEIGHT = 600;
+
 	/**
 	 * Preference name for whether to show the "What's New" help page when the
 	 * Ghidra Project Window is displayed.
@@ -117,6 +123,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	private WeakSet<ProjectListener> listeners;
 	private FrontEndPlugin plugin;
+
+	private DefaultLaunchMode defaultLaunchMode = DefaultLaunchMode.DEFAULT;
 
 	private ComponentProvider compProvider;
 	private LogComponentProvider logProvider;
@@ -153,6 +161,17 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		AppInfo.setFrontEndTool(this);
 		AppInfo.setActiveProject(getProject());
+
+		initFrontEndOptions();
+	}
+
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (logProvider != null) {
+			logProvider.dispose();
+		}
 	}
 
 	private void ensureSize() {
@@ -204,6 +223,17 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			Msg.showError(this, null, "Error", "Error reading front end configuration", e);
 		}
 		return null;
+	}
+
+	@Override
+	protected boolean doSaveTool() {
+		// This method is overridden to allow the FrontEndTool to perform custom saving.
+		// The super.doSaveTool is designed to save tools to the user's tool chest directory. The 
+		// FrontEndTool saves its state directly in the user's settings directory and includes
+		// the entire project's state such as what tools were running and data states for each
+		// running tool.
+		saveToolConfigurationToDisk();
+		return true;
 	}
 
 	void saveToolConfigurationToDisk() {
@@ -289,17 +319,36 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		showComponentHeader(compProvider, false);
 	}
 
+	/**
+	 * Get the preferred default tool launch mode
+	 * @return default tool launch mode
+	 */
+	public DefaultLaunchMode getDefaultLaunchMode() {
+		return defaultLaunchMode;
+	}
+
 	private void initFrontEndOptions() {
 		ToolOptions options = getOptions(ToolConstants.TOOL_OPTIONS);
-		HelpLocation help = new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Save_Tool");
+		HelpLocation help =
+			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Front_End_Tool_Options");
 
+		options.registerOption(DEFAULT_TOOL_LAUNCH_MODE, DefaultLaunchMode.DEFAULT, help,
+			"Indicates if a new or already running tool should be used during default launch.");
 		options.registerOption(AUTOMATICALLY_SAVE_TOOLS, true, help,
-			"When enabled tools will be saved " + "when they are closed");
+			"When enabled tools will be saved when they are closed");
 		options.registerOption(USE_ALERT_ANIMATION_OPTION_NAME, true, help,
-			"Signals that user notifications " +
-				"should be animated.  This makes notifications more distinguishable.");
-		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, Boolean.FALSE, help,
-			"When enabled data buffers sent to Ghidra Server are compressed (see server configuration for other direction)");
+			"Signals that user notifications should be animated.  This makes notifications more " +
+				"distinguishable.");
+		options.registerOption(SHOW_TOOLTIPS_OPTION_NAME, true, help,
+			"Controls the display of tooltip popup windows.");
+		options.registerOption(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false, help,
+			"When enabled data buffers sent to Ghidra Server are compressed (see server " +
+				"configuration for other direction)");
+
+		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, true, help,
+			"Restore the previous project when Ghidra starts.");
+
+		defaultLaunchMode = options.getEnum(DEFAULT_TOOL_LAUNCH_MODE, defaultLaunchMode);
 
 		boolean autoSave = options.getBoolean(AUTOMATICALLY_SAVE_TOOLS, true);
 		GhidraTool.autoSave = autoSave;
@@ -307,9 +356,14 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		boolean animationEnabled = options.getBoolean(USE_ALERT_ANIMATION_OPTION_NAME, true);
 		AnimationUtils.setAnimationEnabled(animationEnabled);
 
+		boolean showToolTips = options.getBoolean(SHOW_TOOLTIPS_OPTION_NAME, true);
+		DockingUtils.setTipWindowEnabled(showToolTips);
+
 		boolean compressDataBuffers =
 			options.getBoolean(ENABLE_COMPRESSED_DATABUFFER_OUTPUT, false);
 		DataBuffer.enableCompressedSerializationOutput(compressDataBuffers);
+
+		shouldRestorePreviousProject = options.getBoolean(RESTORE_PREVIOUS_PROJECT_NAME, true);
 
 		options.addOptionsChangeListener(this);
 	}
@@ -317,26 +371,34 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
+		if (DEFAULT_TOOL_LAUNCH_MODE.equals(optionName)) {
+			defaultLaunchMode = (DefaultLaunchMode) newValue;
+		}
 		if (AUTOMATICALLY_SAVE_TOOLS.equals(optionName)) {
 			GhidraTool.autoSave = (Boolean) newValue;
 		}
 		else if (USE_ALERT_ANIMATION_OPTION_NAME.equals(optionName)) {
 			AnimationUtils.setAnimationEnabled((Boolean) newValue);
 		}
+		else if (SHOW_TOOLTIPS_OPTION_NAME.equals(optionName)) {
+			DockingUtils.setTipWindowEnabled((Boolean) newValue);
+		}
 		else if (ENABLE_COMPRESSED_DATABUFFER_OUTPUT.equals(optionName)) {
 			DataBuffer.enableCompressedSerializationOutput((Boolean) newValue);
+		}
+		else if (RESTORE_PREVIOUS_PROJECT_NAME.equals(optionName)) {
+			shouldRestorePreviousProject = (Boolean) newValue;
 		}
 	}
 
 	@Override
 	public void exit() {
-		saveToolConfigurationToDisk();
 		plugin.exitGhidra();
 	}
 
 	@Override
 	public void close() {
-		exit();
+		close(true);
 	}
 
 	/**
@@ -350,14 +412,19 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			return;
 		}
 
-		ToolOptions options = getOptions(ToolConstants.TOOL_OPTIONS);
-		options.removeOptionsChangeListener(this);
-
 		configureToolAction.setEnabled(true);
 		setProject(project);
 		AppInfo.setActiveProject(project);
 		plugin.setActiveProject(project);
-		initFrontEndOptions();
+	}
+
+	/**
+	 * Checks to see if the previous project should be restored
+	 *
+	 * @return true if the previous project should be restored; otherwise, false
+	 */
+	public boolean shouldRestorePreviousProject() {
+		return shouldRestorePreviousProject;
 	}
 
 	/**
@@ -576,8 +643,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				showExtensions();
-				extensionTableProvider.setHelpLocation(
-					new HelpLocation(GenericHelpTopics.FRONT_END, "Extensions"));
 			}
 
 			@Override
@@ -803,7 +868,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 // Inner Classes
 //==================================================================================================
 
-	private static class LogComponentProvider extends DialogComponentProvider {
+	private static class LogComponentProvider extends ReusableDialogComponentProvider {
 
 		private final File logFile;
 		private Dimension defaultSize = new Dimension(600, 400);

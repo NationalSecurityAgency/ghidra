@@ -36,7 +36,6 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 	private static int EXPECTED_PROCESSOR_SYMBOLS = 9;
@@ -63,11 +62,13 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS);
 		assertNotNull(symbolTable.getPrimarySymbol(addr(4)));
 
-		long imageBaseMove = 0x100;
-		Address movedBobAddress = originalBobAddress.add(imageBaseMove);
-		Address movedFunctionAddress = originalFunctionAddress.add(imageBaseMove);
+		Address originalImageBase = program.getImageBase();
+		Address newImageBase = addr(0x100);
+		long imageBaseMove = newImageBase.subtract(originalImageBase);
+		Address movedBobAddress = originalBobAddress.addWrap(imageBaseMove);
+		Address movedFunctionAddress = originalFunctionAddress.addWrap(imageBaseMove);
 
-		program.setImageBase(addr(imageBaseMove), true);
+		program.setImageBase(newImageBase, true);
 
 		// expect one new symbol for pinned function
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS + 1);
@@ -192,7 +193,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		assertEquals(SymbolType.LABEL, target.getSymbolType());
 		assertTrue(target.isPinned());
-		
+
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(addr(0));
 		memory.moveBlock(block, addr(moveAmount), TaskMonitor.DUMMY);
@@ -264,11 +265,11 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		originalFunctionAddress = addr(ORIGINAL_FUNCTION_ADDRESS);
 
 		transactionID = program.startTransaction("Test");
+		program.setImageBase(addr(0xff00), false);
 		createMemBlock();
 		createProcessorSymbols(lang);
 		createBobSymbol();
 		createPinnedFunctionSymbol();
-
 
 	}
 
@@ -290,8 +291,8 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 			throws InvalidInputException, OverlappingFunctionException {
 		AddressSet set = new AddressSet(originalFunctionAddress);
 		Function fun = program.getFunctionManager()
-				.createFunction("MyFunction", originalFunctionAddress, set,
-			SourceType.USER_DEFINED);
+			.createFunction("MyFunction", originalFunctionAddress, set,
+				SourceType.USER_DEFINED);
 		Symbol symbol = fun.getSymbol();
 		symbol.setPinned(true);
 	}
@@ -309,8 +310,9 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 	private void createMemBlock() throws Exception {
 		byte[] bytesOne = new byte[100];
 		TaskMonitor m = TaskMonitor.DUMMY;
-		program.getMemory().createInitializedBlock("B1", addr(0),
-			new ByteArrayInputStream(bytesOne), bytesOne.length, m, false);
+		program.getMemory()
+			.createInitializedBlock("B1", addr(0),
+				new ByteArrayInputStream(bytesOne), bytesOne.length, m, false);
 
 	}
 

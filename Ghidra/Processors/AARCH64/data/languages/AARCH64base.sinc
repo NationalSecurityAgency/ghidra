@@ -4287,6 +4287,14 @@ PState_pstate_op: "PState.UAO" is Op1_uimm3=0 & Op2_uimm3=3 & CRm { tmp:8 = CRm;
 PState_pstate_op: "PState.PAN" is Op1_uimm3=0 & Op2_uimm3=4 & CRm { tmp:8 = CRm; pan = tmp & 1; }
 PState_pstate_op: "PState.SP" is Op1_uimm3=0 & Op2_uimm3=5 & CRm { tmp:8 = CRm; spsel = tmp & 1; }
 PState_pstate_op: "PState.TCO" is Op1_uimm3=3 & Op2_uimm3=4 & CRm { tmp:8 = CRm; tco = tmp & 1; }
+PState_pstate_op: "PState.ALLINT" is Op1_uimm3=1 & Op2_uimm3=0 & b_0911=0 & CRm { tmp:8 = CRm; allint = tmp & 1; }
+PState_pstate_op: "PState.DIT" is Op1_uimm3=3 & Op2_uimm3=2 & CRm { tmp:8 = CRm; dit = tmp & 1; }
+#PState_pstate_op: "PState.SVCRSM" is Op1_uimm3=3 & Op2_uimm3=3 & b_0911=1 & b_08 { tmp:8 = b_08; svcrsm = tmp & 1; } # see SMSTART/SMSTOP
+#PState_pstate_op: "PState.SVCRZA" is Op1_uimm3=3 & Op2_uimm3=3 & b_0911=2 & b_08 { tmp:8 = b_08; svcrza = tmp & 1; } # see SMSTART/SMSTOP
+#PState_pstate_op: "PState.SVZRMZA" is Op1_uimm3=3 & Op2_uimm3=3 & b_0911=3 & b_08 { tmp:8 = b_08; svcrsmza = tmp & 1; } # see SMSTART/SMSTOP
+PState_pstate_op: "PState.SSBS" is Op1_uimm3=3 & Op2_uimm3=1 & CRm { tmp:8 = CRm; ssbs = tmp & 1; }
+
+
 
 # C6.2.228 MRS page C6-1683 line 99588 MATCH xd5300000/mask=xfff00000
 # C6.2.379 TSTART page C6-1979 line 116075 MATCH xd5233060/mask=xffffffe0
@@ -5452,15 +5460,17 @@ is sf=1 & op.dp3_op54=0 & b_2428=0x1b & op.dp3_op31=1 & Rm_GPR32 & op.dp3_o0=1 &
 # xd503417f/mask=xfffff9ff NOT MATCHED BY ANY CONSTRUCTOR
 # b_0031=110101010000001101000..101111111
 
-SVAmodeOp: "SM" is b_0911=0x1 {}
-SVAmodeOp: "ZA" is b_0911=0x2 {}
-SVAmodeOp: "" is b_0911=0x3 {}
-
 define pcodeop sveStreamingModeStart;
 define pcodeop sveStreamingModeStop;
+
+SVAmodeOp: "SM" is b_0911=0x1 & b_08 { svcr[0,1] = b_08; }
+SVAmodeOp: "ZA" is b_0911=0x2 & b_08 { svcr[1,1] = b_08; }
+SVAmodeOp: ""   is b_0911=0x3 & b_08 { svcr[0,1] = b_08; svcr[1,1] = b_08; }
+
 :smstart "{"^SVAmodeOp^"}"
-is b_1131=0x1aa068 & SVAmodeOp & b_08=1 & b_0507=0x3 & op4=0xf {
-	sveStreamingModeStart(SVAmodeOp);
+is b_1131=0x1aa068 & SVAmodeOp & b_08=1 & b_0507=0x3 & op4=0x1f {
+	build SVAmodeOp;
+	sveStreamingModeStart();
 }
 
 
@@ -5471,10 +5481,9 @@ is b_1131=0x1aa068 & SVAmodeOp & b_08=1 & b_0507=0x3 & op4=0xf {
 # b_0031=110101010000001101000..001111111
 
 :smstop "{"^SVAmodeOp^"}"
-is b_1131=0x1aa068 & SVAmodeOp & b_08=0 & b_0507=0x3 & op4=0xf {
-	sveStreamingModeStop(SVAmodeOp);
+is b_1131=0x1aa068 & SVAmodeOp & b_08=0 & b_0507=0x3 & op4=0x1f {
+	sveStreamingModeStop();
 }
-
 
 
 # C6.2.288 SMULH page C6-1808 line 106800 MATCH x9b400000/mask=xffe08000

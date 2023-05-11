@@ -62,7 +62,7 @@ class TestThread implements PcodeThread<Void> {
 	@Override
 	public PcodeExecutor<Void> getExecutor() {
 		return new PcodeExecutor<>(TraceScheduleTest.TOY_BE_64_LANG, machine.getArithmetic(),
-			getState(), Reason.EXECUTE) {
+			getState(), Reason.EXECUTE_READ) {
 			public PcodeFrame execute(PcodeProgram program, PcodeUseropLibrary<Void> library) {
 				machine.record.add("x:" + name);
 				// TODO: Verify the actual effect
@@ -153,6 +153,11 @@ class TestThread implements PcodeThread<Void> {
 
 	@Override
 	public void setSuspended(boolean suspended) {
+	}
+
+	@Override
+	public boolean isSuspended() {
+		return false;
 	}
 
 	@Override

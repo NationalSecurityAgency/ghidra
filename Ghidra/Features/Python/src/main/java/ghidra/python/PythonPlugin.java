@@ -19,7 +19,7 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.python.core.PySystemState;
 
@@ -27,6 +27,7 @@ import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -40,7 +41,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.*;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * This plugin provides the interactive Python interpreter.
@@ -59,8 +60,6 @@ import resources.ResourceManager;
 public class PythonPlugin extends ProgramPlugin
 		implements InterpreterConnection, OptionsChangeListener {
 
-	private final static int INPUT_THREAD_SHUTDOWN_TIMEOUT_MS = 1000;
-
 	private InterpreterConsole console;
 	private GhidraPythonInterpreter interpreter;
 	private PythonScript interactiveScript;
@@ -72,6 +71,9 @@ public class PythonPlugin extends ProgramPlugin
 	private final static String INCLUDE_BUILTINS_DESCRIPTION =
 		"Whether or not to include Python's built-in functions and properties in the pop-up code completion window.";
 	private final static boolean INCLUDE_BUILTINS_DEFAULT = true;
+
+	private static final Icon ICON = new GIcon("icon.plugin.python");
+
 	private boolean includeBuiltins = INCLUDE_BUILTINS_DEFAULT;
 
 	/**
@@ -134,7 +136,7 @@ public class PythonPlugin extends ProgramPlugin
 	 * Creates various actions for the plugin.
 	 */
 	private void createActions() {
-		
+
 		// Interrupt Interpreter
 		DockingAction interruptAction = new DockingAction("Interrupt Interpreter", getName()) {
 			@Override
@@ -144,7 +146,7 @@ public class PythonPlugin extends ProgramPlugin
 		};
 		interruptAction.setDescription("Interrupt Interpreter");
 		interruptAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/dialog-cancel.png"), null));
+			new ToolBarData(Icons.NOT_ALLOWED_ICON, null));
 		interruptAction.setEnabled(true);
 		interruptAction.setKeyBindingData(
 			new KeyBindingData(KeyEvent.VK_I, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
@@ -160,7 +162,7 @@ public class PythonPlugin extends ProgramPlugin
 		};
 		resetAction.setDescription("Reset Interpreter");
 		resetAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/reload3.png"), null));
+			new ToolBarData(Icons.REFRESH_ICON, null));
 		resetAction.setEnabled(true);
 		resetAction.setKeyBindingData(
 			new KeyBindingData(KeyEvent.VK_D, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
@@ -224,8 +226,14 @@ public class PythonPlugin extends ProgramPlugin
 
 		// Setup the PythonScript describing the state of the interactive prompt.
 		// This allows things like currentProgram and currentAddress to dynamically reflect
-		// what's happening in the listing.
+		// what's happening in the listing.  Injecting the script hierarchy early here allows
+		// code completion to work before commands are entered.
 		interactiveScript = new PythonScript();
+		interactiveScript.set(
+			new GhidraState(tool, tool.getProject(), getCurrentProgram(), getProgramLocation(),
+				getProgramSelection(), getProgramHighlight()),
+			interactiveTaskMonitor, new PrintWriter(getConsole().getStdOut()));
+		interpreter.injectScriptHierarchy(interactiveScript);
 		interactiveTaskMonitor = new PythonInteractiveTaskMonitor(console.getStdOut());
 
 		// Start the input thread that receives python commands to execute.
@@ -263,6 +271,18 @@ public class PythonPlugin extends ProgramPlugin
 	 */
 	@Override
 	public List<CodeCompletion> getCompletions(String cmd) {
+		return getCompletions(cmd, cmd.length());
+	}
+
+	/**
+	 * Returns a list of possible command completion values at the given position.
+	 * 
+	 * @param cmd current command line (without prompt)
+	 * @param caretPos The position of the caret in the input string 'cmd'
+	 * @return A list of possible command completion values. Could be empty if there aren't any.
+	 */
+	@Override
+	public List<CodeCompletion> getCompletions(String cmd, int caretPos) {
 		// Refresh the environment
 		interactiveScript.setSourceFile(new ResourceFile(new File("python")));
 		interactiveScript.set(
@@ -270,7 +290,7 @@ public class PythonPlugin extends ProgramPlugin
 				currentSelection, currentHighlight),
 			interactiveTaskMonitor, console.getOutWriter());
 
-		return interpreter.getCommandCompletions(cmd, includeBuiltins);
+		return interpreter.getCommandCompletions(cmd, includeBuiltins, caretPos);
 	}
 
 	@Override
@@ -333,8 +353,8 @@ public class PythonPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public ImageIcon getIcon() {
-		return ResourceManager.loadImage("images/python.png");
+	public Icon getIcon() {
+		return ICON;
 	}
 
 	/**

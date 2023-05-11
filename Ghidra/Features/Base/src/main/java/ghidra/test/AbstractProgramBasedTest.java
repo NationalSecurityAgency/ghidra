@@ -17,12 +17,16 @@ package ghidra.test;
 
 import static org.junit.Assert.*;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
 
+import docking.widgets.fieldpanel.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.util.viewer.field.ListingField;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -206,4 +210,50 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 		}
 		return result;
 	}
+
+	/**
+	 * Returns a field by the given name at the given address.   Clients can use the convention 
+	 * that field factory classes specify a public static field named 'FIELD_NAME' to choose the
+	 * desired field name.
+	 * <p>
+	 * Note: you will have to perform a {@code goTo()} to trigger the view to load the given field.
+	 * 
+	 * @param a the address
+	 * @param fieldName the field name
+	 * @return the field
+	 */
+	protected ListingField getField(Address a, String fieldName) {
+
+		ListingPanel panel = codeBrowser.getListingPanel();
+		BigInteger index = panel.getAddressIndexMap().getIndex(a);
+		FieldPanel fieldPanel = panel.getFieldPanel();
+		ListingField field = getField(fieldName, 1, index, fieldPanel);
+		return field;
+	}
+
+	protected ListingField getField(String fieldName, int occurrence, final BigInteger index,
+			FieldPanel fieldPanel) {
+
+		if (fieldName == null) {
+			return null;
+		}
+
+		LayoutModel model = fieldPanel.getLayoutModel();
+		Layout layout = model.getLayout(index);
+		if (layout == null) {
+			return null;
+		}
+
+		int instanceNum = 1;
+		for (int i = 0; i < layout.getNumFields(); i++) {
+			ListingField bf = (ListingField) layout.getField(i);
+			if (bf.getFieldFactory().getFieldName().equals(fieldName)) {
+				if (instanceNum++ == occurrence) {
+					return bf;
+				}
+			}
+		}
+		return null;
+	}
+
 }

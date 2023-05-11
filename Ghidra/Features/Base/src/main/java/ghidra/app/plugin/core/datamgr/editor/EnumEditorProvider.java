@@ -19,7 +19,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -30,7 +30,10 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
+import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.compositeeditor.EditorListener;
 import ghidra.app.plugin.core.compositeeditor.EditorProvider;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
@@ -45,7 +48,6 @@ import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.DuplicateNameException;
-import resources.ResourceManager;
 import util.CollectionUtils;
 
 /**
@@ -54,11 +56,10 @@ import util.CollectionUtils;
 public class EnumEditorProvider extends ComponentProviderAdapter
 		implements ChangeListener, EditorProvider {
 
-	static final ImageIcon EDITOR_ICON = ResourceManager.loadImage("images/enum.png");
-	private final static ImageIcon APPLY_ICON = ResourceManager.loadImage("images/disk.png");
-	private final static ImageIcon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private final static ImageIcon DELETE_ICON =
-		ResourceManager.loadImage("images/edit-delete.png");
+	static final Icon EDITOR_ICON = new GIcon("icon.plugin.enum.editor.provider");
+	private final static Icon APPLY_ICON = new GIcon("icon.plugin.enum.editor.apply");
+	private final static Icon ADD_ICON = new GIcon("icon.plugin.enum.editor.add");
+	private final static Icon DELETE_ICON = new GIcon("icon.plugin.enum.editor.delete");
 	private final static String HELP_TOPIC = "DataTypeEditors";
 
 	private final static int CANCEL = 0;
@@ -80,6 +81,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	private CategoryPath originalCategoryPath;
 	private Enum originalEnum;
 	private long originalEnumID = -1;
+	private ToggleDockingAction hexDisplayAction;
 
 	/**
 	 * Construct a new enum editor provider.
@@ -276,6 +278,14 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	private void createActions() {
+		hexDisplayAction = new ToggleActionBuilder("Toggle Hex Mode", plugin.getName())
+			.menuPath("Show Enum Values in Hex")
+			.description("Toggles Enum value column to show values in hex or decimal")
+			.keyBinding("Shift-H")
+			.selected(true)
+			.onAction(c -> editorPanel.setHexDisplayMode(hexDisplayAction.isSelected()))
+			.buildAndInstallLocal(this);
+
 		addAction = new EnumPluginAction("Add Enum Value", e -> editorPanel.addEntry());
 		addAction.setEnabled(true);
 		String editGroup = "Edit";
@@ -287,7 +297,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			new EnumPluginAction("Delete Enum Value", e -> editorPanel.deleteSelectedEntries());
 		deleteAction.setEnabled(false);
 		deleteAction
-				.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
+			.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
 		deleteAction.setToolBarData(new ToolBarData(DELETE_ICON, editGroup));
 		deleteAction.setDescription("Delete the selected enum entries");
 
@@ -302,7 +312,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		showEnumAction.setEnabled(true);
 		String thirdGroup = "FThirdGroup";
 		showEnumAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/go-home.png"), thirdGroup));
+			new ToolBarData(new GIcon("icon.plugin.enum.editor.home"), thirdGroup));
 
 		tool.addLocalAction(this, applyAction);
 		tool.addLocalAction(this, addAction);
@@ -399,9 +409,10 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	private int showOptionDialog(Enum editedEnoom, Set<String> oldNameFields) {
-		StringBuilder msg = new StringBuilder(
-			"<html>If you save this Enum with the <font color=#ff0000>new value(s)</font>" +
-				" listed below,<br> it will invalidate equates created with the old value(s).<br>");
+		StringBuilder msg =
+			new StringBuilder("<html>If you save this Enum with the <font color=\"" +
+				Messages.ERROR.toHexString() + "\">new value(s)</font> listed below,<br>" +
+				" it will invalidate equates created with the old value(s).<br>");
 		msg.append("<ul>");
 		for (String field : oldNameFields) {
 			String newVal;
@@ -412,13 +423,16 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 				// Happens if a field is deleted or there is a name AND value change.
 				newVal = "Missing";
 			}
-			msg.append(String.format("<li>%s: 0x%s \u2192 <font color=#ff0000>%s</font></li>",
+			msg.append(String.format(
+				"<li>%s: 0x%s \u2192 <font color=\"" + Messages.ERROR.toHexString() +
+					"\">%s</font></li>",
 				HTMLUtilities.escapeHTML(field), Long.toHexString(originalEnum.getValue(field)),
 				newVal));
 		}
 		msg.append("</ul>");
 		msg.append(
-			"Invalidated equates can be automatically removed now or<br>managed later from the <i><b>Equates Table</i></b> window.");
+			"Invalidated equates can be automatically removed now or<br>managed later from the" +
+				" <i><b>Equates Table</i></b> window.");
 		msg.append("</html>");
 		int choice = OptionDialog.showOptionDialog(editorPanel, "Equate Conflicts", msg.toString(),
 			"Save and remove", "Save", OptionDialog.ERROR_MESSAGE);

@@ -6,7 +6,7 @@
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
     <TITLE>Exporting Files</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -22,15 +22,19 @@
     <UL>
       <LI><A href="#ascii">ASCII</A></LI>
 
-      <LI><A href="#binary">Binary</A></LI>
-
       <LI><A href="#c_cpp">C/C++</A></LI>
-
-      <LI><A href="#gzf">Ghidra Zip File (.gzf)</A></LI>
+      
+      <LI><A href="#gzf">Ghidra Zip File (GZF)</A></LI>
+      
+      <LI><A href="#gdt">Ghidra Data Type Archive File (GDT)</a></LI>
 
       <LI><A href="#html">HTML</A></LI>
 
       <LI><A href="#intel_hex">Intel Hex</A></LI>
+      
+      <LI><A href="#original_file">Original File</A></LI>
+      
+      <LI><A href="#binary">Raw Bytes</A></LI>
 
       <LI><A href="#xml">XML Export Format</A></LI>
     </UL>
@@ -56,6 +60,16 @@
 
           <LI>Press the <B>OK</B> button to perform the export.</LI>
         </UL>
+        
+        <P><I><IMG src="help/shared/note.png"> In preparation for a file export, a selected project
+        file may be opened in an attempt to support export formats that require an open
+        file.  If the selected file requires an upgrade a warning dialog
+        will be displayed and the affected export formats will not be available until an upgrade 
+        is perfored, however a direct packed format of the project file may still be chosen
+        without performing the upgrade first (e.g., <A href="#gzf">Ghidra Zip File (GZF)</A>,
+        <A href="#gzf">Ghidra Zip File (GZF)</A>).
+	  	</P>
+	  
       </BLOCKQUOTE>
 
       <H3>To export from the CodeBrowser tool:</H3>
@@ -67,7 +81,7 @@
           <LI>Make sure the program to export is the currently open program in the CodeBrowser
           tool.</LI>
 
-          <LI>Invoke the action from the <B>File<IMG src="../../shared/arrow.gif" alt="">Export
+          <LI>Invoke the action from the <B>File<IMG src="help/shared/arrow.gif" alt="">Export
           File...</B> menu item.</LI>
 
           <LI>Use the <A href="#Exporter_Dialog">Exporter Dialog</A> that appears to configure the
@@ -232,21 +246,10 @@
               <P>The text-fields in this panel specify the width, in number of characters, to use
               when displaying program elements in the output file.</P>
 
-              <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Setting a width to zero (0)
+              <P><IMG alt="" border="0" src="help/shared/note.png"> <I>Setting a width to zero (0)
               effectively excludes it from the output file.</I></P>
             </BLOCKQUOTE>
           </BLOCKQUOTE>
-        </BLOCKQUOTE>
-
-        <H3><A name="binary"><A name="Options_Binary"/></A>Binary</H3>
-
-        <BLOCKQUOTE>
-          <P>Creates a binary file containing only the bytes from each memory block in the program.
-          If the program was originally created using the <B>Binary Importer</B>, then this
-          exporter allows recreation of the original file.</P>
-
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Only initialized memory blocks
-          are included in the output file.</I></P>
         </BLOCKQUOTE>
 
         <H3><A name="c_cpp"/><A name="Options_C_C__""/>C/C++</H3>
@@ -284,27 +287,29 @@
             </LI>
           </UL>
         </BLOCKQUOTE>
-        
-        <H3><A name="elf"></A>ELF</H3>
+
+        <H3><A name="gzf"/>Ghidra Zip File (GZF)</H3>
 
         <BLOCKQUOTE>
-          <P>Writes an ELF program that was imported with the ELF loader back to its original file 
-          layout. Any file-backed bytes that were modified by the user in the program database will 
-          be reflected in the new file.</P>
-
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
-          Map is not supported. </I></P>
-          
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
-          restored to their original values, even if the user modifies them.</I></P>
-        </BLOCKQUOTE>
-
-        <H3><A name="gzf"></A>Ghidra Zip File (.gzf)</H3>
-
-        <BLOCKQUOTE>
-          <P>Creates a zip file from a program in your project. You may want to create a zip file
+          <P>Creates a GZF file from a Program in your project. You may want to create a GZF file
           so that you can give it to another user who can then <A href=
-          "help/topics/ImporterPlugin/importer.htm">import</A> into their project.</P>
+          "help/topics/ImporterPlugin/importer.htm">import</A> into their project.  A program
+          export of this format from the Project Window will be based on the current saved file
+          content and bypass any potential upgrade that may be required by other formats.
+          </P>
+        </BLOCKQUOTE>
+        
+        <H3><A name="gdt"/>Ghidra Data Type Archive File (GDT)</H3>
+
+        <BLOCKQUOTE>
+          <P>Creates a GDT file from a Data Type Archive in your project. You may want to create a GDT file
+          so that you can give it to another user who can then <A href=
+          "help/topics/ImporterPlugin/importer.htm">import</A> into their project or open directly
+          via the Data Type Manager as a 
+          <A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Open_File_Data_Type_Archive">File Data Type Archive</A>.
+          A project Data Type Archive export of this format from the Project Window will be based on 
+          the current saved file content and bypass any potential upgrade that may be required by other formats.
+          </P>
         </BLOCKQUOTE>
 
         <H3><A name="html"/><A name="Options_HTML"/>HTML</H3>
@@ -317,11 +322,11 @@
           fields to be color-matched to those in the Code Browser. The hyper-linking allows
           navigation similar to that supported in the Code Browser.</P>
 
-          <P><I><IMG alt="" border="0" src="../../shared/note.png"> The HTML Options are identical
+          <P><I><IMG alt="" border="0" src="help/shared/note.png"> The HTML Options are identical
           the <A href="#ascii_options">ASCII Options</A>.</I></P>
         </BLOCKQUOTE>
 
-        <H3><A name="intel_hex"><A name="Options_Intel_Hex"/></A>Intel Hex</H3>
+        <H3><A name="intel_hex"/><A name="Options_Intel_Hex"/>Intel Hex</H3>
 
         <BLOCKQUOTE>
           <P>The Intel Hex format, a printable file representing memory images, was originally
@@ -345,18 +350,57 @@
           </UL>
         </BLOCKQUOTE>
         
-        <H3><A name="pe"></A>PE</H3>
+        <H3><A name="original_file"/><A name="Options_Original_File"/>Original File</H3>
 
         <BLOCKQUOTE>
-          <P>Writes a PE program that was imported with the PE loader back to its original file 
-          layout. Any file-backed bytes that were modified by the user in the program database will 
-          be reflected in the new file.</P>
+          <P>Writes a program back to its original file layout. By default, any file-backed bytes 
+          that were modified by the user in the program database will be reflected in the new file.
+          Optionally, the program can be written back to its unmodified file bytes, discarding all
+          user modifications.
+          </P>
+          
+          <H4>Original File Options</H4>
 
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          <UL>
+            <LI><B>Export User Byte Modifications</B> - If checked, user byte modifications are
+            preserved in the exported file. If unchecked, no user byte modifications are preserved
+            and the exported file will exactly match the file that was originally imported.</LI>
+          </UL>
+          <UL>
+            <LI><B>Save Multiple File Sources To Directory</B> - If checked, the destination file 
+            will be treated as a directory. Each file source from the program will be saved to this
+            newly created directory with names of the form &lt;directory&gt;.0, &lt;directory&gt;.1,
+            etc. If the program contains multiple file sources and this option is not checked, only 
+            the primary (first) file source will saved to the specified destination file.</LI>
+          </UL>
+          
+          <P><IMG alt="" border="0" src="help/shared/note.png"> <I>This exporter is only
+          operational when the program has at least one file-backed byte source.  This will be 
+          reflected in the <A href="help/topics/MemoryMapPlugin/Memory_Map.htm">Memory Map's</A> 
+          Byte Source column, which entries that begin with <B>File:</B></I></P>
+
+          <P><IMG alt="" border="0" src="help/shared/note.png"> <I>Writing back a modified Memory 
           Map is not supported. </I></P>
           
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
+          <P><IMG alt="" border="0" src="help/shared/note.png"> <I>Relocation bytes are always
           restored to their original values, even if the user modifies them.</I></P>
+          
+          <P><IMG alt="" border="0" src="help/shared/warning.png"> <I>Programs written to disk with
+          this exporter may be runnable on your native platform.  Use caution when exporting 
+          potentially malicious programs.</I></P>
+        </BLOCKQUOTE>
+        
+        <H3><A name="binary"/><A name="Options_Binary"/></A>Raw Bytes</H3>
+
+        <BLOCKQUOTE>
+          <P>Creates a binary file containing only the raw bytes from each memory block in the 
+          program. If there are multiple memory blocks, their bytes will be concatenated in the 
+          exported binary file.  If the program was originally created using the <B>Binary 
+          Importer</B> and there is only one memory block, then this exporter allows recreation of 
+          the original file.</P>
+
+          <P><IMG alt="" border="0" src="help/shared/note.png"> <I>Only initialized memory blocks
+          are included in the output file.</I></P>
         </BLOCKQUOTE>
 
         <H3><A name="xml"/><A name="Options_XML"/>XML</H3>
@@ -366,7 +410,7 @@
           re-import files in this format using the <A href=
           "help/topics/ImporterPlugin/importer.htm">XML Importer</A>.</P>
 
-          <P><A name="xml_options"></A> <I><IMG alt="" border="0" src="../../shared/note.png">The
+          <P><A name="xml_options"></A> <I><IMG alt="" border="0" src="help/shared/note.png">The
           XML Options are identical the <A href=
           "help/topics/ImporterPlugin/importer.htm#xml_options">XML Importer Options</A>.</I></P>
         </BLOCKQUOTE>

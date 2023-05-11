@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,10 +73,8 @@ public class DataTypeManagerHandler {
 	private Set<String> knownOpenFileArchiveNames = new HashSet<>();
 	private Map<UniversalID, InvalidFileArchive> invalidArchives = new HashMap<>();
 
-	private DataTreeDialog dataTreeSaveDialog;
-	private CreateDataTypeArchiveDataTreeDialog dataTreeCreateDialog;
 	private boolean treeDialogCancelled = false;
-	private DomainFileFilter domainFileFilter;
+	private DomainFileFilter createArchiveFileFilter;
 
 	private DataTypeIndexer dataTypeIndexer;
 	private List<ArchiveManagerListener> archiveManagerlisteners = new ArrayList<>();
@@ -102,9 +100,17 @@ public class DataTypeManagerHandler {
 		dataTypeIndexer.addDataTypeManager(builtInDataTypesManager);
 		openArchives.add(new BuiltInArchive(this, builtInDataTypesManager));
 
-		domainFileFilter = f -> {
-			Class<?> c = f.getDomainObjectClass();
-			return DataTypeArchive.class.isAssignableFrom(c);
+		createArchiveFileFilter = new DomainFileFilter() {
+
+			@Override
+			public boolean accept(DomainFile df) {
+				return DataTypeArchive.class.isAssignableFrom(df.getDomainObjectClass());
+			}
+
+			@Override
+			public boolean followLinkedFolders() {
+				return false;
+			}
 		};
 
 		folderListener = new MyFolderListener();
@@ -431,12 +437,13 @@ public class DataTypeManagerHandler {
 		return openArchive(new ResourceFile(file), acquireWriteLock, isUserAction);
 	}
 
-	public Archive openArchive(ResourceFile file, boolean acquireWriteLock, boolean isUserAction)
+	public FileArchive openArchive(ResourceFile file, boolean acquireWriteLock,
+			boolean isUserAction)
 			throws IOException, DuplicateIdException {
 
 		file = file.getCanonicalFile();
 
-		Archive archive = getArchiveForFile(file);
+		FileArchive archive = getArchiveForFile(file);
 		if (archive == null) {
 			archive = new FileArchive(this, file, acquireWriteLock);
 			Archive existingArchive =
@@ -445,11 +452,10 @@ public class DataTypeManagerHandler {
 				archive.close();
 				throw new DuplicateIdException(archive.getName(), existingArchive.getName());
 			}
-
 			addArchivePath(file);
 			addArchive(archive);
 		}
-		if (isUserAction && (archive instanceof FileArchive)) {
+		if (isUserAction) {
 			userOpenedFileArchiveNames.add(getSaveableArchive(file.getAbsolutePath()));
 		}
 		return archive;
@@ -518,7 +524,7 @@ public class DataTypeManagerHandler {
 		return null;
 	}
 
-	private Archive getArchiveForFile(ResourceFile file) {
+	private FileArchive getArchiveForFile(ResourceFile file) {
 		for (Archive archive : openArchives) {
 			if (archive instanceof FileArchive) {
 				FileArchive fileArchive = (FileArchive) archive;
@@ -1224,6 +1230,13 @@ public class DataTypeManagerHandler {
 				listener.sourceArchiveChanged(dataTypeManager, dataTypeSource);
 			}
 		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			for (DataTypeManagerChangeListener listener : dataTypeManagerListeners) {
+				listener.programArchitectureChanged(dataTypeManager);
+			}
+		}
 	}
 
 	/**
@@ -1329,7 +1342,7 @@ public class DataTypeManagerHandler {
 			StringBuilder buf = new StringBuilder();
 			buf.append("The " + CONTENT_NAME + " is currently being modified by \n");
 			buf.append("the following actions:\n ");
-			Transaction t = undoableDomainObject.getCurrentTransaction();
+			TransactionInfo t = undoableDomainObject.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
 			while (it.hasNext()) {
@@ -1363,7 +1376,7 @@ public class DataTypeManagerHandler {
 			StringBuffer buf = new StringBuffer();
 			buf.append("The " + CONTENT_NAME +
 				" is currently being modified by the following actions/tasks:\n \n");
-			Transaction t = undoableDomainObject.getCurrentTransaction();
+			TransactionInfo t = undoableDomainObject.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
 			while (it.hasNext()) {
@@ -1401,77 +1414,74 @@ public class DataTypeManagerHandler {
 	}
 
 	private DataTreeDialog getSaveDialog() {
-		if (dataTreeSaveDialog == null) {
+		DataTreeDialog dialog =
+			new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, createArchiveFileFilter);
 
-			ActionListener listener = event -> {
-				DomainFolder folder = dataTreeSaveDialog.getDomainFolder();
-				String newName = dataTreeSaveDialog.getNameText();
-				if (newName.length() == 0) {
-					dataTreeSaveDialog.setStatusText("Please enter a name");
-					return;
-				}
-				else if (folder == null) {
-					dataTreeSaveDialog.setStatusText("Please select a folder");
-					return;
-				}
+		ActionListener listener = event -> {
+			DomainFolder folder = dialog.getDomainFolder();
+			String newName = dialog.getNameText();
+			if (newName.length() == 0) {
+				dialog.setStatusText("Please enter a name");
+				return;
+			}
+			else if (folder == null) {
+				dialog.setStatusText("Please select a folder");
+				return;
+			}
 
-				DomainFile file = folder.getFile(newName);
-				if (file != null && file.isReadOnly()) {
-					dataTreeSaveDialog.setStatusText("Read Only.  Choose new name/folder");
-				}
-				else {
-					dataTreeSaveDialog.close();
-					treeDialogCancelled = false;
-				}
-			};
-			dataTreeSaveDialog =
-				new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
+			DomainFile file = folder.getFile(newName);
+			if (file != null && file.isReadOnly()) {
+				dialog.setStatusText("Read Only.  Choose new name/folder");
+			}
+			else {
+				dialog.close();
+				treeDialogCancelled = false;
+			}
+		};
 
-			dataTreeSaveDialog.addOkActionListener(listener);
-			dataTreeSaveDialog
-					.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
-		}
-		return dataTreeSaveDialog;
+		dialog.addOkActionListener(listener);
+		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
+		return dialog;
 	}
 
 	private CreateDataTypeArchiveDataTreeDialog getCreateDialog() {
-		if (dataTreeCreateDialog == null) {
 
-			ActionListener listener = event -> {
-				DomainFolder folder = dataTreeCreateDialog.getDomainFolder();
-				String newName = dataTreeCreateDialog.getNameText();
-				if (newName.length() == 0) {
-					dataTreeCreateDialog.setStatusText("Please enter a name");
-					return;
-				}
-				else if (folder == null) {
-					dataTreeCreateDialog.setStatusText("Please select a folder");
-					return;
-				}
+		CreateDataTypeArchiveDataTreeDialog dialog =
+			new CreateDataTypeArchiveDataTreeDialog(null, "Create",
+				DataTreeDialog.CREATE, createArchiveFileFilter);
 
-				DomainFile file = folder.getFile(newName);
-				if (file != null) {
-					dataTreeCreateDialog.setStatusText("Choose a name that doesn't exist.");
-					return;
-				}
+		ActionListener listener = event -> {
+			DomainFolder folder = dialog.getDomainFolder();
+			String newName = dialog.getNameText();
+			if (newName.length() == 0) {
+				dialog.setStatusText("Please enter a name");
+				return;
+			}
+			else if (folder == null) {
+				dialog.setStatusText("Please select a folder");
+				return;
+			}
 
-				if (!dataTreeCreateDialog.createNewDataTypeArchive()) {
-					return;
-				}
+			DomainFile file = folder.getFile(newName);
+			if (file != null) {
+				dialog.setStatusText("Choose a name that doesn't exist.");
+				return;
+			}
 
-				// everything is OK
-				dataTreeCreateDialog.close();
-				treeDialogCancelled = false;
-			};
+			if (!dialog.createNewDataTypeArchive()) {
+				return;
+			}
 
-			dataTreeCreateDialog = new CreateDataTypeArchiveDataTreeDialog(null, "Create",
-				DataTreeDialog.CREATE, domainFileFilter);
+			// everything is OK
+			dialog.close();
+			treeDialogCancelled = false;
+		};
 
-			dataTreeCreateDialog.addOkActionListener(listener);
-			dataTreeCreateDialog.setHelpLocation(
-				new HelpLocation(HelpTopics.DATA_MANAGER, "Create_Data_Type_Archive"));
-		}
-		return dataTreeCreateDialog;
+		dialog.addOkActionListener(listener);
+		dialog.setHelpLocation(
+			new HelpLocation(HelpTopics.DATA_MANAGER, "Create_Data_Type_Archive"));
+
+		return dialog;
 	}
 
 	public DataTypeManager getDataTypeManager(SourceArchive source) {
@@ -1512,14 +1522,14 @@ public class DataTypeManagerHandler {
 				return true;
 			}
 			catch (DuplicateNameException e) {
-				dataTreeCreateDialog.setStatusText("Duplicate Name: " + e.getMessage());
+				setStatusText("Duplicate Name: " + e.getMessage());
 			}
 			catch (InvalidNameException e) {
-				dataTreeCreateDialog.setStatusText("Invalid Name: " + e.getMessage());
+				setStatusText("Invalid Name: " + e.getMessage());
 			}
 			catch (IOException e) {
-				dataTreeCreateDialog.setStatusText("Unexpected IOException!");
-				Msg.showError(null, dataTreeCreateDialog.getComponent(), "Unexpected Exception",
+				setStatusText("Unexpected IOException!");
+				Msg.showError(null, getComponent(), "Unexpected Exception",
 					e.getMessage(), e);
 			}
 

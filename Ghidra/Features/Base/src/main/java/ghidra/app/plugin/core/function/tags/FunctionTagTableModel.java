@@ -58,7 +58,7 @@ public class FunctionTagTableModel extends ThreadedTableModel<FunctionTagRowObje
 		Set<FunctionTag> tags = tagListPanel.backgroundLoadTags();
 		monitor.initialize(tags.size());
 		for (FunctionTag tag : tags) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			accumulator.add(new FunctionTagRowObject(tag, tagManager.getUseCount(tag)));
 			monitor.incrementProgress(1);
 		}

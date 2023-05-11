@@ -286,7 +286,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 			program.endTransaction(transactionID, true);
 		}
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 
 		setBooleanOption(PostCommentFieldFactory.FLAG_FUNCTION_EXIT_OPTION, true);
@@ -1101,19 +1101,19 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 
 	private void setFieldWidth(final FieldFactory fieldFactory, final int width) throws Exception {
 		SwingUtilities.invokeAndWait(() -> fieldFactory.setWidth(width));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 	}
 
 	private void setBooleanOption(final String name, final boolean value) throws Exception {
 		SwingUtilities.invokeAndWait(() -> fieldOptions.setBoolean(name, value));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 	}
 
 	private void setIntOption(final String name, final int value) throws Exception {
 		SwingUtilities.invokeAndWait(() -> fieldOptions.setInt(name, value));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		cb.updateNow();
 	}
 

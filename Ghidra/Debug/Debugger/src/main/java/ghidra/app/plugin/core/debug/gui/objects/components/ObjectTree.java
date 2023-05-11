@@ -16,13 +16,11 @@
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
 import java.awt.Point;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
+import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreePath;
@@ -33,6 +31,7 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.async.AsyncUtils;
@@ -40,53 +39,46 @@ import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.TargetAccessConditioned;
 import ghidra.dbg.target.TargetObject;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 public class ObjectTree implements ObjectPane {
 
-	public static final ImageIcon ICON_TREE =
-		ResourceManager.loadImage("images/object-unpopulated.png");
+	public static final Icon ICON_TREE = new GIcon("icon.debugger.tree.object");
 
-	private ObjectNode root;
-	private GTree tree;
+	private static class MyGTree extends GTree {
+		public MyGTree(GTreeNode root) {
+			super(root);
+			getJTree().setToggleClickCount(0);
+		}
+
+		private JTree tree() {
+			return getJTree();
+		}
+	}
+
+	private final ObjectNode root;
+	private final MyGTree tree;
+
+	private final Map<String, ObjectNode> nodeMap = new LinkedHashMap<>();
+	private final SwingUpdateManager restoreTreeStateManager =
+		new SwingUpdateManager(this::restoreTreeState);
+
 	private TreePath[] currentSelectionPaths;
 	private List<TreePath> currentExpandedPaths;
 	private Point currentViewPosition;
 
-	private Map<String, ObjectNode> nodeMap = new LinkedHashMap<>();
-	private SwingUpdateManager restoreTreeStateManager =
-		new SwingUpdateManager(this::restoreTreeState);
-
 	public ObjectTree(ObjectContainer container) {
 		this.root = new ObjectNode(this, null, container);
 		addToMap(null, container, root);
-		this.tree = new GTree(root);
+		this.tree = new MyGTree(root);
 
 		tree.addGTreeSelectionListener(new GTreeSelectionListener() {
 			@Override
 			public void valueChanged(GTreeSelectionEvent e) {
 				DebuggerObjectsProvider provider = container.getProvider();
 				provider.updateActions(container);
-				TreePath path = e.getPath();
-				Object last = path.getLastPathComponent();
-				if (!(last instanceof ObjectNode)) {
-					throw new RuntimeException("Path terminating in non-ObjectNode");
-				}
-				ObjectNode node = (ObjectNode) last;
-				TargetObject targetObject = node.getTargetObject();
-				if (targetObject != null && !(targetObject instanceof DummyTargetObject) &&
-					e.getEventOrigin().equals(EventOrigin.USER_GENERATED)) {
-					DebugModelConventions.requestActivation(targetObject).exceptionally(ex -> {
-						Msg.error(this, "Could not activate " + targetObject, ex);
-						return null;
-					});
-					DebugModelConventions.requestFocus(targetObject).exceptionally(ex -> {
-						Msg.error(this, "Could not focus " + targetObject, ex);
-						return null;
-					});
-				}
 				provider.getTool().contextChanged(provider);
 				if (e.getEventOrigin() == EventOrigin.INTERNAL_GENERATED) {
 					restoreTreeStateManager.updateLater();
@@ -118,16 +110,11 @@ public class ObjectTree implements ObjectPane {
 			}
 		});
 		tree.setCellRenderer(new ObjectTreeCellRenderer(root.getProvider()));
-		tree.setDataTransformer(new FilterTransformer<GTreeNode>() {
-
-			@Override
-			public List<String> transform(GTreeNode t) {
-				if (t instanceof ObjectNode) {
-					ObjectNode node = (ObjectNode) t;
-					return List.of(node.getContainer().getDecoratedName());
-				}
-				return null;
+		tree.setDataTransformer(t -> {
+			if (t instanceof ObjectNode node) {
+				return List.of(node.getContainer().getDecoratedName());
 			}
+			return null;
 		});
 		tree.addTreeExpansionListener(new TreeExpansionListener() {
 
@@ -135,8 +122,7 @@ public class ObjectTree implements ObjectPane {
 			public void treeExpanded(TreeExpansionEvent event) {
 				TreePath expandedPath = event.getPath();
 				Object last = expandedPath.getLastPathComponent();
-				if (last instanceof ObjectNode) {
-					ObjectNode node = (ObjectNode) last;
+				if (last instanceof ObjectNode node) {
 					node.markExpanded();
 					currentExpandedPaths = tree.getExpandedPaths();
 				}
@@ -146,8 +132,7 @@ public class ObjectTree implements ObjectPane {
 			public void treeCollapsed(TreeExpansionEvent event) {
 				TreePath collapsedPath = event.getPath();
 				Object last = collapsedPath.getLastPathComponent();
-				if (last instanceof ObjectNode) {
-					ObjectNode node = (ObjectNode) last;
+				if (last instanceof ObjectNode node) {
 					node.markCollapsed();
 					currentExpandedPaths = tree.getExpandedPaths();
 				}
@@ -157,17 +142,44 @@ public class ObjectTree implements ObjectPane {
 		tree.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-					TargetObject selectedObject = getSelectedObject();
-					if (selectedObject != null) {
-						container.getProvider().navigateToSelectedObject(selectedObject, null);
-					}
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					activateOrNavigateSelectedObject();
+				}
+			}
+		});
+		tree.tree().addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					activateOrNavigateSelectedObject();
+					e.consume();
 				}
 			}
 		});
 
 		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		tree.setSelectedNode(root);
+	}
+
+	private void activateOrNavigateSelectedObject() {
+		TargetObject object = getSelectedObject();
+		if (object == null) {
+			return;
+		}
+		if (getProvider().navigateToSelectedObject(object, null) != null) {
+			return;
+		}
+		if (object instanceof DummyTargetObject) {
+			return;
+		}
+		DebugModelConventions.requestActivation(object).exceptionally(ex -> {
+			Msg.error(this, "Could not activate " + object, ex);
+			return null;
+		});
+		/*DebugModelConventions.requestFocus(object).exceptionally(ex -> {
+			Msg.error(this, "Could not focus " + object, ex);
+			return null;
+		});*/
 	}
 
 	@Override
@@ -192,8 +204,8 @@ public class ObjectTree implements ObjectPane {
 		}
 		if (path != null) {
 			Object last = path.getLastPathComponent();
-			if (last instanceof ObjectNode) {
-				return ((ObjectNode) last).getContainer().getTargetObject();
+			if (last instanceof ObjectNode node) {
+				return node.getContainer().getTargetObject();
 			}
 		}
 		return null;
@@ -307,8 +319,7 @@ public class ObjectTree implements ObjectPane {
 		for (TreePath path : expandedPaths) {
 			Object[] objs = path.getPath();
 			for (int i = 0; i < objs.length - 2; i++) {
-				if (objs[i] instanceof ObjectNode) {
-					ObjectNode node = (ObjectNode) objs[i];
+				if (objs[i] instanceof ObjectNode node) {
 					if (!node.isLoaded()) {
 						return false;
 					}
@@ -329,7 +340,7 @@ public class ObjectTree implements ObjectPane {
 		}
 
 		Set<ObjectContainer> currentChildren = container.getCurrentChildren();
-		List<GTreeNode> childList = new ArrayList<GTreeNode>();
+		List<GTreeNode> childList = new ArrayList<>();
 
 		node.setRestructured(false);
 		for (ObjectContainer c : currentChildren) {
@@ -364,6 +375,14 @@ public class ObjectTree implements ObjectPane {
 	public void setFocus(TargetObject object, TargetObject focused) {
 		Swing.runIfSwingOrRunLater(() -> {
 			List<String> path = focused.getPath();
+			tree.setSelectedNodeByNamePath(addRootNameToPath(path));
+		});
+	}
+
+	@Override
+	public void setSelectedObject(TargetObject object) {
+		Swing.runIfSwingOrRunLater(() -> {
+			List<String> path = object.getPath();
 			tree.setSelectedNodeByNamePath(addRootNameToPath(path));
 		});
 	}
@@ -404,7 +423,6 @@ public class ObjectTree implements ObjectPane {
 		DebuggerObjectsProvider provider = getProvider();
 		ObjectContainer oc = node.getContainer();
 		provider.deleteFromMap(oc);
-		oc.getTargetObject().removeListener(provider.getListener());
 		nodeMap.remove(path(node.getContainer()));
 	}
 

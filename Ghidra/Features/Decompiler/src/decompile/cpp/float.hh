@@ -16,10 +16,12 @@
 /// \file float.hh
 /// \brief Support for decoding different floating-point formats
 
-#ifndef __CPUI_FLOATFORMAT__
-#define __CPUI_FLOATFORMAT__
+#ifndef __FLOAT_HH__
+#define __FLOAT_HH__
 
 #include "xml.hh"
+
+namespace ghidra {
 
 /// \brief Encoding information for a single floating-point format
 ///
@@ -96,4 +98,5 @@ public:
   void restoreXml(const Element *el);			///< Restore the format from XML
 };
 
+} // End namespace ghidra
 #endif

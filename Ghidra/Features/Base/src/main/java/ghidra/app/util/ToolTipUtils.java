@@ -23,8 +23,9 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.html.*;
-import ghidra.app.util.viewer.options.OptionsGui;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -41,12 +42,6 @@ import ghidra.util.StringUtilities;
  * @since Tracker Id 616
  */
 public class ToolTipUtils {
-
-	private static final Color PARAM_NAME_COLOR = new Color(155, 50, 155);
-	private static final Color PARAM_CUSTOM_STORAGE_COLOR =
-		OptionsGui.PARAMETER_CUSTOM.getDefaultColor();
-	private static final Color PARAM_DYNAMIC_STORAGE_COLOR =
-		OptionsGui.PARAMETER_DYNAMIC.getDefaultColor();
 
 	private static final String ELLIPSES = "...";
 	public static final int LINE_LENGTH = 80;
@@ -162,7 +157,7 @@ public class ToolTipUtils {
 			dt = DataType.DEFAULT;
 		}
 
-		buf.append(colorString(Color.BLACK, friendlyEncodeHTML(dt.getName())));
+		buf.append(colorString(Colors.FOREGROUND, friendlyEncodeHTML(dt.getName())));
 		buf.append(HTML_SPACE);
 		buf.append(friendlyEncodeHTML(s.getName()));
 
@@ -256,7 +251,7 @@ public class ToolTipUtils {
 		StringBuilder buf = new StringBuilder();
 		buf.append("<tr><td width=10>&nbsp;</td>"); // indent
 		buf.append("<td width=\"1%\">");
-		buf.append(colorString(Color.BLACK, friendlyEncodeHTML(type)));
+		buf.append(colorString(Colors.FOREGROUND, friendlyEncodeHTML(type)));
 		buf.append("</td><td width=\"1%\">");
 
 		boolean usesCustomStorage = false;
@@ -266,11 +261,11 @@ public class ToolTipUtils {
 		}
 
 		Color paramColor =
-			usesCustomStorage ? PARAM_CUSTOM_STORAGE_COLOR : PARAM_DYNAMIC_STORAGE_COLOR;
+			usesCustomStorage ? FunctionColors.PARAM_CUSTOM : FunctionColors.PARAM_DYNAMIC;
 		buf.append(
 			colorString(paramColor, friendlyEncodeHTML(param.getVariableStorage().toString())));
 		buf.append("</td><td width=\"1%\">");
-		buf.append(colorString(PARAM_NAME_COLOR, friendlyEncodeHTML(name)));
+		buf.append(colorString(FunctionColors.PARAM, friendlyEncodeHTML(name)));
 
 		// consume remaining space and compact other columns
 		buf.append("</td><td width=\"100%\">&nbsp;</td></tr>");
@@ -294,27 +289,27 @@ public class ToolTipUtils {
 		}
 		buffy.append(friendlyEncodeHTML(function.getReturnType().getName()));
 		buffy.append(HTML_SPACE);
-		PrototypeModel callingConvention = function.getCallingConvention();
-		if (isNonDefaultCallingConvention(callingConvention)) {
-			buffy.append(friendlyEncodeHTML(callingConvention.getName()));
+		
+		String callingConvention = function.getCallingConventionName();
+		if (callingConvention.equals(Function.DEFAULT_CALLING_CONVENTION_STRING)) {
+			callingConvention = function.getCallingConvention().getName();
+		}
+		if (!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
+			String ccHtml = friendlyEncodeHTML(callingConvention);
+			if (function.hasUnknownCallingConventionName()) {
+				ccHtml = colorString(Color.RED, ccHtml);
+			}
+			buffy.append(ccHtml);
 			buffy.append(HTML_SPACE);
 		}
-
+		
 		String functionName = StringUtilities.trimMiddle(function.getName(), LINE_LENGTH);
-		buffy.append(colorString(Color.BLUE, friendlyEncodeHTML(functionName)));
+		buffy.append(colorString(FunctionColors.NAME, friendlyEncodeHTML(functionName)));
 		buffy.append(HTML_SPACE).append("(");
 
 		buildParameterPreview(function, buffy);
 
 		return buffy.toString();
-	}
-
-	private static boolean isNonDefaultCallingConvention(PrototypeModel callingConvention) {
-		if (callingConvention == null) {
-			return false;
-		}
-
-		return !Function.DEFAULT_CALLING_CONVENTION_STRING.equals(callingConvention.getName());
 	}
 
 	private static void buildParameterPreview(Function function, StringBuilder buffy) {
@@ -399,10 +394,10 @@ public class ToolTipUtils {
 		}
 
 		StringBuilder pb = new StringBuilder();
-		pb.append(colorString(Color.BLACK, friendlyEncodeHTML(type)));
+		pb.append(colorString(Colors.FOREGROUND, friendlyEncodeHTML(type)));
 		pb.append(HTML_SPACE);
 
-		pb.append(colorString(PARAM_NAME_COLOR, friendlyEncodeHTML(name)));
+		pb.append(colorString(FunctionColors.NAME, friendlyEncodeHTML(name)));
 		params.add(pb.toString());
 		return rawTextLength;
 	}

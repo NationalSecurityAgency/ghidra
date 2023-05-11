@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.ReferenceType;
 
 import ghidra.async.AsyncFence;
-import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 
@@ -46,7 +46,7 @@ public class JdiModelTargetClassContainer extends JdiModelTargetObjectImpl {
 		super(vm, "Classes");
 		this.vm = vm;
 
-		requestElements(true);
+		requestElements(RefreshBehavior.REFRESH_ALWAYS);
 	}
 
 	protected CompletableFuture<Void> updateUsingClasses(Map<String, ReferenceType> byName) {
@@ -65,7 +65,7 @@ public class JdiModelTargetClassContainer extends JdiModelTargetObjectImpl {
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		// Ignore 'refresh' because inferior.getKnownModules may exclude executable
 		return doRefresh();
 	}
@@ -90,9 +90,6 @@ public class JdiModelTargetClassContainer extends JdiModelTargetObjectImpl {
 	}
 
 	public CompletableFuture<?> refreshInternal() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
 		return doRefresh().exceptionally(ex -> {
 			Msg.error(this, "Problem refreshing vm's classes", ex);
 			return null;

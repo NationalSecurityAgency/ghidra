@@ -56,6 +56,10 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	public ArrayDataType(DataType dataType, int numElements, int elementLength,
 			DataTypeManager dtm) {
 		super(dataType.getCategoryPath(), "array", dtm);
+		if (dataType instanceof FactoryDataType) {
+			throw new IllegalArgumentException(
+				"Factory data type not permitted");
+		}
 		if (numElements < 0) {
 			throw new IllegalArgumentException(
 				"Number of array elements may not be negative [" + numElements + "]");
@@ -74,6 +78,9 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 						dataType.getClass().getSimpleName());
 			}
 			this.elementLength = elementLength;
+		}
+		else {
+			this.elementLength = dataType.getAlignedLength();
 		}
 		this.dataType = dataType;
 		this.numElements = numElements;
@@ -169,6 +176,11 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getLength();
+	}
+
+	@Override
 	public String getDescription() {
 		return "Array of " + dataType.getDisplayName();
 	}
@@ -193,7 +205,8 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
-		if (dt == dataType) {
+		if (dt == dataType && dt.getLength() > 0) {
+			elementLength = dataType.getAlignedLength();
 			notifySizeChanged();
 		}
 	}
@@ -217,7 +230,7 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 
 	@Override
 	public int getElementLength() {
-		return (dataType instanceof Dynamic) ? elementLength : dataType.getLength();
+		return elementLength;
 	}
 
 	@Override
@@ -246,7 +259,9 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 			dataType.removeParent(this);
 			dataType = newDt;
 			dataType.addParent(this);
-			elementLength = newDt.getLength() < 0 ? oldElementLength : -1;
+			if (dataType.getLength() >= 0) {
+				elementLength = dataType.getAlignedLength();
+			}
 			if (!getName().equals(oldName)) {
 				notifyNameChanged(oldName);
 			}

@@ -19,9 +19,10 @@ import java.awt.*;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import generic.theme.Gui;
+import ghidra.app.util.ListingHighlightProvider;
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -39,24 +40,22 @@ import ghidra.util.classfinder.ExtensionPoint;
  */
 public abstract class FieldFactory implements ExtensionPoint {
 	public static final String FONT_OPTION_NAME = "BASE FONT";
-	public static final Font DEFAULT_FIELD_FONT = new Font("monospaced", Font.PLAIN, 12);
+	public static final String BASE_LISTING_FONT_ID = "font.listing.base";
 
 	protected FieldFormatModel model;
 	protected String name;
 	protected int startX;
 	protected int width;
-	protected Color color;
-	protected Color underlineColor = Color.BLUE;
 	private FontMetrics defaultMetrics;
 	private FontMetrics[] fontMetrics = new FontMetrics[4];
 	protected Font baseFont;
 	protected int style = -1;
 	protected boolean enabled = true;
-	protected HighlightProvider hlProvider;
+	protected ListingHighlightProvider hlProvider;
 
 	protected String colorOptionName;
 	protected String styleOptionName;
-	protected Options displayOptions;
+	private TemplateSimplifier templateSimplifier;
 
 	/**
 	 * Base constructor
@@ -66,7 +65,8 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	protected FieldFactory(String name, FieldFormatModel model, HighlightProvider highlightProvider,
+	protected FieldFactory(String name, FieldFormatModel model,
+			ListingHighlightProvider highlightProvider,
 			Options displayOptions, Options fieldOptions) {
 		this.name = name;
 		this.model = model;
@@ -75,28 +75,24 @@ public abstract class FieldFactory implements ExtensionPoint {
 		styleOptionName = name + " Style";
 
 		width = 100;
+		templateSimplifier = model.getFormatManager().getTemplateSimplifier();
+		initDisplayOptions(displayOptions);
+		initFieldOptions(fieldOptions);
+	}
 
-		this.displayOptions = displayOptions;
-		initDisplayOptions();
-
+	protected void initFieldOptions(Options fieldOptions) {
 		fieldOptions.getOptions(name)
 				.setOptionsHelpLocation(new HelpLocation("CodeBrowserPlugin", name));
 	}
 
-	protected void initDisplayOptions() {
-		baseFont = SystemUtilities.adjustForFontSizeOverride(
-			displayOptions.getFont(FONT_OPTION_NAME, DEFAULT_FIELD_FONT));
+	protected void initDisplayOptions(Options displayOptions) {
+		baseFont = Gui.getFont(BASE_LISTING_FONT_ID);
 		// For most fields (defined in optionsGui) these will be set. But "ad hoc" fields won't,
 		// so register something.  A second registration won't change the original
 
-		displayOptions.registerOption(colorOptionName, Color.BLACK, null,
-			"Sets the " + colorOptionName);
 		displayOptions.registerOption(styleOptionName, -1, null, "Sets the " + style);
 
-		color = displayOptions.getColor(colorOptionName, getDefaultColor());
 		style = displayOptions.getInt(styleOptionName, -1);
-		underlineColor = displayOptions.getColor(OptionsGui.UNDERLINE.getColorOptionName(),
-			OptionsGui.UNDERLINE.getDefaultColor());
 		setMetrics(baseFont);
 	}
 
@@ -106,24 +102,6 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 */
 	public FieldFactory(String name) {
 		this.name = name;
-	}
-
-	/**
-	 * Notification that the Options have changed.
-	 * @param options the Options object that changed. Will be either the display
-	 * options or the field options.
-	 * @param optionName the name of the property that changed.
-	 * @param oldValue the old value of the property.
-	 * @param newValue the new value of the property.
-	 */
-	public void optionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		if (options == displayOptions) {
-			displayOptionsChanged(options, optionName, oldValue, newValue);
-		}
-		else {
-			fieldOptionsChanged(options, optionName, oldValue, newValue);
-		}
 	}
 
 	/**
@@ -144,7 +122,8 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 * @return the factory
 	 */
 	public abstract FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions options, ToolOptions fieldOptions);
+			ListingHighlightProvider highlightProvider, ToolOptions options,
+			ToolOptions fieldOptions);
 
 	/**
 	 * Notifications that the display options changed.
@@ -159,15 +138,9 @@ public abstract class FieldFactory implements ExtensionPoint {
 			baseFont = SystemUtilities.adjustForFontSizeOverride((Font) newValue);
 			setMetrics(baseFont);
 		}
-		else if (optionName.equals(colorOptionName)) {
-			color = (Color) newValue;
-		}
 		else if (optionName.equals(styleOptionName)) {
 			style = options.getInt(optionName, -1);
 			setMetrics(baseFont);
-		}
-		else if (optionName.equals(OptionsGui.UNDERLINE.getColorOptionName())) {
-			underlineColor = (Color) newValue;
 		}
 		model.update();
 	}
@@ -190,14 +163,6 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 */
 	public String getFieldName() {
 		return name;
-	}
-
-	/**
-	 * Returns the default field color.
-	 * @return the color.
-	 */
-	public Color getDefaultColor() {
-		return Color.BLACK;
 	}
 
 	/**
@@ -255,6 +220,19 @@ public abstract class FieldFactory implements ExtensionPoint {
 	public void setEnabled(boolean state) {
 		enabled = state;
 		model.modelChanged();
+	}
+
+	/**
+	 * Returns true if this given field represents the given location
+	 * @param listingField the field
+	 * @param location the location 
+	 * @return true if this given field represents the given location
+	 */
+	public boolean supportsLocation(ListingField listingField, ProgramLocation location) {
+		BigInteger dummyIndex = BigInteger.ZERO;
+		int dummyFieldNumber = 0;
+		FieldLocation f = getFieldLocation(listingField, dummyIndex, dummyFieldNumber, location);
+		return f != null;
 	}
 
 	/**
@@ -349,8 +327,12 @@ public abstract class FieldFactory implements ExtensionPoint {
 	private void setMetrics(Font newFont) {
 		defaultMetrics = Toolkit.getDefaultToolkit().getFontMetrics(newFont);
 		for (int i = 0; i < fontMetrics.length; i++) {
-			Font font = new Font(newFont.getFamily(), i, newFont.getSize());
+			Font font = newFont.deriveFont(i); // i is looping over the 4 font styles PLAIN, BOLD, ITALIC, and BOLDITALIC
 			fontMetrics[i] = Toolkit.getDefaultToolkit().getFontMetrics(font);
 		}
+	}
+
+	protected String simplifyTemplates(String input) {
+		return templateSimplifier.simplify(input);
 	}
 }

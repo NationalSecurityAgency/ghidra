@@ -19,27 +19,19 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.google.common.cache.CacheBuilder;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.util.LockHold;
+import ghidra.util.datastruct.WeakValueHashMap;
 
 public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	// NB. Keep both per-region and force-full (per-space) block sets ready
 	private final Map<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> regionBlocks =
-		CacheBuilder.newBuilder()
-				.removalListener(this::regionBlockRemoved)
-				.weakValues()
-				.build()
-				.asMap();
+		new WeakValueHashMap<>();
 	private final Map<AddressSpace, DBTraceProgramViewMemorySpaceBlock> spaceBlocks =
-		CacheBuilder.newBuilder()
-				.removalListener(this::spaceBlockRemoved)
-				.weakValues()
-				.build()
-				.asMap();
+		new WeakValueHashMap<>();
 
 	public DBTraceProgramViewMemory(DBTraceProgramView program) {
 		super(program);
@@ -76,8 +68,10 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 	@Override
 	protected void recomputeAddressSet() {
 		AddressSet temp = new AddressSet();
-		// TODO: Performance test this
-		forVisibleRegions(reg -> temp.add(reg.getRange()));
+		try (LockHold hold = program.trace.lockRead()) {
+			// TODO: Performance test this
+			forVisibleRegions(reg -> temp.add(reg.getRange()));
+		}
 		addressSet = temp;
 	}
 
@@ -139,7 +133,6 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	public void updateChangeRegionBlockRange(TraceMemoryRegion region, AddressRange oldRange,
 			AddressRange newRange) {
-		// TODO: update cached block? Nothing to update.
 		changeRange(oldRange, newRange);
 	}
 

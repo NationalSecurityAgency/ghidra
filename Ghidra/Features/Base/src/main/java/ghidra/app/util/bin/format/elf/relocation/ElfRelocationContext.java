@@ -26,6 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.exception.*;
 
 /**
@@ -36,30 +37,48 @@ public class ElfRelocationContext {
 
 	protected final ElfRelocationHandler handler;
 	protected final ElfLoadHelper loadHelper;
-	protected final ElfRelocationTable relocationTable;
-	private ElfSymbolTable symbolTable; // may be null
-	private ElfSymbol nullSymbol; // corresponds to symbolIndex==0 when no symbolTable
 	protected final Map<ElfSymbol, Address> symbolMap;
 	protected final Program program;
+
+	protected ElfRelocationTable relocationTable;
+	protected ElfSymbolTable symbolTable; // may be null
+
+	private ElfSymbol nullSymbol; // corresponds to symbolIndex==0 when no symbolTable
 
 	/**
 	 * Relocation context for a specific Elf image and relocation table
 	 * @param handler relocation handler or null if not available
 	 * @param loadHelper the elf load helper
-	 * @param relocationTable Elf relocation table
 	 * @param symbolMap Elf symbol placement map
 	 */
 	protected ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
+			Map<ElfSymbol, Address> symbolMap) {
 		this.handler = handler;
 		this.loadHelper = loadHelper;
-		this.relocationTable = relocationTable;
-		symbolTable = relocationTable.getAssociatedSymbolTable();
-		if (symbolTable == null) {
-			nullSymbol = ElfSymbol.createNullSymbol(loadHelper.getElfHeader());
-		}
 		this.symbolMap = symbolMap;
 		this.program = loadHelper.getProgram();
+	}
+
+	/**
+	 * Invoked at start of relocation processing for specified table.
+	 * The method {@link #endRelocationTableProcessing()} will be invoked after last relocation
+	 * is processed.
+	 * @param relocTable relocation table
+	 */
+	public void startRelocationTableProcessing(ElfRelocationTable relocTable) {
+		this.relocationTable = relocTable;
+		symbolTable = relocTable.getAssociatedSymbolTable();
+		if (symbolTable == null) {
+			nullSymbol = new ElfSymbol();
+		}
+	}
+
+	/**
+	 * Invoked at end of relocation processing for current relocation table.
+	 * See {@link #startRelocationTableProcessing(ElfRelocationTable)}.
+	 */
+	public void endRelocationTableProcessing() {
+		this.relocationTable = null;
 	}
 
 	/**
@@ -67,12 +86,14 @@ public class ElfRelocationContext {
 	 * All relocation entries must be processed in the order they appear within the table.
 	 * @param relocation relocation to be processed
 	 * @param relocationAddress relocation address where it should be applied
+	 * @return applied relocation result
 	 */
-	public final void processRelocation(ElfRelocation relocation, Address relocationAddress) {
+	public final RelocationResult processRelocation(ElfRelocation relocation,
+			Address relocationAddress) {
 
 		if (handler == null) {
 			handleNoHandlerError(relocation, relocationAddress);
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		int symbolIndex = relocation.getSymbolIndex();
@@ -80,21 +101,22 @@ public class ElfRelocationContext {
 		if (sym == null) {
 			ElfRelocationHandler.markAsUnhandled(program, relocationAddress, relocation.getType(),
 				symbolIndex, "index " + symbolIndex, getLog());
-			return;
+			return RelocationResult.FAILURE;
 		}
 		if (sym.isTLS()) {
 			handleUnsupportedTLSRelocation(relocation, relocationAddress, sym);
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		try {
-			handler.relocate(this, relocation, relocationAddress);
+			return handler.relocate(this, relocation, relocationAddress);
 		}
 		catch (MemoryAccessException | NotFoundException e) {
 			loadHelper.log(e);
 			ElfRelocationHandler.markAsUnhandled(program, relocationAddress, relocation.getType(),
 				symbolIndex, sym.getNameAsString(), getLog());
 		}
+		return RelocationResult.FAILURE;
 	}
 
 	/**
@@ -130,20 +152,19 @@ public class ElfRelocationContext {
 	/**
 	 * Get a relocation context for a specfic Elf image and relocation table
 	 * @param loadHelper Elf load helper
-	 * @param relocationTable Elf relocation table
 	 * @param symbolMap Elf symbol placement map
 	 * @return relocation context or null
 	 */
 	public static ElfRelocationContext getRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
+			Map<ElfSymbol, Address> symbolMap) {
 		ElfHeader elf = loadHelper.getElfHeader();
 		ElfRelocationContext context = null;
 		ElfRelocationHandler handler = ElfRelocationHandlerFactory.getHandler(elf);
 		if (handler != null) {
-			context = handler.createRelocationContext(loadHelper, relocationTable, symbolMap);
+			context = handler.createRelocationContext(loadHelper, symbolMap);
 		}
 		if (context == null) {
-			context = new ElfRelocationContext(handler, loadHelper, relocationTable, symbolMap);
+			context = new ElfRelocationContext(handler, loadHelper, symbolMap);
 		}
 		return context;
 	}

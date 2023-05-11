@@ -30,23 +30,29 @@ public interface DiffService {
 
 	/**
 	 * Launch the Diff dialog and display differences between the current program 
-	 * and the otherProgram.
+	 * and the otherProgram.  This will force the current Diff, if active, to be terminated.
 	 * @param otherProgram a domain file for the program to Diff the current program against.
-	 * @return true if the second program is opened and successfully Diffed.
+	 * @return true if the second program is opened and successfully Diffed.  A false will be
+	 * returned if the Diff fails to launch.
 	 */	
 	public boolean launchDiff(DomainFile otherProgram);
 	
 	/**
 	 * Launch the Diff dialog and display differences between the current program 
-	 * and the otherProgram.
+	 * and the otherProgram.  This will force the current Diff, if active, to be terminated.
+	 * This Diff service will be added as a consumer on the specified otherProgram while the Diff
+	 * remains active.
 	 * @param otherProgram the program to Diff the current program against.
-	 * @return true if the second program is opened and successfully Diffed.
+	 * @return true if the second program is opened and successfully Diffed. A false will be
+	 * returned if the Diff fails to launch.
 	 */	
 	public boolean launchDiff(Program otherProgram);
 	
 	/**
-	 * Determine if the Diff service is currently displaying a Diff.
+	 * Determine if the Diff service is currently displaying a Diff within the Tool associated with
+	 * this service.
+	 * @return true if a Diff is currently active
 	 */
-	public boolean inProgress();
+	public boolean isDiffActive();
 
 }

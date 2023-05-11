@@ -15,13 +15,11 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
-
-import com.google.common.collect.Range;
 
 import generic.NestedIterator;
 import ghidra.program.database.ProgramDB;
@@ -33,6 +31,7 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
 import ghidra.trace.util.EmptyFunctionIterator;
@@ -65,7 +64,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 	}
 
 	@Override
-	public List<String> getCallingConventionNames() {
+	public Collection<String> getCallingConventionNames() {
 		return functions.getCallingConventionNames();
 	}
 
@@ -77,11 +76,6 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 	@Override
 	public PrototypeModel getCallingConvention(String name) {
 		return functions.getCallingConvention(name);
-	}
-
-	@Override
-	public PrototypeModel[] getCallingConventions() {
-		return functions.getCallingConventions();
 	}
 
 	@Override
@@ -193,7 +187,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 
 	protected Iterator<? extends DBTraceFunctionSymbol> getFunctionsInRange(AddressRange range,
 			boolean forward) {
-		return functions.getIntersecting(Range.singleton(program.snap), null, range, false,
+		return functions.getIntersecting(Lifespan.at(program.snap), null, range, false,
 			forward).iterator();
 	}
 
@@ -275,7 +269,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 		Iterator<? extends DBTraceFunctionSymbol> it =
 			getFunctionsInRange(new AddressRangeImpl(startAddr, endAddr), true);
 		while (it.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			it.next().delete();
 		}
 	}

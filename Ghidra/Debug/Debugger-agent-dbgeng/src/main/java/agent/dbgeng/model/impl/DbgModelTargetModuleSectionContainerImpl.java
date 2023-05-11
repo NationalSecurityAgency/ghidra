@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import agent.dbgeng.manager.DbgModule;
 import agent.dbgeng.manager.DbgModuleSection;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 
@@ -38,7 +39,7 @@ public class DbgModelTargetModuleSectionContainerImpl extends DbgModelTargetObje
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return CompletableFuture.completedFuture(null);
 		/*
 		return module.listSections().thenAccept(byStart -> {

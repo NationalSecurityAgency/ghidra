@@ -64,10 +64,8 @@ import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveHeader;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveMemberHeader;
 import ghidra.app.util.importer.*;
-import ghidra.app.util.opinion.Loader;
-import ghidra.app.util.opinion.MSCoffLoader;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.app.util.opinion.*;
+import ghidra.framework.model.*;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
@@ -198,24 +196,30 @@ public class MSLibBatchImportWorker extends GhidraScript {
 
 							Pair<DomainFolder, String> pair =
 								getFolderAndUniqueFile(currentLibraryFolder, preferredName);
+							LoadResults<? extends DomainObject> loadResults = null;
+							try {
+								loadResults = AutoImporter.importFresh(coffProvider,
+									state.getProject(), pair.first.getPathname(), this, log,
+									monitor, LOADER_FILTER, LOADSPEC_CHOOSER, pair.second,
+									OptionChooser.DEFAULT_OPTIONS);
 
-							List<Program> programs = AutoImporter.importFresh(coffProvider,
-								pair.first, this, log, monitor, LOADER_FILTER, LOADSPEC_CHOOSER,
-								pair.second, OptionChooser.DEFAULT_OPTIONS,
-								MultipleProgramsStrategy.ONE_PROGRAM_OR_EXCEPTION);
+								for (Loaded<? extends DomainObject> loaded : loadResults) {
+									if (loaded.getDomainObject() instanceof Program program) {
+										loaded.save(state.getProject(), log, monitor);
+										println(
+											"Imported " + program.getDomainFile().getPathname());
+										DomainFile progFile = program.getDomainFile();
 
-							if (programs != null) {
-								for (Program program : programs) {
-									println("Imported " + program.getDomainFile().getPathname());
-									DomainFile progFile = program.getDomainFile();
-
-									program.release(this);
-
-									if (!progFile.isVersioned()) {
-										progFile.addToVersionControl(initalCheckInComment, false,
-											monitor);
+										if (!progFile.isVersioned()) {
+											progFile.addToVersionControl(initalCheckInComment,
+												false, monitor);
+										}
 									}
-
+								}
+							}
+							finally {
+								if (loadResults != null) {
+									loadResults.release(this);
 								}
 							}
 						}

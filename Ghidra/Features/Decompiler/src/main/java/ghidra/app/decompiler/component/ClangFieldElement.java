@@ -21,6 +21,7 @@ import java.awt.Graphics;
 import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.field.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.decompiler.ClangToken;
 
 public class ClangFieldElement extends AbstractTextFieldElement {
@@ -49,7 +50,7 @@ public class ClangFieldElement extends AbstractTextFieldElement {
 
 		if (token.isMatchingToken()) {
 			// paint a bounding box around the token
-			g.setColor(Color.GRAY);
+			g.setColor(Palette.GRAY);
 			int offset = 1;
 			g.drawRect(x - offset, y - getHeightAbove() - offset, getStringWidth() + (offset * 2),
 				getHeightAbove() + getHeightBelow() + (offset * 2));

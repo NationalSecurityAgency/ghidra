@@ -71,6 +71,21 @@ public class TaintPcodeExecutorStatePiece extends AbstractTaintPcodeExecutorStat
 			protected TaintSpace newSpace(AddressSpace space) {
 				return new TaintSpace();
 			}
+
+			@Override
+			public AbstractSpaceMap<TaintSpace> fork() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public TaintSpace fork(TaintSpace s) {
+				throw new UnsupportedOperationException();
+			}
 		};
+	}
+
+	@Override
+	public TaintPcodeExecutorStatePiece fork() {
+		throw new UnsupportedOperationException();
 	}
 }

@@ -182,7 +182,7 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 			throw new TimeoutException(
 				"Operation cancelled due to timeout of " + timeout + " " + timeUnit.toString());
 		}
-		delegate.checkCanceled();
+		delegate.checkCancelled();
 	}
 
 	@Override
@@ -229,6 +229,6 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 
 	@Override
 	public void clearCanceled() {
-		delegate.clearCanceled();
+		delegate.clearCancelled();
 	}
 }

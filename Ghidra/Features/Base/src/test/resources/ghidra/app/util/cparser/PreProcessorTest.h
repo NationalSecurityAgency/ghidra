@@ -19,6 +19,7 @@
  #undef a
  #endif
 
+
  /* definition coming from -D, should evaluate to true */
  #if FROM_ARG_VALUE
  #define DID_ARG_VALUE 1
@@ -75,13 +76,17 @@
  #define DID_FILE_ISDEF_DEF 1
  #endif
 
-#include "multinclude.h"
+#include <multinclude.h> /* include once */
+
+#include "multinclude.h" /* include twice */
 
 #include "multinclude.h"
 
 #include "multinclude.h"
 
-#include "multinclude.h"
+#define __DEFINED_INCLUDE <defined.h>
+
+#include __DEFINED_INCLUDE /* THIS SHOULD BE IGNORED <> */
 
 #define __TEXT(quote)  quote
 
@@ -218,9 +223,46 @@ int TEST_FAILED;
 
 #define DefVal10 ((0x7fff) * 900L / 1000)
 
+#define DefVal_1L	1L
+#define DefVal_2l	2l
+#define DefVal_3U	3U 
+#define DefVal_4u	4u
+#define DefVal_5UL	5UL
+#define DefVal_6ul	6ul
+#define DefVal_7lu	7lu
+#define DefVal_8llu	8llu
+#define DefVal_9ull	9ull
+#define DefVal_10ll	10ll
+
+#define DefVal_P_1L (1L)
+#define DefVal_P_2l (2l)
+#define DefVal_P_3U (3U )
+#define DefVal_P_4u ( 4u)
+#define DefVal_P_5UL ( 5UL )
+#define DefVal_P_6ul (6ul)
+#define DefVal_P_7lu ( 7lu )
+#define DefVal_P_8llu ( 8llu )
+#define DefVal_P_9ull ( 9ull )
+#define DefVal_P_10ll ( 10ll )
+
 #define BIGNUM 64 * 16 + 16
 
 #define ImOctal 01234567
+
+
+#define BYTE_LEN_1   0x1
+#define BYTE_LEN_8   0x8
+#define BYTE_LEN_1F   0x1F
+#define BYTE_LEN_FF   0xFF
+#define BYTE_LEN_1FF   0x1FF
+#define BYTE_LEN_7FFF   0x7FFF
+#define BYTE_LEN_10000   0x10000
+#define BYTE_LEN_1000000 0x1000000
+#define BYTE_LEN_100000000   0x100000000
+#define BYTE_LEN_10000000000   0x10000000000
+#define BYTE_LEN_1000000000000   0x1000000000000
+#define BYTE_LEN_100000000000000   0x100000000000000
+#define BYTE_LEN_neg1   -1
 
 /**
  ** Test for recursive definitions, Should not cause an infinite loop
@@ -471,5 +513,20 @@ int does_not_has_include();
 #define BEGINC  QUOTED('"')
 #define TEST_QUOTED_QUOTE    QUOTED('"')
 
+#define TEST_MULTILINE_TEXT(t) multi_line_worked(t)
 
+A = TEST_MULTILINE_TEXT("One Line")
+
+B = TEST_MULTILINE_TEXT("Some text first line"
+               "More text second line") 
+
+#define DUAL_MULTILINE(A, B) dual_line_worked(A,B)
+       
+C = DUAL_MULTILINE(1, OneLine("Caution: One Line"))
+
+D = DUAL_MULTILINE(2, "Caution: First line"
+                                      " second line"
+                                      " third line"
+                                      " fourth line")
+                                                                 
 theEnd();

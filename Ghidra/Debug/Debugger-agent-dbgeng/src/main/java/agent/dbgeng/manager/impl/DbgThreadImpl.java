@@ -20,8 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.RangeSet;
-
 import agent.dbgeng.dbgeng.DebugEventInformation;
 import agent.dbgeng.dbgeng.DebugRegisters.DebugRegisterDescription;
 import agent.dbgeng.dbgeng.DebugThreadId;
@@ -32,6 +30,7 @@ import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import agent.dbgeng.manager.cmd.*;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncReference;
 import ghidra.util.Msg;
@@ -41,8 +40,9 @@ public class DbgThreadImpl implements DbgThread {
 	DbgManagerImpl manager;
 	private DbgProcessImpl process;
 	private DebugThreadId id;
-	private long tid;
+	private Long tid;
 	private DebugEventInformation info;
+	private Long offset;
 
 	private final AsyncReference<DbgState, CauseReasonPair> state =
 		new AsyncReference<>(DbgState.STOPPED);
@@ -176,7 +176,7 @@ public class DbgThreadImpl implements DbgThread {
 	}
 
 	@Override
-	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
+	public CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len) {
 		return manager.execute(new DbgReadMemoryCommand(manager, addr, buf, len));
 	}
 
@@ -227,6 +227,20 @@ public class DbgThreadImpl implements DbgThread {
 	}
 
 	@Override
+	public CompletableFuture<Void> stepToAddress(String address) {
+		return setActive().thenCompose(__ -> {
+			return manager.execute(new DbgStepToAddressCommand(manager, id, address));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Void> traceToAddress(String address) {
+		return setActive().thenCompose(__ -> {
+			return manager.execute(new DbgTraceToAddressCommand(manager, id, address));
+		});
+	}
+
+	@Override
 	public CompletableFuture<Void> kill() {
 		return setActive().thenCompose(__ -> {
 			return manager.execute(new DbgKillCommand(manager));
@@ -271,4 +285,17 @@ public class DbgThreadImpl implements DbgThread {
 		int executingProcessorType = info.getExecutingProcessorType();
 		return WinNTExtra.Machine.getByNumber(executingProcessorType);
 	}
+	
+	public Long getOffset() {
+		return offset;
+	}
+
+	public void setOffset(long offset) {
+		this.offset = offset;
+	}
+
+	public void setTid(Long tid) {
+		this.tid = tid;
+	}
+
 }

@@ -18,11 +18,12 @@ package ghidra.app.util.bin.format.dwarf4.attribs;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.*;
+import ghidra.app.util.bin.format.dwarf4.DWARFCompilationUnit;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFForm;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.app.util.bin.format.dwarf4.next.StringTable;
-import ghidra.util.NumberUtil;
+import ghidra.program.model.data.LEB128;
 
 /**
  * A factory for deserializing {@link DWARFAttributeValue dwarf attribute} from
@@ -55,25 +56,25 @@ public class DWARFAttributeFactory {
 		switch (form) {
 			case DW_FORM_addr:
 				return new DWARFNumericAttribute(
-					DWARFUtil.readVarSizedULong(reader, unit.getPointerSize()));
+					reader.readNextUnsignedValue(unit.getPointerSize()));
 			case DW_FORM_ref1: {
-				long uoffset = DWARFUtil.readVarSizedULong(reader, 1);
+				long uoffset = reader.readNextUnsignedValue(1);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref2: {
-				long uoffset = DWARFUtil.readVarSizedULong(reader, 2);
+				long uoffset = reader.readNextUnsignedValue(2);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref4: {
-				long uoffset = DWARFUtil.readVarSizedULong(reader, 4);
+				long uoffset = reader.readNextUnsignedValue(4);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref8: {
-				long uoffset = DWARFUtil.readVarSizedULong(reader, 8);
+				long uoffset = reader.readNextUnsignedValue(8);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref_udata: {
-				long uoffset = LEB128.readAsLong(reader, false);
+				long uoffset = reader.readNext(LEB128::unsigned);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 
@@ -103,30 +104,27 @@ public class DWARFAttributeFactory {
 				return new DWARFBlobAttribute(reader.readNextByteArray(length));
 			}
 			case DW_FORM_block: {
-				int length = LEB128.readAsUInt32(reader);
+				int length = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 				if (length < 0 || length > MAX_BLOCK4_SIZE) {
 					throw new IOException("Invalid/bad dw_form_block size: " + length);
 				}
 				return new DWARFBlobAttribute(reader.readNextByteArray(length));
 			}
 			case DW_FORM_data1:
-				return new DWARFAmbigNumericAttribute(reader.readNextByte(),
-					NumberUtil.UNSIGNED_BYTE_MASK);
+				return new DWARFNumericAttribute(8, reader.readNextByte(), true, true);
 			case DW_FORM_data2:
-				return new DWARFAmbigNumericAttribute(reader.readNextShort(),
-					NumberUtil.UNSIGNED_SHORT_MASK);
+				return new DWARFNumericAttribute(16, reader.readNextShort(), true, true);
 			case DW_FORM_data4:
-				return new DWARFAmbigNumericAttribute(reader.readNextInt(),
-					NumberUtil.UNSIGNED_INT_MASK);
+				return new DWARFNumericAttribute(32, reader.readNextInt(), true, true);
 			case DW_FORM_data8:
-				return new DWARFNumericAttribute(reader.readNextLong());
+				return new DWARFNumericAttribute(64, reader.readNextLong(), true, true);
 			case DW_FORM_sdata:
-				return new DWARFNumericAttribute(LEB128.readAsLong(reader, true));
+				return new DWARFNumericAttribute(64, reader.readNext(LEB128::signed), true);
 			case DW_FORM_udata:
-				return new DWARFNumericAttribute(LEB128.readAsLong(reader, false));
+				return new DWARFNumericAttribute(64, reader.readNext(LEB128::unsigned), false);
 
 			case DW_FORM_exprloc: {
-				int length = LEB128.readAsUInt32(reader);
+				int length = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 				if (length < 0 || length > MAX_BLOCK4_SIZE) {
 					throw new IOException("Invalid/bad dw_form_exprloc size: " + length);
 				}
@@ -157,7 +155,8 @@ public class DWARFAttributeFactory {
 
 			// Indirect Form
 			case DW_FORM_indirect:
-				DWARFForm formValue = DWARFForm.find(LEB128.readAsUInt32(reader));
+				DWARFForm formValue =
+					DWARFForm.find(reader.readNextUnsignedVarIntExact(LEB128::unsigned));
 				DWARFAttributeValue value = read(reader, unit, formValue);
 
 				return new DWARFIndirectAttribute(value, formValue);

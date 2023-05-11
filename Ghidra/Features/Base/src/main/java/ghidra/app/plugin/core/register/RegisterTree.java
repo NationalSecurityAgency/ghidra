@@ -20,15 +20,15 @@ import java.awt.Point;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class RegisterTree extends GTree {
 	private Program program;
@@ -48,15 +48,12 @@ public class RegisterTree extends GTree {
 		// never have a horizontal scroll bar.
 		JScrollPane scrollPane = getScrollPane();
 		final JViewport viewport = scrollPane.getViewport();
-		scrollPane.getViewport().addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				Point viewPosition = viewport.getViewPosition();
-				if (viewPosition.x != 0) {
-					// if it scrolls horizontally, put it back
-					viewPosition.x = 0;
-					viewport.setViewPosition(viewPosition);
-				}
+		scrollPane.getViewport().addChangeListener(e -> {
+			Point viewPosition = viewport.getViewPosition();
+			if (viewPosition.x != 0) {
+				// if it scrolls horizontally, put it back
+				viewPosition.x = 0;
+				viewport.setViewPosition(viewPosition);
 			}
 		});
 		setMinimumSize(new Dimension(175, 30));
@@ -78,7 +75,7 @@ public class RegisterTree extends GTree {
 	}
 
 	private static Register[] getNonHiddenRegisters(Program program) {
-		ArrayList<Register> list = new ArrayList<Register>();
+		ArrayList<Register> list = new ArrayList<>();
 		for (Register reg : program.getProgramContext().getRegisters()) {
 			if (!reg.isHidden()) {
 				list.add(reg);
@@ -191,9 +188,9 @@ class RegisterTreeRootNode extends SearchableRegisterTreeNode {
 
 		lastRegisters = registers;
 		HashMap<String, RegisterTreeGroupNode> groups =
-			new HashMap<String, RegisterTreeGroupNode>();
+			new HashMap<>();
 
-		List<GTreeNode> nodes = new ArrayList<GTreeNode>();
+		List<GTreeNode> nodes = new ArrayList<>();
 
 		for (Register register : registers) {
 			if (register.getBaseRegister() != register &&
@@ -220,8 +217,8 @@ class RegisterTreeRootNode extends SearchableRegisterTreeNode {
 }
 
 class RegisterTreeNode extends SearchableRegisterTreeNode {
-	private static ImageIcon REG_ICON = ResourceManager.loadImage("images/registerIcon.png");
-	private static ImageIcon REG_GROUP_ICON = ResourceManager.loadImage("images/registerGroup.png");
+	private static Icon REG_ICON = new GIcon("icon.plugin.register");
+	private static Icon REG_GROUP_ICON = new GIcon("icon.plugin.register.provider");
 	private final Register register;
 
 	public RegisterTreeNode(Register register) {
@@ -274,9 +271,8 @@ class RegisterTreeNode extends SearchableRegisterTreeNode {
 }
 
 class RegisterTreeGroupNode extends SearchableRegisterTreeNode {
-	private static ImageIcon OPEN_ICON = ResourceManager.loadImage("images/openSmallFolder.png");
-	private static ImageIcon CLOSED_ICON =
-		ResourceManager.loadImage("images/closedSmallFolder.png");
+	private static Icon OPEN_ICON = Icons.OPEN_FOLDER_ICON;
+	private static Icon CLOSED_ICON = Icons.CLOSED_FOLDER_ICON;
 	private String name;
 
 	public RegisterTreeGroupNode(String name) {

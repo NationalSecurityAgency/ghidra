@@ -15,6 +15,7 @@
  */
 package agent.lldb.model.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,13 +25,16 @@ import agent.lldb.lldb.DebugClient;
 import agent.lldb.manager.LldbCause;
 import agent.lldb.manager.LldbReason;
 import agent.lldb.manager.LldbReason.Reasons;
+import agent.lldb.manager.cmd.LldbRunToAddressCommand;
 import agent.lldb.manager.cmd.LldbStepCommand;
 import agent.lldb.model.iface1.LldbModelTargetFocusScope;
 import agent.lldb.model.iface2.*;
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetMethod.AnnotatedTargetMethod;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.PathUtils;
+import ghidra.program.model.address.Address;
 
 @TargetObjectSchemaInfo(
 	name = "Thread",
@@ -49,7 +53,6 @@ public class LldbModelTargetThreadImpl extends LldbModelTargetObjectImpl
 		implements LldbModelTargetThread {
 
 	public static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
-		TargetStepKind.ADVANCE, //
 		TargetStepKind.FINISH, //
 		TargetStepKind.LINE, //
 		TargetStepKind.OVER, //
@@ -82,6 +85,9 @@ public class LldbModelTargetThreadImpl extends LldbModelTargetObjectImpl
 
 		this.stack = new LldbModelTargetStackImpl(this, process);
 
+		changeAttributes(List.of(), List.of(),
+			AnnotatedTargetMethod.collectExports(MethodHandles.lookup(), threads.getModel(), this),
+			"Methods");
 		changeAttributes(List.of(), List.of( //
 			stack //
 		), Map.of( //
@@ -102,6 +108,7 @@ public class LldbModelTargetThreadImpl extends LldbModelTargetObjectImpl
 		getModel().addModelObject(modelObject, this);
 	}
 
+	@Override
 	public String getDescription(int level) {
 		SBStream stream = new SBStream();
 		SBThread thread = (SBThread) getModelObject();
@@ -114,8 +121,9 @@ public class LldbModelTargetThreadImpl extends LldbModelTargetObjectImpl
 		String tidstr = DebugClient.getId(getThread());
 		if (base == 16) {
 			tidstr = "0x" + tidstr;
-		} else {
-			tidstr = Long.toString(Long.parseLong(tidstr,16));
+		}
+		else {
+			tidstr = Long.toString(Long.parseLong(tidstr, 16));
 		}
 		return "[" + tidstr + "]";
 	}
@@ -138,12 +146,25 @@ public class LldbModelTargetThreadImpl extends LldbModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<Void> step(TargetStepKind kind) {
-		return getModel().gateFuture(getManager().execute(new LldbStepCommand(getManager(), null, kind, null)));
+		return getModel().gateFuture(
+			getManager().execute(new LldbStepCommand(getManager(), getThread(), kind, null)));
 	}
 
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
-		return getModel().gateFuture(getManager().execute(new LldbStepCommand(getManager(), null, null, args)));
+		return getModel().gateFuture(
+			getManager().execute(new LldbStepCommand(getManager(), getThread(), null, args)));
+	}
+
+	@TargetMethod.Export("Run to Address")
+	public CompletableFuture<Void> runToAddress(
+			@TargetMethod.Param(
+				description = "The target address",
+				display = "Address",
+				name = "address") Address address) {
+		return getModel().gateFuture(
+			getManager().execute(new LldbRunToAddressCommand(getManager(), getThread(),
+				address.getOffsetAsBigInteger())));
 	}
 
 	@Override

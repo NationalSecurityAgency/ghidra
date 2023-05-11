@@ -15,9 +15,8 @@
  */
 package ghidra.trace.model.memory;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetRegister;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObjectInterface;
 import ghidra.trace.model.target.annot.TraceObjectInfo;
 import ghidra.trace.model.thread.TraceObjectThread;
@@ -42,11 +41,11 @@ public interface TraceObjectRegister extends TraceObjectInterface {
 		return (getBitLength() + 7) / 8;
 	}
 
-	void setValue(Range<Long> lifespan, byte[] value);
+	void setValue(Lifespan lifespan, byte[] value);
 
 	byte[] getValue(long snap);
 
-	void setState(Range<Long> lifespan, TraceMemoryState state);
+	void setState(Lifespan lifespan, TraceMemoryState state);
 
 	TraceMemoryState getState(long snap);
 

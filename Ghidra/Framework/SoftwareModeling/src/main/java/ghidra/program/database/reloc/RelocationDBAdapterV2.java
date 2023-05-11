@@ -22,6 +22,7 @@ import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.util.exception.VersionException;
 
 class RelocationDBAdapterV2 extends RelocationDBAdapter {
@@ -30,6 +31,7 @@ class RelocationDBAdapterV2 extends RelocationDBAdapter {
 	private final static int V2_TYPE_COL = 0;
 	private final static int V2_VALUE_COL = 1;
 
+/* Do not remove the following commented out schema! It shows the version 2 relocation table schema. */
 //	final static Schema SCHEMA = new Schema(
 //		RelocationDBAdapterV2.VERSION, "Address", new Field[] { IntField.INSTANCE, LongField.INSTANCE },
 //		new String[] { "Type", "Values" });
@@ -44,8 +46,8 @@ class RelocationDBAdapterV2 extends RelocationDBAdapter {
 	 * @throws IOException if database IO error occurs
 	 * @throws VersionException throw if table schema is not V2
 	 */
-	RelocationDBAdapterV2(DBHandle handle, AddressMap addrMap) throws IOException,
-			VersionException {
+	RelocationDBAdapterV2(DBHandle handle, AddressMap addrMap)
+			throws IOException, VersionException {
 		this.addrMap = addrMap;
 		relocTable = handle.getTable(TABLE_NAME);
 		if (relocTable == null || relocTable.getSchema().getVersion() != VERSION) {
@@ -54,7 +56,8 @@ class RelocationDBAdapterV2 extends RelocationDBAdapter {
 	}
 
 	@Override
-	void add(Address addrKey, int type, long[] values, byte[] bytes, String symbolName) {
+	void add(Address addrKey, byte flags, int type, long[] values, byte[] bytes,
+			String symbolName) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -89,6 +92,7 @@ class RelocationDBAdapterV2 extends RelocationDBAdapter {
 		}
 		DBRecord newRec = SCHEMA.createRecord(rec.getKey());
 		newRec.setLongValue(ADDR_COL, rec.getKey()); // key was encoded address
+		newRec.setByteValue(FLAGS_COL, getFlags(Status.UNKNOWN, 0));
 		newRec.setIntValue(TYPE_COL, rec.getIntValue(V2_TYPE_COL));
 		long[] values = new long[] { rec.getLongValue(V2_VALUE_COL) };
 		newRec.setField(VALUE_COL, new BinaryCodedField(values));

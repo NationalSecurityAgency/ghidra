@@ -26,7 +26,7 @@ import ghidra.program.model.mem.MemoryAccessException;
 /**
  * Provides a definition of an Ascii byte in a program.
  */
-public class BooleanDataType extends AbstractIntegerDataType {
+public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 
 	private static SettingsDefinition[] SETTINGS_DEFS = {};
 
@@ -40,7 +40,7 @@ public class BooleanDataType extends AbstractIntegerDataType {
 	}
 
 	public BooleanDataType(DataTypeManager dtm) {
-		super("bool", false, dtm);
+		super("bool", dtm);
 	}
 
 	@Override

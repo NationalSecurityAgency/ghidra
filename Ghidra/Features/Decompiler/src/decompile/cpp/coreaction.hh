@@ -21,12 +21,14 @@
 /// (if they do they must check the covers themselves)
 
 
-#ifndef __CORE_ACTION__
-#define __CORE_ACTION__
+#ifndef __COREACTION_HH__
+#define __COREACTION_HH__
 
 #include "ruleaction.hh"
 #include "blockaction.hh"
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief Gather raw p-code for a function.
 class ActionStart : public Action {
@@ -364,7 +366,7 @@ public:
     return new ActionMergeRequired(getGroup());
   }
   virtual int4 apply(Funcdata &data) { 
-    data.getMerge().mergeAddrTied(); data.getMerge().mergeMarker(); return 0; }
+    data.getMerge().mergeAddrTied(); data.getMerge().groupPartials(); data.getMerge().mergeMarker(); return 0; }
 };
 
 /// \brief Try to merge an op's input Varnode to its output, if they are at the same storage location.
@@ -565,6 +567,14 @@ public:
 
 /// \brief Propagate conditional constants
 class ActionConditionalConst : public Action {
+  static void clearMarks(const vector<PcodeOp *> &opList);
+  static void collectReachable(Varnode *vn,vector<PcodeOpNode> &phiNodeEdges,vector<PcodeOp *> &reachable);
+  static bool flowToAlternatePath(PcodeOp *op);
+  static bool flowTogether(const vector<PcodeOpNode> &edges,int4 i,vector<int4> &result);
+  static Varnode *placeCopy(PcodeOp *op,BlockBasic *bl,Varnode *constVn,Funcdata &data);
+  static void placeMultipleConstants(vector<PcodeOpNode> &phiNodeEdges,vector<int4> &marks,Varnode *constVn,Funcdata &data);
+  void handlePhiNodes(Varnode *varVn,Varnode *constVn,vector<PcodeOpNode> &phiNodeEdges,Funcdata &data);
+  void propagateConstant(Varnode *varVn,Varnode *constVn,FlowBlock *constBlock,bool useMultiequal,Funcdata &data);
 public:
   ActionConditionalConst(const string &g) : Action(0,"condconst",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
@@ -572,7 +582,6 @@ public:
     return new ActionConditionalConst(getGroup());
   }
   virtual int4 apply(Funcdata &data);
-  void propagateConstant(Varnode *varVn,Varnode *constVn,FlowBlock *constBlock,Funcdata &data);
 };
 
 /// \brief Normalize jump-table construction.
@@ -1081,4 +1090,5 @@ public:
 inline bool TermOrder::additiveCompare(const AdditiveEdge *op1,const AdditiveEdge *op2) {
     return (-1 == op1->getVarnode()->termOrder(op2->getVarnode())); }
 
+} // End namespace ghidra
 #endif

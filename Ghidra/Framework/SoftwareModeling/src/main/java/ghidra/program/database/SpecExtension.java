@@ -526,7 +526,7 @@ public class SpecExtension {
 		Options specOptions = program.getOptions(SpecExtension.SPEC_EXTENSION);
 		List<String> optionNames = specOptions.getOptionNames();
 		for (String name : optionNames) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			specOptions.removeOption(name);
 		}
 	}
@@ -660,7 +660,7 @@ public class SpecExtension {
 		FunctionIterator iter = manager.getFunctions(true);
 		for (int i = 0; i < 2; ++i) {
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				Function function = iter.next();
 				String currentFixup = function.getCallFixup();
@@ -715,13 +715,13 @@ public class SpecExtension {
 		FunctionIterator iter = manager.getFunctions(true);
 		for (int i = 0; i < 2; i += 1) {
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				Function function = iter.next();
 				PrototypeModel currentModel = function.getCallingConvention();
 				if (currentModel != null && currentModel.getName().equals(modelName)) {
 					try {
-						function.setCallingConvention("unknown");
+						function.setCallingConvention(Function.UNKNOWN_CALLING_CONVENTION_STRING);
 					}
 					catch (InvalidInputException e) {
 						// shouldn't reach here

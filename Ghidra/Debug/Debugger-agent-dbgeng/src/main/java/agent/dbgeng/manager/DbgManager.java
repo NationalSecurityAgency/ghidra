@@ -24,7 +24,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInsertions;
+import agent.dbgeng.manager.cmd.DbgListOSMemoryRegionsCommand;
+import agent.dbgeng.manager.cmd.DbgListOSProcessesCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgProcessImpl;
 
 public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 
@@ -297,6 +300,27 @@ public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 	 */
 	CompletableFuture<Map<DebugProcessId, DbgProcess>> listProcesses();
 
+	/**
+	 * List dbgeng's processes
+	 * 
+	 * @return a future that completes with a kernel-mode map of process IDs to process handles 
+	 */
+	CompletableFuture<Map<DebugProcessId, DbgProcess>> listOSProcesses();
+
+	/**
+	 * List dbgeng's processes
+	 * 
+	 * @return a future that completes with a kernel-mode list of process memory 
+	 */
+	CompletableFuture<List<DbgModuleMemory>> listOSMemory();
+
+	/**
+	 * List dbgeng's threads
+	 * 
+	 * @return a future that completes with a kernel-mode map of thread IDs to thread handles 
+	 */
+	CompletableFuture<Map<DebugThreadId, DbgThread>> listOSThreads(DbgProcessImpl proc);
+	
 	/**
 	 * List the available processes on target
 	 * 

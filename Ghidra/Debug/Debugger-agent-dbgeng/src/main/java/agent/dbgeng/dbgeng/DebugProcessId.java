@@ -25,37 +25,14 @@ package agent.dbgeng.dbgeng;
  * with other integral values. In particular, this prevents confusion of engine PIDs with system
  * PIDs.
  */
-public class DebugProcessId implements Comparable<DebugProcessId> {
-	public final int id;
+public interface DebugProcessId extends Comparable<DebugProcessId> {
 
-	public DebugProcessId(int id) {
-		this.id = id;
-	}
-
+	public String id();
+	public long value();
+	public boolean isSystem();
+	
 	@Override
-	public int hashCode() {
-		return Integer.hashCode(id);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof DebugProcessId)) {
-			return false;
-		}
-		DebugProcessId that = (DebugProcessId) obj;
-		if (this.id != that.id) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int compareTo(DebugProcessId that) {
-		return Integer.compare(this.id, that.id);
-	}
-
-	@Override
-	public String toString() {
-		return "<dbgeng.dll Engine PID " + id + ">";
+	public default int compareTo(DebugProcessId that) {
+		return this.id().compareTo(that.id());
 	}
 }

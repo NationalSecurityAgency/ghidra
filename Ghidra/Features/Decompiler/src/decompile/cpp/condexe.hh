@@ -15,10 +15,12 @@
  */
 /// \file condexe.hh
 /// \brief Classes for simplifying control-flow with shared conditional expressions
-#ifndef __CONDEXE__
-#define __CONDEXE__
+#ifndef __CONDEXE_HH__
+#define __CONDEXE_HH__
 
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief A helper class for describing the similarity of the boolean condition between 2 CBRANCH operations
 ///
@@ -234,4 +236,5 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
+} // End namespace ghidra
 #endif

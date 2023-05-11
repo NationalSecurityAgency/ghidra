@@ -338,7 +338,7 @@ public class BatchInfo {
 
 		// TODO: drop FSUtils.listFileSystem and do recursion here.
 		for (GFile file : FSUtilities.listFileSystem(fs, startDir, null, taskMonitor)) {
-			taskMonitor.checkCanceled();
+			taskMonitor.checkCancelled();
 			FSRL fqFSRL;
 			try {
 				fqFSRL = fsService.getFullyQualifiedFSRL(file.getFSRL(), taskMonitor);
@@ -499,7 +499,7 @@ public class BatchInfo {
 				batchMonitor.setPrefix("Processing " + fsrl.getName() + ": ");
 
 				try {
-					monitor.checkCanceled();
+					monitor.checkCancelled();
 					addFile(fsrl, batchMonitor);
 				}
 				catch (CryptoException ce) {

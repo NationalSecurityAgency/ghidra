@@ -94,7 +94,7 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() throws Exception {
 		waitForBusyTool(tool);
 		destinationProgram.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		env.dispose();
 
@@ -152,7 +152,7 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 
 		task.run(TaskMonitor.DUMMY);
 		destinationProgram.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	private Data setData(DataType dataType, int dtLength, Address address, Program program)

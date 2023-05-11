@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.Set;
@@ -24,26 +24,22 @@ import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerRegistersProviderGuestTest extends DebuggerRegistersProviderTest {
@@ -56,7 +52,7 @@ public class DebuggerRegistersProviderGuestTest extends DebuggerRegistersProvide
 	}
 
 	public void createToyPlatform() throws Exception {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			toy = tb.trace.getPlatformManager()
 					.addGuestPlatform(getToyBE64Language().getDefaultCompilerSpec());
 			toy.addMappedRange(tb.addr(0), tb.addr(toy, 0), -1);
@@ -70,7 +66,7 @@ public class DebuggerRegistersProviderGuestTest extends DebuggerRegistersProvide
 		registersPlugin = addPlugin(tool, DebuggerRegistersPlugin.class);
 		registersProvider = waitForComponentProvider(DebuggerRegistersProvider.class);
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
-		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		createTrace();
 		createToyPlatform();
@@ -134,22 +130,12 @@ public class DebuggerRegistersProviderGuestTest extends DebuggerRegistersProvide
 	}
 
 	@Override
-	protected void addRegisterValues(TraceThread thread, UndoableTransaction tid) {
+	protected void addRegisterValues(TraceThread thread, Transaction tx) {
 		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 		regVals.putBytes(toy, 0, pc, tb.buf(0, 0, 0, 0, 0, 0x40, 0, 0));
 		regVals.putBytes(toy, 0, sp, tb.buf(0x1f, 0, 0, 0, 0, 0, 0, 0));
 		regVals.putBytes(toy, 0, r0, tb.buf(1, 2, 3, 4, 5, 6, 7, 8));
-	}
-
-	@Override
-	protected void addRegisterTypes(TraceThread thread, UndoableTransaction tid)
-			throws CodeUnitInsertionException {
-		TraceCodeSpace regCode =
-			tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-		regCode.definedData().create(toy, Range.atLeast(0L), pc, PointerDataType.dataType);
-		// TODO: Pointer needs to be to ram, not register space
-		regCode.definedData().create(toy, Range.atLeast(0L), r0, r0Struct);
 	}
 
 	@Override

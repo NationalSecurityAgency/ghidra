@@ -102,19 +102,23 @@ public class LldbModelTargetStackFrameRegisterImpl
 			String[] split = trim.split(" ");
 			value = split[0].substring(2) + split[1].substring(2);
 		}
-		BigInteger val = new BigInteger(value, 16);
-		byte[] bytes = ConversionUtils.bigIntegerToBytes((int) getRegister().GetByteSize(), val);
 		changeAttributes(List.of(), Map.of( //
 			VALUE_ATTRIBUTE_NAME, value //
 		), "Refreshed");
-		if (val.longValue() != 0) {
+		if (!value.equals("0")) {
 			String newval = getDescription(0);
 			changeAttributes(List.of(), Map.of( //
 				DISPLAY_ATTRIBUTE_NAME, newval //
 			), "Refreshed");
 			setModified(!value.equals(oldValue));
 		}
-		return bytes;
+		try {
+			BigInteger val = new BigInteger(value, 16);
+			byte[] bytes = ConversionUtils.bigIntegerToBytes((int) getRegister().GetByteSize(), val);
+			return bytes;
+		} catch (NumberFormatException nfe) {
+			return new byte[0];
+		}
 	}
 
 	@Override

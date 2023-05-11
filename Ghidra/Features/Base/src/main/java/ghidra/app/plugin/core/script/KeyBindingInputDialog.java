@@ -22,9 +22,9 @@ import javax.swing.*;
 
 import docking.*;
 import docking.widgets.label.GLabel;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.HelpLocation;
-import ghidra.util.ReservedKeyBindings;
 
 class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryListener {
 	private KeyEntryTextField kbField;

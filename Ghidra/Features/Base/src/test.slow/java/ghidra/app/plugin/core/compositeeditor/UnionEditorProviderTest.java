@@ -23,12 +23,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import docking.ActionContext;
+import docking.action.DockingActionIf;
+import docking.action.ToggleDockingActionIf;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
 import ghidra.util.Swing;
 import ghidra.util.exception.UsrException;
 
 public class UnionEditorProviderTest extends AbstractUnionEditorTest {
+	private static final String HEX_OPTION_NAME =
+		"Union Editor" + Options.DELIMITER + "Show Numbers In Hex";
 
 	@Test
 	public void testReplaceDataType() throws Exception {
@@ -299,77 +303,55 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 	}
 
 	@Test
-	public void testChangeHexNumbersOption() throws Exception {
-		init(complexUnion, pgmTestCat, false);
-		DataType oldDt = model.viewComposite.clone(null);
-
-		Options options = tool.getOptions("Editors");
-		String hexNumbersName = "Union Editor" + Options.DELIMITER + "Show Numbers In Hex";
-
-		// Get the hex length option value
-		boolean hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexLength);
-		// Check the length value is in decimal
-		assertEquals(false, model.isShowingNumbersInHex());
-		assertEquals("29", model.getValueAt(15, model.getLengthColumn()));
-		assertEquals("87", model.getLengthAsString());
-
-		// Set the hex length option value to Hex
-		options.setBoolean(hexNumbersName, true);
-
-		// Get the hex length option value
-		hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexLength);
-		// Check the value (length should still be decimal in editor)
-		assertEquals(false, model.isShowingNumbersInHex());
-		assertEquals("29", model.getValueAt(15, model.getLengthColumn()));
-		assertEquals("87", model.getLengthAsString());
-
-		// Close the editor
-		Swing.runLater(() -> provider.closeComponent());
-		waitForSwing();
-		// Editor should be closed.
-		assertFalse(tool.isVisible(provider));
-		assertTrue(complexUnion.isEquivalent(oldDt));
-		// Re-open the editor
-		init(complexUnion, pgmTestCat, true);
-
-		// Get the hex option value (length should now be hexadecimal in editor)
-		hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexLength);
-		// Check the value is in hexadecimal
+	public void testEditorHexModeDefaultsFromOptions() throws Exception {
+		// options default is hex
+		provider = edit(complexUnion);
+		model = provider.getModel();
 		assertEquals(true, model.isShowingNumbersInHex());
 		assertEquals("0x1d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x57", model.getLengthAsString());
 
-		// Set the hex length option value to decimal
-		options.setBoolean(hexNumbersName, false);
+		closeProvider(provider);
+		setOptions(HEX_OPTION_NAME, false);
 
-		// Get the hex option value
-		hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexLength);
-		// Check the value (length should still be hexadecimal in editor)
+		provider = edit(complexUnion);
+		model = provider.getModel();
+		assertEquals(false, model.isShowingNumbersInHex());
+		assertEquals("29", model.getValueAt(15, model.getLengthColumn()));
+		assertEquals("87", model.getLengthAsString());
+	}
+
+	@Test
+	public void testHexDisplayOptionsChangeDoesntAffectExisting() throws Exception {
+		// options default is hex
+		provider = edit(complexUnion);
+		model = provider.getModel();
 		assertEquals(true, model.isShowingNumbersInHex());
 		assertEquals("0x1d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x57", model.getLengthAsString());
 
-		// Close the editor
-		Swing.runLater(() -> provider.closeComponent());
-		waitForSwing();
-		// Editor should be closed.
-		assertFalse(tool.isVisible(provider));
-		assertTrue(complexUnion.isEquivalent(oldDt));
+		setOptions(HEX_OPTION_NAME, false);
 
-		// Re-open the editor
-		init(complexUnion, pgmTestCat, false);
+		assertEquals(true, model.isShowingNumbersInHex());
+		assertEquals("0x1d", model.getValueAt(15, model.getLengthColumn()));
+		assertEquals("0x57", model.getLengthAsString());
+	}
 
-		// Get the hex option value (length should now be decimal in editor)
-		hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexLength);
-		// Check the value is in hexadecimal
+	@Test
+	public void testToggleHexModeAction() throws Exception {
+		provider = edit(complexUnion);
+		model = provider.getModel();
+		assertEquals(true, model.isShowingNumbersInHex());
+		assertEquals("0x1d", model.getValueAt(15, model.getLengthColumn()));
+		assertEquals("0x57", model.getLengthAsString());
+
+		DockingActionIf action = getAction(plugin, "Editor: Show Numbers In Hex");
+		setToggleActionSelected((ToggleDockingActionIf) action, new ActionContext(), false);
+
 		assertEquals(false, model.isShowingNumbersInHex());
 		assertEquals("29", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("87", model.getLengthAsString());
+
 	}
 
 	private void delete(int... rows) {
@@ -377,5 +359,12 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		getTable().requestFocus();
 		model.setSelection(rows);
 		deleteAction.actionPerformed(new ActionContext());
+	}
+
+	protected UnionEditorProvider edit(DataType dt) {
+		runSwing(() -> {
+			plugin.edit(dt);
+		});
+		return waitForComponentProvider(UnionEditorProvider.class);
 	}
 }

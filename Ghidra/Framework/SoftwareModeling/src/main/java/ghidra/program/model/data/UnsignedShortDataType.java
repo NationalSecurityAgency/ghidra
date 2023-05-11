@@ -18,9 +18,7 @@ package ghidra.program.model.data;
 /**
  * Basic implementation for a Short Integer dataType 
  */
-public class UnsignedShortDataType extends AbstractIntegerDataType {
-
-	private final static long serialVersionUID = 1;
+public class UnsignedShortDataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined UnsignedShortDataType instance.*/
 	public final static UnsignedShortDataType dataType = new UnsignedShortDataType();
@@ -30,30 +28,19 @@ public class UnsignedShortDataType extends AbstractIntegerDataType {
 	}
 
 	public UnsignedShortDataType(DataTypeManager dtm) {
-		super("ushort", false, dtm);
+		super("ushort", dtm);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		return getDataOrganization().getShortSize();
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#hasLanguageDependantLength()
-	 */
 	@Override
 	public boolean hasLanguageDependantLength() {
 		return true;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "Unsigned Short Integer (compiler-specific size)";

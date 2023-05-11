@@ -23,7 +23,8 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import org.jdesktop.animation.timing.Animator;
 import org.jdesktop.animation.timing.Animator.RepeatBehavior;
@@ -31,6 +32,8 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import docking.util.AnimationUtils;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
 import ghidra.framework.OperatingSystem;
@@ -41,7 +44,6 @@ import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
 import help.Help;
 import help.HelpService;
-import resources.ResourceManager;
 
 /**
  * Component for providing component titles and toolbar. Also provides Drag
@@ -490,6 +492,7 @@ public class DockableHeader extends GenericHeader
 
 	private static class EmphasizeDockableComponentPainter implements GGlassPanePainter {
 
+		private static final GIcon DRAGON_ICON = new GIcon("icon.dragon.256");
 		private Set<ComponentPaintInfo> otherComponentInfos = new HashSet<>();
 		private Image image;
 
@@ -538,7 +541,7 @@ public class DockableHeader extends GenericHeader
 			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
 				RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-			Color background = new Color(218, 232, 250);
+			Color background = Palette.getColor("aliceblue");
 			g.setColor(background);
 
 			Rectangle othersBounds = null;
@@ -567,8 +570,7 @@ public class DockableHeader extends GenericHeader
 
 			g2d.fillRect(othersBounds.x, othersBounds.y, othersBounds.width, othersBounds.height);
 
-			ImageIcon ghidra = ResourceManager.loadImage("images/GhidraIcon256.png");
-			Image ghidraImage = ghidra.getImage();
+			Image ghidraImage = DRAGON_ICON.getImageIcon().getImage();
 
 			double scale = percentComplete * 7;
 			int gw = ghidraImage.getWidth(null);

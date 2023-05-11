@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.watch;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.pcode.exec.PcodeExecutor;
@@ -27,7 +28,6 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator {
@@ -56,7 +56,7 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 	public void testCaptureDebuggerWatchesPlugin() throws Throwable {
 		TraceThread thread;
 		long snap0, snap1;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			snap1 = tb.trace.getTimeManager().createSnapshot("Second").getKey();
 

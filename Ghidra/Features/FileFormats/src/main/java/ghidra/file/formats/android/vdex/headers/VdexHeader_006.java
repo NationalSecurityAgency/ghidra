@@ -58,7 +58,7 @@ public class VdexHeader_006 extends VdexHeader {
 		monitor.setProgress(0);
 		monitor.setMaximum(number_of_dex_files_ * 2);
 		for (int i = 0; i < number_of_dex_files_; ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 			long index = reader.getPointerIndex();
 			ByteProvider provider = reader.getByteProvider();

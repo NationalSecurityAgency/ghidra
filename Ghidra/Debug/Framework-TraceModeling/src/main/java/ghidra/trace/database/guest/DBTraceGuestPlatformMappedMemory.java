@@ -332,7 +332,7 @@ public class DBTraceGuestPlatformMappedMemory implements Memory {
 	}
 
 	@Override
-	public MemoryBlock convertToInitialized(MemoryBlock unitializedBlock, byte initialValue)
+	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
 			throws LockException, MemoryBlockException, NotFoundException {
 		throw new UnsupportedOperationException();
 	}
@@ -381,7 +381,7 @@ public class DBTraceGuestPlatformMappedMemory implements Memory {
 			int savedLimit = buffer.limit();
 			try {
 				buffer.limit(buffer.position() + lenToRead);
-				hostSpace.getBytes(snap, hostCur, buffer);
+				hostSpace.getViewBytes(snap, hostCur, buffer);
 			}
 			finally {
 				buffer.limit(savedLimit);

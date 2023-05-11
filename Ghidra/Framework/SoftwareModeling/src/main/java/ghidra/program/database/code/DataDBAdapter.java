@@ -86,7 +86,7 @@ abstract class DataDBAdapter {
 			DataDBAdapter tmpAdapter = new DataDBAdapterV0(tmpHandle, addrMap, true);
 			RecordIterator iter = oldAdapter.getRecords();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = iter.next();
 				Address addr = oldAddrMap.decodeAddress(rec.getKey());
 				rec.setKey(addrMap.getKey(addr, true));
@@ -99,7 +99,7 @@ abstract class DataDBAdapter {
 
 			iter = tmpAdapter.getRecords();
 			while (iter.hasNext()) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 				DBRecord rec = iter.next();
 				newAdapter.putRecord(rec);
 				monitor.setProgress(++count);

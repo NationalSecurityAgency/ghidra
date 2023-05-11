@@ -15,21 +15,19 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
-import static ghidra.app.plugin.core.debug.gui.model.DebuggerModelProviderTest.CTX;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static ghidra.app.plugin.core.debug.gui.model.DebuggerModelProviderTest.*;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.trace.database.target.DBTraceObjectManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.util.database.UndoableTransaction;
 
 public class ModelQueryTest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
@@ -39,7 +37,7 @@ public class ModelQueryTest extends AbstractGhidraHeadedDebuggerGUITest {
 		ModelQuery rootQuery = ModelQuery.parse("");
 		ModelQuery threadQuery = ModelQuery.parse("Processes[].Threads[]");
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceObjectManager objects = tb.trace.getObjectManager();
 
 			TraceObjectValue rootVal =
@@ -47,15 +45,42 @@ public class ModelQueryTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 			TraceObjectValue thread0Val =
 				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Threads[0]"))
-						.insert(Range.atLeast(0L), ConflictResolution.DENY)
+						.insert(Lifespan.nowOn(0), ConflictResolution.DENY)
 						.getLastEntry();
 
-			assertTrue(rootQuery.includes(Range.all(), rootVal));
-			assertFalse(rootQuery.includes(Range.all(), thread0Val));
+			assertTrue(rootQuery.includes(Lifespan.ALL, rootVal));
+			assertFalse(rootQuery.includes(Lifespan.ALL, thread0Val));
 
-			assertFalse(threadQuery.includes(Range.all(), rootVal));
-			assertTrue(threadQuery.includes(Range.all(), thread0Val));
-			assertFalse(threadQuery.includes(Range.lessThan(0L), thread0Val));
+			assertFalse(threadQuery.includes(Lifespan.ALL, rootVal));
+			assertTrue(threadQuery.includes(Lifespan.ALL, thread0Val));
+			assertFalse(threadQuery.includes(Lifespan.before(0), thread0Val));
+		}
+	}
+
+	@Test
+	public void testInvolves() throws Throwable {
+		createTrace();
+
+		ModelQuery rootQuery = ModelQuery.parse("");
+		ModelQuery threadQuery = ModelQuery.parse("Processes[].Threads[]");
+
+		try (Transaction tx = tb.startTransaction()) {
+			DBTraceObjectManager objects = tb.trace.getObjectManager();
+
+			TraceObjectValue rootVal =
+				objects.createRootObject(CTX.getSchema(new SchemaName("Session")));
+
+			TraceObjectValue thread0Val =
+				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Threads[0]"))
+						.insert(Lifespan.nowOn(0), ConflictResolution.DENY)
+						.getLastEntry();
+
+			assertTrue(rootQuery.involves(Lifespan.ALL, rootVal));
+			assertFalse(rootQuery.involves(Lifespan.ALL, thread0Val));
+
+			assertTrue(threadQuery.involves(Lifespan.ALL, rootVal));
+			assertTrue(threadQuery.involves(Lifespan.ALL, thread0Val));
+			assertFalse(threadQuery.involves(Lifespan.before(0), thread0Val));
 		}
 	}
 }

@@ -15,13 +15,15 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.attribs.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
+import ghidra.program.model.data.LEB128;
 
 /**
  * A DWARF Debug Info Entry is a collection of {@link DWARFAttributeValue attributes}
@@ -60,7 +62,7 @@ public class DebugInfoEntry {
 	public static DebugInfoEntry read(BinaryReader reader, DWARFCompilationUnit unit,
 			DWARFAttributeFactory attributeFactory) throws IOException {
 		long offset = reader.getPointerIndex();
-		int abbreviationCode = LEB128.readAsUInt32(reader);
+		int abbreviationCode = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 		// Check for terminator DIE
 		if (abbreviationCode == 0) {

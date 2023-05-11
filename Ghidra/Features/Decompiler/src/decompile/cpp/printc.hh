@@ -16,11 +16,13 @@
 /// \file printc.hh
 /// \brief Classes to support the c-language back-end of the decompiler
 
-#ifndef __PRINTC__
-#define __PRINTC__
+#ifndef __PRINTC_HH__
+#define __PRINTC_HH__
 
 #include "printlanguage.hh"
 #include "comment.hh"
+
+namespace ghidra {
 
 class FuncProto;
 class JumpTable;
@@ -329,6 +331,7 @@ public:
   virtual void opInsertOp(const PcodeOp *op);
   virtual void opExtractOp(const PcodeOp *op);
   virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
+  virtual void opLzcountOp(const PcodeOp *op) { opFunc(op); }
 };
 
 /// \brief Set of print commands for displaying an open brace '{' and setting a new indent level
@@ -355,4 +358,5 @@ inline void PrintC::pushTypePointerRel(const PcodeOp *op)
   pushAtom(Atom(typePointerRelToken,optoken,EmitMarkup::funcname_color,op));
 }
 
+} // End namespace ghidra
 #endif

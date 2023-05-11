@@ -17,6 +17,8 @@
 #include "funcdata.hh"
 #include "prefersplit.hh"
 
+namespace ghidra {
+
 /// Update disjoint cover making sure (addr,size) is contained in a single element and return
 /// an iterator to this element. The element's \b pass number is set to be the smallest value
 /// of any previous intersecting element. Additionally an \b intersect code is passed back:
@@ -1918,6 +1920,12 @@ void Heritage::splitJoinRead(Varnode *vn,JoinRecord *joinrec)
 
 {
   PcodeOp *op = vn->loneDescend(); // vn isFree, so loneDescend must be non-null
+  bool preventConstCollapse = false;
+  if (vn->isTypeLock()) {
+    type_metatype meta = vn->getType()->getMetatype();
+    if (meta == TYPE_STRUCT || meta == TYPE_ARRAY)
+      preventConstCollapse = true;
+  }
   
   vector<Varnode *> lastcombo;
   vector<Varnode *> nextlev;
@@ -1937,6 +1945,8 @@ void Heritage::splitJoinRead(Varnode *vn,JoinRecord *joinrec)
       fd->opSetInput(concat,mosthalf,0);
       fd->opSetInput(concat,leasthalf,1);
       fd->opInsertBefore(concat,op);
+      if (preventConstCollapse)
+	fd->opMarkNoCollapse(concat);
       mosthalf->setPrecisHi();	// Set precision flags to trigger "double precision" rules
       leasthalf->setPrecisLo();
       op = concat;		// Keep -op- as the earliest op in the concatenation construction
@@ -2662,3 +2672,5 @@ void Heritage::clear(void)
   maxdepth = -1;
   pass = 0;
 }
+
+} // End namespace ghidra

@@ -19,15 +19,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.*;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.DBTraceUtils.URLDBFieldCodec;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.LockHold;
@@ -106,12 +104,19 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 
 	private AddressRange traceRange;
 	private long shift;
-	private Range<Long> lifespan;
+	private Lifespan lifespan;
 
 	public DBTraceStaticMapping(DBTraceStaticMappingManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
 		super(store, record);
 		this.manager = manager;
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+			"Mapping: dynamic=%s,program=%s,address=%s,length=0x%x,shift=0x%x,lifespan=%s",
+			traceAddress, staticProgramURL, staticAddress, length, shift, lifespan);
 	}
 
 	@Override
@@ -127,10 +132,10 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 			throw new AssertionError(e);
 		}
 		this.shift = traceAddress.getOffset() - parseOffset(staticAddress);
-		this.lifespan = DBTraceUtils.toRange(startSnap, endSnap);
+		this.lifespan = Lifespan.span(startSnap, endSnap);
 	}
 
-	void set(AddressRange traceRange, Range<Long> lifespan, URL staticProgramURL,
+	void set(AddressRange traceRange, Lifespan lifespan, URL staticProgramURL,
 			String staticAddress) {
 		if (startSnap == -1) {
 			throw new IllegalArgumentException("endpoint cannot be -1");
@@ -139,8 +144,8 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 		this.traceAddress = traceRange.getMinAddress();
 		this.length = traceRange.getLength();
 		this.lifespan = lifespan;
-		this.startSnap = DBTraceUtils.lowerEndpoint(lifespan);
-		this.endSnap = DBTraceUtils.upperEndpoint(lifespan);
+		this.startSnap = lifespan.lmin();
+		this.endSnap = lifespan.lmax();
 		this.staticProgramURL = staticProgramURL;
 		this.staticAddress = staticAddress;
 		update(TRACE_ADDRESS_COLUMN, LENGTH_COLUMN, START_SNAP_COLUMN, END_SNAP_COLUMN,
@@ -185,7 +190,7 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return lifespan;
 	}
 
@@ -216,14 +221,14 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 
 	@Override
 	@SuppressWarnings("hiding")
-	public boolean conflictsWith(AddressRange range, Range<Long> lifespan, URL toProgramURL,
+	public boolean conflictsWith(AddressRange range, Lifespan lifespan, URL toProgramURL,
 			String toAddress) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			// Must overlap to conflict
 			if (!traceRange.intersects(range)) {
 				return false;
 			}
-			if (!DBTraceUtils.intersect(this.lifespan, lifespan)) {
+			if (!this.lifespan.intersects(lifespan)) {
 				return false;
 			}
 

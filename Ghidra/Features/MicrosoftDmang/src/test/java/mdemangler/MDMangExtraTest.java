@@ -15,12 +15,17 @@
  */
 package mdemangler;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+
+import java.util.List;
 
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.demangler.DemangledObject;
+import mdemangler.naming.MDQualification;
+import mdemangler.object.MDObjectCPP;
+import mdemangler.typeinfo.MDVxTable;
 
 /**
  * This class performs extra demangler testing for special cases that do not fit
@@ -53,4 +58,26 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		demangled = item.toString();
 		assertEquals(functionNamespaceTruth, demangled);
 	}
+
+	@Test
+	public void testVxTableNestedQualifications() throws Exception {
+		// Test string taken from MDMangBaseTest
+		String mangled = "??_7a@b@@6Bc@d@e@@f@g@h@@i@j@k@@@";
+		String truth = "const b::a::`vftable'{for `e::d::c's `h::g::f's `k::j::i'}";
+
+		MDMangGhidra demangler = new MDMangGhidra();
+		MDParsableItem item = demangler.demangle(mangled, true);
+
+		String demangled = item.toString();
+		assertEquals(truth, demangled);
+
+		MDObjectCPP cppItem = (MDObjectCPP) item;
+		MDVxTable vxTable = (MDVxTable) cppItem.getTypeInfo();
+		List<MDQualification> qualifications = vxTable.getNestedQualifications();
+		assertEquals(3, qualifications.size());
+		assertEquals("e::d::c", qualifications.get(0).toString());
+		assertEquals("h::g::f", qualifications.get(1).toString());
+		assertEquals("k::j::i", qualifications.get(2).toString());
+	}
+
 }

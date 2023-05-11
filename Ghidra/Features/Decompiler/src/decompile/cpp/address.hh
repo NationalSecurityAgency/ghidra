@@ -23,10 +23,12 @@
 ///  by placing them in their own space, separate from RAM. Indirection
 ///  (i.e. pointers) must be simulated through the LOAD and STORE ops.
 
-#ifndef __CPUI_ADDR__
-#define __CPUI_ADDR__
+#ifndef __ADDRESS_HH__
+#define __ADDRESS_HH__
 
 #include "space.hh"
+
+namespace ghidra {
 
 class AddrSpaceManager;
 
@@ -87,8 +89,9 @@ public:
   friend ostream &operator<<(ostream &s,const Address &addr);  ///< Write out an address to stream
   bool containedBy(int4 sz,const Address &op2,int4 sz2) const;	///< Determine if \e op2 range contains \b this range
   int4 justifiedContain(int4 sz,const Address &op2,int4 sz2,bool forceleft) const; ///< Determine if \e op2 is the least significant part of \e this.
-  int4 overlap(int4 skip,const Address &op,int4 size) const; ///< Determine how two address ranges overlap
-  bool isContiguous(int4 sz,const Address &loaddr,int4 losz) const; ///< Does \e this form a contigous range with \e loaddr
+  int4 overlap(int4 skip,const Address &op,int4 size) const; ///< Determine how \b this address falls in a given address range
+  int4 overlapJoin(int4 skip,const Address &op,int4 size) const;	///< Determine how \b this falls in a possible \e join space address range
+  bool isContiguous(int4 sz,const Address &loaddr,int4 losz) const; ///< Does \e this form a contiguous range with \e loaddr
   bool isConstant(void) const; ///< Is this a \e constant \e value
   void renormalize(int4 size);	///< Make sure there is a backing JoinRecord if \b this is in the \e join space
   bool isJoin(void) const;	///< Is this a \e join \e value
@@ -431,6 +434,20 @@ inline Address Address::operator-(int4 off) const {
   return Address(base,base->wrapOffset(offset-off));
 }
 
+/// This method is equivalent to Address::overlap, but a range in the \e join space can be
+/// considered overlapped with its constituent pieces.
+/// If \e this + \e skip falls in the range, \e op to \e op + \e size, then a non-negative integer is
+/// returned indicating where in the interval it falls. Otherwise -1 is returned.
+/// \param skip is an adjust to \e this address
+/// \param op is the start of the range to check
+/// \param size is the size of the range
+/// \return an integer indicating how overlap occurs
+inline int4 Address::overlapJoin(int4 skip,const Address &op,int4 size) const
+
+{
+  return op.getSpace()->overlapJoin(op.getOffset(), size, base, offset, skip);
+}
+
 /// Determine if this address is from the \e constant \e space.
 /// All constant values are represented as an offset into
 /// the \e constant \e space.
@@ -479,7 +496,7 @@ inline bool Range::contains(const Address &addr) const {
 
 /// \param size is the desired size in bytes
 /// \return a value appropriate for masking off the first \e size bytes
-inline uintb calc_mask(int4 size) { return uintbmasks[(size<8)? size : 8]; }
+inline uintb calc_mask(int4 size) { return uintbmasks[((uint4)size) < 8  ? size : 8]; }
 
 /// Perform a CPUI_INT_RIGHT on the given val
 /// \param val is the value to shift
@@ -540,4 +557,5 @@ extern void unsignedSubtract128(uint8 *a,uint8 *b);
 extern int4 unsignedCompare128(uint8 *a,uint8 *b);
 extern int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r);
 
+} // End namespace ghidra
 #endif

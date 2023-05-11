@@ -15,6 +15,11 @@
  */
 package ghidra.app.util.viewer.field;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import docking.widgets.fieldpanel.field.AttributedString;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -22,12 +27,6 @@ import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.listing.Program;
 import ghidra.util.BrowserLoader;
 import ghidra.util.Msg;
-
-import java.awt.Color;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import docking.widgets.fieldpanel.field.AttributedString;
 
 /**
  * An annotated string handler that allows handles annotations that begin with 
@@ -37,8 +36,10 @@ import docking.widgets.fieldpanel.field.AttributedString;
  * displayed.
  */
 public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
-	private static final String INVALID_SYMBOL_TEXT = "@url annotation must have a URL string "
-		+ "optionally followed by a display string";
+
+	private static final String INVALID_SYMBOL_TEXT =
+		"@url annotation must have a URL string optionally followed by a display string";
+
 	private static final String[] SUPPORTED_ANNOTATIONS = { "url", "hyperlink", "href", "link" };
 
 	@Override
@@ -54,7 +55,7 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 
 		if (url == null) {
 			return new AttributedString("Invalid URL annotations - not a URL: " + text[1],
-				Color.RED, prototypeString.getFontMetrics(0), false, Color.RED);
+				Messages.ERROR, prototypeString.getFontMetrics(0), false, Messages.ERROR);
 		}
 
 		String displayText = url.toExternalForm();
@@ -88,6 +89,7 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 		return url;
 	}
 
+	@Override
 	public boolean handleMouseClick(String[] annotationParts, Navigatable navigatable,
 			ServiceProvider serviceProvider) {
 		String urlString = annotationParts[1];

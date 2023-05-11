@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.datamodel.script.debug;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.datamodel.script.debug.DataModelScriptDebugClient;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.debug.IDataModelScriptDebugClient;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.debug.WrapIDataModelScriptDebugClient;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -33,20 +33,15 @@ public interface DataModelScriptDebugClientInternal extends DataModelScriptDebug
 
 	static DataModelScriptDebugClientInternal instanceFor(
 			WrapIDataModelScriptDebugClient data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DataModelScriptDebugClientImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DataModelScriptDebugClientImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDataModelScriptDebugClient>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDataModelScriptDebugClient>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(
-					new REFIID(IDataModelScriptDebugClient.IID_IDATA_MODEL_SCRIPT_DEBUG_CLIENT),
-					WrapIDataModelScriptDebugClient.class) //
-				.build();
+	List<Preferred<WrapIDataModelScriptDebugClient>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDataModelScriptDebugClient.IID_IDATA_MODEL_SCRIPT_DEBUG_CLIENT,
+			WrapIDataModelScriptDebugClient.class));
 
 	static DataModelScriptDebugClientInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DataModelScriptDebugClientInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DataModelScriptDebugClientInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

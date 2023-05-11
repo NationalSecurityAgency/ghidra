@@ -15,11 +15,15 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
+import java.util.Map;
 import java.util.concurrent.*;
 
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerDataAccess;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.AccessPcodeExecutionException;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -44,28 +48,22 @@ public abstract class AbstractRWTargetPcodeExecutorStatePiece
 			super(language, space, backing);
 		}
 
-		protected abstract void fillUninitialized(AddressSet uninitialized);
+		protected AbstractRWTargetCachedSpace(Language language, AddressSpace space,
+				PcodeTraceDataAccess backing, SemisparseByteArray bytes, AddressSet written) {
+			super(language, space, backing, bytes, written);
+		}
+
+		protected abstract ULongSpanSet readUninitializedFromTarget(ULongSpanSet uninitialized);
 
 		@Override
-		public byte[] read(long offset, int size, Reason reason) {
-			if (backing != null) {
-				AddressSet uninitialized =
-					addrSet(bytes.getUninitialized(offset, offset + size - 1));
-				if (uninitialized.isEmpty()) {
-					return super.read(offset, size, reason);
-				}
-
-				fillUninitialized(uninitialized);
-
-				AddressSetView unknown = backing.intersectUnknown(
-					addrSet(bytes.getUninitialized(offset, offset + size - 1)));
-				if (!unknown.isEmpty() && reason == Reason.EXECUTE) {
-					warnUnknown(unknown);
-				}
+		protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
+			uninitialized = readUninitializedFromTarget(uninitialized);
+			if (uninitialized.isEmpty()) {
+				return uninitialized;
 			}
 
+			return super.readUninitializedFromBacking(uninitialized);
 			// TODO: What to flush when bytes in the trace change?
-			return super.read(offset, size, reason);
 		}
 
 		protected <T> T waitTimeout(CompletableFuture<T> future) {
@@ -99,6 +97,20 @@ public abstract class AbstractRWTargetPcodeExecutorStatePiece
 	 */
 	protected abstract class TargetBackedSpaceMap
 			extends CacheingSpaceMap<PcodeDebuggerDataAccess, CachedSpace> {
+
+		public TargetBackedSpaceMap() {
+			super();
+		}
+
+		protected TargetBackedSpaceMap(Map<AddressSpace, CachedSpace> spaces) {
+			super(spaces);
+		}
+
+		@Override
+		public CachedSpace fork(CachedSpace s) {
+			return s.fork();
+		}
+
 		@Override
 		protected PcodeDebuggerDataAccess getBacking(AddressSpace space) {
 			return data;

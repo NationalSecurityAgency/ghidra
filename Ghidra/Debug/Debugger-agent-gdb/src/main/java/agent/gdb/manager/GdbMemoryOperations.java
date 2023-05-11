@@ -18,7 +18,7 @@ package agent.gdb.manager;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.RangeSet;
+import generic.ULongSpan.ULongSpanSet;
 
 public interface GdbMemoryOperations {
 
@@ -30,7 +30,7 @@ public interface GdbMemoryOperations {
 	 * @param len the length of data to read
 	 * @return a future which completes giving the ranges successfully read
 	 */
-	CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len);
+	CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len);
 
 	/**
 	 * Read memory
@@ -41,7 +41,7 @@ public interface GdbMemoryOperations {
 	 * @param buf the buffer to read into
 	 * @return a future which completes giving the ranges successfully read
 	 */
-	default CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf) {
+	default CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf) {
 		return readMemory(addr, buf, buf.remaining());
 	}
 

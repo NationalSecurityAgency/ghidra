@@ -23,7 +23,7 @@ import javax.swing.JTextField;
 
 import docking.test.AbstractDockingTest;
 import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.AssemblyCompletion;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.AssemblyInstruction;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
@@ -78,14 +78,14 @@ public class AssemblerPluginTestHelper {
 	}
 
 	public List<AssemblyCompletion> inputAndGetCompletions(String text) {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			instructionInput.setText(text);
 			JTextField field = instructionInput.getOperandsField();
 			instructionInput.auto.fakeFocusGained(field);
 			instructionInput.auto.startCompletion(field);
 			instructionInput.auto.updateNow();
 		});
-		return AbstractGenericTest.waitForValue(() -> AbstractGenericTest.runSwing(() -> {
+		return AbstractGuiTest.waitForValue(() -> AbstractGuiTest.runSwing(() -> {
 			List<AssemblyCompletion> suggestions = instructionInput.auto.getSuggestions();
 			if (suggestions.isEmpty()) {
 				return null;
@@ -98,7 +98,7 @@ public class AssemblerPluginTestHelper {
 		ListingPanel listingPanel = provider.getListingPanel();
 		ProgramLocation location = new ProgramLocation(program, address);
 		AbstractGTest.waitForCondition(() -> {
-			AbstractGenericTest.runSwing(() -> listingPanel.goTo(location));
+			AbstractGuiTest.runSwing(() -> listingPanel.goTo(location));
 			ProgramLocation confirm = listingPanel.getCursorLocation();
 			if (confirm == null) {
 				return false;
@@ -126,7 +126,7 @@ public class AssemblerPluginTestHelper {
 		assertTrue(first instanceof AssemblyInstruction);
 		AssemblyInstruction ai = (AssemblyInstruction) first;
 
-		AbstractGenericTest.runSwing(() -> patchInstructionAction.accept(ai));
+		AbstractGuiTest.runSwing(() -> patchInstructionAction.accept(ai));
 		AbstractGhidraHeadedIntegrationTest.waitForProgram(program);
 
 		return AbstractGTest.waitForValue(() -> listing.getInstructionAt(address));
@@ -140,7 +140,7 @@ public class AssemblerPluginTestHelper {
 		assertEquals(expText, dataInput.getText());
 		assertEquals(address, patchDataAction.getAddress());
 
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			dataInput.setText(newText);
 			patchDataAction.accept();
 		});

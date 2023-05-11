@@ -16,8 +16,7 @@
 package help;
 
 import java.awt.Component;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -30,8 +29,7 @@ import javax.help.event.HelpModelEvent;
 import javax.help.plaf.HelpNavigatorUI;
 import javax.help.plaf.basic.BasicFavoritesCellRenderer;
 import javax.help.plaf.basic.BasicFavoritesNavigatorUI;
-import javax.swing.JComponent;
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import ghidra.util.Msg;
@@ -69,6 +67,28 @@ public class CustomFavoritesView extends FavoritesView {
 		@Override
 		public void setUI(HelpNavigatorUI ui) {
 			super.setUI(new CustomFavoritesNavigatorUI(this));
+		}
+
+		private Action superGetAddAction() {
+			return super.getAddAction();
+		}
+
+		@Override
+		public Action getAddAction() {
+
+			//
+			// Switching themes triggers a UI update.  Internally, the Java Help API is not 
+			// correctly updating listeners, which results in that API having a reference to an old
+			// UI.  Using our own custom action to retrieve the currently active action prevents 
+			// this issue, since we are always getting the active target for actionPerformed().
+			//
+			return new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Action currentAction = superGetAddAction();
+					currentAction.actionPerformed(e);
+				}
+			};
 		}
 	}
 

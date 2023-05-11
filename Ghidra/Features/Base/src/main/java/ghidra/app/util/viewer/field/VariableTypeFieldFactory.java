@@ -15,17 +15,14 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.app.util.viewer.proxy.VariableProxy;
-import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Parameter;
@@ -53,8 +50,8 @@ public class VariableTypeFieldFactory extends AbstractVariableFieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private VariableTypeFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
-			Options displayOptions, Options fieldOptions) {
+	private VariableTypeFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
+			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
 
@@ -67,22 +64,29 @@ public class VariableTypeFieldFactory extends AbstractVariableFieldFactory {
 		if (!enabled || !(obj instanceof Variable)) {
 			return null;
 		}
-		Variable sv = (Variable) obj;
+		Variable variable = (Variable) obj;
 
 		DataType dt;
-		if (sv instanceof Parameter) {
-			dt = ((Parameter) sv).getFormalDataType();
+		if (variable instanceof Parameter) {
+			dt = ((Parameter) variable).getFormalDataType();
 		}
 		else {
-			dt = sv.getDataType();
+			dt = variable.getDataType();
 		}
-		String dtName = (dt != null) ? dt.getDisplayName() : null;
-
+		String dtName = getDataTypeName(dt);
 		AttributedString as =
-			new AttributedString((dtName != null) ? dtName : "", getColor(sv), getMetrics(sv));
+			new AttributedString(dtName, getColor(variable), getMetrics(variable));
 		FieldElement field = new TextFieldElement(as, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, field, startX + varWidth,
 			width, hlProvider);
+	}
+
+	private String getDataTypeName(DataType dt) {
+		if (dt == null) {
+			return "";
+		}
+		String dtName = dt.getName();
+		return dtName == null ? "" : simplifyTemplates(dtName);
 	}
 
 	/**
@@ -135,17 +139,8 @@ public class VariableTypeFieldFactory extends AbstractVariableFieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new VariableTypeFieldFactory(formatModel, provider, displayOptions, fieldOptions);
 	}
-
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.VARIABLE.getDefaultColor();
-	}
-
 }

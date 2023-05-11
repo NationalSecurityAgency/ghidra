@@ -16,18 +16,27 @@
 /// \file interface.hh
 /// \brief Classes and utilities for a \e generic command-line interface
 
-#ifndef __INTERFACE__
-#define __INTERFACE__
+#ifndef __INTERFACE_HH__
+#define __INTERFACE_HH__
 
 #include "capability.hh"
-#include <string>
 #include <map>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <cstdio>
 
-using namespace std;
+namespace ghidra {
+
+using std::map;
+using std::istream;
+using std::ostream;
+using std::ifstream;
+using std::ofstream;
+using std::istringstream;
+using std::endl;
+using std::ws;
+using std::ios_base;
 
 #ifdef __REMOTE_SOCKET__
 
@@ -288,4 +297,5 @@ public:
   virtual void execute(istream &s);
 };
 
+} // End namespace ghidra
 #endif

@@ -27,6 +27,7 @@ import ghidra.async.TypeSpec;
 import ghidra.comm.service.AbstractAsyncClientHandler;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.*;
 import ghidra.dbg.gadp.GadpVersion;
 import ghidra.dbg.gadp.client.GadpValueUtils;
@@ -509,7 +510,11 @@ public class GadpClientHandler
 		List<String> path = req.getPath().getEList();
 		return model.fetchModelObject(path).thenCompose(obj -> {
 			DebuggerObjectModel.requireNonNull(obj, path);
-			return obj.resync(req.getAttributes(), req.getElements());
+			RefreshBehavior reqAttributes = req.getAttributes() ? 
+				RefreshBehavior.REFRESH_ALWAYS : RefreshBehavior.REFRESH_NEVER;
+			RefreshBehavior reqElements = req.getElements() ? 
+				RefreshBehavior.REFRESH_ALWAYS : RefreshBehavior.REFRESH_NEVER;
+			return obj.resync(reqAttributes, reqElements);
 		}).thenCompose(__ -> {
 			return model.flushEvents();
 		}).thenCompose(__ -> {

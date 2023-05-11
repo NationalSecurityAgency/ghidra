@@ -16,7 +16,6 @@
 package ghidra.framework.project;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
@@ -25,7 +24,6 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
-import docking.widgets.OptionDialog;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.ProjectFileManager;
 import ghidra.framework.data.TransientDataManager;
@@ -35,8 +33,11 @@ import ghidra.framework.project.tool.GhidraToolTemplate;
 import ghidra.framework.project.tool.ToolManagerImpl;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.protocol.ghidra.GhidraURLConnection;
+import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
 import ghidra.framework.store.LockException;
 import ghidra.util.*;
+import ghidra.util.datastruct.WeakDataStructureFactory;
+import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
@@ -53,8 +54,6 @@ public class DefaultProject implements Project {
 
 	private static final String PROJECT_STATE = "projectState";
 
-	private ProjectLock projectLock;
-
 	// this may be null
 	private DefaultProjectManager projectManager;
 
@@ -63,11 +62,14 @@ public class DefaultProject implements Project {
 	private ToolManagerImpl toolManager;
 
 	private boolean changed; // flag for whether the project configuration has changed
-	private boolean isClosed;
+	private volatile boolean isClosed;
 
 	private Map<String, SaveState> dataMap = new HashMap<>();
-	private HashMap<String, ToolTemplate> projectConfigMap = new HashMap<>();
-	private HashMap<URL, ProjectFileManager> otherViews = new HashMap<>();
+	private Map<String, ToolTemplate> projectConfigMap = new HashMap<>();
+	private Map<URL, ProjectFileManager> otherViews = new HashMap<>();
+	private Set<URL> visibleViews = new HashSet<>();
+	private WeakSet<ProjectViewListener> viewListeners =
+		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
 	/**
 	 * Constructor for creating a New project
@@ -83,10 +85,6 @@ public class DefaultProject implements Project {
 			RepositoryAdapter repository) throws IOException, LockException {
 		this.projectManager = projectManager;
 		this.projectLocator = projectLocator;
-		this.projectLock = getProjectLock(projectLocator, false);
-		if (projectLock == null) {
-			throw new LockException("Unable to lock project! " + projectLocator);
-		}
 
 		boolean success = false;
 		try {
@@ -102,7 +100,6 @@ public class DefaultProject implements Project {
 				if (fileMgr != null) {
 					fileMgr.dispose();
 				}
-				projectLock.release();
 			}
 		}
 		initializeNewProject();
@@ -124,10 +121,6 @@ public class DefaultProject implements Project {
 
 		this.projectManager = projectManager;
 		this.projectLocator = projectLocator;
-		this.projectLock = getProjectLock(projectLocator, true);
-		if (projectLock == null) {
-			throw new LockException("Unable to lock project! " + projectLocator);
-		}
 
 		boolean success = false;
 		try {
@@ -143,7 +136,6 @@ public class DefaultProject implements Project {
 				if (fileMgr != null) {
 					fileMgr.dispose();
 				}
-				projectLock.release();
 			}
 		}
 	}
@@ -188,54 +180,64 @@ public class DefaultProject implements Project {
 		return projectManager;
 	}
 
-	/**
-	 * Creates a ProjectLock and attempts to lock it. This handles the case
-	 * where the project was previously locked.
-	 * 
-	 * @param locator the project locator
-	 * @param allowInteractiveForce if true, when a lock cannot be obtained, the
-	 *            user will be prompted
-	 * @return A locked ProjectLock
-	 * @throws ProjectLockException if lock failed
-	 */
-	private ProjectLock getProjectLock(ProjectLocator locator, boolean allowInteractiveForce) {
-		ProjectLock lock = new ProjectLock(locator);
-		if (lock.lock()) {
-			return lock;
-		}
+//	/**
+//	 * Determine if the specified project location currently has a write lock.
+//	 * @param locator project storage locator
+//	 * @return true if project data current has write-lock else false
+//	 */
+//	public static boolean isLocked(ProjectLocator locator) {
+//		ProjectLock lock = new ProjectLock(locator);
+//		return lock.isLocked();
+//	}
 
-		// in headless mode, just spit out an error
-		if (!allowInteractiveForce || SystemUtilities.isInHeadlessMode()) {
-			return null;
-		}
-
-		String projectStr = "Project: " + HTMLUtilities.escapeHTML(locator.getLocation()) +
-			System.getProperty("file.separator") + HTMLUtilities.escapeHTML(locator.getName());
-		String lockInformation = lock.getExistingLockFileInformation();
-		if (!lock.canForceLock()) {
-			Msg.showInfo(getClass(), null, "Project Locked",
-				"<html>Project is locked. You have another instance of Ghidra<br>" +
-					"already running with this project open (locally or remotely).<br><br>" +
-					projectStr + "<br><br>" + "Lock information: " + lockInformation);
-			return null;
-		}
-
-		int userChoice = OptionDialog.showOptionDialog(null, "Project Locked - Delete Lock?",
-			"<html>Project is locked. You may have another instance of Ghidra<br>" +
-				"already running with this project opened (locally or remotely).<br>" + projectStr +
-				"<br><br>" + "If this is not the case, you can delete the lock file:  <br><b>" +
-				locator.getProjectLockFile().getAbsolutePath() + "</b>.<br><br>" +
-				"Lock information: " + lockInformation,
-			"Delete Lock", OptionDialog.QUESTION_MESSAGE);
-		if (userChoice == OptionDialog.OPTION_ONE) { // Delete Lock
-			if (lock.forceLock()) {
-				return lock;
-			}
-
-			Msg.showError(this, null, "Error", "Attempt to force lock failed! " + locator);
-		}
-		return null;
-	}
+//	/**
+//	 * Creates a ProjectLock and attempts to lock it. This handles the case
+//	 * where the project was previously locked.
+//	 * 
+//	 * @param locator the project locator
+//	 * @param allowInteractiveForce if true, when a lock cannot be obtained, the
+//	 *            user will be prompted
+//	 * @return A locked ProjectLock
+//	 * @throws ProjectLockException if lock failed
+//	 */
+//	private ProjectLock getProjectLock(ProjectLocator locator, boolean allowInteractiveForce) {
+//		ProjectLock lock = new ProjectLock(locator);
+//		if (lock.lock()) {
+//			return lock;
+//		}
+//
+//		// in headless mode, just spit out an error
+//		if (!allowInteractiveForce || SystemUtilities.isInHeadlessMode()) {
+//			return null;
+//		}
+//
+//		String projectStr = "Project: " + HTMLUtilities.escapeHTML(locator.getLocation()) +
+//			System.getProperty("file.separator") + HTMLUtilities.escapeHTML(locator.getName());
+//		String lockInformation = lock.getExistingLockFileInformation();
+//		if (!lock.canForceLock()) {
+//			Msg.showInfo(getClass(), null, "Project Locked",
+//				"<html>Project is locked. You have another instance of Ghidra<br>" +
+//					"already running with this project open (locally or remotely).<br><br>" +
+//					projectStr + "<br><br>" + "Lock information: " + lockInformation);
+//			return null;
+//		}
+//
+//		int userChoice = OptionDialog.showOptionDialog(null, "Project Locked - Delete Lock?",
+//			"<html>Project is locked. You may have another instance of Ghidra<br>" +
+//				"already running with this project opened (locally or remotely).<br>" + projectStr +
+//				"<br><br>" + "If this is not the case, you can delete the lock file:  <br><b>" +
+//				locator.getProjectLockFile().getAbsolutePath() + "</b>.<br><br>" +
+//				"Lock information: " + lockInformation,
+//			"Delete Lock", OptionDialog.QUESTION_MESSAGE);
+//		if (userChoice == OptionDialog.OPTION_ONE) { // Delete Lock
+//			if (lock.forceLock()) {
+//				return lock;
+//			}
+//
+//			Msg.showError(this, null, "Error", "Attempt to force lock failed! " + locator);
+//		}
+//		return null;
+//	}
 
 	private void initializeNewProject() {
 		if (toolManager == null) {
@@ -261,42 +263,77 @@ public class DefaultProject implements Project {
 	}
 
 	@Override
-	public ProjectData addProjectView(URL url) throws IOException, MalformedURLException {
+	public void addProjectViewListener(ProjectViewListener listener) {
+		viewListeners.add(listener);
+	}
 
-		ProjectData pd = otherViews.get(url);
-		if (pd != null) {
-			return pd;
-		}
+	@Override
+	public void removeProjectViewListener(ProjectViewListener listener) {
+		viewListeners.remove(listener);
+	}
 
-		if (!GhidraURL.PROTOCOL.equals(url.getProtocol())) {
-			throw new IOException("Invalid Ghidra URL specified: " + url);
+	private void notifyVisibleViewAdded(URL projectView) {
+		for (ProjectViewListener listener : viewListeners) {
+			listener.viewedProjectAdded(projectView);
 		}
+	}
+
+	private void notifyVisibleViewRemoved(URL projectView) {
+		for (ProjectViewListener listener : viewListeners) {
+			listener.viewedProjectRemoved(projectView);
+		}
+	}
+
+	private ProjectData openProjectView(URL url) throws IOException {
 
 		GhidraURLConnection c = (GhidraURLConnection) url.openConnection();
 		c.setAllowUserInteraction(true);
 		c.setReadOnly(true);
 
-		int responseCode = c.getResponseCode();
-		if (responseCode == GhidraURLConnection.GHIDRA_NOT_FOUND) {
+		StatusCode responseCode = c.getStatusCode();
+		if (responseCode == StatusCode.NOT_FOUND) {
 			throw new IOException(
 				"Project/repository not found: " + GhidraURL.getDisplayString(url));
 		}
-		if (responseCode == GhidraURLConnection.GHIDRA_UNAUTHORIZED) {
-			throw new IOException(
-				"Authentication Failed for project/repository: " + GhidraURL.getDisplayString(url));
+		if (responseCode == StatusCode.UNAUTHORIZED) {
+			// assume already informed
+			return null;
 		}
 
 		ProjectFileManager projectData = (ProjectFileManager) c.getProjectData();
 		if (projectData == null) {
 			throw new IOException(
-				"Failed to view specified project/repository: " + GhidraURL.getDisplayString(url));
+				"Failed to view specified project/repository: " +
+					GhidraURL.getDisplayString(url));
 		}
 		url = projectData.getProjectLocator().getURL(); // transform to repository root URL
 
 		otherViews.put(url, projectData);
-		changed = true;
-		Msg.info(this, "Opened project view: " + GhidraURL.getDisplayString(url));
 		return projectData;
+	}
+
+	@Override
+	public ProjectData addProjectView(URL url, boolean visible) throws IOException {
+		synchronized (otherViews) {
+			if (isClosed) {
+				throw new IOException("project is closed");
+			}
+
+			if (!GhidraURL.PROTOCOL.equals(url.getProtocol())) {
+				throw new IOException("Invalid Ghidra URL specified: " + url);
+			}
+
+			ProjectData projectData = otherViews.get(url);
+			if (projectData == null) {
+				projectData = openProjectView(url);
+			}
+
+			if (projectData != null && visible && visibleViews.add(url)) {
+				notifyVisibleViewAdded(url);
+			}
+
+			return projectData;
+		}
 	}
 
 	/**
@@ -304,11 +341,16 @@ public class DefaultProject implements Project {
 	 */
 	@Override
 	public void removeProjectView(URL url) {
-		ProjectFileManager dataMgr = otherViews.remove(url);
-		if (dataMgr != null) {
-			dataMgr.dispose();
-			Msg.info(this, "Closed project view: " + GhidraURL.getDisplayString(url));
-			changed = true;
+		synchronized (otherViews) {
+			ProjectFileManager dataMgr = otherViews.remove(url);
+			if (dataMgr != null) {
+				if (visibleViews.remove(url)) {
+					notifyVisibleViewRemoved(url);
+				}
+				dataMgr.dispose();
+				Msg.info(this, "Closed project view: " + GhidraURL.getDisplayString(url));
+				changed = true;
+			}
 		}
 	}
 
@@ -348,6 +390,7 @@ public class DefaultProject implements Project {
 	@Override
 	public ProjectLocator[] getProjectViews() {
 
+		// Only includes visible viewed projects
 		ProjectData[] pd = getViewedProjectData();
 
 		ProjectLocator[] views = new ProjectLocator[pd.length];
@@ -364,17 +407,21 @@ public class DefaultProject implements Project {
 
 	@Override
 	public void close() {
-		Iterator<ProjectFileManager> iter = otherViews.values().iterator();
-		while (iter.hasNext()) {
-			ProjectFileManager dataMgr = iter.next();
-			if (dataMgr != null) {
-				dataMgr.dispose();
+		synchronized (otherViews) {
+			isClosed = true;
+
+			Iterator<ProjectFileManager> iter = otherViews.values().iterator();
+			while (iter.hasNext()) {
+				ProjectFileManager dataMgr = iter.next();
+				if (dataMgr != null) {
+					dataMgr.dispose();
+				}
 			}
+			otherViews.clear();
 		}
-		otherViews.clear();
 
 		try {
-			isClosed = true;
+
 			if (toolManager != null) {
 				toolManager.close();
 				toolManager.dispose();
@@ -382,12 +429,9 @@ public class DefaultProject implements Project {
 			if (projectManager != null) {
 				projectManager.projectClosed(this);
 			}
-			fileMgr.dispose();
 		}
 		finally {
-			if (projectLock != null) {
-				projectLock.release();
-			}
+			fileMgr.dispose();
 		}
 	}
 
@@ -450,10 +494,11 @@ public class DefaultProject implements Project {
 				String location = elem.getAttributeValue("LOCATION");
 				URL url = GhidraURL.makeURL(location, name);
 				try {
-					addProjectView(url);
+					addProjectView(url, true);
 				}
 				catch (IOException e) {
-					Msg.error(this, e.getMessage());
+					Msg.error(this, "Project view not opended (" + GhidraURL.getDisplayString(url) +
+						"): " + e.getMessage());
 				}
 			}
 			it = root.getChildren(OPEN_REPOSITORY_VIEW_XML_NAME).iterator();
@@ -462,10 +507,11 @@ public class DefaultProject implements Project {
 				String urlStr = elem.getAttributeValue("URL");
 				URL url = new URL(urlStr);
 				try {
-					addProjectView(url);
+					addProjectView(url, true);
 				}
 				catch (IOException e) {
-					Msg.error(this, e.getMessage());
+					Msg.error(this, "Project view not opended (" + GhidraURL.getDisplayString(url) +
+						"): " + e.getMessage());
 				}
 			}
 
@@ -602,7 +648,7 @@ public class DefaultProject implements Project {
 	}
 
 	@Override
-	public ProjectData getProjectData() {
+	public ProjectFileManager getProjectData() {
 		return fileMgr;
 	}
 
@@ -622,11 +668,14 @@ public class DefaultProject implements Project {
 			return fileMgr;
 		}
 
-		for (ProjectData data : otherViews.values()) {
-			if (locator.equals(data.getProjectLocator())) {
-				return data;
+		synchronized (otherViews) {
+			for (ProjectData data : otherViews.values()) {
+				if (locator.equals(data.getProjectLocator())) {
+					return data;
+				}
 			}
 		}
+
 		return null;
 	}
 
@@ -640,18 +689,31 @@ public class DefaultProject implements Project {
 
 	@Override
 	public ProjectData[] getViewedProjectData() {
-		ProjectData[] projectData = new ProjectData[otherViews.size()];
-		otherViews.values().toArray(projectData);
-		return projectData;
+		synchronized (otherViews) {
+
+			// only return visible viewed project
+			List<ProjectData> list = new ArrayList<>();
+			for (URL url : otherViews.keySet()) {
+				if (visibleViews.contains(url)) {
+					list.add(otherViews.get(url));
+				}
+			}
+
+			ProjectData[] projectData = new ProjectData[list.size()];
+			list.toArray(projectData);
+			return projectData;
+		}
 	}
 
 	@Override
 	public void releaseFiles(Object consumer) {
 		fileMgr.releaseDomainFiles(consumer);
-		Iterator<ProjectFileManager> it = otherViews.values().iterator();
-		while (it.hasNext()) {
-			ProjectFileManager mgr = it.next();
-			mgr.releaseDomainFiles(consumer);
+		synchronized (otherViews) {
+			Iterator<ProjectFileManager> it = otherViews.values().iterator();
+			while (it.hasNext()) {
+				ProjectFileManager mgr = it.next();
+				mgr.releaseDomainFiles(consumer);
+			}
 		}
 		TransientDataManager.releaseFiles(consumer);
 	}

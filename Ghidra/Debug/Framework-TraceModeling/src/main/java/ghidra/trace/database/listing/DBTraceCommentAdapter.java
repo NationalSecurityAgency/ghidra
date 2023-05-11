@@ -20,8 +20,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.address.*;
@@ -37,9 +35,8 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceCommentChangeType;
-import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -97,7 +94,7 @@ public class DBTraceCommentAdapter
 			update(TYPE_COLUMN, COMMENT_COLUMN);
 		}
 
-		void setLifespan(Range<Long> lifespan) {
+		void setLifespan(Lifespan lifespan) {
 			super.doSetLifespan(lifespan);
 		}
 
@@ -125,7 +122,7 @@ public class DBTraceCommentAdapter
 	 * @param entry the entry to truncate or delete
 	 * @param span the span that must be clear
 	 */
-	protected void makeWay(DBTraceCommentEntry entry, Range<Long> span) {
+	protected void makeWay(DBTraceCommentEntry entry, Lifespan span) {
 		DBTraceUtils.makeWay(entry, span, (e, s) -> e.setLifespan(s), e -> deleteData(e));
 	}
 
@@ -137,7 +134,7 @@ public class DBTraceCommentAdapter
 	 * @param commentType the type of comment as in {@link Listing#setComment(Address, int, String)}
 	 * @param comment the comment
 	 */
-	public void setComment(Range<Long> lifespan, Address address, int commentType, String comment) {
+	public void setComment(Lifespan lifespan, Address address, int commentType, String comment) {
 		if (commentType < MIN_COMMENT_TYPE || commentType > MAX_COMMENT_TYPE) {
 			throw new IllegalArgumentException("commentType");
 		}
@@ -146,8 +143,7 @@ public class DBTraceCommentAdapter
 			for (DBTraceCommentEntry entry : reduce(TraceAddressSnapRangeQuery.intersecting(
 				new AddressRangeImpl(address, address), lifespan)).values()) {
 				if (entry.type == commentType) {
-					if (lifespan.hasLowerBound() &&
-						entry.getLifespan().contains(lifespan.lowerEndpoint())) {
+					if (entry.getLifespan().contains(lifespan.lmin())) {
 						oldValue = entry.comment;
 					}
 					makeWay(entry, lifespan);
@@ -213,7 +209,7 @@ public class DBTraceCommentAdapter
 	 * @param range the address range of the box
 	 * @param commentType a comment type to clear, or {@link CodeUnit#NO_COMMENT} to clear all.
 	 */
-	public void clearComments(Range<Long> span, AddressRange range, int commentType) {
+	public void clearComments(Lifespan span, AddressRange range, int commentType) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceCommentEntry entry : reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {

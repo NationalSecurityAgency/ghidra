@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __BLOCK_ACTION__
-#define __BLOCK_ACTION__
+#ifndef __BLOCKACTION_HH__
+#define __BLOCKACTION_HH__
 
 /// \file blockaction.hh
 /// \brief Actions and classes associated with transforming and structuring the control-flow graph
 
 #include "action.hh"
+
+namespace ghidra {
 
 /// \brief Class for holding an edge while the underlying graph is being manipulated
 ///
@@ -355,4 +357,5 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
+} // End namespace ghidra
 #endif

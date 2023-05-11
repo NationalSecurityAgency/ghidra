@@ -199,6 +199,12 @@ public class PluginClassManager {
 				includedClasses.add(excludedClassName);
 			}
 
+			if (!PluginPackage.exists(packageName)) {
+				Msg.warn(this, "Unable to find plugin package '" + packageName +
+					"' while restoring plugins from xml");
+				continue;
+			}
+
 			PluginPackage pluginPackage = PluginPackage.getPluginPackage(packageName);
 			List<PluginDescription> pluginDescriptionList = packageMap.get(pluginPackage);
 			if (pluginDescriptionList == null) {

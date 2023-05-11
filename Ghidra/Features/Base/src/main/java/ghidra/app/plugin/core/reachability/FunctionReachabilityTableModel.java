@@ -112,7 +112,7 @@ public class FunctionReachabilityTableModel
 
 		CodeBlockIterator codeBlocks = getCallGraphBlocks(monitor);
 		while (codeBlocks.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			CodeBlock block = codeBlocks.next();
 			monitor.setMessage("Creating callgraph - block " + block.getMinAddress());
@@ -153,7 +153,7 @@ public class FunctionReachabilityTableModel
 
 		CodeBlockReferenceIterator iterator = sourceBlock.getDestinations(monitor);
 		while (iterator.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			CodeBlockReference destination = iterator.next();
 			CodeBlock targetBlock = getDestinationBlock(destination, monitor);

@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.awt.event.KeyEvent;
+
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
@@ -25,7 +27,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.EquateSymbol;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.HelpLocation;
-import java.awt.event.KeyEvent;
 
 public class SetEquateAction extends ConvertConstantAction {
 
@@ -42,7 +43,7 @@ public class SetEquateAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned) {
+	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
 		return null;		// Menu isn't tailored for this action
 	}
 

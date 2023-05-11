@@ -35,16 +35,15 @@ ifeq ($(OS),Darwin)
   OSDIR=mac_x86_64
 endif
 
-CC=gcc
-CXX=g++
+CXX=g++ -std=c++11
 
 # Debug flags
-DBG_CXXFLAGS=-g -std=c++11 -Wall -Wno-sign-compare
+DBG_CXXFLAGS=-g -Wall -Wno-sign-compare
 #DBG_CXXFLAGS=-g -pg -Wall -Wno-sign-compare
 #DBG_CXXFLAGS=-g -fprofile-arcs -ftest-coverage -Wall -Wno-sign-compare
 
 # Optimization flags
-OPT_CXXFLAGS=-O2 -std=c++11 -Wall -Wno-sign-compare
+OPT_CXXFLAGS=-O2 -Wall -Wno-sign-compare
 
 YACC=bison
 
@@ -232,15 +231,15 @@ sla_opt/%.o:	%.cc
 	$(CXX) $(ARCH_TYPE) -c $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(SLEIGH_OPT)        $< -o $@
 
 grammar.cc:	grammar.y
-	$(YACC) -p cparse -o $@ $<
+	$(YACC) -l -o $@ $<
 xml.cc:	xml.y
-	$(YACC) -p xml -o $@ $<
+	$(YACC) -l -o $@ $<
 pcodeparse.cc:	pcodeparse.y
-	$(YACC) -p pcode -o $@ $<
+	$(YACC) -l -o $@ $<
 slghparse.cc:	slghparse.y
-	$(YACC) -d -o $@ $<
+	$(YACC) -l -d -o $@ $<
 slghscan.cc:	slghscan.l
-	$(LEX) -o$@ $<
+	$(LEX) -L -o$@ $<
 ruleparse.cc:	ruleparse.y
 	$(YACC) -p ruleparse -d -o $@ $<
 

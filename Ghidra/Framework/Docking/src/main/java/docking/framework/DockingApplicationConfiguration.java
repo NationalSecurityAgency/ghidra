@@ -17,7 +17,8 @@ package docking.framework;
 
 import docking.DockingErrorDisplay;
 import docking.widgets.PopupKeyStorePasswordProvider;
-import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import generic.theme.ApplicationThemeManager;
+import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.net.ApplicationKeyManagerFactory;
 import ghidra.util.ErrorDisplay;
@@ -48,14 +49,15 @@ public class DockingApplicationConfiguration extends ApplicationConfiguration {
 	protected void initializeApplication() {
 		super.initializeApplication();
 
-		DockingWindowsLookAndFeelUtils.loadFromPreferences();
+		ApplicationThemeManager.initialize();
+		LookAndFeelUtils.performPlatformSpecificFixups();
 
 		if (showSplashScreen) {
 			SplashScreen.showSplashScreen();
 		}
 
-		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(
-			new PopupKeyStorePasswordProvider());
+		ApplicationKeyManagerFactory
+				.setKeyStorePasswordProvider(new PopupKeyStorePasswordProvider());
 
 	}
 

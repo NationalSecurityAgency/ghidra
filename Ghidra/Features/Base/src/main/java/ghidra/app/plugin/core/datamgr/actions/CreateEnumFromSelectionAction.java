@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import javax.swing.SwingUtilities;
+import java.util.*;
+
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -28,17 +29,15 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 
 public class CreateEnumFromSelectionAction extends DockingAction {
 	private final DataTypeManagerPlugin plugin;
 
 	public CreateEnumFromSelectionAction(DataTypeManagerPlugin plugin) {
-		super("Enum from Selection", plugin.getName());
+		super("Enum From Selection", plugin.getName());
 		this.plugin = plugin;
 
 		setPopupMenuData(new MenuData(new String[] { "Create Enum From Selection" }, null, "Edit"));
@@ -64,76 +63,64 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 
-		//Get the selected enums 
-		final GTree gTree = (GTree) context.getContextObject();
-		TreePath[] paths = gTree.getSelectionPaths();
-		Enum[] enumArray = new Enum[paths.length];
-		int i = 0;
-
-		for (TreePath element : paths) {
-			GTreeNode node = (GTreeNode) element.getLastPathComponent();
-			DataTypeNode dataTypeNode = (DataTypeNode) node;
-			enumArray[i++] = (Enum) dataTypeNode.getDataType();
-		}
-		Category category = null;
-		DataTypeManager[] dataTypeManagers = plugin.getDataTypeManagers();
-		DataTypeManager myDataTypeManager = null;
-		for (DataTypeManager dataTypeManager : dataTypeManagers) {
-			if (dataTypeManager instanceof ProgramDataTypeManager) {
-				myDataTypeManager = dataTypeManager;
-				category = myDataTypeManager.getCategory(CategoryPath.ROOT);
-				if (category == null) {
-					Msg.error(this, "Could not find program data type manager");
-					return;
-				}
-
-			}
+		DataTypeManager dtm = plugin.getProgram().getDataTypeManager();
+		Category category = dtm.getRootCategory();
+		String newName = getEnumName(category);
+		if (newName == null) {
+			return; // cancelled
 		}
 
-		String newName = "";
-		PluginTool tool = plugin.getTool();
+		List<Enum> enums = getSelectedEnums(context);
+		createMergedEnum(category, enums, newName);
 
-		while (newName.equals("")) {
-			InputDialog inputDialog =
-				new InputDialog("Name new ENUM", "Please enter a name for the new ENUM: ");
-			tool = plugin.getTool();
-			tool.showDialog(inputDialog);
+		selectNewEnum((GTree) context.getContextObject(), dtm.getName(), newName);
+	}
 
-			if (inputDialog.isCanceled()) {
-				return;
-			}
-			newName = inputDialog.getValue();
-		}
-
-		DataType dt = myDataTypeManager.getDataType(category.getCategoryPath(), newName);
-		while (dt != null) {
-			InputDialog dupInputDialog =
-				new InputDialog("Duplicate ENUM Name",
-					"Please enter a unique name for the new ENUM: ");
-			tool = plugin.getTool();
-			tool.showDialog(dupInputDialog);
-
-			if (dupInputDialog.isCanceled()) {
-				return;
-			}
-			newName = dupInputDialog.getValue();
-			dt = myDataTypeManager.getDataType(category.getCategoryPath(), newName);
-		}
-		createNewEnum(category, enumArray, newName);
-
-		// select new node in tree.  Must use invoke later to give the tree a chance to add the
-		// the new node to the tree.
-		myDataTypeManager.flushEvents();
-		final String parentNodeName = myDataTypeManager.getName();
-		final String newNodeName = newName;
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				GTreeNode rootNode = gTree.getViewRoot();
-				gTree.setSelectedNodeByNamePath(new String[] { rootNode.getName(), parentNodeName,
-					newNodeName });
-			}
+	private void selectNewEnum(GTree gTree, String parentName, String name) {
+		// Select new node in tree; run later to give the tree a chance to add the the new node
+		Swing.runLater(() -> {
+			GTreeNode rootNode = gTree.getViewRoot();
+			gTree.setSelectedNodeByNamePath(
+				new String[] { rootNode.getName(), parentName, name });
 		});
+	}
+
+	private List<Enum> getSelectedEnums(ActionContext context) {
+		GTree gTree = (GTree) context.getContextObject();
+		TreePath[] paths = gTree.getSelectionPaths();
+		List<Enum> enums = new ArrayList<>();
+		for (TreePath path : paths) {
+			DataTypeNode dtNode = (DataTypeNode) path.getLastPathComponent();
+			enums.add((Enum) dtNode.getDataType());
+		}
+		return enums;
+	}
+
+	private String getEnumName(Category category) {
+		DataTypeManager dtm = plugin.getProgram().getDataTypeManager();
+		PluginTool tool = plugin.getTool();
+		CategoryPath categoryPath = category.getCategoryPath();
+		InputDialog inputDialog =
+			new InputDialog("Enter Enum Name", "Please enter a name for the new Enum: ");
+		tool.showDialog(inputDialog);
+		if (inputDialog.isCanceled()) {
+			return null;
+		}
+
+		String newName = inputDialog.getValue();
+		DataType dt = dtm.getDataType(categoryPath, newName);
+		while (dt != null) {
+			InputDialog dialog = new InputDialog("Duplicate Enum Name",
+				"Please enter a unique name for the new Enum: ");
+			tool.showDialog(dialog);
+			if (dialog.isCanceled()) {
+				return null;
+			}
+			newName = dialog.getValue();
+			dt = dtm.getDataType(categoryPath, newName);
+		}
+
+		return newName;
 	}
 
 	@Override
@@ -153,7 +140,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 
 	private boolean containsInvalidNodes(TreePath[] selectionPaths) {
 
-		// determine if all selected nodes are ENUMs, if so, return true, if not, return false
+		// determine if all selected nodes are Enums
 		for (TreePath path : selectionPaths) {
 			GTreeNode node = (GTreeNode) path.getLastPathComponent();
 			if (!(node instanceof DataTypeNode)) {
@@ -168,34 +155,107 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 		return false;
 	}
 
-	public void createNewEnum(Category category, Enum[] enumArray, String newName) {
+	private void createMergedEnum(Category category, List<Enum> enumsToMerge,
+			String enumName) {
 
-		// figure out size of the new enum using the max size of the selected enums
-		int maxEnumSize = 1;
-		for (Enum element : enumArray) {
-			if (maxEnumSize < element.getLength()) {
-				maxEnumSize = element.getLength();
-			}
-		}
-		SourceArchive sourceArchive = category.getDataTypeManager().getLocalSourceArchive();
-		Enum dataType =
-			new EnumDataType(category.getCategoryPath(), newName, maxEnumSize,
-				category.getDataTypeManager());
+		int maxEnumSize = computeNewEnumSize(enumsToMerge);
+		DataTypeManager dtm = category.getDataTypeManager();
+		SourceArchive sourceArchive = dtm.getLocalSourceArchive();
+		Enum baseEnum = new EnumDataType(category.getCategoryPath(), enumName, maxEnumSize, dtm);
 
-		for (Enum element : enumArray) {
-			String[] names = element.getNames();
-			for (String name : names) {
-				dataType.add(name, element.getValue(name));
+		baseEnum.setSourceArchive(sourceArchive);
 
-			}
+		for (Enum enumToMerge : enumsToMerge) {
+			mergeEnum(baseEnum, enumToMerge);
 		}
 
-		dataType.setSourceArchive(sourceArchive);
-		int id = category.getDataTypeManager().startTransaction("Create New Enum Data Type");
-		category.getDataTypeManager()
-				.addDataType(dataType, DataTypeConflictHandler.REPLACE_HANDLER);
-		category.getDataTypeManager().endTransaction(id, true);
+		addEnumDataType(category, baseEnum);
 
+		dtm.flushEvents();
+	}
+
+	private void mergeEnum(Enum baseEnum, Enum enumToMerge) {
+
+		boolean hasConflict = false;
+		for (String name : enumToMerge.getNames()) {
+
+			if (isDuplicateEntry(baseEnum, enumToMerge, name)) {
+				continue;
+			}
+
+			long value = enumToMerge.getValue(name);
+			String comment = "";
+			if (isConflictingEntry(baseEnum, enumToMerge, name)) {
+				name = getUniqueName(baseEnum, name);
+				comment = "NOTE: Duplicate name with different value";
+				hasConflict = true;
+			}
+
+			baseEnum.add(name, value, comment);
+		}
+
+		if (hasConflict) {
+			Msg.showWarn(this, null, "Duplicate Entry Name(s)",
+				"Merged Enum " + baseEnum.getName() + " has one or more entries with duplicate " +
+					"names.\nUnderscore(s) have been appended to make them unique.");
+		}
+	}
+
+	private void addEnumDataType(Category category, Enum mergedEnum) {
+		DataTypeManager dtm = category.getDataTypeManager();
+		int id = dtm.startTransaction("Create New Enum Data Type");
+		try {
+			dtm.addDataType(mergedEnum, DataTypeConflictHandler.REPLACE_HANDLER);
+		}
+		finally {
+			dtm.endTransaction(id, true);
+		}
+	}
+
+	private String getUniqueName(Enum baseEnum, String name) {
+
+		List<String> existingNames = Arrays.asList(baseEnum.getNames());
+		while (existingNames.contains(name)) {
+			name = name + "_";
+		}
+		return name;
+	}
+
+	private boolean isDuplicateEntry(Enum baseEnum, Enum enumToMerge, String name) {
+
+		List<String> existingNames = Arrays.asList(baseEnum.getNames());
+		if (!existingNames.contains(name)) {
+			return false;
+		}
+
+		long existingValue = baseEnum.getValue(name);
+		long newValue = enumToMerge.getValue(name);
+		return newValue == existingValue;
+	}
+
+	private boolean isConflictingEntry(Enum mergedEnum, Enum enumToMerge, String name) {
+
+		List<String> existingNames = Arrays.asList(mergedEnum.getNames());
+
+		if (!existingNames.contains(name)) {
+			return false;
+		}
+
+		long valueToAdd = enumToMerge.getValue(name);
+		long existingValue = mergedEnum.getValue(name);
+		if (valueToAdd == existingValue) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private int computeNewEnumSize(List<Enum> enums) {
+		int max = 1;
+		for (Enum element : enums) {
+			max = Math.max(max, element.getLength());
+		}
+		return max;
 	}
 
 }

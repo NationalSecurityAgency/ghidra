@@ -241,7 +241,7 @@ public class LayoutLocationMap<V, E> {
 		MinMaxRowColumn minMax = new MinMaxRowColumn();
 
 		for (V v : vertices) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			int row = gridLocations.row(v);
 			if (row > minMax.maxRow) {
@@ -261,7 +261,7 @@ public class LayoutLocationMap<V, E> {
 		}
 
 		for (E edge : edges) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			List<Point> articulations = gridLocations.getArticulations(edge);
 			if (articulations.isEmpty()) {
@@ -305,7 +305,7 @@ public class LayoutLocationMap<V, E> {
 		// largest values found).
 		//
 		for (V vertex : vertices) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Row<V> row = row(vertex);
 			Column column = col(vertex);
@@ -325,7 +325,7 @@ public class LayoutLocationMap<V, E> {
 		int offset = 0;
 		int n = getRowCount();
 		for (int i = 0; i < n; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Row<V> row = row(i);
 			row.y = offset;
@@ -347,7 +347,7 @@ public class LayoutLocationMap<V, E> {
 		offset = 0;
 		n = getColumnCount();
 		for (int i = 0; i < n; i++) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 
 			Column column = col(i);
 			column.x = offset;

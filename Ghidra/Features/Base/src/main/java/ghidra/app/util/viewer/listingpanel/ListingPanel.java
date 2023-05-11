@@ -32,10 +32,11 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.codebrowser.LayeredColorModel;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.services.ButtonPressedListener;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.format.FieldHeader;
@@ -307,6 +308,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		if (overviewComponent != null) {
 			scroller.setScrollbarSideKickComponent(buildOverviewComponent());
 		}
+		revalidate();
 		repaint();
 	}
 
@@ -349,7 +351,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 				splitPaneDividerLocation = splitPane.getDividerLocation();
 			}
 			JPanel resizeablePanel = new JPanel(new ScrollpanelResizeablePanelLayout(scroller));
-			resizeablePanel.setBackground(Color.WHITE);
+			resizeablePanel.setBackground(Colors.BACKGROUND);
 			resizeablePanel.add(resizeableMarginProvider.getComponent());
 			splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, resizeablePanel, scroller);
 			splitPane.setDividerSize(4);
@@ -447,22 +449,22 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	/**
-	 * Removes the given {@link HighlightProvider} from this listing.
+	 * Removes the given {@link ListingHighlightProvider} from this listing.
 	 *
 	 * @param highlightProvider The provider to remove.
-	 * @see #addHighlightProvider(HighlightProvider)
+	 * @see #addHighlightProvider(ListingHighlightProvider)
 	 */
-	public void removeHighlightProvider(HighlightProvider highlightProvider) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider) {
 		formatManager.removeHighlightProvider(highlightProvider);
 	}
 
 	/**
-	 * Adds a {@link HighlightProvider} to this listing. This highlight provider will be used with
+	 * Adds a {@link ListingHighlightProvider} to this listing. This highlight provider will be used with
 	 * any other registered providers to paint all the highlights for this listing.
 	 *
 	 * @param highlightProvider The provider to add
 	 */
-	public void addHighlightProvider(HighlightProvider highlightProvider) {
+	public void addHighlightProvider(ListingHighlightProvider highlightProvider) {
 		formatManager.addHighlightProvider(highlightProvider);
 	}
 
@@ -1155,11 +1157,11 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	public void setFormatManager(FormatManager formatManager) {
-		List<HighlightProvider> highlightProviders = this.formatManager.getHighlightProviders();
+		List<ListingHighlightProvider> highlightProviders = this.formatManager.getHighlightProviders();
 
 		this.formatManager = formatManager;
 
-		for (HighlightProvider provider : highlightProviders) {
+		for (ListingHighlightProvider provider : highlightProviders) {
 			this.formatManager.addHighlightProvider(provider);
 		}
 

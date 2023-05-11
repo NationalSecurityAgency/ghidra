@@ -22,7 +22,7 @@ import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Action to save the current Diff Apply Settings as the new defaults to be used when new Diffs are started.
@@ -45,7 +45,7 @@ class SaveApplySettingsAction extends DockingAction {
 		super(ACTION_NAME, settingsProvider.getPlugin().getName());
 		this.settingsProvider = settingsProvider;
 		this.settingsOptionMgr = settingsOptionMgr;
-		setToolBarData(new ToolBarData(ResourceManager.loadImage("images/disk.png"), GROUP_NAME));
+		setToolBarData(new ToolBarData(Icons.SAVE_ICON, GROUP_NAME));
 		setEnabled(true);
 		setDescription(DESCRIPTION);
 		setHelpLocation(new HelpLocation(HelpTopics.DIFF, ACTION_NAME));
@@ -61,8 +61,10 @@ class SaveApplySettingsAction extends DockingAction {
 	@Override
 	public void actionPerformed(ActionContext context) {
 		settingsOptionMgr.saveDefaultApplyFilter(settingsProvider.getApplyFilter());
-		settingsProvider.getPlugin().getTool().setStatusInfo(
-			"Diff Apply Settings have been saved to the tool as the new defaults.");
+		settingsProvider.getPlugin()
+				.getTool()
+				.setStatusInfo(
+					"Diff Apply Settings have been saved to the tool as the new defaults.");
 	}
 
 }

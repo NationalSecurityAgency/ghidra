@@ -200,7 +200,7 @@ public class VTTestEnv extends TestEnv {
 				table.addRowSelectionInterval(row, row);
 			}
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
 	public int getSelectedMatchTableRow() {

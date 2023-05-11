@@ -144,7 +144,7 @@
 		<attribute name="_value" schema="ANY" hidden="yes" />
 		<attribute name="_type" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute name="_state" schema="EXECUTION_STATE" required="yes" hidden="yes" />
+		<attribute name="_state" schema="EXECUTION_STATE" required="no" hidden="yes" />
 		<attribute name="_prompt" schema="STRING" required="yes" hidden="yes" />
 		<attribute name="Attributes" schema="SessionAttributes" fixed="yes" />
 		<attribute name="Devices" schema="OBJECT" />
@@ -239,7 +239,7 @@
 		<attribute name="_value" schema="ANY" hidden="yes" />
 		<attribute name="_type" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute name="_state" schema="EXECUTION_STATE" required="yes" hidden="yes" />
+		<attribute name="_state" schema="EXECUTION_STATE" required="no" hidden="yes" />
 		<attribute name="_accessible" schema="BOOL" required="yes" hidden="yes" />
 		<attribute name="_supported_attach_kinds" schema="SET_ATTACH_KIND" required="yes" hidden="yes" />
 		<attribute name="_supported_step_kinds" schema="SET_STEP_KIND" required="yes" fixed="yes" hidden="yes" />
@@ -296,7 +296,7 @@
 		<attribute name="_value" schema="ANY" hidden="yes" />
 		<attribute name="_type" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="yes" />
+		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="no" />
 		<attribute schema="ANY" />
 	</schema>
 	<schema name="ThreadContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
@@ -342,6 +342,7 @@
 	</schema>
 	<schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Thread" />
+		<interface name="Aggregate" />
 		<interface name="Access" />
 		<interface name="ExecutionStateful" />
 		<interface name="Steppable" />
@@ -356,7 +357,7 @@
 		<attribute name="_type" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute name="_accessible" schema="BOOL" required="yes" hidden="yes" />
-		<attribute name="_state" schema="EXECUTION_STATE" required="yes" hidden="yes" />
+		<attribute name="_state" schema="EXECUTION_STATE" required="no" hidden="yes" />
 		<attribute name="_supported_step_kinds" schema="SET_STEP_KIND" required="yes" fixed="yes" hidden="yes" />
 		<attribute name="Registers" schema="RegisterContainer" required="yes" fixed="yes" />
 		<attribute name="Stack" schema="Stack" required="yes" fixed="yes" />
@@ -364,7 +365,17 @@
 		<attribute name="Id" schema="OBJECT" />
 		<attribute name="Name" schema="OBJECT" />
 		<attribute name="_arch" schema="STRING" />
+		<attribute name="Step to Address (pa)" schema="Method" />
+		<attribute name="Trace to Address (ta)" schema="Method" />
 		<attribute schema="ANY" />
+	</schema>
+	<schema name="Method" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Method" />
+		<element schema="VOID" />
+		<attribute name="_display" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_return_type" schema="TYPE" fixed="yes" hidden="yes" />
+		<attribute name="_parameters" schema="MAP_PARAMETERS" fixed="yes" hidden="yes" />
+		<attribute schema="VOID" />
 	</schema>
 	<schema name="Module" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Module" />
@@ -454,6 +465,7 @@
 		<attribute name="rdi" schema="RegisterDescriptor" required="yes" />
 		<attribute name="rsi" schema="RegisterDescriptor" required="yes" />
 		<attribute name="rip" schema="RegisterDescriptor" required="yes" />
+		<attribute name="rbp" schema="RegisterDescriptor" required="yes" />
 		<attribute name="rsp" schema="RegisterDescriptor" required="yes" />
 		<attribute name="r8" schema="RegisterDescriptor" required="yes" />
 		<attribute name="r9" schema="RegisterDescriptor" required="yes" />
@@ -464,6 +476,31 @@
 		<attribute name="r14" schema="RegisterDescriptor" required="yes" />
 		<attribute name="r15" schema="RegisterDescriptor" required="yes" />
 		<attribute name="efl" schema="RegisterDescriptor" required="yes" />
+		<attribute name="dr0" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr1" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr2" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr3" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr6" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr7" schema="RegisterDescriptor" required="no" />
+		<attribute name="cs" schema="RegisterDescriptor" required="no" />
+		<attribute name="ds" schema="RegisterDescriptor" required="no" />
+		<attribute name="es" schema="RegisterDescriptor" required="no" />
+		<attribute name="fs" schema="RegisterDescriptor" required="no" />
+		<attribute name="gs" schema="RegisterDescriptor" required="no" />
+		<attribute name="ss" schema="RegisterDescriptor" required="no" />
+		<attribute name="af" schema="RegisterDescriptor" required="no" />
+		<attribute name="cf" schema="RegisterDescriptor" required="no" />
+		<attribute name="df" schema="RegisterDescriptor" required="no" />
+		<attribute name="if" schema="RegisterDescriptor" required="no" />
+		<attribute name="of" schema="RegisterDescriptor" required="no" />
+		<attribute name="pf" schema="RegisterDescriptor" required="no" />
+		<attribute name="sf" schema="RegisterDescriptor" required="no" />
+		<attribute name="tf" schema="RegisterDescriptor" required="no" />
+		<attribute name="zf" schema="RegisterDescriptor" required="no" />
+		<attribute name="iopl" schema="RegisterDescriptor" required="no" />
+		<attribute name="vif" schema="RegisterDescriptor" required="no" />
+		<attribute name="vip" schema="RegisterDescriptor" required="no" />
+		<attribute name="rflags" schema="RegisterDescriptor" required="no" />
 		<attribute schema="OBJECT" />
 	</schema>
 	<schema name="Stack" canonical="yes" elementResync="NEVER" attributeResync="NEVER">

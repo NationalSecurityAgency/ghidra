@@ -17,6 +17,7 @@ package ghidra.program.model.symbol;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -85,7 +86,7 @@ public class SymbolUtilities {
 		DEFAULT_DATA_PREFIX, DEFAULT_SYMBOL_PREFIX, DEFAULT_SUBROUTINE_PREFIX,
 		DEFAULT_UNKNOWN_PREFIX, DEFAULT_EXTERNAL_ENTRY_PREFIX, DEFAULT_FUNCTION_PREFIX };
 
-	private static List<String> DYNAMIC_DATA_TYPE_PREFIXES = getDynamicDataTypePrefixes();
+	private final static List<String> DYNAMIC_DATA_TYPE_PREFIXES = getDynamicDataTypePrefixes();
 
 	/**
 	 * Any dynamic label will have an address with this minimum length or longer
@@ -574,7 +575,7 @@ public class SymbolUtilities {
 	 */
 	public static Address parseDynamicName(AddressFactory factory, String name) {
 
-		// assume dynamic names will naver start with an underscore
+		// assume dynamic names will never start with an underscore
 		if (name.startsWith(UNDERSCORE)) {
 			return null;
 		}
@@ -591,7 +592,7 @@ public class SymbolUtilities {
 			space = factory.getDefaultAddressSpace();
 		}
 
-		// Only consider address values which meet the meet the minimum padding behavior
+		// Only consider address values which meet the minimum padding behavior
 		if (addressOffsetString.length() < MIN_LABEL_ADDRESS_DIGITS) {
 			return null;
 		}
@@ -945,6 +946,35 @@ public class SymbolUtilities {
 			return "External " + symType;
 		}
 		return symType.toString();
+	}
+
+	/**
+	 * Returns the global symbol with the given name if and only if it is the only global symbol
+	 * with that name.
+	 *
+	 * @param program the program to search.
+	 * @param name the name of the global symbol to find.
+	 * @return the global symbol with the given name if and only if it is the only one.
+	 */
+	public static Symbol getUniqueSymbol(Program program, String name) {
+		return getUniqueSymbol(program, name, null);
+	}
+
+	/**
+	 * Returns the symbol in the given namespace with the given name if and only if it is the only
+	 * symbol in that namespace with that name.
+	 *
+	 * @param program the program to search.
+	 * @param name the name of the symbol to find.
+	 * @param namespace the parent namespace; may be null
+	 * @return the symbol with the given name if and only if it is the only one in that namespace
+	 */
+	public static Symbol getUniqueSymbol(Program program, String name, Namespace namespace) {
+		List<Symbol> symbols = program.getSymbolTable().getSymbols(name, namespace);
+		if (symbols.size() == 1) {
+			return symbols.get(0);
+		}
+		return null;
 	}
 
 	/**

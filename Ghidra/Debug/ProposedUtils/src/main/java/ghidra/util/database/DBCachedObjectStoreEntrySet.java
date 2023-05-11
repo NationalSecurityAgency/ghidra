@@ -21,8 +21,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import org.apache.commons.collections4.ComparatorUtils;
 
-import com.google.common.collect.Range;
-
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
@@ -73,17 +71,17 @@ public class DBCachedObjectStoreEntrySet<T extends DBAnnotatedObject>
 
 	@Override
 	public Iterator<Entry<Long, T>> iterator() {
-		return store.entries.iterator(direction, null);
+		return store.entries.iterator(direction, KeySpan.ALL);
 	}
 
 	@Override
 	public Object[] toArray() {
-		return store.entries.toArray(direction, null);
+		return store.entries.toArray(direction, KeySpan.ALL);
 	}
 
 	@Override
 	public <U> U[] toArray(U[] a) {
-		return store.entries.toArray(direction, null, a, store.getRecordCount());
+		return store.entries.toArray(direction, KeySpan.ALL, a, store.getRecordCount());
 	}
 
 	@Override
@@ -108,7 +106,7 @@ public class DBCachedObjectStoreEntrySet<T extends DBAnnotatedObject>
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		return store.entries.retain(c, null);
+		return store.entries.retain(c, KeySpan.ALL);
 	}
 
 	@Override
@@ -177,29 +175,28 @@ public class DBCachedObjectStoreEntrySet<T extends DBAnnotatedObject>
 
 	@Override
 	public Iterator<Entry<Long, T>> descendingIterator() {
-		return store.entries.iterator(Direction.reverse(direction), null);
+		return store.entries.iterator(Direction.reverse(direction), KeySpan.ALL);
 	}
 
 	@Override
 	public DBCachedObjectStoreEntrySubSet<T> subSet(Entry<Long, T> fromElement,
 			boolean fromInclusive, Entry<Long, T> toElement, boolean toInclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRange(fromElement.getKey(), fromInclusive,
-			toElement.getKey(), toInclusive, direction);
-		return new DBCachedObjectStoreEntrySubSet<>(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.sub(fromElement.getKey(), fromInclusive, toElement.getKey(),
+			toInclusive, direction);
+		return new DBCachedObjectStoreEntrySubSet<>(store, errHandler, lock, direction, span);
 	}
 
 	@Override
 	public DBCachedObjectStoreEntrySubSet<T> headSet(Entry<Long, T> toElement, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeHead(toElement.getKey(), inclusive, direction);
-		return new DBCachedObjectStoreEntrySubSet<>(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.head(toElement.getKey(), inclusive, direction);
+		return new DBCachedObjectStoreEntrySubSet<>(store, errHandler, lock, direction, span);
 	}
 
 	@Override
 	public DBCachedObjectStoreEntrySubSet<T> tailSet(Entry<Long, T> fromElement,
 			boolean inclusive) {
-		Range<Long> rng =
-			DBCachedObjectStore.toRangeTail(fromElement.getKey(), inclusive, direction);
-		return new DBCachedObjectStoreEntrySubSet<>(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.tail(fromElement.getKey(), inclusive, direction);
+		return new DBCachedObjectStoreEntrySubSet<>(store, errHandler, lock, direction, span);
 	}
 
 	@Override

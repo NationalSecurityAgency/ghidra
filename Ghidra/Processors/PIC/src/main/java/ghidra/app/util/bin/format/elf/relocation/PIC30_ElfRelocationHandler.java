@@ -23,6 +23,8 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.RelocationResult;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.util.exception.NotFoundException;
 
 public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
@@ -107,8 +109,8 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 
 	@Override
 	public PIC30_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-		return new PIC30_ElfRelocationContext(this, loadHelper, relocationTable, symbolMap);
+			Map<ElfSymbol, Address> symbolMap) {
+		return new PIC30_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
 	
 	private boolean isEDSVariant(ElfRelocationContext elfRelocationContext) {
@@ -122,12 +124,13 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation, Address relocationAddress)
+	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation, Address relocationAddress)
 			throws MemoryAccessException, NotFoundException {
 
 		int type = relocation.getType();
 		if (type == R_PIC30_NONE) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 
 		Program program = elfRelocationContext.getProgram();
@@ -146,6 +149,8 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 		short oldShortValue = memory.getShort(relocationAddress);
 
 		int newValue;
+		int byteLength = 2; // most relocations affect 2-bytes (change if different)
+
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
 		if (elf.e_machine() == ElfConstants.EM_DSPIC30F) {
@@ -158,6 +163,7 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 			case R_PIC30_32: // 3
 				newValue = symbolValue + addend + oldValue;
 				memory.setInt(relocationAddress, newValue);
+				byteLength = 4;
 				break;
 			case R_PIC30_FILE_REG_BYTE: // 4 short
 			case R_PIC30_FILE_REG: // 5 short
@@ -175,6 +181,7 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				reloc &= 0x7fff;
 				newValue = (reloc << 4) | (oldValue & ~0x7fff0);
 				memory.setInt(relocationAddress, newValue);
+				byteLength = 4;
 				break;
 			case R_PIC30_WORD: // 8
 			case R_PIC30_WORD_TBLOFFSET: // 0x15
@@ -184,6 +191,7 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				reloc &= 0xffff;
 				newValue = (reloc << 4) | (oldValue & ~0x0ffff0);
 				memory.setInt(relocationAddress, newValue);
+				byteLength = 4;
 				break;
 			case R_PIC30_WORD_TBLPAGE: // 0x18
 				reloc = symbolValue >> 16;
@@ -195,6 +203,7 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				}
 				newValue = (reloc << 4) | (oldValue & ~0x0ffff0);
 				memory.setInt(relocationAddress, newValue);
+				byteLength = 4;
 				break;
 			case R_PIC30_PCREL_BRANCH: // 0x1c
 				newValue = (int) (symbolValue - relocWordOffset + oldShortValue - 2);
@@ -205,9 +214,10 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 						elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 			}
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 }

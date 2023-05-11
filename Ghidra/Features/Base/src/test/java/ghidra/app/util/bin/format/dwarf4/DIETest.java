@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
@@ -39,19 +39,28 @@ public class DIETest extends AbstractGenericTest {
 	DWARFProgram prog;
 	DWARFAttributeFactory attribFactory;
 	MockDWARFCompilationUnit cu;
+	int transactionID;
+	Program ghidraProgram;
 
 	@Before
 	public void setUp() throws Exception {
 
 		ToyProgramBuilder builder = new ToyProgramBuilder("Test", true);
-		Program ghidraProgram = builder.getProgram();
+		ghidraProgram = builder.getProgram();
 
+		startTransaction();
 		prog = new DWARFProgram(ghidraProgram, new DWARFImportOptions(), TaskMonitor.DUMMY,
 			new NullSectionProvider());
 		attribFactory = prog.getAttributeFactory();
 
 		cu = new MockDWARFCompilationUnit(prog, 0x1000, 0x2000, 0, DWARFCompilationUnit.DWARF_32,
 			(short) 4, 0, (byte) 8, 0, DWARFSourceLanguage.DW_LANG_C);
+
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		endTransaction();
 	}
 
 	@Test
@@ -180,6 +189,16 @@ public class DIETest extends AbstractGenericTest {
 		DIEAggregate diea1 = prog.getAggregate(die1);
 		Assert.assertNotNull(diea1);
 
+	}
+
+	//---------------------------------------------------------------------------------------------
+
+	protected void startTransaction() {
+		transactionID = ghidraProgram.startTransaction("Test");
+	}
+
+	protected void endTransaction() {
+		ghidraProgram.endTransaction(transactionID, true);
 	}
 
 }

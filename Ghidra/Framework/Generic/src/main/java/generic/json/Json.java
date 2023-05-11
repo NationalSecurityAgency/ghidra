@@ -46,7 +46,7 @@ public class Json extends ToStringStyle {
 			this.setArrayEnd("]");
 
 			this.setFieldSeparator(",\n\t");
-			this.setFieldNameValueSeparator(":");
+			this.setFieldNameValueSeparator(": ");
 
 			this.setNullText("null");
 

@@ -18,9 +18,7 @@ package ghidra.trace.database.symbol;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.locks.ReadWriteLock;
-
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
+import java.util.stream.Stream;
 
 import db.DBHandle;
 import db.DBRecord;
@@ -40,6 +38,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceReferenceChangeType;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.memory.TraceMemoryRegion;
@@ -47,8 +46,7 @@ import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceReferenceSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
-import ghidra.util.LockHold;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
@@ -208,13 +206,13 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 				FLAGS_COLUMN);
 		}
 
-		protected void setLifespan(Range<Long> lifespan) {
+		protected void setLifespan(Lifespan lifespan) {
 			super.doSetLifespan(lifespan);
 			space.manager.doSetXRefLifespan(this);
 		}
 
 		public void setEndSnap(long endSnap) {
-			setLifespan(DBTraceUtils.toRange(DBTraceUtils.lowerEndpoint(lifespan), endSnap));
+			setLifespan(lifespan.withMax(endSnap));
 		}
 
 		public void setSymbolId(long symbolId) {
@@ -326,7 +324,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 			update(REF_SPACE_COLUMN, REF_KEY_COLUMN);
 		}
 
-		protected void setLifespan(Range<Long> lifespan) {
+		protected void setLifespan(Lifespan lifespan) {
 			super.doSetLifespan(lifespan);
 		}
 	}
@@ -428,7 +426,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	@Override
-	public DBTraceReference addReference(Range<Long> lifespan, Reference reference) {
+	public DBTraceReference addReference(Lifespan lifespan, Reference reference) {
 		// Copy over other properties?:
 		//    Symbol ID? (maybe not, since associated symbol may not exist here
 		//    Primary? (maybe not, primary is more a property of the from address
@@ -448,7 +446,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 			reference.getReferenceType(), reference.getSource(), reference.getOperandIndex());
 	}
 
-	protected void makeWay(Range<Long> span, Address fromAddress, Address toAddress,
+	protected void makeWay(Lifespan span, Address fromAddress, Address toAddress,
 			int operandIndex) {
 		// TODO: Do I consider "compatibility?" as in ReferenceDBManager?
 		// NOTE: Always call with the write lock
@@ -468,7 +466,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	@Override
-	public DBTraceReference addMemoryReference(Range<Long> lifespan, Address fromAddress,
+	public DBTraceReference addMemoryReference(Lifespan lifespan, Address fromAddress,
 			Address toAddress, RefType refType, SourceType source, int operandIndex) {
 		if (operandIndex < -1) {
 			throw new IllegalArgumentException("operandIndex");
@@ -485,15 +483,15 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		}
 	}
 
-	private boolean isExternalBlockAddress(Range<Long> lifespan, Address addr) {
+	private boolean isExternalBlockAddress(Lifespan lifespan, Address addr) {
 		// TODO: Verify that this works for emulation
 		TraceMemoryRegion region =
-			trace.getMemoryManager().getRegionContaining(lifespan.lowerEndpoint(), addr);
+			trace.getMemoryManager().getRegionContaining(lifespan.lmin(), addr);
 		return region != null && MemoryBlock.EXTERNAL_BLOCK_NAME.equals(region.getName());
 	}
 
 	@Override
-	public DBTraceOffsetReference addOffsetReference(Range<Long> lifespan, Address fromAddress,
+	public DBTraceOffsetReference addOffsetReference(Lifespan lifespan, Address fromAddress,
 			Address toAddress, boolean toAddrIsBase, long offset, RefType refType,
 			SourceType source, int operandIndex) {
 		if (operandIndex < -1) {
@@ -547,7 +545,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	@Override
-	public DBTraceShiftedReference addShiftedReference(Range<Long> lifespan, Address fromAddress,
+	public DBTraceShiftedReference addShiftedReference(Lifespan lifespan, Address fromAddress,
 			Address toAddress, int shift, RefType refType, SourceType source, int operandIndex) {
 		if (operandIndex < -1) {
 			throw new IllegalArgumentException("operandIndex");
@@ -565,14 +563,14 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	@Override
-	public DBTraceReference addRegisterReference(Range<Long> lifespan, Address fromAddress,
+	public DBTraceReference addRegisterReference(Lifespan lifespan, Address fromAddress,
 			Register toRegister, RefType refType, SourceType source, int operandIndex) {
 		return addMemoryReference(lifespan, fromAddress, toRegister.getAddress(), refType, source,
 			operandIndex);
 	}
 
 	@Override
-	public DBTraceReference addStackReference(Range<Long> lifespan, Address fromAddress,
+	public DBTraceReference addStackReference(Lifespan lifespan, Address fromAddress,
 			int toStackOffset, RefType refType, SourceType source, int operandIndex) {
 		// TODO: base and guest compiler specs, too?
 		AddressSpace stack = baseLanguage.getDefaultCompilerSpec().getStackSpace();
@@ -598,55 +596,59 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		}
 	}
 
+	private Stream<? extends DBTraceReference> streamReferencesFrom(long snap,
+			Address fromAddress) {
+		return referenceMapSpace.reduce(TraceAddressSnapRangeQuery.at(fromAddress, snap))
+				.values()
+				.stream()
+				.map(e -> e.ref);
+	}
+
 	@Override
 	public Collection<? extends DBTraceReference> getReferencesFrom(long snap,
 			Address fromAddress) {
-		return Collections2.transform(
-			referenceMapSpace.reduce(TraceAddressSnapRangeQuery.at(fromAddress, snap)).values(),
-			e -> e.ref);
+		return streamReferencesFrom(snap, fromAddress).toList();
 	}
 
 	@Override
 	public Collection<? extends DBTraceReference> getReferencesFrom(long snap, Address fromAddress,
 			int operandIndex) {
-		return Collections2.filter(getReferencesFrom(snap, fromAddress),
-			r -> r.getOperandIndex() == operandIndex);
+		return streamReferencesFrom(snap, fromAddress)
+				.filter(r -> r.getOperandIndex() == operandIndex)
+				.toList();
 	}
 
 	@Override
-	public Collection<? extends DBTraceReference> getReferencesFromRange(Range<Long> span,
+	public Collection<? extends DBTraceReference> getReferencesFromRange(Lifespan span,
 			AddressRange range) {
-		return Collections2.transform(
-			referenceMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)).values(),
-			e -> e.ref);
+		return new LazyCollection<>(
+			() -> referenceMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span))
+					.values()
+					.stream()
+					.map(e -> e.ref));
 	}
 
 	@Override
 	public DBTraceReference getPrimaryReferenceFrom(long snap, Address fromAddress,
 			int operandIndex) {
-		for (DBTraceReference ref : getReferencesFrom(snap, fromAddress)) {
-			if (!ref.isPrimary()) {
-				continue;
-			}
-			if (ref.getOperandIndex() != operandIndex) {
-				continue;
-			}
-			return ref;
-		}
-		return null;
+		return streamReferencesFrom(snap, fromAddress)
+				.filter(r -> r.isPrimary() && r.getOperandIndex() == operandIndex)
+				.findFirst()
+				.orElse(null);
 	}
 
 	@Override
 	public Collection<? extends DBTraceReference> getFlowReferencesFrom(long snap,
 			Address fromAddress) {
-		return Collections2.filter(getReferencesFrom(snap, fromAddress),
-			r -> r.getReferenceType().isFlow());
+		return streamReferencesFrom(snap, fromAddress)
+				.filter(r -> r.getReferenceType().isFlow())
+				.toList();
 	}
 
 	@Override
-	public void clearReferencesFrom(Range<Long> span, AddressRange range) {
+	public void clearReferencesFrom(Lifespan span, AddressRange range) {
 		try (LockHold hold = manager.getTrace().lockWrite()) {
-			long startSnap = DBTraceUtils.lowerEndpoint(span);
+			long startSnap = span.lmin();
 			for (DBTraceReferenceEntry ref : referenceMapSpace.reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
 				truncateOrDeleteEntry(ref, startSnap);
@@ -669,22 +671,26 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 	@Override
 	public Collection<? extends DBTraceReference> getReferencesTo(long snap, Address toAddress) {
-		return Collections2.transform(
-			xrefMapSpace.reduce(TraceAddressSnapRangeQuery.at(toAddress, snap)).values(),
-			this::getRefForXRefEntry);
+		return xrefMapSpace.reduce(TraceAddressSnapRangeQuery.at(toAddress, snap))
+				.values()
+				.stream()
+				.map(this::getRefForXRefEntry)
+				.toList();
 	}
 
 	@Override
-	public Collection<? extends DBTraceReference> getReferencesToRange(Range<Long> span,
+	public Collection<? extends DBTraceReference> getReferencesToRange(Lifespan span,
 			AddressRange range) {
-		return Collections2.transform(
-			xrefMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)).values(),
-			this::getRefForXRefEntry);
+		return new LazyCollection<>(
+			() -> xrefMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span))
+					.values()
+					.stream()
+					.map(this::getRefForXRefEntry));
 	}
 
 	protected void truncateOrDeleteEntry(DBTraceReferenceEntry ref, long otherStartSnap) {
-		if (DBTraceUtils.lowerEndpoint(ref.getLifespan()) < otherStartSnap) {
-			Range<Long> oldSpan = ref.getLifespan();
+		if (ref.getLifespan().lmin() < otherStartSnap) {
+			Lifespan oldSpan = ref.getLifespan();
 			ref.setEndSnap(otherStartSnap - 1);
 			trace.setChanged(new TraceChangeRecord<>(TraceReferenceChangeType.LIFESPAN_CHANGED,
 				this, ref.ref, oldSpan, ref.getLifespan()));
@@ -695,9 +701,9 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	@Override
-	public void clearReferencesTo(Range<Long> span, AddressRange range) {
+	public void clearReferencesTo(Lifespan span, AddressRange range) {
 		try (LockHold hold = manager.getTrace().lockWrite()) {
-			long startSnap = DBTraceUtils.lowerEndpoint(span);
+			long startSnap = span.lmin();
 			for (DBTraceXRefEntry xref : xrefMapSpace.reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
 				DBTraceReferenceEntry ref = getRefEntryForXRefEntry(xref);
@@ -708,14 +714,14 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	@Override
-	public AddressSetView getReferenceSources(Range<Long> span) {
+	public AddressSetView getReferenceSources(Lifespan span) {
 		return new DBTraceAddressSnapRangePropertyMapAddressSetView<>(space, lock,
 			referenceMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, span)),
 			e -> true);
 	}
 
 	@Override
-	public AddressSetView getReferenceDestinations(Range<Long> span) {
+	public AddressSetView getReferenceDestinations(Lifespan span) {
 		return new DBTraceAddressSnapRangePropertyMapAddressSetView<>(space, lock,
 			xrefMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, span)),
 			e -> true);
@@ -732,7 +738,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	}
 
 	protected Collection<? extends DBTraceReference> getReferencesBySymbolId(long id) {
-		return Collections2.transform(refsBySymbolId.get(id), e -> e.ref);
+		return refsBySymbolId.get(id).stream().map(e -> e.ref).toList();
 	}
 
 	@Override

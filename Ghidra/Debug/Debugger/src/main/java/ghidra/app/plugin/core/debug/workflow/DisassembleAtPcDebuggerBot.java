@@ -20,8 +20,7 @@ import java.util.Map.Entry;
 
 import javax.swing.event.ChangeListener;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import docking.DockingWindowManager;
 import docking.Tool;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
@@ -35,7 +34,8 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.PointerTypedef;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.*;
@@ -51,7 +51,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 @DebuggerBotInfo( //
@@ -156,9 +155,9 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			}
 			TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
 			while (spit.hasNext()) {
-				Range<Long> span = spit.next();
-				if (span.upperEndpoint() >= 0) {
-					return span.upperEndpoint();
+				Lifespan span = spit.next();
+				if (span.lmax() >= 0) {
+					return span.lmax();
 				}
 			}
 			return snap;
@@ -224,12 +223,15 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 				return;
 			}
 			TraceData pcUnit = null;
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Disassemble: PC is code pointer")) {
+			try (Transaction tx =
+				trace.openTransaction("Disassemble: PC is code pointer")) {
 				TraceCodeSpace regCode = codeManager.getCodeRegisterSpace(thread, frameLevel, true);
+				// TODO: Should be same platform as pc, not necessarily base
+				AddressSpace space = trace.getBaseAddressFactory().getDefaultAddressSpace();
+				PointerTypedef type = new PointerTypedef(null, VoidDataType.dataType,
+					pc.getMinimumByteSize(), null, space);
 				try {
-					pcUnit = regCode.definedData()
-							.create(Range.atLeast(pcSnap), pc, PointerDataType.dataType);
+					pcUnit = regCode.definedData().create(Lifespan.nowOn(pcSnap), pc, type);
 				}
 				catch (CodeUnitInsertionException e) {
 					// I guess something's already there. Leave it, then!
@@ -237,11 +239,8 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 					pcUnit = regCode.definedData().getForRegister(pcSnap, pc);
 				}
 			}
-			if (pcUnit != null) {
-				Address pcVal = (Address) TraceRegisterUtils.getValueHackPointer(pcUnit);
-				if (pcVal != null) {
-					disassemble(pcVal, thread, memSnap);
-				}
+			if (pcUnit != null && pcUnit.getValue() instanceof Address pcVal) {
+				disassemble(pcVal, thread, memSnap);
 			}
 		}
 
@@ -295,7 +294,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			 */
 			AddressSetView readOnly =
 				memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite());
-			AddressSetView everKnown = memoryManager.getAddressesWithState(Range.atMost(ks),
+			AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(ks),
 				s -> s == TraceMemoryState.KNOWN);
 			AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
 			AddressSetView known =

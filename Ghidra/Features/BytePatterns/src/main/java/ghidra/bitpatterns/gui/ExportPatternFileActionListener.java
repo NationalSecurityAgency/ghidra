@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.bitpatterns.info.ContextRegisterFilter;
 import ghidra.bitpatterns.info.PatternType;
 import ghidra.framework.preferences.Preferences;
@@ -88,7 +89,7 @@ public class ExportPatternFileActionListener implements ActionListener {
 			return;
 		}
 		GhidraFileChooser gFileChooser = new GhidraFileChooser(component);
-		gFileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
+		gFileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 		ExtensionFileFilter xmlFilter = new ExtensionFileFilter("xml", "XML Files");
 		gFileChooser.setFileFilter(xmlFilter);
 		String baseDir = Preferences.getProperty(XML_EXPORT_DIR_PROPERTY);
@@ -97,11 +98,13 @@ public class ExportPatternFileActionListener implements ActionListener {
 		}
 		gFileChooser.setTitle("Select Export File");
 		File outFile = gFileChooser.getSelectedFile();
+		String lastDirPath = gFileChooser.getCurrentDirectory().getAbsolutePath();
+		gFileChooser.dispose();
 		if (gFileChooser.wasCancelled() || outFile == null) {
 			return;
 		}
-		Preferences.setProperty(XML_EXPORT_DIR_PROPERTY,
-			gFileChooser.getCurrentDirectory().getAbsolutePath());
+
+		Preferences.setProperty(XML_EXPORT_DIR_PROPERTY, lastDirPath);
 		Preferences.store();
 		BitsInputDialogComponentProvider bitsProvider =
 			new BitsInputDialogComponentProvider(BITS_PROVIDER_MESSAGE);
@@ -115,7 +118,6 @@ public class ExportPatternFileActionListener implements ActionListener {
 		}
 		catch (IOException e1) {
 			Msg.showError(this, component, "IO Error", "IO error exporting pattern xml file", e1);
-			e1.printStackTrace();
 		}
 	}
 

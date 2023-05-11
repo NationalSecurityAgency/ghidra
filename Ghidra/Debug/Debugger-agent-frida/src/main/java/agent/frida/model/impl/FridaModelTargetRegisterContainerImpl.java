@@ -16,42 +16,32 @@
 package agent.frida.model.impl;
 
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.frida.manager.FridaReason;
-import agent.frida.manager.FridaState;
-import agent.frida.manager.FridaValue;
-import agent.frida.model.iface2.FridaModelTargetRegister;
-import agent.frida.model.iface2.FridaModelTargetRegisterBank;
-import agent.frida.model.iface2.FridaModelTargetRegisterContainerAndBank;
+import agent.frida.manager.*;
+import agent.frida.model.iface2.*;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerModelListener;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegisterBank;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
-import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterContainer",
 	attributeResync = ResyncMode.ALWAYS,
 	elements = { //
-			@TargetElementType(type = FridaModelTargetRegisterImpl.class) //
+		@TargetElementType(type = FridaModelTargetRegisterImpl.class) //
 	},
 	attributes = {
-			@TargetAttributeType(
-					name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME,
-					type = FridaModelTargetRegisterContainerImpl.class),
-			@TargetAttributeType(type = Void.class) 
+		@TargetAttributeType(
+			name = TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME,
+			type = FridaModelTargetRegisterContainerImpl.class),
+		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
 public class FridaModelTargetRegisterContainerImpl
@@ -64,21 +54,21 @@ public class FridaModelTargetRegisterContainerImpl
 	public FridaModelTargetRegisterContainerImpl(FridaModelTargetThreadImpl thread) {
 		super(thread.getModel(), thread, NAME, "RegisterContainer");
 		this.thread = thread;
-		
-		changeAttributes(List.of(), List.of(), Map.of(
-				DISPLAY_ATTRIBUTE_NAME, getName(),
-				DESCRIPTIONS_ATTRIBUTE_NAME, this), "Initialized");
 
-		requestElements(false);
+		changeAttributes(List.of(), List.of(), Map.of(
+			DISPLAY_ATTRIBUTE_NAME, getName(),
+			DESCRIPTIONS_ATTRIBUTE_NAME, this), "Initialized");
+
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
 	 * Does both descriptions and then populates values
 	 */
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
-			listeners.fire.invalidateCacheRequested(this);
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
+			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listRegisters(thread.getThread()).thenAccept(registers -> {
 			List<TargetObject> targetRegisters;
@@ -111,10 +101,11 @@ public class FridaModelTargetRegisterContainerImpl
 
 	public void threadStateChangedSpecific(FridaState state, FridaReason reason) {
 		if (state.equals(FridaState.FRIDA_THREAD_STOPPED)) {
-			requestAttributes(false).thenAccept(__ -> {
+			requestAttributes(RefreshBehavior.REFRESH_NEVER).thenAccept(__ -> {
 				for (Object attribute : getCachedAttributes().values()) {
 					if (attribute instanceof FridaModelTargetRegisterBank) {
-						FridaModelTargetRegisterBank bank = (FridaModelTargetRegisterBank) attribute;
+						FridaModelTargetRegisterBank bank =
+							(FridaModelTargetRegisterBank) attribute;
 						bank.threadStateChangedSpecific(state, reason);
 					}
 				}
@@ -136,12 +127,9 @@ public class FridaModelTargetRegisterContainerImpl
 			byte[] bytes = register.getBytes();
 			result.put(regname, bytes);
 		}
-		ListenerSet<DebuggerModelListener> ls = getListeners();
-		if (ls != null) {
-			//if (getName().contains("General")) {
-			ls.fire.registersUpdated(this, result);
-			//}
-		}
+		//if (getName().contains("General")) {
+		broadcast().registersUpdated(this, result);
+		//}
 		return CompletableFuture.completedFuture(result);
 	}
 
@@ -158,7 +146,7 @@ public class FridaModelTargetRegisterContainerImpl
 			BigInteger val = new BigInteger(1, ent.getValue());
 			reg.getRegister().setValue(val.toString());
 		}
-		getListeners().fire.registersUpdated(getProxy(), values);
+		broadcast().registersUpdated(getProxy(), values);
 		return AsyncUtils.NIL;
 	}
 

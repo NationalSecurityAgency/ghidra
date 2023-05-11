@@ -6,42 +6,19 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
+data/programdiff.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/close16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/menu16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) Renamed version of flag-red.png|END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) Renamed version of flag-green.png|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) Renamed version of flag-yellow.png|END|
-src/main/help/help/shared/redo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) Renamed version of help-hint.png|END|
-src/main/help/help/shared/undo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) Renamed version of security-medium.png|END|
 src/main/help/help/topics/Diff/Diff.htm||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/DetermineDiffs.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/Diff.png||GHIDRA||||END|
-src/main/help/help/topics/Diff/images/Diff16.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Diff/images/DiffApplySettings.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/DiffApplySettingsPopup.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Diff/images/DiffDetails.png||GHIDRA||||END|
-src/main/help/help/topics/Diff/images/DiffSelect16.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Diff/images/SelectOpenProgram.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/SelectOtherProgram.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/SelectOtherVersionedProgram.png||GHIDRA||||END|
-src/main/help/help/topics/Diff/images/disk.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/help/help/topics/Diff/images/down.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/Diff/images/eraser_arrow16.png||GHIDRA||||END|
-src/main/help/help/topics/Diff/images/pencil16.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/Diff/images/pencil_arrow16.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/Diff/images/settings16.gif||GHIDRA||reviewed||END|
-src/main/help/help/topics/Diff/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/help/help/topics/Diff/images/up.png||GHIDRA||reviewed||END|
-src/main/help/help/topics/Diff/images/xmag.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/Diff16.png||GHIDRA||reviewed||END|
 src/main/resources/images/DiffSelect16.png||GHIDRA||reviewed||END|
-src/main/resources/images/erase16.png||GHIDRA||reviewed||END|
 src/main/resources/images/eraser_arrow16.png||GHIDRA||||END|
-src/main/resources/images/pencil16.png||GHIDRA||reviewed||END|
 src/main/resources/images/pencil_arrow16.png||GHIDRA||reviewed||END|
-src/main/resources/images/settings16.gif||GHIDRA||reviewed||END|
-src/main/resources/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/xmag.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|

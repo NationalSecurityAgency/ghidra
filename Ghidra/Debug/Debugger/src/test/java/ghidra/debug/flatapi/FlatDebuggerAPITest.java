@@ -29,8 +29,7 @@ import java.util.function.Function;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -38,7 +37,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.TestDebuggerProgramLaunchOpinion.TestDebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.AbstractDebuggerProgramLaunchOffer;
@@ -46,10 +45,10 @@ import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOf
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.LaunchResult;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetObject;
@@ -60,6 +59,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
@@ -67,7 +67,6 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 
 public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 
@@ -131,7 +130,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerStaticMappingService mappingService;
 	protected DebuggerEmulationService emulationService;
 	protected DebuggerListingService listingService;
-	protected DebuggerStateEditingService editingService;
+	protected DebuggerControlService editingService;
 	protected FlatDebuggerAPI flat;
 
 	@Before
@@ -140,7 +139,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
 		emulationService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 		listingService = addPlugin(tool, DebuggerListingPlugin.class);
-		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		flat = new TestFlatAPI();
 	}
 
@@ -189,7 +188,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 
 		createAndOpenTrace();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
 		}
 		waitForSwing();
@@ -219,7 +218,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 
 		createAndOpenTrace();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, 0, true);
 			stack.setDepth(3, true);
@@ -291,7 +290,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 			createTrace();
 		}
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, 0, true);
 			stack.setDepth(3, true);
@@ -356,7 +355,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected void createTraceWithBinText() throws Throwable {
 		createAndOpenTrace();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.createRegion("Memory[bin.text]", 0, tb.range(0x00400000, 0x0040ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
@@ -403,19 +402,19 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		programManager.openProgram(program);
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "add block")) {
+		try (Transaction tx = program.openTransaction("add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 4096, (byte) 0,
 						monitor, false);
 		}
 
 		CompletableFuture<Void> changesSettled;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin.text]", 0, tb.range(0x00400000, 0x00400fff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 			changesSettled = mappingService.changesSettled();
-			mappingService.addIdentityMapping(tb.trace, program, Range.atLeast(0L), true);
+			mappingService.addIdentityMapping(tb.trace, program, Lifespan.nowOn(0), true);
 		}
 		waitForSwing();
 		waitOn(changesSettled);
@@ -465,7 +464,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		programManager.openProgram(program);
 
 		Address entry = addr(program, 0x00400000);
-		try (UndoableTransaction start = UndoableTransaction.start(program, "init")) {
+		try (Transaction start = program.openTransaction("init")) {
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 4096, (byte) 0,
 						monitor, false);
@@ -691,7 +690,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteMemoryGivenContext() throws Throwable {
 		createTraceWithBinText();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		assertTrue(flat.writeMemory(tb.trace, 0, tb.addr(0x00400123), tb.arr(3, 2, 1)));
 		ByteBuffer buf = ByteBuffer.allocate(3);
@@ -702,7 +701,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteMemoryCurrentContext() throws Throwable {
 		createTraceWithBinText();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		assertTrue(flat.writeMemory(tb.addr(0x00400123), tb.arr(3, 2, 1)));
 		ByteBuffer buf = ByteBuffer.allocate(3);
@@ -713,7 +712,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteRegisterGivenContext() throws Throwable {
 		TraceThread thread = createTraceWithThreadAndStack(true);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		traceManager.activateThread(thread);
 		waitForSwing();
 
@@ -729,7 +728,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteRegisterCurrentContext() throws Throwable {
 		TraceThread thread = createTraceWithThreadAndStack(true);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		traceManager.activateThread(thread);
 		waitForSwing();
 
@@ -1052,7 +1051,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		programManager.openProgram(program);
 		waitForSwing();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(
 						".text", addr(program, 0x00400000), 1024, (byte) 0, monitor, false);
@@ -1210,8 +1209,8 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					int pid, AddressSpace space) {
 				return new TestTargetProcess(container, pid, space) {
 					@Override
-					public CompletableFuture<Void> resync(boolean refreshAttributes,
-							boolean refreshElements) {
+					public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+							RefreshBehavior refreshElements) {
 						observed.add(this);
 						return super.resync(refreshAttributes, refreshElements);
 					}
@@ -1236,8 +1235,8 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					int pid, AddressSpace space) {
 				return new TestTargetProcess(container, pid, space) {
 					@Override
-					public CompletableFuture<Void> resync(boolean refreshAttributes,
-							boolean refreshElements) {
+					public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+							RefreshBehavior refreshElements) {
 						observed.add(this);
 						return super.resync(refreshAttributes, refreshElements);
 					}
@@ -1249,8 +1248,8 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					int tid) {
 				return new TestTargetThread(container, tid) {
 					@Override
-					public CompletableFuture<Void> resync(boolean refreshAttributes,
-							boolean refreshElements) {
+					public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+							RefreshBehavior refreshElements) {
 						observed.add(this);
 						return super.resync(refreshAttributes, refreshElements);
 					}

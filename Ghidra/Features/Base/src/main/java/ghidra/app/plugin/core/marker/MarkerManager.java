@@ -28,6 +28,7 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.widgets.PopupWindow;
+import generic.theme.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.*;
@@ -39,6 +40,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.ColorUtils.ColorBlender;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
@@ -84,6 +86,7 @@ public class MarkerManager implements MarkerService {
 
 	private List<ChangeListener> listeners = new ArrayList<>();
 	private MarkerClickedListener markerClickedListener = null;
+	private ThemeListener themeListener = e -> themeChanged(e);
 
 	public MarkerManager(Plugin plugin) {
 		this(plugin.getName(), plugin.getTool());
@@ -102,6 +105,13 @@ public class MarkerManager implements MarkerService {
 		primaryMarginProvider = createMarginProvider();
 		primaryOverviewProvider = createOverviewProvider();
 
+		Gui.addThemeListener(themeListener);
+	}
+
+	private void themeChanged(ThemeEvent e) {
+		if (e instanceof ColorChangedThemeEvent) {
+			markerSetCache.clearColors();
+		}
 	}
 
 	private void programClosed(Program program) {
@@ -136,9 +146,8 @@ public class MarkerManager implements MarkerService {
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
 			Color color, Icon icon) {
-		MarkerSetImpl markers =
-			new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
-				showNavigation, colorBackground, color, icon, program);
+		MarkerSetImpl markers = new PointMarkerSet(this, name, markerDescription, priority,
+			showMarkers, showNavigation, colorBackground, color, icon, program);
 		insertMarkers(markers, program);
 		return markers;
 	}
@@ -147,9 +156,8 @@ public class MarkerManager implements MarkerService {
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
 			Color color, Icon icon, boolean isPreferred) {
-		MarkerSetImpl markers =
-			new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
-				showNavigation, colorBackground, color, icon, isPreferred, program);
+		MarkerSetImpl markers = new PointMarkerSet(this, name, markerDescription, priority,
+			showMarkers, showNavigation, colorBackground, color, icon, isPreferred, program);
 		insertMarkers(markers, program);
 		return markers;
 	}
@@ -231,6 +239,7 @@ public class MarkerManager implements MarkerService {
 	}
 
 	public void dispose() {
+		Gui.removeThemeListener(themeListener);
 		updater.dispose();
 		markerSetCache.clear();
 		overviewProviders.forEach(provider -> provider.dispose());
@@ -292,7 +301,7 @@ public class MarkerManager implements MarkerService {
 	List<String> getMarkerTooltipLines(Program program, int y, int x, Address minAddr,
 			Address maxAddr) {
 		MarkerSetCacheEntry entry = markerSetCache.get(program);
-		return entry.getTooltipLines(y, x, minAddr, maxAddr);
+		return entry == null ? List.of() : entry.getTooltipLines(y, x, minAddr, maxAddr);
 	}
 
 	static String getMarkerToolTip(MarkerSetImpl marker, Address a, int x, int y) {
@@ -311,7 +320,7 @@ public class MarkerManager implements MarkerService {
 	/**
 	 * Call to signal that the markers for a given program have changed in some way, such as being
 	 * removed, changing colors or the active state being changed
-	 * 
+	 *
 	 * @param p the program associated with the markers
 	 */
 	void markersChanged(Program p) {
@@ -395,6 +404,13 @@ public class MarkerManager implements MarkerService {
 	}
 
 	@Override
+	public boolean isActiveMarkerForGroup(String groupName, MarkerSet markerSet, Program program) {
+		Map<Program, MarkerSetImpl> markersByProgram = programMarkersByGroup.get(groupName);
+		MarkerSetImpl previousMarkers = markersByProgram.get(program);
+		return markerSet == previousMarkers;
+	}
+
+	@Override
 	public void removeMarkerForGroup(String groupName, MarkerSet markers, Program program) {
 		Map<Program, MarkerSetImpl> markersByProgram = programMarkersByGroup.get(groupName);
 		MarkerSet previousMarkers = markersByProgram.get(program);
@@ -411,7 +427,7 @@ public class MarkerManager implements MarkerService {
 	}
 
 	private Color getBackgroundColor(Program program, MarkerSetCacheEntry entry, Address address) {
-		return entry.getBackgroundColor(address);
+		return entry == null ? null : entry.getBackgroundColor(address);
 	}
 
 	public GoToService getGoToService() {
@@ -469,6 +485,12 @@ public class MarkerManager implements MarkerService {
 			return entry;
 		}
 
+		void clearColors() {
+			for (MarkerSetCacheEntry entry : map.values()) {
+				entry.clearColors();
+			}
+		}
+
 		public void clear() {
 			map.clear();
 		}
@@ -486,6 +508,7 @@ public class MarkerManager implements MarkerService {
 	private static class MarkerSetCacheEntry {
 		private final List<MarkerSetImpl> markerSets = new ArrayList<>();
 		private final AddressColorCache colorCache = new AddressColorCache();
+		private final ColorBlender blender = new ColorBlender();
 
 		private final MarkerSetCache cache;
 		private final Program program;
@@ -500,6 +523,10 @@ public class MarkerManager implements MarkerService {
 			 * domain object closing, which works for plain programs, too.
 			 */
 			program.addCloseListener(closeListener);
+		}
+
+		void clearColors() {
+			colorCache.clear();
 		}
 
 		private void programClosed() {
@@ -577,15 +604,16 @@ public class MarkerManager implements MarkerService {
 			if (colorCache.containsKey(address)) {
 				return colorCache.get(address);
 			}
-			for (MarkerSetImpl markers : IterableUtils.reversedIterable(markerSets)) {
+			blender.clear();
+			for (MarkerSetImpl markers : markerSets) {
 				if (markers.isActive() && markers.isColoringBackground() &&
 					markers.contains(address)) {
-					Color color = markers.getMarkerColor();
-					colorCache.put(address, color);
-					return color;
+					blender.add(markers.getMarkerColor());
 				}
 			}
-			return null;
+			Color color = blender.getColor(null);
+			colorCache.put(address, color);
+			return color;
 		}
 
 		List<String> getTooltipLines(int y, int x, Address minAddr, Address maxAddr) {

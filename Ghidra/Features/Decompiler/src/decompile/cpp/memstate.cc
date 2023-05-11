@@ -16,6 +16,8 @@
 #include "memstate.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 /// This is a static convenience routine for decoding a value from a sequence of bytes depending
 /// on the desired endianness
 /// \param ptr is the pointer to the bytes to decode
@@ -733,3 +735,4 @@ void MemoryState::setChunk(const uint1 *val,AddrSpace *spc,uintb off,int4 size)
   mspace->setChunk(off,size,val);
 }
 
+} // End namespace ghidra

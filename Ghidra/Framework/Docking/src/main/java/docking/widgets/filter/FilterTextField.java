@@ -23,6 +23,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DockingUtils;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -42,11 +44,14 @@ public class FilterTextField extends JPanel {
 	private static final long MINIMUM_TIME_BETWEEN_FLASHES_MS = 5000;
 	private static final int FLASH_FREQUENCY_MS = 250;
 
-	private static Color FLASH_BACKGROUND_COLOR = Color.WHITE;
-	private static Color FILTERED_BACKGROUND_COLOR = Color.YELLOW;
-	/*package*/ static Color UNEDITABLE_BACKGROUND_COLOR = Color.LIGHT_GRAY;
+	private static Color FLASH_FOREGROUND_COLOR = new GColor("color.fg");
+	private static Color FILTERED_BACKGROUND_COLOR = new GColor("color.bg.filterfield");
+	private static Color FILTERED_FOREGROUND_COLOR = new GColor("color.fg.filterfield");
 
-	private Color noFlashColor;
+	/*package*/ static Color UNEDITABLE_BACKGROUND_COLOR = new GColor("color.bg.uneditable");
+
+	private Color noFlashBgColor = Colors.BACKGROUND;
+	private Color noFlashFgColor = Colors.FOREGROUND;
 
 	/** Signals the last flash time (used to prevent excessive flashing) */
 	private long lastFlashTime = 0;
@@ -85,6 +90,8 @@ public class FilterTextField extends JPanel {
 		super(new BorderLayout());
 
 		textField.setColumns(columns);
+		textField.setBackground(noFlashBgColor);
+		textField.setForeground(noFlashFgColor);
 
 		setFocusComponent(component);
 
@@ -153,13 +160,6 @@ public class FilterTextField extends JPanel {
 		flashTimer.restart();
 	}
 
-	private Color getDefaultBackgroundColor() {
-		if (noFlashColor == null) {
-			noFlashColor = textField.getBackground();  // lazy init to default bg color
-		}
-		return noFlashColor;
-	}
-
 	/**
 	 * This method will signal to the users if a filter is currently applied (has text).  For
 	 * example, the default implementation will 'flash' the filter by changing its background
@@ -209,28 +209,31 @@ public class FilterTextField extends JPanel {
 
 	public void setEditable(boolean b) {
 		textField.setEditable(b);
-		updateBackgroundColor();
+		updateColor();
 	}
 
-	private void updateBackgroundColor() {
-		// this is purposely done here (before the isEditable() check below) in order to make
-		// sure that the default color has been properly initialized
-		Color defaultBackgroundColor = getDefaultBackgroundColor();
-
+	private void updateColor() {
 		Color bgColor = UNEDITABLE_BACKGROUND_COLOR;
+		Color fgColor = noFlashFgColor;
 		if (isEditable() && isEnabled()) {
-			bgColor = hasText ? FILTERED_BACKGROUND_COLOR : defaultBackgroundColor;
+			bgColor = hasText ? FILTERED_BACKGROUND_COLOR : noFlashBgColor;
+			fgColor = hasText ? FILTERED_FOREGROUND_COLOR : noFlashFgColor;
 		}
 
 		doSetBackground(bgColor);
+		doSetForeground(fgColor);
 	}
 
-	private void contrastBackground() {
-		Color contrastColor = FLASH_BACKGROUND_COLOR;
-		if (textField.getBackground() == FLASH_BACKGROUND_COLOR) {
-			contrastColor = FILTERED_BACKGROUND_COLOR;
+	private void contrastColors() {
+		Color contrastBg = noFlashBgColor;
+		Color contrastFg = FLASH_FOREGROUND_COLOR;
+		if (textField.getBackground() == noFlashBgColor) {
+			contrastBg = FILTERED_BACKGROUND_COLOR;
+			contrastFg = FILTERED_FOREGROUND_COLOR;
 		}
-		doSetBackground(contrastColor);
+
+		doSetBackground(contrastBg);
+		doSetForeground(contrastFg);
 	}
 
 	public String getText() {
@@ -307,6 +310,10 @@ public class FilterTextField extends JPanel {
 		textField.setBackground(c);
 	}
 
+	/*package*/ void doSetForeground(Color c) {
+		textField.setForeground(c);
+	}
+
 	/*package*/ JLabel getClearLabel() {
 		return clearLabel;
 	}
@@ -333,7 +340,7 @@ public class FilterTextField extends JPanel {
 
 		updateFocusFlashing();
 
-		updateBackgroundColor();
+		updateColor();
 
 		if (fireEvent) {
 			fireFilterChanged(text);
@@ -434,7 +441,7 @@ public class FilterTextField extends JPanel {
 		@Override
 		public void actionPerformed(ActionEvent event) {
 			if (flashCount < MAX_FLASH_COUNT) {
-				contrastBackground();
+				contrastColors();
 				flashCount++;
 			}
 			else {
@@ -452,7 +459,7 @@ public class FilterTextField extends JPanel {
 		@Override
 		public void stop() {
 			super.stop();
-			updateBackgroundColor(); // set to the proper non-flashing color
+			updateColor(); // set to the proper non-flashing color
 			flashCount = 0;
 		}
 	}

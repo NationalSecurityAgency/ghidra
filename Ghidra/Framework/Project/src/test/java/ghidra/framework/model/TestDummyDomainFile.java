@@ -17,6 +17,7 @@ package ghidra.framework.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -101,7 +102,22 @@ public class TestDummyDomainFile implements DomainFile {
 	}
 
 	@Override
+	public URL getSharedProjectURL() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public String getContentType() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isLinkFile() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DomainFolder followLink() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -224,11 +240,6 @@ public class TestDummyDomainFile implements DomainFile {
 	}
 
 	@Override
-	public boolean isVersionControlSupported() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public synchronized boolean isVersioned() {
 		return isVersioned;
 	}
@@ -322,6 +333,16 @@ public class TestDummyDomainFile implements DomainFile {
 
 	@Override
 	public DomainFile moveTo(DomainFolder newParent) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isLinkingSupported() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

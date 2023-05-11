@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import org.junit.*;
 
 import ghidra.MiscellaneousPluginPackage;
-import ghidra.framework.options.*;
 import ghidra.framework.options.AutoOptions.NewValue;
 import ghidra.framework.options.AutoOptions.OldValue;
 import ghidra.framework.options.annotation.AutoOptionConsumed;

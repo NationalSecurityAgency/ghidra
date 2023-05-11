@@ -309,7 +309,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 
 			for (AddressSpace space : addressSpaces) {
 
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				// Portion of current address space that intersects with initialized memory
 				AddressSet intersecting =
@@ -447,7 +447,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 			// Using the CreateDataCmd (which doesn't allow you to pass in a length)
 			// creates a string at the starting address up to the length of the next
 			// "00".
-			DataUtilities.createData(program, start, foundString.getDataType(), length, false,
+			DataUtilities.createData(program, start, foundString.getDataType(), length,
 				DataUtilities.ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 
 			Msg.trace(this, "Created string '" + candidate.getOriginalString() + "' at " + start);
