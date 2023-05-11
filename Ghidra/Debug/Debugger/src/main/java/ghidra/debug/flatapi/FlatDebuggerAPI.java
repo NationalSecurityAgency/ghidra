@@ -1140,7 +1140,7 @@ public interface FlatDebuggerAPI {
 		Language language = platform.getLanguage();
 		RegisterValue value = readRegister(platform, requireThread(coordinates.getThread()),
 			coordinates.getFrame(), coordinates.getSnap(), language.getProgramCounter());
-		if (!value.hasValue()) {
+		if (value == null || !value.hasValue()) {
 			return null;
 		}
 		return language.getDefaultSpace().getAddress(value.getUnsignedValue().longValue());

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#getting-started" id="toc-getting-started">Getting
+Started</a>
+<ul>
+<li><a href="#the-specimen" id="toc-the-specimen">The specimen</a></li>
+<li><a href="#launching-on-linux" id="toc-launching-on-linux">Launching
+on Linux</a></li>
+<li><a href="#launching-on-windows"
+id="toc-launching-on-windows">Launching on Windows</a></li>
+<li><a href="#launching-on-macos" id="toc-launching-on-macos">Launching
+on macOS</a></li>
+<li><a href="#troubleshooting"
+id="toc-troubleshooting">Troubleshooting</a>
+<ul>
+<li><a href="#im-having-trouble-importing-termmines"
+id="toc-im-having-trouble-importing-termmines">I’m having trouble
+importing <code>termmines</code></a></li>
+<li><a href="#there-is-no-debugger-icon-in-my-tool-chest"
+id="toc-there-is-no-debugger-icon-in-my-tool-chest">There is no Debugger
+icon in my Tool Chest</a></li>
+<li><a href="#there-is-no-debug-launch-icon-in-the-global-toolbar"
+id="toc-there-is-no-debug-launch-icon-in-the-global-toolbar">There is no
+Debug / Launch icon in the global toolbar</a></li>
+<li><a
+href="#there-is-no-debug-termmines-in-gdb-locally-in-vm-option-in-the-launch-drop-down"
+id="toc-there-is-no-debug-termmines-in-gdb-locally-in-vm-option-in-the-launch-drop-down">There
+is no “Debug termmines in GDB locally IN-VM” option in the launch
+drop-down</a></li>
+<li><a
+href="#the-launch-hangs-for-several-seconds-and-then-prompt-for-a-recorder"
+id="toc-the-launch-hangs-for-several-seconds-and-then-prompt-for-a-recorder">The
+launch hangs for several seconds and then prompt for a
+“recorder”</a></li>
+<li><a href="#the-dynamic-listing-is-empty"
+id="toc-the-dynamic-listing-is-empty">The Dynamic Listing is
+empty</a></li>
+<li><a
+href="#the-listings-are-in-sync-but-the-dynamic-listing-is-grey-00s"
+id="toc-the-listings-are-in-sync-but-the-dynamic-listing-is-grey-00s">The
+listings are in sync, but the Dynamic Listing is grey 00s</a></li>
+</ul></li>
+<li><a href="#exercise-launch-termmines"
+id="toc-exercise-launch-termmines">Exercise: Launch
+<code>termmines</code></a></li>
+<li><a href="#customized-launching"
+id="toc-customized-launching">Customized Launching</a></li>
+<li><a href="#exercise-launch-with-command-line-help"
+id="toc-exercise-launch-with-command-line-help">Exercise: Launch with
+Command-line Help</a></li>
+<li><a href="#attaching" id="toc-attaching">Attaching</a></li>
+<li><a href="#exercise-attach" id="toc-exercise-attach">Exercise:
+Attach</a></li>
+<li><a href="#troubleshooting-1"
+id="toc-troubleshooting-1">Troubleshooting</a></li>
+</ul></li>
+</ul>
+</nav>
+<section id="getting-started" class="level1">
+<h1>Getting Started</h1>
+<p>This course assumes you are already familiar with the basics of using
+Ghidra, including its static analysis features. To some degree, static
+analysis is an integral part of debugging with Ghidra.</p>
+<section id="the-specimen" class="level2">
+<h2>The specimen</h2>
+<p>Throughout this course, we will examine the provided “Terminal
+Minesweeper” specimen, named <code>termmines</code>. If the compiled
+artifact has not been provided for you, you may build it from source
+using the provided <a
+href="../ExerciseFiles/Debugger/Makefile">Makefile</a>, but you will
+need <code>ncurses.h</code> first:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> GhidraClass/ExerciseFiles/Debugger</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span></span></code></pre></div>
+<p>The specimen is designed for Linux, but should be trivially portable
+to other Unix systems. You will need <code>ncurses</code> and its
+development headers and libraries available on your system. Though
+source code for the specimen is available, we strongly encourage you to
+work on the course exercises without referring to it. Symbols and debug
+information are removed from the binary. With some effort,
+<code>termmines</code> may even port to Windows; however, we have not
+tested this course on Windows.</p>
+<p>It is a good idea to get acquainted with the specimen. In general,
+you should take precautions before running code you do not understand or
+trust. For <code>termmines</code>, the risk is negligible. Run it:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./termmines</span></span></code></pre></div>
+<p>You should see a 9x9 grid and a cursor you can move with the arrow
+keys. Hit <strong>Ctrl-C</strong> to exit. Probe it for help. Most Linux
+programs accept a <code>-h</code> argument for help:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./termmines</span> <span class="at">-h</span></span></code></pre></div>
+<p>You should now have all the information you need to understand how
+the game works. If you have never played Minesweeper before, read up
+online, and perhaps try playing a couple of games. Don’t get distracted,
+though.</p>
+</section>
+<section id="launching-on-linux" class="level2">
+<h2>Launching on Linux</h2>
+<p>On Linux, we will use GDB to debug the specimen. There are many ways
+to do this, but for the sake of simplicity, import and launch as
+follows:</p>
+<ol type="1">
+<li><p>Import <code>termmines</code> into a new Ghidra project.</p></li>
+<li><p>If you have a CodeBrowser open, close it and return to the main
+Ghidra project window.</p></li>
+<li><p>Drag <code>termmines</code> onto the Debugger <img
+src="images/debugger.png" alt="debugger icon" /> in the Tool
+Chest.</p></li>
+<li><p>This will bring up the specimen in the Debugger tool. (If you are
+prompted to analyze, choose Yes.)</p>
+<figure>
+<img src="images/GettingStarted_ToolWSpecimen.png"
+alt="Debugger tool with termmines open" />
+<figcaption aria-hidden="true">Debugger tool with termmines
+open</figcaption>
+</figure></li>
+<li><p>In the Debugger tool, click the dropdown ▾ for the debug <img
+src="images/debugger.png" alt="debug button" /> icon in the global tool
+bar, and select “Debug termmines in GDB locally IN-VM.”</p></li>
+<li><p>Wait a bit then verify the Dynamic Listing window (top) is
+displaying disassembly code.</p>
+<figure>
+<img src="images/GettingStarted_DisassemblyAfterLaunch.png"
+alt="Debugger tool after launching termmines" />
+<figcaption aria-hidden="true">Debugger tool after launching
+termmines</figcaption>
+</figure></li>
+</ol>
+</section>
+<section id="launching-on-windows" class="level2">
+<h2>Launching on Windows</h2>
+<p>On Windows, we will use dbgeng to debug the specimen. This is the
+engine that backs WinDbg. You may choose an alternative Minesweeper,
+since terminal applications are less representative of Windows
+executables. Follow the same process as for Linux, except import
+<code>termmines.exe</code> and select “Debug termmines.exe in dbgeng
+locally IN-VM.”</p>
+</section>
+<section id="launching-on-macos" class="level2">
+<h2>Launching on macOS</h2>
+<p>Unfortunately, things are not so simple on macOS. See the
+instructions for <a
+href="../../../Ghidra/Debug/Debugger-swig-lldb/InstructionsForBuildingLLDBInterface.txt">Building
+LLDB-Java Bindings</a>. Once built, follow the same process as for
+Linux, except select “Debug termmines in LLDB locally IN-VM.”</p>
+</section>
+<section id="troubleshooting" class="level2">
+<h2>Troubleshooting</h2>
+<section id="im-having-trouble-importing-termmines" class="level3">
+<h3>I’m having trouble importing <code>termmines</code></h3>
+<p>Check that <code>termmines</code> exists. You may need to build it
+yourself using <code>make</code>. If it exists and you are still having
+trouble, please refer to the Beginner course.</p>
+</section>
+<section id="there-is-no-debugger-icon-in-my-tool-chest" class="level3">
+<h3>There is no Debugger icon in my Tool Chest</h3>
+<p>Double-check that you are looking at the main Ghidra Project window,
+not a CodeBrowser. The tool chest is the box of big icons above the list
+of imported programs. If it is not there, you can try importing it from
+the default tools:</p>
+<ol type="1">
+<li>In the menus, select <strong>Tools → Import Default
+Tools</strong></li>
+<li>Select “defaultTools/Debugger.tool”</li>
+<li>Click Import</li>
+</ol>
+</section>
+<section id="there-is-no-debug-launch-icon-in-the-global-toolbar"
+class="level3">
+<h3>There is no Debug / Launch icon in the global toolbar</h3>
+<p>Double-check that you are in the Debugger tool, not the CodeBrowser
+tool. If it is still not there, then you may need to re-import the
+default Debugger tool as under the previous heading. If it is still not
+there, your installation may be corrupt.</p>
+</section>
+<section
+id="there-is-no-debug-termmines-in-gdb-locally-in-vm-option-in-the-launch-drop-down"
+class="level3">
+<h3>There is no “Debug termmines in GDB locally IN-VM” option in the
+launch drop-down</h3>
+<p>You may need to install GDB and/or configure Ghidra with its
+location. If you have a copy or custom build of GDB in a non-system
+path, note its full path. If you intend to use the system’s copy of GDB,
+then in a terminal:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span> gdb</span></code></pre></div>
+<p>Note the path given. (If you get an error, then you need to install
+GDB.) In a terminal, type the full path of GDB to ensure it executes
+properly. Type <code>q</code> to quit GDB.</p>
+<ol type="1">
+<li>From the Debugger Targets window, click the Connect <img
+src="images/connect.png" alt="connect button" /> button.</li>
+<li>In the Connect dialog, select “gdb” from the dropdown at the
+top.</li>
+<li>Enter the full path, e.g., <code>/usr/bin/gdb</code>, in the “GDB
+launch command” field.</li>
+<li>Click “Connect”</li>
+<li>If you get an Interpreter window, then things have gone well.</li>
+<li>Type <code>echo test</code> into it to verify it’s responsive, then
+type <code>q</code> to disconnect.</li>
+<li>Close the Debugger tool, then retry.</li>
+</ol>
+</section>
+<section
+id="the-launch-hangs-for-several-seconds-and-then-prompt-for-a-recorder"
+class="level3">
+<h3>The launch hangs for several seconds and then prompt for a
+“recorder”</h3>
+<p>You probably have a stale GDB connection, so when you launched you
+now have multiple connections. For the prompt, select the option with
+the highest score. Examine the Targets window to confirm you have
+multiple GDB connections. If you know which is the stale connection, you
+can right-click it and choose <strong>Disconnect</strong>. Otherwise,
+use <strong>Disconnect All</strong> from the drop-down menu and
+re-launch.</p>
+</section>
+<section id="the-dynamic-listing-is-empty" class="level3">
+<h3>The Dynamic Listing is empty</h3>
+<p>Check for an actual connection. You should see an entry in the
+Debugger Targets window, a populated Object window, and there should be
+an Interpreter window. If not, then your GDB connector may not be
+configured properly. Try the steps under the previous heading.</p>
+<p>If you have an Interpreter window, there are several
+possibilities:</p>
+<section id="ghidra-or-gdb-failed-to-launch-the-target" class="level4">
+<h4>Ghidra or GDB failed to launch the target:</h4>
+<p>Check that the original <code>termmines</code> exists and is
+executable. It must be at the path from where it was originally
+imported. If you imported from a share, consider copying it locally,
+setting its permissions, then re-importing.</p>
+</section>
+<section id="the-target-was-launched-but-immediately-terminated"
+class="level4">
+<h4>The target was launched, but immediately terminated:</h4>
+<p>Check that the specimen has a <code>main</code> symbol. NOTE: It is
+not sufficient to place a <code>main</code> label in Ghidra. The
+original file must have a <code>main</code> symbol.</p>
+<p>Alternatively, in the menus try <strong>Debugger → Debug termmines →
+in GDB locally IN-VM</strong>, and select “Use starti.” This will break
+at the system entry point. If you have labeled <code>main</code> in
+Ghidra, then you can place a breakpoint there and continue — these
+features are covered later in the course.</p>
+<p>Alternatively, try debugging the target in GDB from a separate
+terminal completely outside of Ghidra to see if things work as
+expected.</p>
+</section>
+<section id="the-target-was-launched-but-has-not-stopped-yet"
+class="level4">
+<h4>The target was launched, but has not stopped, yet</h4>
+<p>Try pressing the Interrupt <img src="images/interrupt.png"
+alt="interrupt button" /> button. If that doesn’t work or is
+unsatisfactory, try the remedies under the previous heading — for an
+immediately terminating target.</p>
+</section>
+<section
+id="you-hit-an-uncommon-bug-where-the-memory-map-is-not-applied-properly"
+class="level4">
+<h4>You hit an uncommon bug where the memory map is not applied
+properly</h4>
+<p>This is the case if the Dynamic Listing is completely blank but the
+Regions window is replete. The Dynamic Listing just needs to be kicked a
+little. The easiest way is to step once, using the <img
+src="images/stepinto.png" alt="step into" /> Step Into button in the
+main toolbar. If this is not desirable, then you can toggle
+<strong>Force Full View</strong> back and forth. In the Regions window,
+use the drop-down menu to toggle it on, then toggle it off. The Dynamic
+Listing should now be populated. To go to the program counter,
+double-click the “pc = …” label in the top right.</p>
+</section>
+<section id="something-else-has-gone-wrong" class="level4">
+<h4>Something else has gone wrong</h4>
+<p>Try typing <code>info inferiors</code> and similar GDB diagnostic
+commands into the Interpreter.</p>
+</section>
+</section>
+<section
+id="the-listings-are-in-sync-but-the-dynamic-listing-is-grey-00s"
+class="level3">
+<h3>The listings are in sync, but the Dynamic Listing is grey 00s</h3>
+<p>Check the Auto-Read drop-down near the top right of the Dynamic
+Listing. It should be set to <strong>Read Visible Memory, RO
+Once</strong>.</p>
+</section>
+</section>
+<section id="exercise-launch-termmines" class="level2">
+<h2>Exercise: Launch <code>termmines</code></h2>
+<p>If you were following along with an instructor, delete your import of
+<code>termmines</code> and/or start a new Ghidra Project. Starting from
+the beginning, import <code>termmines</code> and launch it in the Ghidra
+Debugger with GDB. When your tool looks like the screenshot with a
+populated Dynamic Listing, you have completed the exercise. Disconnect
+before proceeding to the next exercise.</p>
+</section>
+<section id="customized-launching" class="level2">
+<h2>Customized Launching</h2>
+<p>For this specimen, you may occasionally need to provide custom
+command-line parameters. By default, Ghidra attempts to launch the
+target without any parameters. In the menus, use <strong>Debugger →
+Debug termmmines → in GDB locally IN-VM</strong> to launch with
+customizations. Ghidra will remember these customizations the next time
+you launch using the drop-down button from the toolbar. The first dialog
+allows you to customize the connection to the back-end debugger. Unless
+you have a special copy of GDB, you should probably just click Connect.
+The second dialog allows you to customize how the back-end debugger
+launches the target. This is where you tweak the command line. You can
+also change the actual image, in case it has moved or you want to
+experiment with a patched version.</p>
+</section>
+<section id="exercise-launch-with-command-line-help" class="level2">
+<h2>Exercise: Launch with Command-line Help</h2>
+<p>Launch the specimen so that it prints its usage. When successful, you
+will see the usage info in the Debugger’s Interpreter window.
+<strong>NOTE</strong>: The process will terminate after printing its
+usage, and as a result, the rest of the UI will be mostly empty.</p>
+</section>
+<section id="attaching" class="level2">
+<h2>Attaching</h2>
+<p>Attaching is slightly more advanced, but because the target will need
+to read from stdin, and Ghidra does not properly attach the Interpreter
+to stdin, we will need to launch the target in a terminal and attach to
+it instead. Note this technique is only possible because the target
+waits for input. Depending on the task for future exercises, you may
+still need to launch from the Debugger instead of attaching.</p>
+<ol type="1">
+<li>Run <code>termmines</code> in a proper terminal with the desired
+command-line parameters.</li>
+<li>In the Ghidra Debugger, find the Targets window, and click the <img
+src="images/connect.png" alt="connect" /> Connect button.</li>
+<li>Select “gdb” from the drop-down box.</li>
+<li>This dialog should look familiar from the Customized Launching
+section. Just click the Connect button.</li>
+<li>In the Objects window (below the Targets window), expand the node
+labeled “Available.”</li>
+<li>In the filter box, type <code>termmines</code>.</li>
+<li>Right-click on the termmines process and select Attach. If this
+fails, select Available again, and click the
+<img alt="refresh" src="images/view-refresh.png" width="16px"> Refresh
+button.</li>
+</ol>
+</section>
+<section id="exercise-attach" class="level2">
+<h2>Exercise: Attach</h2>
+<p>Try attaching on your own, if you have not already. Check your work
+by typing <code>bt</code> into the Interpreter. If you are in
+<code>read</code> you have completed this exercise. Disconnect before
+proceeding to the next module: <a href="A2-UITour.html">A Tour of the
+UI</a></p>
+</section>
+<section id="troubleshooting-1" class="level2">
+<h2>Troubleshooting</h2>
+<p>If you get <code>Operation not permitted</code> or similar when
+trying to attach, it is likely your Linux system is configured with
+Yama’s <code>ptrace_scope=1</code>. We have provided a stub utility
+called <code>anyptracer</code>. The utility permits its own process to
+be traced by any other process and then executes a shell command. Using
+<code>exec</code> as that shell command enables you to execute the
+specimen in the permissive process, and thus you can attach to it as if
+<code>ptrace_scope=0</code>, but without reducing the security of the
+rest of the system. For example:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./anyptracer</span> <span class="st">&#39;exec ./termmines&#39;</span></span></code></pre></div>
+<p>Alternatively, if you have root access, you can rectify the issue
+using the relevant documentation available online.
+<strong>Beware!</strong> You should not modify this setting on your
+daily driver, as this substantially reduces the security of your system.
+Any compromised process would be allowed to attach to and steal data,
+e.g., credentials, from any other process owned by the same user.</p>
+</section>
+</section>
+</body>
+</html>

@@ -123,8 +123,12 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 	/**
 	 * Get a suitable disassembler instance. 
-	 * Marking of bad instructions honors "Mark Bad Disassembly" 
-	 * program Disassembler option.
+	 * The following Program options are used during disassbly:
+	 * <ul>
+	 * <li>{@link #MARK_BAD_INSTRUCTION_PROPERTY}</li>
+	 * <li>{@link #MARK_UNIMPL_PCODE_PROPERTY}</li>
+	 * <li>{@link #RESTRICT_DISASSEMBLY_TO_EXECUTE_MEMORY_PROPERTY}</li>
+	 * </ul>
 	 * @param program the program to be disassembled.
 	 * @param monitor progress monitor
 	 * @param listener object to notify of disassembly messages.
@@ -155,6 +159,8 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * Intended for block pseudo-disassembly use only when the method 
 	 * {@link Disassembler#pseudoDisassembleBlock(MemBuffer, RegisterValue, int)}
 	 * is used.
+	 * NOTE: Executable memory restriction is not provided but should possibly be considered
+	 * by any use of the resulting instance.
 	 * @param language processor language
 	 * @param addrFactory address factory 
 	 * @param monitor progress monitor
@@ -218,8 +224,13 @@ public class Disassembler implements DisassemblerConflictHandler {
 	// TODO: Force use of factory methods above by making constructors protected
 
 	/**
-	 * Disassembler constructor.  Marking of bad instructions honors "Mark Bad Disassembly" 
-	 * program Disassembler option.
+	 * Disassembler constructor.
+	 * The following Program options are used during disassbly:
+	 * <ul>
+	 * <li>{@link #MARK_BAD_INSTRUCTION_PROPERTY}</li>
+	 * <li>{@link #MARK_UNIMPL_PCODE_PROPERTY}</li>
+	 * <li>{@link #RESTRICT_DISASSEMBLY_TO_EXECUTE_MEMORY_PROPERTY}</li>
+	 * </ul>
 	 * @param program the program to be disassembled.
 	 * @param monitor progress monitor
 	 * @param listener object to notify of disassembly messages.
@@ -233,6 +244,8 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 	/**
 	 * Disassembler constructor.  Intended for block pseudo-disassembly use only.
+	 * NOTE: Executable memory restriction is not provided but should possibly be considered
+	 * by any use of the resulting instance.
 	 * @param language processor language
 	 * @param addrFactory address factory 
 	 * @param monitor progress monitor

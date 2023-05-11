@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.util.*;
-
 import java.io.IOException;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.DWARFUtil.LengthResult;
@@ -344,15 +343,26 @@ public class DWARFCompilationUnit {
 			throws IOException, DWARFException, CancelledException {
 
 		BinaryReader br = dwarfProgram.getDebugInfo();
-		br.setPointerIndex(getFirstDIEOffset());
+		br.setPointerIndex(firstDIEOffset);
 
 		Deque<DebugInfoEntry> parentStack = new ArrayDeque<>();
 
 		DebugInfoEntry parent = null;
 		DebugInfoEntry die;
 		DebugInfoEntry unexpectedTerminator = null;
-		while ((br.getPointerIndex() < getEndOffset()) &&
-			(die = DebugInfoEntry.read(br, this, dwarfProgram.getAttributeFactory())) != null) {
+		while (br.getPointerIndex() < endOffset) {
+			long startOfDIE = br.getPointerIndex();
+			try {
+				die = DebugInfoEntry.read(br, this, dwarfProgram.getAttributeFactory());
+			}
+			catch (IOException e) {
+				Msg.error(this,
+					"Failed to read DIE at offset 0x%x in compunit %d (at 0x%x), skipping remainder of compilation unit."
+							.formatted(startOfDIE, compUnitNumber, startOffset),
+					e);
+				br.setPointerIndex(endOffset);
+				continue;
+			}
 
 			monitor.checkCancelled();
 
@@ -366,8 +376,8 @@ public class DWARFCompilationUnit {
 			}
 
 			if (unexpectedTerminator != null) {
-				throw new DWARFException("Unexpected terminator entry at " +
-					Long.toHexString(unexpectedTerminator.getOffset()));
+				throw new DWARFException("Unexpected terminator entry at 0x%x"
+						.formatted(unexpectedTerminator.getOffset()));
 			}
 			entries.add(die);
 
@@ -376,9 +386,9 @@ public class DWARFCompilationUnit {
 				die.setParent(parent);
 			}
 			else {
-				if (die.getOffset() != getFirstDIEOffset()) {
+				if (die.getOffset() != firstDIEOffset) {
 					throw new DWARFException(
-						"Unexpected root level DIE at " + Long.toHexString(die.getOffset()));
+						"Unexpected root level DIE at 0x%x".formatted(die.getOffset()));
 				}
 			}
 

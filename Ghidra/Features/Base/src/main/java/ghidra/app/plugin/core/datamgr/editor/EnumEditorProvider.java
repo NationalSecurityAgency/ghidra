@@ -27,8 +27,7 @@ import javax.swing.table.TableCellEditor;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.*;
 import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.OptionDialog;
@@ -152,7 +151,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, editorPanel.getTable());
+		return new DefaultActionContext(this, editorPanel.getTable());
 	}
 
 	@Override

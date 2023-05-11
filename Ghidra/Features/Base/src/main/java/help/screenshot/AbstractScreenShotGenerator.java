@@ -113,9 +113,13 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		setDockIcon();
 	}
 
+	protected TestEnv newTestEnv() throws Exception {
+		return new TestEnv();
+	}
+
 	@Before
 	public void setUp() throws Exception {
-		env = new TestEnv();
+		env = newTestEnv();
 
 		prepareTool();
 
@@ -285,8 +289,8 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * The same as {@link GhidraScreenShotGenerator#captureIsolatedProvider(Class, int, int)}
-	 * except this method will also capture the containing window.
+	 * The same as {@link GhidraScreenShotGenerator#captureIsolatedProvider(Class, int, int)} except
+	 * this method will also capture the containing window.
 	 *
 	 * @param clazz the provider class
 	 * @param width the width of the capture
@@ -465,9 +469,9 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * Captures the provider by using a screen shot and not by painting the provider directly
-	 * (as does {@link #captureProvider(ComponentProvider)}).  Use this method if you need to
-	 * capture the provider along with any popup windows.
+	 * Captures the provider by using a screen shot and not by painting the provider directly (as
+	 * does {@link #captureProvider(ComponentProvider)}). Use this method if you need to capture the
+	 * provider along with any popup windows.
 	 *
 	 * @param provider the provider
 	 */
@@ -488,13 +492,14 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * Captures the window, including decorations.  This will use a {@link Robot} to create a
-	 * screen capture, which has the effect of getting all items within the window bounds.  This
-	 * method is needed if you wish to capture child windows, like popups/hovers.
+	 * Captures the window, including decorations. This will use a {@link Robot} to create a screen
+	 * capture, which has the effect of getting all items within the window bounds. This method is
+	 * needed if you wish to capture child windows, like popups/hovers.
 	 *
-	 * <P>Other capture methods will not use the screen capture mechanism, but rather will
-	 * directly render the given component.  In this case, subordinate windows will not be
-	 * captured.  For example, see {@link #captureProvider(Class)}.
+	 * <P>
+	 * Other capture methods will not use the screen capture mechanism, but rather will directly
+	 * render the given component. In this case, subordinate windows will not be captured. For
+	 * example, see {@link #captureProvider(Class)}.
 	 *
 	 * @param name the provider's name
 	 */
@@ -505,13 +510,14 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * Captures the window, including decorations.  This will use a {@link Robot} to create a
-	 * screen capture, which has the effect of getting all items within the window bounds.  This
-	 * method is needed if you wish to capture child windows, like popups/hovers.
+	 * Captures the window, including decorations. This will use a {@link Robot} to create a screen
+	 * capture, which has the effect of getting all items within the window bounds. This method is
+	 * needed if you wish to capture child windows, like popups/hovers.
 	 *
-	 * <P>Other capture methods will not use the screen capture mechanism, but rather will
-	 * directly render the given component.  In this case, subordinate windows will not be
-	 * captured.  For example, see {@link #captureProvider(Class)}.
+	 * <P>
+	 * Other capture methods will not use the screen capture mechanism, but rather will directly
+	 * render the given component. In this case, subordinate windows will not be captured. For
+	 * example, see {@link #captureProvider(Class)}.
 	 *
 	 * @param clazz the provider's class
 	 */
@@ -521,13 +527,14 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * Captures the window, including decorations.  This will use a {@link Robot} to create a
-	 * screen capture, which has the effect of getting all items within the window bounds.  This
-	 * method is needed if you wish to capture child windows, like popups/hovers.
+	 * Captures the window, including decorations. This will use a {@link Robot} to create a screen
+	 * capture, which has the effect of getting all items within the window bounds. This method is
+	 * needed if you wish to capture child windows, like popups/hovers.
 	 *
-	 * <P>Other capture methods will not use the screen capture mechanism, but rather will
-	 * directly render the given component.  In this case, subordinate windows will not be
-	 * captured.  For example, see {@link #captureProvider(Class)}.
+	 * <P>
+	 * Other capture methods will not use the screen capture mechanism, but rather will directly
+	 * render the given component. In this case, subordinate windows will not be captured. For
+	 * example, see {@link #captureProvider(Class)}.
 	 *
 	 * @param provider the provider
 	 */
@@ -537,13 +544,14 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * Captures the window, including decorations.  This will use a {@link Robot} to create a
-	 * screen capture, which has the effect of getting all items within the window bounds.  This
-	 * method is needed if you wish to capture child windows, like popups/hovers.
+	 * Captures the window, including decorations. This will use a {@link Robot} to create a screen
+	 * capture, which has the effect of getting all items within the window bounds. This method is
+	 * needed if you wish to capture child windows, like popups/hovers.
 	 *
-	 * <P>Other capture methods will not use the screen capture mechanism, but rather will
-	 * directly render the given component.  In this case, subordinate windows will not be
-	 * captured.  For example, see {@link #captureProvider(Class)}.
+	 * <P>
+	 * Other capture methods will not use the screen capture mechanism, but rather will directly
+	 * render the given component. In this case, subordinate windows will not be captured. For
+	 * example, see {@link #captureProvider(Class)}.
 	 *
 	 * @param name the provider's name
 	 * @param width the desired width
@@ -558,13 +566,14 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * Captures the window, including decorations.  This will use a {@link Robot} to create a
-	 * screen capture, which has the effect of getting all items within the window bounds.  This
-	 * method is needed if you wish to capture child windows, like popups/hovers.
+	 * Captures the window, including decorations. This will use a {@link Robot} to create a screen
+	 * capture, which has the effect of getting all items within the window bounds. This method is
+	 * needed if you wish to capture child windows, like popups/hovers.
 	 *
-	 * <P>Other capture methods will not use the screen capture mechanism, but rather will
-	 * directly render the given component.  In this case, subordinate windows will not be
-	 * captured.  For example, see {@link #captureProvider(Class)}.
+	 * <P>
+	 * Other capture methods will not use the screen capture mechanism, but rather will directly
+	 * render the given component. In this case, subordinate windows will not be captured. For
+	 * example, see {@link #captureProvider(Class)}.
 	 *
 	 * @param provider the provider's name
 	 * @param width the desired width
@@ -1387,19 +1396,19 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * Draws a rectangle around the given component.  The root parameter is used to calculate
-	 * screen coordinates.   This allows you to capture a sub-component of a UI, drawing
-	 * rectangles around children of said sub-component.
+	 * Draws a rectangle around the given component. The root parameter is used to calculate screen
+	 * coordinates. This allows you to capture a sub-component of a UI, drawing rectangles around
+	 * children of said sub-component.
 	 *
-	 * <P>If you are unsure of what to pass for <code>root</code>, the call
+	 * <P>
+	 * If you are unsure of what to pass for <code>root</code>, the call
 	 * {@link #drawRectangleAround(JComponent, Color, int)} instead.
 	 *
 	 * @param component the component to be en-rectangled
-	 * @param root the outermost container widget being displayed; null implies a
-	 * 		  top-level parent
+	 * @param root the outermost container widget being displayed; null implies a top-level parent
 	 * @param color the rectangle color
-	 * @param padding the space between the rectangle and the component; more space makes
-	 *        the component more visible
+	 * @param padding the space between the rectangle and the component; more space makes the
+	 *            component more visible
 	 * @return the bounds of the drawn rectangle
 	 */
 	public Rectangle drawRectangleAround(JComponent component, JComponent root, Color color,
@@ -1586,9 +1595,9 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	/**
-	 * Crops a part of the current image, keeping what is inside the given bounds.  This method
-	 * creates a shape such that the top and bottom of the cropped image have a jagged line,
-	 * looking somewhat like a sideways lightening bolt.
+	 * Crops a part of the current image, keeping what is inside the given bounds. This method
+	 * creates a shape such that the top and bottom of the cropped image have a jagged line, looking
+	 * somewhat like a sideways lightening bolt.
 	 *
 	 * @param bounds the bounds to keep
 	 * @return the snippet

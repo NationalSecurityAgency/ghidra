@@ -15,9 +15,9 @@
  */
 package ghidra.framework.main.projectdata.actions;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 
-public class CheckoutsActionContext extends ActionContext {
+public class CheckoutsActionContext extends DefaultActionContext {
 
 	private int[] selectedRows;
 

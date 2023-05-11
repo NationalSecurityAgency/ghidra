@@ -379,36 +379,34 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		String subGroup = getClass().getName();
 
 		new ActionBuilder("Search Text", getName())
-				.menuPath("&Search", "Program &Text...")
-				.menuGroup("search", subGroup)
-				.keyBinding("ctrl shift E")
-				.description(DESCRIPTION)
-				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
-				.withContext(NavigatableActionContext.class)
-				.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.supportsDefaultToolContext(true)
-				.onAction(c -> {
-					setNavigatable(c.getNavigatable());
-					displayDialog(c);
-				})
-				.buildAndInstall(tool);
+			.menuPath("&Search", "Program &Text...")
+			.menuGroup("search", subGroup)
+			.keyBinding("ctrl shift E")
+			.description(DESCRIPTION)
+			.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
+			.withContext(NavigatableActionContext.class, true)
+			.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> {
+				setNavigatable(c.getNavigatable());
+				displayDialog(c);
+			})
+			.buildAndInstall(tool);
 
 		new ActionBuilder("Repeat Text Search", getName())
-				.menuPath("&Search", "Repeat Text Search")
-				.menuGroup("search", subGroup)
-				.keyBinding("ctrl shift F3")
-				.description(DESCRIPTION)
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
-				.withContext(NavigatableActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.enabledWhen(c -> searchedOnce)
-				.onAction(c -> {
-					setNavigatable(c.getNavigatable());
-					searchDialog.repeatSearch();
-				})
-				.buildAndInstall(tool);
+			.menuPath("&Search", "Repeat Text Search")
+			.menuGroup("search", subGroup)
+			.keyBinding("ctrl shift F3")
+			.description(DESCRIPTION)
+			.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
+			.withContext(NavigatableActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.enabledWhen(c -> searchedOnce)
+			.onAction(c -> {
+				setNavigatable(c.getNavigatable());
+				searchDialog.repeatSearch();
+			})
+			.buildAndInstall(tool);
 	}
 
 	protected void updateNavigatable(ActionContext context) {

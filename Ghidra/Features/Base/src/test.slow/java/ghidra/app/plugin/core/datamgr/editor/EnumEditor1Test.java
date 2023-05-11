@@ -29,7 +29,7 @@ import javax.swing.table.TableCellEditor;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import generic.stl.Pair;
@@ -167,7 +167,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(5L, model.getValueAt(2, VALUE_COL));
 
 		// apply the change
-		runSwing(() -> applyAction.actionPerformed(new ActionContext()));
+		runSwing(() -> applyAction.actionPerformed(new DefaultActionContext()));
 		program.flushEvents();
 		waitForSwing();
 
@@ -390,7 +390,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			int lastRow = model.getRowCount() - 1;
 			table.addRowSelectionInterval(lastRow, lastRow);
 			DockingActionIf addAction = getAction(plugin, "Add Enum Value");
-			addAction.actionPerformed(new ActionContext());
+			addAction.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
 
@@ -1166,7 +1166,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	private void apply() {
 		runSwing(() -> {
 			DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
-			applyAction.actionPerformed(new ActionContext());
+			applyAction.actionPerformed(new DefaultActionContext());
 		}, false);
 		program.flushEvents();
 		waitForSwing();
@@ -1332,7 +1332,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	private void addEnumValue() {
 		runSwing(() -> {
 			DockingActionIf addAction = getAction(plugin, "Add Enum Value");
-			addAction.actionPerformed(new ActionContext());
+			addAction.actionPerformed(new DefaultActionContext());
 		});
 	}
 

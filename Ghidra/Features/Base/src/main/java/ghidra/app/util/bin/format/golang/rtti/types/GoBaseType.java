@@ -20,7 +20,7 @@ import java.util.Set;
 import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.rtti.GoName;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiContext;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 
 /**
@@ -43,7 +43,7 @@ public class GoBaseType {
 	private StructureContext<GoBaseType> context;
 
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@FieldMapping(signedness = Signedness.Unsigned)
 	private long size;

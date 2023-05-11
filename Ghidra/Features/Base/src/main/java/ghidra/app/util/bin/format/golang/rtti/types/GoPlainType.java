@@ -35,7 +35,7 @@ import ghidra.util.Msg;
 public class GoPlainType extends GoType implements StructureReader<GoType> {
 	@Override
 	public void readStructure() throws IOException {
-		this.typ = context.getProgramContext().readStructure(GoBaseType.class, context.getReader());
+		this.typ = context.getDataTypeMapper().readStructure(GoBaseType.class, context.getReader());
 	}
 
 	@Override

@@ -20,8 +20,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.*;
 import docking.widgets.EmptyBorderButton;
 import generic.theme.GIcon;
@@ -132,7 +131,7 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 		if (event != null) {
 			Object source = event.getSource();
 			if (source == activeButtonObj) {
-				return new ActionContext(this, activeButtonObj);
+				return new DefaultActionContext(this, activeButtonObj);
 			}
 		}
 		return null;

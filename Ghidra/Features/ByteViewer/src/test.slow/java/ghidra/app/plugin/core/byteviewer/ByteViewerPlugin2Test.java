@@ -28,7 +28,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.DockingUtils;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
@@ -144,7 +144,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panel.getCurrentComponent();
@@ -162,7 +162,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(false);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(!action.isSelected());
 		assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR,
@@ -188,7 +188,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panel.getCurrentComponent();
@@ -237,7 +237,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		final ByteViewerComponent c = panel.getCurrentComponent();
 
@@ -282,7 +282,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		final ByteViewerComponent c = panel.getCurrentComponent();
 
@@ -325,7 +325,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		final ByteViewerComponent c = panel.getCurrentComponent();
 		byte value = program.getMemory().getByte(addr);
@@ -378,7 +378,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		final ByteViewerComponent c = panel.getCurrentComponent();
 
@@ -472,7 +472,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), loc.getRow(),
 				loc.getCol());
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		byte value = program.getMemory().getByte(addr);
 		SwingUtilities.invokeAndWait(() -> {
@@ -527,7 +527,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 
 		SwingUtilities.invokeAndWait(() -> {
@@ -589,7 +589,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent c = panel.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panel.getCurrentComponent();
@@ -619,7 +619,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
 		assertTrue(action.isSelected());
@@ -638,7 +638,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(false);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(!action.isSelected());
 		assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR,
@@ -660,7 +660,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
@@ -680,7 +680,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(false);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(!action.isSelected());
 		assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR,
@@ -702,7 +702,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
@@ -732,7 +732,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
 			currentComponent.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
@@ -749,7 +749,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(false);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(!action.isSelected());
 		assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR,
@@ -765,7 +765,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 
 		// add a memory block
@@ -818,7 +818,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 
 		// first add a memory block
@@ -1176,7 +1176,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ToggleDockingAction action =
 				(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 
 		// add the block
@@ -1292,7 +1292,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			ToggleDockingAction action =
 				(ToggleDockingAction) getAction(plugin, "Enable/Disable Byteviewer Editing");
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 
 			ByteViewerComponent c = panel.getCurrentComponent();
 
@@ -1529,7 +1529,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf action = getAction(plugin, "Byte Viewer Options");
 		assertTrue(action.isEnabled());
 
-		SwingUtilities.invokeLater(() -> action.actionPerformed(new ActionContext()));
+		SwingUtilities.invokeLater(() -> action.actionPerformed(new DefaultActionContext()));
 		waitForSwing();
 		ByteViewerOptionsDialog d = env.waitForDialogComponent(ByteViewerOptionsDialog.class, 2000);
 		return d;

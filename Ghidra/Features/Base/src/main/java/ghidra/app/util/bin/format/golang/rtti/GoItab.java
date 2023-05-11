@@ -31,7 +31,7 @@ import ghidra.program.model.data.DataType;
 @StructureMapping(structureName = "runtime.itab")
 public class GoItab implements StructureMarkup<GoItab> {
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoItab> context;

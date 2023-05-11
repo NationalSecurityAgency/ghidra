@@ -24,8 +24,7 @@ import java.util.Map;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
@@ -368,7 +367,7 @@ class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 
 		while (comp != null) {
 			if (comp instanceof JTabbedPane) {
-				return new ActionContext(provider, comp);
+				return new DefaultActionContext(provider, comp);
 			}
 			if (comp instanceof ProjectDataTreePanel) {
 				ProjectDataTreePanel panel = (ProjectDataTreePanel) comp;

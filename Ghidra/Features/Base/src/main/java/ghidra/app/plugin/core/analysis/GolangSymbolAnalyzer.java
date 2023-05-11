@@ -27,7 +27,7 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
 import ghidra.app.util.bin.format.golang.*;
 import ghidra.app.util.bin.format.golang.rtti.GoModuledata;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiContext;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
@@ -72,9 +72,9 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 		monitor.setMessage("Golang symbol analyzer");
 
-		try (GoRttiContext programContext = GoRttiContext.getContextFor(program, log)) {
+		try (GoRttiMapper programContext = GoRttiMapper.getMapperFor(program, log)) {
 			if (programContext == null) {
-				Msg.error(this, "Golang analyzer error: unable to get GoRttiContext");
+				Msg.error(this, "Golang analyzer error: unable to get GoRttiMapper");
 				return false;
 			}
 			programContext.discoverGoTypes(monitor);
@@ -121,7 +121,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				analyzerOptions.createBootstrapDatatypeArchive);
 	}
 
-	private void markupWellknownSymbols(GoRttiContext programContext) throws IOException {
+	private void markupWellknownSymbols(GoRttiMapper programContext) throws IOException {
 		Program program = programContext.getProgram();
 		
 		Symbol g0 = SymbolUtilities.getUniqueSymbol(program, "runtime.g0");
@@ -225,7 +225,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		return newMB.getStart();
 	}
 
-	private void setupProgramContext(GoRttiContext programContext) throws IOException {
+	private void setupProgramContext(GoRttiMapper programContext) throws IOException {
 		Program program = programContext.getProgram();
 		GoRegisterInfo goRegInfo = GoRegisterInfoManager.getInstance()
 				.getRegisterInfoForLang(program.getLanguage(),
@@ -299,12 +299,12 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
-	private void createBootstrapGDT(GoRttiContext programContext, Program program,
+	private void createBootstrapGDT(GoRttiMapper programContext, Program program,
 			TaskMonitor monitor) throws IOException {
 		GoVer goVer = programContext.getGolangVersion();
-		String osName = GoRttiContext.getGolangOSString(program);
+		String osName = GoRttiMapper.getGolangOSString(program);
 		String gdtFilename =
-			GoRttiContext.getGDTFilename(goVer, programContext.getPtrSize(), osName);
+			GoRttiMapper.getGDTFilename(goVer, programContext.getPtrSize(), osName);
 		gdtFilename =
 			gdtFilename.replace(".gdt", "_%d.gdt".formatted(System.currentTimeMillis()));
 		File gdt = new File(System.getProperty("user.home"), gdtFilename);

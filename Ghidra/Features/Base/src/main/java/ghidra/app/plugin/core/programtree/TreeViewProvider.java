@@ -23,6 +23,7 @@ import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingAction;
 import ghidra.app.events.ViewChangedPluginEvent;
 import ghidra.app.services.GoToService;
@@ -102,7 +103,7 @@ class TreeViewProvider implements ViewProviderService {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext().setContextObject(getActivePopupObject(event));
+		return new DefaultActionContext().setContextObject(getActivePopupObject(event));
 	}
 
 	@Override

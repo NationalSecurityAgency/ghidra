@@ -15,14 +15,14 @@
  */
 package ghidra.graph.viewer.actions;
 
-import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.DefaultActionContext;
 import ghidra.graph.VisualGraph;
 
 /**
  * Context for {@link VisualGraph}s
  */
-public class VgActionContext extends ActionContext implements VisualGraphActionContext {
+public class VgActionContext extends DefaultActionContext implements VisualGraphActionContext {
 
 	public VgActionContext(ComponentProvider provider) {
 		this(provider, null);

@@ -21,14 +21,10 @@ import java.util.Set;
  * Interface for being notified when the user interacts with a visual graph display
  */
 public interface GraphDisplayListener {
-	/**
-	 * Notification that the graph window has been closed
-	 */
-	public void graphClosed();
 
 	/**
 	 * Notification that the set of selected vertices has changed
-	 * 
+	 *
 	 * @param vertices the set of currently selected vertices
 	 */
 	public void selectionChanged(Set<AttributedVertex> vertices);
@@ -42,7 +38,7 @@ public interface GraphDisplayListener {
 	/**
 	 * Makes a new GraphDisplayListener of the same type as the specific
 	 * instance of this GraphDisplayListener
-	 * 
+	 *
 	 * @param graphDisplay the new {@link GraphDisplay} the new listener will support
 	 * @return A new instance of a GraphDisplayListener that is the same type as as the instance
 	 * on which it is called
@@ -50,7 +46,8 @@ public interface GraphDisplayListener {
 	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay);
 
 	/**
-	 * Tells the listener that it is no longer needed and it can release any listeners/resources
+	 * Tells the listener that it is no longer needed and it can release any listeners/resources.
+	 * This will be called when a {@link GraphDisplay} is disposed or if this listener is replaced.
 	 */
 	public void dispose();
 

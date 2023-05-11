@@ -24,6 +24,7 @@ import javax.swing.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.table.AbstractSortedTableModel;
@@ -83,36 +84,36 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 
 	private void createActions() {
 		new ActionBuilder("Add External Program Name", getOwner())
-				.popupMenuPath("Add External Program")
-				.popupMenuIcon(ADD_ICON)
-				.toolBarIcon(ADD_ICON)
-				.enabledWhen(ac -> program != null)
-				.onAction(ac -> addExternalProgram())
-				.buildAndInstallLocal(this);
+			.popupMenuPath("Add External Program")
+			.popupMenuIcon(ADD_ICON)
+			.toolBarIcon(ADD_ICON)
+			.enabledWhen(ac -> program != null)
+			.onAction(ac -> addExternalProgram())
+			.buildAndInstallLocal(this);
 
 		new ActionBuilder("Delete External Program Name", getOwner())
-				.popupMenuPath("Delete External Program")
-				.popupMenuIcon(DELETE_ICON)
-				.toolBarIcon(DELETE_ICON)
-				.enabledWhen(ac -> hasSelectedRows())
-				.onAction(ac -> deleteExternalProgram())
-				.buildAndInstallLocal(this);
+			.popupMenuPath("Delete External Program")
+			.popupMenuIcon(DELETE_ICON)
+			.toolBarIcon(DELETE_ICON)
+			.enabledWhen(ac -> hasSelectedRows())
+			.onAction(ac -> deleteExternalProgram())
+			.buildAndInstallLocal(this);
 
 		new ActionBuilder("Set External Name Association", getOwner())
-				.popupMenuPath("Set External Name Association")
-				.popupMenuIcon(EDIT_ICON)
-				.toolBarIcon(EDIT_ICON)
-				.enabledWhen(ac -> isSingleRowSelected())
-				.onAction(ac -> setExternalProgramAssociation())
-				.buildAndInstallLocal(this);
+			.popupMenuPath("Set External Name Association")
+			.popupMenuIcon(EDIT_ICON)
+			.toolBarIcon(EDIT_ICON)
+			.enabledWhen(ac -> isSingleRowSelected())
+			.onAction(ac -> setExternalProgramAssociation())
+			.buildAndInstallLocal(this);
 
 		new ActionBuilder("Clear External Name Association", getOwner())
-				.popupMenuPath("Clear External Name Association")
-				.popupMenuIcon(CLEAR_ICON)
-				.toolBarIcon(CLEAR_ICON)
-				.enabledWhen(ac -> hasSelectedRows())
-				.onAction(ac -> clearExternalAssociation())
-				.buildAndInstallLocal(this);
+			.popupMenuPath("Clear External Name Association")
+			.popupMenuIcon(CLEAR_ICON)
+			.toolBarIcon(CLEAR_ICON)
+			.enabledWhen(ac -> hasSelectedRows())
+			.onAction(ac -> clearExternalAssociation())
+			.buildAndInstallLocal(this);
 
 	}
 
@@ -148,7 +149,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, table);
+		return new DefaultActionContext(this, table);
 	}
 
 	private JPanel buildMainPanel() {
@@ -452,7 +453,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 				// there are lots of empty path values. 
 				Comparator<ExternalNamesRow> c1 =
 					(r1, r2) -> Objects.requireNonNullElse(r1.getPath(), "")
-							.compareTo(Objects.requireNonNullElse(r2.getPath(), ""));
+						.compareTo(Objects.requireNonNullElse(r2.getPath(), ""));
 				return c1.thenComparing((r1, r2) -> r1.getName().compareTo(r2.getName()));
 			}
 			return super.createSortComparator(columnIndex);

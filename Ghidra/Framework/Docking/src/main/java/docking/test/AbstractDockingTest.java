@@ -1124,8 +1124,8 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 			String name) {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
 		return ownerActions.stream()
-				.filter(action -> action.getName().equals(name))
-				.collect(Collectors.toSet());
+			.filter(action -> action.getName().equals(name))
+			.collect(Collectors.toSet());
 	}
 
 	/**
@@ -1241,7 +1241,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	public static void performAction(DockingActionIf action, boolean waitForCompletion) {
 
 		ActionContext context = runSwing(() -> {
-			ActionContext actionContext = new ActionContext();
+			ActionContext actionContext = new DefaultActionContext();
 			DockingWindowManager activeInstance = DockingWindowManager.getActiveInstance();
 			if (activeInstance == null) {
 				return actionContext;
@@ -1302,7 +1302,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 			boolean wait) {
 
 		ActionContext context = runSwing(() -> {
-			ActionContext actionContext = new ActionContext();
+			ActionContext actionContext = new DefaultActionContext();
 			if (provider == null) {
 				return actionContext;
 			}
@@ -2130,7 +2130,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	}
 
 	public static boolean isEnabled(DockingActionIf action) {
-		return runSwing(() -> action.isEnabledForContext(new ActionContext()));
+		return runSwing(() -> action.isEnabledForContext(new DefaultActionContext()));
 	}
 
 	public static boolean isEnabled(DockingActionIf action, ActionContextProvider contextProvider) {
@@ -2151,7 +2151,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 * @return the new context
 	 */
 	public ActionContext createContext(Object contextObject) {
-		return new ActionContext().setContextObject(contextObject);
+		return new DefaultActionContext().setContextObject(contextObject);
 	}
 
 	/**
@@ -2161,7 +2161,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 * @return the new context
 	 */
 	public ActionContext createContext(ComponentProvider provider, Object contextObject) {
-		return new ActionContext(provider).setContextObject(contextObject);
+		return new DefaultActionContext(provider).setContextObject(contextObject);
 	}
 
 //==================================================================================================

@@ -43,7 +43,7 @@ import ghidra.util.task.TaskMonitor;
 public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoModuledata> structureContext;
@@ -156,7 +156,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 		itablinks.markupArray("moduledata.itablinks", GoItab.class, true);
 
-		//cutab.markupArray("moduledata.cutab", programContext.getUint32DT(), false);
+		//cutab.markupArray("moduledata.cutab", dataTypeMapper.getUint32DT(), false);
 		markupStringTable(funcnametab.getArrayAddress(), funcnametab.getLen());
 		markupStringTable(filetab.getArrayAddress(), filetab.getLen());
 
@@ -233,11 +233,11 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	/**
 	 * Returns an easily found first GoModuledata instance.
 	 * 
-	 * @param context already initialized {@link GoRttiContext}
+	 * @param context already initialized {@link GoRttiMapper}
 	 * @return new GoModuledata instance, or null if not found
 	 * @throws IOException
 	 */
-	/* package */ static GoModuledata getFirstModuledata(GoRttiContext context)
+	/* package */ static GoModuledata getFirstModuledata(GoRttiMapper context)
 			throws IOException {
 		Program program = context.getProgram();
 		Symbol firstModuleDataSymbol =
@@ -251,7 +251,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	/**
 	 * Searches memory for a likely GoModuledata 
 	 * 
-	 * @param context already initialized {@link GoRttiContext}
+	 * @param context already initialized {@link GoRttiMapper}
 	 * @param pclntabAddress address of an already found {@link GoPcHeader}
 	 * @param pclntab the {@link GoPcHeader}
 	 * @param range memory range to search.  Will be different for different types of binaries
@@ -259,7 +259,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 * @return new GoModuledata instance, or null if not found
 	 * @throws IOException
 	 */
-	/* package */ static GoModuledata findFirstModule(GoRttiContext context,
+	/* package */ static GoModuledata findFirstModule(GoRttiMapper context,
 			Address pclntabAddress, GoPcHeader pclntab, AddressRange range, TaskMonitor monitor)
 			throws IOException {
 		if (range == null) {

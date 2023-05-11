@@ -17,8 +17,8 @@ package ghidra.dbg.target;
 
 import java.lang.annotation.*;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -32,9 +32,6 @@ import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
-import ghidra.dbg.target.TargetMethod.*;
-import ghidra.dbg.target.TargetMethod.TargetParameterMap.EmptyTargetParameterMap;
-import ghidra.dbg.target.TargetMethod.TargetParameterMap.ImmutableTargetParameterMap;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptyMap;
 import ghidra.dbg.util.CollectionUtils.AbstractNMap;
@@ -446,6 +443,28 @@ public interface TargetMethod extends TargetObject {
 					"Missing required parameter '" + name + "'");
 			}
 			return defaultValue;
+		}
+
+		/**
+		 * Set the argument for this parameter
+		 * 
+		 * @param arguments the arguments to modify
+		 * @param value the value to assign the parameter
+		 */
+		public void set(Map<String, ? super T> arguments, T value) {
+			arguments.put(name, value);
+		}
+
+		/**
+		 * Adjust the argument for this parameter
+		 * 
+		 * @param arguments the arguments to modify
+		 * @param adjuster a function of the old argument to the new argument. If the argument is
+		 *            not currently set, the function will receive null.
+		 */
+		@SuppressWarnings("unchecked")
+		public void adjust(Map<String, ? super T> arguments, Function<T, T> adjuster) {
+			arguments.put(name, adjuster.apply((T) arguments.get(name)));
 		}
 
 		@Override

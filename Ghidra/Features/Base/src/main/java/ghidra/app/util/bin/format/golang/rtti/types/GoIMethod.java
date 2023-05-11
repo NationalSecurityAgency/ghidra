@@ -18,14 +18,14 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.rtti.GoName;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiContext;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 
 @StructureMapping(structureName = "runtime.imethod")
 public class GoIMethod implements StructureMarkup<GoIMethod> {
 
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoIMethod> context;

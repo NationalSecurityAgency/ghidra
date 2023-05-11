@@ -15,7 +15,8 @@
  */
 package generic.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -37,7 +38,6 @@ import org.junit.Assert;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.task.AbstractSwingUpdateManager;
 import ghidra.util.task.SwingUpdateManager;
 import junit.framework.AssertionFailedError;
@@ -91,10 +91,10 @@ public class AbstractGuiTest extends AbstractGenericTest {
 	 *             for tasks
 	 */
 	public static void waitForTasks() {
-		doWaitForTasks(PRIVATE_LONG_WAIT_TIMEOUT);
+		waitForTasks(PRIVATE_LONG_WAIT_TIMEOUT);
 	}
 
-	private static void doWaitForTasks(long timeout) {
+	public static void waitForTasks(long timeout) {
 		waitForSwing();
 
 		long time = 0;
@@ -109,7 +109,6 @@ public class AbstractGuiTest extends AbstractGenericTest {
 		// let any pending Swing work finish
 		waitForSwing();
 	}
-
 
 	/**
 	 * @deprecated Use {@link #waitForSwing()} instead

@@ -1069,12 +1069,20 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		TraceProgramView curView = current.getView();
 		if (!syncTrait.isAutoSyncCursorWithStaticListing() || trackedStatic == null) {
 			Swing.runIfSwingOrRunLater(() -> {
+				if (curView != current.getView()) {
+					// Trace changed before Swing scheduled us
+					return;
+				}
 				goToAndUpdateTrackingLabel(curView, loc);
 				doCheckCurrentModuleMissing();
 			});
 		}
 		else {
 			Swing.runIfSwingOrRunLater(() -> {
+				if (curView != current.getView()) {
+					// Trace changed before Swing scheduled us
+					return;
+				}
 				goToAndUpdateTrackingLabel(curView, loc);
 				doCheckCurrentModuleMissing();
 				plugin.fireStaticLocationEvent(trackedStatic);

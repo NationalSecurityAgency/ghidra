@@ -74,7 +74,7 @@ public class PopupActionManager implements PropertyChangeListener {
 		ComponentProvider popupProvider = placeholder.getProvider();
 		ActionContext actionContext = popupProvider.getActionContext(event);
 		if (actionContext == null) {
-			actionContext = new ActionContext();
+			actionContext = new DefaultActionContext();
 		}
 
 		actionContext.setSourceObject(popupContext.getSource());

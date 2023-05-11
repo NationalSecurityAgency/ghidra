@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.console;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 
-public class LogRowConsoleActionContext extends ActionContext {
+public class LogRowConsoleActionContext extends DefaultActionContext {
 
 }

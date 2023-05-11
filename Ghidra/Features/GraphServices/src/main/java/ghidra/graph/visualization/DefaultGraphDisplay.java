@@ -258,12 +258,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				// this lens' delegate is the viewer's VIEW layer, abandoned above
 				.delegate(transformer)
 				.build();
-		LensGraphMouse lensGraphMouse =
-			DefaultLensGraphMouse.builder()
-					.magnificationFloor(1.f)
-					.magnificationCeiling(60.f)
-					.magnificationDelta(.2f)
-					.build();
+		LensGraphMouse lensGraphMouse = DefaultLensGraphMouse.builder()
+				.magnificationFloor(1.f)
+				.magnificationCeiling(60.f)
+				.magnificationDelta(.2f)
+				.build();
 		return MagnifyImageLensSupport.builder(viewer)
 				.lensTransformer(shapeTransformer)
 				.lensGraphMouse(lensGraphMouse)
@@ -831,10 +830,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	public void close() {
 		graphDisplayProvider.remove(this);
 		if (listener != null) {
-			listener.graphClosed();
+			listener.dispose();
+			listener = null;
 		}
-		listener = null;
+
 		componentProvider.closeComponent();
+
 		if (graphDisplayOptions != null) {
 			graphDisplayOptions.removeChangeListener(graphDisplayOptionsChangeListener);
 		}
@@ -843,7 +844,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	@Override
 	public void setGraphDisplayListener(GraphDisplayListener listener) {
 		if (this.listener != null) {
-			this.listener.graphClosed();
+			// This is a bit odd to do here, but this seems like the easiest way to cleanup any
+			// previous listener when reusing the graph display.
+			this.listener.dispose();
 		}
 		this.listener = listener;
 	}
@@ -975,20 +978,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		configureViewerPreferredSize();
 
-		Swing.runNow(() -> {
-			// set the graph but defer the layout algorithm setting
-			viewer.getVisualizationModel().setGraph(graph, false);
-			configureFilters();
-			setInitialLayoutAlgorithm();
-		});
+		// set the graph but defer the layout algorithm setting
+		viewer.getVisualizationModel().setGraph(graph, false);
+		configureFilters();
+		setInitialLayoutAlgorithm();
 		componentProvider.setVisible(true);
 	}
 
 	private void setInitialLayoutAlgorithm() {
 		String layoutAlgorithmName = graphDisplayOptions.getDefaultLayoutAlgorithmNameLayout();
 		layoutAction.setCurrentActionStateByUserData(layoutAlgorithmName);
-		TaskLauncher
-				.launch(new SetLayoutTask(viewer, layoutTransitionManager, layoutAlgorithmName));
 	}
 
 	/**
@@ -998,6 +997,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * @return true if the vertex is a root
 	 */
 	private boolean isRoot(AttributedVertex vertex) {
+		// Prevent the exception thrown by the graphing library if the given node is not in the
+		// graph. This can happen during graph transitions.
+		if (!graph.containsVertex(vertex)) {
+			return false;
+		}
 		Set<AttributedEdge> incomingEdgesOf = graph.incomingEdgesOf(vertex);
 		return incomingEdgesOf.isEmpty() ||
 			graph.incomingEdgesOf(vertex).equals(graph.outgoingEdgesOf(vertex));
@@ -1056,7 +1060,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		// set the layoutModel's initials size to a minimal value. Not sure this should be necessary
 		// but it makes the initial scaling look better for small graphs. Otherwise it seems
 		// to use a very large area to layout the graph, resulting in tiny nodes that are spaced
-		// very far apart. This might just be a work around for a bug in some of the layout 
+		// very far apart. This might just be a work around for a bug in some of the layout
 		// algorithms that don't seem to properly compute a good layout size.
 		viewer.getVisualizationModel().getLayoutModel().setSize(1, 1);
 
@@ -1300,7 +1304,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	@Override
 	public void addAction(DockingActionIf action) {
-
 		if (containsAction(action)) {
 			Msg.warn(this,
 				"Action with same name and owner already exixts in graph: " + action.getFullName());
@@ -1308,7 +1311,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 
 		addedActions.add(action);
-		Swing.runLater(() -> componentProvider.addLocalAction(action));
+		componentProvider.addLocalAction(action);
 	}
 
 	@Override
@@ -1380,14 +1383,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * new graph which may add its own set of actions for that particular graph.
 	 */
 	void restoreToDefaultSetOfActions() {
-		Swing.runLater(() -> {
-			// remove all actions
-			componentProvider.removeAllLocalActions();
-			addedActions.clear();
-			// put the standard graph actions back
-			createToolbarActions();
-			createPopupActions();
-		});
+		// remove all actions
+		componentProvider.removeAllLocalActions();
+		addedActions.clear();
+		// put the standard graph actions back
+		createToolbarActions();
+		createPopupActions();
 	}
 
 	@Override

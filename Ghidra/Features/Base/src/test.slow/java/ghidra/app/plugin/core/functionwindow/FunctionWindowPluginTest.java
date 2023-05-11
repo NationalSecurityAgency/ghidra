@@ -24,8 +24,7 @@ import javax.swing.table.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
 import docking.widgets.combobox.GComboBox;
@@ -148,7 +147,7 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 		String signatureText = getRenderedTableCellValue(functionTable, row, column);
 
 		DockingActionIf copyAction = getAction(tool, ToolConstants.SHARED_OWNER, "Table Data Copy");
-		ActionContext context = new ActionContext(provider, functionTable);
+		ActionContext context = new DefaultActionContext(provider, functionTable);
 		performAction(copyAction, context, true);
 
 		// 

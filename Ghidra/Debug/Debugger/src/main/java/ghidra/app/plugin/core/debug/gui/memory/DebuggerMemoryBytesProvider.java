@@ -377,7 +377,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		if (location == null) {
 			return false;
 		}
-		if (blockSet.getByteBlockInfo(location.getAddress()) == null) {
+		if (blockSet == null || blockSet.getByteBlockInfo(location.getAddress()) == null) {
 			return false;
 		}
 		if (!super.goTo(gotoProgram, location)) {
@@ -493,6 +493,10 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		}
 		TraceProgramView curView = current.getView();
 		Swing.runIfSwingOrRunLater(() -> {
+			if (curView != current.getView()) {
+				// Trace changed before Swing scheduled us
+				return;
+			}
 			goToAndUpdateTrackingLabel(curView, loc);
 		});
 	}

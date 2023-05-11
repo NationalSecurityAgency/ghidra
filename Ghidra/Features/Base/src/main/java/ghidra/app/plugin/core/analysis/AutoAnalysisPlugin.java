@@ -105,28 +105,28 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		// they are inserted
 		int subGroupIndex = 0;
 
-		//@formatter:off
-		autoAnalyzeAction =
-			new ActionBuilder("Auto Analyze", getName())
-					.supportsDefaultToolContext(true)
-					.menuPath("&Analysis", "&Auto Analyze...")
-					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
-					.keyBinding("A")
-					.validContextWhen(ac -> {
-						updateActionName(ac);
-						return ac instanceof ListingActionContext;
-					})
-					.onAction(this::analyzeCallback)
-					.buildAndInstall(tool);
+		autoAnalyzeAction = new ActionBuilder("Auto Analyze", getName())
+			.menuPath("&Analysis", "&Auto Analyze...")
+			.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
+			.keyBinding("A")
+			.withContext(ListingActionContext.class, true)
+			.onAction(this::analyzeCallback)
+			.buildAndInstall(tool);
+
+		// we need to specially override the validContextWhen so that as a side effect, we
+		// can change the action name to not include a program name when the action is
+		// actually invalid. 
+		autoAnalyzeAction.validContextWhen(ac -> {
+			updateActionName(ac);
+			return ac instanceof ListingActionContext;
+		});
 
 		new ActionBuilder("Analyze All Open", getName())
-					.supportsDefaultToolContext(true)
-					.menuPath("&Analysis", "Analyze All &Open...")
-					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
-					.onAction(c -> analyzeAllCallback())
-					.validContextWhen(ac -> ac instanceof ListingActionContext)
-					.buildAndInstall(tool);
-		//@formatter:on
+			.menuPath("&Analysis", "Analyze All &Open...")
+			.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
+			.withContext(ListingActionContext.class, true)
+			.onAction(c -> analyzeAllCallback())
+			.buildAndInstall(tool);
 
 		tool.setMenuGroup(new String[] { "Analysis", "One Shot" }, ANALYZE_GROUP_NAME);
 
@@ -263,8 +263,8 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	private void programActivated(Program program) {
 		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
-				.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
-					"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
+			.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
+				"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
 
 	}
 
@@ -326,7 +326,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 				null, ANALYZE_GROUP_NAME));
 			setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "Auto_Analyzers"));
 
-			setSupportsDefaultToolContext(true);
+			setContextClass(ListingActionContext.class, true);
 		}
 
 		@Override

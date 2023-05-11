@@ -19,9 +19,9 @@ import java.awt.Component;
 import java.util.Collection;
 import java.util.Set;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 
-public class DebuggerWatchActionContext extends ActionContext {
+public class DebuggerWatchActionContext extends DefaultActionContext {
 	private final Set<WatchRow> sel;
 
 	public DebuggerWatchActionContext(DebuggerWatchesProvider provider,

@@ -24,8 +24,8 @@ import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
-import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.ReusableDialogComponentProvider;
 import docking.tool.ToolConstants;
 import docking.widgets.HyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
@@ -42,7 +42,8 @@ import ghidra.program.model.address.Address;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitorComponent;
 
-public class GoToAddressLabelDialog extends DialogComponentProvider implements GoToServiceListener {
+public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
+		implements GoToServiceListener {
 
 	//////////////////////////////////////////////////////////////////////
 	//                                                                  //

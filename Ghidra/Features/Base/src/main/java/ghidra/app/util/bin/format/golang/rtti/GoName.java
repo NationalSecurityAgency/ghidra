@@ -73,7 +73,7 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 	private StructureContext<GoName> context;
 
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@FieldOutput(dataTypeName = "byte")
 	@EOLComment("flagsSet")

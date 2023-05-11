@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.viewer.proxy;
 
+import java.util.Objects;
+
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Pointer;
@@ -23,7 +25,7 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.Reference;
 
 /**
- * Stores information about a variable in a program such that the variable can 
+ * Stores information about a variable in a program such that the variable can
  * be retrieved when needed.
  */
 public class VariableProxy extends ProxyObj<Variable> {
@@ -130,6 +132,6 @@ public class VariableProxy extends ProxyObj<Variable> {
 		if (v == null) {
 			return false;
 		}
-		return v.getMinAddress().equals(a);
+		return Objects.equals(v.getMinAddress(), a);
 	}
 }

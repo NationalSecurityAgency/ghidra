@@ -48,6 +48,7 @@ dependencies {
 			if (projectPath.startsWith(ghidraPath) && (
 				projectPath.contains("/Framework/") ||
 				projectPath.contains("/Features/") ||
+				projectPath.contains("/Debug/") ||
 				projectPath.contains("/Processors/"))) {
 
 				api p

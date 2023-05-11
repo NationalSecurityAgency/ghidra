@@ -554,7 +554,7 @@ public class EquatePlugin extends Plugin {
 	 * @param subOpIndex sub-operand index
 	 * @return scalar value or null
 	 */
-	private Scalar getScalar(CodeUnit cu, int opIndex, int subOpIndex) {
+	Scalar getScalar(CodeUnit cu, int opIndex, int subOpIndex) {
 		if (cu == null) {
 			return null;
 		}

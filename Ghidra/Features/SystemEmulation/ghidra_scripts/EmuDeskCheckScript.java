@@ -77,8 +77,6 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 		 * the syscall stuff does, then we need to allow injection of the already-compiled Sleigh
 		 * program. For now, we'll have to declare the parameter-holding register as a language
 		 * variable.
-		 * 
-		 * @param s
 		 */
 		@StructuredUserop
 		public void strlen(/*@Param(name = "RDI", type = "char *") Var s*/) {

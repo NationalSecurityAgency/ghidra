@@ -89,7 +89,7 @@ import ghidra.util.task.TaskMonitor;
 public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEmulationService {
 	protected static final int MAX_CACHE_SIZE = 5;
 
-	interface EmulateProgramAction {
+	public interface EmulateProgramAction {
 		String NAME = "Emulate Program in new Trace";
 		String DESCRIPTION = "Emulate the current program in a new trace starting at the cursor";
 		Icon ICON = DebuggerResources.ICON_EMULATE;

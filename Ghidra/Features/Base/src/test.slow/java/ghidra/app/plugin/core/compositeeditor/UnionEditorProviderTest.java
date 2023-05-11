@@ -22,7 +22,7 @@ import java.awt.Window;
 import org.junit.Assert;
 import org.junit.Test;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
 import ghidra.framework.options.Options;
@@ -346,7 +346,7 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 		assertEquals("0x57", model.getLengthAsString());
 
 		DockingActionIf action = getAction(plugin, "Editor: Show Numbers In Hex");
-		setToggleActionSelected((ToggleDockingActionIf) action, new ActionContext(), false);
+		setToggleActionSelected((ToggleDockingActionIf) action, new DefaultActionContext(), false);
 
 		assertEquals(false, model.isShowingNumbersInHex());
 		assertEquals("29", model.getValueAt(15, model.getLengthColumn()));
@@ -358,7 +358,7 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 
 		getTable().requestFocus();
 		model.setSelection(rows);
-		deleteAction.actionPerformed(new ActionContext());
+		deleteAction.actionPerformed(new DefaultActionContext());
 	}
 
 	protected UnionEditorProvider edit(DataType dt) {

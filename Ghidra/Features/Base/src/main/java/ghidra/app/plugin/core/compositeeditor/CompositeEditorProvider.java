@@ -19,8 +19,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.*;
 
-import docking.ActionContext;
-import docking.ComponentProvider;
+import docking.*;
 import docking.widgets.OptionDialog;
 import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
@@ -189,7 +188,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		else if (componentAt != null && (originalDTM instanceof StandAloneDataTypeManager)) {
 			return new ComponentStandAloneActionContext(this, componentAt);
 		}
-		return new ActionContext(this, null);
+		return new DefaultActionContext(this, null);
 	}
 
 	@Override

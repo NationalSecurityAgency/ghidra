@@ -27,7 +27,7 @@ import ghidra.util.Msg;
 public class GoUncommonType {
 
 	@ContextField
-	private GoRttiContext programContext;
+	private GoRttiMapper programContext;
 
 	@ContextField
 	private StructureContext<GoUncommonType> context;

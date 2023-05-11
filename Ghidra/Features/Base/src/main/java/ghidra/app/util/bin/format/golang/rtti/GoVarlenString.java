@@ -80,7 +80,7 @@ public class GoVarlenString implements StructureReader<GoVarlenString> {
 
 	public DataType getValueDataType() {
 		return new ArrayDataType(CharDataType.dataType, bytes.length, -1,
-			context.getProgramContext().getDTM());
+			context.getDataTypeMapper().getDTM());
 	}
 
 }

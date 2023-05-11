@@ -159,7 +159,7 @@ public class FieldOutputInfo<T> {
 
 	private void dataTypeNameOutputFunc(StructureContext<T> context, Structure structure,
 			FieldOutputInfo<T> foi) throws IOException {
-		DataType dt = context.getProgramContext().getType(dataTypeName, DataType.class);
+		DataType dt = context.getDataTypeMapper().getType(dataTypeName, DataType.class);
 		if (dt == null) {
 			throw new IOException(
 				"Missing data type %s for field %s".formatted(dataTypeName, fmi.getFieldName()));
@@ -175,7 +175,7 @@ public class FieldOutputInfo<T> {
 	private void primitiveOutputFunc(StructureContext<T> context, Structure structure,
 			FieldOutputInfo<T> foi) throws IOException {
 		DataType dt = ReflectionHelper.getPrimitiveOutputDataType(fmi.getField().getType(),
-			fmi.getLength(), fmi.getSignedness(), context.getProgramContext());
+			fmi.getLength(), fmi.getSignedness(), context.getDataTypeMapper());
 		preAddField(structure);
 		structure.add(dt, fmi.getFieldName(), null);
 	}
@@ -185,7 +185,7 @@ public class FieldOutputInfo<T> {
 		// only outputs array of primitive value
 		Object fieldValue = foi.getValue(context.getStructureInstance(), Object.class);
 		DataType dt = ReflectionHelper.getArrayOutputDataType(fieldValue, fmi.getField().getType(),
-			fmi.getLength(), fmi.getSignedness(), context.getProgramContext());
+			fmi.getLength(), fmi.getSignedness(), context.getDataTypeMapper());
 		preAddField(structure);
 		structure.add(dt, fmi.getFieldName(), null);
 	}
@@ -198,7 +198,7 @@ public class FieldOutputInfo<T> {
 		}
 
 		StructureContext<?> nestedStructContext =
-			context.getProgramContext().getExistingStructureContext(nestedStruct);
+			context.getDataTypeMapper().getExistingStructureContext(nestedStruct);
 		if (nestedStructContext == null) {
 			throw new IOException(
 				"Missing StructureContext for " + nestedStruct.getClass().getSimpleName());

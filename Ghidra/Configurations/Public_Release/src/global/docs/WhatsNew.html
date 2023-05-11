@@ -43,28 +43,28 @@
     </P>
     <hr>   
         
-    <H1>What's New in Ghidra 10.2</H1>
+    <H1>What's New in Ghidra 10.3</H1>
     
     <H2>The not-so-fine print: Please Read!</H2>
     
-	<P>Ghidra 10.2 is fully backward compatible with project data from previous releases. However, programs and data type archives
-	which are created or modified in 10.2 will not be useable by an earlier Ghidra version.</P>
+	<P>Ghidra 10.3 is fully backward compatible with project data from previous releases.
+	However, programs and data type archives which are created or modified in 10.3 will not be useable by an earlier Ghidra version. </P>
 
 	<P>This release includes many new features and capabilities, performance improvements, quite a few bug fixes, and many pull-request
-	contributions.  Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community
-	thanks you too!</P>
+	contributions. Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community thanks you too!</P>
 	
-	<P>IMPORTANT: Ghidra requires Java 17 JDK to run.  A newer version of Java may be acceptable, but has not been tested.  Please see the
+	<P>IMPORTANT: Ghidra requires Java 17 JDK to run.  A newer version of Java may be acceptable but has not been fully tested.  Please see the
 	<a href="InstallationGuide.html">Ghidra Installation Guide</a> for additional information.</P>
 	
 	<P>NOTE: Please note that any programs imported with a Ghidra beta versions or code built directly from source outside of a release tag may not be compatible
-	and may have flaws that have been corrected.  Any programs analyzed from a beta or other local master source build should be considered experimental and
-	re-imported and analyzed with a release version.  As an example, Ghidra 10.1 beta had an import flaw affecting symbol demangling that was not correctable.
-	Programs imported with previous release versions should upgrade correctly through various automatic upgrade mechanisms.  Any program
+	and may have flaws that won't be corrected by using this new release.  Any programs analyzed from a beta or other local master source build should be considered
+	experimental and re-imported and analyzed with a release version.  As an example, Ghidra 10.1 beta had an import flaw affecting symbol demangling that was not
+	correctable. Programs imported with previous release versions should upgrade correctly through various automatic upgrade mechanisms.  Any program
 	you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the latest code fixes.</P>
 
-	<P>NOTE: Ghidra Server: The Ghidra 10.2 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.2
-	clients are compatible with all 10.x and 9.x servers.</P>
+	<P>NOTE: Ghidra Server: The Ghidra 10.3 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.3
+	clients are compatible with all 10.x and 9.x servers.  Although, due to potential Java version differences, it is recommended
+	that Ghidra Server installations older than 10.2 be upgraded.  Those using 10.2 and newer should not need a server upgrade.</P>
 	
 	<P>NOTE: Platform-specific native executables can be built directly from a release distribution.
 	The distribution currently provides Linux 64-bit, Windows 64-bit, and MacOS x86 binaries.  If you have another platform,
@@ -72,165 +72,174 @@
 	demangler, and legacy PDB executables for your plaform.  Please see "Building Ghidra Native Components" section in the
 	the <a href="InstallationGuide.html#Build">Ghidra Installation Guide</a> for additional information.</P>
 	
-	<H2>Distribution</H2>
+	<H2>Dark Mode / Theming </H2>
 	
-	<P> A Software Bill of Materials (SBOM) is now included in the Ghidra release. The SBOM follows the CycloneDX standard,
-	and can be used with tools such as Dependency-Track to help identify risk in the software supply-chain.</P>
+	<P>Ghidra now supports UI theming, which allows for full customization of colors, fonts, and icons used consistently throughout the application.
+	Ghidra themes are built on top of the various Java Look and Feel classes.  Included are standard themes for all the supported
+	Look and Feels. The most notable is the Flat Dark theme, which is built using the FlatLaf, a modern open-source flat Look and Feel
+	library. Additionally, Ghidra includes various tools for editing and creating custom themes.</P>
+	
+	<P>Also, all the main display windows (Listing, Decompiler, and Bytes Viewer) support quickly changing the font size via <B>&lt;Ctrl&gt;+</B> or <B>&lt;Ctrl&gt;-</B>.</P>
+
+    <P>See the Ghidra Help pages for full details on the theming feature.</P>
 	
 	<H2>Debugger</H2>
 	
-	<P>The Debugger improvement highlights include:</P>
+	<P>Perhaps the most exciting debugger change is the addition of new training course materials for the Debugger. The materials are written in
+	Markdown so they display right on GitHub, but they can also be rendered to nice HTML pages by Pandoc for offline viewing. They are suitable
+	both for self-paced learning and classroom environments. Even if you have used our Debugger before, we highly recommend reading these materials.
+	They are in the <b>docs/GhidraClass</b> directory with the other course materials.</P>
+	<P>There are several changes to improve the user experience with the Emulator:</P>
 	<blockquote>
 	<ul>
-	<li>FlatDebuggerAPI is introduced, providing a scripting API for Java-based GhidraScripts. An example <I>DemoDebuggerScript.java</I>
-	is included to get started.</li>
-	<li>P-code Emulation is improved, including numerous fixes, a new framework for system calls in emulation scripts, and a
-	prototype taint analyzer.</li>
-	<li>Compatibility is improved, including support for GDB versions 8.0.1 through 12.1, and LLDB version 14.0.</li>
-	<li>Support for memory/register editing is improved in Registers, Dynamic Listing, Memory, and Watches panels.</li>
-	<li>A new Frida connector is introduced, including support for debugging using Frida on USB/remote devices.</li>
+	<li>There is a dedicated Emulator tool. Previously, it was not apparent an Emulator GUI even existed in the Debugger tool. Most only
+	accessed it via scripting. The Emulator tool is the same as the Debugger tool, but without the back-end debugger management plugins.
+	This both showcases the Emulator and makes it safer to access, e.g., when examining malware. The launch buttons are removed, nearly
+	eliminating the risk of accidental detonation.</li>
+	<li>The control actions (step, suspend, resume, etc.) have been moved to the main toolbar. When toggled to control the emulator, it is now
+	possible to emulate to the next breakpoint. Before, it was only possible to step. If you were savvy, you could use the <b>Go To Time</b>
+	action to run many steps, but you had to predict precisely how many steps. These controls present the Emulator as a more traditional
+	trap-and-trace debugger and retain support for time travel.</li>
+	<li>Breakpoints are now applied to the Emulator. They also support injecting custom Sleigh semantics into the Emulator. This makes
+	it possible, e.g., to stub out external function calls. Breakpoints are now displayed in the <b>Decompiler</b> margin, too. </li>
+	<li>Regarding uninitialized/undefined memory, the Emulator will still treat undefined bytes as zeros. When decoding an
+	instruction; however, it will now interrupt if when encounters undefined bytes. Previously, it would just decode them as if
+	zeros, which was never useful. </li>
+	<li>Nascent support for stack unwinding has been added. Up to now, we have relied on the back-end debugger to unwind the stack,
+	which ruled out displaying accurate stack frames during emulation. There is still more work for full UI integration, but you can
+	unwind a stack (whether on target or emulated) using the <b>Debugger -> Analysis</b> menu and view the results by navigating the
+	<b>Dynamic Listing</b> to stack space. Please understand it may not work in most situations, yet.</li>
+	<li>Several miscellaneous actions have been added: To invalidate the Emulator cache, use the Debugger -> Configure Emulator menu.
+	Use this whenever the Emulator seems to be ignoring configuration changes, especially when modifying custom Sleigh breakpoints.
+	To display all bytes (not just changed ones) in the Dynamic Listing, choose Load Bytes from Emulator in the Auto-Read drop-down.
+	To manually add or remove memory regions, e.g., to create and initialize a heap for emulation, use the new actions in the Regions window</li>
+	</ul>
+	</blockquote>
+	<P>There are several Debugger UI improvements: </P>
+    <blockquote>
+	<ul>
+	<li>The control actions are duplicated in the main toolbar. Previously, these were only in the Objects window. (They remain there for
+	back-end connector/model development, troubleshooting, and diagnostics.) The actions in the main toolbar can be toggled to control a
+	live target or the Emulator. The Emulator stepping actions have been removed from the <b>Threads</b> panel. (They never really made sense there.)
+	Toggling these actions to the Emulator effectively forks an emulator from the target's live state, i.e., for extrapolation, just as the old
+	emulator stepping actions did.</li>
+	<li>The current program counter is now displayed in the top right corner of the <b>Dynamic Listing</b> (or whatever the listing is configured to
+	track). It will display in red if the address cannot be shown in the listing, e.g., because it is not mapped in memory. This provides better
+	feedback when the listings seem to be out of sync.</li>
+	<li>GDB's advance command has been added to the Listing context menus as well as the equivalent actions for other debuggers. (More generally,
+	any command provided by a back-end connector that takes a single address parameter is presented in context menus where an address is
+	available.)</li>
+	<li>The <b>Go To dialog</b> in the <b>Dynamic Listing</b> can now take simple addresses in hexadecimal. Previously, it only took Sleigh expressions,
+	which are powerful, but made the common case too complicated. It still accepts Sleigh expressions, and those expressions can now refer
+	to labels (symbols) from any mapped program database (static image).</li>
+	<li>A new kind of hover has been added for displayed variables. If there is a debugger target (live or emulated) mapped to the current program,
+	the hover will display the variable's current value. This applies to Listings and the Decompiler window. </li>
+	<li>You can now select a different thread, frame, or snapshot without activating it. Single-click to select. Double-click to activate.</li>
+	</ul>
+	</blockquote>
+	<P>There are a few small improvements to back-end debugger integration: </P>
+    <blockquote>
+	<ul>
+	<li>You can now set the working directory when launching a Windows target. </li>
+	<li>GADP agents now accept a single connection and automatically terminate when Ghidra disconnects. </li>
+	<li>Launch scripts have been added for starting a GADP agent from the command line.</li>
+	<li>There is now a script to build the Java bindings needed for the LLDB connector. </li>
 	</ul>
 	</blockquote>
 		
 	<H2>Decompiler</H2>
-	<P>The Decompiler has a myriad of improvements in the latest-release. Many have been long-requested features or improvements.
-	Highlights of the changes include:</P>
-	<blockquote>
-	<ul>
-	<li>Support for union data-types.  The Decompiler scores and displays the most likely field based on how code accesses the union. Alternately, a field access can be set manually.</li>
-	<li>Support for pointers with an offset relative to the start of a data type, usually a structure.  Examples include windows LIST_ENTRY/CONTAINING_RECORD linked lists,
-	CString allocation data, and memory allocation records.</li>
-	<li>Support for pointers with a specified address space. Useful for targeting a specific address space such as SPI memory or
-	in Harvard architectures with multiple address spaces.</li>
-	<li>Improved reconciliation of overlapping views of data-types; for example, passing of sub members of a structure to a function.</li>
-	<li>Marker Margins, similar to the listing marker margins, have been added to display things like Debugger breakpoints.</li>
-	<li>A colored highlighting service has been added, allowing clients to create highlights in the form of background colors for syntax tokens in
-	 the Decompiler UI through API calls.</li>
-	<li>Read-from and write-to access to a volatile variable now display as simple assignments, with a special token color, instead of as read- or write-volatile function calls.</li>
-	</ul>
-	</blockquote>
+	<P>Support has been added for expanding assignment statements on structures or arrays, where multiple fields or elements are moved as a
+	group by a single instruction. This is especially helpful for analyzing structure initialization code and stack strings. </P>
+	
+	<P>Support continues to improve for structures that are either stored across multiple registers or in a single register that is
+	accessed in pieces.  Data types associated with the component fields are propagated more fully throughout the function, and assignments
+	to fields are displayed simply.</P>
 	
 	<H2>Data Types</H2>
 	
-	<P>With this release of Ghidra, support for Pointer Typedefs has been expanded to facilitate the use of specialized
-	data type settings.  Improvements have also been made to ensure that such settings are preserved within data type
-	archives and merge situations.  These settings are not supported at the instance-level and are intended to be an
-	attribute of the associated pointer.  The Typedef provides the ability to tailor a pointer for a specific use.  It
-	is highly recommended that all required Pointer Typedef settings be applied prior to using the data type
-	(e.g., for defined data, data type components, and variables) since there is currently no change propagation for such modifications.
+	<P>Data Type Archives may now optionally target a specific architecture as specified by a processor and associated compiler specification
+	such as data organization.  This has the advantage of better conveying datatype details for a desired architecture and preserving aspects
+	which may change when resolved into a program.  In the future, this will also allow function definitions to retain architecture-specific
+	details.</P> 
 
-   <P>The following Pointer Typedef settings have been introduced with this release:</p>
-<blockquote>
-<ul>     
-     <li> <B>Address Space</B> - allows the destination address space to be specified for a pointer.  While this does not affect pointer dereferencing operations
-     dictated by instruction semantics, it can aid analysis and the generation of associated memory references.</li>
-     <li><B>Component Offset</B> - provides the ability to specify an offset relative to the associated pointer's referenced data type such that:
-         <blockquote>
-         <code>&lt;referenced-data-type-storage-address&gt; = &lt;pointer-offset&gt; - &lt;component-offset-setting&gt;</code>
-         </blockquote>
-     </li>
-     <li><B>Offset Mask</B> - bit-mask to be applied prior to any bit-shift (if specified) during the computation of an actual address offset</li>
+    <P>Function definition data types have been improved to preserve calling convention names which may differ from the predefined generic
+    calling convention names to include those which may have originated from an extended compiler specification.   In addition, function
+    definitions now support the noreturn attribute. </P>
 
-     <li><B>Offset Shift</B> - bit-shift to be applied after any bit-mask (if specified) during the computation of an actual address
-     offset (positive: left-shift, negative: right-shift)</li>
-
-     <li><B>Pointer Type</B> - facilitates special interpretation of pointers</li>
-     
-     <blockquote>
-     <ul>
-         <li> <I>default</I> - normal pointer</li>
-         <li> <I>image-base-relative</I>  - pointers whose offset should be treated as relative to the program's image base (e.g., relative virtual address (RVA))</li>
-     
-         <li> <I>relative</I> - pointers whose offset is relative to the pointer's storage address</li>
-     
-         <li> <I>file-offset</I> - pointers whose offset corresponds to an offset within the loaded binary file (limited to single load file)</li>
-     </ul>
-     </blockquote>
-     </UL>
-</blockquote>    
-
-     <P> NOTE: The use and consumption of Pointer Typedef settings is in its early stages and may not be utilized by various analyzers. 
-     In addition, some settings are not relevant to some analyzers where instruction semantics will dictate pointer dereferencing.</P>
-
-     <P> At the API level, the PointerTypedef and PointerTypedefBuilder classes have been added to simplify the creation of a Pointer Typedef.
-     While an explicit Typedef name may be used, Pointer Typedefs also support an auto-naming mechanism (constructed with a null/empty name)
-     which will simply use the pointer name followed by the settings as an attribute list; example:</P> 
-     <blockquote><blockquote>
-     	<code>int * __((space(ram)))</code>
-     </blockquote></blockquote>
-
-    <P> Within the GUI, using the <B>New-&gt;Typedef on <I>&lt;pointer&gt;</I></B> action on a selected pointer within the Data Type Tree is the quickest way to create one.
-    Once this is done, use the <B>Settings...</B> action on the selected Pointer Typedef.  The Settings dialog will be displayed allowing the various settings
-    to be applied to the Typedef.  Settings should be made to Typedef prior to applying it since settings change propogation is very limited.</P>
+    <P>Enum handling has been improved in the data type manager when creating new enums from an existing set of enum values,
+    for example <b>define_</b> enums parsed from header files.  Enum values will be automatically sized to fit all the values contained
+    in the enum.  Setting the size of an Enum will check if the values will fit within the new size.  In addition, <b>define_</b> values
+    created as enums with a single value are sized to the minimum size to fit the value.  Parsed enums from header files are sized based
+    on the declared size of an int from the data organization used to parse.  A future version will have a setting to size all parsed enums
+    to the smallest size that will fit all the values. </P>
+    
+	<H2>C Header File Parsing </H2>
+	<P>The C-Parser GUI has been refactored to remove include paths from the Options section done as <b>-D</b> define lines, to a new Include section.
+	This should make it easier to configure paths to the include files and has the added benefit of coloring the include file entries red if
+	they are not found within any include path.  You may find creating and using a Ghidra Script instead of the GUI an easier repeatable process.
+	There are several included examples scripts, including ones to parse AVR8 header files, and Visual Studio version 22 files. </P>
 	
-	<H3>C Header File Parsing</H3>
-	
-	<P>C-Parser support has been added for missing C specification syntax from C11 and C23, such as tags, macros with varargs, and _NoReturn.
-	Numerous parsing errors have also been fixed, including for arrays of function pointers, array definitions, and placement of compiler directives.
-	In addition, parsing time of extremely large header files has been drastically reduced.</P>
-	<P>Error handling and reporting from the Pre-Processor and C-Parser have been improved.</P>
-	<P>Several scripts to parse header files outside of the GUI have been included, including one that specially parses AVR8 data types and memory-mapped register
-	definitions from header files for each AVR8 processor variant.  The scripts are <I>CreateAVR8GDTArchiveScript.java</I>, <I>CreateExampleGDTArchiveScript.java</I>, <I>CreateJNIArchivesScript.java</I>,
-	and <I>CreateDefaultGDTArchives.java</I>.</P>
-	<P> Finally, data types in open archives can be used during parsing for undefined data types in a header file.  At the start of parsing, use of open
-	archives can be chosen or ignored without closing open archives.  The header files must still parse without error,
-	however a missing data type or unfound header file may not cause the parsing to fail if an open archive contains a missing, but needed data type definition.</P>
-
+	<P>All supplied data type archive GDT files, except macOS, have been re-parsed to include the new processor architecture. </P>
 	
 	<H2>Mach-O Binary Import</H2>
 	<P>Mach-O binary analysis continues to improve. Support has been added for new file formats introduced in iOS 16 and macOS 13.
-	Improvements have also been made to function identification, symbol detection, and Objective-C support.</P>
-	
-	<H2>Android</H2>
-
-	<P>Import and analysis of the entire existing set of Android binaries up to version 13.x is now supported, including new support for the Multi-DEX format.
-	The type of binaries supported include: Android Run-Time (ART), Ahead-of-Time (OAT)/ELF, Dalvik Executables (DEX), Multi-DEX, Compact DEX (CDEX),
-	Verified DEX (VEX), Boot Image, and Boot Loader formats.  Also included are Sleigh modules for DEX files covering each major release of Android;
-	the optimized instructions vary across versions.</P>
-	
-	<P>A new Android APK loader will load all DEX files at one time and link the <code><B>method_lookup</B></code>
-	sections using <B>external references</B>. The new APK loader uses the manifest file to determine the Android version.</P>
+	Improvements have also been made to function identification, symbol detection, and Objective-C support. </P>
 	
 	<H2>Analysis</H2>
 
-	<P>The option <B>Assume Contiguous Functions Only</B>, for the <B>Shared Return Analyzer</B>, has been turned on by default.
-	The <B>Shared Return Analyzer</B> turns jump instructions into a call if the jump
-	target is, or should be, considered a function.   When turned on, the option treats a jump
-	over a known function entry point to be a call, even if there is only one jump to that location.  The option improves thunk function
-	recovery as well as decompilation results by using a call to the function instead of including the called functions code within the calling function.</P>
+	<P>New <b>ApplyDataArchives</b> analyzer settings enable use of locally created GDT data type archive files or project archives in the
+	analysis pipeline.  Used in conjunction with analysis options settings saved to a named analysis configuration you can easily switch to using a new
+	GDT file and associated analysis options for a given type of binary.  For example, if you are working with AVR8 binaries and have
+	an associated AVR8.gdt file, create an AVR8 configuration and it will be used as the default analysis options configuration until
+	you change to a new configuration. </P>
 	
-	<P>The option has been turned on by default for all processor types except ARM.  ARM Thumb binaries can sometimes use <B>BL</B> instructions,
-	normally used as calls, as an internal jump within a large function.  If this option were on by default for such a binary it would cause
-	additional erroneous functions to be created.  The option can be used on ARM binaries, however they should be all ARM code; otherwise any Thumb code
-	using <B>BL</B> for far jumps must be fixed using the Fix_ARM_Call_JumpsScript and Override_ARM_Call_JumpsScript.</P>
+	<P>Constant Propagation now deals with constants passed as stack parameters.  In addition, there are several new settings which can better
+	control when a constant is considered to be an address.  For example, processors with small memory spaces, the setting <b>Require pointer param
+	data type</b>, will only create a reference if the parameter is declared with a data type that would be a pointer.  This can be useful for Harvard
+	architectures with multiple address spaces used in conjunction with the PointerTypedef to specify the address space of the pointer.  Currently,
+	once you change the parameter of a called function to be a pointer, you will need to re-run analysis to get the constants passed to the function
+	to be turned into a reference.  This will be automated in the near future. </P>
 	
-	<H2>Machine Learning</H2>
-	<P>An optional MachineLearning extension has been added containing the <B>Random Forest Function Finder Plugin</B>.
-	The plugin finds undiscovered functions within a binary using classifiers to identify potential function starts.
-	The plugin trains classifiers using data sets created from  known functions within a binary.
-	These classifiers can then be used by the plugin on the original binary or other binaries to find additional functions
-	missed by initial analysis.</P>
-	<P>The extension can be installed from the <B>Ghidra Project Window</B> via <B>File->Install Extensions...</B> </P>
-		
+	<P>By default, pointer-to-pointer analysis is turned off for ARM binaries in the Operand and Data Reference analyzers. This can result in fewer
+	references created and can be turned back on if your ARM binaries use pointers data stored in memory instead of offset values from the current PC
+	to calculate all references.</P>
+	
+	<P>Added support for PE MinGW pseudo-relocation processing. </P>
+
+    <H2>Shared Projects</H2>
+    <P>Folder and file links to contents of another shared project repository may now be added to a Ghidra Project.  This could allow a team to
+    include a program or subfolder that resides in another project rather than copying the program into your project for easy access.  The linked
+    files are opened for read-only viewing. </P>
+    
 	<H2>Processors</H2>
-	<P>Updated ARM32 and AARCH64 to version v9.3 to include vfp4 instructions.</P>
-	<P>Improvements and bug fixes have been made to many processors to include: <B>AARCH64, ARM, AVR8, AVR32, Coldfire, JVM, MIPS, MSP430, PA-Risc, PowerPC,
-	RISC-V, SuperH, Tricore, V850, X86, 6502, and 68K</B>.</P>
-	<P> Sleigh now supports <code><B>inst_next2</B></code> as well as <code><B>inst_next</B></code> to support branching around the next instruction when its length is unknown.
-	Many processors have conditional skip instructions which can be used on any instruction, including another skip instruction.
-	Some sleigh processor developers have tried to use the delayslot() directive to accomplish instruction skipping. Unfortunately, the use of the delayslot() directive
-	can cause nested delay slots or the potential for branches into the delay slotted instruction, both of which are not supported.</P>
+	<P>Improvements and bug fixes have been made to many processors since 10.2 to include:
+	<code>AARCH64, ARM, Coldfire, HCS12 MIPS X86, PowerPC, RISCV SPARC, SuperH, TriCore, V850, Z80, 6x09, 68K, and 8051</code>.</P>
+	
+	<P>Two new user-submitted processors, <code>eBPF</code> and <code>BPF</code>, add support for two variants of Berkeley Packet Filter binaries.</P>
+	
+	<P>A user-submitted refactoring of X86 <code>LOCK/UNLOCK</code> decoding and semantics has been committed. There are currently some issues with the
+	Decompiler re-arranging code outside of the <code>LOCK/UNLOCK</code> which will be addressed with an upcoming patch. If your analysis depends on
+	the LOCK/UNLOCK semantics, please be aware of the issue. </P>
+	
+	<P> A new leading zeroes count operator, called <code>lzcount</code>, has been added to p-code, and it can now be used by SLEIGH developers
+	to model processor instructions.  The Decompiler can simplify common code idioms using these instructions, and emulation is supported.</P>
 	
 	<H2>User Interface Improvements</H2>
-	<P>The <B>Go To...</B> dialog now provides navigation to file offsets.  In addition, a new File Offset field is available in the Listing.  The
-	field must be added to the Listing using Edit Listing Fields.
-	These new features can greatly simplify correlating bytes in program memory with their original location within the file from which they were imported.
-	Example: to go to the memory location which corresponds to the first byte in the original file, enter <B><code>file(0)</code></B> in the <B>Go To...</B> dialog.</P>
+	<P>Diff can now be performed between two open programs which may include remote files previously opened via a Ghidra-URL. </P>
 	
-	<H2>Import Formats</H2>
-	<P>Support has been added for loading WinDbg and APPORT dump files.</P>
-	<P>Redesigned the Importer's library loading options to provide finer-grained control over where libraries are searched
-	for on disk and in the project, as well as where newly loaded libraries are saved to.</P>
+	<H2>GoLang 1.18 Support</H2>
+	<P>An importer, Analyzer, and Internal changes have been made to support GoLang.  Currently, only version 1.18 is supported; however slightly older or newer versions may work.
+	There are still some Decompiler issues with multiple return parameters to be worked out, however the implementation was thought complete enough
+	for initial real use.  Please consider the feature an evolving initial implementation.</P>
+	
+	<H2>Ghidra Startup</H2>
+	<P>Ghidra now remembers the last location of a program when it is closed. When that program is later re-opened, Ghidra will position the
+	program to that location.  Also, there are options for where Ghidra should start for new programs and optionally when Ghidra completes
+	the initial analysis. </P>
+	
+	<H2>Template Simplification </H2>
+	<P>Ghidra now has options for simplifying the display of symbol names, in both the Listing and Decompiler, with complex template information
+	embedded in them.  The simplification should result in a much less busy display when dealing with templates. </P>
 	
     <H2>Additional Bug Fixes and Enhancements</H2>
     <P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>

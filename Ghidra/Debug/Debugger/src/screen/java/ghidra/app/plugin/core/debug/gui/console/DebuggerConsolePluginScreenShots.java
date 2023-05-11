@@ -15,12 +15,13 @@
  */
 package ghidra.app.plugin.core.debug.gui.console;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 import org.junit.rules.TestName;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -29,7 +30,7 @@ import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerConsolePluginScreenShots extends GhidraScreenShotGenerator {
 
-	public static class ScreenShotActionContext extends ActionContext {
+	public static class ScreenShotActionContext extends DefaultActionContext {
 	}
 
 	DebuggerConsolePlugin consolePlugin;
@@ -44,21 +45,21 @@ public class DebuggerConsolePluginScreenShots extends GhidraScreenShotGenerator 
 		consoleProvider = waitForComponentProvider(DebuggerConsoleProvider.class);
 
 		consolePlugin.addResolutionAction(new ActionBuilder("Import", name.getMethodName())
-				.toolBarIcon(DebuggerResources.ICON_IMPORT)
-				.popupMenuIcon(DebuggerResources.ICON_IMPORT)
-				.popupMenuPath("Map")
-				.description("Import")
-				.withContext(ScreenShotActionContext.class)
-				.onAction(ctx -> Msg.info(this, "Import clicked"))
-				.build());
+			.toolBarIcon(DebuggerResources.ICON_IMPORT)
+			.popupMenuIcon(DebuggerResources.ICON_IMPORT)
+			.popupMenuPath("Map")
+			.description("Import")
+			.withContext(ScreenShotActionContext.class)
+			.onAction(ctx -> Msg.info(this, "Import clicked"))
+			.build());
 		consolePlugin.addResolutionAction(new ActionBuilder("Map", name.getMethodName())
-				.toolBarIcon(DebuggerResources.ICON_MODULES)
-				.popupMenuIcon(DebuggerResources.ICON_MODULES)
-				.popupMenuPath("Map")
-				.description("Map")
-				.withContext(ScreenShotActionContext.class)
-				.onAction(ctx -> Msg.info(this, "Map clicked"))
-				.build());
+			.toolBarIcon(DebuggerResources.ICON_MODULES)
+			.popupMenuIcon(DebuggerResources.ICON_MODULES)
+			.popupMenuPath("Map")
+			.description("Map")
+			.withContext(ScreenShotActionContext.class)
+			.onAction(ctx -> Msg.info(this, "Map clicked"))
+			.build());
 	}
 
 	@Test
@@ -70,7 +71,7 @@ public class DebuggerConsolePluginScreenShots extends GhidraScreenShotGenerator 
 			new ScreenShotActionContext());
 
 		AbstractGhidraHeadedDebuggerGUITest
-				.waitForPass(() -> assertEquals(3, consolePlugin.getRowCount(ActionContext.class)));
+			.waitForPass(() -> assertEquals(3, consolePlugin.getRowCount(ActionContext.class)));
 
 		captureIsolatedProvider(consoleProvider, 600, 300);
 	}

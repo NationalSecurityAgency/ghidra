@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#a-tour-of-the-debugger" id="toc-a-tour-of-the-debugger">A
+Tour of the Debugger</a>
+<ul>
+<li><a href="#the-debugger-tool" id="toc-the-debugger-tool">The Debugger
+Tool</a>
+<ul>
+<li><a href="#toolbar" id="toc-toolbar">Toolbar</a></li>
+<li><a href="#windows" id="toc-windows">Windows</a></li>
+</ul></li>
+<li><a href="#controlling-the-target"
+id="toc-controlling-the-target">Controlling the Target</a></li>
+<li><a href="#troubleshooting"
+id="toc-troubleshooting">Troubleshooting</a>
+<ul>
+<li><a
+href="#the-listings-are-not-in-sync-i.e.-they-do-not-move-together."
+id="toc-the-listings-are-not-in-sync-i.e.-they-do-not-move-together.">The
+listings are not in sync, i.e., they do not move together.</a></li>
+<li><a
+href="#the-listings-seem-to-move-together-but-their-contents-differ."
+id="toc-the-listings-seem-to-move-together-but-their-contents-differ.">The
+listings seem to move together, but their contents differ.</a></li>
+<li><a href="#there-is-no-step-button."
+id="toc-there-is-no-step-button.">There is no step button.</a></li>
+<li><a
+href="#i-can-step-but-i-dont-see-the-effects-in-the-interpreter-window."
+id="toc-i-can-step-but-i-dont-see-the-effects-in-the-interpreter-window.">I
+can step, but I don’t see the effects in the Interpreter
+window.</a></li>
+<li><a href="#the-step-buttons-are-grayed-out."
+id="toc-the-step-buttons-are-grayed-out.">The Step buttons are grayed
+out.</a></li>
+</ul></li>
+<li><a href="#exercise-step-around"
+id="toc-exercise-step-around">Exercise: Step Around</a></li>
+</ul></li>
+</ul>
+</nav>
+<section id="a-tour-of-the-debugger" class="level1">
+<h1>A Tour of the Debugger</h1>
+<p>This module assumes you have completed the <a
+href="A1-GettingStarted.html">Getting Started</a> module. If not, please
+go back.</p>
+<p>This module will briefly introduce each window in the Ghidra
+Debugger. We assume some familiarity with trap-and-trace debugging. If
+you have not used GDB or a similar debugger before, you may find the
+Ghidra Debugger difficult to grasp.</p>
+<p>If you would like your tool to look more or less like the one
+presented in the screenshots here, launch <code>termmines</code> from
+the Debugger using GDB.</p>
+<section id="the-debugger-tool" class="level2">
+<h2>The Debugger Tool</h2>
+<p>Like the CodeBrowser tool, the Debugger tool is a preconfigured
+collection of plugins and panels that present Ghidra’s dynamic analysis
+features. You may re-configure, save, export, import, etc. the tool to
+fit your preferences. For reference, here is a screenshot of the default
+configuration after launching <code>termmines</code>:</p>
+<figure>
+<img src="images/GettingStarted_DisassemblyAfterLaunch.png"
+alt="Debugger tool after launching termmines" />
+<figcaption aria-hidden="true">Debugger tool after launching
+termmines</figcaption>
+</figure>
+<section id="toolbar" class="level3">
+<h3>Toolbar</h3>
+<p>Many of the buttons in the global toolbar are the same as in the
+CodeBrowser. Coincidentally, in the screenshot, the debugger-specific
+buttons start just above the Dynamic Listing in the global toolbar. They
+are:</p>
+<ul>
+<li><img src="images/process.png" alt="emulate button" />
+<strong>Emulate</strong>: To be covered in a later module. This will
+load the current program (from the Static Listing) into the
+emulator.</li>
+<li><img src="images/debugger.png" alt="debug button" />
+<strong>Debug</strong>: This launches the current program (from the
+Static Listing) using a suitable back-end debugger. The drop-down menu
+provides a selection of suitable back-end connectors. Clicking the
+button will use the last successful connector or the default.</li>
+<li><img src="images/record.png" alt="mode button" /> <strong>Control
+Mode</strong>: This drop-down menu sets the mode of the controls and
+machine state edits. By default, all actions are directed to the
+back-end debugger.</li>
+<li><img src="images/resume.png" alt="resume button" />
+<strong>Resume</strong>: Resume execution. This is equivalent to
+<code>continue</code> in GDB.</li>
+<li><img src="images/interrupt.png" alt="interrupt button" />
+<strong>Interrupt</strong>: Interrupt, suspend, pause, break, etc. This
+is equivalent to <strong>Ctrl-C</strong> or <code>interrupt</code> in
+GDB.</li>
+<li><img src="images/kill.png" alt="kill button" />
+<strong>Kill</strong>: Kill, terminate, etc. This is equivalent to
+<code>kill</code> in GDB.</li>
+<li><img src="images/disconnect.png" alt="disconnect button" />
+<strong>Disconnect</strong>: Disconnect from the back-end debugger.
+Typically, this will also end the session. It is equivalent to
+<code>quit</code> in GDB.</li>
+<li><img src="images/stepinto.png" alt="step into button" />
+<strong>Step Into</strong>, <img src="images/stepover.png"
+alt="step over button" /> <strong>Step Over</strong>, <img
+src="images/stepout.png" alt="step out button" /> <strong>Step
+Out</strong>, <img src="images/steplast.png" alt="step last button" />
+<strong>Step Last</strong>: These buttons step in various ways. In
+order, the equivalent commands in GDB are <code>stepi</code>,
+<code>nexti</code>, and <code>finish</code>. Step Last has no equivalent
+in GDB; it is meant to repeat the last custom/extended step.</li>
+</ul>
+</section>
+<section id="windows" class="level3">
+<h3>Windows</h3>
+<p>Starting at the top left and working clockwise, the windows are:</p>
+<ul>
+<li>The <strong>Debugger Targets</strong> window: This lists active
+sessions or connections. From here, you can establish new sessions or
+terminate existing sessions.</li>
+<li>The <strong>Dynamic Listing</strong> window: This is the primary
+means of examining the instructions being executed. By default, it
+follows the program counter and disassembles from there until the next
+control transfer instruction. It supports many of the same operations as
+the Static Listing, including patching. The nearest equivalent in GDB is
+something like <code>x/10i $pc</code>.</li>
+<li>The <strong>Interpreter</strong> window: This is essentially a
+terminal emulator providing a command-line interface to the back-end
+debugger. It is useful for diagnostics or for issuing commands that do
+not have a button in the GUI. Some may also prefer to command the
+debugger from here rather than the GUI.</li>
+<li>The <strong>Breakpoints</strong> window: This is stacked below the
+Interpreter. It lists and manages the breakpoints among all open images
+and running targets. The nearest equivalent in GDB is
+<code>info break</code>.</li>
+<li>The <strong>Registers</strong> window: This is stacked below the
+Breakpoints window. It displays and edits the register values for the
+current thread. The nearest equivalent in GDB is
+<code>info registers</code></li>
+<li>The <strong>Modules</strong> window: This is stacked below the
+Registers window. It displays the images (and sections, if applicable)
+loaded by the target. The equivalent in GDB is
+<code>maintenance info sections</code>. Note that this differs from the
+Regions window.</li>
+<li>The <strong>Threads</strong> window: This lists the threads in the
+current target. The tabs at the top list the active targets. The nearest
+equivalents in GDB are <code>info threads</code> and
+<code>info inferiors</code>.</li>
+<li>The <strong>Time</strong> window: This is stacked below the Threads
+window. This lists the events and snapshots taken of the current
+target.</li>
+<li>The <strong>Stack</strong> window: This lists the stack frames for
+the current thread. The equivalent in GDB is
+<code>backtrace</code>.</li>
+<li>The <strong>Watches</strong> window: This is stacked below the Stack
+window — pun not intended. It manages current watches. These are
+<em>not</em> watchpoints, but rather expressions or variables whose
+values to display. To manage watchpoints, use the Breakpoints window or
+the Interpreter. The nearest equivalent in GDB is
+<code>display</code>.</li>
+<li>The <strong>Regions</strong> window: This is stacked below the
+Watches window. It lists memory regions for the current target. It
+differs from the Modules window, since this includes not only
+image-backed regions but other memory regions, e.g., stacks and heaps.
+The equivalent in GDB is <code>info proc mappings</code>.</li>
+<li>The <strong>Debug Console</strong> window: (Not to be confused with
+the Console window from the CodeBrowser.) This displays logging messages
+and problems encountered during a session. Some problems are presented
+with remedial actions, which may expedite your workflow or aid in
+troubleshooting.</li>
+<li>The <strong>Objects</strong> window: This models the back-end
+debugger as a tree of objects and provides generic actions on those
+objects. It is generally more capable, though less integrated, than the
+GUI, but not quite as capable as the Interpreter. It is useful for
+troubleshooting and for advanced use cases.</li>
+</ul>
+</section>
+</section>
+<section id="controlling-the-target" class="level2">
+<h2>Controlling the Target</h2>
+<p>The control buttons are all located on the global toolbar. Start by
+pressing the <img src="images/stepinto.png" alt="step into" /> Step Into
+button. Notice that the Dynamic Listing moves forward a single
+instruction each time you press it. Also notice that the Static Listing
+moves with the Dynamic Listing. You may navigate in either listing, and
+so long as there is a corresponding location in the other, the two will
+stay synchronized. You may also open the Decompiler just as you would in
+the CodeBrowser, and it will stay in sync, too.</p>
+<p>When you have clicked <img src="images/stepinto.png"
+alt="step into" /> Step Into a sufficient number of times, you should
+end up in a subroutine. You can click <img src="images/stepout.png"
+alt="step out" /> Step Out to leave the subroutine. Note that the target
+is allowed to execute until it returns from the subroutine; it does not
+skip out of it. Now, click <img src="images/stepover.png"
+alt="step over" /> Step Over until you reach another <code>CALL</code>
+instruction. Notice that when you click <img src="images/stepover.png"
+alt="step over" /> Step Over again, it will not descend into the
+subroutine. Instead, the target is allowed to execute the entire
+subroutine before stopping again — after the <code>CALL</code>
+instruction.</p>
+<p>If you prefer, you may use the GDB commands from the Interpreter
+instead of the buttons. Try <code>si</code> and/or <code>ni</code>. You
+can also pass arguments which is not possible with the buttons,
+e.g. <code>si 10</code> to step 10 instructions in one command.</p>
+<p>If you need to terminate the target you should use the <img
+src="images/disconnect.png" alt="disconnect" /> Disconnect button rather
+than the Kill button, in general. Otherwise, each launch will create a
+new connection, and you will end up with several stale connections.
+Additionally, if your target exits or otherwise terminates on its own,
+you will get a stale connection. Use the Targets window to clean such
+connections up. The re-use of connections and/or the use of multiple
+concurrent connections is <em>not</em> covered in this course.</p>
+</section>
+<section id="troubleshooting" class="level2">
+<h2>Troubleshooting</h2>
+<section
+id="the-listings-are-not-in-sync-i.e.-they-do-not-move-together."
+class="level3">
+<h3>The listings are not in sync, i.e., they do not move together.</h3>
+<p>First, check that synchronization is enabled. This is the default
+behavior, but, still, check it first. In the top-right of the Dynamic
+Listing is its local drop-down menu. Click it and check that
+<strong>Auto-Sync Cursor with Static Listing</strong> is selected.</p>
+<p>If that does not work, check the top-left label of the Dynamic
+Listing to see what module you are in. Also check the Debug Console
+window. If you are in a system library, e.g., <code>ld-linux</code>,
+then this is the expected behavior. You may optionally import it, as
+suggested by the Debug Console, but this is covered later.</p>
+<p>If you are not in a system library, then check the Modules window to
+see if <code>termmines</code> is listed. If so, it seems the module
+mapper failed to realize that module is the current program. Right-click
+the module and select “Map to termmines.” Confirm the dialog. If
+<code>termmines</code> is not listed, then your version of GDB may not
+be supported. If you file a bug report, please include your GDB version,
+Linux distribution, and/or other platform details.</p>
+</section>
+<section
+id="the-listings-seem-to-move-together-but-their-contents-differ."
+class="level3">
+<h3>The listings seem to move together, but their contents differ.</h3>
+<p>There is probably a discrepancy between the version you imported and
+the version you launched. This should not happen with
+<code>termmines</code>, but perhaps you re-ran <code>make</code> between
+importing and launching? For other system libraries, this could happen
+if you or an administrator applied system updates since you imported.
+You probably need to re-import the affected module image(s). If this
+happens to you in practice, and you have substantial investment in the
+old import, consider using the Version Tracker to port your knowledge to
+the new import.</p>
+</section>
+<section id="there-is-no-step-button." class="level3">
+<h3>There is no step button.</h3>
+<p>This can happen if the Control Mode is set to the Trace. Perhaps you
+played with the Time window? Change the Control Mode back to “Control
+Target.”</p>
+</section>
+<section
+id="i-can-step-but-i-dont-see-the-effects-in-the-interpreter-window."
+class="level3">
+<h3>I can step, but I don’t see the effects in the Interpreter
+window.</h3>
+<p>This can happen if the Control Mode is set to the Emulator. Change
+the Control Mode back to “Control Target.”</p>
+</section>
+<section id="the-step-buttons-are-grayed-out." class="level3">
+<h3>The Step buttons are grayed out.</h3>
+<p>The target has likely terminated, or you have not selected a thread.
+Check the Threads window. If it is empty, re-launch, and perhaps look at
+the Troubleshooting section in <a href="A1-GettingStarted.html">Getting
+Started</a></p>
+</section>
+</section>
+<section id="exercise-step-around" class="level2">
+<h2>Exercise: Step Around</h2>
+<p>If you were not already following along with an instructor, then try
+some of the stepping buttons. One of the first subroutines called in
+<code>termmines</code> parses command-line arguments. Try stepping until
+you have entered that subroutine. <strong>TIP</strong>: Use the
+Decompiler to help you recognize when you have entered the command-line
+parsing subroutine. Alternatively, use the Static Listing and Decompiler
+to identify the parsing subroutine (as you would in the CodeBrowser),
+and then use the Step buttons to drive the target into it.</p>
+</section>
+</section>
+</body>
+</html>

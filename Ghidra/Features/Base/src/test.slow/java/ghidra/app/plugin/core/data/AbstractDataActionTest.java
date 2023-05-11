@@ -27,6 +27,7 @@ import javax.swing.table.TableCellEditor;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
 import docking.widgets.combobox.GhidraComboBox;
@@ -1528,8 +1529,8 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		}
 		// assumes returned set may be modified
 		return actions.stream()
-				.filter(a -> a.isValidContext(context))
-				.collect(Collectors.toSet());
+			.filter(a -> a.isValidContext(context))
+			.collect(Collectors.toSet());
 	}
 
 	/**
@@ -1634,7 +1635,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		cb.updateNow();
 		ActionContext context = cb.getProvider().getActionContext(null);
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}
