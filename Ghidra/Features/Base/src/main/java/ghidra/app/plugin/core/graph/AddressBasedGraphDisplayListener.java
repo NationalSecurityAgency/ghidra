@@ -57,11 +57,6 @@ public abstract class AddressBasedGraphDisplayListener
 	}
 
 	@Override
-	public void graphClosed() {
-		dispose();
-	}
-
-	@Override
 	public void locationFocusChanged(AttributedVertex vertex) {
 		Address address = getAddress(vertex);
 		if (address != null) {
