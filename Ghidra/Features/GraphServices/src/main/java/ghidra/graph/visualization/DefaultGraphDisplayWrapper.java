@@ -15,6 +15,7 @@
  */
 package ghidra.graph.visualization;
 
+import java.util.Collection;
 import java.util.Set;
 
 import docking.action.DockingActionIf;
@@ -106,6 +107,11 @@ public class DefaultGraphDisplayWrapper
 	@Override
 	public void addAction(DockingActionIf action) {
 		Swing.runNow(() -> delegate.addAction(action));
+	}
+
+	@Override
+	public Collection<DockingActionIf> getActions() {
+		return Swing.runNow(() -> delegate.getActions());
 	}
 
 	@Override

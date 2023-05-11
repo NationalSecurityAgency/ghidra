@@ -601,7 +601,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			display.setGraph(createSubGraph(), graphRenderer.getGraphDisplayOptions(),
 				title + " - Sub-graph", false, TaskMonitor.DUMMY);
 			display.setGraphDisplayListener(listener.cloneWith(display));
-			copyActionsToNewGraph((DefaultGraphDisplay) display);
+			copyActionsToNewGraph(display);
 		}
 		catch (CancelledException e) {
 			// using Dummy, so can't happen
@@ -1277,10 +1277,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		return vv;
 	}
 
-	private void copyActionsToNewGraph(DefaultGraphDisplay display) {
+	private void copyActionsToNewGraph(GraphDisplay display) {
 
+		Collection<DockingActionIf> defaultActions = display.getActions();
 		for (DockingActionIf action : addedActions) {
-			if (display.containsAction(action)) {
+			if (defaultActions.contains(action)) {
 				// ignore actions added by the graph itself and any actions that the end user may
 				// accidentally add more than once
 				continue;
@@ -1288,7 +1289,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 			display.addAction(new DockingActionProxy(action));
 		}
-
 	}
 
 	private boolean containsAction(DockingActionIf action) {
@@ -1312,6 +1312,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		addedActions.add(action);
 		componentProvider.addLocalAction(action);
+	}
+
+	@Override
+	public Collection<DockingActionIf> getActions() {
+		return new ArrayList<>(addedActions);
 	}
 
 	@Override

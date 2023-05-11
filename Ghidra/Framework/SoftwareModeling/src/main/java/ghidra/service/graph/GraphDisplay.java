@@ -15,6 +15,7 @@
  */
 package ghidra.service.graph;
 
+import java.util.Collection;
 import java.util.Set;
 
 import docking.action.DockingActionIf;
@@ -147,4 +148,11 @@ public interface GraphDisplay {
 	 * @param action the action to add
 	 */
 	public void addAction(DockingActionIf action);
+
+	/**
+	 * Gets all actions that have been added to this graph display.  If this display does not
+	 * support actions, then an empty collection will be returned.
+	 * @return the actions
+	 */
+	public Collection<DockingActionIf> getActions();
 }

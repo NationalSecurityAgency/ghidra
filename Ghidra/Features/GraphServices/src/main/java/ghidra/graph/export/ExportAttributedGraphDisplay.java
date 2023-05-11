@@ -112,6 +112,11 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
+	public Collection<DockingActionIf> getActions() {
+		return Collections.emptyList();
+	}
+
+	@Override
 	public AttributedVertex getFocusedVertex() {
 		return null;
 	}
