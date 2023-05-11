@@ -18,10 +18,10 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.app.services.LogicalBreakpoint;
 
-public class DebuggerLogicalBreakpointsActionContext extends ActionContext {
+public class DebuggerLogicalBreakpointsActionContext extends DefaultActionContext {
 	private final Collection<LogicalBreakpointRow> selection;
 
 	public DebuggerLogicalBreakpointsActionContext(Collection<LogicalBreakpointRow> selection) {
@@ -34,7 +34,7 @@ public class DebuggerLogicalBreakpointsActionContext extends ActionContext {
 
 	public Collection<LogicalBreakpoint> getBreakpoints() {
 		return selection.stream()
-				.map(row -> row.getLogicalBreakpoint())
-				.collect(Collectors.toList());
+			.map(row -> row.getLogicalBreakpoint())
+			.collect(Collectors.toList());
 	}
 }

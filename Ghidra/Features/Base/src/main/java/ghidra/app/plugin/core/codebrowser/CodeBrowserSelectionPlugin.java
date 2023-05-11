@@ -65,48 +65,44 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 	private void createActions() {
 		new ActionBuilder("Select All", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&All in View")
-				.menuGroup(SELECT_GROUP, "a")
-				.keyBinding("ctrl A")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_SELECTION, "&All in View")
+			.menuGroup(SELECT_GROUP, "a")
+			.keyBinding("ctrl A")
+			.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
+			.withContext(CodeViewerActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
+			.buildAndInstall(tool);
 
 		new ActionBuilder("Clear Selection", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&Clear Selection")
-				.menuGroup(SELECT_GROUP, "b")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
-						.setSelection(new ProgramSelection()))
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_SELECTION, "&Clear Selection")
+			.menuGroup(SELECT_GROUP, "b")
+			.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
+			.withContext(CodeViewerActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
+				.setSelection(new ProgramSelection()))
+			.buildAndInstall(tool);
 
 		new ActionBuilder("Select Complement", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&Complement")
-				.menuGroup(SELECT_GROUP, "c")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_SELECTION, "&Complement")
+			.menuGroup(SELECT_GROUP, "c")
+			.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
+			.withContext(CodeViewerActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
+			.buildAndInstall(tool);
 
 		tool.addAction(new MarkAndSelectionAction(getName(), SELECT_GROUP, "d"));
 
 		new ActionBuilder("Create Table From Selection", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "Create Table From Selection")
-				.menuGroup("SelectUtils")
-				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Selection_Table"))
-				.supportsDefaultToolContext(true)
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> createTable((CodeViewerProvider) c.getComponentProvider()))
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_SELECTION, "Create Table From Selection")
+			.menuGroup("SelectUtils")
+			.helpLocation(new HelpLocation("CodeBrowserPlugin", "Selection_Table"))
+			.withContext(CodeViewerActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> createTable((CodeViewerProvider) c.getComponentProvider()))
+			.buildAndInstall(tool);
 
 	}
 

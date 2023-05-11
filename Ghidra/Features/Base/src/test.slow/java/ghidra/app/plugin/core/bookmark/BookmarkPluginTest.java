@@ -27,7 +27,7 @@ import javax.swing.text.JTextComponent;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.filter.FilterOptions;
 import docking.widgets.table.*;
@@ -300,7 +300,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		selectRow(5, true);
 
 		DockingActionIf action = getAction(plugin, "Select Bookmark Locations");
-		action.actionPerformed(new ActionContext());
+		action.actionPerformed(new DefaultActionContext());
 
 		AddressSet set = new AddressSet();
 
@@ -311,7 +311,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRow(0, false);
 		selectRow(3, true);
-		action.actionPerformed(new ActionContext());
+		action.actionPerformed(new DefaultActionContext());
 		sel = cbPlugin.getCurrentSelection();
 		set.clear();
 		set.addRange(addr("0x01001010"), addr("0x01001011"));

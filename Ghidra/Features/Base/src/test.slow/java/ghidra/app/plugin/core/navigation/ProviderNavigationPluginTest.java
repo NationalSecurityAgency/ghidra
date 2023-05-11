@@ -129,14 +129,14 @@ public class ProviderNavigationPluginTest extends AbstractProgramBasedTest {
 		assertTrue(
 			"'" + ProviderNavigationPlugin.GO_TO_LAST_ACTIVE_COMPONENT_ACTION_NAME + "'" +
 				" should be enabled when there is a previous provider set",
-			previousProviderAction.isEnabledForContext(new ActionContext()));
+			previousProviderAction.isEnabledForContext(new DefaultActionContext()));
 	}
 
 	private void assertPreviousProviderActionNotEnabled() {
 		assertFalse(
 			"'" + ProviderNavigationPlugin.GO_TO_LAST_ACTIVE_COMPONENT_ACTION_NAME + "'" +
 				" should not be enabled when there is no previous provider set",
-			previousProviderAction.isEnabledForContext(new ActionContext()));
+			previousProviderAction.isEnabledForContext(new DefaultActionContext()));
 	}
 
 	private ComponentProvider activateProvider(String name) {
@@ -152,7 +152,7 @@ public class ProviderNavigationPluginTest extends AbstractProgramBasedTest {
 	}
 
 	private void forceActivate(ComponentProvider provider) {
-		ActionContext context = new ActionContext(provider);
+		ActionContext context = new DefaultActionContext(provider);
 		for (DockingContextListener l : testContextListeners) {
 			l.contextChanged(context);
 		}

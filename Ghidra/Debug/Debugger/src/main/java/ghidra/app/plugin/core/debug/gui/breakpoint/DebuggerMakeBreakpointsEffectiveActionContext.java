@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 
 // TODO: Any granularity, or just one suggested action on the global tool?
-public class DebuggerMakeBreakpointsEffectiveActionContext extends ActionContext {
+public class DebuggerMakeBreakpointsEffectiveActionContext extends DefaultActionContext {
 	// Nothing to add
 }

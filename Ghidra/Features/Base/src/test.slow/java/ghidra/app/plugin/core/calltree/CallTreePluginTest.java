@@ -30,6 +30,7 @@ import org.apache.commons.collections4.map.LazyMap;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.*;
 import docking.widgets.tree.*;
 import generic.test.AbstractGenericTest;
@@ -497,7 +498,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		outgoingTree.setSelectedNode(child1);
 		waitForTree(outgoingTree);
 
-		ActionContext actionContext = new ActionContext(provider, outgoingTree);
+		ActionContext actionContext = new DefaultActionContext(provider, outgoingTree);
 		DockingActionIf goToAction = getAction("Go To Destination");
 		performAction(goToAction, actionContext, true);
 
@@ -517,7 +518,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setProviderFunction("0x5000");
 
 		DockingActionIf selectSourceAction = getAction("Select Call Source");
-		ActionContext context = new ActionContext(provider, outgoingTree);
+		ActionContext context = new DefaultActionContext(provider, outgoingTree);
 
 		assertTrue("The selection action was enabled when no node was selected",
 			!selectSourceAction.isEnabledForContext(context));
@@ -605,7 +606,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ToggleDockingAction filterDuplicatesAction =
 			(ToggleDockingAction) getAction("Filter Duplicates");
-		setToggleActionSelected(filterDuplicatesAction, new ActionContext(), true);
+		setToggleActionSelected(filterDuplicatesAction, new DefaultActionContext(), true);
 		waitForTree(outgoingTree);
 
 		GTreeNode rootNode = getRootNode(outgoingTree);
@@ -638,7 +639,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ToggleDockingAction filterDuplicatesAction =
 			(ToggleDockingAction) getAction("Filter Duplicates");
 
-		setToggleActionSelected(filterDuplicatesAction, new ActionContext(), true);
+		setToggleActionSelected(filterDuplicatesAction, new DefaultActionContext(), true);
 
 		waitForTree(outgoingTree);
 		GTreeNode rootNode = getRootNode(outgoingTree);
@@ -671,7 +672,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ToggleDockingAction filterDuplicatesAction =
 			(ToggleDockingAction) getAction("Filter Duplicates");
-		setToggleActionSelected(filterDuplicatesAction, new ActionContext(), true);
+		setToggleActionSelected(filterDuplicatesAction, new DefaultActionContext(), true);
 		waitForTree(outgoingTree);
 
 		GTreeNode rootNode = getRootNode(outgoingTree);
@@ -714,7 +715,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ToggleDockingAction filterDuplicatesAction =
 			(ToggleDockingAction) getAction("Filter Duplicates");
-		setToggleActionSelected(filterDuplicatesAction, new ActionContext(), true);
+		setToggleActionSelected(filterDuplicatesAction, new DefaultActionContext(), true);
 		waitForTree(incomingTree);
 
 		// copy the names of the children into a map so that we can verify no duplicates
@@ -1071,13 +1072,13 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void fullyExpandIncomingNode(GTreeNode node) {
 		DockingActionIf expandAction = getLocalAction(provider, "Fully Expand Selected Nodes");
-		performAction(expandAction, new ActionContext(provider, incomingTree), false);
+		performAction(expandAction, new DefaultActionContext(provider, incomingTree), false);
 		waitForTree(node.getTree());
 	}
 
 	private void fullyExpandOutgoingNode(GTreeNode node) {
 		DockingActionIf expandAction = getLocalAction(provider, "Fully Expand Selected Nodes");
-		performAction(expandAction, new ActionContext(provider, outgoingTree), false);
+		performAction(expandAction, new DefaultActionContext(provider, outgoingTree), false);
 		waitForTree(node.getTree());
 	}
 

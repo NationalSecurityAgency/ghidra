@@ -25,6 +25,7 @@ import javax.swing.JCheckBox;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GTable;
@@ -689,7 +690,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		performOkCallback();
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
-		clear.actionPerformed(new ActionContext());
+		clear.actionPerformed(new DefaultActionContext());
 		assertFalse(clear.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
@@ -702,13 +703,13 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		prev.actionPerformed(new ActionContext());
+		prev.actionPerformed(new DefaultActionContext());
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		next.actionPerformed(new ActionContext());
+		next.actionPerformed(new DefaultActionContext());
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
 
 		setText("1001010");
@@ -718,8 +719,8 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		prev.actionPerformed(new ActionContext());
-		prev.actionPerformed(new ActionContext());
+		prev.actionPerformed(new DefaultActionContext());
+		prev.actionPerformed(new DefaultActionContext());
 
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
@@ -1029,7 +1030,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	private ActionContext getActionContext() {
 		ActionContext context = runSwing(() -> cbPlugin.getProvider().getActionContext(null));
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}
@@ -1052,7 +1053,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 			TableComponentProvider<?>[] providers = getProviders();
 			if (providers.length > 0) {
 				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
-						.getInstanceField("threadedPanel", providers[0]);
+					.getInstanceField("threadedPanel", providers[0]);
 				GTable table = panel.getTable();
 				while (panel.isBusy()) {
 					Thread.sleep(50);

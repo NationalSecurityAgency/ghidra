@@ -17,10 +17,10 @@ package ghidra.app.plugin.core.debug.gui.modules;
 
 import java.util.Objects;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import ghidra.trace.model.modules.TraceModule;
 
-public class DebuggerMissingModuleActionContext extends ActionContext {
+public class DebuggerMissingModuleActionContext extends DefaultActionContext {
 	private final TraceModule module;
 	private final int hashCode;
 

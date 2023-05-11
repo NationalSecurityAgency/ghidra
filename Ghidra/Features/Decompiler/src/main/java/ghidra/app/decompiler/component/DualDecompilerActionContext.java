@@ -17,8 +17,8 @@ package ghidra.app.decompiler.component;
 
 import java.awt.Component;
 
-import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.DefaultActionContext;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.context.RestrictedAddressSetContext;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
@@ -27,7 +27,7 @@ import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
 /**
  * Action context for a dual decompiler panel.
  */
-public class DualDecompilerActionContext extends ActionContext
+public class DualDecompilerActionContext extends DefaultActionContext
 		implements RestrictedAddressSetContext, CodeComparisonPanelActionContext {
 
 	private CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel = null;

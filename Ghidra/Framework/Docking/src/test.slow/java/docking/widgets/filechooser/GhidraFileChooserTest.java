@@ -2033,7 +2033,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	private ActionContext createDirListContext() {
 
 		DirectoryList dirlist = getListView();
-		return new ActionContext(null, dirlist);
+		return new DefaultActionContext(null, dirlist);
 	}
 
 	private boolean isEnabled(DockingAction action, ActionContext context) {

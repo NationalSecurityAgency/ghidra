@@ -341,12 +341,4 @@ public interface Tool extends ServiceProvider {
 	 */
 	public void close();
 
-	/**
-	 * Returns the default {@link ActionContext} for the tool. The default context is the context
-	 * the default ComponentProvider for the tool.
-	 * 
-	 * @return the default {@link ActionContext} for the tool
-	 */
-	public ActionContext getDefaultToolContext();
-
 }

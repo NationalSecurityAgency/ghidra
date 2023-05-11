@@ -25,7 +25,7 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPlugin;
@@ -272,7 +272,7 @@ public class ByteViewerToolConnectionTest extends AbstractGhidraHeadedIntegratio
 			throws Exception {
 
 		final JMenuItem item = new JMenuItem(name);
-		Runnable r = () -> action.actionPerformed(new ActionContext(null, null, item));
+		Runnable r = () -> action.actionPerformed(new DefaultActionContext(null, null, item));
 		if (doWait) {
 			SwingUtilities.invokeAndWait(r);
 		}
