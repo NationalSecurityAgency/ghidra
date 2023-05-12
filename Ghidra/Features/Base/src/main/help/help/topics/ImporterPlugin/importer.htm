@@ -384,6 +384,16 @@
           the program is run. These sections will not be stored in a special address space called
           "other".</P>
         </BLOCKQUOTE>
+        
+        <H4>Max Zero-Segment Discard Size</H4>
+
+        <BLOCKQUOTE>
+          <P>When both section-headers and program-headers are present, this option controls the 
+          maximum byte-size of a non-section-based memory block which has a zero-fill which will
+          be discarded.  This is intended to allow section-alignment load sequences to be ignored
+          and discarded.  A value of "0" will disable all such discards.  The default value is 
+          255-bytes.</P>
+        </BLOCKQUOTE>
       </BLOCKQUOTE>
 
       <H3>Intel Hex Options<A name="Options_Intel_Hex"/></H3>
