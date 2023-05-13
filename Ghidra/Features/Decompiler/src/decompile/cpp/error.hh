@@ -29,6 +29,7 @@
 #include <set>
 #include <list>
 #include <vector>
+#include <array>
 #include <algorithm>
 #include <cstring>
 #include <cctype>
@@ -40,6 +41,7 @@ using std::map;
 using std::set;
 using std::list;
 using std::vector;
+using std::array;
 using std::pair;
 using std::make_pair;
 using std::ostream;
