@@ -346,6 +346,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				block.getName() + " does not contain address " + start.toString(true));
 		}
 
+		// TODO: We should not really permit changing Data where Dynamic datatype resides
+		// since it could impact its computed length.
+
 		try {
 			Address endAddr = start.addNoWrap(length - 1);
 			if (!block.contains(start)) {

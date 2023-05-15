@@ -1952,13 +1952,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				length = dataType.getLength();
 			}
 			else if (dataType instanceof Dynamic) {
-				if (length <= 0 || !((Dynamic) dataType).canSpecifyLength()) {
-					MemoryBlock block = program.getMemory().getBlock(addr);
-					if (block == null || !block.isInitialized()) {
-						throw new CodeUnitInsertionException(originalDataType.getName() +
-							" may only be applied on initialized memory (" + addr + ")");
-					}
-				}
 				Dynamic dynamicDataType = (Dynamic) dataType;
 				MemBuffer memBuffer = new MemoryBufferImpl(program.getMemory(), addr);
 				length = dynamicDataType.getLength(memBuffer, length);
