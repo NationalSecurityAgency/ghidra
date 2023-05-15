@@ -6,9 +6,10 @@ set -o pipefail
 # sonatype, so that we can promote it to maven central:
 # https://repo1.maven.org/maven2/io/joern/ghidra/
 # see also https://github.com/NationalSecurityAgency/ghidra/issues/799
-VERSION=10.2.3_PUBLIC_20230208
-VERSION_SHORT=10.2.3_PUBLIC
-VERSION_SHORTER=10.2.3
+VERSION=10.3_PUBLIC_20230510
+VERSION_SHORT=10.3_PUBLIC
+VERSION_SHORTER=10.3
+
 SONATYPE_URL=https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
 # the server id from your local ~/.m2/settings.xml
 REPO_ID=sonatype-nexus-staging-joern
@@ -45,4 +46,4 @@ mvn gpg:sign-and-deploy-file -Durl=$SONATYPE_URL -DrepositoryId=$REPO_ID -DpomFi
 mvn gpg:sign-and-deploy-file -Durl=$SONATYPE_URL -DrepositoryId=$REPO_ID -DpomFile=pom.xml -Dclassifier=javadoc -Dfile=docs/GhidraAPI_javadoc.zip
 mvn gpg:sign-and-deploy-file -Durl=$SONATYPE_URL -DrepositoryId=$REPO_ID -DpomFile=pom.xml -Dfile=ghidra.jar
 
-echo "artifacts are now published to sonatype staging. next step: log into https://s01.oss.sonatype.org -> staging repos -> find the right one -> close -> release"
+echo "artifacts are now published to sonatype staging. next step: log into https://s01.oss.sonatype.org -> staging repositories -> select the right one -> close -> release"
