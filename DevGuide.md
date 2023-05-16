@@ -32,40 +32,40 @@ authors' names directly in the source code, so it is discouraged.
 Download non-Maven Central dependencies.  This creates a `dependencies` directory in the repository
 root.
 ```
-$ gradle -I gradle/support/fetchDependencies.gradle init
+gradle -I gradle/support/fetchDependencies.gradle init
 ```
 
 Download Maven Central dependencies and setup the repository for development.  By default, these 
 will be stored at `$HOME/.gradle/`.
 ```
-$ gradle prepdev
+gradle prepdev
 ```
 
 Generate nested Eclipse project files which can then be imported into Eclipse as "existing 
 projects".
 ```
-$ gradle cleanEclipse eclipse
+gradle cleanEclipse eclipse
 ```
 
 Build native components for your current platform.  Requires native tool chains to be present.
 ```
-$ gradle buildNatives
+gradle buildNatives
 ```
 
 Manually compile sleigh files. Ghidra will also do this at runtime when necessary.
 ```
-$ gradle sleighCompile
+gradle sleighCompile
 ```
 
 Build Javadoc:
 ```
-$ gradle createJavadocs
+gradle createJavadocs
 ```
 
 Build Ghidra to `build/dist`.  This will be a distribution intended only to run on the platform on
 which it was built.
 ```
-$ gradle buildGhidra
+gradle buildGhidra
 ```
 
 **Tip:**  You may want to skip certain Gradle tasks to speed up your build, or to deal with
@@ -73,7 +73,7 @@ a problem later.  For example, perhaps you added some new source files and the b
 because of unresolved IP header issues.  You can use the Gradle `-x <task>` command line argument to
 prevent specific tasks from running:
 ```
-$ gradle buildGhidra -x ip
+gradle buildGhidra -x ip
 ```
 
 ## Known Issues
@@ -103,7 +103,7 @@ It is also included in the _Eclipse IDE for RCP and RAP Developers_. To generate
 Eclipse projects, execute:
 
 ```
-$ gradle eclipse -PeclipsePDE
+gradle eclipse -PeclipsePDE
 ```
 
 Import the newly generated GhidraDev projects into an Eclipse that supports this type of project. 
@@ -117,25 +117,25 @@ for instructions on how to build the GhidraDev plugin.
 ## Running tests
 To run unit tests, do:
 ```
-$ gradle unitTestReport
+gradle unitTestReport
 ```
 
 For more complex integration tests, do:
 ```
-$ gradle integrationTest
+gradle integrationTest
 ```
 
 For running both unit and integration tests and to generate a report do:
 ```
-$ gradle combinedTestReport
+gradle combinedTestReport
 ```
 
 ## Setup build in CI
 
 For running tests in headless mode on Linux, in a CI environment, or in Docker, first do:
 ```
-$ Xvfb :99 -nolisten tcp &
-$ export DISPLAY=:99
+Xvfb :99 -nolisten tcp &
+export DISPLAY=:99
 ```
 This is required to make AWT happy.
 
@@ -303,7 +303,7 @@ To set up your environment, in addition to the usual Gradle tasks, process the P
 specification for GADP:
 
 ```bash
-$ gradle generateProto
+gradle generateProto
 ```
 
 If you already have an environment set up in Eclipse, please re-run `gradle prepDev eclipse` and 
