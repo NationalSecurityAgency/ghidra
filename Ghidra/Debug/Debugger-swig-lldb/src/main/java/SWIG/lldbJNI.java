@@ -281,11 +281,7 @@ public class lldbJNI {
   public final static native int eQueueItemKindUnknown_get();
   public final static native int eQueueKindUnknown_get();
   public final static native int eExpressionEvaluationParse_get();
-  public final static native int eTraceInstructionControlFlowTypeInstruction_get();
-  public final static native int eTraceInstructionControlFlowTypeBranch_get();
-  public final static native int eTraceInstructionControlFlowTypeTakenBranch_get();
-  public final static native int eTraceInstructionControlFlowTypeCall_get();
-  public final static native int eTraceInstructionControlFlowTypeReturn_get();
+  public final static native int eInstructionControlFlowKindUnknown_get();
   public final static native int eWatchpointKindWrite_get();
   public final static native int eWatchpointKindRead_get();
   public final static native int eGdbSignalBadAccess_get();

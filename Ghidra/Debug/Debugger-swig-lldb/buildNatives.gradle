@@ -40,7 +40,7 @@ task generateSwig {
 			def exe = "swig"
 			exec {
 				commandLine exe, "-c++", "-features",  "autodoc", "-D__STDC_LIMIT_MACROS", "-D__STDC_CONSTANT_MACROS",
-		    		"-I$llvm_dir/lldb/include", "-I$llvm_dir/lldb/bindings", "-java", "-package", "SWIG", "-c++",
+		    		"-I$llvm_dir/lldb/include", "-I$llvm_dir/include/lldb", "-I$llvm_dir/lldb/bindings", "-java", "-package", "SWIG", "-c++",
 		    		"-outdir", "$outdir_java/SWIG", "-o", "$outdir_cpp/LLDBWrapJava.cpp" 
 				args "$srcdir/java.swig"
 			}
@@ -88,6 +88,7 @@ if (System.env.LLVM_HOME) {
 				}
 				if (b.toolChain in Gcc) {
 					b.cppCompiler.args "-I$llvm_dir/lldb/include"
+					b.cppCompiler.args "-I$llvm_dir/include"
 					b.cppCompiler.args "-I${JAVA_HOME}/include"
 					b.linker.args "-L$llvm_build_dir/lib"			
 					b.linker.args "-llldb"			
@@ -97,6 +98,7 @@ if (System.env.LLVM_HOME) {
 				}
 				else if (b.toolChain in Clang) {
 					b.cppCompiler.args "-I$llvm_dir/lldb/include"
+					b.cppCompiler.args "-I$llvm_dir/include"
 					b.cppCompiler.args "-I${JAVA_HOME}/include"
 					b.linker.args "-L$llvm_build_dir/lib"			
 					b.linker.args "-llldb"			
@@ -106,6 +108,7 @@ if (System.env.LLVM_HOME) {
 				}
 		 		else if (b.toolChain in VisualCpp) {
 					b.cppCompiler.args "/I$llvm_dir/lldb/include"
+					b.cppCompiler.args "-I$llvm_dir/include"
 					b.cppCompiler.args "-I${JAVA_HOME}/include"
 					b.linker.args "/LIBPATH:$llvm_build_dir/lib"			
 					b.linker.args "liblldb.lib"			

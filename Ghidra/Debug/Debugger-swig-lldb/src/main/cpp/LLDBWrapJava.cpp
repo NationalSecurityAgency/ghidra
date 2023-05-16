@@ -4102,61 +4102,13 @@ SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eExpressionEvaluationParse_1get(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeInstruction_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eInstructionControlFlowKindUnknown_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
+  lldb::InstructionControlFlowKind result;
   
   (void)jenv;
   (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeInstruction;
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeBranch_1get(JNIEnv *jenv, jclass jcls) {
-  jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
-  
-  (void)jenv;
-  (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeBranch;
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeTakenBranch_1get(JNIEnv *jenv, jclass jcls) {
-  jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
-  
-  (void)jenv;
-  (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeTakenBranch;
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeCall_1get(JNIEnv *jenv, jclass jcls) {
-  jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
-  
-  (void)jenv;
-  (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeCall;
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeReturn_1get(JNIEnv *jenv, jclass jcls) {
-  jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
-  
-  (void)jenv;
-  (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeReturn;
+  result = (lldb::InstructionControlFlowKind)lldb::eInstructionControlFlowKindUnknown;
   jresult = (jint)result; 
   return jresult;
 }
