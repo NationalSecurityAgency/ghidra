@@ -1,0 +1,54 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100010" readonly="true">
+4883ec18488d7c240cc744240c000000
+00e8da0f0000837c240c0a776b8b4424
+0c488d1580000000486304824801d0ff
+e000000000000000e8bb0f00004883c4
+18c3000000000000e8b30f00004883c4
+18c3000000000000e8ab0f00004883c4
+18c3000000000000e8a30f00004883c4
+18c3000000000000e89b0f00004883c4
+18c3000000000000e8930f00004883c4
+18c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1000b8" readonly="true">
+                a0ffffffb0ffffff
+c0ffffffd0ffffff90ffffff90ffffff
+e0ffffffe0ffffffe0ffffffe0ffffff
+90ffffff
+</bytechunk>
+<symbol space="ram" offset="0x100010" name="switchind"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>map fun r0x101000 get_value_byref</com>
+  <com>map fun r0x101010 casefunc0</com>
+  <com>map fun r0x101018 casefunc1</com>
+  <com>map fun r0x101020 casefunc2</com>
+  <com>map fun r0x101028 casefunc3</com>
+  <com>map fun r0x101008 casefuncmany</com>
+  <com>map fun r0x101030 casefuncdefault</com>
+  <com>lo fu switchind</com>
+  <com>map addr s0xfffffffffffffff4 int4 val</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Switch Indirect #1" min="1" max="1">case 0:</stringmatch>
+<stringmatch name="Switch Indirect #2" min="1" max="1">case 1:</stringmatch>
+<stringmatch name="Switch Indirect #3" min="1" max="1">case 2:</stringmatch>
+<stringmatch name="Switch Indirect #4" min="1" max="1">case 3:</stringmatch>
+<stringmatch name="Switch Indirect #5" min="1" max="1">case 4:</stringmatch>
+<stringmatch name="Switch Indirect #6" min="1" max="1">case 5:</stringmatch>
+<stringmatch name="Switch Indirect #7" min="1" max="1">case 10:</stringmatch>
+<stringmatch name="Switch Indirect #8" min="1" max="1">default:</stringmatch>
+<stringmatch name="Switch Indirect #9" min="1" max="1">casefunc0\(\);</stringmatch>
+<stringmatch name="Switch Indirect #10" min="1" max="1">casefunc1\(\);</stringmatch>
+<stringmatch name="Switch Indirect #11" min="1" max="1">casefunc2\(\);</stringmatch>
+<stringmatch name="Switch Indirect #12" min="1" max="1">casefunc3\(\);</stringmatch>
+<stringmatch name="Switch Indirect #13" min="1" max="1">casefuncmany\(\);</stringmatch>
+<stringmatch name="Switch Indirect #14" min="1" max="1">casefuncdefault\(\);</stringmatch>
+<stringmatch name="Switch Indirect #15" min="1" max="1">get_value_byref\(&amp;val\);</stringmatch>
+<stringmatch name="Switch Indirect #16" min="1" max="1">switch\(val\)</stringmatch>
+</decompilertest>
