@@ -28,6 +28,7 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.label.GDHtmlLabel;
+import ghidra.GhidraOptions;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.util.viewer.listingpanel.ProgramLocationListener;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
@@ -88,10 +89,11 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 	}
 
 	private void initialize() {
+		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		ToolOptions options = tool.getOptions(OPTIONS_TITLE);
-		leftDecompileOptions.grabFromToolAndProgram(null, options,
+		leftDecompileOptions.grabFromToolAndProgram(fieldOptions, options,
 			(functions[LEFT] != null) ? functions[LEFT].getProgram() : null);
-		rightDecompileOptions.grabFromToolAndProgram(null, options,
+		rightDecompileOptions.grabFromToolAndProgram(fieldOptions, options,
 			(functions[RIGHT] != null) ? functions[RIGHT].getProgram() : null);
 		setFieldPanelCoordinator(createFieldPanelCoordinator());
 		setScrollingSyncState(true);
@@ -465,17 +467,19 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 
 	@Override
 	protected void setPrograms(Program leftProgram, Program rightProgram) {
+		ToolOptions fieldOptions =
+			(tool != null) ? tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS) : null;
 		ToolOptions options = (tool != null) ? tool.getOptions(OPTIONS_TITLE) : null;
 		if (leftProgram != programs[LEFT]) {
 			programs[LEFT] = leftProgram;
 			if (options != null) {
-				leftDecompileOptions.grabFromToolAndProgram(null, options, leftProgram);
+				leftDecompileOptions.grabFromToolAndProgram(fieldOptions, options, leftProgram);
 			}
 		}
 		if (rightProgram != programs[RIGHT]) {
 			programs[RIGHT] = rightProgram;
 			if (options != null) {
-				rightDecompileOptions.grabFromToolAndProgram(null, options, rightProgram);
+				rightDecompileOptions.grabFromToolAndProgram(fieldOptions, options, rightProgram);
 			}
 		}
 	}

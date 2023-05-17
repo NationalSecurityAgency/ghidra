@@ -539,7 +539,7 @@ public class DecompileCallback {
 	 */
 	public void getNamespacePath(long id, Encoder resultEncoder) throws IOException {
 		Namespace namespace = getNameSpaceByID(id);
-		HighFunction.encodeNamespace(resultEncoder, namespace);
+		HighFunction.encodeNamespace(resultEncoder, namespace, dtmanage.getNameTransformer());
 		if (debug != null) {
 			debug.getNamespacePath(namespace);
 		}

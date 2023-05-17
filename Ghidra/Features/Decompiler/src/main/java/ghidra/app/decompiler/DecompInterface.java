@@ -370,7 +370,7 @@ public class DecompInterface {
 		}
 		compilerSpec = spec;
 
-		dtmanage = new PcodeDataTypeManager(prog);
+		dtmanage = new PcodeDataTypeManager(prog, options.getNameTransformer());
 		try {
 			decompCallback =
 				new DecompileCallback(prog, pcodelanguage, program.getCompilerSpec(), dtmanage);
@@ -642,6 +642,9 @@ public class DecompInterface {
 	 */
 	public synchronized boolean setOptions(DecompileOptions options) {
 		this.options = options;
+		if (dtmanage != null) {
+			dtmanage.setNameTransformer(options.getNameTransformer());
+		}
 		decompileMessage = "";
 		// Property can be set before process exists
 		if (decompProcess == null) {

@@ -4668,8 +4668,8 @@ void FuncCallSpecs::setFuncdata(Funcdata *f)
   fd = f;
   if (fd != (Funcdata *)0) {
     entryaddress = fd->getAddress();
-    if (fd->getName().size() != 0)
-      name = fd->getName();
+    if (fd->getDisplayName().size() != 0)
+      name = fd->getDisplayName();
   }
 }
 
@@ -5130,7 +5130,7 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
 
 {
   entryaddress = newfd->getAddress();
-  name = newfd->getName();
+  name = newfd->getDisplayName();
   fd = newfd;
 
   Varnode *vn = data.newVarnodeCallSpecs(this);

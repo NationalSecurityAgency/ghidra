@@ -29,16 +29,16 @@ import generic.theme.Gui;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.options.Options;
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramCompilerSpec;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.CompilerSpec.EvaluationModelType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.ElementId;
 import ghidra.program.model.pcode.Encoder;
+import ghidra.program.model.symbol.NameTransformer;
+import ghidra.program.model.symbol.IdentityNameTransformer;
 import ghidra.util.HelpLocation;
 
 /**
@@ -397,6 +397,8 @@ public class DecompileOptions {
 
 	private DecompilerLanguage displayLanguage; // Output language displayed by the decompiler
 
+	private NameTransformer nameTransformer;	// Transformer applied to data-type/function names
+
 	private String protoEvalModel; // Name of the prototype evaluation model
 
 	public DecompileOptions() {
@@ -434,16 +436,17 @@ public class DecompileOptions {
 		payloadLimitMBytes = SUGGESTED_MAX_PAYLOAD_BYTES;
 		maxIntructionsPer = SUGGESTED_MAX_INSTRUCTIONS;
 		cachedResultsSize = SUGGESTED_CACHED_RESULTS_SIZE;
+		nameTransformer = null;
 	}
 
 	/**
 	 * Grab all the decompiler options from various sources within a specific tool and program
 	 * and cache them in this object.
-	 * @param ownerPlugin  the plugin that owns the "tool options" for the decompiler
+	 * @param fieldOptions the Options object containing options specific to listing fields
 	 * @param opt          the Options object that contains the "tool options" specific to the decompiler
 	 * @param program      the program whose "program options" are relevant to the decompiler
 	 */
-	public void grabFromToolAndProgram(Plugin ownerPlugin, ToolOptions opt, Program program) {
+	public void grabFromToolAndProgram(ToolOptions fieldOptions, ToolOptions opt, Program program) {
 
 		grabFromProgram(program);
 
@@ -491,20 +494,18 @@ public class DecompileOptions {
 		maxIntructionsPer = opt.getInt(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS);
 		cachedResultsSize = opt.getInt(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE);
 
-		grabFromToolOptions(ownerPlugin);
+		grabFromFieldOptions(fieldOptions);
 	}
 
-	private void grabFromToolOptions(Plugin ownerPlugin) {
-		if (ownerPlugin == null) {
+	private void grabFromFieldOptions(ToolOptions fieldOptions) {
+		if (fieldOptions == null) {
 			return;
 		}
 
-		PluginTool tool = ownerPlugin.getTool();
-		Options toolOptions = tool.getOptions(CATEGORY_BROWSER_FIELDS);
-
 		CURSOR_MOUSE_BUTTON_NAMES mouseEvent =
-			toolOptions.getEnum(CURSOR_HIGHLIGHT_BUTTON_NAME, CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
+			fieldOptions.getEnum(CURSOR_HIGHLIGHT_BUTTON_NAME, CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
 		middleMouseHighlightButton = mouseEvent.getMouseEventID();
+		nameTransformer = new TemplateSimplifier(fieldOptions);
 	}
 
 	/**
@@ -531,10 +532,18 @@ public class DecompileOptions {
 		displayLanguage = cspec.getDecompilerOutputLanguage();
 	}
 
+	/**
+	 * @return the default prototype to assume if no other information about a function is known
+	 */
 	public String getProtoEvalModel() {
 		return protoEvalModel;
 	}
 
+	/**
+	 * Set the default prototype model for the decompiler.  This is the model assumed if no other
+	 * information about a function is known.
+	 * @param protoEvalModel is the name of the prototype model to set as default
+	 */
 	public void setProtoEvalModel(String protoEvalModel) {
 		this.protoEvalModel = protoEvalModel;
 	}
@@ -542,11 +551,11 @@ public class DecompileOptions {
 	/**
 	 * This registers all the decompiler tool options with ghidra, and has the side effect of
 	 * pulling all the current values for the options if they exist
-	 * @param ownerPlugin  the plugin to which the options should be registered
-	 * @param opt          the options object to register with
+	 * @param fieldOptions the options object specific to listing fields
+	 * @param opt          the options object specific to the decompiler
 	 * @param program      the program
 	 */
-	public void registerOptions(Plugin ownerPlugin, ToolOptions opt, Program program) {
+	public void registerOptions(ToolOptions fieldOptions, ToolOptions opt, Program program) {
 		opt.registerOption(PREDICATE_OPTIONSTRING, PREDICATE_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisPredicate"),
 			PREDICATE_OPTIONDESCRIPTION);
@@ -686,7 +695,7 @@ public class DecompileOptions {
 			"Current variable highlight");
 		opt.registerOption(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralCacheSize"), CACHE_RESULTS_DESCRIPTION);
-		grabFromToolAndProgram(ownerPlugin, opt, program);
+		grabFromToolAndProgram(fieldOptions, opt, program);
 	}
 
 	private static void appendOption(Encoder encoder, ElementId option, String p1, String p2,
@@ -825,10 +834,17 @@ public class DecompileOptions {
 		encoder.closeElement(ELEM_OPTIONSLIST);
 	}
 
+	/**
+	 * @return the maximum number of characters the decompiler displays in a single line of output
+	 */
 	public int getMaxWidth() {
 		return maxwidth;
 	}
 
+	/**
+	 * Set the maximum number of characters the decompiler displays in a single line of output
+	 * @param maxwidth is the maximum number of characters
+	 */
 	public void setMaxWidth(int maxwidth) {
 		this.maxwidth = maxwidth;
 	}
@@ -938,139 +954,296 @@ public class DecompileOptions {
 		return SEARCH_HIGHLIGHT_COLOR;
 	}
 
+	/**
+	 * @return the mouse button that should be used to toggle the primary token highlight
+	 */
 	public int getMiddleMouseHighlightButton() {
 		return middleMouseHighlightButton;
 	}
 
+	/**
+	 * @return true if Pre comments are included as part of decompiler output
+	 */
 	public boolean isPRECommentIncluded() {
 		return commentPREInclude;
 	}
 
+	/**
+	 * Set whether Pre comments are displayed as part of decompiler output
+	 * @param commentPREInclude is true if Pre comments are output
+	 */
 	public void setPRECommentIncluded(boolean commentPREInclude) {
 		this.commentPREInclude = commentPREInclude;
 	}
 
+	/**
+	 * @return true if Plate comments are included as part of decompiler output
+	 */
 	public boolean isPLATECommentIncluded() {
 		return commentPLATEInclude;
 	}
 
+	/**
+	 * Set whether Plate comments are displayed as part of decompiler output
+	 * @param commentPLATEInclude is true if Plate comments are output
+	 */
 	public void setPLATECommentIncluded(boolean commentPLATEInclude) {
 		this.commentPLATEInclude = commentPLATEInclude;
 	}
 
+	/**
+	 * @return true if Post comments are included as part of decompiler output
+	 */
 	public boolean isPOSTCommentIncluded() {
 		return commentPOSTInclude;
 	}
 
+	/**
+	 * Set whether Post comments are displayed as part of decompiler output
+	 * @param commentPOSTInclude is true if Post comments are output
+	 */
 	public void setPOSTCommentIncluded(boolean commentPOSTInclude) {
 		this.commentPOSTInclude = commentPOSTInclude;
 	}
 
+	/**
+	 * @return true if End-of-line comments are included as part of decompiler output
+	 */
 	public boolean isEOLCommentIncluded() {
 		return commentEOLInclude;
 	}
 
+	/**
+	 * Set whether End-of-line comments are displayed as part of decompiler output.
+	 * @param commentEOLInclude is true if End-of-line comments are output
+	 */
 	public void setEOLCommentIncluded(boolean commentEOLInclude) {
 		this.commentEOLInclude = commentEOLInclude;
 	}
 
+	/**
+	 * @return true if WARNING comments are included as part of decompiler output
+	 */
 	public boolean isWARNCommentIncluded() {
 		return commentWARNInclude;
 	}
 
+	/**
+	 * Set whether automatically generated WARNING comments are displayed as part of
+	 * decompiler output.
+	 * @param commentWARNInclude is true if WARNING comments are output
+	 */
 	public void setWARNCommentIncluded(boolean commentWARNInclude) {
 		this.commentWARNInclude = commentWARNInclude;
 	}
 
+	/**
+	 * @return true if function header comments are included as part of decompiler output
+	 */
 	public boolean isHeadCommentIncluded() {
 		return commentHeadInclude;
 	}
 
+	/**
+	 * Set whether function header comments are included as part of decompiler output.
+	 * @param commentHeadInclude is true if header comments are output
+	 */
 	public void setHeadCommentIncluded(boolean commentHeadInclude) {
 		this.commentHeadInclude = commentHeadInclude;
 	}
 
+	/**
+	 * @return true if the decompiler currently eliminates unreachable code
+	 */
 	public boolean isEliminateUnreachable() {
 		return eliminateUnreachable;
 	}
 
+	/**
+	 * Set whether the decompiler should eliminate unreachable code as part of its analysis.
+	 * @param eliminateUnreachable is true if unreachable code is eliminated
+	 */
 	public void setEliminateUnreachable(boolean eliminateUnreachable) {
 		this.eliminateUnreachable = eliminateUnreachable;
 	}
 
+	/**
+	 * If the decompiler currently applies transformation rules that identify and
+	 * simplify double precision arithmetic operations, true is returned.
+	 * @return true if the decompiler applies double precision rules
+	 */
 	public boolean isSimplifyDoublePrecision() {
 		return simplifyDoublePrecision;
 	}
 
+	/**
+	 * Set whether the decompiler should apply transformation rules that identify and
+	 * simplify double precision arithmetic operations.
+	 * @param simplifyDoublePrecision is true if double precision rules should be applied
+	 */
 	public void setSimplifyDoublePrecision(boolean simplifyDoublePrecision) {
 		this.simplifyDoublePrecision = simplifyDoublePrecision;
 	}
 
+	/**
+	 * @return true if line numbers should be displayed with decompiler output.
+	 */
 	public boolean isDisplayLineNumbers() {
 		return displayLineNumbers;
 	}
 
+	/**
+	 * @return the source programming language that decompiler output is rendered in
+	 */
 	public DecompilerLanguage getDisplayLanguage() {
 		return displayLanguage;
 	}
 
+	/**
+	 * Retrieve the transformer being applied to data-type, function, and namespace names.
+	 * If no transform is being applied, a pass-through object is returned.
+	 * @return the transformer object
+	 */
+	public NameTransformer getNameTransformer() {
+		if (nameTransformer == null) {
+			nameTransformer = new IdentityNameTransformer();
+		}
+		return nameTransformer;
+	}
+
+	/**
+	 * Set a specific transformer to be applied to all data-type, function, and namespace
+	 * names in decompiler output.  A null value indicates no transform should be applied.
+	 * @param transformer is the transformer to apply
+	 */
+	public void setNameTransformer(NameTransformer transformer) {
+		nameTransformer = transformer;
+	}
+
+	/**
+	 * @return true if calling convention names are displayed as part of function signatures
+	 */
 	public boolean isConventionPrint() {
 		return conventionPrint;
 	}
 
+	/**
+	 * Set whether the calling convention name should be displayed as part of function signatures
+	 * in decompiler output.
+	 * @param conventionPrint is true if calling convention names should be displayed
+	 */
 	public void setConventionPrint(boolean conventionPrint) {
 		this.conventionPrint = conventionPrint;
 	}
 
+	/**
+	 * @return true if cast operations are not displayed in decompiler output
+	 */
 	public boolean isNoCastPrint() {
 		return noCastPrint;
 	}
 
+	/**
+	 * Set whether decompiler output should display cast operations.
+	 * @param noCastPrint is true if casts should NOT be displayed.
+	 */
 	public void setNoCastPrint(boolean noCastPrint) {
 		this.noCastPrint = noCastPrint;
 	}
 
+	/**
+	 * Set the source programming language that decompiler output should be rendered in.
+	 * @param val is the source language
+	 */
 	public void setDisplayLanguage(DecompilerLanguage val) {
 		displayLanguage = val;
 	}
 
+	/**
+	 * @return the font that should be used to render decompiler output
+	 */
 	public Font getDefaultFont() {
 		return Gui.getFont(DEFAULT_FONT_ID);
 	}
 
+	/**
+	 * If the time a decompiler process is allowed to analyze a single
+	 * function exceeds this value, decompilation is aborted.
+	 * @return the maximum time in seconds
+	 */
 	public int getDefaultTimeout() {
 		return decompileTimeoutSeconds;
 	}
 
+	/**
+	 * Set the maximum time (in seconds) a decompiler process is allowed to analyze a single
+	 * function. If it is exceeded, decompilation is aborted.
+	 * @param timeout is the maximum time in seconds
+	 */
 	public void setDefaultTimeout(int timeout) {
 		decompileTimeoutSeconds = timeout;
 	}
 
+	/**
+	 * If the size (in megabytes) of the payload returned by the decompiler
+	 * process exceeds this value for a single function, decompilation is
+	 * aborted.
+	 * @return the maximum number of megabytes in a function payload
+	 */
 	public int getMaxPayloadMBytes() {
 		return payloadLimitMBytes;
 	}
 
+	/**
+	 * Set the maximum size (in megabytes) of the payload that can be returned by the decompiler
+	 * process when analyzing a single function.  If this size is exceeded, decompilation is
+	 * aborted.
+	 * @param mbytes is the maximum number of megabytes in a function payload
+	 */
 	public void setMaxPayloadMBytes(int mbytes) {
 		payloadLimitMBytes = mbytes;
 	}
 
+	/**
+	 * If the number of assembly instructions in a function exceeds this value, the function
+	 * is not decompiled.
+	 * @return the maximum number of instructions
+	 */
 	public int getMaxInstructions() {
 		return maxIntructionsPer;
 	}
 
+	/**
+	 * Set the maximum number of assembly instructions in a function to decompile.
+	 * If the number exceeds this, the function is not decompiled.
+	 * @param num is the number of instructions
+	 */
 	public void setMaxInstructions(int num) {
 		maxIntructionsPer = num;
 	}
 
+	/**
+	 * @return the style in which comments are printed in decompiler output
+	 */
 	public CommentStyleEnum getCommentStyle() {
 		return commentStyle;
 	}
 
+	/**
+	 * Set the style in which comments are printed as part of decompiler output
+	 * @param commentStyle is the new style to set
+	 */
 	public void setCommentStyle(CommentStyleEnum commentStyle) {
 		this.commentStyle = commentStyle;
 	}
 
+	/**
+	 * Return the maximum number of decompiled function results that should be cached
+	 * by the controller of the decompiler process.
+	 * @return the number of functions to cache
+	 */
 	public int getCacheSize() {
 		return cachedResultsSize;
 	}
+
 }
