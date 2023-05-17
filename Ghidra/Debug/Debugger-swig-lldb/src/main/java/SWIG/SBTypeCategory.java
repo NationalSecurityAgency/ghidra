@@ -175,8 +175,8 @@ public class SBTypeCategory {
     return lldbJNI.SBTypeCategory_DeleteTypeSynthetic(swigCPtr, this, SBTypeNameSpecifier.getCPtr(arg0), arg0);
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeCategory___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeCategory___repr__(swigCPtr, this);
   }
 
 }

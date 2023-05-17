@@ -115,6 +115,10 @@ public class SBCommandInterpreter {
     return lldbJNI.SBCommandInterpreter_HasAliasOptions(swigCPtr, this);
   }
 
+  public boolean IsInteractive() {
+    return lldbJNI.SBCommandInterpreter_IsInteractive(swigCPtr, this);
+  }
+
   public SBProcess GetProcess() {
     return new SBProcess(lldbJNI.SBCommandInterpreter_GetProcess(swigCPtr, this), true);
   }

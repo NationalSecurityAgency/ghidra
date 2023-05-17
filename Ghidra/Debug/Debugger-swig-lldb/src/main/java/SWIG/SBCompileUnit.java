@@ -63,12 +63,20 @@ public class SBCompileUnit {
     return new SBLineEntry(lldbJNI.SBCompileUnit_GetLineEntryAtIndex(swigCPtr, this, idx), true);
   }
 
+  public long FindLineEntryIndex(SBLineEntry line_entry, boolean exact) {
+    return lldbJNI.SBCompileUnit_FindLineEntryIndex__SWIG_0(swigCPtr, this, SBLineEntry.getCPtr(line_entry), line_entry, exact);
+  }
+
+  public long FindLineEntryIndex(SBLineEntry line_entry) {
+    return lldbJNI.SBCompileUnit_FindLineEntryIndex__SWIG_1(swigCPtr, this, SBLineEntry.getCPtr(line_entry), line_entry);
+  }
+
   public long FindLineEntryIndex(long start_idx, long line, SBFileSpec inline_file_spec) {
-    return lldbJNI.SBCompileUnit_FindLineEntryIndex__SWIG_0(swigCPtr, this, start_idx, line, SBFileSpec.getCPtr(inline_file_spec), inline_file_spec);
+    return lldbJNI.SBCompileUnit_FindLineEntryIndex__SWIG_2(swigCPtr, this, start_idx, line, SBFileSpec.getCPtr(inline_file_spec), inline_file_spec);
   }
 
   public long FindLineEntryIndex(long start_idx, long line, SBFileSpec inline_file_spec, boolean exact) {
-    return lldbJNI.SBCompileUnit_FindLineEntryIndex__SWIG_1(swigCPtr, this, start_idx, line, SBFileSpec.getCPtr(inline_file_spec), inline_file_spec, exact);
+    return lldbJNI.SBCompileUnit_FindLineEntryIndex__SWIG_3(swigCPtr, this, start_idx, line, SBFileSpec.getCPtr(inline_file_spec), inline_file_spec, exact);
   }
 
   public SBFileSpec GetSupportFileAtIndex(long idx) {
@@ -99,8 +107,8 @@ public class SBCompileUnit {
     return lldbJNI.SBCompileUnit_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBCompileUnit___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBCompileUnit___repr__(swigCPtr, this);
   }
 
 }

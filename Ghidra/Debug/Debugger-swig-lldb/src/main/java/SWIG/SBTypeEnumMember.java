@@ -71,8 +71,8 @@ public class SBTypeEnumMember {
     return lldbJNI.SBTypeEnumMember_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description, description_level.swigValue());
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeEnumMember___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeEnumMember___repr__(swigCPtr, this);
   }
 
 }

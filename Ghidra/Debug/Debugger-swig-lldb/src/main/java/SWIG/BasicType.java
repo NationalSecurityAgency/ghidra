@@ -22,6 +22,7 @@ public final class BasicType {
   public final static BasicType eBasicTypeUnsignedWChar = new BasicType("eBasicTypeUnsignedWChar");
   public final static BasicType eBasicTypeChar16 = new BasicType("eBasicTypeChar16");
   public final static BasicType eBasicTypeChar32 = new BasicType("eBasicTypeChar32");
+  public final static BasicType eBasicTypeChar8 = new BasicType("eBasicTypeChar8");
   public final static BasicType eBasicTypeShort = new BasicType("eBasicTypeShort");
   public final static BasicType eBasicTypeUnsignedShort = new BasicType("eBasicTypeUnsignedShort");
   public final static BasicType eBasicTypeInt = new BasicType("eBasicTypeInt");
@@ -80,7 +81,7 @@ public final class BasicType {
     swigNext = this.swigValue+1;
   }
 
-  private static BasicType[] swigValues = { eBasicTypeInvalid, eBasicTypeVoid, eBasicTypeChar, eBasicTypeSignedChar, eBasicTypeUnsignedChar, eBasicTypeWChar, eBasicTypeSignedWChar, eBasicTypeUnsignedWChar, eBasicTypeChar16, eBasicTypeChar32, eBasicTypeShort, eBasicTypeUnsignedShort, eBasicTypeInt, eBasicTypeUnsignedInt, eBasicTypeLong, eBasicTypeUnsignedLong, eBasicTypeLongLong, eBasicTypeUnsignedLongLong, eBasicTypeInt128, eBasicTypeUnsignedInt128, eBasicTypeBool, eBasicTypeHalf, eBasicTypeFloat, eBasicTypeDouble, eBasicTypeLongDouble, eBasicTypeFloatComplex, eBasicTypeDoubleComplex, eBasicTypeLongDoubleComplex, eBasicTypeObjCID, eBasicTypeObjCClass, eBasicTypeObjCSel, eBasicTypeNullPtr, eBasicTypeOther };
+  private static BasicType[] swigValues = { eBasicTypeInvalid, eBasicTypeVoid, eBasicTypeChar, eBasicTypeSignedChar, eBasicTypeUnsignedChar, eBasicTypeWChar, eBasicTypeSignedWChar, eBasicTypeUnsignedWChar, eBasicTypeChar16, eBasicTypeChar32, eBasicTypeChar8, eBasicTypeShort, eBasicTypeUnsignedShort, eBasicTypeInt, eBasicTypeUnsignedInt, eBasicTypeLong, eBasicTypeUnsignedLong, eBasicTypeLongLong, eBasicTypeUnsignedLongLong, eBasicTypeInt128, eBasicTypeUnsignedInt128, eBasicTypeBool, eBasicTypeHalf, eBasicTypeFloat, eBasicTypeDouble, eBasicTypeLongDouble, eBasicTypeFloatComplex, eBasicTypeDoubleComplex, eBasicTypeLongDoubleComplex, eBasicTypeObjCID, eBasicTypeObjCClass, eBasicTypeObjCSel, eBasicTypeNullPtr, eBasicTypeOther };
   private static int swigNext = 0;
   private final int swigValue;
   private final String swigName;

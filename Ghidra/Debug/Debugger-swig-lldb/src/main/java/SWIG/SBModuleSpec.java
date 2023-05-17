@@ -112,8 +112,8 @@ public class SBModuleSpec {
     return lldbJNI.SBModuleSpec_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBModuleSpec___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBModuleSpec___repr__(swigCPtr, this);
   }
 
 }

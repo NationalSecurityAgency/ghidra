@@ -91,8 +91,8 @@ public class SBTypeFilter {
     return lldbJNI.SBTypeFilter_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description, description_level.swigValue());
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeFilter___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeFilter___repr__(swigCPtr, this);
   }
 
 }

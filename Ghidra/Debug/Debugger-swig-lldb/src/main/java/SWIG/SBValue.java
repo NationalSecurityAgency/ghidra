@@ -392,8 +392,8 @@ public class SBValue {
     return new SBValue(lldbJNI.SBValue_EvaluateExpression__SWIG_2(swigCPtr, this, expr, SBExpressionOptions.getCPtr(options), options, name), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBValue___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBValue___repr__(swigCPtr, this);
   }
 
 }

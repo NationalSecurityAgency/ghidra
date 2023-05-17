@@ -75,8 +75,8 @@ public class SBSymbolContextList {
     lldbJNI.SBSymbolContextList_Clear(swigCPtr, this);
   }
 
-  public String __str__() {
-    return lldbJNI.SBSymbolContextList___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBSymbolContextList___repr__(swigCPtr, this);
   }
 
 }
