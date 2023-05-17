@@ -189,7 +189,7 @@ unsigned long parse_int(char *a, char *name,
 				name, a, min, max);
 		exit(-1);
 	}
-    return val;
+	return val;
 }
 
 void parse_width(char *arg) {
