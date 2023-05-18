@@ -178,6 +178,10 @@ public class OriginalFileExporter extends Exporter {
 			Iterable<Relocation> relocs = () -> program.getRelocationTable().getRelocations();
 			Memory memory = program.getMemory();
 			for (Relocation reloc : relocs) {
+				if (reloc.getStatus() != Relocation.Status.APPLIED &&
+					reloc.getStatus() != Relocation.Status.APPLIED_OTHER) {
+					continue;
+				}
 				Address addr = reloc.getAddress();
 				AddressSourceInfo addrSourceInfo = memory.getAddressSourceInfo(addr);
 				if (addrSourceInfo == null) {
@@ -187,10 +191,12 @@ public class OriginalFileExporter extends Exporter {
 				if (offset >= 0) {
 					MemoryBlockSourceInfo memSourceInfo = addrSourceInfo.getMemoryBlockSourceInfo();
 					byte[] bytes = reloc.getBytes();
-					int len = Math.min(bytes.length,
-						(int) memSourceInfo.getMaxAddress().subtract(addr) + 1);
-					fout.seek(offset);
-					fout.write(bytes, 0, len);
+					if (bytes != null) {
+						int len = Math.min(bytes.length,
+							(int) memSourceInfo.getMaxAddress().subtract(addr) + 1);
+						fout.seek(offset);
+						fout.write(bytes, 0, len);
+					}
 				}
 			}
 		}
@@ -198,6 +204,7 @@ public class OriginalFileExporter extends Exporter {
 			if (!tempFile.delete()) {
 				log.appendMsg("Failed to delete malformed file: " + tempFile);
 			}
+			log.appendException(e);
 			return false;
 		}
 		
