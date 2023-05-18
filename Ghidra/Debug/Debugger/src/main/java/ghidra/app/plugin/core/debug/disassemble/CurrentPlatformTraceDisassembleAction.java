@@ -20,11 +20,11 @@ import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin.Reqs;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.plugin.core.debug.mapping.DisassemblyResult;
 import ghidra.framework.cmd.TypedBackgroundCommand;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
@@ -53,15 +53,10 @@ public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 		if (plugin.platformService == null) {
 			return null;
 		}
-		if (!(context instanceof ListingActionContext)) {
+		if (!(context instanceof DebuggerListingActionContext lac)) {
 			return null;
 		}
-		ListingActionContext lac = (ListingActionContext) context;
-		Program program = lac.getProgram();
-		if (!(program instanceof TraceProgramView)) {
-			return null;
-		}
-		TraceProgramView view = (TraceProgramView) program;
+		TraceProgramView view = lac.getProgram();
 		Trace trace = view.getTrace();
 		DebuggerCoordinates current = plugin.traceManager == null ? DebuggerCoordinates.NOWHERE
 				: plugin.traceManager.getCurrentFor(trace);

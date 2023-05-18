@@ -2581,8 +2581,8 @@ public interface FlatDebuggerAPI {
 	 */
 	default Trace getTrace(ProgramLocation location) {
 		Program program = location.getProgram();
-		if (program instanceof TraceProgramView) {
-			return ((TraceProgramView) program).getTrace();
+		if (program instanceof TraceProgramView view) {
+			return view.getTrace();
 		}
 		return null;
 	}

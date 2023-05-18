@@ -22,18 +22,17 @@ import db.Transaction;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.widgets.dialogs.InputDialog;
-import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.RenameSnapshotAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -77,17 +76,11 @@ public class DebuggerTimePlugin extends AbstractDebuggerPlugin {
 	}
 
 	protected Entry<Trace, Long> contextGetTraceSnap(ActionContext context) {
-		if (context instanceof ProgramLocationActionContext) {
-			ProgramLocationActionContext ctx = (ProgramLocationActionContext) context;
-			Program program = ctx.getProgram();
-			if (program instanceof TraceProgramView) {
-				TraceProgramView view = (TraceProgramView) program;
-				return Map.entry(view.getTrace(), view.getSnap());
-			}
-			return null;
+		if (context instanceof DebuggerProgramLocationActionContext ctx) {
+			TraceProgramView view = ctx.getProgram();
+			return Map.entry(view.getTrace(), view.getSnap());
 		}
-		if (context instanceof DebuggerSnapActionContext) {
-			DebuggerSnapActionContext ctx = (DebuggerSnapActionContext) context;
+		if (context instanceof DebuggerSnapActionContext ctx) {
 			if (ctx.getTrace() != null) {
 				return Map.entry(ctx.getTrace(), ctx.getSnap());
 			}
