@@ -85,14 +85,6 @@ define pcodeop wclrallOp;
 define pcodeop wclrOp;
 # :wclr L,A,B is $(NOTVLE) & OP=31 & XOP_1_10=934 & L & A & B  { wclrOp(); } 
 
-@ifdef IS_ISA
-# binutils: 476.d 474:  7c 00 06 ac     mbar    
-# binutils: 476.d 47c:  7c 20 06 ac     mbar    1
-# "mbar",	X(31,854),	X_MASK, BOOKE|PPCA2|PPC476, PPCNONE,	{MO}
-define pcodeop mbarOp;
-:mbar MO is OP=31 & XOP_1_10=854 & MO  { mbarOp(); } 
-@endif
-
 # binutils: a2.d:  514: 7d 4a 3a 87     mfdcr\.  r10,234
 :mfdcr. D, DCRN		is $(NOTVLE) & OP=31 & D & DCRN & XOP_1_10=323 & BIT_0=1
 {
