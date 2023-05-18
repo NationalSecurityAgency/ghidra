@@ -17,10 +17,9 @@ package ghidra.app.plugin.core.debug.disassemble;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
-import ghidra.app.context.ListingActionContext;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
@@ -41,15 +40,10 @@ public abstract class AbstractTraceDisassembleAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (!(context instanceof ListingActionContext)) {
+		if (!(context instanceof DebuggerListingActionContext lac)) {
 			return;
 		}
-		ListingActionContext lac = (ListingActionContext) context;
-		Program program = lac.getProgram();
-		if (!(program instanceof TraceProgramView)) {
-			return;
-		}
-		TraceProgramView view = (TraceProgramView) program;
+		TraceProgramView view = lac.getProgram();
 		Address address = lac.getAddress();
 		AddressSpace space = address.getAddressSpace();
 		AddressSetView set;
@@ -58,7 +52,7 @@ public abstract class AbstractTraceDisassembleAction extends DockingAction {
 			set = selection;
 		}
 		else {
-			set = program.getAddressFactory()
+			set = view.getAddressFactory()
 					.getAddressSet(space.getMinAddress(), space.getMaxAddress());
 		}
 		TracePlatform platform = getPlatform(view);

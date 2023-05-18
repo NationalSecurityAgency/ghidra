@@ -335,6 +335,11 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		setSubTitle(computeSubTitle());
 	}
 
+	@Override
+	protected ByteViewerActionContext newByteViewerActionContext() {
+		return new DebuggerMemoryBytesActionContext(this);
+	}
+
 	protected void createActions() {
 		initTraits();
 

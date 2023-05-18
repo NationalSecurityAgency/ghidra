@@ -266,6 +266,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return decorationPanel;
 	}
 
+	protected CodeViewerActionContext newCodeViewerActionContext() {
+		return new CodeViewerActionContext(this);
+	}
+
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		if (program == null) {
@@ -273,7 +277,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		}
 
 		if (event == null) {
-			return new CodeViewerActionContext(this);
+			return newCodeViewerActionContext();
 		}
 
 		Object source = event.getSource();
@@ -283,7 +287,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			if (programLocation == null) {
 				return null;
 			}
-			return new CodeViewerActionContext(this);
+			return newCodeViewerActionContext();
 		}
 
 		FieldHeader headerPanel = listingPanel.getFieldHeader();
