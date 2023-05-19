@@ -101,12 +101,12 @@ public class GdbModelTargetModuleContainer
 
 	@Override
 	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
-		// Ignore 'refresh' because inferior.getKnownModules may exclude executable
-		return doRefresh();
+		// listModules is now cached by the manager
+		return doRefresh(refresh.isRefresh(elements.keySet()));
 	}
 
-	protected CompletableFuture<Void> doRefresh() {
-		return inferior.listModules().thenCompose(byName -> {
+	protected CompletableFuture<Void> doRefresh(boolean force) {
+		return inferior.listModules(force).thenCompose(byName -> {
 			for (String modName : inferior.getKnownModules().keySet()) {
 				if (!byName.keySet().contains(modName)) {
 					impl.deleteModelObject(byName.get(modName));
@@ -129,7 +129,7 @@ public class GdbModelTargetModuleContainer
 	}
 
 	protected CompletableFuture<?> refreshInternal() {
-		return doRefresh().exceptionally(ex -> {
+		return doRefresh(false).exceptionally(ex -> {
 			impl.reportError(this, "Problem refreshing inferior's modules", ex);
 			return null;
 		});

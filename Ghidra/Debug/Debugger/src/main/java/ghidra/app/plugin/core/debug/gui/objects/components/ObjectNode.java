@@ -24,6 +24,7 @@ import docking.widgets.tree.*;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.util.Msg;
@@ -77,11 +78,13 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 	}
 
 	@Override
-	public List<GTreeNode> generateChildren(TaskMonitor monitor) throws CancelledException {
+	public List<GTreeNode> generateChildren(TaskMonitor monitor)
+			throws CancelledException {
 
 		if (!container.isImmutable() || isInProgress()) {
 			try {
-				CompletableFuture<ObjectContainer> cf = container.getOffspring();
+				CompletableFuture<ObjectContainer> cf =
+					container.getOffspring(RefreshBehavior.REFRESH_WHEN_ABSENT);
 				if (cf != null) {
 					// NB: We're allowed to do this because we're guaranteed to be 
 					//   in our own thread by the GTreeSlowLoadingNode
