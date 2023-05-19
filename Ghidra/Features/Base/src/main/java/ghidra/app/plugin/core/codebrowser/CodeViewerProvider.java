@@ -38,6 +38,7 @@ import docking.widgets.fieldpanel.HoverHandler;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GIcon;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.actions.*;
@@ -266,7 +267,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return decorationPanel;
 	}
 
-	protected CodeViewerActionContext newCodeViewerActionContext() {
+	protected ListingActionContext newListingActionContext() {
 		return new CodeViewerActionContext(this);
 	}
 
@@ -277,7 +278,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		}
 
 		if (event == null) {
-			return newCodeViewerActionContext();
+			return newListingActionContext();
 		}
 
 		Object source = event.getSource();
@@ -287,7 +288,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			if (programLocation == null) {
 				return null;
 			}
-			return newCodeViewerActionContext();
+			return newListingActionContext();
 		}
 
 		FieldHeader headerPanel = listingPanel.getFieldHeader();

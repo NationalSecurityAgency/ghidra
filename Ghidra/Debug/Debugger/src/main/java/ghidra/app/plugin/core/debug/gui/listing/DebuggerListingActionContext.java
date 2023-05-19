@@ -15,24 +15,35 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
-import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.core.debug.gui.action.DebuggerProgramLocationActionContext;
 import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.program.TraceProgramView;
 
-public class DebuggerListingActionContext extends CodeViewerActionContext
+public class DebuggerListingActionContext extends ListingActionContext
 		implements DebuggerProgramLocationActionContext {
-	public DebuggerListingActionContext(CodeViewerProvider provider) {
-		super(provider);
+	public DebuggerListingActionContext(DebuggerListingProvider provider) {
+		super(provider, provider);
 	}
 
-	public DebuggerListingActionContext(CodeViewerProvider provider, ProgramLocation location) {
-		super(provider, location);
+	public DebuggerListingActionContext(DebuggerListingProvider provider,
+			ProgramLocation location) {
+		super(provider, provider, location);
+	}
+
+	public DebuggerListingActionContext(DebuggerListingProvider provider, ProgramLocation location,
+			ProgramSelection selection, ProgramSelection highlight) {
+		super(provider, provider, location.getProgram(), location, selection, highlight);
 	}
 
 	@Override
 	public TraceProgramView getProgram() {
 		return (TraceProgramView) super.getProgram();
+	}
+
+	@Override
+	public DebuggerListingProvider getComponentProvider() {
+		return (DebuggerListingProvider) super.getComponentProvider();
 	}
 }
