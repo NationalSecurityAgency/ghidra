@@ -19,7 +19,6 @@ import docking.ActionContext;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
 
 /**
  * Action for use in the composite data type editor.
@@ -49,17 +48,15 @@ public class EditComponentAction extends CompositeEditorTableAction {
 			return;
 		}
 
+		if (!model.isEditComponentAllowed()) {
+			model.setStatus("Can only edit a structure, union, enum or function-definition.");
+			return;
+		}
+
 		DataTypeComponent comp = model.getComponent(row);
 		DataType clickedType = comp.getDataType();
 		DataType dt = DataTypeUtils.getBaseDataType(clickedType);
-		boolean isEditableType =
-			(dt instanceof Structure) || (dt instanceof Union) || (dt instanceof Enum);
-		if (isEditableType) {
-			edit(dt, clickedType.getName());
-		}
-		else {
-			model.setStatus("Can only edit a structure, union or enum.");
-		}
+		edit(dt, clickedType.getName());
 		requestTableFocus();
 	}
 
