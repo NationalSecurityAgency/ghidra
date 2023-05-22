@@ -30,6 +30,7 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
+import ghidra.util.exception.InvalidInputException;
 
 public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 
@@ -117,6 +118,13 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 			func.getName(), func.getProgram().getDataTypeManager());
 		FunctionPrototype functionPrototype = hf.getFunctionPrototype();
 
+		try {
+			fsig.setCallingConvention(functionPrototype.getModelName());
+		}
+		catch (InvalidInputException e) {
+			// ignore
+		}
+
 		int np = hf.getLocalSymbolMap().getNumParams();
 		fsig.setReturnType(functionPrototype.getReturnType());
 
@@ -172,7 +180,6 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		if (function.getEntryPoint().equals(hf.getFunction().getEntryPoint())) {
 			if (function.getSignatureSource() == SourceType.DEFAULT) {
 				model.setUseCustomizeStorage(false);
-				model.setCallingConventionName(functionPrototype.getModelName());
 				model.setFunctionData(buildSignature(hf));
 				verifyDynamicEditorModel(hf, model);
 			}
