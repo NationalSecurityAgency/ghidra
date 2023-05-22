@@ -44,6 +44,7 @@ import docking.widgets.fieldpanel.support.ViewerPosition;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.nav.ListingPanelContainer;
+import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -672,6 +673,19 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	@Override
 	protected ListingActionContext newListingActionContext() {
 		return new DebuggerListingActionContext(this);
+	}
+
+	@Override
+	protected CodeBrowserClipboardProvider newClipboardProvider() {
+		return new CodeBrowserClipboardProvider(tool, this) {
+			@Override
+			public boolean isValidContext(ActionContext context) {
+				if (!(context instanceof DebuggerListingActionContext)) {
+					return false;
+				}
+				return context.getComponentProvider() == componentProvider;
+			}
+		};
 	}
 
 	protected void createActions() {
