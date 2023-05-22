@@ -23,18 +23,13 @@ import agent.gdb.manager.impl.GdbMinimalSymbol;
 public interface GdbModule {
 	String getName();
 
-	CompletableFuture<Long> computeBase();
+	Long getBase();
 
-	CompletableFuture<Long> computeMax();
+	Long getMax();
 
-	Long getKnownBase();
-
-	Long getKnownMax();
-
-	CompletableFuture<Map<String, GdbModuleSection>> listSections();
+	CompletableFuture<Map<String, GdbModuleSection>> listSections(boolean refresh);
 
 	Map<String, GdbModuleSection> getKnownSections();
 
 	CompletableFuture<Map<String, GdbMinimalSymbol>> listMinimalSymbols();
-
 }

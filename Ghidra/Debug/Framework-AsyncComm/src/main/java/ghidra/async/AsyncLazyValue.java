@@ -132,6 +132,7 @@ public class AsyncLazyValue<T> {
 	/**
 	 * Check if the value has been requested, but not yet completed
 	 * 
+	 * <p>
 	 * This will also return true if something is providing the value out of band.
 	 * 
 	 * @return true if {@link #request()} or {@link #provide()} has been called, but not completed

@@ -111,8 +111,8 @@ public class GdbModelTargetModule extends
 	}
 
 	protected AddressRange doGetRange() {
-		Long base = module.getKnownBase();
-		Long max = module.getKnownMax();
+		Long base = module.getBase();
+		Long max = module.getMax();
 		max = max == null ? base : (Long) (max - 1); // GDB gives end+1
 		if (base == null) {
 			Address addr = impl.space.getMinAddress();
