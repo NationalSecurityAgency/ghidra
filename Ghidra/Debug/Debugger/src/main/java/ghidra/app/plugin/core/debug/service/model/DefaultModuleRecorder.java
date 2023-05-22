@@ -89,7 +89,7 @@ public class DefaultModuleRecorder implements ManagedModuleRecorder {
 			return traceModule.addSection(path, section.getIndex(), traceRange);
 		}
 		catch (DuplicateNameException e) {
-			Msg.warn(this, path + " already recorded");
+			// Msg.warn(this, path + " already recorded");
 			return moduleManager.getLoadedSectionByPath(snap, path);
 		}
 	}
@@ -121,6 +121,27 @@ public class DefaultModuleRecorder implements ManagedModuleRecorder {
 		catch (DuplicateNameException e) {
 			Msg.error(this, "Could not record process module removed: " + e);
 		}
+	}
+
+	public void moduleChanged(TargetModule module, AddressRange traceRng) {
+		long snap = recorder.getSnap();
+		String path = module.getJoinedPath(".");
+		recorder.parTx.execute("Module " + path + " range updated", () -> {
+			doModuleChanged(snap, path, traceRng);
+		}, path);
+	}
+
+	protected void doModuleChanged(long snap, String path, AddressRange traceRng) {
+		TraceModule traceModule = moduleManager.getLoadedModuleByPath(snap, path);
+		if (traceModule == null) {
+			Msg.warn(this, "changed " + path + " is not in the trace");
+			return;
+		}
+		/**
+		 * Yes, this will modify the module's previous history, which technically could be
+		 * incorrect. The occasion should be rare, and the OBTR will handle it correctly.
+		 */
+		traceModule.setRange(traceRng);
 	}
 
 	@Override

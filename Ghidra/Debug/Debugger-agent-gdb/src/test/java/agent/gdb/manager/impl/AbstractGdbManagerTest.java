@@ -167,10 +167,10 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			waitOn(startManager(mgr));
 			GdbInferior inferior = mgr.currentInferior();
 			waitOn(inferior.fileExecAndSymbols("/usr/bin/echo"));
-			Map<String, GdbModule> modules = waitOn(inferior.listModules());
+			Map<String, GdbModule> modules = waitOn(inferior.listModules(false));
 			GdbModule modEcho = modules.get("/usr/bin/echo");
 			assertNotNull(modEcho);
-			Map<String, GdbModuleSection> sectionsEcho = waitOn(modEcho.listSections());
+			Map<String, GdbModuleSection> sectionsEcho = waitOn(modEcho.listSections(false));
 			GdbModuleSection secEchoText = sectionsEcho.get(".text");
 			assertNotNull(secEchoText);
 		}
