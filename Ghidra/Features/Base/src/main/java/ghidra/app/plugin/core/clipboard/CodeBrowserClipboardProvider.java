@@ -69,6 +69,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		new ClipboardType(CodeUnitInfoTransferable.localDataTypeFlavor, "Labels");
 	public static final ClipboardType COMMENTS_TYPE =
 		new ClipboardType(CodeUnitInfoTransferable.localDataTypeFlavor, "Comments");
+	public static final ClipboardType ADDRESS_SYM_TEXT_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Address SymString");
 
 	private static final List<ClipboardType> COPY_TYPES = createCopyTypesList();
 
@@ -85,6 +87,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		list.add(PYTHON_LIST_TYPE);
 		list.add(CPP_BYTE_ARRAY_TYPE);
 		list.add(ADDRESS_TEXT_TYPE);
+		list.add(ADDRESS_SYM_TEXT_TYPE);
 
 		return list;
 	}
@@ -183,6 +186,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 		if (copyType == ADDRESS_TEXT_TYPE) {
 			return copyAddress();
+		}
+		else if (copyType == ADDRESS_SYM_TEXT_TYPE) {
+			return copySymbolString();
 		}
 		else if (copyType == CODE_TEXT_TYPE) {
 			return copyCode(monitor);
@@ -308,6 +314,28 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		AddressSetView addressSet = getSelectedAddresses();
 		AddressIterator it = addressSet.getAddresses(true);
 		String joined = StringUtils.join((Iterator<Address>) it, "\n");
+		return createStringTransferable(joined);
+	}
+
+	private Transferable copySymbolString() {
+		CodeUnitIterator codeUnits =
+			currentProgram.getListing().getCodeUnits(getSelectedAddresses(), true);
+		StringBuilder builder = new StringBuilder();
+		while (codeUnits.hasNext()) {
+			// TODO: Can we improve this by caching the function?
+			CodeUnit cu = codeUnits.next();
+			Address addr = cu.getAddress();
+			Function foo = currentProgram.getListing().getFunctionContaining(addr);
+			boolean insideFunction = foo != null;
+			String addrStr;
+			if (insideFunction) {
+				addrStr = String.format("%s + %#x\n", foo, addr.subtract(foo.getEntryPoint()));
+			} else {
+				addrStr = String.format("%s\n", addr);
+			}
+			builder.append(addrStr);
+		}
+		String joined = builder.toString();
 		return createStringTransferable(joined);
 	}
 
