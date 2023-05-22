@@ -318,19 +318,22 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private Transferable copySymbolString() {
+		Listing listing = currentProgram.getListing();
 		CodeUnitIterator codeUnits =
-			currentProgram.getListing().getCodeUnits(getSelectedAddresses(), true);
+			listing.getCodeUnits(getSelectedAddresses(), true);
 		StringBuilder builder = new StringBuilder();
 		while (codeUnits.hasNext()) {
-			// TODO: Can we improve this by caching the function?
+			// TODO: Can we improve this for the usual case where all the address(es)
+			// are in the same function?
 			CodeUnit cu = codeUnits.next();
 			Address addr = cu.getAddress();
-			Function foo = currentProgram.getListing().getFunctionContaining(addr);
+			Function foo = listing.getFunctionContaining(addr);
 			boolean insideFunction = foo != null;
 			String addrStr;
 			if (insideFunction) {
 				addrStr = String.format("%s + %#x\n", foo, addr.subtract(foo.getEntryPoint()));
 			} else {
+				// TODO: Probably better to have a second version for addresses of instructions
 				addrStr = String.format("%s\n", addr);
 			}
 			builder.append(addrStr);
