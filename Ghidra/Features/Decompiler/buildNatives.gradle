@@ -230,6 +230,10 @@ model {
 				if (b.targetPlatform.operatingSystem.linux) {
 //					b.linker.args "-static"
 				}
+				if (b.targetPlatform.operatingSystem.macOsX) {
+					b.cppCompiler.args "-arch arm64" // build both x86 and arm64 builds
+					b.cppCompiler.args "-arch x86_64"
+				}
 			}
 		}
 	}
