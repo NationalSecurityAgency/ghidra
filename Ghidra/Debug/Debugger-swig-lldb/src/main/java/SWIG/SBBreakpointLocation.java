@@ -163,8 +163,8 @@ public class SBBreakpointLocation {
     return new SBBreakpoint(lldbJNI.SBBreakpointLocation_GetBreakpoint(swigCPtr, this), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBBreakpointLocation___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBBreakpointLocation___repr__(swigCPtr, this);
   }
 
 }

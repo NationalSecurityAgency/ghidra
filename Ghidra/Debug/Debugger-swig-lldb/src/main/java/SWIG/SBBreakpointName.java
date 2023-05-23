@@ -191,8 +191,8 @@ public class SBBreakpointName {
     return lldbJNI.SBBreakpointName_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBBreakpointName___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBBreakpointName___repr__(swigCPtr, this);
   }
 
 }

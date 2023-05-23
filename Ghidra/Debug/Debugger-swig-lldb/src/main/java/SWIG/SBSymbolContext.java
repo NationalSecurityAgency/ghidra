@@ -107,8 +107,8 @@ public class SBSymbolContext {
     return lldbJNI.SBSymbolContext_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBSymbolContext___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBSymbolContext___repr__(swigCPtr, this);
   }
 
 }

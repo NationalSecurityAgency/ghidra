@@ -211,8 +211,8 @@ public class SBFrame {
     return lldbJNI.SBFrame_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBFrame___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBFrame___repr__(swigCPtr, this);
   }
 
 }

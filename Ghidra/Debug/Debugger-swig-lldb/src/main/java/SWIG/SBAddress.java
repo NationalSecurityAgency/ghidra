@@ -123,8 +123,8 @@ public class SBAddress {
     return new SBLineEntry(lldbJNI.SBAddress_GetLineEntry(swigCPtr, this), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBAddress___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBAddress___repr__(swigCPtr, this);
   }
 
 }

@@ -79,8 +79,8 @@ public class SBDeclaration {
     lldbJNI.SBDeclaration_SetColumn(swigCPtr, this, column);
   }
 
-  public String __str__() {
-    return lldbJNI.SBDeclaration___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBDeclaration___repr__(swigCPtr, this);
   }
 
 }

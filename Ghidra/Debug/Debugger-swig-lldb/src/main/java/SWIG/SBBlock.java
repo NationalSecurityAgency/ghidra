@@ -115,8 +115,8 @@ public class SBBlock {
     return new SBValueList(lldbJNI.SBBlock_GetVariables__SWIG_1(swigCPtr, this, SBTarget.getCPtr(target), target, arguments, locals, statics), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBBlock___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBBlock___repr__(swigCPtr, this);
   }
 
 }

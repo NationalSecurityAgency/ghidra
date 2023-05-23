@@ -67,6 +67,10 @@ public class SBInstruction {
     return lldbJNI.SBInstruction_GetComment(swigCPtr, this, SBTarget.getCPtr(target), target);
   }
 
+  public InstructionControlFlowKind GetControlFlowKind(SBTarget target) {
+    return InstructionControlFlowKind.swigToEnum(lldbJNI.SBInstruction_GetControlFlowKind(swigCPtr, this, SBTarget.getCPtr(target), target));
+  }
+
   public SBData GetData(SBTarget target) {
     return new SBData(lldbJNI.SBInstruction_GetData(swigCPtr, this, SBTarget.getCPtr(target), target), true);
   }
@@ -111,8 +115,8 @@ public class SBInstruction {
     return lldbJNI.SBInstruction_TestEmulation(swigCPtr, this, SBStream.getCPtr(output_stream), output_stream, test_file);
   }
 
-  public String __str__() {
-    return lldbJNI.SBInstruction___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBInstruction___repr__(swigCPtr, this);
   }
 
 }
