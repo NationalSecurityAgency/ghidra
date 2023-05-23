@@ -328,11 +328,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			CodeUnit cu = codeUnits.next();
 			Address addr = cu.getAddress();
 			Function foo = listing.getFunctionContaining(addr);
-			Address entry = foo.getEntryPoint();
 			boolean insideFunction = foo != null;
-			int delta = addr.compareTo(entry);
 			String addrStr;
 			if (insideFunction) {
+				Address entry = foo.getEntryPoint();			
+				int delta = addr.compareTo(entry);
 				if (delta > 0) {
 					addrStr = String.format("%s + %#x\n", foo, addr.subtract(entry));					
 				}
