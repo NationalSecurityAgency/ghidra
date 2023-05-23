@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.structmapping;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.lang.reflect.*;
+import java.util.*;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.CodeUnit;
@@ -33,11 +32,28 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public class StructureMappingInfo<T> {
 
+	/**
+	 * Returns the name of the structure data type that will define the binary layout 
+	 * of the mapped fields in the target class.
+	 * 
+	 * @param targetClass structure mapped class
+	 * @return the structure name
+	 */
 	public static String getStructureDataTypeNameForClass(Class<?> targetClass) {
 		StructureMapping sma = targetClass.getAnnotation(StructureMapping.class);
 		return sma != null ? sma.structureName() : null;
 	}
 
+	/**
+	 * Returns the mapping info for a class, using annotations found in that class.
+	 * 
+	 * @param <T> structure mapped class
+	 * @param targetClass structure mapped class
+	 * @param structDataType Ghidra {@link DataType} that defines the binary layout of the mapped
+	 * fields of the class, or null if this is a self-reading {@link StructureReader} class  
+	 * @return new {@link StructureMappingInfo} for the specified class
+	 * @throws IllegalArgumentException if targetClass isn't tagged as a structure mapped class
+	 */
 	public static <T> StructureMappingInfo<T> fromClass(Class<T> targetClass,
 			Structure structDataType) {
 		StructureMapping sma = targetClass.getAnnotation(StructureMapping.class);
@@ -59,7 +75,7 @@ public class StructureMappingInfo<T> {
 	private final List<FieldOutputInfo<T>> outputFields = new ArrayList<>();
 	private final List<StructureMarkupFunction<T>> markupFuncs = new ArrayList<>();
 	private final List<Field> contextFields = new ArrayList<>();
-	private final List<Method> afterMethods = new ArrayList<>();
+	private final List<Method> afterMethods;
 	private final boolean useFieldMappingInfo;
 	private Field structureContextField;
 
@@ -77,17 +93,13 @@ public class StructureMappingInfo<T> {
 		Collections.sort(outputFields,
 			(foi1, foi2) -> Integer.compare(foi1.getOrdinal(), foi2.getOrdinal()));
 
-		ReflectionHelper.getMarkedMethods(targetClass, AfterStructureRead.class, afterMethods,
-			true);
+		afterMethods =
+			ReflectionHelper.getMarkedMethods(targetClass, AfterStructureRead.class, null, true);
 
-		List<Method> markupGetters = new ArrayList<>();
-		ReflectionHelper.getMarkedMethods(targetClass, Markup.class, markupGetters, true);
+		List<Method> markupGetters =
+			ReflectionHelper.getMarkedMethods(targetClass, Markup.class, null, true);
 		for (Method markupGetterMethod : markupGetters) {
-			markupFuncs.add(context -> {
-				T obj = context.getStructureInstance();
-				Object val = ReflectionHelper.callGetter(markupGetterMethod, obj);
-				context.getDataTypeMapper().markup(val, false);
-			});
+			markupFuncs.add(createMarkupFuncFromGetter(markupGetterMethod));
 		}
 
 		for (PlateComment pca : ReflectionHelper.getAnnotations(targetClass, PlateComment.class,
@@ -131,6 +143,13 @@ public class StructureMappingInfo<T> {
 		return afterMethods;
 	}
 
+	/**
+	 * Deserializes a structure mapped instance by assigning values to its 
+	 * {@link FieldMapping &#64;FieldMapping mapped} java fields.
+	 * 
+	 * @param context {@link StructureContext}
+	 * @throws IOException if error reading the structure
+	 */
 	public void readStructure(StructureContext<T> context) throws IOException {
 		T newInstance = context.getStructureInstance();
 		if (newInstance instanceof StructureReader<?> selfReader) {
@@ -154,6 +173,15 @@ public class StructureMappingInfo<T> {
 		return markupFuncs;
 	}
 
+	/**
+	 * Creates a new customized {@link Structure structure data type} for a variable length
+	 * structure mapped class.
+	 * 
+	 * @param context {@link StructureContext} of a variable length structure mapped instance
+	 * @return new {@link Structure structure data type} with a name that encodes the size 
+	 * information of the variable length fields
+	 * @throws IOException if error creating the Ghidra data type
+	 */
 	public Structure createStructureDataType(StructureContext<T> context) throws IOException {
 		// used to create a structure that has variable length fields
 
@@ -185,19 +213,32 @@ public class StructureMappingInfo<T> {
 		return newStruct;
 	}
 
+	/**
+	 * Reaches into a structure mapped instance and extracts its StructureContext field value.
+	 * 
+	 * @param structureInstance instance to query
+	 * @return {@link StructureContext}, or null if error extracting value
+	 */
 	@SuppressWarnings("unchecked")
-	public StructureContext<T> recoverStructureContext(T structureInstance) throws IOException {
-		return structureContextField != null
-				? ReflectionHelper.getFieldValue(structureInstance, structureContextField,
-					StructureContext.class)
-				: null;
+	public StructureContext<T> recoverStructureContext(T structureInstance) {
+		try {
+			if (structureContextField != null) {
+				return ReflectionHelper.getFieldValue(structureInstance, structureContextField,
+					StructureContext.class);
+			}
+		}
+		catch (IOException e) {
+			// ignore, drop thru return null
+		}
+		return null;
 	}
 
 	/**
 	 * Initializes any {@link ContextField} fields in a new structure instance.
 	 * 
-	 * @param context
-	 * @throws IOException
+	 * @param context {@link StructureContext}
+	 * @throws IOException if error assigning values to context fields in the structure mapped
+	 * instance
 	 */
 	public void assignContextFieldValues(StructureContext<T> context) throws IOException {
 		Class<?> dataTypeMapperType = context.getDataTypeMapper().getClass();
@@ -230,10 +271,10 @@ public class StructureMappingInfo<T> {
 		return null;
 	}
 
-	private void assignField(FieldContext<T> readContext, Object value)
+	private void assignField(FieldContext<T> fieldContext, Object value)
 			throws IOException {
-		Field field = readContext.fieldInfo().getField();
-		T structureInstance = readContext.getStructureInstance();
+		Field field = fieldContext.fieldInfo().getField();
+		T structureInstance = fieldContext.getStructureInstance();
 
 		ReflectionHelper.assignField(field, structureInstance, value);
 	}
@@ -321,13 +362,21 @@ public class StructureMappingInfo<T> {
 	private void addPlateCommentMarkupFuncs(PlateComment pca) {
 		Method commentGetter =
 			ReflectionHelper.getCommentMethod(targetClass, pca.value(), "toString");
-		markupFuncs.add(context -> {
+		markupFuncs.add((context, session) -> {
 			T obj = context.getStructureInstance();
 			Object val = ReflectionHelper.callGetter(commentGetter, obj);
 			if (val != null) {
-				context.appendComment(CodeUnit.PLATE_COMMENT, null, val.toString(), "\n");
+				session.appendComment(context, CodeUnit.PLATE_COMMENT, null, val.toString(), "\n");
 			}
 		});
+	}
+
+	private StructureMarkupFunction<T> createMarkupFuncFromGetter(Method markupGetterMethod) {
+		return (context, session) -> {
+			T obj = context.getStructureInstance();
+			Object val = ReflectionHelper.callGetter(markupGetterMethod, obj);
+			session.markup(val, false);
+		};
 	}
 
 	private static int getStructLength(Structure struct) {

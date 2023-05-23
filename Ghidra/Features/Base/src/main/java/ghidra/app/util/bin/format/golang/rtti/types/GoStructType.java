@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
-import java.util.*;
-
 import java.io.IOException;
+import java.util.*;
 
 import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
 import ghidra.app.util.bin.format.golang.rtti.GoName;
@@ -26,6 +25,9 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
+/**
+ * Golang type information about a specific structure type.
+ */
 @StructureMapping(structureName = "runtime.structtype")
 public class GoStructType extends GoType {
 
@@ -37,6 +39,7 @@ public class GoStructType extends GoType {
 	private GoSlice fields;
 
 	public GoStructType() {
+		// empty
 	}
 
 	@Markup
@@ -54,10 +57,10 @@ public class GoStructType extends GoType {
 	}
 
 	@Override
-	public void additionalMarkup() throws IOException {
-		super.additionalMarkup();
-		fields.markupArray(getStructureLabel() + "_fields", GoStructField.class, false);
-		fields.markupArrayElements(GoStructField.class);
+	public void additionalMarkup(MarkupSession session) throws IOException {
+		super.additionalMarkup(session);
+		fields.markupArray(getStructureLabel() + "_fields", GoStructField.class, false, session);
+		fields.markupArrayElements(GoStructField.class, session);
 	}
 
 	@Override
@@ -92,7 +95,7 @@ public class GoStructType extends GoType {
 			long offset = field.getOffset();
 			long fieldSize = field.getType().getBaseType().getSize();
 			sb.append("%s %s // %d..%d".formatted(field.getNameString(),
-				field.getType().getBaseType().getNameString(), offset, offset + fieldSize));
+				field.getType().getNameString(), offset, offset + fieldSize));
 		}
 		return sb.toString();
 	}
@@ -138,7 +141,7 @@ public class GoStructType extends GoType {
 				String comment = dtc.getComment();
 				comment = comment == null ? "" : (comment + "\n");
 				comment += "Omitted zero-len field: %s=%s".formatted(skippedField.getNameString(),
-					skippedFieldType.getBaseType().getNameString());
+					skippedFieldType.getNameString());
 				dtc.setComment(comment);
 			}
 		}

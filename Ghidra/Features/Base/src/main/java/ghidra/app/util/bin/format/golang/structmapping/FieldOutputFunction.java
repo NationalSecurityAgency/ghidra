@@ -17,16 +17,23 @@ package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
 
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 
 /**
- * A function that helps construct a Ghidra {@link DataType} from annotated field information
+ * A function that adds a field to a Ghidra structure using annotated field information
  * found in a Java class.
  * 
- * @param <T>
+ * @param <T> type of the structure mapped class
  */
 public interface FieldOutputFunction<T> {
+	/**
+	 * Adds the specified field (in {@code fieldOutputInfo}) to the structure.
+	 * 
+	 * @param context {@link StructureContext}
+	 * @param structure {@link Structure} data type
+	 * @param fieldOutputInfo {@link FieldOutputInfo} field info
+	 * @throws IOException if error
+	 */
 	void addFieldToStructure(StructureContext<T> context, Structure structure,
 			FieldOutputInfo<T> fieldOutputInfo) throws IOException;
 }

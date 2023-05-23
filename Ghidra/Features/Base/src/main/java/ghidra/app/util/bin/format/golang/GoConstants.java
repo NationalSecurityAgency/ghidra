@@ -17,6 +17,12 @@ package ghidra.app.util.bin.format.golang;
 
 import ghidra.program.model.data.CategoryPath;
 
+/**
+ * Misc constant values for golang
+ */
 public class GoConstants {
+	/**
+	 * Category path to place golang types in
+	 */
 	public static final CategoryPath GOLANG_CATEGORYPATH = new CategoryPath("/golang");
 }

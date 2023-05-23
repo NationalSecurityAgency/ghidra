@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.structmapping;
 
+/**
+ * Signedness attribute of a structure mapped field
+ */
 public enum Signedness {
 	Unspecified, Signed, Unsigned
 }

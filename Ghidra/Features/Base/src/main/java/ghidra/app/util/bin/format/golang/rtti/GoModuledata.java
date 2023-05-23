@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.rtti;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.rtti.types.GoType;
@@ -87,8 +86,16 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	private GoSlice itablinks; // []*runtime.itab (array of pointers to runtime.tab)
 
 	public GoModuledata() {
+		// empty
 	}
 
+	/**
+	 * Compares the data in this structure to fields in a GoPcHeader and returns true if they
+	 * match.
+	 * 
+	 * @param pclntab GoPcHeader instance
+	 * @return boolean true if match, false if no match
+	 */
 	public boolean matchesPclntab(GoPcHeader pclntab) {
 		return pclntab.getTextStart().equals(getText()) &&
 			pclntab.getFuncnameAddress().equals(funcnametab.getArrayAddress());
@@ -150,15 +157,15 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	@Override
-	public void additionalMarkup() throws IOException {
-		typeLinks.markupArray("moduledata.typeLinks", programContext.getInt32DT(), false);
-		typeLinks.markupElementReferences(4, getTypeList());
+	public void additionalMarkup(MarkupSession session) throws IOException {
+		typeLinks.markupArray("moduledata.typeLinks", programContext.getInt32DT(), false, session);
+		typeLinks.markupElementReferences(4, getTypeList(), session);
 
-		itablinks.markupArray("moduledata.itablinks", GoItab.class, true);
+		itablinks.markupArray("moduledata.itablinks", GoItab.class, true, session);
 
 		//cutab.markupArray("moduledata.cutab", dataTypeMapper.getUint32DT(), false);
-		markupStringTable(funcnametab.getArrayAddress(), funcnametab.getLen());
-		markupStringTable(filetab.getArrayAddress(), filetab.getLen());
+		markupStringTable(funcnametab.getArrayAddress(), funcnametab.getLen(), session);
+		markupStringTable(filetab.getArrayAddress(), filetab.getLen(), session);
 
 		if (ftab.getLen() > 0) {
 			// chop off the last entry as it is not a full entry (it just points to the address
@@ -166,8 +173,8 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 			int entryLen =
 				programContext.getStructureMappingInfo(GoFunctabEntry.class).getStructureLength();
 			GoSlice subSlice = ftab.getSubSlice(0, ftab.getLen() - 1, entryLen);
-			subSlice.markupArray("moduledata.ftab", GoFunctabEntry.class, false);
-			subSlice.markupArrayElements(GoFunctabEntry.class);
+			subSlice.markupArray("moduledata.ftab", GoFunctabEntry.class, false, session);
+			subSlice.markupArrayElements(GoFunctabEntry.class, session);
 		}
 	}
 
@@ -184,7 +191,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		return result;
 	}
 
-	private void markupStringTable(Address addr, long stringTableLength) {
+	private void markupStringTable(Address addr, long stringTableLength, MarkupSession session) {
 		DataType stringDT = StringUTF8DataType.dataType;
 		long startOfString = addr.getOffset();
 		long endOfStringTable = startOfString + stringTableLength;
@@ -195,7 +202,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 				long len = reader.getPointerIndex() - startOfString;
 				if (len > 0 && len < Integer.MAX_VALUE) {
 					Address stringAddr = addr.getNewAddress(startOfString);
-					programContext.markupAddress(stringAddr, stringDT, (int) len);
+					session.markupAddress(stringAddr, stringDT, (int) len);
 				}
 				startOfString = reader.getPointerIndex();
 			}
@@ -235,7 +242,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 * 
 	 * @param context already initialized {@link GoRttiMapper}
 	 * @return new GoModuledata instance, or null if not found
-	 * @throws IOException
+	 * @throws IOException if error reading found structure
 	 */
 	/* package */ static GoModuledata getFirstModuledata(GoRttiMapper context)
 			throws IOException {
@@ -249,7 +256,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	}
 
 	/**
-	 * Searches memory for a likely GoModuledata 
+	 * Searches memory for a likely GoModuledata structure.
 	 * 
 	 * @param context already initialized {@link GoRttiMapper}
 	 * @param pclntabAddress address of an already found {@link GoPcHeader}
@@ -257,7 +264,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 * @param range memory range to search.  Will be different for different types of binaries
 	 * @param monitor {@link TaskMonitor} 
 	 * @return new GoModuledata instance, or null if not found
-	 * @throws IOException
+	 * @throws IOException if error reading found structure
 	 */
 	/* package */ static GoModuledata findFirstModule(GoRttiMapper context,
 			Address pclntabAddress, GoPcHeader pclntab, AddressRange range, TaskMonitor monitor)
@@ -269,6 +276,8 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		Program program = context.getProgram();
 		Memory memory = program.getMemory();
 
+		// Search memory for a pointer to the pclntab struct.  The result should be the first
+		// field of the GoModuledata structure.
 		int ptrSize = context.getPtrSize();
 		byte[] searchBytes = new byte[ptrSize];
 		context.getDataConverter().putValue(pclntabAddress.getOffset(), ptrSize, searchBytes, 0);
@@ -279,6 +288,9 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		}
 
 		GoModuledata moduleData = context.readStructure(GoModuledata.class, moduleAddr);
+
+		// Verify that we read a good GoModuledata struct by comparing some of its values to
+		// the pclntab structure.
 		return moduleData.matchesPclntab(pclntab) ? moduleData : null;
 	}
 }

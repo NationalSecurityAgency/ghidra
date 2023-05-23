@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.elf.info.ElfInfoItem;
 import ghidra.app.util.bin.format.elf.info.ElfNote;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -32,7 +31,7 @@ public class NoteGoBuildId extends ElfNote {
 
 	/**
 	 * Reads a NoteGoBuildId from the specified BinaryReader, matching the signature of 
-	 * {@link ElfInfoItem.ReaderFunc}.
+	 * ElfInfoItem.ReaderFunc.
 	 * 
 	 * @param br BinaryReader
 	 * @param unusedProgram context (unused but needed to match signature)
