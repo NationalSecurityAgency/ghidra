@@ -15,16 +15,18 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.rtti.GoSlice;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
 
+/**
+ * Common abstract base class for GoType classes
+ */
 @PlateComment()
 public abstract class GoType implements StructureMarkup<GoType> {
 	private static final Map<GoKind, Class<? extends GoType>> specializedTypeClasses =
@@ -38,6 +40,15 @@ public abstract class GoType implements StructureMarkup<GoType> {
 			Map.entry(GoKind.Map, GoMapType.class),
 			Map.entry(GoKind.Interface, GoInterfaceType.class));
 
+	/**
+	 * Returns the specific GoType derived class that will handle the go type located at the
+	 * specified offset.
+	 * 
+	 * @param programContext program-level mapper context
+	 * @param offset absolute location of go type struct
+	 * @return GoType class that will best handle the type struct
+	 * @throws IOException if error reading
+	 */
 	public static Class<? extends GoType> getSpecializedTypeClass(GoRttiMapper programContext,
 			long offset) throws IOException {
 		GoTypeDetector typeDetector = programContext.readStructure(GoTypeDetector.class, offset);
@@ -59,8 +70,12 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	@FieldOutput
 	protected GoBaseType typ;
 
-	public GoBaseType getBaseType() {
+	protected GoBaseType getBaseType() {
 		return typ;
+	}
+
+	public String getNameString() throws IOException {
+		return typ.getNameString();
 	}
 
 	public String getDebugId() {
@@ -95,14 +110,14 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	}
 
 	@Override
-	public void additionalMarkup() throws IOException {
+	public void additionalMarkup(MarkupSession session) throws IOException {
 		GoUncommonType uncommonType = getUncommonType();
 		if (uncommonType != null) {
 			GoSlice slice = uncommonType.getMethodsSlice();
-			slice.markupArray(getStructureName() + "_methods", GoMethod.class, false);
-			slice.markupArrayElements(GoMethod.class);
+			slice.markupArray(getStructureName() + "_methods", GoMethod.class, false, session);
+			slice.markupArrayElements(GoMethod.class, session);
 
-			programContext.labelStructure(uncommonType, typ.getNameString() + "_" +
+			session.labelStructure(uncommonType, typ.getNameString() + "_" +
 				programContext.getStructureDataTypeName(GoUncommonType.class));
 		}
 	}
@@ -153,7 +168,7 @@ public abstract class GoType implements StructureMarkup<GoType> {
 	 * Converts a golang RTTI type structure into a Ghidra data type.
 	 * 
 	 * @return {@link DataType} that represents the golang type
-	 * @throws IOException
+	 * @throws IOException if error getting name of the type
 	 */
 	public DataType recoverDataType() throws IOException {
 		DataType dt = Undefined.getUndefinedDataType((int) typ.getSize());

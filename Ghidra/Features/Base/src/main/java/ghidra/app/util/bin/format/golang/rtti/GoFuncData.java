@@ -19,16 +19,9 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
-import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
-import ghidra.util.exception.InvalidInputException;
 
 @StructureMapping(structureName = "runtime._func")
 public class GoFuncData implements StructureMarkup<GoFuncData> {
@@ -84,33 +77,10 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	@Override
-	public void additionalMarkup() throws IOException {
+	public void additionalMarkup(MarkupSession session) throws IOException {
 		Address addr = getFuncAddress();
 		String name = SymbolUtilities.replaceInvalidChars(getName(), true);
-		Program program = programContext.getProgram();
-
-		Function function = program.getListing().getFunctionAt(addr);
-		if (function == null) {
-			try {
-				if (!program.getMemory()
-						.getLoadedAndInitializedAddressSet()
-						.contains(addr)) {
-					Msg.warn(this,
-						"Unable to create function not contained within loaded memory: %s@%s"
-								.formatted(name, addr));
-					return;
-				}
-				function = program.getFunctionManager()
-						.createFunction(name, addr, new AddressSet(addr), SourceType.IMPORTED);
-			}
-			catch (OverlappingFunctionException | InvalidInputException e) {
-				Msg.error(this, e);
-			}
-		}
-		else {
-			// TODO: this does nothing.  re-evalulate this logic
-			programContext.labelAddress(addr, name);
-		}
+		session.createFunctionIfMissing(name, addr);
 	}
 
 }

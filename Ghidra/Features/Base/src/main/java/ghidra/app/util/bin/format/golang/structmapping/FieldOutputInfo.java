@@ -25,7 +25,7 @@ import ghidra.program.model.data.*;
  * Immutable information needed to create fields in a Ghidra structure data type, using information
  * from a java field.
  * 
- * @param <T>
+ * @param <T> structure mapped class type
  */
 public class FieldOutputInfo<T> {
 	private final FieldMappingInfo<T> fmi;
@@ -63,11 +63,11 @@ public class FieldOutputInfo<T> {
 	/**
 	 * Returns the value of this java field.
 	 * 
-	 * @param <R>
+	 * @param <R> type of the result value
 	 * @param structInstance object containing the field
 	 * @param expectedType expected class of the value 
-	 * @return value of the field
-	 * @throws IOException 
+	 * @return value of the field, or null if the field's value is not of expected type
+	 * @throws IOException if error accessing java field
 	 */
 	public <R> R getValue(T structInstance, Class<R> expectedType) throws IOException {
 		try {
@@ -198,7 +198,7 @@ public class FieldOutputInfo<T> {
 		}
 
 		StructureContext<?> nestedStructContext =
-			context.getDataTypeMapper().getExistingStructureContext(nestedStruct);
+			context.getDataTypeMapper().getStructureContextOfInstance(nestedStruct);
 		if (nestedStructContext == null) {
 			throw new IOException(
 				"Missing StructureContext for " + nestedStruct.getClass().getSimpleName());

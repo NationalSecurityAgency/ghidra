@@ -17,6 +17,19 @@ package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
 
+/**
+ * A function that decorates a field in a structure mapped class.
+ * 
+ * @param <T> structure mapped class type
+ */
 public interface FieldMarkupFunction<T> {
-	void markupField(FieldContext<T> fieldContext) throws IOException;
+
+	/**
+	 * Decorates the specified field.
+	 * 
+	 * @param fieldContext information about the field
+	 * @param markupSession state and methods to assist marking up the program 
+	 * @throws IOException thrown if error performing the markup
+	 */
+	void markupField(FieldContext<T> fieldContext, MarkupSession markupSession) throws IOException;
 }

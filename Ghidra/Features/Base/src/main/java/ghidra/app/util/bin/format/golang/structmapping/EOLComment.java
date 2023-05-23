@@ -27,13 +27,14 @@ import java.lang.annotation.Target;
  * or the return value of a specified method as the string.
  */
 @Retention(RUNTIME)
-@Target({ FIELD })
+@Target(FIELD)
 public @interface EOLComment {
 	/**
-	 * Name of a "getter" method that's return value will be converted to a string and used
+	 * Optional name of a "getter" method that's return value will be converted to a string and used
 	 * as the EOL comment
 	 * 
-	 * @return
+	 * @return optional name of a getter method, or if not set, defaults to use the object's 
+	 * {@link Object#toString() toString()} method
 	 */
 	String value() default "";
 }

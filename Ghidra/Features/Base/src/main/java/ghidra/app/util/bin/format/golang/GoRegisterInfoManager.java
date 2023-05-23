@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.*;
 
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
@@ -66,7 +65,7 @@ public class GoRegisterInfoManager {
 	 * returned that forces all parameters to be stack allocated.
 	 * 
 	 * @param lang {@link Language}
-	 * @param goVersion
+	 * @param goVersion {@link GoVer} enum
 	 * @return {@link GoRegisterInfo}, never null
 	 */
 	public synchronized GoRegisterInfo getRegisterInfoForLang(Language lang, GoVer goVersion) {

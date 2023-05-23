@@ -89,7 +89,7 @@ public class GoPcHeader {
 	 * @param range memory range to search (typically .rdata or .noptrdata sections)
 	 * @param monitor {@link TaskMonitor} that will let the user cancel
 	 * @return {@link Address} of the found pclntab structure, or null if not found
-	 * @throws IOException
+	 * @throws IOException if error reading
 	 */
 	public static Address findPclntabAddress(GoRttiMapper programContext, AddressRange range,
 			TaskMonitor monitor) throws IOException {
@@ -126,7 +126,7 @@ public class GoPcHeader {
 	 * 
 	 * @param provider {@link ByteProvider}
 	 * @return boolean true if the byte provider has the magic signature of a pclntab
-	 * @throws IOException
+	 * @throws IOException if error reading
 	 */
 	public static boolean isPclntab(ByteProvider provider) throws IOException {
 		byte[] header = provider.readBytes(0, 8);

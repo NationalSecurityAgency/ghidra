@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.GoFunctionMultiReturn;
 import ghidra.app.util.bin.format.golang.rtti.GoSlice;
@@ -82,9 +81,9 @@ public class GoFuncType extends GoType {
 	}
 
 	@Override
-	public void additionalMarkup() throws IOException {
+	public void additionalMarkup(MarkupSession session) throws IOException {
 		GoSlice slice = getParamListSlice();
-		slice.markupArray(getStructureLabel() + "_paramlist", GoBaseType.class, true);
+		slice.markupArray(getStructureLabel() + "_paramlist", GoBaseType.class, true, session);
 	}
 
 	public String getFuncPrototypeString(String funcName) throws IOException {
@@ -103,7 +102,7 @@ public class GoFuncType extends GoType {
 			if (i != 0) {
 				sb.append(", ");
 			}
-			sb.append(paramType.getBaseType().getNameString());
+			sb.append(paramType.getNameString());
 		}
 		sb.append(")");
 		if (!outParamTypes.isEmpty()) {
@@ -113,7 +112,7 @@ public class GoFuncType extends GoType {
 				if (i != 0) {
 					sb.append(", ");
 				}
-				sb.append(paramType.getBaseType().getNameString());
+				sb.append(paramType.getNameString());
 			}
 			sb.append(")");
 		}

@@ -15,13 +15,19 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import java.io.IOException;
 import java.util.Set;
 
-import java.io.IOException;
-
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
 
+/**
+ * Golang type information about a specific slice type.
+ * <p>
+ * See {@link GoRttiMapper#getGenericSliceDT()} or the "runtime.slice" type for the definition of
+ * a instance of a slice variable in memory. 
+*/
 @StructureMapping(structureName = "runtime.slicetype")
 public class GoSliceType extends GoType {
 

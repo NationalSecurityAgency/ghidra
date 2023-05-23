@@ -35,8 +35,8 @@ import java.lang.annotation.*;
  * will be marked up in the Ghidra program.
  * <p>
  * The tagged class must be {@link DataTypeMapper#registerStructure(Class) registered} with
- * the program context to enable the suite of structure mapped classes to work together when
- * applied to a Ghidra binary.
+ * the {@link DataTypeMapper program context} to enable the suite of structure mapped classes 
+ * to work together when applied to a Ghidra binary.
  * <p>
  * For variable length structure classes, when the struct mapping system creates a custom-fitted
  * structure to markup a specific location with its specific data, the new struct data type's name
@@ -61,10 +61,16 @@ public @interface StructureMapping {
 	 * {@link DataTypeMapper#addProgramSearchCategoryPath(ghidra.program.model.data.CategoryPath...) program}
 	 * search paths.
 	 * 
-	 * @return
+	 * @return name of a Ghidra structure data type
 	 */
 	String structureName();
 
+	/**
+	 * Optional reference to a 'function' (implemented via a class) that will be called to do 
+	 * custom markup.
+	 * 
+	 * @return {@link StructureMarkupFunction} class
+	 */
 	@SuppressWarnings("rawtypes")
 	Class<? extends StructureMarkupFunction> markupFunc() default StructureMarkupFunction.class;
 }

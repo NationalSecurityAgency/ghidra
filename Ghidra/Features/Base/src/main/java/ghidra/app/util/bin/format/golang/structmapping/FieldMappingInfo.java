@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.bin.format.golang.structmapping;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.*;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataTypeComponent;
@@ -29,18 +28,18 @@ import ghidra.program.model.listing.CodeUnit;
 /**
  * Immutable information needed to deserialize a field in a structure mapped class.
  * 
- * @param <T>
+ * @param <T> structure mapped class type
  */
 public class FieldMappingInfo<T> {
 	/**
 	 * Creates a FieldMappingInfo instance, used when the structure is not variable length.
 	 *  
-	 * @param <T>
-	 * @param field
-	 * @param dtc
-	 * @param signedness
-	 * @param length
-	 * @return
+	 * @param <T> structure mapped class type
+	 * @param field java field
+	 * @param dtc Ghidra structure field
+	 * @param signedness {@link Signedness} enum
+	 * @param length override of structure field, or -1
+	 * @return new {@link FieldMappingInfo} instance
 	 */
 	public static <T> FieldMappingInfo<T> createEarlyBinding(Field field, DataTypeComponent dtc,
 			Signedness signedness, int length) {
@@ -57,12 +56,12 @@ public class FieldMappingInfo<T> {
 	 * Creates a FieldMappingInfo instance, used when the structure is variable length and there is
 	 * no pre-defined Ghidra Structure data type.
 	 * 
-	 * @param <T>
-	 * @param field
-	 * @param fieldName
-	 * @param signedness
-	 * @param length
-	 * @return
+	 * @param <T> structure mapped class type
+	 * @param field java field
+	 * @param fieldName name of Ghidra structure field
+	 * @param signedness {@link Signedness} enum
+	 * @param length override of structure field, or -1
+	 * @return new {@link FieldMappingInfo} instance
 	 */
 	public static <T> FieldMappingInfo<T> createLateBinding(Field field, String fieldName,
 			Signedness signedness, int length) {
@@ -186,14 +185,14 @@ public class FieldMappingInfo<T> {
 
 	private FieldMarkupFunction<T> createCommentMarkupFunc(Method commentGetter, int commentType,
 			String sep) {
-		return context -> {
+		return (context, session) -> {
 			T obj = context.getStructureInstance();
 			Object val = ReflectionHelper.callGetter(commentGetter, obj);
 			if (val != null) {
 				if (val instanceof Collection<?> c && c.isEmpty()) {
 					return;
 				}
-				context.appendComment(commentType, null, val.toString(), sep);
+				session.appendComment(context, commentType, null, val.toString(), sep);
 			}
 		};
 	}
@@ -219,6 +218,9 @@ public class FieldMappingInfo<T> {
 	}
 
 	private FieldReadFunction<T> getReadPrimitiveValueFunc(Class<?> destClass) {
+		// Create a lambda that reads a primitive value from a context that is specific to the
+		// java field's type (destClass)
+		// TODO: floats, other primitive types(?)
 
 		if (destClass == Long.class || destClass == Long.TYPE) {
 			return (context) -> context.fieldInfo().isUnsigned()
@@ -255,51 +257,9 @@ public class FieldMappingInfo<T> {
 				.readStructure(field.getType(), context.reader());
 	}
 
-//	@SuppressWarnings({ "unchecked", "rawtypes" })
-//	private FieldMarkupFunction<T> makeMarkupFunc(
-//			Class<? extends FieldMarkupFunction> markupFuncClass, String getterName) {
-//		if (markupFuncClass != FieldMarkupFunction.class) {
-//			return ReflectionHelper.createInstance(markupFuncClass, this);
-//		}
-//
-//		if (getterName != null && !getterName.isBlank()) {
-//			Method getter = ReflectionHelper.findGetter(field.getDeclaringClass(), getterName);
-//			if (getter == null) {
-//				throw new IllegalArgumentException(
-//					"Missing FieldMarkup getter %s for %s".formatted(getterName, field));
-//			}
-//			getter.setAccessible(true);
-//			return (context) -> markupFieldWithGetter(getter, context);
-//		}
-//
-//		Class<?> fieldType = field.getType();
-//		if (ReflectionHelper.hasStructureMapping(fieldType)) {
-//			return this::markupNestedStructure;
-//		}
-//
-//		Method getter = ReflectionHelper.findGetter(field.getDeclaringClass(), field.getName());
-//		if (getter != null) {
-//			getter.setAccessible(true);
-//			return (context) -> markupFieldWithGetter(getter, context);
-//		}
-//
-//		throw new IllegalArgumentException("Invalid FieldMarkup: " + field);
-//	}
-
-//	private void markupFieldWithGetter(Method getterMethod, FieldContext<T> fieldContext)
-//			throws IOException {
-//		Object getterValue =
-//			ReflectionHelper.callGetter(getterMethod, fieldContext.getStructureInstance());
-//		if (getterValue != null) {
-//			if (getterValue instanceof Collection<?> c && c.isEmpty()) {
-//				return;
-//			}
-//			fieldContext.appendComment(CodeUnit.EOL_COMMENT, "", getterValue.toString(), ";");
-//		}
-//	}
-
-	private void markupNestedStructure(FieldContext<T> fieldContext) throws IOException {
-		fieldContext.getDataTypeMapper().markup(fieldContext.getValue(Object.class), true);
+	private void markupNestedStructure(FieldContext<T> fieldContext, MarkupSession markupSession)
+			throws IOException {
+		markupSession.markup(fieldContext.getValue(Object.class), true);
 	}
 
 	private FieldMarkupFunction<T> makeMarkupReferenceFunc(String getterName) {
@@ -307,19 +267,19 @@ public class FieldMappingInfo<T> {
 
 		Method getter = ReflectionHelper.requireGetter(field.getDeclaringClass(), getterName);
 		getter.setAccessible(true);
-		return (context) -> addRefToFieldWithGetter(getter, context);
+		return (context, session) -> addRefToFieldWithGetter(getter, context, session);
 	}
 
-	private void addRefToFieldWithGetter(Method getterMethod, FieldContext<T> fieldContext)
-			throws IOException {
+	private void addRefToFieldWithGetter(Method getterMethod, FieldContext<T> fieldContext,
+			MarkupSession markupSession) throws IOException {
 		Object getterValue =
 			ReflectionHelper.callGetter(getterMethod, fieldContext.getStructureInstance());
 		if (getterValue != null) {
 			Address addr = getterValue instanceof Address getterAddr
 					? getterAddr
-					: fieldContext.getDataTypeMapper().getExistingStructureAddress(getterValue);
+					: markupSession.getMappingContext().getAddressOfStructure(getterValue);
 			if (addr != null) {
-				fieldContext.addReference(addr);
+				markupSession.addReference(fieldContext, addr);
 			}
 		}
 	}

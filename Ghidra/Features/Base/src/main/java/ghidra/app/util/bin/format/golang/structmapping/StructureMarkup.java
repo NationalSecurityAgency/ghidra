@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.golang.structmapping;
 
-import java.util.List;
-
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Optional interface that structure mapped classes can implement that allows them to control how
@@ -36,7 +35,7 @@ public interface StructureMarkup<T> {
 	 * Returns the name of the instance, typically retrieved from data found inside the instance.
 	 * 
 	 * @return string name, or null if this instance does not have a name
-	 * @throws IOException
+	 * @throws IOException if error getting name
 	 */
 	default String getStructureName() throws IOException {
 		return null;
@@ -46,7 +45,7 @@ public interface StructureMarkup<T> {
 	 * Returns a string that can be used to place a label on the instance.
 	 *  
 	 * @return string to be used as a labe, or null if there is not a valid label for the instance
-	 * @throws IOException
+	 * @throws IOException if error getting label
 	 */
 	default String getStructureLabel() throws IOException {
 		String name = getStructureName();
@@ -59,9 +58,10 @@ public interface StructureMarkup<T> {
 	/**
 	 * Called to allow the implementor to perform custom markup of itself.
 	 * 
-	 * @throws IOException
+	 * @param session state and methods to assist marking up the program
+	 * @throws IOException if error during markup
 	 */
-	default void additionalMarkup() throws IOException {
+	default void additionalMarkup(MarkupSession session) throws IOException {
 		// empty
 	}
 
@@ -69,7 +69,7 @@ public interface StructureMarkup<T> {
 	 * Returns a list of items that should be recursively marked up.
 	 * 
 	 * @return list of structure mapped object instances that should be marked up
-	 * @throws IOException
+	 * @throws IOException if error getting instances
 	 */
 	default List<?> getExternalInstancesToMarkup() throws IOException {
 		return List.of();

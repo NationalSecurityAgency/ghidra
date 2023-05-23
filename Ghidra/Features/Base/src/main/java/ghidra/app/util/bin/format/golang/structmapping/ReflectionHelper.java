@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.bin.format.golang.structmapping;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.lang.reflect.Array;
+import java.util.*;
 
 import ghidra.program.model.data.*;
 
@@ -63,7 +62,7 @@ public class ReflectionHelper {
 	 * @param field reflection {@link Field}
 	 * @param obj java instance that contains the field 
 	 * @param value value to write
-	 * @throws IOException
+	 * @throws IOException if error accessing field or converting value
 	 */
 	public static void assignField(Field field, Object obj, Object value) throws IOException {
 		Class<?> fieldType = field.getType();
@@ -92,11 +91,11 @@ public class ReflectionHelper {
 	 * Return Ghidra data type representing an array of primitive values.
 	 * 
 	 * @param array_value java array object
-	 * @param fieldType
-	 * @param length
-	 * @param signedness
-	 * @param dataTypeMapper
-	 * @return
+	 * @param fieldType class representing the java array type
+	 * @param length length of an element of the array, or -1
+	 * @param signedness {@link Signedness} enum
+	 * @param dataTypeMapper program level structure mapping context
+	 * @return Ghdira {@link ArrayDataType} representing the specified java array type
 	 */
 	public static DataType getArrayOutputDataType(Object array_value, Class<?> fieldType, int length,
 			Signedness signedness, DataTypeMapper dataTypeMapper) {
@@ -239,6 +238,17 @@ public class ReflectionHelper {
 
 	}
 
+	/**
+	 * Creates an instance of the specified target class, using an optional context parameter
+	 * to the constructor.
+	 * 
+	 * @param <T> type of the class to be created
+	 * @param <CTX> type of the context to be passed to the constructor
+	 * @param targetClass class to be created
+	 * @param optionalContext anything, or null
+	 * @return new instance of type T
+	 * @throws IllegalArgumentException if error creating instance
+	 */
 	public static <T, CTX> T createInstance(Class<T> targetClass, CTX optionalContext)
 			throws IllegalArgumentException {
 
@@ -293,9 +303,25 @@ public class ReflectionHelper {
 		}
 	}
 
-	public static void getMarkedMethods(Class<?> targetClass,
+	/**
+	 * Returns a list of methods that have been marked with a specific annotation.
+	 * 
+	 * @param targetClass class to query
+	 * @param annotationClass annotation to search for
+	 * @param methods list to accumulate results into, or null to allocate new list.  Also returned
+	 * as the result of this function
+	 * @param includeParentClasses boolean flag, if true recurse into parent classes first
+	 * @param paramClasses list of parameters that the tagged methods should declare.  Methods
+	 * will be skipped if they don't match
+	 * @return list of found methods that match the annotation and param list
+	 */
+	public static List<Method> getMarkedMethods(Class<?> targetClass,
 			Class<? extends Annotation> annotationClass, List<Method> methods,
 			boolean includeParentClasses, Class<?>... paramClasses) {
+		if (methods == null) {
+			methods = new ArrayList<>();
+		}
+
 		if (includeParentClasses && targetClass.getSuperclass() != null) {
 			getMarkedMethods(targetClass.getSuperclass(), annotationClass, methods,
 				includeParentClasses, paramClasses);
@@ -317,6 +343,7 @@ public class ReflectionHelper {
 				methods.add(method);
 			}
 		}
+		return methods;
 	}
 
 	public static <T extends Annotation> List<T> getAnnotations(Class<?> targetClass,

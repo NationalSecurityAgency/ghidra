@@ -48,6 +48,12 @@ public enum GoKind {
 	public static final int GC_PROG = (1 << 6);
 	public static final int DIRECT_IFACE = (1 << 5);
 
+	/**
+	 * Parses the byte value read from the runtime._type kind field.
+	 * 
+	 * @param b byte value
+	 * @return {@link GoKind} enum, or {@link #invalid} if bad value
+	 */
 	public static GoKind parseByte(int b) {
 		int ordinal = b & KIND_MASK;
 		return Bool.ordinal() <= ordinal && ordinal <= UnsafePointer.ordinal()

@@ -77,9 +77,9 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * is not a supported golang binary.
 	 * 
 	 * @param program {@link Program}
-	 * @param log 
+	 * @param log {@link MessageLog}
 	 * @return new {@link GoRttiMapper}, or null if not a golang binary
-	 * @throws IOException
+	 * @throws IOException if bootstrap gdt is corrupted or some other struct mapping logic error 
 	 */
 	public static GoRttiMapper getMapperFor(Program program, MessageLog log) throws IOException {
 		GoBuildInfo buildInfo = GoBuildInfo.fromProgram(program);
@@ -104,6 +104,15 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 	}
 
+	/**
+	 * Returns the name of the golang bootstrap gdt data type archive, using the specified
+	 * version, pointer size and OS name.
+	 * 
+	 * @param goVer {@link GoVer}
+	 * @param pointerSizeInBytes pointer size for this binary, or -1 to use wildcard "any" 
+	 * @param osName name of the operating system, or "any"
+	 * @return String, "golang_1.18_64bit_any.gdt"
+	 */
 	public static String getGDTFilename(GoVer goVer, int pointerSizeInBytes, String osName) {
 		String bitSize = pointerSizeInBytes > 0
 				? Integer.toString(pointerSizeInBytes * 8)
@@ -114,6 +123,12 @@ public class GoRttiMapper extends DataTypeMapper {
 		return gdtFilename;
 	}
 
+	/**
+	 * Returns a golang OS string based on the Ghidra program.
+	 * 
+	 * @param program {@link Program}
+	 * @return String golang OS string such as "linux", "win"
+	 */
 	public static String getGolangOSString(Program program) {
 		String loaderName = program.getExecutableFormat();
 		if (ElfLoader.ELF_NAME.equals(loaderName)) {
@@ -137,7 +152,7 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @param goVer version of Go
 	 * @param ptrSize size of pointers
 	 * @param osName name of OS
-	 * @return
+	 * @return ResourceFile of matching bootstrap gdt, or null if nothing matches
 	 */
 	public static ResourceFile findGolangBootstrapGDT(GoVer goVer, int ptrSize, String osName) {
 		ResourceFile result = null;
@@ -185,8 +200,22 @@ public class GoRttiMapper extends DataTypeMapper {
 	private GoType mapGoType;
 	private GoType chanGoType;
 
+	/**
+	 * Creates a GoRttiMapper using the specified bootstrap information.
+	 * 
+	 * @param program {@link Program} containing the go binary
+	 * @param ptrSize size of pointers
+	 * @param endian {@link Endian}
+	 * @param goVersion version of go
+	 * @param archiveGDT path to the matching golang bootstrap gdt data type file, or null
+	 * if not present and types recovered via DWARF should be used instead
+	 * @throws IOException if error linking a structure mapped structure to its matching
+	 * ghidra structure, which is a programming error or a corrupted bootstrap gdt
+	 * @throws IllegalArgumentException if there is no matching bootstrap gdt for this specific
+	 * type of golang binary
+	 */
 	public GoRttiMapper(Program program, int ptrSize, Endian endian, GoVer goVersion,
-			ResourceFile archiveGDT) throws IOException {
+			ResourceFile archiveGDT) throws IOException, IllegalArgumentException {
 		super(program, archiveGDT);
 
 		this.goVersion = goVersion;
@@ -222,18 +251,41 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 	}
 
+	/**
+	 * Returns the golang version
+	 * @return {@link GoVer}
+	 */
 	public GoVer getGolangVersion() {
 		return goVersion;
 	}
 
+	/**
+	 * Returns the first module data instance
+	 * 
+	 * @return {@link GoModuledata}
+	 */
 	public GoModuledata getFirstModule() {
 		return modules.get(0);
 	}
 
+	/**
+	 * Adds a module data instance to the context
+	 * 
+	 * @param module {@link GoModuledata} to add
+	 */
 	public void addModule(GoModuledata module) {
 		modules.add(module);
 	}
 
+	/**
+	 * Finds the {@link GoModuledata} that contains the specified offset.
+	 * <p>
+	 * Useful for finding the {@link GoModuledata} to resolve a relative offset of the text,
+	 * types or other area.
+	 *  
+	 * @param offset absolute offset of a structure that a {@link GoModuledata} contains
+	 * @return {@link GoModuledata} instance that contains the structure, or null if not found
+	 */
 	public GoModuledata findContainingModule(long offset) {
 		for (GoModuledata module : modules) {
 			if (module.getTypesOffset() <= offset && offset < module.getTypesEndOffset()) {
@@ -243,6 +295,13 @@ public class GoRttiMapper extends DataTypeMapper {
 		return null;
 	}
 
+	/**
+	 * Finds the {@link GoModuledata} that contains the specified func data offset.
+	 * 
+	 * @param offset absolute offset of a func data structure
+	 * @return {@link GoModuledata} instance that contains the specified func data, or null if not
+	 * found
+	 */
 	public GoModuledata findContainingModuleByFuncData(long offset) {
 		for (GoModuledata module : modules) {
 			if (module.containsFuncDataInstance(offset)) {
@@ -257,26 +316,56 @@ public class GoRttiMapper extends DataTypeMapper {
 		return VARLEN_STRUCTS_CP;
 	}
 
+	/**
+	 * Returns the data type that represents a golang uintptr
+	 * 
+	 * @return golang uinptr data type
+	 */
 	public DataType getUintptrDT() {
 		return uintptrDT;
 	}
 
+	/**
+	 * Returns the data type that represents a golang int32
+	 * 
+	 * @return golang int32 data type
+	 */
 	public DataType getInt32DT() {
 		return int32DT;
 	}
 
+	/**
+	 * Returns the data type that represents a golang uint32
+	 * 
+	 * @return golang uint32 data type
+	 */
 	public DataType getUint32DT() {
 		return uint32DT;
 	}
 
+	/**
+	 * Returns the data type that represents a generic golang slice.
+	 * 
+	 * @return golang generic slice data type
+	 */
 	public Structure getGenericSliceDT() {
 		return getStructureDataType(GoSlice.class);
 	}
 
+	/**
+	 * Returns the ghidra data type that represents a golang built-in map type.
+	 * 
+	 * @return golang map data type
+	 */
 	public GoType getMapGoType() {
 		return mapGoType;
 	}
 
+	/**
+	 * Returns the ghidra data type that represents the built-in golang channel type.
+	 * 
+	 * @return golang channel type
+	 */
 	public GoType getChanGoType() {
 		return chanGoType;
 	}
@@ -286,31 +375,22 @@ public class GoRttiMapper extends DataTypeMapper {
 		return reader.clone();
 	}
 
+	/**
+	 * Returns the size of pointers in this binary.
+	 * 
+	 * @return pointer size (ex. 4, or 8)
+	 */
 	public int getPtrSize() {
 		return ptrSize;
 	}
 
-	public GoName resolveNameOff(long ptrInModule, long off) throws IOException {
-		if (off == 0) {
-			return null;
-		}
-		GoModuledata module = findContainingModule(ptrInModule);
-		long nameStart = module.getTypesOffset() + off;
-		return getGoName(nameStart);
-	}
-
-	public GoName getGoName(long offset) throws IOException {
-		return offset != 0 ? readStructure(GoName.class, offset) : null;
-	}
-
-	public GoType resolveTypeOff(long ptrInModule, long off) throws IOException {
-		if (off == 0 || off == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG || off == -1) {
-			return null;
-		}
-		GoModuledata module = findContainingModule(ptrInModule);
-		return getGoType(module.getTypesOffset() + off);
-	}
-
+	/**
+	 * Returns a specialized {@link GoType} for the type that is located at the specified location.
+	 * 
+	 * @param offset absolute position of a go type
+	 * @return specialized {@link GoType} (example, GoStructType, GoArrayType, etc)
+	 * @throws IOException if error reading
+	 */
 	public GoType getGoType(long offset) throws IOException {
 		if (offset == 0) {
 			return null;
@@ -324,14 +404,36 @@ public class GoRttiMapper extends DataTypeMapper {
 		return goType;
 	}
 
+	/**
+	 * Returns a specialized {@link GoType} for the type that is located at the specified location.
+	 * 
+	 * @param addr location of a go type
+	 * @return specialized {@link GoType} (example, GoStructType, GoArrayType, etc)
+	 * @throws IOException if error reading
+	 */
 	public GoType getGoType(Address addr) throws IOException {
 		return getGoType(addr.getOffset());
 	}
 
+	/**
+	 * Finds a go type by its go-type name, from the list of 
+	 * {@link #discoverGoTypes(TaskMonitor) discovered} go types. 
+	 * 
+	 * @param typeName name string
+	 * @return {@link GoType}, or null if not found
+	 */
 	public GoType findGoType(String typeName) {
 		return typeNameIndex.get(typeName);
 	}
 
+	/**
+	 * Returns the Ghidra {@link DataType} that is equivalent to the named golang type.
+	 * 
+	 * @param <T> expected DataType
+	 * @param goTypeName golang type name
+	 * @param clazz class of expected data type
+	 * @return {@link DataType} representing the named golang type, or null if not found
+	 */
 	public <T extends DataType> T getGhidraDataType(String goTypeName, Class<T> clazz) {
 		T dt = getType(goTypeName, clazz);
 		if (dt == null) {
@@ -353,22 +455,16 @@ public class GoRttiMapper extends DataTypeMapper {
 		return dt;
 	}
 
-	public Address resolveTextOff(long ptrInModule, long off) {
-		if (off == -1 || off == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG) {
-			return null;
-		}
-		GoModuledata module = findContainingModule(ptrInModule);
-		return module != null ? module.getText().add(off) : null;
-	}
-
 	/**
-	 * Export the currently registered struct mapping types to a gdt file.
+	 * Export the currently registered struct mapping types to a gdt file, producing a bootstrap
+	 * GDT archive.
 	 * <p>
 	 * The struct data types will either be from the current program's DWARF data, or
 	 * from an earlier golang.gdt (if this binary doesn't have DWARF)
 	 * 
-	 * @param gdtFile
-	 * @throws IOException
+	 * @param gdtFile destination {@link File} to write the bootstrap types to
+	 * @param monitor {@link TaskMonitor}
+	 * @throws IOException if error
 	 */
 	public void exportTypesToGDT(File gdtFile, TaskMonitor monitor) throws IOException {
 
@@ -463,12 +559,29 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 	}
 
+	/**
+	 * Returns category path that should be used to place recovered golang types.
+	 * 
+	 * @return {@link CategoryPath} to use when creating recovered golang types
+	 */
 	public CategoryPath getRecoveredTypesCp() {
 		return RECOVERED_TYPES_CP;
 	}
 
+	/**
+	 * Returns a {@link DataType Ghidra data type} that represents the {@link GoType golang type}, 
+	 * using a cache of already recovered types to eliminate extra work and self recursion.
+	 *  
+	 * @param typ the {@link GoType} to convert
+	 * @return Ghidra {@link DataType}
+	 * @throws IOException if error converting type
+	 */
 	public DataType getRecoveredType(GoType typ) throws IOException {
-		long offset = getExistingStructureAddress(typ).getOffset();
+		Address typeStructAddr = getAddressOfStructure(typ);
+		if (typeStructAddr == null) {
+			throw new IOException("Unable to get address of a struct mapped instance");
+		}
+		long offset = typeStructAddr.getOffset();
 		DataType dt = cachedRecoveredDataTypes.get(offset);
 		if (dt != null) {
 			return dt;
@@ -478,13 +591,40 @@ public class GoRttiMapper extends DataTypeMapper {
 		return dt;
 	}
 
+	/**
+	 * Inserts a mapping between a {@link GoType golang type} and a 
+	 * {@link DataType ghidra data type}.
+	 * <p>
+	 * Useful to prepopulate the data type mapping before recursing into contained/referenced types
+	 * that might be self-referencing.
+	 * 
+	 * @param typ {@link GoType golang type}
+	 * @param dt {@link DataType Ghidra type}
+	 * @throws IOException if golang type struct is not a valid struct mapped instance
+	 */
 	public void cacheRecoveredDataType(GoType typ, DataType dt) throws IOException {
-		long offset = getExistingStructureAddress(typ).getOffset();
+		Address typeStructAddr = getAddressOfStructure(typ);
+		if (typeStructAddr == null) {
+			throw new IOException("Unable to get address of a struct mapped instance");
+		}
+		long offset = typeStructAddr.getOffset();
 		cachedRecoveredDataTypes.put(offset, dt);
 	}
 
+	/**
+	 * Returns a {@link DataType Ghidra data type} that represents the {@link GoType golang type}, 
+	 * using a cache of already recovered types to eliminate extra work and self recursion.
+	 *  
+	 * @param typ the {@link GoType} to convert
+	 * @return Ghidra {@link DataType}
+	 * @throws IOException if golang type struct is not a valid struct mapped instance
+	 */
 	public DataType getCachedRecoveredDataType(GoType typ) throws IOException {
-		long offset = getExistingStructureAddress(typ).getOffset();
+		Address typeStructAddr = getAddressOfStructure(typ);
+		if (typeStructAddr == null) {
+			throw new IOException("Unable to get address of a struct mapped instance");
+		}
+		long offset = typeStructAddr.getOffset();
 		return cachedRecoveredDataTypes.get(offset);
 	}
 
@@ -492,8 +632,9 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * Converts all discovered golang rtti type records to Ghidra data types, placing them
 	 * in the program's DTM in /golang-recovered
 	 * 
-	 * @throws IOException
-	 * @throws CancelledException 
+	 * @param monitor {@link TaskMonitor}
+	 * @throws IOException error converting a golang type to a Ghidra type
+	 * @throws CancelledException if the user cancelled the import
 	 */
 	public void recoverDataTypes(TaskMonitor monitor) throws IOException, CancelledException {
 		monitor.setMessage("Converting Golang types to Ghidra data types");
@@ -510,6 +651,16 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 	}
 
+	/**
+	 * Iterates over all golang rtti types listed in the GoModuledata struct, and recurses into
+	 * each type to discover any types they reference.
+	 * <p>
+	 * The found types are accumulated in {@link #goTypes}.
+	 * 
+	 * @param monitor {@link TaskMonitor}
+	 * @throws IOException if error
+	 * @throws CancelledException if cancelled
+	 */
 	public void discoverGoTypes(TaskMonitor monitor) throws IOException, CancelledException {
 		GoModuledata firstModule = findFirstModuledata(monitor);
 		if (firstModule == null) {
@@ -533,12 +684,87 @@ public class GoRttiMapper extends DataTypeMapper {
 		}
 		typeNameIndex.clear();
 		for (GoType goType : goTypes.values()) {
-			String typeName = goType.getBaseType().getNameString();
+			String typeName = goType.getNameString();
 			typeNameIndex.put(typeName, goType);
 		}
 		Msg.info(this, "Found %d golang types".formatted(goTypes.size()));
 		initHiddenCompilerTypes();
 	}
+
+	/**
+	 * Returns the {@link GoType} corresponding to an offset that is relative to the controlling
+	 * GoModuledata's typesOffset.
+	 * 
+	 * @param ptrInModule the address of the structure that contains the offset that needs to be
+	 * calculated.  The containing-structure's address is important because it indicates which
+	 * GoModuledata is the 'parent' 
+	 * @param off offset
+	 * @return {@link GoType}, or null if offset is special value 0 or -1
+	 * @throws IOException if error
+	 */
+	public GoType resolveTypeOff(long ptrInModule, long off) throws IOException {
+		if (off == 0 || off == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG || off == -1) {
+			return null;
+		}
+		GoModuledata module = findContainingModule(ptrInModule);
+		return getGoType(module.getTypesOffset() + off);
+	}
+
+	/**
+	 * Returns the {@link Address} to an offset that is relative to the controlling
+	 * GoModuledata's text value.
+	 * 
+	 * @param ptrInModule the address of the structure that contains the offset that needs to be
+	 * calculated.  The containing-structure's address is important because it indicates which
+	 * GoModuledata is the 'parent' 
+	 * @param off offset
+	 * @return {@link Address}, or null if offset was special value -1
+	 */
+	public Address resolveTextOff(long ptrInModule, long off) {
+		if (off == -1 || off == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG) {
+			return null;
+		}
+		GoModuledata module = findContainingModule(ptrInModule);
+		return module != null ? module.getText().add(off) : null;
+	}
+
+	/**
+	 * Returns the {@link GoName} corresponding to an offset that is relative to the controlling
+	 * GoModuledata's typesOffset.
+	 * <p>
+	 * 
+	 * @param ptrInModule the address of the structure that contains the offset that needs to be
+	 * calculated.  The containing-structure's address is important because it indicates which
+	 * GoModuledata is the 'parent' 
+	 * @param off offset
+	 * @return {@link GoName}, or null if offset was special value 0
+	 * @throws IOException if error reading name or unable to find containing module
+	 */
+	public GoName resolveNameOff(long ptrInModule, long off) throws IOException {
+		if (off == 0) {
+			return null;
+		}
+		GoModuledata module = findContainingModule(ptrInModule);
+		if (module == null) {
+			throw new IOException(
+				"Unable to find containing module for structure at 0x%x".formatted(ptrInModule));
+		}
+		long nameStart = module.getTypesOffset() + off;
+		return getGoName(nameStart);
+	}
+
+	/**
+	 * Returns the {@link GoName} instance at the specified offset.
+	 * 
+	 * @param offset location to read
+	 * @return {@link GoName} instance, or null if offset was special value 0
+	 * @throws IOException if error reading
+	 */
+	public GoName getGoName(long offset) throws IOException {
+		return offset != 0 ? readStructure(GoName.class, offset) : null;
+	}
+
+	//--------------------------------------------------------------------------------------------
 
 	private void initHiddenCompilerTypes() {
 		// these structure types are what golang map and chan types actually point to.
@@ -574,9 +800,9 @@ public class GoRttiMapper extends DataTypeMapper {
 	private AddressRange getPclntabSearchRange() {
 		Memory memory = program.getMemory();
 		for (String blockToSearch : List.of(".noptrdata", ".rdata")) {
-			MemoryBlock noptrdataBlock = memory.getBlock(blockToSearch);
-			if (noptrdataBlock != null) {
-				return new AddressRangeImpl(noptrdataBlock.getStart(), noptrdataBlock.getEnd());
+			MemoryBlock memBlock = memory.getBlock(blockToSearch);
+			if (memBlock != null) {
+				return new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd());
 			}
 		}
 		return null;
@@ -585,9 +811,9 @@ public class GoRttiMapper extends DataTypeMapper {
 	private AddressRange getModuledataSearchRange() {
 		Memory memory = program.getMemory();
 		for (String blockToSearch : List.of(".noptrdata", ".data")) {
-			MemoryBlock noptrdataBlock = memory.getBlock(blockToSearch);
-			if (noptrdataBlock != null) {
-				return new AddressRangeImpl(noptrdataBlock.getStart(), noptrdataBlock.getEnd());
+			MemoryBlock memBlock = memory.getBlock(blockToSearch);
+			if (memBlock != null) {
+				return new AddressRangeImpl(memBlock.getStart(), memBlock.getEnd());
 			}
 		}
 		return null;

@@ -17,6 +17,20 @@ package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
 
+/**
+ * Function that decorates a Ghidra structure 
+ * 
+ * @param <T> structure mapped class type
+ */
 public interface StructureMarkupFunction<T> {
-	void markupStructure(StructureContext<T> context) throws IOException;
+
+	/**
+	 * Decorates the specified structure.
+	 * 
+	 * @param context {@link StructureContext}
+	 * @param markupSession state and methods to assist marking up the program 
+	 * @throws IOException thrown if error performing the markup
+	 */
+	void markupStructure(StructureContext<T> context, MarkupSession markupSession)
+			throws IOException;
 }

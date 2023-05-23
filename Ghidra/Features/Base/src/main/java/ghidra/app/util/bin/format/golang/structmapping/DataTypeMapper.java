@@ -16,7 +16,6 @@
 package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 
 import generic.jar.ResourceFile;
@@ -25,18 +24,12 @@ import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFDataTypeConflictHandler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.DataUtilities.ClearDataMode;
-import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.DataConverter;
-import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Information about {@link StructureMapping} classes and their metadata, as well as
- * accumulated information about structure instances that have been deserialized.
+ * Information about {@link StructureMapping} classes and their metadata.
  * <p>
  * To use the full might and majesty of StructureMapping(tm), a DataTypeMapper must be created. It
  * must be able to {@link #addArchiveSearchCategoryPath(CategoryPath...) find} 
@@ -83,14 +76,14 @@ public class DataTypeMapper implements AutoCloseable {
 	protected List<CategoryPath> programSearchCPs = new ArrayList<>();
 	protected List<CategoryPath> archiveSearchCPs = new ArrayList<>();
 	protected Map<Class<?>, StructureMappingInfo<?>> mappingInfo = new HashMap<>();
-	protected Set<Address> markedupStructs = new HashSet<>();
-	protected TaskMonitor markupTaskMonitor = TaskMonitor.DUMMY;
 
 	/**
+	 * Creates and initializes a DataTypeMapper.
 	 * 
-	 * @param program
-	 * @param archiveGDT
-	 * @throws IOException
+	 * @param program the {@link Program} that will contain the deserialized data
+	 * @param archiveGDT path to a gdt data type archive that will be searched when
+	 * a {@link #getType(String, Class)} is called, or {@code null} if no archive
+	 * @throws IOException if error opening data type archive
 	 */
 	protected DataTypeMapper(Program program, ResourceFile archiveGDT) throws IOException {
 		this.program = program;
@@ -108,39 +101,72 @@ public class DataTypeMapper implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * CategoryPath location (in the program) where new data types will be created to represent
+	 * variable length structures.
+	 *    
+	 * @return {@link CategoryPath}, default is ROOT
+	 */
 	public CategoryPath getDefaultVariableLengthStructCategoryPath() {
 		return CategoryPath.ROOT;
 	}
 
+	/**
+	 * Returns the program.
+	 * 
+	 * @return ghidra {@link Program}
+	 */
 	public Program getProgram() {
 		return program;
 	}
 
-	protected BinaryReader createProgramReader() {
-		MemoryByteProvider bp =
-			new MemoryByteProvider(program.getMemory(), program.getImageBase().getAddressSpace());
-		return new BinaryReader(bp, !program.getMemory().isBigEndian());
+	/**
+	 * Creates a {@link MarkupSession} that is controlled by the specified {@link TaskMonitor}.
+	 * 
+	 * @param monitor {@link TaskMonitor}
+	 * @return new {@link MarkupSession}
+	 */
+	public MarkupSession createMarkupSession(TaskMonitor monitor) {
+		return new MarkupSession(this, monitor);
 	}
 
+	/**
+	 * Returns a {@link DataConverter} appropriate for the current program.
+	 *  
+	 * @return {@link DataConverter}
+	 */
 	public DataConverter getDataConverter() {
 		return DataConverter.getInstance(program.getMemory().isBigEndian());
 	}
 
-	public DataTypeMapper addProgramSearchCategoryPath(CategoryPath... paths) {
+	/**
+	 * Adds category paths to a search list, used when looking for a data type.
+	 * <p>
+	 * See {@link #getType(String, Class)}.
+	 * 
+	 * @param paths vararg list of {@link CategoryPath}s
+	 */
+	public void addProgramSearchCategoryPath(CategoryPath... paths) {
 		programSearchCPs.addAll(Arrays.asList(paths));
-		return this;
 	}
 
-	public DataTypeMapper addArchiveSearchCategoryPath(CategoryPath... paths) {
+	/**
+	 * Adds category paths to a search list, used when looking for a data type.
+	 * <p>
+	 * See {@link #getType(String, Class)}.
+	 * 
+	 * @param paths vararg list of {@link CategoryPath}s
+	 */
+	public void addArchiveSearchCategoryPath(CategoryPath... paths) {
 		archiveSearchCPs.addAll(Arrays.asList(paths));
-		return this;
 	}
 
 	/**
 	 * Registers a class that has {@link StructureMapping structure mapping} information.
 	 * 
-	 * @param <T>
-	 * @param clazz
+	 * @param <T> structure mapped class type
+	 * @param clazz class that represents a structure, marked with {@link StructureMapping} 
+	 * annotation
 	 * @throws IOException if the class's Ghidra structure data type could not be found
 	 */
 	public <T> void registerStructure(Class<T> clazz) throws IOException {
@@ -162,18 +188,41 @@ public class DataTypeMapper implements AutoCloseable {
 		mappingInfo.put(clazz, structMappingInfo);
 	}
 
+	/**
+	 * Registers the specified {@link StructureMapping structure mapping} classes.
+	 *  
+	 * @param classes list of classes to register
+	 * @throws IOException if a class's Ghidra structure data type could not be found
+	 */
 	public void registerStructures(List<Class<?>> classes) throws IOException {
 		for (Class<?> clazz : classes) {
 			registerStructure(clazz);
 		}
 	}
 
+	/**
+	 * Returns the {@link StructureMappingInfo} for a class (that has already been registered).
+	 * 
+	 * @param <T> structure mapped class type
+	 * @param clazz the class
+	 * @return {@link StructureMappingInfo} for the specified class, or null if the class was
+	 * not previously {@link #registerStructure(Class) registered}
+	 */
 	@SuppressWarnings("unchecked")
 	public <T> StructureMappingInfo<T> getStructureMappingInfo(Class<T> clazz) {
 		StructureMappingInfo<?> smi = mappingInfo.get(clazz);
 		return (StructureMappingInfo<T>) smi;
 	}
 
+	/**
+	 * Returns the {@link StructureMappingInfo} for an object instance.
+	 *  
+	 * @param <T> structure mapped class type
+	 * @param structureInstance an instance of a previously registered 
+	 * {@link StructureMapping structure mapping} class, or null
+	 * @return {@link StructureMappingInfo} for the instance, or null if the class was
+	 * not previously {@link #registerStructure(Class) registered}
+	 */
 	@SuppressWarnings("unchecked")
 	public <T> StructureMappingInfo<T> getStructureMappingInfo(T structureInstance) {
 		return structureInstance != null
@@ -189,41 +238,35 @@ public class DataTypeMapper implements AutoCloseable {
 	 * fields
 	 */
 	public Structure getStructureDataType(Class<?> clazz) {
-		StructureMappingInfo<?> mi = mappingInfo.get(clazz);
-		return mi != null ? mi.getStructureDataType() : null;
+		StructureMappingInfo<?> smi = mappingInfo.get(clazz);
+		return smi != null ? smi.getStructureDataType() : null;
 	}
 
 	/**
 	 * Returns the name of the Ghidra structure that has been registered for the specified
 	 * structure mapped class.
 	 * 
-	 * @param clazz
-	 * @return
+	 * @param clazz a structure mapped class
+	 * @return name of the corresponding Ghidra structure data type, or null if class was not
+	 * registered
 	 */
 	public String getStructureDataTypeName(Class<?> clazz) {
 		StructureMappingInfo<?> mi = mappingInfo.get(clazz);
 		return mi != null ? mi.getStructureName() : null;
 	}
 
-	protected DataType findType(String name, List<CategoryPath> searchList, DataTypeManager dtm) {
-		for (CategoryPath searchCP : searchList) {
-			DataType dataType = dtm.getDataType(searchCP, name);
-			if (dataType != null) {
-				return dataType;
-			}
-		}
-		return null;
-	}
-
 	/**
 	 * Returns a named {@link DataType}, searching the registered 
 	 * {@link #addProgramSearchCategoryPath(CategoryPath...) program}
 	 * and {@link #addArchiveSearchCategoryPath(CategoryPath...) archive} category paths.
+	 * <p>
+	 * DataTypes that were found in the attached archive gdt manager will be copied into the
+	 * program's data type manager before being returned.
 	 * 
-	 * @param <T>
-	 * @param name
-	 * @param clazz
-	 * @return
+	 * @param <T> DataType or derived type
+	 * @param name {@link DataType} name
+	 * @param clazz expected DataType class
+	 * @return DataType or null if not found
 	 */
 	public <T extends DataType> T getType(String name, Class<T> clazz) {
 		DataType dataType = findType(name, programSearchCPs, programDTM);
@@ -240,27 +283,43 @@ public class DataTypeMapper implements AutoCloseable {
 		return clazz.isInstance(dataType) ? clazz.cast(dataType) : null;
 	}
 
+	/**
+	 * Returns a named {@link DataType}, searching the registered 
+	 * {@link #addProgramSearchCategoryPath(CategoryPath...) program}
+	 * and {@link #addArchiveSearchCategoryPath(CategoryPath...) archive} category paths.
+	 * <p>
+	 * DataTypes that were found in the attached archive gdt manager will be copied into the
+	 * program's data type manager before being returned.
+	 * 
+	 * @param <T> DataType or derived type
+	 * @param name {@link DataType} name
+	 * @param clazz expected DataType class
+	 * @param defaultValue value to return if the requested data type was not found
+	 * @return DataType or {@code defaultValue} if not found
+	 */
 	public <T extends DataType> T getTypeOrDefault(String name, Class<T> clazz, T defaultValue) {
 		T result = getType(name, clazz);
 		return result != null ? result : defaultValue;
 	}
 
+	/**
+	 * Returns the program's data type manager.
+	 * 
+	 * @return program's {@link DataTypeManager}
+	 */
 	public DataTypeManager getDTM() {
 		return programDTM;
 	}
 
-	private <T> StructureContext<T> getStructureContext(Class<T> structureClass,
-			BinaryReader reader) {
-		StructureMappingInfo<T> smi = getStructureMappingInfo(structureClass);
-		if (smi == null) {
-			throw new IllegalArgumentException(
-				"Unknown structure mapped class: " + structureClass.getSimpleName());
-		}
-		return new StructureContext<>(this, smi, reader);
-	}
-
-	public <T> StructureContext<T> getExistingStructureContext(T structureInstance)
-			throws IOException {
+	/**
+	 * Returns the {@link StructureContext} of a structure mapped instance.
+	 * 
+	 * @param <T> java type of a class that is structure mapped
+	 * @param structureInstance an existing instance of type T
+	 * @return {@link StructureContext} of the instance, or null if instance was null or not
+	 * a structure mapped object 
+	 */
+	public <T> StructureContext<T> getStructureContextOfInstance(T structureInstance) {
 		StructureMappingInfo<T> smi = structureInstance != null
 				? getStructureMappingInfo(structureInstance)
 				: null;
@@ -275,9 +334,8 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @param structureInstance instance of an object that represents something in the program's
 	 * memory
 	 * @return {@link Address} of the object, or null if not found or not a supported object
-	 * @throws IOException
 	 */
-	public <T> Address getExistingStructureAddress(T structureInstance) throws IOException {
+	public <T> Address getAddressOfStructure(T structureInstance) {
 		StructureMappingInfo<T> smi = structureInstance != null
 				? getStructureMappingInfo(structureInstance)
 				: null;
@@ -289,118 +347,120 @@ public class DataTypeMapper implements AutoCloseable {
 				: null;
 	}
 
-	public void setMarkupTaskMonitor(TaskMonitor monitor) {
-		this.markupTaskMonitor = Objects.requireNonNullElse(monitor, TaskMonitor.DUMMY);
-	}
-
-	public <T> void markup(T obj, boolean nested) throws IOException {
-		if (markupTaskMonitor.isCancelled()) {
-			throw new IOException("Markup canceled");
-		}
-		if (obj == null) {
-			return;
-		}
-		if (obj instanceof Collection<?> list) {
-			for (Object listElement : list) {
-				markup(listElement, nested);
-			}
-		}
-		else if (obj.getClass().isArray()) {
-			int len = Array.getLength(obj);
-			for (int i = 0; i < len; i++) {
-				markup(Array.get(obj, i), nested);
-			}
-		}
-		else if (obj instanceof Iterator<?> it) {
-			while (it.hasNext()) {
-				Object itElement = it.next();
-				markup(itElement, nested);
-			}
-		}
-		else {
-			StructureContext<T> structureContext = getExistingStructureContext(obj);
-			if (structureContext == null) {
-				throw new IllegalArgumentException();
-			}
-			markupTaskMonitor.incrementProgress(1);
-			structureContext.markupStructure(nested);
-		}
-	}
-
+	/**
+	 * Reads a structure mapped object from the current position of the specified BinaryReader.
+	 * 
+	 * @param <T> type of object
+	 * @param structureClass structure mapped object class
+	 * @param structReader {@link BinaryReader} positioned at the start of an object
+	 * @return new object instance of type T
+	 * @throws IOException if error reading
+	 * @throws IllegalArgumentException if specified structureClass is not valid
+	 */
 	public <T> T readStructure(Class<T> structureClass, BinaryReader structReader)
 			throws IOException {
-		StructureContext<T> structureContext = getStructureContext(structureClass, structReader);
+		StructureContext<T> structureContext = createStructureContext(structureClass, structReader);
 
 		T result = structureContext.readNewInstance();
 		return result;
 	}
 
+	/**
+	 * Reads a structure mapped object from the specified position of the program.
+	 * 
+	 * @param <T> type of object
+	 * @param structureClass structure mapped object class
+	 * @param position of object
+	 * @return new object instance of type T
+	 * @throws IOException if error reading
+	 * @throws IllegalArgumentException if specified structureClass is not valid
+	 */
 	public <T> T readStructure(Class<T> structureClass, long position) throws IOException {
 		return readStructure(structureClass, getReader(position));
 	}
 
+	/**
+	 * Reads a structure mapped object from the specified Address of the program.
+	 * 
+	 * @param <T> type of object
+	 * @param structureClass structure mapped object class
+	 * @param address location of object
+	 * @return new object instance of type T
+	 * @throws IOException if error reading
+	 * @throws IllegalArgumentException if specified structureClass is not valid
+	 */
 	public <T> T readStructure(Class<T> structureClass, Address address) throws IOException {
 		return readStructure(structureClass, getReader(address.getOffset()));
 	}
 
+	/**
+	 * Creates a {@link BinaryReader}, at the specified position.
+	 *  
+	 * @param position location in the program
+	 * @return new {@link BinaryReader} 
+	 */
 	public BinaryReader getReader(long position) {
 		BinaryReader reader = createProgramReader();
 		reader.setPointerIndex(position);
 		return reader;
 	}
 
-
+	/**
+	 * Converts an offset into an Address.
+	 * 
+	 * @param offset numeric offset
+	 * @return {@link Address}
+	 */
 	public Address getDataAddress(long offset) {
 		return program.getImageBase().getNewAddress(offset);
 	}
 
+	/**
+	 * Converts an offset into an Address.
+	 * 
+	 * @param offset numeric offset
+	 * @return {@link Address}
+	 */
 	public Address getCodeAddress(long offset) {
 		return program.getImageBase().getNewAddress(offset);
 	}
 
-	public void labelAddress(Address addr, String symbolName) throws IOException {
-		try {
-			SymbolTable symbolTable = getProgram().getSymbolTable();
-			Symbol[] symbols = symbolTable.getSymbols(addr);
-			if (symbols.length == 0 || symbols[0].isDynamic()) {
-				symbolName = SymbolUtilities.replaceInvalidChars(symbolName, true);
-				symbolTable.createLabel(addr, symbolName, SourceType.IMPORTED);
-			}
-		}
-		catch (InvalidInputException e) {
-			throw new IOException(e);
-		}
-	}
-
-	public <T> void labelStructure(T obj, String symbolName) throws IOException {
-		Address addr = getExistingStructureAddress(obj);
-		labelAddress(addr, symbolName);
-	}
-
-	public void markupAddress(Address addr, DataType dt) throws IOException {
-		markupAddress(addr, dt, -1);
-	}
-
-	public void markupAddress(Address addr, DataType dt, int length) throws IOException {
-		try {
-			DataUtilities.createData(program, addr, dt, length, false,
-				ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
-		}
-		catch (CodeUnitInsertionException e) {
-			throw new IOException(e);
-		}
-
-	}
-
-	public void markupAddressIfUndefined(Address addr, DataType dt) throws IOException {
-		Data data = DataUtilities.getDataAtAddress(program, addr);
-		if (data == null || Undefined.isUndefined(data.getBaseDataType())) {
-			markupAddress(addr, dt);
-		}
-	}
-
 	@Override
 	public String toString() {
-		return "DataTypeMapper { program: %s}".formatted(program.getName());
+		return "DataTypeMapper { program: %s }".formatted(program.getName());
 	}
+
+	/**
+	 * Creates a new BinaryReader that reads bytes from the current program's memory image.
+	 * <p>
+	 * Address offsets and index offsets in the BinaryReader should be synonymous.
+	 * 
+	 * @return new BinaryReader
+	 */
+	protected BinaryReader createProgramReader() {
+		MemoryByteProvider bp =
+			new MemoryByteProvider(program.getMemory(), program.getImageBase().getAddressSpace());
+		return new BinaryReader(bp, !program.getMemory().isBigEndian());
+	}
+
+	protected DataType findType(String name, List<CategoryPath> searchList, DataTypeManager dtm) {
+		for (CategoryPath searchCP : searchList) {
+			DataType dataType = dtm.getDataType(searchCP, name);
+			if (dataType != null) {
+				return dataType;
+			}
+		}
+		return null;
+	}
+
+	private <T> StructureContext<T> createStructureContext(Class<T> structureClass,
+			BinaryReader reader) throws IllegalArgumentException {
+		StructureMappingInfo<T> smi = getStructureMappingInfo(structureClass);
+		if (smi == null) {
+			throw new IllegalArgumentException(
+				"Unknown structure mapped class: " + structureClass.getSimpleName());
+		}
+		return new StructureContext<>(this, smi, reader);
+	}
+
 }
