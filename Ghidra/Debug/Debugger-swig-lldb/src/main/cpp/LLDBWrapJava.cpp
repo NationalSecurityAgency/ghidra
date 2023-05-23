@@ -340,7 +340,7 @@ using namespace lldb;
 
 #include <stdint.h>		// Use the C99 official header
 
-SWIGINTERN std::string lldb_SBAddress___str__(lldb::SBAddress *self){
+SWIGINTERN std::string lldb_SBAddress___repr__(lldb::SBAddress *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -350,7 +350,7 @@ SWIGINTERN std::string lldb_SBAddress___str__(lldb::SBAddress *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBBlock___str__(lldb::SBBlock *self){
+SWIGINTERN std::string lldb_SBBlock___repr__(lldb::SBBlock *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -360,7 +360,7 @@ SWIGINTERN std::string lldb_SBBlock___str__(lldb::SBBlock *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBBreakpoint___str__(lldb::SBBreakpoint *self){
+SWIGINTERN std::string lldb_SBBreakpoint___repr__(lldb::SBBreakpoint *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -370,7 +370,7 @@ SWIGINTERN std::string lldb_SBBreakpoint___str__(lldb::SBBreakpoint *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBBreakpointLocation___str__(lldb::SBBreakpointLocation *self){
+SWIGINTERN std::string lldb_SBBreakpointLocation___repr__(lldb::SBBreakpointLocation *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelFull);
     const char *desc = stream.GetData();
@@ -380,7 +380,7 @@ SWIGINTERN std::string lldb_SBBreakpointLocation___str__(lldb::SBBreakpointLocat
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBBreakpointName___str__(lldb::SBBreakpointName *self){
+SWIGINTERN std::string lldb_SBBreakpointName___repr__(lldb::SBBreakpointName *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -390,7 +390,7 @@ SWIGINTERN std::string lldb_SBBreakpointName___str__(lldb::SBBreakpointName *sel
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBCommandReturnObject___str__(lldb::SBCommandReturnObject *self){
+SWIGINTERN std::string lldb_SBCommandReturnObject___repr__(lldb::SBCommandReturnObject *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -409,7 +409,7 @@ SWIGINTERN void lldb_SBCommandReturnObject_SetImmediateErrorFile__SWIG_2(lldb::S
 SWIGINTERN void lldb_SBCommandReturnObject_Print(lldb::SBCommandReturnObject *self,char const *str){
             self->Printf("%s", str);
         }
-SWIGINTERN std::string lldb_SBCompileUnit___str__(lldb::SBCompileUnit *self){
+SWIGINTERN std::string lldb_SBCompileUnit___repr__(lldb::SBCompileUnit *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -419,7 +419,7 @@ SWIGINTERN std::string lldb_SBCompileUnit___str__(lldb::SBCompileUnit *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBData___str__(lldb::SBData *self){
+SWIGINTERN std::string lldb_SBData___repr__(lldb::SBData *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -438,7 +438,7 @@ SWIGINTERN lldb::FileSP lldb_SBDebugger_GetOutputFileHandle(lldb::SBDebugger *se
 SWIGINTERN lldb::FileSP lldb_SBDebugger_GetErrorFileHandle(lldb::SBDebugger *self){
             return self->GetErrorFile().GetFile();
         }
-SWIGINTERN std::string lldb_SBDebugger___str__(lldb::SBDebugger *self){
+SWIGINTERN std::string lldb_SBDebugger___repr__(lldb::SBDebugger *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -448,7 +448,7 @@ SWIGINTERN std::string lldb_SBDebugger___str__(lldb::SBDebugger *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBDeclaration___str__(lldb::SBDeclaration *self){
+SWIGINTERN std::string lldb_SBDeclaration___repr__(lldb::SBDeclaration *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -458,7 +458,7 @@ SWIGINTERN std::string lldb_SBDeclaration___str__(lldb::SBDeclaration *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBError___str__(lldb::SBError *self){
+SWIGINTERN std::string lldb_SBError___repr__(lldb::SBError *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -477,7 +477,7 @@ SWIGINTERN lldb::SBFile lldb_SBFile_MakeForcingIOMethods(lldb::FileSP FORCE_IO_M
 SWIGINTERN lldb::SBFile lldb_SBFile_MakeBorrowedForcingIOMethods(lldb::FileSP BORROWED_FORCE_IO_METHODS){
             return lldb::SBFile(BORROWED_FORCE_IO_METHODS);
         }
-SWIGINTERN std::string lldb_SBFileSpec___str__(lldb::SBFileSpec *self){
+SWIGINTERN std::string lldb_SBFileSpec___repr__(lldb::SBFileSpec *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -487,7 +487,7 @@ SWIGINTERN std::string lldb_SBFileSpec___str__(lldb::SBFileSpec *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBFrame___str__(lldb::SBFrame *self){
+SWIGINTERN std::string lldb_SBFrame___repr__(lldb::SBFrame *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -497,7 +497,7 @@ SWIGINTERN std::string lldb_SBFrame___str__(lldb::SBFrame *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBFunction___str__(lldb::SBFunction *self){
+SWIGINTERN std::string lldb_SBFunction___repr__(lldb::SBFunction *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -507,7 +507,7 @@ SWIGINTERN std::string lldb_SBFunction___str__(lldb::SBFunction *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBInstruction___str__(lldb::SBInstruction *self){
+SWIGINTERN std::string lldb_SBInstruction___repr__(lldb::SBInstruction *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -517,7 +517,7 @@ SWIGINTERN std::string lldb_SBInstruction___str__(lldb::SBInstruction *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBInstructionList___str__(lldb::SBInstructionList *self){
+SWIGINTERN std::string lldb_SBInstructionList___repr__(lldb::SBInstructionList *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -527,7 +527,7 @@ SWIGINTERN std::string lldb_SBInstructionList___str__(lldb::SBInstructionList *s
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBLineEntry___str__(lldb::SBLineEntry *self){
+SWIGINTERN std::string lldb_SBLineEntry___repr__(lldb::SBLineEntry *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -537,7 +537,7 @@ SWIGINTERN std::string lldb_SBLineEntry___str__(lldb::SBLineEntry *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBMemoryRegionInfo___str__(lldb::SBMemoryRegionInfo *self){
+SWIGINTERN std::string lldb_SBMemoryRegionInfo___repr__(lldb::SBMemoryRegionInfo *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -547,7 +547,7 @@ SWIGINTERN std::string lldb_SBMemoryRegionInfo___str__(lldb::SBMemoryRegionInfo 
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBModule___str__(lldb::SBModule *self){
+SWIGINTERN std::string lldb_SBModule___repr__(lldb::SBModule *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -557,7 +557,7 @@ SWIGINTERN std::string lldb_SBModule___str__(lldb::SBModule *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBModuleSpec___str__(lldb::SBModuleSpec *self){
+SWIGINTERN std::string lldb_SBModuleSpec___repr__(lldb::SBModuleSpec *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -567,7 +567,7 @@ SWIGINTERN std::string lldb_SBModuleSpec___str__(lldb::SBModuleSpec *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBModuleSpecList___str__(lldb::SBModuleSpecList *self){
+SWIGINTERN std::string lldb_SBModuleSpecList___repr__(lldb::SBModuleSpecList *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -577,7 +577,7 @@ SWIGINTERN std::string lldb_SBModuleSpecList___str__(lldb::SBModuleSpecList *sel
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBProcess___str__(lldb::SBProcess *self){
+SWIGINTERN std::string lldb_SBProcess___repr__(lldb::SBProcess *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -587,7 +587,7 @@ SWIGINTERN std::string lldb_SBProcess___str__(lldb::SBProcess *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBSection___str__(lldb::SBSection *self){
+SWIGINTERN std::string lldb_SBSection___repr__(lldb::SBSection *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -600,7 +600,7 @@ SWIGINTERN std::string lldb_SBSection___str__(lldb::SBSection *self){
 SWIGINTERN void lldb_SBStream_RedirectToFileHandle(lldb::SBStream *self,lldb::FileSP file,bool transfer_fh_ownership){
             self->RedirectToFile(file);
         }
-SWIGINTERN std::string lldb_SBSymbol___str__(lldb::SBSymbol *self){
+SWIGINTERN std::string lldb_SBSymbol___repr__(lldb::SBSymbol *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -610,7 +610,7 @@ SWIGINTERN std::string lldb_SBSymbol___str__(lldb::SBSymbol *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBSymbolContext___str__(lldb::SBSymbolContext *self){
+SWIGINTERN std::string lldb_SBSymbolContext___repr__(lldb::SBSymbolContext *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -620,7 +620,7 @@ SWIGINTERN std::string lldb_SBSymbolContext___str__(lldb::SBSymbolContext *self)
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBSymbolContextList___str__(lldb::SBSymbolContextList *self){
+SWIGINTERN std::string lldb_SBSymbolContextList___repr__(lldb::SBSymbolContextList *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -630,7 +630,7 @@ SWIGINTERN std::string lldb_SBSymbolContextList___str__(lldb::SBSymbolContextLis
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTarget___str__(lldb::SBTarget *self){
+SWIGINTERN std::string lldb_SBTarget___repr__(lldb::SBTarget *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -640,7 +640,7 @@ SWIGINTERN std::string lldb_SBTarget___str__(lldb::SBTarget *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBThread___str__(lldb::SBThread *self){
+SWIGINTERN std::string lldb_SBThread___repr__(lldb::SBThread *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -650,7 +650,7 @@ SWIGINTERN std::string lldb_SBThread___str__(lldb::SBThread *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeMember___str__(lldb::SBTypeMember *self){
+SWIGINTERN std::string lldb_SBTypeMember___repr__(lldb::SBTypeMember *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -660,7 +660,7 @@ SWIGINTERN std::string lldb_SBTypeMember___str__(lldb::SBTypeMember *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeMemberFunction___str__(lldb::SBTypeMemberFunction *self){
+SWIGINTERN std::string lldb_SBTypeMemberFunction___repr__(lldb::SBTypeMemberFunction *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -670,7 +670,7 @@ SWIGINTERN std::string lldb_SBTypeMemberFunction___str__(lldb::SBTypeMemberFunct
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBType___str__(lldb::SBType *self){
+SWIGINTERN std::string lldb_SBType___repr__(lldb::SBType *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -680,7 +680,7 @@ SWIGINTERN std::string lldb_SBType___str__(lldb::SBType *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeCategory___str__(lldb::SBTypeCategory *self){
+SWIGINTERN std::string lldb_SBTypeCategory___repr__(lldb::SBTypeCategory *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -690,7 +690,7 @@ SWIGINTERN std::string lldb_SBTypeCategory___str__(lldb::SBTypeCategory *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeEnumMember___str__(lldb::SBTypeEnumMember *self){
+SWIGINTERN std::string lldb_SBTypeEnumMember___repr__(lldb::SBTypeEnumMember *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -700,7 +700,7 @@ SWIGINTERN std::string lldb_SBTypeEnumMember___str__(lldb::SBTypeEnumMember *sel
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeFilter___str__(lldb::SBTypeFilter *self){
+SWIGINTERN std::string lldb_SBTypeFilter___repr__(lldb::SBTypeFilter *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -710,7 +710,7 @@ SWIGINTERN std::string lldb_SBTypeFilter___str__(lldb::SBTypeFilter *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeFormat___str__(lldb::SBTypeFormat *self){
+SWIGINTERN std::string lldb_SBTypeFormat___repr__(lldb::SBTypeFormat *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -720,7 +720,7 @@ SWIGINTERN std::string lldb_SBTypeFormat___str__(lldb::SBTypeFormat *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeNameSpecifier___str__(lldb::SBTypeNameSpecifier *self){
+SWIGINTERN std::string lldb_SBTypeNameSpecifier___repr__(lldb::SBTypeNameSpecifier *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -730,7 +730,7 @@ SWIGINTERN std::string lldb_SBTypeNameSpecifier___str__(lldb::SBTypeNameSpecifie
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeSummary___str__(lldb::SBTypeSummary *self){
+SWIGINTERN std::string lldb_SBTypeSummary___repr__(lldb::SBTypeSummary *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -740,7 +740,7 @@ SWIGINTERN std::string lldb_SBTypeSummary___str__(lldb::SBTypeSummary *self){
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBTypeSynthetic___str__(lldb::SBTypeSynthetic *self){
+SWIGINTERN std::string lldb_SBTypeSynthetic___repr__(lldb::SBTypeSynthetic *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelBrief);
     const char *desc = stream.GetData();
@@ -750,7 +750,7 @@ SWIGINTERN std::string lldb_SBTypeSynthetic___str__(lldb::SBTypeSynthetic *self)
     }
     return std::string(desc, desc_len);
   }
-SWIGINTERN std::string lldb_SBValue___str__(lldb::SBValue *self){
+SWIGINTERN std::string lldb_SBValue___repr__(lldb::SBValue *self){
     lldb::SBStream stream;
     self->GetDescription (stream);
     const char *desc = stream.GetData();
@@ -778,7 +778,7 @@ SWIGINTERN std::string lldb_SBValueList___str__(lldb::SBValueList *self){
                --desc_len;
            return std::string(desc, desc_len);
        }
-SWIGINTERN std::string lldb_SBWatchpoint___str__(lldb::SBWatchpoint *self){
+SWIGINTERN std::string lldb_SBWatchpoint___repr__(lldb::SBWatchpoint *self){
     lldb::SBStream stream;
     self->GetDescription (stream, lldb::eDescriptionLevelVerbose);
     const char *desc = stream.GetData();
@@ -1398,6 +1398,18 @@ SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_LLDB_1INVALID_1QUEUE_1ID_1get(JNIEnv *
   (void)jcls;
   result = (int)(0);
   jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_LLDB_1INVALID_1CPU_1ID_1get(JNIEnv *jenv, jclass jcls) {
+  jlong jresult = 0 ;
+  unsigned int result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (unsigned int)(4294967295U);
+  jresult = (jlong)result; 
   return jresult;
 }
 
@@ -2225,6 +2237,18 @@ SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eSymbolContextVariable_1get(JNIEnv *je
   (void)jenv;
   (void)jcls;
   result = (lldb::SymbolContextItem)lldb::eSymbolContextVariable;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eSymbolContextLastItem_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  lldb::SymbolContextItem result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (lldb::SymbolContextItem)lldb::eSymbolContextLastItem;
   jresult = (jint)result; 
   return jresult;
 }
@@ -3622,6 +3646,18 @@ SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTemplateArgumentKindNull_1get(JNIEnv 
 }
 
 
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eLastFormatterMatchType_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  lldb::FormatterMatchType result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (lldb::FormatterMatchType)lldb::eLastFormatterMatchType;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTypeOptionNone_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
   lldb::TypeOptions result;
@@ -4102,61 +4138,13 @@ SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eExpressionEvaluationParse_1get(JNIEnv
 }
 
 
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeInstruction_1get(JNIEnv *jenv, jclass jcls) {
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eInstructionControlFlowKindUnknown_1get(JNIEnv *jenv, jclass jcls) {
   jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
+  lldb::InstructionControlFlowKind result;
   
   (void)jenv;
   (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeInstruction;
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeBranch_1get(JNIEnv *jenv, jclass jcls) {
-  jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
-  
-  (void)jenv;
-  (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeBranch;
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeTakenBranch_1get(JNIEnv *jenv, jclass jcls) {
-  jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
-  
-  (void)jenv;
-  (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeTakenBranch;
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeCall_1get(JNIEnv *jenv, jclass jcls) {
-  jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
-  
-  (void)jenv;
-  (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeCall;
-  jresult = (jint)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceInstructionControlFlowTypeReturn_1get(JNIEnv *jenv, jclass jcls) {
-  jint jresult = 0 ;
-  lldb::TraceInstructionControlFlowType result;
-  
-  (void)jenv;
-  (void)jcls;
-  result = (lldb::TraceInstructionControlFlowType)lldb::eTraceInstructionControlFlowTypeReturn;
+  result = (lldb::InstructionControlFlowKind)lldb::eInstructionControlFlowKindUnknown;
   jresult = (jint)result; 
   return jresult;
 }
@@ -4726,6 +4714,30 @@ SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eSaveCoreStackOnly_1get(JNIEnv *jenv, 
 }
 
 
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceItemKindError_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  lldb::TraceItemKind result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (lldb::TraceItemKind)lldb::eTraceItemKindError;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_eTraceCursorSeekTypeBeginning_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  lldb::TraceCursorSeekType result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (lldb::TraceCursorSeekType)lldb::eTraceCursorSeekTypeBeginning;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBAddress_1_1SWIG_10(JNIEnv *jenv, jclass jcls) {
   jlong jresult = 0 ;
   lldb::SBAddress *result = 0 ;
@@ -5268,7 +5280,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBAddress_1GetLineEntry(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBAddress_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBAddress_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBAddress *arg1 = (lldb::SBAddress *) 0 ;
   std::string result;
@@ -5277,7 +5289,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBAddress_1_1_1str_1_1(JNIEnv *jenv
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBAddress **)&jarg1; 
-  result = lldb_SBAddress___str__(arg1);
+  result = lldb_SBAddress___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -6281,7 +6293,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBBlock_1GetVariables_1_1SWIG_11(JNIE
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBlock_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBlock_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBBlock *arg1 = (lldb::SBBlock *) 0 ;
   std::string result;
@@ -6290,7 +6302,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBlock_1_1_1str_1_1(JNIEnv *jenv, 
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBBlock **)&jarg1; 
-  result = lldb_SBBlock___str__(arg1);
+  result = lldb_SBBlock___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -7286,7 +7298,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBBreakpoint_1IsHardware(JNIEnv *j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpoint_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpoint_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBBreakpoint *arg1 = (lldb::SBBreakpoint *) 0 ;
   std::string result;
@@ -7295,7 +7307,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpoint_1_1_1str_1_1(JNIEnv *j
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBBreakpoint **)&jarg1; 
-  result = lldb_SBBreakpoint___str__(arg1);
+  result = lldb_SBBreakpoint___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -8020,7 +8032,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBBreakpointLocation_1GetBreakpoint(J
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpointLocation_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpointLocation_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBBreakpointLocation *arg1 = (lldb::SBBreakpointLocation *) 0 ;
   std::string result;
@@ -8029,7 +8041,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpointLocation_1_1_1str_1_1(J
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBBreakpointLocation **)&jarg1; 
-  result = lldb_SBBreakpointLocation___str__(arg1);
+  result = lldb_SBBreakpointLocation___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -8715,7 +8727,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBBreakpointName_1GetDescription(J
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpointName_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpointName_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBBreakpointName *arg1 = (lldb::SBBreakpointName *) 0 ;
   std::string result;
@@ -8724,7 +8736,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBBreakpointName_1_1_1str_1_1(JNIEn
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBBreakpointName **)&jarg1; 
-  result = lldb_SBBreakpointName___str__(arg1);
+  result = lldb_SBBreakpointName___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -9379,6 +9391,21 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBCommandInterpreter_1HasAliasOpti
   (void)jarg1_;
   arg1 = *(lldb::SBCommandInterpreter **)&jarg1; 
   result = (bool)(arg1)->HasAliasOptions();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBCommandInterpreter_1IsInteractive(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBCommandInterpreter *arg1 = (lldb::SBCommandInterpreter *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBCommandInterpreter **)&jarg1; 
+  result = (bool)(arg1)->IsInteractive();
   jresult = (jboolean)result; 
   return jresult;
 }
@@ -10460,7 +10487,7 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBCommandReturnObject_1SetImmediateErr
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBCommandReturnObject_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBCommandReturnObject_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBCommandReturnObject *arg1 = (lldb::SBCommandReturnObject *) 0 ;
   std::string result;
@@ -10469,7 +10496,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBCommandReturnObject_1_1_1str_1_1(
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBCommandReturnObject **)&jarg1; 
-  result = lldb_SBCommandReturnObject___str__(arg1);
+  result = lldb_SBCommandReturnObject___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -11028,7 +11055,53 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1GetLineEntryAtIndex(JN
 }
 
 
-SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1FindLineEntryIndex_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jlong jarg3, jlong jarg4, jobject jarg4_) {
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1FindLineEntryIndex_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jboolean jarg3) {
+  jlong jresult = 0 ;
+  lldb::SBCompileUnit *arg1 = (lldb::SBCompileUnit *) 0 ;
+  lldb::SBLineEntry *arg2 = 0 ;
+  bool arg3 ;
+  uint32_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(lldb::SBCompileUnit **)&jarg1; 
+  arg2 = *(lldb::SBLineEntry **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBLineEntry & reference is null");
+    return 0;
+  } 
+  arg3 = jarg3 ? true : false; 
+  result = (uint32_t)((lldb::SBCompileUnit const *)arg1)->FindLineEntryIndex(*arg2,arg3);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1FindLineEntryIndex_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jlong jresult = 0 ;
+  lldb::SBCompileUnit *arg1 = (lldb::SBCompileUnit *) 0 ;
+  lldb::SBLineEntry *arg2 = 0 ;
+  uint32_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(lldb::SBCompileUnit **)&jarg1; 
+  arg2 = *(lldb::SBLineEntry **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBLineEntry & reference is null");
+    return 0;
+  } 
+  result = (uint32_t)((lldb::SBCompileUnit const *)arg1)->FindLineEntryIndex(*arg2);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1FindLineEntryIndex_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jlong jarg3, jlong jarg4, jobject jarg4_) {
   jlong jresult = 0 ;
   lldb::SBCompileUnit *arg1 = (lldb::SBCompileUnit *) 0 ;
   uint32_t arg2 ;
@@ -11050,7 +11123,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1FindLineEntryIndex_1_1
 }
 
 
-SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1FindLineEntryIndex_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jlong jarg3, jlong jarg4, jobject jarg4_, jboolean jarg5) {
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1FindLineEntryIndex_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jlong jarg3, jlong jarg4, jobject jarg4_, jboolean jarg5) {
   jlong jresult = 0 ;
   lldb::SBCompileUnit *arg1 = (lldb::SBCompileUnit *) 0 ;
   uint32_t arg2 ;
@@ -11201,7 +11274,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1GetDescription(JNIE
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBCompileUnit *arg1 = (lldb::SBCompileUnit *) 0 ;
   std::string result;
@@ -11210,7 +11283,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBCompileUnit_1_1_1str_1_1(JNIEnv *
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBCompileUnit **)&jarg1; 
-  result = lldb_SBCompileUnit___str__(arg1);
+  result = lldb_SBCompileUnit___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -12441,7 +12514,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBData_1SetDataFromDoubleArray(JNI
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBData_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBData_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBData *arg1 = (lldb::SBData *) 0 ;
   std::string result;
@@ -12450,8 +12523,215 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBData_1_1_1str_1_1(JNIEnv *jenv, j
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBData **)&jarg1; 
-  result = lldb_SBData___str__(arg1);
+  result = lldb_SBData___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_SBDebugger_1eBroadcastBitProgress_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (int)lldb::SBDebugger::eBroadcastBitProgress;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_SBDebugger_1eBroadcastBitWarning_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (int)lldb::SBDebugger::eBroadcastBitWarning;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_SBDebugger_1eBroadcastBitError_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  int result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (int)lldb::SBDebugger::eBroadcastBitError;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetProgressFromEvent(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobjectArray jarg2, jobjectArray jarg3, jobjectArray jarg4, jbooleanArray jarg5) {
+  jstring jresult = 0 ;
+  lldb::SBEvent *arg1 = 0 ;
+  uint64_t *arg2 = 0 ;
+  uint64_t *arg3 = 0 ;
+  uint64_t *arg4 = 0 ;
+  bool *arg5 = 0 ;
+  uint64_t temp2 ;
+  uint64_t temp3 ;
+  uint64_t temp4 ;
+  bool temp5 ;
+  char *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBEvent **)&jarg1;
+  if (!arg1) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBEvent const & reference is null");
+    return 0;
+  } 
+  {
+    if (!jarg2) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+      return 0;
+    }
+    if (jenv->GetArrayLength(jarg2) == 0) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+      return 0;
+    }
+    temp2 = (uint64_t)0;
+    arg2 = &temp2; 
+  }
+  {
+    if (!jarg3) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+      return 0;
+    }
+    if (jenv->GetArrayLength(jarg3) == 0) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+      return 0;
+    }
+    temp3 = (uint64_t)0;
+    arg3 = &temp3; 
+  }
+  {
+    if (!jarg4) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+      return 0;
+    }
+    if (jenv->GetArrayLength(jarg4) == 0) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+      return 0;
+    }
+    temp4 = (uint64_t)0;
+    arg4 = &temp4; 
+  }
+  {
+    if (!jarg5) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+      return 0;
+    }
+    if (jenv->GetArrayLength(jarg5) == 0) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+      return 0;
+    }
+    temp5 = false;
+    arg5 = &temp5; 
+  }
+  result = (char *)lldb::SBDebugger::GetProgressFromEvent((lldb::SBEvent const &)*arg1,*arg2,*arg3,*arg4,*arg5);
+  if (result) jresult = jenv->NewStringUTF((const char *)result);
+  {
+    jbyteArray ba = jenv->NewByteArray(9);
+    jbyte* bae = jenv->GetByteArrayElements(ba, 0);
+    jclass clazz = jenv->FindClass("java/math/BigInteger");
+    jmethodID mid = jenv->GetMethodID(clazz, "<init>", "([B)V");
+    jobject bigint;
+    int i;
+    
+    bae[0] = 0;
+    for(i=1; i<9; i++ ) {
+      bae[i] = (jbyte)(temp2>>8*(8-i));
+    }
+    
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+    bigint = jenv->NewObject(clazz, mid, ba);
+    jenv->DeleteLocalRef(ba);
+    jenv->SetObjectArrayElement(jarg2, 0, bigint);
+  }
+  {
+    jbyteArray ba = jenv->NewByteArray(9);
+    jbyte* bae = jenv->GetByteArrayElements(ba, 0);
+    jclass clazz = jenv->FindClass("java/math/BigInteger");
+    jmethodID mid = jenv->GetMethodID(clazz, "<init>", "([B)V");
+    jobject bigint;
+    int i;
+    
+    bae[0] = 0;
+    for(i=1; i<9; i++ ) {
+      bae[i] = (jbyte)(temp3>>8*(8-i));
+    }
+    
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+    bigint = jenv->NewObject(clazz, mid, ba);
+    jenv->DeleteLocalRef(ba);
+    jenv->SetObjectArrayElement(jarg3, 0, bigint);
+  }
+  {
+    jbyteArray ba = jenv->NewByteArray(9);
+    jbyte* bae = jenv->GetByteArrayElements(ba, 0);
+    jclass clazz = jenv->FindClass("java/math/BigInteger");
+    jmethodID mid = jenv->GetMethodID(clazz, "<init>", "([B)V");
+    jobject bigint;
+    int i;
+    
+    bae[0] = 0;
+    for(i=1; i<9; i++ ) {
+      bae[i] = (jbyte)(temp4>>8*(8-i));
+    }
+    
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+    bigint = jenv->NewObject(clazz, mid, ba);
+    jenv->DeleteLocalRef(ba);
+    jenv->SetObjectArrayElement(jarg4, 0, bigint);
+  }
+  {
+    jboolean jvalue = (jboolean)temp5;
+    jenv->SetBooleanArrayRegion(jarg5, 0, 1, &jvalue);
+  }
+  
+  
+  
+  
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetDiagnosticFromEvent(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  lldb::SBEvent *arg1 = 0 ;
+  lldb::SBStructuredData result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBEvent **)&jarg1;
+  if (!arg1) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBEvent const & reference is null");
+    return 0;
+  } 
+  result = lldb::SBDebugger::GetDiagnosticFromEvent((lldb::SBEvent const &)*arg1);
+  *(lldb::SBStructuredData **)&jresult = new lldb::SBStructuredData((const lldb::SBStructuredData &)result); 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetBroadcaster(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  lldb::SBDebugger *arg1 = (lldb::SBDebugger *) 0 ;
+  lldb::SBBroadcaster result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBDebugger **)&jarg1; 
+  result = (arg1)->GetBroadcaster();
+  *(lldb::SBBroadcaster **)&jresult = new lldb::SBBroadcaster((const lldb::SBBroadcaster &)result); 
   return jresult;
 }
 
@@ -12472,6 +12752,13 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1InitializeWithErrorHandli
   result = lldb::SBDebugger::InitializeWithErrorHandling();
   *(lldb::SBError **)&jresult = new lldb::SBError((const lldb::SBError &)result); 
   return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBDebugger_1PrintStackTraceOnError(JNIEnv *jenv, jclass jcls) {
+  (void)jenv;
+  (void)jcls;
+  lldb::SBDebugger::PrintStackTraceOnError();
 }
 
 
@@ -12697,6 +12984,43 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetErrorFileHandle(JNIEnv
   arg1 = *(lldb::SBDebugger **)&jarg1; 
   result = lldb_SBDebugger_GetErrorFileHandle(arg1);
   *(lldb::FileSP **)&jresult = new lldb::FileSP((const lldb::FileSP &)result); 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetSetting_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+  jlong jresult = 0 ;
+  lldb::SBDebugger *arg1 = (lldb::SBDebugger *) 0 ;
+  char *arg2 = (char *) 0 ;
+  lldb::SBStructuredData result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBDebugger **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  result = (arg1)->GetSetting((char const *)arg2);
+  *(lldb::SBStructuredData **)&jresult = new lldb::SBStructuredData((const lldb::SBStructuredData &)result); 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetSetting_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  lldb::SBDebugger *arg1 = (lldb::SBDebugger *) 0 ;
+  lldb::SBStructuredData result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBDebugger **)&jarg1; 
+  result = (arg1)->GetSetting();
+  *(lldb::SBStructuredData **)&jresult = new lldb::SBStructuredData((const lldb::SBStructuredData &)result); 
   return jresult;
 }
 
@@ -14342,7 +14666,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1GetScriptInterpreterInfo(
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBDebugger_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBDebugger_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBDebugger *arg1 = (lldb::SBDebugger *) 0 ;
   std::string result;
@@ -14351,7 +14675,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBDebugger_1_1_1str_1_1(JNIEnv *jen
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBDebugger **)&jarg1; 
-  result = lldb_SBDebugger___str__(arg1);
+  result = lldb_SBDebugger___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -14457,6 +14781,35 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1RunREPL(JNIEnv *jenv, jcl
   result = (arg1)->RunREPL(arg2,(char const *)arg3);
   *(lldb::SBError **)&jresult = new lldb::SBError((const lldb::SBError &)result); 
   if (arg3) jenv->ReleaseStringUTFChars(jarg3, (const char *)arg3);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBDebugger_1LoadTraceFromFile(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jlong jarg3, jobject jarg3_) {
+  jlong jresult = 0 ;
+  lldb::SBDebugger *arg1 = (lldb::SBDebugger *) 0 ;
+  lldb::SBError *arg2 = 0 ;
+  lldb::SBFileSpec *arg3 = 0 ;
+  lldb::SBTrace result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  (void)jarg3_;
+  arg1 = *(lldb::SBDebugger **)&jarg1; 
+  arg2 = *(lldb::SBError **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBError & reference is null");
+    return 0;
+  } 
+  arg3 = *(lldb::SBFileSpec **)&jarg3;
+  if (!arg3) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBFileSpec const & reference is null");
+    return 0;
+  } 
+  result = (arg1)->LoadTraceFromFile(*arg2,(lldb::SBFileSpec const &)*arg3);
+  *(lldb::SBTrace **)&jresult = new lldb::SBTrace((const lldb::SBTrace &)result); 
   return jresult;
 }
 
@@ -14630,7 +14983,7 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBDeclaration_1SetColumn(JNIEnv *jenv,
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBDeclaration_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBDeclaration_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBDeclaration *arg1 = (lldb::SBDeclaration *) 0 ;
   std::string result;
@@ -14639,7 +14992,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBDeclaration_1_1_1str_1_1(JNIEnv *
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBDeclaration **)&jarg1; 
-  result = lldb_SBDeclaration___str__(arg1);
+  result = lldb_SBDeclaration___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -14994,7 +15347,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBError_1GetDescription(JNIEnv *je
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBError_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBError_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBError *arg1 = (lldb::SBError *) 0 ;
   std::string result;
@@ -15003,7 +15356,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBError_1_1_1str_1_1(JNIEnv *jenv, 
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBError **)&jarg1; 
-  result = lldb_SBError___str__(arg1);
+  result = lldb_SBError___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -16829,7 +17182,7 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBFileSpec_1AppendPathComponent(JNIEnv
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFileSpec_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFileSpec_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBFileSpec *arg1 = (lldb::SBFileSpec *) 0 ;
   std::string result;
@@ -16838,7 +17191,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFileSpec_1_1_1str_1_1(JNIEnv *jen
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBFileSpec **)&jarg1; 
-  result = lldb_SBFileSpec___str__(arg1);
+  result = lldb_SBFileSpec___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -17904,7 +18257,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBFrame_1GetDescription(JNIEnv *je
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFrame_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFrame_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBFrame *arg1 = (lldb::SBFrame *) 0 ;
   std::string result;
@@ -17913,7 +18266,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFrame_1_1_1str_1_1(JNIEnv *jenv, 
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBFrame **)&jarg1; 
-  result = lldb_SBFrame___str__(arg1);
+  result = lldb_SBFrame___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -18219,7 +18572,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBFunction_1GetDescription(JNIEnv 
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFunction_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFunction_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBFunction *arg1 = (lldb::SBFunction *) 0 ;
   std::string result;
@@ -18228,7 +18581,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBFunction_1_1_1str_1_1(JNIEnv *jen
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBFunction **)&jarg1; 
-  result = lldb_SBFunction___str__(arg1);
+  result = lldb_SBFunction___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -18561,6 +18914,30 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBInstruction_1GetComment(JNIEnv *j
 }
 
 
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_SBInstruction_1GetControlFlowKind(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jint jresult = 0 ;
+  lldb::SBInstruction *arg1 = (lldb::SBInstruction *) 0 ;
+  lldb::SBTarget arg2 ;
+  lldb::SBTarget *argp2 ;
+  lldb::InstructionControlFlowKind result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(lldb::SBInstruction **)&jarg1; 
+  argp2 = *(lldb::SBTarget **)&jarg2; 
+  if (!argp2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null lldb::SBTarget");
+    return 0;
+  }
+  arg2 = *argp2; 
+  result = (lldb::InstructionControlFlowKind)(arg1)->GetControlFlowKind(arg2);
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBInstruction_1GetData(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   jlong jresult = 0 ;
   lldb::SBInstruction *arg1 = (lldb::SBInstruction *) 0 ;
@@ -18781,7 +19158,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBInstruction_1TestEmulation(JNIEn
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBInstruction_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBInstruction_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBInstruction *arg1 = (lldb::SBInstruction *) 0 ;
   std::string result;
@@ -18790,7 +19167,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBInstruction_1_1_1str_1_1(JNIEnv *
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBInstruction **)&jarg1; 
-  result = lldb_SBInstruction___str__(arg1);
+  result = lldb_SBInstruction___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -19029,7 +19406,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBInstructionList_1DumpEmulationFo
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBInstructionList_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBInstructionList_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBInstructionList *arg1 = (lldb::SBInstructionList *) 0 ;
   std::string result;
@@ -19038,7 +19415,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBInstructionList_1_1_1str_1_1(JNIE
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBInstructionList **)&jarg1; 
-  result = lldb_SBInstructionList___str__(arg1);
+  result = lldb_SBInstructionList___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -20161,7 +20538,7 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBLineEntry_1SetColumn(JNIEnv *jenv, j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBLineEntry_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBLineEntry_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBLineEntry *arg1 = (lldb::SBLineEntry *) 0 ;
   std::string result;
@@ -20170,7 +20547,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBLineEntry_1_1_1str_1_1(JNIEnv *je
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBLineEntry **)&jarg1; 
-  result = lldb_SBLineEntry___str__(arg1);
+  result = lldb_SBLineEntry___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -21035,7 +21412,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBMemoryRegionInfo_1GetDescription
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBMemoryRegionInfo_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBMemoryRegionInfo_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBMemoryRegionInfo *arg1 = (lldb::SBMemoryRegionInfo *) 0 ;
   std::string result;
@@ -21044,7 +21421,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBMemoryRegionInfo_1_1_1str_1_1(JNI
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBMemoryRegionInfo **)&jarg1; 
-  result = lldb_SBMemoryRegionInfo___str__(arg1);
+  result = lldb_SBMemoryRegionInfo___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -22166,7 +22543,7 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBModule_1GarbageCollectAllocatedModul
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModule_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModule_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBModule *arg1 = (lldb::SBModule *) 0 ;
   std::string result;
@@ -22175,7 +22552,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModule_1_1_1str_1_1(JNIEnv *jenv,
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBModule **)&jarg1; 
-  result = lldb_SBModule___str__(arg1);
+  result = lldb_SBModule___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -22484,7 +22861,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBModuleSpec_1GetDescription(JNIEn
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModuleSpec_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModuleSpec_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBModuleSpec *arg1 = (lldb::SBModuleSpec *) 0 ;
   std::string result;
@@ -22493,7 +22870,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModuleSpec_1_1_1str_1_1(JNIEnv *j
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBModuleSpec **)&jarg1; 
-  result = lldb_SBModuleSpec___str__(arg1);
+  result = lldb_SBModuleSpec___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -22693,7 +23070,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBModuleSpecList_1GetDescription(J
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModuleSpecList_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModuleSpecList_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBModuleSpecList *arg1 = (lldb::SBModuleSpecList *) 0 ;
   std::string result;
@@ -22702,7 +23079,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBModuleSpecList_1_1_1str_1_1(JNIEn
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBModuleSpecList **)&jarg1; 
-  result = lldb_SBModuleSpecList___str__(arg1);
+  result = lldb_SBModuleSpecList___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -25584,7 +25961,38 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBProcess_1IsInstrumentationRuntim
 }
 
 
-SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBProcess_1SaveCore(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBProcess_1SaveCore_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jstring jarg3, jint jarg4) {
+  jlong jresult = 0 ;
+  lldb::SBProcess *arg1 = (lldb::SBProcess *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  lldb::SaveCoreStyle arg4 ;
+  lldb::SBError result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBProcess **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  arg3 = 0;
+  if (jarg3) {
+    arg3 = (char *)jenv->GetStringUTFChars(jarg3, 0);
+    if (!arg3) return 0;
+  }
+  arg4 = (lldb::SaveCoreStyle)jarg4; 
+  result = (arg1)->SaveCore((char const *)arg2,(char const *)arg3,arg4);
+  *(lldb::SBError **)&jresult = new lldb::SBError((const lldb::SBError &)result); 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  if (arg3) jenv->ReleaseStringUTFChars(jarg3, (const char *)arg3);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBProcess_1SaveCore_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2) {
   jlong jresult = 0 ;
   lldb::SBProcess *arg1 = (lldb::SBProcess *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -25770,7 +26178,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBProcess_1DeallocateMemory(JNIEnv *j
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBProcess_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBProcess_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBProcess *arg1 = (lldb::SBProcess *) 0 ;
   std::string result;
@@ -25779,7 +26187,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBProcess_1_1_1str_1_1(JNIEnv *jenv
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBProcess **)&jarg1; 
-  result = lldb_SBProcess___str__(arg1);
+  result = lldb_SBProcess___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -27000,6 +27408,21 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBSection_1GetTargetByteSize(JNIEnv *
 }
 
 
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBSection_1GetAlignment(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  lldb::SBSection *arg1 = (lldb::SBSection *) 0 ;
+  uint32_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBSection **)&jarg1; 
+  result = (uint32_t)(arg1)->GetAlignment();
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBSection_1GetDescription(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   jboolean jresult = 0 ;
   lldb::SBSection *arg1 = (lldb::SBSection *) 0 ;
@@ -27022,7 +27445,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBSection_1GetDescription(JNIEnv *
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSection_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSection_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBSection *arg1 = (lldb::SBSection *) 0 ;
   std::string result;
@@ -27031,7 +27454,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSection_1_1_1str_1_1(JNIEnv *jenv
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBSection **)&jarg1; 
-  result = lldb_SBSection___str__(arg1);
+  result = lldb_SBSection___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -28160,6 +28583,70 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBSymbol_1GetEndAddress(JNIEnv *jenv,
 }
 
 
+SWIGEXPORT jobject JNICALL Java_SWIG_lldbJNI_SBSymbol_1GetValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jobject jresult = 0 ;
+  lldb::SBSymbol *arg1 = (lldb::SBSymbol *) 0 ;
+  uint64_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBSymbol **)&jarg1; 
+  result = (uint64_t)(arg1)->GetValue();
+  {
+    jbyteArray ba = jenv->NewByteArray(9);
+    jbyte* bae = jenv->GetByteArrayElements(ba, 0);
+    jclass clazz = jenv->FindClass("java/math/BigInteger");
+    jmethodID mid = jenv->GetMethodID(clazz, "<init>", "([B)V");
+    jobject bigint;
+    int i;
+    
+    bae[0] = 0;
+    for(i=1; i<9; i++ ) {
+      bae[i] = (jbyte)(result>>8*(8-i));
+    }
+    
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+    bigint = jenv->NewObject(clazz, mid, ba);
+    jenv->DeleteLocalRef(ba);
+    jresult = bigint;
+  }
+  return jresult;
+}
+
+
+SWIGEXPORT jobject JNICALL Java_SWIG_lldbJNI_SBSymbol_1GetSize(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jobject jresult = 0 ;
+  lldb::SBSymbol *arg1 = (lldb::SBSymbol *) 0 ;
+  uint64_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBSymbol **)&jarg1; 
+  result = (uint64_t)(arg1)->GetSize();
+  {
+    jbyteArray ba = jenv->NewByteArray(9);
+    jbyte* bae = jenv->GetByteArrayElements(ba, 0);
+    jclass clazz = jenv->FindClass("java/math/BigInteger");
+    jmethodID mid = jenv->GetMethodID(clazz, "<init>", "([B)V");
+    jobject bigint;
+    int i;
+    
+    bae[0] = 0;
+    for(i=1; i<9; i++ ) {
+      bae[i] = (jbyte)(result>>8*(8-i));
+    }
+    
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+    bigint = jenv->NewObject(clazz, mid, ba);
+    jenv->DeleteLocalRef(ba);
+    jresult = bigint;
+  }
+  return jresult;
+}
+
+
 SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBSymbol_1GetPrologueByteSize(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   lldb::SBSymbol *arg1 = (lldb::SBSymbol *) 0 ;
@@ -28242,7 +28729,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBSymbol_1IsSynthetic(JNIEnv *jenv
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbol_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbol_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBSymbol *arg1 = (lldb::SBSymbol *) 0 ;
   std::string result;
@@ -28251,7 +28738,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbol_1_1_1str_1_1(JNIEnv *jenv,
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBSymbol **)&jarg1; 
-  result = lldb_SBSymbol___str__(arg1);
+  result = lldb_SBSymbol___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -28574,7 +29061,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBSymbolContext_1GetDescription(JN
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbolContext_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbolContext_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBSymbolContext *arg1 = (lldb::SBSymbolContext *) 0 ;
   std::string result;
@@ -28583,7 +29070,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbolContext_1_1_1str_1_1(JNIEnv
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBSymbolContext **)&jarg1; 
-  result = lldb_SBSymbolContext___str__(arg1);
+  result = lldb_SBSymbolContext___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -28746,7 +29233,7 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBSymbolContextList_1Clear(JNIEnv *jen
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbolContextList_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbolContextList_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBSymbolContextList *arg1 = (lldb::SBSymbolContextList *) 0 ;
   std::string result;
@@ -28755,7 +29242,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBSymbolContextList_1_1_1str_1_1(JN
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBSymbolContextList **)&jarg1; 
-  result = lldb_SBSymbolContextList___str__(arg1);
+  result = lldb_SBSymbolContextList___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -29826,6 +30313,21 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTarget_1GetTriple(JNIEnv *jenv, j
   (void)jarg1_;
   arg1 = *(lldb::SBTarget **)&jarg1; 
   result = (char *)(arg1)->GetTriple();
+  if (result) jresult = jenv->NewStringUTF((const char *)result);
+  return jresult;
+}
+
+
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTarget_1GetABIName(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jstring jresult = 0 ;
+  lldb::SBTarget *arg1 = (lldb::SBTarget *) 0 ;
+  char *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTarget **)&jarg1; 
+  result = (char *)(arg1)->GetABIName();
   if (result) jresult = jenv->NewStringUTF((const char *)result);
   return jresult;
 }
@@ -32484,7 +32986,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTarget_1EvaluateExpression_1_1SWIG_
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTarget_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTarget_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTarget *arg1 = (lldb::SBTarget *) 0 ;
   std::string result;
@@ -32493,7 +32995,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTarget_1_1_1str_1_1(JNIEnv *jenv,
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTarget **)&jarg1; 
-  result = lldb_SBTarget___str__(arg1);
+  result = lldb_SBTarget___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -33901,7 +34403,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBThread_1GetSiginfo(JNIEnv *jenv, jc
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBThread_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBThread_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBThread *arg1 = (lldb::SBThread *) 0 ;
   std::string result;
@@ -33910,7 +34412,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBThread_1_1_1str_1_1(JNIEnv *jenv,
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBThread **)&jarg1; 
-  result = lldb_SBThread___str__(arg1);
+  result = lldb_SBThread___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -34544,6 +35046,35 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTrace(JNIEnv *jenv, jclass jcl
 }
 
 
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTrace_1CreateNewCursor(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jlong jarg3, jobject jarg3_) {
+  jlong jresult = 0 ;
+  lldb::SBTrace *arg1 = (lldb::SBTrace *) 0 ;
+  lldb::SBError *arg2 = 0 ;
+  lldb::SBThread *arg3 = 0 ;
+  lldb::SBTraceCursor result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  (void)jarg3_;
+  arg1 = *(lldb::SBTrace **)&jarg1; 
+  arg2 = *(lldb::SBError **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBError & reference is null");
+    return 0;
+  } 
+  arg3 = *(lldb::SBThread **)&jarg3;
+  if (!arg3) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBThread & reference is null");
+    return 0;
+  } 
+  result = (arg1)->CreateNewCursor(*arg2,*arg3);
+  *(lldb::SBTraceCursor **)&jresult = new lldb::SBTraceCursor((const lldb::SBTraceCursor &)result); 
+  return jresult;
+}
+
+
 SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTrace_1GetStartConfigurationHelp(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTrace *arg1 = (lldb::SBTrace *) 0 ;
@@ -34555,6 +35086,66 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTrace_1GetStartConfigurationHelp(
   arg1 = *(lldb::SBTrace **)&jarg1; 
   result = (char *)(arg1)->GetStartConfigurationHelp();
   if (result) jresult = jenv->NewStringUTF((const char *)result);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTrace_1SaveToDisk_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jlong jarg3, jobject jarg3_, jboolean jarg4) {
+  jlong jresult = 0 ;
+  lldb::SBTrace *arg1 = (lldb::SBTrace *) 0 ;
+  lldb::SBError *arg2 = 0 ;
+  lldb::SBFileSpec *arg3 = 0 ;
+  bool arg4 ;
+  lldb::SBFileSpec result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  (void)jarg3_;
+  arg1 = *(lldb::SBTrace **)&jarg1; 
+  arg2 = *(lldb::SBError **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBError & reference is null");
+    return 0;
+  } 
+  arg3 = *(lldb::SBFileSpec **)&jarg3;
+  if (!arg3) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBFileSpec const & reference is null");
+    return 0;
+  } 
+  arg4 = jarg4 ? true : false; 
+  result = (arg1)->SaveToDisk(*arg2,(lldb::SBFileSpec const &)*arg3,arg4);
+  *(lldb::SBFileSpec **)&jresult = new lldb::SBFileSpec((const lldb::SBFileSpec &)result); 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTrace_1SaveToDisk_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_, jlong jarg3, jobject jarg3_) {
+  jlong jresult = 0 ;
+  lldb::SBTrace *arg1 = (lldb::SBTrace *) 0 ;
+  lldb::SBError *arg2 = 0 ;
+  lldb::SBFileSpec *arg3 = 0 ;
+  lldb::SBFileSpec result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  (void)jarg3_;
+  arg1 = *(lldb::SBTrace **)&jarg1; 
+  arg2 = *(lldb::SBError **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBError & reference is null");
+    return 0;
+  } 
+  arg3 = *(lldb::SBFileSpec **)&jarg3;
+  if (!arg3) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "lldb::SBFileSpec const & reference is null");
+    return 0;
+  } 
+  result = (arg1)->SaveToDisk(*arg2,(lldb::SBFileSpec const &)*arg3);
+  *(lldb::SBFileSpec **)&jresult = new lldb::SBFileSpec((const lldb::SBFileSpec &)result); 
   return jresult;
 }
 
@@ -34668,6 +35259,404 @@ SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_delete_1SBTrace(JNIEnv *jenv, jclass j
   (void)jenv;
   (void)jcls;
   arg1 = *(lldb::SBTrace **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTraceCursor_1_1SWIG_10(JNIEnv *jenv, jclass jcls) {
+  jlong jresult = 0 ;
+  lldb::SBTraceCursor *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (lldb::SBTraceCursor *)new lldb::SBTraceCursor();
+  *(lldb::SBTraceCursor **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTraceCursor_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  jlong jresult = 0 ;
+  SwigValueWrapper< std::shared_ptr< lldb_private::TraceCursor > > arg1 ;
+  lldb::TraceCursorSP *argp1 ;
+  lldb::SBTraceCursor *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  argp1 = *(lldb::TraceCursorSP **)&jarg1; 
+  if (!argp1) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null lldb::TraceCursorSP");
+    return 0;
+  }
+  arg1 = *argp1; 
+  result = (lldb::SBTraceCursor *)new lldb::SBTraceCursor(arg1);
+  *(lldb::SBTraceCursor **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1SetForwards(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jboolean jarg2) {
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  bool arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  arg2 = jarg2 ? true : false; 
+  (arg1)->SetForwards(arg2);
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1IsForwards(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (bool)((lldb::SBTraceCursor const *)arg1)->IsForwards();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1Next(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  (arg1)->Next();
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1HasValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (bool)(arg1)->HasValue();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1GoToId(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobject jarg2) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  lldb::user_id_t arg2 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  {
+    jclass clazz;
+    jmethodID mid;
+    jbyteArray ba;
+    jbyte* bae;
+    jsize sz;
+    int i;
+    
+    if (!jarg2) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
+      return 0;
+    }
+    clazz = jenv->GetObjectClass(jarg2);
+    mid = jenv->GetMethodID(clazz, "toByteArray", "()[B");
+    ba = (jbyteArray)jenv->CallObjectMethod(jarg2, mid);
+    bae = jenv->GetByteArrayElements(ba, 0);
+    sz = jenv->GetArrayLength(ba);
+    arg2 = 0;
+    if (sz > 0) {
+      arg2 = (lldb::user_id_t)(signed char)bae[0];
+      for(i=1; i<sz; i++) {
+        arg2 = (arg2 << 8) | (lldb::user_id_t)(unsigned char)bae[i];
+      }
+    }
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+  }
+  result = (bool)(arg1)->GoToId(arg2);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1HasId(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jobject jarg2) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  lldb::user_id_t arg2 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  {
+    jclass clazz;
+    jmethodID mid;
+    jbyteArray ba;
+    jbyte* bae;
+    jsize sz;
+    int i;
+    
+    if (!jarg2) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "BigInteger null");
+      return 0;
+    }
+    clazz = jenv->GetObjectClass(jarg2);
+    mid = jenv->GetMethodID(clazz, "toByteArray", "()[B");
+    ba = (jbyteArray)jenv->CallObjectMethod(jarg2, mid);
+    bae = jenv->GetByteArrayElements(ba, 0);
+    sz = jenv->GetArrayLength(ba);
+    arg2 = 0;
+    if (sz > 0) {
+      arg2 = (lldb::user_id_t)(signed char)bae[0];
+      for(i=1; i<sz; i++) {
+        arg2 = (arg2 << 8) | (lldb::user_id_t)(unsigned char)bae[i];
+      }
+    }
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+  }
+  result = (bool)((lldb::SBTraceCursor const *)arg1)->HasId(arg2);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jobject JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1GetId(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jobject jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  lldb::user_id_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (lldb::user_id_t)((lldb::SBTraceCursor const *)arg1)->GetId();
+  {
+    jbyteArray ba = jenv->NewByteArray(9);
+    jbyte* bae = jenv->GetByteArrayElements(ba, 0);
+    jclass clazz = jenv->FindClass("java/math/BigInteger");
+    jmethodID mid = jenv->GetMethodID(clazz, "<init>", "([B)V");
+    jobject bigint;
+    int i;
+    
+    bae[0] = 0;
+    for(i=1; i<9; i++ ) {
+      bae[i] = (jbyte)(result>>8*(8-i));
+    }
+    
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+    bigint = jenv->NewObject(clazz, mid, ba);
+    jenv->DeleteLocalRef(ba);
+    jresult = bigint;
+  }
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1Seek(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jint jarg3) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  int64_t arg2 ;
+  lldb::TraceCursorSeekType arg3 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  arg2 = (int64_t)jarg2; 
+  arg3 = (lldb::TraceCursorSeekType)jarg3; 
+  result = (bool)(arg1)->Seek(arg2,arg3);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1GetItemKind(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jint jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  lldb::TraceItemKind result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (lldb::TraceItemKind)((lldb::SBTraceCursor const *)arg1)->GetItemKind();
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1IsError(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (bool)((lldb::SBTraceCursor const *)arg1)->IsError();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1GetError(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jstring jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  char *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (char *)((lldb::SBTraceCursor const *)arg1)->GetError();
+  if (result) jresult = jenv->NewStringUTF((const char *)result);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1IsEvent(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (bool)((lldb::SBTraceCursor const *)arg1)->IsEvent();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1GetEventType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jint jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  lldb::TraceEvent result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (lldb::TraceEvent)((lldb::SBTraceCursor const *)arg1)->GetEventType();
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1GetEventTypeAsString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jstring jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  char *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (char *)((lldb::SBTraceCursor const *)arg1)->GetEventTypeAsString();
+  if (result) jresult = jenv->NewStringUTF((const char *)result);
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1IsInstruction(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (bool)((lldb::SBTraceCursor const *)arg1)->IsInstruction();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jobject JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1GetLoadAddress(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jobject jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  lldb::addr_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (lldb::addr_t)((lldb::SBTraceCursor const *)arg1)->GetLoadAddress();
+  {
+    jbyteArray ba = jenv->NewByteArray(9);
+    jbyte* bae = jenv->GetByteArrayElements(ba, 0);
+    jclass clazz = jenv->FindClass("java/math/BigInteger");
+    jmethodID mid = jenv->GetMethodID(clazz, "<init>", "([B)V");
+    jobject bigint;
+    int i;
+    
+    bae[0] = 0;
+    for(i=1; i<9; i++ ) {
+      bae[i] = (jbyte)(result>>8*(8-i));
+    }
+    
+    jenv->ReleaseByteArrayElements(ba, bae, 0);
+    bigint = jenv->NewObject(clazz, mid, ba);
+    jenv->DeleteLocalRef(ba);
+    jresult = bigint;
+  }
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1GetCPU(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  lldb::cpu_id_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (lldb::cpu_id_t)((lldb::SBTraceCursor const *)arg1)->GetCPU();
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTraceCursor_1IsValid(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
+  result = (bool)((lldb::SBTraceCursor const *)arg1)->IsValid();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_SWIG_lldbJNI_delete_1SBTraceCursor(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  lldb::SBTraceCursor *arg1 = (lldb::SBTraceCursor *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(lldb::SBTraceCursor **)&jarg1; 
   delete arg1;
 }
 
@@ -34852,7 +35841,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTypeMember_1GetBitfieldSizeInBits(J
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeMember_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeMember_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeMember *arg1 = (lldb::SBTypeMember *) 0 ;
   std::string result;
@@ -34861,7 +35850,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeMember_1_1_1str_1_1(JNIEnv *j
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeMember **)&jarg1; 
-  result = lldb_SBTypeMember___str__(arg1);
+  result = lldb_SBTypeMember___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -35069,7 +36058,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeMemberFunction_1GetDescripti
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeMemberFunction_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeMemberFunction_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeMemberFunction *arg1 = (lldb::SBTypeMemberFunction *) 0 ;
   std::string result;
@@ -35078,7 +36067,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeMemberFunction_1_1_1str_1_1(J
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeMemberFunction **)&jarg1; 
-  result = lldb_SBTypeMemberFunction___str__(arg1);
+  result = lldb_SBTypeMemberFunction___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -35302,6 +36291,21 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBType_1IsScopedEnumerationType(JN
   (void)jarg1_;
   arg1 = *(lldb::SBType **)&jarg1; 
   result = (bool)(arg1)->IsScopedEnumerationType();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBType_1IsAggregateType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  lldb::SBType *arg1 = (lldb::SBType *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBType **)&jarg1; 
+  result = (bool)(arg1)->IsAggregateType();
   jresult = (jboolean)result; 
   return jresult;
 }
@@ -35843,7 +36847,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBType_1GetTypeFlags(JNIEnv *jenv, jc
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBType_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBType_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBType *arg1 = (lldb::SBType *) 0 ;
   std::string result;
@@ -35852,7 +36856,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBType_1_1_1str_1_1(JNIEnv *jenv, j
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBType **)&jarg1; 
-  result = lldb_SBType___str__(arg1);
+  result = lldb_SBType___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -36635,7 +37639,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeCategory_1DeleteTypeSyntheti
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeCategory_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeCategory_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeCategory *arg1 = (lldb::SBTypeCategory *) 0 ;
   std::string result;
@@ -36644,7 +37648,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeCategory_1_1_1str_1_1(JNIEnv 
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeCategory **)&jarg1; 
-  result = lldb_SBTypeCategory___str__(arg1);
+  result = lldb_SBTypeCategory___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -36807,7 +37811,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeEnumMember_1GetDescription(J
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeEnumMember_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeEnumMember_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeEnumMember *arg1 = (lldb::SBTypeEnumMember *) 0 ;
   std::string result;
@@ -36816,7 +37820,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeEnumMember_1_1_1str_1_1(JNIEn
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeEnumMember **)&jarg1; 
-  result = lldb_SBTypeEnumMember___str__(arg1);
+  result = lldb_SBTypeEnumMember___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -37159,7 +38163,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeFilter_1GetDescription(JNIEn
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeFilter_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeFilter_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeFilter *arg1 = (lldb::SBTypeFilter *) 0 ;
   std::string result;
@@ -37168,7 +38172,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeFilter_1_1_1str_1_1(JNIEnv *j
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeFilter **)&jarg1; 
-  result = lldb_SBTypeFilter___str__(arg1);
+  result = lldb_SBTypeFilter___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -37435,7 +38439,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeFormat_1GetDescription(JNIEn
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeFormat_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeFormat_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeFormat *arg1 = (lldb::SBTypeFormat *) 0 ;
   std::string result;
@@ -37444,7 +38448,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeFormat_1_1_1str_1_1(JNIEnv *j
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeFormat **)&jarg1; 
-  result = lldb_SBTypeFormat___str__(arg1);
+  result = lldb_SBTypeFormat___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -37502,7 +38506,28 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTypeNameSpecifier_1_1SWIG_12(J
 }
 
 
-SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTypeNameSpecifier_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTypeNameSpecifier_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jstring jarg1, jint jarg2) {
+  jlong jresult = 0 ;
+  char *arg1 = (char *) 0 ;
+  lldb::FormatterMatchType arg2 ;
+  lldb::SBTypeNameSpecifier *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = 0;
+  if (jarg1) {
+    arg1 = (char *)jenv->GetStringUTFChars(jarg1, 0);
+    if (!arg1) return 0;
+  }
+  arg2 = (lldb::FormatterMatchType)jarg2; 
+  result = (lldb::SBTypeNameSpecifier *)new lldb::SBTypeNameSpecifier((char const *)arg1,arg2);
+  *(lldb::SBTypeNameSpecifier **)&jresult = result; 
+  if (arg1) jenv->ReleaseStringUTFChars(jarg1, (const char *)arg1);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTypeNameSpecifier_1_1SWIG_14(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   lldb::SBType arg1 ;
   lldb::SBType *argp1 ;
@@ -37523,7 +38548,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTypeNameSpecifier_1_1SWIG_13(J
 }
 
 
-SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTypeNameSpecifier_1_1SWIG_14(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_new_1SBTypeNameSpecifier_1_1SWIG_15(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   lldb::SBTypeNameSpecifier *arg1 = 0 ;
   lldb::SBTypeNameSpecifier *result = 0 ;
@@ -37619,6 +38644,21 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBTypeNameSpecifier_1GetType(JNIEnv *
 }
 
 
+SWIGEXPORT jint JNICALL Java_SWIG_lldbJNI_SBTypeNameSpecifier_1GetMatchType(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jint jresult = 0 ;
+  lldb::SBTypeNameSpecifier *arg1 = (lldb::SBTypeNameSpecifier *) 0 ;
+  lldb::FormatterMatchType result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBTypeNameSpecifier **)&jarg1; 
+  result = (lldb::FormatterMatchType)(arg1)->GetMatchType();
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeNameSpecifier_1IsRegex(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jboolean jresult = 0 ;
   lldb::SBTypeNameSpecifier *arg1 = (lldb::SBTypeNameSpecifier *) 0 ;
@@ -37658,7 +38698,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeNameSpecifier_1GetDescriptio
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeNameSpecifier_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeNameSpecifier_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeNameSpecifier *arg1 = (lldb::SBTypeNameSpecifier *) 0 ;
   std::string result;
@@ -37667,7 +38707,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeNameSpecifier_1_1_1str_1_1(JN
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeNameSpecifier **)&jarg1; 
-  result = lldb_SBTypeNameSpecifier___str__(arg1);
+  result = lldb_SBTypeNameSpecifier___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -38149,7 +39189,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeSummary_1GetDescription(JNIE
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeSummary_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeSummary_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeSummary *arg1 = (lldb::SBTypeSummary *) 0 ;
   std::string result;
@@ -38158,7 +39198,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeSummary_1_1_1str_1_1(JNIEnv *
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeSummary **)&jarg1; 
-  result = lldb_SBTypeSummary___str__(arg1);
+  result = lldb_SBTypeSummary___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -38440,7 +39480,7 @@ SWIGEXPORT jboolean JNICALL Java_SWIG_lldbJNI_SBTypeSynthetic_1GetDescription(JN
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeSynthetic_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeSynthetic_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBTypeSynthetic *arg1 = (lldb::SBTypeSynthetic *) 0 ;
   std::string result;
@@ -38449,7 +39489,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBTypeSynthetic_1_1_1str_1_1(JNIEnv
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBTypeSynthetic **)&jarg1; 
-  result = lldb_SBTypeSynthetic___str__(arg1);
+  result = lldb_SBTypeSynthetic___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -40533,7 +41573,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBValue_1EvaluateExpression_1_1SWIG_1
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBValue_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBValue_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBValue *arg1 = (lldb::SBValue *) 0 ;
   std::string result;
@@ -40542,7 +41582,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBValue_1_1_1str_1_1(JNIEnv *jenv, 
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBValue **)&jarg1; 
-  result = lldb_SBValue___str__(arg1);
+  result = lldb_SBValue___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }
@@ -40743,6 +41783,21 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBValueList_1GetFirstValueByName(JNIE
   result = ((lldb::SBValueList const *)arg1)->GetFirstValueByName((char const *)arg2);
   *(lldb::SBValue **)&jresult = new lldb::SBValue((const lldb::SBValue &)result); 
   if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBValueList_1GetError(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  lldb::SBValueList *arg1 = (lldb::SBValueList *) 0 ;
+  lldb::SBError result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(lldb::SBValueList **)&jarg1; 
+  result = (arg1)->GetError();
+  *(lldb::SBError **)&jresult = new lldb::SBError((const lldb::SBError &)result); 
   return jresult;
 }
 
@@ -41354,7 +42409,7 @@ SWIGEXPORT jlong JNICALL Java_SWIG_lldbJNI_SBWatchpoint_1GetWatchpointFromEvent(
 }
 
 
-SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBWatchpoint_1_1_1str_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBWatchpoint_1_1_1repr_1_1(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jstring jresult = 0 ;
   lldb::SBWatchpoint *arg1 = (lldb::SBWatchpoint *) 0 ;
   std::string result;
@@ -41363,7 +42418,7 @@ SWIGEXPORT jstring JNICALL Java_SWIG_lldbJNI_SBWatchpoint_1_1_1str_1_1(JNIEnv *j
   (void)jcls;
   (void)jarg1_;
   arg1 = *(lldb::SBWatchpoint **)&jarg1; 
-  result = lldb_SBWatchpoint___str__(arg1);
+  result = lldb_SBWatchpoint___repr__(arg1);
   jresult = jenv->NewStringUTF((&result)->c_str()); 
   return jresult;
 }

@@ -87,8 +87,8 @@ public class SBInstructionList {
     return lldbJNI.SBInstructionList_DumpEmulationForAllInstructions(swigCPtr, this, triple);
   }
 
-  public String __str__() {
-    return lldbJNI.SBInstructionList___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBInstructionList___repr__(swigCPtr, this);
   }
 
 }

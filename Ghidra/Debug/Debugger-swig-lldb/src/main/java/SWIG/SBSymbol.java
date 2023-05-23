@@ -79,6 +79,14 @@ public class SBSymbol {
     return new SBAddress(lldbJNI.SBSymbol_GetEndAddress(swigCPtr, this), true);
   }
 
+  public java.math.BigInteger GetValue() {
+    return lldbJNI.SBSymbol_GetValue(swigCPtr, this);
+  }
+
+  public java.math.BigInteger GetSize() {
+    return lldbJNI.SBSymbol_GetSize(swigCPtr, this);
+  }
+
   public long GetPrologueByteSize() {
     return lldbJNI.SBSymbol_GetPrologueByteSize(swigCPtr, this);
   }
@@ -99,8 +107,8 @@ public class SBSymbol {
     return lldbJNI.SBSymbol_IsSynthetic(swigCPtr, this);
   }
 
-  public String __str__() {
-    return lldbJNI.SBSymbol___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBSymbol___repr__(swigCPtr, this);
   }
 
 }

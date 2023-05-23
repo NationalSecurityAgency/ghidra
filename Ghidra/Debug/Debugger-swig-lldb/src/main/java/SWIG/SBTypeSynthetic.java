@@ -99,8 +99,8 @@ public class SBTypeSynthetic {
     return lldbJNI.SBTypeSynthetic_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description, description_level.swigValue());
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeSynthetic___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeSynthetic___repr__(swigCPtr, this);
   }
 
 }

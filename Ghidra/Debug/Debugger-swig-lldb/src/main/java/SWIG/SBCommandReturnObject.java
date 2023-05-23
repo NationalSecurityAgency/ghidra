@@ -151,8 +151,8 @@ public class SBCommandReturnObject {
     lldbJNI.SBCommandReturnObject_SetImmediateErrorFile__SWIG_1(swigCPtr, this, SWIGTYPE_p_std__shared_ptrT_lldb_private__File_t.getCPtr(BORROWED));
   }
 
-  public String __str__() {
-    return lldbJNI.SBCommandReturnObject___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBCommandReturnObject___repr__(swigCPtr, this);
   }
 
   public void SetImmediateOutputFile(SWIGTYPE_p_std__shared_ptrT_lldb_private__File_t BORROWED, boolean transfer_ownership) {

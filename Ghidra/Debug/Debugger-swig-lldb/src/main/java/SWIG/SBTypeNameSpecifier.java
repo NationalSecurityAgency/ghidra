@@ -51,12 +51,16 @@ public class SBTypeNameSpecifier {
     this(lldbJNI.new_SBTypeNameSpecifier__SWIG_2(name), true);
   }
 
+  public SBTypeNameSpecifier(String name, FormatterMatchType match_type) {
+    this(lldbJNI.new_SBTypeNameSpecifier__SWIG_3(name, match_type.swigValue()), true);
+  }
+
   public SBTypeNameSpecifier(SBType type) {
-    this(lldbJNI.new_SBTypeNameSpecifier__SWIG_3(SBType.getCPtr(type), type), true);
+    this(lldbJNI.new_SBTypeNameSpecifier__SWIG_4(SBType.getCPtr(type), type), true);
   }
 
   public SBTypeNameSpecifier(SBTypeNameSpecifier rhs) {
-    this(lldbJNI.new_SBTypeNameSpecifier__SWIG_4(SBTypeNameSpecifier.getCPtr(rhs), rhs), true);
+    this(lldbJNI.new_SBTypeNameSpecifier__SWIG_5(SBTypeNameSpecifier.getCPtr(rhs), rhs), true);
   }
 
   public boolean IsValid() {
@@ -75,6 +79,10 @@ public class SBTypeNameSpecifier {
     return new SBType(lldbJNI.SBTypeNameSpecifier_GetType(swigCPtr, this), true);
   }
 
+  public FormatterMatchType GetMatchType() {
+    return FormatterMatchType.swigToEnum(lldbJNI.SBTypeNameSpecifier_GetMatchType(swigCPtr, this));
+  }
+
   public boolean IsRegex() {
     return lldbJNI.SBTypeNameSpecifier_IsRegex(swigCPtr, this);
   }
@@ -83,8 +91,8 @@ public class SBTypeNameSpecifier {
     return lldbJNI.SBTypeNameSpecifier_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description, description_level.swigValue());
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeNameSpecifier___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeNameSpecifier___repr__(swigCPtr, this);
   }
 
 }

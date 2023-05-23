@@ -195,8 +195,8 @@ public class SBData {
     return lldbJNI.SBData_SetDataFromDoubleArray(swigCPtr, this, SWIGTYPE_p_double.getCPtr(array), array_len);
   }
 
-  public String __str__() {
-    return lldbJNI.SBData___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBData___repr__(swigCPtr, this);
   }
 
 }

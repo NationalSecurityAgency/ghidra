@@ -39,12 +39,28 @@ public class SBDebugger {
     }
   }
 
+  public static String GetProgressFromEvent(SBEvent event, java.math.BigInteger[] arg1, java.math.BigInteger[] arg2, java.math.BigInteger[] arg3, boolean[] arg4) {
+    return lldbJNI.SBDebugger_GetProgressFromEvent(SBEvent.getCPtr(event), event, arg1, arg2, arg3, arg4);
+  }
+
+  public static SBStructuredData GetDiagnosticFromEvent(SBEvent event) {
+    return new SBStructuredData(lldbJNI.SBDebugger_GetDiagnosticFromEvent(SBEvent.getCPtr(event), event), true);
+  }
+
+  public SBBroadcaster GetBroadcaster() {
+    return new SBBroadcaster(lldbJNI.SBDebugger_GetBroadcaster(swigCPtr, this), true);
+  }
+
   public static void Initialize() {
     lldbJNI.SBDebugger_Initialize();
   }
 
   public static SBError InitializeWithErrorHandling() {
     return new SBError(lldbJNI.SBDebugger_InitializeWithErrorHandling(), true);
+  }
+
+  public static void PrintStackTraceOnError() {
+    lldbJNI.SBDebugger_PrintStackTraceOnError();
   }
 
   public static void Terminate() {
@@ -109,6 +125,14 @@ public class SBDebugger {
 
   public SWIGTYPE_p_std__shared_ptrT_lldb_private__File_t GetErrorFileHandle() {
     return new SWIGTYPE_p_std__shared_ptrT_lldb_private__File_t(lldbJNI.SBDebugger_GetErrorFileHandle(swigCPtr, this), true);
+  }
+
+  public SBStructuredData GetSetting(String setting) {
+    return new SBStructuredData(lldbJNI.SBDebugger_GetSetting__SWIG_0(swigCPtr, this, setting), true);
+  }
+
+  public SBStructuredData GetSetting() {
+    return new SBStructuredData(lldbJNI.SBDebugger_GetSetting__SWIG_1(swigCPtr, this), true);
   }
 
   public SBError SetInputString(String data) {
@@ -435,8 +459,8 @@ public class SBDebugger {
     return new SBStructuredData(lldbJNI.SBDebugger_GetScriptInterpreterInfo(swigCPtr, this, arg0.swigValue()), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBDebugger___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBDebugger___repr__(swigCPtr, this);
   }
 
   public void RunCommandInterpreter(boolean auto_handle_events, boolean spawn_thread, SBCommandInterpreterRunOptions options, int[] num_errors, boolean[] quit_requested, boolean[] stopped_for_crash) {
@@ -446,5 +470,13 @@ public class SBDebugger {
   public SBError RunREPL(LanguageType language, String repl_options) {
     return new SBError(lldbJNI.SBDebugger_RunREPL(swigCPtr, this, language.swigValue(), repl_options), true);
   }
+
+  public SBTrace LoadTraceFromFile(SBError error, SBFileSpec trace_description_file) {
+    return new SBTrace(lldbJNI.SBDebugger_LoadTraceFromFile(swigCPtr, this, SBError.getCPtr(error), error, SBFileSpec.getCPtr(trace_description_file), trace_description_file), true);
+  }
+
+  public final static int eBroadcastBitProgress = lldbJNI.SBDebugger_eBroadcastBitProgress_get();
+  public final static int eBroadcastBitWarning = lldbJNI.SBDebugger_eBroadcastBitWarning_get();
+  public final static int eBroadcastBitError = lldbJNI.SBDebugger_eBroadcastBitError_get();
 
 }
