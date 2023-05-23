@@ -2926,7 +2926,7 @@ int4 RuleIndirectCollapse::applyOp(PcodeOp *op,Funcdata &data)
       }
     }
     else if (indop->isCall()) {
-      if (op->isIndirectCreation())
+      if (op->isIndirectCreation() || op->noIndirectCollapse())
 	return 0;
       // If there are no aliases to a local variable, collapse
       if (!op->getOut()->hasNoLocalAlias())
