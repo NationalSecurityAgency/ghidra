@@ -328,10 +328,19 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			CodeUnit cu = codeUnits.next();
 			Address addr = cu.getAddress();
 			Function foo = listing.getFunctionContaining(addr);
+			Address entry = foo.getEntryPoint();
 			boolean insideFunction = foo != null;
+			int delta = addr.compareTo(entry);
 			String addrStr;
 			if (insideFunction) {
-				addrStr = String.format("%s + %#x\n", foo, addr.subtract(foo.getEntryPoint()));
+				if (delta > 0) {
+					addrStr = String.format("%s + %#x\n", foo, addr.subtract(entry));					
+				}
+				else if (delta == 0) {
+					addrStr = String.format("%s\n", foo);
+				} else {
+					addrStr = String.format("%s - %#x\n", foo, entry.subtract(addr));
+				}
 			} else {
 				// TODO: Probably better to have a second version for addresses of instructions
 				addrStr = String.format("%s\n", addr);
