@@ -2122,6 +2122,57 @@ int4 ActionLikelyTrash::apply(Funcdata &data)
   return 0;
 }
 
+/// Test if the path to the given BRANCHIND originates from a constant but passes through INDIRECT operations.
+/// This indicates that the switch value is produced indirectly, so we mark these INDIRECT
+/// operations as \e not \e collapsible, to guarantee that the indirect value is not lost during analysis.
+/// \param op is the given BRANCHIND op
+void ActionRestructureVarnode::protectSwitchPathIndirects(PcodeOp *op)
+
+{
+  vector<PcodeOp *> indirects;
+  Varnode *curVn = op->getIn(0);
+  while(curVn->isWritten()) {
+    PcodeOp *curOp = curVn->getDef();
+    uint4 evalType = curOp->getEvalType();
+    if ((evalType & (PcodeOp::binary | PcodeOp::ternary)) != 0) {
+      if (curOp->numInput() > 1) {
+	if (!curOp->getIn(1)->isConstant()) return;	// Multiple paths
+      }
+      curVn = curOp->getIn(0);
+    }
+    else if ((evalType & PcodeOp::unary) != 0)
+      curVn = curOp->getIn(0);
+    else if (curOp->code() == CPUI_INDIRECT) {
+      indirects.push_back(curOp);
+      curVn = curOp->getIn(0);
+    }
+    else if (curOp->code() == CPUI_LOAD) {
+      curVn = curOp->getIn(1);
+    }
+    else
+      return;
+  }
+  if (!curVn->isConstant()) return;
+  // If we reach here, there is exactly one path, from a constant to a switch
+  for(int4 i=0;i<indirects.size();++i) {
+    indirects[i]->setNoIndirectCollapse();
+  }
+}
+
+/// Run through BRANCHIND ops, treat them as switches and protect the data-flow path to the destination variable
+/// \param data is the function to examine
+void ActionRestructureVarnode::protectSwitchPaths(Funcdata &data)
+
+{
+  const BlockGraph &bblocks(data.getBasicBlocks());
+  for(int4 i=0;i<bblocks.getSize();++i) {
+    PcodeOp *op = bblocks.getBlock(i)->lastOp();
+    if (op == (PcodeOp *)0) continue;
+    if (op->code() != CPUI_BRANCHIND) continue;
+    protectSwitchPathIndirects(op);
+  }
+}
+
 int4 ActionRestructureVarnode::apply(Funcdata &data)
 
 {
@@ -2131,6 +2182,9 @@ int4 ActionRestructureVarnode::apply(Funcdata &data)
   l1->restructureVarnode(aliasyes);
   if (data.syncVarnodesWithSymbols(l1,false,aliasyes))
     count += 1;
+
+  if (data.isJumptableRecoveryOn())
+    protectSwitchPaths(data);
 
   numpass += 1;
 #ifdef OPACTION_DEBUG
