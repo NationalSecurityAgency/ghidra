@@ -159,12 +159,13 @@ protected:
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
+  uint8 id;			///< A unique id for the type (or 0 if an id is not assigned)
   int4 size;			///< Size (of variable holding a value of this type)
+  uint4 flags;			///< Boolean properties of the type
   string name;			///< Name of type
+  string displayName;		///< Name to display in output
   type_metatype metatype;	///< Meta-type - type disregarding size
   sub_metatype submeta;		///< Sub-type of of the meta-type, for comparisons
-  uint4 flags;			///< Boolean properties of the type
-  uint8 id;			///< A unique id for the type (or 0 if an id is not assigned)
   Datatype *typedefImm;		///< The immediate data-type being typedefed by \e this
   void decodeBasic(Decoder &decoder);	///< Recover basic data-type properties
   void encodeBasic(type_metatype meta,Encoder &encoder) const;	///< Encode basic data-type properties
@@ -176,8 +177,8 @@ protected:
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
 public:
   /// Construct the base data-type copying low-level properties of another
-  Datatype(const Datatype &op) { size = op.size; name=op.name; metatype=op.metatype; submeta=op.submeta; flags=op.flags;
-    id=op.id; typedefImm=op.typedefImm; }
+  Datatype(const Datatype &op) { size = op.size; name=op.name; displayName=op.displayName; metatype=op.metatype;
+    submeta=op.submeta; flags=op.flags; id=op.id; typedefImm=op.typedefImm; }
   /// Construct the base data-type providing size and meta-type
   Datatype(int4 s,type_metatype m) { size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; }
   virtual ~Datatype(void) {}	///< Destructor
@@ -203,6 +204,7 @@ public:
   uint8 getId(void) const { return id; }			///< Get the type id
   int4 getSize(void) const { return size; }			///< Get the type size
   const string &getName(void) const { return name; }		///< Get the type name
+  const string &getDisplayName(void) const { return displayName; }	///< Get string to use in display
   Datatype *getTypedef(void) const { return typedefImm; }	///< Get the data-type immediately typedefed by \e this (or null)
   virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
   virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
@@ -279,7 +281,7 @@ public:
   /// Construct TypeBase from a size and meta-type
   TypeBase(int4 s,type_metatype m) : Datatype(s,m) {}
   /// Construct TypeBase from a size, meta-type, and name
-  TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m) { name = n; }
+  TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m) { name = n; displayName = n; }
   virtual Datatype *clone(void) const { return new TypeBase(*this); }
 };
 
@@ -326,7 +328,7 @@ public:
   /// Construct from another TypeVoid
   TypeVoid(const TypeVoid &op) : Datatype(op) { flags |= Datatype::coretype; }
   /// Constructor
-  TypeVoid(void) : Datatype(0,TYPE_VOID) { name = "void"; flags |= Datatype::coretype; }
+  TypeVoid(void) : Datatype(0,TYPE_VOID) { name = "void"; displayName = name; flags |= Datatype::coretype; }
   virtual Datatype *clone(void) const { return new TypeVoid(*this); }
   virtual void encode(Encoder &encoder) const;
 };
