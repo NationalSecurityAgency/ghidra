@@ -201,6 +201,7 @@
     </localrange>
   </prototype>
   <modelalias name="__cdecl" parent="__fastcall"/>
+  <modelalias name="__stdcall" parent="__fastcall"/>
   <callfixup name="alloca_probe">
     <target name="_alloca_probe"/>
     <target name="_alloca_probe2"/>
