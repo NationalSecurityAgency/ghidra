@@ -20,13 +20,16 @@ import java.util.List;
 
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.symbol.IdentityNameTransformer;
+import ghidra.program.model.symbol.NameTransformer;
 import ghidra.util.StringUtilities;
 
 /**
- * This class is used to convert a C language
- * token group into readable C code.
+ * This class is used to convert a C/C++ language
+ * token group into readable C/C++ code.
  */
 public class PrettyPrinter {
+
 	/**
 	 * The indent string to use when printing.
 	 */
@@ -34,29 +37,35 @@ public class PrettyPrinter {
 
 	private Function function;
 	private ClangTokenGroup tokgroup;
-	private ArrayList<ClangLine> lines = new ArrayList<ClangLine>();
+	private ArrayList<ClangLine> lines = new ArrayList<>();
+	private NameTransformer transformer;
 
 	/**
 	 * Constructs a new pretty printer using the specified C language token group.
+	 * The printer takes a NameTransformer that will be applied to symbols, which can replace
+	 * illegal characters in the symbol name for instance. A null indicates no transform is applied.
+	 * @param function is the function to be printed
 	 * @param tokgroup the C language token group
+	 * @param transformer the transformer to apply to symbols
 	 */
-	public PrettyPrinter(Function function, ClangTokenGroup tokgroup) {
+	public PrettyPrinter(Function function, ClangTokenGroup tokgroup, NameTransformer transformer) {
 		this.function = function;
 		this.tokgroup = tokgroup;
+		this.transformer = (transformer != null) ? transformer : new IdentityNameTransformer();
 		flattenLines();
 		padEmptyLines();
 	}
 
-    private void padEmptyLines() {
-        for (ClangLine line : lines) {
+	private void padEmptyLines() {
+		for (ClangLine line : lines) {
 			ArrayList<ClangToken> tokenList = line.getAllTokens();
 			if (tokenList.size() == 0) {
 				ClangToken spacer = ClangToken.buildSpacer(null, line.getIndent(), INDENT_STRING);
-				spacer.setLineParent( line );
-                tokenList.add(0, spacer);
+				spacer.setLineParent(line);
+				tokenList.add(0, spacer);
 			}
 		}
-    }
+	}
 
 	public Function getFunction() {
 		return function;
@@ -74,11 +83,9 @@ public class PrettyPrinter {
 	/**
 	 * Prints the C language token group
 	 * into a string of C code.
-	 * @param removeInvalidChars true if invalid character should be
-	 * removed from functions and labels.
 	 * @return a string of readable C code
 	 */
-	public DecompiledFunction print(boolean removeInvalidChars) {
+	public DecompiledFunction print() {
 		StringBuffer buff = new StringBuffer();
 
 		for (ClangLine line : lines) {
@@ -87,30 +94,19 @@ public class PrettyPrinter {
 
 			for (ClangToken token : tokens) {
 				boolean isToken2Clean = token instanceof ClangFuncNameToken ||
-										token instanceof ClangVariableToken || 
-										token instanceof ClangTypeToken ||
-										token instanceof ClangFieldToken || 
-										token instanceof ClangLabelToken;
+					token instanceof ClangVariableToken || token instanceof ClangTypeToken ||
+					token instanceof ClangFieldToken || token instanceof ClangLabelToken;
 
 				//do not clean constant variable tokens
 				if (isToken2Clean && token.getSyntaxType() == ClangToken.CONST_COLOR) {
 					isToken2Clean = false;
 				}
 
-				if (removeInvalidChars && isToken2Clean) {
-					String tokenText = token.getText();
-					for (int i = 0 ; i < tokenText.length() ; ++i) {
-						if (StringUtilities.isValidCLanguageChar(tokenText.charAt(i))) {
-							buff.append(tokenText.charAt(i));
-						}
-						else {
-							buff.append('_');
-						}
-					}
+				String tokenText = token.getText();
+				if (isToken2Clean) {
+					tokenText = transformer.simplify(tokenText);
 				}
-				else {
-					buff.append(token.getText());
-				}
+				buff.append(tokenText);
 			}
 			buff.append(StringUtilities.LINE_SEPARATOR);
 		}
@@ -119,10 +115,10 @@ public class PrettyPrinter {
 
 	private String findSignature() {
 		int nChildren = tokgroup.numChildren();
-		for (int i = 0 ; i < nChildren ; ++i) {
+		for (int i = 0; i < nChildren; ++i) {
 			ClangNode node = tokgroup.Child(i);
 			if (node instanceof ClangFuncProto) {
-				return node.toString()+";";
+				return node.toString() + ";";
 			}
 		}
 		return null;

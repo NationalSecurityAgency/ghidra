@@ -330,14 +330,21 @@ public class LocalSymbolMap {
 	 * Encode all the variables in this local variable map to the stream
 	 * @param encoder is the stream encoder
 	 * @param namespace if the namespace of the function
+	 * @param transformer is used to compute a simplified version of the namespace name
 	 * @throws IOException for errors in the underlying stream
 	 */
-	public void encodeLocalDb(Encoder encoder, Namespace namespace) throws IOException {
+	public void encodeLocalDb(Encoder encoder, Namespace namespace, NameTransformer transformer)
+			throws IOException {
 		encoder.openElement(ELEM_LOCALDB);
 		encoder.writeBool(ATTRIB_LOCK, false);
 		encoder.writeSpace(ATTRIB_MAIN, localSpace);
 		encoder.openElement(ELEM_SCOPE);
-		encoder.writeString(ATTRIB_NAME, func.getFunction().getName());
+		String nm = func.getFunction().getName();
+		encoder.writeString(ATTRIB_NAME, nm);
+		String altName = transformer.simplify(nm);
+		if (!nm.equals(altName)) {
+			encoder.writeString(ATTRIB_LABEL, altName);
+		}
 		encoder.openElement(ELEM_PARENT);
 		long parentid = Namespace.GLOBAL_NAMESPACE_ID;
 		if (!HighFunction.collapseToGlobal(namespace)) {
@@ -345,7 +352,7 @@ public class LocalSymbolMap {
 		}
 		encoder.writeUnsignedInteger(ATTRIB_ID, parentid);
 		encoder.closeElement(ELEM_PARENT);
-		encoder.openElement(ELEM_RANGELIST);	// Emptry address range
+		encoder.openElement(ELEM_RANGELIST);	// Empty address range
 		encoder.closeElement(ELEM_RANGELIST);
 		encoder.openElement(ELEM_SYMBOLLIST);
 		Iterator<HighSymbol> iter = symbolMap.values().iterator();

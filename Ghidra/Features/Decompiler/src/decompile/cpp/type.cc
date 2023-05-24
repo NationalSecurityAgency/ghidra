@@ -544,6 +544,9 @@ void Datatype::decodeBasic(Decoder &decoder)
       uint4 val = encodeIntegerFormat(decoder.readString());
       setDisplayFormat(val);
     }
+    else if (attrib == ATTRIB_LABEL) {
+      displayName = decoder.readString();
+    }
   }
   if (size < 0)
     throw LowlevelError("Bad size for type "+name);
@@ -554,6 +557,8 @@ void Datatype::decodeBasic(Decoder &decoder)
     // Id needs to be unique compared to another data-type with the same name
     id = hashSize(id, size);
   }
+  if (displayName.empty())
+    displayName = name;
 }
 
 /// If a type id is explicitly provided for a data-type, this routine is used
@@ -3003,6 +3008,7 @@ Datatype *TypeFactory::setName(Datatype *ct,const string &n)
     nametree.erase( ct );	// Erase any name reference
   tree.erase(ct);		// Remove new type completely from trees
   ct->name = n;			// Change the name
+  ct->displayName = n;
   if (ct->id == 0)
     ct->id = Datatype::hashName(n);
 				// Insert type with new name
@@ -3215,7 +3221,7 @@ TypeVoid *TypeFactory::getTypeVoid(void)
   if (ct != (TypeVoid *)0)
     return ct;
   TypeVoid tv;
-  tv.id = Datatype::hashName(tv.getName());
+  tv.id = Datatype::hashName(tv.name);
   ct = (TypeVoid *)tv.clone();
   tree.insert(ct);
   nametree.insert(ct);
@@ -3332,6 +3338,7 @@ TypeCode *TypeFactory::getTypeCode(const string &nm)
   if (nm.size()==0) return getTypeCode();
   TypeCode tmp;					// Generic code data-type
   tmp.name = nm;				// with a name
+  tmp.displayName = nm;
   tmp.id = Datatype::hashName(nm);
   tmp.markComplete();	// considered complete
   return (TypeCode *) findAdd(tmp);
@@ -3384,6 +3391,7 @@ Datatype *TypeFactory::getTypedef(Datatype *ct,const string &name,uint8 id,uint4
   }
   res = ct->clone();		// Clone everything
   res->name = name;		// But a new name
+  res->displayName = name;
   res->id = id;			// and new id
   res->flags &= ~((uint4)Datatype::coretype);	// Not a core type
   res->typedefImm = ct;
@@ -3438,6 +3446,7 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,const stri
     pt = pt->getStripped();
   TypePointer tmp(s,pt,ws);
   tmp.name = n;
+  tmp.displayName = n;
   tmp.id = Datatype::hashName(n);
   return (TypePointer *) findAdd(tmp);
 }
@@ -3485,6 +3494,7 @@ TypeStruct *TypeFactory::getTypeStruct(const string &n)
 {
   TypeStruct tmp;
   tmp.name = n;
+  tmp.displayName = n;
   tmp.id = Datatype::hashName(n);
   return (TypeStruct *) findAdd(tmp);
 }
@@ -3505,6 +3515,7 @@ TypeUnion *TypeFactory::getTypeUnion(const string &n)
 {
   TypeUnion tmp;
   tmp.name = n;
+  tmp.displayName = n;
   tmp.id = Datatype::hashName(n);
   return (TypeUnion *) findAdd(tmp);
 }
@@ -3587,6 +3598,7 @@ TypePointerRel *TypeFactory::getTypePointerRel(int4 sz,Datatype *parent,Datatype
 {
   TypePointerRel tp(sz,ptrTo,ws,parent,off);
   tp.name = nm;
+  tp.displayName = nm;
   tp.id = Datatype::hashName(nm);
   TypePointerRel *res = (TypePointerRel *)findAdd(tp);
   return res;
@@ -3605,6 +3617,7 @@ TypePointer *TypeFactory::getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc
 {
   TypePointer tp(ptrTo,spc);
   tp.name = nm;
+  tp.displayName = nm;
   tp.id = Datatype::hashName(nm);
   TypePointer *res = (TypePointer *)findAdd(tp);
   return res;

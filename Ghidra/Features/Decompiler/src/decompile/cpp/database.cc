@@ -395,6 +395,7 @@ void Symbol::decodeHeader(Decoder &decoder)
 
 {
   name.clear();
+  displayName.clear();
   category = no_category;
   symbolId = 0;
   for(;;) {
@@ -447,12 +448,17 @@ void Symbol::decodeHeader(Decoder &decoder)
       if (decoder.readBool())
 	flags |= Varnode::volatil;
     }
+    else if (attribId == ATTRIB_LABEL) {
+      displayName = decoder.readString();
+    }
   }
   if (category == function_parameter) {
     catindex = decoder.readUnsignedInteger(ATTRIB_INDEX);
   }
   else
     catindex = 0;
+  if (displayName.size() == 0)
+    displayName = name;
 }
 
 /// Encode the data-type for the Symbol
@@ -532,6 +538,7 @@ FunctionSymbol::FunctionSymbol(Scope *sc,const string &nm,int4 size)
   consumeSize = size;
   buildType();
   name = nm;
+  displayName = nm;
 }
 
 FunctionSymbol::FunctionSymbol(Scope *sc,int4 size)
@@ -552,7 +559,7 @@ Funcdata *FunctionSymbol::getFunction(void)
 {
   if (fd != (Funcdata *)0) return fd;
   SymbolEntry *entry = getFirstWholeMap();
-  fd = new Funcdata(name,scope,entry->getAddr(),this);
+  fd = new Funcdata(name,displayName,scope,entry->getAddr(),this);
   return fd;
 }
 
@@ -575,7 +582,7 @@ void FunctionSymbol::decode(Decoder &decoder)
 {
   uint4 elemId = decoder.peekElement();
   if (elemId == ELEM_FUNCTION) {
-    fd = new Funcdata("",scope,Address(),this);
+    fd = new Funcdata("","",scope,Address(),this);
     try {
       symbolId = fd->decode(decoder);
     } catch(RecovError &err) {
@@ -583,6 +590,7 @@ void FunctionSymbol::decode(Decoder &decoder)
       throw DuplicateFunctionError(fd->getAddress(),fd->getName());
     }
     name = fd->getName();
+    displayName = fd->getDisplayName();
     if (consumeSize < fd->getSize()) {
       if ((fd->getSize()>1)&&(fd->getSize() <= 8))
 	consumeSize = fd->getSize();
@@ -598,6 +606,9 @@ void FunctionSymbol::decode(Decoder &decoder)
 	name = decoder.readString();
       else if (attribId == ATTRIB_ID) {
 	symbolId = decoder.readUnsignedInteger();
+      }
+      else if (attribId == ATTRIB_LABEL) {
+	displayName = decoder.readString();
       }
     }
     decoder.closeElement(elemId);
@@ -727,6 +738,7 @@ LabSymbol::LabSymbol(Scope *sc,const string &nm)
 {
   buildType();
   name = nm;
+  displayName = nm;
 }
 
 /// \param sc is the Scope that will contain the new Symbol
@@ -766,6 +778,8 @@ void ExternRefSymbol::buildNameType(void)
     name = s.str();
     name += "_exref"; // Indicate this is an external reference variable
   }
+  if (displayName.size() == 0)
+    displayName = name;
   flags |= Varnode::externref | Varnode::typelock;
 }
 
@@ -792,12 +806,15 @@ void ExternRefSymbol::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_EXTERNREFSYMBOL);
-  name = "";			// Name is empty
+  name.clear();			// Name is empty
+  displayName.clear();
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
     if (attribId == ATTRIB_NAME) // Unless we see it explicitly
       name = decoder.readString();
+    else if (attribId == ATTRIB_LABEL)
+      displayName = decoder.readString();
   }
   refaddr = Address::decode(decoder);
   decoder.closeElement(elemId);
@@ -1798,8 +1815,10 @@ void ScopeInternal::addSymbolInternal(Symbol *sym)
     nextUniqueId += 1;
   }
   try {
-    if (sym->name.size() == 0)
+    if (sym->name.size() == 0) {
       sym->name = buildUndefinedName();
+      sym->displayName = sym->name;
+    }
     if (sym->getType() == (Datatype *)0)
       throw LowlevelError(sym->getName() + " symbol created with no type");
     if (sym->getType()->getSize() < 1)
@@ -2138,6 +2157,7 @@ void ScopeInternal::renameSymbol(Symbol *sym,const string &newname)
     multiEntrySet.erase(sym);	// The multi-entry set is sorted by name, remove
   string oldname = sym->name;
   sym->name = newname;
+  sym->displayName = newname;
   insertNameTree(sym);
   if (sym->wholeCount > 1)
     multiEntrySet.insert(sym);	// Reenter into the multi-entry set now that name is changed
@@ -3315,14 +3335,32 @@ void Database::decode(Decoder &decoder)
   for(;;) {
     uint4 subId = decoder.openElement();
     if (subId != ELEM_SCOPE) break;
-    string name = decoder.readString(ATTRIB_NAME);
-    uint8 id = decoder.readUnsignedInteger(ATTRIB_ID);
+    string name;
+    string displayName;
+    uint8 id = 0;
+    bool seenId = false;
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_NAME)
+	name = decoder.readString();
+      else if (attribId == ATTRIB_ID) {
+	id = decoder.readUnsignedInteger();
+	seenId = true;
+      }
+      else if (attribId == ATTRIB_LABEL)
+	displayName = decoder.readString();
+    }
+    if (name.empty() || !seenId)
+      throw DecoderError("Missing name and id attributes in scope");
     Scope *parentScope = (Scope *)0;
     uint4 parentId = decoder.peekElement();
     if (parentId == ELEM_PARENT) {
       parentScope = parseParentTag(decoder);
     }
     Scope *newScope = findCreateScope(id, name, parentScope);
+    if (!displayName.empty())
+      newScope->setDisplayName(displayName);
     newScope->decode(decoder);
     decoder.closeElement(subId);
   }
@@ -3354,6 +3392,41 @@ void Database::decodeScope(Decoder &decoder,Scope *newScope)
     decoder.closeElement(subId);
   }
   decoder.closeElement(elemId);
+}
+
+/// Some namespace objects may already exist.  Create those that don't.
+/// \param decoder is the stream to decode the path from
+/// \return the namespace described by the path
+Scope *Database::decodeScopePath(Decoder &decoder)
+
+{
+  Scope *curscope = getGlobalScope();
+  uint4 elemId = decoder.openElement(ELEM_PARENT);
+  uint4 subId = decoder.openElement();
+  decoder.closeElementSkipping(subId);		// Skip element describing the root scope
+  for(;;) {
+    subId = decoder.openElement();
+    if (subId != ELEM_VAL) break;
+    string displayName;
+    uint8 scopeId = 0;
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_ID)
+	scopeId = decoder.readUnsignedInteger();
+      else if (attribId == ATTRIB_LABEL)
+	displayName = decoder.readString();
+    }
+    string name = decoder.readString(ATTRIB_CONTENT);
+    if (scopeId == 0)
+      throw DecoderError("Missing name and id in scope");
+    curscope = findCreateScope(scopeId, name, curscope);
+    if (!displayName.empty())
+      curscope->setDisplayName(displayName);
+    decoder.closeElement(subId);
+  }
+  decoder.closeElement(elemId);
+  return curscope;
 }
 
 } // End namespace ghidra

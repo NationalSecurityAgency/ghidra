@@ -231,7 +231,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 
 		// Assume docroot has been built.
 
-		PrettyPrinter printer = new PrettyPrinter(function, docroot);
+		PrettyPrinter printer = new PrettyPrinter(function, docroot, null);
 		lines = printer.getLines();
 
 		int lineCount = lines.size();
