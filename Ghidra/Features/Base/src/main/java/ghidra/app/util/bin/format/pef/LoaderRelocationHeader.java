@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.pef;
 
-import ghidra.app.util.bin.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * See Apple's -- PEFBinaryFormat.h
@@ -42,7 +42,7 @@ public class LoaderRelocationHeader implements StructConverter {
 	private int   relocCount;
 	private int   firstRelocOffset;
 
-	private ArrayList<Relocation> _relocations = new ArrayList<Relocation>();
+	private List<Relocation> _relocations = new ArrayList<Relocation>();
 
 	LoaderRelocationHeader(BinaryReader reader, LoaderInfoHeader loader) throws IOException {
 		sectionIndex     = reader.readNextShort();
@@ -99,10 +99,11 @@ public class LoaderRelocationHeader implements StructConverter {
 		return firstRelocOffset;
 	}
 
-	public ArrayList<Relocation> getRelocations() {
+	public List<Relocation> getRelocations() {
 		return _relocations;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		return StructConverterUtil.toDataType(getClass());
 	}

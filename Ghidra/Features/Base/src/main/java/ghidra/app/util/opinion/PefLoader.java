@@ -328,7 +328,7 @@ public class PefLoader extends AbstractProgramWrapperLoader {
 			}
 			RelocationState state =
 				new RelocationState(header, relocationHeader, program, importState);
-			ArrayList<Relocation> relocations = relocationHeader.getRelocations();
+			List<Relocation> relocations = relocationHeader.getRelocations();
 			int relocationIndex = 0;
 			int numRepeats = 0;
 			int jumpToIdx = -1;

@@ -15,14 +15,13 @@
  */
 package ghidra.app.util.bin.format.pef;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
 
 /**
  * See Apple's -- PEFBinaryFormat.h
@@ -79,7 +78,7 @@ public class RelocLgSetOrBySection extends Relocation {
 		return index;
 	}
 
-        @Override
+	@Override
 	public String toString() {
 		switch (subopcode) {
 			case kPEFRelocLgBySection: return "RelocLgBySection";
@@ -90,7 +89,7 @@ public class RelocLgSetOrBySection extends Relocation {
 	}
 
 	@Override
-	public void apply(ImportStateCache importState, RelocationState relocState, 
+	public void apply(ImportStateCache importState, RelocationState relocState,
 			ContainerHeader header, Program program, MessageLog log, TaskMonitor monitor) {
 
 		switch (subopcode) {
@@ -98,7 +97,7 @@ public class RelocLgSetOrBySection extends Relocation {
 				SectionHeader sect = header.getSections().get(index);
 				MemoryBlock block = importState.getMemoryBlockForSection(sect);
 				relocState.relocateMemoryAt(relocState.getRelocationAddress(),
-											(int)block.getStart().getOffset(), log);
+					(int) block.getStart().getOffset(), log);
 				break;
 			}
 			case kPEFRelocLgSetSectC: {
@@ -117,6 +116,6 @@ public class RelocLgSetOrBySection extends Relocation {
 				log.appendMsg("Unsupported RelocLgSetOrBySection subopcode: " + subopcode);
 				break;
 			}
-                }
+		}
 	}
 }
