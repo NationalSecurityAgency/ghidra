@@ -1,4 +1,4 @@
-# Developer's Guide
+# Developer Documentation
 
 ## Environment
 * Primary Language: [Java][java]
@@ -76,8 +76,8 @@ prevent specific tasks from running:
 gradle buildGhidra -x ip
 ```
 
-## Known Issues
-* There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux 
+## Regular issues
+* There is a issue in Gradle that can prevent it from discovering native toolchains on Linux 
   if a non-English system locale is being used. As a workaround, set the following environment 
   variable prior to running your Gradle task: `LC_MESSAGES=en_US.UTF-8`
 
@@ -114,7 +114,7 @@ preferences, and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/Ghi
 See [GhidraDevPlugin/build_README.txt](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt)
 for instructions on how to build the GhidraDev plugin.
 
-## Running tests
+## Test runs
 To run unit tests, do:
 ```
 gradle unitTestReport
@@ -139,14 +139,14 @@ export DISPLAY=:99
 ```
 This is required to make AWT happy.
 
-## Building Supporting Data
+## Support Data Building
 
 Some features of Ghidra require the curation of rather extensive databases. These include the Data 
 Type Archives and Function ID Databases, both of which require collecting header files and libraries
 for the relevant SDKs and platforms. Much of this work is done by hand. The archives included in our
 official builds can be found in the [ghidra-data] repository.
 
-### Building Data Type Archives
+### Archive Data Type Building
 
 This task is often done manually from the Ghidra GUI, and the archives included in our official 
 build require a fair bit of fine tuning.
@@ -157,7 +157,7 @@ parsing profiles, which lists headers and pre-processor options.
 4. The result can be added to an installation or source tree by copying it to 
 `Ghidra/Features/Base/data/typeinfo`.
 
-### Building FID Databases
+### FID Databases building
 
 This task is often done manually from the Ghidra GUI, and the archives included in our official 
 build require a fair bit of fine tuning. You will first need to import the relevant libraries from 
@@ -174,9 +174,10 @@ the [ghidra-data][ghidra-data] repository.
 
 If you'd like some details of our fine tuning, take a look at [building_fid.txt](Ghidra/Features/FunctionID/data/building_fid.txt).
 
-## Debugger Development
+## Debugger Code
+This will be written ASAP, wait for a new commit on the branch.
 
-### Additional Dependencies
+### Addon Dependencies
 
 In addition to Ghidra's normal dependencies, you may want the following:
 
@@ -186,7 +187,7 @@ In addition to Ghidra's normal dependencies, you may want the following:
 
 The others (e.g., JNA) are handled by Gradle via Maven Central.
 
-### Architecture Overview
+### Arch Overview (architecture)
 
 There are several Eclipse projects each fitting into a larger architectural picture.
 These all currently reside in the `Ghidra/Debug` directory, but will likely be re-factored into the
@@ -243,7 +244,7 @@ addresses, registers, etc. from the target namespace into Ghidra's. The target i
 Trace Recorder which begins collecting information needed to populate the UI, e.g., the program 
 counter, stack pointer, and the bytes of memory they refer to.
 
-### Developing a new connector
+### Coding a new connector
 
 So Ghidra does not yet support your favorite debugger?
 It is tempting, exciting, but also daunting to develop your own connector.
@@ -266,7 +267,7 @@ obscures the source of client method calls behind network messages. We've also c
 attempted to codify) these requirements in a suite of abstract test cases. See the `ghidra.dbg.test`
 package of Framework-Debugging, and again, look at existing implementations.
 
-### Adding a new platform
+### Platform adding
 
 If an existing connector exists for a suitable debugger on the desired platform, then adding it may
 be very simple. For example, both the x86 and ARM platforms are supported by GDB, so even though 
@@ -321,3 +322,5 @@ import the new projects.
 [fork]: https://docs.github.com/en/get-started/quickstart/fork-a-repo
 [ghidra-data]: https://github.com/NationalSecurityAgency/ghidra-data
 [DbgGuide]: DebuggerDevGuide.md
+
+This file will be updated with each commit.
