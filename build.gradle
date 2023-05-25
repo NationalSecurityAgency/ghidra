@@ -22,6 +22,7 @@ apply from: "gradle/support/loadApplicationProperties.gradle"
 
 /***************************************************************************************
 * Print current Gradle version and make sure the correct version of gradle is being used
+* Gradle 8.1.1 is the newest version of gradle.
 ***************************************************************************************/
 import org.gradle.util.GradleVersion;
 println "Gradle: " + GradleVersion.current().version
