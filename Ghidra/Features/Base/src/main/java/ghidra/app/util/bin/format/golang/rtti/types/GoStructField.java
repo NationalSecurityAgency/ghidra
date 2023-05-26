@@ -39,7 +39,7 @@ public class GoStructField {
 	@MarkupReference("type")
 	private long typ;	// direct ptr to GoType
 
-	@FieldMapping(fieldName = "offsetAnon" /* TODO or "anon" */)
+	@FieldMapping(fieldName = { "offsetAnon" /* <=1.18*/, "offset" /* >=1.19 */ })
 	private long offset;	// offset >> 1 == actual offset, bit 0 = embedded
 
 	@Markup

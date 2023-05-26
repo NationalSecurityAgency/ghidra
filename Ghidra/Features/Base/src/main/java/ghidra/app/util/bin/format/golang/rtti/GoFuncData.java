@@ -30,7 +30,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	@ContextField
 	private StructureContext<GoFuncData> context;
 
-	@FieldMapping(optional = true)
+	@FieldMapping(optional = true, fieldName = { "entryoff", "entryOff" })
 	@EOLComment("description")
 	@MarkupReference("funcAddress")
 	private long entryoff;	// valid in >=1.18, relative offset of function
@@ -40,7 +40,7 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	@MarkupReference("funcAddress")
 	private long entry;	// valid in <=1.17, location of function
 
-	@FieldMapping
+	@FieldMapping(fieldName = { "nameoff", "nameOff" })
 	@MarkupReference("nameAddress")
 	private long nameoff;
 
