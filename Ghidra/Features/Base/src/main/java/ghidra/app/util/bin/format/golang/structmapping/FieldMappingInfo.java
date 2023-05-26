@@ -77,6 +77,7 @@ public class FieldMappingInfo<T> {
 	private final List<FieldMarkupFunction<T>> markupFuncs = new ArrayList<>();
 
 	private FieldReadFunction<T> readerFunc;
+	private Method setterMethod;
 
 	private FieldMappingInfo(Field field, String dtcFieldName, DataTypeComponent dtc,
 			Signedness signedness, int length) {
@@ -198,13 +199,24 @@ public class FieldMappingInfo<T> {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void setReadFuncClass(Class<? extends FieldReadFunction> readFuncClass) {
-		if (readFuncClass != FieldReadFunction.class) {
-			this.readerFunc = ReflectionHelper.createInstance(readFuncClass, this);
+	public void setFieldValueDeserializationInfo(Class<? extends FieldReadFunction> fieldReadValueClass,
+			Class<?> structTargetClass, String setterNameOverride) {
+		// setup the logic for assigning the deserialized value to the java field
+		Class<?> fieldType = field.getType();
+
+		// TODO: be more strict about setter name, if specified it must be found or error
+		Method setterMethod = ReflectionHelper.findSetter(field.getName(), setterNameOverride,
+			structTargetClass, fieldType);
+		if (setterMethod != null) {
+			this.setterMethod = setterMethod;
+		}
+
+		// setup the logic for deserializing the value from the in-memory structure
+		if (fieldReadValueClass != FieldReadFunction.class) {
+			this.readerFunc = ReflectionHelper.createInstance(fieldReadValueClass, this);
 			return;
 		}
 
-		Class<?> fieldType = field.getType();
 		if (ReflectionHelper.isPrimitiveType(fieldType)) {
 			this.readerFunc = getReadPrimitiveValueFunc(fieldType);
 			return;
@@ -215,6 +227,16 @@ public class FieldMappingInfo<T> {
 			return;
 		}
 
+	}
+
+	public void assignField(FieldContext<T> fieldContext, Object value) throws IOException {
+		T structureInstance = fieldContext.getStructureInstance();
+		if (setterMethod != null) {
+			ReflectionHelper.callSetter(structureInstance, setterMethod, value);
+		}
+		else {
+			ReflectionHelper.assignField(field, structureInstance, value);
+		}
 	}
 
 	private FieldReadFunction<T> getReadPrimitiveValueFunc(Class<?> destClass) {

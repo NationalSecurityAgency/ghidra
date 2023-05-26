@@ -41,14 +41,41 @@ import java.lang.annotation.Target;
 @Target(FIELD)
 public @interface FieldMapping {
 	/**
-	 * Overrides the field name that is matched in the structure
+	 * Overrides the field name that is matched in the structure.
+	 * <p>
+	 * Can be a single name, or a list of names that will be used to find the structure
+	 * field. 
 	 * 
-	 * @return name of the structure field to map, or unset to use the java field's name
+	 * @return name, or list of names, of the structure field to map, or unset to use the 
+	 * java field's name
 	 */
-	String fieldName() default "";
+	String[] fieldName() default "";
 
 	/**
-	 * Optional function that will deserialize the tagged field
+	 * Marks this field as optional.
+	 * <p>
+	 * When marked optional, if a binding between the tagged java field and a structure field is
+	 * not successfully found, this field definition will be skipped.
+	 * 
+	 * @return boolean flag, if true this field is optional, if false or unset, the field is 
+	 * required
+	 */
+	boolean optional() default false;
+
+	/**
+	 * Specifies the name of a setter method that will be used to assign the deserialized value
+	 * to the java field.
+	 * <p>
+	 * If unset, a "void setFieldname(field_type)" method will be searched for.
+	 * <p>
+	 * If no setter method is present, the field's value will be directly assigned.
+	 * 
+	 * @return optional name of a setter method
+	 */
+	String setter() default "";
+
+	/**
+	 * Optional function that will deserialize the tagged field.
 	 * 
 	 * @return {@link FieldReadFunction}
 	 */

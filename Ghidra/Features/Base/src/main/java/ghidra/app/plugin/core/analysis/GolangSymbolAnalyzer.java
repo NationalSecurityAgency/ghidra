@@ -343,8 +343,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	 * <p>
 	 * The zerobase symbol is used as the location of parameters that are zero-length.
 	 * 
-	 * @param prog
-	 * @return
+	 * @param prog {@link Program}
+	 * @return {@link Address} of the runtime.zerobase, or artificial substitute
 	 */
 	public static Address getZerobaseAddress(Program prog) {
 		Symbol zerobaseSym = SymbolUtilities.getUniqueSymbol(prog, "runtime.zerobase");

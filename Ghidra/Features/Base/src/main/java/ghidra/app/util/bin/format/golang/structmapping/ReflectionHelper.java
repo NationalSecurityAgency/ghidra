@@ -51,9 +51,24 @@ public class ReflectionHelper {
 			Map.entry(Byte.TYPE, "byte"),
 			Map.entry(Character.class, "wchar"),
 			Map.entry(Character.TYPE, "wchar"));
+	private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_CLASSES =
+		Map.ofEntries(
+			Map.entry(Long.TYPE, Long.class),
+			Map.entry(Integer.TYPE, Integer.class),
+			Map.entry(Short.TYPE, Short.class),
+			Map.entry(Byte.TYPE, Byte.class),
+			Map.entry(Character.TYPE, Character.class));
 
 	public static boolean isPrimitiveType(Class<?> clazz) {
 		return NUM_CLASSES.contains(clazz);
+	}
+
+	public static Class<?> getPrimitiveWrapper(Class<?> primitiveType) {
+		Class<?> wrapperClass = PRIMITIVE_WRAPPER_CLASSES.get(primitiveType);
+		if (wrapperClass == null) {
+			throw new IllegalArgumentException();
+		}
+		return wrapperClass;
 	}
 
 	/**
@@ -198,6 +213,17 @@ public class ReflectionHelper {
 		return getter;
 	}
 
+	public static Method findSetter(String fieldName, String setterNameOverride,
+			Class<?> structClass, Class<?> valueClass) {
+		Method setter = getMethod(structClass, setterNameOverride, valueClass);
+		if (setter == null) {
+			String setSetterName = "set%s%s".formatted(fieldName.substring(0, 1).toUpperCase(),
+				fieldName.substring(1));
+			setter = getMethod(structClass, setSetterName, valueClass);
+		}
+		return setter;
+	}
+
 	public static <T> Constructor<T> getCtor(Class<T> clazz, Class<?>... paramTypes) {
 		try {
 			return clazz.getDeclaredConstructor(paramTypes);
@@ -209,18 +235,20 @@ public class ReflectionHelper {
 	}
 
 	static Method getMethod(Class<?> clazz, String methodName, Class<?>... paramTypes) {
-		try {
-			// try both public and private methods in the class
-			return clazz.getDeclaredMethod(methodName, paramTypes);
-		}
-		catch (NoSuchMethodException | SecurityException e) {
-			// fail, next try inherited public methods
-		}
-		try {
-			return clazz.getMethod(methodName, paramTypes);
-		}
-		catch (NoSuchMethodException | SecurityException e) {
-			// fail
+		if (methodName != null && !methodName.isBlank()) {
+			try {
+				// try both public and private methods in the class
+				return clazz.getDeclaredMethod(methodName, paramTypes);
+			}
+			catch (NoSuchMethodException | SecurityException e) {
+				// fail, next try inherited public methods
+			}
+			try {
+				return clazz.getMethod(methodName, paramTypes);
+			}
+			catch (NoSuchMethodException | SecurityException e) {
+				// fail
+			}
 		}
 		return null;
 	}
@@ -297,6 +325,15 @@ public class ReflectionHelper {
 				return expectedType.cast(getterValue);
 			}
 			return null;
+		}
+		catch (IllegalAccessException | InvocationTargetException e) {
+			throw new IOException(e);
+		}
+	}
+
+	public static <T> void callSetter(Object obj, Method setterMethod, T value) throws IOException {
+		try {
+			setterMethod.invoke(obj, value);
 		}
 		catch (IllegalAccessException | InvocationTargetException e) {
 			throw new IOException(e);

@@ -28,21 +28,42 @@ public class GoFunctabEntry {
 	@ContextField
 	private StructureContext<GoFunctabEntry> context;
 
-	@FieldMapping
+	@FieldMapping(optional = true)
 	@MarkupReference("funcAddress")
-	private long entryoff;	// offset relative to module's .text
+	private long entryoff;	// valid in >=1.18, relative offset of function
+
+	@FieldMapping(optional = true)
+	@MarkupReference("funcAddress")
+	private long entry;	// valid in <=1.17, location of function
 
 	@FieldMapping
 	@MarkupReference("funcData")
 	private long funcoff; // offset into pclntable -> _func
 
+	private Address funcAddress;
+
+	public void setEntryoff(long entryoff) {
+		this.entryoff = entryoff;
+
+		GoModuledata moduledata = getModuledata();
+		this.funcAddress = moduledata != null ? moduledata.getText().add(entryoff) : null;
+	}
+
+	public void setEntry(long entry) {
+		this.entry = entry;
+		this.funcAddress = programContext.getCodeAddress(entry);
+	}
+
 	public Address getFuncAddress() {
-		return getModuledata().getText().add(entryoff);
+		return funcAddress;
 	}
 
 	@Markup
 	public GoFuncData getFuncData() throws IOException {
-		return funcoff != 0 ? getModuledata().getFuncDataInstance(funcoff) : null;
+		GoModuledata moduledata = getModuledata();
+		return funcoff != 0 && moduledata != null
+				? moduledata.getFuncDataInstance(funcoff)
+				: null;
 	}
 
 	private GoModuledata getModuledata() {

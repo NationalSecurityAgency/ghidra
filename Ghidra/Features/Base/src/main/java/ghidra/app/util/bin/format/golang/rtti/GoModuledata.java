@@ -24,8 +24,7 @@ import ghidra.app.util.bin.format.golang.rtti.types.GoType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.StringUTF8DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -85,6 +84,9 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	@FieldMapping
 	private GoSlice itablinks; // []*runtime.itab (array of pointers to runtime.tab)
 
+	@FieldMapping
+	private GoSlice textsectmap;	// []runtime.textsect, symbol runtime.textsectionmap also points
+
 	public GoModuledata() {
 		// empty
 	}
@@ -97,7 +99,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 * @return boolean true if match, false if no match
 	 */
 	public boolean matchesPclntab(GoPcHeader pclntab) {
-		return pclntab.getTextStart().equals(getText()) &&
+		return (!pclntab.hasTextStart() || pclntab.getTextStart().equals(getText())) &&
 			pclntab.getFuncnameAddress().equals(funcnametab.getArrayAddress());
 	}
 
@@ -163,7 +165,6 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 		itablinks.markupArray("moduledata.itablinks", GoItab.class, true, session);
 
-		//cutab.markupArray("moduledata.cutab", dataTypeMapper.getUint32DT(), false);
 		markupStringTable(funcnametab.getArrayAddress(), funcnametab.getLen(), session);
 		markupStringTable(filetab.getArrayAddress(), filetab.getLen(), session);
 
@@ -175,6 +176,12 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 			GoSlice subSlice = ftab.getSubSlice(0, ftab.getLen() - 1, entryLen);
 			subSlice.markupArray("moduledata.ftab", GoFunctabEntry.class, false, session);
 			subSlice.markupArrayElements(GoFunctabEntry.class, session);
+		}
+
+		Structure textsectDT =
+			programContext.getGhidraDataType("runtime.textsect", Structure.class);
+		if (textsectDT != null) {
+			textsectmap.markupArray("runtime.textsectionmap", textsectDT, false, session);
 		}
 	}
 

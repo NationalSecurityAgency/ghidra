@@ -163,7 +163,7 @@ public class StructureMappingInfo<T> {
 					throw new IOException("Missing read info for field: " + fieldInfo.getField());
 				}
 				Object value = readFunc.get(fieldReadContext);
-				assignField(fieldReadContext, value);
+				fieldInfo.assignField(fieldReadContext, value);
 			}
 			context.reader.setPointerIndex(context.getStructureEnd());
 		}
@@ -271,14 +271,6 @@ public class StructureMappingInfo<T> {
 		return null;
 	}
 
-	private void assignField(FieldContext<T> fieldContext, Object value)
-			throws IOException {
-		Field field = fieldContext.fieldInfo().getField();
-		T structureInstance = fieldContext.getStructureInstance();
-
-		ReflectionHelper.assignField(field, structureInstance, value);
-	}
-
 	private void readFieldInfo(Class<?> clazz) {
 		Class<?> superclass = clazz.getSuperclass();
 		if (superclass != null) {
@@ -291,6 +283,10 @@ public class StructureMappingInfo<T> {
 			FieldOutput foa = field.getAnnotation(FieldOutput.class);
 			if (fma != null || foa != null) {
 				FieldMappingInfo<T> fmi = readFieldMappingInfo(field, fma);
+				if (fmi == null) {
+					// was marked optional field, just skip
+					continue;
+				}
 				field.setAccessible(true);
 				fields.add(fmi);
 
@@ -314,27 +310,48 @@ public class StructureMappingInfo<T> {
 	}
 
 	private FieldMappingInfo<T> readFieldMappingInfo(Field field, FieldMapping fma) {
-		String fieldName = fma != null && !fma.fieldName().isBlank()
-				? fma.fieldName()
-				: field.getName();
-		DataTypeComponent dtc = getField(fieldName);
+		String[] fieldNames = getFieldNamesToSearchFor(field, fma);
+		DataTypeComponent dtc = getFirstMatchingField(fieldNames);
 		if (useFieldMappingInfo && dtc == null) {
+			if (fma.optional()) {
+				return null;
+			}
 			throw new IllegalArgumentException("Missing structure field: %s in %s"
-					.formatted(fieldName, targetClass.getSimpleName()));
+					.formatted(Arrays.toString(fieldNames), targetClass.getSimpleName()));
 		}
 
 		Signedness signedness = fma != null ? fma.signedness() : Signedness.Unspecified;
 		int length = fma != null ? fma.length() : -1;
 		FieldMappingInfo<T> fmi = useFieldMappingInfo
 				? FieldMappingInfo.createEarlyBinding(field, dtc, signedness, length)
-				: FieldMappingInfo.createLateBinding(field, fieldName, signedness, length);
+				: FieldMappingInfo.createLateBinding(field, fieldNames[0], signedness, length);
 
-		fmi.setReadFuncClass(fma != null ? fma.readFunc() : FieldReadFunction.class);
+		Class<? extends FieldReadFunction> fieldReadFuncClass =
+			fma != null ? fma.readFunc() : FieldReadFunction.class;
+		String setterNameOverride = fma != null ? fma.setter() : null;
+		fmi.setFieldValueDeserializationInfo(fieldReadFuncClass, targetClass, setterNameOverride);
 		fmi.addMarkupNestedFuncs();
 		fmi.addCommentMarkupFuncs();
 		fmi.addMarkupReferenceFunc();
 
 		return fmi;
+	}
+
+	private String[] getFieldNamesToSearchFor(Field field, FieldMapping fma) {
+		String[] fmaFieldNames = fma != null ? fma.fieldName() : null;
+		return fmaFieldNames != null && fmaFieldNames.length != 0 && !fmaFieldNames[0].isBlank()
+				? fmaFieldNames
+				: new String[] { field.getName() };
+	}
+
+	private DataTypeComponent getFirstMatchingField(String[] fieldNames) {
+		for (String fieldName : fieldNames) {
+			DataTypeComponent dtc = getField(fieldName);
+			if (dtc != null) {
+				return dtc;
+			}
+		}
+		return null;
 	}
 
 	private FieldOutputInfo<T> readFieldOutputInfo(FieldMappingInfo<T> fmi, FieldOutput foa) {
