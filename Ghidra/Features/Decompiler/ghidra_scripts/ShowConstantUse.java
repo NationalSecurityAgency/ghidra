@@ -665,8 +665,7 @@ public class ShowConstantUse extends GhidraScript {
 					// decompile function
 					// look for call to this function
 					// display call
-					@SuppressWarnings("unchecked")
-					ArrayList<PcodeOp> localDefUseList = (ArrayList<PcodeOp>) defUseList.clone();
+					ArrayList<PcodeOp> localDefUseList = new ArrayList<PcodeOp>(defUseList);
 
 					this.monitor.setMessage("Analyzing : " + refFunc.getName() + " for refs to " +
 						addr + ":" + paramIndex);
