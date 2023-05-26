@@ -17,7 +17,6 @@ package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.SymbolUtilities;
@@ -31,27 +30,51 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	@ContextField
 	private StructureContext<GoFuncData> context;
 
-	@FieldMapping
+	@FieldMapping(optional = true)
 	@EOLComment("description")
 	@MarkupReference("funcAddress")
-	private long entryoff;
+	private long entryoff;	// valid in >=1.18, relative offset of function
+
+	@FieldMapping(optional = true)
+	@EOLComment("description")
+	@MarkupReference("funcAddress")
+	private long entry;	// valid in <=1.17, location of function
 
 	@FieldMapping
 	@MarkupReference("nameAddress")
 	private long nameoff;
 
+	private Address funcAddress;	// set when entryoff or entry are set
+
+	public void setEntryoff(long entryoff) {
+		this.entryoff = entryoff;
+
+		GoModuledata moduledata = getModuledata();
+		this.funcAddress = moduledata != null ? moduledata.getText().add(entryoff) : null;
+	}
+
+	public void setEntry(long entry) {
+		this.entry = entry;
+		this.funcAddress = context.getDataTypeMapper().getCodeAddress(entry);
+	}
+
 	public Address getFuncAddress() {
-		return getModuledata().getText().add(entryoff);
+		return funcAddress;
 	}
 
 	public Address getNameAddress() {
-		return getModuledata().getFuncnametab().getArrayAddress().add(nameoff);
+		GoModuledata moduledata = getModuledata();
+		return moduledata != null
+				? moduledata.getFuncnametab().getArrayAddress().add(nameoff)
+				: null;
 	}
 
 	public String getName() throws IOException {
-		BinaryReader reader =
-			programContext.getReader(getModuledata().getFuncnametab().getArrayOffset() + nameoff);
-		return reader.readNextUtf8String();
+		GoModuledata moduledata = getModuledata();
+		return moduledata != null
+				? programContext.getReader(moduledata.getFuncnametab().getArrayOffset() + nameoff)
+						.readNextUtf8String()
+				: null;
 	}
 
 	public String getDescription() throws IOException {

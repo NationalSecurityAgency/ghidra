@@ -112,7 +112,7 @@ public class GoPcHeader {
 		Memory memory = programContext.getProgram().getMemory();
 		Address pclntabAddr =
 			memory.findBytes(range.getMinAddress(), range.getMaxAddress(), searchBytes, searchMask,
-				true, TaskMonitor.DUMMY);
+				true, monitor);
 		if (pclntabAddr == null) {
 			return null;
 		}
@@ -154,7 +154,7 @@ public class GoPcHeader {
 	@FieldMapping
 	private byte ptrSize;
 
-	@FieldMapping
+	@FieldMapping(optional = true) // present >= 1.18
 	@MarkupReference
 	private long textStart;	// should be same as offset of ".text"
 
@@ -188,6 +188,10 @@ public class GoPcHeader {
 			default -> GoVer.UNKNOWN;
 		};
 		return ver;
+	}
+
+	public boolean hasTextStart() {
+		return textStart != 0;
 	}
 
 	public Address getTextStart() {

@@ -44,16 +44,17 @@ public class GoSlice {
 	private long cap;
 
 	public GoSlice() {
+		// emtpy
 	}
 
 	public GoSlice(long array, long len, long cap) {
-		this.array = array;
-		this.len = len;
-		this.cap = cap;
+		this(array, len, cap, null);
 	}
 
 	public GoSlice(long array, long len, long cap, GoRttiMapper programContext) {
-		this(array, len, cap);
+		this.array = array;
+		this.len = len;
+		this.cap = cap;
 		this.programContext = programContext;
 	}
 
@@ -67,6 +68,10 @@ public class GoSlice {
 	 */
 	public GoSlice getSubSlice(long startElement, long elementCount, long elementSize) {
 		return new GoSlice(array + (startElement * elementSize), elementCount, elementCount, programContext);
+	}
+
+	public boolean isValid() {
+		return array != 0 && isValid(1);
 	}
 
 	public boolean isValid(int elementSize) {
@@ -191,7 +196,7 @@ public class GoSlice {
 	 */
 	public void markupArray(String sliceName, DataType elementType, boolean ptr,
 			MarkupSession session) throws IOException {
-		if (len == 0) {
+		if (len == 0 || !isValid()) {
 			return;
 		}
 		DataTypeManager dtm = programContext.getDTM();

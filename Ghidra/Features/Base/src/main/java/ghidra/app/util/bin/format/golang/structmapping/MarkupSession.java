@@ -268,7 +268,7 @@ public class MarkupSession {
 
 			if (instance instanceof StructureMarkup<?> sm) {
 				String structureLabel = sm.getStructureLabel();
-				if (structureLabel != null && structureLabel.isBlank()) {
+				if (structureLabel != null && !structureLabel.isBlank()) {
 					labelAddress(addr, structureLabel);
 				}
 			}
