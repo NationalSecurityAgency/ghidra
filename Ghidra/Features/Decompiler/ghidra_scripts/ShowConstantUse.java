@@ -665,8 +665,7 @@ public class ShowConstantUse extends GhidraScript {
 					// decompile function
 					// look for call to this function
 					// display call
-					@SuppressWarnings("unchecked")
-					ArrayList<PcodeOp> localDefUseList = (ArrayList<PcodeOp>) defUseList.clone();
+					ArrayList<PcodeOp> localDefUseList = new ArrayList<PcodeOp>(defUseList);
 
 					this.monitor.setMessage("Analyzing : " + refFunc.getName() + " for refs to " +
 						addr + ":" + paramIndex);
@@ -867,12 +866,11 @@ public class ShowConstantUse extends GhidraScript {
 					doneSet);
 				return;
 			case PcodeOp.MULTIEQUAL:
-				followToParam(constUse, defUseList, highFunction, def.getInput(0), funcList,
-					doneSet);
-				@SuppressWarnings("unchecked")
-				ArrayList<PcodeOp> splitUseList = (ArrayList<PcodeOp>) defUseList.clone();
-				followToParam(constUse, splitUseList, highFunction, def.getInput(1), funcList,
-					doneSet);
+				for (int i = 0; i < def.getNumInputs(); i++) {
+					ArrayList<PcodeOp> splitUseList = new ArrayList<>(defUseList);
+					followToParam(constUse, splitUseList, highFunction, def.getInput(i), funcList,
+						doneSet);
+				}
 				return;
 			case PcodeOp.CAST:
 				followToParam(constUse, defUseList, highFunction, def.getInput(0), funcList,
