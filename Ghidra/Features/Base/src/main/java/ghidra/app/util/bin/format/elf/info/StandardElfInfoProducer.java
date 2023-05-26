@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.elf.info;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.*;
@@ -90,6 +89,9 @@ public class StandardElfInfoProducer implements ElfInfoProducer {
 			monitor.checkCancelled();
 
 			Address addr = elfLoadHelper.findLoadAddress(elfProgramHeader, 0);
+			if (addr == null) {
+				continue;
+			}
 			MemoryBlock memBlock = memory.getBlock(addr);
 			if (memBlock == null) {
 				continue;
