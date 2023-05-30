@@ -17,12 +17,8 @@ package ghidra.program.model.lang;
 
 import java.util.ArrayList;
 
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.VariableStorage;
-import ghidra.util.exception.InvalidInputException;
-import ghidra.xml.XmlParseException;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.data.*;
+import ghidra.program.model.lang.protorules.AssignAction;
 
 /**
  * A list of resources describing possible storage locations for a function's return value,
@@ -36,50 +32,43 @@ import ghidra.xml.XmlPullParser;
  * 
  * The resource list is checked to ensure entries are distinguishable.
  */
-public class ParamListStandardOut extends ParamListRegisterOut {
+public class ParamListStandardOut extends ParamListStandard {
 
 	@Override
-	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
-			boolean addAutoParams) {
+	public void assignMap(PrototypePieces proto, DataTypeManager dtManager,
+			ArrayList<ParameterPieces> res, boolean addAutoParams) {
 
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
 		}
 
-		VariableStorage store = assignAddress(prog, proto[0], status, false, false);
-		if (!store.isUnassignedStorage()) {
-			res.add(store);
-			return;
+		ParameterPieces store = new ParameterPieces();
+		res.add(store);
+		if (VoidDataType.isVoidDataType(proto.outtype)) {
+			store.type = proto.outtype;
+			return;		// Don't assign storage for VOID
 		}
-		// If the storage is not assigned (because the datatype is too big) create a hidden input parameter
-		DataType pointer = prog.getDataTypeManager().getPointer(proto[0]);
-		store = assignAddress(prog, pointer, status, false, false);
-		try {
-			if (store.isValid()) {
-				store = new DynamicVariableStorage(prog, true, store.getVarnodes());
-				res.add(store);
-				// Signal to input assignment that there is a hidden return using additional unassigned storage param
+		int responseCode = assignAddress(proto.outtype, proto, -1, dtManager, status, store);
+		if (responseCode != AssignAction.SUCCESS) {
+			// If the storage is not assigned (because the datatype is too big) create a hidden input parameter
+			int sz = (spacebase == null) ? -1 : spacebase.getPointerSize();
+			DataType pointerType = dtManager.getPointer(proto.outtype, sz);
+			if (responseCode == AssignAction.HIDDENRET_SPECIALREG_VOID) {
+				store.type = VoidDataType.dataType;
+			}
+			else {
+				assignAddressFallback(StorageClass.PTR, pointerType, false, status, store);
+				store.type = pointerType;
+				store.isIndirect = true;	// Signal that there is a hidden return
 			}
 			if (addAutoParams) {
-				res.add(VariableStorage.UNASSIGNED_STORAGE); // will get replaced during input storage assignments
-			}
-		}
-		catch (InvalidInputException e) {
-			store = VariableStorage.UNASSIGNED_STORAGE;
-			res.add(store);
-		}
-
-	}
-
-	@Override
-	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException {
-		super.restoreXml(parser, cspec);
-
-		// ParamEntry tags in the output list are considered a group. Check that entries are distinguishable.
-		for (int i = 1; i < entry.length; ++i) {
-			for (int j = 0; j < i; ++j) {
-				ParamEntry.orderWithinGroup(entry[j], entry[i]);
+				ParameterPieces hiddenRet = new ParameterPieces();
+				hiddenRet.type = pointerType;
+				// Encode whether or not hidden return should be drawn from TYPECLASS_HIDDENRET
+				hiddenRet.hiddenReturnPtr = (responseCode == AssignAction.HIDDENRET_SPECIALREG) ||
+					(responseCode == AssignAction.HIDDENRET_SPECIALREG_VOID);
+				res.add(hiddenRet);	// will get replaced during input storage assignments
 			}
 		}
 	}

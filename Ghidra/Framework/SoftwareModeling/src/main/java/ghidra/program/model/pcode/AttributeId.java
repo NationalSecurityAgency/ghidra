@@ -236,5 +236,7 @@ public record AttributeId(String name, int id) {
 //	public static final AttributeId ATTRIB_VERSION = new AttributeId("version", 144);
 
 // public static final AttributeId ATTRIB_ADDRESS = new AttributeId("address", 148);
-	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 149);
+	public static final AttributeId ATTRIB_STORAGE = new AttributeId("storage", 149);
+
+	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 150);
 }

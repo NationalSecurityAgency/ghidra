@@ -349,6 +349,72 @@ type_metatype string2metatype(const string &metastring)
   throw LowlevelError("Unknown metatype: "+metastring);
 }
 
+/// Given a description of a data-type \e class, return the \b type_class.
+/// \param classstring is the description of the class
+/// \return the encoded type_class
+type_class string2typeclass(const string &classstring)
+
+{
+  switch(classstring[0]) {
+    case 'c':
+      if (classstring == "class1")
+	return TYPECLASS_CLASS1;
+      else if (classstring == "class2")
+	return TYPECLASS_CLASS2;
+      else if (classstring == "class3")
+	return TYPECLASS_CLASS3;
+      else if (classstring == "class4")
+	return TYPECLASS_CLASS4;
+      break;
+    case 'g':
+      if (classstring == "general")
+	return TYPECLASS_GENERAL;
+      break;
+    case 'h':
+      if (classstring == "hiddenret")
+	return TYPECLASS_HIDDENRET;
+      break;
+    case 'f':
+      if (classstring == "float")
+	return TYPECLASS_FLOAT;
+      break;
+    case 'p':
+      if (classstring == "ptr" || classstring == "pointer")
+	return TYPECLASS_PTR;
+      break;
+    case 'v':
+      if (classstring == "vector")
+	return TYPECLASS_VECTOR;
+      break;
+    case 'u':
+      if (classstring == "unknown")
+	return TYPECLASS_GENERAL;
+      break;
+  }
+  throw LowlevelError("Unknown data-type class: " + classstring);
+}
+
+/// Assign the basic storage class based on a metatype:
+///   - TYPE_FLOAT  ->  TYPECLASS_FLOAT
+///   - TYPE_PTR    ->  TYPECLASS_PTR
+///
+/// Everything else returns the general purpose TYPECLASS_GENERAL
+/// \param meta is the metatype
+/// \return the storage class
+type_class metatype2typeclass(type_metatype meta)
+
+{
+  switch(meta) {
+    case TYPE_FLOAT:
+      return TYPECLASS_FLOAT;
+    case TYPE_PTR:
+      return TYPECLASS_PTR;
+    default:
+      break;
+  }
+  return TYPECLASS_GENERAL;
+}
+
 /// Encode a formal description of the data-type as a \<type> element.
 /// For composite data-types, the description goes down one level, describing
 /// the component types only by reference.
@@ -2383,31 +2449,19 @@ Datatype *TypePointerRel::getPtrToFromParent(Datatype *base,int4 off,TypeFactory
 
 /// Turn on the data-type's function prototype
 /// \param tfact is the factory that owns \b this
-/// \param model is the prototype model
-/// \param outtype is the return type of the prototype
-/// \param intypes is the list of input parameters
-/// \param dotdotdot is true if the prototype takes variable arguments
+/// \param sig is the list of names and data-types making up the prototype
 /// \param voidtype is the reference "void" data-type
-void TypeCode::setPrototype(TypeFactory *tfact,ProtoModel *model,
-			    Datatype *outtype,const vector<Datatype *> &intypes,
-			    bool dotdotdot,Datatype *voidtype)
+void TypeCode::setPrototype(TypeFactory *tfact,const PrototypePieces &sig,Datatype *voidtype)
+
 {
   factory = tfact;
   flags |= variable_length;
   if (proto != (FuncProto *)0)
     delete proto;
   proto = new FuncProto();
-  proto->setInternal(model,voidtype);
-  vector<Datatype *> typelist;
-  vector<string> blanknames(intypes.size()+1);
-  if (outtype == (Datatype *)0)
-    typelist.push_back(voidtype);
-  else
-    typelist.push_back(outtype);
-  for(int4 i=0;i<intypes.size();++i)
-    typelist.push_back(intypes[i]);
+  proto->setInternal(sig.model,voidtype);
 
-  proto->updateAllTypes(blanknames,typelist,dotdotdot);
+  proto->updateAllTypes(sig);
   proto->setInputLock(true);
   proto->setOutputLock(true);
 }
@@ -3670,17 +3724,12 @@ TypeSpacebase *TypeFactory::getTypeSpacebase(AddrSpace *id,const Address &addr)
 }
 
 /// Creates a TypeCode object and associates a specific function prototype with it.
-/// \param model is the prototype model associated with the function
-/// \param outtype is the return type of the function
-/// \param intypes is the array of input parameters of the function
-/// \param dotdotdot is true if the function takes variable arguments
+/// \param proto is the list of names, data-types, and other attributes of the prototype
 /// \return the TypeCode object
-TypeCode *TypeFactory::getTypeCode(ProtoModel *model,Datatype *outtype,
-				   const vector<Datatype *> &intypes,
-				   bool dotdotdot)
+TypeCode *TypeFactory::getTypeCode(const PrototypePieces &proto)
 {
   TypeCode tc;		// getFuncdata type with no name
-  tc.setPrototype(this,model,outtype,intypes,dotdotdot,getTypeVoid());
+  tc.setPrototype(this,proto,getTypeVoid());
   tc.markComplete();
   return (TypeCode *) findAdd(tc);
 }
@@ -4311,11 +4360,15 @@ void TypeFactory::decodeAlignmentMap(Decoder &decoder)
 void TypeFactory::setDefaultAlignmentMap(void)
 
 {
-  alignMap.resize(5,0);
+  alignMap.resize(9,0);
   alignMap[1] = 1;
   alignMap[2] = 2;
   alignMap[3] = 2;
   alignMap[4] = 4;
+  alignMap[5] = 4;
+  alignMap[6] = 4;
+  alignMap[7] = 4;
+  alignMap[8] = 8;
 }
 
 /// Recover default enumeration properties (size and meta-type) from

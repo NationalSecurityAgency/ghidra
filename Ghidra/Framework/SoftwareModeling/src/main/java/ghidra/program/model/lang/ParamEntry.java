@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.plugin.processors.sleigh.VarnodeData;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
@@ -44,12 +43,8 @@ public class ParamEntry {
 	private static final int IS_GROUPED = 512;			// The entry is grouped with other entries
 	private static final int OVERLAPPING = 0x100;		// This overlaps an earlier entry
 
-	public static final int TYPE_UNKNOWN = 8;			// Default type restriction
-	public static final int TYPE_PTR = 2;				// pointer types
-	public static final int TYPE_FLOAT = 3;				// floating point types
-
 	private int flags;
-	private int type;				// Restriction on DataType this entry must match
+	private StorageClass type;		// Restriction on DataType this entry must match
 	private int[] groupSet;			// Group(s) this entry belongs to
 	private AddressSpace spaceid;	// Space of this range
 	private long addressbase;		// Start of the range
@@ -88,7 +83,7 @@ public class ParamEntry {
 		return addressbase;
 	}
 
-	public int getType() {
+	public StorageClass getType() {
 		return type;
 	}
 
@@ -112,10 +107,6 @@ public class ParamEntry {
 		return ((flags & IS_BIG_ENDIAN) != 0);
 	}
 
-	public boolean isFloatExtended() {
-		return ((flags & SMALLSIZE_FLOAT) != 0);
-	}
-
 	private boolean isLeftJustified() {
 		return (((flags & IS_BIG_ENDIAN) == 0) || ((flags & FORCE_LEFT_JUSTIFY) != 0));
 	}
@@ -131,7 +122,7 @@ public class ParamEntry {
 	 * @param sz is the given size
 	 * @return the collected array of Varnodes or null
 	 */
-	public Varnode[] getJoinPieces(int sz) {
+	private Varnode[] getJoinPieces(int sz) {
 		int num = 0;
 		int first, replace;
 		Varnode vn = null;
@@ -337,18 +328,19 @@ public class ParamEntry {
 	}
 
 	/**
-	 * Return the storage address assigned when allocating something of size -sz- assuming -slotnum- slots
-	 * have already been assigned.  Set res.space to null if the -sz- is too small or if
+	 * Assign the storage address when allocating something of size -sz- assuming -slotnum- slots
+	 * have already been assigned.  Set the address to null if the -sz- is too small or if
 	 * there are not enough slots left
 	 * @param slotnum	number of slots already assigned
 	 * @param sz        number of bytes to being assigned
 	 * @param typeAlign required byte alignment for the parameter
-	 * @param res       the final storage address
+	 * @param res       will hold the final storage address
 	 * @return          slotnum plus the number of slots used
 	 */
-	public int getAddrBySlot(int slotnum, int sz, int typeAlign, VarnodeData res) {
-		res.space = null;		// Start with an invalid result
+	public int getAddrBySlot(int slotnum, int sz, int typeAlign, ParameterPieces res) {
 		int spaceused;
+		long offset;
+		res.address = null;		// Start with an invalid result
 		if (sz < minsize) {
 			return slotnum;
 		}
@@ -359,10 +351,12 @@ public class ParamEntry {
 			if (sz > size) {
 				return slotnum;		// Check on maximum size
 			}
-			res.space = spaceid;
-			res.offset = addressbase;			// Get base address of the slot
+			offset = addressbase;			// Get base address of the slot
 			spaceused = size;
-			if ((flags & SMALLSIZE_FLOAT) != 0) {
+			if ((flags & SMALLSIZE_FLOAT) != 0 && sz != size) {
+				res.address = spaceid.getAddress(offset);
+				res.joinPieces = new Varnode[1];
+				res.joinPieces[0] = new Varnode(res.address, size);
 				return slotnum;
 			}
 		}
@@ -390,13 +384,17 @@ public class ParamEntry {
 			else {
 				index = slotnum;
 			}
-			res.space = spaceid;
-			res.offset = addressbase + index * alignment;
+			offset = addressbase + index * alignment;
 			slotnum += slotsused;		// Inform caller of number of slots used
 		}
 		if (!isLeftJustified()) {
-			res.offset += (spaceused - sz);
+			offset += (spaceused - sz);
 		}
+		res.address = spaceid.getAddress(offset);
+		if (res.address.getAddressSpace().getType() == AddressSpace.TYPE_JOIN) {
+			res.joinPieces = getJoinPieces(sz);
+		}
+
 		return slotnum;
 	}
 
@@ -496,9 +494,8 @@ public class ParamEntry {
 		if (alignment != 0) {
 			encoder.writeSignedInteger(ATTRIB_ALIGN, alignment);
 		}
-		if (type == TYPE_FLOAT || type == TYPE_PTR) {
-			String tok = (type == TYPE_FLOAT) ? "float" : "ptr";
-			encoder.writeString(ATTRIB_METATYPE, tok);
+		if (type != StorageClass.GENERAL) {
+			encoder.writeString(ATTRIB_STORAGE, type.toString());
 		}
 		String extString = null;
 		if ((flags & SMALLSIZE_SEXT) != 0) {
@@ -531,41 +528,32 @@ public class ParamEntry {
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec, List<ParamEntry> curList,
 			boolean grouped) throws XmlParseException {
 		flags = 0;
-		type = TYPE_UNKNOWN;
+		type = StorageClass.GENERAL;
 		size = minsize = -1;		// Must be filled in
 		alignment = 0;				// default
 		numslots = 1;
 
-		XmlElement el = parser.start("pentry");
+		XmlElement el = parser.start(ELEM_PENTRY.name());
 		Iterator<Entry<String, String>> iter = el.getAttributes().entrySet().iterator();
 		while (iter.hasNext()) {
 			Entry<String, String> entry = iter.next();
 			String name = entry.getKey();
-			if (name.equals("minsize")) {
+			if (name.equals(ATTRIB_MINSIZE.name())) {
 				minsize = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("size")) {	// old style
+			else if (name.equals(ATTRIB_SIZE.name())) {	// old style
 				alignment = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("align")) {
+			else if (name.equals(ATTRIB_ALIGN.name())) {
 				alignment = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("maxsize")) {
+			else if (name.equals(ATTRIB_MAXSIZE.name())) {
 				size = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("metatype")) {		// Not implemented at the moment
-				String meta = entry.getValue();
-				// TODO:  Currently only supporting "float", "ptr", and "unknown" metatypes
-				if ((meta != null)) {
-					if (meta.equals("float")) {
-						type = TYPE_FLOAT;
-					}
-					else if (meta.equals("ptr")) {
-						type = TYPE_PTR;
-					}
-				}
+			else if (name.equals(ATTRIB_STORAGE.name()) || name.equals(ATTRIB_METATYPE.name())) {
+				type = StorageClass.getClass(entry.getValue());
 			}
-			else if (name.equals("extension")) {
+			else if (name.equals(ATTRIB_EXTENSION.name())) {
 				flags &= ~(SMALLSIZE_ZEXT | SMALLSIZE_SEXT | SMALLSIZE_INTTYPE | SMALLSIZE_FLOAT);
 				String value = entry.getValue();
 				if (value.equals("sign")) {
@@ -702,18 +690,17 @@ public class ParamEntry {
 		return (int) (offset2 - offset1);
 	}
 
-	public static int getMetatype(DataType tp) {
-		// TODO: A complete metatype implementation
+	public static StorageClass getBasicTypeClass(DataType tp) {
 		if (tp instanceof TypeDef) {
 			tp = ((TypeDef) tp).getBaseDataType();
 		}
 		if (tp instanceof AbstractFloatDataType) {
-			return TYPE_FLOAT;
+			return StorageClass.FLOAT;
 		}
 		if (tp instanceof Pointer) {
-			return TYPE_PTR;
+			return StorageClass.PTR;
 		}
-		return TYPE_UNKNOWN;
+		return StorageClass.GENERAL;
 	}
 
 	/**
@@ -728,7 +715,7 @@ public class ParamEntry {
 			return;
 		}
 		if (entry1.type != entry2.type) {
-			if (entry1.type == TYPE_UNKNOWN) {
+			if (entry1.type == StorageClass.GENERAL) {
 				throw new XmlParseException(
 					"<pentry> tags with a specific type must come before the general type");
 			}

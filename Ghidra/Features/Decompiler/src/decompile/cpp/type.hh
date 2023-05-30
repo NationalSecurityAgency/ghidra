@@ -122,11 +122,31 @@ enum sub_metatype {
   SUB_UNION = 1,		///< Compare as TYPE_UNION
   SUB_PARTIALUNION = 0		///< Compare as a TYPE_PARTIALUNION
 };
+
+/// Data-type classes for the purpose of assigning storage
+enum type_class {
+  TYPECLASS_GENERAL = 0,	///< General purpose
+  TYPECLASS_FLOAT = 1,		///< Floating-point data-types
+  TYPECLASS_PTR = 2,		///< Pointer data-types
+  TYPECLASS_HIDDENRET = 3,	///< Class for hidden return values
+  TYPECLASS_VECTOR = 4,		///< Vector data-types
+  TYPECLASS_CLASS1 = 100,	///< Architecture specific class 1
+  TYPECLASS_CLASS2 = 101,	///< Architecture specific class 2
+  TYPECLASS_CLASS3 = 102,	///< Architecture specific class 3
+  TYPECLASS_CLASS4 = 103	///< Architecture specific class 4
+};
+
 /// Convert type \b meta-type to name
 extern void metatype2string(type_metatype metatype,string &res);
 
 /// Convert string to type \b meta-type
 extern type_metatype string2metatype(const string &metastring);
+
+/// Convert a string to a data-type class
+extern type_class string2typeclass(const string &classstring);
+
+/// Convert a data-type metatype to a data-type class
+extern type_class metatype2typeclass(type_metatype meta);
 
 class Architecture;		// Forward declarations
 class PcodeOp;
@@ -616,7 +636,7 @@ public:
 };
 
 class FuncProto;		// Forward declaration
-class ProtoModel;
+class PrototypePieces;
 
 /// \brief Datatype object representing executable code.
 ///
@@ -626,9 +646,7 @@ protected:
   friend class TypeFactory;
   FuncProto *proto;		///< If non-null, this describes the prototype of the underlying function
   TypeFactory *factory;		///< Factory owning \b this
-  void setPrototype(TypeFactory *tfact,ProtoModel *model,
-		    Datatype *outtype,const vector<Datatype *> &intypes,
-		    bool dotdotdot,Datatype *voidtype);	///< Establish a function pointer
+  void setPrototype(TypeFactory *tfact,const PrototypePieces &sig,Datatype *voidtype);	///< Establish a function pointer
   void setPrototype(TypeFactory *typegrp,const FuncProto *fp);	///< Set a particular function prototype on \b this
   void decodeStub(Decoder &decoder);		///< Restore stub of data-type without the full prototype
   void decodePrototype(Decoder &decoder,bool isConstructor,bool isDestructor,TypeFactory &typegrp);	///< Restore any prototype description
@@ -752,9 +770,7 @@ public:
   TypePartialUnion *getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz);	///< Create a partial union
   TypeEnum *getTypeEnum(const string &n);			///< Create an (empty) enumeration
   TypeSpacebase *getTypeSpacebase(AddrSpace *id,const Address &addr);	///< Create a "spacebase" type
-  TypeCode *getTypeCode(ProtoModel *model,Datatype *outtype,
-			const vector<Datatype *> &intypes,
-			bool dotdotdot);			///< Create a "function" datatype
+  TypeCode *getTypeCode(const PrototypePieces &proto);			///< Create a "function" datatype
   Datatype *getTypedef(Datatype *ct,const string &name,uint8 id,uint4 format);	///< Create a new \e typedef data-type
   TypePointerRel *getTypePointerRel(TypePointer *parentPtr,Datatype *ptrTo,int4 off);	///< Get pointer offset relative to a container
   TypePointerRel *getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm);
