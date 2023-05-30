@@ -43,7 +43,7 @@ public class ActionAdapter implements Action, PropertyChangeListener {
 	 * <p>Most clients should use {@link #ActionAdapter(DockingActionIf, ActionContextProvider)}
 	 * @param dockingAction the action to adapt
 	 */
-	ActionAdapter(DockingActionIf dockingAction) {
+	public ActionAdapter(DockingActionIf dockingAction) {
 		this(dockingAction, null);
 	}
 
