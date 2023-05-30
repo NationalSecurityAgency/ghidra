@@ -31,7 +31,7 @@ public enum GdbLinuxSpecimen implements DebuggerTestSpecimen, DebuggerModelTestU
 	SLEEP {
 		@Override
 		String getCommandLine() {
-			return "sleep 100000";
+			return DummyProc.which("expTraceableSleep");
 		}
 	},
 	FORK_EXIT {

@@ -57,6 +57,7 @@ task testSpecimenLinux_x86_64 {
 	//dependsOn 'expTypesExecutable'//Linux_x86_64Executable'
 	dependsOn 'expRegistersLinux_x86_64Executable'
 	dependsOn 'expStackLinux_x86_64Executable'
+	dependsOn 'expTraceableSleepExecutable'//Linux_x86_64Executable'
 	
 	doLast {
 		exec {
@@ -132,6 +133,9 @@ model {
 			//targetPlatform "linux_x86_32" // TODO: Test on these
 			targetPlatform "win_x86_64"
 			targetPlatform "win_x86_32" // TODO: Test on these
+		}
+		expTraceableSleep(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
 		}
 	}
 
