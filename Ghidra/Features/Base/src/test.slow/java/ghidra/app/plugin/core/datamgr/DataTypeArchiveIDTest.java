@@ -44,7 +44,8 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 		GENERIC_CLIB_32_GDT_PATH, "2644097909188870631",
 		GENERIC_CLIB_64_GDT_PATH, "3193699959493190971",
 		MAC_OS_10_9_GDT_PATH, "2650667045259492112",
-		"typeinfo/golang/golang_1.18_anybit_any.gdt", "3528902399865061936");
+		"typeinfo/golang/golang_1.18_anybit_any.gdt", "3528902399865061936",
+		"typeinfo/golang/golang_1.17_anybit_any.gdt", "3533627828569507753");
 
 	private Map<ResourceFile, String> getCurrentGdts() {
 		return Application.findFilesByExtensionInApplication(".gdt")
