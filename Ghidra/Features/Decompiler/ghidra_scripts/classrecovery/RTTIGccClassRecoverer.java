@@ -17,76 +17,29 @@
 package classrecovery;
 
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.demangler.DemangledObject;
+import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeIterator;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.CharDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.InvalidDataTypeException;
-import ghidra.program.model.data.LongDataType;
-import ghidra.program.model.data.LongLongDataType;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.PointerTypedef;
-import ghidra.program.model.data.StringDataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.data.UnsignedIntegerDataType;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.Bookmark;
-import ghidra.program.model.listing.BookmarkType;
-import ghidra.program.model.listing.CircularDependencyException;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.InstructionIterator;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.DumbMemBufferImpl;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceIterator;
-import ghidra.program.model.symbol.ReferenceManager;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.Msg;
-import ghidra.util.bytesearch.GenericByteSequencePattern;
-import ghidra.util.bytesearch.GenericMatchAction;
-import ghidra.util.bytesearch.Match;
-import ghidra.util.bytesearch.MemoryBytePatternSearcher;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.bytesearch.*;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
@@ -2664,27 +2617,51 @@ private Address getReferencedAddress(Address address) {
 		if (typeinfoNameAddress == null) {
 			return null;
 		}
-
-		String mangledTypeinfoString = getStringAtAddress(typeinfoNameAddress);
-
+		
+		boolean existingString = false;
+		
+		// get defined string if defined already
+		String mangledTypeinfoString = getDefinedStringAt(typeinfoNameAddress);
+		if(mangledTypeinfoString != null) {
+			existingString = true;
+		}
+		
+		if(!existingString) {
+			mangledTypeinfoString = getStringFromMemory(typeinfoNameAddress);
+		}
+		
 		if (mangledTypeinfoString == null) {
 			Msg.debug(this, "Could not get typeinfo string from " + typeinfoAddress.toString());
 			return null;
 		}
+		
+		String mangledLabel = mangledTypeinfoString;
 
-		if (mangledTypeinfoString.startsWith("*")) {
-			mangledTypeinfoString = mangledTypeinfoString.substring(1);
+		if (mangledLabel.startsWith("*")) {
+			mangledLabel = mangledTypeinfoString.substring(1);
 		}
 
-		if (mangledTypeinfoString.startsWith(".rdata$")) {
-			mangledTypeinfoString = mangledTypeinfoString.substring(7);
+		if (mangledLabel.startsWith(".rdata$")) {
+			mangledLabel = mangledTypeinfoString.substring(7);
 		}
-		mangledTypeinfoString = "_ZTS" + mangledTypeinfoString;
+		mangledLabel = "_ZTS" + mangledLabel;
+		
+		if(!isTypeinfoNameString(mangledLabel)) {
+			return null;
+		}
+		
+		if(!existingString) {
+			boolean created = createString(typeinfoNameAddress, mangledTypeinfoString.length());
+			if(!created) {
+				Msg.debug(this, "Could not create string at " + typeinfoNameAddress);
+			}
+		}
 
-		symbolTable.createLabel(typeinfoNameAddress, mangledTypeinfoString, globalNamespace, SourceType.ANALYSIS);
+		// create mangled label
+		symbolTable.createLabel(typeinfoNameAddress, mangledLabel, globalNamespace, SourceType.ANALYSIS);
 
-		// demangle the symbol
-		DemanglerCmd cmd = new DemanglerCmd(typeinfoNameAddress, mangledTypeinfoString);
+		// demangle the symbol to create demangled symbol
+		DemanglerCmd cmd = new DemanglerCmd(typeinfoNameAddress, mangledLabel);
 		cmd.applyTo(program, monitor);
 
 		// get the newly created symbol to get the namespace
@@ -2730,6 +2707,19 @@ private Address getReferencedAddress(Address address) {
 
 		return newSymbol;
 	}
+	
+	private boolean isTypeinfoNameString(String string) {
+		
+		DemangledObject demangledObject = DemanglerUtil.demangle(string);
+		if(demangledObject == null) {
+			return false;
+		}
+		
+		if(demangledObject.getName().equals("typeinfo-name")) {
+			return true;
+		}
+		return false;
+	}
 
 	private Address getTypeinfoNameAddress(Address typeinfoAddress) {
 
@@ -2756,41 +2746,108 @@ private Address getReferencedAddress(Address address) {
 
 		return typeinfoNameAddress;
 	}
-
-	String getStringAtAddress(Address address) throws CancelledException {
-
-		Data stringData = api.getDataAt(address);
-		if (stringData == null) {
-
-			// account for randomly occurring bad strings sucking up the real expected
-			// string
-			Data dataContaining = api.getDataContaining(address);
-			if (dataContaining != null) {
-				api.clearListing(dataContaining.getAddress());
-			}
-			// create string
-			try {
-				stringData = api.createAsciiString(address);
-			} catch (Exception e) {
-				Msg.debug(this, "Could not create string at " + address);
-				return null;
-			}
-
-			if (stringData == null) {
-				return null;
-			}
-
+	
+	
+	private boolean createString(Address address, int len) {
+		try {
+			DataUtilities.createData(program, address, new TerminatedStringDataType(), len, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+			return true;
 		}
+		catch (CodeUnitInsertionException e) {
+			return false;
+		}
+	}
+	
+	private String getDefinedStringAt(Address address) {
+		
+		Listing listing = program.getListing();
+		Data stringData = listing.getDataAt(address);
+		
+		if(stringData == null) {
+			return null;
+		}
+		
+		StringDataType stringDT = new StringDataType();
+		
+		if (!stringData.getBaseDataType().isEquivalent(stringDT)) {
+			return null;
+		}
+		
+
 		int stringLen = stringData.getLength();
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), address);
 
-		StringDataType sdt = new StringDataType();
-
-		String str;
-
-		str = (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
+		TerminatedStringDataType sdt = new TerminatedStringDataType();
+		String str = (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
 
 		return str;
+	}
+	
+	private String getStringFromMemory(Address address) {
+		
+		int stringLen = getStringLen(address);
+		if(stringLen <= 0) {
+			return null;
+		}
+		
+		TerminatedStringDataType sdt = new TerminatedStringDataType();
+		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), address);
+		return (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
+
+	}
+	
+	private int getStringLen(Address addr) {
+		
+		int len = 0;
+		
+		while(isAscii(addr)) {
+			len++;
+			addr = addr.add(1);
+		}
+		
+		if(isNull(addr)) {
+			return len+1;
+		}
+		
+		return 0;
+	}
+	
+	private boolean isAsciiPrintable(char ch) {
+	      return ch >= 32 && ch < 127;
+	  }
+	
+	private boolean isAscii(Address addr) {
+		
+		Memory mem = program.getMemory();
+		try {
+			byte byte1 = mem.getByte(addr);
+			char c = (char) byte1;
+			if(isAsciiPrintable(c)) {
+				return true;
+			}
+			return false;
+			
+		}
+		catch (MemoryAccessException e) {
+			return false;
+		}
+	}
+	
+	private boolean isNull(Address addr) {
+		
+		Memory mem = program.getMemory();
+		try {
+			byte byte1 = mem.getByte(addr);
+			
+			if(byte1 == 0x0) {
+				return true;
+			}
+			return false;
+			
+		}
+		catch (MemoryAccessException e) {
+			return false;
+		}
 	}
 
 
