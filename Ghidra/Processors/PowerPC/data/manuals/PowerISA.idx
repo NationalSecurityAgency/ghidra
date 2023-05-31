@@ -1,1724 +1,1984 @@
-@PowerISA_V2.06_PUBLIC.pdf[PowerPC® Microprocessor Family: The Programming Environments Manual for 32 and 64-bit Microprocessors, Version 2.3, March 31, 2005]
-addo.  ,   91
-addo  ,   91
-add.  ,   91
-add  ,   91
-addco.  ,   92
-addco  ,   92
-addc.  ,   92
-addc  ,   92
-addeo.  ,   93
-addeo  ,   93
-adde.  ,   93
-adde  ,   93
-addg6s  ,   125
-addi  ,   90
-addic  ,   91
-addic.  ,   91
-addis  ,   90
-addmeo.  ,   93
-addmeo  ,   93
-addme.  ,   93
-addme  ,   93
-addzeo.  ,   94
-addzeo  ,   94
-addze.  ,   94
-addze  ,   94
-and.  ,   108
-and  ,   108
-andc.  ,   109
-andc  ,   109
-andi.  ,   106
-andis.  ,   106
-bla  ,   63
-bl  ,   63
-ba  ,   63
-b  ,   63
-bcla  ,   63
-bcl  ,   63
-bca  ,   63
-bc  ,   63
-bcctrl  ,   64
-bcctr  ,   64
-bclrl  ,   64
-bclr  ,   64
-bpermd  ,   114
-brinc  ,   538
-cbcdtd  ,   125
-cdtbcd  ,   125
-cmp  ,   102
-cmpb  ,   110
-cmpi  ,   102
-cmpl  ,   103
-cmpli  ,   103
-cntlzd.  ,   113
-cntlzd  ,   113
-cntlzw.  ,   109
-cntlzw  ,   109
-crand  ,   65
-crandc  ,   66
-creqv  ,   66
-crnand  ,   65
-crnor  ,   66
-cror  ,   65
-crorc  ,   66
-crxor  ,   65
-dadd.  ,   201
-dadd  ,   201
-daddq.  ,   201
-daddq  ,   201
-dcba  ,   711
-dcbf  ,   715
-dcbfep  ,   940
-dcbi  ,   996
-dcblc  ,   1000
-dcbst  ,   715
-dcbstep  ,   939
-dcbt  ,   712
-dcbtep  ,   939
-dcbtls  ,   999
-dcbtst   ,   712 
-dcbtstep  ,   941
-dcbtstls  ,   999
-dcbz  ,   715
-dcbzep  ,   942
-dcffix.  ,   223
-dcffix  ,   223
-dcffixq.  ,   223
-dcffixq  ,   223
-dci  ,   131
-dcmpo  ,   207
-dcmpoq  ,   207
-dcmpu  ,   206
-dcmpuq  ,   207
-dcread  ,   134
-dcread  ,   134
-dctdp.  ,   221
-dctdp  ,   221
-dctfix.  ,   223
-dctfix  ,   223
-dctfixq.  ,   223
-dctfixq  ,   223
-dctqpq.  ,   221
-dctqpq  ,   221
-ddedpd.  ,   225
-ddedpd  ,   225
-ddedpdq.  ,   225
-ddedpdq  ,   225
-ddiv.  ,   204
-ddiv  ,   204
-ddivq.  ,   204
-ddivq  ,   204
-denbcd.  ,   225
-denbcd  ,   225
-denbcdq.  ,   225
-denbcdq  ,   225
-diex.  ,   226
-diex  ,   226
-diexq.  ,   226
-diexq  ,   226
-divdo.  ,   100
-divdo  ,   100
-divd.  ,   100
-divd  ,   100
-divdeo.  ,   101
-divdeo  ,   101
-divde.  ,   101
-divde  ,   101
-divdeuo.  ,   101
-divdeuo  ,   101
-divdeu.  ,   101
-divdeu  ,   101
-divduo.  ,   100
-divduo  ,   100
-divdu.  ,   100
-divdu  ,   100
-divwo.  ,   96
-divwo  ,   96
-divw.  ,   96
-divw  ,   96
-divweo.  ,   97
-divweo  ,   97
-divwe.  ,   97
-divwe  ,   97
-divweuo.  ,   97
-divweuo  ,   97
-divweu.  ,   97
-divweu  ,   97
-divwuo.  ,   96
-divwuo  ,   96
-divwu.  ,   96
-divwu  ,   96
-dlmzb.  ,   617
-dlmzb  ,   617
-dmul.  ,   203
-dmul  ,   203
-dmulq.  ,   203
-dmulq  ,   203
-dnh   ,   1068 
-doze  ,   770
-dqua.  ,   212
-dqua  ,   212
-dquai.  ,   211
-dquai  ,   211
-dquaiq.  ,   211
-dquaiq  ,   211
-dquaq.  ,   212
-dquaq  ,   212
-drdpq.  ,   222
-drdpq  ,   222
-drintn.  ,   119
-drintn  ,   119
-drintnq.  ,   219
-drintnq  ,   219
-drintx.  ,   217
-drintx  ,   217
-drintxq.  ,   217
-drintxq  ,   217
-drrnd.  ,   214
-drrnd  ,   214
-drrndq.  ,   214
-drrndq  ,   214
-drsp.  ,   222
-drsp  ,   222
-dscli.  ,   228
-dscli  ,   228
-dscliq.  ,   228
-dscliq  ,   228
-dscri.  ,   228
-dscri  ,   228
-dscriq.  ,   228
-dscriq  ,   228
-dsn  ,   738
-dsub.  ,   101
-dsub  ,   101
-dsubq.  ,   201
-dsubq  ,   201
-dtstdc  ,   208
-dtstdcq  ,   208
-dtstdg  ,   208
-dtstdgq  ,   208
-dtstex  ,   209
-dtstexq  ,   209
-dtstsf  ,   210
-dtstsfq  ,   210
-dxex.  ,   226
-dxex  ,   226
-dxexq.  ,   226
-dxexq  ,   226
-eciwx  ,   740
-ecowx  ,   740
-efdabs  ,   605
-efdadd  ,   606
-efdcfs  ,   612
-efdcfsf  ,   610
-efdcfsi  ,   609
-efdcfsid  ,   610
-efdcfuf  ,   610
-efdcfui  ,   609
-efdcfuid  ,   610
-efdcmpeq  ,   607
-efdcmpgt  ,   607
-efdcmplt  ,   607
-efdctsf  ,   612
-efdctsi  ,   610
-efdctsidz  ,   611
-efdctsiz  ,   612
-efdctuf  ,   612
-efdctui  ,   610
-efdctuidz  ,   611
-efdctuiz  ,   612
-efddiv  ,   606
-efdmul  ,   606
-efdnabs  ,   605
-efdneg  ,   605
-efdsub  ,   606
-efdtsteq  ,   608
-efdtstgt  ,   607
-efdtstlt  ,   608
-efsabs  ,   598
-efsadd  ,   599
-efscfd  ,   613
-efscfsf  ,   603
-efscfsi  ,   603
-efscfuf  ,   603
-efscfui  ,   603
-efscmpeq  ,   601
-efscmpgt  ,   600
-efscmplt  ,   600
-efsctsf  ,   604
-efsctsi  ,   603
-efsctsiz  ,   604
-efsctuf  ,   604
-efsctui  ,   603
-efsctuiz  ,   604
-efsdiv  ,   599
-efsmul  ,   599
-efsnabs  ,   598
-efsneg  ,   598
-efssub  ,   599
-efststeq  ,   602
-efststgt  ,   601
-efststlt  ,   602
-ehpriv  ,   919
-eieio  ,   727
-eqv.  ,   109
-eqv  ,   109
-evabs  ,   538
-evaddiw  ,   538
-evaddsmiaaw  ,   538
-evaddssiaaw  ,   539
-evaddumiaaw  ,   539
-evaddusiaaw  ,   539
-evaddw  ,   539
-evand  ,   540
-evandc  ,   540
-evcmpeq  ,   540
-evcmpgts  ,   540
-evcmpgtu  ,   541
-evcmplts  ,   541
-evcmpltu  ,   541
-evcntlsw  ,   542
-evcntlzw  ,   542
-evdivws  ,   542
-evdivwu  ,   543
-eveqv  ,   543
-evextsb  ,   543
-evextsh  ,   543
-evfsabs  ,   590
-evfsadd  ,   591
-evfscfsf  ,   595
-evfscfsi  ,   595
-evfscfuf  ,   595
-evfscfui  ,   595
-evfscmpeq  ,   593
-evfscmpgt  ,   592
-evfscmplt  ,   592
-evfsctsf  ,   597
-evfsctsi  ,   596
-evfsctsiz  ,   596
-evfsctuf  ,   597
-evfsctui  ,   596
-evfsctuiz  ,   596
-evfsdiv  ,   591
-evfsmul  ,   591
-evfsnabs  ,   590
-evfsneg  ,   590
-evfssub  ,   591
-evfststeq  ,   594
-evfststgt  ,   593
-evfststlt  ,   594
-evldd  ,   544
-evlddepx  ,   944
-evlddx  ,   544
-evldh  ,   544
-evldhx  ,   544
-evldw  ,   545
-evldwx  ,   545
-evlhhesplat  ,   545
-evlhhesplatx  ,   545
-evlhhossplat  ,   546
-evlhhossplatx  ,   546
-evlhhousplat  ,   546
-evlhhousplatx  ,   546
-evlwhe  ,   547
-evlwhex  ,   547
-evlwhos  ,   547
-evlwhosx  ,   547
-evlwhou  ,   548
-evlwhoux  ,   548
-evlwhsplat  ,   548
-evlwhsplatx  ,   548
-evlwwsplat  ,   549
-evlwwsplatx  ,   549
-evmergehi  ,   549
-evmergehilo  ,   550
-evmergelo  ,   549
-evmergelohi  ,   550
-evmhegsmfaa  ,   550
-evmhegsmfan  ,   550
-evmhegsmiaa  ,   551
-evmhegsmian  ,   551
-evmhegumiaa  ,   551
-evmhegumian  ,   551
-evmhesmf  ,   552
-evmhesmfa  ,   552
-evmhesmfaaw  ,   552
-evmhesmfanw  ,   552
-evmhesmi  ,   553
-evmhesmia  ,   553
-evmhesmiaaw  ,   553
-evmhesmianw  ,   553
-evmhessf  ,   554
-evmhessfa  ,   554
-evmhessfaaw  ,   555
-evmhessfanw  ,   555
-evmhessiaaw  ,   556
-evmhessianw  ,   556
-evmheumi  ,   557
-evmheumia  ,   557
-evmheumiaaw  ,   557
-evmheumianw  ,   557
-evmheusiaaw  ,   558
-evmheusianw  ,   558
-evmhogsmfaa  ,   559
-evmhogsmfan  ,   559
-evmhogsmiaa  ,   559
-evmhogsmian  ,   559
-evmhogumiaa  ,   560
-evmhogumian  ,   560
-evmhosmf  ,   560
-evmhosmfa  ,   560
-evmhosmfaaw  ,   561
-evmhosmfanw  ,   561
-evmhosmi  ,   561
-evmhosmia  ,   561
-evmhosmiaaw  ,   562
-evmhosmianw  ,   561
-evmhossf  ,   563
-evmhossfa  ,   563
-evmhossfaaw  ,   564
-evmhossfanw  ,   564
-evmhossiaaw  ,   565
-evmhossianw  ,   565
-evmhoumi  ,   565
-evmhoumia  ,   565
-evmhoumiaaw  ,   566
-evmhoumianw  ,   562
-evmhousiaaw  ,   566
-evmhousianw  ,   566
-evmra  ,   567
-evmwhsmf  ,   567
-evmwhsmfa  ,   567
-evmwhsmi  ,   567
-evmwhsmia  ,   567
-evmwhssf  ,   568
-evmwhssfa  ,   568
-evmwhumi  ,   568
-evmwhumia  ,   568
-evmwlsmiaaw  ,   569
-evmwlsmianw  ,   569
-evmwlssiaaw  ,   569
-evmwlssianw  ,   569
-evmwlumi  ,   570
-evmwlumia  ,   570
-evmwlumiaaw  ,   570
-evmwlumianw  ,   570
-evmwlusiaaw  ,   571
-evmwlusianw  ,   571
-evmwsmf  ,   571
-evmwsmfa  ,   571
-evmwsmfaa  ,   572
-evmwsmfan  ,   572
-evmwsmi  ,   572
-evmwsmia  ,   572
-evmwsmiaa  ,   572
-evmwsmian  ,   572
-evmwssf  ,   573
-evmwssfa  ,   573
-evmwssfaa  ,   573
-evmwssfan  ,   574
-evmwumi  ,   574
-evmwumia  ,   574
-evmwumiaa  ,   575
-evmwumian  ,   575
-evnand  ,   575
-evneg  ,   575
-evnor  ,   575
-evor  ,   576
-evorc  ,   576
-evrlw  ,   576
-evrlwi  ,   577
-evrndw  ,   577
-evsel  ,   577
-evslw  ,   578
-evslwi  ,   578
-evsplatfi  ,   578
-evsplati  ,   578
-evsrwis  ,   578
-evsrwiu  ,   578
-evsrws  ,   579
-evsrwu  ,   579
-evstdd  ,   579
-evstddepx  ,   944
-evstddx  ,   579
-evstdh  ,   580
-evstdhx  ,   580
-evstdw  ,   580
-evstdwx  ,   580
-evstwhe  ,   581
-evstwhex  ,   581
-evstwho  ,   581
-evstwhox  ,   581
-evstwwe  ,   581
-evstwwex  ,   581
-evstwwo  ,   582
-evstwwox  ,   582
-evsubfsmiaaw  ,   582
-evsubfssiaaw  ,   582
-evsubfumiaaw  ,   583
-evsubfusiaaw  ,   583
-evsubfw  ,   583
-evsubifw  ,   583
-evxor  ,   583
-extsb.  ,   109
-extsb  ,   109
-extsh.  ,   109
-extsh  ,   109
-extsw.  ,   113
-extsw  ,   113
-fabs.  ,   160
-fabs  ,   160
-fadd.  ,   161
-fadd  ,   161
-fadds.  ,   161
-fadds  ,   161
-fcfid.  ,   172
-fcfid  ,   172
-fcfids.  ,   173
-fcfids  ,   173
-fcfidu.  ,   173
-fcfidu  ,   173
-fcfidus.  ,   174
-fcfidus  ,   174
-fcmpo  ,   176
-fcmpu  ,   176
-fcpsgn.  ,   160
-fcpsgn  ,   160
-fctid.  ,   168
-fctid  ,   168
-fctidu.  ,   169
-fctidu  ,   169
-fctiduz.  ,   170
-fctiduz  ,   170
-fctidz.  ,   169
-fctidz  ,   169
-fctiw.  ,   170
-fctiw  ,   170
-fctiwu.  ,   171
-fctiwu  ,   171
-fctiwuz.  ,   172
-fctiwuz  ,   172
-fctiwz.  ,   171
-fctiwz  ,   171
-fdiv.  ,   162
-fdiv  ,   162
-fdivs.  ,   162
-fdivs  ,   162
-fmadd.  ,   166
-fmadd  ,   166
-fmadds.  ,   166
-fmadds  ,   166
-fmr.  ,   160
-fmr  ,   160
-fmsub.  ,   166
-fmsub  ,   166
-fmsubs.  ,   166
-fmsubs  ,   166
-fmul.  ,   162
-fmul  ,   162
-fmuls.  ,   162
-fmuls  ,   162
-fnabs.  ,   160
-fnabs  ,   160
-fneg.  ,   160
-fneg  ,   160
-fnmadd.  ,   167
-fnmadd  ,   167
-fnmadds.  ,   167
-fnmadds  ,   167
-fnmsub.  ,   167
-fnmsub  ,   167
-fnmsubs.  ,   167
-fnmsubs  ,   167
-fre.  ,   163
-fre  ,   163
-fres.  ,   163
-fres  ,   163
-frim.  ,   175
-frim  ,   175
-frin.  ,   175
-frin  ,   175
-frip.  ,   175
-frip  ,   175
-friz.  ,   175
-friz  ,   175
-frsp.  ,   168
-frsp  ,   168
-frsqrte.  ,   164
-frsqrte  ,   164
-frsqrtes.  ,   164
-frsqrtes  ,   164
-fsel.  ,   177
-fsel  ,   177
-fsqrt.  ,   163
-fsqrt  ,   163
-fsqrts.  ,   163
-fsqrts  ,   163
-fsub.  ,   161
-fsub  ,   161
-fsubs.  ,   161
-fsubs  ,   161
-ftdiv  ,   165
-ftsqrt  ,   165
-hrfid  ,   768
-icbi  ,   704
-icbiep  ,   942
-icblc  ,   1001
-icbt  ,   704
-icbtls  ,   1000
-ici   ,   1107
-icread   ,   1111
-isel  ,   105
-isync  ,   717
-lbarx  ,   718
-lbdx  ,   736
-lbepx  ,   935
-lbz  ,   73
-lbzcix  ,   777
-lbzu  ,   73
-lbzux  ,   73
-lbzx  ,   74
-ld  ,   78
-ldarx  ,   723
-ldbrx  ,   84
-ldcix  ,   777
-lddx  ,   736
-ldepx  ,   936
-ldu  ,   78
-ldux  ,   78
-ldx  ,   78
-lfd  ,   153
-lfddx  ,   736
-lfdepx  ,   943
-lfdp  ,   159
-lfdpx  ,   159
-lfdu  ,   153
-lfdux  ,   153
-lfdx  ,   153
-lfiwax  ,   154
-lfiwzx  ,   154
-lfs  ,   156
-lfsu  ,   156
-lfsux  ,   156
-lfsx  ,   156
-lha  ,   75
-lharx  ,   719
-lhau  ,   75
-lhaux  ,   75
-lhax  ,   75
-lhbrx  ,   83
-lhdx  ,   736
-lhepx  ,   935
-lhz  ,   74
-lhzcix  ,   777
-lhzu  ,   74
-lhzux  ,   74
-lhzx  ,   74
-lmw  ,   85
-lq  ,   779
-lswi  ,   87
-lswx  ,   87
-lvebx  ,   244
-lvehx  ,   241
-lvepx  ,   945
-lvepxl  ,   945
-lvewx  ,   241
-lvsl  ,   246
-lvsr  ,   246
-lvx  ,   242
-lvxl  ,   242
-lwa  ,   77
-lwarx  ,   718
-lwaux  ,   77
-lwax  ,   77
-lwbrx  ,   83
-lwdx  ,   736
-lwepx  ,   936
-lwz  ,   76
-lwzcix  ,   777
-lwzu  ,   76
-lwzux  ,   76
-lwzx  ,   76
-lxsdux  ,   366
-lxsdx  ,   366
-lxvd2ux  ,   366
-lxvd2x  ,   366
-lxvdsx  ,   367
-lxvw4ux  ,   367
-lxvw4x  ,   367
-macchwo.  ,   619
-macchwo  ,   619
-macchw.  ,   619
-macchw  ,   619
-macchwso.  ,   619
-macchwso  ,   619
-macchws.  ,   619
-macchws  ,   619
-macchwsuo.  ,   620
-macchwsuo  ,   620
-macchwsu.  ,   620
-macchwsu  ,   620
-macchwuo.  ,   620
-macchwuo  ,   620
-macchwu.  ,   620
-macchwu  ,   620
-machhwo.  ,   621
-machhwo  ,   621
-machhw.  ,   621
-machhw  ,   621
-machhwso.  ,   621
-machhwso  ,   621
-machhws.  ,   621
-machhws  ,   621
-machhwsuo.  ,   622
-machhwsuo  ,   622
-machhwsu.  ,   622
-machhwsu  ,   622
-machhwuo.  ,   622
-machhwuo  ,   622
-machhwu.  ,   622
-machhwu  ,   622
-maclhwo.  ,   623
-maclhwo  ,   623
-maclhw.  ,   623
-maclhw  ,   623
-maclhwso.  ,   623
-maclhwso  ,   623
-maclhws.  ,   623
-maclhws  ,   623
-maclhwsuo.  ,   624
-maclhwsuo  ,   624
-maclhwsu.  ,   624
-maclhwsu  ,   624
-maclhwuo.  ,   624
-maclhwuo  ,   624
-maclhwu.  ,   624
-maclhwu  ,   624
-mbar  ,   727
-mcrf  ,   66
-mcrfs  ,   178
-mcrxr  ,   132
-mfcr  ,   130
-mfdcr  ,   931
-mfdcrux  ,   132
-mfdcrx  ,   931
-mffs.  ,   178
-mffs  ,   178
-mfmsr   ,   787
-mfocrf  ,   131
-mfpmr  ,   1122
-mfspr   ,   129
-mfsr  ,   830
-mfsrin  ,   830
-mftb  ,   732
-mfvscr  ,   297
-msgclr  ,   1102
-msgsnd  ,   1102
-mtcrf  ,   130
-mtdcr  ,   930
-mtdcrux  ,   132
-mtdcrx  ,   930
-mtfsb0.  ,   180
-mtfsb0  ,   180
-mtfsb1.  ,   180
-mtfsb1  ,   180
-mtfsf.  ,   179
-mtfsf  ,   179
-mtfsfi.  ,   179
-mtfsfi  ,   179
-mtmsr  ,   931
-mtmsr  ,   785
-mtmsrd  ,   786
-mtocrf  ,   131
-mtpmr  ,   1122
-mtspr  ,   128
-mtsr   ,   824
-mtsrin   ,   824 
-mtvscr  ,   297
-mulchw.  ,   624
-mulchw  ,   624
-mulchwu.  ,   624
-mulchwu  ,   624
-mulhd.  ,   99
-mulhd  ,   99
-mulhdu.  ,   99
-mulhdu  ,   99
-mulhhw.  ,   625
-mulhhw  ,   625
-mulhhwu.  ,   625
-mulhhwu  ,   625
-mulhw.  ,   95
-mulhw  ,   95
-mulhwu.  ,   95
-mulhwu  ,   95
-mulldo.  ,   99
-mulldo  ,   99
-mulld.  ,   99
-mulld  ,   99
-mullhw.  ,   625
-mullhw  ,   625
-mullhwu.  ,   625
-mullhwu  ,   625
-mulli  ,   95
-mullwo.  ,   95
-mullwo  ,   95
-mullw.  ,   95
-mullw  ,   95
-nand.  ,   108
-nand  ,   108
-nap  ,   770
-nego.  ,   94
-nego  ,   94
-neg.  ,   94
-neg  ,   94
-nmacchwo.  ,   626
-nmacchwo  ,   626
-nmacchw.  ,   626
-nmacchw  ,   626
-nmacchwso.  ,   626
-nmacchwso  ,   626
-nmacchws.  ,   626
-nmacchws  ,   626
-N  ,   627
-nmachhwo.  ,   627
-nmachhwo  ,   627
-nmachhw.  ,   627
-nmachhw  ,   627
-nmachhwso.  ,   627
-nmachhwso  ,   627
-nmachhws.  ,   627
-nmachhws  ,   627
-nmaclhwo.  ,   628
-nmaclhwo  ,   628
-nmaclhw.  ,   628
-nmaclhw  ,   628
-nmaclhwso.  ,   628
-nmaclhwso  ,   628
-nmaclhws.  ,   628
-nmaclhws  ,   628
-nor.  ,   109
-nor  ,   109
-or.  ,   108
-or  ,   108
-orc.  ,   109
-orc  ,   109
-ori  ,   106
-oris  ,   107
-popcntb  ,   111
-popcntd  ,   113
-popcntw  ,   111
-prtyd  ,   112
-prtyw  ,   112
-rfci  ,   917
-rfdi  ,   918
-rfgi  ,   919
-rfi  ,   917
-rfid  ,   768
-rfmci  ,   918
-rldcl.  ,   119
-rldcl  ,   119
-rldcr.  ,   120
-rldcr  ,   120
-rldic.  ,   119
-rldic  ,   119
-rldicl.  ,   118
-rldicl  ,   118
-rldicr.  ,   118
-rldicr  ,   118
-rldimi.  ,   120
-rldimi  ,   120
-rlwimi.  ,   117
-rlwimi  ,   117
-rlwinm.  ,   115
-rlwinm  ,   115
-rlwnm.  ,   116
-rlwnm  ,   116
-rvwinkle  ,   77
-sc   ,   67
-slbfee.   ,   822
-slbia   ,   819
-slbie   ,   818
-slbmfee   ,   821
-slbmfev   ,   820
-slbmte   ,   820
-sld.  ,   123
-sld  ,   123
-sleep  ,   76
-slw.  ,   121
-slw  ,   121
-srad.  ,   124
-srad  ,   124
-sradi.  ,   124
-sradi  ,   124
-sraw.  ,   122
-sraw  ,   122
-srawi.  ,   122
-srawi  ,   122
-srd.  ,   123
-srd  ,   123
-srw.  ,   121
-srw  ,   121
-stb  ,   79
-stbcix  ,   86
-stbcx.  ,   124
-stbdx  ,   41
-bepx  ,   57
-stbu  ,   79
-stbux  ,   79
-stbx  ,   79
-std  ,   82
-stdbrx  ,   84
-stdcix  ,   86
-stdcx.  ,   127
-stddx  ,   41
-stdepx  ,   58
-stdu  ,   82
-stdux  ,   82
-stdx  ,   82
-stfd  ,   57
-stfddx  ,   41
-fdepx  ,   63
-stfdp  ,   59
-stfdpx  ,   59
-stfdu  ,   57
-stfdux  ,   57
-stfdx  ,   57
-stfiwx  ,   58
-stfs  ,   56
-stfsu  ,   56
-stfsux  ,   56
-stfsx  ,   56
-sth  ,   80
-sthbrx  ,   33
-sthcix  ,   86
-sthcx.  ,   125
-sthdx  ,   737
-sthepx  ,   937
-sthu  ,   80
-sthux  ,   80
-sthx  ,   80
-stmw  ,   85
-stq  ,   779
-stswi  ,   88
-stswx  ,   88
-stvebx  ,   244
-stvehx  ,   244
-stvepx  ,   946
-stvepxl  ,   946
-stvewx  ,   245
-stvx  ,   242
-stvxl  ,   245
-stw  ,   81
-stwbrx  ,   83
-stwcix  ,   778
-stwcx.  ,   722
-stwdx  ,   737
-stwepx  ,   938
-stwu  ,   81
-stwux  ,   81
-stwx  ,   81
-stxsdux  ,   368
-stxsdx  ,   368
-stxvd2ux  ,   368
-stxvd2x  ,   368
-stxvw4ux  ,   369
-stxvw4x  ,   369
-subfo.  ,   91
-subfo  ,   91
-subf.  ,   91
-subf  ,   91
-subfco.  ,   92
-subfco  ,   92
-subfc.  ,   92
-subfc  ,   92
-subfeo.  ,   93
-subfeo  ,   93
-subfe.  ,   93
-subfe  ,   93
-subfic  ,   92
-subfmeo.  ,   93
-subfmeo  ,   93
-subfme.  ,   93
-subfme  ,   93
-subfzeo.  ,   94
-subfzeo  ,   94
-subfze.  ,   94
-subfze  ,   94
-sync  ,   725
-td  ,   105
-tdi  ,   105
-tlbia   ,   828
-tlbie  ,   39
-tlbiel  ,   42
-tlbilx  ,   1011
-tlbivax  ,   1009
-tlbre  ,   1016
-bsrx.  ,   1015
-bsx  ,   1013
-tlbsync   ,   831
-tlbwe  ,   1018
-tw  ,   104
-twi  ,   104
-vaddcuw  ,   258
-vaddfp  ,   287
-vaddsbs  ,   258
-vaddshs  ,   258
-vaddsws  ,   258
-vaddubm  ,   259
-vaddubs  ,   260
-vadduhm  ,   259
-vadduhs  ,   260
-vadduwm  ,   259
-vadduws  ,   260
-vand  ,   282
-vandc  ,   282
-vavgsb  ,   273
-vavgsh  ,   273
-vavgsw  ,   273
-vavgub  ,   274
-vavguh  ,   274
-vavguw  ,   274
-vcfsx  ,   291
-vcfux  ,   291
-vcmpbfp.  ,   293
-vcmpbfp  ,   293
-vcmpeqfp.  ,   293
-vcmpeqfp  ,   293
-vcmpequb.  ,   279
-vcmpequb  ,   279
-vcmpequh.  ,   279
-vcmpequh  ,   279
-vcmpequw.  ,   280
-vcmpequw  ,   280
-vcmpgefp.  ,   294
-vcmpgefp  ,   294
-vcmpgtfp.  ,   294
-vcmpgtfp  ,   294
-vcmpgtsb.  ,   280
-vcmpgtsb  ,   280
-vcmpgtsh.  ,   280
-vcmpgtsh  ,   280
-vcmpgtsw.  ,   280
-vcmpgtsw  ,   280
-vcmpgtub.  ,   281
-vcmpgtub  ,   281
-vcmpgtuh.  ,   281
-vcmpgtuh  ,   281
-vcmpgtuw.  ,   281
-vcmpgtuw  ,   281
-vctsxs  ,   290
-vctuxs  ,   290
-vexptefp  ,   295
-vlogefp  ,   295
-vmaddfp  ,   288
-vmaxfp  ,   289
-vmaxsb  ,   275
-vmaxsh  ,   275
-vmaxsw  ,   275
-vmaxub  ,   276
-vmaxuh  ,   276
-vmaxuw  ,   276
-vmhaddshs  ,   266
-vmhraddshs  ,   266
-vminfp  ,   289
-vminsb  ,   277
-vminsh  ,   277
-vminsw  ,   277
-vminub  ,   278
-vminuh  ,   278
-vminuw  ,   278
-vmladduhm  ,   267
-vmrghb  ,   252
-vmrghh  ,   252
-vmrghw  ,   252
-vmrglb  ,   253
-vmrglh  ,   253
-vmrglw  ,   253
-vmsummbm  ,   268
-vmsumshm  ,   268
-vmsumshs  ,   269
-vmsumubm  ,   267
-vmsumuhm  ,   269
-vmsumuhs  ,   270
-vmulesb  ,   264
-vmulesh  ,   264
-vmuleub  ,   264
-vmuleuh  ,   264
-vmulosb  ,   265
-vmulosh  ,   265
-vmuloub  ,   265
-vmulouh  ,   265
-vnmsubfp  ,   288
-vnor  ,   282
-vor  ,   282
-vperm  ,   255
-vpkpx  ,   247
-vpkshss  ,   248
-vpkshus  ,   248
-vpkswss  ,   248
-vpkswus  ,   248
-vpkuhum  ,   249
-vpkuhus  ,   249
-vpkuwum  ,   249
-vpkuwus  ,   249
-vrefp  ,   296
-vrfim  ,   292
-vrfin  ,   292
-vrfip  ,   292
-vrfiz  ,   292
-vrlb  ,   283
-vrlh  ,   283
-vrlw  ,   283
-vrsqrtefp  ,   296
-vsel  ,   255
-vsl  ,   256
-vslb  ,   284
-vsldoi  ,   256
-vslh  ,   284
-vslo  ,   256
-vslw  ,   284
-vspltb  ,   254
-vsplth  ,   254
-vspltisb  ,   254
-vspltish  ,   254
-vspltisw  ,   254
-vspltw  ,   254
-vsr  ,   257
-vsrab  ,   286
-vsrah  ,   286
-vsraw  ,   286
-vsrb  ,   285
-vsrh  ,   285
-vsro  ,   257
-vsrw  ,   285
-vsubcuw  ,   261
-vsubfp  ,   287
-vsubsbs  ,   261
-vsubshs  ,   261
-vsubsws  ,   261
-vsububm  ,   262
-vsububs  ,   263
-vsubuhm  ,   262
-vsubuhs  ,   262
-vsubuwm  ,   262
-vsubuws  ,   263
-vsum2sws  ,   271
-vsum4sbs  ,   272
-vsum4shs  ,   272
-vsum4ubs  ,   272
-vsumsws  ,   271
-vupkhpx  ,   250
-vupkhsb  ,   250
-vupkhsh  ,   250
-vupklpx  ,   251
-vupklsb  ,   251
-vupklsh  ,   251
-vxor  ,   282
-wait  ,   728
-wrtee  ,   932
-wrteei  ,   933
-xor.  ,   108
-xor  ,   108
-xori  ,   107
-xoris  ,   107
-xsabsdp  ,   369
-xsadddp  ,   370
-xscmpodp  ,   375
-xscmpudp  ,   377
-xscpsgndp  ,   379
-xscvdpsp  ,   380
-xscvdpsxds  ,   381
-xscvdpsxws  ,   383
-xscvdpuxds  ,   385
-xscvdpuxws  ,   387
-xscvspdp  ,   389
-xscvsxddp  ,   389
-xscvuxddp  ,   390
-xsdivdp  ,   391
-xsmaddadp  ,   393
-xsmaddmdp  ,   393
-xsmaxdp  ,   396
-xsmindp  ,   398
-xsmsubadp  ,   400
-xsmsubmdp  ,   400
-xsmuldp  ,   403
-xsnabsdp  ,   405
-xsnegdp  ,   405
-xsnmaddadp  ,   406
-xsnmaddmdp  ,   406
-xsnmsubadp  ,   411
-xsnmsubmdp  ,   411
-xsrdpi  ,   414
-xsrdpic  ,   415
-xsrdpim  ,   416
-xsrdpip  ,   416
-xsrdpiz  ,   417
-xsredp  ,   418
-xsrsqrtedp  ,   419
-xssqrtdp  ,   420
-xssubdp  ,   421
-xstdivdp  ,   423
-xstsqrtdp  ,   424
-xvabsdp  ,   425
-xvabssp  ,   425
-xvadddp  ,   426
-xvaddsp  ,   430
-xvcmpeqdp  ,   432
-xvcmpeqdp.  ,   432
-xvcmpeqsp  ,   433
-xvcmpeqsp.  ,   433
-xvcmpgedp  ,   434
-xvcmpgedp.  ,   434
-xvcmpgesp  ,   435
-xvcmpgesp.  ,   435
-xvcmpgtdp  ,   436
-xvcmpgtdp.  ,   436
-xvcmpgtsp  ,   437
-xvcmpgtsp.  ,   437
-xvcpsgndp  ,   438
-xvcpsgnsp  ,   438
-xvcvdpsp  ,   439
-xvcvdpsxds  ,   440
-xvcvdpsxws  ,   442
-xvcvdpuxds  ,   444
-xvcvdpuxws  ,   446
-xvcvspdp  ,   448
-xvcvspsxds  ,   449
-xvcvspsxws  ,   451
-xvcvspuxds  ,   453
-xvcvspuxws  ,   455
-xvcvsxddp  ,   457
-xvcvsxdsp  ,   457
-xvcvsxwdp  ,   458
-xvcvsxwsp  ,   458
-xvcvuxddp  ,   459
-xvcvuxdsp  ,   459
-xvcvuxwdp  ,   460
-xvcvuxwsp  ,   460
-xvdivdp  ,   461
-xvdivsp  ,   463
-xvmaddadp  ,   465
-xvmaddasp  ,   465
-xvmaddmdp  ,   468
-xvmaddmsp  ,   468
-xvmaxdp  ,   471
-xvmaxsp  ,   473
-xvmindp  ,   475
-xvminsp  ,   477
-xvmsubadp  ,   479
-xvmsubasp  ,   479
-xvmsubmdp  ,   482
-xvmsubmsp  ,   482
-xvmuldp  ,   485
-xvmulsp  ,   487
-xvnabsdp  ,   489
-xvnabssp  ,   489
-xvnegdp  ,   490
-xvnegsp  ,   490
-xvnmaddadp  ,   491
-xvnmaddasp  ,   491
-xvnmaddmdp  ,   496
-xvnmaddmsp  ,   496
-xvnmsubadp  ,   499
-xvnmsubasp  ,   499
-xvnmsubmdp  ,   502
-xvnmsubmsp  ,   502
-xvrdpi  ,   505
-xvrdpic  ,   506
-xvrdpim  ,   506
-xvrdpip  ,   507
-xvrdpiz  ,   507
-xvredp  ,   508
-xvresp  ,   509
-xvrspi  ,   510
-xvrspic  ,   510
-xvrspim  ,   511
-xvrspip  ,   511
-xvrspiz  ,   512
-xvrsqrtedp  ,   513
-xvrsqrtesp  ,   514
-xvsqrtdp  ,   515
-xvsqrtsp  ,   516
-xvsubdp  ,   517
-xvsubsp  ,   519
-xvtdivdp  ,   521
-xvtdivsp  ,   522
-xvtsqrtdp  ,   523
-xvtsqrtsp  ,   523
-xxland  ,   524
-xxlandc  ,   524
-xxlnor  ,   525
-xxlor  ,   525
-xxlxor  ,   526
-xxmrghw  ,   527
-xxmrglw  ,   527
-xxpermdi  ,   528
-xxsel  ,   528
-xxsldwi  ,   529
-xxspltw  ,   529
-@PowerISA_V2.07B.pdf [Power ISA Version 2.07 B April 9, 2015]
-e_b,1307
-e_bl,1307
-se_b,1307 	
-se_bl,1307 
-e_bc,1307
-e_bcl,1307
-se_bc,1307
-se_bctr,1308			
-se_bctrl,1308			
-se_blr,1308			
-se_blrl,1308			
-se_sc,1309				
-e_sc,1309			
-se_illegal,1310		
-se_rfmci,1310			
-se_rfci,1311	
-se_rfi,1311		
-se_rfdi,1312		
-se_rfgi,1312
-e_crand,1313
-e_crandc,1313
-e_creqv,1313
-e_crnand,1313
-e_crnor,1314
-e_cror,1314
-e_crorc,1314
-e_crxor,1314
-e_mcrf,1314
-e_lbz,1317
-se_lbz,1317
-e_lbzu,1317
-e_lha,1317
-e_lhz,1317
-se_lhz,1317
-e_lhau,1318
-e_lhzu,1318
-e_lwz,1318
-se_lwz,1318
-e_lwzu,1319
-e_stb,1320
-se_stb,1320
-e_stbu,1321	
-e_sth ,1321
-se_sth,1321
-e_sthu,1321 
-e_stw,1322
-se_stw,1322
-e_stwu,1322
-e_lmw,1323
-e_stmw,1323
-se_add,1325
-e_add16i,1325
-e_add2i.,1325
-e_add2is,1325
-e_addi,1325
-e_addi.,1325
-se_addi,1325
-e_addic,1326
-e_addic.,1326
-se_sub,1326
-se_subf,1326
-e_subfic,1326
-e_subfic.,1326
-se_subi,1326
-se_subi.,1326
-e_mulli,1327
-e_mull2i.,1327
-se_mullw,1327
-se_neg,1327
-se_btsti,1328
-e_cmp16i.,1328
-e_cmpi,1329
-se_cmp,1329
-se_cmpi,1329
-e_cmpl16i.,1329
-e_cmpli,1330
-se_cmpl,1330
-se_cmpli,1330
-e_cmph,1330
-se_cmph,1331
-e_cmph16i.,1331
-e_cmphl,1331
-se_cmphl,1331 
-e_cmphl16i.,1332
-e_and2i.,1333
-e_and2is.,1333
-e_andi,1333
-e_andi.,1333
-se_andi,1333
-e_or2i,1334
-e_or2is,1334
-e_ori,1334
-e_ori.,1334
-e_xori,1334
-e_xori.,1334
-se_and,1334
-se_and.,1334
-se_andc,1334
-se_or,1335
-se_not,1335
-se_bclri,1335
-se_bgeni,1335
-se_bmaski,1335
-se_bseti,1335
-se_extsb,1336
-se_extsh,1336
-se_extzb,1336
-se_extzh,1336
-e_li,1336
-se_li,1336
-e_lis,1336
-se_mfar,1337
-se_mr,1337
-se_mtar,1337
-e_rlw,1338
-e_rlw.,1338
-e_rlwi,1338
-e_rlwi.,1338
-e_rlwimi,1338
-e_rlwinm,1338
-e_slwi,1339
-e_slwi.,1339
-se_slwi,1339
-se_slw,1339
-se_srawi,1339
-se_sraw,1340
-e_srwi,1340
-e_srwi.,1340
-se_srwi,1340
-se_srw,1340
-se_mfctr,1341
-se_mtctr,1341
-se_mflr,1341
-se_mtlr,1341
-se_isync,1342
+@OPF_PowerISA_v3.1.pdf [OpenPower Power ISA, Version 3.1, May 1, 2020]
+add., 103
+add, 103
+addc., 104
+addc, 104
+addco., 104
+addco, 104
+adde., 104
+adde, 104
+addeo., 104
+addeo, 104
+addex, 106
+addg6s, 144
+addi, 102
+addic, 103
+addic., 103
+addis, 102
+addme., 105
+addme, 105
+addmeo., 105
+addmeo, 105
+addo., 103
+addo, 103
+addpcis, 102
+addze., 105
+addze, 105
+addzeo., 105
+addzeo, 105
+and., 126
+and, 126
+andc., 127
+andc, 127
+andi., 125
+andis., 125
+b,   67
+ba, 67
+bl, 67
+bla, 67
+bc, 67
+bca, 67
+bcl, 67
+bcla, 67
+bcctr, 68
+bcctrl, 68
+bcdadd., 504
+bcdcfn., 506
+bcdcfsq., 511
+bcdcfz., 507
+bcdcpsgn., 515
+bcdctn., 509
+bcdctsq., 512
+bcdctz., 510
+bcds., 517
+bcdsetsgn., 516
+bcdsr., 519
+bcdsub., 504
+bcdtrunc., 520
+bcdus., 518
+bcdutrunc., 521
+bclr, 68
+bclrl, 68
+bctar, 69
+bctarl, 69
+bpermd, 131
+brd, 145
+brh, 145
+brw, 145
+cbcdtd, 143
+cdtbcd, 143
+cfuged, 132
+clrbhrb, 1129
+cmp, 119
+cmpb, 128
+cmpeqb, 121
+cmpi, 119
+cmpl, 119
+cmpli, 119
+cmprb, 120
+cntlzd., 130
+cntlzd, 130
+cntlzdm, 131
+cntlzw., 128
+cntlzw, 128
+cnttzd, 130
+cnttzd., 130
+cnttzdm, 131
+cnttzw, 128
+cnttzw., 128
+copy, 1094
+cp_abort, 1095
+crand, 70
+crandc, 71
+creqv, 71
+crnand, 70
+crnor, 71
+cror, 70
+crorc, 71
+crxor, 70
+dadd., 232
+dadd, 232
+daddq., 232
+daddq, 232
+darn, 112
+dcbf, 1090
+dcbst, 1089
+dcbt, 1087
+dcbtst, 1088
+dcbz, 1089
+dcffix., 257
+dcffix, 257
+dcffixq., 257
+dcffixq, 257
+dcffixqq, 258
+dcmpo, 238
+dcmpoq, 238
+dcmpu, 237
+dcmpuq, 237
+dctdp., 255
+dctdp, 255
+dctfix.,259
+dctfix,259
+dctfixq.,259
+dctfixq,259
+dctfixqq,259
+dctqpq., 255
+dctqpq, 255
+ddedpd., 261
+ddedpd, 261
+ddedpdq., 261
+ddedpdq, 261
+ddiv., 235
+ddiv, 235
+ddivq., 235
+ddivq, 235
+denbcd., 261
+denbcd, 261
+denbcdq., 261
+denbcdq, 261
+diex., 262
+diex, 262
+diexq., 262
+diexq, 262
+divd., 115
+divd, 115
+divde., 116
+divde, 116
+divdeo., 116
+divdeo, 116
+divdeu., 116
+divdeu, 116
+divdeuo., 116
+divdeuo, 116
+divdo., 115
+divdo, 115
+divdu., 115
+divdu, 115
+divduo., 115
+divduo, 115
+divw., 108
+divw, 108
+divwe., 109
+divwe, 109
+divweo., 109
+divweo, 109
+divweu., 109
+divweu, 109
+divweuo., 109
+divweuo, 109
+divwo., 108
+divwo, 108
+divwu., 108
+divwu, 108
+divwuo., 108
+divwuo, 108
+dmul., 234
+dmul, 234
+dmulq., 234
+dmulq, 234
+dqua., 245
+dqua, 245
+dquai., 243
+dquai, 243
+dquaiq., 243
+dquaiq, 243
+dquaq., 245
+dquaq, 245
+drdpq., 256
+drdpq, 256
+drintn., 252
+drintn, 252
+drintnq., 252
+drintnq, 252
+drintx., 250
+drintx, 250
+drintxq., 250
+drintxq, 250
+drrnd., 247
+drrnd, 247
+drrndq., 247
+drrndq, 247
+drsp., 256
+drsp, 256
+dscli., 264
+dscli, 264
+dscliq., 264
+dscliq, 264
+dscri., 264
+dscri, 264
+dscriq., 264
+dscriq, 264
+dsub., 232
+dsub, 232
+dsubq., 232
+dsubq, 232
+dtstdc, 239
+dtstdcq, 239
+dtstdg, 239
+dtstdgq, 239
+dtstex, 240
+dtstexq, 240
+dtstsf, 241
+dtstsfi, 242 
+dtstsfiq, 242 
+dtstsfq, 241
+dxex., 262
+dxex, 262
+dxexq., 262
+dxexq, 262
+eieio, 1114 
+eqv., 127
+eqv, 127
+extsb., 128
+extsb, 128
+extsh., 128
+extsh, 128
+extsw., 130
+extsw, 130
+extswsli., 142
+extswsli, 142
+fabs., 187
+fabs, 187
+fadd., 189
+fadd, 189
+fadds., 189
+fadds, 189
+fcfid., 200
+fcfid, 200
+fcfids., 201
+fcfids, 201
+fcfidu., 201
+fcfidu, 201
+fcfidus., 202
+fcfidus, 202
+fcmpo, 205
+fcmpu, 205
+fcpsgn., 187
+fcpsgn, 187
+fctid., 196
+fctid, 196
+fctidu., 197
+fctidu, 197
+fctiduz., 198
+fctiduz, 198
+fctidz., 197
+fctidz, 197
+fctiw., 198
+fctiw, 198
+fctiwu., 199
+fctiwu, 199
+fctiwuz., 200
+fctiwuz, 200
+fctiwz., 199
+fctiwz, 199
+fdiv., 190
+fdiv, 190
+fdivs., 190
+fdivs, 190
+fmadd., 194
+fmadd, 194
+fmadds., 194
+fmadds, 194
+fmr., 187
+fmr, 187
+fmrgew, 188
+fmrgow, 188
+fmsub., 194
+fmsub, 194
+fmsubs., 194
+fmsubs, 194
+fmul., 190
+fmul, 190
+fmuls., 190
+fmuls, 190
+fnabs., 187
+fnabs, 187
+fneg., 187
+fneg, 187
+fnmadd., 195
+fnmadd, 195
+fnmadds., 195
+fnmadds, 195
+fnmsub., 195
+fnmsub, 195
+fnmsubs., 195
+fnmsubs, 195
+fre., 191
+fre, 191
+fres., 191
+fres, 191
+frim., 204
+frim, 204
+frin.,204
+frin, 204
+frip., 204
+frip, 204
+friz., 204
+friz, 204
+frsp., 196
+frsp, 196
+frsqrte., 192
+frsqrte, 192
+frsqrtes., 192
+frsqrtes, 192
+fsel., 206
+fsel, 206
+fsqrt., 191
+fsqrt, 191
+fsqrts., 191
+fsqrts, 191
+fsub., 189
+fsub, 189
+fsubs., 189
+fsubs, 189
+ftdiv, 192
+ftsqrt, 193
+hrfid, 1178
+icbi, 1078
+icbt, 1078
+isel, 124
+isync, 1102
+lbarx, 1103
+lbz, 78
+lbzcix, 1190
+lbzu, 78
+lbzux, 78
+lbzx, 78
+ld, 83
+ldarx, 1108
+ldat, 1099
+ldbrx, 95
+ldcix, 1190
+ldu, 83
+ldux, 83
+ldx, 83
+lfd, 178
+lfdp, 185
+lfdpx, 185
+lfdu, 178
+lfdux, 178
+lfdx, 178
+lfiwax, 179
+lfiwzx, 179
+lfs, 176
+lfsu, 176
+lfsux, 177
+lfsx, 176
+lha, 80
+lharx, 1104
+lhau, 80
+lhaux, 80
+lhax, 80
+lhbrx, 93
+lhz, 79
+lhzcix, 1190
+lhzu, 79
+lhzux, 79
+lhzx, 79
+lmw, 96
+lq, 91
+lqarx, 1110
+lswi, 98
+lswx, 98
+lvebx, 294
+lvehx, 295
+lvewx, 296
+lvsl, 303
+lvsr, 303
+lvx, 297
+lvxl, 297
+lwa, 82
+lwarx, 1104
+lwat, 1099
+lwaux, 82
+lwax, 82
+lwbrx, 94
+lwz, 81
+lwzcix, 1190
+lwzu, 81
+lwzux, 81
+lwzx, 81
+lxsd, 636
+lxsdx, 637
+lxsibzx, 638
+lxsihzx, 638
+lxsiwax, 639
+lxsiwzx, 640
+lxssp, 641
+lxsspx, 642
+lxv, 643
+lxvb16x, 644
+lxvd2x, 645
+lxvdsx, 659
+lxvh8x, 660
+lxvkq, 646
+lxvl, 647
+lxvll, 649
+lxvp, 651 
+lxvpx, 652
+lxvrbx, 653
+lxvrdx, 654
+lxvrhx, 655
+lxvrwx, 656
+lxvw4x, 661
+lxvwsx, 662
+lxvx, 657
+maddhd, 114
+maddhdu, 114
+maddld, 114
+mcrf, 72
+mcrfs, 210
+mcrxrx, 153
+mfbhrbe, 1129
+mfcr, 154
+mffs., 208
+mffs, 208
+mffscdrn, 208
+mffscdrni, 209
+mffsce, 208
+mffscrn, 209
+mffscrni, 209
+mffsl, 209
+mfmsr, 1202
+mfocrf, 154
+mfspr, 152
+mftb, 1120
+mfvscr, 522
+mfvsrd, 146
+mfvsrld, 146
+mfvsrwz, 147
+modsd, 117
+modsw, 111
+modud, 117
+moduw, 111
+msgclr, 1355
+msgclrp, 1357
+msgclru, 1354
+msgsnd, 1354
+msgsndp, 1356
+msgsndu, 1353
+msgsync, 1357
+mtcrf, 153
+mtfsb0., 211
+mtfsb0, 211
+mtfsb1., 211
+mtfsb1, 211
+mtfsf., 210
+mtfsf, 210
+mtfsfi., 210
+mtfsfi, 210
+mtmsr, 1200
+mtmsrd, 1201
+mtocrf, 153
+mtspr, 150
+mtvscr, 522
+mtvsrbm, 489
+mtvsrbmi, 491
+mtvsrd, 147
+mtvsrdd, 149
+mtvsrdm, 490
+mtvsrhm, 489
+mtvsrqm, 491
+mtvsrwa, 148
+mtvsrwm, 490
+mtvsrws, 149
+mtvsrwz, 148
+mulhd., 113
+mulhd, 113
+mulhdu., 113
+mulhdu, 113
+mulhw., 107
+mulhw, 107
+mulhwu., 107
+mulhwu, 107
+mulld., 113
+mulld, 113
+mulldo., 113
+mulldo, 113
+mulli, 107
+mullw., 107
+mullw, 107
+mullwo., 107
+mullwo, 107
+nand., 126
+nand, 126
+neg., 106
+neg, 106
+nego., 106
+nego, 106
+nor.,127
+nor, 127
+or., 127
+or, 127
+orc., 127
+orc, 127
+ori, 125
+oris, 126
+paddi, 102
+paste., 1094
+paste, 1094
+pdepd, 132
+pextd, 132
+plbz, 78
+pld, 83
+plfd, 178
+plfs, 176
+plha, 80
+plhz, 79
+plq, 91
+plwa, 82
+plwz, 81
+plxsd, 636
+plxssp, 641
+plxv, 643
+plxvp, 651
+pmxvbf16ger2, 853
+pmxvbf16ger2nn, 853
+pmxvbf16ger2np, 853
+pmxvbf16ger2pn, 853
+pmxvbf16ger2pp, 853
+pmxvf16ger2 , 897
+pmxvf16ger2nn, 897
+pmxvf16ger2np, 897
+pmxvf16ger2pn, 897
+pmxvf16ger2pp, 897
+pmxvf32ger, 901
+pmxvf32gernn, 901
+pmxvf32gernp, 901
+pmxvf32gerpn, 901
+pmxvf32gerpp, 901
+pmxvf64ger, 905
+pmxvf64gernn, 905
+pmxvf64gernp, 905
+pmxvf64gerpn, 905
+pmxvf64gerpp, 905
+pmxvi16ger2, 917
+pmxvi16ger2pp, 917
+pmxvi16ger2s, 919
+pmxvi16ger2spp, 919
+pmxvi4ger8, 909
+pmxvi4ger8pp, 909
+pmxvi8ger4, 912
+pmxvi8ger4pp, 912
+pmxvi8ger4spp, 915
+pnop, 156
+popcntb, 129
+popcntd, 130
+popcntw, 129
+prtyd, 130
+prtyw, 129
+pstb, 85
+pstd, 88
+pstfd, 183
+pstfs, 181
+psth, 86
+pstq, 92
+pstw, 87
+pstxsd, 664
+pstxssp, 668
+pstxv, 670
+pstxvp, 680
+rfebb, 1126
+rfid, 1178
+rfscv, 1177
+rldcl., 137
+rldcl, 137
+rldcr., 138
+rldcr, 138
+rldic., 137
+rldic, 137
+rldicl., 136
+rldicl, 136
+rldicr., 136
+rldicr, 136
+rldimi., 138
+rldimi, 138
+rlwimi., 134
+rlwimi, 134
+rlwinm., 133
+rlwinm, 133
+rlwnm., 134
+rlwnm, 134
+sc, 73
+scv, 73
+setb, 155
+setbc, 155
+setbcr, 155
+setnbc, 155
+setnbcr, 155
+slbfee., 1255
+slbia, 1251
+slbiag, 1252
+slbie, 1247
+slbieg, 1249
+slbmfee, 1255
+slbmfev, 1254
+slbmte, 1253
+slbsync, 1256
+sld., 141
+sld, 141
+slw., 139
+slw, 139
+srad., 141
+srad, 141
+sradi., 141
+sradi, 141
+sraw., 140
+sraw, 140
+srawi., 140
+srawi, 140
+srd., 141
+srd, 141
+srw., 139
+srw, 139
+stb, 85
+stbcix, 1191
+stbcx., 1105
+stbu, 85
+stbux, 85
+stbx, 85
+std, 88
+stdat, 1101
+stdbrx, 95
+stdcix, 1191
+stdcx., 1108
+stdu, 88
+stdux, 89
+stdx, 88
+stfd, 183
+stfdp, 186
+stfdpx, 186
+stfdu, 183
+stfdux, 184
+stfdx, 183
+stfiwx, 184
+stfs, 181
+stfsu, 181
+stfsux, 182
+stfsx, 181
+sth, 86
+sthbrx, 93
+sthcix, 1191
+sthcx., 1106
+sthu, 86
+sthux, 86
+sthx, 86
+stmw, 96
+stop, 1181
+stq, 92
+stqcx., 894
+stswi, 99
+stswx, 99
+stvebx, 298
+stvehx, 299
+stvewx, 300
+stvx, 301
+stvxl, 301
+stw, 87
+stwat, 1101
+stwbrx, 94
+stwcix, 1191
+stwcx., 1107
+stwu, 87
+stwux, 87
+stwx, 87
+stxsd, 664
+stxsdx, 665
+stxsibx, 666
+stxsihx, 666
+stxsiwx, 667
+stxssp, 668
+stxsspx, 669
+stxv, 670
+stxvb16x, 671
+stxvd2x, 672
+stxvh8x, 673
+stxvl, 674
+stxvll, 676
+stxvp, 680
+stxvpx, 681
+stxvrbx, 677
+stxvrdx, 677
+stxvrhx, 678
+stxvrwx, 678
+stxvw4x, 679
+stxvx, 682
+subf., 103
+subf, 103
+subfc., 104
+subfc, 104
+subfco., 104
+subfco, 104
+subfe., 104
+subfe, 104
+subfeo., 104
+subfeo, 104
+subfic, 103
+subfme, 105
+subfme., 105
+subfmeo, 105
+subfmeo., 105
+subfo., 103
+subfo, 103
+subfze., 105
+subfze, 105
+subfzeo., 105
+subfzeo, 105
+sync, 1112
+td, 124
+tdi, 124
+tlbie, 1257
+tlbiel, 1262
+tlbsync, 1266
+tw, 123
+twi, 123
+urfid, 1179
+vabsdub, 404
+vabsduh, 404
+vabsduw, 405
+vaddcuq, 356
+vaddcuw, 349
+vaddecuq, 356
+vaddeuqm, 355
+vaddfp, 448
+vaddsbs, 349
+vaddshs, 350
+vaddsws, 350
+vaddubm, 351
+vaddubs, 353
+vaddudm, 352 
+vadduhm, 351
+vadduhs, 353
+vadduqm, 355
+vadduwm, 352
+vadduws, 354
+vand, 428
+vandc, 428
+vavgsb, 401
+vavgsh, 402
+vavgsw, 403
+vavgub, 401
+vavguh, 402
+vavguw, 403
+vbpermd, 487
+vbpermq, 488
+vcfsx, 452
+vcfuged, 482
+vcfux, 452
+vcipher, 461
+vcipherlast, 461
+vclrlb, 502
+vclrrb, 502
+vclzb, 473
+vclzd, 475
+vclzdm, 475
+vclzh, 473
+vclzlsbb, 479  
+vclzw, 474
+vcmpbfp., 455
+vcmpbfp, 455
+vcmpeqfp., 456
+vcmpeqfp, 456
+vcmpequb., 414
+vcmpequb, 414
+vcmpequd, 417
+vcmpequd., 417
+vcmpequh., 415
+vcmpequh, 415
+vcmpequq., 418
+vcmpequq, 418
+vcmpequw., 416
+vcmpequw, 416
+vcmpgefp., 456
+vcmpgefp, 456
+vcmpgtfp., 457
+vcmpgtfp, 457
+vcmpgtsb., 419
+vcmpgtsb, 419
+vcmpgtsd, 422
+vcmpgtsd., 422
+vcmpgtsh., 420
+vcmpgtsh, 420
+vcmpgtsq., 423
+vcmpgtsq, 423
+vcmpgtsw., 421
+vcmpgtsw, 421
+vcmpgtub., 419
+vcmpgtub, 419
+vcmpgtud, 422
+vcmpgtud., 422
+vcmpgtuh., 420
+vcmpgtuh, 420
+vcmpgtuq., 423
+vcmpgtuq, 423
+vcmpgtuw., 421
+vcmpgtuw, 421
+vcmpneb, 424
+vcmpneb., 424
+vcmpneh, 425
+vcmpneh., 425
+vcmpnew, 426
+vcmpnew., 425
+vcmpnezb, 424
+vcmpnezb., 424
+vcmpnezh, 425
+vcmpnezh., 425
+vcmpnezw, 426
+vcmpnezw., 426
+vcmpsq, 427
+vcmpuq, 427
+vcntmbb, 495
+vcntmbd 496
+vcntmbh, 495
+vcntmbw, 496
+vctsxs, 451
+vctuxs, 451
+vctzb, 476
+vctzd, 478
+vctzdm, 478
+vctzh, 476
+vctzlsbb, 479
+vctzw, 477
+vdivesd, 387
+vdivesq, 389
+vdivesw, 385
+vdiveud, 387
+vdiveuq, 389
+vdiveuw, 385
+vdivsd, 386
+vdivsq, 388
+vdivsw, 384
+vdivud, 386
+vdivuq, 388
+vdivuw, 384
+veqv, 429
+vexpandbm, 492
+vexpanddm, 493
+vexpandhm, 492
+vexpandqm, 494
+vexpandwm, 493
+vexptefp, 458
+vextddvlx, 338
+vextddvrx, 338
+vextdubvlx, 335
+vextdubvrx, 335
+vextduhvlx, 336
+vextduhvrx, 336
+vextduwvlx, 337
+vextduwvrx, 337
+vextractbm, 497
+vextractd, 331
+vextractdm, 498
+vextracthm, 497
+vextractqm, 499
+vextractub, 330
+vextractuh, 330
+vextractuw, 331
+vextractwm, 498
+vextsb2d, 399
+vextsb2w, 398
+vextsd2q, 400
+vextsh2d, 399
+vextsh2w, 398
+vextsw2d, 400
+vextublx, 332
+vextubrx, 332
+vextuhlx, 333
+vextuhrx, 333
+vextuwlx, 334
+vextuwrx, 334
+vgbbd, 471
+vgnb, 472
+vinsblx, 341
+vinsbrx, 341
+vinsbvlx, 346
+vinsbvrx, 346
+vinsd, 345
+vinsdlx, 344
+vinsdrx, 344
+vinsertb, 339
+vinsertd, 340
+vinserth, 339
+vinsertw, 340
+vinshlx, 342
+vinshrx, 342
+vinshvlx, 347
+vinshvrx, 347
+vinsw, 345
+vinswlx, 343
+vinswrx, 343
+vinswvlx, 348
+vinswvrx, 348
+vlogefp, 459
+vmaddfp, 449
+vmaxfp, 450
+vmaxsb, 406
+vmaxsd, 409
+vmaxsh, 407  
+vmaxsw, 408 
+vmaxub, 406
+vmaxud, 409
+vmaxuh, 407
+vmaxuw, 408
+vmhaddshs, 377
+vmhraddshs, 377 
+vminfp, 450 
+vminsb, 410
+vminsd, 413
+vminsh, 411
+vminsw, 412
+vminub, 410 
+vminud, 413
+vminuh, 411
+vminuw, 412  
+vmladduhm, 378 
+vmodsd, 391
+vmodsq, 392
+vmodsw, 390
+vmodud, 391
+vmoduq, 392
+vmoduw, 390
+vmrgew, 318
+vmrghb, 315 
+vmrghh, 316
+vmrghw, 317  
+vmrglb, 315
+vmrglh, 316
+vmrglw, 317
+vmrgow, 318
+vmsumcud, 383
+vmsummbm, 379  
+vmsumshm, 379  
+vmsumshs, 380  
+vmsumubm, 378 
+vmsumudm, 382 
+vmsumuhm, 380  
+vmsumuhs, 381  
+vmul10cuq, 513
+vmul10ecuq, 514
+vmul10euq, 514
+vmul10uq, 513
+vmulesb, 365  
+vmulesd, 372
+vmulesh, 367  
+vmulesw, 369
+vmuleub, 366  
+vmuleud, 371
+vmuleuh, 368 
+vmuleuw, 370
+vmulhsd, 375
+vmulhsw, 373
+vmulhud, 375
+vmulhuw, 374
+vmulld, 376
+vmulosb, 365
+vmulosd, 372
+vmulosh, 367
+vmulosw, 369
+vmuloub, 366
+vmuloud, 371
+vmulouh, 368
+vmulouw, 370
+vmuluwm, 373
+vnand, 429
+vncipher, 462
+vncipherlast, 462
+vnegd, 397
+vnegw, 397
+vnmsubfp, 449 
+vnor, 429  
+vor, 429 
+vorc, 429
+vpdepd, 480
+vperm, 322  
+vpermr, 322
+vpermxor, 470
+vpextd, 481
+vpkpx, 304
+vpksdss, 307
+vpksdus, 307
+vpkshss, 305
+vpkshus, 305
+vpkswss, 306
+vpkswus, 306
+vpkudum, 310
+vpkudus, 310
+vpkuhum, 308
+vpkuhus, 308
+vpkuwum, 309
+vpkuwus, 309
+vpmsumb, 466
+vpmsumd, 469
+vpmsumh, 467
+vpmsumw, 468
+vpopcntb, 483
+vpopcntd, 484
+vpopcnth, 483
+vpopcntw, 484
+vprtybd, 485
+vprtybq, 486
+vprtybw, 485
+vrefp, 460
+vrfim, 453
+vrfin, 453
+vrfip, 454
+vrfiz, 454
+vrlb, 430
+vrld, 431
+vrldmi, 437
+vrldnm, 434
+vrlh, 430
+vrlq, 432
+vrlqmi, 438
+vrlqnm, 435
+vrlw, 431   
+vrlwmi, 436
+vrlwnm, 433
+vrsqrtefp, 460   
+vsbox, 463
+vsel, 323  
+vshasigmad, 464
+vshasigmaw, 465
+vsl, 326   
+vslb, 439   
+vsld, 440
+vsldbi, 324
+vsldoi, 324
+vslh, 439
+vslo, 327 
+vslq, 441
+vslv, 328
+vslw, 440
+vspltb, 319
+vsplth, 319
+vspltisb, 321
+vspltish, 321
+vspltisw, 321
+vspltw, 320
+vsr, 326
+vsrab, 445
+vsrad, 446
+vsrah, 445
+vsraq, 447
+vsraw, 446
+vsrb, 442
+vsrd, 443
+vsrdbi, 325
+vsrh, 443
+vsro, 327
+vsrq, 444
+vsrv, 328
+vsrw, 443
+vstribl., 500
+vstribl, 500
+vstribr., 500
+vstribr, 500
+vstrihl., 501
+vstrihl, 501
+vstrihr., 501
+vstrihr, 501
+vsubcuq, 364
+vsubcuw, 357
+vsubecuq, 364
+vsubeuqm, 363
+vsubfp, 448
+vsubsbs, 357
+vsubshs, 358
+vsubsws, 358
+vsububm, 359
+vsububs, 361
+vsubudm, 360
+vsubuhm, 359
+vsubuhs, 361
+vsubuqm, 363
+vsubuwm, 360
+vsubuws, 362
+vsum2sws, 394
+vsum4sbs, 395
+vsum4shs, 395
+vsum4ubs, 396
+vsumsws, 393
+vupkhpx, 314
+vupkhsb, 311
+vupkhsh, 312
+vupkhsw, 313
+vupklpx, 314
+vupklsb, 311
+vupklsh, 312
+vupklsw, 313
+vxor, 429
+wait, 1116
+xor., 126
+xor, 126
+xori, 126
+xoris, 126
+xsabsdp, 684
+xsabsqp, 684
+xsadddp, 685
+xsaddqp, 692
+xsaddqpo, 692
+xsaddsp, 690
+xscmpeqdp, 696
+xscmpeqqp, 697
+xscmpexpdp, 694
+xscmpexpqp, 695
+xscmpgedp, 698
+xscmpgeqp, 699
+xscmpgtdp, 700
+xscmpgtqp, 701
+xscmpodp, 702
+xscmpoqp, 704
+xscmpudp, 705
+xscmpuqp, 707
+xscpsgndp, 708
+xscpsgnqp, 708
+xscvdphp, 709
+xscvdpqp, 710
+xscvdpsp, 711
+xscvdpspn, 712
+xscvdpsxds, 713
+xscvdpsxws, 715
+xscvdpuxds, 717
+xscvdpuxws, 719
+xscvhpdp, 721
+xscvqpdp, 722
+xscvqpdpo, 722
+xscvqpsdz, 723
+xscvqpsqz, 725
+xscvqpswz, 727
+xscvqpudz, 729
+xscvqpuqz, 731
+xscvqpuwz, 733
+xscvsdqp, 740
+xscvspdp, 735
+xscvspdpn, 736
+xscvsqqp, 737
+xscvsxddp, 738
+xscvsxdsp, 739
+xscvudqp, 740
+xscvuqqp, 741
+xscvuxddp, 741
+xscvuxdsp, 742
+xsdivdp, 743
+xsdivqp, 745
+xsdivqpo, 745
+xsdivsp, 747
+xsiexpdp, 749
+xsiexpqp, 750
+xsmaddadp, 751
+xsmaddasp, 754
+xsmaddmdp, 751
+xsmaddmsp, 754
+xsmaddqp, 757
+xsmaddqpo, 757
+xsmaxcdp, 762
+xsmaxcqp, 764
+xsmaxdp, 760
+xsmaxjdp, 765
+xsmincdp, 769
+xsmincqp, 771
+xsmindp, 767
+xsminjdp, 772
+xsmsubadp, 774
+xsmsubasp, 777
+xsmsubmdp, 774
+xsmsubmsp, 777
+xsmsubqp, 780
+xsmsubqpo, 780
+xsmuldp, 783
+xsmulqp, 785
+xsmulqpo, 785
+xsmulsp, 878
+xsnabsdp, 789
+xsnabsqp, 789
+xsnegdp, 790
+xsnegqp, 790
+xsnmaddadp, 791
+xsnmaddasp, 796
+xsnmaddmdp, 791
+xsnmaddmsp, 796
+xsnmaddqp, 799
+xsnmaddqpo, 799
+xsnmsubadp, 802
+xsnmsubasp, 805
+xsnmsubmdp, 802
+xsnmsubmsp, 805
+xsnmsubqp, 808
+xsnmsubqpo, 808
+xsrdpi, 811
+xsrdpic, 812
+xsrdpim, 813
+xsrdpip, 814
+xsrdpiz, 815
+xsredp, 816
+xsresp, 817
+xsrqpi, 819
+xsrqpix, 819
+xsrqpxp, 821
+xsrsp, 823
+xsrsqrtedp, 824
+xsrsqrtesp, 825
+xssqrtdp, 827
+xssqrtqp, 829
+xssqrtqpo, 829
+xssqrtsp, 831
+xssubdp, 833
+xssubqp, 835
+xssubqpo, 835
+xssubsp, 837
+xstdivdp, 839
+xstsqrtdp, 840
+xststdcdp, 841
+xststdcqp, 842
+xststdcsp, 843
+xsxexpdp, 844
+xsxexpqp, 844
+xsxsigdp, 845
+xsxsigqp, 845
+xvabsdp, 846
+xvabssp, 846
+xvaddd, 847
+xvaddsp, 851
+xvbf16ger2, 853
+xvbf16ger2nn, 853
+xvbf16ger2np, 853
+xvbf16ger2pn, 853
+xvbf16ger2pp, 853
+xvcmpeqdp, 858
+xvcmpeqdp., 858
+xvcmpeqsp, 859
+xvcmpeqsp., 859
+xvcmpgedp, 860
+xvcmpgedp., 860
+xvcmpgesp, 861
+xvcmpgesp., 861
+xvcmpgtdp, 862
+xvcmpgtdp., 862
+xvcmpgtsp, 863
+xvcmpgtsp., 863
+xvcpsgndp, 864
+xvcpsgnsp, 864
+xvcvbf16sp, 865
+xvcvdpsp, 866
+xvcvdpsxds, 867
+xvcvdpsxws, 869
+xvcvdpuxds, 871
+xvcvdpuxws, 873
+xvcvhpsp, 875
+xvcvspbf16, 876
+xvcvspdp, 877
+xvcvsphp, 878
+xvcvspsxds, 879
+xvcvspsxws, 881
+xvcvspuxds, 883
+xvcvspuxws, 885
+xvcvsxddp, 887
+xvcvsxdsp, 888
+xvcvsxwdp, 889
+xvcvsxwsp, 889
+xvcvuxddp, 890
+xvcvuxdsp, 891
+xvcvuxwdp, 892
+xvcvuxwsp, 892
+xvdivdp, 893
+xvdivsp, 895
+xvf16ger2, 897
+xvf16ger2nn, 897
+xvf16ger2np, 897
+xvf16ger2pn, 897
+xvf16ger2pp, 897
+xvf32ger, 901
+xvf32gernn, 901
+xvf32gernp, 901
+xvf32gerpn, 901
+xvf32gerpp, 901
+xvf64ger, 905
+xvf64gernn, 905
+xvf64gernp, 905
+xvf64gerpn, 905
+xvf64gerpp, 905
+xvi16ger2, 917
+xvi16ger2pp, 917
+xvi16ger2s, 919
+xvi16ger2spp, 919
+xvi4ger8, 909
+xvi4ger8pp, 909
+xvi8ger4, 912
+xvi8ger4pp, 912
+xvi8ger4spp, 915
+xviexpdp, 922
+xviexpsp, 922
+xvmaddadp, 923
+xvmaddasp, 926
+xvmaddmdp, 923
+xvmaddmsp, 926
+xvmaxdp, 929
+xvmaxsp, 931
+xvmindp, 933
+xvminsp, 935
+xvmsubadp, 937
+xvmsubasp, 940
+xvmsubmdp, 937
+xvmsubmsp, 940
+xvmuldp, 943
+xvmulsp, 945
+xvnabsdp, 947
+xvnabssp, 947
+xvnegdp, 948
+xvnegsp, 948
+xvnmaddadp, 949
+xvnmaddasp, 953
+xvnmaddmdp, 949
+xvnmaddmsp, 953
+xvnmsubadp, 956
+xvnmsubasp, 959
+xvnmsubmdp, 956
+xvnmsubmsp, 959
+xvrdpi, 962
+xvrdpic, 963
+xvrdpim, 964
+xvrdpip, 965
+xvrdpiz, 965
+xvredp, 966
+xvresp, 967
+xvrspi, 968
+xvrspic, 969
+xvrspim, 970
+xvrspip, 971
+xvrspiz, 971
+xvrsqrtedp, 972
+xvrsqrtesp, 973
+xvsqrtdp, 974
+xvsqrtsp, 975
+xvsubdp, 976
+xvsubsp, 978
+xvtdivdp, 980
+xvtdivsp, 981
+xvtlsbb, 985
+xvtsqrtdp, 982
+xvtsqrtsp, 982
+xvtstdcdp, 983
+xvtstdcsp, 984
+xvxexpdp, 986
+xvxexpsp, 986
+xvxsigdp, 987
+xvxsigsp, 987
+xxblendvb, 988
+xxblendvd, 989
+xxblendvh, 988
+xxblendvw, 989
+xxbrd, 990
+xxbrh, 991
+xxbrq, 992
+xxbrw, 993
+xxeval, 993
+xxextractuw, 995
+xxgenpcvbm, 996
+xxgenpcvdm, 1002
+xxgenpcvhm, 998
+xxgenpcvwm, 1000
+xxinsertw, 995
+xxland, 1004
+xxlandc, 1004
+xxleqv, 1005
+xxlnand, 1005
+xxlnor, 1006
+xxlor, 1007
+xxlorc, 1006
+xxlxor, 1007
+xxmfacc, 1009
+xxmrghw, 1008
+xxmrglw, 1008
+xxmtacc, 1009
+xxperm, 1011
+xxpermdi, 1012
+xxpermr, 1011
+xxpermx, 1013
+xxsel, 1014
+xxsetaccz, 1015
+xxsldwi, 1016
+xxsplti32dx, 1018
+xxspltib, 1017
+xxspltidp, 1017
+xxspltiw, 1018
+xxspltw, 1019
+
 @PowerISA_V3.0.pdf [Power ISA Version 3.0 Novomber 30, 2015]
-bctar,58
-bctarl,58
-clrbhrb,62
-fmrgew,169
-fmrgow,170
-lqarx,893
-mfbhrbe,62
-msgclrp,1144
-msgsndp,1143
-rfebb,927
-stqcx.,894
-tabort.,913
-tabortdc.,915
-tabortdci.,915
-tabortwc.,914
-tabortwci.,914
-tbegin.,911
-tcheck,916
-tend.,912
-trechkpt.,988
-treclaim.,987
-tsr.,916
-addpcis,87
-cmpeqb,106
-cmprb,105
-cnttzw,113
-cnttzw.,113
-cnttzd,116
-cnttzd.,116
-copy,876
-cp_abort,878
-darn,97
-dtstsfi,222
-dtstsfiq,222
-extswsli,127
-extswsli.,127
-ldat,882
-ldmx,72
-lwat,882
-maddhd,99
-maddhdu,99
-maddld,99
-mcrxrx,137
-modsd,102
-modsw,94
-modud,102
-moduw,94
-msgsync,1144
-paste,877
-paste.,877
-setb,139
-slbieg,1043
-slbsync,1049
-stdat,884
-stop,975
-stwat,884
-wait,898
-bcdadd.,369
-bcdsub.,369
-vaddcuq,293
-vaddecuq,293
-vaddeuqm,293
-vaddudm,290
-vadduqm,290
-vbpermq,367
-vcipher,354
-vcipherlast,354
-vclzb,361
-vclzd,361
-vclzh,361
-vclzw,361
-vcmpequd,325
-vcmpequd.,325
-vcmpgtsd,326
-vcmpgtsd.,326
-vcmpgtud,328
-vcmpgtud.,328
-veqv,333
-vgbbd,360
-vmaxsd,320
-vmaxud,320
-vminsd,322
-vminud,322
-vmrgew,277
-vmrgow,277
-vmulesw,303
-vmuleuw,303
-vmulosw,303
-vmulouw,303
-vmuluwm,304
-vnand,333
-vncipher,355
-vncipherlast,355
-vorc,334
-vpermxor,359
-vpksdss,268
-vpksdus,269
-vpkudum,271
-vpkudus,271
-vpmsumb,357
-vpmsumd,357
-vpmsumh,358
-vpmsumw,358
-vpopcntb,366
-vpopcntd,366
-vpopcnth,366
-vpopcntw,366
-vrld,336
-vsbox,355
-vshasigmad,356
-vshasigmaw,356
-vsld,337
-vsrad,339
-vsrd,338
-vsubcuq,299
-vsubecuq,299
-vsubeuqm,299
-vsubudm,297
-vsubuqm,299
-vupkhsw,274
-vupklsw,274
-bcdcfn.,370
-bcdcfsq.,374
-bcdcfz.,371
-bcdcpsgn.,376
-bcdctn.,372
-bcdctsq.,374
-bcdctz.,373
-bcds.,377
-bcdsetsgn.,376
-bcdsr.,379
-bcdtrunc.,380
-bcdus.,378
-bcdutrunc.,381
-vabsdub,318
-vabsduh,318
-vabsduw,319
-vbpermd,367
-vclzlsbb,363
-vcmpneb,330
-vcmpneb.,330
-vcmpneh,331
-vcmpneh.,331
-vcmpnew,332
-vcmpnew.,332
-vcmpnezb,330
-vcmpnezb.,330
-vcmpnezh,331
-vcmpnezh.,331
-vcmpnezw,332
-vcmpnezw.,332
-vctzb,362
-vctzh,362
-vctzd,362
-vctzlsbb,363
-vctzw,362
-vextractd,287
-vextractub,287
-vextractuh,287
-vextractuw,287
-vextsb2d,314
-vextsb2w,314
-vextsh2d,314
-vextsh2w,314
-vextsw2d,315
-vextublx,364
-vextubrx,364
-vextuhlx,364
-vextuhrx,364
-vextuwlx,365
-vextuwrx,365
-vinsertb,288
-vinsertd ,288
-vinserth,288
-vinsertw,288
-vmul10cuq,375
-vmul10ecuq,375
-vmul10euq,375
-vmul10uq,375
-vnegd,313
-vnegw,313
-vpermr,280
-vprtybd,335
-vprtybq,335
-vprtybw,335
-vrldmi,341
-vrldnm,341
-vrlwmi,340
-vrlwnm,340
-vslv,285
-vsrv,285
-lxsiwax,502
-lxsiwzx,503
-lxsspx,504
-mfvsrd,129
-mfvsrwz,130
-mtvsrd,131
-mtvsrwa,131
-mtvsrwz,132
-stxsiwx,519
-stxsspx,521
-xsaddsp,537
-xscvdpspn,557
-xscvspdpn,578
-xscvsxdsp,579
-xscvuxdsp,581
-xsdivsp,586
-xsmaddasp,593
-xsmaddmsp,593
-xsmsubasp,614
-xsmsubmsp,614
-xsmulsp,624
-xsnmaddasp,633 
-xsnmaddmsp,633
-xsnmsubasp,642
-xsnmsubmsp,642
-xsresp,653
-xsrsp,658
-xsrsqrtesp,660
-xssqrtsp,664
-xssubsp,669
-xxleqv,790
-xxlnand,790
-xxlorc,791
-lxsd,499
-lxsibzx,501
-lxsihzx,501
-lxssp,504
-lxv,511
-lxvx,511
-lxvb16x,506
-lxvh8x,514
-lxvl,508
-lxvll,510
-lxvwsx,516
-mfvsrld,129
-mtvsrdd,132
-mtvsrws,133
-stxsd,517
-stxsibx,518
-stxsihx,518
-stxssp.502
-stxv,526
-stxvb16x,522 
-stxvh8x,524
-stxvl,526
-stxvll,528
-stxvx,529
-xsabsqp,531
-xsaddqp,539
-xsaddqpo,539
-xscmpeqdp,543
-xscmpexpdp,541
-xscmpexpqp,542
-xscmpgedp,544
-xscmpgtdp,545
-xscmpnedp,546
-xscmpoqp,549
-xscmpuqp,552
-xscpsgnqp,553
-xscvdphp,554
-xscvdpqp,555
-xscvhpdp,566
-xscvqpdp,567
-xscvqpdpo,567
-xscvqpsdz,568
-xscvqpswz,570
-xscvqpudz,572
-xscvqpuwz,574
-xscvsdqp,576
-xscvudqp,580
-xsdivqp,584
-xsdivqpo,584
-xsiexpdp,588
-xsiexpqp,589
-xsmaddqp,596
-xsmaddqpo,596
-xsmaxcdp,601
-xsmaxjdp,603
-xsmincdp,607
-xsminjdp,609
-xsmsubqp,617
-xsmsubqpo,617
-xsmulqp,622
-xsmulqpo,622
-xsnabsqp,626
-xsnegqp,627
-xsnmaddqp,636
-xsnmaddqpo,636
-xsnmsubqp,645
-xsnmsubqpo,645
-xsrqpi,654
-xsrqpix,654
-xsrqpxp,656
-xssqrtqp,662
-xssqrtqpo,662
-xssubqp,667
-xssubqpo,667
-xststdcdp,673
-xststdcqp,674
-xststdcsp,675
-xsxexpdp,676
-xsxexpqp,676
-xsxsigdp,677
-xsxsigqp,677
-xvcmpnedp,691
-xvcmpnedp.,691
-xvcmpnesp,692
-xvcmpnesp.,692
-xvcvhpsp,703
-xvcvsphp,705
-xviexpdp,722
-xviexpsp,722
-xvtstdcdp,782
-xvtstdcsp,783
-xvxexpdp,784
-xvxexpsp,784
-xvxsigdp,785
-xvxsigsp,785
-xxbrd,786
-xxbrh,786
-xxbrq,787
-xxbrw,787
-xxextractuw,788
-xxinsertw,788
-xxperm,794
-xxpermr,794
-xxspltib,796
+ldmx,72 
+xscmpnedp, 546
+xvcmpnedp, 691 
+xvcmpnedp., 691
+xvcmpnesp, 692
+xvcmpnesp., 692
+
+@PowerISA_V2.07B.pdf [Power ISA Version 2.07 B April 9, 2015]
+brinc, 625
+dcba, 801
+dcbfep, 1095
+dcbi, 1149
+dcblc, 1154
+dcbstep, 1094
+dcbtep, 1094
+dcbtls, 1153
+dcbtstep, 1097
+dcbtstls, 1153
+dcbzep, 1098
+dci, 1270
+dcread, 1273
+dlmzb., 704
+dlmzb, 704
+dnh, 1259 
+doze, 898
+dsn, 855
+eciwx, 857
+ecowx, 857
+efdabs, 691
+efdadd, 692
+efdcfs, 697
+efdcfsf, 695
+efdcfsi, 694
+efdcfsid, 695
+efdcfuf, 695
+efdcfui, 694
+efdcfuid, 695
+efdcmpeq, 693
+efdcmpgt, 693
+efdcmplt, 693
+efdctsf, 697
+efdctsi, 695
+efdctsidz, 696
+efdctsiz, 697
+efdctuf, 697
+efdctui, 695
+efdctuidz, 696
+efdctuiz, 697
+efddiv, 692
+efdmul, 692
+efdnabs, 691
+efdneg, 691
+efdsub, 692
+efdtsteq, 694
+efdtstgt, 693
+efdtstlt, 694
+efsabs, 684
+efsadd, 685
+efscfd, 698
+efscfsf, 689
+efscfsi, 689
+efscfuf, 689
+efscfui, 689
+efscmpeq, 687
+efscmpgt, 686
+efscmplt, 686
+efsctsf, 690
+efsctsi, 689
+efsctsiz, 690
+efsctuf, 690
+efsctui, 689
+efsctuiz, 690
+efsdiv, 685
+efsmul, 685
+efsnabs, 684
+efsneg, 684
+efssub, 685
+efststeq, 688
+efststgt, 687
+efststlt, 688
+ehpriv, 1074
+evabs, 625
+evaddiw, 625
+evaddsmiaaw, 625
+evaddssiaaw, 626
+evaddumiaaw, 626
+evaddusiaaw, 626
+evaddw, 626
+evand, 627
+evandc, 627
+evcmpeq, 627
+evcmpgts, 627
+evcmpgtu, 628
+evcmplts, 628
+evcmpltu, 628
+evcntlsw, 629
+evcntlzw, 629
+evdivws, 629
+evdivwu, 630
+eveqv, 630
+evextsb, 630
+evextsh, 630
+evfsabs, 676
+evfsadd, 677
+evfscfsf, 681
+evfscfsi, 681
+evfscfuf, 681
+evfscfui, 681
+evfscmpeq, 679
+evfscmpgt, 678
+evfscmplt, 678
+evfsctsf, 683
+evfsctsi, 682
+evfsctsiz, 682
+evfsctuf, 683
+evfsctui, 682
+evfsctuiz, 682
+evfsdiv, 677
+evfsmul, 677
+evfsnabs, 676
+evfsneg, 676
+evfssub, 677
+evfststeq, 680
+evfststgt, 679
+evfststlt, 680
+evldd, 631
+evlddepx, 1100
+evlddx, 631
+evldh, 631
+evldhx, 631
+evldw, 632
+evldwx, 632
+evlhhesplat, 632
+evlhhesplatx, 632
+evlhhossplat, 633
+evlhhossplatx, 633
+evlhhousplat, 633
+evlhhousplatx, 633
+evlwhe, 634
+evlwhex, 634
+evlwhos, 634
+evlwhosx, 634
+evlwhou, 635
+evlwhoux, 635
+evlwhsplat, 635
+evlwhsplatx, 635
+evlwwsplat, 636
+evlwwsplatx, 636
+evmergehi, 636
+evmergehilo, 637
+evmergelo, 636
+evmergelohi, 637
+evmhegsmfaa, 637
+evmhegsmfan, 637
+evmhegsmiaa, 638
+evmhegsmian, 638
+evmhegumiaa, 638
+evmhegumian, 638
+evmhesmf, 639
+evmhesmfa, 639
+evmhesmfaaw, 639
+evmhesmfanw, 639
+evmhesmi, 640
+evmhesmia, 640
+evmhesmiaaw, 640
+evmhesmianw, 640
+evmhessf, 641
+evmhessfa, 641
+evmhessfaaw, 642
+evmhessfanw, 642
+evmhessiaaw, 643
+evmhessianw, 643
+evmheumi, 644
+evmheumia, 644
+evmheumiaaw, 644
+evmheumianw, 644
+evmheusiaaw, 645
+evmheusianw, 645
+evmhogsmfaa, 646
+evmhogsmfan, 646
+evmhogsmiaa, 646
+evmhogsmian, 646
+evmhogumiaa, 647
+evmhogumian, 647
+evmhosmf, 647
+evmhosmfa, 647
+evmhosmfaaw, 648
+evmhosmfanw, 648
+evmhosmi, 648
+evmhosmia, 648
+evmhosmiaaw, 649
+evmhosmianw, 649
+evmhossf, 650
+evmhossfa, 650
+evmhossfaaw, 651
+evmhossfanw, 651
+evmhossiaaw, 652
+evmhossianw, 652
+evmhoumi, 652
+evmhoumia, 652
+evmhoumiaaw, 653
+evmhoumianw, 653
+evmhousiaaw, 653
+evmhousianw, 653
+evmra, 654
+evmwhsmf, 654
+evmwhsmfa, 654
+evmwhsmi, 654
+evmwhsmia, 654
+evmwhssf, 655
+evmwhssfa, 655
+evmwhumi, 655
+evmwhumia, 655
+evmwlsmiaaw, 656
+evmwlsmianw, 656
+evmwlssiaaw, 656
+evmwlssianw, 656
+evmwlumi, 657
+evmwlumia, 657
+evmwlumiaaw, 657
+evmwlumianw, 657
+evmwlusiaaw, 658
+evmwlusianw, 658
+evmwsmf, 658
+evmwsmfa, 658
+evmwsmfaa, 659
+evmwsmfan, 659
+evmwsmi, 659
+evmwsmia, 659
+evmwsmiaa, 659
+evmwsmian, 659
+evmwssf, 660
+evmwssfa, 660
+evmwssfaa, 661
+evmwssfan, 661
+evmwumi, 661
+evmwumia, 661
+evmwumiaa, 662
+evmwumian, 662
+evnand, 662
+evneg, 662
+evnor, 663
+evor, 663
+evorc, 663
+evrlw, 663
+evrlwi, 664
+evrndw, 664
+evsel, 664
+evslw, 665
+evslwi, 665
+evsplatfi, 665
+evsplati, 665
+evsrwis, 665
+evsrwiu, 665
+evsrws, 666
+evsrwu, 666
+evstdd, 666
+evstddepx, 1100
+evstddx, 666
+evstdh, 667
+evstdhx, 667
+evstdw, 667
+evstdwx, 667
+evstwhe, 668
+evstwhex, 668
+evstwho, 668
+evstwhox, 668
+evstwwe, 668
+evstwwex, 668
+evstwwo, 669
+evstwwox, 669
+evsubfsmiaaw, 669
+evsubfssiaaw, 669
+evsubfumiaaw, 670
+evsubfusiaaw, 670
+evsubfw, 670
+evsubifw, 670
+evxor, 670
+icbiep, 1098
+icblc, 1154
+icbtls, 1154
+ici, 1270
+icread, 1274
+lbdx, 853
+lbepx, 1090
+lddx, 853
+ldepx, 1091
+lfddx, 853
+lfdepx, 1099
+lhdx, 853
+lhepx, 1090
+lvepx, 1101
+lvepxl, 1101
+lwdx, 853
+lwepx, 1091
+macchwo., 706
+macchwo, 706
+macchw., 706
+macchw, 706
+macchwso., 706
+macchwso, 706
+macchws., 706
+macchws, 706
+macchwsuo., 707
+macchwsuo, 707
+macchwsu., 707
+macchwsu, 707
+macchwuo., 707
+macchwuo, 707
+macchwu., 707
+macchwu, 707
+machhwo., 708
+machhwo, 708
+machhw., 708
+machhw, 708
+machhwso., 708
+machhwso, 708
+machhws., 708
+machhws, 708
+machhwsuo., 709
+machhwsuo, 709
+machhwsu., 709
+machhwsu, 709
+machhwuo., 709
+machhwuo, 709
+machhwu., 709
+machhwu, 709
+maclhwo., 710
+maclhwo, 710
+maclhw., 710
+maclhw, 710
+maclhwso., 710
+maclhwso, 710
+maclhws., 710
+maclhws, 710
+maclhwsuo., 711
+maclhwsuo, 711
+maclhwsu., 711
+maclhwsu, 711
+maclhwuo., 711
+maclhwuo, 711
+maclhwu., 711
+maclhwu, 711
+mbar, 821
+mcrxr, 143
+mfpmr, 1288
+mfsr, 958
+mfsrin, 958
+mtdcr, 1085
+mtdcrux, 143
+mtdcrx, 1085
+mtpmr, 1288
+mtsr, 957
+mtsrin, 957 
+mulchw., 711
+mulchw, 711
+mulchwu., 711
+mulchwu, 711
+mulhhw., 712
+mulhhw, 712
+mulhhwu., 712
+mulhhwu, 712
+mullhw., 712
+mullhw, 712
+mullhwu., 712
+mullhwu, 712
+nap, 898
+nmacchwo., 713
+nmacchwo, 713
+nmacchw., 713
+nmacchw, 713
+nmacchwso., 713
+nmacchwso, 713
+nmacchws., 713
+nmacchws, 713
+nmachhwo., 714
+nmachhwo, 714
+nmachhw., 714
+nmachhw, 714
+nmachhwso., 714
+nmachhwso, 714
+nmachhws., 714
+nmachhws, 714
+nmaclhwo., 715
+nmaclhwo, 715
+nmaclhw., 715
+nmaclhw, 715
+nmaclhwso., 715
+nmaclhwso, 715
+nmaclhws., 715
+nmaclhws, 715
+rfci, 1072
+rfdi, 1073
+rfgi, 1074
+rfi, 1072
+rfmci, 1073
+rvwinkle, 899
+sleep, 899
+stbdx, 854
+stbepx, 1092
+stddx, 854
+stdepx, 1093
+stfddx, 854
+stfdepx, 1099
+sthdx, 854
+sthepx, 1092
+stvepx, 1102
+stvepxl, 1102
+stwdx, 854
+stwepx, 1093
+subfic, 100
+subfme., 101
+subfme, 101
+subfmeo., 101
+subfmeo, 101
+tabort., 839
+tabortdc., 841
+tabortdci., 841
+tabortwc., 840
+tabortwci., 840
+tbegin., 837
+tcheck, 842
+tend., 838
+tlbia, 963
+tlbilx, 1165
+tlbivax, 1163
+tlbre, 1170
+tlbsrx., 1138
+tlbsx, 1136
+tlbwe, 1141
+trechkpt., 911
+treclaim., 910
+tsr., 841
+wrtee, 1056
+wrteei, 1057
+e_b, 1307
+e_bl, 1307
+se_b, 1307 	
+se_bl, 1307 
+e_bc, 1307
+e_bcl, 1307
+se_bc, 1307
+se_bctr, 1308			
+se_bctrl, 1308			
+se_blr, 1308			
+se_blrl, 1308			
+se_sc, 1309				
+e_sc, 1309			
+se_illegal, 1310		
+se_rfmci, 1310			
+se_rfci, 1311	
+se_rfi, 1311		
+se_rfdi, 1312		
+se_rfgi, 1312
+e_crand, 1313
+e_crandc, 1313
+e_creqv, 1313
+e_crnand, 1313
+e_crnor, 1314
+e_cror, 1314
+e_crorc, 1314
+e_crxor, 1314
+e_mcrf, 1314
+e_lbz, 1317
+se_lbz, 1317
+e_lbzu, 1317
+e_lha, 1317
+e_lhz, 1317
+se_lhz, 1317
+e_lhau, 1318
+e_lhzu, 1318
+e_lwz, 1318
+se_lwz, 1318
+e_lwzu, 1319
+e_stb, 1320
+se_stb, 1320
+e_stbu, 1321	
+e_sth, 1321
+se_sth, 1321
+e_sthu, 1321 
+e_stw, 1322
+se_stw, 1322
+e_stwu, 1322
+e_lmw, 1323
+e_stmw, 1323
+se_add, 1325
+e_add16i, 1325
+e_add2i., 1325
+e_add2is, 1325
+e_addi, 1325
+e_addi., 1325
+se_addi, 1325
+e_addic, 1326
+e_addic., 1326
+se_sub, 1326
+se_subf, 1326
+e_subfic, 1326
+e_subfic., 1326
+se_subi, 1326
+se_subi., 1326
+e_mulli, 1327
+e_mull2i., 1327
+se_mullw, 1327
+se_neg, 1327
+se_btsti, 1328
+e_cmp16i., 1328
+e_cmpi, 1329
+se_cmp, 1329
+se_cmpi, 1329
+e_cmpl16i., 1329
+e_cmpli, 1330
+se_cmpl, 1330
+se_cmpli, 1330
+e_cmph, 1330
+se_cmph, 1331
+e_cmph16i., 1331
+e_cmphl, 1331
+se_cmphl, 1331 
+e_cmphl16i., 1332
+e_and2i., 1333
+e_and2is., 1333
+e_andi, 1333
+e_andi., 1333
+se_andi, 1333
+e_or2i, 1334
+e_or2is, 1334
+e_ori, 1334
+e_ori., 1334
+e_xori, 1334
+e_xori., 1334
+se_and, 1334
+se_and., 1334
+se_andc, 1334
+se_or, 1335
+se_not, 1335
+se_bclri, 1335
+se_bgeni, 1335
+se_bmaski, 1335
+se_bseti, 1335
+se_extsb, 1336
+se_extsh, 1336
+se_extzb, 1336
+se_extzh, 1336
+e_li, 1336
+se_li, 1336
+e_lis, 1336
+se_mfar, 1337
+se_mr, 1337
+se_mtar, 1337
+e_rlw, 1338
+e_rlw., 1338
+e_rlwi, 1338
+e_rlwi., 1338
+e_rlwimi, 1338
+e_rlwinm, 1338
+e_slwi, 1339
+e_slwi., 1339
+se_slwi, 1339
+se_slw, 1339
+se_srawi, 1339
+se_sraw, 1340
+e_srwi, 1340
+e_srwi., 1340
+se_srwi, 1340
+se_srw, 1340
+se_mfctr, 1341
+se_mtctr, 1341
+se_mflr, 1341
+se_mtlr, 1341
+se_isync, 1342
+
+@PowerISA_V2.06_PUBLIC.pdf [Power ISA Version 2.06 January 30, 2009]
+lxsdux, 366
+lxvd2ux, 366
+lxvw4ux, 367
+stxsdux, 368
+stxvd2ux, 368
+stxvw4ux, 369
