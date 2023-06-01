@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.pef;
 
-import ghidra.app.util.bin.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.app.util.bin.*;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * See Apple's -- PEFBinaryFormat.h
@@ -103,6 +103,7 @@ public class LoaderRelocationHeader implements StructConverter {
 		return _relocations;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		return StructConverterUtil.toDataType(getClass());
 	}
