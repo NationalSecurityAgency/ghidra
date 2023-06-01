@@ -2,5 +2,6 @@
 ##MODULE IP: JSch License
 Module.manifest||GHIDRA||||END|
 data/scripts/fallback_info_proc_mappings.gdb||GHIDRA||||END|
+data/scripts/fallback_maintenance_info_sections.gdb||GHIDRA||||END|
 data/scripts/getpid-linux-i386.gdb||GHIDRA||||END|
 data/scripts/wine32_info_proc_mappings.gdb||GHIDRA||||END|
