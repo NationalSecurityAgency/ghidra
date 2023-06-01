@@ -42,6 +42,7 @@
         </pentry>
       </output>
       <unaffected>
+        <register name="r13"/>
         <register name="r14"/>
         <register name="r15"/>
         <register name="r16"/>
