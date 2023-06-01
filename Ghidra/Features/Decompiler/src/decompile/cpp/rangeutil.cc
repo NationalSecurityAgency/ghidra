@@ -1322,15 +1322,13 @@ bool CircleRange::pushForwardBinary(OpCode opc,const CircleRange &in1,const Circ
       int4 sa = (int4)in2.left;
       mask = calc_mask(outSize);
       step = 1;			// Lose any step
-      intb valLeft = in1.left;
-      intb valRight = in1.right;
       int4 bitPos = 8*inSize - 1;
-      sign_extend(valLeft,bitPos);
-      sign_extend(valRight,bitPos);
+      intb valLeft = sign_extend(in1.left,bitPos);
+      intb valRight = sign_extend(in1.right,bitPos);
       if (valLeft >= valRight) {
 	valRight = (intb)(mask >> 1);	// Max positive
 	valLeft = valRight + 1;		// Min negative
-	sign_extend(valLeft,bitPos);
+	valLeft = sign_extend(valLeft,bitPos);
       }
       left = (valLeft >> sa) & mask;
       right = (valRight >> sa) & mask;

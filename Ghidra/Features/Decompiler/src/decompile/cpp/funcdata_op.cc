@@ -994,8 +994,7 @@ bool Funcdata::replaceLessequal(PcodeOp *op)
   else
     return false;
 
-  val = vn->getOffset();	// Treat this as signed value
-  sign_extend(val,8*vn->getSize()-1);
+  val = sign_extend(vn->getOffset(),8*vn->getSize()-1);
   if (op->code() == CPUI_INT_SLESSEQUAL) {
     if ((val<0)&&(val+diff>0)) return false; // Check for sign overflow
     if ((val>0)&&(val+diff<0)) return false;
