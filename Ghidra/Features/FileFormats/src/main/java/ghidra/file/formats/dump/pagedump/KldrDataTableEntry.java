@@ -34,7 +34,7 @@ public class KldrDataTableEntry implements StructConverter {
 	private long NonPagedDebugInfo;
 	private long DllBase;
 	private long EntryPoint;
-	private int SizeOfImage;
+	private long SizeOfImage;
 	private long FullDllName;
 	private long BaseDllName;
 	private int Flags;
@@ -69,7 +69,7 @@ public class KldrDataTableEntry implements StructConverter {
 		setNonPagedDebugInfo(reader.readNextPointer());
 		setDllBase(reader.readNextPointer());
 		setEntryPoint(reader.readNextPointer());
-		setSizeOfImage(reader.readNextInt());
+		setSizeOfImage(reader.readNextUnsignedInt());
 		reader.readNextInt();
 		reader.readNextPointer();
 		setFullDllName(reader.readNextPointer());
@@ -89,6 +89,7 @@ public class KldrDataTableEntry implements StructConverter {
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
 
@@ -152,11 +153,11 @@ public class KldrDataTableEntry implements StructConverter {
 		EntryPoint = entryPoint;
 	}
 
-	public int getSizeOfImage() {
+	public long getSizeOfImage() {
 		return SizeOfImage;
 	}
 
-	public void setSizeOfImage(int sizeOfImage) {
+	public void setSizeOfImage(long sizeOfImage) {
 		SizeOfImage = sizeOfImage;
 	}
 

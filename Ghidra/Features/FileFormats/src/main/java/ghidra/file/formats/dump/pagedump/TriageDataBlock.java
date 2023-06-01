@@ -27,7 +27,7 @@ public class TriageDataBlock implements StructConverter {
 
 	private long address;
 	private int offset;
-	private int size;
+	private long size;
 
 	private DumpFileReader reader;
 	private long index;
@@ -46,7 +46,7 @@ public class TriageDataBlock implements StructConverter {
 
 		setAddress(reader.readNextPointer());
 		setOffset(reader.readNextInt());
-		setSize(reader.readNextInt());
+		setSize(reader.readNextUnsignedInt());
 
 	}
 
@@ -79,11 +79,11 @@ public class TriageDataBlock implements StructConverter {
 		this.offset = offset;
 	}
 
-	public int getSize() {
+	public long getSize() {
 		return size;
 	}
 
-	public void setSize(int size) {
+	public void setSize(long size) {
 		this.size = size;
 	}
 

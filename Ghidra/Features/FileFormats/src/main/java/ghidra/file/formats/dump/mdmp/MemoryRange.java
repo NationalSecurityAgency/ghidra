@@ -27,7 +27,7 @@ public class MemoryRange implements StructConverter {
 	public final static String NAME = "MINIDUMP_MEMORY_RANGE";
 
 	private long startOfMemoryRange;
-	private int dataSize;
+	private long dataSize;
 	private int RVA;
 
 	private DumpFileReader reader;
@@ -44,7 +44,7 @@ public class MemoryRange implements StructConverter {
 		reader.setPointerIndex(index);
 
 		setStartOfMemoryRange(reader.readNextLong());
-		setDataSize(reader.readNextInt());
+		setDataSize(reader.readNextUnsignedInt());
 		setRVA(reader.readNextInt());
 
 	}
@@ -52,6 +52,7 @@ public class MemoryRange implements StructConverter {
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
 
@@ -72,11 +73,11 @@ public class MemoryRange implements StructConverter {
 		this.startOfMemoryRange = startOfMemoryRange;
 	}
 
-	public int getDataSize() {
+	public long getDataSize() {
 		return dataSize;
 	}
 
-	public void setDataSize(int dataSize) {
+	public void setDataSize(long dataSize) {
 		this.dataSize = dataSize;
 	}
 
