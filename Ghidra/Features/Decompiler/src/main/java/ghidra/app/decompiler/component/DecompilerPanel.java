@@ -1297,7 +1297,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private class DecompilerFieldPanel extends FieldPanel {
 
 		public DecompilerFieldPanel(LayoutModel model) {
-			super(model);
+			super(model, "Decompiler");
+			// In the decompiler each field represents a line, so make the field description 
+			// simply be the line number
+			setFieldDescriptionProvider(
+				(l, f) -> "line " + (l.getIndex().intValue() + 1) + ", " + f.getText());
 		}
 
 		/**

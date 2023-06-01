@@ -107,8 +107,8 @@ public class SBFunction {
     return lldbJNI.SBFunction_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBFunction___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBFunction___repr__(swigCPtr, this);
   }
 
 }

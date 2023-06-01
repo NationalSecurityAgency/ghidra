@@ -15,14 +15,20 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import java.io.IOException;
 import java.util.Set;
 
-import java.io.IOException;
-
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
+/**
+ * Golang type info about a specific map type.
+ * <p>
+ * See {@link GoRttiMapper#getMapGoType()} or the "runtime.hmap" type for the definition of
+ * a instance of a map variable in memory. 
+ */
 @StructureMapping(structureName = "runtime.maptype")
 public class GoMapType extends GoType {
 
@@ -51,6 +57,7 @@ public class GoMapType extends GoType {
 	private int flags;
 
 	public GoMapType() {
+		// empty
 	}
 
 	@Markup

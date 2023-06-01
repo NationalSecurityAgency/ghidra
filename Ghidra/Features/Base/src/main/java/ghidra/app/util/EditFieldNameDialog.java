@@ -15,13 +15,13 @@
  */
 package ghidra.app.util;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-import docking.ComponentProvider;
 import docking.DialogComponentProvider;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
@@ -110,21 +110,13 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 	}
 
 	public void editField(DataTypeComponent dataTypeComponent, Program p) {
-		ComponentProvider componentProvider =
-			tool.getComponentProvider(PluginConstants.CODE_BROWSER);
-		JComponent component = componentProvider.getComponent();
-		editField(dataTypeComponent, p, component);
-	}
-
-	public void editField(DataTypeComponent dataTypeComponent, Program p,
-			Component centeredOverComponent) {
 		this.dtComp = dataTypeComponent;
 		this.program = p;
 		String name = getCurrentFieldName();
 		setTitle("Edit Field Name: " + dataTypeComponent.getParent().getName() + "." + name);
 		fieldName.setText(name);
 		clearStatusText();
-		tool.showDialog(this, centeredOverComponent);
+		tool.showDialog(this);
 	}
 
 	/**

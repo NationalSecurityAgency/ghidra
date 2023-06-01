@@ -25,6 +25,7 @@ import docking.widgets.fieldpanel.*;
 import ghidra.app.plugin.core.functiongraph.FGColorProvider;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
+import ghidra.app.util.viewer.field.ListingFieldDescriptionProvider;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.program.model.address.AddressSetView;
@@ -142,7 +143,8 @@ public class FGVertexListingPanel extends ListingPanel {
 	private class FGVertexFieldPanel extends FieldPanel {
 
 		public FGVertexFieldPanel(LayoutModel model) {
-			super(model);
+			super(model, "Function Graph Listing Vertex");
+			setFieldDescriptionProvider(new ListingFieldDescriptionProvider());
 		}
 
 		@Override

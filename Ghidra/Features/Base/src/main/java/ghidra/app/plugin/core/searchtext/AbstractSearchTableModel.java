@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.searchtext;
 
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.query.ProgramLocationPreviewTableModel;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
@@ -49,9 +49,9 @@ public abstract class AbstractSearchTableModel extends ProgramLocationPreviewTab
 		this.tool = tool;
 		this.set = set;
 		this.options = options;
-		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = tool.getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		searchLimit =
-			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, SearchConstants.DEFAULT_SEARCH_LIMIT);
 	}
 
 	@Override

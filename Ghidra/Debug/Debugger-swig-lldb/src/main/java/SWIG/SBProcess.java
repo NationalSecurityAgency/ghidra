@@ -323,8 +323,12 @@ public class SBProcess {
     return lldbJNI.SBProcess_IsInstrumentationRuntimePresent(swigCPtr, this, type.swigValue());
   }
 
+  public SBError SaveCore(String file_name, String flavor, SaveCoreStyle core_style) {
+    return new SBError(lldbJNI.SBProcess_SaveCore__SWIG_0(swigCPtr, this, file_name, flavor, core_style.swigValue()), true);
+  }
+
   public SBError SaveCore(String file_name) {
-    return new SBError(lldbJNI.SBProcess_SaveCore(swigCPtr, this, file_name), true);
+    return new SBError(lldbJNI.SBProcess_SaveCore__SWIG_1(swigCPtr, this, file_name), true);
   }
 
   public SBError GetMemoryRegionInfo(java.math.BigInteger load_addr, SBMemoryRegionInfo region_info) {
@@ -347,8 +351,8 @@ public class SBProcess {
     return new SBError(lldbJNI.SBProcess_DeallocateMemory(swigCPtr, this, ptr), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBProcess___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBProcess___repr__(swigCPtr, this);
   }
 
   public final static int eBroadcastBitStateChanged = lldbJNI.SBProcess_eBroadcastBitStateChanged_get();

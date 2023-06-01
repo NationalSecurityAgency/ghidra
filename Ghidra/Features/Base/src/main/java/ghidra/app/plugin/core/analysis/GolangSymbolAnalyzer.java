@@ -28,6 +28,7 @@ import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
 import ghidra.app.util.bin.format.golang.*;
 import ghidra.app.util.bin.format.golang.rtti.GoModuledata;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
+import ghidra.app.util.bin.format.golang.structmapping.MarkupSession;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
@@ -80,20 +81,22 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			programContext.discoverGoTypes(monitor);
 
 			GoModuledata firstModule = programContext.getFirstModule();
-			programContext.labelStructure(firstModule, "firstmoduledata");
+
 
 			UnknownProgressWrappingTaskMonitor upwtm =
 				new UnknownProgressWrappingTaskMonitor(monitor, 100);
-			programContext.setMarkupTaskMonitor(upwtm);
 			upwtm.initialize(0);
 			upwtm.setMessage("Marking up Golang RTTI structures");
-			programContext.markup(firstModule, false);
-			programContext.setMarkupTaskMonitor(null);
+
+			MarkupSession markupSession = programContext.createMarkupSession(upwtm);
+
+			markupSession.labelStructure(firstModule, "firstmoduledata");
+			markupSession.markup(firstModule, false);
 
 			markupMiscInfoStructs(program);
-			markupWellknownSymbols(programContext);
+			markupWellknownSymbols(programContext, markupSession);
 			fixupNoReturnFuncs(program);
-			setupProgramContext(programContext);
+			setupProgramContext(programContext, markupSession);
 			programContext.recoverDataTypes(monitor);
 
 			if (analyzerOptions.createBootstrapDatatypeArchive) {
@@ -121,19 +124,20 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				analyzerOptions.createBootstrapDatatypeArchive);
 	}
 
-	private void markupWellknownSymbols(GoRttiMapper programContext) throws IOException {
+	private void markupWellknownSymbols(GoRttiMapper programContext, MarkupSession session)
+			throws IOException {
 		Program program = programContext.getProgram();
 		
 		Symbol g0 = SymbolUtilities.getUniqueSymbol(program, "runtime.g0");
 		Structure gStruct = programContext.getGhidraDataType("runtime.g", Structure.class);
 		if (g0 != null && gStruct != null) {
-			programContext.markupAddressIfUndefined(g0.getAddress(), gStruct);
+			session.markupAddressIfUndefined(g0.getAddress(), gStruct);
 		}
 		
 		Symbol m0 = SymbolUtilities.getUniqueSymbol(program, "runtime.m0");
 		Structure mStruct = programContext.getGhidraDataType("runtime.m", Structure.class);
 		if (m0 != null && mStruct != null) {
-			programContext.markupAddressIfUndefined(m0.getAddress(), mStruct);
+			session.markupAddressIfUndefined(m0.getAddress(), mStruct);
 		}
 	}
 
@@ -225,7 +229,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		return newMB.getStart();
 	}
 
-	private void setupProgramContext(GoRttiMapper programContext) throws IOException {
+	private void setupProgramContext(GoRttiMapper programContext, MarkupSession session)
+			throws IOException {
 		Program program = programContext.getProgram();
 		GoRegisterInfo goRegInfo = GoRegisterInfoManager.getInstance()
 				.getRegisterInfoForLang(program.getLanguage(),
@@ -269,14 +274,14 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				: null;
 
 		if (zerobase == null) {
-			programContext.labelAddress(contextMemoryAddr.add(zerobaseSymbol),
+			session.labelAddress(contextMemoryAddr.add(zerobaseSymbol),
 				ARTIFICIAL_RUNTIME_ZEROBASE_SYMBOLNAME);
 		}
 
 		if (gStruct != null) {
 			Address gAddr = contextMemoryAddr.add(gStructOffset);
-			programContext.markupAddressIfUndefined(gAddr, gStruct);
-			programContext.labelAddress(gAddr, "CURRENT_G");
+			session.markupAddressIfUndefined(gAddr, gStruct);
+			session.labelAddress(gAddr, "CURRENT_G");
 
 			Register currentGoroutineReg = goRegInfo.getCurrentGoroutineRegister();
 			if (currentGoroutineReg != null && txtMemblock != null) {
@@ -295,7 +300,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 		if (mStruct != null) {
 			Address mAddr = contextMemoryAddr.add(mStructOffset);
-			programContext.markupAddressIfUndefined(mAddr, mStruct);
+			session.markupAddressIfUndefined(mAddr, mStruct);
 		}
 	}
 
@@ -338,8 +343,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	 * <p>
 	 * The zerobase symbol is used as the location of parameters that are zero-length.
 	 * 
-	 * @param prog
-	 * @return
+	 * @param prog {@link Program}
+	 * @return {@link Address} of the runtime.zerobase, or artificial substitute
 	 */
 	public static Address getZerobaseAddress(Program prog) {
 		Symbol zerobaseSym = SymbolUtilities.getUniqueSymbol(prog, "runtime.zerobase");

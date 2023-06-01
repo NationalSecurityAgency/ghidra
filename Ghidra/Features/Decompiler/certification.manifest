@@ -56,6 +56,7 @@ src/decompile/datatests/retstruct.xml||GHIDRA||||END|
 src/decompile/datatests/sbyte.xml||GHIDRA||||END|
 src/decompile/datatests/skipnext2.xml||GHIDRA||||END|
 src/decompile/datatests/statuscmp.xml||GHIDRA||||END|
+src/decompile/datatests/switchind.xml||GHIDRA||||END|
 src/decompile/datatests/threedim.xml||GHIDRA||||END|
 src/decompile/datatests/twodim.xml||GHIDRA||||END|
 src/decompile/datatests/union_datatype.xml||GHIDRA||||END|

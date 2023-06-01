@@ -25,7 +25,6 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.Memory;
-import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 
 @StructureMapping(structureName = "runtime.slice")
@@ -45,29 +44,34 @@ public class GoSlice {
 	private long cap;
 
 	public GoSlice() {
+		// emtpy
 	}
 
 	public GoSlice(long array, long len, long cap) {
-		this.array = array;
-		this.len = len;
-		this.cap = cap;
+		this(array, len, cap, null);
 	}
 
 	public GoSlice(long array, long len, long cap, GoRttiMapper programContext) {
-		this(array, len, cap);
+		this.array = array;
+		this.len = len;
+		this.cap = cap;
 		this.programContext = programContext;
 	}
 
 	/**
 	 * Return a artificial view of a portion of this slice's contents.
 	 * 
-	 * @param startElement
-	 * @param elementCount
-	 * @param elementSize
-	 * @return
+	 * @param startElement index of element that will be the new sub-slice's starting element
+	 * @param elementCount number of elements to include in new sub-slice
+	 * @param elementSize size of an individual element
+	 * @return new {@link GoSlice} instance that is limited to a portion of this slice
 	 */
 	public GoSlice getSubSlice(long startElement, long elementCount, long elementSize) {
 		return new GoSlice(array + (startElement * elementSize), elementCount, elementCount, programContext);
+	}
+
+	public boolean isValid() {
+		return array != 0 && isValid(1);
 	}
 
 	public boolean isValid(int elementSize) {
@@ -110,10 +114,10 @@ public class GoSlice {
 	 * Reads the content of the slice, treating each element as an instance of the specified
 	 * structure mapped class.
 	 * 
-	 * @param <T>
-	 * @param clazz element type
+	 * @param <T> struct mapped type of element
+	 * @param clazz element type 
 	 * @return list of instances
-	 * @throws IOException
+	 * @throws IOException if error reading an element
 	 */
 	public <T> List<T> readList(Class<T> clazz) throws IOException {
 		return readList((reader) -> programContext.readStructure(clazz, reader));
@@ -123,10 +127,10 @@ public class GoSlice {
 	 * Reads the contents of the slice, treating each element as an instance of an object that can
 	 * be read using the supplied reading function.
 	 * 
-	 * @param <T>
+	 * @param <T> struct mapped type of element
 	 * @param readFunc function that will read an instance from a BinaryReader
 	 * @return list of instances
-	 * @throws IOException
+	 * @throws IOException if error reading an element
 	 */
 	public <T> List<T> readList(ReaderFunction<T> readFunc) throws IOException {
 		List<T> result = new ArrayList<>();
@@ -171,12 +175,13 @@ public class GoSlice {
 	 * @param elementClazz structure mapped class of the element of the array  
 	 * @param ptr boolean flag, if true the element type is really a pointer to the supplied
 	 * data type
+	 * @param session state and methods to assist marking up the program
 	 * @throws IOException if error
 	 */
-	public void markupArray(String sliceName, Class<?> elementClazz, boolean ptr)
-			throws IOException {
+	public void markupArray(String sliceName, Class<?> elementClazz, boolean ptr,
+			MarkupSession session) throws IOException {
 		DataType dt = programContext.getStructureDataType(elementClazz);
-		markupArray(sliceName, dt, ptr);
+		markupArray(sliceName, dt, ptr, session);
 	}
 
 	/**
@@ -186,11 +191,12 @@ public class GoSlice {
 	 * @param elementType Ghidra datatype of the array elements, null ok if ptr == true 
 	 * @param ptr boolean flag, if true the element type is really a pointer to the supplied
 	 * data type
+	 * @param session state and methods to assist marking up the program
 	 * @throws IOException if error
 	 */
-	public void markupArray(String sliceName, DataType elementType, boolean ptr)
-			throws IOException {
-		if (len == 0) {
+	public void markupArray(String sliceName, DataType elementType, boolean ptr,
+			MarkupSession session) throws IOException {
+		if (len == 0 || !isValid()) {
 			return;
 		}
 		DataTypeManager dtm = programContext.getDTM();
@@ -200,27 +206,29 @@ public class GoSlice {
 
 		ArrayDataType arrayDT = new ArrayDataType(elementType, (int) cap, -1, dtm);
 		Address addr = programContext.getDataAddress(array);
-		programContext.markupAddress(addr, arrayDT);
+		session.markupAddress(addr, arrayDT);
 		if (sliceName != null) {
-			programContext.labelAddress(addr, sliceName);
+			session.labelAddress(addr, sliceName);
 		}
 	}
 
 	/**
 	 * Marks up each element of the array, useful when the elements are themselves structures.
 	 * 
-	 * @param <T> structure type
-	 * @param clazz class of the structure type
+	 * @param <T> element type
+	 * @param clazz structure mapped class of element
+	 * @param session state and methods to assist marking up the program
 	 * @return list of element instances
 	 * @throws IOException if error reading
 	 */
-	public <T> List<T> markupArrayElements(Class<T> clazz) throws IOException {
+	public <T> List<T> markupArrayElements(Class<T> clazz, MarkupSession session)
+			throws IOException {
 		if (len == 0) {
 			return List.of();
 		}
 
 		List<T> elementList = readList(clazz);
-		programContext.markup(elementList, true);
+		session.markup(elementList, true);
 		return elementList;
 	}
 
@@ -235,23 +243,14 @@ public class GoSlice {
 	 *  
 	 * @param elementSize size of each element in the array
 	 * @param targetAddrs list of addresses, should be same size as this slice
-	 * @throws IOException
+	 * @param session state and methods to assist marking up the program
+	 * @throws IOException if error creating references
 	 */
-	public void markupElementReferences(int elementSize, List<Address> targetAddrs)
-			throws IOException {
+	public void markupElementReferences(int elementSize, List<Address> targetAddrs,
+			MarkupSession session) throws IOException {
 		if (!targetAddrs.isEmpty()) {
-			ReferenceManager refMgr = programContext.getProgram().getReferenceManager();
-
-			Address srcAddr = programContext.getDataAddress(array);
-			for (Address targetAddr : targetAddrs) {
-				if (targetAddr != null) {
-					refMgr.addMemoryReference(srcAddr, targetAddr, RefType.DATA,
-						SourceType.IMPORTED, 0);
-				}
-				srcAddr = srcAddr.add(elementSize);
-			}
+			session.markupArrayElementReferences(getArrayAddress(), elementSize, targetAddrs);
 		}
-
 	}
 
 	private static long[] readUIntList(BinaryReader reader, long index, int intSize, int count)

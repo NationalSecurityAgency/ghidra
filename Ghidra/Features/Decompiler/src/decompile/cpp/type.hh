@@ -58,7 +58,7 @@ extern ElementId ELEM_INTEGER_SIZE;		///< Marshaling element \<integer_size>
 extern ElementId ELEM_LONG_SIZE;		///< Marshaling element \<long_size>
 //extern ElementId ELEM_MACHINE_ALIGNMENT;	///< Marshaling element \<machine_alignment>
 //extern ElementId ELEM_POINTER_SHIFT;		///< Marshaling element \<pointer_shift>
-//extern ElementId ELEM_POINTER_SIZE;		///< Marshaling element \<pointer_size>
+extern ElementId ELEM_POINTER_SIZE;		///< Marshaling element \<pointer_size>
 //extern ElementId ELEM_SHORT_SIZE;		///< Marshaling element \<short_size>
 extern ElementId ELEM_SIZE_ALIGNMENT_MAP;	///< Marshaling element \<size_alignment_map>
 extern ElementId ELEM_TYPE;			///< Marshaling element \<type>
@@ -156,15 +156,17 @@ protected:
     type_incomplete = 0x400,	///< Set if \b this (recursive) data-type has not been fully defined yet
     needs_resolution = 0x800,	///< Datatype (union, pointer to union) needs resolution before propagation
     force_format = 0x7000,	///< 3-bits encoding display format, 0=none, 1=hex, 2=dec, 3=oct, 4=bin, 5=char
+    truncate_bigendian = 0x8000	///< Pointer can be truncated and is big endian
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
+  uint8 id;			///< A unique id for the type (or 0 if an id is not assigned)
   int4 size;			///< Size (of variable holding a value of this type)
+  uint4 flags;			///< Boolean properties of the type
   string name;			///< Name of type
+  string displayName;		///< Name to display in output
   type_metatype metatype;	///< Meta-type - type disregarding size
   sub_metatype submeta;		///< Sub-type of of the meta-type, for comparisons
-  uint4 flags;			///< Boolean properties of the type
-  uint8 id;			///< A unique id for the type (or 0 if an id is not assigned)
   Datatype *typedefImm;		///< The immediate data-type being typedefed by \e this
   void decodeBasic(Decoder &decoder);	///< Recover basic data-type properties
   void encodeBasic(type_metatype meta,Encoder &encoder) const;	///< Encode basic data-type properties
@@ -176,8 +178,8 @@ protected:
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
 public:
   /// Construct the base data-type copying low-level properties of another
-  Datatype(const Datatype &op) { size = op.size; name=op.name; metatype=op.metatype; submeta=op.submeta; flags=op.flags;
-    id=op.id; typedefImm=op.typedefImm; }
+  Datatype(const Datatype &op) { size = op.size; name=op.name; displayName=op.displayName; metatype=op.metatype;
+    submeta=op.submeta; flags=op.flags; id=op.id; typedefImm=op.typedefImm; }
   /// Construct the base data-type providing size and meta-type
   Datatype(int4 s,type_metatype m) { size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; }
   virtual ~Datatype(void) {}	///< Destructor
@@ -203,12 +205,13 @@ public:
   uint8 getId(void) const { return id; }			///< Get the type id
   int4 getSize(void) const { return size; }			///< Get the type size
   const string &getName(void) const { return name; }		///< Get the type name
+  const string &getDisplayName(void) const { return displayName; }	///< Get string to use in display
   Datatype *getTypedef(void) const { return typedefImm; }	///< Get the data-type immediately typedefed by \e this (or null)
   virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
-  virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
-  virtual Datatype *getSubType(uintb off,uintb *newoff) const; ///< Recover component data-type one-level down
-  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
-  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual const TypeField *findTruncation(int8 off,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
+  virtual Datatype *getSubType(int8 off,int8 *newoff) const; ///< Recover component data-type one-level down
+  virtual Datatype *nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const;
   virtual int4 getHoleSize(int4 off) const { return 0; }	///< Get number of bytes at the given offset that are padding
   virtual int4 numDepend(void) const { return 0; }	///< Return number of component sub-types
   virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }	///< Return the i-th component sub-type
@@ -221,7 +224,7 @@ public:
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);	///< Tailor data-type propagation based on Varnode use
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);	///< Find a previously resolved sub-type
   virtual int4 findCompatibleResolve(Datatype *ct) const;	///< Find a resolution compatible with the given data-type
-  virtual const TypeField *resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff);
+  virtual const TypeField *resolveTruncation(int8 offset,PcodeOp *op,int4 slot,int8 &newoff);
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
   int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
   void encodeRef(Encoder &encoder) const;	///< Encode a reference of \b this to a stream
@@ -279,7 +282,7 @@ public:
   /// Construct TypeBase from a size and meta-type
   TypeBase(int4 s,type_metatype m) : Datatype(s,m) {}
   /// Construct TypeBase from a size, meta-type, and name
-  TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m) { name = n; }
+  TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m) { name = n; displayName = n; }
   virtual Datatype *clone(void) const { return new TypeBase(*this); }
 };
 
@@ -326,7 +329,7 @@ public:
   /// Construct from another TypeVoid
   TypeVoid(const TypeVoid &op) : Datatype(op) { flags |= Datatype::coretype; }
   /// Constructor
-  TypeVoid(void) : Datatype(0,TYPE_VOID) { name = "void"; flags |= Datatype::coretype; }
+  TypeVoid(void) : Datatype(0,TYPE_VOID) { name = "void"; displayName = name; flags |= Datatype::coretype; }
   virtual Datatype *clone(void) const { return new TypeVoid(*this); }
   virtual void encode(Encoder &encoder) const;
 };
@@ -337,24 +340,27 @@ protected:
   friend class TypeFactory;
   Datatype *ptrto;		///< Type being pointed to
   AddrSpace *spaceid;		///< If non-null, the address space \b this is intented to point into
+  TypePointer *truncate;	///< Truncated form of the pointer (if not null)
   uint4 wordsize;               ///< What size unit does the pointer address
   void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this pointer data-type from a stream
   void calcSubmeta(void);	///< Calculate specific submeta for \b this pointer
+  void calcTruncate(TypeFactory &typegrp);	// Assign a truncated pointer subcomponent if necessary
   /// Internal constructor for use with decode
-  TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; spaceid=(AddrSpace *)0; }
+  TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; spaceid=(AddrSpace *)0; truncate=(TypePointer *)0; }
 public:
   /// Construct from another TypePointer
-  TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; wordsize=op.wordsize; spaceid=op.spaceid; }
+  TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; wordsize=op.wordsize; spaceid=op.spaceid; truncate=op.truncate; }
   /// Construct from a size, pointed-to type, and wordsize
   TypePointer(int4 s,Datatype *pt,uint4 ws) : Datatype(s,TYPE_PTR) {
-    ptrto = pt; flags = ptrto->getInheritable(); wordsize=ws; spaceid=(AddrSpace *)0; calcSubmeta(); }
+    ptrto = pt; flags = ptrto->getInheritable(); wordsize=ws; spaceid=(AddrSpace *)0; truncate=(TypePointer *)0; calcSubmeta(); }
   /// Construct from a pointed-to type and an address space attribute
   TypePointer(Datatype *pt,AddrSpace *spc) : Datatype(spc->getAddrSize(), TYPE_PTR) {
-    ptrto = pt; flags = ptrto->getInheritable(); spaceid=spc; wordsize=spc->getWordSize(); calcSubmeta(); }
+    ptrto = pt; flags = ptrto->getInheritable(); spaceid=spc; wordsize=spc->getWordSize(); truncate=(TypePointer *)0; calcSubmeta(); }
   Datatype *getPtrTo(void) const { return ptrto; }	///< Get the pointed-to Datatype
   uint4 getWordSize(void) const { return wordsize; }	///< Get the size of the addressable unit being pointed to
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get any address space associated with \b this pointer
   virtual void printRaw(ostream &s) const;
+  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual int4 numDepend(void) const { return 1; }
   virtual Datatype *getDepend(int4 index) const { return ptrto; }
   virtual void printNameBase(ostream &s) const { s << 'p'; ptrto->printNameBase(s); }
@@ -362,7 +368,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePointer(*this); }
   virtual void encode(Encoder &encoder) const;
-  virtual TypePointer *downChain(uintb &off,TypePointer *&par,uintb &parOff,bool allowArrayWrap,TypeFactory &typegrp);
+  virtual TypePointer *downChain(int8 &off,TypePointer *&par,int8 &parOff,bool allowArrayWrap,TypeFactory &typegrp);
   virtual bool isPtrsubMatching(uintb off) const;
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
@@ -386,7 +392,7 @@ public:
   int4 numElements(void) const { return arraysize; }	///< Get the number of elements
   Datatype *getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const;	///< Figure out what a byte range overlaps
   virtual void printRaw(ostream &s) const;
-  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual int4 getHoleSize(int4 off) const;
   virtual int4 numDepend(void) const { return 1; }
   virtual Datatype *getDepend(int4 index) const { return arrayof; }
@@ -443,10 +449,10 @@ public:
   TypeStruct(void) : Datatype(0,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
   vector<TypeField>::const_iterator beginField(void) const { return field.begin(); }	///< Beginning of fields
   vector<TypeField>::const_iterator endField(void) const { return field.end(); }	///< End of fields
-  virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
-  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
-  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
-  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual const TypeField *findTruncation(int8 off,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
+  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
+  virtual Datatype *nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const;
   virtual int4 getHoleSize(int4 off) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
@@ -475,8 +481,8 @@ public:
   TypeUnion(const TypeUnion &op);	///< Construct from another TypeUnion
   TypeUnion(void) : Datatype(0,TYPE_UNION) { flags |= (type_incomplete | needs_resolution); }	///< Construct incomplete TypeUnion
   const TypeField *getField(int4 i) const { return &field[i]; }	///< Get the i-th field of the union
-  virtual const TypeField *findTruncation(int4 offset,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
-  //  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual const TypeField *findTruncation(int8 offset,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
+  //  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
@@ -486,7 +492,7 @@ public:
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
-  virtual const TypeField *resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff);
+  virtual const TypeField *resolveTruncation(int8 offset,PcodeOp *op,int4 slot,int8 &newoff);
 };
 
 /// \brief A data-type that holds \e part of a TypeStruct or TypeArray
@@ -500,7 +506,7 @@ public:
   TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
   Datatype *getParent(void) const { return container; }	///< Get the data-type containing \b this piece
   virtual void printRaw(ostream &s) const;
-  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual int4 getHoleSize(int4 off) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
@@ -525,7 +531,7 @@ public:
   TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
   TypeUnion *getParentUnion(void) const { return container; }	///< Get the union which \b this is part of
   virtual void printRaw(ostream &s) const;
-  virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
+  virtual const TypeField *findTruncation(int8 off,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
   virtual int4 numDepend(void) const;
   virtual Datatype *getDepend(int4 index) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
@@ -536,7 +542,7 @@ public:
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
-  virtual const TypeField *resolveTruncation(int4 off,PcodeOp *op,int4 slot,int4 &newoff);
+  virtual const TypeField *resolveTruncation(int8 off,PcodeOp *op,int4 slot,int8 &newoff);
 };
 
 /// \brief Relative pointer: A pointer with a fixed offset into a specific structure or other data-type
@@ -573,7 +579,7 @@ public:
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePointerRel(*this); }
   virtual void encode(Encoder &encoder) const;
-  virtual TypePointer *downChain(uintb &off,TypePointer *&par,uintb &parOff,bool allowArrayWrap,TypeFactory &typegrp);
+  virtual TypePointer *downChain(int8 &off,TypePointer *&par,int8 &parOff,bool allowArrayWrap,TypeFactory &typegrp);
   virtual bool isPtrsubMatching(uintb off) const;
   virtual Datatype *getStripped(void) const { return stripped; }	///< Get the plain form of the pointer
   static Datatype *getPtrToFromParent(Datatype *base,int4 off,TypeFactory &typegrp);
@@ -603,7 +609,7 @@ public:
   const FuncProto *getPrototype(void) const { return proto; }	///< Get the function prototype
   virtual ~TypeCode(void);
   virtual void printRaw(ostream &s) const;
-  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypeCode(*this); }
@@ -631,9 +637,9 @@ public:
     : Datatype(0,TYPE_SPACEBASE), localframe(frame) { spaceid = id; glb = g; }
   Scope *getMap(void) const;	///< Get the symbol table indexed by \b this
   Address getAddress(uintb off,int4 sz,const Address &point) const;	///< Construct an Address given an offset
-  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
-  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
-  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
+  virtual Datatype *nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeSpacebase(*this); }
@@ -644,6 +650,8 @@ public:
 class TypeFactory {
   int4 sizeOfInt;		///< Size of the core "int" datatype
   int4 sizeOfLong;		///< Size of the core "long" datatype
+  int4 sizeOfPointer;		///< Size of pointers (into default data address space)
+  int4 sizeOfAltPointer;	///< Size of alternate pointers used by architecture (if not 0)
   int4 align;			///< Alignment of structures
   int4 enumsize;		///< Size of an enumerated type
   type_metatype enumtype;	///< Default enumeration meta-type (when parsing C)
@@ -681,6 +689,8 @@ public:
   int4 getStructAlign(void) const { return align; }	///< Get the default structure alignment
   int4 getSizeOfInt(void) const { return sizeOfInt; }	///< Get the size of the default "int"
   int4 getSizeOfLong(void) const { return sizeOfLong; }	///< Get the size of the default "long"
+  int4 getSizeOfPointer(void) const { return sizeOfPointer; }	///< Get the size of pointers
+  int4 getSizeOfAltPointer(void) const { return sizeOfAltPointer; }	///< Get size of alternate pointers (or 0)
   Architecture *getArch(void) const { return glb; }	///< Get the Architecture object
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
@@ -717,6 +727,7 @@ public:
   TypePointerRel *getTypePointerRel(TypePointer *parentPtr,Datatype *ptrTo,int4 off);	///< Get pointer offset relative to a container
   TypePointerRel *getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm);
   TypePointer *getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc,const string &nm);
+  TypePointer *resizePointer(TypePointer *ptr,int4 newSize);	///< Build a resized pointer based on the given pointer
   Datatype *getExactPiece(Datatype *ct,int4 offset,int4 size);	///< Get the data-type associated with piece of a structured data-type
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form

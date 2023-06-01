@@ -29,22 +29,70 @@ import java.lang.annotation.Target;
  * <p>
  * The type of the tagged java field can be a java primitive, or a 
  * {@link StructureMapping structure mapped} class.
+ * <p>
+ * Supported java primitive types:
+ * <ul>
+ * 	<li>long, int, short, byte
+ * 	<li>char
+ * </ul>
  * 
  */
 @Retention(RUNTIME)
 @Target(FIELD)
 public @interface FieldMapping {
-	String fieldName() default "";
+	/**
+	 * Overrides the field name that is matched in the structure.
+	 * <p>
+	 * Can be a single name, or a list of names that will be used to find the structure
+	 * field. 
+	 * 
+	 * @return name, or list of names, of the structure field to map, or unset to use the 
+	 * java field's name
+	 */
+	String[] fieldName() default "";
 
+	/**
+	 * Marks this field as optional.
+	 * <p>
+	 * When marked optional, if a binding between the tagged java field and a structure field is
+	 * not successfully found, this field definition will be skipped.
+	 * 
+	 * @return boolean flag, if true this field is optional, if false or unset, the field is 
+	 * required
+	 */
+	boolean optional() default false;
+
+	/**
+	 * Specifies the name of a setter method that will be used to assign the deserialized value
+	 * to the java field.
+	 * <p>
+	 * If unset, a "void setFieldname(field_type)" method will be searched for.
+	 * <p>
+	 * If no setter method is present, the field's value will be directly assigned.
+	 * 
+	 * @return optional name of a setter method
+	 */
+	String setter() default "";
+
+	/**
+	 * Optional function that will deserialize the tagged field.
+	 * 
+	 * @return {@link FieldReadFunction}
+	 */
 	@SuppressWarnings("rawtypes")
 	Class<? extends FieldReadFunction> readFunc() default FieldReadFunction.class;
 
+	/**
+	 * Allows override the length of the structure field 
+	 * 
+	 * @return length of the structure field, or unset to use the field's data type
+	 */
 	int length() default -1;
 
 	/**
-	 * Override the signedness the underlying numeric field.
+	 * Override the signedness of the underlying numeric field.
 	 * 
-	 * @return
+	 * @return {@link Signedness} enum, or unset to use the data type's normal signedness
 	 */
 	Signedness signedness() default Signedness.Unspecified;
 }

@@ -38,5 +38,11 @@ import ghidra.program.model.address.Address;
 @Retention(RUNTIME)
 @Target(FIELD)
 public @interface MarkupReference {
+
+	/**
+	 * Optional name of a 'getter' method to use instead of the getter for the tagged field.
+	 * 
+	 * @return name of 'getter' method, if unset the field's normal getter will be used
+	 */
 	String value() default "";
 }

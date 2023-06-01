@@ -24,7 +24,8 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import ghidra.app.cmd.memory.MoveBlockListener;
 import ghidra.app.cmd.memory.MoveBlockTask;
-import ghidra.app.util.*;
+import ghidra.app.util.AddressInput;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
@@ -106,7 +107,7 @@ public class MoveBlockDialog extends DialogComponentProvider implements MoveBloc
 			origStartLabel.setText(model.getStartAddress().toString());
 			origEndLabel.setText(model.getEndAddress().toString());
 			lengthLabel.setText(model.getLengthString());
-			tool.showDialog(this, tool.getComponentProvider(PluginConstants.MEMORY_MAP));
+			tool.showDialog(this);
 		}
 		else if (message.length() == 0) {
 			setOkEnabled(true);

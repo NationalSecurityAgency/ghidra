@@ -87,8 +87,8 @@ public class SBTypeMemberFunction {
     return lldbJNI.SBTypeMemberFunction_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description, description_level.swigValue());
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeMemberFunction___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeMemberFunction___repr__(swigCPtr, this);
   }
 
 }

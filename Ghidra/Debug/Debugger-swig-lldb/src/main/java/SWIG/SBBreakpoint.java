@@ -247,8 +247,8 @@ public class SBBreakpoint {
     return lldbJNI.SBBreakpoint_IsHardware(swigCPtr, this);
   }
 
-  public String __str__() {
-    return lldbJNI.SBBreakpoint___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBBreakpoint___repr__(swigCPtr, this);
   }
 
 }

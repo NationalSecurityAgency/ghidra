@@ -75,8 +75,8 @@ public class SBTypeMember {
     return lldbJNI.SBTypeMember_GetBitfieldSizeInBits(swigCPtr, this);
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeMember___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeMember___repr__(swigCPtr, this);
   }
 
 }

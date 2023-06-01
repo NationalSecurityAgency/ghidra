@@ -232,7 +232,7 @@ Datatype *ScoreUnionFields::derefPointer(Datatype *ct,Varnode *vn,int4 &score)
   if (ct->getMetatype() == TYPE_PTR) {
     Datatype *ptrto = ((TypePointer *)ct)->getPtrTo();
     while(ptrto != (Datatype *)0 && ptrto->getSize() > vn->getSize()) {
-      uintb newoff;
+      int8 newoff;
       ptrto = ptrto->getSubType(0, &newoff);
     }
     if (ptrto != (Datatype *)0 && ptrto->getSize() == vn->getSize()) {
@@ -429,8 +429,8 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
 	  Varnode *vn = trial.op->getIn(1-trial.inslot);
 	  if (vn->isConstant()) {
 	    TypePointer *baseType = (TypePointer *)trial.fitType;
-	    uintb off = vn->getOffset();
-	    uintb parOff;
+	    int8 off = vn->getOffset();
+	    int8 parOff;
 	    TypePointer *par;
 	    resType = baseType->downChain(off,par,parOff,trial.array,typegrp);
 	    if (resType != (Datatype*)0)
@@ -860,16 +860,16 @@ Datatype *ScoreUnionFields::scoreTruncation(Datatype *ct,Varnode *vn,int4 offset
     }
   }
   else {
-    uintb off = offset;
     score = 10;		// If we can find a size match for the truncation
-    while(ct != (Datatype*)0 && (off != 0 || ct->getSize() != vn->getSize())) {
+    int8 curOff = offset;
+    while(ct != (Datatype*)0 && (curOff != 0 || ct->getSize() != vn->getSize())) {
       if (ct->getMetatype() == TYPE_INT || ct->getMetatype() == TYPE_UINT) {
-	if (ct->getSize() >= vn->getSize() + off) {
+	if (ct->getSize() >= vn->getSize() + curOff) {
 	  score = 1;	// Size doesn't match, but still possibly a reasonable operation
 	  break;
 	}
       }
-      ct = ct->getSubType(off,&off);
+      ct = ct->getSubType(curOff,&curOff);
     }
     if (ct == (Datatype *)0)
       score = -10;

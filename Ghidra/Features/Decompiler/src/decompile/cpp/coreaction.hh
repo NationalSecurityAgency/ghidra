@@ -831,6 +831,8 @@ public:
 /// This produces on intermediate view of symbols on the stack.
 class ActionRestructureVarnode : public Action {
   int4 numpass;			///< Number of passes performed for this function
+  static void protectSwitchPathIndirects(PcodeOp *op);	///< Protect path to the given switch from INDIRECT collapse
+  static void protectSwitchPaths(Funcdata &data);	///< Look for switches and protect path of switch variable
 public:
   ActionRestructureVarnode(const string &g) : Action(0,"restructure_varnode",g) {}	///< Constructor
   virtual void reset(Funcdata &data) { numpass = 0; }

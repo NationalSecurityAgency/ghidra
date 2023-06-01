@@ -133,7 +133,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(name = "Default Extended Step", description = "The default string for the extended step command")
+	@AutoOptionDefined(
+		name = "Default Extended Step",
+		description = "The default string for the extended step command")
 	String extendedStep = "";
 
 	@SuppressWarnings("unused")
@@ -491,7 +493,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void addTable(ObjectContainer container) {
 		AtomicReference<ObjectContainer> update = new AtomicReference<>();
 		AsyncUtils.sequence(TypeSpec.cls(ObjectContainer.class)).then(seq -> {
-			container.getOffspring().handle(seq::next);
+			container.getOffspring(RefreshBehavior.REFRESH_WHEN_ABSENT).handle(seq::next);
 		}, update).then(seq -> {
 			try {
 				ObjectContainer oc = update.get();
@@ -1242,9 +1244,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void performRefresh(ActionContext context) {
 		TargetObject current = getObjectFromContext(context);
 		if (current != null) {
+			current.resync(RefreshBehavior.REFRESH_ALWAYS, RefreshBehavior.REFRESH_ALWAYS);
 			refresh(current.getName());
 		}
 		else {
+			TargetObject modelRoot = getModel().getModelRoot();
+			if (modelRoot != null) {
+				modelRoot.resync(RefreshBehavior.REFRESH_ALWAYS, RefreshBehavior.REFRESH_ALWAYS);
+			}
 			refresh();
 		}
 	}

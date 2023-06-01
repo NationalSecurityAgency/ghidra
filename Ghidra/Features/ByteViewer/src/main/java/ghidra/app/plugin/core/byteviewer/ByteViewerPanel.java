@@ -752,7 +752,7 @@ public class ByteViewerPanel extends JPanel
 
 		// for the index/address column
 		indexFactory = new IndexFieldFactory(fm);
-		indexPanel = new FieldPanel(this);
+		indexPanel = new FieldPanel(this, "Byte Viewer");
 
 		indexPanel.enableSelection(false);
 		indexPanel.setCursorOn(false);

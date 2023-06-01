@@ -303,8 +303,8 @@ public class SBThread {
     return new SBValue(lldbJNI.SBThread_GetSiginfo(swigCPtr, this), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBThread___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBThread___repr__(swigCPtr, this);
   }
 
   public final static int eBroadcastBitStackChanged = lldbJNI.SBThread_eBroadcastBitStackChanged_get();

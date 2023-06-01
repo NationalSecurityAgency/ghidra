@@ -222,7 +222,7 @@ void PrintC::pushSymbolScope(const Symbol *symbol)
       pushOp(&scope, (PcodeOp *)0);
     }
     for(int4 i=scopedepth-1;i>=0;--i) {
-      pushAtom(Atom(scopeList[i]->getName(),syntax,EmitMarkup::global_color,(PcodeOp *)0,(Varnode *)0));
+      pushAtom(Atom(scopeList[i]->getDisplayName(),syntax,EmitMarkup::global_color,(PcodeOp *)0,(Varnode *)0));
     }
   }
 }
@@ -252,7 +252,7 @@ void PrintC::emitSymbolScope(const Symbol *symbol)
       point = point->getParent();
     }
     for(int4 i=scopedepth-1;i>=0;--i) {
-      emit->print(scopeList[i]->getName(), EmitMarkup::global_color);
+      emit->print(scopeList[i]->getDisplayName(), EmitMarkup::global_color);
       emit->print(scope.print1, EmitMarkup::no_color);
     }
   }
@@ -285,7 +285,7 @@ void PrintC::pushTypeStart(const Datatype *ct,bool noident)
   }
   else {
     pushOp(tok,(const PcodeOp *)0);
-    pushAtom(Atom(ct->getName(),typetoken,EmitMarkup::type_color,ct));
+    pushAtom(Atom(ct->getDisplayName(),typetoken,EmitMarkup::type_color,ct));
   }
   for(int4 i=typestack.size()-2;i>=0;--i) {
     ct = typestack[i];
@@ -661,7 +661,7 @@ void PrintC::opConstructor(const PcodeOp *op,bool withNew)
   if (dt->getMetatype() == TYPE_PTR) {
     dt = ((TypePointer *)dt)->getPtrTo();
   }
-  string nm = dt->getName();
+  string nm = dt->getDisplayName();
   pushOp(&function_call,op);
   pushAtom(Atom(nm,optoken,EmitMarkup::funcname_color,op));
   // implied vn's pushed on in reverse order for efficiency
@@ -763,8 +763,8 @@ void PrintC::opSubpiece(const PcodeOp *op)
     const Varnode *vn = op->getIn(0);
     Datatype *ct = vn->getHighTypeReadFacing(op);
     if (ct->isPieceStructured()) {
-      int4 offset;
-      int4 byteOff = TypeOpSubpiece::computeByteOffsetForComposite(op);
+      int8 offset;
+      int8 byteOff = TypeOpSubpiece::computeByteOffsetForComposite(op);
       const TypeField *field = ct->findTruncation(byteOff,op->getOut()->getSize(),op,1,offset);	// Use artificial slot
       if (field != (const TypeField*)0 && offset == 0) {		// A formal structure field
 	pushOp(&object_member,op);
@@ -873,7 +873,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
   flex = isValueFlexible(in0);
 
   if (ct->getMetatype() == TYPE_STRUCT || ct->getMetatype() == TYPE_UNION) {
-    uintb suboff = in1const;	// How far into container
+    int8 suboff = (int4)in1const;	// How far into container
     if (ptrel != (TypePointerRel *)0) {
       suboff += ptrel->getPointerOffset();
       suboff &= calc_mask(ptype->getSize());
@@ -887,11 +887,11 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	return;
       }
     }
-    suboff = AddrSpace::addressToByte(suboff,ptype->getWordSize());
+    suboff = AddrSpace::addressToByteInt(suboff,ptype->getWordSize());
     string fieldname;
     Datatype *fieldtype;
     int4 fieldid;
-    int4 newoff;
+    int8 newoff;
     if (ct->getMetatype() == TYPE_UNION) {
       if (suboff != 0)
 	throw LowlevelError("PTRSUB accesses union with non-zero offset");
@@ -905,9 +905,9 @@ void PrintC::opPtrsub(const PcodeOp *op)
       fieldtype = fld->type;
     }
     else {	// TYPE_STRUCT
-      const TypeField *fld = ct->findTruncation((int4)suboff,0,op,0,newoff);
+      const TypeField *fld = ct->findTruncation(suboff,0,op,0,newoff);
       if (fld == (const TypeField*)0) {
-	if (ct->getSize() <= suboff) {
+	if (ct->getSize() <= suboff || suboff < 0) {
 	  clear();
 	  throw LowlevelError("PTRSUB out of bounds into struct");
 	}
@@ -1112,7 +1112,7 @@ void PrintC::opCpoolRefOp(const PcodeOp *op)
 	pushAtom(Atom(rec->getToken(),functoken,EmitMarkup::funcname_color,op,outvn));
 	pushOp(&comma,(const PcodeOp *)0);
 	pushVn(vn0,op,mods);
-	pushAtom(Atom(dt->getName(),syntax,EmitMarkup::type_color,op,outvn));
+	pushAtom(Atom(dt->getDisplayName(),syntax,EmitMarkup::type_color,op,outvn));
 	break;
       }
     case CPoolRecord::primitive:		// Should be eliminated
@@ -1163,7 +1163,7 @@ void PrintC::opNewOp(const PcodeOp *op)
 	while (dt->getMetatype() == TYPE_PTR) {
 	  dt = ((TypePointer *)dt)->getPtrTo();
 	}
-	nm = dt->getName();
+	nm = dt->getDisplayName();
       }
       pushOp(&subscript,op);
       pushAtom(Atom(nm,optoken,EmitMarkup::type_color,op));
@@ -1658,7 +1658,7 @@ bool PrintC::pushPtrCodeConstant(uintb val,const TypePointer *ct,
   val = AddrSpace::addressToByte(val,spc->getWordSize());
   fd = glb->symboltab->getGlobalScope()->queryFunction( Address(spc,val));
   if (fd != (Funcdata *)0) {
-    pushAtom(Atom(fd->getName(),functoken,EmitMarkup::funcname_color,op,fd));
+    pushAtom(Atom(fd->getDisplayName(),functoken,EmitMarkup::funcname_color,op,fd));
     return true;
   }
   return false;
@@ -1839,7 +1839,7 @@ void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
     HighVariable *high = vn->getHigh();
     if (high->isUnmerged()) {
       ostringstream s;
-      s << sym->getName();
+      s << sym->getDisplayName();
       SymbolEntry *entry = high->getSymbolEntry();
       if (entry != (SymbolEntry *)0) {
 	s << '$' << dec << entry->getSymbol()->getMapEntryPosition(entry);
@@ -1850,7 +1850,7 @@ void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
       return;
     }
   }
-  pushAtom(Atom(sym->getName(),vartoken,tokenColor,op,vn));
+  pushAtom(Atom(sym->getDisplayName(),vartoken,tokenColor,op,vn));
 }
 
 void PrintC::pushUnnamedLocation(const Address &addr,
@@ -1871,6 +1871,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
   //                       globalstruct.(arrayfield[0])
   vector<PartialSymbolEntry> stack;
   Datatype *finalcast = (Datatype *)0;
+  int8 newoff;
   
   Datatype *ct = sym->getType();
 
@@ -1887,8 +1888,9 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 	  break;	// Turns out we don't resolve to the field
       }
       const TypeField *field;
-      field = ct->findTruncation(off,sz,op,inslot,off);
+      field = ct->findTruncation(off,sz,op,inslot,newoff);
       if (field != (const TypeField *)0) {
+	off = newoff;
 	stack.emplace_back();
 	PartialSymbolEntry &entry( stack.back() );
 	entry.token = &object_member;
@@ -1918,8 +1920,9 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     }
     else if (ct->getMetatype() == TYPE_UNION) {
       const TypeField *field;
-      field = ct->findTruncation(off,sz,op,inslot,off);
+      field = ct->findTruncation(off,sz,op,inslot,newoff);
       if (field != (const TypeField*)0) {
+	off = newoff;
 	stack.emplace_back();
 	PartialSymbolEntry &entry(stack.back());
 	entry.token = &object_member;
@@ -1984,7 +1987,7 @@ void PrintC::pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 
   // We prepend an underscore to indicate a close
   // but not quite match
-    string nm = '_'+sym->getName();
+    string nm = '_'+sym->getDisplayName();
     pushAtom(Atom(nm,vartoken,EmitMarkup::var_color,op,vn));
   }
   else
@@ -2057,7 +2060,7 @@ void PrintC::emitStructDefinition(const TypeStruct *ct)
   emit->tagLine();
   emit->print(CLOSE_CURLY);
   emit->spaces(1);
-  emit->print(ct->getName());
+  emit->print(ct->getDisplayName());
   emit->print(SEMICOLON);
 }
 
@@ -2100,7 +2103,7 @@ void PrintC::emitEnumDefinition(const TypeEnum *ct)
   emit->tagLine();
   emit->print(CLOSE_CURLY);
   emit->spaces(1);
-  emit->print(ct->getName());
+  emit->print(ct->getDisplayName());
   emit->print(SEMICOLON);
 }
 
@@ -2507,7 +2510,7 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
   }
   int4 id1 = emit->openGroup();
   emitSymbolScope(fd->getSymbol());
-  emit->tagFuncName(fd->getName(),EmitMarkup::funcname_color,fd,(PcodeOp *)0);
+  emit->tagFuncName(fd->getDisplayName(),EmitMarkup::funcname_color,fd,(PcodeOp *)0);
 
   emit->spaces(function_call.spacing,function_call.bump);
   int4 id2 = emit->openParen(OPEN_PAREN);
@@ -3122,7 +3125,7 @@ void PrintC::emitLabel(const FlowBlock *bl)
       const Scope *symScope = ((const BlockBasic *)bb)->getFuncdata()->getScopeLocal();
       Symbol *sym = symScope->queryCodeLabel(addr);
       if (sym != (Symbol *)0) {
-	emit->tagLabel(sym->getName(),EmitMarkup::no_color,spc,off);
+	emit->tagLabel(sym->getDisplayName(),EmitMarkup::no_color,spc,off);
 	return;
       }
     }

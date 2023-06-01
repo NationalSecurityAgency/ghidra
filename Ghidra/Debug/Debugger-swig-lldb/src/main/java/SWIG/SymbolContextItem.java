@@ -21,6 +21,7 @@ public final class SymbolContextItem {
   public final static SymbolContextItem eSymbolContextSymbol = new SymbolContextItem("eSymbolContextSymbol", lldbJNI.eSymbolContextSymbol_get());
   public final static SymbolContextItem eSymbolContextEverything = new SymbolContextItem("eSymbolContextEverything", lldbJNI.eSymbolContextEverything_get());
   public final static SymbolContextItem eSymbolContextVariable = new SymbolContextItem("eSymbolContextVariable", lldbJNI.eSymbolContextVariable_get());
+  public final static SymbolContextItem eSymbolContextLastItem = new SymbolContextItem("eSymbolContextLastItem", lldbJNI.eSymbolContextLastItem_get());
 
   public final int swigValue() {
     return swigValue;
@@ -56,7 +57,7 @@ public final class SymbolContextItem {
     swigNext = this.swigValue+1;
   }
 
-  private static SymbolContextItem[] swigValues = { eSymbolContextTarget, eSymbolContextModule, eSymbolContextCompUnit, eSymbolContextFunction, eSymbolContextBlock, eSymbolContextLineEntry, eSymbolContextSymbol, eSymbolContextEverything, eSymbolContextVariable };
+  private static SymbolContextItem[] swigValues = { eSymbolContextTarget, eSymbolContextModule, eSymbolContextCompUnit, eSymbolContextFunction, eSymbolContextBlock, eSymbolContextLineEntry, eSymbolContextSymbol, eSymbolContextEverything, eSymbolContextVariable, eSymbolContextLastItem };
   private static int swigNext = 0;
   private final int swigValue;
   private final String swigName;

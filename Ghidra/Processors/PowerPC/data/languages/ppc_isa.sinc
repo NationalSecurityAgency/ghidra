@@ -1625,14 +1625,6 @@ define pcodeop lbzcixOp;
 	RT = *:1 A;
 } 
 
-# binutils-descr: "eieio",	X(31,854),	0xffffffff,  PPC,   BOOKE|PPCA2|PPC476,	{0}
-define pcodeop eieioOp;
-# ISA-cmt: eieio - Enforce In-order Execution of I/O
-# ISA-info: eieio - Form "X" Page 698 Category "S"
-# binutils: mytest.d:   20:	7c 00 06 ac 	eieio
-:eieio  is $(NOTVLE) & OP=31 & XOP_1_10=854 & BITS_11_25=0 & BIT_0=0   { eieioOp(); } 
-
-
 # binutils-descr: "ldcix",	X(31,885),	X_MASK,      POWER6,	PPCNONE,	{RT, RA0, RB}
 # ISA-cmt: ldcix - Load Doubleword Caching Inhibited Indexed
 # ISA-info: ldcix - Form "X" Page 749 Category "S"

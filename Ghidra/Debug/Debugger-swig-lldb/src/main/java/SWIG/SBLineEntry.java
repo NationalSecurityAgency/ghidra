@@ -87,8 +87,8 @@ public class SBLineEntry {
     lldbJNI.SBLineEntry_SetColumn(swigCPtr, this, column);
   }
 
-  public String __str__() {
-    return lldbJNI.SBLineEntry___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBLineEntry___repr__(swigCPtr, this);
   }
 
 }

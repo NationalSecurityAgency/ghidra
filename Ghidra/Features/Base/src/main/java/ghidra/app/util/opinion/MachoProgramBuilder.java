@@ -511,10 +511,13 @@ public class MachoProgramBuilder {
 		Address baseAddr = space.getAddress(textSegment.getVMaddress());
 		for (ExportEntry export : exports) {
 			String name = SymbolUtilities.replaceInvalidChars(export.getName(), true);
-			Address exportAddr = baseAddr.add(export.getAddress());
-			program.getSymbolTable().addExternalEntryPoint(exportAddr);
 			try {
+				Address exportAddr = baseAddr.add(export.getAddress());
+				program.getSymbolTable().addExternalEntryPoint(exportAddr);
 				program.getSymbolTable().createLabel(exportAddr, name, SourceType.IMPORTED);
+			}
+			catch (AddressOutOfBoundsException e) {
+				log.appendMsg("Failed to process export '" + export + "': " + e.getMessage());
 			}
 			catch (Exception e) {
 				log.appendMsg("Unable to create symbol: " + e.getMessage());

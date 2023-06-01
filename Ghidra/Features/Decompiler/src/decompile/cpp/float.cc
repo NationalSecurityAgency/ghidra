@@ -569,8 +569,7 @@ uintb FloatFormat::opSqrt(uintb a) const
 uintb FloatFormat::opInt2Float(uintb a,int4 sizein) const
 
 {
-  intb ival = (intb)a;
-  sign_extend(ival,8*sizein-1);
+  intb ival = sign_extend(a,8*sizein-1);
   double val = (double) ival;	// Convert integer to float
   return getEncoding(val);
 }

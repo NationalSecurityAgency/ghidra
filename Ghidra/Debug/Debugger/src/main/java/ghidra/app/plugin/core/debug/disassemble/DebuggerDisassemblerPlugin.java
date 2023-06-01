@@ -22,9 +22,9 @@ import docking.Tool;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
 import generic.jar.ResourceFile;
-import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -34,7 +34,6 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.trace.model.Trace;
@@ -209,23 +208,18 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 
 	@Override
 	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
-		if (!(context instanceof ListingActionContext)) {
-			return null;
-		}
 		/**
 		 * I could use Navigatable.isDynamic, but it seems more appropriate, since the types are in
 		 * scope here, to check for an actual trace.
 		 */
-		ListingActionContext lac = (ListingActionContext) context;
+		if (!(context instanceof DebuggerListingActionContext lac)) {
+			return null;
+		}
 		Address address = lac.getAddress();
 		if (address == null) {
 			return null;
 		}
-		Program program = lac.getProgram();
-		if (!(program instanceof TraceProgramView)) {
-			return null;
-		}
-		TraceProgramView view = (TraceProgramView) program;
+		TraceProgramView view = lac.getProgram();
 		return getActionsFor(new ArrayList<>(), view.getTrace(), view.getSnap(), address);
 	}
 }

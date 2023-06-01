@@ -40,9 +40,9 @@ public class GoFunctionFixup {
 	 * Assigns custom storage for a function's parameters, using the function's current
 	 * parameter list (formal info only) as starting information.
 	 *  
-	 * @param func
-	 * @throws DuplicateNameException
-	 * @throws InvalidInputException
+	 * @param func Ghidra {@link Function} to fix
+	 * @throws DuplicateNameException if invalid parameter names
+	 * @throws InvalidInputException if invalid data types or storage
 	 */
 	public static void fixupFunction(Function func)
 			throws DuplicateNameException, InvalidInputException {
@@ -51,6 +51,15 @@ public class GoFunctionFixup {
 		fixupFunction(func, goVersion);
 	}
 
+	/**
+	 * Assigns custom storage for a function's parameters, using the function's current
+	 * parameter list (formal info only) as starting information.
+	 *  
+	 * @param func Ghidra {@link Function} to fix
+	 * @param goVersion {@link GoVer} enum
+	 * @throws DuplicateNameException if invalid parameter names
+	 * @throws InvalidInputException if invalid data types or storage
+	 */
 	public static void fixupFunction(Function func, GoVer goVersion)
 			throws DuplicateNameException, InvalidInputException {
 		Program program = func.getProgram();
@@ -150,8 +159,8 @@ public class GoFunctionFixup {
 	 * Returns a Ghidra data type that represents a zero-length array, to be used as a replacement
 	 * for a zero-length array parameter.
 	 * 
-	 * @param dt
-	 * @return
+	 * @param dt data type that will donate its name to the created empty array type
+	 * @return {@link DataType} that represents a specific zero-length array type
 	 */
 	public static DataType makeEmptyArrayDataType(DataType dt) {
 		StructureDataType struct = new StructureDataType(dt.getCategoryPath(),
@@ -303,7 +312,7 @@ public class GoFunctionFixup {
 	 * <p>
 	 * Only valid for storage scheme that has all register storages listed first / contiguous.
 	 * 
-	 * @param varnodes
+	 * @param varnodes list of {@link Varnode varnodes} that will be modified in-place
 	 */
 	public static void reverseNonStackStorageLocations(List<Varnode> varnodes) {
 		int regStorageCount;

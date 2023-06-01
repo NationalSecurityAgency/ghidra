@@ -22,7 +22,6 @@ import java.awt.event.KeyEvent;
 import javax.swing.*;
 
 import docking.ReusableDialogComponentProvider;
-import ghidra.app.util.PluginConstants;
 import ghidra.framework.plugintool.PluginTool;
 
 abstract class CommentDialog extends ReusableDialogComponentProvider {
@@ -54,8 +53,7 @@ abstract class CommentDialog extends ReusableDialogComponentProvider {
 			commentsField.selectAll();
 		}
 		PluginTool tool = plugin.getTool();
-		tool.showDialog(this, tool.getComponentProvider(
-			PluginConstants.CODE_BROWSER));
+		tool.showDialog(this);
 	}
 
 	/////////////////////////////////////////////

@@ -99,8 +99,8 @@ public class SBTypeFormat {
     return lldbJNI.SBTypeFormat_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description, description_level.swigValue());
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeFormat___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeFormat___repr__(swigCPtr, this);
   }
 
 }

@@ -94,7 +94,7 @@ public class LldbModelTargetThreadImpl extends LldbModelTargetObjectImpl
 			ACCESSIBLE_ATTRIBUTE_NAME, accessible = false, //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
 			STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE, //
-			TID_ATTRIBUTE_NAME, thread.GetThreadID().intValue(), //
+			TID_ATTRIBUTE_NAME, thread.GetThreadID().longValue(), //
 			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS //
 		), "Initialized");
 

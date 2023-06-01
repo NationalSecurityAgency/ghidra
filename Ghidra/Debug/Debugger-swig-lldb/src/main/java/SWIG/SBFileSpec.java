@@ -99,8 +99,8 @@ public class SBFileSpec {
     lldbJNI.SBFileSpec_AppendPathComponent(swigCPtr, this, file_or_directory);
   }
 
-  public String __str__() {
-    return lldbJNI.SBFileSpec___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBFileSpec___repr__(swigCPtr, this);
   }
 
 }

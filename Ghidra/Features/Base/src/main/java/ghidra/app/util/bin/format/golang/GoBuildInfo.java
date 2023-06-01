@@ -18,11 +18,10 @@ package ghidra.app.util.bin.format.golang;
 import static ghidra.app.util.bin.StructConverter.ASCII;
 import static ghidra.app.util.bin.StructConverter.BYTE;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
@@ -63,13 +62,19 @@ public class GoBuildInfo implements ElfInfoItem {
 	 * Reads a GoBuildInfo ".go.buildinfo" section from the specified Program, if present.
 	 * 
 	 * @param program {@link Program} that contains the ".go.buildinfo" section
-	 * @return new {@link GoBuildInfo} section, if present, null if missing or error
+	 * @return new {@link GoBuildInfo} instance, if present, null if missing or error
 	 */
 	public static GoBuildInfo fromProgram(Program program) {
 		ItemWithAddress<GoBuildInfo> wrappedItem = findBuildInfo(program);
 		return wrappedItem != null ? wrappedItem.item() : null;
 	}
 
+	/**
+	 * Searches for the GoBuildInfo structure in the most common and easy locations.
+	 * 
+	 * @param program {@link Program} to search
+	 * @return new {@link GoBuildInfo} instance, if present, null if missing or error
+	 */
 	public static ItemWithAddress<GoBuildInfo> findBuildInfo(Program program) {
 		// try as if binary is ELF
 		ItemWithAddress<GoBuildInfo> wrappedItem =
@@ -135,7 +140,7 @@ public class GoBuildInfo implements ElfInfoItem {
 	private final List<GoModuleInfo> dependencies;
 	private final List<GoBuildSettings> buildSettings; // compile/linker flags used during build process
 
-	public GoBuildInfo(int pointerSize, Endian endian, String version, String path,
+	private GoBuildInfo(int pointerSize, Endian endian, String version, String path,
 			GoModuleInfo moduleInfo, List<GoModuleInfo> dependencies,
 			List<GoBuildSettings> buildSettings) {
 		this.pointerSize = pointerSize;

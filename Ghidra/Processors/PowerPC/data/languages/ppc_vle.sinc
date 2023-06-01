@@ -353,7 +353,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	*:2(sd4HPlusRxAddr) = RZ_VLE:2;	
 }
 
-:sthu S,d8PlusRaAddress			is $(ISVLE) & OP=6 & XOP_8_VLE=5 & S & A & d8PlusRaAddress
+:e_sthu S,d8PlusRaAddress			is $(ISVLE) & OP=6 & XOP_8_VLE=5 & S & A & d8PlusRaAddress
 {
 	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
 	*:2(ea) = S:2;
@@ -400,14 +400,14 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	#TODO  SEE TODO in e_ldmvsprw
 	# storeReg(CR);
 	local tmpCR:4 = 0;
-	tmpCR = tmpCR | zext((cr0 & 0xf) << 0);
-	tmpCR = tmpCR | zext((cr1 & 0xf) << 4);
-	tmpCR = tmpCR | zext((cr2 & 0xf) << 8);
-	tmpCR = tmpCR | zext((cr3 & 0xf) << 12);
-	tmpCR = tmpCR | zext((cr4 & 0xf) << 16);
-	tmpCR = tmpCR | zext((cr5 & 0xf) << 20);
-	tmpCR = tmpCR | zext((cr6 & 0xf) << 24);
-	tmpCR = tmpCR | zext((cr7 & 0xf) << 28);
+	tmpCR = tmpCR | (zext(cr0 & 0xf) << 0);
+	tmpCR = tmpCR | (zext(cr1 & 0xf) << 4);
+	tmpCR = tmpCR | (zext(cr2 & 0xf) << 8);
+	tmpCR = tmpCR | (zext(cr3 & 0xf) << 12);
+	tmpCR = tmpCR | (zext(cr4 & 0xf) << 16);
+	tmpCR = tmpCR | (zext(cr5 & 0xf) << 20);
+	tmpCR = tmpCR | (zext(cr6 & 0xf) << 24);
+	tmpCR = tmpCR | (zext(cr7 & 0xf) << 28);
 	*:4 tea = tmpCR;
 	tea = tea + 4;
 	storeReg(LR);
