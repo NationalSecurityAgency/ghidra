@@ -242,7 +242,9 @@ public class SemisparseByteArray {
 	 */
 	public synchronized void putData(final long loc, final byte[] data, final int offset,
 			final int length) {
-		if (length == 0) {
+		if (length < 0) {
+			throw new IllegalArgumentException("length: " + length);
+		} else if (length == 0) {
 			return;
 		}
 		defined.add(ULongSpan.extent(loc, length));
