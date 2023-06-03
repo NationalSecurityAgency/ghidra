@@ -105,13 +105,17 @@ int main(int argc, char **argv) {
 
   bool runUnitTests = true;
   bool runDataTests = true;
+  bool needSleigh = true;
+  string dirname;
 
+  string sleighdirname = FileManage::discoverGhidraRoot(argv[0]);
   argc -= 1;
   argv += 1;
   set<string> unitTestNames;
   set<string> dataTestNames;
-  string dirname("../datatests");
-  string sleighdirname("../../../../../../..");
+  if (sleighdirname.size() != 0) {
+    needSleigh = false;
+  }
   while (argc > 0) {
     string command(argv[0]);
     if (command == "-path") {
@@ -124,12 +128,14 @@ int main(int argc, char **argv) {
       sleighdirname = argv[1];
       argv += 2;
       argc -= 2;
+      needSleigh = false;
     }
     else if (command == "-usesleighenv") {
       const char *sleighhomepath = getenv("SLEIGHHOME");
       if (sleighhomepath != (const char *)0) {
         cout << "Using SLEIGHHOME=" << sleighhomepath << endl;
         sleighdirname = sleighhomepath;
+        needSleigh = false;
       }
       else
         cout << "No SLEIGHHOME environment variable" << endl;
@@ -153,6 +159,12 @@ int main(int argc, char **argv) {
       return -1;
     }
   }
+  if (needSleigh) {
+    cout << "Couldn't detect sleigh automatically." << endl;
+    exit(1);
+  }
+  if (dirname.length() == 0)
+    dirname = sleighdirname + "/Ghidra/Features/Decompiler/src/decompile/datatests";
   startDecompilerLibrary(sleighdirname.c_str());
 
   // Keep track of failed tests as return code to indicate failures, clamped at
