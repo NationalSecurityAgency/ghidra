@@ -39,6 +39,13 @@ model {
 	// native Gradle plugin. 
 	toolChains {
 		if (isCurrentLinux()) {
+			if (project.hasProperty('clang')) {
+				clang(Clang) {
+					if (isCurrentArm_64()) {
+						target("linux_arm_64")
+					}
+				}
+			}
 			gcc(Gcc) {
 				if (isCurrentArm_64()) {
 					target("linux_arm_64")
