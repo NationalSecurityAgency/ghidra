@@ -30,6 +30,4 @@ dependencies {
 	// Only include this debug version of the jh library if necessary.
 	//api name:'jh2.with.debug'
 	api 'javax.help:javahelp:2.0.05'
-	
-
 }

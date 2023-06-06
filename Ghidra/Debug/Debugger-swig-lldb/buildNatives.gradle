@@ -127,7 +127,7 @@ if (System.env.LLVM_HOME) {
 		}
 	}
 } else {
-	println "Debugger-swig-lldb:buildNatives skipped - LLVM_HOME not defined"
+	logger.debug('Debugger-swig-lldb:buildNatives skipped - LLVM_HOME not defined')
 }
 
 task checkLLVM {

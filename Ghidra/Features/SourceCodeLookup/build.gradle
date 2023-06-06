@@ -25,5 +25,4 @@ eclipse.project.name = 'Features SourceCodeLookup'
 dependencies {
 	api project(":Base")
 	api project(":Decompiler")
-	helpPath project(path: ":Decompiler", configuration: 'helpPath')
 }
