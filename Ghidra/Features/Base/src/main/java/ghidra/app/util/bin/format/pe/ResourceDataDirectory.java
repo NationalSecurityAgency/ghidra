@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import java.util.*;
-
 import java.io.IOException;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.resource.*;
@@ -66,9 +65,6 @@ public class ResourceDataDirectory extends DataDirectory {
 		"Menu", "Dialog", "StringTable", "FontDir", "Font", "Accelerator", "RC_Data",
 		"MessageTable", "GroupCursor", "13", "GroupIcon", "15", "Version", "DialogInclude", "18",
 		"PlugAndPlay", "VXD", "ANI_Cursor", "ANI_Icon", "HTML", "Manifest" };
-
-	public final static String PE_PROPERTY_PROGINFO_PREFIX = "PE Property[";
-	public final static String PE_PROPERTY_PROGINFO_SUFFIX = "]";
 
 	/**
 	 * Not defined in documentation but PNGs and WAVs are both this type
@@ -160,6 +156,16 @@ public class ResourceDataDirectory extends DataDirectory {
 	 * Manifest resource
 	 */
 	public final static byte RT_MANIFEST = 24;
+
+	/**
+	 * Gets a program property name to represent PE resource property with the given key name
+	 * 
+	 * @param key The key name
+	 * @return A program property name to represent PE resource property with the given key name
+	 */
+	public static String getPeResourceProperty(String key) {
+		return "PE Property[" + key.replaceAll("\\.", "_dot_") + "]";
+	}
 
 	private ResourceDirectory rootDirectory;
 
@@ -419,14 +425,8 @@ public class ResourceDataDirectory extends DataDirectory {
 				return;
 			}
 			String value = versionInfo.getValue(key);
-			String optionKey = PE_PROPERTY_PROGINFO_PREFIX + escapeProgInfoKeyValue(key) +
-				PE_PROPERTY_PROGINFO_SUFFIX;
-			programInfoOptions.setString(optionKey, value);
+			programInfoOptions.setString(getPeResourceProperty(key), value);
 		}
-	}
-
-	private static String escapeProgInfoKeyValue(String key) {
-		return key.replaceAll("\\.", "_dot_");
 	}
 
 	private void markupChild(VS_VERSION_CHILD child, Address parentAddr, Program program,
