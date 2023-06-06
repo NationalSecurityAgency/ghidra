@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
-import java.util.List;
-
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
@@ -68,6 +67,20 @@ public class GoUncommonType {
 			return List.of();
 		}
 		return slice.readList(GoMethod.class);
+	}
+
+	/**
+	 * Returns the location of where this object, and any known associated optional
+	 * structures ends.
+	 * 
+	 * @return index location of end of this type object
+	 */
+	public long getEndOfTypeInfo() {
+		if (mcount == 0) {
+			return context.getStructureEnd();
+		}
+		GoSlice slice = getMethodsSlice();
+		return slice.getArrayEnd(GoMethod.class);
 	}
 
 }

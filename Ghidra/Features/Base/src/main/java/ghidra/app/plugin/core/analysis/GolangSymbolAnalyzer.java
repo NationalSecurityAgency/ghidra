@@ -18,30 +18,30 @@ package ghidra.app.plugin.core.analysis;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.app.services.*;
 import ghidra.app.util.MemoryBlockUtils;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
 import ghidra.app.util.bin.format.golang.*;
-import ghidra.app.util.bin.format.golang.rtti.GoModuledata;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
+import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.MarkupSession;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.*;
+import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.UnknownProgressWrappingTaskMonitor;
 import ghidra.xml.XmlParseException;
@@ -73,34 +73,35 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 		monitor.setMessage("Golang symbol analyzer");
 
-		try (GoRttiMapper programContext = GoRttiMapper.getMapperFor(program, log)) {
-			if (programContext == null) {
+		try (GoRttiMapper goBinary = GoRttiMapper.getMapperFor(program, log)) {
+			if (goBinary == null) {
 				Msg.error(this, "Golang analyzer error: unable to get GoRttiMapper");
 				return false;
 			}
-			programContext.discoverGoTypes(monitor);
-
-			GoModuledata firstModule = programContext.getFirstModule();
-
+			goBinary.init(monitor);
+			goBinary.discoverGoTypes(monitor);
 
 			UnknownProgressWrappingTaskMonitor upwtm =
 				new UnknownProgressWrappingTaskMonitor(monitor, 100);
 			upwtm.initialize(0);
 			upwtm.setMessage("Marking up Golang RTTI structures");
 
-			MarkupSession markupSession = programContext.createMarkupSession(upwtm);
+			MarkupSession markupSession = goBinary.createMarkupSession(upwtm);
+			GoModuledata firstModule = goBinary.getFirstModule();
+			if (firstModule != null) {
+				markupSession.labelStructure(firstModule, "firstmoduledata");
+				markupSession.markup(firstModule, false);
+			}
 
-			markupSession.labelStructure(firstModule, "firstmoduledata");
-			markupSession.markup(firstModule, false);
-
-			markupMiscInfoStructs(program);
-			markupWellknownSymbols(programContext, markupSession);
+			markupWellknownSymbols(goBinary, markupSession);
+			setupProgramContext(goBinary, markupSession);
+			goBinary.recoverDataTypes(monitor);
+			markupGoFunctions(goBinary, markupSession);
 			fixupNoReturnFuncs(program);
-			setupProgramContext(programContext, markupSession);
-			programContext.recoverDataTypes(monitor);
+			markupMiscInfoStructs(program);
 
 			if (analyzerOptions.createBootstrapDatatypeArchive) {
-				createBootstrapGDT(programContext, program, monitor);
+				createBootstrapGDT(goBinary, program, monitor);
 			}
 		}
 		catch (IOException e) {
@@ -124,21 +125,101 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				analyzerOptions.createBootstrapDatatypeArchive);
 	}
 
-	private void markupWellknownSymbols(GoRttiMapper programContext, MarkupSession session)
+	private void markupWellknownSymbols(GoRttiMapper goBinary, MarkupSession session)
 			throws IOException {
-		Program program = programContext.getProgram();
-		
+		Program program = goBinary.getProgram();
+
 		Symbol g0 = SymbolUtilities.getUniqueSymbol(program, "runtime.g0");
-		Structure gStruct = programContext.getGhidraDataType("runtime.g", Structure.class);
+		Structure gStruct = goBinary.getGhidraDataType("runtime.g", Structure.class);
 		if (g0 != null && gStruct != null) {
 			session.markupAddressIfUndefined(g0.getAddress(), gStruct);
 		}
-		
+
 		Symbol m0 = SymbolUtilities.getUniqueSymbol(program, "runtime.m0");
-		Structure mStruct = programContext.getGhidraDataType("runtime.m", Structure.class);
+		Structure mStruct = goBinary.getGhidraDataType("runtime.m", Structure.class);
 		if (m0 != null && mStruct != null) {
 			session.markupAddressIfUndefined(m0.getAddress(), mStruct);
 		}
+	}
+
+	private void markupGoFunctions(GoRttiMapper goBinary, MarkupSession markupSession)
+			throws IOException {
+		for (GoFuncData funcdata : goBinary.getAllFunctions()) {
+			String funcname = SymbolUtilities.replaceInvalidChars(funcdata.getName(), true);
+			markupSession.createFunctionIfMissing(funcname, funcdata.getFuncAddress());
+		}
+		try {
+			fixDuffFunctions(goBinary, markupSession);
+		}
+		catch (InvalidInputException | DuplicateNameException e) {
+			Msg.error(this, "Error configuring duff functions", e);
+		}
+	}
+
+	/**
+	 * Fixes the function signature of the runtime.duffzero and runtime.duffcopy functions.
+	 * <p>
+	 * The alternate duff-ified entry points haven't been discovered yet, so the information
+	 * set to the main function entry point will be propagated at a later time to the alternate 
+	 * entry points by the GolangDuffFixupAnalyzer.
+	 * 
+	 * @param goBinary the golang binary
+	 * @param session {@link MarkupSession}
+	 * @throws InvalidInputException if error assigning the function signature
+	 * @throws DuplicateNameException if error assigning the function signature
+	 */
+	private void fixDuffFunctions(GoRttiMapper goBinary, MarkupSession session)
+			throws InvalidInputException, DuplicateNameException {
+		Program program = goBinary.getProgram();
+		GoRegisterInfo regInfo = goBinary.getRegInfo();
+		DataType voidPtr = program.getDataTypeManager().getPointer(VoidDataType.dataType);
+		DataType uintDT = goBinary.getTypeOrDefault("uint", DataType.class,
+			AbstractUnsignedIntegerDataType.getUnsignedDataType(goBinary.getPtrSize(), null));
+		
+		GoFuncData duffzeroFuncdata = goBinary.getFunctionByName("runtime.duffzero");
+		Function duffzeroFunc = duffzeroFuncdata != null
+				? program.getFunctionManager().getFunctionAt(duffzeroFuncdata.getFuncAddress())
+				: null;
+		PrototypeModel duffzeroCC = goBinary.getDuffzeroCallingConvention();
+		if (duffzeroFunc != null && duffzeroCC != null) {
+			// NOTE: some duffzero funcs need a zero value supplied to them via a register set
+			// by the caller.  (depending on the arch)  The duffzero calling convention defined 
+			// by the callspec should take care of this by defining that register as the second 
+			// storage location. Otherwise, the callspec will only have a single storage 
+			// location defined.
+			boolean needZeroValueParam = regInfo.getZeroRegister() == null;
+			List<Variable> params = new ArrayList<>();
+			params.add(new ParameterImpl("dest", voidPtr, program));
+			if (needZeroValueParam) {
+				params.add(new ParameterImpl("zeroValue", uintDT, program));
+			}
+
+			duffzeroFunc.updateFunction(duffzeroCC.getName(),
+				new ReturnParameterImpl(VoidDataType.dataType, program), params,
+				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true,
+				SourceType.ANALYSIS);
+
+			DWARFUtil.appendComment(program, duffzeroFunc.getEntryPoint(), CodeUnit.PLATE_COMMENT,
+				"Golang special function: ", "duffzero", "\n");
+		}
+
+		GoFuncData duffcopyFuncdata = goBinary.getFunctionByName("runtime.duffcopy");
+		Function duffcopyFunc = duffcopyFuncdata != null
+				? program.getFunctionManager().getFunctionAt(duffcopyFuncdata.getFuncAddress())
+				: null;
+		PrototypeModel duffcopyCC = goBinary.getDuffcopyCallingConvention();
+		if (duffcopyFuncdata != null && duffcopyCC != null) {
+			List<Variable> params = List.of(
+				new ParameterImpl("dest", voidPtr, program),
+				new ParameterImpl("src", voidPtr, program));
+			duffcopyFunc.updateFunction(duffcopyCC.getName(),
+				new ReturnParameterImpl(VoidDataType.dataType, program), params,
+				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+
+			DWARFUtil.appendComment(program, duffcopyFunc.getEntryPoint(), CodeUnit.PLATE_COMMENT,
+				"Golang special function: ", "duffcopy", "\n");
+		}
+
 	}
 
 	private void markupMiscInfoStructs(Program program) {
@@ -229,15 +310,14 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		return newMB.getStart();
 	}
 
-	private void setupProgramContext(GoRttiMapper programContext, MarkupSession session)
+	private void setupProgramContext(GoRttiMapper goBinary, MarkupSession session)
 			throws IOException {
-		Program program = programContext.getProgram();
-		GoRegisterInfo goRegInfo = GoRegisterInfoManager.getInstance()
-				.getRegisterInfoForLang(program.getLanguage(),
-					programContext.getGolangVersion());
+		Program program = goBinary.getProgram();
+		GoRegisterInfo goRegInfo = goBinary.getRegInfo();
 
 		MemoryBlock txtMemblock = program.getMemory().getBlock(".text");
-		if (txtMemblock != null && goRegInfo.getZeroRegister() != null) {
+		if (txtMemblock != null && goRegInfo.getZeroRegister() != null &&
+			!goRegInfo.isZeroRegisterIsBuiltin()) {
 			try {
 				program.getProgramContext()
 						.setValue(goRegInfo.getZeroRegister(), txtMemblock.getStart(),
@@ -248,9 +328,9 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			}
 		}
 
-		int alignment = programContext.getPtrSize();
+		int alignment = goBinary.getPtrSize();
 		long sizeNeeded = 0;
-		
+
 		Symbol zerobase = SymbolUtilities.getUniqueSymbol(program, "runtime.zerobase");
 		long zerobaseSymbol = sizeNeeded;
 		sizeNeeded += zerobase == null
@@ -258,13 +338,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 				: 0;
 
 		long gStructOffset = sizeNeeded;
-		Structure gStruct = programContext.getGhidraDataType("runtime.g", Structure.class);
+		Structure gStruct = goBinary.getGhidraDataType("runtime.g", Structure.class);
 		sizeNeeded += gStruct != null
 				? NumericUtilities.getUnsignedAlignedValue(gStruct.getLength(), alignment)
 				: 0;
 
 		long mStructOffset = sizeNeeded;
-		Structure mStruct = programContext.getGhidraDataType("runtime.m", Structure.class);
+		Structure mStruct = goBinary.getGhidraDataType("runtime.m", Structure.class);
 		sizeNeeded += mStruct != null
 				? NumericUtilities.getUnsignedAlignedValue(mStruct.getLength(), alignment)
 				: 0;
@@ -304,16 +384,16 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
-	private void createBootstrapGDT(GoRttiMapper programContext, Program program,
+	private void createBootstrapGDT(GoRttiMapper goBinary, Program program,
 			TaskMonitor monitor) throws IOException {
-		GoVer goVer = programContext.getGolangVersion();
+		GoVer goVer = goBinary.getGolangVersion();
 		String osName = GoRttiMapper.getGolangOSString(program);
 		String gdtFilename =
-			GoRttiMapper.getGDTFilename(goVer, programContext.getPtrSize(), osName);
+			GoRttiMapper.getGDTFilename(goVer, goBinary.getPtrSize(), osName);
 		gdtFilename =
 			gdtFilename.replace(".gdt", "_%d.gdt".formatted(System.currentTimeMillis()));
 		File gdt = new File(System.getProperty("user.home"), gdtFilename);
-		programContext.exportTypesToGDT(gdt, monitor);
+		goBinary.exportTypesToGDT(gdt, monitor);
 		Msg.info(this, "Golang bootstrap GDT created: " + gdt);
 	}
 
@@ -323,7 +403,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return "golang".equals(
+		return GoConstants.GOLANG_CSPEC_NAME.equals(
 			program.getCompilerSpec().getCompilerSpecDescription().getCompilerSpecName());
 	}
 

@@ -128,6 +128,21 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		return pclntable.isOffsetWithinData(offset, 1);
 	}
 
+	/**
+	 * Returns an artificial slice of the functab entries that are valid.
+	 * 
+	 * @return artificial slice of the functab entries that are valid
+	 */
+	public GoSlice getFunctabEntriesSlice() {
+		// chop off the last entry as it is not a full entry (it just points to the address
+		// at the end of the text segment) and can conflict with markup of the following structs
+		long sliceElementCount = ftab.getLen() > 0 ? ftab.getLen() - 1 : 0;
+		int entryLen =
+			programContext.getStructureMappingInfo(GoFunctabEntry.class).getStructureLength();
+		GoSlice subSlice = ftab.getSubSlice(0, sliceElementCount, entryLen);
+		return subSlice;
+	}
+
 	public boolean isValid() {
 		MemoryBlock txtBlock = programContext.getProgram().getMemory().getBlock(".text");
 		if (txtBlock != null && txtBlock.getStart().getOffset() != text) {
@@ -153,6 +168,16 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		return funcnametab;
 	}
 
+	public List<GoFuncData> getAllFunctionData() throws IOException {
+		List<GoFunctabEntry> functabentries =
+			getFunctabEntriesSlice().readList(GoFunctabEntry.class);
+		List<GoFuncData> result = new ArrayList<>();
+		for (GoFunctabEntry functabEntry : functabentries) {
+			result.add(functabEntry.getFuncData());
+		}
+		return result;
+	}
+
 	@Override
 	public StructureContext<GoModuledata> getStructureContext() {
 		return structureContext;
@@ -168,15 +193,9 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		markupStringTable(funcnametab.getArrayAddress(), funcnametab.getLen(), session);
 		markupStringTable(filetab.getArrayAddress(), filetab.getLen(), session);
 
-		if (ftab.getLen() > 0) {
-			// chop off the last entry as it is not a full entry (it just points to the address
-			// at the end of the text segment) and can conflict with markup of the following structs
-			int entryLen =
-				programContext.getStructureMappingInfo(GoFunctabEntry.class).getStructureLength();
-			GoSlice subSlice = ftab.getSubSlice(0, ftab.getLen() - 1, entryLen);
-			subSlice.markupArray("moduledata.ftab", GoFunctabEntry.class, false, session);
-			subSlice.markupArrayElements(GoFunctabEntry.class, session);
-		}
+		GoSlice subSlice = getFunctabEntriesSlice();
+		subSlice.markupArray("moduledata.ftab", GoFunctabEntry.class, false, session);
+		subSlice.markupArrayElements(GoFunctabEntry.class, session);
 
 		Structure textsectDT =
 			programContext.getGhidraDataType("runtime.textsect", Structure.class);

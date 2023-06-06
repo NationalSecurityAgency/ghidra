@@ -51,6 +51,56 @@
 			</unaffected>
 		</prototype>
 	</default_proto>
+	
+	<prototype name="duffzero" extrapop="4" stackshift="4">
+		<input>
+			<pentry minsize="1" maxsize="4">
+				<register name="EDI"/>
+			</pentry>
+			<pentry minsize="1" maxsize="4">
+				<register name="EAX"/>
+			</pentry>
+		</input>
+      
+		<output>
+			<pentry minsize="1" maxsize="4">
+				<register name="EDI"/>
+			</pentry>
+		</output>
+      
+		<killedbycall>
+			<register name="EDI"/>
+		</killedbycall>
+		<unaffected>
+			<register name="ESP"/>
+			<register name="EBP"/>
+		</unaffected>
+	</prototype>
+	
+	<prototype name="duffcopy" extrapop="4" stackshift="4">
+		<input>
+			<pentry minsize="1" maxsize="4">
+				<register name="EDI"/>
+			</pentry>
+			<pentry minsize="1" maxsize="4">
+				<register name="ESI"/>
+			</pentry>
+		</input>
+      
+		<output>
+		</output>
+      
+		<killedbycall>
+			<register name="EDI"/>
+			<register name="ESI"/>
+			<register name="ECX"/>
+		</killedbycall>
+		<unaffected>
+			<register name="ESP"/>
+			<register name="EBP"/>
+		</unaffected>
+	</prototype>
+	
 	<prototype name="__cdeclf" extrapop="4" stackshift="4">
 		<input>
 			<pentry minsize="1" maxsize="500" align="4">

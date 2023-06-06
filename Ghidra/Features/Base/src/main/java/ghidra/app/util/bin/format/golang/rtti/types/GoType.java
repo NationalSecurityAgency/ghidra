@@ -92,6 +92,19 @@ public abstract class GoType implements StructureMarkup<GoType> {
 					: 0);
 	}
 
+	/**
+	 * Returns the location of where this type object, and any known associated optional
+	 * structures ends.
+	 * 
+	 * @return index location of end of this type object
+	 * @throws IOException if error reading
+	 */
+	public long getEndOfTypeInfo() throws IOException {
+		return typ.hasUncommonType()
+				? getUncommonType().getEndOfTypeInfo()
+				: context.getStructureEnd();
+	}
+
 	@Markup
 	public GoUncommonType getUncommonType() throws IOException {
 		return typ.hasUncommonType()
