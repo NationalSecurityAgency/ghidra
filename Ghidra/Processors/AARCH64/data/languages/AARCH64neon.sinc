@@ -4270,14 +4270,14 @@ is b_31=0 & b_30=1 & b_1029=0b00111011111000110010 & Rd_VPR128.8H & Rn_VPR128.8H
 
 # C7.2.55 FCMLA (by element) page C7-1117 line 64749 KEEPWITH
 
-fcmla_rotate: #0 is b_15=0 & b_1314=0b00 { export 0:1; }
-fcmla_rotate: #90 is b_15=0 & b_1314=0b01 { export 90:1; }
-fcmla_rotate: #180 is b_15=0 & b_1314=0b10 { export 180:1; }
-fcmla_rotate: #270 is b_15=0 & b_1314=0b11 { export 270:1; }
-fcmla_rotate: #0 is b_15=1 & b_1112=0b00 { export 0:1; }
-fcmla_rotate: #90 is b_15=1 & b_1112=0b01 { export 90:1; }
-fcmla_rotate: #180 is b_15=1 & b_1112=0b10 { export 180:1; }
-fcmla_rotate: #270 is b_15=1 & b_1112=0b11 { export 270:1; }
+fcmla_rotate: #0 is b_15=0 & b_1314=0b00 { export 0:2; }
+fcmla_rotate: #90 is b_15=0 & b_1314=0b01 { export 90:2; }
+fcmla_rotate: #180 is b_15=0 & b_1314=0b10 { export 180:2; }
+fcmla_rotate: #270 is b_15=0 & b_1314=0b11 { export 270:2; }
+fcmla_rotate: #0 is b_15=1 & b_1112=0b00 { export 0:2; }
+fcmla_rotate: #90 is b_15=1 & b_1112=0b01 { export 90:2; }
+fcmla_rotate: #180 is b_15=1 & b_1112=0b10 { export 180:2; }
+fcmla_rotate: #270 is b_15=1 & b_1112=0b11 { export 270:2; }
 
 # C7.2.62 FCMLA (by element) page C7-2154 line 125620 MATCH x2f001000/mask=xbf009400
 # CONSTRUCT x2f401000/mask=xffc09c00 MATCHED 1 DOCUMENTED OPCODES
