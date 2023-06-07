@@ -3554,8 +3554,8 @@ is b_31=0 & b_30=1 & b_2129=0b101110010 & b_1015=0b000101 & Rd_VPR128.8H & Rn_VP
 
 # C7.2.46 FCADD page C7-1090 line 63037 KEEPWITH
 
-fcadd_rotate: #90 is b_12=0 { export 90:1; }
-fcadd_rotate: #270 is b_12=1 { export 270:1; }
+fcadd_rotate: #90 is b_12=0 { export 90:2; }
+fcadd_rotate: #270 is b_12=1 { export 270:2; }
 
 # C7.2.53 FCADD page C7-2127 line 123874 MATCH x2e00e400/mask=xbf20ec00
 # CONSTRUCT x2e40e400/mask=xffe0ec00 MATCHED 1 DOCUMENTED OPCODES
