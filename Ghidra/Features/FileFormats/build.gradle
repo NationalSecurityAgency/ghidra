@@ -47,8 +47,6 @@ dependencies {
 	api 'net.sf.sevenzipjbinding:sevenzipjbinding:16.02-2.01'	
 	runtimeOnly 'net.sf.sevenzipjbinding:sevenzipjbinding-all-platforms:16.02-2.01'
 	
-	helpPath project(path: ":Base", configuration: 'helpPath')
-
 	// include code from src/test/slow in Base
 	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
 }

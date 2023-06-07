@@ -357,17 +357,6 @@ public class GHelpBuilder {
 		errorMessage(buffy.toString());
 	}
 
-	private static void warningMessage(String... message) {
-		StringBuilder buffy = new StringBuilder();
-		buffy.append("\n");
-		buffy.append("              !!!!!     WARNING     !!!!!\n");
-		for (String string : message) {
-			buffy.append('\t').append('\t').append(string).append('\n');
-		}
-		buffy.append("\n");
-		errorMessage(buffy.toString());
-	}
-
 	private static void printErrorMessage(String message) {
 		// this prevents error messages getting interspersed with output messages
 		flush();

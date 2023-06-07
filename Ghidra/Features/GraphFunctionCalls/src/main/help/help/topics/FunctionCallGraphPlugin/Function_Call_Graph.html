@@ -226,20 +226,88 @@
 		<H2><A name="Satellite_View"></A>Satellite View</H2>
 	
 	    <BLOCKQUOTE>
-	        <P>The Satellite View works exactly as the 
-	        	<A href="help/topics/FunctionGraphPlugin/Function_Graph.html#Satellite_View">
-	        		Function Graph's Satellite View</A>.
-	        </P>
-		</BLOCKQUOTE>
+	      <P>The Satellite View provides an overview of the graph. From this view you may also perform
+	      basic adjustment of the overall graph location. In addition to the complete graph, the
+	      satellite view contains a <B>lens</B> (the white rectangle) that indicates how much of the
+	      current graph fits into the primary view.</P>
+	
+	      <P>When you single left mouse click in the satellite view the graph is centered around the
+	      corresponding point in the primary view. Alternatively, you may drag the lens of the
+	      satellite view to the desired location by performing a mouse drag operation on the lens.</P>
+	
+	      <P>You may hide the satellite view by right-clicking anywhere in the Primary View and
+	      deselecting the <B>Display Satellite View</B> toggle button from the popup menu.</P>
+	
+	      <BLOCKQUOTE>
+	        <P><IMG src="help/shared/tip.png" alt="" border="0"> If the Primary View is painting
+	        sluggishly, then hiding the Satellite View cause the Primary View to be more
+	        responsive.</P>
+	      </BLOCKQUOTE>
+	
+	      <H3><A name="Satellite_View_Dock"></A>Detached Satellite</H3>
+	
+	      <BLOCKQUOTE>
+	        <P>The Satellite View is attached, or <B>docked</B>, to the Primary View by default.
+	        However, you can detach, or undock, the Satellite View, which will put the view into a
+	        Component Provider, which itself can be moved, resized and docked anywhere in the Tool you
+	        wish.</P>
+	
+	        <P>To undock the Satellite View, right-click in the graph and deselect the <B>Dock
+	        Satellite View</B> menu item.</P>
+	
+	        <P>To re-dock the Satellite View, right-click in the graph and select the <B>Dock Satellite
+	        View</B> menu item.</P>
+	      </BLOCKQUOTE>
+	
+	      <BLOCKQUOTE>
+	        <P><IMG src="help/shared/tip.png" alt="" border="0"> To reshow the Satellite View if it is
+	        hidden, whether docked or undocked, you can press the <IMG src=
+	        "images/network-wireless.png" alt="" border="1"> button. This button is in the lower-right
+	        hand corner of the graph and is only visible if the Satellite View is hidden or
+	        undocked.</P>
+	      </BLOCKQUOTE>
+	    </BLOCKQUOTE>
 	
 		<H2><A name="Options"></A>Options</H2>
 	
 	    <BLOCKQUOTE>
-	        <P>The Function Call Graph options are currently a subset of the 
-	        	<A href="help/topics/FunctionGraphPlugin/Function_Graph.html#Options">
-	        		Function Graph's Options</A>.
-	        </P>
-		</BLOCKQUOTE>
+	    
+	      <P>The <B>Scroll Wheel Pans</B> option signals to move the graph vertical when scrolling the
+	      mouse scroll wheel. Disabling this option restores the original function graph scroll wheel
+	      behavior of zooming when scrolled.</P>
+	
+	      <P>The <B>Use Animation</B> option signals to the graph whether to animate mutative graph
+	      operations and navigations.</P>
+	
+	      <P><A name="Layout_Compressing"></A>The <B>Use Condensed Layout</B> option signals to the
+	      graph to bring vertices as close together as possible when laying out the graph. Using this
+	      option to fit as many vertices on the screen as possible. Disable this option to make the
+	      overall layout of the graph more aesthetic.</P>
+	
+	      <P>The <B>Use Mouse-relative Zoom</B> option signals zoom the graph to and from the mouse
+	      location when zooming from the middle-mouse. The default for this option is off, which
+	      triggers zoom to work from the center of the graph, regardless of the mouse location.</P>
+	
+		 <P>The <B>View Settings</B> option describes how the graph will be zoomed when it is first
+		 loaded.  The values are:</P>
+	
+	      <UL>
+	        <LI><B>Start Fully Zoomed Out</B> - always start fully zoomed out so that the entire
+	        graph can be seen.</LI>
+	
+	        <LI><B>Start Fully Zoomed In</B> - always start fully zoomed in on the vertex containing
+	        the current location.</LI>
+	
+	        <LI><B>Remember User Settings</B> - keep the zoom level where the user previously left
+	        it.</LI>
+	      </UL>
+	      <BR>
+	      <BR>    
+	
+	      <P>There are various edge color and highlight color options available to change. The
+	      highlight colors are those to be used when the flow animations take place.</P>
+    	</BLOCKQUOTE>
+
 		
 		
 	</BLOCKQUOTE>

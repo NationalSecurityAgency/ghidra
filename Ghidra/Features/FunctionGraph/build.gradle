@@ -22,15 +22,9 @@ apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features Graph FunctionGraph'
 
-
-
 dependencies {
-
 	api project(":Base")
-
 	api project(":GraphServices")
-       
-	helpPath project(path: ":Base", configuration: 'helpPath')
 }
 
 
