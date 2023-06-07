@@ -2569,7 +2569,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		int offset = 0;
 		while (offset < defaultPointerSize) {
 			monitor.checkCancelled();
-			Address addr = pointer.add(offset++);
+			Address addr = pointer.add(offset);
 			data = listing.getDataContaining(addr);
 
 			// if bad address, instruction, or already defined data cannot contain pointer
@@ -2592,6 +2592,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			if (symbols.length != 0) {
 				return false;
 			}
+			offset++;
 		}
 
 		return true;
