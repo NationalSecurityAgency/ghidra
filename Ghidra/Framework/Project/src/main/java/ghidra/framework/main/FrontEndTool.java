@@ -166,12 +166,17 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	@Override
-	protected void dispose() {
+	public void dispose() {
 		super.dispose();
 
 		if (logProvider != null) {
 			logProvider.dispose();
 		}
+		shutdown();
+	}
+
+	protected void shutdown() {
+		System.exit(0);
 	}
 
 	private void ensureSize() {
@@ -392,13 +397,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	@Override
-	public void exit() {
-		plugin.exitGhidra();
-	}
-
-	@Override
-	public void close() {
-		close(true);
+	public boolean canClose() {
+		return super.canClose() && plugin.closeActiveProject();
 	}
 
 	/**

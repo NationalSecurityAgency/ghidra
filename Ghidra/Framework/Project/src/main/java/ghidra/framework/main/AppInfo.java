@@ -46,7 +46,7 @@ public class AppInfo {
 
 	public static void exitGhidra() {
 		assertFrontEndRunning();
-		tool.exit();
+		tool.close(); // closing the front end tool will exit the application
 	}
 
 	private static void assertFrontEndRunning() {

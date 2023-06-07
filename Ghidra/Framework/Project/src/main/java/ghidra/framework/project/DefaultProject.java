@@ -303,8 +303,7 @@ public class DefaultProject implements Project {
 		ProjectFileManager projectData = (ProjectFileManager) c.getProjectData();
 		if (projectData == null) {
 			throw new IOException(
-				"Failed to view specified project/repository: " +
-					GhidraURL.getDisplayString(url));
+				"Failed to view specified project/repository: " + GhidraURL.getDisplayString(url));
 		}
 		url = projectData.getProjectLocator().getURL(); // transform to repository root URL
 
@@ -423,7 +422,6 @@ public class DefaultProject implements Project {
 		try {
 
 			if (toolManager != null) {
-				toolManager.close();
 				toolManager.dispose();
 			}
 			if (projectManager != null) {
