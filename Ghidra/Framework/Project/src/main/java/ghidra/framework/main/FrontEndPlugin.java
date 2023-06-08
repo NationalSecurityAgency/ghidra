@@ -445,23 +445,7 @@ public class FrontEndPlugin extends Plugin
 		projectDataPanel.readDataState(saveState);
 	}
 
-	/**
-	 * Exit the Ghidra application; the parameter indicates whether
-	 * the user should be prompted to save the project that is about
-	 * to be closed
-	 */
-	void exitGhidra() {
-		boolean okToExit = closeActiveProject();
-		if (okToExit) {
-			System.exit(0);
-
-		}
-		else if (!tool.isVisible()) {
-			tool.setVisible(true);
-		}
-	}
-
-	private boolean closeActiveProject() {
+	boolean closeActiveProject() {
 		if (activeProject == null) {
 			return true;
 		}
@@ -470,7 +454,7 @@ public class FrontEndPlugin extends Plugin
 		}
 		catch (Exception e) {
 			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e); // Keep this.
-			int result = OptionDialog.showOptionDialog(tool.getToolFrame(), "Close Project Failed",
+			int result = OptionDialog.showOptionDialog(null, "Close Project Failed",
 				"Error Description: [ " + e + " ]" + "\n" +
 					"=====> Do you wish to exit Ghidra, possibly losing changes? <=====",
 				"Exit Ghidra (Possibly Lose Changes)", OptionDialog.ERROR_MESSAGE);

@@ -167,12 +167,12 @@ public class GhidraTool extends PluginTool {
 	}
 
 	@Override
-	public void exit() {
+	public void dispose() {
 		if (fileOpenDropHandler != null) {
 			fileOpenDropHandler.dispose();
 			fileOpenDropHandler = null;
 		}
-		super.exit();
+		super.dispose();
 	}
 
 	private void addCloseAction() {

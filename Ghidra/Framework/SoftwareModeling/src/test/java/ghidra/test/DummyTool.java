@@ -65,16 +65,10 @@ public class DummyTool extends PluginTool {
 	}
 
 	@Override
-	public void exit() {
-		//do nothing
-	}
-
-	@Override
 	public void close() {
 		if (project != null) {
 			project.getToolServices().closeTool(this);
 		}
-
 	}
 
 	@Override
@@ -266,7 +260,7 @@ public class DummyTool extends PluginTool {
 	}
 
 	@Override
-	public boolean canClose(boolean isExiting) {
+	public boolean canClose() {
 		return true;
 	}
 
