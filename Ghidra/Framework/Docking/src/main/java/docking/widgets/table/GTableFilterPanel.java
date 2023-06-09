@@ -146,6 +146,12 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	private SwingUpdateManager updateManager = new SwingUpdateManager(250, 1000, () -> {
 		String text = filterField.getText();
 		TableFilter<ROW_OBJECT> tableFilter = filterFactory.getTableFilter(text, transformer);
+
+		// Having an edit active when the data changes can lead to incorrect row editing.  The table
+		// knows which row is being edited by number.   If the data for that row number changes as a
+		// result of a filter, the table does not know this and may update the wrong row data.
+		table.editingCanceled(null);
+
 		textFilterModel.setTableFilter(
 			getCombinedTableFilter(secondaryTableFilter, tableFilter, columnTableFilter));
 	});
