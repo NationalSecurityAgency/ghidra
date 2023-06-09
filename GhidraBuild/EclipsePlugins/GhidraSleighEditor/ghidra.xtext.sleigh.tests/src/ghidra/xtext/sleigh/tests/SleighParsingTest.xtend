@@ -16,11 +16,13 @@
 package ghidra.xtext.sleigh.tests
 
 import com.google.inject.Inject
+import ghidra.xtext.sleigh.sleigh.Model
+import ghidra.xtext.sleigh.sleigh.SleighPackage
+import org.eclipse.xtext.diagnostics.Diagnostic
 import org.eclipse.xtext.testing.InjectWith
 import org.eclipse.xtext.testing.extensions.InjectionExtension
 import org.eclipse.xtext.testing.util.ParseHelper
 import org.eclipse.xtext.testing.validation.ValidationTestHelper
-import ghidra.xtext.sleigh.sleigh.Model
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
 
@@ -193,6 +195,53 @@ class SleighParsingTest {
 			:set reg is contFlag=0 & op=0 [ contFlag = 1; ] {}	
 		''')
 		model.assertNoErrors
+	}
+	
+	@Test def void testCpool() {
+		var model = parseHelper.parse('''
+			define space register size=2 type=register_space wordsize=1 default;
+			define register offset=0 size=1 [ Z C N V ];
+			
+			define token instr(16)
+			   op = (0,15)
+			   reg = (0,1)
+			   cc = (2,3)
+			;
+			
+			attach variables [ reg ] [ Z C N V ];
+			
+			:mov reg,N,op is op=0 & N & reg & op & op=1 {
+				tmp:1 = cpool(0:1, 0:2);
+				tmp1:2 = cpool(0:1, 1:2, 2:2, 3:4);
+				
+				tmp2:2 = cpool(0:1, 1:2, 2:2, 3:4, 3:4, 4:4, 5:4, 6:4);
+			}
+		''')
+		model.assertNoErrors
+
+		model = parseHelper.parse('''
+			define space register size=2 type=register_space wordsize=1 default;
+			define register offset=0 size=1 [ Z C N V ];
+			
+			define token instr(16)
+			   op = (0,15)
+			   reg = (0,1)
+			   cc = (2,3)
+			;
+			
+			attach variables [ reg ] [ Z C N V ];
+			
+			:mov reg,N,op is op=0 & N & reg & op & op=1 {
+				tmp:1 = cpool(0:1, 0:2);
+				tmp:2 = cpool(0:1);  # too few args
+			}
+		''')
+		
+		assertError(model,
+			SleighPackage::eINSTANCE.expression,
+			Diagnostic.SYNTAX_DIAGNOSTIC, 314,1, 
+			"mismatched input ')' expecting ','"
+		)
 	}
 }
 

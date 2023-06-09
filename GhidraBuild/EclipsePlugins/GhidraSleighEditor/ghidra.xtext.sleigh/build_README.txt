@@ -77,7 +77,7 @@ Creating an installation zip file to install in Eclipse:
      - Export source: UNCHECKED
      - Package as individual JAR archives: CHECKED
      - Generate p2 repository: CHECKED
-     - Categorize repository: CHECKED.
+     - Categorize repository: CHECKED
      - Qualifier replacement: CHECKED + clear field so default is used
      - Save as Ant script: UNCHECKED
      - Allow for binary cycles in target platform: CHECKED
