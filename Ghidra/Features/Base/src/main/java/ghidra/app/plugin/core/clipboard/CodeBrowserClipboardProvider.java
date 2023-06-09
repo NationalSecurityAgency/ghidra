@@ -25,7 +25,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -61,6 +60,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	public static final ClipboardType ADDRESS_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
+	public static final ClipboardType ADDRESS_TEXT_WITH_OFFSET_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Address w/ Offset");
 	public static final ClipboardType CODE_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Formatted Code");
 	public static final ClipboardType LABELS_COMMENTS_TYPE =
@@ -85,6 +86,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		list.add(PYTHON_LIST_TYPE);
 		list.add(CPP_BYTE_ARRAY_TYPE);
 		list.add(ADDRESS_TEXT_TYPE);
+		list.add(ADDRESS_TEXT_WITH_OFFSET_TYPE);
 
 		return list;
 	}
@@ -183,6 +185,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 		if (copyType == ADDRESS_TEXT_TYPE) {
 			return copyAddress();
+		}
+		else if (copyType == ADDRESS_TEXT_WITH_OFFSET_TYPE) {
+			return copySymbolString();
 		}
 		else if (copyType == CODE_TEXT_TYPE) {
 			return copyCode(monitor);
@@ -304,55 +309,69 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private Transferable copyAddress() {
+		AddressSetView addrs = getSelectedAddresses();
+		Iterable<Address> it = addrs.getAddresses(true);
+		return createStringTransferable(StringUtils.join(it, "\n"));
+	}
 
-		AddressSetView addressSet = getSelectedAddresses();
-		AddressIterator it = addressSet.getAddresses(true);
-		String joined = StringUtils.join((Iterator<Address>) it, "\n");
-		return createStringTransferable(joined);
+	private Transferable copySymbolString() {
+		Listing listing = currentProgram.getListing();
+		List<String> strings = new ArrayList<>();
+		CodeUnitIterator codeUnits = listing.getCodeUnits(getSelectedAddresses(), true);
+		while (codeUnits.hasNext()) {
+			CodeUnit cu = codeUnits.next();
+			Address addr = cu.getAddress();
+			Function function = listing.getFunctionContaining(addr);
+			if (function == null) {
+				strings.add(addr.toString());
+				continue;
+			}
+
+			String name = function.getName(true);
+			Address entry = function.getEntryPoint();
+			int delta = addr.compareTo(entry);
+			if (delta == 0) {
+				strings.add(name);
+			}
+			else if (delta > 0) {
+				strings.add(String.format("%s + %#x", name, addr.subtract(entry)));
+			}
+			else {
+				strings.add(String.format("%s - %#x", name, entry.subtract(addr)));
+			}
+		}
+		return createStringTransferable(StringUtils.join(strings, "\n"));
 	}
 
 	protected Transferable copyCode(TaskMonitor monitor) {
 
 		AddressSetView addressSet = getSelectedAddresses();
-		try {
-			TextLayoutGraphics g = new TextLayoutGraphics();
+		ListingModel listingModel = getListingModel();
+		TextLayoutGraphics g = new TextLayoutGraphics();
+		LayoutBackgroundColorManager colorMap =
+			new EmptyLayoutBackgroundColorManager(PAINT_CONTEXT.getBackground());
+		Rectangle rect = new Rectangle(Integer.MAX_VALUE, Integer.MAX_VALUE);
+		AddressRangeIterator ranges = addressSet.getAddressRanges();
+		while (ranges.hasNext() && !monitor.isCancelled()) {
+			AddressRange curRange = ranges.next();
+			Address address = curRange.getMinAddress();
+			Address maxAddress = curRange.getMaxAddress();
 
-			Rectangle rect = new Rectangle(Integer.MAX_VALUE, Integer.MAX_VALUE);
-
-			AddressRangeIterator rangeItr = addressSet.getAddressRanges();
-			while (rangeItr.hasNext()) {
-				AddressRange curRange = rangeItr.next();
-				Address curAddress = curRange.getMinAddress();
-				Address maxAddress = curRange.getMaxAddress();
-
-				// getAddressAfter(curAddress) returns null in certain situations
-				while (curAddress != null && curAddress.compareTo(maxAddress) <= 0) {
-					if (monitor.isCancelled()) {
-						break;
-					}
-
-					//Add the layout for the present address
-					Layout layout = getListingModel().getLayout(curAddress, false);
-					if (layout != null) {
-						LayoutBackgroundColorManager layoutColorMap =
-							new EmptyLayoutBackgroundColorManager(PAINT_CONTEXT.getBackground());
-						layout.paint(null, g, PAINT_CONTEXT, rect, layoutColorMap, null);
-						g.flush();
-					}
-					// may be null
-					curAddress = getListingModel().getAddressAfter(curAddress);
+			while (address != null && address.compareTo(maxAddress) <= 0) {
+				if (monitor.isCancelled()) {
+					break;
 				}
+
+				Layout layout = listingModel.getLayout(address, false);
+				if (layout != null) {
+					layout.paint(null, g, PAINT_CONTEXT, rect, colorMap, null);
+					g.flush();
+				}
+				address = listingModel.getAddressAfter(address);
 			}
-
-			return createStringTransferable(g.getBuffer().toString());
-		}
-		catch (Exception e) {
-			String message = "Copy failed: " + ExceptionUtils.getMessage(e);
-			Msg.error(this, message, e);
-			tool.setStatusInfo(message, true);
 		}
 
-		return null;
+		return createStringTransferable(g.getBuffer());
 	}
 
 	private Transferable copyByteString(Address address) {
@@ -361,7 +380,6 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private CodeUnitInfoTransferable copyLabelsComments(boolean copyLabels, boolean copyComments) {
-
 		AddressSetView addressSet = getSelectedAddresses();
 		List<CodeUnitInfo> list = new ArrayList<>();
 		Address startAddr = addressSet.getMinAddress();
