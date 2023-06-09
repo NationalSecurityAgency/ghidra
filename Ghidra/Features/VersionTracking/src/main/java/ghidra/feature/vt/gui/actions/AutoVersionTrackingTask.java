@@ -464,12 +464,26 @@ public class AutoVersionTrackingTask extends Task {
 				continue;
 			}
 
+			// if already matched or blocked skip it
+			if (match.getAssociation().getStatus() != VTAssociationStatus.AVAILABLE) {
+				continue;
+			}
+
 			// Get a set of related matches from the set of all matches.  These all have the same
 			// instructions as each other but not necessarily the same operands.
 			Set<VTMatch> relatedMatches = getRelatedMatches(match, matches, monitor);
 
-			// remove related matches from the set of matches to process next time
+			// remove related matches from the copy of set of matches which gets checked 
+			// and skipped if not in the set
 			removeMatches(copyOfMatches, relatedMatches);
+
+			if (relatedMatches.size() > 20) {
+				Msg.debug(this, "Too many related matches to process this match set " +
+					match.getSourceAddress());
+				continue;
+			}
+
+
 
 			// remove any matches that have identical source functions - if more than one
 			// with exactly the same instructions and operands then cannot determine a unique match
