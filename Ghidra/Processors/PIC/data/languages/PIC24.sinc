@@ -2051,7 +2051,7 @@ cond1: "gt" is  TOK_CCCC=0xC
                 { tmpBool:1 = ((!SRL_Z && SRL_N && SRL_OV) || (!SRL_Z && !SRL_N && !SRL_OV)); export tmpBool; }
 cond1: "gtu" is  TOK_CCCC=0xE { tmpBool:1 = SRL_C && !SRL_Z; export tmpBool; }
 cond1: "le" is  TOK_CCCC=0x4
-                { tmpBool:1 = (SRL_Z || (SRL_N && !SRL_OV) || (!SRL_N && SRL_OV)); export tmpBool; }
+                { tmpBool:1 = (SRL_Z || (SRL_N != SRL_OV)); export tmpBool; }
 cond1: "leu" is  TOK_CCCC=0x6 { tmpBool:1 = (!SRL_C || SRL_Z); export tmpBool; }
 cond1: "lt" is  TOK_CCCC=0x5 { tmpBool:1 = ((SRL_N && !SRL_OV) || (!SRL_N && SRL_OV)); export tmpBool; }
 cond1: "n" is  TOK_CCCC=0x3 { tmpBool:1 = (SRL_N); export tmpBool; }
