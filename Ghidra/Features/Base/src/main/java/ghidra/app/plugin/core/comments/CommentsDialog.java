@@ -25,6 +25,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
@@ -266,12 +268,15 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		GComboBox<AnnotationAdapterWrapper> annotationsComboBox = new GComboBox<>(annotations);
 		JButton addAnnotationButton = new JButton("Add Annotation");
 		addAnnotationButton.addActionListener(e -> {
-			JTextArea currentTextArea = getSelectedTextArea();
+			JTextArea textArea = getSelectedTextArea();
 			AnnotationAdapterWrapper aaw =
 				(AnnotationAdapterWrapper) annotationsComboBox.getSelectedItem();
-			currentTextArea.insert(aaw.getPrototypeString(),
-				currentTextArea.getCaretPosition());
-			currentTextArea.setCaretPosition(currentTextArea.getCaretPosition() - 1);
+			String selectedText = textArea.getSelectedText();
+			if (!StringUtils.isBlank(selectedText)) {
+				textArea.replaceSelection(aaw.getPrototypeString(selectedText));
+			} else {
+				insertAnnotation(textArea, aaw);
+			}
 		});
 		JPanel annoPanel = new JPanel();
 		annoPanel.add(addAnnotationButton);
@@ -359,9 +364,7 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 			JTextArea currentTextArea = getSelectedTextArea();
 			for (AnnotationAdapterWrapper annotation : annotations) {
 				if (annotation.toString().equals(e.getActionCommand())) {
-					currentTextArea.insert(annotation.getPrototypeString(),
-						currentTextArea.getCaretPosition());
-					currentTextArea.setCaretPosition(currentTextArea.getCaretPosition() - 1);
+					insertAnnotation(currentTextArea, annotation);
 				}
 			}
 		};
@@ -381,6 +384,12 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		repeatableField.addMouseListener(new PopupListener());
 
 		return panel;
+	}
+	
+	private void insertAnnotation(JTextArea textArea, AnnotationAdapterWrapper annotation) {
+		textArea.insert(annotation.getPrototypeString(),
+				textArea.getCaretPosition());
+		textArea.setCaretPosition(textArea.getCaretPosition() - 1);
 	}
 
 	private void installUndoRedo(JTextComponent textComponent) {
@@ -525,6 +534,10 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 
 		public String getPrototypeString() {
 			return handler.getPrototypeString();
+		}
+		
+		public String getPrototypeString(String contained) {
+			return handler.getPrototypeString(contained);
 		}
 	}
 }

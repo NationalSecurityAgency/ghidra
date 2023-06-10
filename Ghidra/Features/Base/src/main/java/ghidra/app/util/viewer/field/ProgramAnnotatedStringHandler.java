@@ -277,5 +277,10 @@ public class ProgramAnnotatedStringHandler implements AnnotatedStringHandler {
 	public String getPrototypeString() {
 		return "{@program program_name.exe@symbol_name}";
 	}
+	
+	@Override
+	public String getPrototypeString(String contained) {
+		return "{@program " + contained.trim() + "}";
+	}
 
 }

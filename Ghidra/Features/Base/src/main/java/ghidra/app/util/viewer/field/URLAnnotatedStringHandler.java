@@ -118,5 +118,10 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 	public String getPrototypeString() {
 		return "{@url http://www.example.com}";
 	}
+	
+	@Override
+	public String getPrototypeString(String contained) {
+		return "{@url " + contained.trim() + "}";
+	}
 
 }

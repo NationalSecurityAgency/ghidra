@@ -173,5 +173,10 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 	public String getPrototypeString() {
 		return "{@symbol symbol_address}";
 	}
+	
+	@Override
+	public String getPrototypeString(String contained) {
+		return "{@symbol " + contained.trim() + "}";
+	}
 
 }
