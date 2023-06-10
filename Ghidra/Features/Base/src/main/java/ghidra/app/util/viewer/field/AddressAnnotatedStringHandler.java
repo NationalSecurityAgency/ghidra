@@ -111,4 +111,9 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 		return "{@address 0x00}";
 	}
 
+	@Override
+	public String getPrototypeString(String contained) {
+		return "{@address 0x" + contained.trim() + "}";
+	}
+
 }

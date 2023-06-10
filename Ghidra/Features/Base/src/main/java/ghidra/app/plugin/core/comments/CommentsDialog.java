@@ -269,9 +269,13 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 			JTextArea currentTextArea = getSelectedTextArea();
 			AnnotationAdapterWrapper aaw =
 				(AnnotationAdapterWrapper) annotationsComboBox.getSelectedItem();
-			currentTextArea.insert(aaw.getPrototypeString(),
-				currentTextArea.getCaretPosition());
-			currentTextArea.setCaretPosition(currentTextArea.getCaretPosition() - 1);
+			if (currentTextArea.getSelectedText() != null && !currentTextArea.getSelectedText().isEmpty()) {
+				currentTextArea.replaceSelection(aaw.getPrototypeString(currentTextArea.getSelectedText()));
+			} else {
+				currentTextArea.insert(aaw.getPrototypeString(),
+						currentTextArea.getCaretPosition());
+				currentTextArea.setCaretPosition(currentTextArea.getCaretPosition() - 1);
+			}
 		});
 		JPanel annoPanel = new JPanel();
 		annoPanel.add(addAnnotationButton);
@@ -525,6 +529,10 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 
 		public String getPrototypeString() {
 			return handler.getPrototypeString();
+		}
+		
+		public String getPrototypeString(String contained) {
+			return handler.getPrototypeString(contained);
 		}
 	}
 }

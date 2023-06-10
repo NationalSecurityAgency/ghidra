@@ -196,4 +196,9 @@ public class ExecutableTaskStringHandler implements AnnotatedStringHandler {
 			return buffer.toString();
 		}
 	}
+
+	@Override
+	public String getPrototypeString(String contained) {
+		return "{@execute " + contained.trim() + "}";
+	}
 }
