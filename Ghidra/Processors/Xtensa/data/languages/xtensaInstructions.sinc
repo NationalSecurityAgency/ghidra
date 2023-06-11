@@ -27,18 +27,18 @@
 }
 
 # ADDI - Add Immediate (RRI8), pg. 251.
-:addi at, as, s8_16.23 is s8_16.23 & ar = 0b1100 & as & at & op0 = 0b0010 {
-    at = as + sext(s8_16.23:1);
+:addi at, as, s8_16_23 is s8_16_23 & ar = 0b1100 & as & at & op0 = 0b0010 {
+    at = as + s8_16_23;
 }
 
 # ADDI.N - Narrow Add Immediate (RRRN), pg. 252.
-:addi.n n_ar, n_as, n_s4_4.7_nozero is n_ar & n_as & n_s4_4.7_nozero & n_op0 = 0b1011 {
-    n_ar = n_as + n_s4_4.7_nozero;
+:addi.n n_ar, n_as, n_s4_4_7_nozero is n_ar & n_as & n_s4_4_7_nozero & n_op0 = 0b1011 {
+    n_ar = n_as + n_s4_4_7_nozero;
 }
 
 # ADDMI - Add Immediate with Shift by 8, pg. 253.
-:addmi at, as, s16_16.23_sb8 is s16_16.23_sb8 & ar = 0b1101 & as & at & op0 = 0b0010 {
-    at = as + sext(s16_16.23_sb8);
+:addmi at, as, s16_16_23_sb8 is s16_16_23_sb8 & ar = 0b1101 & as & at & op0 = 0b0010 {
+    at = as + sext(s16_16_23_sb8);
 }
 
 # ADDX2 - Add with Shift by 1, pg. 254.
@@ -112,15 +112,15 @@
 }
 
 # BALL - Branch if All Bits Set, pg. 264.
-:ball srel_16.23, as, at is srel_16.23 & ar = 0b0100 & as & at & op0 = 0b0111 {
+:ball srel_16_23, as, at is srel_16_23 & ar = 0b0100 & as & at & op0 = 0b0111 {
     if ((~as & at) == 0)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BANY - Branch if Any Bit Set, pg. 265.
-:bany srel_16.23, as, at, is srel_16.23 & ar = 0b1000 & as & at & op0 = 0b0111 {
+:bany srel_16_23, as, at, is srel_16_23 & ar = 0b1000 & as & at & op0 = 0b0111 {
     if ((as & at) != 0)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 macro extract_bit(val, bit, result) {
@@ -128,203 +128,290 @@ macro extract_bit(val, bit, result) {
 }
 
 # BBC - Branch if Bit Clear, pg. 266.
-:bbc as, at, srel_16.23 is srel_16.23 & ar = 0b0101 & as & at & op0 = 0b0111 {
+:bbc as, at, srel_16_23 is srel_16_23 & ar = 0b0101 & as & at & op0 = 0b0111 {
     local bval;
     extract_bit(as, at[0,5], bval);
     if (bval == 0)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BBCI - Branch if Bit Clear immediate, pg. 267
-:bbci as, u5_4.7_12, srel_16.23 is srel_16.23 & u3_13.15 = 0b011 & as & u5_4.7_12 & op0 = 0b0111 {
+:bbci as, u5_4_7_12, srel_16_23 is srel_16_23 & u3_13_15 = 0b011 & as & u5_4_7_12 & op0 = 0b0111 {
     local bval;
-    extract_bit(as, u5_4.7_12, bval);
+    extract_bit(as, u5_4_7_12, bval);
     if (bval == 0)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BBS - Branch if Bit Set, pg. 269.
-:bbs as, at, srel_16.23 is srel_16.23 & ar = 0b1101 & as & at & op0 = 0b0111 {
+:bbs as, at, srel_16_23 is srel_16_23 & ar = 0b1101 & as & at & op0 = 0b0111 {
     local bval;
     extract_bit(as, at[0,5], bval);
     if (bval != 0)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BBSI - Branch if Bit Set immediate, pg. 270.
-:bbsi as, u5_4.7_12, srel_16.23 is srel_16.23 & u3_13.15 = 0b111 & as & u5_4.7_12 & op0 = 0b0111 {
+:bbsi as, u5_4_7_12, srel_16_23 is srel_16_23 & u3_13_15 = 0b111 & as & u5_4_7_12 & op0 = 0b0111 {
     local bval;
-    extract_bit(as, u5_4.7_12, bval);
-    if (bval == 0)
-        goto srel_16.23;
+    extract_bit(as, u5_4_7_12, bval);
+    if (bval != 0)
+        goto srel_16_23;
 }
 
 # BEQ - Branch if Equal, pg. 272.
-:beq as, at, srel_16.23 is srel_16.23 & ar = 0b0001 & as & at & op0 = 0b0111 {
+:beq as, at, srel_16_23 is srel_16_23 & ar = 0b0001 & as & at & op0 = 0b0111 {
     if (as == at)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BEQI - Branch if Equal Immediate, pg. 273.
-:beqi as, r_b4const, srel_16.23 is srel_16.23 & r_b4const & as & u2_6.7 = 0 & u2_4.5 = 0b10 & op0 = 0b0110 {
+:beqi as, r_b4const, srel_16_23 is srel_16_23 & r_b4const & as & u2_6_7 = 0 & u2_4_5 = 0b10 & op0 = 0b0110 {
     if (as == r_b4const)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BEQZ - Branch if Equal Zero, pg. 274.
-:beqz as, srel_12.23 is srel_12.23 & as & u2_6.7 = 0 & u2_4.5 = 0b01 & op0 = 0b0110 {
+:beqz as, srel_12_23 is srel_12_23 & as & u2_6_7 = 0 & u2_4_5 = 0b01 & op0 = 0b0110 {
     if (as == 0)
-        goto srel_12.23;
+        goto srel_12_23;
 }
 
 # BEQZ.N - Narrow Branch if Equal Zero, pg. 275.
-:beqz.n n_as, urel_12.15_4.5 is urel_12.15_4.5 & n_as & n_u2_6.7 = 0b10 & n_op0 = 0b1100 {
+:beqz.n n_as, urel_12_15_4_5 is urel_12_15_4_5 & n_as & n_u2_6_7 = 0b10 & n_op0 = 0b1100 {
     if (n_as == 0)
-        goto urel_12.15_4.5;
+        goto urel_12_15_4_5;
 }
 
 # BF - Branch if False, pg. 276.
-:bf bs, srel_16.23 is srel_16.23 & ar = 0 & bs & at = 0b0111 & op0 = 0b0110 {
+:bf bs, srel_16_23 is srel_16_23 & ar = 0 & bs & at = 0b0111 & op0 = 0b0110 {
     if (!bs)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BGE - Branch if Greater Than or Equal, pg. 277.
-:bge as, at, srel_16.23 is srel_16.23 & ar = 0b1010 & as & at & op0 = 0b0111 {
+:bge as, at, srel_16_23 is srel_16_23 & ar = 0b1010 & as & at & op0 = 0b0111 {
     if (as s>= at)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BGEI - Branch if Greater Than or Equal Immediate, pg. 278.
-:bgei as, r_b4const, srel_16.23 is srel_16.23 & r_b4const & as & u2_6.7 = 0b11 & u2_4.5 = 0b10 & op0 = 0b0110 {
+:bgei as, r_b4const, srel_16_23 is srel_16_23 & r_b4const & as & u2_6_7 = 0b11 & u2_4_5 = 0b10 & op0 = 0b0110 {
     if (as s>= r_b4const)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BGEU - Branch if Greater Than or Equal Unsigned, pg. 279.
-:bgeu as, at, srel_16.23 is srel_16.23 & ar = 0b1011 & as & at & op0 = 0b0111 {
+:bgeu as, at, srel_16_23 is srel_16_23 & ar = 0b1011 & as & at & op0 = 0b0111 {
     if (as >= at)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BGEUI - Branch if Greater Than or Equal Unsigned Immediate, pg. 280.
-:bgeui as, r_b4constu, srel_16.23 is srel_16.23 & r_b4constu & as & u2_6.7 = 0b11 & u2_4.5 = 0b11 & op0 = 0b0110 {
+:bgeui as, r_b4constu, srel_16_23 is srel_16_23 & r_b4constu & as & u2_6_7 = 0b11 & u2_4_5 = 0b11 & op0 = 0b0110 {
     if (as >= r_b4constu)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BGEZ - Branch if Greater Than or Equal Zero, pg. 281.
-:bgez as, srel_12.23 is srel_12.23 & as & u2_6.7 = 0b11 & u2_4.5 = 0b01 & op0 = 0b0110 {
+:bgez as, srel_12_23 is srel_12_23 & as & u2_6_7 = 0b11 & u2_4_5 = 0b01 & op0 = 0b0110 {
     if (as s>= 0)
-        goto srel_12.23;
+        goto srel_12_23;
 }
 
 # BLT - Branch if Less Than, pg. 282.
-:blt as, at, srel_16.23 is srel_16.23 & ar = 0b0010 & as & at & op0 = 0b0111 {
+:blt as, at, srel_16_23 is srel_16_23 & ar = 0b0010 & as & at & op0 = 0b0111 {
     if (as s< at)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BLTI - Branch if Less Than Immediate, pg. 283.
-:blti as, r_b4const, srel_16.23 is srel_16.23 & r_b4const & as & u2_6.7 = 0b10 & u2_4.5 = 0b10 & op0 = 0b0110 {
+:blti as, r_b4const, srel_16_23 is srel_16_23 & r_b4const & as & u2_6_7 = 0b10 & u2_4_5 = 0b10 & op0 = 0b0110 {
     if (as s< r_b4const)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BLTU - Branch if Less Than Unsigned, pg. 284.
-:bltu as, at, srel_16.23 is srel_16.23 & ar = 0b0011 & as & at & op0 = 0b0111 {
+:bltu as, at, srel_16_23 is srel_16_23 & ar = 0b0011 & as & at & op0 = 0b0111 {
     if (as < at)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BLTUI - Branch if Less Than Unsigned Immediate, pg. 285.
-:bltui as, r_b4constu, srel_16.23 is srel_16.23 & r_b4constu & as & u2_6.7 = 0b10 & u2_4.5 = 0b11 & op0 = 0b0110 {
+:bltui as, r_b4constu, srel_16_23 is srel_16_23 & r_b4constu & as & u2_6_7 = 0b10 & u2_4_5 = 0b11 & op0 = 0b0110 {
     if (as < r_b4constu)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BLTZ - Branch if Less Than Zero, pg. 286.
-:bltz as, srel_12.23 is srel_12.23 & as & u2_6.7 = 0b10 & u2_4.5 = 0b01 & op0 = 0b0110 {
+:bltz as, srel_12_23 is srel_12_23 & as & u2_6_7 = 0b10 & u2_4_5 = 0b01 & op0 = 0b0110 {
     if (as s< 0)
-        goto srel_12.23;
+        goto srel_12_23;
 }
 
 # BNALL - Branch if Not-All Bits Set, pg. 287.
-:bnall srel_16.23, as, at is srel_16.23 & ar = 0b1100 & as & at & op0 = 0b0111 {
+:bnall srel_16_23, as, at is srel_16_23 & ar = 0b1100 & as & at & op0 = 0b0111 {
     if ((~as & at) != 0)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BNE - Branch if Not Equal, pg. 288.
-:bne as, at, srel_16.23 is srel_16.23 & ar = 0b1001 & as & at & op0 = 0b0111 {
+:bne as, at, srel_16_23 is srel_16_23 & ar = 0b1001 & as & at & op0 = 0b0111 {
     if (as != at)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BNEI - Branch if Not EquaL Immediate, pg. 289.
-:bnei as, r_b4const, srel_16.23 is srel_16.23 & r_b4const & as & u2_6.7 = 0b01 & u2_4.5 = 0b10 & op0 = 0b0110 {
+:bnei as, r_b4const, srel_16_23 is srel_16_23 & r_b4const & as & u2_6_7 = 0b01 & u2_4_5 = 0b10 & op0 = 0b0110 {
     if (as != r_b4const)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BNEZ - Branch if Not Equal Zero, pg. 290.
-:bnez as, srel_12.23 is srel_12.23 & as & u2_6.7 = 0b01 & u2_4.5 = 0b01 & op0 = 0b0110 {
+:bnez as, srel_12_23 is srel_12_23 & as & u2_6_7 = 0b01 & u2_4_5 = 0b01 & op0 = 0b0110 {
     if (as != 0)
-        goto srel_12.23;
+        goto srel_12_23;
 }
 
 # BNEZ.N - Narrow Branch if Not Equal Zero, pg. 291.
-:bnez.n n_as, urel_12.15_4.5 is urel_12.15_4.5 & n_as & n_u2_6.7 = 0b11 & n_op0 = 0b1100 {
+:bnez.n n_as, urel_12_15_4_5 is urel_12_15_4_5 & n_as & n_u2_6_7 = 0b11 & n_op0 = 0b1100 {
     if (n_as != 0)
-        goto urel_12.15_4.5;
+        goto urel_12_15_4_5;
 }
 
 # BNONE - Branch if No Bit Set, pg. 292.
-:bnone srel_16.23, as, at, is srel_16.23 & ar = 0 & as & at & op0 = 0b0111 {
+:bnone srel_16_23, as, at, is srel_16_23 & ar = 0 & as & at & op0 = 0b0111 {
     if ((as & at) == 0)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # BREAK - Breakpoint, pg. 293.
-:break u4_8.11, u4_4.7 is op2 = 0 & op1 = 0 & ar = 0b0100 & u4_8.11 & u4_4.7 & op0 = 0 {
-    breakpoint(0x001000:4, u4_8.11:1, u4_4.7:1);
+:break u4_8_11, u4_4_7 is op2 = 0 & op1 = 0 & ar = 0b0100 & u4_8_11 & u4_4_7 & op0 = 0 {
+    breakpoint(0x001000:4, u4_8_11:1, u4_4_7:1);
 }
 
 # BREAK.N - Narrow Breakpoint, pg. 295.
-:break.n n_u4_8.11 is n_ar = 0b1111 & n_u4_8.11 & n_at = 0b0010 & n_op0 = 0b1101 {
-    breakpoint(0x010000:4, n_u4_8.11:1, 0:1);
+:break.n n_u4_8_11 is n_ar = 0b1111 & n_u4_8_11 & n_at = 0b0010 & n_op0 = 0b1101 {
+    breakpoint(0x010000:4, n_u4_8_11:1, 0:1);
 }
 
 # BT - Branch if True, pg. 296.
-:bt bs, srel_16.23 is srel_16.23 & ar = 0b0001 & bs & at = 0b0111 & op0 = 0b0110 {
+:bt bs, srel_16_23 is srel_16_23 & ar = 0b0001 & bs & at = 0b0111 & op0 = 0b0110 {
     if (bs)
-        goto srel_16.23;
+        goto srel_16_23;
 }
 
 # CALL0 - Non-windowed Call, pg. 297.
-:call0 srel_6.23_sb2 is srel_6.23_sb2 & u2_4.5 = 0 & op0 = 0b0101 {
+:call0 srel_6_23_sb2 is srel_6_23_sb2 & u2_4_5 = 0 & op0 = 0b0101 {
+    #local dst = srel_6_23_sb2;
+    i2 = a2;
+    i3 = a3;
+    i4 = a4;
+    i5 = a5;
+    i6 = a6;
+    i7 = a7;
     a0 = inst_start + 3;
-    call srel_6.23_sb2;
+    call srel_6_23_sb2;
+}
+
+# CALL4 - Call PC-relative, Rotate Window by 4, pg. 298.
+:call4 srel_6_23_sb2 is srel_6_23_sb2 & u2_4_5 = 0b01 & op0 = 0b0101 {
+    #local dst = srel_6_23_sb2;
+    i2=a6;
+    i3=a7;
+    i4=a8;
+    i5=a9;
+    a0 = inst_start + 3;
+    call srel_6_23_sb2;
+    a6=o2;
+}
+
+# CALL8 - Call PC-relative, Rotate Window by 8, pg. 300.
+:call8 srel_6_23_sb2 is srel_6_23_sb2 & u2_4_5 = 0b10 & op0 = 0b0101 {
+    #local dst:4 =
+    i2=a10;
+    i3=a11;
+    i4=a12;
+    i5=a13;
+    i6=a14;
+    i7=a15;
+    a0 = inst_start + 3;
+    call srel_6_23_sb2;
+    a10=o2;
+}
+
+# CALL12 - Call PC-relative, Rotate Window by 12, pg. 302.
+:call12 srel_6_23_sb2 is srel_6_23_sb2 & u2_4_5 = 0b11 & op0 = 0b0101 {
+    #local dst = srel_6_23_sb2;
+    i2=a14;
+    i3=a15;
+    a0 = inst_start + 3;
+    call srel_6_23_sb2;
+    a14=o2;
 }
 
 # CALLX0 - Non-windowed Call Register, pg. 304.
-:callx0 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6.7 = 0b11 & u2_4.5 = 0 & op0 = 0 {
+:callx0 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6_7 = 0b11 & u2_4_5 = 0 & op0 = 0 {
     local dst = as;
+    i2 = a2;
+    i3 = a3;
+    i4 = a4;
+    i5 = a5;
+    i6 = a6;
+    i7 = a7;
     a0 = inst_start + 3;
     call [dst];
 }
 
+# CALLX4 - Call Register, Rotate Window by 4, pg. 305.
+:callx4 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6_7 = 0b11 & u2_4_5 = 0b01 & op0 = 0 {
+    local dst = as;
+    i2=a6;
+    i3=a7;
+    i4=a8;
+    i5=a9;
+    i6=a10;
+    i7=a11;
+    a0 = inst_start + 3;
+    call [dst];
+    a6=o2;
+}
+
+# CALLX8 - Call Register, Rotate Window by 8, pg. 307.
+:callx8 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6_7 = 0b11 & u2_4_5 = 0b10 & op0 = 0 {
+    local dst = as;
+    i2=a10;
+    i3=a11;
+    i4=a12;
+    i5=a13;
+    i6=a14;
+    i7=a15;
+    a0 = inst_start + 3;
+    call [dst];
+    a10=o2;
+}
+
+# CALLX12 - Call Register, Rotate Window by 12, pg. 308.
+:callx12 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6_7 = 0b11 & u2_4_5 = 0b11 & op0 = 0 {
+    local dst = as;
+    i2=a14;
+    i3=a15;
+    a0 = inst_start + 3;
+    call [dst];
+    a14=o2;
+}
+
 # CEIL.S - Ceiling Single to Fixed, pg. 311.
-:ceil.s ar, fs, u4_4.7 is op2 = 0b1011 & op1 = 0b1010 & ar & fs & u4_4.7 & op0 = 0 {
-    local scale:4 = int2float(1:1 << u4_4.7:1);
+:ceil.s ar, fs, u4_4_7 is op2 = 0b1011 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+    local scale:4 = int2float(1:1 << u4_4_7:1);
     ar = ceil(fs f* scale);
 }
 
 # CLAMPS - Signed Clamp, pg. 312.
-:clamps ar, as, u5_4.7_plus7 is op2 = 0b0011 & op1 = 0b0011 & ar & as & u5_4.7_plus7 & op0 = 0 {
-    # ar ← min(max(as, -2^{u5_4.7_plus7}), 2^{u5_4.7_plus7}-1)
-    local maxval:4 =  (1 << u5_4.7_plus7) - 1;
-    local minval:4 = -(1 << u5_4.7_plus7);
+:clamps ar, as, u5_4_7_plus7 is op2 = 0b0011 & op1 = 0b0011 & ar & as & u5_4_7_plus7 & op0 = 0 {
+    # ar ← min(max(as, -2^{u5_4_7_plus7}), 2^{u5_4_7_plus7}-1)
+    local maxval:4 =  (1 << u5_4_7_plus7) - 1;
+    local minval:4 = -(1 << u5_4_7_plus7);
     if (as s< minval)
         goto <write_minval>;
     if (as s> maxval)
@@ -343,8 +430,8 @@ macro extract_bit(val, bit, result) {
 }
 
 # DHI - Data Cache Hit Invalidate, pg. 313.
-:dhi as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b0110 & op0 = 0b0010 {
-    dhi(as + zext(u10_16.23_sb2));
+:dhi as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0110 & op0 = 0b0010 {
+    dhi(as + zext(u10_16_23_sb2));
 }
 
 # DHU - Data Cache Hit Unlock, pg. 315.
@@ -353,18 +440,18 @@ macro extract_bit(val, bit, result) {
 }
 
 # DHWB - Data Cache Hit Writeback, pg. 317.
-:dhwb as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b0100 & op0 = 0b0010 {
-    dhwb(as + zext(u10_16.23_sb2));
+:dhwb as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0100 & op0 = 0b0010 {
+    dhwb(as + zext(u10_16_23_sb2));
 }
 
 # DHWBI - Data Cache Hit Writeback Invalidate, pg. 319.
-:dhwbi as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b0101 & op0 = 0b0010 {
-    dhwbi(as + zext(u10_16.23_sb2));
+:dhwbi as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0101 & op0 = 0b0010 {
+    dhwbi(as + zext(u10_16_23_sb2));
 }
 
 # DII - Data Cache Index Invalidate, pg. 321.
-:dii as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b0111 & op0 = 0b0010 {
-    dii(as + zext(u10_16.23_sb2));
+:dii as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0111 & op0 = 0b0010 {
+    dii(as + zext(u10_16_23_sb2));
 }
 
 # DIU - Data Cache Index Unlock, pg. 323.
@@ -388,28 +475,42 @@ macro extract_bit(val, bit, result) {
 }
 
 # DPFR - Data Cache Prefetch for Read, pg. 331.
-:dpfr as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0 & op0 = 0b0010 {
-    dpfr(as + zext(u10_16.23_sb2));
+:dpfr as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0 & op0 = 0b0010 {
+    dpfr(as + zext(u10_16_23_sb2));
 }
 
 # DPFRO - Data Cache Prefetch for Read Once, pg. 333.
-:dpfro as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b0010 & op0 = 0b0010 {
-    dpfro(as + zext(u10_16.23_sb2));
+:dpfro as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0010 & op0 = 0b0010 {
+    dpfro(as + zext(u10_16_23_sb2));
 }
 
 # DPFW - Data Cache Prefetch for Write, pg. 335.
-:dpfw as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b0001 & op0 = 0b0010 {
-    dpfw(as + zext(u10_16.23_sb2));
+:dpfw as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0001 & op0 = 0b0010 {
+    dpfw(as + zext(u10_16_23_sb2));
 }
 
 # DPFWO - Data Cache Prefetch for Write Once, pg. 337.
-:dpfwo as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b0011 & op0 = 0b0010 {
-    dpfwo(as + zext(u10_16.23_sb2));
+:dpfwo as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0011 & op0 = 0b0010 {
+    dpfwo(as + zext(u10_16_23_sb2));
 }
 
 # DSYNC - Load/Store Synchronize, pg. 339.
 :dsync is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0b0011 & op0 = 0 {
     dsync();
+}
+
+# ENTRY - Subroutine Entry, pg. 340.
+:entry as, u15_12_23_sb3 is u15_12_23_sb3 & as & u2_6_7 = 0b00 & u2_4_5 = 0b11 & op0 = 0b0110 {
+    local amn = sext(u15_12_23_sb3);
+    a2=i2;
+    a3=i3;
+    a4=i4;
+    a5=i5;
+    a6=i6;
+    a7=i7;
+    #as = as + amn;
+    WindowBase    = amn;
+    a1 = a1 - amn;
 }
 
 # ESYNC - Execute Synchronize, pg. 342.
@@ -423,9 +524,9 @@ macro extract_bit(val, bit, result) {
 }
 
 # EXTUI - Extract Unsigned Immediate, pg. 344.
-:extui ar, at, u5_8.11_16, u5_20.23_plus1 is u5_20.23_plus1 & u3_17.19 = 0b010 & u5_8.11_16 & ar & at & op0 = 0 {
-    local shifted:4 = at >> u5_8.11_16;
-    local mask:4 = (1:4 << (u5_20.23_plus1))-1;
+:extui ar, at, u5_8_11_16, u5_20_23_plus1 is u5_20_23_plus1 & u3_17_19 = 0b010 & u5_8_11_16 & ar & at & op0 = 0 {
+    local shifted:4 = at >> u5_8_11_16;
+    local mask:4 = (1:4 << (u5_20_23_plus1))-1;
     ar = shifted & mask;
 }
 
@@ -435,15 +536,15 @@ macro extract_bit(val, bit, result) {
 }
 
 # FLOAT.S - Convert Fixed to Single, pg. 346.
-:float.s fr, as, u4_4.7 is op2 = 0b1100 & op1 = 0b1010 & fr & as & u4_4.7 & op0 = 0 {
+:float.s fr, as, u4_4_7 is op2 = 0b1100 & op1 = 0b1010 & fr & as & u4_4_7 & op0 = 0 {
     local f = int2float(as);
-    local d = int2float(1:2 << u4_4.7:2);
+    local d = int2float(1:2 << u4_4_7:2);
     fr = d f/ f;
 }
 
 # FLOOR.S - Floor Single to Fixed, pg. 347.
-:floor.s ar, fs, u4_4.7 is op2 = 0b1010 & op1 = 0b1010 & ar & fs & u4_4.7 & op0 = 0 {
-    local scale:4 = int2float(1:2 << u4_4.7:2);
+:floor.s ar, fs, u4_4_7 is op2 = 0b1010 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+    local scale:4 = int2float(1:2 << u4_4_7:2);
     ar = floor(fs f* scale);
 }
 
@@ -453,8 +554,8 @@ macro extract_bit(val, bit, result) {
 }
 
 # IHI - Instruction Cache Hit Invalidate, pg. 349.
-:ihi as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b1110 & op0 = 0b0010 {
-    ihi(as + zext(u10_16.23_sb2));
+:ihi as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b1110 & op0 = 0b0010 {
+    ihi(as + zext(u10_16_23_sb2));
 }
 
 # IHU - Instruction Cache Hit Unlock, pg. 351.
@@ -463,8 +564,8 @@ macro extract_bit(val, bit, result) {
 }
 
 # III - Instruction Cache Index Invalidate, pg. 353.
-:iii as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b1111 & op0 = 0b0010 {
-    iii(as + zext(u10_16.23_sb2));
+:iii as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b1111 & op0 = 0b0010 {
+    iii(as + zext(u10_16_23_sb2));
 }
 
 # IITLB - Invalidate Instruction TLB Entry, pg. 355.
@@ -480,18 +581,16 @@ macro extract_bit(val, bit, result) {
 # ILL - Illegal Instruction, pg. 358.
 :ill is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & at = 0 & op0 = 0 {
     ill();
-    goto inst_start;
 }
 
 # ILL.N - Narrow Illegal Instruction, pg. 359.
 :ill.n is n_ar = 0b1111 & n_as = 0 & n_at = 0b0110 & n_op0 = 0b1101 {
     ill();
-    goto inst_start;
 }
 
 # IPF - Instruction Cache Prefetch, pg. 360.
-:ipf as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0111 & as & at = 0b1100 & op0 = 0b0010 {
-    ipf(as + zext(u10_16.23_sb2));
+:ipf as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b1100 & op0 = 0b0010 {
+    ipf(as + zext(u10_16_23_sb2));
 }
 
 # IPFL - Instruction Cache Prefetch and Lock, pg. 362.
@@ -505,67 +604,82 @@ macro extract_bit(val, bit, result) {
 }
 
 # J - Unconditional Jump, pg. 366.
-:j srel_6.23 is srel_6.23 & u2_4.5 = 0 & op0 = 0b0110 {
-    goto srel_6.23;
+:j srel_6_23 is srel_6_23 & u2_4_5 = 0 & op0 = 0b0110 {
+    goto srel_6_23;
 }
 
 # J.L is a macro.
 
 # RET (JX A0) - Non-Windowed Return, pg. 478.
-:ret is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6.7 = 0b10 & u2_4.5 = 0b10 & op0 = 0 {
+:ret is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b10 & op0 = 0 {
+    return [a0];
+}
+
+# RETW - Windowed Return, pg. 480.
+:retw is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b01 & op0 = 0 {
+# Assume call8
+    o2=a2;
+    a1 = a1 + WindowBase;
+    return [a0];
+}
+
+# RETW.N - Narrow Windowed Return, pg. 482.
+:retw.n is n_ar = 0b1111 & n_as = 0 & n_at = 0b0001 & n_op0 = 0b1101 {
+    o2=a2;
+    a1 = a1 + WindowBase;
     return [a0];
 }
 
 # The manual suggests that RET is equivalent to JX A0, yet RET has bit 5 unset, JX doesn’t.
-:ret is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6.7 = 0b10 & u2_4.5 = 0b00 & op0 = 0 {
+:ret is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b00 & op0 = 0 {
     return [a0];
 }
 
 # JX - Uncoditional Jump Register, pg. 368.
-:jx as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6.7 = 0b10 & u2_4.5 = 0b10 & op0 = 0 {
+:jx as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6_7 = 0b10 & u2_4_5 = 0b10 & op0 = 0 {
     goto [as];
 }
 
 # L8UI - Load 8-bit Unsigned, pg. 369.
-:l8ui at, as, u8_16.23 is u8_16.23 & ar = 0 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u8_16.23:1);
+:l8ui at, as, u8_16_23 is u8_16_23 & ar = 0 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u8_16_23:1);
     at = zext(*:1 addr);
 }
 
 # L16SI - Load 16-bit Signed, pg. 370.
-:l16si at, as, u9_16.23_sb1 is u9_16.23_sb1 & ar = 0b1001 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u9_16.23_sb1);
+:l16si at, as, u9_16_23_sb1 is u9_16_23_sb1 & ar = 0b1001 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u9_16_23_sb1);
     at = sext(*:2 addr);
 }
 
 # L16UI - Load 16-bit Unsigned, pg. 372.
-:l16ui at, as, u9_16.23_sb1 is u9_16.23_sb1 & ar = 0b001 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u9_16.23_sb1);
+:l16ui at, as, u9_16_23_sb1 is u9_16_23_sb1 & ar = 0b001 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u9_16_23_sb1);
     at = zext(*:2 addr);
 }
 
 # L32AI - Load 32-bit Acquire, pg. 374.
-:l32ai at, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b1011 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:l32ai at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1011 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     at = *:4 addr;
     acquire(addr);
 }
 
 # L32I - Load 32-bit, pg. 378.
-:l32i at, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0010 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:l32i at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0010 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     at = *:4 addr;
 }
 
 # L32I.N - Narrow Load 32-bit, pg. 380.
-:l32i.n n_at, n_as, n_u6_12.15_sb2 is n_u6_12.15_sb2 & n_as & n_at & n_op0 = 0b1000 {
-    local addr:4 = n_as + zext(n_u6_12.15_sb2);
+:l32i.n n_at, n_as, n_u6_12_15_sb2 is n_u6_12_15_sb2 & n_as & n_at & n_op0 = 0b1000 {
+    local addr:4 = n_as + zext(n_u6_12_15_sb2);
     n_at = *:4 addr;
 }
 
 # L32R - Load 32-bit PC-relative, pg. 382.
-:l32r at, srel_8.23_oex_sb2 is srel_8.23_oex_sb2 & at & op0 = 0b0001 {
-    at = srel_8.23_oex_sb2;
+:l32r at, srel_8_23_oex_sb2 is srel_8_23_oex_sb2 & at & op0 = 0b0001 {
+    at = srel_8_23_oex_sb2;
 }
 
 # LDCT - Load Data Cache Tag, pg. 384.
@@ -583,15 +697,42 @@ macro extract_bit(val, bit, result) {
     at = licw(as);
 }
 
+macro loopSetup(as, end, doit) {
+    LCOUNT = as - 1;
+    LBEG = inst_next;
+    #LEND = end;
+    if (doit) goto <body>;
+    goto end;
+    <body>
+}
+
+# LOOP - Loop, pg. 392.
+:loop as, urel_16_23 is urel_16_23 & ar=0b1000 & as & at=0b0111 & op0=0b0110
+[loopEnd=1; globalset(urel_16_23, loopEnd);] {
+    loopSetup(as, urel_16_23, 1:1);
+}
+
+# LOOPGTZ - Loop if Greater Than Zero, pg. 394.
+:loopgtz as, urel_16_23 is urel_16_23 & ar=0b1010 & as & at=0b0111 & op0=0b0110
+[loopEnd=1; globalset(urel_16_23, loopEnd);] {
+    loopSetup(as, urel_16_23, as s> 0);
+}
+
+# LOOPNEZ - Loop if Not Equal Zero, pg. 396.
+:loopnez as, urel_16_23 is urel_16_23 & ar=0b1001 & as & at=0b0111 & op0=0b0110
+[loopEnd=1; globalset(urel_16_23, loopEnd);] {
+    loopSetup(as, urel_16_23, as != 0);
+}
+
 # LSI - Load Single Immediate, pg. 398.
-:lsi ft, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0 & as & ft & op0 = 0b0011 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:lsi ft, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0 & as & ft & op0 = 0b0011 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     ft = *:4 addr;
 }
 
 # LSIU - Load Single Immediate with Update, pg. 400.
-:lsiu ft, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b1000 & as & ft & op0 = 0b0011 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:lsiu ft, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1000 & as & ft & op0 = 0b0011 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     ft = *:4 addr;
     as = addr;
 }
@@ -712,15 +853,15 @@ macro extract_bit(val, bit, result) {
 }
 
 # MOVI - Move Immediate, pg. 421.
-:movi at, s16_16.23_8.11 is s16_16.23_8.11 & ar = 0b1010 & at & op0 = 0b0010 {
-    local val:4 = sext(s16_16.23_8.11);
+:movi at, s16_16_23_8_11 is s16_16_23_8_11 & ar = 0b1010 & at & op0 = 0b0010 {
+    local val:4 = sext(s16_16_23_8_11);
     at = val;
 }
 
 
 # MOVI.N - Narrow Move Immediate, pg. 422.
-:movi.n n_as, n_s8_12.15_4.6_asymm is n_s8_12.15_4.6_asymm & n_as & n_u1_7 = 0 & n_op0 = 0b1100 {
-    local val:4 = sext(n_s8_12.15_4.6_asymm);
+:movi.n n_as, n_s8_12_15_4_6_asymm is n_s8_12_15_4_6_asymm & n_as & n_u1_7 = 0 & n_op0 = 0b1100 {
+    local val:4 = sext(n_s8_12_15_4_6_asymm);
     n_as = val;
 }
 
@@ -825,27 +966,12 @@ macro extract_bit(val, bit, result) {
 
 # NSA - Normalization Shift Amount, pg. 461.
 :nsa at, as is op2 = 0b0100 & op1 = 0 & ar = 0b1110 & as & at & op0 = 0 {
-    # https://stackoverflow.com/questions/54772520/normalizing-a-two-complement-number
-    at = nsa(as);
+    at = lzcount(~as);
 }
 
 # NSAU - Normalization Shift Amount Unsigned, pg. 462. (Count leading zeros)
 :nsau at, as is op2 = 0b0100 & op1 = 0 & ar = 0b1111 & as & at & op0 = 0 {
-    local z4 = as[16,16] == 0;
-
-    local t3 = zext(z4)*as[0,16] + zext(!z4)*as[16,16];
-    local z3 = t3[8,8] == 0;
-
-    local t2 = (z3)*t3[0,8] + (!z3)*t3[8,8];
-    local z2 = t2[4,4] == 0;
-
-    local t1 = (z2)*t2[0,4] + (!z2)*t2[4,4];
-    local z1 = t1[2,2] == 0;
-
-    local z0 = (z1)*(t1[1,1] == 0) + (!z1)*(t1[3,1] == 0);
-    local all0 = as == 0;
-
-    at = zext((all0)*32 + (!all0)*(z4<<4 | z3<<3 | z2<<2 | z1<<1 | z0));
+    at = lzcount(as);
 }
 
 # OEQ.S - Compare Single Equal, pg. 463.
@@ -931,36 +1057,43 @@ macro extract_bit(val, bit, result) {
 # RET.N - Narrow Non-Windowed Return, pg. 479.
 :ret.n is n_ar = 0b1111 & n_as = 0 & n_at = 0 & n_op0 = 0b1101 {
     return [a0];
+    o2=a2;
 }
 
 # RFDD - Return from Debug and Dispatch, pg. 484.
 :rfdd is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1110 & (as = 0b0000 | as = 0b0001) & at = 0b0001 & op0 = 0 {
-    rfdd();
+    local tmp:4 = rfdd();
+    return [tmp];
 }
 
 # RFDE _ Return From Double Exception, pg. 485.
 :rfde is op2 = 0 & op1 = 0 & ar = 0b0011 & as =0b0010 & at = 0 & op0 = 0 {
-    rfde();
+    local tmp:4 = rfde();
+    return [tmp];
 }
 
 # RFDO - Return from Debug Operation, pg. 486.
 :rfdo is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1110 & as = 0 & at = 0 & op0 = 0 {
-    rfdo();
+    local tmp:4 = rfdo();
+    return [tmp];
 }
 
 # RFE - Return From Exception, pg. 487.
 :rfe is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0 & at = 0 & op0 = 0 {
-    rfe();
+    local tmp:4 = rfe();
+    return [tmp];
 }
 
 # RFI - Return from High-Priority Interrupt, pg. 488.
-:rfi u4_8.11 is op2 = 0 & op1 = 0 & ar = 0b0011 & u4_8.11 & at = 0b0001 & op0 = 0 {
-    rfi(u4_8.11:1);
+:rfi u4_8_11 is op2 = 0 & op1 = 0 & ar = 0b0011 & u4_8_11 & at = 0b0001 & op0 = 0 {
+    local tmp:4 = rfi(u4_8_11:1);
+    return [tmp];
 }
 
 # RFME - Return from Memory Error, pg. 489.
 :rfme is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0 & at = 0b0010 & op0 = 0 {
-    rfme();
+    local tmp:4 = rfme();
+    return [tmp];
 }
 
 # RFR - Move FR to AR, pg. 490.
@@ -970,17 +1103,20 @@ macro extract_bit(val, bit, result) {
 
 # RFUE - Return from User-Mode Exception, pg. 491.
 :rfue is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0001 & at = 0 & op0 = 0 {
-    rfue();
+    local tmp:4 = rfue();
+    return [tmp];
 }
 
 # RFWO - Return from Window Overflow, pg. 492.
 :rfwo is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0100 & at = 0 & op0 = 0 {
-    rfwo();
+    local tmp:4 = rfwo();
+    return [tmp];
 }
 
 # RFWU - Return from Window Underflow, pg. 493.
 :rfwu is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0101 & at = 0 & op0 = 0 {
-    rfwu();
+    local tmp:4 = rfwu();
+    return [tmp];
 }
 
 # RITLB0 - Read Instruction TLB Virtual Entry, pg. 494.
@@ -993,20 +1129,26 @@ macro extract_bit(val, bit, result) {
     at = ritlb1(as);
 }
 
+# ROTW - Rotate Window, pg. 496.
+:rotw s4_4_7 is op2 = 0b0100 & op1 = 0 & ar = 0b1000 & as = 0 & s4_4_7 & op0 = 0 {
+    WindowBase = WindowBase + s4_4_7;
+}
+
 # ROUND.S - Round Single to Fixed, pg. 497.
-:round.s ar, fs, u4_4.7 is op2 = 0b1000 & op1 = 0b1010 & ar & fs & u4_4.7 & op0 = 0 {
-    local scale:4 = int2float(1:2 << u4_4.7:2);
+:round.s ar, fs, u4_4_7 is op2 = 0b1000 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+    local scale:4 = int2float(1:2 << u4_4_7:2);
     ar = round(fs f* scale);
 }
 
 # RSIL - Read and Set Interrupt Level, pg. 498.
-:rsil at, u4_8.11 is op2 = 0 & op1 = 0 & ar = 0b0110 & u4_8.11 & at & op0 = 0 {
-    at = rsil(u4_8.11:1);
+:rsil at, u4_8_11 is op2 = 0 & op1 = 0 & ar = 0b0110 & u4_8_11 & at & op0 = 0 {
+    at = rsil(u4_8_11:1);
 }
 
 # RSR - Read Special Register, pg. 500.
-:rsr at, u8_8.15 is op0 = 0 & op1 = 0b0011 & u8_8.15 & at & op0 = 0 {
-    at = rsr(u8_8.15:1);
+:rsr at, sr is op0 = 0 & op1 = 0b0011 & sr & at & op0 = 0 {
+    local src:4 =  zext(sr);
+    at = *[register]:4 src;
 }
 
 # RSYNC - Register Read Synchronize, pg. 502.
@@ -1015,43 +1157,49 @@ macro extract_bit(val, bit, result) {
 }
 
 # RUR - Read User Register, pg. 503.
-:rur ar, u8_4.11 is op2 = 0b1110 & op1 = 0b0011 & ar & u8_4.11 & op0 = 0 {
-    ar = rur(u8_4.11:1);
+:rur ar, u8_4_11 is op2 = 0b1110 & op1 = 0b0011 & ar & u8_4_11 & op0 = 0 {
+    ar = rur(u8_4_11:1);
 }
 
 # S8I - Store 8-bit, pg. 504.
-:s8i at, as, u8_16.23 is u8_16.23 & ar = 0b0100 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u8_16.23:1);
+:s8i at, as, u8_16_23 is u8_16_23 & ar = 0b0100 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u8_16_23:1);
     *:1 addr = at:1;
 }
 
 # S16I - Store 16-bit, pg. 505.
-:s16i at, as, u9_16.23_sb1 is u9_16.23_sb1 & ar = 0b0101 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u9_16.23_sb1);
+:s16i at, as, u9_16_23_sb1 is u9_16_23_sb1 & ar = 0b0101 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u9_16_23_sb1);
     *:2 addr = at:2;
 }
 
 # S32C1I - Store 32-bit Compare Conditional, pg. 506
-:s32c1i at, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b1110 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:s32c1i at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1110 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     at = s32c1i(addr);
 }
 
+# S32E - Store 32-bit for Window Exceptions, pg. 508.
+:s32e at, as, s5_12_15_oex is op2 = 0b0100 & op1 = 0b1001 & s5_12_15_oex & as & at & op0 = 0 {
+	#local vAddr:4 = as + s5_12_15_oex;
+	#*:4 vAddr = at;
+}
+
 # S32I - Store 32-bit, pg. 510.
-:s32i at, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0110 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:s32i at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0110 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     *:4 addr = at;
 }
 
 # S32I.N - Narrow Store 32-bit, pg. 512.
-:s32i.n n_at, n_as, n_u6_12.15_sb2 is n_u6_12.15_sb2 & n_as & n_at & n_op0 = 0b1001 {
-    local addr:4 = n_as + zext(n_u6_12.15_sb2);
+:s32i.n n_at, n_as, n_u6_12_15_sb2 is n_u6_12_15_sb2 & n_as & n_at & n_op0 = 0b1001 {
+    local addr:4 = n_as + zext(n_u6_12_15_sb2);
     *:4 addr = n_at;
 }
 
 # S32RI - Store 32-bit Release, pg. 514.
-:s32ri at, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b1111 & as & at & op0 = 0b0010 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:s32ri at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1111 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     *:4 addr = at;
     release(addr);
 }
@@ -1062,8 +1210,8 @@ macro extract_bit(val, bit, result) {
 }
 
 # SEXT - Sign Extend, pg. 518.
-:sext ar, as, u5_4.7_plus7 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u5_4.7_plus7 & op0 = 0 {
-    local shift:1 = 31:1 - u5_4.7_plus7;
+:sext ar, as, u5_4_7_plus7 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u5_4_7_plus7 & op0 = 0 {
+    local shift:1 = 31:1 - u5_4_7_plus7;
     local tmp:4 = as << shift;
     ar = tmp s>> shift;
 }
@@ -1085,24 +1233,23 @@ macro extract_bit(val, bit, result) {
 
 # SLL - Shift Left Logical, pg. 524.
 :sll ar, as is op2 = 0b1010 & op1 = 0b0001 & ar & as & at = 0 & op0 = 0 {
-    local sa:1 = 32 - sar;
+    local sa = 32 - SAR;
     ar = as << sa;
 }
 
 # SLLI - Shift Left Logical Immediate, pg. 525.
-:slli ar, as, u5_4.7_20 is u3_21.23 = 0 & u5_4.7_20 & op1 = 0b0001 & ar & as & op0 = 0 {
-    local sa:1 = 32 - u5_4.7_20;
-    ar = as << sa;
+:slli ar, as, u5_4_7_20_slli is u3_21_23 = 0 & u5_4_7_20_slli & op1 = 0b0001 & ar & as & op0 = 0 {
+    ar = as << u5_4_7_20_slli;
 }
 
 # SRA - Shift Right Arithmetic, pg. 526.
 :sra ar, at is op2 = 0b1011 & op1 = 0b0001 & ar & as = 0 & at & op0 = 0 {
-    ar = at s>> sar;
+    ar = at s>> SAR;
 }
 
 # SRAI - Shift Right Arithmetic Immediate, pg. 527.
-:srai ar, at, u5_8.11_20 is u3_21.23 = 0b001 & u5_8.11_20 & op1 = 0b0001 & ar & at & op0 = 0 {
-    ar = at s>> u5_8.11_20;
+:srai ar, at, u5_8_11_20 is u3_21_23 = 0b001 & u5_8_11_20 & op1 = 0b0001 & ar & at & op0 = 0 {
+    ar = at s>> u5_8_11_20;
 }
 
 # SRC - Shift Right Combined, pg. 528.
@@ -1110,67 +1257,66 @@ macro extract_bit(val, bit, result) {
     local s64:8 = zext(as);
     local t64:8 = zext(at);
     local combined:8 = (s64 << 32) | t64;
-    local shifted:8 = combined >> sar;
+    local shifted:8 = combined >> SAR;
     ar = shifted:4;
 }
 
 # SRL - Shift Right Logical, pg. 529.
 :srl ar, at is op2 = 0b1001 & op1 = 0b0001 & ar & as = 0 & at & op0 = 0 {
-    ar = at >> sar;
+    ar = at >> SAR;
 }
 
 # SRLI - Shift Right Logical Immediate, pg. 530.
-:srli ar, at, u4_8.11 is op2 = 0b0100 & op1 = 0b0001 & ar & u4_8.11 & at & op0 = 0 {
-    ar = at >> u4_8.11;
+:srli ar, at, u4_8_11 is op2 = 0b0100 & op1 = 0b0001 & ar & u4_8_11 & at & op0 = 0 {
+    ar = at >> u4_8_11;
 }
 
 # SSA8B - Set Shift Amount for BE Byte Shift, pg. 531.
 :ssa8b as is op2 = 0b0100 & op1 = 0 & ar = 0b0011 & as & at = 0 & op0 = 0 {
     local lsa:4 = (as&3)*8;
-    sar = 32 - lsa:1;
+    SAR = 32 - lsa;
 }
 
 # SSA8L - Set Shift Amount for LE Byte Shift, pg. 532.
 :ssa8l as is op2 = 0b0100 & op1 = 0 & ar = 0b0010 & as & at = 0 & op0 = 0 {
-    local rsa:4 = (as&3)*8;
-    sar = rsa:1;
+    SAR = (as&3)*8;
 }
 
 # SSAI - Set Shift Amount Immediate, pg. 533.
-:ssai u5_8.11_4 is op2 = 0b0100 & op1 = 0 & ar = 0b0100 & u5_8.11_4 & u3_5.7 = 0 & op0 = 0 {
-    sar = u5_8.11_4:1;
+:ssai u5_8_11_4 is op2 = 0b0100 & op1 = 0 & ar = 0b0100 & u5_8_11_4 & u3_5_7 = 0 & op0 = 0 {
+    SAR = zext(u5_8_11_4);
 }
 
 # SSI - Store Single Immediate, pg. 534.
-:ssi ft, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b0100 & as & ft & op0 = 0b0011 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:ssi ft, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0100 & as & ft & op0 = 0b0011 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     *:4 addr = ft;
 }
 
 # SSIU - Store Single Immediate with Update, pg. 536.
-:ssiu ft, as, u10_16.23_sb2 is u10_16.23_sb2 & ar = 0b1100 & as & ft & op0 = 0b0011 {
-    local addr:4 = as + zext(u10_16.23_sb2);
+:ssiu ft, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1100 & as & ft & op0 = 0b0011 {
+    local addr:4 = as + zext(u10_16_23_sb2);
     *:4 addr = ft;
     as = addr;
 }
 
 # SSL - Set Shift Amount for Left Shift, pg. 538.
 :ssl as is op2 = 0b0100 & op1 = 0 & ar = 0b0001 & as & at = 0 & op0 = 0 {
-    sar = 32 - (as:1 & 0x1f);
+    SAR = 32 - (as & 0x1f);
 }
 
 # SSR - Set Shift Amount for Right Shift, pg. 539.
 :ssr as is op2 = 0b0100 & op1 = 0 & ar = 0 & as & at = 0 & op0 = 0 {
-    sar = (as:1 & 0x1f);
+    SAR = (as & 0x1f);
 }
 
-# SSX - Store Singe Indexed, pg. 540.
+# SSX - Store Single Indexed, pg. 540.
 :ssx fr, as, at is op2 = 0b0100 & op1 = 0b1000 & fr & as & at & op0 = 0 {
     local addr:4 = as+at;
     *:4 addr = fr;
 }
 
-# SSXU - Store Singe Indexed with Update, pg. 541.
+# SSXU - Store Single Indexed with Update, pg. 541.
 :ssxu fr, as, at is op2 = 0b0101 & op1 = 0b1000 & fr & as & at & op0 = 0 {
     local addr:4 = as+at;
     *:4 addr = fr;
@@ -1208,8 +1354,8 @@ macro extract_bit(val, bit, result) {
 }
 
 # TRUNC.S - Truncate Single to Fixed, pg. 548
-:trunc.s ar, fs, u4_4.7 is op2 = 0b1001 & op1 = 0b1010 & ar & fs & u4_4.7 & op0 = 0 {
-    local scale:4 = int2float(1:2 << u4_4.7:2);
+:trunc.s ar, fs, u4_4_7 is op2 = 0b1001 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+    local scale:4 = int2float(1:2 << u4_4_7:2);
     ar = trunc(fs f* scale);
 }
 
@@ -1219,10 +1365,10 @@ macro extract_bit(val, bit, result) {
 }
 
 # UFLOAT.S - Convert Unsigned Fixed to Single, pg. 550.
-:ufloat.s fr, as, u4_4.7 is op2 = 0b1101 & op1 = 0b1010 & fr & as & u4_4.7 & op0 = 0 {
+:ufloat.s fr, as, u4_4_7 is op2 = 0b1101 & op1 = 0b1010 & fr & as & u4_4_7 & op0 = 0 {
     local tmp:8 = zext(as);
     local f = int2float(tmp);
-    local d = int2float(1:2 << u4_4.7:2);
+    local d = int2float(1:2 << u4_4_7:2);
     fr = d f/ f;
 }
 
@@ -1244,8 +1390,8 @@ macro extract_bit(val, bit, result) {
 }
 
 # UTRUNC.S - Truncate Single to Fixed Unsigned, pg. 555.
-:utrunc.s ar, fs, u4_4.7 is op2 = 0b1110 & op1 = 0b1010 & ar & fs & u4_4.7 & op0 = 0 {
-    local scale:4 = int2float(1:2 << u4_4.7:2);
+:utrunc.s ar, fs, u4_4_7 is op2 = 0b1110 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+    local scale:4 = int2float(1:2 << u4_4_7:2);
     local tmp:8 = trunc(fs f* scale);
     local posof = nan(fs) || (tmp >> 16) != 0;
     local negof = tmp s< 0;
@@ -1254,8 +1400,8 @@ macro extract_bit(val, bit, result) {
 }
 
 # WAITI - Wait Interrupt, pg. 556.
-:waiti u4_8.11 is op2 = 0 & op1 = 0 & ar = 0b0111 & u4_8.11 & at = 0 & op0 = 0 {
-    waiti(u4_8.11:4);
+:waiti u4_8_11 is op2 = 0 & op1 = 0 & ar = 0b0111 & u4_8_11 & at = 0 & op0 = 0 {
+    waiti(u4_8_11:4);
 }
 
 # WDTLB - Write Data TLB Entry, pg. 557.
@@ -1279,13 +1425,14 @@ macro extract_bit(val, bit, result) {
 }
 
 # WSR - Write Special Register, pg. 561.
-:wsr at, u8_8.15 is op2 = 0b0001 & op1 = 0b0011 & u8_8.15 & at & op0 = 0 {
-    wsr(u8_8.15:1, at);
+:wsr at, sr is op2 = 0b0001 & op1 = 0b0011 & sr & at & op0 = 0 {
+    local dst:4 =  zext(sr);
+    *[register]:4 dst = at;
 }
 
 # WUR - Write User Register, pg. 563.
-:wur at, u8_8.15 is op2 = 0b1111 & op1 = 0b0011 & u8_8.15 & at & op0 = 0 {
-    wur(u8_8.15:1, at);
+:wur at, u8_8_15 is op2 = 0b1111 & op1 = 0b0011 & u8_8_15 & at & op0 = 0 {
+    wur(u8_8_15:1, at);
 }
 
 # XOR - Bitwise Exclusive Or, pg. 564.
@@ -1299,6 +1446,56 @@ macro extract_bit(val, bit, result) {
 }
 
 # XSR - Exchange Special Register, pg. 566.
-:xsr at, u8_8.15 is op2 = 0b0110 & op1 = 0b0001 & u8_8.15 & at & op0 = 0 {
-    at = xsr(u8_8.15:1, at);
+:xsr at, u8_8_15 is op2 = 0b0110 & op1 = 0b0001 & u8_8_15 & at & op0 = 0 {
+    at = xsr(u8_8_15:1, at);
 }
+
+# PAD, dummy
+:pad is op0_16=0x0 {
+}
+
+# PAD, dummy
+:pad is op0_8=0x0 {
+}
+
+## MAC16 option ##
+
+# This produces correct pcode, tho it would be nicer to display the float in disasm as well
+# +0.0 +1.0 +2.0 +0.5
+const.s_imm: tmp is as=0 [ tmp = 0x00000000; ] { export *[const]:4 tmp; }
+const.s_imm: tmp is as=1 [ tmp = 0x3F800000; ] { export *[const]:4 tmp; }
+const.s_imm: tmp is as=2 [ tmp = 0x40000000; ] { export *[const]:4 tmp; }
+const.s_imm: tmp is as=3 [ tmp = 0x3F000000; ] { export *[const]:4 tmp; }
+
+:const.s fr, const.s_imm is op2=0b1111 & op1=0b1010 & fr & const.s_imm & at=0b0011 & op0=0 {
+    fr = float2float(const.s_imm);
+}
+
+# Stub out some insns which mainly appear in boilerplate library functions...
+:div0.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b0111 & op0=0 unimpl
+:sqrt0.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1001 & op0=0 unimpl
+:nexp01.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1011 & op0=0 unimpl
+:mksadj.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1100 & op0=0 unimpl
+:mkdadj.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1101 & op0=0 unimpl
+:addexp.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1110 & op0=0 unimpl
+:addexpm.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1111 & op0=0 unimpl
+:maddn.s fr, fs, ft is op2=0b0110 & op1=0b1010 & fr & fs & ft & op0=0 unimpl
+:divn.s fr, fs, ft is op2=0b0111 & op1=0b1010 & fr & fs & ft & op0=0 unimpl
+
+# UNIMPLEMENTED
+# - Windowed Register Option
+
+# L32E - Load 32-bit for Window Exceptions, pg. 376.
+:l32e at, as, s5_12_15_oex is op2 = 0 & op1 = 0b1001 & s5_12_15_oex & as & at & op0 = 0 unimpl
+
+# MOVSP - Move to Stack Pointer, pg. 427.
+:movsp at, as is op2 = 0 & op1 = 0 & ar = 0b0001 & as & at & op0 = 0 unimpl
+
+# LDDEC - Load with Autodecrement, pg. 386.
+:lddec "MAC16_REGS[" u2_12_13 "]", as is op2 = 0b1001 & op1 = 0 & u2_14_15 = 0 & u2_12_13 & as & at = 0 & op0 = 0b0100 unimpl
+
+# LDINC - Load with Autoincrement, pg. 387.
+:ldinc "MAC16_REGS[" u2_12_13 "]", as is op2 = 0b1000 & op1 = 0 & u2_14_15 = 0 & u2_12_13 & as & at = 0 & op0 = 0b0100 unimpl
+
+# MULA.AA.* - Signed Multiply, pg. 431.
+:mula.aa.* as, at is op2 = 0b0001 & u2_18_19 = 0b01 & ar = 0 & as & at & op0 = 0b0100 unimpl

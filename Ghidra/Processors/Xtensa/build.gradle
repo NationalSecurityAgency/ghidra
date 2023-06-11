@@ -6,6 +6,5 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Processors Xtensa'
 
 dependencies {
-	compile project(':Base')
+	api project(':Base')
 }
-

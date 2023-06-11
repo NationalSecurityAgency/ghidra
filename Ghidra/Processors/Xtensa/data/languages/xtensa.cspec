@@ -77,4 +77,69 @@
     </unaffected>
     </prototype>
   </default_proto>
+  
+  <!-- TODO: Evaluate calling convention introduced with PR 5442 -->
+  <prototype name="__stdcall_windowed" extrapop="0" stackshift="0">
+      <input>
+	<!-- TODO: These might be named a2, a3, a4, etc. -->
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="i2"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="i3"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="i4"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="i5"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="i6"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="i7"/>
+        </pentry>
+        <pentry minsize="1" maxsize="500" align="4">
+          <addr offset="0" space="stack"/>
+        </pentry>
+      </input>
+      <output>
+	<!-- TODO: Verify minsize and maxsize values -->
+	<!-- TODO: Consider need to name registers -->
+        <pentry minsize="1" maxsize="4" extension="inttype">
+          <register name="o2"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8" extension="inttype">
+          <addr space="join" piece1="o3" piece2="o2"/>
+        </pentry>
+        <pentry minsize="9" maxsize="12" extension="inttype">
+          <addr space="join" piece1="o4" piece2="o3" piece3="o2"/>
+        </pentry>
+        <pentry minsize="13" maxsize="16" extension="inttype">
+          <addr space="join" piece1="o5" piece2="o4" piece3="o3" piece4="o2"/>
+        </pentry>
+    </output>
+    <returnaddress>
+        <register name="a0"/>
+    </returnaddress>
+    <unaffected>
+      <register name="a1"/>
+      <register name="a2"/>
+      <register name="a3"/>
+      <register name="a4"/>
+      <register name="a5"/>
+      <register name="a6"/>
+      <register name="a7"/>
+      <register name="a8"/>
+      <register name="a9"/>
+      <register name="a10"/>
+      <register name="a11"/>
+      <register name="a12"/>
+      <register name="a13"/>
+      <register name="a14"/>
+      <register name="a15"/>
+    </unaffected>
+  </prototype>
+    
 </compiler_spec>
