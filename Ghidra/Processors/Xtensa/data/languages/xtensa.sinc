@@ -1,0 +1,386 @@
+define endian=little;
+define alignment=1;
+
+define space ram        type=ram_space      size=4  default;
+define space register   type=register_space size=4;
+
+# Special registers (SR). Not all are actually 32 bit, but for the sake of
+# simplicity they are here.
+define register offset=0x00 size=4  [ LBEG LEND LCOUNT SAR BR LITBASE ];
+define register offset=0x30 size=4  [ SCOMPARE1 ];
+define register offset=0x40 size=4  [ ACCLO ACCHI ];
+define register offset=0x80 size=4  [ M0 M1 M2 M3 ];
+define register offset=0x120 size=4 [ WindowBase WindowStart ];
+define register offset=0x14c size=4 [ PTEVADDR ];
+define register offset=0x164 size=4 [ MMID RASID ITLBCFG DTLBCFG ];
+define register offset=0x180 size=4 [ IBREAKENABLE ];
+define register offset=0x184 size=4 [ MEMCTL ];
+define register offset=0x188 size=4 [ CACHEATTR ATOMCTL ];
+define register offset=0x1a0 size=4 [ DDR ];
+define register offset=0x1a8 size=4 [ MEPC MEPS MESAVE MESR MECR MEVADDR ];
+define register offset=0x200 size=4 [ IBREAKA0 IBREAKA1 ];
+define register offset=0x240 size=4 [ DBREAKA0 DBREAKA1 ];
+define register offset=0x280 size=4 [ DBREAKC0 DBREAKC1 ];
+define register offset=0x2c4 size=4 [ EPC1 EPC2 EPC3 EPC4 EPC5 EPC6 EPC7 ];
+define register offset=0x300 size=4 [ DEPC ];
+define register offset=0x308 size=4 [ EPS2 EPS3 EPS4 EPS5 EPS6 EPS7 ];
+define register offset=0x344 size=4 [ EXCSAVE1 EXCSAVE2 EXCSAVE3 EXCSAVE4 EXCSAVE5 EXCSAVE6 EXCSAVE7 ];
+define register offset=0x380 size=4 [ CPENABLE ];
+define register offset=0x384 size=4 [ INTERRUPT INTSET INTCLEAR INTENABLE ];
+define register offset=0x398 size=4 [ PS VECBASE EXCCAUSE DEBUGCAUSE CCOUNT PRID ICOUNT ICOUNTLEVEL EXCVADDR ];
+define register offset=0x3c0 size=4 [ CCOMPARE0 CCOMPARE1 CCOMPARE2 ];
+define register offset=0x3d0 size=4 [ MISC0 MISC1 MISC2 MISC3 ];
+
+# Address registers (AR).
+define register offset=0x8000 size=4 [
+    a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15
+    i2 i3 i4 i5 i6 i7
+    o2 o3 o4 o5 o6 o7
+];
+
+# Floating Point registers (FR + FCR (control) + FSR (status)).
+# TODO: FCR and FSR seem unused?
+define register offset=0x8100 size=4 [
+    f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15
+    fcr fsr
+];
+
+# Boolean registers (BR).
+define register offset=0x8200 size=1 [
+    b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
+];
+
+# Program counter.
+define register offset=0x8300 size=4 [ pc ];
+
+
+define register offset=0x8400 size=4 contextreg;
+define context contextreg
+    phase=(0,0)
+    loopEnd=(1,1) noflow
+;
+
+# Regular 24-bit instruction.
+define token insn(24)
+    # Named opcode/register fields.
+    op2    = (20,23)
+    ar     = (12,15)
+    fr     = (12,15)
+    br     = (12,15)
+    as     = (8,11)
+    fs     = (8,11)
+    bs     = (8,11)
+    sr     = (8,15)
+    at     = (4,7)
+    ft     = (4,7)
+    bt     = (4,7)
+    op1    = (16,19)
+    op0    = (0,3)
+
+    # Signed and unsigned immediates. Named [us]N_L.M, where u and s denote signedness, L and M the
+    # least and most significant bit of the immediate in the instruction word, and N the length
+    # (i.e. M-L+1).
+    u3_21.23    = (21,23)
+    u4_20.23    = (20,23)
+    s8_16.23    = (16,23) signed
+    u8_16.23    = (16,23)
+    u12_12.23   = (12,23)
+    s12_12.23   = (12,23) signed
+    u16_8.23    =  (8,23)
+    s8_6.23     =  (6,23) signed
+    u1_20       = (20,20)
+    u2_18.19    = (18,19)
+    u3_17.19    = (17,19)
+    u2_16.17    = (16,17)
+    u1_16       = (16,16)
+    u2_14.15    = (14,15)
+    u3_13.15    = (13,15)
+    u4_12.15    = (12,15)
+    u8_8.15     =  (8,15)
+    u2_12.13    = (12,13)
+    u1_12       = (12,12)
+    u4_8.11     =  (8,11)
+    u8_4.11     =  (4,11)
+    s4_8.11     =  (8,11)  signed
+    u2_6.7      =  (6,7)
+    u3_5.7      =  (5,7)
+    u4_4.7      =  (4,7)
+    s4_4.7      =  (4,7)
+    u2_4.5      =  (4,5)
+    u1_4        =  (4,4)
+;
+
+# Narrow 16-bit instructions; fields are always prefixed with n_.
+define token narrowinsn(16)
+    n_ar   = (12,15)
+    n_as   = (8,11)
+    n_at   = (4,7)
+    n_op0  = (0, 3)
+
+    n_u4_12.15  = (12,15)
+    n_s4_12.15  = (12,15) signed
+    n_u4_8.11   =  (8,11)
+    n_u1_7      =  (7,7)
+    n_u2_6.7    =  (6,7)
+    n_u4_4.7    =  (4,7)
+    n_s3_4.6    =  (4,6)
+    n_u2_4.5    =  (4,5)
+
+;
+
+attach variables [ sr ] [
+#    0x...0         0x...4      0x...8      0x...c
+     LBEG           LEND        LCOUNT      SAR         # 0x0_
+     BR             LITBASE     _           _           # 0x1_
+     _              _           _           _           # 0x2_
+     SCOMPARE1      _           _           _           # 0x3_
+     ACCLO          ACCHI       _           _           # 0x4_
+     _              _           _           _           # 0x5_
+     _              _           _           _           # 0x6_
+     _              _           _           _           # 0x7_
+     M0             M1          M2          M3          # 0x8_
+     _              _           _           _           # 0x9_
+     _              _           _           _           # 0xa_
+     _              _           _           _           # 0xb_
+     _              _           _           _           # 0xc_
+     _              _           _           _           # 0xd_
+     _              _           _           _           # 0xe_
+     _              _           _           _           # 0xf_
+#    0x...0         0x...4      0x...8      0x...c
+     _              _           _           _           # 0x10_
+     _              _           _           _           # 0x11_
+     WindowBase     WindowStart _           _           # 0x12_
+     _              _           _           _           # 0x13_
+     _              _           _           PTEVADDR    # 0x14_
+     _              _           _           _           # 0x15_
+     _              MMID        RASID       ITLBCFG     # 0x16_
+     DTLBCFG        _           _           _           # 0x17_
+     IBREAKENABLE   MEMCTL      CACHEATTR   ATOMCTL     # 0x18_
+     _              _           _           _           # 0x19_
+     DDR            _           MEPC        MEPS        # 0x1a_
+     MESAVE         MESR        MECR        MEVADDR     # 0x1b_
+     _              _           _           _           # 0x1c_
+     _              _           _           _           # 0x1d_
+     _              _           _           _           # 0x1e_
+     _              _           _           _           # 0x1f_
+#    0x...0         0x...4      0x...8      0x...c
+     IBREAKA0       IBREAKA1    _           _           # 0x20_
+     _              _           _           _           # 0x21_
+     _              _           _           _           # 0x22_
+     _              _           _           _           # 0x23_
+     DBREAKA0       DBREAKA1    _           _           # 0x24_
+     _              _           _           _           # 0x25_
+     _              _           _           _           # 0x26_
+     _              _           _           _           # 0x27_
+     DBREAKC0       DBREAKC1    _           _           # 0x28_
+     _              _           _           _           # 0x29_
+     _              _           _           _           # 0x2a_
+     _              _           _           _           # 0x2b_
+     _              EPC1        EPC2        EPC3        # 0x2c_
+     EPC4           EPC5        EPC6        EPC7        # 0x2d_
+     _              _           _           _           # 0x2e_
+     _              _           _           _           # 0x2f_
+#    0x...0         0x...4      0x...8      0x...c
+     DEPC           _           EPS2        EPS3        # 0x30_
+     EPS4           EPS5        EPS6        EPS7        # 0x31_
+     _              _           _           _           # 0x32_
+     _              _           _           _           # 0x33_
+     _              EXCSAVE1    EXCSAVE2    EXCSAVE3    # 0x34_
+     EXCSAVE4       EXCSAVE5    EXCSAVE6    EXCSAVE7    # 0x35_
+     _              _           _           _           # 0x36_
+     _              _           _           _           # 0x37_
+     CPENABLE       INTERRUPT   INTSET      INTCLEAR    # 0x38_
+     INTENABLE      _           PS          VECBASE     # 0x39_
+     EXCCAUSE       DEBUGCAUSE  CCOUNT      PRID        # 0x3a_
+     ICOUNT         ICOUNTLEVEL EXCVADDR    _           # 0x3b_
+     CCOMPARE0      CCOMPARE1   CCOMPARE2   _           # 0x3c_
+     MISC0          MISC1       MISC2       MISC3       # 0x3d_
+     _              _           _           _           # 0x3e_
+     _              _           _           _           # 0x3f_
+#    0x...0         0x...4      0x...8      0x...c
+];
+
+attach variables [ ar as at n_ar n_as n_at ] [
+    a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15
+];
+
+attach variables [ fr fs ft ] [
+    f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15
+];
+
+attach variables [ br bs bt ] [
+    b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
+];
+
+attach variables [  u8_8.15 ] [ LBEG LEND LCOUNT SAR BR LITBASE _ _ _ _ _ _ SCOMPARE1 _ _ _ ACCLO ACCHI _ _ _ _ _ _ _ _ _ _ _ _ _ _ M0 M1 M2 M3 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ WindowBase WindowStart _ _ _ _ _ _ _ _ _ PTEVADDR _ _ _ _ _  MMID RASID ITLBCFG DTLBCFG _ _ _ IBREAKENABLE MEMCTL CACHEATTR ATOMCTL _ _ _ _ DDR _ MEPC MEPS MESAVE MESR MECR MEVADDR _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ IBREAKA0 IBREAKA1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ DBREAKA0 DBREAKA1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ DBREAKC0 DBREAKC1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ EPC1 EPC2 EPC3 EPC4 EPC5 EPC6 EPC7 _ _ _ _ _ _ _ _ DEPC _ EPS2 EPS3 EPS4 EPS5 EPS6 EPS7 _ _ _ _ _ _ _ _ _ EXCSAVE1 EXCSAVE2 EXCSAVE3 EXCSAVE4 EXCSAVE5 EXCSAVE6 EXCSAVE7 _ _ _ _ _ _ _ _ CPENABLE INTERRUPT INTSET INTCLEAR INTENABLE _ PS VECBASE EXCCAUSE DEBUGCAUSE CCOUNT PRID ICOUNT ICOUNTLEVEL EXCVADDR _ CCOMPARE0 CCOMPARE1 CCOMPARE2 _ MISC0 MISC1 MISC2 MISC3 _ _ _ _ _ _ _ _ ];
+
+
+# Various 32-bit pointers relative to PC. Any operands that are split across non-consecutive
+# bits are named foo_LL.LM_ML.MM, where LL is the least significant bits of the least
+# singificant operand half, LM the most significant bits of the least significant operand half, etc.
+
+urel_16.23: rel is u8_16.23  [ rel = inst_start + u8_16.23  + 4; ] { export *:4 rel; }
+
+srel_16.23: rel is s8_16.23  [ rel = inst_start + s8_16.23  + 4; ] { export *:4 rel; }
+
+srel_12.23: rel is s12_12.23 [ rel = inst_start + s12_12.23 + 4; ] { export *:4 rel; }
+
+srel_6.23:  rel is s8_6.23   [ rel = inst_start + s8_6.23   + 4; ] { export *:4 rel; }
+
+urel_12.15_4.5: rel is n_u2_4.5 & n_u4_12.15 [
+    rel = inst_start + ((n_u2_4.5 << 4) | n_u4_12.15) + 4;
+] { export *:4 rel; }
+
+srel_6.23_sb2: rel is s8_6.23 [
+    rel = (inst_start & ~3) + ( s8_6.23 << 2 ) + 4;
+] { export *:4 rel; }
+
+srel_8.23_oex_sb2: rel is u16_8.23 [
+    rel = ((inst_start + 3) & ~3) + ((u16_8.23 | 0xffff0000) << 2);
+] { export *:4 rel; }
+
+# Immediates split across the instruction.
+u5_8.11_20: tmp is u1_20 & u4_8.11  [ tmp = (u1_20 << 4) | u4_8.11; ] { export *[const]:1 tmp; }
+u5_4.7_20:  tmp is u1_20 & u4_4.7   [ tmp = (u1_20 << 4) | u4_4.7;  ] { export *[const]:1 tmp; }
+u5_8.11_16: tmp is u1_16 & u4_8.11  [ tmp = (u1_16 << 4) | u4_8.11; ] { export *[const]:1 tmp; }
+u5_4.7_12:  tmp is u1_12 & u4_4.7   [ tmp = (u1_12 << 4) | u4_4.7;  ] { export *[const]:1 tmp; }
+u5_8.11_4:  tmp is u1_4 & u4_8.11   [ tmp = (u1_4  << 4) | u4_8.11; ] { export *[const]:1 tmp; }
+
+# Signed 12-bit (extended to 16) immediate, used by MOVI.
+s16_16.23_8.11: tmp is s4_8.11 & u8_16.23 [
+   tmp = (s4_8.11 << 8) | u8_16.23;
+] { export *[const]:2 tmp; }
+
+# An “asymmetric” immediate from -32..95, used by MOVI.N.
+n_s8_12.15_4.6_asymm: tmp is n_s3_4.6 & n_s4_12.15 [
+    tmp = ((((n_s3_4.6 & 7) << 4) | (n_s4_12.15 & 15)) |
+          ((((n_s3_4.6 >> 2) & 1) & ((n_s3_4.6 >> 1) & 1)) << 7));
+] { export *[const]:1 tmp; }
+
+# Immediates shifted or with offset.
+s16_16.23_sb8:  tmp is s8_16.23     [ tmp = s8_16.23  << 8; ] { export *[const]:2 tmp; }
+u15_12.23_sb3:  tmp is u12_12.23    [ tmp = u12_12.23 << 3; ] { export *[const]:2 tmp; }
+u10_16.23_sb2:  tmp is u8_16.23     [ tmp = u8_16.23  << 2; ] { export *[const]:2 tmp; }
+u9_16.23_sb1:   tmp is u8_16.23     [ tmp = u8_16.23  << 1; ] { export *[const]:2 tmp; }
+u5_20.23_plus1: tmp is u4_20.23     [ tmp = u4_20.23   + 1; ] { export *[const]:1 tmp; }
+u8_20.23_sb4:   tmp is u4_20.23     [ tmp = u4_20.23  << 4; ] { export *[const]:1 tmp; }
+u5_4.7_plus7:   tmp is u4_4.7       [ tmp = u4_4.7     + 7; ] { export *[const]:1 tmp; }
+
+n_u6_12.15_sb2: tmp is n_u4_12.15  [ tmp = n_u4_12.15 << 2; ] { export *[const]:1 tmp; }
+
+# One-extended. FIXME: Verify this. Only used by [LS]32E (window extension), which aren’t yet
+# implemented.
+s5_12.15_oex:  tmp is u4_12.15      [ tmp = (2 << u4_12.15) * -1; ] { export *[const]:2 tmp; }
+
+# Some 4-bit immediates with mappings that can’t be (easily) expressed in a single disassembly action.
+
+# n_u4_4.7 with 0 being -1, used by ADDI.N.
+n_s4_4.7_nozero: tmp is n_u4_4.7 = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
+n_s4_4.7_nozero: tmp is n_u4_4.7      [ tmp = n_u4_4.7+0; ] { export *[const]:4 tmp; }
+
+# imm stored in sa for slli is 32-shift.
+# TODO why can't we use subtable output for this instead of repeating u5_4.7_20 calc?
+u5_4.7_20_slli: tmp is u1_20 & u4_4.7   [ tmp = 32 - ((u1_20 << 4) | u4_4.7); ] { export *[const]:1 tmp; }
+
+# B4CONST(ar) (Branch Immediate) encodings, pg. 41 f.
+r_b4const: tmp is ar = 0         [ tmp = 0xffffffff; ] { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 1         [ tmp = 0x1; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 2         [ tmp = 0x2; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 3         [ tmp = 0x3; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 4         [ tmp = 0x4; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 5         [ tmp = 0x5; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 6         [ tmp = 0x6; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 7         [ tmp = 0x7; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 8         [ tmp = 0x8; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 9         [ tmp = 0xa; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 10        [ tmp = 0xc; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 11        [ tmp = 0x10; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 12        [ tmp = 0x20; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 13        [ tmp = 0x40; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 14        [ tmp = 0x80; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 15        [ tmp = 0x100; ]      { export *[const]:4 tmp; }
+
+# B4CONSTU(ar) (Branch Unsigned Immediate) encodings, pg. 42.
+r_b4constu: tmp is ar = 0         [ tmp = 0x8000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 1         [ tmp = 0x1000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 2         [ tmp = 0x2; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 3         [ tmp = 0x3; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 4         [ tmp = 0x4; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 5         [ tmp = 0x5; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 6         [ tmp = 0x6; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 7         [ tmp = 0x7; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 8         [ tmp = 0x8; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 9         [ tmp = 0xa; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 10        [ tmp = 0xc; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 11        [ tmp = 0x10; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 12        [ tmp = 0x20; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 13        [ tmp = 0x40; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 14        [ tmp = 0x80; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 15        [ tmp = 0x100; ]  { export *[const]:4 tmp; }
+
+define pcodeop breakpoint;
+define pcodeop dhi;
+define pcodeop dhu;
+define pcodeop dhwb;
+define pcodeop dhwbi;
+define pcodeop dii;
+define pcodeop diu;
+define pcodeop diwb;
+define pcodeop diwbi;
+define pcodeop dpfl;
+define pcodeop dpfr;
+define pcodeop dpfro;
+define pcodeop dpfw;
+define pcodeop dpfwo;
+define pcodeop dsync;
+define pcodeop esync;
+define pcodeop excw;
+define pcodeop extw;
+define pcodeop idtlb;
+define pcodeop ihi;
+define pcodeop ihu;
+define pcodeop iii;
+define pcodeop iitlb;
+define pcodeop iiu;
+define pcodeop ill;
+define pcodeop ipf;
+define pcodeop ipfl;
+define pcodeop isync;
+define pcodeop acquire;
+define pcodeop ldct;
+define pcodeop lict;
+define pcodeop licw;
+define pcodeop memw;
+define pcodeop nsa;
+define pcodeop pdtlb;
+define pcodeop pitlb;
+define pcodeop rdtlb0;
+define pcodeop rdtlb1;
+define pcodeop rer;
+define pcodeop rfdd;
+define pcodeop rfde;
+define pcodeop rfdo;
+define pcodeop rfe;
+define pcodeop rfi;
+define pcodeop rfme;
+define pcodeop rfue;
+define pcodeop rfwo;
+define pcodeop rfwu;
+define pcodeop ritlb0;
+define pcodeop ritlb1;
+define pcodeop rsil;
+define pcodeop rsync;
+define pcodeop rur;
+define pcodeop s32c1i;
+define pcodeop release;
+define pcodeop sdct;
+define pcodeop sict;
+define pcodeop sicw;
+define pcodeop simcall;
+define pcodeop syscall;
+define pcodeop waiti;
+define pcodeop wdtlb;
+define pcodeop wer;
+define pcodeop witlb;
+define pcodeop wur;
+define pcodeop xsr;

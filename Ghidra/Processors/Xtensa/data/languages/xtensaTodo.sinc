@@ -1,0 +1,163 @@
+## Windowed Register Option ##
+
+# CALL4 - Call PC-relative, Rotate Window by 4, pg. 298.
+:call4 srel_6.23_sb2 is srel_6.23_sb2 & u2_4.5 = 0b01 & op0 = 0b0101 {
+    #local dst = srel_6.23_sb2;
+    i2=a6;
+    i3=a7;
+    i4=a8;
+    i5=a9;
+    a0 = inst_start + 3;
+    call srel_6.23_sb2;
+    a6=o2;
+}
+
+# CALL8 - Call PC-relative, Rotate Window by 8, pg. 300.
+:call8 srel_6.23_sb2 is srel_6.23_sb2 & u2_4.5 = 0b10 & op0 = 0b0101 {
+    #local dst:4 =
+    i2=a10;
+    i3=a11;
+    i4=a12;
+    i5=a13;
+    i6=a14;
+    i7=a15;
+    a0 = inst_start + 3;
+    call srel_6.23_sb2;
+    a10=o2;
+}
+
+# CALL12 - Call PC-relative, Rotate Window by 12, pg. 302.
+:call12 srel_6.23_sb2 is srel_6.23_sb2 & u2_4.5 = 0b11 & op0 = 0b0101 {
+    #local dst = srel_6.23_sb2;
+    i2=a14;
+    i3=a15;
+    a0 = inst_start + 3;
+    call srel_6.23_sb2;
+    a14=o2;
+}
+
+# ENTRY - Subroutine Entry, pg. 340.
+:entry as, u15_12.23_sb3 is u15_12.23_sb3 & as & u2_6.7 = 0b00 & u2_4.5 = 0b11 & op0 = 0b0110 {
+    local amn = sext(u15_12.23_sb3);
+    a2=i2;
+    a3=i3;
+    a4=i4;
+    a5=i5;
+    a6=i6;
+    a7=i7;
+    #as = as + amn;
+    WindowBase    = amn;
+    a1 = a1 - amn;
+}
+
+
+# CALLX4 - Call Register, Rotate Window by 4, pg. 305.
+:callx4 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6.7 = 0b11 & u2_4.5 = 0b01 & op0 = 0 {
+    local dst = as;
+    i2=a6;
+    i3=a7;
+    i4=a8;
+    i5=a9;
+    i6=a10;
+    i7=a11;
+    a0 = inst_start + 3;
+    call [dst];
+    a6=o2;
+}
+
+# CALLX8 - Call Register, Rotate Window by 8, pg. 307.
+:callx8 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6.7 = 0b11 & u2_4.5 = 0b10 & op0 = 0 {
+    local dst = as;
+    i2=a10;
+    i3=a11;
+    i4=a12;
+    i5=a13;
+    i6=a14;
+    i7=a15;
+    a0 = inst_start + 3;
+    call [dst];
+    a10=o2;
+}
+
+# CALLX12 - Call Register, Rotate Window by 12, pg. 308.
+:callx12 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6.7 = 0b11 & u2_4.5 = 0b11 & op0 = 0 {
+    local dst = as;
+    i2=a14;
+    i3=a15;
+    a0 = inst_start + 3;
+    call [dst];
+    a14=o2;
+}
+
+
+# L32E - Load 32-bit for Window Exceptions, pg. 376.
+:l32e at, as, s5_12.15_oex is op2 = 0 & op1 = 0b1001 & s5_12.15_oex & as & at & op0 = 0 {
+
+}
+
+# MOVSP - Move to Stack Pointer, pg. 427.
+:movsp at, as is op2 = 0 & op1 = 0 & ar = 0b0001 & as & at & op0 = 0 unimpl
+
+# RETW - Windowed Return, pg. 480.
+:retw is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6.7 = 0b10 & u2_4.5 = 0b01 & op0 = 0 {
+# Assume call8
+    o2=a2;
+    a1 = a1 + WindowBase;
+    return [a0];
+}
+
+# RETW.N - Narrow Windowed Return, pg. 482.
+:retw.n is n_ar = 0b1111 & n_as = 0 & n_at = 0b0001 & n_op0 = 0b1101 {
+    o2=a2;
+    a1 = a1 + WindowBase;
+    return [a0];
+}
+
+# ROTW - Rotate Window, pg. 496.
+:rotw s4_4.7 is op2 = 0b0100 & op1 = 0 & ar = 0b1000 & as = 0 & s4_4.7 & op0 = 0 {
+    WindowBase = WindowBase + s4_4.7;
+}
+
+# S32E - Store 32-bit for Window Exceptions, pg. 508.
+:s32e at, as, s5_12.15_oex is op2 = 0b0100 & op1 = 0b1001 & s5_12.15_oex & as & at & op0 = 0 {
+	#local vAddr:4 = as + s5_12.15_oex;
+	#*:4 vAddr = at;
+}
+
+
+## MAC16 option ##
+
+# LDDEC - Load with Autodecrement, pg. 386.
+:lddec "MAC16_REGS[" u2_12.13 "]", as is op2 = 0b1001 & op1 = 0 & u2_14.15 = 0 & u2_12.13 & as & at = 0 & op0 = 0b0100 unimpl
+
+# LDINC - Load with Autoincrement, pg. 387.
+:ldinc "MAC16_REGS[" u2_12.13 "]", as is op2 = 0b1000 & op1 = 0 & u2_14.15 = 0 & u2_12.13 & as & at = 0 & op0 = 0b0100 unimpl
+
+# MULA.AA.* - Signed Multiply, pg. 431.
+:mula.aa.* as, at is op2 = 0b0001 & u2_18.19 = 0b01 & ar = 0 & as & at & op0 = 0b0100 unimpl
+
+# FIXME: Add remaining MUL.* opcodes.
+
+
+# TODO this produces correct pcode, tho it would be nicer to display the float in disasm as well
+# +0.0 +1.0 +2.0 +0.5
+const.s_imm: tmp is as=0 [ tmp = 0x00000000; ] { export *[const]:4 tmp; }
+const.s_imm: tmp is as=1 [ tmp = 0x3F800000; ] { export *[const]:4 tmp; }
+const.s_imm: tmp is as=2 [ tmp = 0x40000000; ] { export *[const]:4 tmp; }
+const.s_imm: tmp is as=3 [ tmp = 0x3F000000; ] { export *[const]:4 tmp; }
+
+:const.s fr, const.s_imm is op2=0b1111 & op1=0b1010 & fr & const.s_imm & at=0b0011 & op0=0 {
+    fr = float2float(const.s_imm);
+}
+
+
+# Stub out some insns which mainly appear in boilerplate library functions...
+:div0.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b0111 & op0=0 unimpl
+:sqrt0.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1001 & op0=0 unimpl
+:nexp01.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1011 & op0=0 unimpl
+:mksadj.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1100 & op0=0 unimpl
+:mkdadj.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1101 & op0=0 unimpl
+:addexp.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1110 & op0=0 unimpl
+:addexpm.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1111 & op0=0 unimpl
+:maddn.s fr, fs, ft is op2=0b0110 & op1=0b1010 & fr & fs & ft & op0=0 unimpl
+:divn.s fr, fs, ft is op2=0b0111 & op1=0b1010 & fr & fs & ft & op0=0 unimpl

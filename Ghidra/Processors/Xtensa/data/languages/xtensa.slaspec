@@ -1,0 +1,23 @@
+@include "xtensa.sinc"
+
+# NOTE: This is quite a big hack; a real processor will compare nextPC to LEND on every ifetch.
+# As we only inject the branch-back check on addresses marked by loop insns, we may miss
+# strange things like loop registers being written directly or loop registers being overwritten
+# by a "nested" loop instruction. We also don't check CLOOPENABLE (PS.EXCM).
+# For code that hasn't been intentially crafted for anti-analysis this should be fine.
+:^instruction is phase=0 & loopEnd=1 & instruction [phase=1;] {
+    if (LCOUNT == 0) goto <done>;
+    LCOUNT = LCOUNT - 1;
+    goto [LBEG];
+    <done>
+    build instruction;
+}
+
+:^instruction is phase=0 & loopEnd=0 & instruction [phase=1;] {
+    build instruction;
+}
+
+with : phase=1 {
+@include "xtensaInstructions.sinc"
+@include "xtensaTodo.sinc"
+}
