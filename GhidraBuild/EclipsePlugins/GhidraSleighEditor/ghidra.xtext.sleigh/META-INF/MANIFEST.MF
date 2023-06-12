@@ -3,9 +3,8 @@ Automatic-Module-Name: ghidra.xtext.sleigh
 Bundle-ManifestVersion: 2
 Bundle-Name: ghidra.xtext.sleigh
 Bundle-Vendor: Ghidra
-Bundle-Version: 1.0.1.qualifier
+Bundle-Version: 1.0.2.qualifier
 Bundle-SymbolicName: ghidra.xtext.sleigh; singleton:=true
-Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.xtext,
  org.eclipse.xtext.xbase,
  org.eclipse.equinox.common;bundle-version="3.5.0",
@@ -16,16 +15,17 @@ Require-Bundle: org.eclipse.xtext,
  org.eclipse.xtend.lib;bundle-version="2.14.0",
  org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: ghidra.xtext.sleigh.formatting2,
- ghidra.xtext.sleigh,
- ghidra.xtext.sleigh.sleigh.impl,
- ghidra.xtext.sleigh.validation,
- ghidra.xtext.sleigh.scoping,
- ghidra.xtext.sleigh.sleigh,
- ghidra.xtext.sleigh.serializer,
- ghidra.xtext.sleigh.parser.antlr.internal,
- ghidra.xtext.sleigh.services,
- ghidra.xtext.sleigh.sleigh.util,
+Export-Package: ghidra.xtext.sleigh,
+ ghidra.xtext.sleigh.converter,
+ ghidra.xtext.sleigh.formatting2,
  ghidra.xtext.sleigh.generator,
- ghidra.xtext.sleigh.parser.antlr
+ ghidra.xtext.sleigh.parser.antlr,
+ ghidra.xtext.sleigh.parser.antlr.internal;x-internal:=true,
+ ghidra.xtext.sleigh.scoping,
+ ghidra.xtext.sleigh.serializer,
+ ghidra.xtext.sleigh.services,
+ ghidra.xtext.sleigh.sleigh,
+ ghidra.xtext.sleigh.sleigh.impl,
+ ghidra.xtext.sleigh.sleigh.util,
+ ghidra.xtext.sleigh.validation
 Import-Package: org.apache.log4j
