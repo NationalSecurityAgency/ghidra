@@ -58,6 +58,7 @@ ElementId ELEM_SPLITDATATYPE = ElementId("splitdatatype",270);
 ElementId ELEM_STRUCTALIGN = ElementId("structalign",208);
 ElementId ELEM_TOGGLERULE = ElementId("togglerule",209);
 ElementId ELEM_WARNING = ElementId("warning",210);
+ElementId ELEM_JUMPTABLEMAX = ElementId("jumptablemax",271);
 
 /// If the parameter is "on" return \b true, if "off" return \b false.
 /// Any other value causes an exception.
@@ -120,6 +121,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionAllowContextSet());
   registerOption(new OptionSetAction());
   registerOption(new OptionSetLanguage());
+  registerOption(new OptionJumpTableMax());
   registerOption(new OptionJumpLoad());
   registerOption(new OptionToggleRule());
   registerOption(new OptionAliasBlock());
@@ -792,6 +794,26 @@ string OptionSetLanguage::apply(Architecture *glb,const string &p1,const string 
   glb->setPrintLanguage(p1);
   res = "Decompiler produces "+p1;
   return res;
+}
+
+/// \class OptionJumpTableMax
+/// \brief Set the maximum number of entries that can be recovered for a single jump table
+///
+/// This option is an unsigned integer value used during analysis of jump tables.  It serves as a
+/// sanity check that the recovered number of entries for a jump table is reasonable and
+/// also acts as a resource limit on the number of destination addresses that analysis will attempt
+/// to follow from a single indirect jump.
+string OptionJumpTableMax::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  istringstream s(p1);
+  s.unsetf(ios::dec | ios::hex | ios::oct);
+  uint4 val = 0;
+  s >> val;
+  if (val==0)
+    throw ParseError("Must specify integer maximum");
+  glb->max_jumptable_size = val;
+  return "Maximum jumptable size set to "+p1;
 }
 
 /// \class OptionJumpLoad
