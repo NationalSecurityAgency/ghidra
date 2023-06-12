@@ -172,6 +172,7 @@ public:
   int4 max_term_duplication;	///< Max terms duplicated without a new variable
   int4 max_basetype_size;	///< Maximum size of an "integer" type before creating an array type
   int4 min_funcsymbol_size;	///< Minimum size of a function symbol
+  uint4 max_jumptable_size;	///< Maximum number of entries in a single JumpTable
   bool aggressive_ext_trim;	///< Aggressively trim inputs that look like they are sign extended
   bool readonlypropagate;	///< true if readonly values should be treated as constants
   bool infer_pointers;		///< True if we should infer pointers from constants that are likely addresses

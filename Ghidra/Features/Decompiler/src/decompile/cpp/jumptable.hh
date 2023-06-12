@@ -535,7 +535,6 @@ class JumpTable {
   uintb switchVarConsume;	///< Bits of the switch variable being consumed
   int4 defaultBlock;		///< The out-edge corresponding to the \e default switch destination (-1 = undefined)
   int4 lastBlock;		///< Block out-edge corresponding to last entry in the address table
-  uint4 maxtablesize;		///< Maximum table size we allow to be built (sanity check)
   uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
   uint4 maxleftright;		///< Maximum shifts to normalize
   uint4 maxext;			///< Maximum extensions to normalize
@@ -561,7 +560,6 @@ public:
   const Address &getOpAddress(void) const { return opaddress; }	///< Get the address of the BRANCHIND for the switch
   PcodeOp *getIndirectOp(void) const { return indirect; }	///< Get the BRANCHIND PcodeOp
   void setIndirectOp(PcodeOp *ind) { opaddress = ind->getAddr(); indirect = ind; }	///< Set the BRANCHIND PcodeOp
-  void setMaxTableSize(uint4 val) { maxtablesize = val; }	///< Set the maximum entries allowed in the address table
   void setNormMax(uint4 maddsub,uint4 mleftright,uint4 mext) {
     maxaddsub = maddsub; maxleftright = mleftright; maxext = mext; }	///< Set the switch variable normalization model restrictions
   void setOverride(const vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv);

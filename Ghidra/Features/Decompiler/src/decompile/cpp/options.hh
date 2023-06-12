@@ -64,6 +64,7 @@ extern ElementId ELEM_SPLITDATATYPE;		///< Marshaling element \<splitdatatype>
 extern ElementId ELEM_STRUCTALIGN;		///< Marshaling element \<structalign>
 extern ElementId ELEM_TOGGLERULE;		///< Marshaling element \<togglerule>
 extern ElementId ELEM_WARNING;			///< Marshaling element \<warning>
+extern ElementId ELEM_JUMPTABLEMAX;		///< Marshaling element \<jumptablemax>
 
 /// \brief Base class for options classes that affect the configuration of the Architecture object
 ///
@@ -290,6 +291,12 @@ public:
 class OptionSetLanguage : public ArchOption {
 public:
   OptionSetLanguage(void) { name = "setlanguage"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionJumpTableMax : public ArchOption {
+public:
+  OptionJumpTableMax(void) { name = "jumptablemax"; }	///< Constructor
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
