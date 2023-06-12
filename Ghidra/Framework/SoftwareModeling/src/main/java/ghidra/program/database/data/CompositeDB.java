@@ -683,13 +683,11 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	}
 	
 	/**
-	 * Perform any neccessary component adjustments based on
-	 * sizes and alignment of components differing from their 
-	 * specification which may be influenced by the data organization.
-	 * If this composite changes parents will not be
-	 * notified - handling this is the caller's responsibility.
-	 * It is assumed that this method is invoked on composites
-	 * in dependency order.
+	 * Perform any neccessary component adjustments based on sizes of components differing from 
+	 * their specification which may be influenced by the data organization.  This method
+	 * does not consider alignment changes and should be used on non-packed structures only.
+	 * If this composite changes parents will not be notified - handling this is the caller's 
+	 * responsibility. It is assumed that this method is invoked on composites in dependency order.
 	 * @throws IOException if database IO error occurs
 	 */
 	protected abstract void fixupComponents() throws IOException;

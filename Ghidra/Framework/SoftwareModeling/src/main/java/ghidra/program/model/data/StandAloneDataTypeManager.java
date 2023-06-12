@@ -59,11 +59,16 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 	protected String name;
 	
+	public static enum ArchiveWarningLevel {
+		INFO, WARN, ERROR;
+	}
+
 	public static enum ArchiveWarning {
+
 		/**
 		 * {@link #NONE} indicates a normal archive condition
 		 */
-		NONE,
+		NONE(ArchiveWarningLevel.INFO),
 
 		/**
 		 * {@link #UPGRADED_LANGUAGE_VERSION} indicates an archive which has been open for update
@@ -72,7 +77,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		 * which involves significant {@link Register} changes.  Sharing an upgraded archive 
 		 * may impact others who do not have access to the updated {@link Language} module.
 		 */
-		UPGRADED_LANGUAGE_VERSION,
+		UPGRADED_LANGUAGE_VERSION(ArchiveWarningLevel.INFO),
 
 		// programArchitectureSummary must be set for the warnings below
 
@@ -82,7 +87,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		 * a problem being loaded.  The {@link FileDataTypeManager#getWarningDetail()} may provide
 		 * additional insight to the underlying cause. 
 		 */
-		LANGUAGE_NOT_FOUND,
+		LANGUAGE_NOT_FOUND(ArchiveWarningLevel.ERROR),
 
 		/**
 		 * {@link #COMPILER_SPEC_NOT_FOUND} indicates the {@link CompilerSpec}, 
@@ -91,7 +96,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		 * additional insight to the underlying cause.  This condition can only occur if the
 		 * required {@link Language} was found. 
 		 */
-		COMPILER_SPEC_NOT_FOUND,
+		COMPILER_SPEC_NOT_FOUND(ArchiveWarningLevel.ERROR),
 
 		/**
 		 * {@link #LANGUAGE_UPGRADE_REQURED} indicates an archive which has been open read-only
@@ -103,7 +108,27 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		 * who do not have access to the updated {@link Language} module and should be 
 		 * coordinated with others who may be affected.
 		 */
-		LANGUAGE_UPGRADE_REQURED,
+		LANGUAGE_UPGRADE_REQURED(ArchiveWarningLevel.WARN),
+
+		/**
+		 * {@link #DATA_ORG_CHANGED} indicates an archive which has been open read-only
+		 * requires an upgraded to adjust for changes in the associated data organization.
+		 */
+		DATA_ORG_CHANGED(ArchiveWarningLevel.WARN);
+
+		final ArchiveWarningLevel level;
+
+		ArchiveWarning(ArchiveWarningLevel level) {
+			this.level = level;
+		}
+
+		/**
+		 * Get the warning level
+		 * @return warning level
+		 */
+		public ArchiveWarningLevel level() {
+			return level;
+		}
 	}
 
 	private ArchiveWarning warning;
@@ -134,35 +159,37 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	 * Constructor for a data-type manager backed by a packed database file.
 	 * When opening for UPDATE an automatic upgrade will be performed if required.
 	 * <p>
-	 * <B>NOTE:</B> {@link #reportWarning()} should be invoked immediately after 
+	 * <B>NOTE:</B> {@link #logWarning()} should be invoked immediately after 
 	 * instantiating a {@link StandAloneDataTypeManager} for an existing database after 
 	 * {@link #getName()} and {@link #getPath()} can be invoked safely.  In addition, it 
 	 * may be appropriate to use {@link #getWarning() check for warnings} prior to use.
 	 * 
 	 * @param packedDbfile packed datatype archive file (i.e., *.gdt resource).
 	 * @param openMode open mode CREATE, READ_ONLY or UPDATE (see {@link DBConstants})
+	 * @param monitor the progress monitor
 	 * @throws IOException a low-level IO error.  This exception may also be thrown
 	 * when a version error occurs (cause is VersionException).
+	 * @throws CancelledException if task cancelled
 	 */
-	protected StandAloneDataTypeManager(ResourceFile packedDbfile, int openMode)
-			throws IOException {
-		super(packedDbfile, openMode);
+	protected StandAloneDataTypeManager(ResourceFile packedDbfile, int openMode,
+			TaskMonitor monitor) throws IOException, CancelledException {
+		super(packedDbfile, openMode, monitor);
 	}
 
 	/**
 	 * Constructor for a data-type manager using a specified DBHandle.
 	 * <p>
-	 * <B>NOTE:</B> {@link #reportWarning()} should be invoked immediately after 
+	 * <B>NOTE:</B> {@link #logWarning()} should be invoked immediately after 
 	 * instantiating a {@link StandAloneDataTypeManager} for an existing database after 
 	 * {@link #getName()} and {@link #getPath()} can be invoked safely.  In addition, it 
 	 * may be appropriate to use {@link #getWarning() check for warnings} prior to use.
 	 * 
 	 * @param handle open database  handle
-	 * @param openMode the program open mode
+	 * @param openMode open mode CREATE, READ_ONLY or UPDATE (see {@link DBConstants})
 	 * @param errHandler the database I/O error handler
 	 * @param lock the program synchronization lock
 	 * @param monitor the progress monitor
-	 * @throws CancelledException if the user cancels an upgrade
+	 * @throws CancelledException if task cancelled
 	 * @throws VersionException if the database does not match the expected version.
 	 * @throws IOException if a database I/O error occurs.
 	 */
@@ -170,6 +197,9 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
 		super(handle, null, openMode, null, errHandler, lock, monitor);
+		if (openMode != DBConstants.CREATE && hasDataOrganizationChange()) {
+			handleDataOrganizationChange(openMode, monitor);
+		}
 	}
 
 	/**
@@ -193,41 +223,77 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	/**
-	 * Due to the supression of error and warning conditions during instantiation this method should
-	 * be invoked at the end of instatiation when {@link #getName()} and {@link #getPath()} are
-	 * ready to be invoked safely.  Logging will be performed via {@link Msg}.
+	 * Get a suitable warning message.  See {@link #getWarning()} for type and its severity level
+	 * {@link ArchiveWarning#level()}.
+	 * @param includeDetails if false simple message returned, otherwise more details are included.
+	 * @return warning message or null if {@link #getWarning()} is {@link ArchiveWarning#NONE}.
 	 */
-	protected void reportWarning() {
-		String msg;
+	public String getWarningMessage(boolean includeDetails) {
+		String msg = null;
 		switch (warning) {
-			case NONE:
-				break;
 			case LANGUAGE_NOT_FOUND:
-				msg = "Language not found for Archive '" + getName() + "': " +
-					warningDetail.getMessage();
-				Msg.error(this, msg);
+				msg = "Language not found for Archive";
+				if (includeDetails) {
+					msg += " '" + getName() + "': " + warningDetail.getMessage();
+				}
 				break;
 			case COMPILER_SPEC_NOT_FOUND:
-				msg = "Compiler specification not found for Archive '" + getName() + "': " +
-					warningDetail.getMessage();
-				Msg.error(this, msg);
+				msg = "Compiler specification not found for Archive";
+				if (includeDetails) {
+					msg += " '" + getName() + "': " + warningDetail.getMessage();
+				}
 				break;
 			case LANGUAGE_UPGRADE_REQURED:
-				msg = "Language upgrade required for Archive '" + getName() + "': " +
-					programArchitectureSummary;
-				Msg.warn(this, msg);
+				msg = "Language upgrade required for Archive";
+				if (includeDetails) {
+					msg += " '" + getName() + "': " + programArchitectureSummary;
+				}
 				break;
 			case UPGRADED_LANGUAGE_VERSION:
-				ProgramArchitecture arch = getProgramArchitecture();
-				LanguageDescription languageDescription =
-					arch.getLanguage().getLanguageDescription();
-				msg =
-					"Upgraded program-architecture for Archive: '" + getName() +
+				msg = "Upgraded program-architecture for Archive";
+				if (includeDetails) {
+					ProgramArchitecture arch = getProgramArchitecture();
+					LanguageDescription languageDescription =
+						arch.getLanguage().getLanguageDescription();
+					msg += " '" + getName() +
 						"'\n   Language: " +
 						languageDescription.getLanguageID() + " Version " +
 						languageDescription.getVersion() + ".x" +
 						", CompilerSpec: " + arch.getCompilerSpec().getCompilerSpecID();
+				}
+				break;
+			case DATA_ORG_CHANGED:
+				msg = "Data organization upgrade required for Archive";
+				if (includeDetails) {
+					msg += " '" + getName() + "': " + programArchitectureSummary;
+				}
+				break;
+			default:
+				break;
+		}
+		return msg;
+	}
+
+	/**
+	 * Due to the supression of error and warning conditions during instantiation this method should
+	 * be invoked at the end of instatiation when {@link #getName()} and {@link #getPath()} are
+	 * ready to be invoked safely.  Logging will be performed via {@link Msg}.
+	 */
+	protected void logWarning() {
+		String msg = getWarningMessage(true);
+		if (msg == null) {
+			return;
+		}
+		switch (warning.level) {
+			case ERROR:
+				Msg.error(this, msg);
+				break;
+			case WARN:
+				Msg.warn(this, msg);
+				break;
+			default:
 				Msg.info(this, msg);
+				break;
 		}
 
 	}
@@ -238,6 +304,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 
 		warning = ArchiveWarning.NONE;
 		if (openMode == DBConstants.CREATE) {
+			saveDataOrganization(); // save default dataOrg
 			return; // optional program architecture is set after initialization is complete
 		}
 
@@ -369,8 +436,17 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 		if (variableStorageMgr != null) {
 			variableStorageMgr.setProgramArchitecture(getProgramArchitecture());
 		}
-
 	}
+
+	@Override
+	protected void handleDataOrganizationChange(int openMode, TaskMonitor monitor)
+			throws LanguageVersionException, CancelledException, IOException {
+		if (openMode == DBConstants.READ_ONLY) {
+			warning = ArchiveWarning.DATA_ORG_CHANGED;
+		}
+		super.handleDataOrganizationChange(openMode, monitor);
+	}
+
 
 	/**
 	 * Get the program architecture information which has been associated with this 

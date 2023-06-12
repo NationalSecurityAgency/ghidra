@@ -701,15 +701,26 @@ public class DataOrganizationImpl implements DataOrganization {
 	 * Restore a data organization from the specified DB data map.
 	 * @param dataMap DB data map
 	 * @param keyPrefix key prefix for all map entries
-	 * @return data organization
+	 * @return stored data organization or null if not stored
 	 * @throws IOException if an IO error occurs
 	 */
 	public static DataOrganizationImpl restore(DBStringMapAdapter dataMap, String keyPrefix)
 			throws IOException {
 
+		boolean containsDataOrgEntries = false;
+		for (String key : dataMap.keySet()) {
+			if (key.startsWith(keyPrefix)) {
+				containsDataOrgEntries = true;
+				break;
+			}
+		}
+		if (!containsDataOrgEntries) {
+			return null;
+		}
+
 		DataOrganizationImpl dataOrg = new DataOrganizationImpl();
 		
-		dataOrg.bigEndian = dataMap.getBoolean(BIG_ENDIAN_NAME, false);
+		dataOrg.bigEndian = dataMap.getBoolean(keyPrefix + BIG_ENDIAN_NAME, false);
 
 		dataOrg.absoluteMaxAlignment =
 			dataMap.getInt(keyPrefix + ELEM_ABSOLUTE_MAX_ALIGNMENT.name(),
@@ -983,5 +994,36 @@ public class DataOrganizationImpl implements DataOrganization {
 
 		parser.end();
 
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(absoluteMaxAlignment, bigEndian, bitFieldPacking, charSize,
+			defaultAlignment, defaultPointerAlignment, doubleSize, floatSize, integerSize,
+			isSignedChar, longDoubleSize, longLongSize, longSize, machineAlignment, pointerShift,
+			pointerSize, shortSize, sizeAlignmentMap, wideCharSize);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DataOrganizationImpl other = (DataOrganizationImpl) obj;
+		return absoluteMaxAlignment == other.absoluteMaxAlignment && bigEndian == other.bigEndian &&
+			Objects.equals(bitFieldPacking, other.bitFieldPacking) && charSize == other.charSize &&
+			defaultAlignment == other.defaultAlignment &&
+			defaultPointerAlignment == other.defaultPointerAlignment &&
+			doubleSize == other.doubleSize && floatSize == other.floatSize &&
+			integerSize == other.integerSize && isSignedChar == other.isSignedChar &&
+			longDoubleSize == other.longDoubleSize && longLongSize == other.longLongSize &&
+			longSize == other.longSize && machineAlignment == other.machineAlignment &&
+			pointerShift == other.pointerShift && pointerSize == other.pointerSize &&
+			shortSize == other.shortSize &&
+			Objects.equals(sizeAlignmentMap, other.sizeAlignmentMap) &&
+			wideCharSize == other.wideCharSize;
 	}
 }
