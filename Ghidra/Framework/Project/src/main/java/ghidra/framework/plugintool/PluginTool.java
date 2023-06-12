@@ -54,6 +54,7 @@ import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import help.Help;
 import help.HelpService;
@@ -738,14 +739,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	/**
-	 * Cancel any running command and clear the command queue.
-	 * @param wait if true wait for current task to cancel cleanly
-	 */
-	public void terminateBackgroundCommands(boolean wait) {
-		taskMgr.stop(wait);
-	}
-
-	/**
 	 * Add the given background command to a queue that is processed after the
 	 * main background command completes.
 	 * @param cmd background command to submit
@@ -1049,7 +1042,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 		saveAsAction.setEnabled(true);
 		saveAsAction
-			.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
 
 		addAction(saveAction);
 		addAction(saveAsAction);
@@ -1075,7 +1068,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		menuData.setMenuSubGroup(Integer.toString(subGroup++));
 		exportToolAction.setMenuBarData(menuData);
 		exportToolAction
-			.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
 		addAction(exportToolAction);
 
 		DockingAction exportDefautToolAction =
@@ -1098,42 +1091,42 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void addHelpActions() {
 		new ActionBuilder("About Ghidra", ToolConstants.TOOL_OWNER)
-			.menuPath(ToolConstants.MENU_HELP, "&About Ghidra")
-			.menuGroup("ZZA")
-			.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "About_Ghidra"))
-			.inWindow(ActionBuilder.When.ALWAYS)
-			.onAction(c -> DockingWindowManager.showDialog(new AboutDialog()))
-			.buildAndInstall(this);
+				.menuPath(ToolConstants.MENU_HELP, "&About Ghidra")
+				.menuGroup("ZZA")
+				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "About_Ghidra"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> DockingWindowManager.showDialog(new AboutDialog()))
+				.buildAndInstall(this);
 
 		new ActionBuilder("User Agreement", ToolConstants.TOOL_OWNER)
-			.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
-			.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-			.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
-			.inWindow(ActionBuilder.When.ALWAYS)
-			.onAction(
-				c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
-			.buildAndInstall(this);
+				.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(
+					c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
+				.buildAndInstall(this);
 
 		final ErrorReporter reporter = ErrLogDialog.getErrorReporter();
 		if (reporter != null) {
 			new ActionBuilder("Report Bug", ToolConstants.TOOL_OWNER)
-				.menuPath(ToolConstants.MENU_HELP, "&Report Bug...")
-				.menuGroup("BBB")
-				.helpLocation(new HelpLocation("ErrorReporting", "Report_Bug"))
-				.inWindow(ActionBuilder.When.ALWAYS)
-				.onAction(c -> reporter.report(getToolFrame(), "User Bug Report", null))
-				.buildAndInstall(this);
+					.menuPath(ToolConstants.MENU_HELP, "&Report Bug...")
+					.menuGroup("BBB")
+					.helpLocation(new HelpLocation("ErrorReporting", "Report_Bug"))
+					.inWindow(ActionBuilder.When.ALWAYS)
+					.onAction(c -> reporter.report(getToolFrame(), "User Bug Report", null))
+					.buildAndInstall(this);
 		}
 
 		HelpService help = Help.getHelpService();
 
 		new ActionBuilder("Contents", ToolConstants.TOOL_OWNER)
-			.menuPath(ToolConstants.MENU_HELP, "&Contents")
-			.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-			.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
-			.inWindow(ActionBuilder.When.ALWAYS)
-			.onAction(c -> help.showHelp(null, false, getToolFrame()))
-			.buildAndInstall(this);
+				.menuPath(ToolConstants.MENU_HELP, "&Contents")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+				.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> help.showHelp(null, false, getToolFrame()))
+				.buildAndInstall(this);
 	}
 
 	/**
@@ -1151,7 +1144,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * 	<LI>Running tasks. Closing with running tasks could lead to data loss.
 	 *  <LI>Plugins get asked if they can be closed. They may prompt the user to resolve
 	 *  some plugin specific state.
-	 * 	<LI>The user is prompted to save any data changes. 
+	 * 	<LI>The user is prompted to save any data changes.
 	 * 	<LI>Tools are saved, possibly asking the user to resolve any conflicts caused by
 	 *  changing multiple instances of the same tool in different ways.
 	 * 	<LI>If all the above conditions passed, the tool is closed and disposed.
@@ -1165,7 +1158,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	protected boolean canClose() {
-		if (isBusy()) {
+		if (!canStopTasks()) {
 			return false;
 		}
 		if (!canClosePlugins()) {
@@ -1179,7 +1172,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	/**
 	 * Normally, tools are not allowed to close while tasks are running in that tool as it
-	 * could leave the application in an unstable state. Tools that exit the application 
+	 * could leave the application in an unstable state. Tools that exit the application
 	 * (such as the FrontEndTool) can override this so that the user can terminate running tasks
 	 * and not have that prevent exiting the application.
 	 * @return whether the user is allowed to terminate tasks so that the tool can be closed.
@@ -1199,20 +1192,29 @@ public abstract class PluginTool extends AbstractDockingTool {
 	/**
 	 * Checks if this tool has running tasks, with optionally giving the user an
 	 * opportunity to cancel them.
-	 * 
+	 *
 	 * @return true if this tool has running tasks
 	 */
-	protected boolean isBusy() {
-		if (taskMgr.isBusy()) {
-			int result = OptionDialog.showYesNoDialog(getToolFrame(), "Tool Busy Executing Task",
-				"The tool is busy performing a background task.\n If you continue the" +
-					" task may be terminated and some work may be lost!\n\nContinue anyway?");
-			if (result != OptionDialog.YES_OPTION) {
-				return true;
-			}
-			taskMgr.stop(false);
+	protected boolean canStopTasks() {
+		if (!taskMgr.isBusy()) {
+			return true;
 		}
-		return false;
+
+		int result = OptionDialog.showYesNoDialog(getToolFrame(), "Tool Busy Executing Task",
+			"The tool is busy performing a background task.\n If you continue the" +
+				" task may be terminated and some work may be lost!\n\nContinue anyway?");
+		if (result != OptionDialog.YES_OPTION) {
+			return false;
+		}
+
+		Task task = new Task("Stopping Tasks", true, false, true) {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				taskMgr.stop(monitor);
+			}
+		};
+		TaskLauncher.launch(task);
+		return !task.isCancelled();
 	}
 
 	/**

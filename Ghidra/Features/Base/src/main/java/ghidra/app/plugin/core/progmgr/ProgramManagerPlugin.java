@@ -472,7 +472,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	@Override
 	protected boolean saveData() {
-		boolean result = programSaveMgr.canCloseAll();
+		boolean result = programSaveMgr.saveAll();
 		contextChanged();
 		return result;
 	}

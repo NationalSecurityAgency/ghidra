@@ -173,13 +173,7 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull("Did not get option dialog to close tool with running task", dialog);
 		pressButtonByText(dialog, "Yes");
 
-		// check for another warning about closing the program with running tasks
-		dialog = waitForDialogComponent(OptionDialog.class);
-		assertNotNull("Did not get option dialog to close program with running task", dialog);
-		pressButtonByText(dialog, "Close!");
-		waitForSwing();
-
-		assertNull("Tool did not close after task", tool.getToolFrame());
+		waitFor(() -> tool.getToolFrame() == null, "Tool did not close after task");
 		stopBackgroundCommand(tool, cmd);
 	}
 
@@ -231,11 +225,9 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		@Override
 		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 			hasStarted = true;
-
-			while (!stop) {
+			while (!stop && !monitor.isCancelled()) {
 				sleep(100);
 			}
-
 			return true;
 		}
 	}

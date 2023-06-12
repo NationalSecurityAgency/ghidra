@@ -233,7 +233,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	@Override
 	protected boolean doSaveTool() {
 		// This method is overridden to allow the FrontEndTool to perform custom saving.
-		// The super.doSaveTool is designed to save tools to the user's tool chest directory. The 
+		// The super.doSaveTool is designed to save tools to the user's tool chest directory. The
 		// FrontEndTool saves its state directly in the user's settings directory and includes
 		// the entire project's state such as what tools were running and data states for each
 		// running tool.
@@ -397,7 +397,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	@Override
-	public boolean canClose() {
+	protected boolean canClose() {
 		return super.canClose() && plugin.closeActiveProject();
 	}
 
