@@ -271,30 +271,28 @@ public class ToolTaskManager implements Runnable {
 	}
 
 	/**
-	 * Cancel the currently running task and clear all commands that are
-	 * scheduled to run. Block until the currently running task ends.
+	 * Cancel the currently running task and clear all commands that are scheduled to run. Block
+	 * until the currently running task ends.
 	 *
-	 * @param wait if true wait for current task to cancel cleanly
+	 * @param monitor a monitor to cancel waiting for the task to finish
 	 */
-	public void stop(boolean wait) {
+	public void stop(TaskMonitor monitor) {
 
-		Thread oldTaskThread = null;
 		synchronized (this) {
 			if (isBusy()) {
 				toolTaskMonitor.cancel();
-				oldTaskThread = taskThread;
 			}
 			if (currentTask != null) {
 				clearQueuedCommands(currentTask.getDomainObject());
 			}
 		}
 
-		if (oldTaskThread != null && wait) {
+		while (taskThread != null && !monitor.isCancelled()) {
 			try {
-				oldTaskThread.join();
+				Thread.sleep(100);
 			}
 			catch (InterruptedException e) {
-				// guess we don't care?
+				// try again
 			}
 		}
 	}
@@ -522,6 +520,7 @@ public class ToolTaskManager implements Runnable {
 	 * Clear list of tasks and queue of scheduled commands.
 	 */
 	public synchronized void dispose() {
+
 		clearTasks();
 		List<UndoableDomainObject> list = new ArrayList<>(queuedCommandsMap.keySet());
 		for (UndoableDomainObject obj : list) {
