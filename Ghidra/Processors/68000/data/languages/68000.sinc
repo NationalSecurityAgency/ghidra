@@ -1643,7 +1643,7 @@ m2rfl0: { m2rfl1}		is mvm15=0 & m2rfl1			{ }
 :movem.w (regan)+,m2rfw0	is opbig=0x4c & op67=2 & mode=3 & regan; m2rfw0		{ movemptr = regan; build m2rfw0; regan = movemptr; }
 :movem.w (d16,regan),m2rfw0	is opbig=0x4c & op67=2 & mode=5 & regan; m2rfw0; d16	{ movemptr = regan+d16; build m2rfw0; }
 :movem.w (extw),m2rfw0		is opbig=0x4c & op67=2 & mode=6 & regan; m2rfw0; extw	[ pcmode=0; regtfan=regan; ] { build extw; movemptr = extw; build m2rfw0; }
-:movem.w (d16,PC),m2rfw0	is opbig=0x4c & op67=2 & mode=7 & regan=2; m2rfw0; d16 & PC	{ movemptr = inst_start+2+d16; build m2rfw0; }
+:movem.w (d16,PC),m2rfw0	is opbig=0x4c & op67=2 & mode=7 & regan=2; m2rfw0; d16 & PC	{ movemptr = inst_start+4+d16; build m2rfw0; }
 :movem.w (extw),m2rfw0		is opbig=0x4c & op67=2 & mode=7 & regan=3; m2rfw0; extw	[ pcmode=1; ] { build extw; movemptr = extw; build m2rfw0; }
 :movem.w (d16)".w",m2rfw0	is opbig=0x4c & op67=2 & mode=7 & regan=0; m2rfw0; d16	{ movemptr = d16; build m2rfw0; }
 :movem.w (d32)".l",m2rfw0	is opbig=0x4c & op67=2 & mode=7 & regan=1; m2rfw0; d32	{ movemptr = d32; build m2rfw0; }
@@ -1651,7 +1651,7 @@ m2rfl0: { m2rfl1}		is mvm15=0 & m2rfl1			{ }
 :movem.l (regan)+,m2rfl0	is opbig=0x4c & op67=3 & mode=3 & regan; m2rfl0		{ movemptr = regan; build m2rfl0; regan = movemptr; }
 :movem.l (d16,regan),m2rfl0	is opbig=0x4c & op67=3 & mode=5 & regan; m2rfl0; d16	{ movemptr = regan+d16; build m2rfl0; }
 :movem.l (extw),m2rfl0		is opbig=0x4c & op67=3 & mode=6 & regan; m2rfl0; extw	[ pcmode=0; regtfan=regan; ] { build extw; movemptr = extw; build m2rfl0; }
-:movem.l (d16,PC),m2rfl0	is opbig=0x4c & op67=3 & mode=7 & regan=2; m2rfl0; d16 & PC	{ movemptr = inst_start+2+d16; build m2rfl0; }
+:movem.l (d16,PC),m2rfl0	is opbig=0x4c & op67=3 & mode=7 & regan=2; m2rfl0; d16 & PC	{ movemptr = inst_start+4+d16; build m2rfl0; }
 :movem.l (extw),m2rfl0		is opbig=0x4c & op67=3 & mode=7 & regan=3; m2rfl0; extw	[ pcmode=1; ] { build extw; movemptr = extw; build m2rfl0; }
 :movem.l (d16)".w",m2rfl0	is opbig=0x4c & op67=3 & mode=7 & regan=0; m2rfl0; d16	{ movemptr = d16; build m2rfl0; }
 :movem.l (d32)".l",m2rfl0	is opbig=0x4c & op67=3 & mode=7 & regan=1; m2rfl0; d32	{ movemptr = d32; build m2rfl0; }
@@ -1764,7 +1764,7 @@ macro negResFlags(result) {
 	Txb = result:1;
 }
 
-:pea eaptr			is (opbig=0x48 & op67=1 & $(CTL_ADDR_MODES))... & eaptr			{ SP = SP-4; *SP = eaptr; }
+:pea eaptr			is (opbig=0x48 & op67=1 & $(CTL_ADDR_MODES))... & eaptr			{ value:4 = eaptr; SP = SP-4; *SP = value; }
 
 @ifdef MC68040
 

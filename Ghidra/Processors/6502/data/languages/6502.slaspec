@@ -479,6 +479,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :TSX     is op=0xBA
 {
 	X = S;
+    resultFlags(X);	
 }
 
 :TXA     is op=0x8A

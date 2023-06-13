@@ -61,6 +61,7 @@
             id="68000:BE:32:Coldfire">
     <description>Motorola 32-bit Coldfire</description>
     <compiler name="default" spec="68000.cspec" id="default"/>
+    <compiler name="register" spec="68000_register.cspec" id="register"/>
     <external_name tool="IDA-PRO" name="colfire"/>
     <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
   </language>

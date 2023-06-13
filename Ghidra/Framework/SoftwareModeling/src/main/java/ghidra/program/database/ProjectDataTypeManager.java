@@ -69,7 +69,7 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 			TaskMonitor monitor) throws CancelledException, VersionException, IOException {
 		super(handle, openMode, errHandler, lock, monitor);
 		this.dataTypeArchive = dataTypeArchive;
-		reportWarning();
+		logWarning();
 	}
 
 	@Override
