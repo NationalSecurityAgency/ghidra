@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,8 @@
  */
 package ghidra.framework.model;
 
-
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Objects that implement Undoable have the ability to "remember" some number
@@ -59,14 +58,28 @@ public interface Undoable {
 	void redo() throws IOException;
 
 	/**
-	 * Returns a description of the chanage that would be "undone".
+	 * Returns a description of the change that would be "undone".
+	 * @return a description of the change that would be "undone". 
 	 */
-	String getUndoName();
+	public String getUndoName();
 
 	/**
 	 * Returns a description of the change that would be "redone".
+	 * @return a description of the change that would be "redone".
 	 */
-	String getRedoName();
+	public String getRedoName();
+
+	/**
+	 * Returns a list of the names of all current undo transactions
+	 * @return a list of the names of all current undo transactions
+	 */
+	public List<String> getAllUndoNames();
+
+	/**
+	 * Returns a list of the names of all current redo transactions
+	 * @return a list of the names of all current redo transactions
+	 */
+	public List<String> getAllRedoNames();
 
 	/**
 	 * Adds the given transaction listener to this domain object
