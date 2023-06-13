@@ -1764,7 +1764,7 @@ macro negResFlags(result) {
 	Txb = result:1;
 }
 
-:pea eaptr			is (opbig=0x48 & op67=1 & $(CTL_ADDR_MODES))... & eaptr			{ SP = SP-4; *SP = eaptr; }
+:pea eaptr			is (opbig=0x48 & op67=1 & $(CTL_ADDR_MODES))... & eaptr			{ value:4 = eaptr; SP = SP-4; *SP = value; }
 
 @ifdef MC68040
 
