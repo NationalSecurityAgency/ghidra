@@ -1,6 +1,7 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
 data/languages/HC05-M68HC05TB.pspec||GHIDRA||||END|
+data/languages/HC05.cspec||GHIDRA||||END|
 data/languages/HC05.ldefs||GHIDRA||||END|
 data/languages/HC05.pspec||GHIDRA||||END|
 data/languages/HC05.slaspec||GHIDRA||||END|
