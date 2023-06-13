@@ -197,11 +197,11 @@ public class ElfRelocationTable implements ElfFileSection {
 			int relocationIndex = 0;
 			long remainingRelocations = reader.readNext(LEB128::signed); // reloc_count
 			long offset = reader.readNext(LEB128::signed); // reloc_baseOffset
+			long addend = 0;
 
 			while (remainingRelocations > 0) {
 
-				// start new group
-				long addend = 0;
+				// start new group - read group header (size and flags)
 
 				// group_size
 				long groupSize = reader.readNext(LEB128::signed);
@@ -228,9 +228,12 @@ public class ElfRelocationTable implements ElfFileSection {
 				// group_info (optional)
 				long groupRInfo = groupedByInfo ? reader.readNext(LEB128::signed) : 0;
 
-				if (groupedByAddend && groupHasAddend) {
+				if (groupHasAddend && groupedByAddend) {
 					// group_addend (optional)
 					addend += reader.readNext(LEB128::signed);
+				}
+				else if (!groupHasAddend) {
+					addend = 0;
 				}
 
 				for (int i = 0; i < groupSize; i++) {

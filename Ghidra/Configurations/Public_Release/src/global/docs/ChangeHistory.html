@@ -53,6 +53,7 @@
     <li><I>GUI</I>. Fixed issue with menu bar colors on Mac system when using <span class="gtitle">Mac Aqua Look and Feel</span> while in dark mode. (GP-3528, Issue #4454)</li>
     <li><I>Importer</I>. Fixed an exception that occurred when the <span class="gcode">MzLoader</span> tried to split the <span class="gcode">HEADER</span> overlay block. (GP-3447, Issue #5320)</li>
     <li><I>Importer:ELF</I>. Corrected potential exception when processing invalid <span class="gcode">ELF PT_NOTE</span> program header. (GP-3493, Issue #5384)</li>
+    <li><I>Importer:ELF</I>. Corrected bugs in ELF Android packed relocation processing and rendering of <span class="gcode">sleb128</span> data type. (GP-3543)</li>
     <li><I>Importer:Mach-O</I>. Fixed a regression in the Mach-O Loader that was causing incorrect <span class="gcode">DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE</span> fixups. (GP-3474)</li>
     <li><I>Importer:Mach-O</I>. Fixed an <span class="gcode">AddressOutOfBoundsException</span> that could sometimes occur when importing the exports section of <span class="gcode">dyld_shared_cache</span> files. (GP-3505, Issue #5392)</li>
     <li><I>Importer:PE</I>. Fixed an <span class="gcode">IllegalStateException</span> that could occur if both <span class="gtitle">Load Local Libraries From Disk</span> and <span class="gtitle">Load System Libraries From Disk</span> options are used during import and the same library is found in both local and system directories. (GP-3445)</li>
