@@ -222,18 +222,21 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		String parseMessages = parser.getParseMessages();
 		System.out.println(parseMessages);
 		
-		assertTrue("Duplicate ENUM message missing", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
-		
-		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
-		
-		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
-
 		DataType dt;
 		DataType pointedToDT;
 		ParameterDefinition[] funcArgs;
 		FunctionDefinition funcDef;
 		String str;
 
+		dt = dtMgr.getDataType(new CategoryPath("/"), "pragmaPassed");
+		assertNotNull("Structure after pragma not parsed", dt);
+		
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
+		
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
+		
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
+		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "_IO_FILE_complete");
 		Structure sldt = (Structure) dt;
 		DataTypeComponent data3 = sldt.getComponent(2);
