@@ -389,6 +389,9 @@ public abstract class VariableDB implements Variable {
 		// If we have a VariableImpl or either function is using custom variable storage
 		// then they are only equivalent if the storage is the same.
 		Function otherFunction = otherVar.getFunction();
+		if (function != null && !(function.equals(otherFunction))) {
+			return false;
+		}
 		boolean eitherHasCustomVariableStorage =
 			(function == null || function.hasCustomVariableStorage()) ||
 				(otherFunction == null || otherFunction.hasCustomVariableStorage());
