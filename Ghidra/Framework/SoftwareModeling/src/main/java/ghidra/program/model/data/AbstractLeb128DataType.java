@@ -95,7 +95,7 @@ public abstract class AbstractLeb128DataType extends BuiltIn implements Dynamic 
 		}
 
 		// approximate bitLength from storage byte length
-		int bitLength = Math.max(64, len * 7);
+		int bitLength = Math.min(64, len * 7);
 		int mod = bitLength % 8;
 		if (mod != 0) {
 			bitLength += (8 - mod);

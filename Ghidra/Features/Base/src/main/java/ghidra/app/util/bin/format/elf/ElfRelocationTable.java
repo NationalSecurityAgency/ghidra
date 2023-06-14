@@ -229,6 +229,11 @@ public class ElfRelocationTable implements ElfFileSection {
 				long groupRInfo = groupedByInfo ? reader.readNext(LEB128::signed) : 0;
 
 				if (groupHasAddend && groupedByAddend) {
+					if (!addendTypeReloc) {
+						elfHeader.logError(
+							"ELF Android Relocation processing failed.  Unexpected r_addend in android.rel section");
+						return List.of();
+					}
 					// group_addend (optional)
 					addend += reader.readNext(LEB128::signed);
 				}
@@ -236,16 +241,16 @@ public class ElfRelocationTable implements ElfFileSection {
 					addend = 0;
 				}
 
+				// Process all group entries
 				for (int i = 0; i < groupSize; i++) {
 					// reloc_offset (optional)
-					offset +=
-						groupedByDelta ? groupOffsetDelta : reader.readNext(LEB128::signed);
+					offset += groupedByDelta ? groupOffsetDelta : reader.readNext(LEB128::signed);
 
 					// reloc_info (optional)
 					long info = groupedByInfo ? groupRInfo : reader.readNext(LEB128::signed);
 
 					long rAddend = 0;
-					if (groupHasAddend) {
+					if (addendTypeReloc && groupHasAddend) {
 						if (!groupedByAddend) {
 							// reloc_addend (optional)
 							addend += reader.readNext(LEB128::signed);
