@@ -865,8 +865,7 @@ macro loopSetup(as, end, doit) {
 
 # NSA - Normalization Shift Amount, pg. 461.
 :nsa at, as is op2 = 0b0100 & op1 = 0 & ar = 0b1110 & as & at & op0 = 0 {
-    # https://stackoverflow.com/questions/54772520/normalizing-a-two-complement-number
-    at = nsa(as);
+    at = lzcount(~as);
 }
 
 # NSAU - Normalization Shift Amount Unsigned, pg. 462. (Count leading zeros)
