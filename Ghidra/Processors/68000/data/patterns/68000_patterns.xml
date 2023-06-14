@@ -16,6 +16,7 @@
       <data>0x4e 0x56 1111.... .......0 </data>           <!-- link.w A6, -imm -->
       <data>0101...1 10001111   01001000 11010111 ........ ........ </data> <!-- subq.l +imm, SP; movem.l {}, (SP) -->
       <data>0010...0 0.101111 0000.... .......0 </data>  <!-- mov.l (+imm, SP), reg -->
+      <data>0x48 0xe7 ........ ........ </data>          <!-- movem.l {regs}, -(SP) -->
       <data>0x2f 0x02 </data>  <!-- move.l D2,-SP -->
       <data>0x2f 0x03 </data>  <!-- move.l D3,-SP -->
       <data>0x2f 0x0a </data>  <!-- move.l A2,-SP -->
