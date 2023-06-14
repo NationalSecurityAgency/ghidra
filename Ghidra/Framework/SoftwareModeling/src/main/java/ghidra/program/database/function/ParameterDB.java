@@ -90,4 +90,11 @@ class ParameterDB extends VariableDB implements Parameter {
 		return null;
 	}
 
+	@Override
+	public int hashCode() {
+		int hashcode = getVariableStorage().hashCode();
+		hashcode ^= function.hashCode();
+		return hashcode;
+	}
+
 }
