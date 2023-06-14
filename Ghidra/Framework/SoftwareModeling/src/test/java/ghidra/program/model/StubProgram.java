@@ -304,6 +304,16 @@ public class StubProgram implements Program {
 	}
 
 	@Override
+	public List<String> getAllUndoNames() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public List<String> getAllRedoNames() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void addTransactionListener(TransactionListener listener) {
 		throw new UnsupportedOperationException();
 	}

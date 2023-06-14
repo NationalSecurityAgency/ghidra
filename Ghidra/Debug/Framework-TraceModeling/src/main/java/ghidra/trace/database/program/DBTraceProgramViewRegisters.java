@@ -614,6 +614,16 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
+	public List<String> getAllUndoNames() {
+		return view.getAllUndoNames();
+	}
+
+	@Override
+	public List<String> getAllRedoNames() {
+		return view.getAllRedoNames();
+	}
+
+	@Override
 	public void addTransactionListener(TransactionListener listener) {
 		view.addTransactionListener(listener);
 	}
