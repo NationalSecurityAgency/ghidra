@@ -26,7 +26,7 @@ public class TriageDump implements StructConverter {
 	public final static String NAME = "PAGEDUMP_TRIAGE";
 
 	private int servicePackBuild;
-	private int sizeOfDump;
+	private long sizeOfDump;
 	private int validOffset;
 	private int contextOffset;
 	private int exceptionOffset;
@@ -75,7 +75,7 @@ public class TriageDump implements StructConverter {
 		reader.setPointerIndex(index);
 
 		setServicePackBuild(reader.readNextInt());
-		setSizeOfDump(reader.readNextInt());
+		setSizeOfDump(reader.readNextUnsignedInt());
 		setValidOffset(reader.readNextInt());
 		setContextOffset(reader.readNextInt());
 		setExceptionOffset(reader.readNextInt());
@@ -156,11 +156,11 @@ public class TriageDump implements StructConverter {
 		this.servicePackBuild = servicePackBuild;
 	}
 
-	public int getSizeOfDump() {
+	public long getSizeOfDump() {
 		return sizeOfDump;
 	}
 
-	public void setSizeOfDump(int sizeOfDump) {
+	public void setSizeOfDump(long sizeOfDump) {
 		this.sizeOfDump = sizeOfDump;
 	}
 

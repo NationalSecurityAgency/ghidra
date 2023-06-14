@@ -103,8 +103,8 @@ public class SBMemoryRegionInfo {
     return lldbJNI.SBMemoryRegionInfo_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBMemoryRegionInfo___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBMemoryRegionInfo___repr__(swigCPtr, this);
   }
 
 }

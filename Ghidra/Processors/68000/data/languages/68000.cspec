@@ -22,25 +22,16 @@
 		<entry size="8" alignment="4" />
 	</size_alignment_map>
   </data_organization>
+  
   <global>
     <range space="ram"/>
   </global>
+  
   <stackpointer register="SP" space="ram"/>
+  
   <default_proto>
-    <prototype name="__stdcall" extrapop="4" stackshift="4" strategy="register">
+    <prototype name="__stdcall" extrapop="4" stackshift="4">
       <input>
-        <pentry minsize="1" maxsize="4" metatype="ptr">
-          <register name="A0"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4" metatype="ptr">
-          <register name="A1"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4">
-          <register name="D0"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4">
-          <register name="D1"/>
-        </pentry>
         <pentry minsize="1" maxsize="500" align="4">
           <addr offset="4" space="stack"/>
         </pentry>
@@ -64,6 +55,13 @@
         <register name="A6"/>
         <register name="SP"/>
       </unaffected>
+      <killedbycall>
+        <register name="D0"/>
+        <register name="D1"/>
+        <register name="A0"/>
+        <register name="A1"/>
+      </killedbycall>
     </prototype>
   </default_proto>
+  
 </compiler_spec>

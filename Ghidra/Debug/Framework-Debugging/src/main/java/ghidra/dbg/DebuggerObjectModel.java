@@ -21,7 +21,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Predicate;
 
 import ghidra.async.*;
-import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.*;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
@@ -65,13 +64,30 @@ import ghidra.util.Msg;
  * risk deadlocking Ghidra's UI.
  */
 public interface DebuggerObjectModel {
-	
+
 	public static enum RefreshBehavior {
-		REFRESH_ALWAYS,
-		REFRESH_NEVER,
-		REFRESH_WHEN_ABSENT
+		REFRESH_ALWAYS {
+			@Override
+			public boolean isRefresh(Collection<?> col) {
+				return true;
+			}
+		},
+		REFRESH_NEVER {
+			@Override
+			public boolean isRefresh(Collection<?> col) {
+				return false;
+			}
+		},
+		REFRESH_WHEN_ABSENT {
+			@Override
+			public boolean isRefresh(Collection<?> col) {
+				return col.isEmpty();
+			}
+		};
+
+		public abstract boolean isRefresh(Collection<?> col);
 	}
-	
+
 	public static final TypeSpec<Map<String, ? extends TargetObject>> ELEMENT_MAP_TYPE =
 		TypeSpec.auto();
 	public static final TypeSpec<Map<String, ?>> ATTRIBUTE_MAP_TYPE = TypeSpec.auto();

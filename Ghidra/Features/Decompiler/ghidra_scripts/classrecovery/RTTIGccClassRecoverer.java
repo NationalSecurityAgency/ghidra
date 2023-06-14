@@ -29,6 +29,8 @@ import java.util.Set;
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.demangler.DemangledObject;
+import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
@@ -44,6 +46,8 @@ import ghidra.program.model.data.CharDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.data.DataTypeConflictHandler;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.data.LongDataType;
 import ghidra.program.model.data.LongLongDataType;
@@ -53,6 +57,7 @@ import ghidra.program.model.data.PointerTypedef;
 import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.TerminatedStringDataType;
 import ghidra.program.model.data.UnsignedIntegerDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Bookmark;
@@ -63,6 +68,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionManager;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
@@ -77,6 +83,7 @@ import ghidra.program.model.symbol.ReferenceManager;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.Msg;
@@ -96,9 +103,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private static final String SI_CLASS_TYPEINFO_NAMESPACE = "__si_class_type_info";
 	private static final String VMI_CLASS_TYPEINFO_NAMESPACE = "__vmi_class_type_info";
 	private static final String TYPEINFO_LABEL = "typeinfo";
-	private static final String MANGLED_CLASS_TYPEINFO_NAMESPACE = "N10__cxxabiv117__class_type_infoE";
-	private static final String MANGLED_SI_CLASS_TYPEINFO_NAMESPACE = "N10__cxxabiv120__si_class_type_infoE";
-	private static final String MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE = "N10__cxxabiv121__vmi_class_type_infoE";
+	private static final String MANGLED_CLASS_TYPEINFO_NAMESPACE =
+		"N10__cxxabiv117__class_type_infoE";
+	private static final String MANGLED_SI_CLASS_TYPEINFO_NAMESPACE =
+		"N10__cxxabiv120__si_class_type_infoE";
+	private static final String MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE =
+		"N10__cxxabiv121__vmi_class_type_infoE";
 	private static final String MANGLED_VTABLE_PREFIX = "_ZTV";
 	private static final String MANGLED_STRING_PREFIX = "_ZTS";
 	private static final String MANGLED_TYPEINFO_PREFIX = "_ZTI";
@@ -135,23 +145,30 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	List<RecoveredClass> recoveredClasses = new ArrayList<RecoveredClass>();
 
-	private Map<RecoveredClass, Map<Integer, RecoveredClass>> classToParentOrderMap = new HashMap<RecoveredClass, Map<Integer, RecoveredClass>>();
+	private Map<RecoveredClass, Map<Integer, RecoveredClass>> classToParentOrderMap =
+		new HashMap<RecoveredClass, Map<Integer, RecoveredClass>>();
 
-	private Map<RecoveredClass, Map<RecoveredClass, Long>> classToParentOffsetMap = new HashMap<RecoveredClass, Map<RecoveredClass, Long>>();
+	private Map<RecoveredClass, Map<RecoveredClass, Long>> classToParentOffsetMap =
+		new HashMap<RecoveredClass, Map<RecoveredClass, Long>>();
 
 	boolean isDwarfLoaded;
 	boolean replaceClassStructs;
 
 	FunctionManager functionManager = null;
+	Listing listing;
 
-	public RTTIGccClassRecoverer(Program program, ProgramLocation location, PluginTool tool, FlatProgramAPI api,
-			boolean createBookmarks, boolean useShortTemplates, boolean nameVfunctions, boolean isDwarfLoaded,
+	public RTTIGccClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
+			FlatProgramAPI api,
+			boolean createBookmarks, boolean useShortTemplates, boolean nameVfunctions,
+			boolean isDwarfLoaded,
 			TaskMonitor monitor) throws Exception {
 
-		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions, isDwarfLoaded, monitor);
+		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
+			isDwarfLoaded, monitor);
 		this.isDwarfLoaded = isDwarfLoaded;
 
 		functionManager = program.getFunctionManager();
+		listing = program.getListing();
 	}
 
 	@Override
@@ -161,7 +178,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			if (!hasSpecialTypeinfos()) {
 				return false;
 			}
-		} catch (InvalidInputException | UnsupportedEncodingException e) {
+		}
+		catch (InvalidInputException | UnsupportedEncodingException e) {
 
 			e.printStackTrace();
 			return false;
@@ -186,8 +204,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		AddressSetView initializedMem = program.getMemory().getAllInitializedAddressSet();
 		List<ReferenceAddressPair> directReferenceList = new ArrayList<ReferenceAddressPair>();
 
-		ProgramMemoryUtil.loadDirectReferenceList(program, 1, initializedMem.getMinAddress(), initializedMem,
-				directReferenceList, monitor);
+		ProgramMemoryUtil.loadDirectReferenceList(program, 1, initializedMem.getMinAddress(),
+			initializedMem,
+			directReferenceList, monitor);
 		createGlobalDirectRefMap(directReferenceList);
 
 		Msg.debug(this, "Creating Special Typeinfos");
@@ -204,8 +223,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Msg.debug(this, "Could not create special vtables");
 			return null;
 		}
-		
-		if(specialVtables.size() != specialTypeinfos.size()) {
+
+		if (specialVtables.size() != specialTypeinfos.size()) {
 			Msg.debug(this, "Not equal number of special vtables and special typeinfos");
 			return null;
 		}
@@ -225,11 +244,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Msg.debug(this, "Could not recover ELF rtti classes");
 			return null;
 		}
-		
+
 		if (recoveredClasses.isEmpty()) {
 			return recoveredClasses;
 		}
-		
+
 		Msg.debug(this, "Updating classes with parents and flags");
 		updateClassesWithParentsAndFlags(typeinfos);
 
@@ -263,7 +282,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		List<GccTypeinfo> specialGccTypeinfos = new ArrayList<GccTypeinfo>();
 
-		GccTypeinfo gccTypeinfo = findSpecialTypeinfoSymbol(CLASS_TYPEINFO_NAMESPACE, MANGLED_CLASS_TYPEINFO_NAMESPACE);
+		GccTypeinfo gccTypeinfo =
+			findSpecialTypeinfoSymbol(CLASS_TYPEINFO_NAMESPACE, MANGLED_CLASS_TYPEINFO_NAMESPACE);
 
 		if (gccTypeinfo != null) {
 			gccTypeinfo.setMangledNamespaceString(MANGLED_CLASS_TYPEINFO_NAMESPACE);
@@ -271,7 +291,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			specialGccTypeinfos.add(gccTypeinfo);
 		}
 
-		gccTypeinfo = findSpecialTypeinfoSymbol(SI_CLASS_TYPEINFO_NAMESPACE, MANGLED_SI_CLASS_TYPEINFO_NAMESPACE);
+		gccTypeinfo = findSpecialTypeinfoSymbol(SI_CLASS_TYPEINFO_NAMESPACE,
+			MANGLED_SI_CLASS_TYPEINFO_NAMESPACE);
 
 		if (gccTypeinfo != null) {
 			gccTypeinfo.setMangledNamespaceString(MANGLED_SI_CLASS_TYPEINFO_NAMESPACE);
@@ -279,7 +300,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			specialGccTypeinfos.add(gccTypeinfo);
 		}
 
-		gccTypeinfo = findSpecialTypeinfoSymbol(VMI_CLASS_TYPEINFO_NAMESPACE, MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE);
+		gccTypeinfo = findSpecialTypeinfoSymbol(VMI_CLASS_TYPEINFO_NAMESPACE,
+			MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE);
 
 		if (gccTypeinfo != null) {
 			gccTypeinfo.setMangledNamespaceString(MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE);
@@ -291,26 +313,29 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private GccTypeinfo findSpecialTypeinfoSymbol(String namespaceName, String mangledNamespaceString)
+	private GccTypeinfo findSpecialTypeinfoSymbol(String namespaceName,
+			String mangledNamespaceString)
 			throws CancelledException {
 
 		// try finding with normal symbol name and namespace
-		Symbol typeinfoSymbol = getSymbolInNamespaces(SPECIAL_CLASS_NAMESPACE, namespaceName, TYPEINFO_LABEL);
+		Symbol typeinfoSymbol =
+			getSymbolInNamespaces(SPECIAL_CLASS_NAMESPACE, namespaceName, TYPEINFO_LABEL);
 		if (typeinfoSymbol == null) {
 			// then try finding with mangled symbol
-			typeinfoSymbol = findAndReturnDemangledSymbol(MANGLED_TYPEINFO_PREFIX + mangledNamespaceString,
+			typeinfoSymbol =
+				findAndReturnDemangledSymbol(MANGLED_TYPEINFO_PREFIX + mangledNamespaceString,
 					SPECIAL_CLASS_NAMESPACE, namespaceName, TYPEINFO_LABEL);
 			if (typeinfoSymbol == null) {
-
 				// then try finding vtable in fake ext mem block (in this case there is no
 				// typeinfo symbol because it
 				// is in an external prog so it is assigned to the same address as the vtable
-				typeinfoSymbol = findTypeinfoUsingExternalVtableSymbol(namespaceName, mangledNamespaceString);
+				typeinfoSymbol = findTypeinfoUsingNotInProgramMemoryVtableSymbol(namespaceName,
+					mangledNamespaceString);
 
 				if (typeinfoSymbol == null) {
-
 					// then try finding with mangled namespace string in memory
-					typeinfoSymbol = findTypeinfoSymbolUsingMangledNamespaceString(mangledNamespaceString,
+					typeinfoSymbol =
+						findTypeinfoSymbolUsingMangledNamespaceString(mangledNamespaceString,
 							namespaceName);
 				}
 			}
@@ -321,37 +346,30 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return null;
 	}
 
-	private Symbol findTypeinfoUsingExternalVtableSymbol(String namespaceName, String mangledNamespaceString)
+	private Symbol findTypeinfoUsingNotInProgramMemoryVtableSymbol(String namespaceName,
+			String mangledNamespaceString)
 			throws CancelledException {
 
 		// try finding with normal symbol name and namespace
-		boolean isIndirectPointerToVtable = false;
-		Symbol vtableSymbol = getSymbolInNamespaces(SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
+		Symbol vtableSymbol =
+			getSymbolInNamespaces(SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
 		if (vtableSymbol == null) {
 			// then try finding with mangled symbol
-			vtableSymbol = findAndReturnDemangledSymbol(MANGLED_VTABLE_PREFIX + mangledNamespaceString,
+			vtableSymbol =
+				findAndReturnDemangledSymbol(MANGLED_VTABLE_PREFIX + mangledNamespaceString,
 					SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
 			if (vtableSymbol == null) {
-				vtableSymbol = findAndReturnDemangledSymbol(
-						"__imp_" + MANGLED_VTABLE_PREFIX + mangledNamespaceString, SPECIAL_CLASS_NAMESPACE,
-						namespaceName, VTABLE_LABEL);
-				if (vtableSymbol == null) {
-					return null;
-				}
-				isIndirectPointerToVtable = true;
-
+				return null;
 			}
-
 		}
 
 		Address vtableAddress = vtableSymbol.getAddress();
 
-		// if the vtable is not in the external block and it isn't an external address
-		// then
-		// it shouldn't be the case where the typeinfo is at the same location as the
-		// vtable
-		// since it should have enough memory for whole table then
-		if (!inExternalBlock(vtableAddress) && !vtableAddress.isExternalAddress() && !isIndirectPointerToVtable) {
+		// if the vtable is in program memory (ie not in EXTERNAL block or external address or 
+		// in a non-loaded section that isn't real memory then it shouldn't be the case where the 
+		// typeinfo is at the same location as the vtable since it should have enough memory and 
+		// real bytes that point to a real typeinfo in program memory
+		if (hasAssociatedFileByes(vtableAddress)) {
 			return null;
 		}
 
@@ -364,15 +382,36 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		Symbol typeinfoSymbol;
 		try {
-			typeinfoSymbol = symbolTable.createLabel(vtableAddress, "typeinfo", vtableSymbol.getParentNamespace(),
-					SourceType.ANALYSIS);
+			typeinfoSymbol = symbolTable.createLabel(vtableAddress, "typeinfo",
+				vtableSymbol.getParentNamespace(),
+				SourceType.ANALYSIS);
 			// api.setPlateComment(typeinfoAddress, "typeinfo for " + namespace);
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			Msg.debug(this, "Could not make typeinfo symbol at " + vtableAddress);
 			return null;
 		}
 
 		return typeinfoSymbol;
+
+	}
+
+	private boolean hasAssociatedFileByes(Address address) {
+
+		if (inExternalBlock(address)) {
+			return false;
+		}
+		if (address.isExternalAddress()) {
+			return false;
+		}
+		Memory memory = program.getMemory();
+
+		long fileOffset = memory.getAddressSourceInfo(address).getFileOffset();
+		if (fileOffset == -1) {
+			return false;
+		}
+
+		return true;
 
 	}
 
@@ -382,8 +421,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		if (namespace == null) {
 
 			try {
-				namespace = symbolTable.createNameSpace(parentNamespace, namespaceName, SourceType.ANALYSIS);
-			} catch (DuplicateNameException | InvalidInputException e) {
+				namespace = symbolTable.createNameSpace(parentNamespace, namespaceName,
+					SourceType.ANALYSIS);
+			}
+			catch (DuplicateNameException | InvalidInputException e) {
 				return null;
 			}
 		}
@@ -392,7 +433,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	// TODO: this assumes only one and returns the first found - have never seen
 	// more than one but should probably check
-	private Symbol findAndReturnDemangledSymbol(String mangledSymbolName, String specialClassNamespaceName,
+	private Symbol findAndReturnDemangledSymbol(String mangledSymbolName,
+			String specialClassNamespaceName,
 			String classNamespaceName, String label) {
 
 		SymbolIterator symbolIterator = symbolTable.getSymbolIterator(mangledSymbolName, true);
@@ -400,21 +442,25 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			Symbol mangledSymbol = symbolIterator.next();
 			Address symbolAddress = mangledSymbol.getAddress();
-			Namespace specialClassNamespace = getOrCreateNamespace(specialClassNamespaceName, globalNamespace);
+			Namespace specialClassNamespace =
+				getOrCreateNamespace(specialClassNamespaceName, globalNamespace);
 			if (specialClassNamespace == null) {
 				return null;
 			}
-			Namespace classNamespace = getOrCreateNamespace(classNamespaceName, specialClassNamespace);
+			Namespace classNamespace =
+				getOrCreateNamespace(classNamespaceName, specialClassNamespace);
 			if (classNamespace == null) {
 				return null;
 			}
 
 			try {
-				Symbol demangledSymbol = symbolTable.createLabel(symbolAddress, label, classNamespace,
+				Symbol demangledSymbol =
+					symbolTable.createLabel(symbolAddress, label, classNamespace,
 						SourceType.ANALYSIS);
 				demangledSymbol.setPrimary();
 				return demangledSymbol;
-			} catch (InvalidInputException e) {
+			}
+			catch (InvalidInputException e) {
 				return null;
 			}
 
@@ -423,7 +469,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	// TODO: can this be used for regular ones too?
-	private Symbol findTypeinfoSymbolUsingMangledNamespaceString(String mangledNamespace, String namespaceName)
+	private Symbol findTypeinfoSymbolUsingMangledNamespaceString(String mangledNamespace,
+			String namespaceName)
 			throws CancelledException {
 
 		Symbol specialTypeinfoSymbol = findTypeinfoUsingMangledString(mangledNamespace);
@@ -439,9 +486,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private GccTypeinfo createGccTypeinfo(Symbol typeinfoSymbol, boolean isSpecial) {
 
 		Address typeinfoAddress = typeinfoSymbol.getAddress();
-		boolean isExternal = typeinfoAddress.isExternalAddress() || inExternalBlock(typeinfoAddress);
+		boolean isExternal =
+			typeinfoAddress.isExternalAddress() || inExternalBlock(typeinfoAddress);
 
-		GccTypeinfo gccTypeinfo = new GccTypeinfo(typeinfoSymbol.getAddress(), typeinfoSymbol.getParentNamespace(),
+		GccTypeinfo gccTypeinfo =
+			new GccTypeinfo(typeinfoSymbol.getAddress(), typeinfoSymbol.getParentNamespace(),
 				isSpecial, !isExternal);
 		return gccTypeinfo;
 	}
@@ -449,8 +498,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private void setComponentOffset() {
 
 		String processor = program.getLanguage().getProcessor().toString();
-		if (processor.equals("x86") || processor.equals("MIPS") || processor.equals("PowerPC")
-				|| processor.equals("RISCV")) {
+		if (processor.equals("x86") || processor.equals("MIPS") || processor.equals("PowerPC") ||
+			processor.equals("RISCV")) {
 
 			if (defaultPointerSize == 4) {
 				componentOffset = 8;
@@ -479,7 +528,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		boolean isGcc;
 
-		boolean isCompilerSpecGcc = program.getCompilerSpec().getCompilerSpecID().getIdAsString()
+		boolean isCompilerSpecGcc = program.getCompilerSpec()
+				.getCompilerSpecID()
+				.getIdAsString()
 				.equalsIgnoreCase("gcc");
 		if (isCompilerSpecGcc) {
 			return true;
@@ -503,11 +554,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		byte[] gccBytes = { (byte) 0x47, (byte) 0x43, (byte) 0x43, (byte) 0x3a };
 		byte[] maskBytes = { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 
-		Address found = program.getMemory().findBytes(commentBlock.getStart(), commentBlock.getEnd(), gccBytes,
-				maskBytes, true, monitor);
+		Address found = program.getMemory()
+				.findBytes(commentBlock.getStart(), commentBlock.getEnd(), gccBytes,
+					maskBytes, true, monitor);
 		if (found == null) {
 			isGcc = false;
-		} else {
+		}
+		else {
 			isGcc = true;
 		}
 
@@ -525,7 +578,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private boolean hasSpecialTypeinfos()
 			throws CancelledException, InvalidInputException, UnsupportedEncodingException {
 
-		SymbolIterator symbolIterator = symbolTable.getSymbolIterator("*N10__cxxabiv117__class_type_infoE*", true);
+		SymbolIterator symbolIterator =
+			symbolTable.getSymbolIterator("*N10__cxxabiv117__class_type_infoE*", true);
 		if (symbolIterator.hasNext()) {
 			return true;
 		}
@@ -534,7 +588,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return true;
 		}
 
-		symbolIterator = symbolTable.getSymbolIterator("*N10__cxxabiv120__si_class_type_infoE*", true);
+		symbolIterator =
+			symbolTable.getSymbolIterator("*N10__cxxabiv120__si_class_type_infoE*", true);
 		if (symbolIterator.hasNext()) {
 			return true;
 		}
@@ -543,7 +598,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return true;
 		}
 
-		symbolIterator = symbolTable.getSymbolIterator("*N10__cxxabiv121__vmi_class_type_infoE*", true);
+		symbolIterator =
+			symbolTable.getSymbolIterator("*N10__cxxabiv121__vmi_class_type_infoE*", true);
 		if (symbolIterator.hasNext()) {
 			return true;
 		}
@@ -555,7 +611,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return false;
 
 	}
-
 
 	List<Symbol> getSpecialTypeinfoSymbols() {
 
@@ -583,11 +638,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return symbols;
 	}
 
-	//TODO: split out methods
-	private void updateClassesWithParentsAndFlags(List<GccTypeinfo> typeinfos) throws CancelledException  {
+	// TODO: split out methods
+	private void updateClassesWithParentsAndFlags(List<GccTypeinfo> typeinfos)
+			throws CancelledException {
 
 		// add properties and parents to each class
-		for(GccTypeinfo typeinfo : typeinfos) {
+		for (GccTypeinfo typeinfo : typeinfos) {
 
 			monitor.checkCancelled();
 			Address typeinfoAddress = typeinfo.getAddress();
@@ -602,17 +658,19 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			RecoveredClass recoveredClass = getClass(classNamespace);
 
 			if (recoveredClass == null) {
-				throw new IllegalArgumentException("RecoveredClass should already exist for " + classNamespace.getName(true));
+				throw new IllegalArgumentException(
+					"RecoveredClass should already exist for " + classNamespace.getName(true));
 			}
-			
-			if (typeinfo.isClassTypeinfo()){
+
+			if (typeinfo.isClassTypeinfo()) {
 				recoveredClass.setHasSingleInheritance(true);
 				recoveredClass.setHasMultipleInheritance(false);
 				recoveredClass.setHasMultipleVirtualInheritance(false);
 				recoveredClass.setInheritsVirtualAncestor(false);
 
 				// no parents so just add empty order and parent maps to the class maps
-				Map<Integer, RecoveredClass> orderToParentMap = new HashMap<Integer, RecoveredClass>();
+				Map<Integer, RecoveredClass> orderToParentMap =
+					new HashMap<Integer, RecoveredClass>();
 
 				classToParentOrderMap.put(recoveredClass, orderToParentMap);
 
@@ -625,10 +683,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			// per docs those on this list are
 			// classes containing only a single, public, non-virtual base at offset zero
 			if (typeinfo.isSiClassTypeinfo()) {
-				
+
 				List<BaseTypeinfo> baseTypeinfos = typeinfo.getBaseTypeinfos();
-				if(baseTypeinfos.size() != 1) {
-					throw new IllegalArgumentException("SiClassTypeinfo " + classNamespace.getName(true) + " should have exactly one parent");
+				if (baseTypeinfos.size() != 1) {
+					throw new IllegalArgumentException(
+						"SiClassTypeinfo " + classNamespace.getName(true) +
+							" should have exactly one parent");
 				}
 
 				GccTypeinfo siParentTypeinfo = baseTypeinfos.get(0).getBaseTypeinfo();
@@ -636,7 +696,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				// parent isn't a known class - possibly is an external parent
 				if (parentClass == null) {
-					throw new IllegalArgumentException("RecoveredClass should already exist for " + siParentTypeinfo.getNamespace().getName(true));
+					throw new IllegalArgumentException(
+						"RecoveredClass should already exist for " +
+							siParentTypeinfo.getNamespace().getName(true));
 				}
 
 				updateClassWithParent(parentClass, recoveredClass);
@@ -645,14 +707,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				recoveredClass.setHasMultipleVirtualInheritance(false);
 				parentClass.setIsPublicClass(true);
 				recoveredClass.addParentToBaseTypeMapping(parentClass, false);
-				
+
 				// TODO: make method to check all ancestors not just parent
-				if(siParentTypeinfo.isVmiClassTypeinfo()) {
+				if (siParentTypeinfo.isVmiClassTypeinfo()) {
 					recoveredClass.setInheritsVirtualAncestor(true);
 				}
 
 				// add order to parent and parent offset
-				Map<Integer, RecoveredClass> orderToParentMap = new HashMap<Integer, RecoveredClass>();
+				Map<Integer, RecoveredClass> orderToParentMap =
+					new HashMap<Integer, RecoveredClass>();
 				orderToParentMap.put(0, parentClass);
 				classToParentOrderMap.put(recoveredClass, orderToParentMap);
 
@@ -666,12 +729,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			if (typeinfo.isVmiClassTypeinfo()) {
 
-				List<RecoveredClass> parents = addClassParentsAndFlagsForVmiClass(recoveredClass, typeinfo);
+				List<RecoveredClass> parents =
+					addClassParentsAndFlagsForVmiClass(recoveredClass, typeinfo);
 
 				if (parents.isEmpty()) {
 					Msg.debug(this,
-							"Could not get vmi parent from typeinfoAddress - removing class from list"
-									+ typeinfoAddress.toString());
+						"Could not get vmi parent from typeinfoAddress - removing class from list" +
+							typeinfoAddress.toString());
 					recoveredClasses.remove(recoveredClass);
 					continue;
 				}
@@ -720,7 +784,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				Msg.debug(this, "Skipping special typeinfos -- vtables already processed");
 				continue;
 			}
-			
+
 			int numRefs = getNumberOfRefsByBaseTypeinfos(typeinfo, typeinfos);
 
 			List<Address> constructionVtables = new ArrayList<Address>();
@@ -732,45 +796,45 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				Vtable vtable = processMainVtable(mainVtable, map.get(mainVtable));
 				if (vtable == null) {
 					Msg.debug(this,
-							"MISSING expected vtable for simple class " + typeinfo.getNamespace().getName(true));
+						"MISSING expected vtable for simple class " +
+							typeinfo.getNamespace().getName(true));
 					continue;
 				}
 
 				vtables.add(vtable);
 				applyVtableMarkup(vtable);
 
-				
 			}
 			for (Address vtableAddress : constructionVtables) {
 
-				Vtable constructionVtable = processVtable(vtableAddress, map.get(vtableAddress), true);
+				Vtable constructionVtable =
+					processVtable(vtableAddress, map.get(vtableAddress), true);
 				if (constructionVtable == null || !constructionVtable.isValid()) {
 
 					Msg.debug(this, "Invalid construction vtable at " + vtableAddress);
 					continue;
 				}
 				vtables.add(constructionVtable);
-				
-				
+
 			}
 
 		}
-		
+
 		List<Vtt> vtts = findVtts(vtables);
-		updateConstructionVtablesWithNamespace(vtts,vtables);
-		//TODO:  update rest of vtt names my trying to match up with ones needing but missing VTT 
+		updateConstructionVtablesWithNamespace(vtts, vtables);
+		// TODO: update rest of vtt names by trying to match up with ones needing but
+		// missing VTT
 
 		return vtables;
 	}
-	
-	private List<Vtt> findVtts(List<Vtable> vtables) throws CancelledException, InvalidInputException {
+
+	private List<Vtt> findVtts(List<Vtable> vtables)
+			throws CancelledException, InvalidInputException {
 
 		List<Vtt> vtts = findVttsUsingSymbols();
 		if (vtts.isEmpty()) {
-		//	vtts = findVttsUsingReferences(vtables);
-			
-			 vtts = findVttsWithoutSymbols(vtables);
-			
+			vtts = findVttsWithoutSymbols(vtables);
+
 		}
 
 		// check vtts for run of pointers to other vtables /vfunctions and self and
@@ -781,8 +845,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		return vtts;
 	}
-	
-	private void updateConstructionVtablesWithNamespace(List<Vtt> vtts, List<Vtable> vtables) throws CancelledException, InvalidInputException {
+
+	private void updateConstructionVtablesWithNamespace(List<Vtt> vtts, List<Vtable> vtables)
+			throws CancelledException, InvalidInputException {
 		for (Vtable vtable : vtables) {
 			monitor.checkCancelled();
 
@@ -796,125 +861,127 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					Msg.debug(this, "Cannot find vtt for vtable at " + vtable.getAddress());
 				}
 				Namespace typeinfoNamespace = vtable.getReferencedTypeinfo().getNamespace();
-				Namespace constructionNamespace = createConstructionNamespace(typeinfoNamespace, vttNamespace);
+				Namespace constructionNamespace =
+					createConstructionNamespace(typeinfoNamespace, vttNamespace);
 				if (constructionNamespace != null) {
 					vtable.setNamespace(constructionNamespace);
 				}
 				else {
-					Msg.debug(this, "Cannot create construction namespace for vtable at " + vtable.getAddress());
+					Msg.debug(this, "Cannot create construction namespace for vtable at " +
+						vtable.getAddress());
 				}
-				
+
 			}
 			applyVtableMarkup(vtable);
 		}
 	}
-	
+
 	private boolean isSelfReferencing(Address address) {
 		Address referencedAddress = getReferencedAddress(address);
-		if(referencedAddress == null) {
+		if (referencedAddress == null) {
 			return false;
 		}
-		if(referencedAddress.equals(address)) {
+		if (referencedAddress.equals(address)) {
 			return true;
 		}
 		return false;
 	}
-	
-	private List<Vtt> findVttsUsingSymbols() throws CancelledException{
-		
+
+	private List<Vtt> findVttsUsingSymbols() throws CancelledException {
+
 		List<Vtt> vtts = new ArrayList<Vtt>();
 		SymbolIterator symbols = symbolTable.getSymbols("VTT");
-		while(symbols.hasNext()) {
+		while (symbols.hasNext()) {
 			monitor.checkCancelled();
-			
+
 			Symbol symbol = symbols.next();
-			
+
 			Vtt vtt = new Vtt(symbol.getAddress(), symbol.getParentNamespace());
 			vtts.add(vtt);
 		}
-		
+
 		return vtts;
 	}
-	
-	private List<Vtt> findVttsWithoutSymbols(List<Vtable> vtables) throws CancelledException, InvalidInputException {
 
-		
+	private List<Vtt> findVttsWithoutSymbols(List<Vtable> vtables)
+			throws CancelledException, InvalidInputException {
+
 		List<Address> vttStarts = findVttStarts(vtables);
-		
+
 		List<Vtt> vtts = new ArrayList<Vtt>();
 		for (Address vttAddress : vttStarts) {
 			monitor.checkCancelled();
-			
+
 			Namespace namespace = getVttNamespace(vttAddress, vtables);
-				
-			
+
 			Vtt vtt = new Vtt(vttAddress, namespace);
 			vtts.add(vtt);
 			symbolTable.createLabel(vttAddress, "VTT", namespace, SourceType.ANALYSIS);
 			api.setPlateComment(vttAddress, "VTT for " + namespace.getName(true));
-			
+
 		}
 		return vtts;
 	}
-	
-	private Namespace getVttNamespace(Address vttAddress, List<Vtable> vtables) throws CancelledException {
-		
+
+	private Namespace getVttNamespace(Address vttAddress, List<Vtable> vtables)
+			throws CancelledException {
+
 		Namespace namespace = globalNamespace;
-		
+
 		Address referencedAddress = getReferencedAddress(vttAddress);
-		if(referencedAddress == null) {
+		if (referencedAddress == null) {
 			throw new IllegalArgumentException("There should be a pointer here " + vttAddress);
 		}
-		
-		Vtable referencedVtable = getVtableContaining(vtables,referencedAddress);
-		if(referencedVtable != null && referencedVtable.isPrimary()) {
+
+		Vtable referencedVtable = getVtableContaining(vtables, referencedAddress);
+		if (referencedVtable != null && referencedVtable.isPrimary()) {
 			namespace = referencedVtable.getNamespace();
 		}
 		return namespace;
 	}
-	
-	private List<Address> findVttStarts(List<Vtable> vtables) throws CancelledException{
-		
+
+	private List<Address> findVttStarts(List<Vtable> vtables) throws CancelledException {
+
 		List<Address> vttStarts = new ArrayList<Address>();
-		
+
 		List<Address> addressesToCheck = new ArrayList<Address>();
-		
+
 		// make a list of possible vtt starting addresses
-		for(Vtable vtable : vtables) {
-			
+		for (Vtable vtable : vtables) {
+
 			monitor.checkCancelled();
-			
+
 			addressesToCheck.add(vtable.getAddress().add(vtable.getLength()));
 			GccTypeinfo referencedTypeinfo = vtable.getReferencedTypeinfo();
 			Address typeinfo = referencedTypeinfo.getAddress();
-			Data typeinfoStruct = program.getListing().getDataAt(typeinfo);
-			if(typeinfoStruct == null) {
+			Data typeinfoStruct = listing.getDataAt(typeinfo);
+			if (!isTypeinfoStruct(typeinfoStruct)) {
 				continue;
 			}
 			addressesToCheck.add(typeinfo.add(typeinfoStruct.getLength()));
 		}
-		
+
 		boolean keepChecking = true;
 		int numToCheck = addressesToCheck.size();
-		while(keepChecking) {
-			for(Address possibleVttStart : addressesToCheck) {
-			
+		while (keepChecking) {
+			for (Address possibleVttStart : addressesToCheck) {
+
 				monitor.checkCancelled();
-			
-				if(isPossibleVttStart(possibleVttStart, vtables, vttStarts)) {
+
+				if (isPossibleVttStart(possibleVttStart, vtables, vttStarts)) {
 					vttStarts.add(possibleVttStart);
 				}
 			}
-		
+
 			addressesToCheck.removeAll(vttStarts);
-			if(addressesToCheck.size() == numToCheck) {
+			if (addressesToCheck.size() == numToCheck) {
 				keepChecking = false;
 			}
 			numToCheck = addressesToCheck.size();
 		}
-	
+
 		return vttStarts;
-		
+
 	}
 
 	private Vtt getVttContainingVtable(List<Vtt> vtts, Vtable vtable) throws CancelledException {
@@ -937,7 +1004,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// make list of all vtable tops and vftable tops
 		List<Address> vtableAndVftableAddrs = getListOfVtableAndVftableTops(vtables);
 		List<Address> vttStarts = getVttAddresses(vtts);
-		
 
 		// if vtt references one of the vtable or vftable tops OR if it references
 		// itself add the ref'd addr to the list in vtt obj
@@ -945,15 +1011,17 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			monitor.checkCancelled();
 			Address pointerAddress = vtt.getAddress();
 			Address referencedAddress = getReferencedAddress(pointerAddress);
-			while (referencedAddress != null && (vtableAndVftableAddrs.contains(referencedAddress)
-					|| referencedAddress.equals(vtt.getAddress()) || isSelfReferencing(pointerAddress) || vttStarts.contains(referencedAddress))) {
+			while (referencedAddress != null &&
+				(vtableAndVftableAddrs.contains(referencedAddress) ||
+					referencedAddress.equals(vtt.getAddress()) ||
+					isSelfReferencing(pointerAddress) || vttStarts.contains(referencedAddress))) {
 				vtt.addPointerToList(referencedAddress);
 				pointerAddress = pointerAddress.add(defaultPointerSize);
 				referencedAddress = getReferencedAddress(pointerAddress);
 			}
 		}
 	}
-	
+
 	private List<Address> getVtableAddresses(List<Vtable> vtables) throws CancelledException {
 		List<Address> vtableStarts = new ArrayList<Address>();
 
@@ -975,35 +1043,38 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 		return vttStarts;
 	}
-	
-	
-	private boolean isPossibleVttStart(Address address, List<Vtable> vtables, List<Address> knownVtts) throws CancelledException {
-		
+
+	private boolean isPossibleVttStart(Address address, List<Vtable> vtables,
+			List<Address> knownVtts)
+			throws CancelledException {
+
 		// make list of all vtable tops and vftable tops
 		List<Address> vtableAndVftableAddrs = getListOfVtableAndVftableTops(vtables);
-		
-		if(isSelfReferencing(address)) {
+
+		if (isSelfReferencing(address)) {
 			return true;
 		}
-		
+
 		Address referencedAddress = getReferencedAddress(address);
-		if(referencedAddress != null && (vtableAndVftableAddrs.contains(referencedAddress) || knownVtts.contains(referencedAddress))){
+		if (referencedAddress != null && (vtableAndVftableAddrs.contains(referencedAddress) ||
+			knownVtts.contains(referencedAddress))) {
 			return true;
 		}
-		
+
 		return false;
-	
+
 	}
-private Address getReferencedAddress(Address address) {
-		
+
+	private Address getReferencedAddress(Address address) {
+
 		int addressSize = address.getSize();
 		Memory memory = program.getMemory();
 		try {
-			
+
 			if (addressSize == 32) {
 				long offset32 = memory.getInt(address);
 				Address newAddr = address.getNewAddress(offset32);
-				if(memory.contains(newAddr)) {
+				if (memory.contains(newAddr)) {
 					return newAddr;
 				}
 				return null;
@@ -1013,7 +1084,7 @@ private Address getReferencedAddress(Address address) {
 
 				long offset64 = memory.getLong(address);
 				Address newAddr = address.getNewAddress(offset64);
-				if(memory.contains(newAddr)) {
+				if (memory.contains(newAddr)) {
 					return newAddr;
 				}
 				return null;
@@ -1028,7 +1099,8 @@ private Address getReferencedAddress(Address address) {
 		}
 	}
 
-	private List<Address> getListOfVtableAndVftableTops(List<Vtable> vtables) throws CancelledException {
+	private List<Address> getListOfVtableAndVftableTops(List<Vtable> vtables)
+			throws CancelledException {
 		// make list of all vtable tops and vftable tops
 		List<Address> vtableAndVftableAddrs = new ArrayList<Address>();
 		for (Vtable vtable : vtables) {
@@ -1039,12 +1111,14 @@ private Address getReferencedAddress(Address address) {
 				vtableAndVftableAddrs.add(vtable.getVfunctionTop());
 			}
 
-			vtableAndVftableAddrs.addAll(getListOfVtableAndVftableTops(vtable.getInternalVtables()));
+			vtableAndVftableAddrs
+					.addAll(getListOfVtableAndVftableTops(vtable.getInternalVtables()));
 		}
 		return vtableAndVftableAddrs;
 	}
 
-	private Vtable processMainVtable(Address vtableAddress, GccTypeinfoRef typeinfoRef) throws CancelledException {
+	private Vtable processMainVtable(Address vtableAddress, GccTypeinfoRef typeinfoRef)
+			throws CancelledException {
 		Vtable vtable = processVtable(vtableAddress, typeinfoRef, false);
 		if (vtable == null || !vtable.isValid()) {
 
@@ -1079,7 +1153,6 @@ private Address getReferencedAddress(Address address) {
 		}
 	}
 
-
 	/**
 	 * method to find the main vtable for the given typeinfo and if any, add the
 	 * construction ones to the passed in list
@@ -1103,18 +1176,17 @@ private Address getReferencedAddress(Address address) {
 		if (mainVtable != null || !constructionVtables.isEmpty()) {
 			return mainVtable;
 		}
-		
 
 		// no const vtables for this typeinfo if only one in list
-		if (vtableList.size() == 1 && (typeinfo.isClassTypeinfo() || typeinfo.isSiClassTypeinfo())
-				&& typeinfo.getNumDirectVirtualBases() == 0) {
+		if (vtableList.size() == 1 &&
+			(typeinfo.isClassTypeinfo() || typeinfo.isSiClassTypeinfo()) &&
+			typeinfo.getNumDirectVirtualBases() == 0) {
 			return vtableList.get(0);
 		}
 
 		// if more than one add all to the construction list then remove the main one
 		// when found
 		constructionVtables.addAll(vtableList);
-		
 
 		Map<Address, List<Address>> vtableRefsMap = createMapOfVtableRefs(vtableList);
 		Map<Address, List<Address>> vftableRefsMap = createMapOfVftableRefs(vtableList, map);
@@ -1137,49 +1209,56 @@ private Address getReferencedAddress(Address address) {
 			constructionVtables.remove(mainVtable);
 			return mainVtable;
 		}
-		
 
-		if(vtableList.size() == 1) {
-			if(numBaseRefs == 0) {
+		if (vtableList.size() == 1) {
+			if (numBaseRefs == 0) {
 				return vtableList.get(0);
 			}
 			constructionVtables.add(vtableList.get(0));
 			return null;
-			
+
 		}
 
-		// if still no clear winner and there is only one on list try using internal vtables
+		// if still no clear winner and there is only one on list try using internal
+		// vtables
 		// make a temp vtable to pull out any internal vtables and try to test them
 		if (vtableList.size() == 1) {
 			Address vtableAddress = vtableList.get(0);
 			GccTypeinfoRef typeinfoRef = map.get(vtableAddress);
-			Vtable vtable = new Vtable(program, vtableAddress, typeinfoRef, false, false, false, monitor);
-			if(!vtable.isValid()) {
+			Vtable vtable =
+				new Vtable(program, vtableAddress, typeinfoRef, false, false, false, monitor);
+			if (!vtable.isValid()) {
 				return null;
 			}
 			List<Vtable> internalVtables = vtable.getInternalVtables();
 			List<Address> internalVtableAddrs = new ArrayList<Address>();
-			for(Vtable internalVtable : internalVtables) {
+			for (Vtable internalVtable : internalVtables) {
 				Address internalVtableAddress = internalVtable.getAddress();
 				internalVtableAddrs.add(internalVtableAddress);
-				
+
 				Address internalTypinfoRef = internalVtable.getTypeinfoRefAddress();
 				GccTypeinfoRef gccTypeinfoRef = map.get(internalVtableAddress);
 				if (gccTypeinfoRef == null) {
-					map.put(internalVtableAddress, new GccTypeinfoRef(internalTypinfoRef, typeinfo, true));
-				} else {
+					map.put(internalVtableAddress,
+						new GccTypeinfoRef(internalTypinfoRef, typeinfo, true));
+				}
+				else {
 					if (gccTypeinfoRef.getAddress().compareTo(internalTypinfoRef) > 0) {
-						map.put(internalVtableAddress, new GccTypeinfoRef(internalTypinfoRef, typeinfo, true));
+						map.put(internalVtableAddress,
+							new GccTypeinfoRef(internalTypinfoRef, typeinfo, true));
 					}
 				}
-				
+
 			}
 			if (internalVtables.size() > 0) {
-				Map<Address, List<Address>> internalVtableRefsMap = createMapOfVtableRefs(internalVtableAddrs);
-				Map<Address, List<Address>> internalVftableRefsMap = createMapOfVftableRefs(internalVtableAddrs, map);
-				
+				Map<Address, List<Address>> internalVtableRefsMap =
+					createMapOfVtableRefs(internalVtableAddrs);
+				Map<Address, List<Address>> internalVftableRefsMap =
+					createMapOfVftableRefs(internalVtableAddrs, map);
+
 				// this isn't the mainVtable - just using to test if functions are ref
-				mainVtable = findMainVtableUsingFunctionRefs(internalVtableRefsMap, internalVftableRefsMap);
+				mainVtable =
+					findMainVtableUsingFunctionRefs(internalVtableRefsMap, internalVftableRefsMap);
 				if (mainVtable != null) {
 					mainVtable = vtableAddress;
 					constructionVtables.remove(mainVtable);
@@ -1191,27 +1270,27 @@ private Address getReferencedAddress(Address address) {
 		// no main vtable - all construction vtables
 		return null;
 	}
-	
-	
-	private int getNumberOfRefsByBaseTypeinfos(GccTypeinfo typeinfo, List<GccTypeinfo> typeinfos) throws CancelledException {
-		
+
+	private int getNumberOfRefsByBaseTypeinfos(GccTypeinfo typeinfo, List<GccTypeinfo> typeinfos)
+			throws CancelledException {
+
 		int numRefs = 0;
-		for(GccTypeinfo typinfo : typeinfos) {
+		for (GccTypeinfo typinfo : typeinfos) {
 			monitor.checkCancelled();
-			
-			if(typinfo.isSpecialTypeinfo()) {
+
+			if (typinfo.isSpecialTypeinfo()) {
 				continue;
 			}
-			
-			if(!typinfo.isVmiClassTypeinfo()) {
+
+			if (!typinfo.isVmiClassTypeinfo()) {
 				continue;
 			}
-			
+
 			List<BaseTypeinfo> baseTypeinfos = typinfo.getBaseTypeinfos();
-			for(BaseTypeinfo baseTypeinfo : baseTypeinfos) {
+			for (BaseTypeinfo baseTypeinfo : baseTypeinfos) {
 				monitor.checkCancelled();
-				
-				if(baseTypeinfo.getBaseTypeinfo().equals(typeinfo)){
+
+				if (baseTypeinfo.getBaseTypeinfo().equals(typeinfo)) {
 					numRefs++;
 				}
 			}
@@ -1219,7 +1298,8 @@ private Address getReferencedAddress(Address address) {
 		return numRefs;
 	}
 
-	private Map<Address, List<Address>> createMapOfVtableRefs(List<Address> vtableList) throws CancelledException {
+	private Map<Address, List<Address>> createMapOfVtableRefs(List<Address> vtableList)
+			throws CancelledException {
 
 		Map<Address, List<Address>> map = new HashMap<Address, List<Address>>();
 		for (Address vtableAddr : vtableList) {
@@ -1381,7 +1461,8 @@ private Address getReferencedAddress(Address address) {
 
 	}
 
-	private Address getMainVtableUsingSymbols(List<Address> vtableAddresses, List<Address> constructionVtables)
+	private Address getMainVtableUsingSymbols(List<Address> vtableAddresses,
+			List<Address> constructionVtables)
 			throws CancelledException {
 
 		List<Address> mainVtableCandidates = new ArrayList<Address>();
@@ -1392,7 +1473,8 @@ private Address getReferencedAddress(Address address) {
 			if (primarySymbol != null && primarySymbol.getName().equals(VTABLE_LABEL)) {
 				mainVtableCandidates.add(vtableAddress);
 			}
-			if (primarySymbol != null && primarySymbol.getName().equals("construction-" + VTABLE_LABEL)) {
+			if (primarySymbol != null &&
+				primarySymbol.getName().equals("construction-" + VTABLE_LABEL)) {
 				constructionVtables.add(vtableAddress);
 			}
 		}
@@ -1404,8 +1486,8 @@ private Address getReferencedAddress(Address address) {
 		return mainVtableCandidates.get(0);
 	}
 
-
-	private Map<Address, GccTypeinfoRef> getVtablesUsingTypeinfo(GccTypeinfo typeinfo) throws CancelledException {
+	private Map<Address, GccTypeinfoRef> getVtablesUsingTypeinfo(GccTypeinfo typeinfo)
+			throws CancelledException {
 
 		Map<Address, GccTypeinfoRef> map = new HashMap<Address, GccTypeinfoRef>();
 		Set<Address> typeinfoRefs = findTypeinfoRefsPossiblyInVtables(typeinfo);
@@ -1424,7 +1506,8 @@ private Address getReferencedAddress(Address address) {
 			GccTypeinfoRef gccTypeinfoRef = map.get(vtableAddress);
 			if (gccTypeinfoRef == null) {
 				map.put(vtableAddress, new GccTypeinfoRef(typeinfoRef, typeinfo, true));
-			} else {
+			}
+			else {
 				if (gccTypeinfoRef.getAddress().compareTo(typeinfoRef) > 0) {
 					map.put(vtableAddress, new GccTypeinfoRef(typeinfoRef, typeinfo, true));
 				}
@@ -1472,18 +1555,20 @@ private Address getReferencedAddress(Address address) {
 		return false;
 	}
 
-	private Vtable getVtable(List<Vtable> vtables, Namespace classNamespace) throws CancelledException {
+	private Vtable getVtable(List<Vtable> vtables, Namespace classNamespace)
+			throws CancelledException {
 
 		for (Vtable vtable : vtables) {
 			monitor.checkCancelled();
 
-			if (vtable.getNamespace().equals(classNamespace) && vtable.isPrimary() && !vtable.isConstructionVtable()) {
+			if (vtable.getNamespace().equals(classNamespace) && vtable.isPrimary() &&
+				!vtable.isConstructionVtable()) {
 				return vtable;
 			}
 		}
 		return null;
 	}
-	
+
 	private Vtable getVtable(List<Vtable> vtables, Address address) throws CancelledException {
 
 		for (Vtable vtable : vtables) {
@@ -1495,13 +1580,15 @@ private Address getReferencedAddress(Address address) {
 		}
 		return null;
 	}
-	
-	private Vtable getVtableContaining(List<Vtable> vtables, Address address) throws CancelledException {
+
+	private Vtable getVtableContaining(List<Vtable> vtables, Address address)
+			throws CancelledException {
 		for (Vtable vtable : vtables) {
-			
+
 			monitor.checkCancelled();
-			
-			AddressSet vtableAddrs = new AddressSet(vtable.getAddress(), vtable.getAddress().add(vtable.getLength()));
+
+			AddressSet vtableAddrs =
+				new AddressSet(vtable.getAddress(), vtable.getAddress().add(vtable.getLength()));
 
 			if (vtableAddrs.contains(address)) {
 				return vtable;
@@ -1509,7 +1596,6 @@ private Address getReferencedAddress(Address address) {
 		}
 		return null;
 	}
-
 
 	private void createVtableComment(Vtable vtable) {
 
@@ -1525,8 +1611,8 @@ private Address getReferencedAddress(Address address) {
 		}
 
 		String plateComment = api.getPlateComment(vtableAddress);
-		if (plateComment != null && plateComment.contains(VTABLE_LABEL)
-				&& plateComment.contains(classNamespace.getName())) {
+		if (plateComment != null && plateComment.contains(VTABLE_LABEL) &&
+			plateComment.contains(classNamespace.getName())) {
 			return;
 		}
 
@@ -1536,7 +1622,8 @@ private Address getReferencedAddress(Address address) {
 		}
 		String vtableComment = VTABLE_LABEL;
 
-		api.setPlateComment(vtableAddress, constructionString + vtableComment + " for " + classNamespace.getName(true));
+		api.setPlateComment(vtableAddress,
+			constructionString + vtableComment + " for " + classNamespace.getName(true));
 
 	}
 
@@ -1553,8 +1640,8 @@ private Address getReferencedAddress(Address address) {
 		String vtableLabel = VTABLE_LABEL;
 
 		Symbol primarySymbol = symbolTable.getPrimarySymbol(vtableAddress);
-		if (primarySymbol != null && primarySymbol.getName().contains(vtableLabel)
-				&& primarySymbol.getParentNamespace().equals(classNamespace)) {
+		if (primarySymbol != null && primarySymbol.getName().contains(vtableLabel) &&
+			primarySymbol.getParentNamespace().equals(classNamespace)) {
 			return;
 		}
 
@@ -1568,8 +1655,9 @@ private Address getReferencedAddress(Address address) {
 			internalString = "internal_";
 		}
 
-		symbolTable.createLabel(vtableAddress, internalString + constructionString + VTABLE_LABEL, classNamespace,
-				SourceType.ANALYSIS);
+		symbolTable.createLabel(vtableAddress, internalString + constructionString + VTABLE_LABEL,
+			classNamespace,
+			SourceType.ANALYSIS);
 
 	}
 
@@ -1595,12 +1683,14 @@ private Address getReferencedAddress(Address address) {
 			internalString = "internal_";
 		}
 
-		symbolTable.createLabel(vtable.getVfunctionTop(), internalString + constructionString + VFTABLE_LABEL,
-				classNamespace, SourceType.ANALYSIS);
+		symbolTable.createLabel(vtable.getVfunctionTop(),
+			internalString + constructionString + VFTABLE_LABEL,
+			classNamespace, SourceType.ANALYSIS);
 
 	}
 
-	List<Symbol> getTypeinfosByType(List<Symbol> typeinfoSymbols, String typeinfoType) throws CancelledException {
+	List<Symbol> getTypeinfosByType(List<Symbol> typeinfoSymbols, String typeinfoType)
+			throws CancelledException {
 
 		List<Symbol> subsetByType = new ArrayList<Symbol>();
 
@@ -1616,22 +1706,21 @@ private Address getReferencedAddress(Address address) {
 		return subsetByType;
 	}
 
-
 	private Address getPrimaryVtableAddress(Address typeinfoRef) throws CancelledException {
 
 		if (typeinfoRef == null) {
 			return null;
 		}
 		// get the data containing the typeinfo reference
-		Data dataContaining = extendedFlatAPI.getDataContaining(typeinfoRef);
-		if (dataContaining != null) {
+		Data dataContaining = listing.getDataContaining(typeinfoRef);
+		if (dataContaining != null && dataContaining.isDefined()) {
 
 			// get the top address of the containing data
 			Address dataAddress = dataContaining.getAddress();
 
 			// if it has a vtable label then return the data address
-			boolean hasVtableLabel = hasSymbolWithName(dataAddress, VTABLE_LABEL)
-					|| hasSymbolWithName(dataAddress, CONSTRUCTION_VTABLE_LABEL);
+			boolean hasVtableLabel = hasSymbolWithName(dataAddress, VTABLE_LABEL) ||
+				hasSymbolWithName(dataAddress, CONSTRUCTION_VTABLE_LABEL);
 			if (hasVtableLabel) {
 				return dataAddress;
 			}
@@ -1650,9 +1739,9 @@ private Address getReferencedAddress(Address address) {
 		// are internal vtables and will get processed when the main one does
 		Address offsetToTop = getAddress(typeinfoRef, 0 - defaultPointerSize);
 
-
 		// check for appropriately sized long that is value 0 to make sure the
-		// vtable the typeinfo ref is in is the main one and skip otherwise since non-zero
+		// vtable the typeinfo ref is in is the main one and skip otherwise since
+		// non-zero
 		// ones are internal vtables that will get processed with the main one
 		if (!extendedFlatAPI.hasNumZeros(offsetToTop, defaultPointerSize)) {
 			return null;
@@ -1670,8 +1759,8 @@ private Address getReferencedAddress(Address address) {
 
 		while (vtableAddress != null) {
 
-			boolean hasVtableLabel = hasSymbolWithName(vtableAddress, VTABLE_LABEL)
-					|| hasSymbolWithName(vtableAddress, CONSTRUCTION_VTABLE_LABEL);
+			boolean hasVtableLabel = hasSymbolWithName(vtableAddress, VTABLE_LABEL) ||
+				hasSymbolWithName(vtableAddress, CONSTRUCTION_VTABLE_LABEL);
 			if (hasVtableLabel) {
 				return vtableAddress;
 			}
@@ -1693,7 +1782,7 @@ private Address getReferencedAddress(Address address) {
 				return vtableAddress.add(defaultPointerSize);
 			}
 
-			Data data = api.getDataContaining(vtableAddress);
+			Data data = listing.getDataContaining(vtableAddress);
 			if (data != null && !data.getDataType().getName().contains("undefined")) {
 				return vtableAddress.add(defaultPointerSize);
 			}
@@ -1765,9 +1854,11 @@ private Address getReferencedAddress(Address address) {
 
 		Namespace newNamespace;
 		try {
-			newNamespace = NamespaceUtils.createNamespaceHierarchy(name, namespaceIn.getParentNamespace(), program,
-					SourceType.ANALYSIS);
-		} catch (InvalidInputException e) {
+			newNamespace = NamespaceUtils.createNamespaceHierarchy(name,
+				namespaceIn.getParentNamespace(), program,
+				SourceType.ANALYSIS);
+		}
+		catch (InvalidInputException e) {
 			return null;
 		}
 		return newNamespace;
@@ -1775,7 +1866,7 @@ private Address getReferencedAddress(Address address) {
 
 	private Structure getTypeinfoStructure(Address typeinfoAddress) {
 
-		Data data = api.getDataAt(typeinfoAddress);
+		Data data = listing.getDataAt(typeinfoAddress);
 
 		if (!isTypeinfoStruct(data)) {
 			return null;
@@ -1785,7 +1876,8 @@ private Address getReferencedAddress(Address address) {
 
 	}
 
-	public Map<Address, Set<Address>> findTypeinfoReferencesNotInTypeinfoStructsOld(List<Address> typeinfoAddresses)
+	public Map<Address, Set<Address>> findTypeinfoReferencesNotInTypeinfoStructsOld(
+			List<Address> typeinfoAddresses)
 			throws CancelledException {
 
 		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Typeinfo References");
@@ -1828,7 +1920,8 @@ private Address getReferencedAddress(Address address) {
 		}
 		Map<Address, Set<Address>> directRefMap = new HashMap<Address, Set<Address>>();
 
-		AddressIterator addrIter = initializedSet.getAddresses(initializedSet.getMinAddress(), true);
+		AddressIterator addrIter =
+			initializedSet.getAddresses(initializedSet.getMinAddress(), true);
 		while (addrIter.hasNext()) {
 			monitor.checkCancelled();
 			Address address = addrIter.next();
@@ -1855,7 +1948,8 @@ private Address getReferencedAddress(Address address) {
 	 * @param taskMonitor    a cancellable monitor
 	 */
 	private void addByteSearchPatternDirRefs(MemoryBytePatternSearcher searcher,
-			Map<Address, Set<Address>> typeinfoRefMap, Address address, byte[] bytes, TaskMonitor taskMonitor) {
+			Map<Address, Set<Address>> typeinfoRefMap, Address address, byte[] bytes,
+			TaskMonitor taskMonitor) {
 
 		// no pattern bytes.
 		if (bytes == null) {
@@ -1879,13 +1973,15 @@ private Address getReferencedAddress(Address address) {
 		};
 
 		// create a Pattern of the bytes and the MatchAction to perform upon a match
-		GenericByteSequencePattern<Address> genericByteMatchPattern = new GenericByteSequencePattern<>(bytes, action);
+		GenericByteSequencePattern<Address> genericByteMatchPattern =
+			new GenericByteSequencePattern<>(bytes, action);
 
 		searcher.addPattern(genericByteMatchPattern);
 
 	}
 
-	public Map<Address, Set<Address>> findTypeinfoReferencesNotInTypeinfoStructs(List<GccTypeinfo> typeinfos)
+	public Map<Address, Set<Address>> findTypeinfoReferencesNotInTypeinfoStructs(
+			List<GccTypeinfo> typeinfos)
 			throws CancelledException {
 
 		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Typeinfo References");
@@ -1941,7 +2037,8 @@ private Address getReferencedAddress(Address address) {
 		return typeinfoRefMap;
 	}
 
-	public Set<Address> findTypeinfoRefsPossiblyInVtables(GccTypeinfo typeinfo) throws CancelledException {
+	public Set<Address> findTypeinfoRefsPossiblyInVtables(GccTypeinfo typeinfo)
+			throws CancelledException {
 
 		Address typeinfoAddr = typeinfo.getAddress();
 		Set<Address> typeinfoRefsPossiblyInVtables = new HashSet<Address>();
@@ -1955,21 +2052,22 @@ private Address getReferencedAddress(Address address) {
 
 		for (Address typeinfoRef : typeinfoRefs) {
 
-			Function functionContainingTypeinfoRef = program.getListing().getFunctionContaining(typeinfoRef);
+			Function functionContainingTypeinfoRef =
+				program.getListing().getFunctionContaining(typeinfoRef);
 			if (functionContainingTypeinfoRef != null) {
 				continue;
 			}
 
-			Instruction instructionContainingAddr = program.getListing().getInstructionContaining(typeinfoRef);
+			Instruction instructionContainingAddr =
+				program.getListing().getInstructionContaining(typeinfoRef);
 			if (instructionContainingAddr != null) {
 				continue;
 			}
-			
-			Data dataContainingTypeinfoRef = program.getListing().getDefinedDataContaining(typeinfoRef);
 
-			if (dataContainingTypeinfoRef == null
-					|| (dataContainingTypeinfoRef != null && !isTypeinfoStruct(dataContainingTypeinfoRef))) {
+			Data dataContainingTypeinfoRef =
+				program.getListing().getDefinedDataContaining(typeinfoRef);
 
+			if (!isTypeinfoStruct(dataContainingTypeinfoRef)) {
 				typeinfoRefsPossiblyInVtables.add(typeinfoRef);
 			}
 		}
@@ -1989,7 +2087,8 @@ private Address getReferencedAddress(Address address) {
 	 * @param bytes           the bytes to search for
 	 * @param taskMonitor     a cancellable monitor
 	 */
-	private void addByteSearchPattern(MemoryBytePatternSearcher searcher, Map<Address, Set<Address>> typeinfoRefMap,
+	private void addByteSearchPattern(MemoryBytePatternSearcher searcher,
+			Map<Address, Set<Address>> typeinfoRefMap,
 			Address typeinfoAddress, byte[] bytes, TaskMonitor taskMonitor) {
 
 		// no pattern bytes.
@@ -2002,20 +2101,24 @@ private Address getReferencedAddress(Address address) {
 			@Override
 			public void apply(Program prog, Address addr, Match match) {
 
-				Function functionContainingTypeinfoRef = prog.getListing().getFunctionContaining(addr);
+				Function functionContainingTypeinfoRef =
+					prog.getListing().getFunctionContaining(addr);
 
 				Data dataContainingTypeinfoRef = prog.getListing().getDefinedDataContaining(addr);
 
-				Instruction instructionContainingAddr = prog.getListing().getInstructionContaining(addr);
+				Instruction instructionContainingAddr =
+					prog.getListing().getInstructionContaining(addr);
 
 				// check the direct references found with the searcher
 				// if not in function but is an instruction then create the function
 				// otherwise, add to the list to report to user
 				boolean add = false;
-				if (functionContainingTypeinfoRef == null && instructionContainingAddr == null
-						&& dataContainingTypeinfoRef == null) {
+				if (functionContainingTypeinfoRef == null && instructionContainingAddr == null &&
+					dataContainingTypeinfoRef == null) {
 					add = true;
-				} else if (dataContainingTypeinfoRef != null && !isTypeinfoStruct(dataContainingTypeinfoRef)) {
+				}
+				else if (dataContainingTypeinfoRef != null &&
+					!isTypeinfoStruct(dataContainingTypeinfoRef)) {
 					add = true;
 				}
 				if (add) {
@@ -2032,12 +2135,12 @@ private Address getReferencedAddress(Address address) {
 		};
 
 		// create a Pattern of the bytes and the MatchAction to perform upon a match
-		GenericByteSequencePattern<Address> genericByteMatchPattern = new GenericByteSequencePattern<>(bytes, action);
+		GenericByteSequencePattern<Address> genericByteMatchPattern =
+			new GenericByteSequencePattern<>(bytes, action);
 
 		searcher.addPattern(genericByteMatchPattern);
 
 	}
-
 
 	/**
 	 * Method to determine if the given data is a typeinfo structure
@@ -2057,7 +2160,8 @@ private Address getReferencedAddress(Address address) {
 			return false;
 		}
 
-		// This has to be "contains" to get all types of class structures some begin and end
+		// This has to be "contains" to get all types of class structures some begin and
+		// end
 		// with other things
 		Structure structure = (Structure) baseDataType;
 		if (structure.getName().contains(CLASS_TYPE_INFO_STRUCTURE)) {
@@ -2074,7 +2178,8 @@ private Address getReferencedAddress(Address address) {
 	 * @param vtableAddress the given vtable address
 	 * @throws CancelledException if cancelled
 	 */
-	private Vtable processVtable(Address vtableAddress, GccTypeinfoRef typeinfoRef, Boolean isConstruction)
+	private Vtable processVtable(Address vtableAddress, GccTypeinfoRef typeinfoRef,
+			Boolean isConstruction)
 			throws CancelledException {
 
 		Vtable vtable = null;
@@ -2085,17 +2190,21 @@ private Address getReferencedAddress(Address address) {
 			isExternal = true;
 		}
 
-		if (vtableAddress.equals(class_type_info_vtable) || vtableAddress.equals(si_class_type_info_vtable)
-				|| vtableAddress.equals(vmi_class_type_info_vtable)) {
+		if (vtableAddress.equals(class_type_info_vtable) ||
+			vtableAddress.equals(si_class_type_info_vtable) ||
+			vtableAddress.equals(vmi_class_type_info_vtable)) {
 
 			isSpecial = true;
 		}
 
 		if (isConstruction == null) {
-			vtable = new Vtable(program, vtableAddress, typeinfoRef, isSpecial, isExternal, monitor);
-		} else {
+			vtable =
+				new Vtable(program, vtableAddress, typeinfoRef, isSpecial, isExternal, monitor);
+		}
+		else {
 
-			vtable = new Vtable(program, vtableAddress, typeinfoRef, isSpecial, isExternal, isConstruction, monitor);
+			vtable = new Vtable(program, vtableAddress, typeinfoRef, isSpecial, isExternal,
+				isConstruction, monitor);
 		}
 
 		if (isExternal) {
@@ -2137,25 +2246,30 @@ private Address getReferencedAddress(Address address) {
 
 	}
 
-	public SpecialVtable createSpecialVtable(Address vtableAddress, GccTypeinfo specialTypeinfo) throws Exception {
+	public SpecialVtable createSpecialVtable(Address vtableAddress, GccTypeinfo specialTypeinfo)
+			throws Exception {
 
 		boolean isExternal = false;
 		Address typeinfoRefAddress = null;
-		// if vtable is in external block don't try to create it because the full table isn't there
+		// if vtable is in external block don't try to create it because the full table
+		// isn't there
 		// but is partially in placeholder external memory block
 		if (program.getMemory().getBlock(vtableAddress).getName().equals("EXTERNAL")) {
 			isExternal = true;
 		}
 
-		// if vtable address points to external memory don't try to create because table is
+		// if vtable address points to external memory don't try to create because table
+		// is
 		// in external library
 		Address externalReference = getExternalReference(vtableAddress);
 		if (externalReference != null) {
 			isExternal = true;
 		}
 
-		// if external then there is no typeinfo ref in the vtable - it is in an external program
-		// if internal then the typeinfo ref for special vtable is the second item in the vtable
+		// if external then there is no typeinfo ref in the vtable - it is in an
+		// external program
+		// if internal then the typeinfo ref for special vtable is the second item in
+		// the vtable
 		if (!isExternal) {
 			typeinfoRefAddress = vtableAddress.add(defaultPointerSize);
 		}
@@ -2166,7 +2280,8 @@ private Address getReferencedAddress(Address address) {
 
 		api.clearListing(vtableAddress);
 
-		SpecialVtable specialVtable = new SpecialVtable(program, vtableAddress, typeinfoRef, isExternal,
+		SpecialVtable specialVtable =
+			new SpecialVtable(program, vtableAddress, typeinfoRef, isExternal,
 				vtableSymbol.getParentNamespace(), monitor);
 		return specialVtable;
 	}
@@ -2201,8 +2316,10 @@ private Address getReferencedAddress(Address address) {
 			List<SpecialVtable> specialVtables) throws CancelledException, Exception {
 
 		StructureDataType classTypeInfoStructure = createClassTypeInfoStructure();
-		StructureDataType siClassTypeInfoStructure = createSiClassTypeInfoStructure(classTypeInfoStructure);
-		StructureDataType baseClassTypeInfoStructure = createBaseClassTypeInfoStructure(classTypeInfoStructure);
+		StructureDataType siClassTypeInfoStructure =
+			createSiClassTypeInfoStructure(classTypeInfoStructure);
+		StructureDataType baseClassTypeInfoStructure =
+			createBaseClassTypeInfoStructure(classTypeInfoStructure);
 
 		List<GccTypeinfo> typeinfos = new ArrayList<GccTypeinfo>(specialTypeinfos);
 
@@ -2213,7 +2330,8 @@ private Address getReferencedAddress(Address address) {
 
 			if (specialTypeinfo.isInProgramMemory()) {
 				applyTypeinfoStructure(siClassTypeInfoStructure, specialTypeinfo.getAddress());
-				typeinfoToStructuretypeMap.put(specialTypeinfo.getAddress(), SI_CLASS_TYPE_INFO_STRUCTURE);
+				typeinfoToStructuretypeMap.put(specialTypeinfo.getAddress(),
+					SI_CLASS_TYPE_INFO_STRUCTURE);
 			}
 		}
 
@@ -2272,20 +2390,27 @@ private Address getReferencedAddress(Address address) {
 				}
 
 				// create a "single inheritance" struct here
-				else if (specialVtable.getNamespace().getName().equals(SI_CLASS_TYPEINFO_NAMESPACE)) {
+				else if (specialVtable.getNamespace()
+						.getName()
+						.equals(SI_CLASS_TYPEINFO_NAMESPACE)) {
 					specialTypeinfoNamespaceName = SI_CLASS_TYPEINFO_NAMESPACE;
 					typeinfoToStructuretypeMap.put(typeinfoAddress, SI_CLASS_TYPE_INFO_STRUCTURE);
-					newStructure = applyTypeinfoStructure(siClassTypeInfoStructure, typeinfoAddress);
+					newStructure =
+						applyTypeinfoStructure(siClassTypeInfoStructure, typeinfoAddress);
 				}
 
 				// create a "virtual multip inheritance" struct here
-				else if (specialVtable.getNamespace().getName().equals(VMI_CLASS_TYPEINFO_NAMESPACE)) {
+				else if (specialVtable.getNamespace()
+						.getName()
+						.equals(VMI_CLASS_TYPEINFO_NAMESPACE)) {
 					specialTypeinfoNamespaceName = VMI_CLASS_TYPEINFO_NAMESPACE;
 					typeinfoToStructuretypeMap.put(typeinfoAddress, VMI_CLASS_TYPE_INFO_STRUCTURE);
-					Structure vmiClassTypeinfoStructure = getOrCreateVmiTypeinfoStructure(typeinfoAddress,
+					Structure vmiClassTypeinfoStructure =
+						getOrCreateVmiTypeinfoStructure(typeinfoAddress,
 							baseClassTypeInfoStructure);
 					if (vmiClassTypeinfoStructure != null) {
-						newStructure = applyTypeinfoStructure(vmiClassTypeinfoStructure, typeinfoAddress);
+						newStructure =
+							applyTypeinfoStructure(vmiClassTypeinfoStructure, typeinfoAddress);
 					}
 				}
 
@@ -2296,39 +2421,41 @@ private Address getReferencedAddress(Address address) {
 
 				// check for existing symbol and if none, demangle the name and apply
 				Symbol typeinfoSymbol = api.getSymbolAt(typeinfoAddress);
-				if (typeinfoSymbol == null || typeinfoSymbol.getSource() == SourceType.DEFAULT
-						|| typeinfoSymbol.getName().startsWith(".rdata$")) {
+				if (typeinfoSymbol == null || typeinfoSymbol.getSource() == SourceType.DEFAULT ||
+					typeinfoSymbol.getName().startsWith(".rdata$")) {
 
 					typeinfoSymbol = createDemangledTypeinfoSymbol(typeinfoAddress);
 					if (typeinfoSymbol == null) {
-						Msg.debug(this, "Could not create demangled typeinfo symbol at " + typeinfoAddress.toString());
+						Msg.debug(this, "Could not create demangled typeinfo symbol at " +
+							typeinfoAddress.toString());
 						continue;
 					}
 				}
 
-				if (typeinfoSymbol != null && typeinfoSymbol.getName().equals("typeinfo")) {
+				if (typeinfoSymbol.getName().equals("typeinfo")) {
 					promoteToClassNamespace(typeinfoSymbol.getParentNamespace());
 					GccTypeinfo typeinfo = createGccTypeinfo(typeinfoSymbol, false);
 					if (specialTypeinfoNamespaceName == null) {
 						continue;
 					}
-					GccTypeinfo specialTypeinfo = getTypeinfo(specialTypeinfoNamespaceName, specialTypeinfos);
+					GccTypeinfo specialTypeinfo =
+						getTypeinfo(specialTypeinfoNamespaceName, specialTypeinfos);
 					typeinfo.setInheritedSpecialTypeinfo(specialTypeinfo);
 					typeinfos.add(typeinfo);
 					continue;
 				}
 			}
 		}
-		
+
 		// remove typeinfos that do not inherit one of the three special typeinfos
 		List<GccTypeinfo> typeinfosToRemove = new ArrayList<GccTypeinfo>();
 		Map<Address, GccTypeinfo> typeinfoMap = new HashMap<Address, GccTypeinfo>();
-		
+
 		for (GccTypeinfo typeinfo : typeinfos) {
 			monitor.checkCancelled();
 			Address typeinfoAddress = typeinfo.getAddress();
 			if (typeinfo.getInheritedSpecialTypeinfo() == null) {
-						
+
 				typeinfosToRemove.add(typeinfo);
 				continue;
 			}
@@ -2342,7 +2469,8 @@ private Address getReferencedAddress(Address address) {
 		return typeinfos;
 	}
 
-	private GccTypeinfo getTypeinfo(String namespaceName, List<GccTypeinfo> typeinfos) throws CancelledException {
+	private GccTypeinfo getTypeinfo(String namespaceName, List<GccTypeinfo> typeinfos)
+			throws CancelledException {
 
 		for (GccTypeinfo typeinfo : typeinfos) {
 			monitor.checkCancelled();
@@ -2355,7 +2483,8 @@ private Address getReferencedAddress(Address address) {
 
 	}
 
-	private void updateTypeinfosWithBases(List<GccTypeinfo> typeinfos, Map<Address, GccTypeinfo> typeinfoMap)
+	private void updateTypeinfosWithBases(List<GccTypeinfo> typeinfos,
+			Map<Address, GccTypeinfo> typeinfoMap)
 			throws CancelledException {
 
 		List<GccTypeinfo> invalidTypeinfos = new ArrayList<GccTypeinfo>();
@@ -2401,26 +2530,29 @@ private Address getReferencedAddress(Address address) {
 	private boolean updateSiTypeinfo(GccTypeinfo typeinfo, Map<Address, GccTypeinfo> typeinfoMap)
 			throws CancelledException {
 
-		Data siTypeinfoStructure = api.getDataAt(typeinfo.getAddress());
+		Data siTypeinfoStructure = listing.getDataAt(typeinfo.getAddress());
 
 		// SI_CLASS_TYPE_INFO_STRUCTURE
-		if (siTypeinfoStructure == null || !siTypeinfoStructure.isStructure()) {
+		if (!isTypeinfoStruct(siTypeinfoStructure)) {
 			throw new IllegalArgumentException(
-					siTypeinfoStructure.getAddressString(false, false) + " is not a structure");
+				siTypeinfoStructure.getAddressString(false, false) +
+					" is not a typeinfo structure");
 		}
 
 		Data baseClassPointer = siTypeinfoStructure.getComponent(2);
 
 		Address baseClassPointerAddress = baseClassPointer.getAddress();
-		Address baseTypeinfoAddress = extendedFlatAPI.getReferencedAddress(baseClassPointerAddress, false);
+		Address baseTypeinfoAddress =
+			extendedFlatAPI.getReferencedAddress(baseClassPointerAddress, false);
 
 		if (baseTypeinfoAddress == null) {
-			Msg.debug(this, typeinfo.getAddress() + ": invalid typeinfo - cannot get address for baseTypeinfo");
+			Msg.debug(this,
+				typeinfo.getAddress() + ": invalid typeinfo - cannot get address for baseTypeinfo");
 			return false;
 		}
 
 		GccTypeinfo baseTypeinfo = typeinfoMap.get(baseTypeinfoAddress);
-		if(baseTypeinfo == null) {
+		if (baseTypeinfo == null) {
 			return false;
 		}
 
@@ -2433,12 +2565,12 @@ private Address getReferencedAddress(Address address) {
 	private boolean updateVmiTypeinfo(GccTypeinfo typeinfo, Map<Address, GccTypeinfo> typeinfoMap)
 			throws CancelledException {
 
-		Data vmiTypeinfoStructure = api.getDataAt(typeinfo.getAddress());
+		Data vmiTypeinfoStructure = listing.getDataAt(typeinfo.getAddress());
 
 		// VMI_CLASS_TYPE_INFO_STRUCTURE
-		if (vmiTypeinfoStructure == null || !vmiTypeinfoStructure.isStructure()) {
+		if (!isTypeinfoStruct(vmiTypeinfoStructure)) {
 			throw new IllegalArgumentException(
-					vmiTypeinfoStructure.getAddressString(false, false) + " is not a structure");
+				vmiTypeinfoStructure.getAddressString(false, false) + " is not a structure");
 		}
 
 		long inheritanceFlagValue = getVmiInheritanceFlag(vmiTypeinfoStructure);
@@ -2453,19 +2585,23 @@ private Address getReferencedAddress(Address address) {
 
 			Data baseClassStructure = baseClassArray.getComponent(i);
 			Address baseClassStructureAddress = baseClassStructure.getAddress();
-			Address baseTypeinfoAddress = extendedFlatAPI.getReferencedAddress(baseClassStructureAddress, false);
+			Address baseTypeinfoAddress =
+				extendedFlatAPI.getReferencedAddress(baseClassStructureAddress, false);
 
 			if (baseTypeinfoAddress == null) {
 				Msg.debug(this,
-						typeinfo.getAddress() + ": invalid typeinfo - cannot get address at baseTypeinfo[" + i + "]");
+					typeinfo.getAddress() +
+						": invalid typeinfo - cannot get address at baseTypeinfo[" + i + "]");
 				return false;
 			}
 
 			GccTypeinfo baseTypeinfo = typeinfoMap.get(baseTypeinfoAddress);
 
 			if (baseTypeinfo == null) {
-				Msg.debug(this, typeinfo.getAddress()
-						+ ": invalid typeinfo - no special classtypeinfo ref'd by baseTypeinfo[" + i + "]");
+				Msg.debug(this,
+					typeinfo.getAddress() +
+						": invalid typeinfo - no special classtypeinfo ref'd by baseTypeinfo[" + i +
+						"]");
 				return false;
 			}
 
@@ -2488,7 +2624,8 @@ private Address getReferencedAddress(Address address) {
 			if (defaultPointerSize == 4) {
 				offsetMask = 0xffffff00L;
 
-			} else {
+			}
+			else {
 				offsetMask = 0xffffffffffffff00L;
 			}
 
@@ -2514,15 +2651,16 @@ private Address getReferencedAddress(Address address) {
 		// TODO: make a validate structure method and pass name
 		if (vmiTypeinfoStructure == null || !vmiTypeinfoStructure.isStructure()) {
 			throw new IllegalArgumentException(
-					vmiTypeinfoStructure.getAddressString(false, false) + " is not a structure");
+				vmiTypeinfoStructure.getAddressString(false, false) + " is not a structure");
 		}
 
 		Data inheritanceFlagComponent = vmiTypeinfoStructure.getComponent(2);
 		Address flagAddress = inheritanceFlagComponent.getAddress();
 		DataType inheritanceFlagDataType = inheritanceFlagComponent.getDataType();
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), flagAddress);
-		Scalar scalar = (Scalar) inheritanceFlagDataType.getValue(buf, inheritanceFlagDataType.getDefaultSettings(),
-				inheritanceFlagDataType.getLength());
+		Scalar scalar = (Scalar) inheritanceFlagDataType.getValue(buf,
+			inheritanceFlagDataType.getDefaultSettings(),
+			inheritanceFlagDataType.getLength());
 		long inheritanceFlagValue = scalar.getUnsignedValue();
 		return inheritanceFlagValue;
 	}
@@ -2532,15 +2670,16 @@ private Address getReferencedAddress(Address address) {
 		// TODO: make a validate structure method and pass name
 		if (vmiTypeinfoStructure == null || !vmiTypeinfoStructure.isStructure()) {
 			throw new IllegalArgumentException(
-					vmiTypeinfoStructure.getAddressString(false, false) + " is not a structure");
+				vmiTypeinfoStructure.getAddressString(false, false) + " is not a structure");
 		}
 
 		Data numBaseClassesComponent = vmiTypeinfoStructure.getComponent(3);
 		Address numBaseClassesAddress = numBaseClassesComponent.getAddress();
 		DataType numBaseClassesDataType = numBaseClassesComponent.getDataType();
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), numBaseClassesAddress);
-		Scalar scalar = (Scalar) numBaseClassesDataType.getValue(buf, numBaseClassesDataType.getDefaultSettings(),
-				numBaseClassesDataType.getLength());
+		Scalar scalar = (Scalar) numBaseClassesDataType.getValue(buf,
+			numBaseClassesDataType.getDefaultSettings(),
+			numBaseClassesDataType.getLength());
 		int numBaseClasses = (int) scalar.getUnsignedValue();
 
 		return numBaseClasses;
@@ -2556,27 +2695,42 @@ private Address getReferencedAddress(Address address) {
 	 */
 	private boolean canContainPointer(Address pointer) throws CancelledException {
 
-		// return true if has a correcly sized ptr already -
-		Data data = program.getListing().getDataAt(pointer);
-		if (data != null && data.isPointer()) {
+		// check to see if bad address or instruction first
+		Data data = listing.getDataAt(pointer);
+		if (data == null) {
+			return false;
+		}
+
+		// return true if has a correcly sized ptr already
+		if (data.isPointer()) {
 			return true;
 		}
 
-		// ok if has symbol at the actual addr so don't check it
-		int offset = 1;
-
+		int offset = 0;
 		while (offset < defaultPointerSize) {
 			monitor.checkCancelled();
 			Address addr = pointer.add(offset);
-			data = program.getListing().getDataContaining(addr);
-			if (data != null) {
+			data = listing.getDataContaining(addr);
+
+			// if bad address, instruction, or already defined data cannot contain pointer offset
+			// 0 was already checked for pointer above and returned true if already a pointer
+			// this is checking to see if there is other data at or in middle of the space where
+			// we want to put a pointer
+			if (data == null || data.isDefined()) {
 				return false;
 			}
 
+			// ok if has symbol at the actual addr so don't check it
+			if (offset == 0) {
+				continue;
+			}
+
+			// but if ref in middle then can't contain ptr
 			Symbol[] symbols = symbolTable.getSymbols(addr);
 			if (symbols.length != 0) {
 				return false;
 			}
+			offset++;
 		}
 
 		return true;
@@ -2592,7 +2746,7 @@ private Address getReferencedAddress(Address address) {
 	 */
 	private boolean hasExistingTypeinfoStructure(Address address) {
 
-		Data dataAt = api.getDataAt(address);
+		Data dataAt = listing.getDataAt(address);
 
 		if (dataAt == null) {
 			return false;
@@ -2604,8 +2758,7 @@ private Address getReferencedAddress(Address address) {
 			return false;
 		}
 
-		// This has to be "contains" to get all types of class structures some begin and
-		// end
+		// This has to be "contains" to get all types of class structures some begin and end
 		// with other things
 		if (!dataType.getName().contains(CLASS_TYPE_INFO_STRUCTURE)) {
 			return false;
@@ -2642,10 +2795,12 @@ private Address getReferencedAddress(Address address) {
 		}
 
 		// get or create the vmiClassTypeInfoStruct
-		Structure vmiClassTypeinfoStructure = (Structure) dataTypeManager.getDataType(classDataTypesCategoryPath,
+		Structure vmiClassTypeinfoStructure =
+			(Structure) dataTypeManager.getDataType(classDataTypesCategoryPath,
 				VMI_CLASS_TYPE_INFO_STRUCTURE + numBases);
 		if (vmiClassTypeinfoStructure == null) {
-			vmiClassTypeinfoStructure = createVmiClassTypeInfoStructure(baseClassTypeInfoStructure, numBases);
+			vmiClassTypeinfoStructure =
+				createVmiClassTypeInfoStructure(baseClassTypeInfoStructure, numBases);
 		}
 		return vmiClassTypeinfoStructure;
 	}
@@ -2654,7 +2809,8 @@ private Address getReferencedAddress(Address address) {
 			throws DuplicateNameException, InvalidInputException, CancelledException {
 
 		// TODO: 1. see if there is a mangled name that didn't get demangled at
-		// TODO: 2 - refactor the three places that call this to just call getSymbolAt and
+		// TODO: 2 - refactor the three places that call this to just call getSymbolAt
+		// and
 		// in that method check for regular symbol and return or check for mangled
 		// symbol that didn't get demangled then return or
 		// check for this scenario where you need to get the string out
@@ -2665,51 +2821,83 @@ private Address getReferencedAddress(Address address) {
 			return null;
 		}
 
-		String mangledTypeinfoString = getStringAtAddress(typeinfoNameAddress);
+		boolean existingString = false;
+
+		// get defined string if defined already
+		String mangledTypeinfoString = getDefinedStringAt(typeinfoNameAddress);
+		if (mangledTypeinfoString != null) {
+			existingString = true;
+		}
+
+		if (!existingString) {
+			mangledTypeinfoString = getStringFromMemory(typeinfoNameAddress);
+		}
 
 		if (mangledTypeinfoString == null) {
 			Msg.debug(this, "Could not get typeinfo string from " + typeinfoAddress.toString());
 			return null;
 		}
 
-		if (mangledTypeinfoString.startsWith("*")) {
-			mangledTypeinfoString = mangledTypeinfoString.substring(1);
+		String mangledLabel = mangledTypeinfoString;
+
+		if (mangledLabel.startsWith("*")) {
+			mangledLabel = mangledTypeinfoString.substring(1);
 		}
 
-		if (mangledTypeinfoString.startsWith(".rdata$")) {
-			mangledTypeinfoString = mangledTypeinfoString.substring(7);
+		if (mangledLabel.startsWith(".rdata$")) {
+			mangledLabel = mangledTypeinfoString.substring(7);
 		}
-		mangledTypeinfoString = "_ZTS" + mangledTypeinfoString;
+		mangledLabel = "_ZTS" + mangledLabel;
 
-		symbolTable.createLabel(typeinfoNameAddress, mangledTypeinfoString, globalNamespace, SourceType.ANALYSIS);
+		if (!isTypeinfoNameString(mangledLabel)) {
+			return null;
+		}
 
-		// demangle the symbol
-		DemanglerCmd cmd = new DemanglerCmd(typeinfoNameAddress, mangledTypeinfoString);
+		if (!existingString) {
+			boolean created = createString(typeinfoNameAddress, mangledTypeinfoString.length());
+			if (!created) {
+				Msg.debug(this, "Could not create string at " + typeinfoNameAddress);
+			}
+		}
+
+		// create mangled label
+		symbolTable.createLabel(typeinfoNameAddress, mangledLabel, globalNamespace,
+			SourceType.ANALYSIS);
+
+		// demangle the symbol to create demangled symbol
+		DemanglerCmd cmd = new DemanglerCmd(typeinfoNameAddress, mangledLabel);
 		cmd.applyTo(program, monitor);
 
 		// get the newly created symbol to get the namespace
 		Symbol typeinfoNameSymbol = symbolTable.getPrimarySymbol(typeinfoNameAddress);
 
-		// TODO: need to account for rare case where there are more than one typeinfos with
-		// exact same class and name so make two classes in this case - name second one dupe#
+		// TODO: need to account for rare case where there are more than one typeinfos
+		// with
+		// exact same class and name so make two classes in this case - name second one
+		// dupe#
 		// TODO: instead/also - eliminate the ones with no refs or just pick one?
 		List<Symbol> symbols = symbolTable.getSymbols(typeinfoNameSymbol.getName(),
-				typeinfoNameSymbol.getParentNamespace());
+			typeinfoNameSymbol.getParentNamespace());
 		if (symbols.size() > 1) {
 
-			Msg.debug(this, "Duplicate typeinfo namespace: " + typeinfoNameSymbol.getParentNamespace().toString());
+			Msg.debug(this, "Duplicate typeinfo namespace: " +
+				typeinfoNameSymbol.getParentNamespace().toString());
 			for (Symbol symbol : symbols) {
 				Msg.debug(this, symbol.getAddress());
 			}
 			Namespace newNamespace = symbolTable.getOrCreateNameSpace(globalNamespace,
-					typeinfoNameSymbol.getParentNamespace().getName(true) + "DUPE", SourceType.ANALYSIS);
+				typeinfoNameSymbol.getParentNamespace().getName(true) + "DUPE",
+				SourceType.ANALYSIS);
 			try {
 				typeinfoNameSymbol.setNamespace(newNamespace);
-			} catch (DuplicateNameException e) {
+			}
+			catch (DuplicateNameException e) {
 				return null;
-			} catch (InvalidInputException e) {
+			}
+			catch (InvalidInputException e) {
 				return null;
-			} catch (CircularDependencyException e) {
+			}
+			catch (CircularDependencyException e) {
 				return null;
 			}
 
@@ -2719,21 +2907,36 @@ private Address getReferencedAddress(Address address) {
 
 		if (classNamespace.isGlobal()) {
 			Msg.debug(this,
-					typeinfoAddress.toString() + "Could not create a class namespace for demangled namespace string ");
+				typeinfoAddress.toString() +
+					"Could not create a class namespace for demangled namespace string ");
 			return null;
 		}
 
 		// create the new typeinfo symbol in the demangled namespace
-		Symbol newSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo", classNamespace, SourceType.ANALYSIS);
+		Symbol newSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo", classNamespace,
+			SourceType.ANALYSIS);
 
 		api.setPlateComment(typeinfoAddress, "typeinfo for " + classNamespace.getName(true));
 
 		return newSymbol;
 	}
 
+	private boolean isTypeinfoNameString(String string) {
+
+		DemangledObject demangledObject = DemanglerUtil.demangle(string);
+		if (demangledObject == null) {
+			return false;
+		}
+
+		if (demangledObject.getName().equals("typeinfo-name")) {
+			return true;
+		}
+		return false;
+	}
+
 	private Address getTypeinfoNameAddress(Address typeinfoAddress) {
 
-		Data dataAt = api.getDataAt(typeinfoAddress);
+		Data dataAt = listing.getDataAt(typeinfoAddress);
 		if (dataAt == null) {
 			return null;
 		}
@@ -2757,42 +2960,107 @@ private Address getReferencedAddress(Address address) {
 		return typeinfoNameAddress;
 	}
 
-	String getStringAtAddress(Address address) throws CancelledException {
-
-		Data stringData = api.getDataAt(address);
-		if (stringData == null) {
-
-			// account for randomly occurring bad strings sucking up the real expected
-			// string
-			Data dataContaining = api.getDataContaining(address);
-			if (dataContaining != null) {
-				api.clearListing(dataContaining.getAddress());
-			}
-			// create string
-			try {
-				stringData = api.createAsciiString(address);
-			} catch (Exception e) {
-				Msg.debug(this, "Could not create string at " + address);
-				return null;
-			}
-
-			if (stringData == null) {
-				return null;
-			}
-
+	private boolean createString(Address address, int len) {
+		try {
+			DataUtilities.createData(program, address, new TerminatedStringDataType(), len,
+				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+			return true;
 		}
+		catch (CodeUnitInsertionException e) {
+			return false;
+		}
+	}
+
+	private String getDefinedStringAt(Address address) {
+
+		Listing listing = program.getListing();
+		Data stringData = listing.getDataAt(address);
+
+		if (stringData == null) {
+			return null;
+		}
+
+		StringDataType stringDT = new StringDataType();
+
+		if (!stringData.getBaseDataType().isEquivalent(stringDT)) {
+			return null;
+		}
+
 		int stringLen = stringData.getLength();
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), address);
 
-		StringDataType sdt = new StringDataType();
-
-		String str;
-
-		str = (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
+		TerminatedStringDataType sdt = new TerminatedStringDataType();
+		String str = (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
 
 		return str;
 	}
 
+	private String getStringFromMemory(Address address) {
+
+		int stringLen = getStringLen(address);
+		if (stringLen <= 0) {
+			return null;
+		}
+
+		TerminatedStringDataType sdt = new TerminatedStringDataType();
+		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), address);
+		return (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
+
+	}
+
+	private int getStringLen(Address addr) {
+
+		int len = 0;
+
+		while (isAscii(addr)) {
+			len++;
+			addr = addr.add(1);
+		}
+
+		if (isNull(addr)) {
+			return len + 1;
+		}
+
+		return 0;
+	}
+
+	private boolean isAsciiPrintable(char ch) {
+		return ch >= 32 && ch < 127;
+	}
+
+	private boolean isAscii(Address addr) {
+
+		Memory mem = program.getMemory();
+		try {
+			byte byte1 = mem.getByte(addr);
+			char c = (char) byte1;
+			if (isAsciiPrintable(c)) {
+				return true;
+			}
+			return false;
+
+		}
+		catch (MemoryAccessException e) {
+			return false;
+		}
+	}
+
+	private boolean isNull(Address addr) {
+
+		Memory mem = program.getMemory();
+		try {
+			byte byte1 = mem.getByte(addr);
+
+			if (byte1 == 0x0) {
+				return true;
+			}
+			return false;
+
+		}
+		catch (MemoryAccessException e) {
+			return false;
+		}
+	}
 
 	/**
 	 * Method to check to see if there are any EXTERNAL block relocations
@@ -2802,12 +3070,14 @@ private Address getReferencedAddress(Address address) {
 	 * @throws CancelledException if cancelled
 	 */
 	private boolean hasExternalRelocations() throws CancelledException {
-		// if no external block then there won't be any refernces to special typeinfo in external
+		// if no external block then there won't be any refernces to special typeinfo in
+		// external
 		// block so return empty list
 		if (!hasExternalBlock()) {
 			return false;
 		}
-		Iterator<Bookmark> bookmarksIterator = program.getBookmarkManager().getBookmarksIterator(BookmarkType.WARNING);
+		Iterator<Bookmark> bookmarksIterator =
+			program.getBookmarkManager().getBookmarksIterator(BookmarkType.WARNING);
 		while (bookmarksIterator.hasNext()) {
 			monitor.checkCancelled();
 			Bookmark bookmark = bookmarksIterator.next();
@@ -2839,25 +3109,29 @@ private Address getReferencedAddress(Address address) {
 		}
 
 		if (class_type_info != null) {
-			Data data = extendedFlatAPI.getDataContaining(class_type_info);
-			if (data != null && data.getDataType().getName().contains(SI_CLASS_TYPE_INFO_STRUCTURE)) {
+			Data data = listing.getDataContaining(class_type_info);
+			if (data != null &&
+				data.getDataType().getName().contains(SI_CLASS_TYPE_INFO_STRUCTURE)) {
 				addrSet.add(data.getAddress(), data.getAddress().add(data.getLength()));
 			}
 		}
 
 		if (si_class_type_info != null) {
-			Data data = extendedFlatAPI.getDataContaining(si_class_type_info);
+			Data data = listing.getDataContaining(si_class_type_info);
 			if (data != null && data.getAddress() == null) {
-				Msg.debug(this, "si_class_type_info at " + si_class_type_info.toString() + " has null addr");
+				Msg.debug(this,
+					"si_class_type_info at " + si_class_type_info.toString() + " has null addr");
 			}
-			if (data != null && data.getDataType().getName().contains(SI_CLASS_TYPE_INFO_STRUCTURE)) {
+			if (data != null &&
+				data.getDataType().getName().contains(SI_CLASS_TYPE_INFO_STRUCTURE)) {
 				addrSet.add(data.getAddress(), data.getAddress().add(data.getLength()));
 			}
 		}
 
 		if (vmi_class_type_info != null) {
-			Data data = extendedFlatAPI.getDataContaining(vmi_class_type_info);
-			if (data != null && data.getDataType().getName().contains(SI_CLASS_TYPE_INFO_STRUCTURE)) {
+			Data data = listing.getDataContaining(vmi_class_type_info);
+			if (data != null &&
+				data.getDataType().getName().contains(SI_CLASS_TYPE_INFO_STRUCTURE)) {
 				addrSet.add(data.getAddress(), data.getAddress().add(data.getLength()));
 			}
 		}
@@ -2929,8 +3203,10 @@ private Address getReferencedAddress(Address address) {
 
 	}
 
-	public void assignConstructorsAndDestructorsUsingExistingNameNew(List<RecoveredClass> recoveredClasses)
-			throws CancelledException, InvalidInputException, DuplicateNameException, CircularDependencyException {
+	public void assignConstructorsAndDestructorsUsingExistingNameNew(
+			List<RecoveredClass> recoveredClasses)
+			throws CancelledException, InvalidInputException, DuplicateNameException,
+			CircularDependencyException {
 
 		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
 		while (recoveredClassIterator.hasNext()) {
@@ -2967,7 +3243,8 @@ private Address getReferencedAddress(Address address) {
 		}
 	}
 
-	private void findVftableDestructors(List<RecoveredClass> recoveredClasses) throws CancelledException {
+	private void findVftableDestructors(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
 
@@ -2978,7 +3255,8 @@ private Address getReferencedAddress(Address address) {
 			for (Address vftableAddress : vftableAddresses) {
 				monitor.checkCancelled();
 
-				List<Function> virtualFunctions = recoveredClass.getVirtualFunctions(vftableAddress);
+				List<Function> virtualFunctions =
+					recoveredClass.getVirtualFunctions(vftableAddress);
 
 				if (virtualFunctions.size() < 2) {
 					continue;
@@ -2987,20 +3265,23 @@ private Address getReferencedAddress(Address address) {
 				Function firstVfunction = virtualFunctions.get(0);
 				Function secondVfunction = virtualFunctions.get(1);
 
-				Address callingAddressOfFirstVfunction = getCallingAddress(secondVfunction, firstVfunction);
+				Address callingAddressOfFirstVfunction =
+					getCallingAddress(secondVfunction, firstVfunction);
 				if (callingAddressOfFirstVfunction == null) {
 					continue;
 				}
 
 				// TODO: eventually work into new op delete discovery
-				Address callingAddrOfOpDelete = getCallingAddress(secondVfunction, "operator.delete");
+				Address callingAddrOfOpDelete =
+					getCallingAddress(secondVfunction, "operator.delete");
 				if (callingAddrOfOpDelete == null) {
 					continue;
 				}
 
 				// if firsrVfunction is called before op delete then valid set of
 				// destructor/deleting destructor
-				if (callingAddrOfOpDelete.getOffset() > callingAddressOfFirstVfunction.getOffset()) {
+				if (callingAddrOfOpDelete.getOffset() > callingAddressOfFirstVfunction
+						.getOffset()) {
 					recoveredClass.addDestructor(firstVfunction);
 					recoveredClass.addDeletingDestructor(secondVfunction);
 				}
@@ -3009,16 +3290,19 @@ private Address getReferencedAddress(Address address) {
 		}
 	}
 
-	private Address getCallingAddress(Function function, Function expectedCalledFunction) throws CancelledException {
+	private Address getCallingAddress(Function function, Function expectedCalledFunction)
+			throws CancelledException {
 
-		InstructionIterator instructions = function.getProgram().getListing().getInstructions(function.getBody(), true);
+		InstructionIterator instructions =
+			function.getProgram().getListing().getInstructions(function.getBody(), true);
 
 		while (instructions.hasNext()) {
 			monitor.checkCancelled();
 			Instruction instruction = instructions.next();
 			if (instruction.getFlowType().isCall()) {
 
-				Function calledFunction = extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
+				Function calledFunction =
+					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
 
 				if (calledFunction == null) {
 					continue;
@@ -3032,16 +3316,19 @@ private Address getReferencedAddress(Address address) {
 
 	}
 
-	private Address getCallingAddress(Function function, String expectedCalledFunctionName) throws CancelledException {
+	private Address getCallingAddress(Function function, String expectedCalledFunctionName)
+			throws CancelledException {
 
-		InstructionIterator instructions = function.getProgram().getListing().getInstructions(function.getBody(), true);
+		InstructionIterator instructions =
+			function.getProgram().getListing().getInstructions(function.getBody(), true);
 
 		while (instructions.hasNext()) {
 			monitor.checkCancelled();
 			Instruction instruction = instructions.next();
 			if (instruction.getFlowType().isCall()) {
 
-				Function calledFunction = extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
+				Function calledFunction =
+					extendedFlatAPI.getReferencedFunction(instruction.getMinAddress(), false);
 				if (calledFunction.getName().equals(expectedCalledFunctionName)) {
 					return instruction.getAddress();
 				}
@@ -3051,7 +3338,8 @@ private Address getReferencedAddress(Address address) {
 
 	}
 
-	private void removeFromIndeterminateLists(List<RecoveredClass> recoveredClasses, Function function)
+	private void removeFromIndeterminateLists(List<RecoveredClass> recoveredClasses,
+			Function function)
 			throws CancelledException {
 
 		for (RecoveredClass recoveredClass : recoveredClasses) {
@@ -3065,19 +3353,20 @@ private Address getReferencedAddress(Address address) {
 	private StructureDataType createClassTypeInfoStructure() throws CancelledException {
 
 		StructureDataType classTypeInfoStructure = new StructureDataType(classDataTypesCategoryPath,
-				CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
+			CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
 
 		CharDataType characterDT = new CharDataType();
 
 		if (hasExternalRelocations()) {
-			PointerTypedef classTypeInfoPtr = new PointerTypedef(null, null, -1, program.getDataTypeManager(),
+			PointerTypedef classTypeInfoPtr =
+				new PointerTypedef(null, null, -1, program.getDataTypeManager(),
 					componentOffset);
 			classTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 
 		}
 		else {
 			PointerTypedef classTypeInfoPtr = new PointerTypedef(null, PointerDataType.dataType, -1,
-					program.getDataTypeManager(), 0);
+				program.getDataTypeManager(), componentOffset);
 			classTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 		}
 
@@ -3089,16 +3378,18 @@ private Address getReferencedAddress(Address address) {
 		return classTypeInfoStructure;
 	}
 
-	private StructureDataType createSiClassTypeInfoStructure(StructureDataType classTypeInfoStructure)
+	private StructureDataType createSiClassTypeInfoStructure(
+			StructureDataType classTypeInfoStructure)
 			throws CancelledException {
 
-		StructureDataType siClassTypeInfoStructure = new StructureDataType(classDataTypesCategoryPath,
+		StructureDataType siClassTypeInfoStructure =
+			new StructureDataType(classDataTypesCategoryPath,
 				SI_CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
 
 		CharDataType characterDT = new CharDataType();
 
-	
-		PointerTypedef classTypeInfoPtr = new PointerTypedef(null, null, -1, program.getDataTypeManager(),
+		PointerTypedef classTypeInfoPtr =
+			new PointerTypedef(null, null, -1, program.getDataTypeManager(),
 				componentOffset);
 		siClassTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 
@@ -3114,10 +3405,12 @@ private Address getReferencedAddress(Address address) {
 		return siClassTypeInfoStructure;
 	}
 
-	private StructureDataType createBaseClassTypeInfoStructure(StructureDataType classTypeInfoStructure)
+	private StructureDataType createBaseClassTypeInfoStructure(
+			StructureDataType classTypeInfoStructure)
 			throws InvalidDataTypeException {
 
-		StructureDataType baseclassTypeInfoStructure = new StructureDataType(classDataTypesCategoryPath,
+		StructureDataType baseclassTypeInfoStructure =
+			new StructureDataType(classDataTypesCategoryPath,
 				BASE_CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
 
 		DataType classTypeInfoPointer = dataTypeManager.getPointer(classTypeInfoStructure);
@@ -3132,15 +3425,18 @@ private Address getReferencedAddress(Address address) {
 		baseclassTypeInfoStructure.add(classTypeInfoPointer, "classTypeinfoPtr", null);
 
 		if (program.getMemory().isBigEndian()) {
-			baseclassTypeInfoStructure.addBitField(dataType, offsetBitSize, "baseClassOffset", "baseClassOffset");
+			baseclassTypeInfoStructure.addBitField(dataType, offsetBitSize, "baseClassOffset",
+				"baseClassOffset");
 			baseclassTypeInfoStructure.addBitField(dataType, 1, "isPublicBase", "isPublicBase");
 			baseclassTypeInfoStructure.addBitField(dataType, 1, "isVirtualBase", "isVirtualBase");
 			baseclassTypeInfoStructure.addBitField(dataType, 6, "unused", "unused");
-		} else {
+		}
+		else {
 			baseclassTypeInfoStructure.addBitField(dataType, 1, "isVirtualBase", "isVirtualBase");
 			baseclassTypeInfoStructure.addBitField(dataType, 1, "isPublicBase", "isPublicBase");
 			baseclassTypeInfoStructure.addBitField(dataType, 6, "unused", "unused");
-			baseclassTypeInfoStructure.addBitField(dataType, offsetBitSize, "baseClassOffset", "baseClassOffset");
+			baseclassTypeInfoStructure.addBitField(dataType, offsetBitSize, "baseClassOffset",
+				"baseClassOffset");
 		}
 
 		baseclassTypeInfoStructure.setPackingEnabled(true);
@@ -3149,17 +3445,19 @@ private Address getReferencedAddress(Address address) {
 
 	}
 
-	private StructureDataType createVmiClassTypeInfoStructure(StructureDataType baseClassTypeInfoStructure,
+	private StructureDataType createVmiClassTypeInfoStructure(
+			StructureDataType baseClassTypeInfoStructure,
 			int numBaseClasses) throws CancelledException {
 
-		StructureDataType vmiClassTypeInfoStructure = new StructureDataType(classDataTypesCategoryPath,
+		StructureDataType vmiClassTypeInfoStructure =
+			new StructureDataType(classDataTypesCategoryPath,
 				VMI_CLASS_TYPE_INFO_STRUCTURE + numBaseClasses, 0, dataTypeManager);
 
 		CharDataType characterDT = new CharDataType();
 		UnsignedIntegerDataType unsignedIntDT = new UnsignedIntegerDataType();
 
-		
-		PointerTypedef classTypeInfoPtr = new PointerTypedef(null, null, -1, program.getDataTypeManager(),
+		PointerTypedef classTypeInfoPtr =
+			new PointerTypedef(null, null, -1, program.getDataTypeManager(),
 				componentOffset);
 		vmiClassTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 
@@ -3171,10 +3469,11 @@ private Address getReferencedAddress(Address address) {
 
 		// make array of base class type info structs
 		ArrayDataType baseClassArray = new ArrayDataType(baseClassTypeInfoStructure, numBaseClasses,
-				baseClassTypeInfoStructure.getLength());
+			baseClassTypeInfoStructure.getLength());
 		try {
 			vmiClassTypeInfoStructure.add(baseClassArray, "baseClassPtrArray", null);
-		} catch (IllegalArgumentException e) {
+		}
+		catch (IllegalArgumentException e) {
 			Msg.debug(baseClassArray, e);
 		}
 
@@ -3182,20 +3481,20 @@ private Address getReferencedAddress(Address address) {
 
 		return vmiClassTypeInfoStructure;
 	}
-	
-	
+
 	/**
 	 * Method to add parents to the given class
 	 * 
 	 * @param recoveredClass  the given class
 	 * @param typeinfoAddress the address of the typeinfo
 	 * @return list of parents for the given class
-	 * @throws CancelledException 
-	 * @throws Exception if cannot access the given typeinfo structure, one of its
-	 *                   components, or it is not a vmi structure
+	 * @throws CancelledException
+	 * @throws Exception          if cannot access the given typeinfo structure, one
+	 *                            of its components, or it is not a vmi structure
 	 */
-	private List<RecoveredClass> addClassParentsAndFlagsForVmiClass(RecoveredClass recoveredClass, GccTypeinfo typeinfo) throws CancelledException{
-			
+	private List<RecoveredClass> addClassParentsAndFlagsForVmiClass(RecoveredClass recoveredClass,
+			GccTypeinfo typeinfo)
+			throws CancelledException {
 
 		long inheritanceFlagValue = typeinfo.getInheritanceFlagValue();
 
@@ -3204,8 +3503,10 @@ private Address getReferencedAddress(Address address) {
 		// add flag for non-diamond repeated and diamond shape types
 		if (inheritanceFlagValue == 1) {
 			if (DEBUG) {
-				Msg.debug(this, "from typeinfo at address " + typeinfo.getAddress().toString() + " "
-						+ recoveredClass.getClassNamespace().getName(true) + " has non-diamond repeated inheritance");
+				Msg.debug(this,
+					"from typeinfo at address " + typeinfo.getAddress().toString() + " " +
+						recoveredClass.getClassNamespace().getName(true) +
+						" has non-diamond repeated inheritance");
 			}
 		}
 		if (inheritanceFlagValue == 2) {
@@ -3219,35 +3520,38 @@ private Address getReferencedAddress(Address address) {
 
 		List<BaseTypeinfo> baseTypeinfos = typeinfo.getBaseTypeinfos();
 		int numBaseClasses = baseTypeinfos.size();
-		
+
 		boolean hasVirtualInheritance = false;
-		if(typeinfo.getNumAllVirtualBases() > 0) {
+		if (typeinfo.getNumAllVirtualBases() > 0) {
 			hasVirtualInheritance = true;
 		}
 
 		if (numBaseClasses > 1) {
 			recoveredClass.setHasMultipleInheritance(true);
 			recoveredClass.setHasSingleInheritance(false);
-		} else {
+		}
+		else {
 			recoveredClass.setHasMultipleInheritance(false);
 			recoveredClass.setHasSingleInheritance(true);
 			recoveredClass.setHasMultipleVirtualInheritance(hasVirtualInheritance);
 		}
-		
+
 		List<RecoveredClass> parentClassList = new ArrayList<RecoveredClass>();
 
 		int parentNum = 0;
-		for(BaseTypeinfo baseTypeinfo : baseTypeinfos) {
+		for (BaseTypeinfo baseTypeinfo : baseTypeinfos) {
 			monitor.checkCancelled();
 
 			GccTypeinfo vmiParentTypeinfo = baseTypeinfo.getBaseTypeinfo();
-			
+
 			RecoveredClass parentClass = getClass(vmiParentTypeinfo.getNamespace());
-			
+
 			if (parentClass == null) {
-				throw new IllegalArgumentException("RecoveredClass should already exist for " + vmiParentTypeinfo.getNamespace().getName(true));
+				throw new IllegalArgumentException(
+					"RecoveredClass should already exist for " +
+						vmiParentTypeinfo.getNamespace().getName(true));
 			}
-			
+
 			updateClassWithParent(parentClass, recoveredClass);
 			parentClassList.add(parentClass);
 
@@ -3255,7 +3559,7 @@ private Address getReferencedAddress(Address address) {
 
 			recoveredClass.setInheritsVirtualAncestor(hasVirtualInheritance);
 			parentClass.setIsPublicClass(baseTypeinfo.isPublicBase());
-		
+
 			orderToParentMap.put(parentNum++, parentClass);
 			parentToOffsetMap.put(parentClass, baseTypeinfo.getOffset());
 		}
@@ -3266,25 +3570,27 @@ private Address getReferencedAddress(Address address) {
 		return parentClassList;
 
 	}
-	
-	
 
-	private Address findSpecialVtable(GccTypeinfo specialTypeinfo, List<GccTypeinfo> specialTypeinfos)
+	private Address findSpecialVtable(GccTypeinfo specialTypeinfo,
+			List<GccTypeinfo> specialTypeinfos)
 			throws CancelledException {
 
 		String namespaceName = specialTypeinfo.getNamespace().getName();
 		String mangledNamespaceString = specialTypeinfo.getMangledNamespaceString();
 
 		// try finding with normal symbol name and namespace
-		Symbol vtableSymbol = getSymbolInNamespaces(SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
+		Symbol vtableSymbol =
+			getSymbolInNamespaces(SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
 		if (vtableSymbol == null) {
 			// then try finding with mangled symbol
-			vtableSymbol = findAndReturnDemangledSymbol(MANGLED_VTABLE_PREFIX + mangledNamespaceString,
+			vtableSymbol =
+				findAndReturnDemangledSymbol(MANGLED_VTABLE_PREFIX + mangledNamespaceString,
 					SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
 
 			// then try finding top of special vtable by finding ref to special typeinfo
 			if (vtableSymbol == null) {
-				Address vtableAddress = findSpecialVtableUsingSpecialTypeinfo(specialTypeinfo.getAddress(),
+				Address vtableAddress =
+					findSpecialVtableUsingSpecialTypeinfo(specialTypeinfo.getAddress(),
 						specialTypeinfos);
 
 				if (vtableAddress == null) {
@@ -3292,11 +3598,14 @@ private Address getReferencedAddress(Address address) {
 				}
 
 				try {
-					vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL, specialTypeinfo.getNamespace(),
-							SourceType.ANALYSIS);
-					api.setPlateComment(vtableAddress, "vtable for " + specialTypeinfo.getNamespace());
+					vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL,
+						specialTypeinfo.getNamespace(),
+						SourceType.ANALYSIS);
+					api.setPlateComment(vtableAddress,
+						"vtable for " + specialTypeinfo.getNamespace());
 
-				} catch (InvalidInputException e) {
+				}
+				catch (InvalidInputException e) {
 					vtableSymbol = null;
 				}
 
@@ -3308,7 +3617,8 @@ private Address getReferencedAddress(Address address) {
 		return null;
 	}
 
-	private List<SpecialVtable> findSpecialVtables(List<GccTypeinfo> specialTypeinfos) throws Exception {
+	private List<SpecialVtable> findSpecialVtables(List<GccTypeinfo> specialTypeinfos)
+			throws Exception {
 
 		List<SpecialVtable> specialVtables = new ArrayList<SpecialVtable>();
 
@@ -3344,7 +3654,8 @@ private Address getReferencedAddress(Address address) {
 	 * ref only works for special typeinfos/vtables. Regular ones can have variable
 	 * len between the two
 	 */
-	private Address findSpecialVtableUsingSpecialTypeinfo(Address typeinfoAddress, List<GccTypeinfo> specialTypeinfos)
+	private Address findSpecialVtableUsingSpecialTypeinfo(Address typeinfoAddress,
+			List<GccTypeinfo> specialTypeinfos)
 			throws CancelledException {
 
 		List<Address> referencesTo = getAllReferencesTo(typeinfoAddress);
@@ -3369,8 +3680,10 @@ private Address getReferencedAddress(Address address) {
 
 		}
 
-		// use the address set created to weed out references to the given typeinfo from special 
-		// typeinofs we only want references to the given typeinfo from its associated vtable
+		// use the address set created to weed out references to the given typeinfo from
+		// special
+		// typeinofs we only want references to the given typeinfo from its associated
+		// vtable
 		List<Address> possibleRefsInVtable = new ArrayList<Address>();
 
 		for (Address refTo : referencesTo) {
@@ -3397,7 +3710,8 @@ private Address getReferencedAddress(Address address) {
 		return vtableAddress;
 	}
 
-	private Symbol findTypeinfoUsingMangledString(String mangledNamespaceString) throws CancelledException {
+	private Symbol findTypeinfoUsingMangledString(String mangledNamespaceString)
+			throws CancelledException {
 
 		Address findSingleMangledString = findSingleMangledString(mangledNamespaceString);
 		if (findSingleMangledString == null) {
@@ -3416,11 +3730,14 @@ private Address getReferencedAddress(Address address) {
 		mangledNamespaceString = MANGLED_STRING_PREFIX + mangledNamespaceString;
 
 		try {
-			symbolTable.createLabel(findSingleMangledString, mangledNamespaceString, globalNamespace,
-					SourceType.ANALYSIS);
-		} catch (InvalidInputException e) {
+			symbolTable.createLabel(findSingleMangledString, mangledNamespaceString,
+				globalNamespace,
+				SourceType.ANALYSIS);
+		}
+		catch (InvalidInputException e) {
 
-			Msg.debug(this, "Could not make symbol for mangled string at " + findSingleMangledString);
+			Msg.debug(this,
+				"Could not make symbol for mangled string at " + findSingleMangledString);
 			return null;
 		}
 
@@ -3434,9 +3751,11 @@ private Address getReferencedAddress(Address address) {
 
 		Symbol typeinfoSymbol;
 		try {
-			typeinfoSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo", namespace, SourceType.ANALYSIS);
+			typeinfoSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo", namespace,
+				SourceType.ANALYSIS);
 			api.setPlateComment(typeinfoAddress, "typeinfo for " + namespace);
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			Msg.debug(this, "Could not make typeinfo symbol at " + typeinfoAddress);
 			return null;
 		}
@@ -3565,7 +3884,8 @@ private Address getReferencedAddress(Address address) {
 	 * @param refPairs list of reference address pairs
 	 * @throws CancelledException if cancelled
 	 */
-	public void createGlobalDirectRefMap(List<ReferenceAddressPair> refPairs) throws CancelledException {
+	public void createGlobalDirectRefMap(List<ReferenceAddressPair> refPairs)
+			throws CancelledException {
 
 		for (ReferenceAddressPair refPair : refPairs) {
 			monitor.checkCancelled();
@@ -3618,7 +3938,8 @@ private Address getReferencedAddress(Address address) {
 				continue;
 			}
 
-			// per docs those on this list have no bases (ie parents), and is also a base type
+			// per docs those on this list have no bases (ie parents), and is also a base
+			// type
 			// for the other two class type representations ie (si and vmi)
 			if (typeinfoStructureType.equals(CLASS_TYPE_INFO_STRUCTURE)) {
 				nonInheritedClasses.add(recoveredClass);
@@ -3644,9 +3965,11 @@ private Address getReferencedAddress(Address address) {
 			}
 		}
 	}
-	
-	private void updateClassWithVfunctions(List<RecoveredClass> recoveredClasses, List<Vtable> vtables) throws Exception {
-		
+
+	private void updateClassWithVfunctions(List<RecoveredClass> recoveredClasses,
+			List<Vtable> vtables)
+			throws Exception {
+
 		for (RecoveredClass recoveredClass : recoveredClasses) {
 
 			monitor.checkCancelled();
@@ -3712,7 +4035,8 @@ private Address getReferencedAddress(Address address) {
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			List<RecoveredClass> classHierarchyList = new ArrayList<RecoveredClass>();
 
-			// once all the non and single inheritance ones are created, create the multi ones
+			// once all the non and single inheritance ones are created, create the multi
+			// ones
 			// case where there is multi-inheritance somewhere in the chain
 			if (multiAndOrVirtuallyInheritedClasses.contains(recoveredClass)) {
 				classHierarchyList = getMultiClassHierarchy(recoveredClass);
@@ -3731,12 +4055,15 @@ private Address getReferencedAddress(Address address) {
 			while (parentIterator.hasNext()) {
 				monitor.checkCancelled();
 				RecoveredClass parentClass = parentIterator.next();
-				recoveredClass.addClassHierarchyMapping(parentClass, parentClass.getClassHierarchy());
+				recoveredClass.addClassHierarchyMapping(parentClass,
+					parentClass.getClassHierarchy());
 			}
 		}
 
-		// update the inherits virtual ancestor flag using ancestors - previously was only done for
-		// parents but now have all classes with flag set for direct parent so can get the other
+		// update the inherits virtual ancestor flag using ancestors - previously was
+		// only done for
+		// parents but now have all classes with flag set for direct parent so can get
+		// the other
 		// ancestors too
 		recoveredClassIterator = recoveredClasses.iterator();
 		while (recoveredClassIterator.hasNext()) {
@@ -3791,7 +4118,8 @@ private Address getReferencedAddress(Address address) {
 	 *         parents
 	 * @throws CancelledException if cancelled
 	 */
-	List<RecoveredClass> getSingleClassHierarchy(RecoveredClass recoveredClass) throws CancelledException {
+	List<RecoveredClass> getSingleClassHierarchy(RecoveredClass recoveredClass)
+			throws CancelledException {
 
 		List<RecoveredClass> classHierarchyList = new ArrayList<RecoveredClass>();
 
@@ -3814,7 +4142,8 @@ private Address getReferencedAddress(Address address) {
 	 *         inheritance
 	 * @throws CancelledException if cancelled
 	 */
-	List<RecoveredClass> getMultiClassHierarchy(RecoveredClass recoveredClass) throws CancelledException {
+	List<RecoveredClass> getMultiClassHierarchy(RecoveredClass recoveredClass)
+			throws CancelledException {
 
 		List<RecoveredClass> classHierarchyList = new ArrayList<RecoveredClass>();
 
@@ -3853,7 +4182,8 @@ private Address getReferencedAddress(Address address) {
 		try {
 			Address newAddress = address.add(offset);
 			return newAddress;
-		} catch (AddressOutOfBoundsException e) {
+		}
+		catch (AddressOutOfBoundsException e) {
 			return null;
 		}
 	}
@@ -3895,7 +4225,8 @@ private Address getReferencedAddress(Address address) {
 
 		try {
 			possibleFunctionPointer = address.getNewAddress(longValue);
-		} catch (AddressOutOfBoundsException e) {
+		}
+		catch (AddressOutOfBoundsException e) {
 			return false;
 		}
 
@@ -3929,12 +4260,14 @@ private Address getReferencedAddress(Address address) {
 			long originalLongValue = extendedFlatAPI.getLongValueAt(address);
 			if (originalLongValue != longValue) {
 				Address offsetPointer = address.getNewAddress(originalLongValue);
-				if (api.getDataAt(offsetPointer) != null) {
+				Data dataAt = listing.getDataAt(offsetPointer);
+				if (dataAt != null && dataAt.isDefined()) {
 					api.clearListing(offsetPointer);
 					disassemble = api.disassemble(address);
 
-					Bookmark bookmark = getBookmarkAt(possibleFunctionPointer, BookmarkType.ERROR, "Bad Instruction",
-							"conflicting data");
+					Bookmark bookmark = getBookmarkAt(possibleFunctionPointer, BookmarkType.ERROR,
+						"Bad Instruction",
+						"conflicting data");
 					if (bookmark != null) {
 						api.removeBookmark(bookmark);
 					}
@@ -3947,7 +4280,8 @@ private Address getReferencedAddress(Address address) {
 		return false;
 	}
 
-	private Bookmark getBookmarkAt(Address address, String bookmarkType, String category, String commentContains)
+	private Bookmark getBookmarkAt(Address address, String bookmarkType, String category,
+			String commentContains)
 			throws CancelledException {
 
 		Bookmark[] bookmarks = program.getBookmarkManager().getBookmarks(address);
@@ -3955,8 +4289,9 @@ private Address getReferencedAddress(Address address) {
 		for (Bookmark bookmark : bookmarks) {
 			monitor.checkCancelled();
 
-			if (bookmark.getType().getTypeString().equals(bookmarkType) && bookmark.getCategory().equals(category)
-					&& bookmark.getComment().contains(commentContains)) {
+			if (bookmark.getType().getTypeString().equals(bookmarkType) &&
+				bookmark.getCategory().equals(category) &&
+				bookmark.getComment().contains(commentContains)) {
 				return bookmark;
 			}
 		}
@@ -4045,19 +4380,24 @@ private Address getReferencedAddress(Address address) {
 	 * @throws CancelledException when cancelled
 	 * @throws Exception          naming exception
 	 */
-	private void processDataTypes(RecoveredClass recoveredClass) throws CancelledException, Exception {
+	private void processDataTypes(RecoveredClass recoveredClass)
+			throws CancelledException, Exception {
 
 		// if recovered class is a special typeinfo class skip it
 		if (recoveredClass.getName().endsWith("_class_type_info")) {
-			Msg.debug(this, "Not creating class data type for " + recoveredClass.getClassNamespace().getName(true)
-					+ " because it is one of the special typeinfo classes.");
+			Msg.debug(this,
+				"Not creating class data type for " +
+					recoveredClass.getClassNamespace().getName(true) +
+					" because it is one of the special typeinfo classes.");
 			return;
 		}
 
 		// can't handle creating class data types for classes with virtual parents yet
 		if (recoveredClass.inheritsVirtualAncestor()) {
-			Msg.debug(this, "Cannot create class data type for " + recoveredClass.getClassNamespace().getName(true)
-					+ " because it has virtual ancestors and we don't yet handle that use case.");
+			Msg.debug(this,
+				"Cannot create class data type for " +
+					recoveredClass.getClassNamespace().getName(true) +
+					" because it has virtual ancestors and we don't yet handle that use case.");
 			return;
 		}
 
@@ -4068,8 +4408,9 @@ private Address getReferencedAddress(Address address) {
 				monitor.checkCancelled();
 				if (parent.getName().endsWith("_class_type_info")) {
 					Msg.debug(this,
-							"Not creating class data type for " + recoveredClass.getClassNamespace().getName(true)
-									+ " because it has a parent that is one of the special typeinfo classes.");
+						"Not creating class data type for " +
+							recoveredClass.getClassNamespace().getName(true) +
+							" because it has a parent that is one of the special typeinfo classes.");
 					return;
 				}
 			}
@@ -4077,24 +4418,29 @@ private Address getReferencedAddress(Address address) {
 
 		// can't handle creating class data types for diamond shaped classes yet
 		if (recoveredClass.isDiamondShaped()) {
-			Msg.debug(this, "Cannot create class data type for " + recoveredClass.getClassNamespace().getName(true)
-					+ " because it is diamond shaped and we don't yet handle that use case.");
+			Msg.debug(this,
+				"Cannot create class data type for " +
+					recoveredClass.getClassNamespace().getName(true) +
+					" because it is diamond shaped and we don't yet handle that use case.");
 			return;
 		}
 
 		if (!recoveredClass.hasVftable()) {
 			createSimpleClassStructure(recoveredClass, null);
-			// return in this case because if there is no vftable for a class the script cannot
+			// return in this case because if there is no vftable for a class the script
+			// cannot
 			// identify any member functions so there is no need to process the rest of this
 			// method
 			return;
 		}
 
-		// create pointers to empty vftable structs so they can be added to the class data type
+		// create pointers to empty vftable structs so they can be added to the class
+		// data type
 		// then filled in later
 		Map<Address, DataType> vfPointerDataTypes = createEmptyVfTableStructs(recoveredClass);
 
-		// create current class structure and add pointer to vftable, all parent member data
+		// create current class structure and add pointer to vftable, all parent member
+		// data
 		// structures, and class member data structure
 		Structure classStruct = createSimpleClassStructure(recoveredClass, vfPointerDataTypes);
 
@@ -4120,7 +4466,8 @@ private Address getReferencedAddress(Address address) {
 		// then empty classes will get auto-created in the wrong place
 		// when the vfunctions are put in the class
 
-		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes, classStruct);
+		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes,
+			classStruct);
 
 	}
 
@@ -4131,12 +4478,14 @@ private Address getReferencedAddress(Address address) {
 
 		CategoryPath classPath = recoveredClass.getClassPath();
 
-		// get either existing structure if prog has a structure created by pdb or computed
+		// get either existing structure if prog has a structure created by pdb or
+		// computed
 		// structure from decompiled construtor(s) info
 		Structure classStructure;
 		if (recoveredClass.hasExistingClassStructure()) {
 			classStructure = recoveredClass.getExistingClassStructure();
-		} else {
+		}
+		else {
 			classStructure = recoveredClass.getComputedClassStructure();
 		}
 
@@ -4145,35 +4494,43 @@ private Address getReferencedAddress(Address address) {
 			structLen = addAlignment(classStructure.getLength());
 		}
 
-		Structure classStructureDataType = new StructureDataType(classPath, className, structLen, dataTypeManager);
+		Structure classStructureDataType =
+			new StructureDataType(classPath, className, structLen, dataTypeManager);
 
 		// if no inheritance - add pointer to class vftable structure
 		if (nonInheritedClasses.contains(recoveredClass) && vfPointerDataTypes != null) {
 
-			// the size was checked before calling this method so we know there is one and only
+			// the size was checked before calling this method so we know there is one and
+			// only
 			// one for this simple case
 			Address vftableAddress = recoveredClass.getVftableAddresses().get(0);
 			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
 
 			// simple case the offset for vftablePtr is 0
 			// if can fit or grow structure, add the vftablePtr to it
-			EditStructureUtils.addDataTypeToStructure(classStructureDataType, 0, classVftablePointer,
-					CLASS_VTABLE_PTR_FIELD_EXT, monitor);
+			EditStructureUtils.addDataTypeToStructure(classStructureDataType, 0,
+				classVftablePointer,
+				CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 		}
-		// if single inheritance or multi non-virtual (wouldn't have called this method if
+		// if single inheritance or multi non-virtual (wouldn't have called this method
+		// if
 		// it were virtually inherited) put parent struct and data into class struct
 		else {
 
-			Map<Integer, RecoveredClass> orderToParentMap = classToParentOrderMap.get(recoveredClass);
+			Map<Integer, RecoveredClass> orderToParentMap =
+				classToParentOrderMap.get(recoveredClass);
 			if (orderToParentMap == null || orderToParentMap.isEmpty()) {
-				throw new Exception("Vmi class " + recoveredClass.getClassNamespace().getName(true)
-						+ " should have a parent in the classToParentOrderMap but doesn't");
+				throw new Exception(
+					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
+						" should have a parent in the classToParentOrderMap but doesn't");
 			}
 
-			Map<RecoveredClass, Long> parentToOffsetMap = classToParentOffsetMap.get(recoveredClass);
+			Map<RecoveredClass, Long> parentToOffsetMap =
+				classToParentOffsetMap.get(recoveredClass);
 			if (parentToOffsetMap.isEmpty()) {
-				throw new Exception("Vmi class " + recoveredClass.getClassNamespace().getName(true)
-						+ " should have a parent in the classToParentOffsetMap but doesn't");
+				throw new Exception(
+					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
+						" should have a parent in the classToParentOffsetMap but doesn't");
 			}
 
 			int numParents = orderToParentMap.keySet().size();
@@ -4182,22 +4539,26 @@ private Address getReferencedAddress(Address address) {
 
 				Long parentOffsetLong = parentToOffsetMap.get(parent);
 				if (parentOffsetLong == null) {
-					throw new Exception("Can't get parent offset for " + parent.getClassNamespace().getName(true));
+					throw new Exception(
+						"Can't get parent offset for " + parent.getClassNamespace().getName(true));
 				}
 				int parentOffset = parentOffsetLong.intValue();
 
 				Structure baseClassStructure = getClassStructureFromDataTypeManager(parent);
-				// if we can't get the parent throw exception because it shouldn't get here if the
+				// if we can't get the parent throw exception because it shouldn't get here if
+				// the
 				// parent doesn't exist
 				if (baseClassStructure == null) {
 					throw new Exception(
-							parent.getClassNamespace().getName(true) + " : structure should exist but doesn't.");
+						parent.getClassNamespace().getName(true) +
+							" : structure should exist but doesn't.");
 				}
 
 				// if it fits at offset or is at the end and class structure can be grown,
 				// copy the whole baseClass structure to the class Structure at the given offset
-				EditStructureUtils.addDataTypeToStructure(classStructureDataType, parentOffset, baseClassStructure,
-						baseClassStructure.getName(), monitor);
+				EditStructureUtils.addDataTypeToStructure(classStructureDataType, parentOffset,
+					baseClassStructure,
+					baseClassStructure.getName(), monitor);
 			}
 
 		}
@@ -4206,38 +4567,45 @@ private Address getReferencedAddress(Address address) {
 		int dataOffset = getDataOffset(recoveredClass, classStructureDataType);
 		int dataLen = UNKNOWN;
 		if (dataOffset != NONE) {
-			dataLen = EditStructureUtils.getNumberOfUndefinedsStartingAtOffset(classStructureDataType, dataOffset,
-					monitor);
+			dataLen = EditStructureUtils.getNumberOfUndefinedsStartingAtOffset(
+				classStructureDataType, dataOffset,
+				monitor);
 		}
 
 		if (dataLen != UNKNOWN && dataLen > 0) {
 
-			Structure recoveredClassDataStruct = createClassMemberDataStructure(recoveredClass, classStructureDataType,
+			Structure recoveredClassDataStruct =
+				createClassMemberDataStructure(recoveredClass, classStructureDataType,
 					dataLen, dataOffset);
 
 			if (recoveredClassDataStruct != null) {
 				// if it fits at offset or is at the end and class structure can be grown,
 				// copy the whole baseClass structure to the class Structure at the given offset
-				EditStructureUtils.addDataTypeToStructure(classStructureDataType, dataOffset, recoveredClassDataStruct,
-						"data", monitor);
+				EditStructureUtils.addDataTypeToStructure(classStructureDataType, dataOffset,
+					recoveredClassDataStruct,
+					"data", monitor);
 			}
 
 		}
 
-		classStructureDataType = addClassVftables(classStructureDataType, recoveredClass, vfPointerDataTypes);
+		classStructureDataType =
+			addClassVftables(classStructureDataType, recoveredClass, vfPointerDataTypes);
 
-		// unused at this point until something figures out how to create them and where to
+		// unused at this point until something figures out how to create them and where
+		// to
 		// put them
-		classStructureDataType = addVbtableToClassStructure(recoveredClass, classStructureDataType, true);
+		classStructureDataType =
+			addVbtableToClassStructure(recoveredClass, classStructureDataType, true);
 
-		if (classStructureDataType.getNumComponents() == classStructureDataType.getNumDefinedComponents()) {
+		if (classStructureDataType.getNumComponents() == classStructureDataType
+				.getNumDefinedComponents()) {
 			classStructureDataType.setPackingEnabled(true);
 		}
 
 		classStructureDataType.setDescription(createParentStringBuffer(recoveredClass).toString());
 
 		classStructureDataType = (Structure) dataTypeManager.addDataType(classStructureDataType,
-				DataTypeConflictHandler.DEFAULT_HANDLER);
+			DataTypeConflictHandler.DEFAULT_HANDLER);
 
 		return classStructureDataType;
 	}
@@ -4262,11 +4630,7 @@ private Address getReferencedAddress(Address address) {
 		if (externalBlock == null) {
 			return false;
 		}
-		if (externalBlock.contains(address)) {
-			return true;
-		}
-		return false;
-
+		return externalBlock.contains(address);
 	}
 
 }

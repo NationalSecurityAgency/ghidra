@@ -70,11 +70,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private static final String ELF_PROGRAM_HEADERS_BLOCK_NAME = "_elfProgramHeaders";
 	private static final String ELF_SECTION_HEADERS_BLOCK_NAME = "_elfSectionHeaders";
 
-	// Maximum length of discardable segment
-	// If program contains section headers, any zeroed segment smaller than this size
-	// will be eligible for removal.
-	private static final int DISCARDABLE_SEGMENT_SIZE = 0xff;
-
 	private List<Option> options;
 	private Long dataImageBase; // cached data image base option or null if not applicable
 	private MessageLog log;
@@ -326,7 +321,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		if (elf.getSectionHeaderCount() == 0 || elf.getProgramHeaderCount() == 0) {
 			return false; // only prune if both sections and program headers are present
 		}
-		if (length > DISCARDABLE_SEGMENT_SIZE || !blockName.startsWith(SEGMENT_NAME_PREFIX)) {
+
+		int maxSegmentDiscardSize = ElfLoaderOptionsFactory.getMaxSegmentDiscardSize(options);
+		if (maxSegmentDiscardSize <= 0 || length > maxSegmentDiscardSize ||
+			!blockName.startsWith(SEGMENT_NAME_PREFIX)) {
 			return false;
 		}
 

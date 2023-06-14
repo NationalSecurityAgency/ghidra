@@ -1781,6 +1781,10 @@ public class GdbManagerImpl implements GdbManager {
 		return runningInterpreter;
 	}
 
+	private boolean isProbablyValid(String out) {
+		return out.contains("->0x");
+	}
+
 	private CompletableFuture<Map.Entry<String, String[]>> nextMaintInfoSections(
 			GdbInferiorImpl inferior, String cmds[], List<String[]> results) {
 		if (results.size() == cmds.length) {
@@ -1795,7 +1799,7 @@ public class GdbManagerImpl implements GdbManager {
 		String cmd = cmds[results.size()];
 		return inferior.consoleCapture(cmd, CompletesWithRunning.CANNOT).thenCompose(out -> {
 			String[] lines = out.split("\n");
-			if (lines.length >= 10) {
+			if (isProbablyValid(out)) {
 				return CompletableFuture.completedFuture(Map.entry(cmd, lines));
 			}
 			results.add(lines);
@@ -1824,7 +1828,7 @@ public class GdbManagerImpl implements GdbManager {
 			inferior.consoleCapture(maintInfoSectionsCmd, CompletesWithRunning.CANNOT);
 		return futureOut.thenCompose(out -> {
 			String[] lines = out.split("\n");
-			if (lines.length >= 10) {
+			if (isProbablyValid(out)) {
 				return CompletableFuture.completedFuture(lines);
 			}
 			CompletableFuture<Entry<String, String[]>> futureBest = nextMaintInfoSections(inferior,
@@ -1888,5 +1892,11 @@ public class GdbManagerImpl implements GdbManager {
 			}
 		}
 		return null;
+	}
+
+	public void logInfo(String string) {
+		if (LOG_IO) {
+			DBG_LOG.println("INFO: " + string);
+		}
 	}
 }

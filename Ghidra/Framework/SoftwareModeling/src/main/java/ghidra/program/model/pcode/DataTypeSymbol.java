@@ -149,7 +149,7 @@ public class DataTypeSymbol {
 	public static String generateHash(DataType dt) {
 		String material;
 		if (dt instanceof FunctionSignature)
-			material = ((FunctionSignature) dt).getPrototypeString();
+			material = ((FunctionSignature) dt).getPrototypeString(true);
 		else if (dt instanceof TypeDef) {
 			material = ((TypeDef) dt).getDataType().getPathName();
 		}

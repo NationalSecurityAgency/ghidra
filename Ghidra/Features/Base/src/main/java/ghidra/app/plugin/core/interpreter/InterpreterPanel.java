@@ -132,6 +132,10 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		promptTextPane.setBackground(BG_COLOR);
 		inputTextPane.setBackground(BG_COLOR);
 
+		// Reduce the gap after the prompt text.  The UI will not calculate its preferred size with
+		// a minimum width if the insets have been set.
+		promptTextPane.setMargin(new Insets(0, 0, 0, 0));
+
 		history = new HistoryManagerImpl();
 
 		outputScrollPane.setFocusable(false);
@@ -381,7 +385,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	private void createOptions() {
 		ToolOptions options = tool.getOptions("Console");
 
-// TODO: change help anchor name		
+// TODO: change help anchor name
 		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
 		options.setOptionsHelpLocation(help);
 
@@ -396,7 +400,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		completionWindowTrigger =
 			options.getEnum(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB);
 
-// TODO		
+// TODO
 //		highlightCompletion =
 //			options.getBoolean(HIGHLIGHT_COMPLETION_OPTION_LABEL, DEFAULT_HIGHLIGHT_COMPLETION);
 //		options.setDescription(HIGHLIGHT_COMPLETION_OPTION_LABEL, HIGHLIGHT_COMPLETION_DESCRIPTION);
@@ -415,7 +419,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		else if (optionName.equals(COMPLETION_WINDOW_TRIGGER_LABEL)) {
 			completionWindowTrigger = (CompletionWindowTrigger) newValue;
 		}
-// TODO		
+// TODO
 //		else if (optionName.equals(HIGHLIGHT_COMPLETION_OPTION_LABEL)) {
 //			highlightCompletion = ((Boolean) newValue).booleanValue();
 //		}

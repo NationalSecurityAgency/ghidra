@@ -21,7 +21,6 @@ import java.io.InputStream;
 import ghidra.docking.settings.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.util.classfinder.ClassTranslator;
 
 /**
  * An abstract base class for a LEB128 variable length integer data type.
@@ -82,13 +81,27 @@ public abstract class AbstractLeb128DataType extends BuiltIn implements Dynamic 
 			maxLength = LEB128.MAX_SUPPORTED_LENGTH;
 		}
 
+		int len = getLength(buf, maxLength);
+		if (len < 1) {
+			return null; // error, or more than 10 bytes long
+		}
+
+		long val;
 		try (InputStream is = buf.getInputStream(0, maxLength)) {
-			long val = LEB128.read(is, signed);
-			return new Scalar(64 - Long.numberOfLeadingZeros(val), val, signed);
+			val = LEB128.read(is, signed);
 		}
 		catch (IOException e) {
-			return null;	// memory error, or more than 10 bytes long
+			return null;	// error, or more than 10 bytes long
 		}
+
+		// approximate bitLength from storage byte length
+		int bitLength = Math.min(64, len * 7);
+		int mod = bitLength % 8;
+		if (mod != 0) {
+			bitLength += (8 - mod);
+		}
+
+		return new Scalar(bitLength, val, signed);
 	}
 
 	@Override

@@ -111,12 +111,16 @@ public class SBSection {
     return lldbJNI.SBSection_GetTargetByteSize(swigCPtr, this);
   }
 
+  public long GetAlignment() {
+    return lldbJNI.SBSection_GetAlignment(swigCPtr, this);
+  }
+
   public boolean GetDescription(SBStream description) {
     return lldbJNI.SBSection_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBSection___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBSection___repr__(swigCPtr, this);
   }
 
 }

@@ -18,6 +18,7 @@ package agent.gdb.pty;
 import java.io.IOException;
 
 import agent.gdb.pty.linux.LinuxPtyFactory;
+import agent.gdb.pty.macos.MacosPtyFactory;
 import agent.gdb.pty.windows.ConPtyFactory;
 import ghidra.framework.OperatingSystem;
 
@@ -33,6 +34,8 @@ public interface PtyFactory {
 	 */
 	static PtyFactory local() {
 		switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
+			case MAC_OS_X:
+				return new MacosPtyFactory();
 			case LINUX:
 				return new LinuxPtyFactory();
 			case WINDOWS:

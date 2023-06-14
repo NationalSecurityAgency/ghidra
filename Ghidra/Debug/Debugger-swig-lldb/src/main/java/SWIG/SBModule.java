@@ -227,8 +227,8 @@ public class SBModule {
     lldbJNI.SBModule_GarbageCollectAllocatedModules();
   }
 
-  public String __str__() {
-    return lldbJNI.SBModule___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBModule___repr__(swigCPtr, this);
   }
 
 }

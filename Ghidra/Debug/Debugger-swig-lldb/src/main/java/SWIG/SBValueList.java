@@ -79,6 +79,10 @@ public class SBValueList {
     return new SBValue(lldbJNI.SBValueList_GetFirstValueByName(swigCPtr, this, name), true);
   }
 
+  public SBError GetError() {
+    return new SBError(lldbJNI.SBValueList_GetError(swigCPtr, this), true);
+  }
+
   public String __str__() {
     return lldbJNI.SBValueList___str__(swigCPtr, this);
   }

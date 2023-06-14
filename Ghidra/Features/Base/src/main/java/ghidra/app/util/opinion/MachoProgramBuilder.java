@@ -133,6 +133,7 @@ public class MachoProgramBuilder {
 		processUnsupportedLoadCommands();
 		boolean exportsFound = processExports(machoHeader);
 		processSymbolTables(machoHeader, !exportsFound);
+		processIndirectSymbols();
 		setRelocatableProperty();
 		processLibraries();
 		processProgramDescription();
@@ -511,10 +512,13 @@ public class MachoProgramBuilder {
 		Address baseAddr = space.getAddress(textSegment.getVMaddress());
 		for (ExportEntry export : exports) {
 			String name = SymbolUtilities.replaceInvalidChars(export.getName(), true);
-			Address exportAddr = baseAddr.add(export.getAddress());
-			program.getSymbolTable().addExternalEntryPoint(exportAddr);
 			try {
+				Address exportAddr = baseAddr.add(export.getAddress());
+				program.getSymbolTable().addExternalEntryPoint(exportAddr);
 				program.getSymbolTable().createLabel(exportAddr, name, SourceType.IMPORTED);
+			}
+			catch (AddressOutOfBoundsException e) {
+				log.appendMsg("Failed to process export '" + export + "': " + e.getMessage());
 			}
 			catch (Exception e) {
 				log.appendMsg("Unable to create symbol: " + e.getMessage());
@@ -586,6 +590,84 @@ public class MachoProgramBuilder {
 				catch (Exception e) {
 					log.appendMsg("Unable to create symbol: " + e.getMessage());
 				}
+			}
+		}
+	}
+
+	protected void processIndirectSymbols() throws Exception {
+		// We only want to directly handle indirect symbols on incomplete dylibs that were extracted
+		// from a dyld_shared_cache.  If the Mach-O is fully-formed and contains binding information
+		// (found in the DyldChainedFixupsCommand or DyldInfoCommand), thunk analysis properly
+		// associates indirect symbols with their "real" symbol and we shouldn't do anything here.
+		if (machoHeader.getFirstLoadCommand(DyldChainedFixupsCommand.class) != null ||
+			machoHeader.getFirstLoadCommand(DyldInfoCommand.class) != null) {
+			return;
+		}
+
+		monitor.setMessage("Processing indirect symbols...");
+
+		SymbolTableCommand symbolTableCommand =
+			machoHeader.getFirstLoadCommand(SymbolTableCommand.class);
+
+		DynamicSymbolTableCommand dynamicCommand =
+			machoHeader.getFirstLoadCommand(DynamicSymbolTableCommand.class);
+
+		if (dynamicCommand == null) {
+			return;
+		}
+		int[] indirectSymbols = dynamicCommand.getIndirectSymbols();
+		if (indirectSymbols.length == 0) {
+			return;
+		}
+
+		List<Integer> sectionTypes = List.of(SectionTypes.S_NON_LAZY_SYMBOL_POINTERS,
+			SectionTypes.S_LAZY_SYMBOL_POINTERS, SectionTypes.S_SYMBOL_STUBS);
+
+		List<Section> sections = machoHeader.getAllSections()
+				.stream()
+				.filter(s -> sectionTypes.contains(s.getType()))
+				.toList();
+
+		for (Section section : sections) {
+			if (monitor.isCancelled()) {
+				return;
+			}
+			if (section.getSize() == 0) {
+				continue;
+			}
+
+			Namespace namespace = createNamespace(section.getSectionName());
+
+			int indirectSymbolTableIndex = section.getReserved1();
+
+			int symbolSize = machoHeader.getAddressSize();
+			if (section.getType() == SectionTypes.S_SYMBOL_STUBS) {
+				symbolSize = section.getReserved2();
+			}
+
+			int nSymbols = (int) section.getSize() / symbolSize;
+
+			Address startAddr = space.getAddress(section.getAddress());
+			for (int i = indirectSymbolTableIndex; i < indirectSymbolTableIndex + nSymbols; ++i) {
+				if (monitor.isCancelled()) {
+					break;
+				}
+				int symbolIndex = indirectSymbols[i];
+				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
+				if (symbol != null) {
+					String name = generateValidName(symbol.getString());
+					if (name != null && name.length() > 0) {
+						try {
+							program.getSymbolTable()
+									.createLabel(startAddr, name, namespace, SourceType.IMPORTED);
+						}
+						catch (Exception e) {
+							log.appendMsg("Unable to create indirect symbol " + name);
+							log.appendException(e);
+						}
+					}
+				}
+				startAddr = startAddr.add(symbolSize);
 			}
 		}
 	}

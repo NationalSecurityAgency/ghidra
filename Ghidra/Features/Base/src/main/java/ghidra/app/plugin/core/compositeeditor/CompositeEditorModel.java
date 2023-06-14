@@ -941,7 +941,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 		return ((baseDt != null) && !(baseDt instanceof BuiltInDataType) &&
 			!(baseDt instanceof MissingBuiltInDataType) &&
-			((baseDt instanceof Structure) || baseDt instanceof Union || baseDt instanceof Enum));
+			((baseDt instanceof Structure) || (baseDt instanceof Union) ||
+				(baseDt instanceof Enum) || (baseDt instanceof FunctionDefinition)));
 	}
 
 	@Override

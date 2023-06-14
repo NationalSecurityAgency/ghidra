@@ -1398,8 +1398,9 @@ void FlowInfo::recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *
   s1 << data.getName() << "@@jump@";
   op->getAddr().printRaw(s1);
 
+  string nm = s1.str();
   // Prepare partial Funcdata object for analysis if necessary
-  Funcdata partial(s1.str(),data.getScopeLocal()->getParent(),data.getAddress(),(FunctionSymbol *)0);
+  Funcdata partial(nm,nm,data.getScopeLocal()->getParent(),data.getAddress(),(FunctionSymbol *)0);
 
   for(int4 i=0;i<tablelist.size();++i) {
     op = tablelist[i];

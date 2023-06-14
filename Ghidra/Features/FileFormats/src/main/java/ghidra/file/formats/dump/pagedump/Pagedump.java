@@ -128,7 +128,7 @@ public class Pagedump extends DumpFile {
 		is32Bit = header.is32Bit();
 		isPAE = header.getPaeEnabled() != 0;
 
-		int hdrLen = header.toDataType().getLength();
+		long hdrLen = header.toDataType().getLength();
 		addInteriorAddressObject("DumpHeader", 0, 0L, hdrLen);
 		data.add(new DumpData(0, header.toDataType()));
 
@@ -143,7 +143,7 @@ public class Pagedump extends DumpFile {
 			case DUMP_TYPE_BITMAP_FULL:
 			case DUMP_TYPE_BITMAP_KERNEL:
 				int signature = reader.readInt(hdrLen);
-				int offset = hdrLen;
+				long offset = hdrLen;
 				switch (signature) {
 					case SIG_SUMMARY:
 					case SIG_FULL:
@@ -175,7 +175,7 @@ public class Pagedump extends DumpFile {
 				addInteriorAddressObject("DumpHeader", hdrLen, hdrLen,
 					triage.getSizeOfDump());
 
-				int next = hdrLen + triage.getSizeOfDump();
+				long next = hdrLen + triage.getSizeOfDump();
 				addInteriorAddressObject("Unknown", next,
 					next, reader.length() - next);
 
@@ -424,7 +424,7 @@ public class Pagedump extends DumpFile {
 				continue;
 			}
 			Long addr = pfnToVA.get(pfnx);
-			addInteriorAddressObject(DumpFileLoader.MEMORY, fileOffset(pfnx), addr, 0x1000);
+			addInteriorAddressObject(DumpFileLoader.MEMORY, fileOffset(pfnx), addr, 0x1000L);
 			monitor.setProgress(count++);
 		}
 		/*
@@ -462,6 +462,7 @@ public class Pagedump extends DumpFile {
 		return Integer.toHexString(header.getMachineImageType());
 	}
 
+	@Override
 	public void analyze(TaskMonitor monitor) {
 		boolean analyzeEmbeddedObjects =
 			OptionUtils.getBooleanOptionValue(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
@@ -611,9 +612,10 @@ public class Pagedump extends DumpFile {
 	*/
 
 	/**
-	 * Get default <code>Pagedump</code> loader options.
-	 * Includes {@link #DEBUG_DATA_PATH_OPTION_NAME} plus default {@link DumpFile} options 
-	 * (see {@link DumpFile#getDefaultOptions(DumpFileReader)}).
+	 * Get default <code>Pagedump</code> loader options. Includes
+	 * {@link #DEBUG_DATA_PATH_OPTION_NAME} plus default {@link DumpFile} options (see
+	 * {@link DumpFile#getDefaultOptions(DumpFileReader)}).
+	 * 
 	 * @param reader dump file reader
 	 * @return default collection of Pagedump loader options
 	 */

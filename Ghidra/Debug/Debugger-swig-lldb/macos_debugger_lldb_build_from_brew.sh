@@ -30,8 +30,8 @@ if [ ! -z "${GHIDRA_INSTALL_DIR}" ]; then
 	pushd "${GHIDRA_INSTALL_DIR}/Ghidra/Debug/Debugger-swig-lldb"
 fi
 
-# Pin to 14, as this is what Ghidra's built in bindings are built against
-LLVM_VERSION="14"
+# Pin to 16, as this is what Ghidra's built in bindings are built against
+LLVM_VERSION="16"
 
 # Install llvm and unpack the source code for this version, patched
 # with the brew patches

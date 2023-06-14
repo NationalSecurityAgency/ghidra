@@ -72,9 +72,9 @@ public class Userdump extends DumpFile {
 		DataType dt = header.toDataType();
 		data.add(new DumpData(0, "DumpHeader", dt.getLength()));
 
-		int regionOffset = (int) header.getMemoryRegionOffset();
+		long regionOffset = header.getMemoryRegionOffset();
 		addInteriorAddressObject("DumpHeader", 0, 0L, regionOffset);
-		int blocksLength = (int) (reader.length() - regionOffset);
+		long blocksLength = reader.length() - regionOffset;
 		addInteriorAddressObject("RawBlocks", regionOffset,
 			header.getMemoryRegionOffset(), blocksLength);
 
@@ -163,6 +163,7 @@ public class Userdump extends DumpFile {
 		return Integer.toHexString(header.getMachineImageType());
 	}
 
+	@Override
 	public void analyze(TaskMonitor monitor) {
 		boolean analyzeEmbeddedObjects =
 			OptionUtils.getBooleanOptionValue(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
@@ -174,8 +175,9 @@ public class Userdump extends DumpFile {
 	}
 
 	/**
-	 * Get default <code>Userdump</code> loader options.
-	 * See {@link DumpFile#getDefaultOptions(DumpFileReader)}.
+	 * Get default <code>Userdump</code> loader options. See
+	 * {@link DumpFile#getDefaultOptions(DumpFileReader)}.
+	 * 
 	 * @param reader dump file reader
 	 * @return default collection of Userdump loader options
 	 */

@@ -1922,7 +1922,7 @@ void PragmaSpecifier() : {
 {
   LOOKAHEAD(3)
   <POPEN> PragmaSpecifier() <PCLOSE> |
-      id=<PIDENTIFIER> (<PIDENTIFIER> | <PINTEGER_LITERAL> | <PSTRING_LITERAL>)*
+      id=<PIDENTIFIER> (<PIDENTIFIER> | <PINTEGER_LITERAL> | <PSTRING_LITERAL> | <PCOMMA> )*
           ([ <POPEN> [ (ds1=PragmaConstant())+ [ ( <PCOMMA> ds2=PragmaConstant() ) [ ( <PCOMMA> ds3=PragmaConstant() ) [ ( <PCOMMA> PragmaConstant() )+ ] ] ] ] <PCLOSE> ] ) 
   {
     if (id.image.equals("pack") && ds1 != null) {

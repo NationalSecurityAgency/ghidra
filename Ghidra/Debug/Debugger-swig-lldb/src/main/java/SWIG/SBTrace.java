@@ -43,8 +43,20 @@ public class SBTrace {
     this(lldbJNI.new_SBTrace(), true);
   }
 
+  public SBTraceCursor CreateNewCursor(SBError error, SBThread thread) {
+    return new SBTraceCursor(lldbJNI.SBTrace_CreateNewCursor(swigCPtr, this, SBError.getCPtr(error), error, SBThread.getCPtr(thread), thread), true);
+  }
+
   public String GetStartConfigurationHelp() {
     return lldbJNI.SBTrace_GetStartConfigurationHelp(swigCPtr, this);
+  }
+
+  public SBFileSpec SaveToDisk(SBError error, SBFileSpec bundle_dir, boolean compact) {
+    return new SBFileSpec(lldbJNI.SBTrace_SaveToDisk__SWIG_0(swigCPtr, this, SBError.getCPtr(error), error, SBFileSpec.getCPtr(bundle_dir), bundle_dir, compact), true);
+  }
+
+  public SBFileSpec SaveToDisk(SBError error, SBFileSpec bundle_dir) {
+    return new SBFileSpec(lldbJNI.SBTrace_SaveToDisk__SWIG_1(swigCPtr, this, SBError.getCPtr(error), error, SBFileSpec.getCPtr(bundle_dir), bundle_dir), true);
   }
 
   public SBError Start(SBStructuredData configuration) {

@@ -61,6 +61,10 @@ public class HighFunctionShellSymbol extends HighSymbol {
 		encoder.openElement(ELEM_FUNCTION);
 		encoder.writeUnsignedInteger(ATTRIB_ID, getId());
 		encoder.writeString(ATTRIB_NAME, name);
+		String altName = dtmanage.getNameTransformer().simplify(name);
+		if (!name.equals(altName)) {
+			encoder.writeString(ATTRIB_LABEL, altName);
+		}
 		encoder.writeSignedInteger(ATTRIB_SIZE, 1);
 		AddressXML.encode(encoder, getStorage().getMinAddress());
 		encoder.closeElement(ELEM_FUNCTION);

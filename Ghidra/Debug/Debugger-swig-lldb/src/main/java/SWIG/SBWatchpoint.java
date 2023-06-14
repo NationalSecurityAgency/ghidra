@@ -115,8 +115,8 @@ public class SBWatchpoint {
     return new SBWatchpoint(lldbJNI.SBWatchpoint_GetWatchpointFromEvent(SBEvent.getCPtr(event), event), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBWatchpoint___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBWatchpoint___repr__(swigCPtr, this);
   }
 
 }

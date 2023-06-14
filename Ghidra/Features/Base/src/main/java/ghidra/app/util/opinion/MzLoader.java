@@ -96,12 +96,12 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		try {
 			Set<RelocationFixup> relocationFixups = getRelocationFixups(space, mz, log, monitor);
 
-			markupHeaders(program, fileBytes, mz, log, monitor);
 			processMemoryBlocks(program, fileBytes, space, mz, relocationFixups, log, monitor);
 			adjustSegmentStarts(program, monitor);
 			processRelocations(program, space, mz, relocationFixups, log, monitor);
 			processEntryPoint(program, space, mz, log, monitor);
 			processRegisters(program, mz, log, monitor);
+			markupHeaders(program, fileBytes, mz, log, monitor); // Do after adjustSegmentStarts()
 		}
 		catch (CancelledException e) {
 			return;

@@ -119,8 +119,8 @@ public class SBTypeSummary {
     return lldbJNI.SBTypeSummary_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description, description_level.swigValue());
   }
 
-  public String __str__() {
-    return lldbJNI.SBTypeSummary___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTypeSummary___repr__(swigCPtr, this);
   }
 
 }

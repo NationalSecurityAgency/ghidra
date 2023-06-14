@@ -111,8 +111,8 @@ public class SBError {
     return lldbJNI.SBError_GetDescription(swigCPtr, this, SBStream.getCPtr(description), description);
   }
 
-  public String __str__() {
-    return lldbJNI.SBError___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBError___repr__(swigCPtr, this);
   }
 
 }

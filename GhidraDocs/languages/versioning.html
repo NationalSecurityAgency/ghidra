@@ -48,7 +48,15 @@ re-disassembly of all instructions.</p>
 a user to make certain transitions between similar language
 implementations.&nbsp; Such transitions are generally facilitated via a
 default translator, although certain limitations are imposed based upon
-address space sizes and register mappings.<br>
+address space sizes and register mappings.</p>
+<p>Any changes made to a Data Organization could impact the packing of 
+components within a structure or union.  While such changes should be avoided
+due to the possible fallout, any such change to a 
+<span style="font-style: italic;">*.cspec</span> should be made
+in conjuction with a version change to all affected languages within
+the relavent <span style="font-style: italic;">*.ldefs</span> files.  The
+resulting program upgrade will allow affected data types to be updated.
+<br>
 </p>
 <h2><a name="versioning"></a>Language Versioning</h2>
 <p>A language's version is specified as a<span

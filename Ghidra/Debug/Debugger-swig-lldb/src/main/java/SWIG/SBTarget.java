@@ -179,6 +179,10 @@ public class SBTarget {
     return lldbJNI.SBTarget_GetTriple(swigCPtr, this);
   }
 
+  public String GetABIName() {
+    return lldbJNI.SBTarget_GetABIName(swigCPtr, this);
+  }
+
   public long GetDataByteSize() {
     return lldbJNI.SBTarget_GetDataByteSize(swigCPtr, this);
   }
@@ -547,8 +551,8 @@ public class SBTarget {
     return new SBValue(lldbJNI.SBTarget_EvaluateExpression__SWIG_1(swigCPtr, this, expr, SBExpressionOptions.getCPtr(options), options), true);
   }
 
-  public String __str__() {
-    return lldbJNI.SBTarget___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBTarget___repr__(swigCPtr, this);
   }
 
   public SBTrace GetTrace() {

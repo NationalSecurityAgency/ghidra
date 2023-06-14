@@ -89,7 +89,6 @@ public class GdbModuleImpl implements GdbModule {
 	protected final Map<String, GdbModuleSectionImpl> sections = new LinkedHashMap<>();
 	protected final Map<String, GdbModuleSection> unmodifiableSections =
 		Collections.unmodifiableMap(sections);
-	protected final AsyncLazyValue<Void> loadSections = new AsyncLazyValue<>(this::doLoadSections);
 
 	protected final AsyncLazyValue<Map<String, GdbMinimalSymbol>> minimalSymbols =
 		new AsyncLazyValue<>(this::doGetMinimalSymbols);
@@ -104,36 +103,19 @@ public class GdbModuleImpl implements GdbModule {
 		return name;
 	}
 
-	protected CompletableFuture<Void> doLoadSections() {
-		return inferior.doLoadSections();
-	}
-
 	@Override
-	public CompletableFuture<Long> computeBase() {
-		return loadSections.request().thenApply(__ -> base);
-	}
-
-	@Override
-	public CompletableFuture<Long> computeMax() {
-		return loadSections.request().thenApply(__ -> max);
-	}
-
-	@Override
-	public Long getKnownBase() {
+	public Long getBase() {
 		return base;
 	}
 
 	@Override
-	public Long getKnownMax() {
+	public Long getMax() {
 		return max;
 	}
 
 	@Override
-	public CompletableFuture<Map<String, GdbModuleSection>> listSections() {
-		if (sections.isEmpty() && loadSections.isDone()) {
-			loadSections.forget();
-		}
-		return loadSections.request().thenApply(__ -> unmodifiableSections);
+	public CompletableFuture<Map<String, GdbModuleSection>> listSections(boolean refresh) {
+		return inferior.listModules(refresh).thenApply(__ -> unmodifiableSections);
 	}
 
 	@Override
@@ -168,7 +150,7 @@ public class GdbModuleImpl implements GdbModule {
 		return minimalSymbols.request();
 	}
 
-	protected void processSectionLine(String line) {
+	protected void processSectionLine(String line, Set<String> namesSeen) {
 		Matcher matcher = inferior.manager.matchSectionLine(line);
 		if (matcher != null) {
 			try {
@@ -177,6 +159,7 @@ public class GdbModuleImpl implements GdbModule {
 				long offset = Long.parseLong(matcher.group("offset"), 16);
 
 				String sectionName = matcher.group("name");
+				namesSeen.add(sectionName);
 				List<String> attrs = new ArrayList<>();
 				for (String a : matcher.group("attrs").split("\\s+")) {
 					if (a.length() != 0) {
@@ -191,12 +174,23 @@ public class GdbModuleImpl implements GdbModule {
 				if (sections.put(sectionName,
 					new GdbModuleSectionImpl(sectionName, vmaStart, vmaEnd, offset,
 						attrs)) != null) {
-					Msg.warn(this, "Duplicate section name: " + line);
 				}
 			}
 			catch (NumberFormatException e) {
 				Msg.error(this, "Invalid number in section entry: " + line);
 			}
 		}
+	}
+
+	protected void resyncRetainSections(Set<String> names) {
+		/**
+		 * The need for this seems dubious. If it's the same module, why would its sections ever
+		 * change? However, in theory, a module could be unloaded, replaced on disk, and reloaded.
+		 * If all those happen between two queries, then yes, it'll seem as though an existing
+		 * module's sections changed.
+		 * 
+		 * If we ever need a callback, we'll have to use an iterator-based implementation.
+		 */
+		sections.keySet().retainAll(names);
 	}
 }

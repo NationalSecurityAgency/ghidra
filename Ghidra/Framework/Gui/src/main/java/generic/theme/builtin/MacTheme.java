@@ -27,6 +27,6 @@ import generic.theme.LafType;
 public class MacTheme extends DiscoverableGTheme {
 
 	public MacTheme() {
-		super("Mac OS X Theme", LafType.MAC);
+		super("Mac Theme", LafType.MAC);
 	}
 }

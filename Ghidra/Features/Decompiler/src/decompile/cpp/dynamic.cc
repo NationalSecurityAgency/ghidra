@@ -236,6 +236,8 @@ void DynamicHash::calcHash(const PcodeOp *op,int4 slot,uint4 method)
 	buildOpUp(markop[opproc]);
       }
       gatherUnmarkedVn();
+      for(;vnproc<markvn.size();++vnproc)
+        buildVnUp(markvn[vnproc]);
       break;
     case 6:
       gatherUnmarkedOp();
@@ -243,6 +245,8 @@ void DynamicHash::calcHash(const PcodeOp *op,int4 slot,uint4 method)
 	buildOpDown(markop[opproc]);
       }
       gatherUnmarkedVn();
+      for(;vnproc<markvn.size();++vnproc)
+        buildVnDown(markvn[vnproc]);
       break;
     default:
       break;

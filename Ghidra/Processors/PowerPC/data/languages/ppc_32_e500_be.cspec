@@ -45,6 +45,8 @@
         </pentry>
       </output>
       <unaffected>
+        <register name="r2"/>  <!-- _SDA2_BASE_ -->
+        <register name="r13"/> <!-- _SDA_BASE_  -->
         <register name="r14"/>
         <register name="r15"/>
         <register name="r16"/>

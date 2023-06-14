@@ -50,6 +50,7 @@ public interface lldbConstants {
   public final static long LLDB_INVALID_LINE_NUMBER = lldbJNI.LLDB_INVALID_LINE_NUMBER_get();
   public final static int LLDB_INVALID_COLUMN_NUMBER = lldbJNI.LLDB_INVALID_COLUMN_NUMBER_get();
   public final static int LLDB_INVALID_QUEUE_ID = lldbJNI.LLDB_INVALID_QUEUE_ID_get();
+  public final static long LLDB_INVALID_CPU_ID = lldbJNI.LLDB_INVALID_CPU_ID_get();
   public final static String LLDB_ARCH_DEFAULT = lldbJNI.LLDB_ARCH_DEFAULT_get();
   public final static String LLDB_ARCH_DEFAULT_32BIT = lldbJNI.LLDB_ARCH_DEFAULT_32BIT_get();
   public final static String LLDB_ARCH_DEFAULT_64BIT = lldbJNI.LLDB_ARCH_DEFAULT_64BIT_get();

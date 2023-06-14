@@ -81,6 +81,9 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 		try {
 			setProgramArchitecture(p, p.getSymbolTable().getVariableStorageManager(), false,
 				TaskMonitor.DUMMY);
+			// NOTE: Due to late manner in which program architecture is established, any
+			// response to a data organization change must be handled during a language
+			// upgrade and setLanguage
 		}
 		catch (CancelledException e) {
 			throw new AssertException(e); // unexpected - no IO performed

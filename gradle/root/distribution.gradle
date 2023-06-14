@@ -418,6 +418,8 @@ task createExternalExtensions(type: Copy) {
 	group 'private'
 	description "Creates directory of extensions that are external to the installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
 	
+	dependsOn assembleSource
+	
 	destinationDir new File(DISTRIBUTION_DIR.getPath(), "external_extensions")
 	
 	// Make sure that we don't try to copy the same file with the same path.

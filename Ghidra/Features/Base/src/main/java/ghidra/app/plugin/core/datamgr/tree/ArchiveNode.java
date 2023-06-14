@@ -21,9 +21,12 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarningLevel;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.task.SwingUpdateManager;
 
@@ -63,26 +66,29 @@ public class ArchiveNode extends CategoryNode {
 			buf.append(HTMLUtilities.HTML_SPACE);
 			buf.append(HTMLUtilities.HTML_SPACE);
 			buf.append(HTMLUtilities.escapeHTML(programArchSummary));
-			addArchiveWarnings(dtm, buf);
 		}
 		else {
 			buf.append(DEFAULT_DATA_ORG_DESCRIPTION);
 		}
+		addArchiveWarnings(dtm, buf);
 		return buf.toString();
 	}
 
 	private void addArchiveWarnings(DataTypeManager dtm, StringBuilder buf) {
 		if (dtm instanceof StandAloneDataTypeManager archiveDtm) {
-			if (archiveDtm.isProgramArchitectureMissing()) {
+			ArchiveWarning warning = archiveDtm.getWarning();
+			if (warning != ArchiveWarning.NONE) {
+				GColor c = Messages.NORMAL;
+				ArchiveWarningLevel level = warning.level();
+				if (level == ArchiveWarningLevel.ERROR) {
+					c = Messages.ERROR;
+				}
+				else if (level == ArchiveWarningLevel.WARN) {
+					c = Messages.WARNING;
+				}
+				String msg = archiveDtm.getWarningMessage(false);
 				buf.append(HTMLUtilities.BR);
-				buf.append(
-					"<font color=\"" + Messages.ERROR +
-						"\">** Missing Language/Compiler Specification **</font>");
-			}
-			else if (archiveDtm.isProgramArchitectureUpgradeRequired()) {
-				buf.append(HTMLUtilities.BR);
-				buf.append("<font color=\"" + Messages.WARNING +
-					"\">** Language Upgrade Required **</font>");
+				buf.append("<font color=\"" + c + "\">** " + msg + " **</font>");
 			}
 		}
 	}

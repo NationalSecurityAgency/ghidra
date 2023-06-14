@@ -91,6 +91,10 @@ public class SBType {
     return lldbJNI.SBType_IsScopedEnumerationType(swigCPtr, this);
   }
 
+  public boolean IsAggregateType() {
+    return lldbJNI.SBType_IsAggregateType(swigCPtr, this);
+  }
+
   public SBType GetPointerType() {
     return new SBType(lldbJNI.SBType_GetPointerType(swigCPtr, this), true);
   }
@@ -223,8 +227,8 @@ public class SBType {
     return lldbJNI.SBType_GetTypeFlags(swigCPtr, this);
   }
 
-  public String __str__() {
-    return lldbJNI.SBType___str__(swigCPtr, this);
+  public String __repr__() {
+    return lldbJNI.SBType___repr__(swigCPtr, this);
   }
 
 }
