@@ -45,7 +45,7 @@ public class ExternalDebugInfo {
 
 		String filename = debugLink != null ? debugLink.getFilename() : null;
 		int crc = debugLink != null ? debugLink.getCrc() : 0;
-		byte[] hash = buildId != null ? buildId.getHash() : null;
+		byte[] hash = buildId != null ? buildId.getDescription() : null;
 		return new ExternalDebugInfo(filename, crc, hash);
 	}
 
