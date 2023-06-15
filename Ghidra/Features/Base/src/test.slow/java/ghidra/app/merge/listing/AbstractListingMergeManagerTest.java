@@ -108,8 +108,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * This is a generic method for testing merge conflicts for equates on data. It sets the bytes 
-	 * to those indicated beginning at the indicated address and then creates Data using the 
+	 * This is a generic method for testing merge conflicts for equates on data. It sets the bytes
+	 * to those indicated beginning at the indicated address and then creates Data using the
 	 * specified data type at that address. It then creates a conflicting equate name and
 	 * chooses the Latest or My change based on the boolean flag, chooseMy.
 	 * @param address the address where the data is created
@@ -385,7 +385,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 			assertNotNull(newFunction);
 
 			if (newFunction.isThunk()) {
-				// TODO For thunk functions need to call thunk analyzer here before 
+				// TODO For thunk functions need to call thunk analyzer here before
 				// stack analysis occurs
 			}
 			FunctionStackAnalysisCmd analyzeCmd = new FunctionStackAnalysisCmd(addr, true);
@@ -423,7 +423,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		originalProgram = mtf.getOriginalProgram();
 		myProgram = mtf.getPrivateProgram();// my program
 		resultProgram = mtf.getResultProgram();// destination program
-		latestProgram = mtf.getLatestProgram();// latest version (results and latest start out the same);		
+		latestProgram = mtf.getLatestProgram();// latest version (results and latest start out the same);
 		resultAddressFactory = resultProgram.getAddressFactory();
 
 		ProgramChangeSet resultChangeSet = mtf.getResultChangeSet();
@@ -473,7 +473,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 			fail("Interrupted waiting for merge to start");
 		}
 
-		// now wait for the merge tool to appear or for the entire merge process to have 
+		// now wait for the merge tool to appear or for the entire merge process to have
 		// ended
 		waitForCondition(() -> {
 			mergeTool = mergeMgr.getMergeTool();
@@ -689,8 +689,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on a primary symbol conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on a primary symbol conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's primary symbol is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -841,7 +841,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -859,7 +859,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -920,7 +920,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -938,7 +938,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -949,7 +949,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	 * <li>KEEP_ORIGINAL</li>
 	 * <li>CANCELED</li>
 	 * </ul>
-	 * @param useForAll true indicates that this should select the checkbox for 
+	 * @param useForAll true indicates that this should select the checkbox for
 	 * "Use For All" of this type of comment.
 	 * @throws Exception if panel not available as expected
 	 */
@@ -959,6 +959,12 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		ListingMergePanel comp = getMergePanel();
 		assertNotNull(comp);
 		Window window = SwingUtilities.getWindowAncestor(comp);
+		if (window == null) {
+			Msg.debug(this, "Unable to find merge window");
+			printOpenWindows();
+		}
+		assertNotNull("Unable to find conflict panel window", window);
+
 		ConflictInfoPanel infoComp = findComponent(comp, ConflictInfoPanel.class);
 		assertNotNull(infoComp);
 
@@ -1013,7 +1019,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1030,7 +1036,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1093,7 +1099,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1109,7 +1115,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1126,7 +1132,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1147,7 +1153,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param addr indicates the address in conflict.
@@ -1195,7 +1201,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	/**
 	 * Verifies the address matches the one i the conflict information panel.
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param addr the expected address of the conflict
@@ -1207,7 +1213,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	 * <li>KEEP_MY</li>
 	 * <li>CANCEL</li>
 	 * </ul>
-	 * @param useForAll true indicates thatthis should select the checkbox for 
+	 * @param useForAll true indicates thatthis should select the checkbox for
 	 * "Use for all conflicts of this property type".
 	 * @throws Exception if panel not available as expected
 	 */
@@ -1228,7 +1234,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	/**
 	 * Verifies the address matches the one i the conflict information panel.
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param addr the expected address of the conflict
@@ -1280,8 +1286,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on a primary symbol conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on a primary symbol conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's primary symbol is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1334,8 +1340,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on a primary symbol conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on a primary symbol conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's primary symbol is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1388,8 +1394,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on the named global symbol conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on the named global symbol conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's primary symbol is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1461,8 +1467,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on the named type of conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on the named type of conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's option is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1575,7 +1581,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice for a symbol conflict as indicated by option. This is equivalent to 
+	 * Makes a user choice for a symbol conflict as indicated by option. This is equivalent to
 	 * the user clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param addr indicates the address in conflict.
@@ -1596,9 +1602,9 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	/**
 	 * This gets an array containing the bytes indicated by the string.
-	 * It takes a string of the form "a5 32 b9", where each byte is two hex digits separated 
+	 * It takes a string of the form "a5 32 b9", where each byte is two hex digits separated
 	 * by a space.
-	 * @param hexBytesAsString is a string indicating the hexadecimal representation of the 
+	 * @param hexBytesAsString is a string indicating the hexadecimal representation of the
 	 * bytes to put in the array.
 	 * @return the array of bytes
 	 * @throws a NumberFormatException if the string can't be parsed into an array of bytes.
