@@ -120,7 +120,7 @@ public class PcodeOp {
 	// translation.
 	public static final int MULTIEQUAL = 60;  // Output equal to one of inputs, depending on execution
 	public static final int INDIRECT = 61;    // Output probably equals input, but may be indirectly affected
-	public static final int PIECE = 62;       // Output is constructed from multiple peices
+	public static final int PIECE = 62;       // Output is constructed from multiple pieces
 	public static final int SUBPIECE = 63;    // Output is a subpiece of input0, input1=offset into input0
 
 	public static final int CAST = 64;        // Cast from one type to another
