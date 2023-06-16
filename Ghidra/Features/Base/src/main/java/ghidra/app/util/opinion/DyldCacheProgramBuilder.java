@@ -441,6 +441,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			if (!name.isEmpty()) {
 				listing.setComment(headerAddr, CodeUnit.PLATE_COMMENT, path);
 			}
+
+			// TODO: This can be slow.  Add an option for it.
+			//DyldCacheProgramBuilder.this.markupLoadCommandData(header);
 		}
 
 		/**

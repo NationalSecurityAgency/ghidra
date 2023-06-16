@@ -336,22 +336,17 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
 		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address address = baseAddress.getNewAddress(getStartIndex());
-				api.createData(address, toDataType());
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
 
-				markupTOC(header, api, baseAddress, parentModule, monitor);
-				markupModules(header, api, baseAddress, parentModule, monitor);
-				markupReferencedSymbolTable(header, api, baseAddress, parentModule, monitor);
-				makupIndirectSymbolTable(header, api, baseAddress, parentModule, monitor);
-				markupExternalRelocations(api, baseAddress, parentModule, monitor);
-				markupLocalRelocations(api, baseAddress, parentModule, monitor);
-			}
+			markupTOC(header, api, baseAddress, parentModule, monitor);
+			markupModules(header, api, baseAddress, parentModule, monitor);
+			markupReferencedSymbolTable(header, api, baseAddress, parentModule, monitor);
+			makupIndirectSymbolTable(header, api, baseAddress, parentModule, monitor);
+			markupExternalRelocations(api, baseAddress, parentModule, monitor);
+			markupLocalRelocations(api, baseAddress, parentModule, monitor);
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create " + getCommandName());

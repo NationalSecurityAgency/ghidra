@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.macho.commands;
+package ghidra.app.util.bin.format.macho.commands.chained;
 
 import java.io.IOException;
 
@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a dyld_chained_import structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/fixup-chains.h">mach-o/fixup-chains.h</a> 
  */
 public class DyldChainedImport implements StructConverter {
 	private static final int DYLD_CHAINED_IMPORT = 1;

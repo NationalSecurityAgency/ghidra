@@ -20,9 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 
 /**
- * Represents a LC_DYLD_EXPORTS_TRIE command
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a LC_DYLD_EXPORTS_TRIE command 
  */
 public class DyldExportsTrieCommand extends LinkEditDataCommand {
 

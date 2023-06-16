@@ -110,7 +110,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		}
 
 		// Do things that needed to wait until after the inner Mach-O's are processed
-		super.markupChainedFixups(chainedFixups);
+		super.markupChainedFixups(machoHeader, chainedFixups);
 	}
 
 	/**
@@ -185,7 +185,8 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	}
 
 	@Override
-	protected void markupChainedFixups(List<Address> fixups) throws CancelledException {
+	protected void markupChainedFixups(MachHeader header, List<Address> fixups)
+			throws CancelledException {
 		// Just save the list.  
 		// We need to delay doing the markup until after we process all the inner Mach-O's.
 		this.chainedFixups = fixups;
