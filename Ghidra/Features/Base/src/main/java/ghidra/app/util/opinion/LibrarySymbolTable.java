@@ -43,7 +43,7 @@ import util.CollectionUtils;
 class LibrarySymbolTable {
 
 	private static final SimpleDateFormat TIMESTAMP_FORMAT =
-		new SimpleDateFormat("EEE MMM dd hh:mm:ss zzz yyyy");
+		new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
 
 	private static final int NONE = 0;
 	private static final int LIBRARY = 1;
