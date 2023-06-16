@@ -98,8 +98,10 @@ public interface AnnotatedStringHandler extends ExtensionPoint {
 	
 	/**
 	 * Returns an example string of how the annotation is used
-	 * @param contained The text that may be wrapped
+	 * @param displayText The text that may be wrapped, cannot be null
 	 * @return the example of how this is used.
 	 */
-	public String getPrototypeString(String contained);
+	public default String getPrototypeString(String displayText) {
+		return getPrototypeString();
+	}
 }
