@@ -28,22 +28,24 @@ import ghidra.program.model.lang.Register;
  */
 public class GoRegisterInfo {
 
-	private List<Register> intRegisters;
-	private List<Register> floatRegisters;
-	private int stackInitialOffset;
-	private int maxAlign;	// 4 or 8
-	private Register currentGoroutineRegister;	// always points to g
-	private Register zeroRegister;	// always contains a zero value
+	private final List<Register> intRegisters;
+	private final List<Register> floatRegisters;
+	private final int stackInitialOffset;
+	private final int maxAlign;	// 4 or 8
+	private final Register currentGoroutineRegister;	// always points to g
+	private final Register zeroRegister;	// always contains a zero value
+	private final boolean zeroRegisterIsBuiltin;	// zero register is provided by cpu, or is manually set
 
 	GoRegisterInfo(List<Register> intRegisters, List<Register> floatRegisters,
 			int stackInitialOffset, int maxAlign, Register currentGoroutineRegister,
-			Register zeroRegister) {
+			Register zeroRegister, boolean zeroRegisterIsBuiltin) {
 		this.intRegisters = intRegisters;
 		this.floatRegisters = floatRegisters;
 		this.stackInitialOffset = stackInitialOffset;
 		this.maxAlign = maxAlign;
 		this.currentGoroutineRegister = currentGoroutineRegister;
 		this.zeroRegister = zeroRegister;
+		this.zeroRegisterIsBuiltin = zeroRegisterIsBuiltin;
 	}
 
 	public int getIntRegisterSize() {
@@ -62,6 +64,10 @@ public class GoRegisterInfo {
 		return zeroRegister;
 	}
 
+	public boolean isZeroRegisterIsBuiltin() {
+		return zeroRegisterIsBuiltin;
+	}
+
 	public List<Register> getIntRegisters() {
 		return intRegisters;
 	}
@@ -76,11 +82,11 @@ public class GoRegisterInfo {
 
 	public int getAlignmentForType(DataType dt) {
 		while (dt instanceof TypeDef || dt instanceof Array) {
-			if (dt instanceof TypeDef) {
-				dt = ((TypeDef) dt).getBaseDataType();
+			if (dt instanceof TypeDef td) {
+				dt = td.getBaseDataType();
 			}
-			if (dt instanceof Array) {
-				dt = ((Array) dt).getDataType();
+			if (dt instanceof Array a) {
+				dt = a.getDataType();
 			}
 		}
 		if (isIntType(dt) && isIntrinsicSize(dt.getLength())) {

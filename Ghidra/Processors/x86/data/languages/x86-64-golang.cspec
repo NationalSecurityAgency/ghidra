@@ -178,6 +178,68 @@
 		</unaffected>
 	</prototype>
     
+	<prototype name="duffzero" extrapop="8" stackshift="8">
+		<input>
+			<pentry minsize="1" maxsize="8">
+				<register name="RDI"/>
+			</pentry>
+		</input>
+      
+		<output>
+			<pentry minsize="1" maxsize="8">
+				<register name="RDI"/>
+			</pentry>
+		</output>
+      
+		<killedbycall>
+			<register name="RDI"/>
+		</killedbycall>
+		<unaffected>
+			<register name="RSP"/>
+			<register name="RBP"/>
+			<register name="R14"/>        
+		</unaffected>
+	</prototype>
+	
+	<prototype name="duffcopy" extrapop="8" stackshift="8">
+		<input>
+			<pentry minsize="1" maxsize="8">
+				<register name="RDI"/>
+			</pentry>
+			<pentry minsize="1" maxsize="8">
+				<register name="RSI"/>
+			</pentry>
+		</input>
+      
+		<output>
+			<pentry minsize="1" maxsize="8">
+				<register name="RDI"/>
+			</pentry>
+			<pentry minsize="9" maxsize="16">
+				<addr space="join" piece2="RDI" piece1="RSI"/>
+			</pentry>
+		</output>
+      
+		<killedbycall>
+			<register name="RDI"/>
+			<register name="RSI"/>
+		</killedbycall>
+		<unaffected>
+			<register name="RAX"/>
+			<register name="RBX"/>
+			<register name="RCX"/>
+			<register name="RDI"/>
+			<register name="RSI"/>
+			<register name="R8"/>
+			<register name="R9"/>
+			<register name="R10"/>
+			<register name="R11"/>
+			<register name="RSP"/>
+			<register name="RBP"/>
+			<register name="R14"/>        
+		</unaffected>
+	</prototype>
+	
 	<prototype name="__stdcall" extrapop="8" stackshift="8">
 		<!-- Derived from "System V Application Binary Interface AMD64 Architecture Processor Supplement" April 2016 -->
 		<input>

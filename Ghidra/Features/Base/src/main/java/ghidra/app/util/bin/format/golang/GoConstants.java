@@ -21,8 +21,16 @@ import ghidra.program.model.data.CategoryPath;
  * Misc constant values for golang
  */
 public class GoConstants {
+	public static final String GOLANG_CSPEC_NAME = "golang";
+
 	/**
 	 * Category path to place golang types in
 	 */
 	public static final CategoryPath GOLANG_CATEGORYPATH = new CategoryPath("/golang");
+
+	public static final String GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME = "abi-internal";
+	public static final String GOLANG_ABI0_CALLINGCONVENTION_NAME = "abi0";
+	public static final String GOLANG_DUFFZERO_CALLINGCONVENTION_NAME = "duffzero";
+	public static final String GOLANG_DUFFCOPY_CALLINGCONVENTION_NAME = "duffcopy";
 }
+
