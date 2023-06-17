@@ -32,7 +32,6 @@ import docking.action.ToggleDockingAction;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.MultiActionDockingAction;
 import docking.widgets.OptionDialog;
-import docking.widgets.PopupWindow;
 import docking.widgets.textpane.GHtmlTextPane;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
@@ -476,15 +475,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 				setDataTypeSelected(dt);
 			}
 			else if (type == EventType.ENTERED) {
-				//
-				// The user hovered over the link--show something useful, like the path
-				//
-				JToolTip toolTip = new JToolTip();
-				CategoryPath path = dt.getCategoryPath();
-				toolTip.setTipText(path.toString());
-				PopupWindow popup = new PopupWindow(toolTip);
-				popup.setCloseWindowDelay(10000);
-				popup.showPopup((MouseEvent) event.getInputEvent());
+				previewPane.setToolTipText(dt.getCategoryPath().toString());
+			}
+			else if (type == EventType.EXITED) {
+				previewPane.setToolTipText(null);
 			}
 
 		});

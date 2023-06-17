@@ -54,6 +54,7 @@ import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import help.Help;
 import help.HelpService;
@@ -492,10 +493,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 		return eventMgr.hasToolListeners();
 	}
 
-	public void exit() {
-		dispose();
-	}
-
 	protected void dispose() {
 		isDisposed = true;
 
@@ -525,6 +522,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 		disposeManagers();
 		winMgr.dispose();
+		toolServices.closeTool(this);
 	}
 
 	private void disposeManagers() {
@@ -738,14 +736,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	public void executeBackgroundCommand(BackgroundCommand cmd, UndoableDomainObject obj) {
 		taskMgr.executeCommand(cmd, obj);
-	}
-
-	/**
-	 * Cancel any running command and clear the command queue.
-	 * @param wait if true wait for current task to cancel cleanly
-	 */
-	public void terminateBackgroundCommands(boolean wait) {
-		taskMgr.stop(wait);
 	}
 
 	/**
@@ -1052,7 +1042,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 		saveAsAction.setEnabled(true);
 		saveAsAction
-			.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
 
 		addAction(saveAction);
 		addAction(saveAsAction);
@@ -1078,7 +1068,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		menuData.setMenuSubGroup(Integer.toString(subGroup++));
 		exportToolAction.setMenuBarData(menuData);
 		exportToolAction
-			.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
 		addAction(exportToolAction);
 
 		DockingAction exportDefautToolAction =
@@ -1101,42 +1091,42 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void addHelpActions() {
 		new ActionBuilder("About Ghidra", ToolConstants.TOOL_OWNER)
-			.menuPath(ToolConstants.MENU_HELP, "&About Ghidra")
-			.menuGroup("ZZA")
-			.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "About_Ghidra"))
-			.inWindow(ActionBuilder.When.ALWAYS)
-			.onAction(c -> DockingWindowManager.showDialog(new AboutDialog()))
-			.buildAndInstall(this);
+				.menuPath(ToolConstants.MENU_HELP, "&About Ghidra")
+				.menuGroup("ZZA")
+				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "About_Ghidra"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> DockingWindowManager.showDialog(new AboutDialog()))
+				.buildAndInstall(this);
 
 		new ActionBuilder("User Agreement", ToolConstants.TOOL_OWNER)
-			.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
-			.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-			.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
-			.inWindow(ActionBuilder.When.ALWAYS)
-			.onAction(
-				c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
-			.buildAndInstall(this);
+				.menuPath(ToolConstants.MENU_HELP, "&User Agreement")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+				.helpLocation(new HelpLocation(ToolConstants.ABOUT_HELP_TOPIC, "User_Agreement"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(
+					c -> DockingWindowManager.showDialog(new UserAgreementDialog(false, false)))
+				.buildAndInstall(this);
 
 		final ErrorReporter reporter = ErrLogDialog.getErrorReporter();
 		if (reporter != null) {
 			new ActionBuilder("Report Bug", ToolConstants.TOOL_OWNER)
-				.menuPath(ToolConstants.MENU_HELP, "&Report Bug...")
-				.menuGroup("BBB")
-				.helpLocation(new HelpLocation("ErrorReporting", "Report_Bug"))
-				.inWindow(ActionBuilder.When.ALWAYS)
-				.onAction(c -> reporter.report(getToolFrame(), "User Bug Report", null))
-				.buildAndInstall(this);
+					.menuPath(ToolConstants.MENU_HELP, "&Report Bug...")
+					.menuGroup("BBB")
+					.helpLocation(new HelpLocation("ErrorReporting", "Report_Bug"))
+					.inWindow(ActionBuilder.When.ALWAYS)
+					.onAction(c -> reporter.report(getToolFrame(), "User Bug Report", null))
+					.buildAndInstall(this);
 		}
 
 		HelpService help = Help.getHelpService();
 
 		new ActionBuilder("Contents", ToolConstants.TOOL_OWNER)
-			.menuPath(ToolConstants.MENU_HELP, "&Contents")
-			.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-			.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
-			.inWindow(ActionBuilder.When.ALWAYS)
-			.onAction(c -> help.showHelp(null, false, getToolFrame()))
-			.buildAndInstall(this);
+				.menuPath(ToolConstants.MENU_HELP, "&Contents")
+				.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+				.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
+				.inWindow(ActionBuilder.When.ALWAYS)
+				.onAction(c -> help.showHelp(null, false, getToolFrame()))
+				.buildAndInstall(this);
 	}
 
 	/**
@@ -1148,46 +1138,89 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	/**
-	 * Close this tool:
+	 * Closes this tool, possibly with input from the user. The following conditions are checked
+	 * and can prompt the user for more info and allow them to cancel the close.
 	 * <OL>
-	 * 	<LI>if there are no tasks running.
-	 * 	<LI>resolve the state of any plugins so they can be closed.
-	 * 	<LI>Prompt the user to save any changes.
-	 * 	<LI>close all associated plugins (this closes the domain object if one is open).
-	 * 	<LI>pop up dialog to save the configuration if it has changed.
-	 * 	<LI>notify the project tool services that this tool is going away.
+	 * 	<LI>Running tasks. Closing with running tasks could lead to data loss.
+	 *  <LI>Plugins get asked if they can be closed. They may prompt the user to resolve
+	 *  some plugin specific state.
+	 * 	<LI>The user is prompted to save any data changes.
+	 * 	<LI>Tools are saved, possibly asking the user to resolve any conflicts caused by
+	 *  changing multiple instances of the same tool in different ways.
+	 * 	<LI>If all the above conditions passed, the tool is closed and disposed.
 	 * </OL>
 	 */
 	@Override
 	public void close() {
-		close(false);
+		if (canClose()) {
+			dispose();
+		}
 	}
 
-	protected void close(boolean isExiting) {
-		if (canClose(isExiting) && pluginMgr.saveData()) {
-			doClose();
+	protected boolean canClose() {
+		if (!canStopTasks()) {
+			return false;
 		}
+		if (!canClosePlugins()) {
+			return false;
+		}
+		if (!pluginMgr.saveData()) {
+			return false;
+		}
+		return doSaveTool();
 	}
 
 	/**
-	 * Close this tool:
-	 * <OL>
-	 * 	<LI>if there are no tasks running.
-	 * 	<LI>close all associated plugins (this closes the domain object if one is open).
-	 * 	<LI>pop up dialog to save the configuration if it has changed;
-	 * 	<LI>notify the project tool services that this tool is going away.
-	 * </OL>
+	 * Normally, tools are not allowed to close while tasks are running in that tool as it
+	 * could leave the application in an unstable state. Tools that exit the application
+	 * (such as the FrontEndTool) can override this so that the user can terminate running tasks
+	 * and not have that prevent exiting the application.
+	 * @return whether the user is allowed to terminate tasks so that the tool can be closed.
 	 */
-	private void doClose() {
-
-		if (!doSaveTool()) {
-			return; // if cancelled, don't close
-		}
-
-		exit();
-		toolServices.closeTool(this);
+	protected boolean allowTerminatingTasksWhenClosing() {
+		return false;
 	}
 
+	/**
+	 * Checks if this tool's plugins are in a state to be closed.
+	 * @return true if all the plugins in the tool can be closed without further user input.
+	 */
+	protected boolean canClosePlugins() {
+		return pluginMgr.canClose();
+	}
+
+	/**
+	 * Checks if this tool has running tasks, with optionally giving the user an
+	 * opportunity to cancel them.
+	 *
+	 * @return true if this tool has running tasks
+	 */
+	protected boolean canStopTasks() {
+		if (!taskMgr.isBusy()) {
+			return true;
+		}
+
+		int result = OptionDialog.showYesNoDialog(getToolFrame(), "Tool Busy Executing Task",
+			"The tool is busy performing a background task.\n If you continue the" +
+				" task may be terminated and some work may be lost!\n\nContinue anyway?");
+		if (result != OptionDialog.YES_OPTION) {
+			return false;
+		}
+
+		Task task = new Task("Stopping Tasks", true, false, true) {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				taskMgr.stop(monitor);
+			}
+		};
+		TaskLauncher.launch(task);
+		return !task.isCancelled();
+	}
+
+	/**
+	 * Returns true if this tool needs saving
+	 * @return true if this tool needs saving
+	 */
 	public boolean shouldSave() {
 		return hasConfigChanged(); // ignore the window layout changes
 	}
@@ -1220,41 +1253,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 				}
 			}
 			// option 3 is don't save; just exit
-		}
-		return true;
-	}
-
-	/**
-	 * Can this tool be closed?
-	 * <br>Note: This forces plugins to terminate any tasks they have running and
-	 * apply any unsaved data to domain objects or files. If they can't do
-	 * this or the user cancels then this returns false.
-	 *
-	 * @param isExiting whether the tool is exiting
-	 * @return false if this tool has tasks in progress or can't be closed
-	 * since the user has unfinished/unsaved changes.
-	 */
-	public boolean canClose(boolean isExiting) {
-		if (taskMgr.isBusy()) {
-			if (isExiting) {
-				int result = OptionDialog.showYesNoDialog(getToolFrame(),
-					"Tool Busy Executing Task",
-					"The tool is busy performing a background task.\n If you continue the" +
-						" task may be terminated and some work may be lost!\n\nContinue anyway?");
-				if (result == OptionDialog.NO_OPTION) {
-					return false;
-				}
-				taskMgr.stop(false);
-			}
-			else {
-				beep();
-				Msg.showInfo(getClass(), getToolFrame(), "Tool Busy",
-					"You must stop all background tasks before tool may close.");
-				return false;
-			}
-		}
-		if (!pluginMgr.canClose()) {
-			return false;
 		}
 		return true;
 	}

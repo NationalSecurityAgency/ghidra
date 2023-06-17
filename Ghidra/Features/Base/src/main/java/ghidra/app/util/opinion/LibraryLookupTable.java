@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
+import ghidra.app.util.bin.format.pe.ResourceDataDirectory;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.framework.options.Options;
@@ -147,8 +148,8 @@ public class LibraryLookupTable {
 
 		Options props = program.getOptions(Program.PROGRAM_INFO);
 		String format = program.getExecutableFormat();
-		String company = props.getString("CompanyName", "");
-		String version = props.getString("FileVersion", "");
+		String company = props.getString(ResourceDataDirectory.getPeResourceProperty("CompanyName"), "");
+		String version = props.getString(ResourceDataDirectory.getPeResourceProperty("FileVersion"), "");
 
 		boolean save =
 			!format.equals(PeLoader.PE_NAME) || company.toLowerCase().contains("microsoft");

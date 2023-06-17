@@ -23,7 +23,6 @@ eclipse.project.name = 'Xtra MachineLearning'
 
 dependencies {
 	api project(':Base')
-    helpPath project(path: ":Base", configuration: 'helpPath')
 
     api "com.oracle.labs.olcut:olcut-config-protobuf:5.2.0" //{exclude group: "com.google.protobuf", module: "protobuf-java"}
     api ("com.oracle.labs.olcut:olcut-core:5.2.0") {exclude group: "org.jline"}

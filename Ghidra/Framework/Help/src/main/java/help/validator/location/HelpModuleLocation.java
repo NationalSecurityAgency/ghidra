@@ -22,6 +22,7 @@ import java.util.*;
 import javax.help.HelpSet;
 
 import ghidra.util.exception.AssertException;
+import help.HelpBuildUtils;
 import help.validator.model.*;
 
 public abstract class HelpModuleLocation {
@@ -47,13 +48,16 @@ public abstract class HelpModuleLocation {
 
 	public abstract HelpSet loadHelpSet();
 
-	/** Returns true if this help location represents a source of input files to generate help output */
+	/** 
+	 * Returns true if this help location represents a source of input files to generate help output
+	 * @return true if this help location represents a source of input files to generate help output
+	 */
 	public abstract boolean isHelpInputSource();
 
 	protected void loadHelpTopics() {
 		Path helpTopicsDir = helpDir.resolve("topics");
 		if (!Files.exists(helpTopicsDir)) {
-			throw new AssertException("No topics found in help dir: " + helpDir);
+			HelpBuildUtils.debug("No topics found in help dir: " + this);
 		}
 
 		try (DirectoryStream<Path> ds = Files.newDirectoryStream(helpTopicsDir);) {
@@ -65,7 +69,7 @@ public abstract class HelpModuleLocation {
 		}
 		catch (IOException e) {
 			// I suppose there aren't any
-			throw new AssertException("No topics found in help dir: " + helpDir);
+			throw new AssertException("No topics found in help dir: " + this);
 		}
 	}
 
@@ -193,7 +197,7 @@ public abstract class HelpModuleLocation {
 				}
 				List<AnchorDefinition> list = map.get(name);
 				if (list == null) {
-					list = new ArrayList<AnchorDefinition>();
+					list = new ArrayList<>();
 					map.put(name, list);
 				}
 				list.add(anchorDefinition);

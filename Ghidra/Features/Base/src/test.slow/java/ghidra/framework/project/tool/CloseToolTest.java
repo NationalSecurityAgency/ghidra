@@ -22,6 +22,7 @@ import java.awt.Window;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.widgets.OptionDialog;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -114,7 +115,7 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testCannotCloseToolWithBackgroundTaskRunning() throws Exception {
+	public void testCloseToolWithBackgroundTaskRunningAnswerNo() throws Exception {
 		// open a program
 		ProgramDB program = new ProgramBuilder("notepad", ProgramBuilder._TOY).getProgram();
 
@@ -130,15 +131,15 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		closeTool(tool);
 
 		// check for warning dialog
-		Window window = waitForWindow("Tool Busy");
-		assertNotNull("Did not get tool busy dialog", window);
-		closeWindow(window);
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
+		assertNotNull("Did not get option dialog to terminate tasks", dialog);
+		pressButtonByText(dialog, "No");
 
 		// try to close the program
 		closeProgram(tool, program);
 
 		// check for warning dialog
-		window = waitForWindow("Close notepad Failed");
+		Window window = waitForWindow("Close notepad Failed");
 		assertNotNull("Did not get \"close failed\" dialog", window);
 		closeWindow(window);
 
@@ -149,6 +150,31 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(tool.getToolFrame());
 		closeTool(tool);
 		assertNull("Tool did not close after task", tool.getToolFrame());
+	}
+
+	@Test
+	public void testCloseToolWithBackgroundTaskRunningAnswerYes() throws Exception {
+		// open a program
+		ProgramDB program = new ProgramBuilder("notepad", ProgramBuilder._TOY).getProgram();
+
+		// launch a tool with the program
+		PluginTool tool = env.launchDefaultTool(program);
+
+		// start a background task that will run until we tell it to finish.
+		ControllableBackgroundCommand cmd = new ControllableBackgroundCommand();
+		tool.executeBackgroundCommand(cmd, program);
+		waitForCommandToStart(cmd);
+
+		// try to close the tool
+		closeTool(tool);
+
+		// check for warning dialog
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
+		assertNotNull("Did not get option dialog to close tool with running task", dialog);
+		pressButtonByText(dialog, "Yes");
+
+		waitFor(() -> tool.getToolFrame() == null, "Tool did not close after task");
+		stopBackgroundCommand(tool, cmd);
 	}
 
 	private void closeWindow(final Window window) {
@@ -199,11 +225,9 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		@Override
 		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 			hasStarted = true;
-
-			while (!stop) {
+			while (!stop && !monitor.isCancelled()) {
 				sleep(100);
 			}
-
 			return true;
 		}
 	}

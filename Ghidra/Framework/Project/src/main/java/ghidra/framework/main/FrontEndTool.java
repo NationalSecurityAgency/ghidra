@@ -166,12 +166,17 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	@Override
-	protected void dispose() {
+	public void dispose() {
 		super.dispose();
 
 		if (logProvider != null) {
 			logProvider.dispose();
 		}
+		shutdown();
+	}
+
+	protected void shutdown() {
+		System.exit(0);
 	}
 
 	private void ensureSize() {
@@ -228,7 +233,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	@Override
 	protected boolean doSaveTool() {
 		// This method is overridden to allow the FrontEndTool to perform custom saving.
-		// The super.doSaveTool is designed to save tools to the user's tool chest directory. The 
+		// The super.doSaveTool is designed to save tools to the user's tool chest directory. The
 		// FrontEndTool saves its state directly in the user's settings directory and includes
 		// the entire project's state such as what tools were running and data states for each
 		// running tool.
@@ -392,13 +397,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	@Override
-	public void exit() {
-		plugin.exitGhidra();
-	}
-
-	@Override
-	public void close() {
-		close(true);
+	protected boolean canClose() {
+		return super.canClose() && plugin.closeActiveProject();
 	}
 
 	/**

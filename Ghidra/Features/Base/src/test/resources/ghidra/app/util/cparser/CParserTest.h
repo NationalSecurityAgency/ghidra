@@ -176,6 +176,9 @@ int (__stdcall * GetSectionBlock) (
 
  #pragma region Input compatibility macros
 
+// nothing will parse after this line if the this fails
+  #pragma test for, pragma, with, commas outside parens
+
    #pragma warning(disable)
 
   #pragma warning(disable:4035 4793)               // re-enable below

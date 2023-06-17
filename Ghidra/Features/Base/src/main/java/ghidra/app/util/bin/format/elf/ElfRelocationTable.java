@@ -197,11 +197,11 @@ public class ElfRelocationTable implements ElfFileSection {
 			int relocationIndex = 0;
 			long remainingRelocations = reader.readNext(LEB128::signed); // reloc_count
 			long offset = reader.readNext(LEB128::signed); // reloc_baseOffset
+			long addend = 0;
 
 			while (remainingRelocations > 0) {
 
-				// start new group
-				long addend = 0;
+				// start new group - read group header (size and flags)
 
 				// group_size
 				long groupSize = reader.readNext(LEB128::signed);
@@ -228,21 +228,29 @@ public class ElfRelocationTable implements ElfFileSection {
 				// group_info (optional)
 				long groupRInfo = groupedByInfo ? reader.readNext(LEB128::signed) : 0;
 
-				if (groupedByAddend && groupHasAddend) {
+				if (groupHasAddend && groupedByAddend) {
+					if (!addendTypeReloc) {
+						elfHeader.logError(
+							"ELF Android Relocation processing failed.  Unexpected r_addend in android.rel section");
+						return List.of();
+					}
 					// group_addend (optional)
 					addend += reader.readNext(LEB128::signed);
 				}
+				else if (!groupHasAddend) {
+					addend = 0;
+				}
 
+				// Process all group entries
 				for (int i = 0; i < groupSize; i++) {
 					// reloc_offset (optional)
-					offset +=
-						groupedByDelta ? groupOffsetDelta : reader.readNext(LEB128::signed);
+					offset += groupedByDelta ? groupOffsetDelta : reader.readNext(LEB128::signed);
 
 					// reloc_info (optional)
 					long info = groupedByInfo ? groupRInfo : reader.readNext(LEB128::signed);
 
 					long rAddend = 0;
-					if (groupHasAddend) {
+					if (addendTypeReloc && groupHasAddend) {
 						if (!groupedByAddend) {
 							// reloc_addend (optional)
 							addend += reader.readNext(LEB128::signed);

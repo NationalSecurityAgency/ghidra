@@ -25,7 +25,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -50,6 +49,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
+import ghidra.util.task.CancellableIterator;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
@@ -61,6 +61,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	public static final ClipboardType ADDRESS_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
+	public static final ClipboardType ADDRESS_TEXT_WITH_OFFSET_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Address w/ Offset");
 	public static final ClipboardType CODE_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Formatted Code");
 	public static final ClipboardType LABELS_COMMENTS_TYPE =
@@ -85,6 +87,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		list.add(PYTHON_LIST_TYPE);
 		list.add(CPP_BYTE_ARRAY_TYPE);
 		list.add(ADDRESS_TEXT_TYPE);
+		list.add(ADDRESS_TEXT_WITH_OFFSET_TYPE);
 
 		return list;
 	}
@@ -182,19 +185,22 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	public Transferable copySpecial(ClipboardType copyType, TaskMonitor monitor) {
 
 		if (copyType == ADDRESS_TEXT_TYPE) {
-			return copyAddress();
+			return copyAddress(monitor);
+		}
+		else if (copyType == ADDRESS_TEXT_WITH_OFFSET_TYPE) {
+			return copySymbolString(monitor);
 		}
 		else if (copyType == CODE_TEXT_TYPE) {
 			return copyCode(monitor);
 		}
 		else if (copyType == LABELS_COMMENTS_TYPE) {
-			return copyLabelsComments(true, true);
+			return copyLabelsComments(true, true, monitor);
 		}
 		else if (copyType == LABELS_TYPE) {
-			return copyLabelsComments(true, false);
+			return copyLabelsComments(true, false, monitor);
 		}
 		else if (copyType == COMMENTS_TYPE) {
-			return copyLabelsComments(false, true);
+			return copyLabelsComments(false, true, monitor);
 		}
 
 		return copyBytes(copyType, monitor);
@@ -303,56 +309,71 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		return new NonLabelStringTransferable(location.getOperandRepresentation());
 	}
 
-	private Transferable copyAddress() {
+	private Transferable copyAddress(TaskMonitor monitor) {
+		AddressSetView addrs = getSelectedAddresses();
+		Iterable<Address> iterable = addrs.getAddresses(true);
+		CancellableIterator<Address> it = new CancellableIterator<>(iterable.iterator(), monitor);
+		return createStringTransferable(StringUtils.join(it, "\n"));
+	}
 
-		AddressSetView addressSet = getSelectedAddresses();
-		AddressIterator it = addressSet.getAddresses(true);
-		String joined = StringUtils.join((Iterator<Address>) it, "\n");
-		return createStringTransferable(joined);
+	private Transferable copySymbolString(TaskMonitor monitor) {
+		Listing listing = currentProgram.getListing();
+		List<String> strings = new ArrayList<>();
+		CodeUnitIterator codeUnits = listing.getCodeUnits(getSelectedAddresses(), true);
+		while (codeUnits.hasNext() && !monitor.isCancelled()) {
+			CodeUnit cu = codeUnits.next();
+			Address addr = cu.getAddress();
+			Function function = listing.getFunctionContaining(addr);
+			if (function == null) {
+				strings.add(addr.toString());
+				continue;
+			}
+
+			String name = function.getName(true);
+			Address entry = function.getEntryPoint();
+			int delta = addr.compareTo(entry);
+			if (delta == 0) {
+				strings.add(name);
+			}
+			else if (delta > 0) {
+				strings.add(String.format("%s + %#x", name, addr.subtract(entry)));
+			}
+			else {
+				strings.add(String.format("%s - %#x", name, entry.subtract(addr)));
+			}
+		}
+		return createStringTransferable(StringUtils.join(strings, "\n"));
 	}
 
 	protected Transferable copyCode(TaskMonitor monitor) {
 
 		AddressSetView addressSet = getSelectedAddresses();
-		try {
-			TextLayoutGraphics g = new TextLayoutGraphics();
+		ListingModel listingModel = getListingModel();
+		TextLayoutGraphics g = new TextLayoutGraphics();
+		LayoutBackgroundColorManager colorMap =
+			new EmptyLayoutBackgroundColorManager(PAINT_CONTEXT.getBackground());
+		Rectangle rect = new Rectangle(Integer.MAX_VALUE, Integer.MAX_VALUE);
+		AddressRangeIterator ranges = addressSet.getAddressRanges();
+		while (ranges.hasNext() && !monitor.isCancelled()) {
+			AddressRange curRange = ranges.next();
+			Address address = curRange.getMinAddress();
+			Address maxAddress = curRange.getMaxAddress();
 
-			Rectangle rect = new Rectangle(Integer.MAX_VALUE, Integer.MAX_VALUE);
-
-			AddressRangeIterator rangeItr = addressSet.getAddressRanges();
-			while (rangeItr.hasNext()) {
-				AddressRange curRange = rangeItr.next();
-				Address curAddress = curRange.getMinAddress();
-				Address maxAddress = curRange.getMaxAddress();
-
-				// getAddressAfter(curAddress) returns null in certain situations
-				while (curAddress != null && curAddress.compareTo(maxAddress) <= 0) {
-					if (monitor.isCancelled()) {
-						break;
-					}
-
-					//Add the layout for the present address
-					Layout layout = getListingModel().getLayout(curAddress, false);
-					if (layout != null) {
-						LayoutBackgroundColorManager layoutColorMap =
-							new EmptyLayoutBackgroundColorManager(PAINT_CONTEXT.getBackground());
-						layout.paint(null, g, PAINT_CONTEXT, rect, layoutColorMap, null);
-						g.flush();
-					}
-					// may be null
-					curAddress = getListingModel().getAddressAfter(curAddress);
+			while (address != null && address.compareTo(maxAddress) <= 0) {
+				if (monitor.isCancelled()) {
+					break;
 				}
+
+				Layout layout = listingModel.getLayout(address, false);
+				if (layout != null) {
+					layout.paint(null, g, PAINT_CONTEXT, rect, colorMap, null);
+					g.flush();
+				}
+				address = listingModel.getAddressAfter(address);
 			}
-
-			return createStringTransferable(g.getBuffer().toString());
-		}
-		catch (Exception e) {
-			String message = "Copy failed: " + ExceptionUtils.getMessage(e);
-			Msg.error(this, message, e);
-			tool.setStatusInfo(message, true);
 		}
 
-		return null;
+		return createStringTransferable(g.getBuffer());
 	}
 
 	private Transferable copyByteString(Address address) {
@@ -360,12 +381,12 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		return createStringTransferable(copyBytesAsString(set, false, TaskMonitor.DUMMY));
 	}
 
-	private CodeUnitInfoTransferable copyLabelsComments(boolean copyLabels, boolean copyComments) {
-
+	private CodeUnitInfoTransferable copyLabelsComments(boolean copyLabels, boolean copyComments,
+			TaskMonitor monitor) {
 		AddressSetView addressSet = getSelectedAddresses();
 		List<CodeUnitInfo> list = new ArrayList<>();
 		Address startAddr = addressSet.getMinAddress();
-		getCodeUnitInfo(addressSet, startAddr, list, copyLabels, copyComments);
+		getCodeUnitInfo(addressSet, startAddr, list, copyLabels, copyComments, monitor);
 		return new CodeUnitInfoTransferable(list);
 	}
 
@@ -471,23 +492,23 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private void getCodeUnitInfo(AddressSetView set, Address startAddr, List<CodeUnitInfo> list,
-			boolean copyLabels, boolean copyComments) {
+			boolean copyLabels, boolean copyComments, TaskMonitor monitor) {
 		Map<Address, CodeUnitInfo> map = new HashMap<>();
 		if (copyLabels) {
-			getFunctions(startAddr, set, list, map);
-			getLabels(startAddr, set, list, map);
+			getFunctions(startAddr, set, list, map, monitor);
+			getLabels(startAddr, set, list, map, monitor);
 		}
 		if (copyComments) {
-			getComments(startAddr, set, list, map);
+			getComments(startAddr, set, list, map, monitor);
 		}
 	}
 
 	private void getFunctions(Address startAddr, AddressSetView set, List<CodeUnitInfo> list,
-			Map<Address, CodeUnitInfo> map) {
+			Map<Address, CodeUnitInfo> map, TaskMonitor monitor) {
 
-		FunctionIterator iter = currentProgram.getListing().getFunctions(set, true);
-		while (iter.hasNext()) {
-			Function function = iter.next();
+		FunctionIterator it = currentProgram.getListing().getFunctions(set, true);
+		while (it.hasNext() && !monitor.isCancelled()) {
+			Function function = it.next();
 			Address entry = function.getEntryPoint();
 			CodeUnitInfo info = getInfoFromMap(list, map, entry, startAddr);
 			info.setFunction(function);
@@ -495,13 +516,12 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private void getComments(Address startAddr, AddressSetView set, List<CodeUnitInfo> list,
-			Map<Address, CodeUnitInfo> map) {
+			Map<Address, CodeUnitInfo> map, TaskMonitor monitor) {
 
-		CodeUnitIterator iter =
-			currentProgram.getListing().getCodeUnitIterator(CodeUnit.COMMENT_PROPERTY, set, true);
-
-		while (iter.hasNext()) {
-			CodeUnit cu = iter.next();
+		Listing listing = currentProgram.getListing();
+		CodeUnitIterator it = listing.getCodeUnitIterator(CodeUnit.COMMENT_PROPERTY, set, true);
+		while (it.hasNext() && !monitor.isCancelled()) {
+			CodeUnit cu = it.next();
 			Address minAddress = cu.getMinAddress();
 			CodeUnitInfo info = getInfoFromMap(list, map, minAddress, startAddr);
 			setCommentInfo(cu, info);
@@ -519,12 +539,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 	}
 
 	private void getLabels(Address startAddr, AddressSetView set, List<CodeUnitInfo> list,
-			Map<Address, CodeUnitInfo> map) {
+			Map<Address, CodeUnitInfo> map, TaskMonitor monitor) {
 
-		SymbolIterator iter = currentProgram.getSymbolTable().getPrimarySymbolIterator(set, true);
-
-		while (iter.hasNext()) {
-			Symbol symbol = iter.next();
+		SymbolIterator it = currentProgram.getSymbolTable().getPrimarySymbolIterator(set, true);
+		while (it.hasNext() && !monitor.isCancelled()) {
+			Symbol symbol = it.next();
 			Address minAddress = symbol.getAddress();
 			Symbol[] symbols = currentProgram.getSymbolTable().getSymbols(minAddress);
 			CodeUnitInfo info = getInfoFromMap(list, map, minAddress, startAddr);

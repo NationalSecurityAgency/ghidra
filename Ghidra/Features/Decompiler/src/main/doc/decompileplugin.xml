@@ -2984,6 +2984,17 @@
     </para>
       </listitem>
     </varlistentry>
+    <varlistentry id="GeneralMaxJumptable">
+      <term><emphasis role="bold">Max Entries per Jumptable</emphasis></term>
+      <listitem>
+	<para>
+	  This option sets the maximum number of entries (addresses) that the Decompiler can
+	  recover from analyzing a single jumptable. This serves as a sanity check that the recovered
+	  dimensions of a jumptable are reasonable and places an upper limit on the sheer number
+	  of addresses the Decompiler is willing to trace from a single indirect jump.
+	</para>
+      </listitem>
+    </varlistentry>
     </variablelist>
     </informalexample>
   </para>

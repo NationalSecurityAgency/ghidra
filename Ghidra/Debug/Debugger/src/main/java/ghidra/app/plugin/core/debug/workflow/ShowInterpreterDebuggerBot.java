@@ -28,11 +28,11 @@ import ghidra.util.Msg;
 import ghidra.util.Swing;
 
 @DebuggerBotInfo( //
-	description = "Show debugger interpreters", //
-	details = "Listens for new debuggers supporting the interpreter interface," +
-		" and when found, displays that interpeter.", //
-	help = @HelpInfo(anchor = "show_interpreter"), //
-	enabledByDefault = true //
+		description = "Show debugger interpreters", //
+		details = "Listens for new debuggers supporting the interpreter interface," +
+			" and when found, displays that interpeter.", //
+		help = @HelpInfo(anchor = "show_interpreter"), //
+		enabledByDefault = true //
 )
 public class ShowInterpreterDebuggerBot implements DebuggerBot {
 	private DebuggerWorkflowServicePlugin plugin;

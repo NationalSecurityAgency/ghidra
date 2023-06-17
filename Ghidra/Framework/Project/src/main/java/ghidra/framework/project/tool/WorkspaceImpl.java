@@ -15,13 +15,16 @@
  */
 package ghidra.framework.project.tool;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.jdom.Element;
 
 import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.model.Workspace;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.PluginToolAccessUtils;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -31,11 +34,10 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  */
 class WorkspaceImpl implements Workspace {
-	private final static int TYPICAL_NUM_RUNNING_TOOLS = 5;
 
 	private String name;
 	private ToolManagerImpl toolManager;
-	private Set<PluginTool> runningTools = new HashSet<PluginTool>(TYPICAL_NUM_RUNNING_TOOLS);
+	private Set<PluginTool> runningTools = new CopyOnWriteArraySet<>();
 	private boolean isActive;
 
 	WorkspaceImpl(String name, ToolManagerImpl toolManager) {
@@ -223,14 +225,9 @@ class WorkspaceImpl implements Workspace {
 	 * Close all running tools; called from the close() method in
 	 * ToolManagerImpl which is called from the Project's close()
 	 */
-	void close() {
+	void dispose() {
 		for (PluginTool tool : runningTools) {
-			try {
-				tool.exit();
-			}
-			finally {
-				toolManager.toolRemoved(this, tool);
-			}
+			PluginToolAccessUtils.dispose(tool);
 		}
 		runningTools.clear();
 	}

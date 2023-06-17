@@ -376,16 +376,6 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	/**
-	 * Close all running tools in the project.
-	 */
-	public void close() {
-		for (Workspace element : workspaces) {
-			WorkspaceImpl w = (WorkspaceImpl) element;
-			w.close();
-		}
-	}
-
-	/**
 	 * Save the tools that are opened and changed, that will be brought back up when the project
 	 * is reopened
 	 * @return true if the session was saved
@@ -445,6 +435,10 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	}
 
 	public void dispose() {
+		for (Workspace element : workspaces) {
+			WorkspaceImpl w = (WorkspaceImpl) element;
+			w.dispose();
+		}
 		toolServices.dispose();
 	}
 

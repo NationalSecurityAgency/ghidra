@@ -27,7 +27,7 @@ public class UnloadedModule implements StructConverter {
 	public final static String NAME = "MINIDUMP_UNLOADED_MODULE";
 
 	private long baseOfImage;
-	private int sizeOfImage;
+	private long sizeOfImage;
 	private int checkSum;
 	private int timeDateStamp;
 	private int moduleNameRVA;
@@ -46,7 +46,7 @@ public class UnloadedModule implements StructConverter {
 		reader.setPointerIndex(index);
 
 		setBaseOfImage(reader.readNextLong());
-		setSizeOfImage(reader.readNextInt());
+		setSizeOfImage(reader.readNextUnsignedInt());
 		setCheckSum(reader.readNextInt());
 		setTimeDateStamp(reader.readNextInt());
 		setModuleNameRVA(reader.readNextInt());
@@ -56,6 +56,7 @@ public class UnloadedModule implements StructConverter {
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
+	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
 
@@ -78,11 +79,11 @@ public class UnloadedModule implements StructConverter {
 		this.baseOfImage = baseOfImage;
 	}
 
-	public int getSizeOfImage() {
+	public long getSizeOfImage() {
 		return sizeOfImage;
 	}
 
-	public void setSizeOfImage(int sizeOfImage) {
+	public void setSizeOfImage(long sizeOfImage) {
 		this.sizeOfImage = sizeOfImage;
 	}
 

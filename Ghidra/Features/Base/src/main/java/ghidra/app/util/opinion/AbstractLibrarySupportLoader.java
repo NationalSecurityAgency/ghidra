@@ -507,6 +507,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					// options turned off (if shouldSearchAllPaths() is overridden to return true).
 					// In this case, we still want to process those libraries, but we 
 					// do not want to save them, so they can be released.
+					boolean loadedLocal = false;
 					if (!localSearchPaths.isEmpty()) {
 						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
 							libraryName, provider, localSearchPaths, libraryDestFolderPath,
@@ -514,13 +515,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						if (loadedLibrary != null) {
 							if (loadLocalLibraries) {
 								loadedPrograms.add(loadedLibrary);
+								loadedLocal = true;
 							}
 							else {
 								loadedLibrary.release(consumer);
 							}
 						}
 					}
-					if (!systemSearchPaths.isEmpty()) {
+					if (!loadedLocal && !systemSearchPaths.isEmpty()) {
 						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
 							libraryName, provider, systemSearchPaths, libraryDestFolderPath,
 							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);

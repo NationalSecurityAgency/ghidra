@@ -61,15 +61,18 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	 * with a warning condition, architecture-specific data may not be available or up-to-date.
 	 * 
 	 * @param packedDbfile file to load or create based upon openMode
-	 * @param openMode one of the DBConstants: CREATE, UPDATE, READ_ONLY, UPGRADE 
+	 * @param openMode one of the DBConstants: CREATE, READ_ONLY or UPDATE
+	 * @param monitor the progress monitor
 	 * @throws IOException if an IO error occurs
+	 * @throws CancelledException if task cancelled
 	 */
-	private FileDataTypeManager(ResourceFile packedDbfile, int openMode) throws IOException {
-		super(validateFilename(packedDbfile), openMode);
+	private FileDataTypeManager(ResourceFile packedDbfile, int openMode, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		super(validateFilename(packedDbfile), openMode, monitor);
 		file = packedDbfile;
 		name = getRootName(file.getName());
 		packedDB = ((PackedDBHandle) dbHandle).getPackedDatabase();
-		reportWarning();
+		logWarning();
 	}
 
 	private static ResourceFile validateFilename(ResourceFile packedDbfile) {
@@ -86,7 +89,13 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	 * @throws IOException if an IO error occurs
 	 */
 	public static FileDataTypeManager createFileArchive(File packedDbfile) throws IOException {
-		return new FileDataTypeManager(new ResourceFile(packedDbfile), DBConstants.CREATE);
+		try {
+			return new FileDataTypeManager(new ResourceFile(packedDbfile), DBConstants.CREATE,
+				TaskMonitor.DUMMY);
+		}
+		catch (CancelledException e) {
+			throw new AssertException(e); // unexpected without task monitor use
+		}
 	}
 
 	/**
@@ -129,7 +138,12 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	public static FileDataTypeManager openFileArchive(ResourceFile packedDbfile,
 			boolean openForUpdate) throws IOException {
 		int mode = openForUpdate ? DBConstants.UPDATE : DBConstants.READ_ONLY;
-		return new FileDataTypeManager(packedDbfile, mode);
+		try {
+			return new FileDataTypeManager(packedDbfile, mode, TaskMonitor.DUMMY);
+		}
+		catch (CancelledException e) {
+			throw new AssertException(e); // unexpected without task monitor use
+		}
 	}
 
 	/**

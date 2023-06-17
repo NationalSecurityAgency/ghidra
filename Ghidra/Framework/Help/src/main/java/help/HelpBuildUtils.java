@@ -68,7 +68,11 @@ public class HelpBuildUtils {
 			return new DirectoryHelpModuleLocation(file);
 		}
 		else if (file.isFile()) {
-			return new JarHelpModuleLocation(file);
+			JarHelpModuleLocation jarLocation = JarHelpModuleLocation.fromFile(file);
+			if (jarLocation == null) {
+				HelpBuildUtils.debug("Jar file does not contain help: " + file);
+			}
+			return jarLocation;
 		}
 		throw new IllegalArgumentException(
 			"Don't know how to create a help module location for file: " + file);

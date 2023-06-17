@@ -22,6 +22,56 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.3.1 Change History (June 2023)</H1>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Debugger:LLDB</I>. Upgraded SWIG-generated Java (plus docs) to LLVM/lldb 16.x. (GP-3442, Issue #5359)</li>
+    <li><I>Decompiler</I>. Added an option to the Decompiler, controlling the maximum size of jumptable that can be recovered. (GP-3266)</li>
+    <li><I>Decompiler</I>. Improved Decompiler function call-override to consider calling convention when differentiating function signatures. (GP-3268, Issue #5335)</li>
+    <li><I>Decompiler</I>. The Decompiler now respects tool options for shortening template strings within symbol names. (GP-3369)</li>
+    <li><I>Importer:ELF</I>. Added <span class="gtitle">Max Zero-Segment Discard Size</span> import option to ELF Loader.  Value was previously hard-coded to 255 bytes. (GP-3428, Issue #5273)</li>
+    <li><I>Importer:Mach-O</I>. Restored Mach-O indirect symbol creation when binding information is not present, such as when importing a <span class="gcode">DYLIB</span> extracted from a <span class="gcode">dyld_shared_cache</span>. (GP-3526)</li>
+    <li><I>Languages</I>. Added windows<span class="gcode">__stdcall</span> calling convention as an alias to the default calling convention for <span class="gcode">aarch64</span> and <span class="gcode">x86-64</span>. (GP-3472)</li>
+    <li><I>Scripting</I>. Improved the <span class="gcode">RecoverClassesFromRTTIScript</span> recognition of special vtables when they are in memory blocks not tied to imported file bytes. (GP-3463)</li>
+    <li><I>Scripting</I>. Mitigated a <span class="gcode">RecoverClassesFromRTTIScript</span> issue where mangled typeinfo names were not always getting extracted from memory when more than one bad data type was created over the memory containing the mangled string. (GP-3467)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed regression when functions are set as inline that can cause lockups: during analysis, with use of stack depth field, and for <span class="gtitle">Set Stack Depth Change</span> action. (GP-3499, Issue #5378, #5400, #5401)</li>
+    <li><I>CParser</I>. Fixed C header file parsing of <span class="gcode">pragma</span> lines when a comma is found outside of parentheses. (GP-3541, Issue #5427)</li>
+    <li><I>Data Types</I>. Corrected issues related to data organization retention and upgrade for data types. (GP-3506)</li>
+    <li><I>Debugger:GDB</I>. Reduced frenetic queries for module info at launch time. Fixed <span class="gcode">00000000</span> values in module ranges. (GP-3448, Issue #4456, #5357)</li>
+    <li><I>Decompiler</I>. Fixed bug that could cause errors in constant calculations involving 128-bit or larger registers. (GP-3426, Issue #3492)</li>
+    <li><I>Decompiler</I>. Fixed a bug that could prevent recovery of a switch if the variable is written indirectly through a pointer alias. (GP-3441, Issue #5307)</li>
+    <li><I>Decompiler</I>. Corrected 10.3 regression when <span class="gtitle">Edit Function Signature</span> is invoked from Decompiler, which may ignore the calling convention used with current function decompilation. (GP-3454, Issue #5367)</li>
+    <li><I>Decompiler</I>. Fixed hashing bug causing inconsistent results with <span class="gtitle">Force Field</span> action in the Decompiler. (GP-3508, Issue #5372)</li>
+    <li><I>Documentation</I>. Fixed missing <span class="gcode">return</span> in <span class="gcode">termmines.c</span> exercise file. (GP-3444, Issue #5343)</li>
+    <li><I>Exporter</I>. Fixed a regression in the <span class="gtitle">Original File</span> exporter that prevented it from working when unapplied relocations were present in the relocation table. (GP-3446, Issue #5346)</li>
+    <li><I>GUI</I>. Fixed bug where Ghidra did not prompt to save GUI Theme changes when exiting via a menu versus the window <span class="gtitle">X</span> (<em>Close Window</em>) button. (GP-3477, Issue #5377)</li>
+    <li><I>GUI</I>. Updated the Python Interpreter prompt to use less space. (GP-3509, Issue #5379)</li>
+    <li><I>GUI</I>. Fixed issue with menu bar colors on Mac system when using <span class="gtitle">Mac Aqua Look and Feel</span> while in dark mode. (GP-3528, Issue #4454)</li>
+    <li><I>Importer</I>. Fixed an exception that occurred when the <span class="gcode">MzLoader</span> tried to split the <span class="gcode">HEADER</span> overlay block. (GP-3447, Issue #5320)</li>
+    <li><I>Importer:ELF</I>. Corrected potential exception when processing invalid <span class="gcode">ELF PT_NOTE</span> program header. (GP-3493, Issue #5384)</li>
+    <li><I>Importer:ELF</I>. Corrected bugs in ELF Android packed relocation processing and rendering of <span class="gcode">sleb128</span> data type. (GP-3543)</li>
+    <li><I>Importer:Mach-O</I>. Fixed a regression in the Mach-O Loader that was causing incorrect <span class="gcode">DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE</span> fixups. (GP-3474)</li>
+    <li><I>Importer:Mach-O</I>. Fixed an <span class="gcode">AddressOutOfBoundsException</span> that could sometimes occur when importing the exports section of <span class="gcode">dyld_shared_cache</span> files. (GP-3505, Issue #5392)</li>
+    <li><I>Importer:PE</I>. Fixed an <span class="gcode">IllegalStateException</span> that could occur if both <span class="gtitle">Load Local Libraries From Disk</span> and <span class="gtitle">Load System Libraries From Disk</span> options are used during import and the same library is found in both local and system directories. (GP-3445)</li>
+    <li><I>Importer:PE</I>. Fixed a bug that caused PE symbol <span class="gcode">.exports</span> files to always get deleted after import. (GP-3519, Issue #5348)</li>
+    <li><I>Languages</I>. Adjusted handling of PowerPC e500 small data area pointer. (GP-3480)</li>
+    <li><I>Processors</I>. Fixed operand count mismatch in some M68000 instructions. (GP-2779, Issue #4807, #4808)</li>
+    <li><I>Processors</I>. Corrected issue with M68000 <span class="gcode">pea</span> instruction with address based on <span class="gcode">SP</span>. (GP-2955, Issue #4795)</li>
+    <li><I>Processors</I>. Fixed flag issue in 6502 <span class="gcode">TSX</span> instruction. (GP-2963, Issue #4838)</li>
+    <li><I>Processors</I>. Addressed multiple issues with 8048, including fixing the <span class="gcode">movp</span>, <span class="gcode">movp3</span>, and <span class="gcode">jmpp</span> instructions and correcting the implementation of the memory bank selection. (GP-3009, Issue #2423, #4825)</li>
+    <li><I>Processors</I>. Fixed decoding of x86-64 <span class="gcode">popf</span> and <span class="gcode">pushf</span> instructions. (GP-3102, Issue #4980)</li>
+    <li><I>Processors</I>. Corrected pcode for PowerPC <span class="gcode">e_stmvsprw</span> instruction. (GP-3325, Issue #4886)</li>
+    <li><I>Processors</I>. Fixed PowerPC instruction <span class="gcode">eieio</span> decode for all valid variants. (GP-3432, Issue #4887)</li>
+    <li><I>Processors</I>. Fixed issue with AARCH64 <span class="gcode">mla</span> instruction using erroneous registers. (GP-3478)</li>
+    <li><I>Processors</I>. Restored original M68000 calling convention to only use stack, and added an additional <span class="gcode">.cspec</span> file for the optional <em>Register ABI</em> calling convention for ColdFire.  Also added bonus function start patterns identified during testing. (GP-3532, Issue #5390)</li>
+    <li><I>Sleigh</I>. Fixed SleighEditor to allow <span class="gcode">2</span> to <span class="gcode">n</span> arguments in <span class="gcode">CPOOL</span> Sleigh operator. (GP-3534, Issue #2148)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.3 Change History (May 2023)</H1>
 <blockquote><p><u><B>New Features</B></u></p>
 <ul>

@@ -1404,6 +1404,7 @@ void Architecture::resetDefaultsInternal(void)
   alias_block_level = 2;	// Block structs and arrays by default, but not more primitive data-types
   split_datatype_config = OptionSplitDatatypes::option_struct | OptionSplitDatatypes::option_array
       | OptionSplitDatatypes::option_pointer;
+  max_jumptable_size = 1024;
 }
 
 /// Reset options that can be modified by the OptionDatabase. This includes

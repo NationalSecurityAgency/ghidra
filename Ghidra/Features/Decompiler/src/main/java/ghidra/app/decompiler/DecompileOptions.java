@@ -37,8 +37,8 @@ import ghidra.program.model.lang.CompilerSpec.EvaluationModelType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.ElementId;
 import ghidra.program.model.pcode.Encoder;
-import ghidra.program.model.symbol.NameTransformer;
 import ghidra.program.model.symbol.IdentityNameTransformer;
+import ghidra.program.model.symbol.NameTransformer;
 import ghidra.util.HelpLocation;
 
 /**
@@ -211,6 +211,7 @@ public class DecompileOptions {
 	public static final int SUGGESTED_DECOMPILE_TIMEOUT_SECS = 30;
 	public static final int SUGGESTED_MAX_PAYLOAD_BYTES = 50;
 	public static final int SUGGESTED_MAX_INSTRUCTIONS = 100000;		// Must match Architecture::resetDefaultsInternal
+	public static final int SUGGESTED_MAX_JUMPTABLE_ENTRIES = 1024;		// Must match Architecture::resetDefaultsInternal
 
 	public enum CommentStyleEnum {
 
@@ -388,11 +389,13 @@ public class DecompileOptions {
 	private final static String DECOMPILE_TIMEOUT = "Decompiler Timeout (seconds)";
 	private final static String PAYLOAD_LIMIT = "Decompiler Max-Payload (MBytes)";
 	private final static String MAX_INSTRUCTIONS = "Max Instructions per Function";
+	private final static String MAX_JUMPTABLE_ENTRIES = "Max Entries per Jumptable";
 	private final static Boolean LINE_NUMBER_DEF = Boolean.TRUE;
 	private boolean displayLineNumbers;
 	private int decompileTimeoutSeconds;
 	private int payloadLimitMBytes;
 	private int maxIntructionsPer;
+	private int maxJumpTableEntries;
 	private int cachedResultsSize;
 
 	private DecompilerLanguage displayLanguage; // Output language displayed by the decompiler
@@ -435,6 +438,7 @@ public class DecompileOptions {
 		decompileTimeoutSeconds = SUGGESTED_DECOMPILE_TIMEOUT_SECS;
 		payloadLimitMBytes = SUGGESTED_MAX_PAYLOAD_BYTES;
 		maxIntructionsPer = SUGGESTED_MAX_INSTRUCTIONS;
+		maxJumpTableEntries = SUGGESTED_MAX_JUMPTABLE_ENTRIES;
 		cachedResultsSize = SUGGESTED_CACHED_RESULTS_SIZE;
 		nameTransformer = null;
 	}
@@ -492,6 +496,7 @@ public class DecompileOptions {
 		decompileTimeoutSeconds = opt.getInt(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS);
 		payloadLimitMBytes = opt.getInt(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES);
 		maxIntructionsPer = opt.getInt(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS);
+		maxJumpTableEntries = opt.getInt(MAX_JUMPTABLE_ENTRIES, SUGGESTED_MAX_JUMPTABLE_ENTRIES);
 		cachedResultsSize = opt.getInt(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE);
 
 		grabFromFieldOptions(fieldOptions);
@@ -689,6 +694,9 @@ public class DecompileOptions {
 		opt.registerOption(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxInstruction"),
 			"The maximum number of instructions decompiled in a single function");
+		opt.registerOption(MAX_JUMPTABLE_ENTRIES, SUGGESTED_MAX_JUMPTABLE_ENTRIES,
+			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxJumptable"),
+			"The maximum number of entries that can be recovered from a single jumptable");
 		opt.registerThemeColorBinding(HIGHLIGHT_CURRENT_VARIABLE_MSG,
 			HIGHLIGHT_CURRENT_VARIABLE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCurrentHighlight"),
@@ -829,6 +837,9 @@ public class DecompileOptions {
 		}
 		if (maxIntructionsPer != SUGGESTED_MAX_INSTRUCTIONS) {
 			appendOption(encoder, ELEM_MAXINSTRUCTION, Integer.toString(maxIntructionsPer), "", "");
+		}
+		if (maxJumpTableEntries != SUGGESTED_MAX_JUMPTABLE_ENTRIES) {
+			appendOption(encoder, ELEM_JUMPTABLEMAX, Integer.toString(maxJumpTableEntries), "", "");
 		}
 		appendOption(encoder, ELEM_PROTOEVAL, protoEvalModel, "", "");
 		encoder.closeElement(ELEM_OPTIONSLIST);
@@ -1220,6 +1231,26 @@ public class DecompileOptions {
 	 */
 	public void setMaxInstructions(int num) {
 		maxIntructionsPer = num;
+	}
+
+	/**
+	 * If the number of entries in a single jumptable exceeds this value, the decompiler will
+	 * not recover the table and control flow from the indirect jump corresponding to the table
+	 * will not be followed.
+	 * @return the maximum number of entries
+	 */
+	public int getMaxJumpTableEntries() {
+		return maxJumpTableEntries;
+	}
+
+	/**
+	 * Set the maximum number of entries the decompiler will recover from a single jumptable.
+	 * If the number exceeds this, the table is not recovered and control flow from the
+	 * corresponding indirect jump is not followed.
+	 * @param num is the number of entries
+	 */
+	public void setMaxJumpTableEntries(int num) {
+		maxJumpTableEntries = num;
 	}
 
 	/**

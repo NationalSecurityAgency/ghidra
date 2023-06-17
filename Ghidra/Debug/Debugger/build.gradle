@@ -31,10 +31,6 @@ dependencies {
 	api project(':Decompiler')
 	api project(':ProposedUtils')
 
-	helpPath project(path: ':Base', configuration: 'helpPath')
-	helpPath project(path: ':Decompiler', configuration: 'helpPath')
-	helpPath project(path: ':ProgramDiff', configuration: 'helpPath')
-
 	testImplementation project(path: ':Base', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
