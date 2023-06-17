@@ -208,4 +208,10 @@ class AddressModelDB extends DataTypeDB {//implements AddressModel {
 
 	}
 
+	@Override
+	public int getAlignedLength() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }
