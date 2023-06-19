@@ -161,3 +161,15 @@ const.s_imm: tmp is as=3 [ tmp = 0x3F000000; ] { export *[const]:4 tmp; }
 :addexpm.s fr, fs is op2=0b1111 & op1=0b1010 & fr & fs & at=0b1111 & op0=0 unimpl
 :maddn.s fr, fs, ft is op2=0b0110 & op1=0b1010 & fr & fs & ft & op0=0 unimpl
 :divn.s fr, fs, ft is op2=0b0111 & op1=0b1010 & fr & fs & ft & op0=0 unimpl
+
+# SEXT - Sign Extend, pg. 518.
+# TODO: Eclipse SleighEditor errors present here:
+#   "mismatched input 'sext' expecting'is'"
+#   "missing ':' at ','"
+#   "no viable alternative at input ','"
+# I don't think this precludes compilation or functionality???
+:sext ar, as, u5_4.7_plus7 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u5_4.7_plus7 & op0 = 0 {
+    local shift:1 = 31:1 - u5_4.7_plus7;
+    local tmp:4 = as << shift;
+    ar = tmp s>> shift;
+}

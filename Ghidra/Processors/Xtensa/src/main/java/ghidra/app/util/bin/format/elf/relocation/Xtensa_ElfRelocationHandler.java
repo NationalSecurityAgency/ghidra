@@ -6,10 +6,8 @@ import ghidra.app.util.bin.format.elf.ElfRelocation;
 import ghidra.app.util.bin.format.elf.ElfSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.RelocationResult;
-import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.util.exception.NotFoundException;
 
 public class Xtensa_ElfRelocationHandler extends ElfRelocationHandler {
@@ -34,13 +32,8 @@ public class Xtensa_ElfRelocationHandler extends ElfRelocationHandler {
 		}
 
 		Program program = elfRelocationContext.getProgram();
-		Memory memory = program.getMemory();
-
-		long addend = relocation.hasAddend() ? relocation.getAddend() : memory.getInt(relocationAddress);
-		long offset = relocationAddress.getOffset();
-		long base = elfRelocationContext.getImageBaseWordAdjustmentOffset();
+		
 		ElfSymbol sym = null;
-		long symbolValue = 0;
 		String symbolName = null;
 
 		int symbolIndex = relocation.getSymbolIndex();
@@ -49,7 +42,6 @@ public class Xtensa_ElfRelocationHandler extends ElfRelocationHandler {
 		}
 
 		if (null != sym) {
-			symbolValue = elfRelocationContext.getSymbolValue(sym);
 			symbolName = sym.getNameAsString();
 		}
 
@@ -291,7 +283,7 @@ public class Xtensa_ElfRelocationHandler extends ElfRelocationHandler {
 					symbolName, elfRelocationContext.getLog());
 			return RelocationResult.SKIPPED;
 		}
-		//return new RelocationResult(Status.APPLIED, byteLength);
+
 	}
 
 }

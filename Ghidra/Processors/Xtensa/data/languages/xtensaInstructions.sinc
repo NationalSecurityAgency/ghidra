@@ -1088,13 +1088,6 @@ macro loopSetup(as, end, doit) {
     sdct(as, at);
 }
 
-# SEXT - Sign Extend, pg. 518.
-:sext ar, as, u5_4.7_plus7 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u5_4.7_plus7 & op0 = 0 {
-    local shift:1 = 31:1 - u5_4.7_plus7;
-    local tmp:4 = as << shift;
-    ar = tmp s>> shift;
-}
-
 # SICT - Store Instruction Cache Tag, pg. 519.
 :sict at, as is op2 = 0b1111 & op1 = 0b0001 & ar = 0b0001 & as & at & op0 = 0 {
     sict(as, at);

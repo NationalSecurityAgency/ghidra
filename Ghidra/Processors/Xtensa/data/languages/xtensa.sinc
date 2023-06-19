@@ -350,6 +350,7 @@ define pcodeop acquire;
 define pcodeop ldct;
 define pcodeop lict;
 define pcodeop licw;
+define pcodeop lzcount;
 define pcodeop memw;
 define pcodeop pdtlb;
 define pcodeop pitlb;
