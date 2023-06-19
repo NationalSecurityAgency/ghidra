@@ -1,0 +1,7 @@
+<patternconstraints>
+  <language id="Xtensa:LE:32:default">
+  	<compiler id="default">
+  	  <patternfile>xtensa_patterns.xml</patternfile>
+  	</compiler>
+  </language>
+</patternconstraints>
