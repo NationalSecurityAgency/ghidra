@@ -63,10 +63,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 	protected MergeScreenShotGenerator mtfGenerator;
 	static protected float DESCRIPTION_FONT_SIZE = (float) 14.0;
 
-	public RepositoryScreenShots() {
-		super();
-	}
-
 	@Before
 	@Override
 	public void setUp() throws Exception {
@@ -81,6 +77,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 	@Override
 	public void tearDown() throws Exception {
 		mtfGenerator.showResults();
+		closeAllWindows();
 		mtf.dispose();
 	}
 
@@ -95,13 +92,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		super.executeMerge(decision, waitForVisibleWindow);
 		mtfGenerator.setTool(mergeTool);
 	}
-
-//	public void testMultiUser() throws Exception {
-//		GhidraScreenShotGenerator gssg = new GhidraScreenShotGenerator(getName());
-//		gssg.setUp();
-//		gssg.captureWindow();
-//
-//	}
 
 	@Test
 	public void testMemoryConflict() throws Exception {
@@ -2412,8 +2402,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				boolean commit = false;
 				try {
 					program.getExternalManager()
-							.setExternalPath("ADVAPI32.DLL", "//advapi32.dll",
-								true);
+							.setExternalPath("ADVAPI32.DLL", "//advapi32.dll", true);
 					commit = true;
 				}
 				finally {
@@ -2469,8 +2458,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				boolean commit = false;
 				try {
 					program.getExternalManager()
-							.setExternalPath("ADVAPI32.DLL", "//advapi32.dll",
-								true);
+							.setExternalPath("ADVAPI32.DLL", "//advapi32.dll", true);
 					commit = true;
 				}
 				finally {
@@ -2572,11 +2560,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		FrontEndTool frontEndTool = env.showFrontEndTool();
 		DomainFolder rootFolder = frontEndTool.getProject().getProjectData().getRootFolder();
 		TaskMonitor dummyMonitor = TaskMonitor.DUMMY;
-		DomainFile myTestArchiveDF =
-			env.restoreDataTypeArchive("MyTestArchive.gdt", rootFolder);
-		final DataTypeArchive myTestArchive =
-			(DataTypeArchiveDB) myTestArchiveDF.getDomainObject(this, true, false,
-				TaskMonitor.DUMMY);
+		DomainFile myTestArchiveDF = env.restoreDataTypeArchive("MyTestArchive.gdt", rootFolder);
+		final DataTypeArchive myTestArchive = (DataTypeArchiveDB) myTestArchiveDF
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 
 		final CategoryPath sourceCatPath = new CategoryPath("/Category1/Category2/Category5");
 		final DataType floatStruct =
@@ -2729,8 +2715,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		ExternalLocationIterator iter = extMgr.getExternalLocations(libName);
 		while (iter.hasNext()) {
 			ExternalLocation loc = iter.next();
-			if (!((ExternalManagerDB) extMgr).removeExternalLocation(
-				loc.getExternalSpaceAddress())) {
+			if (!((ExternalManagerDB) extMgr)
+					.removeExternalLocation(loc.getExternalSpaceAddress())) {
 				Assert.fail("Couldn't remove external location for library " + libName);
 			}
 		}
@@ -2868,9 +2854,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 			JScrollPane scrollPane =
 				(JScrollPane) TestUtils.getInstanceField("scrollPane", latestScroller);
 			JScrollBar horizontalScrollBar = scrollPane.getHorizontalScrollBar();
-			horizontalScrollBar.setValue(
-				(horizontalScrollBar.getMinimum() + horizontalScrollBar.getMaximum() -
-					horizontalScrollBar.getVisibleAmount()) * percent / 100);
+			horizontalScrollBar
+					.setValue((horizontalScrollBar.getMinimum() + horizontalScrollBar.getMaximum() -
+						horizontalScrollBar.getVisibleAmount()) * percent / 100);
 		});
 		waitForSwing();
 	}
