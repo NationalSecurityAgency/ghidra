@@ -42,7 +42,7 @@ import ghidra.util.HelpLocation;
  * creates instances of this provider as-needed. 
  */
 public class FunctionComparisonProvider extends ComponentProviderAdapter
-		implements PopupActionProvider, FunctionComparisonModelListener {
+	implements PopupActionProvider, FunctionComparisonModelListener {
 
 	protected static final String HELP_TOPIC = "FunctionComparison";
 	protected FunctionComparisonPanel functionComparisonPanel;
@@ -73,7 +73,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param contextType the type of context supported by this provider; may be null
 	 */
 	public FunctionComparisonProvider(Plugin plugin, String name, String owner,
-			Class<?> contextType) {
+		Class<?> contextType) {
 		super(plugin.getTool(), name, owner, contextType);
 		this.plugin = plugin;
 		model = new FunctionComparisonModel();
@@ -263,5 +263,10 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		for (DockingAction dockingAction : actions) {
 			addLocalAction(dockingAction);
 		}
+	}
+
+	public void removeAddFunctionsAction() {
+		//TODO this is stupid merge multi and this into one
+
 	}
 }

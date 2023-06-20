@@ -364,7 +364,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	public DataTypesProvider createProvider() {
 
 		DataTypesProvider newProvider = new DataTypesProvider(this, SEARCH_PROVIDER_NAME, true);
-		newProvider.setIncludeDataTypeMembersInFilter(provider.includeDataMembersInSearch());
+		newProvider.setIncludeDataTypeMembersInFilter(provider.isIncludeDataMembersInSearch());
 		newProvider.setFilteringArrays(provider.isFilteringArrays());
 		newProvider.setFilteringPointers(provider.isFilteringPointers());
 		return newProvider;

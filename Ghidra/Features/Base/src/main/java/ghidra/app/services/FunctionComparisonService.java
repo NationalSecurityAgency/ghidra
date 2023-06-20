@@ -40,6 +40,13 @@ import ghidra.program.model.listing.Function;
 public interface FunctionComparisonService {
 
 	/**
+	 * Creates a comparison provider that allows comparisons between a functions.
+	 * 
+	 * @return the new comparison provider 
+	 */
+	public FunctionComparisonProvider createFunctionComparisonProvider();
+
+	/**
 	 * Creates a comparison between a set of functions, where each function
 	 * in the list can be compared against any other.
 	 * <p>
@@ -84,7 +91,7 @@ public interface FunctionComparisonService {
 	 * @param provider the provider to add the comparisons to
 	 */
 	public void compareFunctions(Set<Function> functions,
-			FunctionComparisonProvider provider);
+		FunctionComparisonProvider provider);
 
 	/**
 	 * Creates a comparison between two functions and adds it to a given
@@ -99,7 +106,7 @@ public interface FunctionComparisonService {
 	 * @param provider the provider to add the comparison to
 	 */
 	public void compareFunctions(Function source, Function target,
-			FunctionComparisonProvider provider);
+		FunctionComparisonProvider provider);
 
 	/**
 	 * Removes a given function from all comparisons across all comparison 
@@ -132,5 +139,5 @@ public interface FunctionComparisonService {
 	 * @param listener the listener to remove
 	 */
 	public void removeFunctionComparisonProviderListener(
-			ComponentProviderActivationListener listener);
+		ComponentProviderActivationListener listener);
 }

@@ -65,8 +65,8 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 	}
 
 	@Override
-	protected String parseRepositoryName() throws MalformedURLException {
-		return null;
+	public String getRepositoryName() {
+		return localStorageLocator.getName();
 	}
 
 	@Override

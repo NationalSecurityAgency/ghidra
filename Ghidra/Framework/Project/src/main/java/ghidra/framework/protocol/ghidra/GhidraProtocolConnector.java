@@ -35,7 +35,7 @@ public abstract class GhidraProtocolConnector {
 
 	protected final URL url;
 
-	protected final String repositoryName;
+	protected String repositoryName; // only valid for server repository
 	protected final String itemPath; // trailing "/" signifies explicit folder path 
 
 	protected String folderPath;
@@ -56,7 +56,7 @@ public abstract class GhidraProtocolConnector {
 		checkProtocol();
 		checkUserInfo();
 		checkHostInfo();
-		this.repositoryName = parseRepositoryName();
+		this.repositoryName = GhidraURL.isServerRepositoryURL(url) ? parseRepositoryName() : null;
 		this.itemPath = parseItemPath();
 	}
 
@@ -105,7 +105,7 @@ public abstract class GhidraProtocolConnector {
 	 * @return repository name or null if not specified
 	 * @throws MalformedURLException if URL is invalid
 	 */
-	protected String parseRepositoryName() throws MalformedURLException {
+	private String parseRepositoryName() throws MalformedURLException {
 
 		String path = url.getPath();
 
