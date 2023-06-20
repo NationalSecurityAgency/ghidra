@@ -105,8 +105,9 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		int id = program.startTransaction("add");
 		try {
-			struct = (Structure) program.getDataTypeManager().addDataType(struct,
-				DataTypeConflictHandler.REPLACE_HANDLER);
+			struct = (Structure) program.getDataTypeManager()
+					.addDataType(struct,
+						DataTypeConflictHandler.REPLACE_HANDLER);
 		}
 		finally {
 			program.endTransaction(id, true);
@@ -206,8 +207,8 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("54h", model.getValueAt(2, DTPPTableModel.PREVIEW_COL));// 2-byte short
 
 		assertEquals("680054h", model.getValueAt(3, DTPPTableModel.PREVIEW_COL));// 4-byte int at offset 0
-		assertEquals("61004D00200065h", model.getValueAt(4, DTPPTableModel.PREVIEW_COL));// 8-byte long at offset 4
-		assertEquals("72h", model.getValueAt(5, DTPPTableModel.PREVIEW_COL));// 2-byte short at offset 12
+		assertEquals("6700720061004Dh", model.getValueAt(4, DTPPTableModel.PREVIEW_COL));// 8-byte long at offset 8
+		assertEquals("69h", model.getValueAt(5, DTPPTableModel.PREVIEW_COL));// 2-byte short at offset 16
 
 		env.close(program);
 

@@ -238,16 +238,18 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	/**
 	 * Constructor for a data-type manager backed by a packed database file. When
 	 * opening for UPDATE an automatic upgrade will be performed if required.
-	 * NOTE: default DataOrganization will be used.
+	 * NOTE: Default DataOrganization will be used for new archive.
 	 * 
 	 * @param packedDBfile packed datatype archive file (i.e., *.gdt resource).
 	 * @param openMode     open mode CREATE, READ_ONLY or UPDATE (see
 	 *                     {@link DBConstants}).
+	 * @param monitor task monitor
 	 * @throws IOException a low-level IO error. This exception may also be thrown
 	 *                     when a version error occurs (cause is VersionException).
+	 * @throws CancelledException if task cancelled
 	 */
-	protected DataTypeManagerDB(ResourceFile packedDBfile, int openMode)
-			throws IOException {
+	protected DataTypeManagerDB(ResourceFile packedDBfile, int openMode, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		this.errHandler = new DbErrorHandler();
 		this.lock = new Lock("DataTypeManagerDB");
@@ -268,18 +270,16 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE);
 			}
 			else {
-				pdb = PackedDatabase.getPackedDatabase(packedDBfile, false, TaskMonitor.DUMMY);
-				if (openMode == DBConstants.UPDATE) {
-					dbHandle = pdb.openForUpdate(TaskMonitor.DUMMY);
+				pdb = PackedDatabase.getPackedDatabase(packedDBfile, false, monitor);
+
+				if (openMode == DBConstants.READ_ONLY) {
+					dbHandle = pdb.open(monitor);
 				}
-				else {
-					dbHandle = pdb.open(TaskMonitor.DUMMY);
+				else { // UPDATE mode (allows upgrade use)
+					dbHandle = pdb.openForUpdate(monitor);
 				}
 			}
 			openSuccess = true;
-		}
-		catch (CancelledException e1) {
-			throw new AssertException(e1); // can't happen--dummy monitor
 		}
 		finally {
 			if (!openSuccess && pdb != null) {
@@ -290,20 +290,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// Initialize datatype manager and save new archive on CREATE
 		boolean initSuccess = false;
 		try {
-
-			initPackedDatabase(packedDBfile, openMode); // performs upgrade if needed
-
+			initPackedDatabase(packedDBfile, openMode, monitor); // performs upgrade if needed
 			if (openMode == DBConstants.CREATE) {
 				// preserve UniversalID if it has been established
 				Long uid = universalID != null ? universalID.getValue() : null;
 				((PackedDBHandle) dbHandle).saveAs("Archive", file.getParentFile(),
-					packedDBfile.getName(), uid, TaskMonitor.DUMMY);
+					packedDBfile.getName(), uid, monitor);
 			}
-
 			initSuccess = true;
-		}
-		catch (CancelledException e) {
-			throw new AssertException(e); // can't happen--dummy monitor
 		}
 		finally {
 			if (!initSuccess) {
@@ -312,41 +306,43 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private void initPackedDatabase(ResourceFile packedDBfile, int openMode)
+	private void initPackedDatabase(ResourceFile packedDBfile, int openMode, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		int id = startTransaction("");
-		try {
-			init(openMode, TaskMonitor.DUMMY);
+		try (Transaction tx = openTransaction("")) {
+			init(openMode, monitor);
+
+			if (openMode != DBConstants.CREATE && hasDataOrganizationChange()) {
+				// check for data organization change with possible upgrade
+				handleDataOrganizationChange(openMode, monitor);
+			}
+
+			if (openMode == DBConstants.UPGRADE) {
+				migrateOldFlexArrayComponentsIfRequired(monitor);
+
+				Msg.showInfo(this, null, "Archive Upgraded",
+					"Data type archive has been upgraded: " + packedDBfile.getName());
+			}
 		}
 		catch (VersionException e) {
 			if (openMode == DBConstants.UPDATE && e.isUpgradable()) {
-				try {
-					init(DBConstants.UPGRADE, TaskMonitor.DUMMY);
-					migrateOldFlexArrayComponentsIfRequired(TaskMonitor.DUMMY);
-
-					Msg.showInfo(this, null, "Archive Upgraded",
-						"Data type archive schema has been upgraded: " + packedDBfile.getName());
-				}
-				catch (VersionException ve) {
-					throw new IOException(e); // unexpected
-				}
+				initPackedDatabase(packedDBfile, DBConstants.UPGRADE, monitor);
 			}
 			else {
-				// TODO: Unable to handle required upgrade for read-only without API change
+				// Unable to handle required upgrade
 				throw new IOException(e);
 			}
-		}
-		finally {
-			endTransaction(id, true);
 		}
 	}
 
 	/**
 	 * Constructor for a database-backed <code>DataTypeManagerDB</code> extension.
+	 * NOTE: This does not check for and handle data organization changes which must be
+	 * handled later (use {@link #hasDataOrganizationChange()} and 
+	 * {@link #compilerSpecChanged(TaskMonitor)} to check for and initiate response to changes).
 	 * 
 	 * @param handle     database handle
 	 * @param addrMap    address map (may be null)
-	 * @param openMode   open mode CREATE, READ_ONLY or UPDATE (see {@link DBConstants}).
+	 * @param openMode   open mode CREATE, READ_ONLY, UPDATE, UPGRADE (see {@link DBConstants}).
 	 * @param tablePrefix DB table prefix to be applied to all associated table names.  This 
 	 *                    need only be specified when using multiple instances with the same
 	 *                    DB handle (null or empty string for no-prefix).
@@ -526,6 +522,17 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	protected void initializeOtherAdapters(int openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 		// do nothing
+	}
+
+	protected void handleDataOrganizationChange(int openMode, TaskMonitor monitor)
+			throws IOException, LanguageVersionException, CancelledException {
+		if (openMode == DBConstants.UPDATE) {
+			throw new LanguageVersionException("Data organization change detected", true);
+		}
+		if (openMode == DBConstants.UPGRADE) {
+			compilerSpecChanged(monitor);
+		}
+		// NOTE: No change for READ_ONLY mode
 	}
 
 	/**
@@ -777,6 +784,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * true, to reflect any changes in the data organization.
 	 * The caller is resposible for ensuring that this setting is done consistent 
 	 * with the {@link #addrMap} setting used during construction if applicable.
+	 * <br>
+	 * If not storing caller may need to check for data organization change to communicate
+	 * change or to facilitate an upgrade situation.
+	 * 
 	 * @param programArchitecture program architecture details (may be null) in which case
 	 * default data organization will be used.
 	 * @param variableStorageMgr variable storage manager (within same database) or null
@@ -805,8 +816,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			saveDataOrganization();
 		}
 		else if (store) {
-			compilerSpecChanged(monitor);
-			updateLastChangeTime();
+			try {
+				compilerSpecChanged(monitor);
+				updateLastChangeTime();
+			}
+			finally {
+				invalidateCache();
+			}
 		}
 	}
 
@@ -822,46 +838,52 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @throws CancelledException if processing cancelled - data types may not properly reflect
 	 * updated compiler specification
 	 */
-	private void compilerSpecChanged(TaskMonitor monitor) throws IOException, CancelledException {
+	protected void compilerSpecChanged(TaskMonitor monitor) throws IOException, CancelledException {
 		
 		if (mode == DBConstants.READ_ONLY) {
 			throw new ReadOnlyException();
 		}
 
-		DataOrganization oldDataOrganization = readDataOrganization();
+		boolean hasDataOrgChange = hasDataOrganizationChange();
 
-		try {
-			saveDataOrganization();
+		saveDataOrganization();
 
-			if (oldDataOrganization != null &&
-				!oldDataOrganization.equals(dataOrganization)) {
-				Msg.info(this,
-					"Fixing datatypes to reflect data organization change: " + getPath());
-				doCompositeFixup(monitor);
-			}
-
-			// FUTURE: may need to handle calling convention and data organization change impact
-			// on function definitions
-
+		if (hasDataOrgChange) {
+			doCompositeFixup(monitor);
 		}
-		finally {
-			invalidateCache();
-		}
+
+		// FUTURE: may need to handle calling convention and data organization change impact
+		// on function definitions
 	}
 
-	private void saveDataOrganization() throws IOException {
-		if (dataOrganization == null) {
-			return;
-		}
-		DataOrganizationImpl.save(dataOrganization, getDataMap(true), "dataOrg.");
+	protected final boolean hasDataOrganizationChange() throws IOException {
+		// compare DB-stored data organization with the one in affect
+		return !Objects.equals(readDataOrganization(), getDataOrganization());
 	}
 
-	private DataOrganization readDataOrganization() throws IOException {
+	protected void saveDataOrganization() throws IOException {
+		DataOrganizationImpl.save(getDataOrganization(), getDataMap(true), "dataOrg.");
+	}
+
+	/**
+	 * Read the DB-serialized data organization.  If one has not been stored a suitable
+	 * default will be returned.
+	 * @return stored data organization or suitable default.
+	 * @throws IOException if DB error orccurs
+	 */
+	protected DataOrganization readDataOrganization() throws IOException {
 		DBStringMapAdapter dataMap = getDataMap(false);
 		if (dataMap == null) {
 			return null;
 		}
-		return DataOrganizationImpl.restore(dataMap, "dataOrg.");
+
+		DataOrganization dataOrg = DataOrganizationImpl.restore(dataMap, "dataOrg.");
+		if (dataOrg == null) {
+			ProgramArchitecture arch = getProgramArchitecture();
+			return DataOrganizationImpl
+					.getDefaultOrganization(arch != null ? arch.getLanguage() : null);
+		}
+		return dataOrg;
 	}
 
 	@Override
@@ -4235,7 +4257,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		int count = 0;
 		for (CompositeDB c : orderedComposites) {
 			monitor.checkCancelled();
-			c.fixupComponents();
+			if (c.isPackingEnabled()) {
+				c.repack(true, false);
+			}
+			else {
+				c.fixupComponents();
+			}
 			monitor.setProgress(++count);
 		}
 	}

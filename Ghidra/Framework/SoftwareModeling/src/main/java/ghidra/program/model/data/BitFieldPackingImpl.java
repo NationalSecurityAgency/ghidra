@@ -19,6 +19,7 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import ghidra.program.database.DBStringMapAdapter;
 import ghidra.program.model.pcode.Encoder;
@@ -188,5 +189,24 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 			parser.end(subel);
 		}
 		parser.end();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(typeAlignmentEnabled, useMSConvention, zeroLengthBoundary);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		BitFieldPackingImpl other = (BitFieldPackingImpl) obj;
+		return typeAlignmentEnabled == other.typeAlignmentEnabled &&
+			useMSConvention == other.useMSConvention &&
+			zeroLengthBoundary == other.zeroLengthBoundary;
 	}
 }

@@ -1775,9 +1775,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 		monitor.checkCancelled();
 
-		// Upgrade Function Manager 
-		if (openMode == UPGRADE && oldFunctionMgr != null) {
-			oldFunctionMgr.upgrade(this, monitor);
+		if (openMode == UPGRADE) {
+			if (oldFunctionMgr != null) {
+				// Upgrade Function Manager 
+				oldFunctionMgr.upgrade(this, monitor);
+			}
 		}
 
 		for (int i = 0; i < NUM_MANAGERS; i++) {

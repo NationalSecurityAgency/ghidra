@@ -428,6 +428,16 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	}
 
 	@Override
+	public List<String> getAllUndoNames() {
+		return transactionMgr.getAllUndoNames();
+	}
+
+	@Override
+	public List<String> getAllRedoNames() {
+		return transactionMgr.getAllRedoNames();
+	}
+
+	@Override
 	public TransactionInfo getCurrentTransactionInfo() {
 		return transactionMgr.getCurrentTransactionInfo();
 	}

@@ -2217,7 +2217,7 @@ void JumpTable::recoverModel(Funcdata *fd)
 {
   if (jmodel != (JumpModel *)0) {
     if (jmodel->isOverride()) {	// If preexisting model is override
-      jmodel->recoverModel(fd,indirect,0,maxtablesize);
+      jmodel->recoverModel(fd,indirect,0,glb->max_jumptable_size);
       return;
     }
     delete jmodel;		// Otherwise this is an old attempt we should remove
@@ -2228,18 +2228,18 @@ void JumpTable::recoverModel(Funcdata *fd)
     if (op->code() == CPUI_CALLOTHER) {
       JumpAssisted *jassisted = new JumpAssisted(this);
       jmodel = jassisted;
-      if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize))
+      if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
 	return;
     }
   }
   JumpBasic *jbasic = new JumpBasic(this);
   jmodel = jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize))
+  if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
     return;
   jmodel = new JumpBasic2(this);
   ((JumpBasic2 *)jmodel)->initializeStart(jbasic->getPathMeld());
   delete jbasic;
-  if (jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize))
+  if (jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size))
     return;
   delete jmodel;
   jmodel = (JumpModel *)0;
@@ -2343,7 +2343,6 @@ JumpTable::JumpTable(Architecture *g,Address ad)
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = -1;
-  maxtablesize = 1024;
   maxaddsub = 1;
   maxleftright = 1;
   maxext = 1;
@@ -2364,7 +2363,6 @@ JumpTable::JumpTable(const JumpTable *op2)
   switchVarConsume = ~((uintb)0);
   defaultBlock = -1;
   lastBlock = op2->lastBlock;
-  maxtablesize = op2->maxtablesize;
   maxaddsub = op2->maxaddsub;
   maxleftright = op2->maxleftright;
   maxext = op2->maxext;
@@ -2682,7 +2680,7 @@ bool JumpTable::recoverLabels(Funcdata *fd)
   }
   else {
     jmodel = new JumpModelTrivial(this);
-    jmodel->recoverModel(fd,indirect,addresstable.size(),maxtablesize);
+    jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size);
     jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0);
     trivialSwitchOver();
     jmodel->buildLabels(fd,addresstable,label,origmodel);

@@ -458,8 +458,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 					break;
 // FIXME: must resolve cyclic issues before this can be done
 //				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-//					// Allow high-priority reference-driven code analyzers a 
-//					// shot at processing computed flows determined during 
+//					// Allow high-priority reference-driven code analyzers a
+//					// shot at processing computed flows determined during
 //					// constant propagation.
 //					pcr = (ProgramChangeRecord) doRecord;
 //					Reference ref = (Reference) pcr.getNewValue();
@@ -801,7 +801,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			}
 
 			if (!yield) {
-				notifyAnalysisEnded();
+				notifyAnalysisEnded(monitor.isCancelled());
 				if (printTaskTimes) {
 					printTimedTasks();
 					saveTaskTimes();
@@ -848,13 +848,13 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		listeners.remove(listener);
 	}
 
-	private void notifyAnalysisEnded() {
+	private void notifyAnalysisEnded(boolean isCancelled) {
 		for (AnalysisTaskList list : taskArray) {
 			list.notifyAnalysisEnded(program);
 		}
 
 		for (AutoAnalysisManagerListener listener : listeners) {
-			listener.analysisEnded(this);
+			listener.analysisEnded(this, isCancelled);
 		}
 		log.clear();
 	}
@@ -1061,7 +1061,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 		catch (OptionsVetoException e) {
 // FIXME!! Not good to popup for all use cases
-			// This will only happen if an Analyzer author makes a mistake 
+			// This will only happen if an Analyzer author makes a mistake
 			Msg.showError(this, null, "Invalid Analysis Option",
 				"Invalid Analysis option set during initialization", e);
 		}
@@ -1179,7 +1179,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	/**
 	 * Get the set of addresses that have been protected from clearing
-	 * 
+	 *
 	 * @return protected locations
 	 */
 	public AddressSetView getProtectedLocations() {
@@ -1188,7 +1188,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	/**
 	 * Add a location that is know good code to be protected from clearing for this Analysis run only.
-	 * 
+	 *
 	 * @param addr address to protect
 	 */
 	public void setProtectedLocation(Address addr) {
@@ -1197,7 +1197,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	/**
 	 * Add a set of known good code locations to be protected from clearing for this Analysis run only.
-	 * 
+	 *
 	 * @param set of addresses to protect
 	 */
 	public void setProtectedLocations(AddressSet set) {
@@ -1292,12 +1292,12 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 				testLen = spacer.length() - 5;
 			}
 			taskTimesStringBuf
-				.append("    " + element + spacer.substring(testLen) + secString + "\n");
+					.append("    " + element + spacer.substring(testLen) + secString + "\n");
 		}
 
 		taskTimesStringBuf.append("-----------------------------------------------------\n");
 		taskTimesStringBuf
-			.append("     Total Time   " + (int) (totalTaskTime / 1000.00) + " secs\n");
+				.append("     Total Time   " + (int) (totalTaskTime / 1000.00) + " secs\n");
 		taskTimesStringBuf.append("-----------------------------------------------------\n");
 
 		return taskTimesStringBuf.toString();
@@ -1556,7 +1556,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		public long getMaximum() {
 			return Math.max(primaryMonitor.getMaximum(), secondaryMonitor.getMaximum());
 		}
-		
+
 		@Override
 		public void checkCanceled() throws CancelledException {
 			primaryMonitor.checkCancelled();

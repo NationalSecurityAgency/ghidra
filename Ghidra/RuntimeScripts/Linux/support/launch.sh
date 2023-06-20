@@ -135,6 +135,13 @@ fi
 # Get the JDK that will be used to launch Ghidra
 JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
 if [ ! $? -eq 0 ]; then
+	# If fd 0 (stdin) isn't a tty, fail because we can't prompt the user
+	if [ ! -t 0 ]; then
+		echo
+		echo "Unable to prompt user for JDK path, no TTY detected.  Please refer to the Ghidra Installation Guide's Troubleshooting section."
+		exit 1
+	fi
+	
 	# No JDK has been setup yet.  Let the user choose one.
 	java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -ask
 	

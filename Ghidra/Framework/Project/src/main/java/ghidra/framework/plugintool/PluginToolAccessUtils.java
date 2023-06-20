@@ -42,7 +42,7 @@ public class PluginToolAccessUtils {
 	 * @return true if the tool can be closed
 	 */
 	public static boolean canClose(PluginTool tool) {
-		return !tool.isBusy() && tool.canClosePlugins();
+		return tool.canStopTasks() && tool.canClosePlugins();
 	}
 
 }

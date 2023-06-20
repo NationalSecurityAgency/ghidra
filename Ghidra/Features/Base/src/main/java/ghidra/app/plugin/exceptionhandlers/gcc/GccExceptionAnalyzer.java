@@ -57,7 +57,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 
 	private Set<Program> visitedPrograms = new HashSet<>();
 	private AutoAnalysisManagerListener analysisListener =
-		(manager) -> visitedPrograms.remove(manager.getProgram());
+		(manager, isCancelled) -> visitedPrograms.remove(manager.getProgram());
 
 	/**
 	 * Creates an analyzer for marking up the GCC exception handling information.
@@ -106,9 +106,10 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 		boolean isGcc =
 			program.getCompilerSpec().getCompilerSpecID().getIdAsString().equalsIgnoreCase("gcc");
 
-		boolean isDefault =
-			program.getCompilerSpec().getCompilerSpecID().getIdAsString().equalsIgnoreCase(
-				"default");
+		boolean isDefault = program.getCompilerSpec()
+				.getCompilerSpecID()
+				.getIdAsString()
+				.equalsIgnoreCase("default");
 
 		if (!isGcc && !isDefault) {
 			return false;
@@ -156,7 +157,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 	/*
 	 * Parses the standard GCC exception handling support sections:
 	 * 1) EHFrameHeader ('.eh_frame_hdr')
-	 * 2) EHFrame ('.eh_frame') 
+	 * 2) EHFrame ('.eh_frame')
 	 */
 	private void handleStandardSections(Program program, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
@@ -405,8 +406,8 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * A TypeInfo associates the address of a type information record with the filter value that 
-	 * is used to handle a catch action for that type. 
+	 * A TypeInfo associates the address of a type information record with the filter value that
+	 * is used to handle a catch action for that type.
 	 */
 	private class TypeInfo {
 		private Address typeInfoAddress;

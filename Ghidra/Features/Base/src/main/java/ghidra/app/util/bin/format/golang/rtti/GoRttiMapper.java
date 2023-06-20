@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.golang.rtti;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import generic.jar.ResourceFile;
@@ -34,9 +35,13 @@ import ghidra.app.util.opinion.PeLoader;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Endian;
+import ghidra.program.model.lang.PrototypeModel;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
@@ -197,8 +202,15 @@ public class GoRttiMapper extends DataTypeMapper {
 	private final Map<String, GoType> typeNameIndex = new HashMap<>();
 	private final Map<Long, DataType> cachedRecoveredDataTypes = new HashMap<>();
 	private final List<GoModuledata> modules = new ArrayList<>();
+	private Map<Address, GoFuncData> funcdataByAddr = new HashMap<>();
+	private Map<String, GoFuncData> funcdataByName = new HashMap<>();
 	private GoType mapGoType;
 	private GoType chanGoType;
+	private GoRegisterInfo regInfo;
+	private PrototypeModel abiInternalCallingConvention;
+	private PrototypeModel abi0CallingConvention;
+	private PrototypeModel duffzeroCallingConvention;
+	private PrototypeModel duffcopyCallingConvention;
 
 	/**
 	 * Creates a GoRttiMapper using the specified bootstrap information.
@@ -259,6 +271,41 @@ public class GoRttiMapper extends DataTypeMapper {
 		return goVersion;
 	}
 
+	public GoRegisterInfo getRegInfo() {
+		return regInfo;
+	}
+
+	public void init(TaskMonitor monitor) throws IOException {
+		initHiddenCompilerTypes();
+
+		this.regInfo = GoRegisterInfoManager.getInstance()
+				.getRegisterInfoForLang(program.getLanguage(), goVersion);
+
+		this.abiInternalCallingConvention = program.getFunctionManager()
+				.getCallingConvention(GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME);
+		this.abi0CallingConvention = program.getFunctionManager()
+				.getCallingConvention(GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME);
+		this.duffzeroCallingConvention = program.getFunctionManager()
+				.getCallingConvention(GoConstants.GOLANG_DUFFZERO_CALLINGCONVENTION_NAME);
+		this.duffcopyCallingConvention = program.getFunctionManager()
+				.getCallingConvention(GoConstants.GOLANG_DUFFCOPY_CALLINGCONVENTION_NAME);
+
+		GoModuledata firstModule = findFirstModuledata(monitor);
+		if (firstModule != null) {
+			addModule(firstModule);
+		}
+		initFuncdata();
+	}
+
+	private void initFuncdata() throws IOException {
+		for (GoModuledata module : modules) {
+			for (GoFuncData funcdata : module.getAllFunctionData()) {
+				funcdataByAddr.put(funcdata.getFuncAddress(), funcdata);
+				funcdataByName.put(funcdata.getName(), funcdata);
+			}
+		}
+	}
+
 	/**
 	 * Returns the first module data instance
 	 * 
@@ -275,6 +322,40 @@ public class GoRttiMapper extends DataTypeMapper {
 	 */
 	public void addModule(GoModuledata module) {
 		modules.add(module);
+	}
+
+	public GoParamStorageAllocator getStorageAllocator() {
+		GoParamStorageAllocator storageAllocator = new GoParamStorageAllocator(program, goVersion);
+		return storageAllocator;
+	}
+
+	public boolean isGolangAbi0Func(Function func) {
+		Address funcAddr = func.getEntryPoint();
+		for (Symbol symbol : func.getProgram().getSymbolTable().getSymbolsAsIterator(funcAddr)) {
+			if (symbol.getSymbolType() == SymbolType.LABEL) {
+				String labelName = symbol.getName();
+				if (labelName.endsWith("abi0")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public PrototypeModel getAbi0CallingConvention() {
+		return abi0CallingConvention;
+	}
+
+	public PrototypeModel getAbiInternalCallingConvention() {
+		return abiInternalCallingConvention;
+	}
+
+	public PrototypeModel getDuffzeroCallingConvention() {
+		return duffzeroCallingConvention;
+	}
+
+	public PrototypeModel getDuffcopyCallingConvention() {
+		return duffcopyCallingConvention;
 	}
 
 	/**
@@ -413,6 +494,13 @@ public class GoRttiMapper extends DataTypeMapper {
 	 */
 	public GoType getGoType(Address addr) throws IOException {
 		return getGoType(addr.getOffset());
+	}
+
+	public GoType getLastGoType() {
+		Optional<Entry<Long, GoType>> max = goTypes.entrySet()
+				.stream()
+				.max((o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+		return max.isPresent() ? max.get().getValue() : null;
 	}
 
 	/**
@@ -662,33 +750,28 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @throws CancelledException if cancelled
 	 */
 	public void discoverGoTypes(TaskMonitor monitor) throws IOException, CancelledException {
-		GoModuledata firstModule = findFirstModuledata(monitor);
-		if (firstModule == null) {
-			return;
-		}
-		addModule(firstModule);
-
 		UnknownProgressWrappingTaskMonitor upwtm =
 			new UnknownProgressWrappingTaskMonitor(monitor, 50);
 		upwtm.setMessage("Iterating Golang RTTI types");
 		upwtm.initialize(0);
 
 		goTypes.clear();
-		Set<Long> discoveredTypes = new HashSet<>();
-		for (Iterator<GoType> it = firstModule.iterateTypes(); it.hasNext();) {
-			upwtm.checkCancelled();
-			upwtm.setProgress(discoveredTypes.size());
-
-			GoType type = it.next();
-			type.discoverGoTypes(discoveredTypes);
-		}
 		typeNameIndex.clear();
+		Set<Long> discoveredTypes = new HashSet<>();
+		for (GoModuledata module : modules) {
+			for (Iterator<GoType> it = module.iterateTypes(); it.hasNext();) {
+				upwtm.checkCancelled();
+				upwtm.setProgress(discoveredTypes.size());
+
+				GoType type = it.next();
+				type.discoverGoTypes(discoveredTypes);
+			}
+		}
 		for (GoType goType : goTypes.values()) {
 			String typeName = goType.getNameString();
 			typeNameIndex.put(typeName, goType);
 		}
 		Msg.info(this, "Found %d golang types".formatted(goTypes.size()));
-		initHiddenCompilerTypes();
 	}
 
 	/**
@@ -762,6 +845,18 @@ public class GoRttiMapper extends DataTypeMapper {
 	 */
 	public GoName getGoName(long offset) throws IOException {
 		return offset != 0 ? readStructure(GoName.class, offset) : null;
+	}
+
+	public GoFuncData getFunctionData(Address funcAddr) throws IOException {
+		return funcdataByAddr.get(funcAddr);
+	}
+
+	public GoFuncData getFunctionByName(String funcName) {
+		return funcdataByName.get(funcName);
+	}
+
+	public List<GoFuncData> getAllFunctions() throws IOException {
+		return new ArrayList<>(funcdataByAddr.values());
 	}
 
 	//--------------------------------------------------------------------------------------------
