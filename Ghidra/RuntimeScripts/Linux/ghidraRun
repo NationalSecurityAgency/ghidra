@@ -16,4 +16,5 @@ SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Launch Ghidra
-"${SCRIPT_DIR}"/support/launch.sh bg jdk Ghidra "${MAXMEM}" "" ghidra.GhidraRun "$@"
+if [[ $@ == *"--debug"* ]]; then CMD=debug; else CMD=bg; fi
+"${SCRIPT_DIR}"/support/launch.sh $CMD jdk Ghidra "${MAXMEM}" "" ghidra.GhidraRun "${@//--debug/}"
