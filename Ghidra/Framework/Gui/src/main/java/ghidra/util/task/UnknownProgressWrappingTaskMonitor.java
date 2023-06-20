@@ -15,46 +15,27 @@
  */
 package ghidra.util.task;
 
-import ghidra.util.exception.CancelledException;
-
 /**
  * A class that is meant to wrap a {@link TaskMonitor} when you do not know the maximum value
  * of the progress.
  */
-public class UnknownProgressWrappingTaskMonitor extends TaskMonitorAdapter {
-
-	private TaskMonitor delegate;
+public class UnknownProgressWrappingTaskMonitor extends WrappingTaskMonitor {
 
 	public UnknownProgressWrappingTaskMonitor(TaskMonitor delegate, long startMaximum) {
-		this.delegate = delegate;
+		super(delegate);
 		delegate.setMaximum(startMaximum);
 	}
 
 	@Override
-	public void setMessage(String message) {
-		delegate.setMessage(message);
-	}
-
-	@Override
 	public void setProgress(long value) {
-		delegate.setProgress(value);
+		super.setProgress(value);
 		maybeUpdateMaximum();
 	}
 
 	@Override
 	public void incrementProgress(long incrementAmount) {
-		delegate.incrementProgress(incrementAmount);
+		super.incrementProgress(incrementAmount);
 		maybeUpdateMaximum();
-	}
-
-	@Override
-	public synchronized boolean isCancelled() {
-		return delegate.isCancelled();
-	}
-
-	@Override
-	public void checkCancelled() throws CancelledException {
-		delegate.checkCancelled();
 	}
 
 	private void maybeUpdateMaximum() {
