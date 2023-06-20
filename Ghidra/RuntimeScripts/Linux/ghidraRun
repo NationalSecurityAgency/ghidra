@@ -8,6 +8,11 @@
 # the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
 #MAXMEM=2G
 
+# sets JAVA_HOME to the recommended Java 17 not already set and running on macOS where the java_home util is available
+if [ -z "$JAVA_HOME" ] && [[ "$(uname)" == "Darwin" ]] && [ -x "$(command -v /usr/libexec/java_home)" ]; then
+    export JAVA_HOME=`/usr/libexec/java_home -v 17`
+fi
+
 # Resolve symbolic link if present and get the directory this script lives in.
 # NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
 # contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
