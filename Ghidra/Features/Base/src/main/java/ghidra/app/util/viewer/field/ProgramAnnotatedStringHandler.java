@@ -132,7 +132,7 @@ public class ProgramAnnotatedStringHandler implements AnnotatedStringHandler {
 		// default folder is the root folder
 		DomainFolder folder = projectData.getRootFolder();
 
-		// Get program name and folder from program comment annotation 
+		// Get program name and folder from program comment annotation
 		// handles forward and back slashes and with and without first slash
 		String programText = getProgramText(annotationParts);
 		String programName = FilenameUtils.getName(programText);
@@ -277,10 +277,10 @@ public class ProgramAnnotatedStringHandler implements AnnotatedStringHandler {
 	public String getPrototypeString() {
 		return "{@program program_name.exe@symbol_name}";
 	}
-	
+
 	@Override
-	public String getPrototypeString(String contained) {
-		return "{@program " + contained.trim() + "}";
+	public String getPrototypeString(String displayText) {
+		return "{@program " + displayText.trim() + "}";
 	}
 
 }

@@ -65,16 +65,16 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 
 	private boolean enterMode = false;
 	private JCheckBox enterBox = new GCheckBox("Enter accepts comment", enterMode);
-	{
-		enterBox.addChangeListener(e -> {
-			enterMode = enterBox.isSelected();
-			plugin.updateOptions();
-		});
-	}
 	private JPopupMenu popup = new JPopupMenu();
 
 	CommentsDialog(CommentsPlugin plugin) {
 		super("Set Comments");
+
+		enterBox.addChangeListener(e -> {
+			enterMode = enterBox.isSelected();
+			plugin.updateOptions();
+		});
+
 		setHelpLocation(new HelpLocation(plugin.getName(), "Comments"));
 		addWorkPanel(createPanel());
 
@@ -153,13 +153,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		}
 	}
 
-	/////////////////////////////////////////////
-	// *** GhidraDialog "callback" methods ***
-	/////////////////////////////////////////////
-
-	/**
-	 * Callback for the cancel button.
-	 */
 	@Override
 	protected void cancelCallback() {
 
@@ -200,9 +193,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		close();
 	}
 
-	/**
-	 * Callback for the OK button.
-	 */
 	@Override
 	protected void okCallback() {
 		if (wasChanged) {
@@ -219,9 +209,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		}
 	}
 
-	/**
-	 * Callback for the Apply button.
-	 */
 	@Override
 	protected void applyCallback() {
 		preComment = preField.getText();
@@ -237,10 +224,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		setApplyEnabled(false);
 	}
 
-	////////////////////////////////////////////////////////////////////
-	// ** private methods **
-	////////////////////////////////////////////////////////////////////
-
 	private AnnotationAdapterWrapper[] getAnnotationAdapterWrappers() {
 		List<AnnotatedStringHandler> annotations = Annotation.getAnnotatedStringHandlers();
 		int count = annotations.size();
@@ -251,9 +234,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		return retVal;
 	}
 
-	/**
-	 * Create the panel for the dialog.
-	 */
 	private JPanel createPanel() {
 
 		JPanel panel = new JPanel(new BorderLayout());
@@ -274,7 +254,8 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 			String selectedText = textArea.getSelectedText();
 			if (!StringUtils.isBlank(selectedText)) {
 				textArea.replaceSelection(aaw.getPrototypeString(selectedText));
-			} else {
+			}
+			else {
 				insertAnnotation(textArea, aaw);
 			}
 		});
@@ -385,10 +366,9 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 
 		return panel;
 	}
-	
+
 	private void insertAnnotation(JTextArea textArea, AnnotationAdapterWrapper annotation) {
-		textArea.insert(annotation.getPrototypeString(),
-				textArea.getCaretPosition());
+		textArea.insert(annotation.getPrototypeString(), textArea.getCaretPosition());
 		textArea.setCaretPosition(textArea.getCaretPosition() - 1);
 	}
 
@@ -535,7 +515,7 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		public String getPrototypeString() {
 			return handler.getPrototypeString();
 		}
-		
+
 		public String getPrototypeString(String contained) {
 			return handler.getPrototypeString(contained);
 		}

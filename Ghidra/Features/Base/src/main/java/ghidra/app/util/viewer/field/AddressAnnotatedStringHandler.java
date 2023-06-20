@@ -96,8 +96,8 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 			return goToService.goTo(sourceNavigatable, address);
 		}
 
-		Msg.showInfo(getClass(), null,
-			"No address: " + addressText, "Unable to locate address \"" + addressText + "\"");
+		Msg.showInfo(getClass(), null, "No address: " + addressText,
+			"Unable to locate address \"" + addressText + "\"");
 		return false;
 	}
 
@@ -112,8 +112,8 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 	}
 
 	@Override
-	public String getPrototypeString(String contained) {
-		return "{@address 0x" + contained.trim() + "}";
+	public String getPrototypeString(String displayText) {
+		return "{@address " + displayText.trim() + "}";
 	}
 
 }
