@@ -961,32 +961,38 @@ macro loopSetup(as, end, doit) {
 
 # RFDD - Return from Debug and Dispatch, pg. 484.
 :rfdd is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1110 & (as = 0b0000 | as = 0b0001) & at = 0b0001 & op0 = 0 {
-    rfdd();
+    local tmp:4 = rfdd();
+    return [tmp];
 }
 
 # RFDE _ Return From Double Exception, pg. 485.
 :rfde is op2 = 0 & op1 = 0 & ar = 0b0011 & as =0b0010 & at = 0 & op0 = 0 {
-    rfde();
+    local tmp:4 = rfde();
+    return [tmp];
 }
 
 # RFDO - Return from Debug Operation, pg. 486.
 :rfdo is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1110 & as = 0 & at = 0 & op0 = 0 {
-    rfdo();
+    local tmp:4 = rfdo();
+    return [tmp];
 }
 
 # RFE - Return From Exception, pg. 487.
 :rfe is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0 & at = 0 & op0 = 0 {
-    rfe();
+    local tmp:4 = rfe();
+    return [tmp];
 }
 
 # RFI - Return from High-Priority Interrupt, pg. 488.
 :rfi u4_8.11 is op2 = 0 & op1 = 0 & ar = 0b0011 & u4_8.11 & at = 0b0001 & op0 = 0 {
-    rfi(u4_8.11:1);
+    local tmp:4 = rfi(u4_8.11:1);
+    return [tmp];
 }
 
 # RFME - Return from Memory Error, pg. 489.
 :rfme is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0 & at = 0b0010 & op0 = 0 {
-    rfme();
+    local tmp:4 = rfme();
+    return [tmp];
 }
 
 # RFR - Move FR to AR, pg. 490.
@@ -996,17 +1002,20 @@ macro loopSetup(as, end, doit) {
 
 # RFUE - Return from User-Mode Exception, pg. 491.
 :rfue is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0001 & at = 0 & op0 = 0 {
-    rfue();
+    local tmp:4 = rfue();
+    return [tmp];
 }
 
 # RFWO - Return from Window Overflow, pg. 492.
 :rfwo is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0100 & at = 0 & op0 = 0 {
-    rfwo();
+    local tmp:4 = rfwo();
+    return [tmp];
 }
 
 # RFWU - Return from Window Underflow, pg. 493.
 :rfwu is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0101 & at = 0 & op0 = 0 {
-    rfwu();
+    local tmp:4 = rfwu();
+    return [tmp];
 }
 
 # RITLB0 - Read Instruction TLB Virtual Entry, pg. 494.
