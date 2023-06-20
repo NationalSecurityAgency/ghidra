@@ -187,7 +187,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	/**
 	 * Removes all secondary highlights for the current function
-	 * 
+	 *
 	 * @param function the function containing the secondary highlights
 	 */
 	public void removeSecondaryHighlights(Function function) {
@@ -298,14 +298,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	/**
 	 * This function is used to alert the panel that a token was renamed. If the token being renamed
 	 * had a secondary highlight, we must re-apply the highlight to the new token.
-	 * 
+	 *
 	 * <p>
 	 * This is not needed for highlighter service highlights, since they get called again to
 	 * re-apply highlights. It is up to that highlighter to determine if highlighting still applies
 	 * to the new token name. Alternatively, for secondary highlights, we know the user chose the
 	 * highlight based upon name. Thus, when the name changes, we need to take action to update the
 	 * secondary highlight.
-	 * 
+	 *
 	 * @param token the token being renamed
 	 * @param newName the new name of the token
 	 */
@@ -349,7 +349,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	/**
 	 * Called by the provider to clone all highlights in the source panel and apply them to this
 	 * panel
-	 * 
+	 *
 	 * @param sourcePanel the panel that was cloned
 	 */
 	public void cloneHighlights(DecompilerPanel sourcePanel) {
@@ -393,7 +393,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	/**
 	 * This function sets the current window display based on our display state
-	 * 
+	 *
 	 * @param decompileData the new data
 	 */
 	void setDecompileData(DecompileData decompileData) {
@@ -565,7 +565,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	/**
 	 * Put cursor on first token in the list
-	 * 
+	 *
 	 * @param tokens the tokens to search for
 	 */
 	private void goToBeginningOfLine(List<ClangToken> tokens) {
@@ -677,7 +677,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	/**
 	 * Passing false signals to disallow navigating to new functions from within the panel by using
 	 * the mouse.
-	 * 
+	 *
 	 * @param enabled false disabled mouse function navigation
 	 */
 	void setMouseNavigationEnabled(boolean enabled) {
@@ -991,7 +991,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	/**
 	 * The color used in a primary highlight to mark the token that was clicked. This is used in
 	 * 'slice' actions to mark the source of the slice.
-	 * 
+	 *
 	 * @return the color
 	 */
 	public Color getSpecialHighlightColor() {
@@ -1053,7 +1053,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	/**
 	 * Returns a single selected token; null if there is no selection or multiple tokens selected.
-	 * 
+	 *
 	 * @return a single selected token; null if there is no selection or multiple tokens selected.
 	 */
 	public ClangToken getSelectedToken() {
@@ -1083,10 +1083,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	/**
 	 * Get the line number for the given y position, relative to the scroll panel
-	 * 
+	 *
 	 * <p>
 	 * If the y position is below all the lines, the last line is returned.
-	 * 
+	 *
 	 * @param y the y position
 	 * @return the line number, or 0 if not applicable
 	 */
@@ -1298,10 +1298,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		public DecompilerFieldPanel(LayoutModel model) {
 			super(model, "Decompiler");
-			// In the decompiler each field represents a line, so make the field description 
+			// In the decompiler each field represents a line, so make the field description
 			// simply be the line number
-			setFieldDescriptionProvider(
-				(l, f) -> "line " + (l.getIndex().intValue() + 1) + ", " + f.getText());
+			setFieldDescriptionProvider((l, f) -> {
+				if (f == null) {
+					return null;
+				}
+				return "line " + (l.getIndex().intValue() + 1) + ", " + f.getText();
+			});
 		}
 
 		/**
@@ -1309,7 +1313,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		 * an event to the rest of the tool. (This is in contrast to a field panel
 		 * <code>goTo</code>, which we use to simply move the cursor, but not trigger an tool-level
 		 * navigation event.)
-		 * 
+		 *
 		 * @param lineNumber the line number
 		 * @param column the column within the line
 		 */
