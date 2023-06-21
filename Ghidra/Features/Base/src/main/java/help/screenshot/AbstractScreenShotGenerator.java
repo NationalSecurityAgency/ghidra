@@ -15,8 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -49,6 +48,8 @@ import docking.widgets.tree.GTree;
 import generic.test.AbstractGenericTest;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.ThemeManager;
+import generic.theme.builtin.FlatLightTheme;
 import generic.util.image.ImageUtils;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.analysis.AnalysisOptionsDialog;
@@ -106,11 +107,11 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	public Image image;
 
 	public AbstractScreenShotGenerator() {
-		super();
-
 		// this prevents test tool from appearing in the UI
 		setInstanceField("allowTestTools", ToolUtils.class, Boolean.FALSE);
 		setDockIcon();
+
+		ThemeManager.getInstance().setTheme(new FlatLightTheme());
 	}
 
 	protected TestEnv newTestEnv() throws Exception {
