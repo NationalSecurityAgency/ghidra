@@ -20,26 +20,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataUtilities;
-import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a LC_FUNCTION_STARTS command. 
+ * Represents a LC_DATA_IN_CODE command. 
  */
-public class FunctionStartsCommand extends LinkEditDataCommand {
-	
-	private List<LEB128Info> lebs = new ArrayList<>();
+public class DataInCodeCommand extends LinkEditDataCommand {
+
+	private List<DataInCodeEntry> entries = new ArrayList<>();
 
 	/**
-	 * Creates and parses a new {@link FunctionStartsCommand}
+	 * Creates and parses a new {@link DataInCodeCommand}
 	 * 
 	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
 	 *   command
@@ -47,36 +44,22 @@ public class FunctionStartsCommand extends LinkEditDataCommand {
 	 *   references.  Note that this might be in a different underlying provider.
 	 * @throws IOException if an IO-related error occurs while parsing
 	 */
-	FunctionStartsCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
+	DataInCodeCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
 			throws IOException {
 		super(loadCommandReader, dataReader);
 
-		int i = 0;
-		while (true) {
-			LEB128Info info = dataReader.readNext(LEB128Info::unsigned);
-			if (i + info.getLength() > datasize || info.asLong() == 0) {
-				break;
-			}
-			i += info.getLength();
-			lebs.add(info);
+		for (int i = 0; i + DataInCodeEntry.SIZE <= datasize; i += DataInCodeEntry.SIZE) {
+			entries.add(new DataInCodeEntry(dataReader));
 		}
 	}
 
 	/**
-	 * Finds the {@link List} of function start addresses
+	 * Gets the {@link List} of {@link DataInCodeEntry}s
 	 * 
-	 * @param textSegmentAddr The {@link Address} of the function starts' __TEXT segment
-	 * @return The {@link List} of function start addresses
-	 * @throws IOException if there was an issue reading bytes
+	 * @return The {@link List} of {@link DataInCodeEntry}s
 	 */
-	public List<Address> findFunctionStartAddrs(Address textSegmentAddr) throws IOException {
-		List<Address> addrs = new ArrayList<>();
-		long currentFuncOffset = 0;
-		for (LEB128Info leb : lebs) {
-			currentFuncOffset += leb.asLong();
-			addrs.add(textSegmentAddr.add(currentFuncOffset));
-		}
-		return addrs;
+	public List<DataInCodeEntry> getEntries() {
+		return entries;
 	}
 
 	@Override
@@ -87,29 +70,13 @@ public class FunctionStartsCommand extends LinkEditDataCommand {
 		}
 
 		super.markup(program, header, addr, monitor, log);
-		
-		SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
-		if (textSegment == null) {
-			return;
-		}
 
 		try {
-			ReferenceManager referenceManager = program.getReferenceManager();
-			Address textSegmentAddr = program.getAddressFactory()
-					.getDefaultAddressSpace()
-					.getAddress(textSegment.getVMaddress());
-			long currentFuncOffset = 0;
-			for (LEB128Info leb : lebs) {
-				Data d = DataUtilities.createData(program, addr, ULEB128, -1,
+			for (DataInCodeEntry entry : entries) {
+				DataUtilities.createData(program, addr, entry.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				addr = addr.add(leb.getLength());
-				currentFuncOffset += leb.asLong();
-				Reference ref = referenceManager.addMemoryReference(d.getMinAddress(),
-					textSegmentAddr.add(currentFuncOffset),
-					RefType.DATA, SourceType.IMPORTED, 0);
-				referenceManager.setPrimary(ref, true);
+				addr = addr.add(DataInCodeEntry.SIZE);
 			}
-
 		}
 		catch (Exception e) {
 			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(), "Failed to markup %s."

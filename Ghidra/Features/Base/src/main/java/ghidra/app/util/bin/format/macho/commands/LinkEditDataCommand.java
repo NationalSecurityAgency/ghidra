@@ -23,8 +23,10 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.ProgramModule;
+import ghidra.program.model.listing.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -69,23 +71,37 @@ public class LinkEditDataCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
+	public Address getDataAddress(MachHeader header, AddressSpace space) {
+		if (dataoff != 0 && datasize != 0) {
+			SegmentCommand segment = getContainingSegment(header, dataoff);
+			if (segment != null) {
+				return space
+						.getAddress(segment.getVMaddress() + (dataoff - segment.getFileOffset()));
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public void markup(Program program, MachHeader header, Address addr, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		if (addr == null || datasize == 0) {
+			return;
+		}
+		String lcName = LoadCommandTypes.getLoadCommandName(getCommandType());
+		program.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, lcName);
+	}
+
+	@Override
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
 		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address address = baseAddress.getNewAddress(getStartIndex());
-				api.createData(address, toDataType());
-				api.setPlateComment(address,
-					LoadCommandTypes.getLoadCommandName(getCommandType()));
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
 
-//TODO markup actual data
-
-				if (datasize > 0) {
-					Address start = baseAddress.getNewAddress(dataoff);
-					api.createFragment(parentModule, getCommandName() + "_DATA", start, datasize);
-				}
+			if (datasize > 0) {
+				Address start = baseAddress.getNewAddress(dataoff);
+				api.createFragment(parentModule,
+					LoadCommandTypes.getLoadCommandName(getCommandType()), start, datasize);
 			}
 		}
 		catch (Exception e) {

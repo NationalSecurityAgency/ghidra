@@ -19,14 +19,8 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
-import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.importer.MessageLog;
-import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.ProgramModule;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Represents a version_min_command structure 
@@ -46,25 +40,6 @@ public class VersionMinCommand extends LoadCommand {
 	@Override
 	public String getCommandName() {
 		return "version_min_command";
-	}
-
-	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
-			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-
-		updateMonitor(monitor);
-		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address addr = baseAddress.getNewAddress(getStartIndex());
-				api.createData(addr, toDataType());
-				api.setPlateComment(addr,
-					LoadCommandTypes.getLoadCommandName(getCommandType()));
-			}
-		}
-		catch (Exception e) {
-			log.appendMsg("Unable to create " + getCommandName() + " - " + e.getMessage());
-		}
 	}
 
 	@Override
