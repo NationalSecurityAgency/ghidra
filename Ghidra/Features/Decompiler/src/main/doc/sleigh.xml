@@ -2816,7 +2816,7 @@ must match the size of the destination space.
 <para>
 In some cases, the semantics of an instruction may require
 branching <emphasis>within</emphasis> the semantics of a single
-instruction, so specifying a destination address is too course. In
+instruction, so specifying a destination address is too coarse. In
 this case, SLEIGH is capable of <emphasis>p-code relative</emphasis>
 branching. Individual p-code operations can be identified by
 a <emphasis>label</emphasis>, and this label can be used as the
