@@ -89,7 +89,7 @@ public class DtbAnalyzer extends FileFormatAnalyzer {
 
 		monitor.initialize(header.getEntries().size());
 		for (int i = 0; i < header.getEntries().size(); ++i) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
 			DtTableEntry entry = header.getEntries().get(i);
