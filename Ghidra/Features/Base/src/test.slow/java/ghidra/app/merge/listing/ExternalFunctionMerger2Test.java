@@ -75,13 +75,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 	public void testFunctionParamNameVsDataTypeNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -97,23 +92,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -126,23 +112,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 					Parameter parameter1 = function.getParameter(0);
 					parameter1.setName("MyParameter", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -155,13 +132,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 					Parameter parameter1 = function.getParameter(0);
 					parameter1.setDataType(new FloatDataType(), SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -188,13 +161,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 	public void testFunctionParamChangeNameDataTypeComment1() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -210,23 +178,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -241,23 +200,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					parameter1.setName("LatestParameter", SourceType.USER_DEFINED);
 					parameter1.setDataType(new FloatDataType(), SourceType.ANALYSIS);
 					parameter1.setComment("Latest Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -272,13 +222,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					parameter1.setName("MyParameter", SourceType.USER_DEFINED);
 					parameter1.setDataType(new DoubleDataType(), SourceType.ANALYSIS);
 					parameter1.setComment("My Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -307,13 +253,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 	public void testFunctionParamChange_NameKeepLatest_CommentKeepMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -329,23 +270,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -359,23 +291,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = function.getParameter(0);
 					parameter1.setName("LatestParameter", SourceType.USER_DEFINED);
 					parameter1.setComment("Latest Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -389,13 +312,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = function.getParameter(0);
 					parameter1.setName("MyParameter", SourceType.USER_DEFINED);
 					parameter1.setComment("My Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -424,13 +343,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 	public void testFunctionParamChange_NameKeepMy_CommentKeepLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -446,23 +360,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -476,23 +381,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = function.getParameter(0);
 					parameter1.setName("LatestParameter", SourceType.USER_DEFINED);
 					parameter1.setComment("Latest Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -506,13 +402,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = function.getParameter(0);
 					parameter1.setName("MyParameter", SourceType.USER_DEFINED);
 					parameter1.setComment("My Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -542,13 +434,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 			throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -564,23 +451,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -595,23 +473,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					parameter1.setName("LatestParameter", SourceType.USER_DEFINED);
 					parameter1.setDataType(new FloatDataType(), SourceType.ANALYSIS);
 					parameter1.setComment("Latest Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -627,13 +496,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					parameter1.setDataType(new ArrayDataType(new CharDataType(), 4, 1),
 						SourceType.ANALYSIS);
 					parameter1.setComment("My Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -663,13 +528,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 			throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -685,23 +545,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -716,23 +567,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					parameter1.setName("LatestParameter", SourceType.USER_DEFINED);
 					parameter1.setDataType(new FloatDataType(), SourceType.ANALYSIS);
 					parameter1.setComment("Latest Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -748,13 +590,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					parameter1.setDataType(new ArrayDataType(new CharDataType(), 4, 1),
 						SourceType.ANALYSIS);
 					parameter1.setComment("My Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -783,13 +621,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 	public void testFunctionParamChangeNameDataTypeComment2() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -805,23 +638,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -836,23 +660,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					parameter1.setName("LatestParameter", SourceType.USER_DEFINED);
 					parameter1.setDataType(new FloatDataType(), SourceType.ANALYSIS);
 					parameter1.setComment("Latest Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -867,13 +682,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					parameter1.setName("MyParameter", SourceType.USER_DEFINED);
 					parameter1.setDataType(new DoubleDataType(), SourceType.ANALYSIS);
 					parameter1.setComment("My Comment");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -903,13 +714,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
@@ -918,24 +724,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x1001504"), "advapi32.dll",
 						"oranges", null, SourceType.USER_DEFINED, 0, RefType.DATA);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
@@ -945,14 +741,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					refMgr.addExternalReference(addr(program, "0x1001504"), "advapi32.dll",
 						"oranges", addr(program, "77db1020"), SourceType.USER_DEFINED, 0,
 						RefType.DATA);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -984,68 +775,41 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					createExternalLabel(program, grapesPath, null, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					Function function = externalLocation.createFunction();
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					Function function = externalLocation.createFunction();
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1069,13 +833,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation =
 						createExternalLabel(program, grapesPath, null, SourceType.USER_DEFINED);
@@ -1083,59 +842,37 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					externalLocation.getSymbol().delete();
 					externalLocation =
 						createExternalLabel(program, grapesPath, null, SourceType.USER_DEFINED);
 					externalLocation.setDataType(ByteDataType.dataType);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					externalLocation.getSymbol().delete();
 					externalLocation =
 						createExternalLabel(program, grapesPath, null, SourceType.USER_DEFINED);
 					externalLocation.setDataType(ByteDataType.dataType);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1156,66 +893,39 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					createExternalLabel(program, grapesPath, null, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					Function function = externalLocation.createFunction();
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					externalLocation.setLocation("count", externalLocation.getAddress(),
 						SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1243,32 +953,18 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					createExternalLabel(program, grapesPath, null, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					Function function = externalLocation.createFunction();
@@ -1276,34 +972,21 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					externalLocation.setLocation("count", externalLocation.getAddress(),
 						SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1339,33 +1022,19 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					createExternalLabel(program, grapesPath, addr(program, "77db4321"),
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					Function function = externalLocation.createFunction();
@@ -1373,34 +1042,21 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					externalLocation.setLocation("count", externalLocation.getAddress(),
 						SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1436,33 +1092,19 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					createExternalLabel(program, grapesPath, addr(program, "77db4321"),
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					Function function = externalLocation.createFunction();
@@ -1470,34 +1112,21 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), 4, program);
 					parameter1.setComment("Test Parameter Comment");
 					function.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ExternalLocation externalLocation = getExternalLocation(program, grapesPath);
 					externalLocation.setLocation("count", externalLocation.getAddress(),
 						SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1528,13 +1157,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 	public void testFunctionStackOverlapConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Library externalLibrary =
@@ -1547,23 +1171,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Function function = externalLocation.getFunction();
 					assertNotNull(function);
 					function.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -1580,13 +1195,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter2 = new ParameterImpl("P2", new DWordDataType(), 8, program);
 					parameter2.setComment("Other Comment");
 					function.addParameter(parameter2, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function1 =
 					getExternalFunction(program, new String[] { "user32.dll", "apples" });
@@ -1596,13 +1207,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 				assertEquals("Other Comment", p2.getComment());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
 					Symbol librarySymbol = symbolTable.getLibrarySymbol("user32.dll");
@@ -1620,13 +1226,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 						new ParameterImpl("P2", new DWordDataType(), 10, program);
 					parameter2.setComment("Other Comment");
 					function.addParameter(parameter2, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1672,68 +1274,41 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					Function function = createExternalFunction(program, applesPath,
 						addr(program, "77db1020"), new FloatDataType(), SourceType.ANALYSIS);
 					assertNotNull(function);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function function = getExternalFunction(program, applesPath);
 					function.setReturnType(new WordDataType(), SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function1 = getExternalFunction(program, applesPath);
 				assertEquals(0, function1.getParameterCount());
 				checkDataType(new WordDataType(), function1.getReturnType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function function = getExternalFunction(program, applesPath);
 					function.setReturnType(new PointerDataType(new ByteDataType()),
 						SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function1 = getExternalFunction(program, applesPath);
 				assertEquals(0, function1.getParameterCount());
@@ -1757,70 +1332,43 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					Function function = createExternalFunction(program, applesPath,
 						addr(program, "77db1020"), new FloatDataType(), SourceType.ANALYSIS);
 					assertNotNull(function);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function function = getExternalFunction(program, applesPath);
 					function.setReturnType(new LongDataType(), SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function1 = getExternalFunction(program, applesPath);
 				assertEquals(0, function1.getParameterCount());
 				checkDataType(new LongDataType(), function1.getReturnType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
 				CategoryPath path = new CategoryPath("/");
 				DataType typedefDT = new TypedefDataType(path, "long", new LongDataType(),
 					program.getDataTypeManager());
-				boolean commit = false;
 				try {
 					Function function = getExternalFunction(program, applesPath);
 					function.setReturnType(typedefDT, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function1 = getExternalFunction(program, applesPath);
 				assertEquals(0, function1.getParameterCount());
@@ -1847,68 +1395,41 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					Function function = createExternalFunction(program, applesPath,
 						addr(program, "77db1020"), new FloatDataType(), SourceType.ANALYSIS);
 					assertNotNull(function);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function function = getExternalFunction(program, applesPath);
 					function.setReturnType(new WordDataType(), SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function1 = getExternalFunction(program, applesPath);
 				assertEquals(0, function1.getParameterCount());
 				checkDataType(new WordDataType(), function1.getReturnType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function function = getExternalFunction(program, applesPath);
 					function.setReturnType(new PointerDataType(new ByteDataType()),
 						SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function1 = getExternalFunction(program, applesPath);
 				assertEquals(0, function1.getParameterCount());
@@ -1932,13 +1453,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					Function applesFunction = createExternalFunction(program, applesPath,
 						addr(program, "77db1234"), new FloatDataType(), SourceType.IMPORTED);
@@ -1952,38 +1468,23 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 					createExternalFunction(program, orangesPath, addr(program, "00cc5566"),
 						new DWordDataType(), SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function applesFunction = getExternalFunction(program, applesPath);
 					applesFunction.getSymbol().delete();// Remove the function, but not the external location.
 
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 					orangesFunction.getSymbol().delete();// Remove the function, but not the external location.
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
 				assertNotNull(applesLocation);
@@ -1993,13 +1494,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 				assertEquals(false, orangesLocation.isFunction());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function applesFunction = getExternalFunction(program, applesPath);
 					applesFunction.setComment("Once upon a time...");
@@ -2010,14 +1506,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 						new ParameterImpl("stuff", new ByteDataType(), 4, program);
 					parameter1.setComment("Long ago in a land far, far away");
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
 				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
@@ -2063,45 +1554,26 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					Function function =
 						createExternalFunction(program, orangesPath, addr(program, "00cc5566"));
 					assertEquals(SourceType.DEFAULT, function.getSignatureSource());
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 					orangesFunction.setSignatureSource(SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
@@ -2111,24 +1583,14 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 //				assertEquals(2, orangesFunction.getParameterCount());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 					orangesFunction.setSignatureSource(SourceType.ANALYSIS);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
@@ -2157,34 +1619,20 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					Function function =
 						createExternalFunction(program, orangesPath, addr(program, "00cc5566"));
 					assertEquals(SourceType.DEFAULT, function.getSignatureSource());
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 					orangesFunction.setSignatureSource(SourceType.USER_DEFINED);
@@ -2197,14 +1645,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
 						new VariableStorage(program, program.getRegister("BX")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
@@ -2214,13 +1657,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 				assertEquals(2, orangesFunction.getParameterCount());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 					orangesFunction.setSignatureSource(SourceType.ANALYSIS);
@@ -2233,14 +1671,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
 						new VariableStorage(program, program.getRegister("BX")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
@@ -2280,34 +1713,20 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					Function function =
 						createExternalFunction(program, orangesPath, addr(program, "00cc5566"));
 					assertEquals(SourceType.DEFAULT, function.getSignatureSource());
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 					orangesFunction.setSignatureSource(SourceType.USER_DEFINED);
@@ -2320,14 +1739,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
 						new VariableStorage(program, program.getRegister("BX")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
@@ -2337,13 +1751,8 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 				assertEquals(2, orangesFunction.getParameterCount());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 					orangesFunction.setSignatureSource(SourceType.ANALYSIS);
@@ -2356,14 +1765,9 @@ public class ExternalFunctionMerger2Test extends AbstractExternalMergerTest {
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
 						new VariableStorage(program, program.getRegister("BX")), program);
 					orangesFunction.addParameter(parameter2, SourceType.IMPORTED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);

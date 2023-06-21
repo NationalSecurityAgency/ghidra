@@ -63,46 +63,24 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testAddDiffPickLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 	
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d18");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d18");
-					try {
-						equateTab.createEquate("TWO", 2).addReference(addr, 1);
-						equateTab.createEquate("ONE", 1).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("TWO", 2).addReference(addr, 1);
+					equateTab.createEquate("ONE", 1).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 	
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d18");
-					equateTab.getEquate("uno").addReference(addr, 1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d18");
+				equateTab.getEquate("uno").addReference(addr, 1);
 			}
 		});
 	
@@ -125,47 +103,25 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 	@Test
 	    public void testAddDiffPickMy() throws Exception {
 			mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-	
-				/* (non-Javadoc)
-				 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-				 */
+
 				@Override
 				public void modifyLatest(ProgramDB program) {
-					int txId = program.startTransaction("Modify Latest Program");
-					boolean commit = false;
+					EquateTable equateTab = program.getEquateTable();
+					Address addr = addr(program, "0x1002533");
+//					equateTab.getEquate("one").addReference(addr, 1);
 					try {
-						EquateTable equateTab = program.getEquateTable();
-						Address addr = addr(program, "0x1002533");
-	//					equateTab.getEquate("one").addReference(addr, 1);
-						try {
-							equateTab.createEquate("0x1", 1).addReference(addr, 1);
-						}
-						catch (DuplicateNameException | InvalidInputException e) {
-							Assert.fail(e.getMessage());
-						}
-						commit = true;
+						equateTab.createEquate("0x1", 1).addReference(addr, 1);
 					}
-					finally {
-						program.endTransaction(txId, commit);
+					catch (DuplicateNameException | InvalidInputException e) {
+						Assert.fail(e.getMessage());
 					}
 				}
-	
-				/* (non-Javadoc)
-				 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-				 */
+
 				@Override
 				public void modifyPrivate(ProgramDB program) {
-					int txId = program.startTransaction("Modify My Program");
-					boolean commit = false;
-					try {
-						EquateTable equateTab = program.getEquateTable();
-						Address addr = addr(program, "0x1002533");
-						equateTab.getEquate("uno").addReference(addr, 1);
-						commit = true;
-					}
-					finally {
-						program.endTransaction(txId, commit);
-					}
+					EquateTable equateTab = program.getEquateTable();
+					Address addr = addr(program, "0x1002533");
+					equateTab.getEquate("uno").addReference(addr, 1);
 				}
 			});
 	
@@ -277,8 +233,6 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 	
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					Listing listing = program.getListing();
 					Address startAddr = addr(program, "0x1002d20");
@@ -288,53 +242,33 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 					Instruction instruction = listing.getInstructionAt(startAddr);
 					Assert.assertTrue(instruction != null);
 					Assert.assertEquals(2, instruction.getNumOperands());
-					commit = true;
 				}
 				catch (MemoryAccessException e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 	
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d20");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d20");
-					try {
-						equateTab.createEquate("FOO", -0x20).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("FOO", -0x20).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 	
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x1002d20");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x1002d20");
-					try {
-						equateTab.createEquate("BAR", -0x20).addReference(addr, 1);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("BAR", -0x20).addReference(addr, 1);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});

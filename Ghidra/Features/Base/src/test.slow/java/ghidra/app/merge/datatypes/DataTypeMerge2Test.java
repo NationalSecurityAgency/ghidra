@@ -53,11 +53,9 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -66,16 +64,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					s.add(new WordDataType());
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -97,51 +91,35 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 				DataType cdt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category4"),
 					"CharStruct");
-				try {
-					Structure s = (Structure) dt;
-					Array array = new ArrayDataType(cdt, 5, cdt.getLength());
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					s.add(array);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Structure s = (Structure) dt;
+				Array array = new ArrayDataType(cdt, 5, cdt.getLength());
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
+				s.add(array);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
 				DataType cdt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category4"),
 					"CharStruct");
-				try {
-					Structure s = (Structure) dt;
-					Array array = new ArrayDataType(cdt, 3, cdt.getLength());
-					s.add(array);
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Structure s = (Structure) dt;
+				Array array = new ArrayDataType(cdt, 3, cdt.getLength());
+				s.add(array);
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -164,15 +142,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
 				try {
 					dt.setName("OtherIntStruct");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -180,28 +155,16 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-
-				try {
-					Structure s = (Structure) dt;
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Structure s = (Structure) dt;
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
 			}
 		});
 		executeMerge(-1);
@@ -223,17 +186,14 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-
+				
 				try {
 					dt.setName("OtherIntStruct");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -241,18 +201,13 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -261,16 +216,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					s.add(new WordDataType());
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -292,11 +243,9 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -305,41 +254,31 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					s.add(new WordDataType());
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
 				try {
 					dt.setName("My_Int_Struct");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -361,17 +300,14 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
 				try {
 					dt.setName("OtherIntStruct");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -379,18 +315,13 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -399,16 +330,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					s.add(new WordDataType());
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -431,9 +358,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -441,8 +366,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					dt.setName("OtherIntStruct");
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					commit = true;
+					s.add(new WordDataType());;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -450,16 +374,11 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -468,16 +387,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					Pointer p = PointerDataType.getPointer(new ByteDataType(), 4);
 					s.add(p);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -500,30 +415,19 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-
-				try {
-					Structure s = (Structure) dt;
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Structure s = (Structure) dt;
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -532,16 +436,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					Pointer p = PointerDataType.getPointer(new ByteDataType(), 4);
 					s.add(p);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -565,47 +465,35 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category3/IntStruct to
 				// /Category1
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
 				try {
 					Category c = dtm.getCategory(new CategoryPath("/Category1"));
 					c.moveDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (DataTypeDependencyException e) {
 					Assert.fail("Got DataTypeDependencyException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
 				try {
 					dt.setName("My_Int_Struct");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -624,11 +512,9 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category3/IntStruct to
 				// /Category1 and rename it
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -636,7 +522,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					dt.setName("OtherIntStruct");
 					Category c = dtm.getCategory(new CategoryPath("/Category1"));
 					c.moveDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -647,28 +532,16 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				catch (DataTypeDependencyException e) {
 					Assert.fail("Got DataTypeDependencyException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-
-				try {
-					Structure s = (Structure) dt;
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Structure s = (Structure) dt;
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -692,11 +565,9 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -704,7 +575,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					dt.setName("OtherIntStruct");
 					Category c = dtm.getCategory(new CategoryPath("/Category1"));
 					c.moveDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -715,28 +585,16 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				catch (DataTypeDependencyException e) {
 					Assert.fail("Got DataTypeDependencyException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-
-				try {
-					Structure s = (Structure) dt;
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Structure s = (Structure) dt;
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
 			}
 		});
 		executeMerge(-1);
@@ -761,30 +619,19 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
-
-				try {
-					Structure s = (Structure) dt;
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Structure s = (Structure) dt;
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				DataType dt = dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"),
 					"IntStruct");
 
@@ -792,7 +639,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					dt.setName("OtherIntStruct");
 					Category c = dtm.getCategory(new CategoryPath("/Category1"));
 					c.moveDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -802,9 +648,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				}
 				catch (DataTypeDependencyException e) {
 					Assert.fail("Got DataTypeDependencyException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 
@@ -832,36 +675,25 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(CategoryPath.ROOT);
 				DataType dt = c.getDataType("DLL_Table");
+				Structure s = (Structure) dt;
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
+				// move to /Category1/Category2
+				c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					Structure s = (Structure) dt;
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					// move to /Category1/Category2
-					c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-					try {
-						c.moveDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
-					}
-					catch (DataTypeDependencyException e) {
-						Assert.fail("Got DataTypeDependencyException!");
-					}
-
-					commit = true;
+					c.moveDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
+				catch (DataTypeDependencyException e) {
+					Assert.fail("Got DataTypeDependencyException!");
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(CategoryPath.ROOT);
 				DataType dt = c.getDataType("DLL_Table");
 
@@ -869,16 +701,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					dt.setName("MY_DLLs");
 					Structure s = (Structure) dt;
 					s.add(new FloatDataType());
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 
@@ -901,36 +729,25 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(CategoryPath.ROOT);
 				DataType dt = c.getDataType("DLL_Table");
+				Structure s = (Structure) dt;
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
+				// move to /Category1/Category2
+				c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					Structure s = (Structure) dt;
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					// move to /Category1/Category2
-					c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-					try {
-						c.moveDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
-					}
-					catch (DataTypeDependencyException e) {
-						Assert.fail("Got DataTypeDependencyException!");
-					}
-
-					commit = true;
+					c.moveDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
+				catch (DataTypeDependencyException e) {
+					Assert.fail("Got DataTypeDependencyException!");
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(CategoryPath.ROOT);
 				DataType dt = c.getDataType("DLL_Table");
 
@@ -938,16 +755,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					dt.setName("MY_DLLs");
 					Structure s = (Structure) dt;
 					s.add(new FloatDataType());
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 
@@ -970,38 +783,27 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("ArrayStruct");
+				Structure s = (Structure) dt;
+				s.add(new ByteDataType());
+				s.add(new WordDataType());
+				// move to /Category1/Category2
+				c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					Structure s = (Structure) dt;
-					s.add(new ByteDataType());
-					s.add(new WordDataType());
-					// move to /Category1/Category2
-					c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-					try {
-						c.moveDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
-					}
-					catch (DataTypeDependencyException e) {
-						Assert.fail("Got DataTypeDependencyException!");
-					}
-
-					commit = true;
+					c.moveDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
+				catch (DataTypeDependencyException e) {
+					Assert.fail("Got DataTypeDependencyException!");
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("ArrayStruct");
 				Category c5 = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
@@ -1013,16 +815,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					s.add(new FloatDataType());
 					Array array = new ArrayDataType(floatStruct, 4, floatStruct.getLength());
 					s.add(array);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 
@@ -1044,30 +842,19 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("FavoriteColors");
-				try {
-					Enum enumm = (Enum) dt;
-					enumm.add("Purple", 0x10);
-					enumm.add("Grey", 0x20);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Enum enumm = (Enum) dt;
+				enumm.add("Purple", 0x10);
+				enumm.add("Grey", 0x20);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move /Category1/Category2/Category5 to
 				// /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("FavoriteColors");
 
@@ -1076,16 +863,12 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					Enum enumm = (Enum) dt;
 					enumm.remove("Pink");
 					enumm.add("Pink", 0x10);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 
@@ -1107,22 +890,14 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("FavoriteColors");
-				try {
-					Enum enumm = (Enum) dt;
-					String valueName = "Pink";
-					long value = enumm.getValue(valueName);
-					enumm.remove(valueName);
-					enumm.add(valueName, value, "This is the latest comment on server");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Enum enumm = (Enum) dt;
+				String valueName = "Pink";
+				long value = enumm.getValue(valueName);
+				enumm.remove(valueName);
+				enumm.add(valueName, value, "This is the latest comment on server");
 			}
 
 			@Override
@@ -1149,43 +924,26 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("FavoriteColors");
-				try {
-					Enum enumm = (Enum) dt;
-					String valueName = "Pink";
-					long value = enumm.getValue(valueName);
-					enumm.remove(valueName);
-					enumm.add(valueName, value, "This is the latest comment on server");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Enum enumm = (Enum) dt;
+				String valueName = "Pink";
+				long value = enumm.getValue(valueName);
+				enumm.remove(valueName);
+				enumm.add(valueName, value, "This is the latest comment on server");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("FavoriteColors");
-
-				try {
-					Enum enumm = (Enum) dt;
-					String valueName = "Pink";
-					long value = enumm.getValue(valueName);
-					enumm.remove(valueName);
-					enumm.add(valueName, value, "This my local updated comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Enum enumm = (Enum) dt;
+				String valueName = "Pink";
+				long value = enumm.getValue(valueName);
+				enumm.remove(valueName);
+				enumm.add(valueName, value, "This my local updated comment");
 			}
 
 		});
@@ -1207,43 +965,26 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("FavoriteColors");
-				try {
-					Enum enumm = (Enum) dt;
-					String valueName = "Pink";
-					long value = enumm.getValue(valueName);
-					enumm.remove(valueName);
-					enumm.add(valueName, value, "This is the latest comment on server");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Enum enumm = (Enum) dt;
+				String valueName = "Pink";
+				long value = enumm.getValue(valueName);
+				enumm.remove(valueName);
+				enumm.add(valueName, value, "This is the latest comment on server");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				DataType dt = c.getDataType("FavoriteColors");
-
-				try {
-					Enum enumm = (Enum) dt;
-					String valueName = "Pink";
-					long value = enumm.getValue(valueName);
-					enumm.remove(valueName);
-					enumm.add(valueName, value, "This my local updated comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				Enum enumm = (Enum) dt;
+				String valueName = "Pink";
+				long value = enumm.getValue(valueName);
+				enumm.remove(valueName);
+				enumm.add(valueName, value, "This my local updated comment");
 			}
 
 		});
@@ -1265,53 +1006,37 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				Structure s1 = (Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-					"Structure_1");
-				try {
-					// create a TypeDef on Bar
-					TypeDef td =
-						new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
-					// create a Pointer to typedef on Bar
-					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
-					// add pointer to Foo
-					foo.add(p);
+				"Structure_1");
+				// create a TypeDef on Bar
+				TypeDef td =
+					new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
+				// create a Pointer to typedef on Bar
+				Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
+				p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * *
+				p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * * * * *
+				// add pointer to Foo
+				foo.add(p);
 
-					// edit Structure_1 to contain Bar
-					s1.add(bar);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// edit Structure_1 to contain Bar
+				s1.add(bar);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);// choose my Foo
@@ -1352,23 +1077,14 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				try {
-					// remove Bar from the data type manager
-					dtm.remove(bar, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				// remove Bar from the data type manager
+				dtm.remove(bar, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Symbol symbol = getUniqueSymbol(program, "entry");
 				Address addr = symbol.getAddress();
@@ -1377,7 +1093,6 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 				set.addRange(addr.getNewAddress(0x01006420), addr.getNewAddress(0x01006581));
 				set.addRange(addr.getNewAddress(0x010065a4), addr.getNewAddress(0x010065cd));
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-				int transactionID = program.startTransaction("test");
 				try {
 					symbol.delete();
 					Function func =
@@ -1387,14 +1102,10 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 					functionDef.setReturnType(bar);
 					functionDef.setCategoryPath(new CategoryPath("/MISC"));
 					dtm.addDataType(functionDef, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail("Modifying private program failed: " + e);
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -1414,42 +1125,24 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
-
-				try {
-					fd.setReturnType(bar);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				fd.setReturnType(bar);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
-
-				int transactionID = program.startTransaction("test");
-				try {
-					vars[0].setDataType(foo);
-					vars[0].setComment("this is a comment");
-					Pointer p = PointerDataType.getPointer(foo, 4);
-					vars[1].setDataType(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				vars[0].setDataType(foo);
+				vars[0].setComment("this is a comment");
+				Pointer p = PointerDataType.getPointer(foo, 4);
+				vars[1].setDataType(p);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -1475,44 +1168,26 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
-
-				try {
-					fd.setReturnType(bar);
-					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-					dtm.remove(foo, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				fd.setReturnType(bar);
+				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+				dtm.remove(foo, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
-
-				int transactionID = program.startTransaction("test");
-				try {
-					vars[0].setDataType(foo);
-					vars[0].setComment("this is a comment");
-					Pointer p = PointerDataType.getPointer(foo, 4);
-					vars[1].setDataType(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				vars[0].setDataType(foo);
+				vars[0].setComment("this is a comment");
+				Pointer p = PointerDataType.getPointer(foo, 4);
+				vars[1].setDataType(p);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -1537,44 +1212,26 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
-
-				try {
-					fd.setVarArgs(true);
-					fd.setNoReturn(true);
-					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-					dtm.remove(foo, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				fd.setVarArgs(true);
+				fd.setNoReturn(true);
+				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+				dtm.remove(foo, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
-
-				int transactionID = program.startTransaction("test");
-				try {
-					vars[0].setDataType(foo);
-					vars[0].setComment("this is a comment");
-					Pointer p = PointerDataType.getPointer(foo, 4);
-					vars[1].setDataType(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				vars[0].setDataType(foo);
+				vars[0].setComment("this is a comment");
+				Pointer p = PointerDataType.getPointer(foo, 4);
+				vars[1].setDataType(p);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -1601,44 +1258,26 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
-
-				try {
-					fd.setVarArgs(true);
-					fd.setNoReturn(true);
-					Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
-					dtm.remove(foo, TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				fd.setVarArgs(true);
+				fd.setNoReturn(true);
+				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
+				dtm.remove(foo, TaskMonitor.DUMMY);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Structure foo = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
-
-				int transactionID = program.startTransaction("test");
-				try {
-					vars[0].setDataType(foo);
-					vars[0].setComment("this is a comment");
-					Pointer p = PointerDataType.getPointer(foo, 4);
-					vars[1].setDataType(p);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				vars[0].setDataType(foo);
+				vars[0].setComment("this is a comment");
+				Pointer p = PointerDataType.getPointer(foo, 4);
+				vars[1].setDataType(p);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_LATEST);
@@ -1668,46 +1307,28 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
-
-				try {
-					fd.setReturnType(VoidDataType.dataType);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				
+				fd.setReturnType(VoidDataType.dataType);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 
 				FunctionDefinition fd = (FunctionDefinition) dtm
 						.getDataType(new CategoryPath("/MISC"), "MyFunctionDef");
 				ParameterDefinition[] vars = fd.getArguments();
-
-				int transactionID = program.startTransaction("test");
-				try {
-					ParameterDefinition[] newVars = new ParameterDefinition[vars.length + 1];
-					System.arraycopy(vars, 0, newVars, 0, vars.length);
-					newVars[vars.length] = new ParameterDefinitionImpl("Bar", WordDataType.dataType,
-						"this is another comment");
-					fd.setArguments(newVars);
-					fd.setVarArgs(true);
-					fd.setNoReturn(true);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				ParameterDefinition[] newVars = new ParameterDefinition[vars.length + 1];
+				System.arraycopy(vars, 0, newVars, 0, vars.length);
+				newVars[vars.length] = new ParameterDefinitionImpl("Bar", WordDataType.dataType,
+					"this is another comment");
+				fd.setArguments(newVars);
+				fd.setVarArgs(true);
+				fd.setNoReturn(true);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -1741,44 +1362,28 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
-				try {
-					FunctionDefinition fd =
-						new FunctionDefinitionDataType(new CategoryPath("/MISC"), "printf");
-					fd.setReturnType(new WordDataType());
-					fd.setArguments(
-						new ParameterDefinition[] { new ParameterDefinitionImpl("format",
-							new Pointer32DataType(new StringDataType()), null) });
-					fd.setVarArgs(false);
-					dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				FunctionDefinition fd =
+					new FunctionDefinitionDataType(new CategoryPath("/MISC"), "printf");
+				fd.setReturnType(new WordDataType());
+				fd.setArguments(
+					new ParameterDefinition[] { new ParameterDefinitionImpl("format",
+						new Pointer32DataType(new StringDataType()), null) });
+				fd.setVarArgs(false);
+				dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
-				try {
-					FunctionDefinition fd =
-						new FunctionDefinitionDataType(new CategoryPath("/MISC"), "printf");
-					fd.setReturnType(new WordDataType());
-					fd.setArguments(
-						new ParameterDefinition[] { new ParameterDefinitionImpl("format",
-							new Pointer32DataType(new StringDataType()), null) });
-					fd.setVarArgs(true);
-					dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				FunctionDefinition fd =
+					new FunctionDefinitionDataType(new CategoryPath("/MISC"), "printf");
+				fd.setReturnType(new WordDataType());
+				fd.setArguments(
+					new ParameterDefinition[] { new ParameterDefinitionImpl("format",
+						new Pointer32DataType(new StringDataType()), null) });
+				fd.setVarArgs(true);
+				dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);
@@ -1814,44 +1419,28 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
-				try {
-					FunctionDefinition fd =
-						new FunctionDefinitionDataType(new CategoryPath("/MISC"), "exit");
-					fd.setReturnType(VoidDataType.dataType);
-					fd.setNoReturn(false);
-					fd.setArguments(
-						new ParameterDefinition[] { new ParameterDefinitionImpl("rc",
-							IntegerDataType.dataType, null) });
-					dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				FunctionDefinition fd =
+					new FunctionDefinitionDataType(new CategoryPath("/MISC"), "exit");
+				fd.setReturnType(VoidDataType.dataType);
+				fd.setNoReturn(false);
+				fd.setArguments(
+					new ParameterDefinition[] { new ParameterDefinitionImpl("rc",
+						IntegerDataType.dataType, null) });
+				dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
-				try {
-					FunctionDefinition fd =
-						new FunctionDefinitionDataType(new CategoryPath("/MISC"), "exit");
-					fd.setReturnType(VoidDataType.dataType);
-					fd.setNoReturn(true);
-					fd.setArguments(
-						new ParameterDefinition[] { new ParameterDefinitionImpl("rc",
-							IntegerDataType.dataType, null) });
-					dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				FunctionDefinition fd =
+					new FunctionDefinitionDataType(new CategoryPath("/MISC"), "exit");
+				fd.setReturnType(VoidDataType.dataType);
+				fd.setNoReturn(true);
+				fd.setArguments(
+					new ParameterDefinition[] { new ParameterDefinitionImpl("rc",
+						IntegerDataType.dataType, null) });
+				dtm.addDataType(fd, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 		});
 		executeMerge(DataTypeMergeManager.OPTION_MY);

@@ -85,56 +85,34 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-					refs = refMgr.getReferencesFrom(addr(program, "010018a6"), 0); // Remove ref only here
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Remove different refs
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove same refs
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+				refs = refMgr.getReferencesFrom(addr(program, "010018a6"), 0); // Remove ref only here
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Remove different refs
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove same refs
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-					refs = refMgr.getReferencesFrom(addr(program, "0100295a"), 1); // Remove ref only here
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 0); // Remove different refs
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove same refs
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+				refs = refMgr.getReferencesFrom(addr(program, "0100295a"), 1); // Remove ref only here
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 0); // Remove different refs
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove same refs
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 			}
 		});
 
@@ -168,76 +146,52 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.addStackReference(addr(program, "0x10018a6"), 0, -0x4, RefType.WRITE,
-						SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.addStackReference(addr(program, "0x10018a6"), 0, -0x4, RefType.WRITE,
+					SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.addStackReference(addr(program, "0x1002d0b"), 1, -0x8, RefType.DATA,
-						SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.addStackReference(addr(program, "0x1002d0b"), 1, -0x8, RefType.DATA,
+					SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.addStackReference(addr(program, "0x100295a"), 1, -0x8, RefType.READ,
-						SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.addStackReference(addr(program, "0x100295a"), 1, -0x8, RefType.READ,
+					SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.addStackReference(addr(program, "0x10033fe"), 0, -0xc, RefType.DATA,
-						SourceType.DEFAULT);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.addStackReference(addr(program, "0x10033fe"), 0, -0xc, RefType.DATA,
+					SourceType.DEFAULT);
 			}
 		});
 
@@ -277,72 +231,48 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.READ);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.READ);
 			}
 		});
 
@@ -397,64 +327,40 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register eaxReg = context.getRegister("EAX");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register eaxReg = context.getRegister("EAX");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x1002d0b"), 1, eaxReg,
-						RefType.DATA, SourceType.DEFAULT);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x1002d0b"), 1, eaxReg,
+					RefType.DATA, SourceType.DEFAULT);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register eaxReg = context.getRegister("EAX");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register eaxReg = context.getRegister("EAX");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Change Ref register
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x100295a"), 1, eaxReg,
-						RefType.DATA, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Change Ref register
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x100295a"), 1, eaxReg,
+					RefType.DATA, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Change Ref Type
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.READ);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Change Ref Type
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.READ);
 			}
 		});
 
@@ -514,86 +420,62 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register eaxReg = context.getRegister("EAX");
-					Register ecxReg = context.getRegister("ECX");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register eaxReg = context.getRegister("EAX");
+				Register ecxReg = context.getRegister("ECX");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x1002d0b"), 1, eaxReg,
-						RefType.DATA, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x1002d0b"), 1, eaxReg,
+					RefType.DATA, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x100295a"), 1, ecxReg,
-						RefType.DATA, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x100295a"), 1, ecxReg,
+					RefType.DATA, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.READ);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.READ);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register eaxReg = context.getRegister("EAX");
-					Register ecxReg = context.getRegister("ECX");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register eaxReg = context.getRegister("EAX");
+				Register ecxReg = context.getRegister("ECX");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x1002d0b"), 1, eaxReg,
-						RefType.DATA, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1); // Change ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x1002d0b"), 1, eaxReg,
+					RefType.DATA, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x100295a"), 1, ecxReg,
-						RefType.DATA, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x100295a"), 1, ecxReg,
+					RefType.DATA, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove ref
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.READ);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0); // Remove ref
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.READ);
 			}
 		});
 
@@ -654,86 +536,62 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register eaxReg = context.getRegister("EAX");
-					Register ediReg = context.getRegister("EDI");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register eaxReg = context.getRegister("EAX");
+				Register ediReg = context.getRegister("EDI");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0);
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0);
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1);
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1);
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x1002d0b"), 1, eaxReg,
-						RefType.DATA, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x1002d0b"), 1, eaxReg,
+					RefType.DATA, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x10033fe"), 0, ediReg,
-						RefType.DATA, SourceType.DEFAULT);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x10033fe"), 0, ediReg,
+					RefType.DATA, SourceType.DEFAULT);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register ecxReg = context.getRegister("ECX");
-					Register esiReg = context.getRegister("ESI");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register ecxReg = context.getRegister("ECX");
+				Register esiReg = context.getRegister("ESI");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x10018a6"), 0, esiReg,
-						RefType.WRITE, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x10018a6"), 0, esiReg,
+					RefType.WRITE, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x100295a"), 1, ecxReg,
-						RefType.WRITE, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x100295a"), 1);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x100295a"), 1, ecxReg,
+					RefType.WRITE, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1);
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.WRITE);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d0b"), 1);
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.WRITE);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0);
-					assertEquals(1, refs.length);
-					refMgr.updateRefType(refs[0], RefType.READ);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x10033fe"), 0);
+				assertEquals(1, refs.length);
+				refMgr.updateRefType(refs[0], RefType.READ);
 			}
 		});
 
@@ -808,69 +666,45 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register ebpReg = context.getRegister("EBP");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register ebpReg = context.getRegister("EBP");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					// Change stack ref to reg ref
-					// 01001af5: op0 to stack offset -0x24a
-					refs = refMgr.getReferencesFrom(addr(program, "0x1001af5"), 0);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x1001af5"), 0, ebpReg,
-						RefType.DATA, SourceType.IMPORTED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Change stack ref to reg ref
+				// 01001af5: op0 to stack offset -0x24a
+				refs = refMgr.getReferencesFrom(addr(program, "0x1001af5"), 0);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x1001af5"), 0, ebpReg,
+					RefType.DATA, SourceType.IMPORTED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register ebpReg = context.getRegister("EBP");
-					Register axReg = context.getRegister("AX");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register ebpReg = context.getRegister("EBP");
+				Register axReg = context.getRegister("AX");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					// Change stack ref to reg ref
-					// 01001b03: op1 to stack offset -0x24c
-					refs = refMgr.getReferencesFrom(addr(program, "0x1001b03"), 1);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x1001b03"), 1, ebpReg,
-						RefType.DATA, SourceType.IMPORTED);
+				// Change stack ref to reg ref
+				// 01001b03: op1 to stack offset -0x24c
+				refs = refMgr.getReferencesFrom(addr(program, "0x1001b03"), 1);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x1001b03"), 1, ebpReg,
+					RefType.DATA, SourceType.IMPORTED);
 
-					// Change mem ref to a reg ref
-					// 01001aec: op1 to 01001398 AddrTable010080c0Element36 DATA primary
-					refs = refMgr.getReferencesFrom(addr(program, "0x1001aec"), 1);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addRegisterReference(addr(program, "0x1001aec"), 1, axReg, RefType.DATA,
-						SourceType.ANALYSIS);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Change mem ref to a reg ref
+				// 01001aec: op1 to 01001398 AddrTable010080c0Element36 DATA primary
+				refs = refMgr.getReferencesFrom(addr(program, "0x1001aec"), 1);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addRegisterReference(addr(program, "0x1001aec"), 1, axReg, RefType.DATA,
+					SourceType.ANALYSIS);
 			}
 		});
 
@@ -916,62 +750,38 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					// Change reg ref to mem ref
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					refMgr.addMemoryReference(addr(program, "0x10018a6"),
-						addr(program, "0x10018ae"), RefType.COMPUTED_JUMP, SourceType.DEFAULT, 0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Change reg ref to mem ref
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
+				refMgr.addMemoryReference(addr(program, "0x10018a6"),
+					addr(program, "0x10018ae"), RefType.COMPUTED_JUMP, SourceType.DEFAULT, 0);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+
+				// Change reg ref to mem ref
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0);
+				assertEquals(1, refs.length);
+				refMgr.delete(refs[0]);
 				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-
-					// Change reg ref to mem ref
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018a6"), 0);
-					assertEquals(1, refs.length);
-					refMgr.delete(refs[0]);
-					try {
-						refMgr.addExternalReference(addr(program, "0x10018a6"), "USER32.DLL",
-							"printf", addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
-							RefType.DATA);
-					}
-					catch (DuplicateNameException e) {
-						Assert.fail(e.getMessage());
-					}
-					catch (InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-
-					commit = true;
+					refMgr.addExternalReference(addr(program, "0x10018a6"), "USER32.DLL",
+						"printf", addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
+						RefType.DATA);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					Assert.fail(e.getMessage());
+				}
+				catch (InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -1003,75 +813,52 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register esiReg = context.getRegister("ESI");
-					Register eaxReg = context.getRegister("EAX");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register esiReg = context.getRegister("ESI");
+				Register eaxReg = context.getRegister("EAX");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x10018cd"), 0, esiReg,
-						RefType.READ, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x10018cd"), 0, esiReg,
+					RefType.READ, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
-						RefType.READ, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
+					RefType.READ, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addStackReference(addr(program, "0x1003409"), 0, -0x4, RefType.READ,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addStackReference(addr(program, "0x1003409"), 0, -0x4, RefType.READ,
+					SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register cxReg = context.getRegister("CX");
-					Register eaxReg = context.getRegister("EAX");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register cxReg = context.getRegister("CX");
+				Register eaxReg = context.getRegister("EAX");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1002965"), 0, cxReg,
-						RefType.WRITE, SourceType.USER_DEFINED);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1002965"), 0, cxReg,
+					RefType.WRITE, SourceType.USER_DEFINED);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
-						RefType.READ, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
+					RefType.READ, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1003404"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addStackReference(addr(program, "0x1003404"), 0, -0x4, RefType.WRITE,
-						SourceType.USER_DEFINED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x1003404"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addStackReference(addr(program, "0x1003404"), 0, -0x4, RefType.WRITE,
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1123,90 +910,66 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register esiReg = context.getRegister("ESI");
-					Register cxReg = context.getRegister("CX");
-					Register eaxReg = context.getRegister("EAX");
-					Register ediReg = context.getRegister("EDI");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register esiReg = context.getRegister("ESI");
+				Register cxReg = context.getRegister("CX");
+				Register eaxReg = context.getRegister("EAX");
+				Register ediReg = context.getRegister("EDI");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x10018cd"), 0, esiReg,
-						RefType.READ, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x10018cd"), 0, esiReg,
+					RefType.READ, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1002965"), 0, cxReg, RefType.READ,
-						SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1002965"), 0, cxReg, RefType.READ,
+					SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
-						RefType.READ, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
+					RefType.READ, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1003409"), 0, ediReg,
-						RefType.READ, SourceType.DEFAULT);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1003409"), 0, ediReg,
+					RefType.READ, SourceType.DEFAULT);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register esiReg = context.getRegister("ESI");
-					Register cxReg = context.getRegister("CX");
-					Register eaxReg = context.getRegister("EAX");
-					Register ediReg = context.getRegister("EDI");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
+				ProgramContext context = program.getProgramContext();
+				Register esiReg = context.getRegister("ESI");
+				Register cxReg = context.getRegister("CX");
+				Register eaxReg = context.getRegister("EAX");
+				Register ediReg = context.getRegister("EDI");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x10018cd"), 0, esiReg,
-						RefType.WRITE, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x10018cd"), 0, esiReg,
+					RefType.WRITE, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1002965"), 0, cxReg,
-						RefType.WRITE, SourceType.DEFAULT);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1002965"), 0, cxReg,
+					RefType.WRITE, SourceType.DEFAULT);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
-						RefType.DATA, SourceType.USER_DEFINED);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
+					RefType.DATA, SourceType.USER_DEFINED);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
-					assertEquals(0, refs.length);
-					refMgr.addRegisterReference(addr(program, "0x1003409"), 0, ediReg,
-						RefType.DATA, SourceType.USER_DEFINED);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
+				assertEquals(0, refs.length);
+				refMgr.addRegisterReference(addr(program, "0x1003409"), 0, ediReg,
+					RefType.DATA, SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1256,107 +1019,83 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 
 		mtf.initialize("NotepadMergeListingTest_X86", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register esiReg = context.getRegister("ESI");
-					Register cxReg = context.getRegister("CX");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-					Reference newRef;
+				ProgramContext context = program.getProgramContext();
+				Register esiReg = context.getRegister("ESI");
+				Register cxReg = context.getRegister("CX");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+				Reference newRef;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
-					assertEquals(0, refs.length);
-					newRef =
-						refMgr.addRegisterReference(addr(program, "0x10018cd"), 0, esiReg,
-							RefType.READ, SourceType.DEFAULT);
-					assertNotNull(newRef);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
+				assertEquals(0, refs.length);
+				newRef =
+					refMgr.addRegisterReference(addr(program, "0x10018cd"), 0, esiReg,
+						RefType.READ, SourceType.DEFAULT);
+				assertNotNull(newRef);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
-					assertEquals(0, refs.length);
-					newRef =
-						refMgr.addRegisterReference(addr(program, "0x1002965"), 0, cxReg,
-							RefType.READ, SourceType.DEFAULT);
-					assertNotNull(newRef);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
+				assertEquals(0, refs.length);
+				newRef =
+					refMgr.addRegisterReference(addr(program, "0x1002965"), 0, cxReg,
+						RefType.READ, SourceType.DEFAULT);
+				assertNotNull(newRef);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
-					assertEquals(0, refs.length);
-					newRef =
-						refMgr.addStackReference(addr(program, "0x1002d18"), 1, -0x8, RefType.READ,
-							SourceType.DEFAULT);
-					assertNotNull(newRef);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
+				assertEquals(0, refs.length);
+				newRef =
+					refMgr.addStackReference(addr(program, "0x1002d18"), 1, -0x8, RefType.READ,
+						SourceType.DEFAULT);
+				assertNotNull(newRef);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
-					assertEquals(0, refs.length);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
+				assertEquals(0, refs.length);
 //					newRef = refMgr.addStackReference(addr(program, "0x1003409"), 0, -0x8, RefType.READ, false);
-					newRef =
-						refMgr.addMemoryReference(addr(program, "0x1003409"),
-							addr(program, "0x1001000"), RefType.READ, SourceType.DEFAULT, 0);
-					assertNotNull(newRef);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				newRef =
+					refMgr.addMemoryReference(addr(program, "0x1003409"),
+						addr(program, "0x1001000"), RefType.READ, SourceType.DEFAULT, 0);
+				assertNotNull(newRef);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ProgramContext context = program.getProgramContext();
-					Register eaxReg = context.getRegister("EAX");
-					Register ediReg = context.getRegister("EDI");
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-					Reference newRef;
+				ProgramContext context = program.getProgramContext();
+				Register eaxReg = context.getRegister("EAX");
+				Register ediReg = context.getRegister("EDI");
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+				Reference newRef;
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
-					assertEquals(0, refs.length);
-					newRef =
-						refMgr.addStackReference(addr(program, "0x10018cd"), 0, -0x8, RefType.READ,
-							SourceType.DEFAULT);
-					assertNotNull(newRef);
+				refs = refMgr.getReferencesFrom(addr(program, "0x10018cd"), 0);
+				assertEquals(0, refs.length);
+				newRef =
+					refMgr.addStackReference(addr(program, "0x10018cd"), 0, -0x8, RefType.READ,
+						SourceType.DEFAULT);
+				assertNotNull(newRef);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
-					assertEquals(0, refs.length);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002965"), 0);
+				assertEquals(0, refs.length);
 //					newRef = refMgr.addStackReference(addr(program, "0x1002965"), 0, -0x8, RefType.READ, false);
-					newRef =
-						refMgr.addMemoryReference(addr(program, "0x1002965"),
-							addr(program, "0x10018cf"), RefType.CONDITIONAL_JUMP,
-							SourceType.DEFAULT, 0);
-					assertNotNull(newRef);
+				newRef =
+					refMgr.addMemoryReference(addr(program, "0x1002965"),
+						addr(program, "0x10018cf"), RefType.CONDITIONAL_JUMP,
+						SourceType.DEFAULT, 0);
+				assertNotNull(newRef);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
-					assertEquals(0, refs.length);
-					newRef =
-						refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
-							RefType.READ, SourceType.USER_DEFINED);
-					assertNotNull(newRef);
+				refs = refMgr.getReferencesFrom(addr(program, "0x1002d18"), 1);
+				assertEquals(0, refs.length);
+				newRef =
+					refMgr.addRegisterReference(addr(program, "0x1002d18"), 1, eaxReg,
+						RefType.READ, SourceType.USER_DEFINED);
+				assertNotNull(newRef);
 
-					refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
-					assertEquals(0, refs.length);
-					newRef =
-						refMgr.addRegisterReference(addr(program, "0x1003409"), 0, ediReg,
-							RefType.READ, SourceType.USER_DEFINED);
-					assertNotNull(newRef);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refs = refMgr.getReferencesFrom(addr(program, "0x1003409"), 0);
+				assertEquals(0, refs.length);
+				newRef =
+					refMgr.addRegisterReference(addr(program, "0x1003409"), 0, ediReg,
+						RefType.READ, SourceType.USER_DEFINED);
+				assertNotNull(newRef);
 			}
 		});
 

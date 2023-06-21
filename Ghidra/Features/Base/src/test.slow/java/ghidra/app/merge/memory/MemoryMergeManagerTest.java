@@ -38,42 +38,26 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testNameConflict() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("LatestText");
-					commit = true;
 				}
 				catch (LockException e) {
 					Assert.fail();
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("MY_Text");
 				}
 				catch (LockException e) {
 					Assert.fail();
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -89,42 +73,26 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testNameConflict2() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("LatestText");
-					commit = true;
 				}
 				catch (LockException e) {
 					Assert.fail();
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("MY_Text");
 				}
 				catch (LockException e) {
 					Assert.fail();
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -139,42 +107,26 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testNameConflict3() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("LatestText");
-					commit = true;
 				}
 				catch (LockException e) {
 					Assert.fail();
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("MY_Text");
 				}
 				catch (LockException e) {
 					Assert.fail();
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -192,53 +144,25 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setRead(true);
-					blocks[0].setExecute(true);
-					blocks[0].setWrite(false);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				blocks[0].setRead(true);
+				blocks[0].setExecute(true);
+				blocks[0].setWrite(false);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setWrite(false);
-					blocks[0].setExecute(false);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				blocks[0].setWrite(false);
+				blocks[0].setExecute(false);
 
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setWrite(true);
-					blocks[0].setExecute(true);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				blocks[0].setWrite(true);
+				blocks[0].setExecute(true);
 			}
 		});
 		merge();
@@ -255,53 +179,24 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setRead(true);
-					blocks[0].setExecute(true);
-					blocks[0].setWrite(false);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				blocks[0].setRead(true);
+				blocks[0].setExecute(true);
+				blocks[0].setWrite(false);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setWrite(false);
-					blocks[0].setExecute(false);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
+				blocks[0].setWrite(false);
+				blocks[0].setExecute(false);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setWrite(true);
-					blocks[0].setExecute(true);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				blocks[0].setWrite(true);
+				blocks[0].setExecute(true);
 			}
 		});
 		merge();
@@ -315,45 +210,30 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testMultipleConflicts() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
+				blocks[0].setComment("this is a comment for .text");
+				blocks[2].setComment("this is a comment for .rsrc");
+				blocks[4].setRead(false);
+				blocks[4].setWrite(false);
+				blocks[4].setExecute(false);
+				
 				try {
-					blocks[0].setComment("this is a comment for .text");
-					blocks[2].setComment("this is a comment for .rsrc");
-					blocks[4].setRead(false);
-					blocks[4].setWrite(false);
-					blocks[4].setExecute(false);
-
-					try {
-						blocks[4].setName("special-debug");
-					}
-					catch (LockException e) {
-						Assert.fail();
-					}
-
-//					Address baseAddr = program.getMinAddress().getNewAddress(0x03002000L);
-//					program.setImageBase(baseAddr, true);
-					commit = true;
+					blocks[4].setName("special-debug");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
+				catch (LockException e) {
+					Assert.fail();
 				}
 
+//				Address baseAddr = program.getMinAddress().getNewAddress(0x03002000L);
+//				program.setImageBase(baseAddr, true);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 //				Address baseAddr = program.getMinAddress().getNewAddress(0x2000L);
 				try {
 //					program.setImageBase(baseAddr, true);
@@ -366,9 +246,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 				}
 				catch (LockException e) {
 					Assert.fail();
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -397,27 +274,16 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testCommentNoConflict() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// nothing to do
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment(null);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				blocks[0].setComment(null);
 			}
 		});
 		merge();
@@ -430,38 +296,19 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testNullCommentConflict() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment("this is a comment for .text");
-					blocks[2].setComment("this is a comment for .rsrc");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				blocks[0].setComment("this is a comment for .text");
+				blocks[2].setComment("this is a comment for .rsrc");
 
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment(null);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				blocks[0].setComment(null);
 			}
 		});
 		merge();
@@ -475,39 +322,19 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testCommentConflict() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment("this is a comment for .text");
-					blocks[2].setComment("this is a comment for .rsrc");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
+				blocks[0].setComment("this is a comment for .text");
+				blocks[2].setComment("this is a comment for .rsrc");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment("MY comments for .text are better");
-					blocks[2].setComment("this is a comment for .rsrc");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				blocks[0].setComment("MY comments for .text are better");
+				blocks[2].setComment("this is a comment for .rsrc");
 			}
 		});
 		merge();
@@ -521,39 +348,20 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testCommentConflict2() throws Exception {
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment("this is a comment for .text");
-					blocks[2].setComment("this is a comment for .rsrc");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				blocks[0].setComment("this is a comment for .text");
+				blocks[2].setComment("this is a comment for .rsrc");
 
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment("MY comments for .text are better");
-					blocks[2].setComment("this is a comment for .rsrc");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				blocks[0].setComment("MY comments for .text are better");
+				blocks[2].setComment("this is a comment for .rsrc");
 			}
 		});
 		merge();
@@ -567,39 +375,20 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 	@Test
 	public void testCommentConflict3() throws Exception {
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment("this is a comment for .text");
-					blocks[2].setComment("this is a comment for .rsrc");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				blocks[0].setComment("this is a comment for .text");
+				blocks[2].setComment("this is a comment for .rsrc");
 
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
-				try {
-					blocks[0].setComment("MY comments for .text are better");
-					blocks[2].setComment("my comments");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				blocks[0].setComment("MY comments for .text are better");
+				blocks[2].setComment("my comments");
 			}
 		});
 		merge();
@@ -678,36 +467,23 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 
 	private void setupUseForAllConflicts() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("LatestText");
 					blocks[1].setName("LatestData");
 					blocks[2].setComment("LatestResource");
-					commit = true;
 				}
 				catch (LockException e) {
 					Assert.fail();
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("test");
 				try {
 					blocks[0].setName("My_Text");
 					blocks[1].setName("My_Data");
@@ -715,9 +491,6 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 				}
 				catch (LockException e) {
 					Assert.fail();
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
