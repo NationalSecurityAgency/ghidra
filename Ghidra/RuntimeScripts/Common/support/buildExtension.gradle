@@ -310,7 +310,7 @@ tasks.register('indexHelp', JavaExec) {
 	File helpRootDir = file('src/main/help/help')		
 	File outputFile = file("build/help/main/help/${project.name}_JavaHelpSearch")	
 
-	inputs.dir helpRootDir
+	inputs.dir helpRootDir skipWhenEmpty()
 	outputs.dir outputFile
 	
 	classpath = sourceSets.main.runtimeClasspath
@@ -363,13 +363,21 @@ tasks.register('buildHelp', JavaExec) {
 	File helpRootDir = file('src/main/help/help')	
 	File outputDir = file('build/help/main/help')
 
-	inputs.dir helpRootDir
+	onlyIf {
+		helpRootDir.exists()
+	}
+
+	if (helpRootDir.exists()) {
+		inputs.dir helpRootDir
 	
-	inputs.files({
-		// Note: this must be done lazily in a closure since the classpath is not ready at 
-		// configuration time.
-		return getHelpInputs(sourceSets.main.runtimeClasspath.files)
-	})
+		inputs.files({
+			// Note: this must be done lazily in a closure since the classpath is not ready at 
+			// configuration time.
+			return getHelpInputs(sourceSets.main.runtimeClasspath.files)
+		})	
+	}
+
+
 
 	outputs.dir outputDir
 
