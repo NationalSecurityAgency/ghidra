@@ -475,7 +475,7 @@ define token instrArm (32)
 	thv_Rt=(12,15)
 	thv_Rn=(16,19)
 	thv_Rm=(0,3)
-        thv_Rt2=(8,11)
+    thv_Rt2=(8,11)
 	thv_immed=(0,7)
 	    
     # Arbitrary bit fields for 32-bit Big Endian Thumb
