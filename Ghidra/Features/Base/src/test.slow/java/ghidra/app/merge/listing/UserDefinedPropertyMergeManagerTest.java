@@ -71,43 +71,27 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						VoidPropertyMap vpm = pmm.createVoidPropertyMap("testVoidProp");
-						vpm.add(addr(program, "0x1002472"));
-						vpm.add(addr(program, "0x100248c"));
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					VoidPropertyMap vpm = pmm.createVoidPropertyMap("testVoidProp");
+					vpm.add(addr(program, "0x1002472"));
+					vpm.add(addr(program, "0x100248c"));
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						VoidPropertyMap vpm = pmm.createVoidPropertyMap("testVoidProp");
-						vpm.add(addr(program, "0x1002481"));
-						vpm.add(addr(program, "0x100248c"));
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					VoidPropertyMap vpm = pmm.createVoidPropertyMap("testVoidProp");
+					vpm.add(addr(program, "0x1002481"));
+					vpm.add(addr(program, "0x100248c"));
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 		});
@@ -146,38 +130,22 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.add(addr(program, "0x1002472"), 1);
-					pm.add(addr(program, "0x1002488"), 3);
-					pm.add(addr(program, "0x100248a"), 3);
-					pm.add(addr(program, "0x100248c"), 3);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.add(addr(program, "0x1002472"), 1);
+				pm.add(addr(program, "0x1002488"), 3);
+				pm.add(addr(program, "0x100248a"), 3);
+				pm.add(addr(program, "0x100248c"), 3);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.add(addr(program, "0x1002481"), 2);
-					pm.add(addr(program, "0x1002488"), 2);
-					pm.add(addr(program, "0x100248a"), 2);
-					pm.add(addr(program, "0x100248c"), 2);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.add(addr(program, "0x1002481"), 2);
+				pm.add(addr(program, "0x1002488"), 2);
+				pm.add(addr(program, "0x100248a"), 2);
+				pm.add(addr(program, "0x100248c"), 2);
 			}
 		});
 
@@ -237,44 +205,28 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					assertNotNull(opm);
-					opm.add(addr(program, "0x1002400"), new SaveableColor(Color.GRAY));
-					opm.add(addr(program, "0x1002466"), new SaveableColor(Color.CYAN));
-					opm.add(addr(program, "0x1002472"), new SaveableColor(Color.BLACK));
-					opm.add(addr(program, "0x1002488"), new SaveableColor(Color.PINK));
-					opm.add(addr(program, "0x100248a"), new SaveableColor(Color.GREEN));
-					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.WHITE));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				assertNotNull(opm);
+				opm.add(addr(program, "0x1002400"), new SaveableColor(Color.GRAY));
+				opm.add(addr(program, "0x1002466"), new SaveableColor(Color.CYAN));
+				opm.add(addr(program, "0x1002472"), new SaveableColor(Color.BLACK));
+				opm.add(addr(program, "0x1002488"), new SaveableColor(Color.PINK));
+				opm.add(addr(program, "0x100248a"), new SaveableColor(Color.GREEN));
+				opm.add(addr(program, "0x100248c"), new SaveableColor(Color.WHITE));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					assertNotNull(opm);
-					opm.add(addr(program, "0x1002466"), new SaveableColor(Color.MAGENTA));
-					opm.add(addr(program, "0x1002481"), new SaveableColor(Color.RED));
-					opm.add(addr(program, "0x1002488"), new SaveableColor(Color.PINK));
-					opm.add(addr(program, "0x100248a"), new SaveableColor(Color.CYAN));
-					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.YELLOW));
-					opm.add(addr(program, "0x1002490"), new SaveableColor(Color.ORANGE));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				assertNotNull(opm);
+				opm.add(addr(program, "0x1002466"), new SaveableColor(Color.MAGENTA));
+				opm.add(addr(program, "0x1002481"), new SaveableColor(Color.RED));
+				opm.add(addr(program, "0x1002488"), new SaveableColor(Color.PINK));
+				opm.add(addr(program, "0x100248a"), new SaveableColor(Color.CYAN));
+				opm.add(addr(program, "0x100248c"), new SaveableColor(Color.YELLOW));
+				opm.add(addr(program, "0x1002490"), new SaveableColor(Color.ORANGE));
 			}
 		});
 
@@ -340,51 +292,35 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						StringPropertyMap spm = pmm.createStringPropertyMap("testString");
-						spm.add(addr(program, "0x1002400"), "Eleven");
-						spm.add(addr(program, "0x1002466"), "Six");
-						spm.add(addr(program, "0x1002472"), "Twelve");
-						spm.add(addr(program, "0x1002488"), "EightyEight");
-						spm.add(addr(program, "0x100248a"), "Fourteen");
-						spm.add(addr(program, "0x100248c"), "Fifteen");
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					StringPropertyMap spm = pmm.createStringPropertyMap("testString");
+					spm.add(addr(program, "0x1002400"), "Eleven");
+					spm.add(addr(program, "0x1002466"), "Six");
+					spm.add(addr(program, "0x1002472"), "Twelve");
+					spm.add(addr(program, "0x1002488"), "EightyEight");
+					spm.add(addr(program, "0x100248a"), "Fourteen");
+					spm.add(addr(program, "0x100248c"), "Fifteen");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						StringPropertyMap spm = pmm.createStringPropertyMap("testString");
-						spm.add(addr(program, "0x1002481"), "TwentyOne");
-						spm.add(addr(program, "0x1002466"), "SixtySix");
-						spm.add(addr(program, "0x1002488"), "EightyEight");
-						spm.add(addr(program, "0x100248a"), "TwentyThree");
-						spm.add(addr(program, "0x100248c"), "TwentyFour");
-						spm.add(addr(program, "0x1002490"), "TwentyFive");
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					StringPropertyMap spm = pmm.createStringPropertyMap("testString");
+					spm.add(addr(program, "0x1002481"), "TwentyOne");
+					spm.add(addr(program, "0x1002466"), "SixtySix");
+					spm.add(addr(program, "0x1002488"), "EightyEight");
+					spm.add(addr(program, "0x100248a"), "TwentyThree");
+					spm.add(addr(program, "0x100248c"), "TwentyFour");
+					spm.add(addr(program, "0x1002490"), "TwentyFive");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 		});
@@ -437,82 +373,58 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						StringPropertyMap spm = pmm.createStringPropertyMap("testString1");
-						spm.add(addr(program, "0x1002100"), "A");
-						spm.add(addr(program, "0x1002166"), "B");
+					StringPropertyMap spm = pmm.createStringPropertyMap("testString1");
+					spm.add(addr(program, "0x1002100"), "A");
+					spm.add(addr(program, "0x1002166"), "B");
 
-						spm = pmm.createStringPropertyMap("testString2");
-						spm.add(addr(program, "0x1002200"), "C");
-						spm.add(addr(program, "0x1002266"), "D");
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					spm = pmm.createStringPropertyMap("testString2");
+					spm.add(addr(program, "0x1002200"), "C");
+					spm.add(addr(program, "0x1002266"), "D");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						StringPropertyMap spm = pmm.createStringPropertyMap("testString3");
-						spm.add(addr(program, "0x1002381"), "E");
-						spm.add(addr(program, "0x1002366"), "F");
+					StringPropertyMap spm = pmm.createStringPropertyMap("testString3");
+					spm.add(addr(program, "0x1002381"), "E");
+					spm.add(addr(program, "0x1002366"), "F");
 
-						// Add to existing map removed in latest (conflict)
-						// NOTE: In the absence of property conflict handling this
-						// will cause testString1 properties removed in latest to be
-						// re-introduced into result
+					// Add to existing map removed in latest (conflict)
+					// NOTE: In the absence of property conflict handling this
+					// will cause testString1 properties removed in latest to be
+					// re-introduced into result
 
-						// TODO: improve property conflict handling
+					// TODO: improve property conflict handling
 
-						spm = pmm.getStringPropertyMap("testString1");
-						spm.add(addr(program, "0x1002500"), "G");
-						spm.add(addr(program, "0x1002566"), "H");
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					spm = pmm.getStringPropertyMap("testString1");
+					spm.add(addr(program, "0x1002500"), "G");
+					spm.add(addr(program, "0x1002566"), "H");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						StringPropertyMap spm = pmm.createStringPropertyMap("testString4");
-						spm.add(addr(program, "0x1002500"), "I");
-						spm.add(addr(program, "0x1002566"), "J");
+					StringPropertyMap spm = pmm.createStringPropertyMap("testString4");
+					spm.add(addr(program, "0x1002500"), "I");
+					spm.add(addr(program, "0x1002566"), "J");
 
-						pmm.removePropertyMap("testString1");
+					pmm.removePropertyMap("testString1");
 
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 
@@ -586,68 +498,44 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						StringPropertyMap pm = pmm.createStringPropertyMap("testMap");
-						pm.add(addr(program, "0x1002100"), "A");
-						pm.add(addr(program, "0x1002166"), "B");
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					StringPropertyMap pm = pmm.createStringPropertyMap("testMap");
+					pm.add(addr(program, "0x1002100"), "A");
+					pm.add(addr(program, "0x1002166"), "B");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						pmm.removePropertyMap("testMap");
+					pmm.removePropertyMap("testMap");
 
-						IntPropertyMap pm = pmm.createIntPropertyMap("testMap");
-						pm.add(addr(program, "0x1002100"), 1);
-						pm.add(addr(program, "0x1002166"), 2);
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					IntPropertyMap pm = pmm.createIntPropertyMap("testMap");
+					pm.add(addr(program, "0x1002100"), 1);
+					pm.add(addr(program, "0x1002166"), 2);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					try {
-						pmm.removePropertyMap("testMap");
+					pmm.removePropertyMap("testMap");
 
-						LongPropertyMap pm = pmm.createLongPropertyMap("testMap");
-						pm.add(addr(program, "0x1002100"), 1);
-						pm.add(addr(program, "0x1002166"), 2);
-					}
-					catch (DuplicateNameException e) {
-						e.printStackTrace();
-					}
-					commit = true;
+					LongPropertyMap pm = pmm.createLongPropertyMap("testMap");
+					pm.add(addr(program, "0x1002100"), 1);
+					pm.add(addr(program, "0x1002166"), 2);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					e.printStackTrace();
 				}
 			}
 
@@ -699,34 +587,18 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.remove(addr(program, "0x10018ba"));
-					pm.remove(addr(program, "0x1002428"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.remove(addr(program, "0x10018ba"));
+				pm.remove(addr(program, "0x1002428"));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.remove(addr(program, "0x10018ce"));
-					pm.remove(addr(program, "0x1002428"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.remove(addr(program, "0x10018ce"));
+				pm.remove(addr(program, "0x1002428"));
 			}
 		});
 
@@ -762,34 +634,18 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
-					pm.remove(addr(program, "0x100248c"));
-					pm.remove(addr(program, "0x10039f8"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
+				pm.remove(addr(program, "0x100248c"));
+				pm.remove(addr(program, "0x10039f8"));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
-					pm.remove(addr(program, "0x10039f1"));
-					pm.remove(addr(program, "0x10039f8"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
+				pm.remove(addr(program, "0x10039f1"));
+				pm.remove(addr(program, "0x10039f8"));
 			}
 		});
 
@@ -822,40 +678,24 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.remove(addr(program, "0x10018ba"));
-					pm.remove(addr(program, "0x10018ce"));
-					pm.remove(addr(program, "0x10018ff"));
-					pm.add(addr(program, "0x1002428"), 4);
-					pm.add(addr(program, "0x100248c"), 5);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.remove(addr(program, "0x10018ba"));
+				pm.remove(addr(program, "0x10018ce"));
+				pm.remove(addr(program, "0x10018ff"));
+				pm.add(addr(program, "0x1002428"), 4);
+				pm.add(addr(program, "0x100248c"), 5);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.add(addr(program, "0x10018ba"), 5);
-					pm.add(addr(program, "0x10018ce"), 1);
-					pm.add(addr(program, "0x10018ff"), 1);
-					pm.remove(addr(program, "0x1002428"));
-					pm.remove(addr(program, "0x100248c"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.add(addr(program, "0x10018ba"), 5);
+				pm.add(addr(program, "0x10018ce"), 1);
+				pm.add(addr(program, "0x10018ff"), 1);
+				pm.remove(addr(program, "0x1002428"));
+				pm.remove(addr(program, "0x100248c"));
 			}
 		});
 
@@ -899,38 +739,22 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
-					pm.remove(addr(program, "0x100248c"));
-					pm.remove(addr(program, "0x10039f1"));
-					pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
-					pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
+				pm.remove(addr(program, "0x100248c"));
+				pm.remove(addr(program, "0x10039f1"));
+				pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
+				pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
-					pm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
-					pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
-					pm.remove(addr(program, "0x10039f8"));
-					pm.remove(addr(program, "0x10039fe"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
+				pm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
+				pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
+				pm.remove(addr(program, "0x10039f8"));
+				pm.remove(addr(program, "0x10039fe"));
 			}
 		});
 
@@ -970,38 +794,22 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.add(addr(program, "0x10018ba"), 3);
-					pm.add(addr(program, "0x10018ff"), 1);
-					pm.add(addr(program, "0x1002428"), 4);
-					pm.add(addr(program, "0x100248c"), 5);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.add(addr(program, "0x10018ba"), 3);
+				pm.add(addr(program, "0x10018ff"), 1);
+				pm.add(addr(program, "0x1002428"), 4);
+				pm.add(addr(program, "0x100248c"), 5);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.add(addr(program, "0x10018ce"), 5);
-					pm.add(addr(program, "0x10018ff"), 1);
-					pm.add(addr(program, "0x1002428"), 3);
-					pm.add(addr(program, "0x100248c"), 6);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.add(addr(program, "0x10018ce"), 5);
+				pm.add(addr(program, "0x10018ff"), 1);
+				pm.add(addr(program, "0x1002428"), 3);
+				pm.add(addr(program, "0x100248c"), 6);
 			}
 		});
 
@@ -1048,36 +856,20 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
-					pm.add(addr(program, "0x100248c"), new SaveableColor(Color.BLUE));
-					pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.ORANGE));
-					pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
+				pm.add(addr(program, "0x100248c"), new SaveableColor(Color.BLUE));
+				pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.ORANGE));
+				pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
-					pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.RED));
-					pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.ORANGE));
-					pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.YELLOW));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
+				pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.RED));
+				pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.ORANGE));
+				pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.YELLOW));
 			}
 		});
 
@@ -1120,38 +912,22 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.remove(addr(program, "0x10018ba"));
-					pm.remove(addr(program, "0x10018ce"));
-					pm.add(addr(program, "0x1002428"), 4);
-					pm.add(addr(program, "0x100248c"), 5);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.remove(addr(program, "0x10018ba"));
+				pm.remove(addr(program, "0x10018ce"));
+				pm.add(addr(program, "0x1002428"), 4);
+				pm.add(addr(program, "0x100248c"), 5);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.add(addr(program, "0x10018ba"), 5);
-					pm.add(addr(program, "0x10018ce"), 1);
-					pm.remove(addr(program, "0x1002428"));
-					pm.remove(addr(program, "0x100248c"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.add(addr(program, "0x10018ba"), 5);
+				pm.add(addr(program, "0x10018ce"), 1);
+				pm.remove(addr(program, "0x1002428"));
+				pm.remove(addr(program, "0x100248c"));
 			}
 		});
 
@@ -1189,38 +965,22 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
-					pm.remove(addr(program, "0x100248c"));
-					pm.remove(addr(program, "0x10039f1"));
-					pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
-					pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
+				pm.remove(addr(program, "0x100248c"));
+				pm.remove(addr(program, "0x10039f1"));
+				pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
+				pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
-					pm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
-					pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
-					pm.remove(addr(program, "0x10039f8"));
-					pm.remove(addr(program, "0x10039fe"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
+				pm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
+				pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
+				pm.remove(addr(program, "0x10039f8"));
+				pm.remove(addr(program, "0x10039fe"));
 			}
 		});
 
@@ -1257,54 +1017,36 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 
-					IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
-					ipm.add(addr(program, "0x10018ba"), 3);
-					ipm.add(addr(program, "0x10018ff"), 1);
-					ipm.add(addr(program, "0x1002428"), 4);
-					ipm.add(addr(program, "0x100248c"), 5);
+				IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
+				ipm.add(addr(program, "0x10018ba"), 3);
+				ipm.add(addr(program, "0x10018ff"), 1);
+				ipm.add(addr(program, "0x1002428"), 4);
+				ipm.add(addr(program, "0x100248c"), 5);
 
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					opm.remove(addr(program, "0x100248c"));
-					opm.remove(addr(program, "0x10039f1"));
-					opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
-					opm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				opm.remove(addr(program, "0x100248c"));
+				opm.remove(addr(program, "0x10039f1"));
+				opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
+				opm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 
-					IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
-					ipm.add(addr(program, "0x10018ce"), 5);
-					ipm.add(addr(program, "0x10018ff"), 1);
-					ipm.add(addr(program, "0x1002428"), 3);
-					ipm.add(addr(program, "0x100248c"), 6);
+				IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
+				ipm.add(addr(program, "0x10018ce"), 5);
+				ipm.add(addr(program, "0x10018ff"), 1);
+				ipm.add(addr(program, "0x1002428"), 3);
+				ipm.add(addr(program, "0x100248c"), 6);
 
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
-					opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
-					opm.remove(addr(program, "0x10039f8"));
-					opm.remove(addr(program, "0x10039fe"));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
+				opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
+				opm.remove(addr(program, "0x10039f8"));
+				opm.remove(addr(program, "0x10039fe"));
 			}
 		});
 
@@ -1367,54 +1109,36 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 
-					IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
-					ipm.remove(addr(program, "0x10018ba"));
-					ipm.remove(addr(program, "0x10018ce"));
-					ipm.add(addr(program, "0x1002428"), 4);
-					ipm.add(addr(program, "0x100248c"), 5);
+				IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
+				ipm.remove(addr(program, "0x10018ba"));
+				ipm.remove(addr(program, "0x10018ce"));
+				ipm.add(addr(program, "0x1002428"), 4);
+				ipm.add(addr(program, "0x100248c"), 5);
 
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					opm.remove(addr(program, "0x100248c"));
-					opm.remove(addr(program, "0x10039f1"));
-					opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
-					opm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				opm.remove(addr(program, "0x100248c"));
+				opm.remove(addr(program, "0x10039f1"));
+				opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
+				opm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 
-					IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
-					ipm.add(addr(program, "0x10018ba"), 5);
-					ipm.add(addr(program, "0x10018ce"), 1);
-					ipm.remove(addr(program, "0x1002428"));
-					ipm.remove(addr(program, "0x100248c"));
+				IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
+				ipm.add(addr(program, "0x10018ba"), 5);
+				ipm.add(addr(program, "0x10018ce"), 1);
+				ipm.remove(addr(program, "0x1002428"));
+				ipm.remove(addr(program, "0x100248c"));
 
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
-					opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
-					opm.remove(addr(program, "0x10039f8"));
-					opm.remove(addr(program, "0x10039fe"));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
+				opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
+				opm.remove(addr(program, "0x10039f8"));
+				opm.remove(addr(program, "0x10039fe"));
 			}
 		});
 
@@ -1470,58 +1194,40 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 
-					IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
-					ipm.remove(addr(program, "0x10018ba"));
-					ipm.remove(addr(program, "0x10018ce"));
-					ipm.add(addr(program, "0x1002428"), 4);
-					ipm.add(addr(program, "0x100248c"), 5);
-					ipm.add(addr(program, "0x10061e0"), 2);
-					ipm.add(addr(program, "0x10018ea"), 1);
+				IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
+				ipm.remove(addr(program, "0x10018ba"));
+				ipm.remove(addr(program, "0x10018ce"));
+				ipm.add(addr(program, "0x1002428"), 4);
+				ipm.add(addr(program, "0x100248c"), 5);
+				ipm.add(addr(program, "0x10061e0"), 2);
+				ipm.add(addr(program, "0x10018ea"), 1);
 
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					opm.remove(addr(program, "0x100248c"));
-					opm.remove(addr(program, "0x10039f1"));
-					opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
-					opm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				opm.remove(addr(program, "0x100248c"));
+				opm.remove(addr(program, "0x10039f1"));
+				opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
+				opm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 
-					IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
-					ipm.add(addr(program, "0x10018ba"), 5);
-					ipm.add(addr(program, "0x10018ce"), 1);
-					ipm.remove(addr(program, "0x1002428"));
-					ipm.remove(addr(program, "0x100248c"));
-					ipm.add(addr(program, "0x10061e0"), 3);
-					ipm.add(addr(program, "0x10018ea"), 4);
+				IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
+				ipm.add(addr(program, "0x10018ba"), 5);
+				ipm.add(addr(program, "0x10018ce"), 1);
+				ipm.remove(addr(program, "0x1002428"));
+				ipm.remove(addr(program, "0x100248c"));
+				ipm.add(addr(program, "0x10061e0"), 3);
+				ipm.add(addr(program, "0x10018ea"), 4);
 
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
-					opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
-					opm.remove(addr(program, "0x10039f8"));
-					opm.remove(addr(program, "0x10039fe"));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
+				opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
+				opm.remove(addr(program, "0x10039f8"));
+				opm.remove(addr(program, "0x10039fe"));
 			}
 		});
 
@@ -1580,58 +1286,40 @@ public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeMan
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 
-					IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
-					ipm.remove(addr(program, "0x10018ba"));
-					ipm.remove(addr(program, "0x10018ce"));
-					ipm.add(addr(program, "0x1002428"), 4);
-					ipm.add(addr(program, "0x100248c"), 5);
-					ipm.add(addr(program, "0x10061e0"), 2);
-					ipm.add(addr(program, "0x10018ea"), 1);
+				IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
+				ipm.remove(addr(program, "0x10018ba"));
+				ipm.remove(addr(program, "0x10018ce"));
+				ipm.add(addr(program, "0x1002428"), 4);
+				ipm.add(addr(program, "0x100248c"), 5);
+				ipm.add(addr(program, "0x10061e0"), 2);
+				ipm.add(addr(program, "0x10018ea"), 1);
 
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					opm.remove(addr(program, "0x100248c"));
-					opm.remove(addr(program, "0x10039f1"));
-					opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
-					opm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				opm.remove(addr(program, "0x100248c"));
+				opm.remove(addr(program, "0x10039f1"));
+				opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
+				opm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
+				PropertyMapManager pmm = program.getUsrPropertyManager();
 
-					IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
-					ipm.add(addr(program, "0x10018ba"), 5);
-					ipm.add(addr(program, "0x10018ce"), 1);
-					ipm.remove(addr(program, "0x1002428"));
-					ipm.remove(addr(program, "0x100248c"));
-					ipm.add(addr(program, "0x10061e0"), 3);
-					ipm.add(addr(program, "0x10018ea"), 4);
+				IntPropertyMap ipm = pmm.getIntPropertyMap("Space");
+				ipm.add(addr(program, "0x10018ba"), 5);
+				ipm.add(addr(program, "0x10018ce"), 1);
+				ipm.remove(addr(program, "0x1002428"));
+				ipm.remove(addr(program, "0x100248c"));
+				ipm.add(addr(program, "0x10061e0"), 3);
+				ipm.add(addr(program, "0x10018ea"), 4);
 
-					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
-					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
-					opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
-					opm.remove(addr(program, "0x10039f8"));
-					opm.remove(addr(program, "0x10039fe"));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
+				opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
+				opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
+				opm.remove(addr(program, "0x10039f8"));
+				opm.remove(addr(program, "0x10039fe"));
 			}
 		});
 

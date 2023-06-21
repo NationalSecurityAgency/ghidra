@@ -15,8 +15,7 @@
  */
 package ghidra.app.merge.tree;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 
@@ -45,47 +44,30 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// conflict resolution is ASK_USER (private name exists in results tree)
 		// Choose "Use name  'Some Other Tree'"
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 1
 					listing.renameTree("Main Tree", "Some Other Tree");
 					listing.createRootModule("My Tree");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 1
 					listing.renameTree("Main Tree", "My Tree");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -104,47 +86,30 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// conflict resolution is ASK_USER (private name exists in results tree)
 		// Choose option "Rename 'My Tree' to 'My Tree.<sid>'"
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 1
 					listing.renameTree("Main Tree", "Some Other Tree");
 					listing.createRootModule("My Tree");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 1
 					listing.renameTree("Main Tree", "My Tree");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -165,47 +130,30 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// Case 1: "other" name changed, "private" name changed
 		// Choose option for use original name
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 1
 					listing.renameTree("Main Tree", "Some Other Tree");
 					listing.createRootModule("My Tree");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 1
 					listing.renameTree("Main Tree", "My Tree");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -226,50 +174,31 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// Choose "Use name 'Another Tree One'
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 4
 					ProgramModule root = listing.getRootModule("Tree One");
 					listing.renameTree("Tree One", "Another Tree One");
 					root.createModule("submodule");
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 4
 					listing.renameTree("Tree One", "My Tree One");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -289,50 +218,31 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// Choose "Use name 'My Tree One'
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 4
 					ProgramModule root = listing.getRootModule("Tree One");
 					listing.renameTree("Tree One", "Another Tree One");
 					root.createModule("submodule");
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 4
 					listing.renameTree("Tree One", "My Tree One");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -352,50 +262,31 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// Choose "Add new tree named 'My Tree One'
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 4
 					ProgramModule root = listing.getRootModule("Tree One");
 					listing.renameTree("Tree One", "Another Tree One");
 					root.createModule("submodule");
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 4
 					listing.renameTree("Tree One", "My Tree One");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -415,50 +306,31 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// Choose original name
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					// for case 4
 					ProgramModule root = listing.getRootModule("Tree One");
 					listing.renameTree("Tree One", "Another Tree One");
 					root.createModule("submodule");
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 4
 					listing.renameTree("Tree One", "My Tree One");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -485,51 +357,31 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// Case 5: "other" name changed, "private" name & content changed
 		// Choose option "Use name 'Another Tree Two'"
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 5
 					listing.renameTree("Tree Two", "Another Tree Two");
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 5
 					ProgramModule root = listing.getRootModule("Tree Two");
 					listing.renameTree("Tree Two", "My Tree Two");
 					root.createModule("my submodule");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -548,51 +400,31 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// Case 5: "other" name changed, "private" name & content changed
 		// Choose option "Use name 'My Tree Two'"
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 5
 					listing.renameTree("Tree Two", "Another Tree Two");
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 5
 					ProgramModule root = listing.getRootModule("Tree Two");
 					listing.renameTree("Tree Two", "My Tree Two");
 					root.createModule("my submodule");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -611,51 +443,31 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// Case 5: "other" name changed, "private" name & content changed
 		// Choose option "Add new tree named 'My Tree Two'"
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 5
 					listing.renameTree("Tree Two", "Another Tree Two");
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				Listing listing = program.getListing();
 				// change the name
-				int transactionID = program.startTransaction("test");
 				try {
-
 					// for case 5
 					ProgramModule root = listing.getRootModule("Tree Two");
 					listing.renameTree("Tree Two", "My Tree Two");
 					root.createModule("my submodule");
-
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -676,38 +488,24 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// test for name conflict
 		// conflict resolution = ORIGINAL
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					ProgramModule root = listing.getRootModule("Main Tree");
 					root.createFragment("frag_one");
 					root.createModule("my module");
 					listing.renameTree("Main Tree", "My Tree");
 					listing.createRootModule("Another Main Tree");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
-				int transactionID = program.startTransaction("test");
 				try {
 					Listing listing = program.getListing();
 
@@ -726,13 +524,9 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 					}
 					// rename tree to cause a conflict
 					listing.renameTree("Main Tree", "Another Main Tree");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -757,14 +551,10 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// test for name conflict
 		// conflict resolution = ORIGINAL
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("test");
 				try {
 					ProgramModule root = listing.getRootModule("Main Tree");
 					root.createFragment("frag_one");
@@ -774,24 +564,14 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 
 					// rename Tree Three to Tree3_XXX
 					listing.renameTree("Tree Three", "Tree3_XXX");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
-				int transactionID = program.startTransaction("test");
 				try {
 					Listing listing = program.getListing();
 
@@ -812,13 +592,9 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 					listing.renameTree("Main Tree", "My Main Tree");
 
 					listing.renameTree("Tree Three", "MY TREE 3");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});

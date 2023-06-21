@@ -46,48 +46,31 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testChangePathNoConflicts() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					program.getExternalManager().setExternalPath("COMDLG32.DLL", "//comdlg32.dll",
 						true);
 					program.getExternalManager().setExternalPath("KERNEL32.DLL", "//kernel32.dll",
 						true);
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getExternalManager().setExternalPath("GDI32.DLL", "//gdi32.dll", true);
 					program.getExternalManager().setExternalPath("KERNEL32.DLL", "//kernel32.dll",
 						true);
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -116,46 +99,29 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testPathConflicts() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//foo.dll", true);
 					program.getExternalManager().setExternalPath("KERNEL32.DLL", "//latest.dll",
 						true);
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//bar.dll", true);
 					program.getExternalManager().setExternalPath("KERNEL32.DLL", "//my.dll", true);
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -186,36 +152,15 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testRemoveWithoutConflicts() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeExternalLibrary(program, "ADVAPI32.DLL");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeExternalLibrary(program, "ADVAPI32.DLL");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					removeExternalLibrary(program, "USER32.DLL");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeExternalLibrary(program, "USER32.DLL");
 			}
 		});
 
@@ -241,46 +186,29 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testRemoveConflictsKeepLatest() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
 					program.getExternalManager().setExternalPath("USER32.DLL", "//latest.dll",
 						true);
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//my.dll", true);
 					removeExternalLibrary(program, "USER32.DLL");
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -318,46 +246,29 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testRemoveConflictsKeepMy() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
 					program.getExternalManager().setExternalPath("USER32.DLL", "//latest.dll",
 						true);
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//my.dll", true);
 					removeExternalLibrary(program, "USER32.DLL");
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -395,46 +306,29 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testRemoveRefsConflictKeepMy() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
 					program.getExternalManager().setExternalPath("USER32.DLL", "//latest.dll",
 						true);
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//my.dll", true);
 					removeExternalLibrary(program, "USER32.DLL");
-					commit = true;
 				}
 				catch (InvalidInputException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -471,38 +365,17 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testRemoveRefKeepSymbol() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				ReferenceManager rm = program.getReferenceManager();
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					rm.removeAllReferencesFrom(addr(program, "0x1001000")); // remove ref to IsTextUnicode
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				rm.removeAllReferencesFrom(addr(program, "0x1001000")); // remove ref to IsTextUnicode
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				ReferenceManager rm = program.getReferenceManager();
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					rm.removeAllReferencesFrom(addr(program, "0x1001008")); // remove ref to RegQueryValueExW
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				rm.removeAllReferencesFrom(addr(program, "0x1001008")); // remove ref to RegQueryValueExW
 			}
 		});
 
@@ -543,13 +416,9 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testRemoveLibRenameExtSymConflictRemoveBoth() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
 					String[] names = program.getExternalManager().getExternalLibraryNames();
@@ -558,23 +427,14 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 					SymbolTable symTab = program.getSymbolTable();
 					Symbol s = symTab.getSymbol(refs[0]);
 					s.setName("SetCursor99", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Reference[] refs =
 						program.getReferenceManager().getReferencesFrom(addr(program, "0x1001004")); // RegCreateKeyW
@@ -582,13 +442,9 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 					Symbol s = symTab.getSymbol(refs[0]);
 					s.setName("RegCreateKeyW99", SourceType.USER_DEFINED);
 					removeExternalLibrary(program, "USER32.DLL");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -625,13 +481,9 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 	public void testRemoveLibRenameExtSymConflictKeepBoth() throws Exception {
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					removeExternalLibrary(program, "ADVAPI32.DLL");
 					Reference[] refs =
@@ -639,23 +491,14 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 					SymbolTable symTab = program.getSymbolTable();
 					Symbol s = symTab.getSymbol(refs[0]);
 					s.setName("SetCursor99", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Reference[] refs =
 						program.getReferenceManager().getReferencesFrom(addr(program, "0x1001004")); // RegCreateKeyW
@@ -663,13 +506,9 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 					Symbol s = symTab.getSymbol(refs[0]);
 					s.setName("RegCreateKeyW99", SourceType.USER_DEFINED);
 					removeExternalLibrary(program, "USER32.DLL");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
