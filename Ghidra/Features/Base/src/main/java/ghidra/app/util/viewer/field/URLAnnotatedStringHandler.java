@@ -29,10 +29,10 @@ import ghidra.util.BrowserLoader;
 import ghidra.util.Msg;
 
 /**
- * An annotated string handler that allows handles annotations that begin with 
+ * An annotated string handler that allows handles annotations that begin with
  * {@link #SUPPORTED_ANNOTATIONS}.  This class expects one or two strings following the annotation.
  * The first string will be treated as a Java {@link URL} and the optional second string will
- * be treated as display text.  If there is not display text, then the URL will be 
+ * be treated as display text.  If there is not display text, then the URL will be
  * displayed.
  */
 public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
@@ -103,8 +103,8 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 			return true;
 		}
 
-		Msg.showError(this, null, "Invalid URL", "Unable to create a Java URL " +
-			"object from string: " + urlString);
+		Msg.showError(this, null, "Invalid URL",
+			"Unable to create a Java URL object from string: " + urlString);
 
 		return false;
 	}
@@ -117,6 +117,11 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 	@Override
 	public String getPrototypeString() {
 		return "{@url http://www.example.com}";
+	}
+
+	@Override
+	public String getPrototypeString(String dislplayText) {
+		return "{@url " + dislplayText.trim() + "}";
 	}
 
 }
