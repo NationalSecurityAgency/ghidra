@@ -157,9 +157,14 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 						continue;
 					}
 
-					if (!hasCorrectVersion(file)) {
-						Msg.showError(this, null, "Installation Error", "Extension version for [" +
-							file.getName() + "] is incompatible with Ghidra.");
+					String extensionVersion = getExtensionVersion(file);
+					if (extensionVersion == null) {
+						Msg.showError(this, null, "Installation Error",
+							"Unable to read extension version for [" + file + "]");
+						continue;
+					}
+
+					if (!ExtensionUtils.validateExtensionVersion(extensionVersion)) {
 						continue;
 					}
 
@@ -188,53 +193,41 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		addAction(addAction);
 	}
 
-	/**
-	 * Verifies that the extension(s) represented by the given file (or directory) have
-	 * a version that is compatible with the current version of Ghidra.
-	 * 
-	 * @param file the file or directory to inspect
-	 * @return true if the extension(s) has the correct version
-	 */
-	private boolean hasCorrectVersion(File file) {
-
-		String ghidraVersion = Application.getApplicationVersion();
-
-		// If the given file is a zip...
-		if (file.isFile()) {
-			try {
-				if (ExtensionUtils.isZip(file)) {
-					Properties props = ExtensionUtils.getPropertiesFromArchive(file);
-					if (props == null) {
-						return false;  // no prop file exists
-					}
-					ExtensionDetails extension =
-						ExtensionUtils.createExtensionDetailsFromProperties(props);
-					String extVersion = extension.getVersion();
-					if (extVersion != null && extVersion.equals(ghidraVersion)) {
-						return true;
-					}
-				}
-			}
-			catch (ExtensionException e) {
-				// just fall through
-			}
-
-			return false;
-		}
+	private String getExtensionVersion(File file) {
 
 		// If the given file is a directory...
-		List<ResourceFile> propFiles =
-			ExtensionUtils.findExtensionPropertyFiles(new ResourceFile(file), true);
-		for (ResourceFile propFile : propFiles) {
-			ExtensionDetails extension =
-				ExtensionUtils.createExtensionDetailsFromPropertyFile(propFile);
-			String extVersion = extension.getVersion();
-			if (extVersion != null && extVersion.equals(ghidraVersion)) {
-				return true;
+		if (!file.isFile()) {
+			List<ResourceFile> propFiles =
+				ExtensionUtils.findExtensionPropertyFiles(new ResourceFile(file), true);
+			for (ResourceFile props : propFiles) {
+				ExtensionDetails ext = ExtensionUtils.createExtensionDetailsFromPropertyFile(props);
+				String version = ext.getVersion();
+				if (version != null) {
+					return version;
+				}
 			}
+
+			return null;
 		}
 
-		return false;
+		// If the given file is a zip...
+		try {
+			if (ExtensionUtils.isZip(file)) {
+				Properties props = ExtensionUtils.getPropertiesFromArchive(file);
+				if (props == null) {
+					return null;  // no prop file exists
+				}
+				ExtensionDetails ext = ExtensionUtils.createExtensionDetailsFromProperties(props);
+				String version = ext.getVersion();
+				if (version != null) {
+					return version;
+				}
+			}
+		}
+		catch (ExtensionException e) {
+			// just fall through
+		}
+		return null;
 	}
 
 	/**
@@ -265,7 +258,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	}
 
 	/**
-	 * Filter for a {@link GhidraFileChooser} that restricts selection to those 
+	 * Filter for a {@link GhidraFileChooser} that restricts selection to those
 	 * files that are Ghidra Extensions (zip files with an extension.properties
 	 * file) or folders.
 	 */
