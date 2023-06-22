@@ -111,20 +111,21 @@ public class DyldCacheUtils {
 		 * Creates a new {@link SplitDyldCache}
 		 * 
 		 * @param baseProvider The {@link ByteProvider} of the "base" DYLD Cache file
-		 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
+		 * @param shouldProcessLocalSymbols True if local symbols should be processed; otherwise, 
+		 *   false
 		 * @param log The log
 		 * @param monitor A cancelable task monitor
 		 * @throws IOException If there was an IO-related issue with processing the split DYLD Cache
 		 * @throws CancelledException If the user canceled the operation
 		 */
-		public SplitDyldCache(ByteProvider baseProvider, boolean shouldProcessSymbols,
+		public SplitDyldCache(ByteProvider baseProvider, boolean shouldProcessLocalSymbols,
 				MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
 
 			// Setup "base" DYLD Cache
 			monitor.setMessage("Parsing " + baseProvider.getName() + " headers...");
 			providers.add(baseProvider);
 			DyldCacheHeader baseHeader = new DyldCacheHeader(new BinaryReader(baseProvider, true));
-			baseHeader.parseFromFile(shouldProcessSymbols, log, monitor);
+			baseHeader.parseFromFile(shouldProcessLocalSymbols, log, monitor);
 			headers.add(baseHeader);
 			names.add(baseProvider.getName());
 
@@ -145,7 +146,7 @@ public class DyldCacheUtils {
 				providers.add(splitProvider);
 				DyldCacheHeader splitHeader =
 					new DyldCacheHeader(new BinaryReader(splitProvider, true));
-				splitHeader.parseFromFile(shouldProcessSymbols, log, monitor);
+				splitHeader.parseFromFile(shouldProcessLocalSymbols, log, monitor);
 				headers.add(splitHeader);
 				names.add(splitFSRL.getName());
 				uuidToFileMap.put(splitHeader.getUUID(), splitFSRL);

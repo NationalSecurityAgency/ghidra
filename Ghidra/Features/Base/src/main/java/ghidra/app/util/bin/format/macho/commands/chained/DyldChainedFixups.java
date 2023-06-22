@@ -40,7 +40,6 @@ public class DyldChainedFixups {
 
 	private MachHeader machoHeader;
 	private Program program;
-	private boolean shouldAddChainedFixupsRelocations;
 	private MessageLog log;
 	private TaskMonitor monitor;
 	private Memory memory;
@@ -51,16 +50,13 @@ public class DyldChainedFixups {
 	 * 
 	 * @param program The {@link Program}
 	 * @param header The Mach-O header
-	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
-	 *   fixups; otherwise, false
 	 * @param log The log
 	 * @param monitor A cancelable task monitor.
 	 */
-	public DyldChainedFixups(Program program, MachHeader header,
-			boolean shouldAddChainedFixupsRelocations, MessageLog log, TaskMonitor monitor) {
+	public DyldChainedFixups(Program program, MachHeader header, MessageLog log,
+			TaskMonitor monitor) {
 		this.program = program;
 		this.machoHeader = header;
-		this.shouldAddChainedFixupsRelocations = shouldAddChainedFixupsRelocations;
 		this.log = log;
 		this.monitor = monitor;
 		this.memory = program.getMemory();
@@ -306,13 +302,11 @@ public class DyldChainedFixups {
 					byteLength = result.byteLength();
 				}
 				finally {
-					if (shouldAddChainedFixupsRelocations) {
-						program.getRelocationTable()
-								.add(chainLoc, status,
-									(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) |
-										(isBound ? 2 : 0) | 1,
-									new long[] { newChainValue }, byteLength, symName);
-					}
+					program.getRelocationTable()
+							.add(chainLoc, status,
+								(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) |
+									(isBound ? 2 : 0) | 1,
+								new long[] { newChainValue }, byteLength, symName);
 				}
 			}
 			// delay creating data until after memory has been changed

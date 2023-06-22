@@ -359,19 +359,19 @@ public class DyldCacheHeader implements StructConverter {
 	/**
 	 * Parses the structures referenced by this {@link DyldCacheHeader} from a file.
 	 * 
-	 * @param parseSymbols True if symbols should be parsed (could be very slow); otherwise, false
+	 * @param parseLocalSymbols True if local symbols should be parsed; otherwise, false
 	 * @param log The log
 	 * @param monitor A cancellable task monitor
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public void parseFromFile(boolean parseSymbols, MessageLog log, TaskMonitor monitor)
+	public void parseFromFile(boolean parseLocalSymbols, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
 		if (headerType >= 1) {
 			parseMappingInfo(log, monitor);
 			parseImageInfo(log, monitor);
 		}
 		if (headerType >= 3) {
-			if (parseSymbols) {
+			if (parseLocalSymbols) {
 				parseLocalSymbolsInfo(log, monitor);
 			}
 		}
@@ -454,13 +454,14 @@ public class DyldCacheHeader implements StructConverter {
 	 * Marks up this {@link DyldCacheHeader} with data structures and comments.
 	 * 
 	 * @param program The {@link Program} to mark up
+	 * @param markupLocalSymbols True if the local symbols should be marked up; otherwise, false
 	 * @param space The {@link Program}'s {@link AddressSpace}
 	 * @param monitor A cancellable task monitor
 	 * @param log The log
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public void markup(Program program, AddressSpace space, TaskMonitor monitor, MessageLog log)
-			throws CancelledException {
+	public void markup(Program program, boolean markupLocalSymbols, AddressSpace space,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
 		if (headerType >= 1) {
 			markupHeader(program, space, monitor, log);
 			markupMappingInfo(program, space, monitor, log);
@@ -471,7 +472,9 @@ public class DyldCacheHeader implements StructConverter {
 			markupSlideInfo(program, space, monitor, log);
 		}
 		if (headerType >= 3) {
-			markupLocalSymbolsInfo(program, space, monitor, log);
+			if (markupLocalSymbols) {
+				markupLocalSymbolsInfo(program, space, monitor, log);
+			}
 		}
 		if (headerType >= 6) {
 			markupBranchPools(program, space, monitor, log);

@@ -181,7 +181,7 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 				provider.length() - offset, monitor);
 			ByteProvider providerWrapper =
 				new ByteProviderWrapper(provider, offset, provider.length() - offset);
-			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes, false,
+			MachoProgramBuilder.buildProgram(program, providerWrapper, fileBytes,
 				new MessageLog(), monitor);
 
 			AbstractProgramLoader.setProgramProperties(program, providerWrapper,

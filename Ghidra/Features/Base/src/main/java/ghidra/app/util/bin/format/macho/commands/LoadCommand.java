@@ -103,12 +103,13 @@ public abstract class LoadCommand implements StructConverter {
 	 * @param program The {@link Program} to mark up
 	 * @param header The Mach-O header
 	 * @param addr The {@link Address} of the start of load command data (could be null if no data)
+	 * @param source A name that represents where the header came from (could be null)
 	 * @param monitor A cancellable task monitor
 	 * @param log The log
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public void markup(Program program, MachHeader header, Address addr, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+	public void markup(Program program, MachHeader header, Address addr, String source,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
 		// Default is no markup
 		return;
 	}
