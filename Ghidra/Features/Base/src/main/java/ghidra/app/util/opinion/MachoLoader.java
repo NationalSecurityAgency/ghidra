@@ -20,13 +20,13 @@ import java.io.IOException;
 import java.nio.file.AccessMode;
 import java.util.*;
 
-import ghidra.app.util.*;
+import ghidra.app.util.MemoryBlockUtils;
+import ghidra.app.util.Option;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FileSystemService;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
 import ghidra.util.LittleEndianDataConverter;
@@ -40,13 +40,6 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 	public final static String MACH_O_NAME = "Mac OS X Mach-O";
 	private static final long MIN_BYTE_LENGTH = 4;
-
-	/** Loader option to add relocation entries for chained fixups */
-	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
-		"Add relocation entries for chained fixups";
-
-	/** Default value for loader option add chained fixups relocation entries */
-	static final boolean ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT = true;
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
@@ -91,12 +84,10 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			// A Mach-O file may contain PRELINK information.  If so, we use a special
 			// program builder that knows how to deal with it.
 			if (MachoPrelinkUtils.isMachoPrelink(provider, monitor)) {
-				MachoPrelinkProgramBuilder.buildProgram(program, provider, fileBytes,
-					shouldAddChainedFixupsRelocations(options), log, monitor);
+				MachoPrelinkProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 			}
 			else {
-				MachoProgramBuilder.buildProgram(program, provider, fileBytes,
-					shouldAddChainedFixupsRelocations(options), log, monitor);
+				MachoProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 			}
 		}
 		catch (CancelledException e) {
@@ -113,24 +104,6 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	@Override
 	public String getName() {
 		return MACH_O_NAME;
-	}
-
-	@Override
-	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
-		if (!loadIntoProgram) {
-			list.add(new Option(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME,
-				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-addChainedFixupsRelocations"));
-		}
-		return list;
-	}
-
-	private boolean shouldAddChainedFixupsRelocations(List<Option> options) {
-		return OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
-			ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
 	}
 
 	/**

@@ -167,7 +167,7 @@ public class SymbolTableCommand extends LoadCommand {
 
 	@Override
 	public void markup(Program program, MachHeader header, Address symbolTableAddr,
-			TaskMonitor monitor, MessageLog log) throws CancelledException {
+			String source, TaskMonitor monitor, MessageLog log) throws CancelledException {
 		if (symbolTableAddr == null) {
 			return;
 		}
@@ -175,9 +175,12 @@ public class SymbolTableCommand extends LoadCommand {
 
 		Listing listing = program.getListing();
 		ReferenceManager referenceManager = program.getReferenceManager();
-		String lcName = LoadCommandTypes.getLoadCommandName(getCommandType());
+		String name = LoadCommandTypes.getLoadCommandName(getCommandType());
+		if (source != null) {
+			name += " - " + source;
+		}
 		try {
-			listing.setComment(symbolTableAddr, CodeUnit.PLATE_COMMENT, lcName);
+			listing.setComment(symbolTableAddr, CodeUnit.PLATE_COMMENT, name);
 			for (int i = 0; i < nsyms; i++) {
 				NList nlist = symbols.get(i);
 				DataType dt = nlist.toDataType();
@@ -197,7 +200,7 @@ public class SymbolTableCommand extends LoadCommand {
 		}
 		catch (Exception e) {
 			log.appendMsg(SymbolTableCommand.class.getSimpleName(),
-				"Failed to markup %s.".formatted(lcName));
+				"Failed to markup %s.".formatted(name));
 		}
 	}
 

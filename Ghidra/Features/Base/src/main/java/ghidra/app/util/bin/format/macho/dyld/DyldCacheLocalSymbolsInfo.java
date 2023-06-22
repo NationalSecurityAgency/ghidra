@@ -107,9 +107,7 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 	public void markup(Program program, Address localSymbolsInfoAddr, TaskMonitor monitor,
 			MessageLog log) throws CancelledException {
 		markupLocalSymbols(program, localSymbolsInfoAddr, monitor, log);
-		
-		// TODO: This is slow and not too useful.  Add an option for it.
-		//markupNList(program, localSymbolsInfoAddr, monitor, log);
+		markupNList(program, localSymbolsInfoAddr, monitor, log);
 	}
 
 	/**

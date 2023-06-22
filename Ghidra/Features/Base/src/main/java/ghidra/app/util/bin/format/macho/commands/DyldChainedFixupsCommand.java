@@ -64,14 +64,14 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 	}
 
 	@Override
-	public void markup(Program program, MachHeader header, Address addr, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+	public void markup(Program program, MachHeader header, Address addr, String source,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
 
 		if (addr == null || datasize == 0) {
 			return;
 		}
 
-		super.markup(program, header, addr, monitor, log);
+		super.markup(program, header, addr, source, monitor, log);
 
 		try {
 			DataUtilities.createData(program, addr, chainHeader.toDataType(), -1,

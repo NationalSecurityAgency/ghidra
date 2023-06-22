@@ -63,7 +63,6 @@ public class MachoProgramBuilder {
 	protected Program program;
 	protected ByteProvider provider;
 	protected FileBytes fileBytes;
-	protected boolean shouldAddChainedFixupsRelocations;
 	protected MessageLog log;
 	protected TaskMonitor monitor;
 	protected Memory memory;
@@ -76,17 +75,14 @@ public class MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
-	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
-	 *   fixups; otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 */
 	protected MachoProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean shouldAddChainedFixupsRelocations, MessageLog log, TaskMonitor monitor) {
+			MessageLog log, TaskMonitor monitor) {
 		this.program = program;
 		this.provider = provider;
 		this.fileBytes = fileBytes;
-		this.shouldAddChainedFixupsRelocations = shouldAddChainedFixupsRelocations;
 		this.log = log;
 		this.monitor = monitor;
 		this.memory = program.getMemory();
@@ -100,17 +96,14 @@ public class MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
-	 * @param addChainedFixupsRelocations True if relocations should be added for chained fixups;
-	 *   otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean addChainedFixupsRelocations, MessageLog log, TaskMonitor monitor)
-			throws Exception {
+			MessageLog log, TaskMonitor monitor) throws Exception {
 		MachoProgramBuilder machoProgramBuilder = new MachoProgramBuilder(program, provider,
-			fileBytes, addChainedFixupsRelocations, log, monitor);
+			fileBytes, log, monitor);
 		machoProgramBuilder.build();
 	}
 
@@ -146,7 +139,7 @@ public class MachoProgramBuilder {
 		// Markup structures
 		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
 		markupSections();
-		markupLoadCommandData(machoHeader);
+		markupLoadCommandData(machoHeader, null);
 		markupChainedFixups(machoHeader, chainedFixups);
 		markupProgramVars();
 
@@ -763,8 +756,7 @@ public class MachoProgramBuilder {
 	}
 
 	public List<Address> processChainedFixups(MachHeader header) throws Exception {
-		DyldChainedFixups dyldChainedFixups =
-			new DyldChainedFixups(program, header, shouldAddChainedFixupsRelocations, log, monitor);
+		DyldChainedFixups dyldChainedFixups = new DyldChainedFixups(program, header, log, monitor);
 		return dyldChainedFixups.processChainedFixups();
 	}
 
@@ -1250,13 +1242,14 @@ public class MachoProgramBuilder {
 	 * Marks up {@link LoadCommand} dadta
 	 * 
 	 * @param header The Mach-O header
+	 * @param source A name that represents where the header came from (could be null)
 	 * @throws Exception If there was a problem performing the markup
 	 */
-	protected void markupLoadCommandData(MachHeader header) throws Exception {
+	protected void markupLoadCommandData(MachHeader header, String source) throws Exception {
 		for (LoadCommand cmd : header.getLoadCommands()) {
 			Address dataAddr = cmd.getDataAddress(header, space);
 			if (dataAddr != null) {
-				cmd.markup(program, header, dataAddr, monitor, log);
+				cmd.markup(program, header, dataAddr, source, monitor, log);
 			}
 		}
 	}

@@ -83,13 +83,16 @@ public class LinkEditDataCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(Program program, MachHeader header, Address addr, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+	public void markup(Program program, MachHeader header, Address addr, String source,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
 		if (addr == null || datasize == 0) {
 			return;
 		}
-		String lcName = LoadCommandTypes.getLoadCommandName(getCommandType());
-		program.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, lcName);
+		String name = LoadCommandTypes.getLoadCommandName(getCommandType());
+		if (source != null) {
+			name += " - " + source;
+		}
+		program.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, name);
 	}
 
 	@Override

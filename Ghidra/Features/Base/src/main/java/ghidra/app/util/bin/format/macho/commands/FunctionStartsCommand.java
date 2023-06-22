@@ -80,13 +80,13 @@ public class FunctionStartsCommand extends LinkEditDataCommand {
 	}
 
 	@Override
-	public void markup(Program program, MachHeader header, Address addr, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+	public void markup(Program program, MachHeader header, Address addr, String source,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
 		if (addr == null || datasize == 0) {
 			return;
 		}
 
-		super.markup(program, header, addr, monitor, log);
+		super.markup(program, header, addr, source, monitor, log);
 		
 		SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
 		if (textSegment == null) {
