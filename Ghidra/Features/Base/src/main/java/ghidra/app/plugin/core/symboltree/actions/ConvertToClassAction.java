@@ -22,7 +22,12 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.symboltree.*;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.NamespaceUtils;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeConflictHandler;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.listing.GhidraClass;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.VariableUtilities;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
@@ -75,7 +80,10 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 			String name = namespace.getName();
 			convertToClass(program, namespace);
 			program.flushEvents();
-			context.getSymbolTree().startEditing(classesNode, name);
+			GTreeNode parent = node.getParent();
+			parent.removeNode(node);
+			program.flushEvents();
+			context.getSymbolTree().setSelectedNode(parent.getChild(name));
 		}
 	}
 
@@ -83,8 +91,15 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 		int id = program.startTransaction(NAME);
 		boolean success = false;
 		try {
-			NamespaceUtils.convertNamespaceToClass(ns);
-			success = true;
+			GhidraClass gc = NamespaceUtils.convertNamespaceToClass(ns);
+			
+			// ensure a DataType exists for the this parameter
+			DataTypeManager dtm = program.getDataTypeManager();
+			DataType dt = VariableUtilities.findOrCreateClassStruct(gc, dtm);
+			if (dt != null) {
+				dtm.resolve(dt, DataTypeConflictHandler.REPLACE_HANDLER);
+				success = true;
+			}
 		}
 		catch (InvalidInputException e) {
 			// This is thrown when the provided namespace is a function
