@@ -29,6 +29,7 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
+	<!-- TODO: These might be named a2, a3, a4, etc. -->
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="i2"/>
         </pentry>
@@ -52,6 +53,8 @@
         </pentry>
       </input>
       <output>
+	<!-- TODO: Verify minsize and maxsize values -->
+	<!-- TODO: Consider need to name registers -->
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="o2"/>
         </pentry>
@@ -70,6 +73,7 @@
     </returnaddress>
     <unaffected>
       <register name="a1"/>
+      <register name="a2"/>
       <register name="a3"/>
       <register name="a4"/>
       <register name="a5"/>

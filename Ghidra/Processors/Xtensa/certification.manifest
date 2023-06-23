@@ -9,8 +9,11 @@ data/languages/xtensa.pspec||GHIDRA||||END|
 data/languages/xtensa.sinc||GHIDRA||||END|
 data/languages/xtensa.slaspec||GHIDRA||||END|
 data/languages/xtensaInstructions.sinc||GHIDRA||||END|
-data/languages/xtensaTodo.sinc||GHIDRA||||END|
 data/manuals/xtensa.idx||GHIDRA||||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|
+data/patterns/xtensa_patterns.xml||GHIDRA||||END|
+src/main/help/help/topics/xtensa/help.html||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/java/ghidra/app/util/bin/format/elf/relocation/Xtensa_ElfRelocationHandler.java||GHIDRA||||END|
 src/main/java/ghidra/app/util/bin/format/elf/relocation/Xtensa_ElfRelocationConstants.java||GHIDRA||||END|
 src/test.processors/java/ghidra/test/processors/Xtensa_O0_EmulatorTest.java||GHIDRA||||END|

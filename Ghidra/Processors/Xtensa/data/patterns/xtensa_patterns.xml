@@ -1,4 +1,16 @@
 <patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>0x1d 0xf0</data>                <!-- retw.n -->
+      <data>0x1d 0xf0 0x00</data>           <!-- retw.n -->
+      <data>0x1d 0xf0 0x00 0x00</data>      <!-- retw.n -->
+      <data>0x1d 0xf0 0x00 0x00 0x00 </data><!-- retw.n -->
+    </prepatterns>
+    <postpatterns>
+      <data>0x36 ...00001 0x00</data>       <!-- entry a1, constant // this only includes stack frame size 0x10->0x80 -->
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
   <patternpairs totalbits="40" postbits="24">
     <prepatterns>
       <data>00001101 11110000</data> <!-- ret.n  //0 filler -->
@@ -109,7 +121,6 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-
   <patternpairs totalbits="64" postbits="48">
     <prepatterns>
       <data>00001101 11110000</data> <!-- ret.n  //0 filler -->
@@ -239,3 +250,4 @@
     <funcstart validcode="function" thunk="true" />
   </pattern>
 </patternlist>
+
