@@ -43,10 +43,12 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -249,7 +251,20 @@ public abstract class DebuggerReadsMemoryTrait {
 		// NB. provider should call contextChanged, updating actions
 	}
 
+	protected boolean isConsistent() {
+		TraceProgramView view = current.getView();
+		if (view == null || visible.isEmpty()) {
+			return true; // Some have special logic for empty
+		}
+		AddressSpace space = visible.getFirstRange().getAddressSpace();
+		int id = space.getSpaceID();
+		return space == view.getAddressFactory().getAddressSpace(id);
+	}
+
 	protected void doAutoRead() {
+		if (!isConsistent()) {
+			return;
+		}
 		autoSpec.readMemory(tool, current, visible).exceptionally(ex -> {
 			Msg.error(this, "Could not auto-read memory: " + ex);
 			return null;
