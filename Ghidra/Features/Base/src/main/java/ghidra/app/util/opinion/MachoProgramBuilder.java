@@ -19,13 +19,13 @@ import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.commands.ExportTrie.ExportEntry;
 import ghidra.app.util.bin.format.macho.commands.chained.DyldChainedFixups;
+import ghidra.app.util.bin.format.macho.commands.chained.DyldChainedStartsOffsets;
 import ghidra.app.util.bin.format.macho.commands.dyld.*;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
@@ -1001,7 +1001,16 @@ public class MachoProgramBuilder {
 					continue;
 				}
 
-				if (section.getType() == SectionTypes.S_CSTRING_LITERALS) {
+				if (section.getSectionName().equals(SectionNames.CHAIN_STARTS)) {
+					ByteProvider p = new MemoryByteProvider(memory, block.getStart());
+					BinaryReader reader = new BinaryReader(p, machoHeader.isLittleEndian());
+					DyldChainedStartsOffsets chainedStartsOffsets =
+						new DyldChainedStartsOffsets(reader);
+					DataUtilities.createData(program, block.getStart(),
+						chainedStartsOffsets.toDataType(), -1,
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				else if (section.getType() == SectionTypes.S_CSTRING_LITERALS) {
 					markupBlock(block, new TerminatedStringDataType());
 				}
 				else if (section.getType() == SectionTypes.S_4BYTE_LITERALS) {
