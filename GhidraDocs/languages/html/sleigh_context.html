@@ -1,24 +1,24 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>8. Using Context</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>8.Â Using Context</title>
 <link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="up" href="sleigh.html" title="SLEIGH">
-<link rel="prev" href="sleigh_constructors.html" title="7. Constructors">
-<link rel="next" href="sleigh_ref.html" title="9. P-code Tables">
+<link rel="prev" href="sleigh_constructors.html" title="7.Â Constructors">
+<link rel="next" href="sleigh_ref.html" title="9.Â P-code Tables">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="navheader">
 <table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">8. Using Context</th></tr>
+<tr><th colspan="3" align="center">8.Â Using Context</th></tr>
 <tr>
 <td width="20%" align="left">
-<a accesskey="p" href="sleigh_constructors.html">Prev</a> </td>
-<th width="60%" align="center"> </th>
-<td width="20%" align="right"> <a accesskey="n" href="sleigh_ref.html">Next</a>
+<a accesskey="p" href="sleigh_constructors.html">Prev</a>Â </td>
+<th width="60%" align="center">Â </th>
+<td width="20%" align="right">Â <a accesskey="n" href="sleigh_ref.html">Next</a>
 </td>
 </tr>
 </table>
@@ -26,7 +26,7 @@
 </div>
 <div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="sleigh_context"></a>8. Using Context</h2></div></div></div>
+<a name="sleigh_context"></a>8.Â Using Context</h2></div></div></div>
 <p>
 For most practical specifications, the disassembly and semantic
 meaning of an instruction can be determined by looking only at the
@@ -77,7 +77,7 @@ necessary.
 <p>
 SLEIGH solves these problems by introducing <span class="emphasis"><em>context
 variables</em></span>. The syntax for defining these symbols was
-described in <a class="xref" href="sleigh_tokens.html#sleigh_context_variables" title="6.4. Context Variables">Section 6.4, &#8220;Context Variables&#8221;</a>. As mentioned
+described in <a class="xref" href="sleigh_tokens.html#sleigh_context_variables" title="6.4.Â Context Variables">SectionÂ 6.4, â€œContext Variablesâ€</a>. As mentioned
 there, the easiest and most common way to use a context variable is as
 just another field to use in our bit patterns. It gives us the extra
 information we need to distinguish between different instructions
@@ -85,7 +85,7 @@ whose encodings are otherwise the same.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_context_basic"></a>8.1. Basic Use of Context Variables</h3></div></div></div>
+<a name="sleigh_context_basic"></a>8.1.Â Basic Use of Context Variables</h3></div></div></div>
 <p>
 Suppose a processor supports the use of two different sets of
 registers in its main addressing mode, based on the setting of a
@@ -149,12 +149,12 @@ although see the following sections.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_local_change"></a>8.2. Local Context Change</h3></div></div></div>
+<a name="sleigh_local_change"></a>8.2.Â Local Context Change</h3></div></div></div>
 <p>
 SLEIGH can make direct modifications to context variables through
 statements in the disassembly action section of a constructor. The
 left-hand side of an assignment statement in this section can be a context variable,
-see <a class="xref" href="sleigh_constructors.html#sleigh_general_actions" title="7.5.2. General Actions and Pattern Expressions">Section 7.5.2, &#8220;General Actions and Pattern Expressions&#8221;</a>. Because the result of this
+see <a class="xref" href="sleigh_constructors.html#sleigh_general_actions" title="7.5.2.Â General Actions and Pattern Expressions">SectionÂ 7.5.2, â€œGeneral Actions and Pattern Expressionsâ€</a>. Because the result of this
 assignment is calculated in the middle of the instruction disassembly,
 the change in value of the context variable can potentially affect any
 remaining parsing for that instruction. A modal variable is being
@@ -193,7 +193,7 @@ use <span class="emphasis"><em>mode</em></span>, its value will have reverted to
 original global state. The same holds for any context variable
 modified with this syntax. If an instruction needs to permanently
 modify the state of a context variable, the designer must use
-constructions described in <a class="xref" href="sleigh_context.html#sleigh_global_change" title="8.3. Global Context Change">Section 8.3, &#8220;Global Context Change&#8221;</a>.
+constructions described in <a class="xref" href="sleigh_context.html#sleigh_global_change" title="8.3.Â Global Context Change">SectionÂ 8.3, â€œGlobal Context Changeâ€</a>.
 </p>
 <p>
 Clearly, the behavior of the above example could be easily replicated
@@ -219,7 +219,7 @@ by <span class="bold"><strong>build</strong></span> directives.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_global_change"></a>8.3. Global Context Change</h3></div></div></div>
+<a name="sleigh_global_change"></a>8.3.Â Global Context Change</h3></div></div></div>
 <p>
 It is possible for an instruction to attempt a permanent change to a
 context variable, which would then affect the parsing of other
@@ -261,7 +261,7 @@ select <span class="emphasis"><em>r</em></span> registers
 via <span class="emphasis"><em>rreg1</em></span>, and <span class="emphasis"><em>smode</em></span>
 sets <span class="emphasis"><em>mode</em></span> to 1 in order to
 select <span class="emphasis"><em>s</em></span> registers. As is described in
-<a class="xref" href="sleigh_context.html#sleigh_local_change" title="8.2. Local Context Change">Section 8.2, &#8220;Local Context Change&#8221;</a>, these assignments by themselves
+<a class="xref" href="sleigh_context.html#sleigh_local_change" title="8.2.Â Local Context Change">SectionÂ 8.2, â€œLocal Context Changeâ€</a>, these assignments by themselves
 cause only a local context change.  However, the
 subsequent <span class="bold"><strong>globalset</strong></span> directives make
 the change persist outside of the the instructions
@@ -276,7 +276,7 @@ of <span class="emphasis"><em>mode</em></span> begins at the next address.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_contextflow"></a>8.3.1. Context Flow</h4></div></div></div>
+<a name="sleigh_contextflow"></a>8.3.1.Â Context Flow</h4></div></div></div>
 <p>
 A global change to context that affects instruction decoding is typically
 open-ended. I.e. once the mode switching instruction is executed, a permanent change
@@ -290,7 +290,7 @@ is encountered.
 </p>
 <p>
 Flow following behavior can be overridden by adding the <span class="bold"><strong>noflow</strong></span>
-attribute to the definition of the context field. (See <a class="xref" href="sleigh_tokens.html#sleigh_context_variables" title="6.4. Context Variables">Section 6.4, &#8220;Context Variables&#8221;</a>)
+attribute to the definition of the context field. (See <a class="xref" href="sleigh_tokens.html#sleigh_context_variables" title="6.4.Â Context Variables">SectionÂ 6.4, â€œContext Variablesâ€</a>)
 In this case, a <span class="bold"><strong>globalset</strong></span> directive only affects the context
 of a single instruction at the specified address. Subsequent instructions
 retain their original context. This can be useful in a variety of situations but is typically
@@ -348,15 +348,15 @@ end and what to do if there are conflicts.
 <table width="100%" summary="Navigation footer">
 <tr>
 <td width="40%" align="left">
-<a accesskey="p" href="sleigh_constructors.html">Prev</a> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right"> <a accesskey="n" href="sleigh_ref.html">Next</a>
+<a accesskey="p" href="sleigh_constructors.html">Prev</a>Â </td>
+<td width="20%" align="center">Â </td>
+<td width="40%" align="right">Â <a accesskey="n" href="sleigh_ref.html">Next</a>
 </td>
 </tr>
 <tr>
-<td width="40%" align="left" valign="top">7. Constructors </td>
+<td width="40%" align="left" valign="top">7.Â ConstructorsÂ </td>
 <td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
-<td width="40%" align="right" valign="top"> 9. P-code Tables</td>
+<td width="40%" align="right" valign="top">Â 9.Â P-code Tables</td>
 </tr>
 </table>
 </div>
