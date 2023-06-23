@@ -81,36 +81,36 @@ define token insn(24)
     op1    = (16,19)
     op0    = (0,3)
 
-    # Signed and unsigned immediates. Named [us]N_L.M, where u and s denote signedness, L and M the
+    # Signed and unsigned immediates. Named [us]N_L_M, where u and s denote signedness, L and M the
     # least and most significant bit of the immediate in the instruction word, and N the length
     # (i.e. M-L+1).
-    u3_21.23    = (21,23)
-    u4_20.23    = (20,23)
-    s8_16.23    = (16,23) signed
-    u8_16.23    = (16,23)
-    u12_12.23   = (12,23)
-    s12_12.23   = (12,23) signed
-    u16_8.23    =  (8,23)
-    s8_6.23     =  (6,23) signed
+    u3_21_23    = (21,23)
+    u4_20_23    = (20,23)
+    s8_16_23    = (16,23) signed
+    u8_16_23    = (16,23)
+    u12_12_23   = (12,23)
+    s12_12_23   = (12,23) signed
+    u16_8_23    =  (8,23)
+    s8_6_23     =  (6,23) signed
     u1_20       = (20,20)
-    u2_18.19    = (18,19)
-    u3_17.19    = (17,19)
-    u2_16.17    = (16,17)
+    u2_18_19    = (18,19)
+    u3_17_19    = (17,19)
+    u2_16_17    = (16,17)
     u1_16       = (16,16)
-    u2_14.15    = (14,15)
-    u3_13.15    = (13,15)
-    u4_12.15    = (12,15)
-    u8_8.15     =  (8,15)
-    u2_12.13    = (12,13)
+    u2_14_15    = (14,15)
+    u3_13_15    = (13,15)
+    u4_12_15    = (12,15)
+    u8_8_15     =  (8,15)
+    u2_12_13    = (12,13)
     u1_12       = (12,12)
-    u4_8.11     =  (8,11)
-    u8_4.11     =  (4,11)
-    s4_8.11     =  (8,11)  signed
-    u2_6.7      =  (6,7)
-    u3_5.7      =  (5,7)
-    u4_4.7      =  (4,7)
-    s4_4.7      =  (4,7)
-    u2_4.5      =  (4,5)
+    u4_8_11     =  (8,11)
+    u8_4_11     =  (4,11)
+    s4_8_11     =  (8,11)  signed
+    u2_6_7      =  (6,7)
+    u3_5_7      =  (5,7)
+    u4_4_7      =  (4,7)
+    s4_4_7      =  (4,7)
+    u2_4_5      =  (4,5)
     u1_4        =  (4,4)
 ;
 
@@ -121,14 +121,14 @@ define token narrowinsn(16)
     n_at   = (4,7)
     n_op0  = (0, 3)
 
-    n_u4_12.15  = (12,15)
-    n_s4_12.15  = (12,15) signed
-    n_u4_8.11   =  (8,11)
+    n_u4_12_15  = (12,15)
+    n_s4_12_15  = (12,15) signed
+    n_u4_8_11   =  (8,11)
     n_u1_7      =  (7,7)
-    n_u2_6.7    =  (6,7)
-    n_u4_4.7    =  (4,7)
-    n_s3_4.6    =  (4,6)
-    n_u2_4.5    =  (4,5)
+    n_u2_6_7    =  (6,7)
+    n_u4_4_7    =  (4,7)
+    n_s3_4_6    =  (4,6)
+    n_u2_4_5    =  (4,5)
 ;
 
 define token opbyte (8)
@@ -223,7 +223,7 @@ attach variables [ br bs bt ] [
     b0 b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 b12 b13 b14 b15
 ];
 
-attach variables [  u8_8.15 ] [
+attach variables [  u8_8_15 ] [
 #    0x...0         0x...4      0x...8      0x...c
      LBEG           LEND        LCOUNT      SAR         # 0x0_
      BR             LITBASE     _           _           # 0x1_
@@ -299,70 +299,70 @@ attach variables [  u8_8.15 ] [
 # bits are named foo_LL.LM_ML.MM, where LL is the least significant bits of the least
 # singificant operand half, LM the most significant bits of the least significant operand half, etc.
 
-urel_16.23: rel is u8_16.23  [ rel = inst_start + u8_16.23  + 4; ] { export *:4 rel; }
+urel_16_23: rel is u8_16_23  [ rel = inst_start + u8_16_23  + 4; ] { export *:4 rel; }
 
-srel_16.23: rel is s8_16.23  [ rel = inst_start + s8_16.23  + 4; ] { export *:4 rel; }
+srel_16_23: rel is s8_16_23  [ rel = inst_start + s8_16_23  + 4; ] { export *:4 rel; }
 
-srel_12.23: rel is s12_12.23 [ rel = inst_start + s12_12.23 + 4; ] { export *:4 rel; }
+srel_12_23: rel is s12_12_23 [ rel = inst_start + s12_12_23 + 4; ] { export *:4 rel; }
 
-srel_6.23:  rel is s8_6.23   [ rel = inst_start + s8_6.23   + 4; ] { export *:4 rel; }
+srel_6_23:  rel is s8_6_23   [ rel = inst_start + s8_6_23   + 4; ] { export *:4 rel; }
 
-urel_12.15_4.5: rel is n_u2_4.5 & n_u4_12.15 [
-    rel = inst_start + ((n_u2_4.5 << 4) | n_u4_12.15) + 4;
+urel_12_15_4_5: rel is n_u2_4_5 & n_u4_12_15 [
+    rel = inst_start + ((n_u2_4_5 << 4) | n_u4_12_15) + 4;
 ] { export *:4 rel; }
 
-srel_6.23_sb2: rel is s8_6.23 [
-    rel = (inst_start & ~3) + ( s8_6.23 << 2 ) + 4;
+srel_6_23_sb2: rel is s8_6_23 [
+    rel = (inst_start & ~3) + ( s8_6_23 << 2 ) + 4;
 ] { export *:4 rel; }
 
-srel_8.23_oex_sb2: rel is u16_8.23 [
-    rel = ((inst_start + 3) & ~3) + ((u16_8.23 | 0xffff0000) << 2);
+srel_8_23_oex_sb2: rel is u16_8_23 [
+    rel = ((inst_start + 3) & ~3) + ((u16_8_23 | 0xfffc0000) << 2);
     # Below might indicate firmware specific:
-    # rel = 0x9fa000 + 0x40000 + ((u16_8.23 | 0xffff0000) << 2);
+    # rel = 0x9fa000 + 0x40000 + ((u16_8_23 | 0xffff0000) << 2);
 ] { export *:4 rel; }
 
 # Immediates split across the instruction.
-u5_8.11_20: tmp is u1_20 & u4_8.11  [ tmp = (u1_20 << 4) | u4_8.11; ] { export *[const]:1 tmp; }
-u5_4.7_20:  tmp is u1_20 & u4_4.7   [ tmp = (u1_20 << 4) | u4_4.7;  ] { export *[const]:1 tmp; }
-u5_8.11_16: tmp is u1_16 & u4_8.11  [ tmp = (u1_16 << 4) | u4_8.11; ] { export *[const]:1 tmp; }
-u5_4.7_12:  tmp is u1_12 & u4_4.7   [ tmp = (u1_12 << 4) | u4_4.7;  ] { export *[const]:1 tmp; }
-u5_8.11_4:  tmp is u1_4 & u4_8.11   [ tmp = (u1_4  << 4) | u4_8.11; ] { export *[const]:1 tmp; }
+u5_8_11_20: tmp is u1_20 & u4_8_11  [ tmp = (u1_20 << 4) | u4_8_11; ] { export *[const]:1 tmp; }
+u5_4_7_20:  tmp is u1_20 & u4_4_7   [ tmp = (u1_20 << 4) | u4_4_7;  ] { export *[const]:1 tmp; }
+u5_8_11_16: tmp is u1_16 & u4_8_11  [ tmp = (u1_16 << 4) | u4_8_11; ] { export *[const]:1 tmp; }
+u5_4_7_12:  tmp is u1_12 & u4_4_7   [ tmp = (u1_12 << 4) | u4_4_7;  ] { export *[const]:1 tmp; }
+u5_8_11_4:  tmp is u1_4 & u4_8_11   [ tmp = (u1_4  << 4) | u4_8_11; ] { export *[const]:1 tmp; }
 
 # Signed 12-bit (extended to 16) immediate, used by MOVI.
-s16_16.23_8.11: tmp is s4_8.11 & u8_16.23 [
-   tmp = (s4_8.11 << 8) | u8_16.23;
+s16_16_23_8_11: tmp is s4_8_11 & u8_16_23 [
+    tmp = (s4_8_11 << 8) | u8_16_23;
 ] { export *[const]:2 tmp; }
 
 # An “asymmetric” immediate from -32..95, used by MOVI.N.
-n_s8_12.15_4.6_asymm: tmp is n_s3_4.6 & n_s4_12.15 [
-    tmp = ((((n_s3_4.6 & 7) << 4) | (n_s4_12.15 & 15)) |
-          ((((n_s3_4.6 >> 2) & 1) & ((n_s3_4.6 >> 1) & 1)) << 7));
+n_s8_12_15_4_6_asymm: tmp is n_s3_4_6 & n_s4_12_15 [
+    tmp = ((((n_s3_4_6 & 7) << 4) | (n_s4_12_15 & 15)) |
+          ((((n_s3_4_6 >> 2) & 1) & ((n_s3_4_6 >> 1) & 1)) << 7));
 ] { export *[const]:1 tmp; }
 
 # Immediates shifted or with offset.
-s16_16.23_sb8:  tmp is s8_16.23     [ tmp = s8_16.23  << 8; ] { export *[const]:2 tmp; }
-u15_12.23_sb3:  tmp is u12_12.23    [ tmp = u12_12.23 << 3; ] { export *[const]:2 tmp; }
-u10_16.23_sb2:  tmp is u8_16.23     [ tmp = u8_16.23  << 2; ] { export *[const]:2 tmp; }
-u9_16.23_sb1:   tmp is u8_16.23     [ tmp = u8_16.23  << 1; ] { export *[const]:2 tmp; }
-u5_20.23_plus1: tmp is u4_20.23     [ tmp = u4_20.23   + 1; ] { export *[const]:1 tmp; }
-u8_20.23_sb4:   tmp is u4_20.23     [ tmp = u4_20.23  << 4; ] { export *[const]:1 tmp; }
-u5_4.7_plus7:   tmp is u4_4.7       [ tmp = u4_4.7     + 7; ] { export *[const]:1 tmp; }
+s16_16_23_sb8:  tmp is s8_16_23     [ tmp = s8_16_23  << 8; ] { export *[const]:2 tmp; }
+u15_12_23_sb3:  tmp is u12_12_23    [ tmp = u12_12_23 << 3; ] { export *[const]:2 tmp; }
+u10_16_23_sb2:  tmp is u8_16_23     [ tmp = u8_16_23  << 2; ] { export *[const]:2 tmp; }
+u9_16_23_sb1:   tmp is u8_16_23     [ tmp = u8_16_23  << 1; ] { export *[const]:2 tmp; }
+u5_20_23_plus1: tmp is u4_20_23     [ tmp = u4_20_23   + 1; ] { export *[const]:1 tmp; }
+u8_20.23_sb4:   tmp is u4_20_23     [ tmp = u4_20_23  << 4; ] { export *[const]:1 tmp; }
+u5_4_7_plus7:   tmp is u4_4_7       [ tmp = u4_4_7     + 7; ] { export *[const]:1 tmp; }
 
-n_u6_12.15_sb2: tmp is n_u4_12.15  [ tmp = n_u4_12.15 << 2; ] { export *[const]:1 tmp; }
+n_u6_12_15_sb2: tmp is n_u4_12_15  [ tmp = n_u4_12_15 << 2; ] { export *[const]:1 tmp; }
 
 # One-extended. FIXME: Verify this. Only used by [LS]32E (window extension), which aren’t yet
 # implemented.
-s5_12.15_oex:  tmp is u4_12.15      [ tmp = (2 << u4_12.15) * -1; ] { export *[const]:2 tmp; }
+s5_12_15_oex:  tmp is u4_12_15      [ tmp = (2 << u4_12_15) * -1; ] { export *[const]:2 tmp; }
 
 # Some 4-bit immediates with mappings that can’t be (easily) expressed in a single disassembly action.
 
-# n_u4_4.7 with 0 being -1, used by ADDI.N.
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7      [ tmp = n_u4_4.7+0; ] { export *[const]:4 tmp; }
+# n_u4_4_7 with 0 being -1, used by ADDI.N.
+n_s4_4_7_nozero: tmp is n_u4_4_7 = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
+n_s4_4_7_nozero: tmp is n_u4_4_7      [ tmp = n_u4_4_7+0; ] { export *[const]:4 tmp; }
 
 # imm stored in sa for slli is 32-shift.
-# TODO why can't we use subtable output for this instead of repeating u5_4.7_20 calc?
-u5_4.7_20_slli: tmp is u1_20 & u4_4.7   [ tmp = 32 - ((u1_20 << 4) | u4_4.7); ] { export *[const]:1 tmp; }
+# TODO why can't we use subtable output for this instead of repeating u5_4_7_20 calc?
+u5_4_7_20_slli: tmp is u1_20 & u4_4_7   [ tmp = 32 - ((u1_20 << 4) | u4_4_7); ] { export *[const]:1 tmp; }
 
 # B4CONST(ar) (Branch Immediate) encodings, pg. 41 f.
 r_b4const: tmp is ar = 0         [ tmp = 0xffffffff; ] { export *[const]:4 tmp; }
