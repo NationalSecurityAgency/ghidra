@@ -103,46 +103,22 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testRemoveNamespaceSymbolNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol symbol;
-					symbol = getUniqueSymbol(program, "EmptyNamespace");
-					assertNotNull(symbol);
-					symtab.removeSymbolSpecial(symbol);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol symbol;
+				symbol = getUniqueSymbol(program, "EmptyNamespace");
+				assertNotNull(symbol);
+				symtab.removeSymbolSpecial(symbol);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol symbol;
-					symbol = getUniqueSymbol(program, "FirstNamespace");
-					assertNotNull(symbol);
-					symtab.removeSymbolSpecial(symbol);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol symbol;
+				symbol = getUniqueSymbol(program, "FirstNamespace");
+				assertNotNull(symbol);
+				symtab.removeSymbolSpecial(symbol);
 			}
 		});
 
@@ -170,46 +146,22 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testRemoveClassSymbolNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol symbol;
-					symbol = getUniqueSymbol(program, "EmptyClass");
-					assertNotNull(symbol);
-					symtab.removeSymbolSpecial(symbol);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol symbol;
+				symbol = getUniqueSymbol(program, "EmptyClass");
+				assertNotNull(symbol);
+				symtab.removeSymbolSpecial(symbol);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol symbol;
-					symbol = getUniqueSymbol(program, "FirstClass");
-					assertNotNull(symbol);
-					symtab.removeSymbolSpecial(symbol);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol symbol;
+				symbol = getUniqueSymbol(program, "FirstClass");
+				assertNotNull(symbol);
+				symtab.removeSymbolSpecial(symbol);
 			}
 		});
 
@@ -232,49 +184,31 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testAddNamespaceNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createNameSpace(program.getGlobalNamespace(), "NewLatestNamespace",
 						SourceType.USER_DEFINED);
 					symtab.createNameSpace(program.getGlobalNamespace(), "NewSameNamespace",
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createNameSpace(program.getGlobalNamespace(), "NewMyNamespace",
 						SourceType.USER_DEFINED);
 					symtab.createNameSpace(program.getGlobalNamespace(), "NewSameNamespace",
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -297,13 +231,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testAddNamespaceAndSymbolNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Namespace ns;
@@ -313,23 +242,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						SourceType.USER_DEFINED);
 					ns = symtab.createNameSpace(program.getGlobalNamespace(), "NewSameNamespace",
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Namespace ns;
@@ -341,13 +261,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						SourceType.USER_DEFINED);
 					symtab.createLabel(addr(program, "0x1006420"), "CrackerJacks", ns,
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -383,49 +299,31 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testAddClassNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createClass(program.getGlobalNamespace(), "NewLatestClass",
 						SourceType.USER_DEFINED);
 					symtab.createClass(program.getGlobalNamespace(), "NewSameClass",
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createClass(program.getGlobalNamespace(), "NewMyClass",
 						SourceType.USER_DEFINED);
 					symtab.createClass(program.getGlobalNamespace(), "NewSameClass",
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -448,13 +346,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testAddClassAndFunctionNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					GhidraClass gc;
@@ -468,23 +361,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						SourceType.USER_DEFINED);
 					f = getFunction(program, "0x1006420");
 					f.setParentNamespace(gc);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					GhidraClass gc;
@@ -499,13 +383,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 					f = getFunction(program, "0x1003bed");
 					f.setParentNamespace(gc);
 					f.setName("CrackerJacks", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -548,13 +428,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testSimpleAddClassAddNamespaceConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Namespace ns;
 					GhidraClass gc;
@@ -574,23 +449,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 							.createClass(program.getGlobalNamespace(),
 								"Yellow", SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Namespace ns;
 					GhidraClass gc;
@@ -610,13 +476,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 							.createNameSpace(program.getGlobalNamespace(),
 								"Yellow", SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -653,13 +515,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testSimpleAddSubClassAddSubNamespaceConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Namespace emptyNamespace = (Namespace) getUniqueSymbol(program,
 						"EmptyNamespace", program.getGlobalNamespace()).getObject();
@@ -681,23 +538,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 							.createClass(emptyNamespace, "Yellow",
 								SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Namespace emptyNamespace = (Namespace) getUniqueSymbol(program,
 						"EmptyNamespace", program.getGlobalNamespace()).getObject();
@@ -719,13 +567,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 							.createNameSpace(emptyNamespace, "Yellow",
 								SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -771,13 +615,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 			// non-primary global "EEE" @ "0x1004bdc"
 			// primary global "AAA" @ "0x100e483"
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Namespace ns;
 					GhidraClass gc;
@@ -797,23 +636,15 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 							.createClass(program.getGlobalNamespace(),
 								"Yellow", SourceType.USER_DEFINED);
 					assertNotNull(gc);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Namespace ns;
 					GhidraClass gc;
@@ -841,13 +672,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 							.createNameSpace(ns, "SubYellow",
 								SourceType.USER_DEFINED);
 					assertNotNull(ns);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -918,13 +745,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testSimpleAddNamespaceAddSymbolNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Namespace ns;
 					GhidraClass gc;
@@ -941,23 +763,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 					Function redFunction = funcMgr.getFunctionAt(addr(program, "0x1002a91"));
 //					redFunction.setName("RedSymbolLatest");
 					redFunction.getSymbol().setNamespace(gc);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Namespace ns;
 					GhidraClass gc;
@@ -975,13 +788,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 					assertNotNull(ns);
 					symtab.createLabel(addr(program, "0x1001000"), "RedSymbolMy", ns,
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1028,48 +837,30 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 	public void testSimpleRenameNamespaceAddSymbolNoConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Namespace emptyNamespace = (Namespace) getUniqueSymbol(program,
 						"EmptyNamespace", program.getGlobalNamespace()).getObject();
 					emptyNamespace.getSymbol().setName("ChangedNS", SourceType.USER_DEFINED);
 					assertEquals("ChangedNS", emptyNamespace.getName());
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Namespace emptyNamespace = (Namespace) getUniqueSymbol(program,
 						"EmptyNamespace", program.getGlobalNamespace()).getObject();
 					symtab.createLabel(addr(program, "0x1001000"), "bats", emptyNamespace,
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1115,13 +906,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Namespace firstNamespace = (Namespace) getUniqueSymbol(program,
@@ -1134,23 +920,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						SourceType.USER_DEFINED);
 					Function f = getFunction(program, "0x1002239");
 					f.setName("Stuff", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Namespace secondNamespace = (Namespace) getUniqueSymbol(program,
@@ -1163,13 +940,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						SourceType.USER_DEFINED);
 					Function f = getFunction(program, "0x100194b");
 					f.setName("Junk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1231,13 +1004,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Symbol firstNsSym =
@@ -1247,23 +1015,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						"SecondNamespace", program.getGlobalNamespace()).getObject();
 					symtab.createLabel(addr(program, "0x1001000"), "soccer", secondNamespace,
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Symbol secondNsSym =
@@ -1273,13 +1032,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						"FirstNamespace", program.getGlobalNamespace()).getObject();
 					symtab.createLabel(addr(program, "0x1001000"), "football", firstNamespace,
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1341,13 +1096,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Symbol firstNsSym =
@@ -1355,23 +1105,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 					symtab.removeSymbolSpecial(firstNsSym);
 					Function f = getFunction(program, "0x1002239");
 					f.setName("Stuff", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Symbol secondNsSym =
@@ -1379,13 +1120,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 					symtab.removeSymbolSpecial(secondNsSym);
 					Function f = getFunction(program, "0x100194b");
 					f.setName("Junk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1423,13 +1160,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					FunctionManager functionMgr = program.getFunctionManager();
@@ -1439,24 +1171,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 					Namespace parentNamespace = symtab.createNameSpace(program.getGlobalNamespace(),
 						"Foo", SourceType.USER_DEFINED);
 					f.setParentNamespace(parentNamespace);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					FunctionManager functionMgr = program.getFunctionManager();
@@ -1466,14 +1188,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 					Namespace parentNamespace = symtab.createNameSpace(program.getGlobalNamespace(),
 						"Foo", SourceType.USER_DEFINED);
 					f.setParentNamespace(parentNamespace);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1493,13 +1210,8 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					FunctionManager functionMgr = program.getFunctionManager();
@@ -1515,24 +1227,14 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 					parentNamespace = symtab.createNameSpace(program.getGlobalNamespace(), "NS1",
 						SourceType.USER_DEFINED);
 					f.setParentNamespace(parentNamespace);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					FunctionManager functionMgr = program.getFunctionManager();
@@ -1549,13 +1251,9 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 						SourceType.USER_DEFINED);
 					f.setParentNamespace(parentNamespace);
 
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

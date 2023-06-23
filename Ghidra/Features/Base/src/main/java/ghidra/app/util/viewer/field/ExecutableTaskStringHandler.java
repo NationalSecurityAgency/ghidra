@@ -26,7 +26,7 @@ import ghidra.util.Msg;
 
 public class ExecutableTaskStringHandler implements AnnotatedStringHandler {
 	private static final String INVALID_SYMBOL_TEXT =
-		"@execute annotation must have an " + "executable name";
+		"@execute annotation must have an executable name";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "execute" };
 
 	@Override
@@ -48,9 +48,9 @@ public class ExecutableTaskStringHandler implements AnnotatedStringHandler {
 
 	private String getDisplayText(String[] text) {
 		//
-		// We currently support two modes of: 3 parameters or 1. The user can leave off the 
-		// executable's parameter and display string OR they can have all three.  
-		// 
+		// We currently support two modes of: 3 parameters or 1. The user can leave off the
+		// executable's parameter and display string OR they can have all three.
+		//
 		if (text.length == 4) {
 			return text[3]; // 4 items means they have display text
 		}
@@ -154,6 +154,7 @@ public class ExecutableTaskStringHandler implements AnnotatedStringHandler {
 						inputStream.close();
 					}
 					catch (IOException e) {
+						// ignore; we tried
 					}
 				}
 			}
@@ -184,16 +185,14 @@ public class ExecutableTaskStringHandler implements AnnotatedStringHandler {
 				}
 			}
 			catch (Exception e) {
-				e.printStackTrace();
+				Msg.error(this, "Exception reading output for executable annotation", e);
 				buffer = null;
 			}
 		}
+	}
 
-		String getIOData() {
-			if (buffer == null) {
-				return null;
-			}
-			return buffer.toString();
-		}
+	@Override
+	public String getPrototypeString(String displayText) {
+		return "{@execute " + displayText.trim() + "}";
 	}
 }

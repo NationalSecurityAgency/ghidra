@@ -36,18 +36,42 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 
 	public final static String DYLD_CACHE_NAME = "DYLD Cache";
 
-	/** Loader option to process symbols*/
-	static final String PROCESS_SYMBOLS_OPTION_NAME = "Process symbols";
+	/** Loader option to process symbols */
+	static final String PROCESS_LOCAL_SYMBOLS_OPTION_NAME = "Process local symbols";
 
 	/** Default value for loader option to process symbols */
-	static final boolean PROCESS_SYMBOLS_OPTION_DEFAULT = true;
+	static final boolean PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT = true;
 
-	/** Loader option to add relocation entries for chained fixups */
+	/** Loader option to process exports */
+	static final String PROCESS_EXPORTS_OPTION_NAME = "Process exports";
+
+	/** Default value for loader option to process exports */
+	static final boolean PROCESS_EXPORTS_OPTION_DEFAULT = true;
+
+	/** Loader option to mark up symbols */
+	static final String MARKUP_LOCAL_SYMBOLS_OPTION_NAME = "Markup local symbol nlists (slow)";
+
+	/** Default value for loader option to mark up symbols */
+	static final boolean MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT = false;
+
+	/** Loader option to process chained fixups */
+	static final String PROCESS_CHAINED_FIXUPS_OPTION_NAME = "Process chained fixups";
+
+	/** Default value for loader option to process chained fixups */
+	static final boolean PROCESS_CHAINED_FIXUPS_OPTION_DEFAULT = true;
+
+	/** Loader option to add chained fixups to relocation table */
 	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
-		"Add relocation entries for chained fixups";
+		"Add chained fixups to relocation table";
 
-	/** Default value for loader option to add chained fixups relocation entries */
+	/** Default value for loader option to add chained fixups to relocation table */
 	static final boolean ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT = false;
+
+	/** Loader option to mark up Mach-O load command data */
+	static final String MARKUP_MACHO_LC_DATA_OPTION_NAME = "Markup Mach-O load command data (slow)";
+
+	/** Default value for loader option to mark up Mach-O load command data */
+	static final boolean MARKUP_MACHO_LC_DATA_OPTION_DEFAULT = false;
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
@@ -87,8 +111,7 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 		try {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
 				MemoryBlockUtils.createFileBytes(program, provider, monitor),
-				shouldProcessSymbols(options), shouldAddChainedFixupsRelocations(options), log,
-				monitor);
+				getDyldCacheOptions(options), log, monitor);
 		}
 		catch (CancelledException e) {
 			return;
@@ -104,23 +127,44 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 		List<Option> list =
 			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
 		if (!loadIntoProgram) {
-			list.add(new Option(PROCESS_SYMBOLS_OPTION_NAME, PROCESS_SYMBOLS_OPTION_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processSymbols"));
+			list.add(
+				new Option(PROCESS_LOCAL_SYMBOLS_OPTION_NAME, PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processLocalSymbols"));
+			list.add(
+				new Option(MARKUP_LOCAL_SYMBOLS_OPTION_NAME, MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-markupLocalSymbols"));
+			list.add(
+				new Option(PROCESS_EXPORTS_OPTION_NAME, PROCESS_EXPORTS_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processExports"));
+			list.add(new Option(PROCESS_CHAINED_FIXUPS_OPTION_NAME,
+				PROCESS_CHAINED_FIXUPS_OPTION_DEFAULT, Boolean.class,
+				Loader.COMMAND_LINE_ARG_PREFIX + "-processChainedFixups"));
 			list.add(new Option(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME,
 				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
 				Loader.COMMAND_LINE_ARG_PREFIX + "-addChainedFixupsRelocations"));
+			list.add(new Option(MARKUP_MACHO_LC_DATA_OPTION_NAME,
+				MARKUP_MACHO_LC_DATA_OPTION_DEFAULT, Boolean.class,
+				Loader.COMMAND_LINE_ARG_PREFIX + "-markupMachoLoadCommandData"));
 		}
 		return list;
 	}
 
-	private boolean shouldProcessSymbols(List<Option> options) {
-		return OptionUtils.getOption(PROCESS_SYMBOLS_OPTION_NAME, options,
-			PROCESS_SYMBOLS_OPTION_DEFAULT);
-	}
-
-	private boolean shouldAddChainedFixupsRelocations(List<Option> options) {
-		return OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
-			ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
+	private DyldCacheOptions getDyldCacheOptions(List<Option> options) {
+		boolean processLocalSymbols = OptionUtils.getOption(PROCESS_LOCAL_SYMBOLS_OPTION_NAME,
+			options, PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT);
+		boolean markupLocalSymbols = OptionUtils.getOption(MARKUP_LOCAL_SYMBOLS_OPTION_NAME,
+			options, MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT);
+		boolean processExports = OptionUtils.getOption(PROCESS_EXPORTS_OPTION_NAME,
+			options, PROCESS_EXPORTS_OPTION_DEFAULT);
+		boolean processChainedFixups = OptionUtils.getOption(PROCESS_CHAINED_FIXUPS_OPTION_NAME,
+			options, PROCESS_CHAINED_FIXUPS_OPTION_DEFAULT);
+		boolean addChainedFixupsRelocations =
+			OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
+				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
+		boolean markupMachoLoadCommandData = OptionUtils.getOption(MARKUP_MACHO_LC_DATA_OPTION_NAME,
+			options, MARKUP_MACHO_LC_DATA_OPTION_DEFAULT);
+		return new DyldCacheOptions(processLocalSymbols, markupLocalSymbols, processExports,
+			processChainedFixups, addChainedFixupsRelocations, markupMachoLoadCommandData);
 	}
 
 	@Override

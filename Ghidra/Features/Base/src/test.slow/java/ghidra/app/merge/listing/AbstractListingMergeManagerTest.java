@@ -126,65 +126,41 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
+				Listing listing = program.getListing();
+				Address addr = addr(program, address);
 				try {
-					Listing listing = program.getListing();
-					Address addr = addr(program, address);
-					try {
-						program.getMemory().setBytes(addr, bytes);
-						listing.createData(addr, dt);
-					}
-					catch (CodeUnitInsertionException | MemoryAccessException e) {
-						Assert.fail(e.getMessage());
-					}
-					Data data = listing.getDataAt(addr);
-					Assert.assertTrue(data != null);
-					Assert.assertTrue(dt.isEquivalent(data.getDataType()));
-					commit = true;
+					program.getMemory().setBytes(addr, bytes);
+					listing.createData(addr, dt);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (CodeUnitInsertionException | MemoryAccessException e) {
+					Assert.fail(e.getMessage());
 				}
+				Data data = listing.getDataAt(addr);
+				Assert.assertTrue(data != null);
+				Assert.assertTrue(dt.isEquivalent(data.getDataType()));
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, address);
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, address);
-					try {
-						equateTab.createEquate("FOO", expectedValue).addReference(addr, 0);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("FOO", expectedValue).addReference(addr, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, address);
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, address);
-					try {
-						equateTab.createEquate("BAR", expectedValue).addReference(addr, 0);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("BAR", expectedValue).addReference(addr, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -1636,91 +1612,45 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001984 =
-						new AddressSet(addr(program, "0x1001984"), addr(program, "0x100198a"));
-					createFunction(program, "0x1001984", "FUN_01001984", body1001984);
+				AddressSet body1001984 =
+					new AddressSet(addr(program, "0x1001984"), addr(program, "0x100198a"));
+				createFunction(program, "0x1001984", "FUN_01001984", body1001984);
 
-					AddressSet body10029bc =
-						new AddressSet(addr(program, "0x10029bc"), addr(program, "0x10029d3"));
-					createFunction(program, "0x10029bc", "FUN_010029bc", body10029bc);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029bc =
+					new AddressSet(addr(program, "0x10029bc"), addr(program, "0x10029d3"));
+				createFunction(program, "0x10029bc", "FUN_010029bc", body10029bc);
 			}
 		});
 	}
 
 	protected void setupRemoveConflictUseForAll() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x10031ee");
-					removeFunction(program, "0x1003bed");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x10031ee");
+				removeFunction(program, "0x1003bed");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Function func = getFunction(program, "0x10031ee");
-					func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
-					func = getFunction(program, "0x1003bed");
-					func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Function func = getFunction(program, "0x10031ee");
+				func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
+				func = getFunction(program, "0x1003bed");
+				func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
 			}
 		});
 	}

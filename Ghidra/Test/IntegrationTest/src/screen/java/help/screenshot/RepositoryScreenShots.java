@@ -63,10 +63,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 	protected MergeScreenShotGenerator mtfGenerator;
 	static protected float DESCRIPTION_FONT_SIZE = (float) 14.0;
 
-	public RepositoryScreenShots() {
-		super();
-	}
-
 	@Before
 	@Override
 	public void setUp() throws Exception {
@@ -81,6 +77,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 	@Override
 	public void tearDown() throws Exception {
 		mtfGenerator.showResults();
+		closeAllWindows();
 		mtf.dispose();
 	}
 
@@ -96,47 +93,29 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		mtfGenerator.setTool(mergeTool);
 	}
 
-//	public void testMultiUser() throws Exception {
-//		GhidraScreenShotGenerator gssg = new GhidraScreenShotGenerator(getName());
-//		gssg.setUp();
-//		gssg.captureWindow();
-//
-//	}
-
 	@Test
 	public void testMemoryConflict() throws Exception {
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("Modify Latest Program");
 				try {
 					blocks[1].setName("LatestText");
-					commit = true;
 				}
 				catch (LockException e) {
 					Assert.fail();
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				MemoryBlock[] blocks = program.getMemory().getBlocks();
-				int transactionID = program.startTransaction("Modify My Program");
 				try {
 					blocks[1].setName("MY_Text");
 				}
 				catch (LockException e) {
 					Assert.fail();
-				}
-				finally {
-					program.endTransaction(transactionID, true);
 				}
 			}
 		});
@@ -166,28 +145,19 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("Modify Original Program");
 				try {
 					listing.createRootModule("Main Tree");
 					listing.createRootModule("Tree Three");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				Listing listing = program.getListing();
-				int transactionID = program.startTransaction("Modify Latest Program");
 				try {
 					ProgramModule root = listing.getRootModule("Main Tree");
 					root.createFragment("frag_one");
@@ -197,21 +167,14 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 					// rename Tree Three to Tree3_XXX
 					listing.renameTree("Tree Three", "Tree3_XXX");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
-				int transactionID = program.startTransaction("Modify My Program");
 				try {
 					Listing listing = program.getListing();
 
@@ -232,13 +195,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					listing.renameTree("Main Tree", "My Main Tree");
 
 					listing.renameTree("Tree Three", "MY TREE 3");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -263,27 +222,17 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					DataTypeManager dtm = program.getDataTypeManager();
-					Category miscCat = dtm.createCategory(new CategoryPath("/MISC"));
-					Structure s = new StructureDataType("Foo", 0);
-					s.add(new ByteDataType());
-					s.add(DataType.DEFAULT);
-					s.add(new FloatDataType());
-					miscCat.addDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				DataTypeManager dtm = program.getDataTypeManager();
+				Category miscCat = dtm.createCategory(new CategoryPath("/MISC"));
+				Structure s = new StructureDataType("Foo", 0);
+				s.add(new ByteDataType());
+				s.add(DataType.DEFAULT);
+				s.add(new FloatDataType());
+				miscCat.addDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					DataTypeManager dtm = program.getDataTypeManager();
 
@@ -296,8 +245,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					Category cat1 = dtm.createCategory(new CategoryPath("/Category1"));
 					Category cat2 = cat1.createCategory("Category2");
 					cat2.moveCategory(miscCat, monitor);
-
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Error modifying Latest program.");
@@ -305,15 +252,10 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				catch (DuplicateNameException e) {
 					Assert.fail("Error modifying Latest program.");
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					DataTypeManager dtm = program.getDataTypeManager();
 
@@ -324,16 +266,12 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 					Category category = dtm.getCategory(new CategoryPath("/MISC"));
 					category.setName("Category1");
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Error modifying My program.");
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Error modifying My program.");
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -356,22 +294,12 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					DataTypeManager dtm = program.getDataTypeManager();
-					dtm.createCategory(new CategoryPath("/MISC"));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				DataTypeManager dtm = program.getDataTypeManager();
+				dtm.createCategory(new CategoryPath("/MISC"));
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					DataTypeManager dtm = program.getDataTypeManager();
 
@@ -380,8 +308,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					Category cat2 = cat1.createCategory("Category2");
 					Category cat3 = cat2.createCategory("Category3");
 					cat3.moveCategory(miscCat, monitor);
-
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Error modifying Latest program.");
@@ -389,29 +315,19 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				catch (DuplicateNameException e) {
 					Assert.fail("Error modifying Latest program.");
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					DataTypeManager dtm = program.getDataTypeManager();
 
 					Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 					Category cat1 = dtm.createCategory(new CategoryPath("/Category1"));
 					cat1.moveCategory(miscCat, monitor);
-
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Error modifying My program.");
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -435,55 +351,28 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					ProgramContext pc = program.getProgramContext();
-					Register regDR0 = pc.getRegister(regNameDR0);
+				ProgramContext pc = program.getProgramContext();
+				Register regDR0 = pc.getRegister(regNameDR0);
 
-					setRegValue(pc, addr(program, "004010a0"), addr(program, "004010a3"), regDR0,
-						0x1234L);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setRegValue(pc, addr(program, "004010a0"), addr(program, "004010a3"), regDR0,
+					0x1234L);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ProgramContext pc = program.getProgramContext();
-					Register regDR0 = pc.getRegister(regNameDR0);
+				ProgramContext pc = program.getProgramContext();
+				Register regDR0 = pc.getRegister(regNameDR0);
 
-					setRegValue(pc, addr(program, "004010a0"), addr(program, "004010a3"), regDR0,
-						0x5L);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setRegValue(pc, addr(program, "004010a0"), addr(program, "004010a3"), regDR0,
+					0x5L);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ProgramContext pc = program.getProgramContext();
-					Register regDR0 = pc.getRegister(regNameDR0);
+				ProgramContext pc = program.getProgramContext();
+				Register regDR0 = pc.getRegister(regNameDR0);
 
-					pc.remove(addr(program, "004010a0"), addr(program, "004010a3"), regDR0);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				pc.remove(addr(program, "004010a0"), addr(program, "004010a3"), regDR0);
 			}
 		});
 
@@ -505,43 +394,19 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					createData(program, "0x0040e694", new DWordDataType());
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x0040e694", new DWordDataType());
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					clear(program, "0x0040e694", "0x0040e695");
-					createData(program, "0x0040e694", new ArrayDataType(new ByteDataType(), 2, 1));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				clear(program, "0x0040e694", "0x0040e695");
+				createData(program, "0x0040e694", new ArrayDataType(new ByteDataType(), 2, 1));
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					clear(program, "0x0040e694", "0x0040e695");
-					createData(program, "0x0040e694", new ArrayDataType(new CharDataType(), 2, 1));
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				clear(program, "0x0040e694", "0x0040e695");
+				createData(program, "0x0040e694", new ArrayDataType(new CharDataType(), 2, 1));
 			}
 		});
 
@@ -880,63 +745,36 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					Structure structure = new StructureDataType("SampleStructure", 0);
-					structure.add(new ByteDataType());
-					structure.add(new WordDataType());
-					structure.add(new FloatDataType());
+				Structure structure = new StructureDataType("SampleStructure", 0);
+				structure.add(new ByteDataType());
+				structure.add(new WordDataType());
+				structure.add(new FloatDataType());
 
-					clear(program, "0x0040e694", "0x0040e69b");
-					createData(program, "0x0040e694", structure);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				clear(program, "0x0040e694", "0x0040e69b");
+				createData(program, "0x0040e694", structure);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Structure structure = new StructureDataType("SampleStructure", 0);
-					structure.add(new ByteDataType());
-					structure.add(new CharDataType());
-					structure.add(new CharDataType());
-					structure.add(new FloatDataType());
+				Structure structure = new StructureDataType("SampleStructure", 0);
+				structure.add(new ByteDataType());
+				structure.add(new CharDataType());
+				structure.add(new CharDataType());
+				structure.add(new FloatDataType());
 
-					clear(program, "0x0040e694", "0x0040e69b");
-					createData(program, "0x0040e694", structure);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				clear(program, "0x0040e694", "0x0040e69b");
+				createData(program, "0x0040e694", structure);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Structure structure = new StructureDataType("SampleStructure", 0);
-					structure.add(new ByteDataType());
-					structure.add(new ArrayDataType(new CharDataType(), 2, 1));
-					structure.add(new FloatDataType());
+				Structure structure = new StructureDataType("SampleStructure", 0);
+				structure.add(new ByteDataType());
+				structure.add(new ArrayDataType(new CharDataType(), 2, 1));
+				structure.add(new FloatDataType());
 
-					clear(program, "0x0040e694", "0x0040e69b");
-					createData(program, "0x0040e694", structure);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				clear(program, "0x0040e694", "0x0040e69b");
+				createData(program, "0x0040e694", structure);
 			}
 		});
 
@@ -959,8 +797,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
@@ -968,21 +804,14 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 						symbolTable.createExternalLibrary("Library2", SourceType.USER_DEFINED);
 					externalManager.addExtLocation(externalLibrary, "activate",
 						addr(program, "77ba5f22"), SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
@@ -997,14 +826,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 						SourceType.USER_DEFINED);
 					function.addParameter(new ParameterImpl("type", new ByteDataType(), program),
 						SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1026,8 +850,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
@@ -1035,41 +857,27 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 						symbolTable.createExternalLibrary("Library1", SourceType.USER_DEFINED);
 					externalManager.addExtLocation(externalLibrary, "activate",
 						addr(program, "77ba5f22"), SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
 						externalManager.getUniqueExternalLocation("Library1", "activate");
 					externalLocation.setDataType(new FloatDataType());
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1080,14 +888,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 						SourceType.USER_DEFINED);
 					function.addParameter(new ParameterImpl("type", new ByteDataType(), program),
 						SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1109,8 +912,6 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					SymbolTable symbolTable = program.getSymbolTable();
@@ -1118,21 +919,14 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 						symbolTable.createExternalLibrary("Library2", SourceType.USER_DEFINED);
 					externalManager.addExtLocation(externalLibrary, "process",
 						addr(program, "77ba5f22"), SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1151,21 +945,14 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					function.addParameter(
 						new ParameterImpl(null, new Undefined4DataType(), program),
 						SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1184,14 +971,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 					function.addParameter(
 						new ParameterImpl(null, new Undefined2DataType(), program),
 						SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1215,52 +997,34 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Function function = getFunction(program, "0x00401130");
-					function.setReturnType(new PointerDataType(), SourceType.USER_DEFINED);
-					Parameter parameter0 = function.getParameter(0);
-					parameter0.setComment("Latest parameter 1 comment.");
+				Function function = getFunction(program, "0x00401130");
+				function.setReturnType(new PointerDataType(), SourceType.USER_DEFINED);
+				Parameter parameter0 = function.getParameter(0);
+				parameter0.setComment("Latest parameter 1 comment.");
 
-					Parameter parameter1 = function.getParameter(1);
-					parameter1.setName("value", SourceType.USER_DEFINED);
-					parameter1.setComment("Latest parameter 2 comment.");
+				Parameter parameter1 = function.getParameter(1);
+				parameter1.setName("value", SourceType.USER_DEFINED);
+				parameter1.setComment("Latest parameter 2 comment.");
 
-					Function function2 = getFunction(program, "0x00401240");
-					Parameter parameter = function2.getParameter(0);
-					parameter.setComment("Latest parameter 0 comment.");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Function function2 = getFunction(program, "0x00401240");
+				Parameter parameter = function2.getParameter(0);
+				parameter.setComment("Latest parameter 0 comment.");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Function function = getFunction(program, "0x00401130");
-					function.setReturnType(new FloatDataType(), SourceType.USER_DEFINED);
-					Parameter parameter0 = function.getParameter(0);
-					parameter0.setComment("My parameter 1 comment.");
+				Function function = getFunction(program, "0x00401130");
+				function.setReturnType(new FloatDataType(), SourceType.USER_DEFINED);
+				Parameter parameter0 = function.getParameter(0);
+				parameter0.setComment("My parameter 1 comment.");
 
-					Parameter parameter1 = function.getParameter(1);
-					parameter1.setName("type", SourceType.USER_DEFINED);
-					parameter1.setComment("My parameter 2 comment.");
+				Parameter parameter1 = function.getParameter(1);
+				parameter1.setName("type", SourceType.USER_DEFINED);
+				parameter1.setComment("My parameter 2 comment.");
 
-					Function function2 = getFunction(program, "0x00401240");
-					Parameter parameter = function2.getParameter(0);
-					parameter.setComment("My parameter 0 comment.");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Function function2 = getFunction(program, "0x00401240");
+				Parameter parameter = function2.getParameter(0);
+				parameter.setComment("My parameter 0 comment.");
 			}
 		});
 
@@ -1288,50 +1052,26 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x00401130");
-					removeFunction(program, "0x00401240");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x00401130");
+				removeFunction(program, "0x00401240");
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					FunctionManager functionManager = program.getFunctionManager();
-					AddressSet body =
-						new AddressSet(addr(program, "0x00401130"), addr(program, "0x00401264"));
-					functionManager.createFunction(null, addr(program, "0x00401130"), body,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				FunctionManager functionManager = program.getFunctionManager();
+				AddressSet body =
+					new AddressSet(addr(program, "0x00401130"), addr(program, "0x00401264"));
+				functionManager.createFunction(null, addr(program, "0x00401130"), body,
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					FunctionManager functionManager = program.getFunctionManager();
-					AddressSet body2 =
-						new AddressSet(addr(program, "0x00401240"), addr(program, "0x00401264"));
-					functionManager.createFunction(null, addr(program, "0x00401240"), body2,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				FunctionManager functionManager = program.getFunctionManager();
+				AddressSet body2 =
+					new AddressSet(addr(program, "0x00401240"), addr(program, "0x00401264"));
+				functionManager.createFunction(null, addr(program, "0x00401240"), body2,
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1353,29 +1093,13 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x00401130");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x00401130");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Function func = getFunction(program, "0x00401130");
-					func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Function func = getFunction(program, "0x00401130");
+				func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
 			}
 		});
 
@@ -1396,47 +1120,23 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					symtab.createLabel(addr(program, "0x0040156c"), "DDD", SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				symtab.createLabel(addr(program, "0x0040156c"), "DDD", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol symbol = symtab.getGlobalSymbol("DDD", addr(program, "0x0040156c"));
-					symbol.delete();
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol symbol = symtab.getGlobalSymbol("DDD", addr(program, "0x0040156c"));
+				symbol.delete();
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol symbol = symtab.getGlobalSymbol("DDD", addr(program, "0x0040156c"));
-					Namespace namespace = getFunction(program, "0x00401130");
-					symbol.setNamespace(namespace);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol symbol = symtab.getGlobalSymbol("DDD", addr(program, "0x0040156c"));
+				Namespace namespace = getFunction(program, "0x00401130");
+				symbol.setNamespace(namespace);
 			}
 		});
 
@@ -1458,49 +1158,25 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Namespace namespace = getFunction(program, "0x00401130");
-					symtab.createLabel(addr(program, "0x0040156c"), "AAA", namespace,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Namespace namespace = getFunction(program, "0x00401130");
+				symtab.createLabel(addr(program, "0x0040156c"), "AAA", namespace,
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol symbol = symtab.getGlobalSymbol("AAA", addr(program, "0x0040156c"));
-					symbol.setName("ME", SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol symbol = symtab.getGlobalSymbol("AAA", addr(program, "0x0040156c"));
+				symbol.setName("ME", SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Symbol symbol = symtab.getGlobalSymbol("AAA", addr(program, "0x0040156c"));
-					symbol.setNameAndNamespace("ME", program.getGlobalNamespace(),
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Symbol symbol = symtab.getGlobalSymbol("AAA", addr(program, "0x0040156c"));
+				symbol.setNameAndNamespace("ME", program.getGlobalNamespace(),
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1522,34 +1198,18 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Namespace namespace = program.getGlobalNamespace();
-					symtab.createLabel(addr(program, "0x0040156c"), "BBB", namespace,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Namespace namespace = program.getGlobalNamespace();
+				symtab.createLabel(addr(program, "0x0040156c"), "BBB", namespace,
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Namespace namespace = getFunction(program, "0x00401130");
-					symtab.createLabel(addr(program, "0x0040156c"), "BBB", namespace,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Namespace namespace = getFunction(program, "0x00401130");
+				symtab.createLabel(addr(program, "0x0040156c"), "BBB", namespace,
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1571,34 +1231,18 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Namespace namespace = getFunction(program, "0x00401130");
-					symtab.createLabel(addr(program, "0x0040156c"), "Foo", namespace,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Namespace namespace = getFunction(program, "0x00401130");
+				symtab.createLabel(addr(program, "0x0040156c"), "Foo", namespace,
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Namespace namespace = getFunction(program, "0x00401130");
-					symtab.createLabel(addr(program, "0x0040156c"), "Bar", namespace,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Namespace namespace = getFunction(program, "0x00401130");
+				symtab.createLabel(addr(program, "0x0040156c"), "Bar", namespace,
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -1620,28 +1264,20 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					symtab.createNameSpace(program.getGlobalNamespace(), "FirstNamespace",
 						SourceType.USER_DEFINED);
 					symtab.createNameSpace(program.getGlobalNamespace(), "SecondNamespace",
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Symbol firstNsSym =
@@ -1651,20 +1287,14 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 						"SecondNamespace", program.getGlobalNamespace()).getObject();
 					symtab.createLabel(addr(program, "0x0040156c"), "soccer", secondNamespace,
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					SymbolTable symtab = program.getSymbolTable();
 					Symbol secondNsSym =
@@ -1674,13 +1304,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 						"FirstNamespace", program.getGlobalNamespace()).getObject();
 					symtab.createLabel(addr(program, "0x00401140"), "football", firstNamespace,
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1703,36 +1329,20 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Namespace namespace = getFunction(program, "0x00401130");
-					symtab.createLabel(addr(program, "0x0040114a"), "YOU", namespace,
-						SourceType.USER_DEFINED);
-					createGlobalSymbol(program, "0x0040156c", "ME");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Namespace namespace = getFunction(program, "0x00401130");
+				symtab.createLabel(addr(program, "0x0040114a"), "YOU", namespace,
+					SourceType.USER_DEFINED);
+				createGlobalSymbol(program, "0x0040156c", "ME");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					SymbolTable symtab = program.getSymbolTable();
-					Namespace namespace = getFunction(program, "0x00401130");
-					symtab.createLabel(addr(program, "0x00401150"), "YOU", namespace,
-						SourceType.USER_DEFINED);
-					createGlobalSymbol(program, "0x00401140", "ME");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				SymbolTable symtab = program.getSymbolTable();
+				Namespace namespace = getFunction(program, "0x00401130");
+				symtab.createLabel(addr(program, "0x00401150"), "YOU", namespace,
+					SourceType.USER_DEFINED);
+				createGlobalSymbol(program, "0x00401140", "ME");
 			}
 		});
 
@@ -1754,51 +1364,27 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, "0x00402e5f");
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, "0x00402e5f");
-					try {
-						equateTab.createEquate("01", 1).addReference(addr, 0);
-					}
-					catch (DuplicateNameException e) {
-						Assert.fail(e.getMessage());
-					}
-					catch (InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("01", 1).addReference(addr, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException e) {
+					Assert.fail(e.getMessage());
+				}
+				catch (InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x00402e5f", 0, 1L, "PEAR");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x00402e5f", 0, 1L, "PEAR");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					changeEquate(program, "0x00402e5f", 0, 1L, "ORANGE");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				changeEquate(program, "0x00402e5f", 0, 1L, "ORANGE");
 			}
 		});
 
@@ -1820,47 +1406,23 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.createIntPropertyMap("Space");
-					pm.add(addr(program, "0x00401002"), 1);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.createIntPropertyMap("Space");
+				pm.add(addr(program, "0x00401002"), 1);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.add(addr(program, "0x00401002"), 3);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.add(addr(program, "0x00401002"), 3);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					PropertyMapManager pmm = program.getUsrPropertyManager();
-					IntPropertyMap pm = pmm.getIntPropertyMap("Space");
-					pm.add(addr(program, "0x00401002"), 4);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				PropertyMapManager pmm = program.getUsrPropertyManager();
+				IntPropertyMap pm = pmm.getIntPropertyMap("Space");
+				pm.add(addr(program, "0x00401002"), 4);
 			}
 		});
 
@@ -1882,73 +1444,49 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					ExternalManager externalManager = program.getExternalManager();
-					externalManager.addExtLocation("KERNEL32.DLL", "allocate", null,
-						SourceType.USER_DEFINED);
-					externalManager.addExtLocation("KERNEL32.DLL", "stuff", null,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ExternalManager externalManager = program.getExternalManager();
+				externalManager.addExtLocation("KERNEL32.DLL", "allocate", null,
+					SourceType.USER_DEFINED);
+				externalManager.addExtLocation("KERNEL32.DLL", "stuff", null,
+					SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-					refs = refMgr.getReferencesFrom(addr(program, "0x0040b044"), 0);
-					assertEquals(1, refs.length);
-					Reference reference = refs[0];
-					Address fromAddress = reference.getFromAddress();
-					int operandIndex = reference.getOperandIndex();
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+				refs = refMgr.getReferencesFrom(addr(program, "0x0040b044"), 0);
+				assertEquals(1, refs.length);
+				Reference reference = refs[0];
+				Address fromAddress = reference.getFromAddress();
+				int operandIndex = reference.getOperandIndex();
 
-					refMgr.delete(refs[0]);
+				refMgr.delete(refs[0]);
 
-					ExternalManager externalManager = program.getExternalManager();
-					ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation("KERNEL32.DLL", "allocate");
-					refMgr.addExternalReference(fromAddress, operandIndex, externalLocation,
-						SourceType.USER_DEFINED, RefType.DATA);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ExternalManager externalManager = program.getExternalManager();
+				ExternalLocation externalLocation =
+					externalManager.getUniqueExternalLocation("KERNEL32.DLL", "allocate");
+				refMgr.addExternalReference(fromAddress, operandIndex, externalLocation,
+					SourceType.USER_DEFINED, RefType.DATA);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-					refs = refMgr.getReferencesFrom(addr(program, "0x0040b044"), 0);
-					assertEquals(1, refs.length);
-					Reference reference = refs[0];
-					Address fromAddress = reference.getFromAddress();
-					int operandIndex = reference.getOperandIndex();
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+				refs = refMgr.getReferencesFrom(addr(program, "0x0040b044"), 0);
+				assertEquals(1, refs.length);
+				Reference reference = refs[0];
+				Address fromAddress = reference.getFromAddress();
+				int operandIndex = reference.getOperandIndex();
 
-					refMgr.delete(refs[0]);
+				refMgr.delete(refs[0]);
 
-					ExternalManager externalManager = program.getExternalManager();
-					ExternalLocation externalLocation =
-						externalManager.getUniqueExternalLocation("KERNEL32.DLL", "stuff");
-					refMgr.addExternalReference(fromAddress, operandIndex, externalLocation,
-						SourceType.USER_DEFINED, RefType.DATA);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ExternalManager externalManager = program.getExternalManager();
+				ExternalLocation externalLocation =
+					externalManager.getUniqueExternalLocation("KERNEL32.DLL", "stuff");
+				refMgr.addExternalReference(fromAddress, operandIndex, externalLocation,
+					SourceType.USER_DEFINED, RefType.DATA);
 			}
 		});
 
@@ -1971,34 +1509,18 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					ProgramContext pc = program.getProgramContext();
-					Register regESI = pc.getRegister("ESI");
-					refMgr.addRegisterReference(addr(program, "0x004018e4"), 0, regESI,
-						RefType.READ, SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				ProgramContext pc = program.getProgramContext();
+				Register regESI = pc.getRegister("ESI");
+				refMgr.addRegisterReference(addr(program, "0x004018e4"), 0, regESI,
+					RefType.READ, SourceType.USER_DEFINED);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addStackReference(addr(program, "0x004018e4"), 0, -8, RefType.READ,
-						SourceType.USER_DEFINED);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addStackReference(addr(program, "0x004018e4"), 0, -8, RefType.READ,
+					SourceType.USER_DEFINED);
 			}
 		});
 
@@ -2021,52 +1543,36 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-					refs = refMgr.getReferencesFrom(addr(program, "0x00401eca"), 1);
-					assertEquals(1, refs.length);
-					Reference reference = refs[0];
-					Address fromAddress = reference.getFromAddress();
-					Address toAddress = reference.getToAddress();
-					int operandIndex = reference.getOperandIndex();
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+				refs = refMgr.getReferencesFrom(addr(program, "0x00401eca"), 1);
+				assertEquals(1, refs.length);
+				Reference reference = refs[0];
+				Address fromAddress = reference.getFromAddress();
+				Address toAddress = reference.getToAddress();
+				int operandIndex = reference.getOperandIndex();
 
-					refMgr.delete(refs[0]);
+				refMgr.delete(refs[0]);
 
-					refMgr.addMemoryReference(fromAddress, toAddress, RefType.READ_WRITE,
-						SourceType.USER_DEFINED, operandIndex);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refMgr.addMemoryReference(fromAddress, toAddress, RefType.READ_WRITE,
+					SourceType.USER_DEFINED, operandIndex);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					Reference[] refs;
-					refs = refMgr.getReferencesFrom(addr(program, "0x00401eca"), 1);
-					assertEquals(1, refs.length);
-					Reference reference = refs[0];
-					Address fromAddress = reference.getFromAddress();
-					Address toAddress = reference.getToAddress();
-					int operandIndex = reference.getOperandIndex();
+				ReferenceManager refMgr = program.getReferenceManager();
+				Reference[] refs;
+				refs = refMgr.getReferencesFrom(addr(program, "0x00401eca"), 1);
+				assertEquals(1, refs.length);
+				Reference reference = refs[0];
+				Address fromAddress = reference.getFromAddress();
+				Address toAddress = reference.getToAddress();
+				int operandIndex = reference.getOperandIndex();
 
-					refMgr.delete(refs[0]);
+				refMgr.delete(refs[0]);
 
-					refMgr.addMemoryReference(fromAddress, toAddress, RefType.READ,
-						SourceType.USER_DEFINED, operandIndex);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				refMgr.addMemoryReference(fromAddress, toAddress, RefType.READ,
+					SourceType.USER_DEFINED, operandIndex);
 			}
 		});
 
@@ -2089,47 +1595,31 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addMemoryReference(addr(program, "0x004017db"),
-						addr(program, "0x00401953"), RefType.READ, SourceType.USER_DEFINED, 1);
-					refMgr.addMemoryReference(addr(program, "0x004017db"),
-						addr(program, "0x0040cbc8"), RefType.DATA, SourceType.USER_DEFINED, 1);
-					refMgr.addMemoryReference(addr(program, "0x004017db"),
-						addr(program, "0x004018bc"), RefType.READ_IND, SourceType.USER_DEFINED, 1);
-					refMgr.addExternalReference(addr(program, "0x00401810"), "USER32.DLL",
-						"getMessage", addr(program, "0x1001a11"), SourceType.USER_DEFINED, 0,
-						RefType.DATA);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addMemoryReference(addr(program, "0x004017db"),
+					addr(program, "0x00401953"), RefType.READ, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x004017db"),
+					addr(program, "0x0040cbc8"), RefType.DATA, SourceType.USER_DEFINED, 1);
+				refMgr.addMemoryReference(addr(program, "0x004017db"),
+					addr(program, "0x004018bc"), RefType.READ_IND, SourceType.USER_DEFINED, 1);
+				refMgr.addExternalReference(addr(program, "0x00401810"), "USER32.DLL",
+					"getMessage", addr(program, "0x1001a11"), SourceType.USER_DEFINED, 0,
+					RefType.DATA);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					ReferenceManager refMgr = program.getReferenceManager();
-					refMgr.addExternalReference(addr(program, "0x004017db"), "USER32.DLL", "printf",
-						addr(program, "0x01234567"), SourceType.USER_DEFINED, 1, RefType.DATA);
-					refMgr.addMemoryReference(addr(program, "0x00401810"),
-						addr(program, "0x00000010"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, 0);
-					refMgr.addMemoryReference(addr(program, "0x00401810"),
-						addr(program, "0x100190b"), RefType.DATA, SourceType.USER_DEFINED, 0);
-					refMgr.addMemoryReference(addr(program, "0x00401810"),
-						addr(program, "0x100191f"), RefType.CONDITIONAL_JUMP,
-						SourceType.USER_DEFINED, 0);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				ReferenceManager refMgr = program.getReferenceManager();
+				refMgr.addExternalReference(addr(program, "0x004017db"), "USER32.DLL", "printf",
+					addr(program, "0x01234567"), SourceType.USER_DEFINED, 1, RefType.DATA);
+				refMgr.addMemoryReference(addr(program, "0x00401810"),
+					addr(program, "0x00000010"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, 0);
+				refMgr.addMemoryReference(addr(program, "0x00401810"),
+					addr(program, "0x100190b"), RefType.DATA, SourceType.USER_DEFINED, 0);
+				refMgr.addMemoryReference(addr(program, "0x00401810"),
+					addr(program, "0x100191f"), RefType.CONDITIONAL_JUMP,
+					SourceType.USER_DEFINED, 0);
 			}
 		});
 
@@ -2153,32 +1643,16 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x00401131");
-					bookMgr.setBookmark(addr, BookmarkType.NOTE, "Test", "Call to print.");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x00401131");
+				bookMgr.setBookmark(addr, BookmarkType.NOTE, "Test", "Call to print.");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x00401131");
-					bookMgr.setBookmark(addr, BookmarkType.NOTE, "Calls", "invoke print function");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x00401131");
+				bookMgr.setBookmark(addr, BookmarkType.NOTE, "Calls", "invoke print function");
 			}
 		});
 
@@ -2202,49 +1676,25 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x004010a0");
-					bookMgr.setBookmark(addr, BookmarkType.ANALYSIS, "Found Code",
-						"Found code from operand reference");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x004010a0");
+				bookMgr.setBookmark(addr, BookmarkType.ANALYSIS, "Found Code",
+					"Found code from operand reference");
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x004010a0");
-					bookMgr.setBookmark(addr, BookmarkType.ANALYSIS, "Found Code",
-						"Latest bookmark @ 0x004010a0");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x004010a0");
+				bookMgr.setBookmark(addr, BookmarkType.ANALYSIS, "Found Code",
+					"Latest bookmark @ 0x004010a0");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					BookmarkManager bookMgr = program.getBookmarkManager();
-					Address addr = addr(program, "0x004010a0");
-					bookMgr.removeBookmarks(new AddressSet(addr), TaskMonitorAdapter.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				BookmarkManager bookMgr = program.getBookmarkManager();
+				Address addr = addr(program, "0x004010a0");
+				bookMgr.removeBookmarks(new AddressSet(addr), TaskMonitorAdapter.DUMMY);
 			}
 		});
 
@@ -2268,50 +1718,26 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-					cu.setComment(CodeUnit.PRE_COMMENT, "Before the code unit.");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
+				cu.setComment(CodeUnit.PRE_COMMENT, "Before the code unit.");
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-					cu.setComment(CodeUnit.PRE_COMMENT, null);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
+				cu.setComment(CodeUnit.PRE_COMMENT, null);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-					cu.setComment(CodeUnit.PRE_COMMENT, "This is a changed pre-comment.");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
+				cu.setComment(CodeUnit.PRE_COMMENT, "This is a changed pre-comment.");
 			}
 		});
 
@@ -2336,53 +1762,29 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-					cu.setComment(CodeUnit.PRE_COMMENT, "This is a simple comment for example.");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
+				cu.setComment(CodeUnit.PRE_COMMENT, "This is a simple comment for example.");
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-					cu.setComment(CodeUnit.PRE_COMMENT, "This is a simple comment for example.\n" +
-						"I added some more to this comment to make it multiple lines.");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
+				cu.setComment(CodeUnit.PRE_COMMENT, "This is a simple comment for example.\n" +
+					"I added some more to this comment to make it multiple lines.");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
-					cu.setComment(CodeUnit.PRE_COMMENT,
-						"Changed this to a multiple line comment.\n" +
-							"It was necessary for demonstration purposes.");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x0040156c"));
+				cu.setComment(CodeUnit.PRE_COMMENT,
+					"Changed this to a multiple line comment.\n" +
+						"It was necessary for demonstration purposes.");
 			}
 		});
 
@@ -2408,43 +1810,18 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					program.getExternalManager()
-							.setExternalPath("ADVAPI32.DLL", "//advapi32.dll",
-								true);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				program.getExternalManager()
+						.setExternalPath("ADVAPI32.DLL", "//advapi32.dll", true);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//foo.dll", true);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//foo.dll", true);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//bar.dll", true);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//bar.dll", true);
 			}
 		});
 
@@ -2465,43 +1842,18 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
-				try {
-					program.getExternalManager()
-							.setExternalPath("ADVAPI32.DLL", "//advapi32.dll",
-								true);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				program.getExternalManager()
+						.setExternalPath("ADVAPI32.DLL", "//advapi32.dll", true);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeExternalLibrary(program, "ADVAPI32.DLL");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeExternalLibrary(program, "ADVAPI32.DLL");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//my.dll", true);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//my.dll", true);
 			}
 		});
 
@@ -2522,34 +1874,18 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Options list = program.getOptions("Analysis Disassembly");
-					list.setBoolean("Mark Bad Disassembly  ", true);
-					list.setBoolean("Mark Bad Disassembly ", true);
-					list.setBoolean("Mark Bad Disassembly", true);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Options list = program.getOptions("Analysis Disassembly");
+				list.setBoolean("Mark Bad Disassembly  ", true);
+				list.setBoolean("Mark Bad Disassembly ", true);
+				list.setBoolean("Mark Bad Disassembly", true);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Options list = program.getOptions("Analysis Disassembly");
-					list.setBoolean("Mark Bad Disassembly  ", false);
-					list.setBoolean("Mark Bad Disassembly ", false);
-					list.setBoolean("Mark Bad Disassembly", false);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Options list = program.getOptions("Analysis Disassembly");
+				list.setBoolean("Mark Bad Disassembly  ", false);
+				list.setBoolean("Mark Bad Disassembly ", false);
+				list.setBoolean("Mark Bad Disassembly", false);
 			}
 		});
 
@@ -2572,11 +1908,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		FrontEndTool frontEndTool = env.showFrontEndTool();
 		DomainFolder rootFolder = frontEndTool.getProject().getProjectData().getRootFolder();
 		TaskMonitor dummyMonitor = TaskMonitor.DUMMY;
-		DomainFile myTestArchiveDF =
-			env.restoreDataTypeArchive("MyTestArchive.gdt", rootFolder);
-		final DataTypeArchive myTestArchive =
-			(DataTypeArchiveDB) myTestArchiveDF.getDomainObject(this, true, false,
-				TaskMonitor.DUMMY);
+		DomainFile myTestArchiveDF = env.restoreDataTypeArchive("MyTestArchive.gdt", rootFolder);
+		final DataTypeArchive myTestArchive = (DataTypeArchiveDB) myTestArchiveDF
+				.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 
 		final CategoryPath sourceCatPath = new CategoryPath("/Category1/Category2/Category5");
 		final DataType floatStruct =
@@ -2587,56 +1921,33 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				Category rootCat = dtm.getRootCategory();
-				try {
-					// Add the structure to the root category.
-					rootCat.addDataType(floatStruct, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+
+				// Add the structure to the root category.
+				rootCat.addDataType(floatStruct, DataTypeConflictHandler.DEFAULT_HANDLER);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				try {
-					SourceArchive sourceArchive =
-						dtm.getSourceArchive(myTestArchive.getDataTypeManager().getUniversalID());
-					sourceArchive.setName("TestArchiveOne");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+
 				SourceArchive sourceArchive =
 					dtm.getSourceArchive(myTestArchive.getDataTypeManager().getUniversalID());
+				sourceArchive.setName("TestArchiveOne");
+				
 				assertNotNull(sourceArchive);
 				assertEquals("TestArchiveOne", sourceArchive.getName());
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				try {
-					SourceArchive sourceArchive =
-						dtm.getSourceArchive(myTestArchive.getDataTypeManager().getUniversalID());
-					sourceArchive.setName("TestArchiveTwo");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+
 				SourceArchive sourceArchive =
 					dtm.getSourceArchive(myTestArchive.getDataTypeManager().getUniversalID());
+				sourceArchive.setName("TestArchiveTwo");
+				
 				assertNotNull(sourceArchive);
 				assertEquals("TestArchiveTwo", sourceArchive.getName());
 			}
@@ -2729,8 +2040,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		ExternalLocationIterator iter = extMgr.getExternalLocations(libName);
 		while (iter.hasNext()) {
 			ExternalLocation loc = iter.next();
-			if (!((ExternalManagerDB) extMgr).removeExternalLocation(
-				loc.getExternalSpaceAddress())) {
+			if (!((ExternalManagerDB) extMgr)
+					.removeExternalLocation(loc.getExternalSpaceAddress())) {
 				Assert.fail("Couldn't remove external location for library " + libName);
 			}
 		}
@@ -2868,9 +2179,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 			JScrollPane scrollPane =
 				(JScrollPane) TestUtils.getInstanceField("scrollPane", latestScroller);
 			JScrollBar horizontalScrollBar = scrollPane.getHorizontalScrollBar();
-			horizontalScrollBar.setValue(
-				(horizontalScrollBar.getMinimum() + horizontalScrollBar.getMaximum() -
-					horizontalScrollBar.getVisibleAmount()) * percent / 100);
+			horizontalScrollBar
+					.setValue((horizontalScrollBar.getMinimum() + horizontalScrollBar.getMaximum() -
+						horizontalScrollBar.getVisibleAmount()) * percent / 100);
 		});
 		waitForSwing();
 	}

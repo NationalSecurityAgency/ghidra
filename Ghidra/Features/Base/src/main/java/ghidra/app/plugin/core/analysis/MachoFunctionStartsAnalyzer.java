@@ -172,7 +172,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 		header.parse();
 		monitor.setIndeterminate(true);
 		monitor.setMessage("Analyzing function starts...");
-		analyzeFunctionStarts(program, header, provider, set, monitor);
+		analyzeFunctionStarts(program, header, set, monitor);
 	}
 
 	/**
@@ -225,8 +225,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 					for (DyldCacheHeader header : providerMap.keySet()) {
 						for (DyldCacheMappingInfo mappingInfo : header.getMappingInfos()) {
 							if (mappingInfo.contains(linkEdit.getVMaddress())) {
-								analyzeFunctionStarts(program, machoHeader, providerMap.get(header),
-									set, monitor);
+								analyzeFunctionStarts(program, machoHeader, set, monitor);
 								foundLinkEdit = true;
 								break;
 							}
@@ -249,13 +248,12 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 	 * 
 	 * @param program The {@link Program}
 	 * @param header The {@link MachHeader} that contains the LC_FUNCTION_STARTS load command
-	 * @param provider The {@link ByteProvider} that contains the LC_FUNCTION_STARTS data
 	 * @param set The set of addresses to find new functions at
 	 * @param monitor A cancellable monitor
 	 * @throws CancelledException If the user cancelled
 	 */
-	private void analyzeFunctionStarts(Program program, MachHeader header, ByteProvider provider,
-			AddressSetView set, TaskMonitor monitor) throws IOException, CancelledException {
+	private void analyzeFunctionStarts(Program program, MachHeader header, AddressSetView set,
+			TaskMonitor monitor) throws IOException, CancelledException {
 		FunctionManager functionMgr = program.getFunctionManager();
 		Listing listing = program.getListing();
 		PseudoDisassembler pdis = new PseudoDisassembler(program);
@@ -273,7 +271,7 @@ public class MachoFunctionStartsAnalyzer extends AbstractAnalyzer {
 		Address textSegmentAddr = space.getAddress(textSegment.getVMaddress());
 		List<FunctionStartsCommand> commands = header.getLoadCommands(FunctionStartsCommand.class);
 		for (FunctionStartsCommand cmd : commands) {
-			for (Address addr : cmd.findFunctionStartAddrs(provider, textSegmentAddr)) {
+			for (Address addr : cmd.findFunctionStartAddrs(textSegmentAddr)) {
 				monitor.checkCancelled();
 				if (!set.contains(textSegmentAddr)) {
 					continue;

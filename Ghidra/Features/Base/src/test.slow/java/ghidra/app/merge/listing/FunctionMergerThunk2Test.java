@@ -65,8 +65,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -77,20 +75,14 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function externalFunction = createExternalFunction(program,
 						new String[] { "user32.dll", "printf" }, new DWordDataType());
@@ -105,13 +97,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -137,8 +125,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -149,13 +135,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -202,8 +184,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -214,13 +194,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -256,8 +232,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -268,21 +242,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -292,20 +260,14 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 					assertNotNull(referredToFunction);
 					thunkFunction.setThunkedFunction(referredToFunction);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -315,13 +277,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 					assertNotNull(referredToFunction);
 					thunkFunction.setThunkedFunction(referredToFunction);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -361,8 +319,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -373,21 +329,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -397,20 +347,14 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 					assertNotNull(referredToFunction);
 					thunkFunction.setThunkedFunction(referredToFunction);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -420,13 +364,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 					assertNotNull(referredToFunction);
 					thunkFunction.setThunkedFunction(referredToFunction);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -466,8 +406,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -478,21 +416,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -502,13 +434,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -552,8 +480,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -564,13 +490,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -582,8 +504,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -593,13 +513,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -638,8 +554,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -650,13 +564,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk function in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -665,8 +575,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a simple function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -677,13 +585,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create non-thunk function in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -726,8 +630,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -738,13 +640,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk function in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -753,8 +651,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -765,13 +661,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create non-thunk function in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -815,8 +707,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk function to TWO_PARAMS_ENTRY.
 					removeFunction(program, "01001ae3");
@@ -828,20 +718,14 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Original program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to NO_PARAMS_ENTRY.
 					AddressSet body =
@@ -852,13 +736,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk function in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -867,8 +747,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to TWO_PARAMS_ENTRY.
 					AddressSet body =
@@ -879,13 +757,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk function in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -938,8 +812,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -950,21 +822,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -974,21 +840,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					AddressSet body = new AddressSet(addr(program, OVERLAP_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -996,13 +856,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					functionManager.removeFunction(addr(program, THUNK_A_ENTRY));
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1042,8 +898,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1054,21 +908,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1078,21 +926,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					AddressSet body = new AddressSet(addr(program, OVERLAP_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1100,13 +942,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					functionManager.removeFunction(addr(program, THUNK_A_ENTRY));
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1141,8 +979,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1153,21 +989,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1175,21 +1005,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					functionManager.removeFunction(addr(program, THUNK_A_ENTRY));
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1199,13 +1023,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					AddressSet body = new AddressSet(addr(program, OVERLAP_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1240,8 +1060,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1252,21 +1070,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1274,21 +1086,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					functionManager.removeFunction(addr(program, THUNK_A_ENTRY));
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1298,13 +1104,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					AddressSet body = new AddressSet(addr(program, OVERLAP_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1345,8 +1147,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with two params.
 					AddressSet body =
@@ -1357,21 +1157,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1379,13 +1173,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					functionManager.removeFunction(addr(program, TWO_PARAMS_ENTRY));
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1421,8 +1211,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkedFunction =
@@ -1430,21 +1218,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkedFunction);
 
 					functionManager.removeFunction(addr(program, TWO_PARAMS_ENTRY));
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with two params.
 					AddressSet body =
@@ -1455,13 +1237,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in MY program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1497,8 +1275,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1509,21 +1285,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1531,21 +1301,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					thunkFunction.setName("LatestThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1553,13 +1317,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					thunkFunction.setName("MyThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1601,8 +1361,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1613,21 +1371,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1635,21 +1387,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					thunkFunction.setName("LatestThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1657,13 +1403,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkFunction);
 
 					thunkFunction.setName("MyThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1705,8 +1447,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1717,21 +1457,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1742,21 +1476,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkedFunction);
 
 					thunkedFunction.setName("LatestThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -1767,13 +1495,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkedFunction);
 
 					thunkedFunction.setName("MyThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1815,8 +1539,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					// Create a thunk to the function with no params.
@@ -1832,21 +1554,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 						functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
 					assertNotNull(thunkFunction);
 					thunkFunction.setName("OriginalThunk", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkedFunction =
@@ -1854,21 +1570,15 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkedFunction);
 
 					thunkedFunction.setName("LatestThunked", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkedFunction =
@@ -1876,13 +1586,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertNotNull(thunkedFunction);
 
 					thunkedFunction.setName("MyThunked", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1925,8 +1631,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				// Add the thunk to the Original program.
-				int txId = program.startTransaction("Modify Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -1937,13 +1641,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -1955,8 +1655,6 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function function = functionManager.getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -1967,13 +1665,9 @@ public class FunctionMergerThunk2Test extends AbstractExternalMergerTest {
 					assertEquals(addr(program, TWO_PARAMS_ENTRY), thunkedFunction.getEntryPoint());
 
 					function.setName("CoolStuff", SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

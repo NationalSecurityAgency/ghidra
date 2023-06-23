@@ -19,13 +19,8 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.*;
-import ghidra.app.util.importer.MessageLog;
-import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.ProgramModule;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
 
 public abstract class ObsoleteCommand extends LoadCommand {
 
@@ -35,30 +30,16 @@ public abstract class ObsoleteCommand extends LoadCommand {
 	}
 
 	public DataType toDataType() throws DuplicateNameException, IOException {
-	    StructureDataType struct = new StructureDataType(getCommandName(), 0);
-	    struct.add(DWORD, "cmd", null);
-	    struct.add(DWORD, "cmdsize", null);
-	    struct.add(getByteArray(), "obsolete", null);
-	    struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
-	    return struct;
+		StructureDataType struct = new StructureDataType(getCommandName(), 0);
+		struct.add(DWORD, "cmd", null);
+		struct.add(DWORD, "cmdsize", null);
+		struct.add(getByteArray(), "obsolete", null);
+		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
+		return struct;
 	}
 
 	private DataType getByteArray() {
-		return new ArrayDataType(BYTE, getCommandSize()-8, BYTE.getLength());
+		return new ArrayDataType(BYTE, getCommandSize() - 8, BYTE.getLength());
 	}
 
-	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary, ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
-		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address addr = baseAddress.getNewAddress(getStartIndex());
-				api.createData(addr, toDataType());
-			}
-		}
-		catch (Exception e) {
-			log.appendMsg("Unable to create "+getCommandName()+" - "+e.getMessage());
-		}
-	}
 }

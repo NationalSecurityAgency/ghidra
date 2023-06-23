@@ -99,9 +99,6 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 
 		ExtensionDetails extension = getSelectedExtension(rowIndex);
-		if (!isValidVersion(extension)) {
-			return false;
-		}
 
 		// Do not allow GUI uninstallation of extensions manually installed in installation
 		// directory

@@ -49,14 +49,9 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 	private void setupThunkFunctionUseForAll() throws Exception {
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with two params.
 					AddressSet bodyA =
@@ -77,23 +72,14 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					if (!createdB) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet bodyA =
@@ -114,13 +100,9 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					if (!createdB) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -209,14 +191,9 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 	private void setupFunctionBodyUseForAll() throws Exception {
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with two params.
 					AddressSet bodyA =
@@ -237,24 +214,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					if (!createdB) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change My program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with two params.
 					AddressSet bodyA = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -275,13 +243,9 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					if (!createdB) {
 						Assert.fail("Couldn't create thunk in My program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -382,14 +346,9 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 	private void setupFunctionReturnUseForAll() throws Exception {
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, NO_PARAMS_ENTRY);
 					assertNotNull(function1);
@@ -397,24 +356,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					assertNotNull(function2);
 					function1.setReturnType(new ByteDataType(), SourceType.USER_DEFINED);
 					function2.setReturnType(new FloatDataType(), SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change My program.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, NO_PARAMS_ENTRY);
 					assertNotNull(function1);
@@ -422,13 +372,9 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					assertNotNull(function2);
 					function1.setReturnType(new CharDataType(), SourceType.USER_DEFINED);
 					function2.setReturnType(new DWordDataType(), SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -499,13 +445,8 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, "0x00401150");
 					Function function2 = getFunction(program, "0x004012c0");
@@ -523,25 +464,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					function1.addLocalVariable(latestLocal8[0], SourceType.USER_DEFINED);
 
 					function2.addLocalVariable(latestLocalC[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, "0x00401150");
 					Function function2 = getFunction(program, "0x004012c0");
@@ -556,15 +487,10 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					function1.addLocalVariable(myLocala[0], SourceType.USER_DEFINED);
 
 					function2.addLocalVariable(myLocal30[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -613,13 +539,8 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, "0x00401150");
 					Function function2 = getFunction(program, "0x004012c0");
@@ -637,25 +558,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					function1.addLocalVariable(latestLocal8[0], SourceType.USER_DEFINED);
 
 					function2.addLocalVariable(latestLocalC[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, "0x00401150");
 					Function function2 = getFunction(program, "0x004012c0");
@@ -670,15 +581,10 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					function1.addLocalVariable(myLocala[0], SourceType.USER_DEFINED);
 
 					function2.addLocalVariable(myLocal30[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -718,46 +624,22 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 	private void setupParamInfoConflictUseForAll() throws Exception {
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Function func = getFunction(program, "0x004019ac");
-					func.getParameter(2).setComment("Latest comment 004019ac_2.");
+				Function func = getFunction(program, "0x004019ac");
+				func.getParameter(2).setComment("Latest comment 004019ac_2.");
 
-					func = getFunction(program, "0x00401150");
-					func.getParameter(0).setComment("Latest comment 00401150_0.");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				func = getFunction(program, "0x00401150");
+				func.getParameter(0).setComment("Latest comment 00401150_0.");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Function func = getFunction(program, "0x004019ac");
-					func.getParameter(2).setComment("My comment 004019ac_2.");
+				Function func = getFunction(program, "0x004019ac");
+				func.getParameter(2).setComment("My comment 004019ac_2.");
 
-					func = getFunction(program, "0x00401150");
-					func.getParameter(0).setComment("My comment 00401150_0.");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				func = getFunction(program, "0x00401150");
+				func.getParameter(0).setComment("My comment 00401150_0.");
 			}
 		});
 	}
@@ -804,13 +686,8 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					latest_Parm1[0] =
 						new MyParameter("apple", 3, new ByteDataType(), 0x14, program);
@@ -826,25 +703,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					func.setCustomVariableStorage(true);
 					Parameter p0 = func.getParameter(0);
 					p0.setName("Duck", SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					my_count[0] = new MyParameter("count", 2, new ByteDataType(), 0x14, program);
 					my_offset[0] = new MyParameter("offset", 3, new WordDataType(), 0x20, program);
@@ -860,15 +727,10 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					func.setCustomVariableStorage(true);
 					func.addParameter(my_count[0], SourceType.USER_DEFINED);
 					func.addParameter(my_offset[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -912,13 +774,8 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("WallaceSrc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					latest_Parm1[0] =
 						new MyParameter("apple", 3, new ByteDataType(), 0x14, program);
@@ -934,25 +791,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					func.setCustomVariableStorage(true);
 					Parameter p0 = func.getParameter(0);
 					p0.setName("Duck", SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					my_count[0] = new MyParameter("count", 2, new ByteDataType(), 0x14, program);
 					my_offset[0] = new MyParameter("offset", 3, new WordDataType(), 0x20, program);
@@ -968,15 +815,10 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					func.setCustomVariableStorage(true);
 					func.addParameter(my_count[0], SourceType.USER_DEFINED);
 					func.addParameter(my_offset[0], SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1016,8 +858,6 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// undefined4 local_8
 					Function function1 = getFunction(program, "0x00401150");
@@ -1034,22 +874,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 					((LocalVariable) localVariables2[0]).setDataType(new FloatDataType(),
 						SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// undefined4 local_8
 					Function function1 = getFunction(program, "0x00401150");
@@ -1066,15 +899,10 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					assertEquals(2, localVariables2.length);
 
 					function2.removeVariable(localVariables2[0]);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1127,8 +955,6 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// undefined4 local_8
 					Function function1 = getFunction(program, "0x00401150");
@@ -1145,22 +971,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 					((LocalVariable) localVariables2[0]).setDataType(new FloatDataType(),
 						SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// undefined4 local_8
 					Function function1 = getFunction(program, "0x00401150");
@@ -1177,15 +996,10 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 						SourceType.USER_DEFINED);
 
 					function2.removeVariable(localVariables2[0]);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1232,8 +1046,6 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// undefined4 local_8
 					Function function1 = getFunction(program, "0x00401150");
@@ -1250,22 +1062,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 					((LocalVariable) localVariables2[0]).setDataType(new DWordDataType(),
 						SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// undefined4 local_8
 					Function function1 = getFunction(program, "0x00401150");
@@ -1282,15 +1087,10 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					assertEquals(2, localVariables2.length);
 
 					localVariables2[0].setDataType(new FloatDataType(), SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1342,8 +1142,6 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// undefined4 local_8
 					Function function1 = getFunction(program, "0x00401150");
@@ -1360,22 +1158,15 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 					((LocalVariable) localVariables2[0]).setDataType(new DWordDataType(),
 						SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// undefined4 local_8
 					Function function1 = getFunction(program, "0x00401150");
@@ -1392,15 +1183,10 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 					assertEquals(2, localVariables2.length);
 
 					localVariables2[0].setDataType(new FloatDataType(), SourceType.USER_DEFINED);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1453,45 +1239,31 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, "0x00401150");// Initially __stdcall
 					function1.setCallingConvention("__cdecl");// change to __cdecl
 
 					Function function2 = getFunction(program, "0x00401a58");// Initially __cdecl
 					function2.setCallingConvention("__fastcall");// Change to __fastcall
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, "0x00401150");// Initially __stdcall
 					function1.setCallingConvention("__fastcall");// change to __fastcall
 
 					Function function2 = getFunction(program, "0x00401a58");// Initially __cdecl
 					function2.setCallingConvention("__stdcall");// Change to __stdcall
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1522,45 +1294,31 @@ public class FunctionMergerUseForAllTest extends AbstractListingMergeManagerTest
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, "0x00401150");// Initially __stdcall
 					function1.setCallingConvention("__cdecl");// change to __cdecl
 
 					Function function2 = getFunction(program, "0x00401a58");// Initially __cdecl
 					function2.setCallingConvention("__fastcall");// Change to __fastcall
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Function function1 = getFunction(program, "0x00401150");// Initially __stdcall
 					function1.setCallingConvention("__fastcall");// change to __fastcall
 
 					Function function2 = getFunction(program, "0x00401a58");// Initially __cdecl
 					function2.setCallingConvention("__stdcall");// Change to __stdcall
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

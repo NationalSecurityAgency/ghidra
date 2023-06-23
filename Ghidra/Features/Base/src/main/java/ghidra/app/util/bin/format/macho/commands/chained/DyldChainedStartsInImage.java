@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.macho.commands;
+package ghidra.app.util.bin.format.macho.commands.chained;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
@@ -27,56 +28,56 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a dyld_chained_starts_in_image structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/fixup-chains.h">mach-o/fixup-chains.h</a> 
  */
 public class DyldChainedStartsInImage implements StructConverter {
 
-	private int seg_count;         // count of segment chain starts
-	private int seg_info_offset[];
+	private int segCount;
+	private int[] segInfoOffset;
 
-	private DyldChainedStartsInSegment chainedStarts[];
+	private List<DyldChainedStartsInSegment> chainedStarts;
 
-	DyldChainedStartsInImage(BinaryReader reader) throws IOException {
+	/**
+	 * Creates a new {@link DyldChainedStartsInImage}
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of the structure
+	 * @throws IOException if there was an IO-related problem creating the structure
+	 */
+	public DyldChainedStartsInImage(BinaryReader reader) throws IOException {
 
 		long ptrIndex = reader.getPointerIndex();
 
-		seg_count = reader.readNextInt();
-		seg_info_offset = reader.readNextIntArray(seg_count);
+		segCount = reader.readNextInt();
+		segInfoOffset = reader.readNextIntArray(segCount);
 
-		ArrayList<DyldChainedStartsInSegment> starts = new ArrayList<>();
-		for (int off : seg_info_offset) {
-
-			// off == 0 means there is no associated starts_in_segment entry
-			if (off == 0) {
-				continue;
+		chainedStarts = new ArrayList<>();
+		for (int offset : segInfoOffset) {
+			if (offset != 0) {
+				reader.setPointerIndex(ptrIndex + offset);
+				chainedStarts.add(new DyldChainedStartsInSegment(reader));
 			}
-
-			reader.setPointerIndex(ptrIndex + off);
-			starts.add(new DyldChainedStartsInSegment(reader));
 		}
-		chainedStarts = starts.toArray(DyldChainedStartsInSegment[]::new);
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType("dyld_chained_starts_in_image", 0);
-
 		struct.add(DWORD, "seg_count", null);
-		struct.add(new ArrayDataType(DWORD, seg_count, 1), "seg_info_offset", "");
-
+		struct.add(new ArrayDataType(DWORD, segCount, 1), "seg_info_offset",
+			"each entry is offset into this struct for that segment followed by pool of dyld_chain_starts_in_segment data");
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}
 
-	public int getSeg_count() {
-		return seg_count;
+	public int getSegCount() {
+		return segCount;
 	}
 
-	public int[] getSeg_info_offset() {
-		return seg_info_offset;
+	public int[] getSegInfoOffset() {
+		return segInfoOffset;
 	}
 
-	public DyldChainedStartsInSegment[] getChainedStarts() {
+	public List<DyldChainedStartsInSegment> getChainedStarts() {
 		return chainedStarts;
 	}
 }

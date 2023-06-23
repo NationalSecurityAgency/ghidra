@@ -158,20 +158,19 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getDisplayString()
-	 */
 	@Override
 	public String getDisplayString() {
 		return "Symbol";
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getPrototypeString()
-	 */
 	@Override
 	public String getPrototypeString() {
 		return "{@symbol symbol_address}";
+	}
+
+	@Override
+	public String getPrototypeString(String displayText) {
+		return "{@symbol " + displayText.trim() + "}";
 	}
 
 }

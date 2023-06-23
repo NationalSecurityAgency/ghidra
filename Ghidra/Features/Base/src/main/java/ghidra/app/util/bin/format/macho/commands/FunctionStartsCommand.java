@@ -15,25 +15,31 @@
  */
 package ghidra.app.util.bin.format.macho.commands;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.io.IOException;
-
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.LEB128Info;
+import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.LEB128;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a LC_FUNCTION_STARTS command.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a LC_FUNCTION_STARTS command. 
  */
 public class FunctionStartsCommand extends LinkEditDataCommand {
 	
+	private List<LEB128Info> lebs = new ArrayList<>();
+
 	/**
-	 * Creates and parses a new {@link LinkEditDataCommand}
+	 * Creates and parses a new {@link FunctionStartsCommand}
 	 * 
 	 * @param loadCommandReader A {@link BinaryReader reader} that points to the start of the load
 	 *   command
@@ -44,50 +50,70 @@ public class FunctionStartsCommand extends LinkEditDataCommand {
 	FunctionStartsCommand(BinaryReader loadCommandReader, BinaryReader dataReader)
 			throws IOException {
 		super(loadCommandReader, dataReader);
+
+		int i = 0;
+		while (true) {
+			LEB128Info info = dataReader.readNext(LEB128Info::unsigned);
+			if (i + info.getLength() > datasize || info.asLong() == 0) {
+				break;
+			}
+			i += info.getLength();
+			lebs.add(info);
+		}
 	}
 
 	/**
 	 * Finds the {@link List} of function start addresses
 	 * 
-	 * @param provider The provider that contains the function start addresses.  This could be a
-	 *   different provider than the one that contains the load command.
 	 * @param textSegmentAddr The {@link Address} of the function starts' __TEXT segment
 	 * @return The {@link List} of function start addresses
 	 * @throws IOException if there was an issue reading bytes
 	 */
-	public List<Address> findFunctionStartAddrs(ByteProvider provider, Address textSegmentAddr)
-			throws IOException {
+	public List<Address> findFunctionStartAddrs(Address textSegmentAddr) throws IOException {
 		List<Address> addrs = new ArrayList<>();
-		Address current = textSegmentAddr;
-		for (long offset : findFunctionStartOffsets(provider)) {
-			current = current.add(offset);
-			addrs.add(current);
+		long currentFuncOffset = 0;
+		for (LEB128Info leb : lebs) {
+			currentFuncOffset += leb.asLong();
+			addrs.add(textSegmentAddr.add(currentFuncOffset));
 		}
-
 		return addrs;
 	}
 
-	/**
-	 * Finds the {@link List} of function start offsets
-	 * 
-	 * @param provider The provider that contains the function start offsets.  This could be a
-	 *   different provider than the one that contains the load command.
-	 * @return The {@link List} of function start offsets
-	 * @throws IOException if there was an issue reading bytes
-	 */
-	private List<Long> findFunctionStartOffsets(ByteProvider provider) throws IOException {
-		BinaryReader reader = new BinaryReader(provider, true);
-		reader.setPointerIndex(getDataOffset());
-
-		List<Long> offsets = new ArrayList<>();
-		while (true) {
-			long offset = reader.readNext(LEB128::unsigned);
-			if (offset == 0) {
-				break;
-			}
-			offsets.add(offset);
+	@Override
+	public void markup(Program program, MachHeader header, Address addr, String source,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
+		if (addr == null || datasize == 0) {
+			return;
 		}
 
-		return offsets;
+		super.markup(program, header, addr, source, monitor, log);
+		
+		SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
+		if (textSegment == null) {
+			return;
+		}
+
+		try {
+			ReferenceManager referenceManager = program.getReferenceManager();
+			Address textSegmentAddr = program.getAddressFactory()
+					.getDefaultAddressSpace()
+					.getAddress(textSegment.getVMaddress());
+			long currentFuncOffset = 0;
+			for (LEB128Info leb : lebs) {
+				Data d = DataUtilities.createData(program, addr, ULEB128, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				addr = addr.add(leb.getLength());
+				currentFuncOffset += leb.asLong();
+				Reference ref = referenceManager.addMemoryReference(d.getMinAddress(),
+					textSegmentAddr.add(currentFuncOffset),
+					RefType.DATA, SourceType.IMPORTED, 0);
+				referenceManager.setPrimary(ref, true);
+			}
+
+		}
+		catch (Exception e) {
+			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(), "Failed to markup %s."
+					.formatted(LoadCommandTypes.getLoadCommandName(getCommandType())));
+		}
 	}
 }

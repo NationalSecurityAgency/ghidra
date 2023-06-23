@@ -28,7 +28,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a mach_header structure.
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/loader.h">EXTERNAL_HEADERS/mach-o/loader.h</a> 
  */
 public class MachHeader implements StructConverter {
 	private int magic;

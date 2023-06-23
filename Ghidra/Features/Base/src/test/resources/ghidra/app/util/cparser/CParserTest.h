@@ -178,6 +178,8 @@ int (__stdcall * GetSectionBlock) (
 
 // nothing will parse after this line if the this fails
   #pragma test for, pragma, with, commas outside parens
+  
+  #pragma region System Family (kernel drivers) with Desktop Family for compat
 
    #pragma warning(disable)
 
@@ -190,6 +192,22 @@ int (__stdcall * GetSectionBlock) (
  #pragma our macros nachos (for use only within FileProvider.h)
  
  #pragma warning (suppress: 28128)
+ 
+struct pragmaPassed {
+    char dummy;
+};
+
+int whileWithPragma(int a)
+{
+    do {
+        a++;
+    } while (0 __pragma(warning(disable: 28110)));
+    
+    __pragma(warning(push)) __pragma(warning(disable : 4548)) do {__noop(pszDest);} while((0,0) __pragma(warning(pop)) );
+    
+    return a;
+}
+
 
 int g(int a, int b, int c)
 {

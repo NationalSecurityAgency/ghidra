@@ -27,7 +27,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents an nlist and nlist_64 structure.
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/nlist.h.auto.html">mach-o/nlist.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/nlist.h">EXTERNAL_HEADERS/mach-o/nlist.h</a> 
  */
 public class NList implements StructConverter {
 	private int n_strx;
