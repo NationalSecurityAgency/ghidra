@@ -794,7 +794,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 }
 
 # Pop word from stack
-:POP^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & (ad=0x1 | dest_Direct16_0_4) & as=0x3 & src_Direct16_8_4=0x1 & tbl_wzero) ... & DEST_W_AD ... {
+:POP^".W" DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x0 & as=0x3 & src_Direct16_8_4=0x1 & tbl_wzero) ... & DEST_W_AD ... {
 	DEST_W_AD = *:2 SP;
 	build tbl_wzero;
 	SP = SP + 0x2;
@@ -802,7 +802,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 }
 
 # Pop byte from stack
-:POP^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & (ad=0x1 | dest_Direct16_0_4) & as=0x3 & src_Direct16_8_4=0x1 & tbl_bzero) ... & DEST_B_AD ... {
+:POP^".B" DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x4 & bow=0x1 & as=0x3 & src_Direct16_8_4=0x1 & tbl_bzero) ... & DEST_B_AD ... {
 	DEST_B_AD = *:1 SP;
 	build tbl_bzero;
 	SP = SP + 0x2;
