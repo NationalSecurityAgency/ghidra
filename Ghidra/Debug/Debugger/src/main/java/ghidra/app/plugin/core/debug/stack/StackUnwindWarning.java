@@ -25,6 +25,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.PcodeOpAST;
+import ghidra.program.model.pcode.VarnodeAST;
 
 /**
  * A warning issued while unwinding a stack
@@ -183,6 +184,17 @@ public interface StackUnwindWarning {
 		@Override
 		public String getMessage() {
 			return "Indirect call target has unexpected type: " + type;
+		}
+	}
+
+	/**
+	 * While analyzing an indirect call, couldn't get the function signature because its input doesn't have a high variable.
+	 */
+	public record NoHighVariableFromTargetPointerTypeUnwindWarning(VarnodeAST vn)
+			implements StackUnwindWarning {
+		@Override
+		public String getMessage() {
+			return "Input of indirect call target has no high variable: " + vn;
 		}
 	}
 
