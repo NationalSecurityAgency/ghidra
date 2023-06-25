@@ -272,7 +272,7 @@ public class ObjectiveC1_MessageAnalyzer extends AbstractAnalyzer {
 			if (data == null) {
 				return null;
 			}
-			data = data.getComponentAt((int) address.subtract(data.getAddress()));
+			data = data.getComponentContaining((int) address.subtract(data.getAddress()));
 			if (data == null) {
 				return null;
 			}

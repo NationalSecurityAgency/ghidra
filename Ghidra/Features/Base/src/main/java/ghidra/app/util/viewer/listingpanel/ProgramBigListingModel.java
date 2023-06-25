@@ -263,7 +263,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		}
 		else if (dt instanceof Structure) {
 			int offset = (int) address.subtract(parent.getMinAddress());
-			data = parent.getComponentAt(offset);
+			data = parent.getComponentContaining(offset);
 
 			// Need to handle filler in a special way.
 			if (data == null) {
@@ -281,7 +281,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		}
 		else {
 			int offset = (int) address.subtract(parent.getMinAddress());
-			data = parent.getComponentAt(offset);
+			data = parent.getComponentContaining(offset);
 		}
 		if (data == null) {
 			return null;
