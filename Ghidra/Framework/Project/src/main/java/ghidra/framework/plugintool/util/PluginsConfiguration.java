@@ -15,6 +15,8 @@
  */
 package ghidra.framework.plugintool.util;
 
+import static java.util.function.Predicate.*;
+
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -25,30 +27,33 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 
-public class PluginClassManager {
+/**
+ * This class maintains a collection of all plugin classes that are acceptable for a given tool
+ * type.  Simple applications with only one plugin type can use the
+ * {@link DefaultPluginsConfiguration}.  More complex tools can support a subset of the available
+ * plugins. Those tools should create custom subclasses for each tool type, that filter out plugins
+ * that are not appropriate for that tool type.
+ */
+public abstract class PluginsConfiguration {
 
-	private Map<PluginPackage, List<PluginDescription>> packageMap = new HashMap<>();
+	private Map<PluginPackage, List<PluginDescription>> descriptionsByPackage = new HashMap<>();
+	private Map<String, PluginDescription> descriptionsByName = new HashMap<>();
 
-	private Map<String, PluginDescription> pluginClassMap = new HashMap<>();
-
-	public PluginClassManager(Class<?> filterClass, Class<?> exclusionClass) {
-		populatePluginDescriptionMaps(filterClass, exclusionClass);
+	protected PluginsConfiguration() {
+		populatePluginDescriptionMaps();
 	}
 
-	public PluginDescription getPluginDescription(String className) {
-		return pluginClassMap.get(className);
+	protected abstract boolean accepts(Class<? extends Plugin> pluginClass);
+
+	private Predicate<Class<? extends Plugin>> createFilter() {
+		Predicate<Class<? extends Plugin>> ignore = ProgramaticUseOnly.class::isAssignableFrom;
+		return not(ignore).and(c -> accepts(c));
 	}
 
-	private void populatePluginDescriptionMaps(Class<?> localFilterClass,
-			Class<?> localExclusionClass) {
+	private void populatePluginDescriptionMaps() {
 
-		Predicate<Class<? extends Plugin>> myClassFilter =
-			c -> (localFilterClass == null || localFilterClass.isAssignableFrom(c)) &&
-				(localExclusionClass == null || !localExclusionClass.isAssignableFrom(c)) &&
-				!ProgramaticUseOnly.class.isAssignableFrom(c);
-
-		List<Class<? extends Plugin>> classes =
-			ClassSearcher.getClasses(Plugin.class, myClassFilter);
+		Predicate<Class<? extends Plugin>> classFilter = createFilter();
+		List<Class<? extends Plugin>> classes = ClassSearcher.getClasses(Plugin.class, classFilter);
 
 		for (Class<? extends Plugin> pluginClass : classes) {
 			if (!PluginUtils.isValidPluginClass(pluginClass)) {
@@ -57,16 +62,21 @@ public class PluginClassManager {
 			}
 
 			PluginDescription pd = PluginDescription.getPluginDescription(pluginClass);
-			pluginClassMap.put(pluginClass.getName(), pd);
+			descriptionsByName.put(pluginClass.getName(), pd);
 
 			PluginPackage pluginPackage = pd.getPluginPackage();
 			List<PluginDescription> list =
-				packageMap.computeIfAbsent(pluginPackage, (k) -> new ArrayList<>());
+				descriptionsByPackage.computeIfAbsent(pluginPackage, (k) -> new ArrayList<>());
 			list.add(pd);
 		}
+
 	}
 
-	public void addXmlElementsForPlugins(Element root, List<Plugin> plugins) {
+	public PluginDescription getPluginDescription(String className) {
+		return descriptionsByName.get(className);
+	}
+
+	public void savePluginsToXml(Element root, List<Plugin> plugins) {
 		Map<PluginPackage, List<Plugin>> pluginPackageMap = buildPluginPackageMap(plugins);
 		for (PluginPackage pluginPackage : pluginPackageMap.keySet()) {
 			root.addContent(getPackageElement(pluginPackage, pluginPackageMap.get(pluginPackage)));
@@ -76,7 +86,7 @@ public class PluginClassManager {
 	private Element getPackageElement(PluginPackage pluginPackage, List<Plugin> pluginList) {
 		Element packageElement = new Element("PACKAGE");
 		packageElement.setAttribute("NAME", pluginPackage.getName());
-		List<PluginDescription> pluginDescriptions = packageMap.get(pluginPackage);
+		List<PluginDescription> pluginDescriptions = descriptionsByPackage.get(pluginPackage);
 
 		Set<String> includedPluginClasses = new HashSet<>();
 		for (Plugin plugin : pluginList) {
@@ -120,7 +130,8 @@ public class PluginClassManager {
 	private Map<PluginPackage, List<Plugin>> buildPluginPackageMap(List<Plugin> plugins) {
 		Map<PluginPackage, List<Plugin>> pluginPackageMap = new HashMap<>();
 		for (Plugin plugin : plugins) {
-			PluginDescription pluginDescription = pluginClassMap.get(plugin.getClass().getName());
+			PluginDescription pluginDescription =
+				descriptionsByName.get(plugin.getClass().getName());
 			if (pluginDescription == null) {
 				continue;
 			}
@@ -138,41 +149,42 @@ public class PluginClassManager {
 	}
 
 	/**
-	 * Used to convert an old style tool XML file by adding in classes in the same packages as
-	 * those that were named specifically in the XML file
+	 * Used to convert an old style tool XML file by mapping the given class names to plugin
+	 * packages and then adding <b>all</b> plugins in that package.  This has the effect of pulling
+	 * in more plugin classes than were originally specified in the tool xml.
+	 *
 	 * @param classNames the list of classNames from from the old XML file
-	 * @return the adjusted class names
+	 * @return the adjusted set of plugin class names
 	 */
-	public Set<String> fillInPackageClasses(List<String> classNames) {
+	public Set<String> getPluginNamesByCurrentPackage(List<String> classNames) {
 		Set<PluginPackage> packages = new HashSet<>();
 		Set<String> adjustedClassNames = new HashSet<>();
 
 		for (String className : classNames) {
-			PluginDescription pluginDescription = pluginClassMap.get(className);
-			if (pluginDescription != null) {
-				if (pluginDescription.getStatus() == PluginStatus.RELEASED) {
-					packages.add(pluginDescription.getPluginPackage());
-				}
-				else {
-					adjustedClassNames.add(className);
-				}
+			PluginDescription pd = descriptionsByName.get(className);
+			if (pd == null) {
+				continue; // plugin no longer in tool
+			}
+
+			if (pd.getStatus() == PluginStatus.RELEASED) {
+				packages.add(pd.getPluginPackage());
+			}
+			else {
+				adjustedClassNames.add(className);
 			}
 		}
+
 		for (PluginPackage pluginPackage : packages) {
-			List<PluginDescription> list = packageMap.get(pluginPackage);
-			for (PluginDescription pluginDescription : list) {
-				if (pluginDescription.getStatus() != PluginStatus.RELEASED) {
-					continue;
-				}
-				String name = pluginDescription.getPluginClass().getName();
-				adjustedClassNames.add(name);
+			List<PluginDescription> packageDescriptions = descriptionsByPackage.get(pluginPackage);
+			for (PluginDescription pd : packageDescriptions) {
+				adjustedClassNames.add(pd.getPluginClass().getName());
 			}
 		}
 
 		return adjustedClassNames;
 	}
 
-	public Set<String> getPluginClasses(Element element) {
+	public Set<String> getPluginClassNames(Element element) {
 
 		Set<String> classNames = new HashSet<>();
 		List<?> children = element.getChildren("PACKAGE");
@@ -206,7 +218,8 @@ public class PluginClassManager {
 			}
 
 			PluginPackage pluginPackage = PluginPackage.getPluginPackage(packageName);
-			List<PluginDescription> pluginDescriptionList = packageMap.get(pluginPackage);
+			List<PluginDescription> pluginDescriptionList =
+				descriptionsByPackage.get(pluginPackage);
 			if (pluginDescriptionList == null) {
 				continue;
 			}
@@ -236,13 +249,13 @@ public class PluginClassManager {
 	}
 
 	public List<PluginPackage> getPluginPackages() {
-		List<PluginPackage> list = new ArrayList<>(packageMap.keySet());
+		List<PluginPackage> list = new ArrayList<>(descriptionsByPackage.keySet());
 		Collections.sort(list);
 		return list;
 	}
 
 	public List<PluginDescription> getPluginDescriptions(PluginPackage pluginPackage) {
-		List<PluginDescription> list = packageMap.get(pluginPackage);
+		List<PluginDescription> list = descriptionsByPackage.get(pluginPackage);
 		List<PluginDescription> stableList = new ArrayList<>();
 		for (PluginDescription pluginDescription : list) {
 			if (pluginDescription.getStatus() == PluginStatus.UNSTABLE ||
@@ -256,7 +269,7 @@ public class PluginClassManager {
 
 	public List<PluginDescription> getUnstablePluginDescriptions() {
 		List<PluginDescription> unstablePlugins = new ArrayList<>();
-		for (PluginDescription pluginDescription : pluginClassMap.values()) {
+		for (PluginDescription pluginDescription : descriptionsByName.values()) {
 			if (pluginDescription.getStatus() == PluginStatus.UNSTABLE) {
 				unstablePlugins.add(pluginDescription);
 			}
@@ -266,7 +279,7 @@ public class PluginClassManager {
 
 	public List<PluginDescription> getManagedPluginDescriptions() {
 		ArrayList<PluginDescription> nonHiddenPlugins = new ArrayList<>();
-		for (PluginDescription pluginDescription : pluginClassMap.values()) {
+		for (PluginDescription pluginDescription : descriptionsByName.values()) {
 			if (pluginDescription.getStatus() == PluginStatus.HIDDEN) {
 				continue;
 			}

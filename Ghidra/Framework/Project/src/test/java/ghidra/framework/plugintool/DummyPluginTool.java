@@ -15,10 +15,10 @@
  */
 package ghidra.framework.plugintool;
 
-import ghidra.framework.plugintool.util.PluginClassManager;
+import ghidra.framework.plugintool.util.PluginsConfiguration;
 
 /**
- * A dummy version of {@link PluginTool} that tests can use when they need an instance of 
+ * A dummy version of {@link PluginTool} that tests can use when they need an instance of
  * the PluginTool, but do not wish to use a real version
  */
 public class DummyPluginTool extends PluginTool {
@@ -29,7 +29,7 @@ public class DummyPluginTool extends PluginTool {
 	}
 
 	@Override
-	public PluginClassManager getPluginClassManager() {
+	protected PluginsConfiguration createPluginsConfigurations() {
 		return null;
 	}
 

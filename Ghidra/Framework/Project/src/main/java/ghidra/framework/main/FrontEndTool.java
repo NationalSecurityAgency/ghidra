@@ -131,7 +131,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	private WindowListener windowListener;
 	private DockingAction configureToolAction;
-	private PluginClassManager pluginClassManager;
 
 	/**
 	 * Construct a new Ghidra Project Window.
@@ -190,11 +189,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	@Override
-	public PluginClassManager getPluginClassManager() {
-		if (pluginClassManager == null) {
-			pluginClassManager = new PluginClassManager(ApplicationLevelPlugin.class, null);
-		}
-		return pluginClassManager;
+	protected PluginsConfiguration createPluginsConfigurations() {
+		return new ApplicationLevelPluginsConfiguration();
 	}
 
 	public void selectFiles(Set<DomainFile> files) {
