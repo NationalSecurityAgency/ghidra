@@ -57,11 +57,13 @@ public class LinkEditDataCommand extends LoadCommand {
 		this.dataReader.setPointerIndex(dataoff);
 	}
 
-	public int getDataOffset() {
+	@Override
+	public int getLinkerDataOffset() {
 		return dataoff;
 	}
 
-	public int getDataSize() {
+	@Override
+	public int getLinkerDataSize() {
 		return datasize;
 	}
 
