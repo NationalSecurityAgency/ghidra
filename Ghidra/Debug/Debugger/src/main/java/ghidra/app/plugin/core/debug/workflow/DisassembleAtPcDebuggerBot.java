@@ -225,7 +225,9 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			TraceData pcUnit = null;
 			try (Transaction tx =
 				trace.openTransaction("Disassemble: PC is code pointer")) {
-				TraceCodeSpace regCode = codeManager.getCodeRegisterSpace(thread, frameLevel, true);
+				TraceCodeSpace regCode = pc.getAddressSpace().isRegisterSpace()
+						? codeManager.getCodeRegisterSpace(thread, frameLevel, true)
+						: codeManager.getCodeSpace(pc.getAddressSpace(), true);
 				// TODO: Should be same platform as pc, not necessarily base
 				AddressSpace space = trace.getBaseAddressFactory().getDefaultAddressSpace();
 				PointerTypedef type = new PointerTypedef(null, VoidDataType.dataType,
