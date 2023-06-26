@@ -353,14 +353,15 @@ public class DebuggerLegacyStackPanel extends JPanel {
 		currentStack = null;
 
 		Trace curTrace = current.getTrace();
-		TraceMemorySpace regs =
-			curTrace.getMemoryManager().getMemoryRegisterSpace(current.getThread(), false);
-		if (regs == null) {
+		Register pc = curTrace.getBaseLanguage().getProgramCounter();
+		if (pc == null) {
 			contextChanged();
 			return;
 		}
-		Register pc = curTrace.getBaseLanguage().getProgramCounter();
-		if (pc == null) {
+		TraceMemorySpace regs = pc.getAddressSpace().isRegisterSpace()
+				? curTrace.getMemoryManager().getMemoryRegisterSpace(current.getThread(), false)
+				: curTrace.getMemoryManager().getMemorySpace(pc.getAddressSpace(), false);
+		if (regs == null) {
 			contextChanged();
 			return;
 		}

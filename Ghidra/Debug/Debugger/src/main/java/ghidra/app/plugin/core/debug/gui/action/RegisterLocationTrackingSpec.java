@@ -65,8 +65,9 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		if (!thread.getLifespan().contains(snap)) {
 			return null;
 		}
-		TraceMemorySpace regs =
-			trace.getMemoryManager().getMemoryRegisterSpace(thread, frame, false);
+		TraceMemorySpace regs = reg.getAddressSpace().isRegisterSpace()
+				? trace.getMemoryManager().getMemoryRegisterSpace(thread, frame, false)
+				: trace.getMemoryManager().getMemorySpace(reg.getAddressSpace(), false);
 		if (regs == null) {
 			return null;
 		}
@@ -106,10 +107,10 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 			return false;
 		}
 		Register register = computeRegister(coordinates);
-		if (register == null) {
+		AddressSpace as = space.getAddressSpace();
+		if (register == null || register.getAddressSpace() != as) {
 			return false;
 		}
-		AddressSpace as = space.getAddressSpace();
 		AddressRange regRng = coordinates.getPlatform()
 				.getConventionalRegisterRange(as.isRegisterSpace() ? as : null, register);
 		return range.getRange().intersects(regRng);
