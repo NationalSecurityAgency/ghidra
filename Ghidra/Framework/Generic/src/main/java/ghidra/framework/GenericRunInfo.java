@@ -80,8 +80,7 @@ public class GenericRunInfo {
 
 	private static List<File> collectAllApplicationDirectories(File dataDirectoryParentDir) {
 
-		String settingsDirPrefix =
-			"." + Application.getName().replaceAll("\\s", "").toLowerCase();
+		String settingsDirPrefix = "." + Application.getName().replaceAll("\\s", "").toLowerCase();
 		FileFilter userDirFilter = f -> {
 			String name = f.getName();
 			return f.isDirectory() && name.startsWith(settingsDirPrefix) &&
@@ -121,6 +120,45 @@ public class GenericRunInfo {
 			}
 
 			return file;
+		}
+		return null;
+	}
+
+	/**
+	 * Searches previous Application Settings directories 
+	 * ({@link #getUserSettingsDirsByTime()}) to find a settings directory containing
+	 * files that match the given file filter.  This is 
+	 * useful for loading previous directories of saved settings files of a particular type.
+	 * 
+	 * <p>Note: this method will ignore any test versions of settings directories.
+	 * 
+	 * @param dirName the name of a settings subdir; must be relative to a settings directory
+	 * @param filter the file filter for the files of interest
+	 * @return the most recent file matching that name and containing at least one file
+	 * of the given type, in a previous version's settings directory.
+	 */
+	public static File getPreviousApplicationSettingsDir(String dirName, FileFilter filter) {
+
+		List<File> settingsDirs = getPreviousApplicationSettingsDirsByTime();
+		for (File dir : settingsDirs) {
+			String dirPath = dir.getPath();
+			if (dirPath.endsWith("Test")) {
+				continue; // Ignore any test directories.
+			}
+
+			String altFilePath = dirPath + File.separatorChar + dirName;
+
+			File altSettingsDir = new File(altFilePath);
+			if (!altSettingsDir.exists()) {
+				continue;
+			}
+			if (!altSettingsDir.isDirectory()) {
+				continue;
+			}
+			File[] listFiles = altSettingsDir.listFiles(filter);
+			if (listFiles != null && listFiles.length > 0) {
+				return altSettingsDir;
+			}
 		}
 		return null;
 	}

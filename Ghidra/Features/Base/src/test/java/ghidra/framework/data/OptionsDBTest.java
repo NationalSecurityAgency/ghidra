@@ -303,8 +303,7 @@ public class OptionsDBTest extends AbstractDockingTest {
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("foo", OptionType.INT_TYPE, 5, null, "description",
-			editor);
+		options.registerOption("foo", OptionType.INT_TYPE, 5, null, "description", editor);
 		assertEquals(editor, options.getRegisteredPropertyEditor("foo"));
 
 	}
@@ -621,13 +620,13 @@ public class OptionsDBTest extends AbstractDockingTest {
 		}
 
 		@Override
-		public void readState(SaveState saveState) {
-			value = saveState.getInt("VALUE", 0);
+		public void readState(GProperties properties) {
+			value = properties.getInt("VALUE", 0);
 		}
 
 		@Override
-		public void writeState(SaveState saveState) {
-			saveState.putInt("VALUE", value);
+		public void writeState(GProperties properties) {
+			properties.putInt("VALUE", value);
 		}
 
 		@Override
