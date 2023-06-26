@@ -23,7 +23,10 @@ import generic.jar.ResourceFile;
 import ghidra.util.*;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
+import utilities.util.FileUtilities;
 import utilities.util.reflection.ReflectionUtilities;
 import utility.application.ApplicationLayout;
 import utility.module.ModuleUtilities;
@@ -616,6 +619,39 @@ public class Application {
 	public static File getUserSettingsDirectory() {
 		checkAppInitialized();
 		return app.layout.getUserSettingsDir();
+	}
+
+	/**
+	 * Returns a list of files in a setting subdirectory that have the given file extension,
+	 * copying files from older versions of Ghidra if the settings dir is not yet established.
+	 * @param dirName the name of the settings subdirectory.
+	 * @param fileExtension the file name suffix
+	 * @return a list of files in a setting sub directory that have the given file extension
+	 */
+	public static List<File> getUserSettingsFiles(String dirName, String fileExtension) {
+		File userSettingsDir = getUserSettingsDirectory();
+		File subSettingsDir = new File(userSettingsDir, dirName);
+		FileFilter filter = f -> f.getName().endsWith(fileExtension);
+
+		if (!subSettingsDir.exists()) {
+			subSettingsDir.mkdir();
+			copyFilesFromPreviousVersion(subSettingsDir, dirName, filter);
+		}
+		File[] files = subSettingsDir.listFiles(filter);
+		return CollectionUtils.asList(files);
+	}
+
+	private static void copyFilesFromPreviousVersion(File subSettingsDir, String dirName,
+			FileFilter filter) {
+		File previousDir = GenericRunInfo.getPreviousApplicationSettingsDir(dirName, filter);
+		if (previousDir != null) {
+			try {
+				FileUtilities.copyDir(previousDir, subSettingsDir, filter, TaskMonitor.DUMMY);
+			}
+			catch (CancelledException | IOException e) {
+				// don't care - just means we couldn't copy old files to new ghidra version
+			}
+		}
 	}
 
 	/**
