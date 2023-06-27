@@ -192,6 +192,14 @@ public class NList implements StructConverter {
 		return (((n_desc) >> 8) & 0xff);
 	}
 
+	public boolean is32bit() {
+		return is32bit;
+	}
+
+	public int getSize() {
+		return is32bit ? 12 : 16;
+	}
+
 	@Override
 	public String toString() {
 		return string;
