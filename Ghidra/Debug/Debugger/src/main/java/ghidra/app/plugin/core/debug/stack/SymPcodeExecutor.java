@@ -216,7 +216,14 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	 */
 	protected FunctionSignature getSignatureFromTargetPointerType(PcodeOpAST op) {
 		VarnodeAST target = (VarnodeAST) op.getInput(0);
-		DataType dataType = target.getHigh().getDataType();
+		HighVariable high = target.getHigh();
+		
+		if (high == null) {
+			warnings.add(new NoHighVariableFromTargetPointerTypeUnwindWarning(target));
+			return null;
+		}
+
+		DataType dataType = high.getDataType();
 		if (!(dataType instanceof Pointer ptrType)) {
 			warnings.add(new UnexpectedTargetTypeStackUnwindWarning(dataType));
 			return null;
