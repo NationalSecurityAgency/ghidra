@@ -175,12 +175,17 @@ public class SymbolTableCommand extends LoadCommand {
 
 		Listing listing = program.getListing();
 		ReferenceManager referenceManager = program.getReferenceManager();
-		String name = LoadCommandTypes.getLoadCommandName(getCommandType());
+		String symbolsName = LoadCommandTypes.getLoadCommandName(getCommandType()) + " (symbols)";
+		String stringsName = LoadCommandTypes.getLoadCommandName(getCommandType()) + " (strings)";
 		if (source != null) {
-			name += " - " + source;
+			symbolsName += " - " + source;
+			stringsName += " - " + source;
 		}
 		try {
-			listing.setComment(symbolTableAddr, CodeUnit.PLATE_COMMENT, name);
+			listing.setComment(symbolTableAddr, CodeUnit.PLATE_COMMENT, symbolsName);
+			if (stringTableAddr != null) {
+				listing.setComment(stringTableAddr, CodeUnit.PLATE_COMMENT, stringsName);
+			}
 			for (int i = 0; i < nsyms; i++) {
 				NList nlist = symbols.get(i);
 				DataType dt = nlist.toDataType();
@@ -197,10 +202,11 @@ public class SymbolTableCommand extends LoadCommand {
 					referenceManager.setPrimary(ref, true);
 				}
 			}
+
 		}
 		catch (Exception e) {
 			log.appendMsg(SymbolTableCommand.class.getSimpleName(),
-				"Failed to markup %s.".formatted(name));
+				"Failed to markup %s.".formatted(symbolsName));
 		}
 	}
 
