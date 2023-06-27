@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.searchmem.mask;
 
+import java.util.Arrays;
+
 /**
  * Stores information about the instruction and mask.
  * 
@@ -54,7 +56,7 @@ class MaskValue {
 	@Override
 	public String toString() {
 		String rep = textRepresentation == null ? "" : textRepresentation;
-		return getClass().getSimpleName() + " - " + rep + " [mask=" + mask + ", value=" + value +
+		return getClass().getSimpleName() + " - " + rep + " [mask=" + Arrays.toString(mask) + ", value=" + Arrays.toString(value) +
 			"]";
 	}
 
