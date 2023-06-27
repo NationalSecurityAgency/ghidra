@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.ElfRelocationTable.TableFormat;
@@ -136,21 +135,19 @@ public class ElfHeader implements StructConverter {
 	protected void initElfHeader() throws ElfException {
 		try {
 
+			if (!Arrays.equals(ElfConstants.MAGIC_BYTES,
+				provider.readBytes(0, ElfConstants.MAGIC_BYTES.length))) {
+				throw new ElfException("Not a valid ELF executable.");
+			}
+			e_ident_magic_num = ElfConstants.MAGIC_NUM;
+			e_ident_magic_str = ElfConstants.MAGIC_STR;
+
 			determineHeaderEndianess();
 
 			// reader uses unbounded provider wrapper to allow handling of missing/truncated headers
 			reader = new BinaryReader(new UnlimitedByteProviderWrapper(provider),
 				hasLittleEndianHeaders);
-
-			e_ident_magic_num = reader.readNextByte();
-			e_ident_magic_str = reader.readNextAsciiString(ElfConstants.MAGIC_STR_LEN);
-
-			boolean magicMatch = ElfConstants.MAGIC_NUM == e_ident_magic_num &&
-				ElfConstants.MAGIC_STR.equalsIgnoreCase(e_ident_magic_str);
-
-			if (!magicMatch) {
-				throw new ElfException("Not a valid ELF executable.");
-			}
+			reader.setPointerIndex(ElfConstants.MAGIC_BYTES.length);
 
 			e_ident_class = reader.readNextByte();
 			e_ident_data = reader.readNextByte();
