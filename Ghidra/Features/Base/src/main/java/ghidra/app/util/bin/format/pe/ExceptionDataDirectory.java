@@ -53,23 +53,33 @@ public class ExceptionDataDirectory extends DataDirectory {
 		long oldIndex = reader.getPointerIndex();
 		reader.setPointerIndex(ptr);
 
-		functionEntries = switch (ntHeader.getFileHeader().getMachine() & IMAGE_FILE_MACHINE_MASK) {
-			case IMAGE_FILE_MACHINE_I386:
-			case IMAGE_FILE_MACHINE_IA64:
-			case IMAGE_FILE_MACHINE_AMD64:
-				yield new ImageRuntimeFunctionEntries_X86(reader, size, ntHeader);
-			case IMAGE_FILE_MACHINE_ARM:
-			case IMAGE_FILE_MACHINE_ARM64:
-			case IMAGE_FILE_MACHINE_ARMNT:
-				yield new ImageRuntimeFunctionEntries_ARM(reader, size, ntHeader);
-			default:
-				Msg.error(this, String.format("Exception Data unsupported architecture: 0x%02x",
-					ntHeader.getFileHeader().getMachine()));
-				yield null;
-		};
+		try {
+			functionEntries =
+				switch (ntHeader.getFileHeader().getMachine() & IMAGE_FILE_MACHINE_MASK) {
+					case IMAGE_FILE_MACHINE_I386:
+					case IMAGE_FILE_MACHINE_IA64:
+					case IMAGE_FILE_MACHINE_AMD64:
+						yield new ImageRuntimeFunctionEntries_X86(reader, size, ntHeader);
+					case IMAGE_FILE_MACHINE_ARM:
+					case IMAGE_FILE_MACHINE_ARM64:
+					case IMAGE_FILE_MACHINE_ARMNT:
+						yield new ImageRuntimeFunctionEntries_ARM(reader, size, ntHeader);
+					default:
+						Msg.error(this,
+							String.format("Exception Data unsupported architecture: 0x%02x",
+								ntHeader.getFileHeader().getMachine()));
+						yield null;
+				};
+			return true;
+		}
+		catch (IOException e) {
+			Msg.error(this, "Failed to parse " + ExceptionDataDirectory.class.getSimpleName(), e);
+		}
+		finally {
+			reader.setPointerIndex(oldIndex);
+		}
 
-		reader.setPointerIndex(oldIndex);
-		return true;
+		return false;
     }
 
 	@Override
