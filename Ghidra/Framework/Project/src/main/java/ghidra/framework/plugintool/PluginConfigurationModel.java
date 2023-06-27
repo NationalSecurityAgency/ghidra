@@ -34,7 +34,7 @@ public class PluginConfigurationModel {
 
 	public PluginConfigurationModel(PluginTool tool) {
 		this(new DefaultPluginInstaller(tool),
-			new DeafultPluginPackagingProvider(tool.getPluginClassManager()));
+			new DeafultPluginPackagingProvider(tool.getPluginsConfiguration()));
 	}
 
 	public PluginConfigurationModel(PluginInstaller pluginInstaller,

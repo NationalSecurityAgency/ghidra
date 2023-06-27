@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.main;
+package ghidra.framework.project.tool;
+
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.util.PluginsConfiguration;
 
 /**
- * Marker interface for plugins that only get constructed programmatically for specific purposes.
- * Plugins that implement this interface should never be added via the config GUIs.
+ * A configuration that allows all general plugins and application plugins.  Plugins that may only
+ * exist at the application level are filtered out.
  */
-public interface ProgramaticUseOnly {
-	// marker interface
+class GhidraPluginsConfiguration extends PluginsConfiguration {
+
+	@Override
+	protected boolean accepts(Class<? extends Plugin> c) {
+		return !(ApplicationLevelOnlyPlugin.class.isAssignableFrom(c));
+	}
 }

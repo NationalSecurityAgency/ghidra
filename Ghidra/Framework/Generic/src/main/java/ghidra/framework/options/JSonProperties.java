@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.main;
+package ghidra.framework.options;
+
+import java.io.*;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
- * Marker interface for plugins that only get constructed programmatically for specific purposes.
- * Plugins that implement this interface should never be added via the config GUIs.
+ * A convenience class for creating a GProperties object from a file containing JSon data
+ * generated from {@link GProperties#saveToJsonFile(File)}
  */
-public interface ProgramaticUseOnly {
-	// marker interface
+public class JSonProperties extends GProperties {
+
+	public JSonProperties(File file) throws IOException {
+		super(getJsonObject(file));
+
+	}
+
+	private static JsonObject getJsonObject(File file) throws IOException {
+		try (Reader reader = new FileReader(file)) {
+			return (JsonObject) JsonParser.parseReader(reader);
+		}
+	}
+
 }

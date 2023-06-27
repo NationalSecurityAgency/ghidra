@@ -34,48 +34,6 @@ import ghidra.util.exception.AssertException;
 public class PluginUtils {
 
 	/**
-	 * Finds all {@link PluginDescription} objects that match a given set of plugin classes. This
-	 * effectively tells the caller which of the given plugins have been loaded by the class loader.
-	 * <p>
-	 * eg: If the list of plugin classes contains the class "FooPlugin.class", this method
-	 * will search the {@link PluginConfigurationModel} for any plugin with the name "FooPlugin" and
-	 * return its {@link PluginDescription}.
-	 * <p>
-	 * Note that this method does not take path/package information into account when finding
-	 * plugins; in the example above, if there is more than one plugin with the name "FooPlugin",
-	 * only one will be found (the one found is not guaranteed to be the first).
-	 *
-	 * @param tool the current tool
-	 * @param plugins the list of plugin classes to search for
-	 * @return list of plugin descriptions
-	 */
-	public static List<PluginDescription> getPluginDescriptions(PluginTool tool,
-			List<Class<?>> plugins) {
-
-		// First define the list of plugin descriptions to return
-		List<PluginDescription> retPlugins = new ArrayList<>();
-
-		// Get all plugins that have been loaded
-		PluginClassManager pluginClassManager = tool.getPluginClassManager();
-		List<PluginDescription> allPluginDescriptions =
-			pluginClassManager.getManagedPluginDescriptions();
-
-		// see if an entry exists in the list of all loaded plugins
-		for (Class<?> plugin : plugins) {
-			String pluginName = plugin.getSimpleName();
-
-			Optional<PluginDescription> desc = allPluginDescriptions.stream()
-					.filter(d -> (pluginName.equals(d.getName())))
-					.findAny();
-			if (desc.isPresent()) {
-				retPlugins.add(desc.get());
-			}
-		}
-
-		return retPlugins;
-	}
-
-	/**
 	 * Finds all plugin classes loaded from a given set of extensions.
 	 *
 	 * @param extensions set of extensions to search

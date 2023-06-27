@@ -29,16 +29,16 @@ public interface CustomOption {
 	/**
 	 * Concrete subclass of WrappedOption should read all of its
 	 * state from the given saveState object.
-	 * @param saveState container of state information
+	 * @param properties container of state information
 	 */
-	public void readState(SaveState saveState);
+	public void readState(GProperties properties);
 
 	/**
 	 * Concrete subclass of WrappedOption should write all of its
 	 * state to the given saveState object.
-	 * @param saveState container of state information
+	 * @param properties container of state information
 	 */
-	public void writeState(SaveState saveState);
+	public void writeState(GProperties properties);
 
 	/**
 	 * CustomOption should implement this method to provide a formatted 

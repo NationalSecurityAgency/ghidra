@@ -15,10 +15,15 @@
  */
 package ghidra.framework.main;
 
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.util.PluginsConfiguration;
+
 /**
- * Marker interface for plugins that only get constructed programmatically for specific purposes.
- * Plugins that implement this interface should never be added via the config GUIs.
+ * A configuration that only includes {@link ApplicationLevelPlugin} plugins.
  */
-public interface ProgramaticUseOnly {
-	// marker interface
+class ApplicationLevelPluginsConfiguration extends PluginsConfiguration {
+	@Override
+	protected boolean accepts(Class<? extends Plugin> c) {
+		return ApplicationLevelPlugin.class.isAssignableFrom(c);
+	}
 }
