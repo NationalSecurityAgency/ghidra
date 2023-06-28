@@ -17,6 +17,8 @@ package docking.widgets.shapes;
 
 import docking.widgets.shapes.PopupWindowPlacer.*;
 
+import java.util.Arrays;
+
 /**
  * This class builds a PopWindowPlacer that can have subsequent PopWindowPlacers.
  * <p>
@@ -279,7 +281,7 @@ public class PopupWindowPlacerBuilder {
 	 */
 	public PopupWindowPlacerBuilder edge(Location major, Location... minors) {
 		if (minors.length > 3) {
-			throw new IllegalArgumentException("Too many preferred Locations: " + minors);
+			throw new IllegalArgumentException("Too many preferred Locations: " + Arrays.toString(minors));
 		}
 		for (Location minor : minors) {
 			if (!major.validMinor(minor)) {
