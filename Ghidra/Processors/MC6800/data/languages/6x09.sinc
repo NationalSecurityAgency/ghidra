@@ -1008,12 +1008,16 @@ macro PushEntireState()
 
 :LEAX EA    is op=0x30; EA
 {
-        X = EA;
+        local tmp = EA;
+        X = tmp;
+        $(Z) = (tmp == 0);
 }
 
 :LEAY EA    is op=0x31; EA
 {
-        Y = EA;
+        local tmp = EA;
+        Y = tmp;
+        $(Z) = (tmp == 0);
 }
 
 :LEAS EA    is op=0x32; EA
