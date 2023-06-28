@@ -344,6 +344,26 @@ void ScopeLocal::annotateRawStackPtr(void)
   }
 }
 
+/// If the return value is passed back in a location whose address space holds \b this scope's variables,
+/// assume the return value is unmapped, unless there is a specific alias into the location.
+/// Mark the range as unmapped.
+/// \param is the sorted list of alias offsets into the space
+void ScopeLocal::checkUnaliasedReturn(const vector<uintb> &alias)
+
+{
+  PcodeOp *retOp = fd->getFirstReturnOp();
+  if (retOp == (PcodeOp *)0 || retOp->numInput() < 2) return;
+  Varnode *vn = retOp->getIn(1);
+  if (vn->getSpace() != space) return;
+  if (!vn->isMapped()) return;
+  vector<uintb>::const_iterator iter = lower_bound(alias.begin(),alias.end(),vn->getOffset());
+  if (iter != alias.end()) {
+    // Alias is greater than or equal to vn offset
+    if (*iter <= (vn->getOffset() + vn->getSize() - 1)) return;	// Alias into return storage, don't continue
+  }
+  markNotMapped(space, vn->getOffset(), vn->getSize(), false);
+}
+
 /// This resets the discovery process for new local variables mapped to the scope's address space.
 /// Any analysis removing specific ranges from the mapped set (via markNotMapped()) is cleared.
 void ScopeLocal::resetLocalWindow(void)
@@ -1081,8 +1101,10 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
   fakeInputSymbols();
 
   state.sortAlias();
-  if (aliasyes)
+  if (aliasyes) {
     markUnaliased(state.getAlias());
+    checkUnaliasedReturn(state.getAlias());
+  }
   if (!state.getAlias().empty() && state.getAlias()[0] == 0)	// If a zero offset use of the stack pointer exists
     annotateRawStackPtr();					// Add a special placeholder PTRSUB
 }

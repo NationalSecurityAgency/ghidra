@@ -163,6 +163,16 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcMapParam : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcMapReturn : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcMapfunction : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
