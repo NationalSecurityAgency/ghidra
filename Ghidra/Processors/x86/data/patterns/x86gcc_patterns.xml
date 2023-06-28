@@ -90,6 +90,11 @@
      <funcstart label="__i686.get_pc_thunk.si" validcode="function"/>
   </pattern>
 
+  <pattern>
+     <data>0x8b 0x3c 0x24 0xc3 </data> <!-- MOV  EDI,[ESP] / RET -->
+     <funcstart label="__i686.get_pc_thunk.di" validcode="function"/>
+  </pattern>
+
   <patternpairs totalbits="32" postbits="16">
     <prepatterns>
       <data>0x90</data> <!-- NOP filler -->
