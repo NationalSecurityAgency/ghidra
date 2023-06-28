@@ -116,6 +116,10 @@ public class SegmentCommand extends LoadCommand {
 		return vmsize;
 	}
 
+	public void setVMsize(long vmSize) {
+		vmsize = vmSize;
+	}
+
 	public long getFileOffset() {
 		return fileoff;
 	}
@@ -126,6 +130,10 @@ public class SegmentCommand extends LoadCommand {
 
 	public long getFileSize() {
 		return filesize;
+	}
+
+	public void setFileSize(long fileSize) {
+		filesize = fileSize;
 	}
 
 	/**

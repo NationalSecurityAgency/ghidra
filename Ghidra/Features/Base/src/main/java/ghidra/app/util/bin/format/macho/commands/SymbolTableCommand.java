@@ -74,12 +74,12 @@ public class SymbolTableCommand extends LoadCommand {
 		List<NList> sortedList =
 			nlistList.stream().sorted((o1, o2) -> Integer.compare(o1.getStringTableIndex(),
 				o2.getStringTableIndex())).collect(Collectors.toList());
-
+		
 		// initialize the sorted NList strings from string table
 		for (NList nList : sortedList) {
 			nList.initString(dataReader, stroff);
 		}
-
+		
 		// the symbol table should be in the original order.
 		// The table is indexed by other tables in the MachO headers
 		symbols = nlistList;
@@ -151,6 +151,23 @@ public class SymbolTableCommand extends LoadCommand {
 	@Override
 	public String getCommandName() {
 		return "symtab_command";
+	}
+
+	@Override
+	public int getLinkerDataOffset() {
+		return symoff;
+	}
+
+	@Override
+	public int getLinkerDataSize() {
+		if (!symbols.isEmpty()) {
+			int totalStringSize = 0;
+			for (NList nlist : symbols) {
+				totalStringSize += nlist.getString().length() + 1; // Add 1 for null terminator
+			}
+			return nsyms * symbols.get(0).getSize() + totalStringSize;
+		}
+		return 0;
 	}
 
 	@Override

@@ -86,6 +86,26 @@ public abstract class LoadCommand implements StructConverter {
 	public abstract String getCommandName();
 
 	/**
+	 * Gets the file offset of this load command's "linker data".  Not all load commands with data
+	 * will have linker data.  Linker data typically resides in the __LINKEDIT segment.
+	 * 
+	 * @return The file offset of this load command's "linker data", or 0 if it has no linker data
+	 */
+	public int getLinkerDataOffset() {
+		return 0;
+	}
+
+	/**
+	 * Gets the file size of this load command's "linker data". Not all load commands with data
+	 * will have linker data.  Linker data typically resides in the __LINKEDIT segment.
+	 * 
+	 * @return The file size of this load command's "linker data", or 0 if it has no linker data
+	 */
+	public int getLinkerDataSize() {
+		return 0;
+	}
+
+	/**
 	 * Gets the {@link Address} of this load command's "data"
 	 * 
 	 * @param header The Mach-O header
