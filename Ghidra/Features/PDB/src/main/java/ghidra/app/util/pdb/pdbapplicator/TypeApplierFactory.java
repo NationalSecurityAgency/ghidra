@@ -112,9 +112,9 @@ public class TypeApplierFactory {
 					applier =
 						new MemberFunctionTypeApplier(applicator, (MemberFunction16MsType) type);
 					break;
-//				case VtShapeMsType.PDB_ID:
-//					applier = new VtShapeTypeApplier(applicator, (VtShapeMsType) type);
-//					break;
+				case VtShapeMsType.PDB_ID:
+					applier = new VtShapeTypeApplier(applicator, (VtShapeMsType) type);
+					break;
 //				case Cobol016MsType.PDB_ID:
 //					// Not evaluated/implemented yet.
 //					break;
@@ -381,7 +381,7 @@ public class TypeApplierFactory {
 //					// Not evaluated/implemented yet.
 //					break;
 
-				// 0x1500 block 
+				// 0x1500 block
 //				case TypeServerMsType.PDB_ID:
 //					// Not evaluated/implemented yet.
 //					break;
@@ -472,7 +472,7 @@ public class TypeApplierFactory {
 //					// Not evaluated/implemented yet.
 //					break;
 
-				// 0x1600 block 
+				// 0x1600 block
 //				case FunctionIdMsType.PDB_ID:
 //					// Not evaluated/implemented yet.
 //					break;
