@@ -1755,7 +1755,7 @@ bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode 
     pushSymbol(sym,vn,op);
     return true;
   }
-  modval = (-baseval) & mask;
+  modval = (~baseval + 1) & mask;
   if (modval == val) {		// twos complement
     pushOp(&unary_minus,(const PcodeOp *)0);
     pushSymbol(sym,vn,op);
@@ -1999,7 +1999,7 @@ void PrintC::pushImpliedField(const Varnode *vn,const PcodeOp *op)
 {
   bool proceed = false;
   Datatype *parent = vn->getHigh()->getType();
-  const TypeField *field;
+  const TypeField *field = (const TypeField *)0;
   if (parent->needsResolution() && parent->getMetatype() != TYPE_PTR) {
     const Funcdata *fd = op->getParent()->getFuncdata();
     int4 slot = op->getSlot(vn);

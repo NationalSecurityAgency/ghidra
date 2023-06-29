@@ -3675,7 +3675,7 @@ int4 RuleCarryElim::applyOp(PcodeOp *op,Funcdata &data)
     data.opSetOpcode(op,CPUI_COPY);
     return 1;
   }
-  off = (-off) & calc_mask(vn2->getSize()); // Take twos-complement of constant
+  off = (~off + 1) & calc_mask(vn2->getSize()); // Take twos-complement of constant
 
   data.opSetOpcode(op,CPUI_INT_LESSEQUAL);
   data.opSetInput(op,vn1,1);	// Move other input to second position
@@ -5592,7 +5592,7 @@ int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
     // The only multiply we transform, is multiply by -1
     if (otherconst->getOffset() != calc_mask(otherconst->getSize())) return 0;
     newconst = cvn->getOffset();
-    newconst = (-newconst) & calc_mask(otherconst->getSize());
+    newconst = (~newconst + 1) & calc_mask(otherconst->getSize());
   }
   else if (opc == CPUI_INT_NEGATE) {
     newconst = cvn->getOffset();
@@ -6639,7 +6639,7 @@ int4 RuleAddUnsigned::applyOp(PcodeOp *op,Funcdata &data)
     }
   }
   data.opSetOpcode(op,CPUI_INT_SUB);
-  Varnode *cvn = data.newConstant(constvn->getSize(), (-val) & mask);
+  Varnode *cvn = data.newConstant(constvn->getSize(), (~val + 1) & mask);
   cvn->copySymbol(constvn);
   data.opSetInput(op,cvn,1);
   return 1;
@@ -8020,7 +8020,7 @@ int4 RuleSignForm2::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *multOp = multOut->getDef();
   if (multOp->code() != CPUI_INT_MULT) return 0;
   int4 slot;
-  PcodeOp *sextOp;
+  PcodeOp *sextOp = (PcodeOp *)0;
   for(slot=0;slot<2;++slot) {			// Search for the INT_SEXT
     Varnode *vn = multOp->getIn(slot);
     if (!vn->isWritten()) continue;
@@ -8312,7 +8312,7 @@ int4 RuleSignMod2Opt::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *addOp = addOut->getDef();
   if (addOp->code() != CPUI_INT_ADD) return 0;
   int4 multSlot;
-  PcodeOp *multOp;
+  PcodeOp *multOp = (PcodeOp *)0;
   bool trunc = false;
   for(multSlot = 0;multSlot < 2;++multSlot) {
     Varnode *vn = addOp->getIn(multSlot);
@@ -8461,7 +8461,7 @@ Varnode *RuleSignMod2nOpt2::checkMultiequalForm(PcodeOp *op,uintb npow)
   if (op->numInput() != 2) return (Varnode *)0;
   npow -= 1;		// 2^n - 1
   int4 slot;
-  Varnode *base;
+  Varnode *base = (Varnode *)0;
   for(slot=0;slot<op->numInput();++slot) {
     Varnode *addOut = op->getIn(slot);
     if (!addOut->isWritten()) continue;

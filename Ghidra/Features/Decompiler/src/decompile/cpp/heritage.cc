@@ -377,8 +377,10 @@ Varnode *Heritage::normalizeWriteSize(Varnode *vn,const Address &addr,int4 size)
 {
   int4 overlap;
   int4 mostsigsize;
-  PcodeOp *op,*newop;
-  Varnode *mostvn,*leastvn,*big,*bigout,*midvn;
+  PcodeOp *op, *newop;
+  Varnode *big,*bigout,*midvn;
+  Varnode *mostvn = (Varnode *)0;
+  Varnode *leastvn = (Varnode *)0;
 
   mostvn = (Varnode *)0;
   op = vn->getDef();

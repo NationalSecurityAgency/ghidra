@@ -585,7 +585,7 @@ void FunctionSymbol::decode(Decoder &decoder)
     fd = new Funcdata("","",scope,Address(),this);
     try {
       symbolId = fd->decode(decoder);
-    } catch(RecovError &err) {
+    } catch(RecovError&) {
       // Caused by a duplicate scope name. Preserve the address so we can find the original symbol
       throw DuplicateFunctionError(fd->getAddress(),fd->getName());
     }
@@ -650,7 +650,7 @@ bool EquateSymbol::isValueClose(uintb op2Value,int4 size) const
   }
   if (maskValue == (op2Value & mask)) return true;
   if (maskValue == (~op2Value & mask)) return true;
-  if (maskValue == (-op2Value & mask)) return true;
+  if (maskValue == ((~op2Value + 1) & mask)) return true;
   if (maskValue == ((op2Value + 1) & mask)) return true;
   if (maskValue == ((op2Value -1) & mask)) return true;
   return false;
