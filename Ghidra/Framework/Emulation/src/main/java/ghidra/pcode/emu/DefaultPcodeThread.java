@@ -20,6 +20,8 @@ import java.util.*;
 
 import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.SleighParserContext;
+import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -27,6 +29,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.util.Msg;
@@ -457,6 +460,33 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 	}
 
+	protected RegisterValue getContextAfterCommits() {
+		PseudoInstruction pins = (PseudoInstruction) instruction;
+		try {
+			SleighParserContext parserCtx = (SleighParserContext) pins.getParserContext();
+			var procCtx = new DisassemblerContextAdapter() {
+				RegisterValue ctxVal = new RegisterValue(language.getContextBaseRegister());
+
+				@Override
+				public void setFutureRegisterValue(Address address, RegisterValue value) {
+					if (!value.getRegister().isProcessorContext()) {
+						return;
+					}
+					if (!address.equals(counter)) {
+						Msg.warn(this, "Context applied somewhere other than the counter.");
+						return;
+					}
+					ctxVal = ctxVal.assign(value.getRegister(), value);
+				}
+			};
+			parserCtx.applyCommits(procCtx);
+			return procCtx.ctxVal;
+		}
+		catch (MemoryAccessException e) {
+			throw new AssertionError(e);
+		}
+	}
+
 	/**
 	 * Resolve a finished instruction, advancing the program counter if necessary
 	 */
@@ -469,7 +499,10 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			overrideCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
 		}
 		if (contextreg != Register.NO_CONTEXT) {
-			overrideContext(defaultContext.getFlowValue(instruction.getRegisterValue(contextreg)));
+			RegisterValue flowCtx =
+				defaultContext.getFlowValue(instruction.getRegisterValue(contextreg));
+			RegisterValue commitCtx = getContextAfterCommits();
+			overrideContext(flowCtx.combineValues(commitCtx));
 		}
 		postExecuteInstruction();
 		frame = null;
