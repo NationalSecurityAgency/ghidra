@@ -35,26 +35,24 @@ public class FieldListTypeApplier extends MsTypeApplier {
 	private List<MsTypeApplier> methodList = new ArrayList<>();
 	private boolean isEmpty;
 
-	// return can be null
 	static FieldListTypeApplier getFieldListApplierSpecial(DefaultPdbApplicator applicator,
 			RecordNumber recordNumber) throws PdbException {
 		MsTypeApplier applier =
 			applicator.getApplierOrNoTypeSpec(recordNumber, FieldListTypeApplier.class);
-		FieldListTypeApplier fieldListApplier = null;
-		if (applier instanceof FieldListTypeApplier) {
-			return (FieldListTypeApplier) applicator.getApplierOrNoTypeSpec(recordNumber,
-				FieldListTypeApplier.class);
+		if (applier instanceof FieldListTypeApplier fieldListApplier) {
+			return fieldListApplier;
 		}
-		try {
-			if (recordNumber.getCategory() == RecordCategory.TYPE) {
-				fieldListApplier = new FieldListTypeApplier(applicator,
+		// Only the NoType spec should fall through to here
+		if (recordNumber.getCategory() == RecordCategory.TYPE) {
+			try {
+				return new FieldListTypeApplier(applicator,
 					applicator.getPdb().getTypeRecord(recordNumber), true);
 			}
+			catch (IllegalArgumentException e) {
+				applicator.appendLogMsg(e.getMessage());
+			}
 		}
-		catch (IllegalArgumentException e) {
-			applicator.appendLogMsg(e.getMessage());
-		}
-		return fieldListApplier;
+		throw new PdbException("Problem creating field list");
 	}
 
 	/**
@@ -105,7 +103,9 @@ public class FieldListTypeApplier extends MsTypeApplier {
 
 	@Override
 	void apply() throws PdbException, CancelledException {
-		dataType = applyFieldListMsType((AbstractFieldListMsType) msType);
+		if (!isEmpty()) {
+			dataType = applyFieldListMsType((AbstractFieldListMsType) msType);
+		}
 	}
 
 	List<MsTypeApplier> getBaseClassList() {

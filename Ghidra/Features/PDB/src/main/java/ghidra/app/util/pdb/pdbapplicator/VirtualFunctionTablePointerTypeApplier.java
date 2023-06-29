@@ -21,6 +21,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -68,20 +69,24 @@ public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 
 	@Override
 	void apply() throws PdbException, CancelledException {
-		if (msType instanceof AbstractVirtualFunctionTablePointerMsType) {
+		if (msType instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType vftPtrWOffset) {
 			dataType = applyPointer(
-				((AbstractVirtualFunctionTablePointerMsType) msType).getPointerTypeRecordNumber());
+				vftPtrWOffset.getPointerTypeRecordNumber());
+		}
+		else if (msType instanceof AbstractVirtualFunctionTablePointerMsType vftPtr) {
+			dataType = applyPointer(vftPtr.getPointerTypeRecordNumber());
 		}
 		else {
-			dataType = applyPointer(
-				((AbstractVirtualFunctionTablePointerWithOffsetMsType) msType).getPointerTypeRecordNumber());
+			dataType = VoidDataType.dataType;
+			applicator.appendLogMsg(
+				"PDB Warning: Type not handled: " + msType.getClass().getSimpleName());
 		}
 	}
 
 	private DataType applyPointer(RecordNumber pointerTypeRecordNumber) {
 		MsTypeApplier rawApplier = applicator.getTypeApplier(pointerTypeRecordNumber);
-		if (rawApplier instanceof PointerTypeApplier) {
-			return rawApplier.getDataType();
+		if (rawApplier instanceof PointerTypeApplier pointerApplier) {
+			return pointerApplier.getDataType();
 		}
 		applicator.appendLogMsg("cannot process " + rawApplier.getClass().getSimpleName() + "for " +
 			getClass().getSimpleName());
