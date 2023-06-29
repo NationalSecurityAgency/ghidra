@@ -297,6 +297,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		List<DyldCacheImage> mappedImages = dyldCacheHeader.getMappedImages();
 		monitor.initialize(mappedImages.size());
 		for (DyldCacheImage mappedImage : mappedImages) {
+			monitor.checkCancelled();
+			monitor.incrementProgress(1);
 			DyldCacheMachoInfo info = new DyldCacheMachoInfo(splitDyldCache, bp,
 				mappedImage.getAddress() - dyldCacheHeader.getBaseAddress(),
 				space.getAddress(mappedImage.getAddress()), mappedImage.getPath());
@@ -304,79 +306,82 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			if (libobjcInfo == null && info.name.contains("libobjc.")) {
 				libobjcInfo = info;
 			}
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
 		}
 		
-		// Create Exports
-		boolean exportsCreated = false;
-		if (options.processExports()) {
-			monitor.setMessage("Creating DYLIB exports...");
-			monitor.initialize(infoSet.size());
-			for (DyldCacheMachoInfo info : infoSet) {
-				exportsCreated = info.createExports();
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
-			}
-		}
-
-		// Create DyldCache Mach-O symbols if local symbols are not present
-		if (options.processLocalSymbols() && !localSymbolsPresent) {
-			monitor.setMessage("Creating DYLIB symbols...");
-			monitor.initialize(infoSet.size());
-			for (DyldCacheMachoInfo info : infoSet) {
-				info.createSymbols(options.processExports() && !exportsCreated);
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
-			}
-		}
-
-		// Markup DyldCache Mach-O headers 
+		// Markup DyldCache DYLIB headers 
 		monitor.setMessage("Marking up DYLIB headers...");
 		monitor.initialize(infoSet.size());
 		for (DyldCacheMachoInfo info : infoSet) {
-			info.markupHeaders();
 			monitor.checkCancelled();
 			monitor.incrementProgress(1);
+			info.markupHeaders();
 		}
 
-		// Markup DyldCache Mach-O headers 
-		if (options.markupMachoLoadCommandData()) {
+		if (options.processDylibMemory()) {
+
+			// Process DyldCache DYLIB memory blocks
+			monitor.setMessage("Processing DYLIB memory blocks...");
+			monitor.initialize(infoSet.size());
+			for (DyldCacheMachoInfo info : infoSet) {
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
+				info.processMemoryBlocks();
+			}
+
+			// Add DyldCache Mach-O's to program tree
+			monitor.setMessage("Adding DYLIB's to program tree...");
+			monitor.initialize(infoSet.size());
+			for (DyldCacheMachoInfo info : infoSet) {
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
+				info.addToProgramTree();
+			}
+
+		}
+
+		// Markup DyldCache DYLIB load command data
+		if (options.markupDylibLoadCommandData()) {
 			monitor.setMessage("Marking up DYLIB load command data...");
 			monitor.initialize(infoSet.size());
 			for (DyldCacheMachoInfo info : infoSet) {
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
 				info.markupLoadCommandData();
+			}
+		}
+
+		// Create DYLIB symbols 
+		if (options.processDylibSymbols()) {
+			monitor.setMessage("Creating DYLIB symbols...");
+			monitor.initialize(infoSet.size());
+			for (DyldCacheMachoInfo info : infoSet) {
+				info.createSymbols(false);
 				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
 		}
 
-		// Add DyldCache Mach-O's to program tree
-		monitor.setMessage("Adding DYLIB's to program tree...");
-		monitor.initialize(infoSet.size());
-		for (DyldCacheMachoInfo info : infoSet) {
-			info.addToProgramTree();
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
-		}
-
-		// Process DyldCache DYLIB memory blocks
-		monitor.setMessage("Processing DYLIB memory blocks...");
-		monitor.initialize(infoSet.size());
-		for (DyldCacheMachoInfo info : infoSet) {
-			info.processMemoryBlocks();
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
+		// Create DYLIB Exports
+		if (options.processDylibExports()) {
+			monitor.setMessage("Creating DYLIB exports...");
+			monitor.initialize(infoSet.size());
+			for (DyldCacheMachoInfo info : infoSet) {
+				info.createExports();
+				monitor.checkCancelled();
+				monitor.incrementProgress(1);
+			}
 		}
 
 		// Process and markup the libobjc DYLIB
-		monitor.setMessage("Processing libobjc...");
-		DyldCacheMachoInfo libObjcInfo =
-			infoSet.stream().filter(e -> e.name.contains("libobjc.")).findAny().orElse(null);
-		if (libObjcInfo != null) {
-			LibObjcDylib libObjcDylib =
-				new LibObjcDylib(libObjcInfo.header, program, space, log, monitor);
-			libObjcDylib.markup();
+		if (options.processLibobjc()) {
+			monitor.setMessage("Processing libobjc...");
+			DyldCacheMachoInfo libObjcInfo =
+				infoSet.stream().filter(e -> e.name.contains("libobjc.")).findAny().orElse(null);
+			if (libObjcInfo != null) {
+				LibObjcDylib libObjcDylib =
+					new LibObjcDylib(libObjcInfo.header, program, space, log, monitor);
+				libObjcDylib.markup();
+			}
 		}
 	}
 

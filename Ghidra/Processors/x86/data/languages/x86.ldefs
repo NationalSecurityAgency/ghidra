@@ -63,7 +63,7 @@
 	<external_name tool="IDA-PRO" name="metapc"/>
     <external_name tool="gnu" name="i8086"/>
     <external_name tool="gdis.disassembler.options.file" name="x86-16.gdis"/>
-    </language>
+  </language>
   <language processor="x86"
             endian="little"
             size="16"
@@ -78,8 +78,8 @@
 	<external_name tool="IDA-PRO" name="8086p"/>
     <external_name tool="gnu" name="i8086"/>
     <external_name tool="gdis.disassembler.options.file" name="x86-16.gdis"/>
-    </language>
-    <language processor="x86"
+  </language>
+  <language processor="x86"
             endian="little"
             size="64"
             variant="default"
@@ -98,5 +98,19 @@
     <external_name tool="IDA-PRO" name="metapc"/>
     <external_name tool="DWARF.register.mapping.file" name="x86-64.dwarf"/>
     <external_name tool="Golang.register.info.file" name="x86-64-golang.register.info"/>
+  </language>
+  <language processor="x86"
+            endian="little"
+            size="64"
+            variant="compat32"
+            version="2.14"
+            slafile="x86-64.sla"
+            processorspec="x86-64-compat32.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:64:compat32">
+    <description>Intel/AMD 64-bit x86 in 32-bit compatibility mode (long mode off)</description>
+    <compiler name="Visual Studio" spec="x86win.cspec" id="windows"/>
+    <compiler name="gcc" spec="x86gcc.cspec" id="gcc"/>
+    <external_name tool="DWARF.register.mapping.file" name="x86.dwarf"/>
   </language>
 </language_definitions>
