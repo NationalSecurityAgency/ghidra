@@ -189,7 +189,7 @@ public class MDMangGhidra extends MDMang {
 				else {
 					variable =
 						new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
-					variable.setNamespace(processNamespace(objectCPP.getQualfication()));
+					variable.setNamespace(processNamespace(objectCPP.getQualification()));
 				}
 				variable.setDatatype(dt);
 				resultObject = variable;
@@ -214,7 +214,7 @@ public class MDMangGhidra extends MDMang {
 				else {
 					DemangledFunction function =
 						new DemangledFunction(mangledSource, demangledSource, objectCPP.getName());
-					function.setNamespace(processNamespace(objectCPP.getQualfication()));
+					function.setNamespace(processNamespace(objectCPP.getQualification()));
 					resultObject = function;
 					objectResult = processFunction((MDFunctionInfo) typeinfo, function);
 					// Any other special values to be set?
@@ -244,7 +244,7 @@ public class MDMangGhidra extends MDMang {
 				MDVxTable vxtable = (MDVxTable) typeinfo;
 				DemangledVariable variable =
 					new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
-				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
+				variable.setNamespace(processNamespace(objectCPP.getQualification()));
 				variable.setConst(vxtable.isConst());
 				variable.setVolatile(vxtable.isVolatile());
 				variable.setPointer64(vxtable.isPointer64());
@@ -256,7 +256,7 @@ public class MDMangGhidra extends MDMang {
 			else if (typeinfo instanceof AbstractMDMetaClass) { //Includes all RTTI, except RTTI4
 				DemangledVariable variable =
 					new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
-				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
+				variable.setNamespace(processNamespace(objectCPP.getQualification()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
 				//  customer complaints or other fall-out from having created a variable here.
@@ -265,7 +265,7 @@ public class MDMangGhidra extends MDMang {
 			else if (typeinfo instanceof MDGuard) {
 				DemangledVariable variable =
 					new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
-				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
+				variable.setNamespace(processNamespace(objectCPP.getQualification()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
 				//  customer complaints or other fall-out from having created a variable here.
@@ -275,7 +275,7 @@ public class MDMangGhidra extends MDMang {
 				// Any others (e.g., case '9')
 				DemangledVariable variable =
 					new DemangledVariable(mangledSource, demangledSource, objectCPP.getName());
-				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
+				variable.setNamespace(processNamespace(objectCPP.getQualification()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
 				//  customer complaints or other fall-out from having created a variable here.
@@ -309,7 +309,7 @@ public class MDMangGhidra extends MDMang {
 			else if (baseName.length() != 0) {
 				DemangledVariable variable;
 				variable = new DemangledVariable(mangledSource, demangledSource, baseName);
-				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
+				variable.setNamespace(processNamespace(objectCPP.getQualification()));
 				resultObject = variable;
 			}
 		}
