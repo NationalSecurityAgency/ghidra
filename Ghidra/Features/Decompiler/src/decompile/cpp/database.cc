@@ -585,7 +585,7 @@ void FunctionSymbol::decode(Decoder &decoder)
     fd = new Funcdata("","",scope,Address(),this);
     try {
       symbolId = fd->decode(decoder);
-    } catch(RecovError &err) {
+    } catch(RecovError&) {
       // Caused by a duplicate scope name. Preserve the address so we can find the original symbol
       throw DuplicateFunctionError(fd->getAddress(),fd->getName());
     }
@@ -630,6 +630,8 @@ EquateSymbol::EquateSymbol(Scope *sc,const string &nm,uint4 format,uintb val)
   dispflags |= format;
 }
 
+#pragma warning (push)
+#pragma warning (disable : 4146)
 /// An EquateSymbol should survive certain kinds of transforms during decompilation,
 /// such as negation, twos-complementing, adding or subtracting 1.
 /// Return \b true if the given value looks like a transform of this type relative
@@ -655,6 +657,7 @@ bool EquateSymbol::isValueClose(uintb op2Value,int4 size) const
   if (maskValue == ((op2Value -1) & mask)) return true;
   return false;
 }
+#pragma warning (pop)
 
 void EquateSymbol::encode(Encoder &encoder) const
 

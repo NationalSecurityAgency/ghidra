@@ -1735,6 +1735,8 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   popMod();
 }
 
+#pragma warning (push)
+#pragma warning (disable : 4146)
 bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode *vn,const PcodeOp *op)
 
 {
@@ -1777,6 +1779,7 @@ bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode 
   }
   return false;
 }
+#pragma warning (pop)
 
 void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
 
@@ -1999,7 +2002,7 @@ void PrintC::pushImpliedField(const Varnode *vn,const PcodeOp *op)
 {
   bool proceed = false;
   Datatype *parent = vn->getHigh()->getType();
-  const TypeField *field;
+  const TypeField *field = (const TypeField *)0;
   if (parent->needsResolution() && parent->getMetatype() != TYPE_PTR) {
     const Funcdata *fd = op->getParent()->getFuncdata();
     int4 slot = op->getSlot(vn);

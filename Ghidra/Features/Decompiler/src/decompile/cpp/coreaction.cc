@@ -816,7 +816,7 @@ bool ActionMultiCse::processBlock(Funcdata &data,BlockBasic *bl)
 {
   vector<Varnode *> vnlist;
   PcodeOp *targetop = (PcodeOp *)0;
-  PcodeOp *pairop;
+  PcodeOp *pairop = (PcodeOp *)0;
   list<PcodeOp *>::iterator iter = bl->beginOp();
   list<PcodeOp *>::iterator enditer = bl->endOp();
   while(iter != enditer) {

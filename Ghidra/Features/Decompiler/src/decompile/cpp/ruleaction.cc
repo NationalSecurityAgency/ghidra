@@ -3659,6 +3659,8 @@ void RuleCarryElim::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_CARRY);
 }
 
+#pragma warning (push)
+#pragma warning (disable : 4146)
 int4 RuleCarryElim::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -3682,6 +3684,7 @@ int4 RuleCarryElim::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetInput(op,data.newConstant(vn1->getSize(),off),0); // Put the new constant in first position
   return 1;
 }
+#pragma warning (pop)
 
 /// \class RuleSub2Add
 /// \brief Eliminate INT_SUB:  `V - W  =>  V + W * -1`
@@ -5568,6 +5571,8 @@ void RuleEqual2Constant::getOpList(vector<uint4> &oplist) const
   oplist.insert(oplist.end(),list,list+2);
 }
 
+#pragma warning (push)
+#pragma warning (disable : 4146)
 int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -5619,6 +5624,7 @@ int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetInput(op,data.newConstant(a->getSize(),newconst),1);
   return 1;
 }
+#pragma warning (pop)
 
 void AddTreeState::clear(void)
 
@@ -6616,6 +6622,8 @@ void RuleAddUnsigned::getOpList(vector<uint4> &oplist) const
   oplist.push_back(CPUI_INT_ADD);
 }
 
+#pragma warning (push)
+#pragma warning (disable : 4146)
 int4 RuleAddUnsigned::applyOp(PcodeOp *op,Funcdata &data)
 
 {
@@ -6644,6 +6652,7 @@ int4 RuleAddUnsigned::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetInput(op,cvn,1);
   return 1;
 }
+#pragma warning (pop)
 
 /// \class Rule2Comp2Sub
 /// \brief Cleanup: Convert INT_ADD back to INT_SUB: `V + -W  ==> V - W`
@@ -8020,7 +8029,7 @@ int4 RuleSignForm2::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *multOp = multOut->getDef();
   if (multOp->code() != CPUI_INT_MULT) return 0;
   int4 slot;
-  PcodeOp *sextOp;
+  PcodeOp *sextOp = (PcodeOp *)0;
   for(slot=0;slot<2;++slot) {			// Search for the INT_SEXT
     Varnode *vn = multOp->getIn(slot);
     if (!vn->isWritten()) continue;
@@ -8312,7 +8321,7 @@ int4 RuleSignMod2Opt::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *addOp = addOut->getDef();
   if (addOp->code() != CPUI_INT_ADD) return 0;
   int4 multSlot;
-  PcodeOp *multOp;
+  PcodeOp *multOp = (PcodeOp *)0;
   bool trunc = false;
   for(multSlot = 0;multSlot < 2;++multSlot) {
     Varnode *vn = addOp->getIn(multSlot);
@@ -8461,7 +8470,7 @@ Varnode *RuleSignMod2nOpt2::checkMultiequalForm(PcodeOp *op,uintb npow)
   if (op->numInput() != 2) return (Varnode *)0;
   npow -= 1;		// 2^n - 1
   int4 slot;
-  Varnode *base;
+  Varnode *base = (Varnode *)0;
   for(slot=0;slot<op->numInput();++slot) {
     Varnode *addOut = op->getIn(slot);
     if (!addOut->isWritten()) continue;

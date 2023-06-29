@@ -243,7 +243,7 @@ void LoopBody::orderTails(void)
   if (tails.size() <= 1) return;
   if (exitblock == (FlowBlock *)0) return;
   int4 prefindex;
-  FlowBlock *trial;
+  FlowBlock *trial = (FlowBlock *)0;
   for(prefindex=0;prefindex < tails.size(); ++prefindex) {
     trial = tails[prefindex];
     int4 sizeout = trial->sizeOut();
