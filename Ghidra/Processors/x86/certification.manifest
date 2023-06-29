@@ -34,6 +34,7 @@ data/languages/x86-16.gdis||GHIDRA||||END|
 data/languages/x86-16.pspec||GHIDRA||||END|
 data/languages/x86-32-golang.cspec||GHIDRA||||END|
 data/languages/x86-32-golang.register.info||GHIDRA||||END|
+data/languages/x86-64-compat32.pspec||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.register.info||GHIDRA||||END|
