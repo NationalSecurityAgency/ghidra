@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.formats.gfilesystem.crypto;
+package ghidra.framework.generic.auth;
 
 import java.io.Closeable;
 import java.util.Arrays;
@@ -23,44 +23,44 @@ import java.util.Arrays;
  * <p>
  * {@link #close() Closing} an instance will clear the characters of the char array.
  */
-public class PasswordValue implements Closeable {
+public class Password implements Closeable {
 
 	/**
-	 * Creates a new PasswordValue using a copy the specified characters.
+	 * Creates a new {@code Password} using a copy the specified characters.
 	 * 
 	 * @param password password characters
-	 * @return new PasswordValue instance
+	 * @return new {@code Password} instance
 	 */
-	public static PasswordValue copyOf(char[] password) {
-		PasswordValue result = new PasswordValue();
+	public static Password copyOf(char[] password) {
+		Password result = new Password();
 		result.password = new char[password.length];
 		System.arraycopy(password, 0, result.password, 0, password.length);
 		return result;
 	}
 
 	/**
-	 * Creates a new PasswordValue by wrapping the specified character array.
+	 * Creates a new {@code Password} by wrapping the specified character array.
 	 * <p>
 	 * The new instance will take ownership of the char array, and
 	 * clear it when the instance is {@link #close() closed}.
 	 * 
 	 * @param password password characters
-	 * @return new PasswordValue instance
+	 * @return new {@code Password} instance
 	 */
-	public static PasswordValue wrap(char[] password) {
-		PasswordValue result = new PasswordValue();
+	public static Password wrap(char[] password) {
+		Password result = new Password();
 		result.password = password;
 		return result;
 	}
 
 	private char[] password;
 
-	private PasswordValue() {
+	private Password() {
 		// empty
 	}
 
 	@Override
-	public PasswordValue clone() {
+	public Password clone() {
 		return copyOf(password);
 	}
 
@@ -101,7 +101,7 @@ public class PasswordValue implements Closeable {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		PasswordValue other = (PasswordValue) obj;
+		Password other = (Password) obj;
 		return Arrays.equals(password, other.password);
 	}
 

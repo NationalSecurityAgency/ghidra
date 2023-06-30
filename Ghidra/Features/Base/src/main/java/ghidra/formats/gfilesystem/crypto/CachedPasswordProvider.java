@@ -18,6 +18,7 @@ package ghidra.formats.gfilesystem.crypto;
 import java.util.*;
 
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.generic.auth.Password;
 
 /**
  * Caches passwords used to unlock a file.
@@ -34,10 +35,10 @@ public class CachedPasswordProvider implements PasswordProvider {
 	 * Adds a password / file combo to the cache.
 	 * 
 	 * @param fsrl {@link FSRL} file
-	 * @param password password to unlock the file.  Specified PasswordValue is
+	 * @param password password to unlock the file.  Specified {@link Password} is
 	 * only copied, clearing is still callers responsibility
 	 */
-	public synchronized void addPassword(FSRL fsrl, PasswordValue password) {
+	public synchronized void addPassword(FSRL fsrl, Password password) {
 		CryptoRec rec = new CryptoRec();
 		rec.fsrl = fsrl;
 		rec.value = password.clone();
@@ -95,7 +96,7 @@ public class CachedPasswordProvider implements PasswordProvider {
 	}
 
 	@Override
-	public synchronized Iterator<PasswordValue> getPasswordsFor(FSRL fsrl, String prompt,
+	public synchronized Iterator<Password> getPasswordsFor(FSRL fsrl, String prompt,
 			Session session) {
 		Set<CryptoRec> uniqueFoundRecs = new LinkedHashSet<>();
 		uniqueFoundRecs.addAll(values.getOrDefault(fsrl.toString(), Collections.emptyList()));
@@ -105,7 +106,7 @@ public class CachedPasswordProvider implements PasswordProvider {
 			uniqueFoundRecs.addAll(values.getOrDefault(fsrl.getMD5(), Collections.emptyList()));
 		}
 
-		List<PasswordValue> results = new ArrayList<>();
+		List<Password> results = new ArrayList<>();
 		for (CryptoRec rec : uniqueFoundRecs) {
 			results.add(rec.value);
 		}
@@ -117,13 +118,13 @@ public class CachedPasswordProvider implements PasswordProvider {
 
 	private static class CryptoRec {
 		FSRL fsrl;
-		PasswordValue value;
+		Password value;
 	}
 
-	private class CloningPasswordIterator implements Iterator<PasswordValue> {
-		Iterator<PasswordValue> delegate;
+	private class CloningPasswordIterator implements Iterator<Password> {
+		Iterator<Password> delegate;
 
-		CloningPasswordIterator(Iterator<PasswordValue> it) {
+		CloningPasswordIterator(Iterator<Password> it) {
 			this.delegate = it;
 		}
 
@@ -133,8 +134,8 @@ public class CachedPasswordProvider implements PasswordProvider {
 		}
 
 		@Override
-		public PasswordValue next() {
-			PasswordValue result = delegate.next();
+		public Password next() {
+			Password result = delegate.next();
 			return result.clone();
 		}
 
