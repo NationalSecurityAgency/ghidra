@@ -19,6 +19,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.help.HelpSet;
@@ -110,15 +111,12 @@ public class GhidraHelpService extends HelpManager {
 	private Map<ResourceFile, Set<URL>> mapHelpToModule(Collection<ResourceFile> moduleRoots,
 			Set<URL> allHelpSets) {
 		Map<ResourceFile, Set<URL>> results = new HashMap<>();
-		Spliterator<URL> spliterator = Spliterators.spliterator(
-				allHelpSets.iterator(),
-				allHelpSets.size(),
-				Spliterator.ORDERED
-		);
 		for (ResourceFile module : moduleRoots) {
-			Set<URL> help = StreamSupport
-					.stream(spliterator, false)
-					.filter((url) -> url != null && url.toExternalForm().contains(module.getName()))
+			Set<URL> help = allHelpSets.stream()
+					.map(Optional::ofNullable)
+					.filter(Optional::isPresent)
+					.map(Optional::get)
+					.filter(url -> url.toExternalForm().contains(module.getName()))
 					.collect(Collectors.toSet());
 			// Clean up
 			allHelpSets.removeAll(help);
@@ -126,7 +124,6 @@ public class GhidraHelpService extends HelpManager {
 				results.put(module, help);
 			}
 		}
-
 		return results;
 	}
 
