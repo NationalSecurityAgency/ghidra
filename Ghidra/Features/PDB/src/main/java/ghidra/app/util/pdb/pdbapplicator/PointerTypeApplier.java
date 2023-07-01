@@ -89,16 +89,7 @@ public class PointerTypeApplier extends MsTypeApplier {
 	private DataType getUnderlyingType(AbstractPointerMsType type) {
 		MsTypeApplier underlyingApplier =
 			applicator.getTypeApplier(type.getUnderlyingRecordNumber());
-
 		DataType underlyingType = underlyingApplier.getCycleBreakType();
-		if (underlyingType == null) {
-			// TODO: we have seen underlyingTypeApplier is for NoTypeApplier for VtShapeMsType
-			//  Figure it out, and perhaps create an applier that creates a structure or something?
-			underlyingType = applicator.getPdbPrimitiveTypeApplicator().getVoidType();
-			applicator.appendLogMsg(
-				"PDB Warning: No type conversion for " + underlyingApplier.getMsType().toString() +
-					" as underlying type for pointer. Using void.");
-		}
 		return underlyingType;
 	}
 

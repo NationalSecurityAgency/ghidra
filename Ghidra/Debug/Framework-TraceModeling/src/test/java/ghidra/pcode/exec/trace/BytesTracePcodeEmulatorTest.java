@@ -940,8 +940,44 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			assertEquals(BigInteger.valueOf(0x0010fff8),
 				regs.getValue(x64, 1, tb.reg(x64, "RSP")).getUnsignedValue());
-			assertEquals(new BigInteger("efbeed0d00000000",16), // Guest is LE, host is BE
+			assertEquals(new BigInteger("efbeed0d00000000", 16), // Guest is LE, host is BE
 				TraceSleighUtils.evaluate(changedExpr, tb.trace, 1, thread, 0));
+		}
+	}
+
+	@Test
+	public void testITECC_VMOVCCF32() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "ARM:LE:32:v8T")) {
+			TraceThread thread = initTrace(tb, """
+					pc = 0x00400000;
+					sp = 0x00110000;
+					s1 = 0x12341234;
+					CY = 1;
+					""",
+				List.of(
+					"ite cc"));
+			//"vmov.cc.f32 s1,0xbf000000"));
+
+			try (Transaction tx = tb.startTransaction()) {
+				tb.trace.getMemoryManager()
+						.putBytes(0, tb.addr(0x00400002), tb.buf(0xfe, 0xee, 0x00, 0x0a));
+			}
+
+			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.stepInstruction();
+			emuThread.stepPcodeOp(); // decode
+			assertEquals("vmov.cc.f32 s1,0xbf000000", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+
+			try (Transaction tx = tb.startTransaction()) {
+				emu.writeDown(tb.host, 1, 1);
+			}
+
+			assertEquals(BigInteger.valueOf(0x00400006),
+				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x12341234), // Unaffected
+				TraceSleighUtils.evaluate("s1", tb.trace, 1, thread, 0));
 		}
 	}
 }

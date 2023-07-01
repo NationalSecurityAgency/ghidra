@@ -112,8 +112,9 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 		try {
 			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
 
-			List<Address> addrs =
-				api.getCurrentProgram().getMemory().locateAddressesForFileOffset(getDataOffset());
+			List<Address> addrs = api.getCurrentProgram()
+					.getMemory()
+					.locateAddressesForFileOffset(getLinkerDataOffset());
 			if (addrs.size() <= 0) {
 				throw new Exception("Chain Header does not exist in program");
 			}

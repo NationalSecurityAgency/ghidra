@@ -305,6 +305,16 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
+	public int getLinkerDataOffset() {
+		return indirectsymoff;
+	}
+
+	@Override
+	public int getLinkerDataSize() {
+		return nindirectsyms * Integer.BYTES;
+	}
+
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType(getCommandName(), 0);
 		struct.add(DWORD, "cmd", null);
