@@ -3582,8 +3582,8 @@ int4 SleighCompile::run_compilation(const string &filein,const string &fileout)
 {
   parseFromNewFile(filein);
   slgh = this;		// Set global pointer up for parser
-  errno_t err = fopen_s(&sleighin, filein.c_str(),"r");	// Open the file for the lexer
-  if (err != 0) {
+  sleighin = fopen(filein.c_str(),"r");	// Open the file for the lexer
+  if (sleighin == (FILE *)0) {
     cerr << "Unable to open specfile: " << filein << endl;
     return 2;
   }

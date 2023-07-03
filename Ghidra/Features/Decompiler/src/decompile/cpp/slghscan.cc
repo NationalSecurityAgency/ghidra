@@ -1374,8 +1374,8 @@ int4 preprocess(int4 cur_state,int4 blank_state)
       expand_preprocmacros(fname);
       slgh->parseFromNewFile(fname);
       fname = slgh->grabCurrentFilePath();
-	  errno_t err = fopen_s(&sleighin, fname.c_str(), "r");
-      if (err != 0)
+      sleighin = fopen(fname.c_str(),"r");
+      if (sleighin == (FILE *)0)
         preproc_error("Could not open included file "+fname);
       filebuffers.back().file = sleighin;
       sleigh_switch_to_buffer( sleigh_create_buffer(sleighin, YY_BUF_SIZE) );
@@ -3165,7 +3165,7 @@ static void yy_load_buffer_state  (void)
         b->yy_bs_column = 0;
     }
 
-        b->yy_is_interactive = file ? (isatty( _fileno(file) ) > 0) : 0;
+        b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
     
 	errno = oerrno;
 }
