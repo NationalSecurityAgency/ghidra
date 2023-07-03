@@ -150,6 +150,12 @@ public abstract class AbstractMsf implements Msf {
 		this.pdbOptions = Objects.requireNonNull(pdbOptions, "PdbOptions may not be null");
 		// Do initial configuration with largest possible page size.  ConfigureParameters will
 		//  be called again later with the proper pageSize set.
+		// GP-3603... considered changing the pagesize for the initial header read from
+		//  0x1000 to 0x2000, but I don't think there is anything needed beyond 0x1000 offset
+		//  in terms of header information, and if we did change it, then we'd run the risk
+		//  of an extremely small PDB (pagesize of 0x200 and less than 16 pages) not being
+		//  able to be read (initial header read would fail).  Determining if such a small
+		//  PDB is possible would be more work than I fell necessary at this time.
 		pageSize = 0x1000;
 		configureParameters();
 		// Create components.
@@ -217,6 +223,7 @@ public abstract class AbstractMsf implements Msf {
 	 * Returns the file reader
 	 * @return the file reader
 	 */
+	@Override
 	public MsfFileReader getFileReader() {
 		return fileReader;
 	}
