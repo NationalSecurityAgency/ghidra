@@ -110,7 +110,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
 				ByteProvider bp = splitDyldCache.getProvider(i);
 
-				fixPageChains(header);
+				fixSlidePointers(header);
 				markupHeaders(header);
 				markupBranchIslands(header, bp);
 				createLocalSymbols(header);
@@ -254,13 +254,13 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	}
 
 	/**
-	 * Fixes any chained pointers within each of the data pages.
+	 * Fixes any slide pointers within each of the data pages.
 	 * 
 	 * @param dyldCacheHeader The {@link DyldCacheHeader}
 	 * @throws MemoryAccessException if there was a problem reading/writing memory.
 	 * @throws CancelledException if user cancels
 	 */
-	private void fixPageChains(DyldCacheHeader dyldCacheHeader)
+	private void fixSlidePointers(DyldCacheHeader dyldCacheHeader)
 			throws MemoryAccessException, CancelledException {
 		if (!options.processChainedFixups()) {
 			return;
@@ -271,9 +271,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		for (DyldCacheSlideInfoCommon info : slideInfos) {
 			int version = info.getVersion();
 
-			log.appendMsg("Fixing page chains version: " + version);
-			info.fixPageChains(program, dyldCacheHeader, options.addChainedFixupsRelocations(), log,
-				monitor);
+			log.appendMsg("Fixing slide pointers version: " + version);
+			info.fixSlidePointers(program, options.addChainedFixupsRelocations(), log, monitor);
 		}
 	}
 
@@ -317,24 +316,23 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			info.markupHeaders();
 		}
 
-		if (options.processDylibMemory()) {
+		// Add DyldCache Mach-O's to program tree
+		monitor.setMessage("Adding DYLIB's to program tree...");
+		monitor.initialize(infoSet.size());
+		for (DyldCacheMachoInfo info : infoSet) {
+			monitor.checkCancelled();
+			monitor.incrementProgress(1);
+			info.addToProgramTree();
+		}
 
-			// Process DyldCache DYLIB memory blocks
+		// Process DyldCache DYLIB memory blocks
+		if (options.processDylibMemory()) {
 			monitor.setMessage("Processing DYLIB memory blocks...");
 			monitor.initialize(infoSet.size());
 			for (DyldCacheMachoInfo info : infoSet) {
 				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 				info.processMemoryBlocks();
-			}
-
-			// Add DyldCache Mach-O's to program tree
-			monitor.setMessage("Adding DYLIB's to program tree...");
-			monitor.initialize(infoSet.size());
-			for (DyldCacheMachoInfo info : infoSet) {
-				monitor.checkCancelled();
-				monitor.incrementProgress(1);
-				info.addToProgramTree();
 			}
 
 		}
