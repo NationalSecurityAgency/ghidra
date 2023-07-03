@@ -2994,22 +2994,17 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * <pre>
 	 * String user = askString("Login", "Username:");
 	 * Project project;
-	 * try (Secret secret = askSecret("Login", "Password:")) {
-	 * 	if (secret == null) {
-	 * 		return; // User cancelled
-	 * 	}
-	 * 	project = doLoginAndOpenProject(user, secret.buffer());
+	 * try (Password password = askPassword("Login", "Password:")) {
+	 * 	project = doLoginAndOpenProject(user, password.getPasswordChars());
 	 * }
 	 * </pre>
 	 * 
 	 * The buffer will be zero-filled upon leaving the {@code try-with-resources} block. If, in the
 	 * sample, the {@code doLoginAndOpenProject} method or any part of its implementation needs to
-	 * retain the secret, it must make a copy. It is then the implementation's responsibility to
+	 * retain the password, it must make a copy. It is then the implementation's responsibility to
 	 * protect its copy.
 	 * 
 	 * @param title the title of the dialog
-	 * @param serverType the server type, i.e., its protocol or URL schema
-	 * @param serverName the host name of the server
 	 * @param prompt the prompt to the left of the input field, or null to display "Password:"
 	 * @return the password
 	 * @throws CancelledException if the user cancels
