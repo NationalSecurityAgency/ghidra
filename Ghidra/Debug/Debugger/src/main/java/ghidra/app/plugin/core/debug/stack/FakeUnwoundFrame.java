@@ -87,8 +87,13 @@ public class FakeUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	}
 
 	@Override
-	public String getWarnings() {
-		return "";
+	public StackUnwindWarningSet getWarnings() {
+		return new StackUnwindWarningSet();
+	}
+
+	@Override
+	public Exception getError() {
+		return null;
 	}
 
 	@Override

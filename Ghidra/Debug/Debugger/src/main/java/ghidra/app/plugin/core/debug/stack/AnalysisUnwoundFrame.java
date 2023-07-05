@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.stack;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.bookmark.BookmarkNavigator;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -61,8 +62,8 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	private final int level;
 	private final Address pcVal;
 	private final Address spVal;
+	private final Address staticPcVal;
 	private final UnwindInfo info;
-	private final UnwindException infoErr;
 	private final SavedRegisterMap registerMap;
 
 	private final Address base;
@@ -83,35 +84,29 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 *            is the caller's (i.e., subclass') responsibility to ensure the given state
 	 *            corresponds to the given coordinates.
 	 * @param level the level of this frame
-	 * @param pcVal the address of the next instruction when this frame becomes the current frame
+	 * @param pcVal the (dynamic) address of the next instruction when this frame becomes the
+	 *            current frame
 	 * @param spVal the address of the top of the stack when this frame becomes the current frame
+	 * @param staticPcVal the (static) address of the next instruction
 	 * @param info the information used to unwind this frame
 	 * @param infoErr if applicable, an error describing why the unwind info is missing or
 	 *            incomplete
 	 * @param registerMap a map from registers to the offsets of their saved values on the stack
 	 */
 	AnalysisUnwoundFrame(PluginTool tool, DebuggerCoordinates coordinates, StackUnwinder unwinder,
-			PcodeExecutorState<T> state, int level, Address pcVal, Address spVal, UnwindInfo info,
-			UnwindException infoErr, SavedRegisterMap registerMap) {
+			PcodeExecutorState<T> state, int level, Address pcVal, Address spVal,
+			Address staticPcVal, UnwindInfo info, SavedRegisterMap registerMap) {
 		super(tool, coordinates, state);
-		if ((info == null) == (infoErr == null)) {
-			throw new AssertionError();
-		}
 		this.unwinder = unwinder;
 		this.level = level;
 
 		this.pcVal = pcVal;
 		this.spVal = spVal;
+		this.staticPcVal = staticPcVal;
 		this.info = info;
-		this.infoErr = infoErr;
 		this.registerMap = registerMap;
 
-		if (info != null) {
-			this.base = info.computeBase(spVal);
-		}
-		else {
-			this.base = null;
-		}
+		this.base = info.computeBase(spVal);
 	}
 
 	@Override
@@ -156,8 +151,10 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	@Override
 	protected Address applyBase(long offset) {
 		if (base == null) {
-			throw new UnwindException("Cannot compute stack address for offset " + offset,
-				infoErr);
+			throw new UnwindException(
+				"Cannot compute stack address for offset %d.\nFrame error: %s".formatted(offset,
+					info.error().getMessage()),
+				info.error());
 		}
 		return base.add(offset);
 	}
@@ -194,8 +191,11 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 
 	@Override
 	public String getDescription() {
-		return String.format("%s %s pc=%s sp=%s base=%s", level, info.function(),
-			pcVal.toString(false), spVal.toString(false), base.toString(false));
+		return String.format("%s %s pc=%s sp=%s base=%s",
+			level, info.function(),
+			pcVal == null ? null : pcVal.toString(false),
+			spVal == null ? null : spVal.toString(false),
+			base == null ? null : base.toString(false));
 	}
 
 	@Override
@@ -225,7 +225,7 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 */
 	protected Structure generateStructure(int prevParamSize) {
 		FrameStructureBuilder builder =
-			new FrameStructureBuilder(language, pcVal, info, prevParamSize);
+			new FrameStructureBuilder(language, staticPcVal, info, prevParamSize);
 		return builder.build(StackUnwinder.FRAMES_PATH, "frame_" + pcVal.toString(false),
 			trace.getDataTypeManager());
 	}
@@ -324,7 +324,7 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 		TraceBookmarkManager bm = trace.getBookmarkManager();
 		TraceBookmarkType btWarn = getWarningBookmarkType();
 		Lifespan span = Lifespan.nowOnMaybeScratch(viewSnap);
-		String warnings = info.warnings().summarize();
+		String warnings = info.warnings().summarize().stream().collect(Collectors.joining("\n"));
 		Structure structure = resolveStructure(prevParamSize);
 		if (structure == null || structure.isZeroLength()) {
 			for (TraceBookmark existing : bm.getBookmarksAt(viewSnap, spPlusParams)) {
@@ -374,27 +374,13 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 		return info;
 	}
 
-	/**
-	 * If the unwind information is absent or incomplete, get the error explaining why.
-	 * 
-	 * <p>
-	 * When analysis is incomplete, the frame may still be partially unwound, meaning only certain
-	 * variables can be evaluated, and the return address may not be available. Typically, a
-	 * partially unwound frame is the last frame that can be recovered in the stack. If the base
-	 * pointer could not be recovered, then only register variables and static variables can be
-	 * evaluated.
-	 * 
-	 * @return the error
-	 */
-	public UnwindException getError() {
-		return infoErr;
+	@Override
+	public StackUnwindWarningSet getWarnings() {
+		return info.warnings();
 	}
 
 	@Override
-	public String getWarnings() {
-		if (info == null) {
-			return "";
-		}
-		return info.warnings().summarize();
+	public Exception getError() {
+		return info.error();
 	}
 }
