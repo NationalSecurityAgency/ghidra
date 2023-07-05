@@ -78,6 +78,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 	public AddressSet flowConstants(final Program program, Address flowStart,
 			AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
 			throws CancelledException {
+
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
 		ConstantPropagationContextEvaluator eval =
@@ -229,11 +230,16 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 				@Override
 				public boolean evaluateReturn(Varnode retVN, VarnodeContext context, Instruction instruction) {
 					// check if a return is actually returning, or is branching with a constant PC
-
+					
+					// if flow already overridden, don't override again
+					if (instruction.getFlowOverride() != FlowOverride.NONE) {
+						return false;
+					}
+					
 					if (retVN != null && context.isConstant(retVN)) {
 						long offset = retVN.getOffset();
 						if (offset > 3 && offset != -1) {
-							// need to override the return to a branch
+							// need to override the return flow to a branch
 							instruction.setFlowOverride(FlowOverride.BRANCH);
 						}
 					}
