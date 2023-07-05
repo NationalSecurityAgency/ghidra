@@ -15,15 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.stack;
 
-/**
- * An exception to indicate failed or incomplete stack uwinding
- */
-public class UnwindException extends RuntimeException {
-	public UnwindException(String message) {
+public class EvaluationException extends RuntimeException {
+	public EvaluationException(String message) {
 		super(message);
-	}
-
-	public UnwindException(String message, Exception cause) {
-		super(message, cause);
 	}
 }

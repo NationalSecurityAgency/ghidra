@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.stack;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
@@ -263,14 +264,28 @@ public class ListingUnwoundFrame extends AbstractUnwoundFrame<WatchValue> {
 	}
 
 	@Override
-	public String getWarnings() {
+	public StackUnwindWarningSet getWarnings() {
+		StackUnwindWarningSet warnings = new StackUnwindWarningSet();
 		for (TraceBookmark bookmark : frame.getTrace()
 				.getBookmarkManager()
 				.getBookmarksAt(frame.getStartSnap(), frame.getMinAddress())) {
-			if (bookmark.getTypeString().equals(BookmarkType.WARNING)) {
-				return bookmark.getComment();
+			if (!bookmark.getTypeString().equals(BookmarkType.WARNING)) {
+				continue;
+			}
+			String comment = bookmark.getComment();
+			if (comment == null) {
+				continue;
+			}
+			for (String line : comment.split("\n")) {
+				warnings.add(new CustomStackUnwindWarning(line));
 			}
 		}
+		return warnings;
+	}
+
+	@Override
+	public Exception getError() {
+		// TODO: Can this be deserialized from a bookmark?
 		return null;
 	}
 
