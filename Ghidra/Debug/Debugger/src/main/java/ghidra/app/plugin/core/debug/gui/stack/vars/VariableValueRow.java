@@ -18,13 +18,11 @@ package ghidra.app.plugin.core.debug.gui.stack.vars;
 import static ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueRow.*;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
-import ghidra.app.plugin.core.debug.stack.UnwoundFrame;
+import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.pcode.exec.DebuggerPcodeUtils.PrettyBytes;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.exec.ValueLocation;
@@ -40,6 +38,7 @@ import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -61,7 +60,8 @@ public interface VariableValueRow {
 	 * @return the HTML-styled string
 	 */
 	static String styleSimple(Object obj) {
-		return obj == null ? htmlFg(COLOR_ERROR, "None") : HTMLUtilities.escapeHTML(obj.toString());
+		return obj == null ? htmlFg(COLOR_ERROR, "None")
+				: HTMLUtilities.escapeHTML(obj.toString()).replace("\n", "<br>");
 	}
 
 	/**
@@ -566,19 +566,7 @@ public interface VariableValueRow {
 	 * A row to display the warnings encountered while unwinding the frame used to evaluate the
 	 * variable
 	 */
-	record WarningsRow(String warnings) implements VariableValueRow {
-		/**
-		 * Create a row from the given list of warnings
-		 * 
-		 * @param warnings the warnings
-		 */
-		public WarningsRow(List<String> warnings) {
-			this(warnings.stream()
-					.map(String::trim)
-					.filter(w -> !w.isBlank())
-					.collect(Collectors.joining("\n")));
-		}
-
+	record WarningsRow(StackUnwindWarningSet warnings) implements VariableValueRow {
 		@Override
 		public RowKey key() {
 			return RowKey.WARNINGS;
@@ -591,8 +579,8 @@ public interface VariableValueRow {
 
 		@Override
 		public String valueToHtml() {
-			String[] split = warnings.split("\n");
-			String formatted = Stream.of(split)
+			String formatted = warnings.summarize()
+					.stream()
 					.map(w -> String.format("<li>%s</li>", HTMLUtilities.escapeHTML(w)))
 					.collect(Collectors.joining("\n  "));
 			return String.format("""
@@ -604,16 +592,21 @@ public interface VariableValueRow {
 
 		@Override
 		public String valueToSimpleString() {
-			return warnings;
+			return warnings.summarize().stream().collect(Collectors.joining("\n"));
 		}
 
 		@Override
 		public String toHtml() {
-			if (warnings.isBlank()) {
+			if (warnings.isEmpty()) {
 				return "";
 			}
 			return String.format("<tr><td valign='top'><b>%s</b></td><td>%s</td></tr>",
 				keyToHtml(), valueToHtml());
+		}
+
+		@Override
+		public void reportDetails() {
+			warnings.reportDetails();
 		}
 	}
 
@@ -633,11 +626,17 @@ public interface VariableValueRow {
 
 		@Override
 		public String valueToHtml() {
+			if (error instanceof EvaluationException || error instanceof UnwindException) {
+				return styleSimple(error.getMessage());
+			}
 			return styleSimple(error);
 		}
 
 		@Override
 		public String valueToSimpleString() {
+			if (error instanceof EvaluationException || error instanceof UnwindException) {
+				return error.getMessage();
+			}
 			return error.toString();
 		}
 
@@ -646,5 +645,13 @@ public interface VariableValueRow {
 			return String.format("<tr><td valign='top'><b>%s</b></td><td>%s</td></tr>",
 				keyToHtml(), valueToHtml());
 		}
+
+		@Override
+		public void reportDetails() {
+			Msg.showError(this, null, "Details", error.getMessage(), error);
+		}
+	}
+
+	default void reportDetails() {
 	}
 }

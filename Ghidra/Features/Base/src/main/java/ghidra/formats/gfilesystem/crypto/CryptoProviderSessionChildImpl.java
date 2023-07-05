@@ -18,6 +18,7 @@ package ghidra.formats.gfilesystem.crypto;
 import java.util.Iterator;
 
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.generic.auth.Password;
 
 /**
  * A stub implementation of CryptoSession that relies on a parent instance.
@@ -41,12 +42,12 @@ public class CryptoProviderSessionChildImpl implements CryptoSession {
 	}
 
 	@Override
-	public Iterator<PasswordValue> getPasswordsFor(FSRL fsrl, String prompt) {
+	public Iterator<Password> getPasswordsFor(FSRL fsrl, String prompt) {
 		return parentSession.getPasswordsFor(fsrl, prompt);
 	}
 
 	@Override
-	public void addSuccessfulPassword(FSRL fsrl, PasswordValue password) {
+	public void addSuccessfulPassword(FSRL fsrl, Password password) {
 		parentSession.addSuccessfulPassword(fsrl, password);
 	}
 

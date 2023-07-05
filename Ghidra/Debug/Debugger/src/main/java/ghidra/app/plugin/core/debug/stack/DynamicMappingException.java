@@ -15,15 +15,24 @@
  */
 package ghidra.app.plugin.core.debug.stack;
 
-/**
- * An exception to indicate failed or incomplete stack uwinding
- */
-public class UnwindException extends RuntimeException {
-	public UnwindException(String message) {
-		super(message);
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
+
+public class DynamicMappingException extends EvaluationException {
+	private final Program program;
+	private final Address address;
+
+	public DynamicMappingException(Program program, Address address) {
+		super("Cannot map %s:%s to dynamic adress".formatted(program.getName(), address));
+		this.program = program;
+		this.address = address;
 	}
 
-	public UnwindException(String message, Exception cause) {
-		super(message, cause);
+	public Program getProgram() {
+		return program;
+	}
+
+	public Address getAddress() {
+		return address;
 	}
 }

@@ -602,14 +602,14 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
 		assertEquals(
-			new UnwindInfo(function, 0, 4, stack(0), Map.of(), new StackUnwindWarningSet()),
+			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(new UnwindInfo(function, -20, 4, stack(0),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
 			Map.of(
 				register("EBP"), stack(-4)),
-			new StackUnwindWarningSet()),
+			new StackUnwindWarningSet(), null),
 			infoAtBody);
 	}
 
@@ -629,16 +629,17 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
 		assertEquals(
-			new UnwindInfo(function, 0, 4, stack(0), Map.of(), new StackUnwindWarningSet()),
+			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(new UnwindInfo(function, -20, 4, stack(0),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
 			Map.of(
 				register("EBP"), stack(-4)),
 			new StackUnwindWarningSet(
 				new UnspecifiedConventionStackUnwindWarning(myExtern),
-				new UnknownPurgeStackUnwindWarning(myExtern))),
+				new UnknownPurgeStackUnwindWarning(myExtern)),
+			null),
 			infoAtBody);
 	}
 
@@ -656,16 +657,17 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
 		assertEquals(
-			new UnwindInfo(function, 0, 4, stack(0), Map.of(), new StackUnwindWarningSet()),
+			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
 		DataType ptr2Undef = new PointerDataType(DataType.DEFAULT, program.getDataTypeManager());
-		assertEquals(new UnwindInfo(function, -20, 4, stack(0),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
 			Map.of(
 				register("EBP"), stack(-4)),
 			new StackUnwindWarningSet(
-				new UnexpectedTargetTypeStackUnwindWarning(ptr2Undef))),
+				new UnexpectedTargetTypeStackUnwindWarning(ptr2Undef)),
+			null),
 			infoAtBody);
 	}
 
@@ -1163,7 +1165,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 			ProgramLocation programLocation, DebuggerCoordinates current,
 			FieldLocation fieldLocation, Field field) throws Throwable {
 		VariableValueTable table = new VariableValueTable();
-		List<String> warnings = new ArrayList<>();
+		StackUnwindWarningSet warnings = new StackUnwindWarningSet();
 		waitOn(valuesService.fillVariableValueTable(table, programLocation, current,
 			fieldLocation, field, warnings));
 		table.add(new WarningsRow(warnings));

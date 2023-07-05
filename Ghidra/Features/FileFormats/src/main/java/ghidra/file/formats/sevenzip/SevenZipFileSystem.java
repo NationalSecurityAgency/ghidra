@@ -18,10 +18,9 @@ package ghidra.file.formats.sevenzip;
 
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
-import java.util.*;
-
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -31,9 +30,9 @@ import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.crypto.CryptoSession;
-import ghidra.formats.gfilesystem.crypto.PasswordValue;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.formats.gfilesystem.fileinfo.FileType;
+import ghidra.framework.generic.auth.Password;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
@@ -141,9 +140,9 @@ public class SevenZipFileSystem implements GFileSystem {
 				String prompt = passwords.isEmpty()
 						? fsrl.getContainer().getName()
 						: String.format("%s in %s", file.getName(), fsrl.getContainer().getName());
-				for (Iterator<PasswordValue> pwIt =
+				for (Iterator<Password> pwIt =
 					cryptoSession.getPasswordsFor(fsrl.getContainer(), prompt); pwIt.hasNext();) {
-					try (PasswordValue passwordValue = pwIt.next()) {
+					try (Password passwordValue = pwIt.next()) {
 						monitor.setMessage("Testing password for " + file.getName());
 
 						String password = String.valueOf(passwordValue.getPasswordChars());	// we are forced to use strings by 7zip's api

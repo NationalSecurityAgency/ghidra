@@ -25,12 +25,13 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.generic.auth.Password;
 import util.CollectionUtils;
 
 public class CachedPasswordProviderTest extends AbstractGenericTest {
 	private CryptoProviders cryptoProviders = CryptoProviders.getInstance();
 
-	private List<PasswordValue> getPasswords(CryptoSession cryptoSession, String fsrlStr)
+	private List<Password> getPasswords(CryptoSession cryptoSession, String fsrlStr)
 			throws MalformedURLException {
 		return CollectionUtils
 				.asList(cryptoSession.getPasswordsFor(FSRL.fromString(fsrlStr), "badbeef"));
@@ -60,7 +61,7 @@ public class CachedPasswordProviderTest extends AbstractGenericTest {
 
 			// shouldn't match passwords: file1.txt to file2.txt
 			cryptoSession.addSuccessfulPassword(FSRL.fromString("file:///fake/path/file1.txt"),
-				PasswordValue.wrap("password_for_file2.txt".toCharArray()));
+				Password.wrap("password_for_file2.txt".toCharArray()));
 			assertEquals(1, getPasswords(cryptoSession, "file:///fake/path/file1.txt").size());
 			assertEquals(0, getPasswords(cryptoSession, "file:///fake/path/file2.txt").size());
 

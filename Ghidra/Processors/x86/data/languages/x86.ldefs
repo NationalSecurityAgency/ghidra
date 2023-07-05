@@ -99,7 +99,7 @@
     <external_name tool="DWARF.register.mapping.file" name="x86-64.dwarf"/>
     <external_name tool="Golang.register.info.file" name="x86-64-golang.register.info"/>
   </language>
-  <language processor="x86"
+  <language processor="x86-compat32"
             endian="little"
             size="64"
             variant="compat32"

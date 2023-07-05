@@ -78,7 +78,10 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 		protected Address translateMemory(Program program, Address address) {
 			TraceLocation location = mappingService.getOpenMappedLocation(trace,
 				new ProgramLocation(program, address), snap);
-			return location == null ? null : location.getAddress();
+			if (location == null) {
+				throw new DynamicMappingException(program, address);
+			}
+			return location.getAddress();
 		}
 	}
 
@@ -97,7 +100,10 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 		protected Address translateMemory(Program program, Address address) {
 			TraceLocation location = mappingService.getOpenMappedLocation(trace,
 				new ProgramLocation(program, address), snap);
-			return location == null ? null : location.getAddress();
+			if (location == null) {
+				throw new DynamicMappingException(program, address);
+			}
+			return location.getAddress();
 		}
 	}
 
@@ -131,6 +137,9 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 
 		@Override
 		protected boolean isLeaf(Varnode vn) {
+			if (vn.getDef() == null && (vn.isRegister() || vn.isAddress())) {
+				return true;
+			}
 			return vn.isConstant() ||
 				symbolStorage.contains(vn.getAddress(), vn.getAddress().add(vn.getSize() - 1));
 		}
