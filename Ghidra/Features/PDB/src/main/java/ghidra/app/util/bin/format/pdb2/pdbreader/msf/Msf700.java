@@ -92,6 +92,10 @@ public class Msf700 extends AbstractMsf {
 				log2PageSize = 12;
 				freePageMapNumSequentialPage = 1;
 				break;
+			case 0x2000:
+				log2PageSize = 13;
+				freePageMapNumSequentialPage = 1;
+				break;
 			default:
 				throw new PdbException(String.format("Unknown page size: 0X%08X", pageSize));
 		}

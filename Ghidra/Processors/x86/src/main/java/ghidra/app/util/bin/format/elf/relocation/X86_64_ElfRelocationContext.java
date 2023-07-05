@@ -87,7 +87,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		// NOTE: GOT allocation calculation assumes all GOT entries correspond to a specific
 		// symbol and not a computed offset.  This assumption may need to be revised based upon 
 		// uses of getGotEntryAddress method
-		Set<Long> uniqueSymbolValues = new HashSet<>();
+		Set<Object> uniqueSymbolValues = new HashSet<>();
 		for (ElfRelocationTable rt : getElfHeader().getRelocationTables()) {
 			ElfSymbolTable st = rt.getAssociatedSymbolTable();
 			if (st == null) {
@@ -102,7 +102,9 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 				if (elfSymbol == null) {
 					continue;
 				}
-				uniqueSymbolValues.add(elfSymbol.getValue());
+				long value = elfSymbol.getValue();
+				Object uniqueValue = value == 0 ? elfSymbol.getNameAsString() : Long.valueOf(value);
+				uniqueSymbolValues.add(uniqueValue);
 			}
 		}
 		return Math.max(8, uniqueSymbolValues.size() * 8);
@@ -130,13 +132,14 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		nextAllocatedGotEntryAddress = Address.NO_ADDRESS;
 
 		ElfSymbol gotElfSymbol = findGotElfSymbol();
-		if (gotElfSymbol == null) {
-			// TODO: may need to support cases where GOT symbol not defined
+
+		if (gotElfSymbol == null && !getElfHeader().isRelocatable()) {
 			loadHelper.log(
 				"GOT allocatiom failed. " + ElfConstants.GOT_SYMBOL_NAME + " not defined");
 			return null;
 		}
-		if (getSymbolAddress(gotElfSymbol) != null) {
+
+		if (gotElfSymbol != null && getSymbolAddress(gotElfSymbol) != null) {
 			throw new AssertException(ElfConstants.GOT_SYMBOL_NAME + " already allocated");
 		}
 
@@ -147,7 +150,9 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		if (allocatedGotLimits != null &&
 			allocatedGotLimits.getMinAddress().getOffset() < Integer.MAX_VALUE) {
 			// GOT must fall within first 32-bit segment
-			symbolMap.put(gotElfSymbol, allocatedGotLimits.getMinAddress());
+			if (gotElfSymbol != null) {
+				symbolMap.put(gotElfSymbol, allocatedGotLimits.getMinAddress());
+			}
 			allocatedGotAddress = allocatedGotLimits.getMinAddress();
 			nextAllocatedGotEntryAddress = allocatedGotAddress;
 			gotMap = new HashMap<>();
@@ -156,8 +161,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 			return allocatedGotAddress;
 		}
 
-		loadHelper.log("Failed to allocate " + ElfRelocationHandler.GOT_BLOCK_NAME +
-			" block required for relocation processing");
+		loadHelper.log("Failed to allocate GOT block required for relocation processing");
 		return null;
 	}
 
@@ -213,7 +217,9 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		}
 		if (addr == null) {
 			addr = getNextAllocatedGotEntryAddress();
-			gotMap.put(symbolValue, addr);
+			if (gotMap != null) {
+				gotMap.put(symbolValue, addr);
+			}
 		}
 		return addr == Address.NO_ADDRESS ? null : addr;
 	}
