@@ -215,7 +215,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 			GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
-		// Set default render to display red if file would not we found
+		// Set default render to display red if file would not be found
 		// Using include paths
 		pathPanel.getTable().setDefaultRenderer(String.class, new GTableCellRenderer() {
 			@Override
