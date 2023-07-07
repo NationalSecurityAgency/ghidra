@@ -49,10 +49,11 @@ public class ProjectFileManager implements ProjectData {
 
 	private static final String TEST_REPOSITORY_PATH = System.getProperty("Repository");
 
-	private static final String SERVER_NAME = "SERVER";
-	private static final String PORT_NUMBER = "PORT_NUMBER";
-	private static final String REPOSITORY_NAME = "REPOSITORY_NAME";
-	private static final String OWNER = "OWNER";
+	public static final String SERVER_NAME = "SERVER";
+	public static final String PORT_NUMBER = "PORT_NUMBER";
+	public static final String REPOSITORY_NAME = "REPOSITORY_NAME";
+	public static final String OWNER = "OWNER";
+
 	private static final String PROPERTY_FILENAME = "project";
 
 	private static final int USER_DATA_RECONCILE_DELAY_MS = 5 * 60 * 1000; // 5-minutes
@@ -202,6 +203,38 @@ public class ProjectFileManager implements ProjectData {
 		else {
 			versionedFSListener = null;
 		}
+	}
+
+	/**
+	 * Read the contents of the project properties file to include the following values if relavent:
+	 * {@value #OWNER}, {@value #SERVER_NAME}, {@value #REPOSITORY_NAME}, {@value #PORT_NUMBER}
+	 * @param projectDir project directory (*.rep)
+	 * @return project properties or null if invalid project directory specified
+	 */
+	public static Properties readProjectProperties(File projectDir) {
+		try {
+			PropertyFile pf =
+				new PropertyFile(projectDir, PROPERTY_FILENAME, "/", PROPERTY_FILENAME);
+			if (pf.exists()) {
+				Properties properties = new Properties();
+
+				properties.setProperty(OWNER, pf.getString(OWNER, null));
+
+				String serverName = pf.getString(SERVER_NAME, null);
+				String repoName = pf.getString(REPOSITORY_NAME, null);
+				int port = pf.getInt(PORT_NUMBER, 0);
+				if (serverName != null && repoName != null) {
+					properties.setProperty(SERVER_NAME, serverName);
+					properties.setProperty(REPOSITORY_NAME, repoName);
+					properties.setProperty(PORT_NUMBER, Integer.toString(port));
+				}
+				return properties;
+			}
+		}
+		catch (IOException e) {
+			// ignore
+		}
+		return null;
 	}
 
 	private void init(boolean create, boolean isInWritableProject)
