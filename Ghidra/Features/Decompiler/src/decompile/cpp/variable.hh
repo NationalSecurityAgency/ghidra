@@ -253,12 +253,15 @@ public:
 /// and still keeping the cached tests accurate, by calling the updateHigh() method.  If two HighVariables
 /// to be merged, the cached tests can be updated by calling moveIntersectTest() before merging.
 class HighIntersectTest {
+  PcodeOpSet &affectingOps;		///< PcodeOps that may indirectly affect the intersection test
   map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
   static void gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,vector<Varnode *> &res);
   static bool testBlockIntersection(HighVariable *a,int4 blk,const Cover &cover,int4 relOff,const vector<Varnode *> &blist);
   bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
+  bool testUntiedCallIntersection(HighVariable *tied,HighVariable *untied);
 public:
+  HighIntersectTest(PcodeOpSet &cCover) : affectingOps(cCover) {}
   void moveIntersectTests(HighVariable *high1,HighVariable *high2);
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   bool intersection(HighVariable *a,HighVariable *b);
