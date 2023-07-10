@@ -106,6 +106,14 @@ int foo;
  
 #pragma once
 
+#pragma multiple \
+        lines \
+        pragma
+
+#pragma no comment here /* no comment / here */
+
+#pragma with no EOL comment here // no comment here
+
 #define PTYPE 4
 
 #define TYPE2               2   /* 2 */
