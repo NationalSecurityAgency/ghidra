@@ -434,6 +434,15 @@ macro complement(op)
         setNZFlags(op);
 }
 
+# Signed shift right.
+# P-code INT_SRIGHT.
+macro arithmeticShiftRight(op)
+{
+        $(C) = op & 1;
+        op = (op s>> 1);
+        setNZFlags(op);
+}
+
 macro logicalShiftRight(op)
 {
         $(C) = op & 1;
@@ -450,29 +459,23 @@ macro rotateRightWithCarry(op)
         setNZFlags(op);
 }
 
+macro logicalShiftLeft(op)
+{
+        local tmp = (op >> 7);
+        $(C) = tmp;
+        op = op << 1;
+        $(V) = tmp ^ (op >> 7);
+        setNZFlags(op);
+}
+
 macro rotateLeftWithCarry(op)
 {
         local carryIn = $(C);
-        $(C) = op >> 7;
+        local tmp = (op >> 7);
+        $(C) = tmp;
         op = (op << 1) | carryIn;
+        $(V) = tmp ^ (op >> 7);
         setNZFlags(op);
-}
-
-# Signed shift right.
-# P-code INT_SRIGHT.
-macro arithmeticShiftRight(op)
-{
-        $(C) = op & 1;
-        op = (op s>> 1);
-        setNZFlags(op);
-}
-
-macro logicalShiftLeft(op)
-{
-        $(C) = (op >> 7);
-        op = op << 1;
-        $(Z) = (op == 0);
-        $(N) = (op >> 7);
 }
 
 macro increment(op)
@@ -1204,7 +1207,7 @@ macro PushEntireState()
 
 :ADDB OP1    is (op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
 {
-        setHFlag(A, OP1);
+        setHFlag(B, OP1);
         addition(B, OP1);
 }
 
