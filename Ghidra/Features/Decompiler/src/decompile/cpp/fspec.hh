@@ -1479,9 +1479,11 @@ public:
   void updateOutputNoTypes(const vector<Varnode *> &triallist,TypeFactory *factory);
   void updateAllTypes(const vector<string> &namelist,const vector<Datatype *> &typelist,bool dtdtdt);
   ProtoParameter *getParam(int4 i) const { return store->getInput(i); }	///< Get the i-th input parameter
+  void setParam(int4 i,const string &name,const ParameterPieces &piece) { store->setInput(i, name, piece); }	///< Set parameter storage directly
   void removeParam(int4 i) { store->clearInput(i); }		///< Remove the i-th input parameter
   int4 numParams(void) const { return store->getNumInputs(); }	///< Get the number of input parameters
   ProtoParameter *getOutput(void) const { return store->getOutput(); }	///< Get the return value
+  void setOutput(const ParameterPieces &piece) { store->setOutput(piece); }	///< Set return value storage directly
   Datatype *getOutputType(void) const { return store->getOutput()->getType(); }	///< Get the return value data-type
   const RangeList &getLocalRange(void) const { return model->getLocalRange(); }	///< Get the range of potential local stack variables
   const RangeList &getParamRange(void) const { return model->getParamRange(); }	///< Get the range of potential stack parameters
@@ -1601,6 +1603,7 @@ class FuncCallSpecs : public FuncProto {
   bool isinputactive; 		///< Are we actively trying to recover input parameters
   bool isoutputactive;		///< Are we actively trying to recover output parameters
   bool isbadjumptable;		///< Was the call originally a jump-table we couldn't recover
+  bool isstackoutputlock;	///< Do we have a locked output on the stack
   Varnode *getSpacebaseRelative(void) const;	///< Get the active stack-pointer Varnode at \b this call site
   Varnode *buildParam(Funcdata &data,Varnode *vn,ProtoParameter *param,Varnode *stackref);
   int4 transferLockedInputParam(ProtoParameter *param);
@@ -1642,6 +1645,8 @@ public:
   bool isOutputActive(void) const { return isoutputactive; }	///< Return \b true if return value recovery analysis is active
   void setBadJumpTable(bool val) { isbadjumptable = val; }	///< Toggle whether \b call site looked like an indirect jump
   bool isBadJumpTable(void) const { return isbadjumptable; }	///< Return \b true if \b this call site looked like an indirect jump
+  void setStackOutputLock(bool val) { isstackoutputlock = val; }	///< Toggle whether output is locked and on the stack
+  bool isStackOutputLock(void) const { return isstackoutputlock; }	///< Return \b true if return value is locked and on the stack
   ParamActive *getActiveInput(void) { return &activeinput; }	///< Get the analysis object for input parameter recovery
   ParamActive *getActiveOutput(void) { return &activeoutput; }	///< Get the analysis object for return value recovery
 

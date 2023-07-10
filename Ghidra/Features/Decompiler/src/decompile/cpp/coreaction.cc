@@ -1501,6 +1501,11 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
       if (sz == 1 && outtype->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
 	data.opMarkCalculatedBool(callop);
       Address addr = outparam->getAddress();
+      if (addr.getSpace()->getType() == IPTR_SPACEBASE) {
+	// Delay creating output Varnode until heritage of the stack, when we know relative value of the stack pointer
+	fc->setStackOutputLock(true);
+	return;
+      }
       data.newVarnodeOut(sz,addr,callop);
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
