@@ -1726,10 +1726,10 @@ PPToken MacroVals() : {Token s,t,u=new Token();u.image="";}
 }
 
 PPToken Pragma() :
-{Token t;}
-{   t=<PRAGMA_EXPRN> {
-       PPToken pt = new PPToken(t);
-       if (emitExecSwitch==true) println("#pragma " + defs.expand(t.image,true)); return pt;
+{Token t,u=null; }
+{   (LOOKAHEAD(2)(t=<PRAGMA_EXPRN> { if (u==null) { u = t; } else { u.image += t.image; } } ))+ {
+       PPToken pt = new PPToken(u);
+       if (emitExecSwitch==true) println("#pragma " + defs.expand(u.image,true)); return pt;
     }
 }
 
@@ -1908,7 +1908,7 @@ PPToken NewLines() :
     t=<EOLCMNTNL> |    // newline coming from //
     t=<ERRLINE>  |
     t=<LINLINE>  |
-    t=<PRGLINE>  |
+    t=<PRAGLINE>  |
     t=<IFDLINE>  |
     t=<IFNDLINE> |
     t=<DIRLINE> |
@@ -2691,13 +2691,19 @@ TOKEN : {
 
 <PRAGMA>
 TOKEN : {
-    <PRAGMA_EXPRN:  <NOTWS> (<NOTENDL>)* > : DEFAULT |
-    <PRGLINE: <ENDL> > : DEFAULT
+    <PRAGMA_EXPRN:
+             <WSP> ( ~["\\","\n","\r","/"," ","\t"] |
+              (<CMT><NOTENDLSTAR>)
+             )+ > : PRAGMA |
+    <PRAGLINE:  <ENDL> > : DEFAULT
 }
 
 <PRAGMA>
 SKIP : {
-    <_WSP1: <WSP> > : PRAGMA
+    <_LCMTPRAG: <CMT><CMT>> : LINECOMMENT |
+    <_SCMT_PRAG: (<STARTCMT> (<NOTENDLSTAR> | ("*" ~["/"]) | ("/"))+ <ENDCMT>) > : PRAGMA |
+    <_COD_WSP: <WSP>> : PRAGMA |
+    <_COD_PRAG: <COD>> : PRAGMA
 }
 
 

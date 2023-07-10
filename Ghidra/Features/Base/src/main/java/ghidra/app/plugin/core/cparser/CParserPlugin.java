@@ -41,6 +41,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -300,16 +301,25 @@ public class CParserPlugin extends ProgramPlugin {
 
 	/*
 	 * Parse into the current programs data type manager
+	 * 
+	 * Always uses the program's processor architecture
 	 */
-	protected void parse(String[] filenames, String[] includePaths, String options,
-			String languageIDString, String compilerIDString) {
+	protected void parse(String[] filenames, String[] includePaths, String options) {
 		if (currentProgram == null) {
 			Msg.showInfo(getClass(), parseDialog.getComponent(), "No Open Program",
 				"A program must be open to \"Parse to Program\"");
 			return;
 		}
+		/*
+		 * always use the processor/compiler for the program when parsing to program
+		 */
+		LanguageCompilerSpecPair languageCompilerSpecPair = currentProgram.getLanguageCompilerSpecPair();
+		String procID = languageCompilerSpecPair.languageID.getIdAsString();
+		String compilerID = languageCompilerSpecPair.compilerSpecID.getIdAsString();
+		
 		int result = OptionDialog.showOptionDialog(parseDialog.getComponent(), "Confirm",
-			"Parse C source to \"" + currentProgram.getDomainFile().getName() + "\"?", "Continue");
+			"Parse C source to \"" + currentProgram.getDomainFile().getName() + "\"?" + "\n\n" +
+		    "Using program architecture: " + procID + " / " + compilerID, "Continue");
 
 		if (result == OptionDialog.CANCEL_OPTION) {
 			return;
@@ -320,8 +330,8 @@ public class CParserPlugin extends ProgramPlugin {
 			.setFileNames(filenames)
 			.setIncludePaths(includePaths)
 			.setOptions(options)
-			.setLanguageID(languageIDString)
-			.setCompilerID(compilerIDString);
+			.setLanguageID(procID)
+			.setCompilerID(compilerID);
 
 		tool.execute(parseTask);
 	}
