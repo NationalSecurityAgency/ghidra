@@ -36,8 +36,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.OptionsService;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
@@ -56,6 +55,9 @@ public class WindowsResourceReference extends GhidraScript {
 	ArrayList<ArrayList<PcodeOp>> defUseLists = new ArrayList<>();
 
 	protected AddressSetPropertyMap alreadyDoneAddressSetPropertyMap;
+	
+	// set of functions that decompilation failed on
+	protected AddressSet badDecompFunctions = new AddressSet();
 
 	public AddressSetPropertyMap getOrCreatePropertyMap(Program program, String mapName) {
 		if (alreadyDoneAddressSetPropertyMap != null) {
@@ -367,6 +369,11 @@ public class WindowsResourceReference extends GhidraScript {
 		if (f == null) {
 			return;
 		}
+		
+		// check if decompilation of this function failed previously
+		if (badDecompFunctions.contains(f.getEntryPoint())) {
+			return;
+		}
 
 		Instruction instr = prog.getListing().getInstructionAt(refAddr);
 		if (instr == null) {
@@ -376,7 +383,9 @@ public class WindowsResourceReference extends GhidraScript {
 		decompileFunction(f, decompiler);
 
 		if (hfunction == null) {
-			return; // failed to decompile
+			// failed to decompile, add to bad list
+			badDecompFunctions.add(f.getEntryPoint());
+			return;
 		}
 
 		Iterator<PcodeOpAST> ops = hfunction.getPcodeOps(refAddr);
