@@ -221,9 +221,12 @@ public class AnalysisUnwoundFrame<T> extends AbstractUnwoundFrame<T> {
 	 * Generate the structure for {@link #resolveStructure(int)}
 	 * 
 	 * @param prevParamSize the number of bytes occupied by the parameters for the next frame down.
-	 * @return the generated structure
+	 * @return the generated structure or null if {@link UnwindInfo info} contains an error.
 	 */
 	protected Structure generateStructure(int prevParamSize) {
+		if (info.error() != null) {
+			return null;
+		}
 		FrameStructureBuilder builder =
 			new FrameStructureBuilder(language, staticPcVal, info, prevParamSize);
 		return builder.build(StackUnwinder.FRAMES_PATH, "frame_" + pcVal.toString(false),
