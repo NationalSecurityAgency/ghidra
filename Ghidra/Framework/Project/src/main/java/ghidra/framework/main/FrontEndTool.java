@@ -647,7 +647,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			}
 		};
 		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_FILE, "Install Extensions..." }, null,
+			new MenuData(new String[] { ToolConstants.MENU_FILE, "Install Extensions" }, null,
 				CONFIGURE_GROUP);
 		menuData.setMenuSubGroup(CONFIGURE_GROUP + 2);
 		installExtensionsAction.setMenuBarData(menuData);
@@ -674,7 +674,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			}
 		};
 
-		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Configure..." },
+		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Configure" },
 			null, CONFIGURE_GROUP);
 		menuData.setMenuSubGroup(CONFIGURE_GROUP + 1);
 		configureToolAction.setMenuBarData(menuData);

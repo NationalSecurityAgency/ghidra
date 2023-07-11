@@ -805,7 +805,7 @@ public class Application {
 	 */
 	public static Collection<ResourceFile> getLibraryDirectories() {
 		checkAppInitialized();
-		return ModuleUtilities.getModuleLibDirectories(app.layout.getModules());
+		return ModuleUtilities.getModuleLibDirectories(app.layout.getModules().values());
 	}
 
 	/**

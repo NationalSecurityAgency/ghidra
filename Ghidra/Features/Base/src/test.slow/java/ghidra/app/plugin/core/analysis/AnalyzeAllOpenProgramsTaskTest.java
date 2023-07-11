@@ -30,7 +30,7 @@ import ghidra.framework.model.Project;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.PluginsConfiguration;
+import ghidra.framework.plugintool.PluginsConfiguration;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;

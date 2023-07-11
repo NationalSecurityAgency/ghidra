@@ -28,9 +28,7 @@ import generic.theme.GColor;
 import ghidra.util.HTMLUtilities;
 
 /**
- * Abstract class that defines a panel for displaying name/value pairs with html-formatting. 
- * <p>
- * This is used with the {@link ExtensionDetailsPanel} and the {@link PluginDetailsPanel}
+ * Abstract class that defines a panel for displaying name/value pairs with html-formatting.
  */
 public abstract class AbstractDetailsPanel extends JPanel {
 

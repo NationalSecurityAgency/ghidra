@@ -20,7 +20,6 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Set;
 
-import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 
@@ -62,18 +61,6 @@ public interface ToolServices {
 	 * @return the tool chest
 	 */
 	public ToolChest getToolChest();
-
-	/**
-	 * Find a running tool like the one specified that has the named domain file.
-	 * If it finds a matching tool, then it is brought to the front.
-	 * Otherwise, it creates one and runs it.
-	 * It then invokes the specified event on the running tool.
-	 *
-	 * @param tool find/create a tool like this one.
-	 * @param domainFile open this file in the found/created tool.
-	 * @param event invoke this event on the found/created tool
-	 */
-	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event);
 
 	/**
 	 * Returns the default/preferred tool template which should be used to open the specified

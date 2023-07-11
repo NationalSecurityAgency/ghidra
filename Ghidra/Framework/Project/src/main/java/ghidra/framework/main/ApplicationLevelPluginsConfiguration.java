@@ -16,7 +16,7 @@
 package ghidra.framework.main;
 
 import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.util.PluginsConfiguration;
+import ghidra.framework.plugintool.PluginsConfiguration;
 
 /**
  * A configuration that only includes {@link ApplicationLevelPlugin} plugins.

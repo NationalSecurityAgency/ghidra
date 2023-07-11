@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.plugintool.dialog;
+package ghidra.framework.project.extensions;
 
 import java.awt.Color;
 import java.awt.Point;
@@ -22,6 +22,7 @@ import javax.swing.text.SimpleAttributeSet;
 
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import generic.theme.GColor;
+import ghidra.framework.plugintool.dialog.AbstractDetailsPanel;
 
 /**
  * Panel that shows information about the selected extension in the {@link ExtensionTablePanel}. This

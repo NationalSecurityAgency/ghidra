@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.plugintool.dialog;
+package ghidra.framework.project.extensions;
 
 import java.awt.BorderLayout;
 import java.io.File;
 import java.util.List;
-import java.util.Properties;
 
 import javax.swing.*;
 
@@ -32,7 +31,8 @@ import generic.jar.ResourceFile;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import resources.Icons;
@@ -42,6 +42,8 @@ import resources.Icons;
  * install/uninstall extensions, or add new ones.
  */
 public class ExtensionTableProvider extends DialogComponentProvider {
+
+	private static final String LAST_IMPORT_DIRECTORY_KEY = "LastExtensionImportDirectory";
 
 	private ExtensionTablePanel extensionTablePanel;
 
@@ -126,57 +128,28 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 					Application.getApplicationLayout().getExtensionInstallationDirs().get(0);
 				if (!installDir.exists() && !installDir.mkdir()) {
 					Msg.showError(this, null, "Directory Error",
-						"Cannot install/uninstall extensions: Failed to create extension installation directory.\n" +
-							"See the \"Ghidra Extension Notes\" section of the Ghidra Installation Guide for more information.");
+						"Cannot install/uninstall extensions: Failed to create extension " +
+							"installation directory: " + installDir);
 				}
 				if (!installDir.canWrite()) {
 					Msg.showError(this, null, "Permissions Error",
-						"Cannot install/uninstall extensions: Invalid write permissions on installation directory.\n" +
-							"See the \"Ghidra Extension Notes\" section of the Ghidra Installation Guide for more information.");
+						"Cannot install/uninstall extensions: Invalid write permissions on " +
+							"installation directory: " + installDir);
 					return;
 				}
 
 				GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
 				chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
-				chooser.setTitle("Select extension");
+				chooser.setLastDirectoryPreference(LAST_IMPORT_DIRECTORY_KEY);
+				chooser.setTitle("Select Extension");
 				chooser.addFileFilter(new ExtensionFileFilter());
 
 				List<File> files = chooser.getSelectedFiles();
 				chooser.dispose();
-				for (File file : files) {
-					try {
-						if (!ExtensionUtils.isExtension(new ResourceFile(file))) {
-							Msg.showError(this, null, "Installation Error", "Selected file: [" +
-								file.getName() + "] is not a valid Ghidra Extension");
-							continue;
-						}
-					}
-					catch (ExtensionException e1) {
-						Msg.showError(this, null, "Installation Error", "Error determining if [" +
-							file.getName() + "] is a valid Ghidra Extension", e1);
-						continue;
-					}
 
-					String extensionVersion = getExtensionVersion(file);
-					if (extensionVersion == null) {
-						Msg.showError(this, null, "Installation Error",
-							"Unable to read extension version for [" + file + "]");
-						continue;
-					}
-
-					if (!ExtensionUtils.validateExtensionVersion(extensionVersion)) {
-						continue;
-					}
-
-					try {
-						if (ExtensionUtils.install(new ResourceFile(file))) {
-							panel.refreshTable();
-							requireRestart = true;
-						}
-					}
-					catch (Exception e) {
-						Msg.error(null, "Problem installing extension [" + file.getName() + "]", e);
-					}
+				if (installExtensions(files)) {
+					panel.refreshTable();
+					requireRestart = true;
 				}
 			}
 		};
@@ -185,49 +158,18 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		addAction.setMenuBarData(new MenuData(new String[] { "Add Extension" }, addIcon, group));
 		addAction.setToolBarData(new ToolBarData(addIcon, group));
 		addAction.setHelpLocation(new HelpLocation(GenericHelpTopics.FRONT_END, "ExtensionTools"));
-		addAction.setDescription(
-			SystemUtilities.isInDevelopmentMode() ? "Add Extension (disabled in development mode)"
-					: "Add extension");
-		addAction.setEnabled(
-			!SystemUtilities.isInDevelopmentMode() && !Application.inSingleJarMode());
+		addAction.setDescription("Add extension");
+		addAction.setEnabled(!Application.inSingleJarMode());
 		addAction(addAction);
 	}
 
-	private String getExtensionVersion(File file) {
-
-		// If the given file is a directory...
-		if (!file.isFile()) {
-			List<ResourceFile> propFiles =
-				ExtensionUtils.findExtensionPropertyFiles(new ResourceFile(file), true);
-			for (ResourceFile props : propFiles) {
-				ExtensionDetails ext = ExtensionUtils.createExtensionDetailsFromPropertyFile(props);
-				String version = ext.getVersion();
-				if (version != null) {
-					return version;
-				}
-			}
-
-			return null;
+	private boolean installExtensions(List<File> files) {
+		boolean didInstall = false;
+		for (File file : files) {
+			boolean success = ExtensionUtils.install(file);
+			didInstall |= success;
 		}
-
-		// If the given file is a zip...
-		try {
-			if (ExtensionUtils.isZip(file)) {
-				Properties props = ExtensionUtils.getPropertiesFromArchive(file);
-				if (props == null) {
-					return null;  // no prop file exists
-				}
-				ExtensionDetails ext = ExtensionUtils.createExtensionDetailsFromProperties(props);
-				String version = ext.getVersion();
-				if (version != null) {
-					return version;
-				}
-			}
-		}
-		catch (ExtensionException e) {
-			// just fall through
-		}
-		return null;
+		return didInstall;
 	}
 
 	/**
@@ -258,9 +200,8 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	}
 
 	/**
-	 * Filter for a {@link GhidraFileChooser} that restricts selection to those
-	 * files that are Ghidra Extensions (zip files with an extension.properties
-	 * file) or folders.
+	 * Filter for a {@link GhidraFileChooser} that restricts selection to those files that are 
+	 * Ghidra Extensions (zip files with an extension.properties file) or folders.
 	 */
 	private class ExtensionFileFilter implements GhidraFileFilter {
 		@Override
@@ -269,16 +210,8 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		}
 
 		@Override
-		public boolean accept(File f, GhidraFileChooserModel l_model) {
-
-			try {
-				return ExtensionUtils.isExtension(new ResourceFile(f)) || f.isDirectory();
-			}
-			catch (ExtensionException e) {
-				// if something fails to be recognized as an extension, just move on.
-			}
-
-			return false;
+		public boolean accept(File f, GhidraFileChooserModel model) {
+			return f.isDirectory() || ExtensionUtils.isExtension(f);
 		}
 	}
 }

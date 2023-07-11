@@ -76,7 +76,7 @@ public class ConcurrentTestExceptionHandler implements UncaughtExceptionHandler 
 	 * environmental issues rather than real problems.  This method is intended to ignore 
 	 * these less-than-serious issues.
 	 * 
-	 * @param throwable the throwable to examine
+	 * @param t the throwable to examine
 	 * @return true if it should be ignored
 	 */
 	private static boolean isKnownTestMachineTimingBug(Throwable t) {
