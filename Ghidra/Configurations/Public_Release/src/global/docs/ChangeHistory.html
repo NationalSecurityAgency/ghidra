@@ -22,6 +22,47 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.3.2 Change History (July 2023)</H1>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Debugger:Emulator</I>. Fixed bug when starting the Emulator for processors having small memory spaces. (GP-3437, Issue #5331)</li>
+    <li><I>Extensions</I>. Updated Extension installation to allow users to bypass the version compatibility check. (GP-3466, Issue #1193)</li>
+    <li><I>Importer:Mach-O</I>. The MachoLoader now supports the <span class="gcode">__chain_starts</span> section. (GP-3568)</li>
+    <li><I>PDB</I>. Updated PDB maximum page size to 8 KB. (GP-3603)</li>
+    <li><I>Scripting</I>. Added <span class="gcode">askPassword</span> method to <span class="gcode">GhidraScript</span> API. (GP-3295)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Corrected an issue which could result in a duplicated imported symbol within the EXTERNAL memory block for what should be a default thunk function. (GP-3302)</li>
+    <li><I>Analysis</I>. Fixed problem with Branch/Return analysis infinite loop waffling on some ARM binaries. (GP-3582)</li>
+    <li><I>Analysis</I>. Fixed creation of incorrect function bodies which included addresses with data from flow into non-disassembled code.  Also fixed PowerPC disassembly from computed flow in certain circumstances. (GP-3599, Issue #5441)</li>
+    <li><I>Analysis</I>. Very large functions that run out of address space IDs used for tracking constants will now only log one error message. (GP-3605)</li>
+    <li><I>API</I>. Corrected <span class="gcode">CreateFunctionCmd</span> issue which could fail with the <em>"Function body must contain the entrypoint"</em> error. (GP-3591, Issue #5412)</li>
+    <li><I>CParser</I>. Allow <span class="gcode">pragma</span> keyword in more places, allow parentheses in <span class="gcode">#pragma</span>, and fixed silent parse failures. (GP-2808, Issue #4692, #5454)</li>
+    <li><I>CParser</I>. Fixed CParser to handle multi-line <span class="gcode">#pragma</span> directives. (GP-3611, Issue #5524)</li>
+    <li><I>CParser</I>. When using the CParser to parse header files directly into a program, the program's processor architecture is now used. (GP-3612, Issue #5502)</li>
+    <li><I>Debugger</I>. Cleaned up old Troubleshooting entries in Help. (GP-3468)</li>
+    <li><I>Debugger:Listing</I>. Fixed regression in dynamic disassembly of WoW64 targets. (GP-3583)</li>
+    <li><I>Debugger:Stack</I>. Fixed various stability and error reporting issues with stack unwinding and runtime value hovers. (GP-3407, Issue #5332)</li>
+    <li><I>Debugger:Stack</I>. Fixed several issues in Debugger/Emulator GUIs when using/emulating an architecture with a memory-mapped PC register. (GP-3572, Issue #5410)</li>
+    <li><I>Debugger:Stack</I>. Fixed <span class="gcode">NullPointerException</span> when varnode has no high variable during stack unwinding. (GP-3576, Issue #5487)</li>
+    <li><I>Debugger:Watches</I>. Fixed restoration of Watch DataType when it comes from the restored Trace. (GP-3588)</li>
+    <li><I>Decompiler</I>. Fixed a bug in the Decompiler where combined constant assignments to an array or structure were incorrectly split out on big endian architectures. (GP-3609, Issue #5424)</li>
+    <li><I>Emulator</I>. Fixed issue in Emulator's instruction decoder regarding context. (GP-3571)</li>
+    <li><I>GUI</I>. Fixed exception when performing the <span class="gtitle">Convert to Class</span> action in the Symbol Tree while the tree had a filter applied. (GP-3589, Issue #5480)</li>
+    <li><I>Importer:ELF</I>. Fixed incorrect error message during import regarding ELF build-ID length. (GP-3546)</li>
+    <li><I>Importer:ELF</I>. Corrected exception and ELF GOT allocation issue which could prevent import of X86-64 object modules which contain GOT-based relocations (e.g., <span class="gcode">R_X86_64_GOTPCREL</span>). (GP-3610, Issue #5519)</li>
+    <li><I>Importer:Mach-O</I>. Fixed a regression in the Mach-O Loader that was causing incorrect <span class="gcode">DYLD_CHAINED_PTR_64_KERNEL_CACHE</span> fixups. (GP-3598)</li>
+    <li><I>Importer:PE</I>. Fixed a timestamp encoding bug that caused PE symbol <span class="gcode">.exports</span> files to not get matched and applied in some circumstances. (GP-3552, Issue #5351)</li>
+    <li><I>Importer:PE</I>. Failing to parse PE <span class="gcode">ExceptionDataDirectory</span> no longer prevents the import from finishing. (GP-3584, Issue #5483, #5496)</li>
+    <li><I>Processors</I>. Fixed ARM Neon Thumb <span class="gcode">vdup</span> instruction, which was using the wrong bits for register value. (GP-3524, Issue #5420)</li>
+    <li><I>Processors</I>. Fixed 6x09 <span class="gcode">leax</span> and <span class="gcode">leay</span> instructions to update zero flag. (GP-3525, Issue #5414)</li>
+    <li><I>Processors</I>. Corrected 6809 macros compare flags and two-byte push/pops in big endian architecture variant. (GP-3606, Issue #5508)</li>
+    <li><I>Processors</I>. Fixed flags for the 6809 processor left-shift instructions. (GP-3621, Issue #5523)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.3.1 Change History (June 2023)</H1>
 <blockquote><p><u><B>Improvements</B></u></p>
 <ul>
