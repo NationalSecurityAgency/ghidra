@@ -226,7 +226,9 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 				public boolean evaluateReference(VarnodeContext context, Instruction instr,
 						int pcodeop, Address address, int size, DataType dataType, RefType refType) {
 
-					if (instr.getFlowType().isJump()) {
+					if (refType.isJump() && refType.isComputed() &&
+							program.getMemory().contains(address) && address.getOffset() != 0) {
+						super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 						// for branching instructions, if we have a good target, mark it
 						// if this isn't straight code (thunk computation), let someone else lay down the reference
 						return !symEval.encounteredBranch();

@@ -142,7 +142,7 @@ public class UnwindAnalysis {
 		private final BlockGraph graph;
 		private final BlockVertex pcBlock;
 		private final DijkstraShortestPathsAlgorithm<BlockVertex, BlockEdge> pathFinder;
-		private final Set<StackUnwindWarning> warnings = new HashSet<>();
+		private final Set<StackUnwindWarning> warnings = new LinkedHashSet<>();
 
 		/**
 		 * Begin analysis for unwinding a frame, knowing only the program counter for that frame
@@ -353,7 +353,7 @@ public class UnwindAnalysis {
 		public SymPcodeExecutorState executeToPc(Deque<BlockEdge> to) throws CancelledException {
 			SymPcodeExecutorState state = new SymPcodeExecutorState(program);
 			SymPcodeExecutor exec =
-				SymPcodeExecutor.forProgram(program, state, Reason.EXECUTE_READ, warnings, monitor);
+				SymPcodeExecutor.forProgram(program, state, Reason.EXECUTE_READ, monitor);
 			executePathTo(exec, to);
 			executeBlockTo(exec, pcBlock.block, pc);
 			return state;
@@ -375,7 +375,7 @@ public class UnwindAnalysis {
 		public SymPcodeExecutorState executeFromPc(SymPcodeExecutorState state,
 				Deque<BlockEdge> from) throws CancelledException {
 			SymPcodeExecutor exec =
-				SymPcodeExecutor.forProgram(program, state, Reason.EXECUTE_READ, warnings, monitor);
+				SymPcodeExecutor.forProgram(program, state, Reason.EXECUTE_READ, monitor);
 			executeBlockFrom(exec, pcBlock.block, pc);
 			executePathFrom(exec, from);
 			return state;
@@ -454,37 +454,76 @@ public class UnwindAnalysis {
 					"Could not find a path from " + function + " entry to " + pc);
 			}
 			Collection<Deque<BlockEdge>> exitsPaths = getExitsPaths();
+			if (exitsPaths.isEmpty()) {
+				warnings.add(new NoReturnPathStackUnwindWarning(pc));
+			}
+			SymPcodeExecutorState lastSuccessfulEntryState = null;
+			Exception lastError = null;
 			// TODO: Proper exceptions for useless results
 			for (Deque<BlockEdge> entryPath : entryPaths) {
-				SymPcodeExecutorState entryState = executeToPc(entryPath);
-				Long depth = entryState.computeStackDepth();
-				if (depth == null) {
+				SymPcodeExecutorState entryState;
+				try {
+					entryState = executeToPc(entryPath);
+				}
+				catch (Exception e) {
+					lastError = e;
 					continue;
 				}
-				if (exitsPaths.isEmpty()) {
-					warnings.add(new NoReturnPathStackUnwindWarning(pc));
+				Long depth = entryState.computeStackDepth();
+				if (depth == null) {
+					lastError = new UnwindException("Cannot determine stack depth");
+					continue;
 				}
+				lastSuccessfulEntryState = entryState;
+
 				Map<Register, Address> mapByEntry = entryState.computeMapUsingStack();
 				for (Deque<BlockEdge> exitPath : exitsPaths) {
-					SymPcodeExecutorState exitState =
-						executeFromPc(entryState.forkRegs(), exitPath);
-					Address addressOfReturn = exitState.computeAddressOfReturn();
-					Long adjust = exitState.computeStackDepth();
-					if (addressOfReturn == null || adjust == null) {
+					SymPcodeExecutorState exitState;
+					try {
+						exitState = executeFromPc(entryState.forkRegs(), exitPath);
+					}
+					catch (Exception e) {
+						lastError = e;
 						continue;
 					}
+					Address addressOfReturn = exitState.computeAddressOfReturn();
+					if (addressOfReturn == null) {
+						lastError =
+							new UnwindException("Cannot determine address of return pointer");
+						continue;
+					}
+					Long adjust = exitState.computeStackDepth();
+					if (adjust == null) {
+						lastError = new UnwindException("Cannot determine stack adjustment");
+						continue;
+					}
+					warnings.addAll(entryState.warnings);
+					warnings.addAll(exitState.warnings);
 					Map<Register, Address> mapByExit = exitState.computeMapUsingRegisters();
 					mapByExit.entrySet().retainAll(mapByEntry.entrySet());
 					return new UnwindInfo(function, depth, adjust, addressOfReturn, mapByExit,
-						new StackUnwindWarningSet(warnings));
+						new StackUnwindWarningSet(warnings), null);
 				}
-				warnings.add(new OpaqueReturnPathStackUnwindWarning(pc));
-				long adjust = SymPcodeExecutor.computeStackChange(function, warnings);
-				return new UnwindInfo(function, depth, adjust, null, mapByEntry,
-					new StackUnwindWarningSet(warnings));
 			}
-			throw new UnwindException(
-				"Could not analyze any path from " + function + " entry to " + pc);
+			if (lastSuccessfulEntryState != null) {
+				warnings.add(new OpaqueReturnPathStackUnwindWarning(pc, lastError));
+				try {
+					long adjust = SymPcodeExecutor.computeStackChange(function, warnings);
+					return new UnwindInfo(function, lastSuccessfulEntryState.computeStackDepth(),
+						adjust, null, lastSuccessfulEntryState.computeMapUsingStack(),
+						new StackUnwindWarningSet(warnings), lastError);
+				}
+				catch (Exception e) {
+					return new UnwindInfo(function, lastSuccessfulEntryState.computeStackDepth(),
+						null, null, lastSuccessfulEntryState.computeMapUsingStack(),
+						new StackUnwindWarningSet(warnings), e);
+				}
+			}
+			return new UnwindInfo(function, null, null, null, null,
+				new StackUnwindWarningSet(warnings), new UnwindException(
+					"Could not analyze any path from %s entry to %s.\n%s".formatted(function, pc,
+						lastError.getMessage()),
+					lastError));
 		}
 	}
 

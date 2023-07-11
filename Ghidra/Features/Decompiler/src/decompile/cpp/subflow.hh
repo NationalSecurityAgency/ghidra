@@ -188,7 +188,7 @@ class SplitDatatype {
   bool testDatatypeCompatibility(Datatype *inBase,Datatype *outBase,bool inConstant);
   bool testCopyConstraints(PcodeOp *copyOp);
   bool generateConstants(Varnode *vn,vector<Varnode *> &inVarnodes);
-  void buildInConstants(Varnode *rootVn,vector<Varnode *> &inVarnodes);
+  void buildInConstants(Varnode *rootVn,vector<Varnode *> &inVarnodes,bool bigEndian);
   void buildInSubpieces(Varnode *rootVn,PcodeOp *followOp,vector<Varnode *> &inVarnodes);
   void buildOutVarnodes(Varnode *rootVn,vector<Varnode *> &outVarnodes);
   void buildOutConcats(Varnode *rootVn,PcodeOp *previousOp,vector<Varnode *> &outVarnodes);

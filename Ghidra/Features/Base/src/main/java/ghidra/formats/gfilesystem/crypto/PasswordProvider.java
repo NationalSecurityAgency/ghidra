@@ -18,6 +18,7 @@ package ghidra.formats.gfilesystem.crypto;
 import java.util.Iterator;
 
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.generic.auth.Password;
 
 /**
  * Instances of this interface provide passwords to decrypt files.
@@ -47,5 +48,5 @@ public interface PasswordProvider extends CryptoProvider {
 	 * related queries
 	 * @return {@link Iterator} of possible passwords
 	 */
-	Iterator<PasswordValue> getPasswordsFor(FSRL fsrl, String prompt, Session session);
+	Iterator<Password> getPasswordsFor(FSRL fsrl, String prompt, Session session);
 }

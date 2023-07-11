@@ -331,7 +331,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 
 		Map<Function, AddressSetView> bodyChangeMap = new HashMap<>();
 		// If I ain't got nobody left after extracting overlapping functions
-		if (body.isEmpty()) {
+		if (body.isEmpty() || !body.contains(entry)) {
 			// try subtracting this body from existing functions
 			//   need to compute a bodyChangeMap if affecting other functions
 			//   in case creation of this function fails
@@ -637,7 +637,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 		FlowType[] dontFollow = { RefType.COMPUTED_CALL, RefType.CONDITIONAL_CALL,
 			RefType.UNCONDITIONAL_CALL, RefType.INDIRECTION };
 		AddressSet start = new AddressSet(entry, entry);
-		FollowFlow flow = new FollowFlow(program, start, dontFollow, includeOtherFunctions);
+		FollowFlow flow = new FollowFlow(program, start, dontFollow, includeOtherFunctions, false);
 		return flow.getFlowAddressSet(monitor);
 	}
 

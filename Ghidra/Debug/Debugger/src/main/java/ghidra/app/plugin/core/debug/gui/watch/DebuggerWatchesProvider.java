@@ -846,6 +846,9 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		removeOldListeners();
 		this.currentTrace = trace;
 		addNewListeners();
+		for (WatchRow row : watchTableModel.getModelData()) {
+			row.updateType();
+		}
 	}
 
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {

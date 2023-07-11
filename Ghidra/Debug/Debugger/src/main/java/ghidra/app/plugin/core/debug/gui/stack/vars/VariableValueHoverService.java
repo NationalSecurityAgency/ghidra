@@ -16,6 +16,8 @@
 package ghidra.app.plugin.core.debug.gui.stack.vars;
 
 import java.awt.Window;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -34,6 +36,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueRow.*;
 import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueUtils.VariableEvaluator;
 import ghidra.app.plugin.core.debug.stack.*;
+import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils.PluginToolExecutorService;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils.PluginToolExecutorService.TaskOpt;
 import ghidra.app.plugin.core.hover.AbstractConfigurableHover;
@@ -147,13 +150,13 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		private final VariableValueTable table;
 		private final PluginTool tool;
 		private final DebuggerCoordinates current;
-		private final List<String> warnings;
+		private final StackUnwindWarningSet warnings;
 
 		private final DebuggerStaticMappingService mappingService;
 		private final VariableEvaluator eval;
 
 		public TableFiller(VariableValueTable table, PluginTool tool, DebuggerCoordinates current,
-				VariableEvaluator eval, List<String> warnings) {
+				VariableEvaluator eval, StackUnwindWarningSet warnings) {
 			this.table = table;
 			this.tool = tool;
 			this.current = current;
@@ -205,7 +208,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			if (stUnit instanceof Instruction stIns) {
 				fillDefinedData(dynData);
 				table.add(new InstructionRow(stIns));
-				table.add(new WarningsRow("Instruction taken from static listing"));
+				table.add(new WarningsRow(
+					StackUnwindWarningSet.custom("Instruction taken from static listing")));
 				return table;
 			}
 			throw new AssertionError();
@@ -304,10 +308,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			}
 			Variable variable = VariableValueUtils.findStackVariable(function, stackAddress);
 			return executeBackground(monitor -> {
-				UnwoundFrame<WatchValue> frame = eval.getStackFrame(function, warnings, monitor);
-				if (frame == null) {
-					throw new UnwindException("Cannot find frame for " + function);
-				}
+				UnwoundFrame<WatchValue> frame =
+					eval.getStackFrame(function, warnings, monitor, true);
 				if (variable != null) {
 					return fillFrameStorage(frame, variable.getName(), variable.getDataType(),
 						variable.getProgram(), variable.getVariableStorage());
@@ -363,15 +365,14 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			return executeBackground(monitor -> {
 				UnwoundFrame<WatchValue> frame;
 				if (function == null) {
-					warnings.add("Instruction is not in a function. Using innermost frame.");
+					warnings.add(new CustomStackUnwindWarning(
+						"Instruction is not in a function. Using innermost frame."));
 					frame = VariableValueUtils.locateInnermost(tool, current);
 				}
 				else {
-					frame = eval.getStackFrame(function, warnings, monitor);
+					frame = eval.getStackFrame(function, warnings, monitor, false);
 				}
 				if (frame == null) {
-					warnings.add(
-						"Could not locate " + function + " in stack. Using innermost frame.");
 					return fillRegisterNoFrame(register);
 				}
 
@@ -423,11 +424,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			return executeBackground(monitor -> {
 				UnwoundFrame<WatchValue> frame =
 					VariableValueUtils.requiresFrame(program, storage, symbolStorage)
-							? eval.getStackFrame(function, warnings, monitor)
+							? eval.getStackFrame(function, warnings, monitor, true)
 							: eval.getGlobalsFakeFrame();
-				if (frame == null) {
-					throw new UnwindException("Cannot find frame for " + function);
-				}
 				return fillFrameStorage(frame, name, type, program, storage);
 			});
 		}
@@ -436,11 +434,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 				DataType type, PcodeOp op, AddressSetView symbolStorage) {
 			return executeBackground(monitor -> {
 				UnwoundFrame<WatchValue> frame = VariableValueUtils.requiresFrame(op, symbolStorage)
-						? eval.getStackFrame(function, warnings, monitor)
+						? eval.getStackFrame(function, warnings, monitor, true)
 						: eval.getGlobalsFakeFrame();
-				if (frame == null) {
-					throw new UnwindException("Cannot find frame for " + function);
-				}
 				return fillFrameOp(frame, function.getProgram(), name, type, op, symbolStorage);
 			});
 		}
@@ -578,10 +573,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		public CompletableFuture<VariableValueTable> fillVariable(Variable variable) {
 			Function function = variable.getFunction();
 			return executeBackground(monitor -> {
-				UnwoundFrame<WatchValue> frame = eval.getStackFrame(function, warnings, monitor);
-				if (frame == null) {
-					throw new UnwindException("Cannot find frame for " + function);
-				}
+				UnwoundFrame<WatchValue> frame =
+					eval.getStackFrame(function, warnings, monitor, true);
 				return fillFrameStorage(frame, variable.getName(), variable.getDataType(),
 					variable.getProgram(), variable.getVariableStorage());
 			});
@@ -590,7 +583,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 
 	public CompletableFuture<VariableValueTable> fillVariableValueTable(VariableValueTable table,
 			ProgramLocation programLocation, DebuggerCoordinates current,
-			FieldLocation fieldLocation, Field field, List<String> warnings) {
+			FieldLocation fieldLocation, Field field, StackUnwindWarningSet warnings) {
 		if (traceManager == null || mappingService == null || current.getPlatform() == null) {
 			return null;
 		}
@@ -630,7 +623,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			return null;
 		}
 		VariableValueTable table = new VariableValueTable();
-		List<String> warnings = new ArrayList<>();
+		StackUnwindWarningSet warnings = new StackUnwindWarningSet();
 		CompletableFuture<VariableValueTable> future;
 		try {
 			future = fillVariableValueTable(table, programLocation,
@@ -638,7 +631,9 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 		catch (Exception e) {
 			table.add(new ErrorRow(e));
-			return createTooltipComponent("<html>" + table.toHtml());
+			JComponent component = createTooltipComponent("<html>" + table.toHtml());
+			addErrorDetailsListener(component, table);
+			return component;
 		}
 		if (future == null) {
 			return null;
@@ -650,6 +645,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		if (!(component instanceof JToolTip tooltip)) {
 			throw new AssertionError("Expected a JToolTip");
 		}
+		addErrorDetailsListener(component, table);
 		future.handleAsync((__, ex) -> {
 			table.remove(RowKey.STATUS);
 			if (ex != null) {
@@ -666,6 +662,27 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 			return null;
 		}, SwingExecutorService.MAYBE_NOW);
 		return tooltip;
+	}
+
+	protected void addErrorDetailsListener(JComponent component, VariableValueTable table) {
+		component.addMouseListener(new MouseAdapter() {
+			private boolean isShiftDoubleClick(MouseEvent evt) {
+				if (evt.getClickCount() != 2) {
+					return false;
+				}
+				if ((evt.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) == 0) {
+					return false;
+				}
+				return true;
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent evt) {
+				if (isShiftDoubleClick(evt)) {
+					table.reportDetails();
+				}
+			}
+		});
 	}
 
 	public void traceClosed(Trace trace) {

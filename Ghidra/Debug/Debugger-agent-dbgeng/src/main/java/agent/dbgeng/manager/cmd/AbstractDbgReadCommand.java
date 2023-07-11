@@ -45,6 +45,9 @@ public abstract class AbstractDbgReadCommand extends AbstractDbgCommand<ULongSpa
 
 	@Override
 	public ULongSpanSet complete(DbgPendingCommand<?> pending) {
+		if (readLen == 0) {
+			return ULongSpanSet.of();
+		}
 		return ULongSpanSet.of(ULongSpan.extent(addr, readLen));
 	}
 }

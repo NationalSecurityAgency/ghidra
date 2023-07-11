@@ -124,12 +124,23 @@ public interface UnwoundFrame<T> {
 	/**
 	 * Get the warnings generated during analysis
 	 * 
-	 * <p>
-	 * Several warnings may be returned, each on its own line.
-	 * 
 	 * @return the warnings
 	 */
-	String getWarnings();
+	StackUnwindWarningSet getWarnings();
+
+	/**
+	 * If the unwind is in error or incomplete, get the error explaining why.
+	 * 
+	 * <p>
+	 * When analysis is incomplete, the frame may still be partially unwound, meaning only certain
+	 * variables can be evaluated, and the return address may not be available. Typically, a
+	 * partially unwound frame is the last frame that can be recovered in the stack. If the base
+	 * pointer could not be recovered, then only register variables and static variables can be
+	 * evaluated.
+	 * 
+	 * @return the error
+	 */
+	Exception getError();
 
 	/**
 	 * Get the value of the storage from the frame

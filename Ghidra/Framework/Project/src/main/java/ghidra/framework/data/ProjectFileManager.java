@@ -1181,8 +1181,12 @@ public class ProjectFileManager implements ProjectData {
 					repository.disconnect();
 					repository = null;
 				}
-				rootFolderData.dispose();
-				versionedFileSystem.dispose();
+				if (rootFolderData != null) {
+					rootFolderData.dispose();
+				}
+				if (versionedFileSystem != null) {
+					versionedFileSystem.dispose();
+				}
 				fileSystem.dispose();
 			}
 		}

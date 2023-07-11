@@ -127,6 +127,15 @@ public class PreProcessorTest extends AbstractGenericTest {
 				"\" second line\"\n" + 
 				"\" third line\"\n" + 
 				"\" fourth line\")") != -1);
+
+		assertTrue("multi line #pragma failed ", results
+			.indexOf("#pragma  multiple lines pragma") != -1);
+		
+		assertTrue("#pragma with comment failed ", results
+			.indexOf("#pragma  no comment here") != -1);
+		
+		assertTrue("#pragma with EOL comment failed ", results
+			.indexOf("#pragma  with no EOL comment here") != -1);
 	}
 
 	@Test

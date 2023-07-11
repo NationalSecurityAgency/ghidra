@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.Combinable;
+import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
 
 /**
  * A bucket of warnings
@@ -28,6 +29,12 @@ import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.Combinable;
  */
 public class StackUnwindWarningSet implements Collection<StackUnwindWarning> {
 	private final Collection<StackUnwindWarning> warnings = new LinkedHashSet<>();
+
+	public static StackUnwindWarningSet custom(String message) {
+		StackUnwindWarningSet set = new StackUnwindWarningSet();
+		set.add(new CustomStackUnwindWarning(message));
+		return set;
+	}
 
 	/**
 	 * Create a new empty set
@@ -130,7 +137,7 @@ public class StackUnwindWarningSet implements Collection<StackUnwindWarning> {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public String summarize() {
+	public List<String> summarize() {
 		Set<Class<? extends StackUnwindWarning>> combined = new LinkedHashSet<>();
 		List<String> lines = new ArrayList<>();
 		for (StackUnwindWarning w : warnings) {
@@ -155,6 +162,12 @@ public class StackUnwindWarningSet implements Collection<StackUnwindWarning> {
 				lines.add(w.getMessage());
 			}
 		}
-		return lines.stream().collect(Collectors.joining("\n"));
+		return lines;
+	}
+
+	public void reportDetails() {
+		for (StackUnwindWarning w : warnings) {
+			w.reportDetails();
+		}
 	}
 }

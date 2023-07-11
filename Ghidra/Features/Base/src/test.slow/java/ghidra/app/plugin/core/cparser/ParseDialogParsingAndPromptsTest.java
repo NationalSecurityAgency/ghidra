@@ -123,7 +123,7 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 		String langText = parseDialog.getLanguageText().getText();
 		assertEquals("64/32 (primarily for backward compatibility)", langText);
 
-		pressButtonByText(waitForDialogComponent("Program Architecture not Specified"), "OK", false);
+		pressButtonByText(waitForDialogComponent("Confirm"), "Cancel", false);
 	}
 	
 	@Test

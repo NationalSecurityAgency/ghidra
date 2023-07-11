@@ -23,8 +23,8 @@ import java.util.stream.Stream;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.PcodeOpAST;
+import ghidra.program.model.pcode.*;
+import ghidra.util.Msg;
 
 /**
  * A warning issued while unwinding a stack
@@ -67,6 +67,12 @@ public interface StackUnwindWarning {
 	}
 
 	/**
+	 * For diagnostics, report any error details indicated by this warning, usually via {@link Msg}.
+	 */
+	default void reportDetails() {
+	}
+
+	/**
 	 * The unwind analyzer could not find an exit path from the frame's program counter.
 	 */
 	public record NoReturnPathStackUnwindWarning(Address pc) implements StackUnwindWarning {
@@ -84,10 +90,17 @@ public interface StackUnwindWarning {
 	/**
 	 * The unwind analyzer discovered at last one exit path, but none could be analyzed.
 	 */
-	public record OpaqueReturnPathStackUnwindWarning(Address pc) implements StackUnwindWarning {
+	public record OpaqueReturnPathStackUnwindWarning(Address pc, Exception last)
+			implements StackUnwindWarning {
 		@Override
 		public String getMessage() {
-			return "Could not analyze any path from " + pc + " to a return";
+			return "Could not analyze any path from " + pc + " to a return.\nLast error: " +
+				last.getMessage();
+		}
+
+		@Override
+		public void reportDetails() {
+			Msg.showError(this, null, "Details", getMessage(), last);
 		}
 	}
 
@@ -187,6 +200,18 @@ public interface StackUnwindWarning {
 	}
 
 	/**
+	 * While analyzing an indirect call, couldn't get the function signature because its input
+	 * doesn't have a high variable.
+	 */
+	public record NoHighVariableFromTargetPointerTypeUnwindWarning(VarnodeAST vn)
+			implements StackUnwindWarning {
+		@Override
+		public String getMessage() {
+			return "Input of indirect call target has no high variable: " + vn;
+		}
+	}
+
+	/**
 	 * While analyzing an indirect call, the signature could not be derived from call-site context.
 	 */
 	public record CouldNotRecoverSignatureStackUnwindWarning(PcodeOpAST op)
@@ -194,6 +219,17 @@ public interface StackUnwindWarning {
 		@Override
 		public String getMessage() {
 			return "Could not recover signature of indirect call: " + op;
+		}
+	}
+
+	/**
+	 * A custom warning, either because a specific type is too onerous, or because the message was
+	 * deserialized and the specific type and info cannot be recovered.
+	 */
+	public record CustomStackUnwindWarning(String message) implements StackUnwindWarning {
+		@Override
+		public String getMessage() {
+			return message;
 		}
 	}
 }

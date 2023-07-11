@@ -434,6 +434,15 @@ macro complement(op)
         setNZFlags(op);
 }
 
+# Signed shift right.
+# P-code INT_SRIGHT.
+macro arithmeticShiftRight(op)
+{
+        $(C) = op & 1;
+        op = (op s>> 1);
+        setNZFlags(op);
+}
+
 macro logicalShiftRight(op)
 {
         $(C) = op & 1;
@@ -450,29 +459,23 @@ macro rotateRightWithCarry(op)
         setNZFlags(op);
 }
 
+macro logicalShiftLeft(op)
+{
+        local tmp = (op >> 7);
+        $(C) = tmp;
+        op = op << 1;
+        $(V) = tmp ^ (op >> 7);
+        setNZFlags(op);
+}
+
 macro rotateLeftWithCarry(op)
 {
         local carryIn = $(C);
-        $(C) = op >> 7;
+        local tmp = (op >> 7);
+        $(C) = tmp;
         op = (op << 1) | carryIn;
+        $(V) = tmp ^ (op >> 7);
         setNZFlags(op);
-}
-
-# Signed shift right.
-# P-code INT_SRIGHT.
-macro arithmeticShiftRight(op)
-{
-        $(C) = op & 1;
-        op = (op s>> 1);
-        setNZFlags(op);
-}
-
-macro logicalShiftLeft(op)
-{
-        $(C) = (op >> 7);
-        op = op << 1;
-        $(Z) = (op == 0);
-        $(N) = (op >> 7);
 }
 
 macro increment(op)
@@ -505,56 +508,69 @@ macro clear(op)
 
 macro addition(reg, op)
 {
-        $(C) = carry(reg, op);
-        $(V) = scarry(reg, op);
+        local tmp = reg;
+        local val = op;
+        $(C) = carry(tmp, val);
+        $(V) = scarry(tmp, val);
 
-        reg = reg + op;
+        tmp = tmp + val;
 
-        setNZFlags(reg);
+        setNZFlags(tmp);
+        reg = tmp;
 }
 
 macro additionWithCarry(reg, op)
 {
         local carryIn = zext($(C));
+        local tmp = reg;
+        local val = op;
         local mask = 0x0F; # Low nibble mask
-        local tmpResult = reg + op;
+        local result = tmp + val;
 
-        $(H) = (((reg & mask) + (op & mask) + carryIn) >> 4) & 1;
-        $(C) = carry(reg, op) || carry(tmpResult, carryIn);
-        $(V) = scarry(reg, op) ^^ scarry(tmpResult, carryIn);
+        $(H) = (((tmp & mask) + (val & mask) + carryIn) >> 4) & 1;
+        $(C) = carry(tmp, val) || carry(result, carryIn);
+        $(V) = scarry(tmp, val) ^^ scarry(result, carryIn);
 
-        reg = tmpResult + carryIn;
+        tmp = result + carryIn;
 
-        setNZFlags(reg);
+        setNZFlags(tmp);
+        reg = tmp;
 }
 
 macro subtraction(reg, op)
 {
-        $(V) = sborrow(reg, op);
-        reg = reg - op;
-        setNZFlags(reg);
-        $(C) = (reg < op);
+        local tmp = reg;
+        local val = op;
+        $(V) = sborrow(tmp, val);
+        $(C) = (tmp < val);
+        tmp = tmp - val;
+        setNZFlags(tmp);
+        reg = tmp;
 }
 
 macro subtractionWithCarry(reg, op)
 {
         local carryIn = zext($(C));
-        local tmpResult = reg - op;
+        local tmp = reg;
+        local val = op;
+        local tmpResult = tmp - val;
 
-        $(C) = (reg < op) || (tmpResult < carryIn);
-        $(V) = sborrow(reg, op) ^^ sborrow(tmpResult, carryIn);
-
-        reg = tmpResult - carryIn;
-
-        setNZFlags(reg);
+        $(C) = (tmp < val) || (tmpResult < carryIn);
+        $(V) = sborrow(tmp, val) ^^ sborrow(tmpResult, carryIn);
+        tmp = tmpResult - carryIn;
+        setNZFlags(tmp);
+        reg = tmp;
 }
 
 macro compare(reg, op)
 {
-        $(V) = sborrow(reg, op);
-        local tmp = reg - op;
+        local tmp = reg;
+        local val = op;
+        $(V) = sborrow(tmp, val);
+        $(C) = (tmp < val);
+        tmp = tmp - val;
         setNZFlags(tmp);
-        $(C) = (tmp < op);
+        reg = tmp;
 }
 
 macro logicalAnd(reg, op)
@@ -609,9 +625,8 @@ macro Push1(reg, op)
 # Push 2 byte operand op2
 macro Push2(reg, op)
 {
-        reg = reg - 1;
+        reg = reg - 2;
         *:2 reg = op;
-        reg = reg - 1;
 }
 
 # Pull 1 byte operand op1
@@ -624,9 +639,8 @@ macro Pull1(reg, op)
 # Pull 2 byte operand op2
 macro Pull2(reg, op)
 {
-        reg = reg + 1;
         op = *:2 reg;
-        reg = reg + 1;
+        reg = reg + 2;
 }
 
 macro PushUYXDpD()
@@ -1008,12 +1022,16 @@ macro PushEntireState()
 
 :LEAX EA    is op=0x30; EA
 {
-        X = EA;
+        local tmp = EA;
+        X = tmp;
+        $(Z) = (tmp == 0);
 }
 
 :LEAY EA    is op=0x31; EA
 {
-        Y = EA;
+        local tmp = EA;
+        Y = tmp;
+        $(Z) = (tmp == 0);
 }
 
 :LEAS EA    is op=0x32; EA
@@ -1200,7 +1218,7 @@ macro PushEntireState()
 
 :ADDB OP1    is (op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
 {
-        setHFlag(A, OP1);
+        setHFlag(B, OP1);
         addition(B, OP1);
 }
 
