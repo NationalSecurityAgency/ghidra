@@ -2085,11 +2085,11 @@ bool SplitDatatype::generateConstants(Varnode *vn,vector<Varnode *> &inVarnodes)
 /// based on the input offsets in \b dataTypePieces.
 /// \param rootVn is the given root constant
 /// \param inVarnodes is the container for the new Varnodes
-void SplitDatatype::buildInConstants(Varnode *rootVn,vector<Varnode *> &inVarnodes)
+/// \param bigEndian is \b true if the output address space is big endian
+void SplitDatatype::buildInConstants(Varnode *rootVn,vector<Varnode *> &inVarnodes,bool bigEndian)
 
 {
   uintb baseVal = rootVn->getOffset();
-  bool bigEndian = rootVn->getSpace()->isBigEndian();
   for(int4 i=0;i<dataTypePieces.size();++i) {
     Datatype *dt = dataTypePieces[i].inType;
     int4 off = dataTypePieces[i].offset;
@@ -2344,7 +2344,7 @@ bool SplitDatatype::splitCopy(PcodeOp *copyOp,Datatype *inType,Datatype *outType
   vector<Varnode *> inVarnodes;
   vector<Varnode *> outVarnodes;
   if (inVn->isConstant())
-    buildInConstants(inVn,inVarnodes);
+    buildInConstants(inVn,inVarnodes,outVn->getSpace()->isBigEndian());
   else
     buildInSubpieces(inVn,copyOp,inVarnodes);
   buildOutVarnodes(outVn,outVarnodes);
@@ -2459,9 +2459,10 @@ bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
       return false;
   }
 
+  AddrSpace *storeSpace = storeOp->getIn(0)->getSpaceFromConst();
   vector<Varnode *> inVarnodes;
   if (inVn->isConstant())
-    buildInConstants(inVn,inVarnodes);
+    buildInConstants(inVn,inVarnodes,storeSpace->isBigEndian());
   else if (loadOp != (PcodeOp *)0) {
     vector<Varnode *> loadPtrs;
     buildPointers(loadRoot.pointer, loadRoot.ptrType, loadRoot.baseOffset, loadOp, loadPtrs, true);
@@ -2483,7 +2484,6 @@ bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
 
   vector<Varnode *> storePtrs;
   buildPointers(storeRoot.pointer, storeRoot.ptrType, storeRoot.baseOffset, storeOp, storePtrs, false);
-  AddrSpace *storeSpace = storeOp->getIn(0)->getSpaceFromConst();
   // Preserve original STORE object, so that INDIRECT references are still valid
   // but convert it into the first of the smaller STOREs
   data.opSetInput(storeOp,storePtrs[0],1);

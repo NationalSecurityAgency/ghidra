@@ -46,7 +46,7 @@ public class UnwindStackCommand extends TypedBackgroundCommand<Trace> {
 			for (AnalysisUnwoundFrame<WatchValue> frame : unwinder.frames(where.frame(0),
 				monitor)) {
 				UnwindInfo info = frame.getUnwindInfo();
-				if (info != null) {
+				if (info != null && info.error() == null) {
 					frame.applyToListing(prevParamSize, monitor);
 					prevParamSize = info.computeParamSize();
 				}

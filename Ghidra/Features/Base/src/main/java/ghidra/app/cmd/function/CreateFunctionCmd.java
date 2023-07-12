@@ -637,7 +637,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 		FlowType[] dontFollow = { RefType.COMPUTED_CALL, RefType.CONDITIONAL_CALL,
 			RefType.UNCONDITIONAL_CALL, RefType.INDIRECTION };
 		AddressSet start = new AddressSet(entry, entry);
-		FollowFlow flow = new FollowFlow(program, start, dontFollow, includeOtherFunctions);
+		FollowFlow flow = new FollowFlow(program, start, dontFollow, includeOtherFunctions, false);
 		return flow.getFlowAddressSet(monitor);
 	}
 

@@ -505,7 +505,7 @@ def checkGradleVersion() {
 	GradleVersion min = null;
 	GradleVersion max = null;
 	try {
-		min = GradleVersion.version("${rootProject.GRADLE_MIN}")
+		min = GradleVersion.version("${GRADLE_MIN}")
 	}
 	catch (IllegalArgumentException e) {
 		String defaultMin = "1.0"
@@ -513,8 +513,8 @@ def checkGradleVersion() {
 		min = GradleVersion.version(defaultMin)
 	}
 	try {
-		if (rootProject.GRADLE_MAX) {
-			max = GradleVersion.version("${rootProject.GRADLE_MAX}")
+		if (GRADLE_MAX) {
+			max = GradleVersion.version("${GRADLE_MAX}")
 		}
 	}
 	catch (IllegalArgumentException e) {

@@ -804,22 +804,22 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		paths = expandPaths(paths);
 		pathPanel.setPaths(paths);
 
-		if (languageIDString == null || compilerIDString == null) {
-			Msg.showWarn(getClass(), rootPanel, "Program Architecture not Specified",
-				"A Program Architecture must be specified in order to parse to a file.");
-			return;
-		}
-
-		if (parseToFile) {
+		if (parseToFile) {		
+			if (languageIDString == null || compilerIDString == null) {
+				Msg.showWarn(getClass(), rootPanel, "Program Architecture not Specified",
+					"A Program Architecture must be specified in order to parse to a file.");
+				return;
+			}
+			
 			File file = getSaveFile();
 			if (file != null) {
 				plugin.parse(paths, includePaths, options, languageIDString, compilerIDString,
 					file.getAbsolutePath());
 			}
+			return;
 		}
-		else {
-			plugin.parse(paths, includePaths, options, languageIDString, compilerIDString);
-		}
+		
+		plugin.parse(paths, includePaths, options);
 	}
 
 	private String[] expandPaths(String[] paths) {

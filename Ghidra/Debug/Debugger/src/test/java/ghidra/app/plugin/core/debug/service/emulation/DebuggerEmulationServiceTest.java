@@ -381,7 +381,8 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		assertTrue(result.error() instanceof DecodePcodeExecutionException);
 
 		long scratch = result.snapshot();
-		assertEquals(new BigInteger("003ffffe", 16), regs.getViewValue(scratch, regPC).getUnsignedValue());
+		assertEquals(new BigInteger("003ffffe", 16),
+			regs.getViewValue(scratch, regPC).getUnsignedValue());
 	}
 
 	@Test
@@ -714,5 +715,35 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		waitForTasks();
 		assertEquals(new BigInteger("5678", 16),
 			regs.getViewValue(scratch, regR2).getUnsignedValue());
+	}
+
+	@Test
+	public void testCustomStack() throws Exception {
+		createProgram();
+		intoProject(program);
+		Memory memory = program.getMemory();
+		Address addrText = addr(program, 0x00400000);
+		Register regSP = program.getRegister("sp");
+		try (Transaction tx = program.openTransaction("Initialize")) {
+			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
+			blockText.setExecute(true);
+			memory.createUninitializedBlock("STACK", addr(program, 0x00001234), 0x1000, false);
+		}
+
+		programManager.openProgram(program);
+		waitForSwing();
+		codeBrowser.goTo(new ProgramLocation(program, addrText));
+		waitForSwing();
+
+		assertTrue(emulationPlugin.actionEmulateProgram.isEnabled());
+		performAction(emulationPlugin.actionEmulateProgram);
+
+		Trace trace = traceManager.getCurrentTrace();
+		assertNotNull(trace);
+
+		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		assertEquals(new BigInteger("2234", 16), regs.getViewValue(0, regSP).getUnsignedValue());
 	}
 }

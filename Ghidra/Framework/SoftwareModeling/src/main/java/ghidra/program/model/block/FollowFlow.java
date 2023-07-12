@@ -46,10 +46,14 @@ public class FollowFlow {
 	private boolean followPointers = true;
 
 	private boolean followIntoFunction = true;
+	private boolean includeData = true;
 	private Address nextSymbolAddr;
 
 	/**
 	 * Constructor
+	 * 
+	 * Note: flow into existing functions will be included
+	 * Note: flow into un-disassembled locations will be included
 	 *
 	 * @param program the program whose flow we are following.
 	 * @param addressSet the initial addresses that should be flowed from or flowed to.
@@ -63,6 +67,7 @@ public class FollowFlow {
 	 * <BR>FlowType.CONDITIONAL_JUMP
 	 * <BR>FlowType.UNCONDITIONAL_JUMP
 	 * <BR>FlowType.INDIRECTION
+	 *
 	 */
 	public FollowFlow(Program program, AddressSet addressSet, FlowType[] doNotFollow) {
 		this.program = program;
@@ -72,6 +77,8 @@ public class FollowFlow {
 
 	/**
 	 * Constructor
+	 * 
+	 * Note: flow into un-disassembled locations will be included
 	 * 
 	 * @param program the program whose flow we are following.
 	 * @param addressSet the initial addresses that should be flowed from or flowed to.
@@ -92,6 +99,31 @@ public class FollowFlow {
 			boolean followIntoFunctions) {
 		this(program, addressSet, doNotFollow);
 		this.followIntoFunction = followIntoFunctions;
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param program the program whose flow we are following.
+	 * @param addressSet the initial addresses that should be flowed from or flowed to.
+	 * @param doNotFollow array of flow types that are not to be followed.
+	 * null or empty array indicates follow all flows. The following are valid
+	 * flow types for the doNotFollow array:
+	 * <BR>FlowType.COMPUTED_CALL
+	 * <BR>FlowType.CONDITIONAL_CALL
+	 * <BR>FlowType.UNCONDITIONAL_CALL
+	 * <BR>FlowType.COMPUTED_JUMP
+	 * <BR>FlowType.CONDITIONAL_JUMP
+	 * <BR>FlowType.UNCONDITIONAL_JUMP
+	 * <BR>FlowType.INDIRECTION
+	 * @param followIntoFunctions true if flows into (or back from) defined functions
+	 * should be followed.
+	 * @param includeData true if instruction flows into un-disassembled data should be included
+	 */
+	public FollowFlow(Program program, AddressSet addressSet, FlowType[] doNotFollow,
+			boolean followIntoFunctions, boolean includeData) {
+		this(program, addressSet, doNotFollow, followIntoFunctions);
+		this.includeData = includeData;
 	}
 
 	/**
@@ -289,7 +321,9 @@ public class FollowFlow {
 			codeUnit = instructionStack.pop();
 			if (!(codeUnit instanceof Instruction)) {
 				// Probably undefined data which should be disassembled
-				flowAddressSet.addRange(codeUnit.getMinAddress(), codeUnit.getMaxAddress());
+				if (includeData) {
+					flowAddressSet.addRange(codeUnit.getMinAddress(), codeUnit.getMaxAddress());
+				}
 				continue;
 			}
 
@@ -475,7 +509,7 @@ public class FollowFlow {
 			if (nextAddress != null) {
 				CodeUnit nextCodeUnit = program.getListing().getCodeUnitContaining(nextAddress);
 				if (nextCodeUnit != null) {
-					if (nextCodeUnit instanceof Data) {
+					if (nextCodeUnit instanceof Data && includeData) {
 						followData(instructionStack, flowAddressSet, (Data) nextCodeUnit,
 							nextAddress);
 					}
