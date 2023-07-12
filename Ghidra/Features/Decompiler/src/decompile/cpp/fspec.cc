@@ -4718,6 +4718,7 @@ FuncCallSpecs::FuncCallSpecs(PcodeOp *call_op)
   isinputactive = false;
   isoutputactive = false;
   isbadjumptable = false;
+  isstackoutputlock = false;
 }
 
 void FuncCallSpecs::setFuncdata(Funcdata *f)

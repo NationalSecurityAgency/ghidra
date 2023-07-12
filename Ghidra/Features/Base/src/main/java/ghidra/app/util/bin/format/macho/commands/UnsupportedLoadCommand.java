@@ -19,14 +19,8 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
-import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.importer.MessageLog;
-import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.ProgramModule;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitor;
 
 public class UnsupportedLoadCommand extends LoadCommand {
 	private int type;
@@ -39,22 +33,6 @@ public class UnsupportedLoadCommand extends LoadCommand {
 	@Override
 	public String getCommandName() {
 		return "Unsupported Load Command Type = 0x" + Integer.toHexString(type);
-	}
-
-	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
-			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
-		if (isBinary) {
-			try {
-				createFragment(api, baseAddress, parentModule);
-				Address address = baseAddress.getNewAddress(getStartIndex());
-				api.createData(address, toDataType());
-			}
-			catch (Exception e) {
-				log.appendMsg("Unable to create " + getCommandName() + " - " + e.getMessage());
-			}
-		}
 	}
 
 	@Override

@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import docking.widgets.OptionDialog;
+import docking.widgets.PasswordDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -47,6 +48,7 @@ import ghidra.framework.Application;
 import ghidra.framework.client.*;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
+import ghidra.framework.generic.auth.Password;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.OptionType;
@@ -2975,6 +2977,56 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		});
 
 		return choice;
+	}
+
+	/**
+	 * Returns a {@link Password}, using the String input parameters for guidance. This method can
+	 * only be used in headed mode.
+	 * <p>
+	 * In the GUI environment, this method displays a password popup dialog that prompts the user
+	 * for a secret, usually a password or other credential. There is no pre-population of the
+	 * input. If the user cancels the dialog, it is immediately disposed, and any input to that
+	 * dialog is cleared from memory. If the user completes the dialog, then the secret is returned
+	 * in a wrapped buffer. The buffer can be cleared by calling {@link Secret#close()}; however, it
+	 * is meant to be used in a {@code try-with-resources} block. The pattern does not guarantee
+	 * protection of the secret, but it will help you avoid some typical pitfalls:
+	 * 
+	 * <pre>
+	 * String user = askString("Login", "Username:");
+	 * Project project;
+	 * try (Password password = askPassword("Login", "Password:")) {
+	 * 	project = doLoginAndOpenProject(user, password.getPasswordChars());
+	 * }
+	 * </pre>
+	 * 
+	 * The buffer will be zero-filled upon leaving the {@code try-with-resources} block. If, in the
+	 * sample, the {@code doLoginAndOpenProject} method or any part of its implementation needs to
+	 * retain the password, it must make a copy. It is then the implementation's responsibility to
+	 * protect its copy.
+	 * 
+	 * @param title the title of the dialog
+	 * @param prompt the prompt to the left of the input field, or null to display "Password:"
+	 * @return the password
+	 * @throws CancelledException if the user cancels
+	 * @throws ImproperUseException if in headless mode
+	 */
+	public Password askPassword(String title, String prompt) throws CancelledException {
+		if (isRunningHeadless()) {
+			throw new ImproperUseException(
+				"The askPassword() method can only be used when running headed Ghidra.");
+		}
+		PasswordDialog dialog =
+			new PasswordDialog(title, null, null, prompt, null, null);
+		try {
+			state.getTool().showDialog(dialog);
+			if (!dialog.okWasPressed()) {
+				throw new CancelledException("User cancelled password prompt.");
+			}
+			return Password.wrap(dialog.getPassword());
+		}
+		finally {
+			dialog.dispose();
+		}
 	}
 
 	/**

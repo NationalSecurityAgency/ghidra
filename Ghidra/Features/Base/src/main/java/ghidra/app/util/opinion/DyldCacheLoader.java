@@ -36,18 +36,60 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 
 	public final static String DYLD_CACHE_NAME = "DYLD Cache";
 
-	/** Loader option to process symbols*/
-	static final String PROCESS_SYMBOLS_OPTION_NAME = "Process symbols";
+	/** Loader option to process chained fixups */
+	static final String PROCESS_CHAINED_FIXUPS_OPTION_NAME = "Process chained fixups";
+
+	/** Default value for loader option to process chained fixups */
+	static final boolean PROCESS_CHAINED_FIXUPS_OPTION_DEFAULT = true;
+
+	/** Loader option to add chained fixups to relocation table */
+	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
+		"Add chained fixups to relocation table";
+
+	/** Default value for loader option to add chained fixups to relocation table */
+	static final boolean ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT = false;
+
+	/** Loader option to process symbols */
+	static final String PROCESS_LOCAL_SYMBOLS_OPTION_NAME = "Process local symbols";
 
 	/** Default value for loader option to process symbols */
-	static final boolean PROCESS_SYMBOLS_OPTION_DEFAULT = true;
+	static final boolean PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT = true;
 
-	/** Loader option to add relocation entries for chained fixups */
-	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
-		"Add relocation entries for chained fixups";
+	/** Loader option to mark up symbols */
+	static final String MARKUP_LOCAL_SYMBOLS_OPTION_NAME = "Markup local symbol nlists";
 
-	/** Default value for loader option to add chained fixups relocation entries */
-	static final boolean ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT = false;
+	/** Default value for loader option to mark up symbols */
+	static final boolean MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT = false;
+
+	/** Loader option to process individual dylib's memory */
+	static final String PROCESS_DYLIB_MEMORY_OPTION_NAME = "Process dylib memory";
+
+	/** Loader option to process individual dylib's memory */
+	static final boolean PROCESS_DYLIB_MEMORY_OPTION_DEFAULT = true;
+
+	/** Loader option to process dylib symbols */
+	static final String PROCESS_DYLIB_SYMBOLS_OPTION_NAME = "Process dylib symbols";
+
+	/** Default value for loader option to process dylib symbols */
+	static final boolean PROCESS_DYLIB_SYMBOLS_OPTION_DEFAULT = true;
+
+	/** Loader option to process dylib exports */
+	static final String PROCESS_DYLIB_EXPORTS_OPTION_NAME = "Process dylib exports";
+
+	/** Default value for loader option to process dylib exports */
+	static final boolean PROCESS_DYLIB_EXPORTS_OPTION_DEFAULT = true;
+
+	/** Loader option to mark up dylib load command data */
+	static final String MARKUP_DYLIB_LC_DATA_OPTION_NAME = "Markup dylib load command data";
+
+	/** Default value for loader option to mark up dylib load command data */
+	static final boolean MARKUP_DYLIB_LC_DATA_OPTION_DEFAULT = false;
+
+	/** Loader option to process libobjc */
+	static final String PROCESS_DYLIB_LIBOBJC_OPTION_NAME = "Process libobjc";
+
+	/** Default value for loader option to process libobjc */
+	static final boolean PROCESS_DYLIB_LIBOBJC_OPTION_DEFAULT = true;
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
@@ -87,8 +129,7 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 		try {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
 				MemoryBlockUtils.createFileBytes(program, provider, monitor),
-				shouldProcessSymbols(options), shouldAddChainedFixupsRelocations(options), log,
-				monitor);
+				getDyldCacheOptions(options), log, monitor);
 		}
 		catch (CancelledException e) {
 			return;
@@ -104,23 +145,60 @@ public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 		List<Option> list =
 			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
 		if (!loadIntoProgram) {
-			list.add(new Option(PROCESS_SYMBOLS_OPTION_NAME, PROCESS_SYMBOLS_OPTION_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processSymbols"));
+			list.add(new Option(PROCESS_CHAINED_FIXUPS_OPTION_NAME,
+				PROCESS_CHAINED_FIXUPS_OPTION_DEFAULT, Boolean.class,
+				Loader.COMMAND_LINE_ARG_PREFIX + "-processChainedFixups"));
 			list.add(new Option(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME,
 				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
 				Loader.COMMAND_LINE_ARG_PREFIX + "-addChainedFixupsRelocations"));
+			list.add(
+				new Option(PROCESS_LOCAL_SYMBOLS_OPTION_NAME, PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processLocalSymbols"));
+			list.add(
+				new Option(MARKUP_LOCAL_SYMBOLS_OPTION_NAME, MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-markupLocalSymbols"));
+			list.add(
+				new Option(PROCESS_DYLIB_MEMORY_OPTION_NAME, PROCESS_DYLIB_MEMORY_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibMemory"));
+			list.add(
+				new Option(PROCESS_DYLIB_SYMBOLS_OPTION_NAME, PROCESS_DYLIB_SYMBOLS_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibSymbols"));
+			list.add(
+				new Option(PROCESS_DYLIB_EXPORTS_OPTION_NAME, PROCESS_DYLIB_EXPORTS_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processDylibExports"));
+			list.add(new Option(MARKUP_DYLIB_LC_DATA_OPTION_NAME,
+				MARKUP_DYLIB_LC_DATA_OPTION_DEFAULT, Boolean.class,
+				Loader.COMMAND_LINE_ARG_PREFIX + "-markupDylibLoadCommandData"));
+			list.add(
+				new Option(PROCESS_DYLIB_LIBOBJC_OPTION_NAME, PROCESS_DYLIB_LIBOBJC_OPTION_DEFAULT,
+					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processLibobjc"));
 		}
 		return list;
 	}
 
-	private boolean shouldProcessSymbols(List<Option> options) {
-		return OptionUtils.getOption(PROCESS_SYMBOLS_OPTION_NAME, options,
-			PROCESS_SYMBOLS_OPTION_DEFAULT);
-	}
-
-	private boolean shouldAddChainedFixupsRelocations(List<Option> options) {
-		return OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
-			ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
+	private DyldCacheOptions getDyldCacheOptions(List<Option> options) {
+		boolean processChainedFixups = OptionUtils.getOption(PROCESS_CHAINED_FIXUPS_OPTION_NAME,
+			options, PROCESS_CHAINED_FIXUPS_OPTION_DEFAULT);
+		boolean addChainedFixupsRelocations =
+				OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
+					ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
+		boolean processLocalSymbols = OptionUtils.getOption(PROCESS_LOCAL_SYMBOLS_OPTION_NAME,
+			options, PROCESS_LOCAL_SYMBOLS_OPTION_DEFAULT);
+		boolean markupLocalSymbols = OptionUtils.getOption(MARKUP_LOCAL_SYMBOLS_OPTION_NAME,
+			options, MARKUP_LOCAL_SYMBOLS_OPTION_DEFAULT);
+		boolean processDylibMemory = OptionUtils.getOption(PROCESS_DYLIB_MEMORY_OPTION_NAME,
+			options, PROCESS_DYLIB_MEMORY_OPTION_DEFAULT);
+		boolean processDylibSymbols = OptionUtils.getOption(PROCESS_DYLIB_SYMBOLS_OPTION_NAME,
+			options, PROCESS_DYLIB_SYMBOLS_OPTION_DEFAULT);
+		boolean processDylibExports = OptionUtils.getOption(PROCESS_DYLIB_EXPORTS_OPTION_NAME,
+			options, PROCESS_DYLIB_EXPORTS_OPTION_DEFAULT);
+		boolean markupDylibLoadCommandData = OptionUtils.getOption(MARKUP_DYLIB_LC_DATA_OPTION_NAME,
+			options, MARKUP_DYLIB_LC_DATA_OPTION_DEFAULT);
+		boolean processLibobjc = OptionUtils.getOption(PROCESS_DYLIB_LIBOBJC_OPTION_NAME,
+			options, PROCESS_DYLIB_LIBOBJC_OPTION_DEFAULT);
+		return new DyldCacheOptions(processChainedFixups, addChainedFixupsRelocations,
+			processLocalSymbols, markupLocalSymbols, processDylibMemory, processDylibSymbols,
+			processDylibExports, markupDylibLoadCommandData, processLibobjc);
 	}
 
 	@Override

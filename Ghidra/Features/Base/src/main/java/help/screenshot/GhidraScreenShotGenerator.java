@@ -40,7 +40,7 @@ import ghidra.util.exception.AssertException;
 
 /**
  * Extend this class to create screen shot images for help. The name of the class determines the
- * topic directory where the captured image will be stored. So if the class name is 
+ * topic directory where the captured image will be stored. So if the class name is
  * XyzShreenShots, the resulting captured image will appear in help topic directly "Xyz", regardless
  * of which module has that topic.  The test name will determine the name of the image file
  * that is generated. So if the test name is testHappyBirthday, the filename will be
@@ -48,11 +48,10 @@ import ghidra.util.exception.AssertException;
  */
 public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenerator {
 
-	private static final Color FG_COLOR_TEXT = Palette.getColor("color.palette.cornflowerblue");
+	private static final Color FG_COLOR_TEXT = Palette.getColor("cornflowerblue");
 	private static final String CAPTURE = "Capture";
 
 	protected GhidraScreenShotGenerator() {
-		super();
 	}
 
 	@Override
@@ -73,7 +72,7 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		}
 	}
 
-	/** 
+	/**
 	 * Generally, you shouldn't use this.  This is only visible for those who do not directly
 	 * extend this class.
 	 */
@@ -189,10 +188,10 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	/**
-	 * Call when you are finished generating a new image.  This method will either show the 
-	 * newly created image or write it to disk, depending upon the value of 
+	 * Call when you are finished generating a new image.  This method will either show the
+	 * newly created image or write it to disk, depending upon the value of
 	 * {@link #SAVE_CREATED_IMAGE_FILE}, which is a system property.
-	 * 
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param oldImageName  The name of the image
 	 */
@@ -297,8 +296,8 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	/**
-	 * @deprecated use instead {@link #finished(File, String)}.  
-	 * 
+	 * @deprecated use instead {@link #finished(File, String)}.
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param oldImageName  The name of the image
 	 */
@@ -308,8 +307,8 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	/**
-	 * @deprecated use instead {@link #finished(File, String)}.  
-	 * 
+	 * @deprecated use instead {@link #finished(File, String)}.
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param imageName  The name of the image
 	 */

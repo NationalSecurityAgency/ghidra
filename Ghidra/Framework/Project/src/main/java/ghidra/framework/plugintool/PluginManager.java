@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdom.Element;
 
+import ghidra.framework.main.UtilityPluginPackage;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
@@ -33,15 +34,40 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.MultipleCauses;
 
 class PluginManager {
-	static final Logger log = LogManager.getLogger(PluginManager.class);
+	private static final Logger log = LogManager.getLogger(PluginManager.class);
 
+	private PluginsConfiguration pluginsConfiguration;
 	private List<Plugin> pluginList = new ArrayList<>();
 	private PluginTool tool;
 	private ServiceManager serviceMgr;
 
-	PluginManager(PluginTool tool, ServiceManager serviceMgr) {
+	PluginManager(PluginTool tool, ServiceManager serviceMgr,
+			PluginsConfiguration pluginsConfiguration) {
 		this.tool = tool;
 		this.serviceMgr = serviceMgr;
+		this.pluginsConfiguration = pluginsConfiguration;
+	}
+
+	void installUtilityPlugins() throws PluginException {
+
+		PluginPackage utilityPackage = PluginPackage.getPluginPackage(UtilityPluginPackage.NAME);
+		List<PluginDescription> descriptions =
+			pluginsConfiguration.getPluginDescriptions(utilityPackage);
+		if (descriptions == null) {
+			return;
+		}
+
+		Set<String> classNames = new HashSet<>();
+		for (PluginDescription description : descriptions) {
+			String pluginClass = description.getPluginClass().getName();
+			classNames.add(pluginClass);
+		}
+
+		addPlugins(classNames);
+	}
+
+	PluginsConfiguration getPluginsConfiguration() {
+		return pluginsConfiguration;
 	}
 
 	boolean acceptData(DomainFile[] data) {
@@ -55,9 +81,9 @@ class PluginManager {
 	}
 
 	/**
-	 * Identify plugin which will accept specified URL.  If no plugin accepts URL it will be 
-	 * rejected and false returned. If a plugin can accept the specified URL it will attempt to 
-	 * process and return true if successful.  
+	 * Identify plugin which will accept specified URL.  If no plugin accepts URL it will be
+	 * rejected and false returned. If a plugin can accept the specified URL it will attempt to
+	 * process and return true if successful.
 	 * The user may be prompted if connecting to the URL requires user authentication.
 	 * @param url read-only resource URL
 	 * @return true if URL accepted and processed else false
@@ -72,7 +98,7 @@ class PluginManager {
 		return false;
 	}
 
-	public void dispose() {
+	void dispose() {
 		for (Iterator<Plugin> it = pluginList.iterator(); it.hasNext();) {
 			Plugin plugin = it.next();
 			plugin.cleanup();
@@ -255,15 +281,14 @@ class PluginManager {
 	}
 
 	void saveToXml(Element root, boolean includeConfigState) {
-		PluginClassManager pluginClassManager = tool.getPluginClassManager();
-		pluginClassManager.addXmlElementsForPlugins(root, pluginList);
+
+		pluginsConfiguration.savePluginsToXml(root, pluginList);
 
 		if (!includeConfigState) {
 			return;
 		}
 
 		SaveState saveState = new SaveState("PLUGIN_STATE");
-
 		Iterator<Plugin> it = pluginList.iterator();
 		while (it.hasNext()) {
 			Plugin p = it.next();
@@ -279,8 +304,8 @@ class PluginManager {
 
 	void restorePluginsFromXml(Element root) throws PluginException {
 		boolean isOld = isOldToolConfig(root);
-		Collection<String> classNames =
-			isOld ? getPluginClassNamesFromOldXml(root) : getPluginClassNamesToLoad(root);
+		Collection<String> classNames = isOld ? getPluginClassNamesFromOldXml(root)
+				: pluginsConfiguration.getPluginClassNames(root);
 		Map<String, SaveState> map = isOld ? getPluginSavedStates(root, "PLUGIN")
 				: getPluginSavedStates(root, "PLUGIN_STATE");
 
@@ -324,17 +349,12 @@ class PluginManager {
 			String className = elem.getAttributeValue("CLASS");
 			classNames.add(className);
 		}
-		PluginClassManager pluginClassManager = tool.getPluginClassManager();
-		return pluginClassManager.fillInPackageClasses(classNames);
+
+		return pluginsConfiguration.getPluginNamesByCurrentPackage(classNames);
 	}
 
 	private boolean isOldToolConfig(Element root) {
 		return root.getChild("PLUGIN") != null;
-	}
-
-	private Set<String> getPluginClassNamesToLoad(Element root) {
-		PluginClassManager pluginClassManager = tool.getPluginClassManager();
-		return pluginClassManager.getPluginClasses(root);
 	}
 
 	/**
@@ -465,8 +485,9 @@ class PluginManager {
 			// TODO: this following loop is searching for any non-loaded Plugin that implements
 			// the required service class interface.
 			// This doesn't seem exactly right as a Service implementation shouldn't
-			// be automagically pulled in and instantiated UNLESS it was specified as the "defaultProvider",
-			// which we've already checked for in the previous PluginUtils.getDefaultProviderForServiceClass().
+			// be automagically pulled in and instantiated UNLESS it was specified as the
+			// "defaultProvider", which we've already checked for in the previous
+			// PluginUtils.getDefaultProviderForServiceClass().
 			// TODO: this also should be filtered by the PluginClassManager so we don't
 			// pull in classes that have been excluded.
 			for (Class<? extends Plugin> pc : ClassSearcher.getClasses(Plugin.class)) {

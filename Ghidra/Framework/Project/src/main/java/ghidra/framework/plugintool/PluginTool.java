@@ -45,7 +45,8 @@ import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.main.*;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.main.UserAgreementDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.dialog.ExtensionTableProvider;
@@ -175,7 +176,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		eventMgr = new EventManager(this);
 		serviceMgr = new ServiceManager();
 		installServices();
-		pluginMgr = new PluginManager(this, serviceMgr);
+		pluginMgr = new PluginManager(this, serviceMgr, createPluginsConfigurations());
 		dialogMgr = new DialogManager(this);
 		initActions();
 		initOptions();
@@ -192,7 +193,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 		// non-public constructor for stub subclasses
 	}
 
-	public abstract PluginClassManager getPluginClassManager();
+	protected PluginsConfiguration createPluginsConfigurations() {
+		return new DefaultPluginsConfiguration();
+	}
+
+	protected PluginsConfiguration getPluginsConfiguration() {
+		return pluginMgr.getPluginsConfiguration();
+	}
 
 	/**
 	 * This method exists here, as opposed to inline in the constructor, so that subclasses can
@@ -233,21 +240,15 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	protected void installUtilityPlugins() {
 
-		PluginClassManager classManager = getPluginClassManager();
-		PluginPackage utilityPackage = PluginPackage.getPluginPackage(UtilityPluginPackage.NAME);
-		List<PluginDescription> descriptions = classManager.getPluginDescriptions(utilityPackage);
-
-		Set<String> classNames = new HashSet<>();
-		if (descriptions == null) {
-			return;
-		}
-		for (PluginDescription description : descriptions) {
-			String pluginClass = description.getPluginClass().getName();
-			classNames.add(pluginClass);
-		}
-
 		try {
-			addPlugins(classNames);
+			checkedRunSwingNow(() -> {
+				try {
+					pluginMgr.installUtilityPlugins();
+				}
+				finally {
+					setConfigChanged(true);
+				}
+			}, PluginException.class);
 		}
 		catch (PluginException e) {
 			Msg.showError(this, null, "Error Adding Utility Plugins",

@@ -15,7 +15,7 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -41,32 +41,18 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// don't care
@@ -90,35 +76,21 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// don't care
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -139,50 +111,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddSame() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 		});
 
@@ -203,50 +153,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddBothSubMyPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 		});
 
@@ -272,50 +200,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddBothSubMyPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 		});
 
@@ -341,50 +247,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddBothSubMyPickBoth() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 		});
 
@@ -410,50 +294,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddBothSubLatestPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -479,50 +341,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddBothSubLatestPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -548,50 +388,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddBothSubLatestPickBoth() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -617,50 +435,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddDiffPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -686,50 +482,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddDiffPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -755,50 +529,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testAddDiffPickBoth() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -829,32 +581,18 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// don't care
@@ -878,35 +616,21 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// don't care
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -927,50 +651,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeBothSame() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 		});
 
@@ -991,50 +693,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeBothSubMyPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 		});
 
@@ -1060,50 +740,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeBothSubMyPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 		});
 
@@ -1129,50 +787,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeBothSubMyPickBoth() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 		});
 
@@ -1198,50 +834,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeBothSubLatestPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -1267,50 +881,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeBothSubLatestPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -1336,50 +928,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeBothSubLatestPickBoth() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -1405,50 +975,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeDiffPickLatest() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -1474,50 +1022,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeDiffPickMy() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -1543,50 +1069,28 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	public void testChangeDiffPickBoth() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 
@@ -1824,66 +1328,42 @@ public class CommentMergeManager1Test extends AbstractListingMergeManagerTest {
 	private void setupAddDiffCommentUseForAll() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "Latest EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "Latest Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "Latest Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "Latest Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "Latest Repeatable Comment");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Listing listing = program.getListing();
-					CodeUnit cu;
-					cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
+				Listing listing = program.getListing();
+				CodeUnit cu;
+				cu = listing.getCodeUnitAt(addr(program, "0x10028b1"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 
-					cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
-					cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
-					cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
-					cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
-					cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
-					cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				cu = listing.getCodeUnitAt(addr(program, "0x100230d"));
+				cu.setComment(CodeUnit.EOL_COMMENT, "My EOL Comment");
+				cu.setComment(CodeUnit.PRE_COMMENT, "My Pre Comment");
+				cu.setComment(CodeUnit.POST_COMMENT, "My Post Comment");
+				cu.setComment(CodeUnit.PLATE_COMMENT, "My Plate Comment");
+				cu.setComment(CodeUnit.REPEATABLE_COMMENT, "My Repeatable Comment");
 			}
 		});
 	}

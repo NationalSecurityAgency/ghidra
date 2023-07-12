@@ -94,6 +94,13 @@ public class GoSlice {
 		return programContext.getDataAddress(array);
 	}
 
+	public long getArrayEnd(Class<?> elementClass) {
+		StructureMappingInfo<?> elementSMI =
+			context.getDataTypeMapper().getStructureMappingInfo(elementClass);
+		int elementLength = elementSMI.getStructureLength();
+		return array + len * elementLength;
+	}
+
 	public long getLen() {
 		return len;
 	}

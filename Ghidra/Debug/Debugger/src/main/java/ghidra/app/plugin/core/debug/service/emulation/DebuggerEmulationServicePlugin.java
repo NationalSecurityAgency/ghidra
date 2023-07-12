@@ -510,14 +510,14 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			if (!block.isExecute()) {
 				return;
 			}*/
-			ProgramLocation progLoc =
-				staticMappings.getOpenMappedLocation(new DefaultTraceLocation(view.getTrace(), null,
-					Lifespan.at(view.getSnap()), tracePc));
-			Program program = progLoc == null ? null : progLoc.getProgram();
-			Address programPc = progLoc == null ? null : progLoc.getAddress();
 
 			long snap =
 				view.getViewport().getOrderedSnaps().stream().filter(s -> s >= 0).findFirst().get();
+			ProgramLocation progLoc = staticMappings.getOpenMappedLocation(
+				new DefaultTraceLocation(trace, null, Lifespan.at(snap), tracePc));
+			Program program = progLoc == null ? null : progLoc.getProgram();
+			Address programPc = progLoc == null ? null : progLoc.getAddress();
+
 			TraceThread thread = ProgramEmulationUtils.launchEmulationThread(trace, snap, program,
 				tracePc, programPc);
 			traceManager.activateThread(thread);

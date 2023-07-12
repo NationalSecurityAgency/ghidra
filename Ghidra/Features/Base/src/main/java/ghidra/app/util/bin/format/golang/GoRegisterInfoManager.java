@@ -37,7 +37,7 @@ import ghidra.util.xml.XmlUtilities;
  * 			&lt;float_registers list="XMM0,XMM1,XMM2,XMM3,XMM4,XMM5,XMM6,XMM7,XMM8,XMM9,XMM10,XMM11,XMM12,XMM13,XMM14"/>
  * 			&lt;stack initialoffset="8" maxalign="8"/>
  * 			&lt;current_goroutine register="R14"/>
- * 			&lt;zero_register register="XMM15"/>
+ * 			&lt;zero_register register="XMM15" builtin="true|false"/>
  * 		&lt;/register_info>
  * 		&lt;register_info versions="V1_2">
  * 			...
@@ -115,7 +115,7 @@ public class GoRegisterInfoManager {
 	}
 
 	@SuppressWarnings("unchecked")
-	public Map<GoVer, GoRegisterInfo> readFrom(Element rootElem, Language lang)
+	private Map<GoVer, GoRegisterInfo> readFrom(Element rootElem, Language lang)
 			throws IOException {
 
 		Map<GoVer, GoRegisterInfo> result = new HashMap<>();
@@ -152,10 +152,12 @@ public class GoRegisterInfoManager {
 		Register currentGoRoutineReg =
 			parseRegStr(goRoutineElem.getAttributeValue("register"), lang);
 		Register zeroReg = parseRegStr(zeroRegElem.getAttributeValue("register"), lang);
+		boolean zeroRegIsBuiltin =
+			XmlUtilities.parseOptionalBooleanAttr(zeroRegElem, "builtin", false);
 
 		GoRegisterInfo registerInfo =
 			new GoRegisterInfo(intRegs, floatRegs, stackInitialOffset, maxAlign,
-				currentGoRoutineReg, zeroReg);
+				currentGoRoutineReg, zeroReg, zeroRegIsBuiltin);
 		Map<GoVer, GoRegisterInfo> result = new HashMap<>();
 		for (GoVer goVer : validGoVersions) {
 			result.put(goVer, registerInfo);
@@ -165,7 +167,7 @@ public class GoRegisterInfoManager {
 
 	private GoRegisterInfo getDefault(Language lang) {
 		int goSize = lang.getInstructionAlignment();
-		return new GoRegisterInfo(List.of(), List.of(), goSize, goSize, null, null);
+		return new GoRegisterInfo(List.of(), List.of(), goSize, goSize, null, null, false);
 	}
 
 	private List<Register> parseRegListStr(String s, Language lang) throws IOException {

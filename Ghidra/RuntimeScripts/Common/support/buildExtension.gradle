@@ -310,7 +310,7 @@ tasks.register('indexHelp', JavaExec) {
 	File helpRootDir = file('src/main/help/help')		
 	File outputFile = file("build/help/main/help/${project.name}_JavaHelpSearch")	
 
-	inputs.dir helpRootDir
+	inputs.dir helpRootDir skipWhenEmpty()
 	outputs.dir outputFile
 	
 	classpath = sourceSets.main.runtimeClasspath
@@ -363,13 +363,21 @@ tasks.register('buildHelp', JavaExec) {
 	File helpRootDir = file('src/main/help/help')	
 	File outputDir = file('build/help/main/help')
 
-	inputs.dir helpRootDir
+	onlyIf {
+		helpRootDir.exists()
+	}
+
+	if (helpRootDir.exists()) {
+		inputs.dir helpRootDir
 	
-	inputs.files({
-		// Note: this must be done lazily in a closure since the classpath is not ready at 
-		// configuration time.
-		return getHelpInputs(sourceSets.main.runtimeClasspath.files)
-	})
+		inputs.files({
+			// Note: this must be done lazily in a closure since the classpath is not ready at 
+			// configuration time.
+			return getHelpInputs(sourceSets.main.runtimeClasspath.files)
+		})	
+	}
+
+
 
 	outputs.dir outputDir
 
@@ -497,7 +505,7 @@ def checkGradleVersion() {
 	GradleVersion min = null;
 	GradleVersion max = null;
 	try {
-		min = GradleVersion.version("${rootProject.GRADLE_MIN}")
+		min = GradleVersion.version("${GRADLE_MIN}")
 	}
 	catch (IllegalArgumentException e) {
 		String defaultMin = "1.0"
@@ -505,8 +513,8 @@ def checkGradleVersion() {
 		min = GradleVersion.version(defaultMin)
 	}
 	try {
-		if (rootProject.GRADLE_MAX) {
-			max = GradleVersion.version("${rootProject.GRADLE_MAX}")
+		if (GRADLE_MAX) {
+			max = GradleVersion.version("${GRADLE_MAX}")
 		}
 	}
 	catch (IllegalArgumentException e) {

@@ -56,8 +56,8 @@ public class DyldCacheHeader implements StructConverter {
 	private long cacheType;
 	private int branchPoolsOffset;
 	private int branchPoolsCount;
-	private long accelerateInfoAddr;
-	private long accelerateInfoSize;
+	private long accelerateInfoAddr_dyldInCacheMH;
+	private long accelerateInfoSize_dyldInCacheEntry;
 	private long imagesTextOffset;
 	private long imagesTextCount;
 	private long patchInfoAddr;
@@ -101,7 +101,7 @@ public class DyldCacheHeader implements StructConverter {
 	private long swiftOptsOffset;
 	private long swiftOptsSize;
 	private int subCacheArrayOffset;
-	private int subCacheArrayCount;
+	private Integer subCacheArrayCount;
 	private byte[] symbolFileUUID;
 	private long rosettaReadOnlyAddr;
 	private long rosettaReadOnlySize;
@@ -109,8 +109,14 @@ public class DyldCacheHeader implements StructConverter {
 	private long rosettaReadWriteSize;
 	private int imagesOffset;
 	private int imagesCount;
+	private Integer cacheSubType;
+	private long objcOptsOffset;
+	private long objcOptsSize;
+	private long cacheAtlasOffset;
+	private long cacheAtlasSize;
+	private long dynamicDataOffset;
+	private long dynamicDataMaxSize;
 
-	private int headerType;
 	private int headerSize;
 	private BinaryReader reader;
 	private long baseAddress;
@@ -136,18 +142,13 @@ public class DyldCacheHeader implements StructConverter {
 		this.reader = reader;
 		long startIndex = reader.getPointerIndex();
 
-		// HEADER 1: https://opensource.apple.com/source/dyld/dyld-95.3/launch-cache/dyld_cache_format.h.auto.html
-		headerType = 1;
 		magic = reader.readNextByteArray(16);
 		mappingOffset = reader.readNextInt();
 		mappingCount = reader.readNextInt();
 		imagesOffsetOld = reader.readNextInt();
 		imagesCountOld = reader.readNextInt();
 		dyldBaseAddress = reader.readNextLong();
-
-		// HEADER 2: https://opensource.apple.com/source/dyld/dyld-195.5/launch-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 2;
 			codeSignatureOffset = reader.readNextLong();
 			codeSignatureSize = reader.readNextLong();
 		}
@@ -155,40 +156,33 @@ public class DyldCacheHeader implements StructConverter {
 			slideInfoOffset = reader.readNextLong();
 			slideInfoSize = reader.readNextLong();
 		}
-
-		// HEADER 3:  No header file for this version (without the following UUID), but there are images of this version
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 3;
 			localSymbolsOffset = reader.readNextLong();
 			localSymbolsSize = reader.readNextLong();
 		}
-
-		// HEADER 4: https://opensource.apple.com/source/dyld/dyld-239.3/launch-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 4;
 			uuid = reader.readNextByteArray(16);
 		}
-
-		// HEADER 5: https://opensource.apple.com/source/dyld/dyld-360.14/launch-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 5;
 			cacheType = reader.readNextLong();
 		}
-
-		// HEADER 6: https://opensource.apple.com/source/dyld/dyld-421.1/launch-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 6;
 			branchPoolsOffset = reader.readNextInt();
-			branchPoolsCount = reader.readNextInt();
-			accelerateInfoAddr = reader.readNextLong();
-			accelerateInfoSize = reader.readNextLong();
-			imagesTextOffset = reader.readNextLong();
-			imagesTextCount = reader.readNextLong();
 		}
-
-		// HEADER 7: https://opensource.apple.com/source/dyld/dyld-832.7.1/dyld3/shared-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 7;
+			branchPoolsCount = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			accelerateInfoAddr_dyldInCacheMH = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			accelerateInfoSize_dyldInCacheEntry = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			imagesTextOffset = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			imagesTextCount = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
 			patchInfoAddr = reader.readNextLong();
@@ -265,11 +259,6 @@ public class DyldCacheHeader implements StructConverter {
 		if (reader.getPointerIndex() < mappingOffset) {
 			mappingWithSlideCount = reader.readNextInt();
 		}
-
-		// HEADER 8: https://github.com/apple-oss-distributions/dyld/blob/dyld-940/cache-builder/dyld_cache_format.h
-		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 8;
-		}
 		if (reader.getPointerIndex() < mappingOffset) {
 			dylibsPBLStateArrayAddrUnused = reader.readNextLong();
 		}
@@ -337,9 +326,29 @@ public class DyldCacheHeader implements StructConverter {
 		if (reader.getPointerIndex() < mappingOffset) {
 			imagesCount = reader.readNextInt();
 		}
-		// HEADER 9: <unknown>
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 9;
+			cacheSubType = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			padding = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			objcOptsOffset = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			objcOptsSize = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			cacheAtlasOffset = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			cacheAtlasSize = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			dynamicDataOffset = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			dynamicDataMaxSize = reader.readNextLong();
 		}
 
 		headerSize = (int) (reader.getPointerIndex() - startIndex);
@@ -359,36 +368,27 @@ public class DyldCacheHeader implements StructConverter {
 	/**
 	 * Parses the structures referenced by this {@link DyldCacheHeader} from a file.
 	 * 
-	 * @param parseSymbols True if symbols should be parsed (could be very slow); otherwise, false
+	 * @param parseLocalSymbols True if local symbols should be parsed; otherwise, false
 	 * @param log The log
 	 * @param monitor A cancellable task monitor
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public void parseFromFile(boolean parseSymbols, MessageLog log, TaskMonitor monitor)
+	public void parseFromFile(boolean parseLocalSymbols, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
-		if (headerType >= 1) {
-			parseMappingInfo(log, monitor);
-			parseImageInfo(log, monitor);
-		}
-		if (headerType >= 3) {
-			if (parseSymbols) {
-				parseLocalSymbolsInfo(log, monitor);
-			}
-		}
-		if (headerType >= 6) {
-			parseBranchPools(log, monitor);
-			parseImageTextInfo(log, monitor);
-		}
-		if (headerType >= 8) {
-			parseSubcaches(log, monitor);
-		}
+		parseMappingInfo(log, monitor);
+		parseImageInfo(log, monitor);
+		parseLocalSymbolsInfo(parseLocalSymbols, log, monitor);
+		parseBranchPools(log, monitor);
+		parseImageTextInfo(log, monitor);
+		parseSubcaches(log, monitor);
 		parseCacheMappingSlideInfo(log, monitor);
-		if (hasSlideInfo()) {
-			parseSlideInfos(log, monitor);
-		}
+		parseSlideInfos(log, monitor);
 	}
 
 	private void parseSlideInfos(MessageLog log, TaskMonitor monitor) throws CancelledException {
+		if (!hasSlideInfo()) {
+			return;
+		}
 		if (slideInfoOffset != 0) {
 			DyldCacheSlideInfoCommon slideInfo = parseSlideInfo(slideInfoOffset, log, monitor);
 			if (slideInfo != null) {
@@ -445,45 +445,32 @@ public class DyldCacheHeader implements StructConverter {
 	 */
 	public void parseFromMemory(Program program, AddressSpace space, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
-		if (headerType >= 6) {
-			parseAcceleratorInfo(program, space, log, monitor);
-		}
+		parseAcceleratorInfo(program, space, log, monitor);
 	}
 
 	/**
 	 * Marks up this {@link DyldCacheHeader} with data structures and comments.
 	 * 
 	 * @param program The {@link Program} to mark up
+	 * @param markupLocalSymbols True if the local symbols should be marked up; otherwise, false
 	 * @param space The {@link Program}'s {@link AddressSpace}
 	 * @param monitor A cancellable task monitor
 	 * @param log The log
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public void markup(Program program, AddressSpace space, TaskMonitor monitor, MessageLog log)
-			throws CancelledException {
-		if (headerType >= 1) {
-			markupHeader(program, space, monitor, log);
-			markupMappingInfo(program, space, monitor, log);
-			markupImageInfo(program, space, monitor, log);
-		}
-		if (headerType >= 2) {
-			markupCodeSignature(program, space, monitor, log);
-			markupSlideInfo(program, space, monitor, log);
-		}
-		if (headerType >= 3) {
-			markupLocalSymbolsInfo(program, space, monitor, log);
-		}
-		if (headerType >= 6) {
-			markupBranchPools(program, space, monitor, log);
-			markupAcceleratorInfo(program, space, monitor, log);
-			markupImageTextInfo(program, space, monitor, log);
-		}
-		if (headerType >= 8) {
-			markupSubcacheEntries(program, space, monitor, log);
-		}
-		if (mappingWithSlideOffset >= 0) {
-			markupCacheMappingSlideInfo(program, space, log, monitor);
-		}
+	public void markup(Program program, boolean markupLocalSymbols, AddressSpace space,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
+		markupHeader(program, space, monitor, log);
+		markupMappingInfo(program, space, monitor, log);
+		markupImageInfo(program, space, monitor, log);
+		markupLocalSymbolsInfo(markupLocalSymbols, program, space, monitor, log);
+		markupCodeSignature(program, space, monitor, log);
+		markupSlideInfo(program, space, monitor, log);
+		markupBranchPools(program, space, monitor, log);
+		markupAcceleratorInfo(program, space, monitor, log);
+		markupImageTextInfo(program, space, monitor, log);
+		markupSubcacheEntries(program, space, monitor, log);
+		markupCacheMappingSlideInfo(program, space, log, monitor);
 	}
 
 	/**
@@ -640,47 +627,32 @@ public class DyldCacheHeader implements StructConverter {
 		StructureDataType struct = new StructureDataType("dyld_cache_header", 0);
 
 		// @formatter:off
-		
-		// headerType 1
-		//
 		addHeaderField(struct, new ArrayDataType(ASCII, 16, 1), "magic","e.g. \"dyld_v0    i386\"");
 		addHeaderField(struct, DWORD, "mappingOffset","file offset to first dyld_cache_mapping_info");
 		addHeaderField(struct, DWORD, "mappingCount", "number of dyld_cache_mapping_info entries");
 		addHeaderField(struct, DWORD, "imagesOffsetOld", "UNUSED: moved to imagesOffset to prevent older dsc_extarctors from crashing");
 		addHeaderField(struct, DWORD, "imagesCountOld", "UNUSED: moved to imagesCount to prevent older dsc_extarctors from crashing");
 		addHeaderField(struct, QWORD, "dyldBaseAddress","base address of dyld when cache was built");
-
-		// headerType 2
-		//
 		addHeaderField(struct, QWORD, "codeSignatureOffset", "file offset of code signature blob");
 		addHeaderField(struct, QWORD, "codeSignatureSize","size of code signature blob (zero means to end of file)");
 		addHeaderField(struct, QWORD, "slideInfoOffset", "file offset of kernel slid info");
 		addHeaderField(struct, QWORD, "slideInfoSize", "size of kernel slid info");
-
-		// headerType 3
-		//
 		addHeaderField(struct, QWORD, "localSymbolsOffset","file offset of where local symbols are stored");
 		addHeaderField(struct, QWORD, "localSymbolsSize", "size of local symbols information");
-
-		// headerType 4
-		//
 		addHeaderField(struct, new ArrayDataType(BYTE, 16, 1), "uuid","unique value for each shared cache file");
-
-		// headerType 5
-		//
 		addHeaderField(struct, QWORD, "cacheType", "0 for development, 1 for production");
-
-		// headerType 6
-		//
 		addHeaderField(struct, DWORD, "branchPoolsOffset","file offset to table of uint64_t pool addresses");
 		addHeaderField(struct, DWORD, "branchPoolsCount", "number of uint64_t entries");
-		addHeaderField(struct, QWORD, "accelerateInfoAddr","(unslid) address of optimization info");
-		addHeaderField(struct, QWORD, "accelerateInfoSize", "size of optimization info");
+		if (hasAccelerateInfo()) {
+			addHeaderField(struct, QWORD, "accelerateInfoAddr","(unslid) address of optimization info");
+			addHeaderField(struct, QWORD, "accelerateInfoSize", "size of optimization info");
+		}
+		else {
+			addHeaderField(struct, QWORD, "dyldInCacheMH","(unslid) address of mach_header of dyld in cache");
+			addHeaderField(struct, QWORD, "dyldInCacheEntry", "(unslid) address of entry point (_dyld_start) of dyld in cache");
+		}
 		addHeaderField(struct, QWORD, "imagesTextOffset","file offset to first dyld_cache_image_text_info");
 		addHeaderField(struct, QWORD, "imagesTextCount","number of dyld_cache_image_text_info entries");
-
-		// headerType 7
-		//
 		addHeaderField(struct, QWORD, "patchInfoAddr", "(unslid) address of dyld_cache_patch_info");
 		addHeaderField(struct, QWORD, "patchInfoSize", "Size of all of the patch information pointed to via the dyld_cache_patch_info");
 		addHeaderField(struct, QWORD, "otherImageGroupAddrUnused", "unused");
@@ -704,9 +676,6 @@ public class DyldCacheHeader implements StructConverter {
 		addHeaderField(struct, QWORD, "otherTrieSize","size of trie of dylibs and bundles with dlopen closures");
 		addHeaderField(struct, DWORD, "mappingWithSlideOffset","file offset to first dyld_cache_mapping_and_slide_info");
 		addHeaderField(struct, DWORD, "mappingWithSlideCount","number of dyld_cache_mapping_and_slide_info entries");
-		
-		// headerType 8
-		//
 		addHeaderField(struct, QWORD, "dylibsPBLStateArrayAddrUnused", "unused");
 		addHeaderField(struct, QWORD, "dylibsPBLSetAddr", "(unslid) address of PrebuiltLoaderSet of all cached dylibs");
 		addHeaderField(struct, QWORD, "programsPBLSetPoolAddr", "(unslid) address of pool of PrebuiltLoaderSet for each program ");
@@ -727,6 +696,14 @@ public class DyldCacheHeader implements StructConverter {
 		addHeaderField(struct, QWORD, "rosettaReadWriteSize", "maximum size of the Rosetta read-write region");
 		addHeaderField(struct, DWORD, "imagesOffset", "file offset to first dyld_cache_image_info");
 		addHeaderField(struct, DWORD, "imagesCount", "number of dyld_cache_image_info entries");
+		addHeaderField(struct, DWORD, "cacheSubType", "0 for development, 1 for production, when cacheType is multi-cache(2)");
+		addHeaderField(struct, DWORD, "padding", "");
+		addHeaderField(struct, QWORD, "objcOptsOffset", "VM offset from cache_header* to ObjC optimizations header");
+		addHeaderField(struct, QWORD, "objcOptsSize", "size of ObjC optimizations header");
+		addHeaderField(struct, QWORD, "cacheAtlasOffset", "VM offset from cache_header* to embedded cache atlas for process introspection");
+		addHeaderField(struct, QWORD, "cacheAtlasSize", "size of embedded cache atlas");
+		addHeaderField(struct, QWORD, "dynamicDataOffset", "VM offset from cache_header* to the location of dyld_cache_dynamic_data_header");
+		addHeaderField(struct, QWORD, "dynamicDataMaxSize", "maximum size of space reserved from dynamic data");
 		// @formatter:on
 
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
@@ -786,9 +763,9 @@ public class DyldCacheHeader implements StructConverter {
 		return slideInfo;
 	}
 
-	private void parseLocalSymbolsInfo(MessageLog log, TaskMonitor monitor)
+	private void parseLocalSymbolsInfo(boolean shouldParse, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
-		if (localSymbolsOffset == 0) {
+		if (!shouldParse || localSymbolsOffset == 0) {
 			return;
 		}
 		monitor.setMessage("Parsing DYLD local symbols info...");
@@ -853,7 +830,7 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			reader.setPointerIndex(subCacheArrayOffset);
 			for (int i = 0; i < subCacheArrayCount; ++i) {
-				subcacheEntryList.add(new DyldSubcacheEntry(reader, headerType));
+				subcacheEntryList.add(new DyldSubcacheEntry(reader));
 				monitor.checkCancelled();
 				monitor.incrementProgress(1);
 			}
@@ -866,12 +843,12 @@ public class DyldCacheHeader implements StructConverter {
 
 	private void parseAcceleratorInfo(Program program, AddressSpace space, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
-		if (accelerateInfoAddr == 0 || headerType >= 9) {
+		if (!hasAccelerateInfo() || accelerateInfoAddr_dyldInCacheMH == 0) {
 			return;
 		}
 		monitor.setMessage("Parsing DYLD accelerateor info...");
 		monitor.initialize(imagesTextCount);
-		Address addr = space.getAddress(accelerateInfoAddr);
+		Address addr = space.getAddress(accelerateInfoAddr_dyldInCacheMH);
 		try (ByteProvider bytes = new MemoryByteProvider(program.getMemory(), addr)) {
 			BinaryReader memoryReader =
 				new BinaryReader(bytes, !program.getLanguage().isBigEndian());
@@ -999,8 +976,11 @@ public class DyldCacheHeader implements StructConverter {
 		}
 	}
 
-	private void markupLocalSymbolsInfo(Program program, AddressSpace space, TaskMonitor monitor,
-			MessageLog log) throws CancelledException {
+	private void markupLocalSymbolsInfo(boolean shouldMarkup, Program program, AddressSpace space,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
+		if (!shouldMarkup) {
+			return;
+		}
 		monitor.setMessage("Marking up DYLD local symbols info...");
 		monitor.initialize(1);
 		try {
@@ -1044,8 +1024,8 @@ public class DyldCacheHeader implements StructConverter {
 		monitor.setMessage("Marking up DYLD accelerator info...");
 		monitor.initialize(1);
 		try {
-			if (accelerateInfo != null && headerType < 9) {
-				Address addr = space.getAddress(accelerateInfoAddr);
+			if (hasAccelerateInfo() && accelerateInfo != null) {
+				Address addr = space.getAddress(accelerateInfoAddr_dyldInCacheMH);
 				DataUtilities.createData(program, addr, accelerateInfo.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				accelerateInfo.markup(program, addr, monitor, log);
@@ -1154,11 +1134,9 @@ public class DyldCacheHeader implements StructConverter {
 			// this is no longer used, but if non-zero, is older format and has slide-info
 			return true;
 		}
-		if (headerType > 6) {
-			for (DyldCacheMappingAndSlideInfo info : cacheMappingAndSlideInfoList) {
-				if (info.getSlideInfoFileSize() != 0) {
-					return true;
-				}
+		for (DyldCacheMappingAndSlideInfo info : cacheMappingAndSlideInfoList) {
+			if (info.getSlideInfoFileSize() != 0) {
+				return true;
 			}
 		}
 		return false;
@@ -1176,9 +1154,19 @@ public class DyldCacheHeader implements StructConverter {
 	/**
 	 * Checks to see whether or not this is a subcache
 	 * 
-	 * @return True if this is a subcache; otherwise, false if its a base cache
+	 * @return True if this is a subcache; otherwise, false if it's a base cache
 	 */
 	public boolean isSubcache() {
-		return headerType >= 8 && subCacheArrayCount == 0 && symbolFileUUID == null;
+		return subCacheArrayCount != null && subCacheArrayCount == 0 && symbolFileUUID == null;
+	}
+
+	/**
+	 * Checks to see whether or not the old accelerate info fields are being used
+	 * 
+	 * @return True if the old accelerate info fields are being used; otherwise, false if the new
+	 *   dyldInCache fields are being used
+	 */
+	public boolean hasAccelerateInfo() {
+		return cacheSubType == null;
 	}
 }

@@ -15,21 +15,18 @@
  */
 package ghidra.app.util.opinion;
 
-import static ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.*;
-
 import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.commands.ExportTrie.ExportEntry;
+import ghidra.app.util.bin.format.macho.commands.chained.DyldChainedFixups;
+import ghidra.app.util.bin.format.macho.commands.chained.DyldChainedStartsOffsets;
 import ghidra.app.util.bin.format.macho.commands.dyld.*;
-import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr;
-import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
@@ -66,7 +63,6 @@ public class MachoProgramBuilder {
 	protected Program program;
 	protected ByteProvider provider;
 	protected FileBytes fileBytes;
-	protected boolean shouldAddChainedFixupsRelocations;
 	protected MessageLog log;
 	protected TaskMonitor monitor;
 	protected Memory memory;
@@ -79,17 +75,14 @@ public class MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
-	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
-	 *   fixups; otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 */
 	protected MachoProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean shouldAddChainedFixupsRelocations, MessageLog log, TaskMonitor monitor) {
+			MessageLog log, TaskMonitor monitor) {
 		this.program = program;
 		this.provider = provider;
 		this.fileBytes = fileBytes;
-		this.shouldAddChainedFixupsRelocations = shouldAddChainedFixupsRelocations;
 		this.log = log;
 		this.monitor = monitor;
 		this.memory = program.getMemory();
@@ -103,17 +96,14 @@ public class MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
-	 * @param addChainedFixupsRelocations True if relocations should be added for chained fixups;
-	 *   otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean addChainedFixupsRelocations, MessageLog log, TaskMonitor monitor)
-			throws Exception {
+			MessageLog log, TaskMonitor monitor) throws Exception {
 		MachoProgramBuilder machoProgramBuilder = new MachoProgramBuilder(program, provider,
-			fileBytes, addChainedFixupsRelocations, log, monitor);
+			fileBytes, log, monitor);
 		machoProgramBuilder.build();
 	}
 
@@ -125,32 +115,42 @@ public class MachoProgramBuilder {
 		machoHeader.parse();
 		monitor.setCancelEnabled(true);
 
+		// Setup memory
 		setImageBase();
-		processEncryption();
-		processEntryPoint();
 		processMemoryBlocks(machoHeader, provider.getName(), true, true);
 		fixupProgramTree();
-		processUnsupportedLoadCommands();
+
+		// Process load commands
+		processEntryPoint();
 		boolean exportsFound = processExports(machoHeader);
 		processSymbolTables(machoHeader, !exportsFound);
 		processIndirectSymbols();
-		setRelocatableProperty();
-		processLibraries();
-		processProgramDescription();
-		renameObjMsgSendRtpSymbol();
 		processUndefinedSymbols();
 		processAbsoluteSymbols();
-		List<Address> chainedFixups = processChainedFixups();
+		List<Address> chainedFixups = processChainedFixups(machoHeader);
 		processBindings(false);
-		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
-		markupSections();
-		processProgramVars();
 		processSectionRelocations();
 		processExternalRelocations();
 		processLocalRelocations();
-		markupChainedFixups(chainedFixups);
-	}
+		processLibraries();
+		processEncryption();
+		processUnsupportedLoadCommands();
 
+		// Markup structures
+		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
+		markupSections();
+		markupLoadCommandData(machoHeader, null);
+		markupChainedFixups(machoHeader, chainedFixups);
+		markupProgramVars();
+
+		// Set program info
+		setRelocatableProperty();
+		setProgramDescription();
+
+		// Perform additional actions
+		renameObjMsgSendRtpSymbol();
+	}
+	
 	/**
 	 * Sets the image base
 	 * 
@@ -174,63 +174,6 @@ public class MachoProgramBuilder {
 		}
 		else {
 			program.setImageBase(space.getAddress(0), true);
-		}
-	}
-	
-	/**
-	 * Logs encrypted block ranges
-	 * 
-	 * @throws Exception if there was a problem detecting the encrypted block ranges
-	 */
-	protected void processEncryption() throws Exception {
-		monitor.setMessage("Processing encryption...");
-		for (EncryptedInformationCommand cmd : machoHeader
-				.getLoadCommands(EncryptedInformationCommand.class)) {
-			if (cmd.getCryptID() != 0) {
-				log.appendMsg(String.format("ENCRYPTION DETECTED: (file offset 0x%x, size 0x%x)",
-					cmd.getCryptOffset(), cmd.getCryptSize()));
-			}
-		}
-	}
-
-	/**
- 	 * Attempts to discover and set the entry point.
- 	 * 
- 	 * @throws Exception If there was a problem discovering or setting the entry point.
- 	 */
-	protected void processEntryPoint() throws Exception {
-		monitor.setMessage("Processing entry point...");
-		Address entryPointAddr = null;
-
-		EntryPointCommand entryPointCommand =
-			machoHeader.getFirstLoadCommand(EntryPointCommand.class);
-		if (entryPointCommand != null) {
-			long offset = entryPointCommand.getEntryOffset();
-			if (offset > 0) {
-				SegmentCommand segment = machoHeader.getSegment("__TEXT");
-				if (segment != null) {
-					entryPointAddr = space.getAddress(segment.getVMaddress()).add(offset);
-				}
-			}
-		}
-
-		if (entryPointAddr == null) {
-			ThreadCommand threadCommand = machoHeader.getFirstLoadCommand(ThreadCommand.class);
-			if (threadCommand != null) {
-				long pointer = threadCommand.getInitialInstructionPointer();
-				if (pointer != -1) {
-					entryPointAddr = space.getAddress(pointer);
-				}
-			}
-		}
-
-		if (entryPointAddr != null) {
-			program.getSymbolTable().createLabel(entryPointAddr, "entry", SourceType.IMPORTED);
-			program.getSymbolTable().addExternalEntryPoint(entryPointAddr);
-			createOneByteFunction("entry", entryPointAddr);
-		}
-		else {
-			log.appendMsg("Unable to determine entry point.");
 		}
 	}
 
@@ -467,18 +410,45 @@ public class MachoProgramBuilder {
 	}
 
 	/**
- 	 * Processes {@link LoadCommand}s that we haven't implemented yet.
- 	 * 
- 	 * @throws CancelledException if the operation was cancelled.
- 	 */
-	protected void processUnsupportedLoadCommands() throws CancelledException {
- 		monitor.setMessage("Processing unsupported load commands...");
+	 * Attempts to discover and set the entry point.
+	 * 
+	 * @throws Exception If there was a problem discovering or setting the entry point.
+	 */
+	protected void processEntryPoint() throws Exception {
+		monitor.setMessage("Processing entry point...");
+		Address entryPointAddr = null;
 
- 		for (LoadCommand loadCommand : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
- 			monitor.checkCancelled();
- 			log.appendMsg(loadCommand.getCommandName());
- 		}
- 	}
+		EntryPointCommand entryPointCommand =
+			machoHeader.getFirstLoadCommand(EntryPointCommand.class);
+		if (entryPointCommand != null) {
+			long offset = entryPointCommand.getEntryOffset();
+			if (offset > 0) {
+				SegmentCommand segment = machoHeader.getSegment("__TEXT");
+				if (segment != null) {
+					entryPointAddr = space.getAddress(segment.getVMaddress()).add(offset);
+				}
+			}
+		}
+
+		if (entryPointAddr == null) {
+			ThreadCommand threadCommand = machoHeader.getFirstLoadCommand(ThreadCommand.class);
+			if (threadCommand != null) {
+				long pointer = threadCommand.getInitialInstructionPointer();
+				if (pointer != -1) {
+					entryPointAddr = space.getAddress(pointer);
+				}
+			}
+		}
+
+		if (entryPointAddr != null) {
+			program.getSymbolTable().createLabel(entryPointAddr, "entry", SourceType.IMPORTED);
+			program.getSymbolTable().addExternalEntryPoint(entryPointAddr);
+			createOneByteFunction("entry", entryPointAddr);
+		}
+		else {
+			log.appendMsg("Unable to determine entry point.");
+		}
+	}
  	
 	protected boolean processExports(MachHeader header) throws Exception {
 		monitor.setMessage("Processing exports...");
@@ -511,9 +481,9 @@ public class MachoProgramBuilder {
 
 		Address baseAddr = space.getAddress(textSegment.getVMaddress());
 		for (ExportEntry export : exports) {
-			String name = SymbolUtilities.replaceInvalidChars(export.getName(), true);
+			String name = SymbolUtilities.replaceInvalidChars(export.name(), true);
 			try {
-				Address exportAddr = baseAddr.add(export.getAddress());
+				Address exportAddr = baseAddr.add(export.address());
 				program.getSymbolTable().addExternalEntryPoint(exportAddr);
 				program.getSymbolTable().createLabel(exportAddr, name, SourceType.IMPORTED);
 			}
@@ -672,99 +642,6 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void setRelocatableProperty() {
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-		switch (machoHeader.getFileType()) {
-			case MachHeaderFileTypes.MH_EXECUTE:
-				props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, false);
-				break;
-			default:
-				props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, true);
-				break;
-		}
-	}
-
-	protected void processLibraries() throws Exception {
-		monitor.setMessage("Processing libraries...");
-
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-		int libraryIndex = 0;
-
-		for (LoadCommand command : machoHeader.getLoadCommands()) {
-			if (monitor.isCancelled()) {
-				return;
-			}
-
-			String libraryPath = null;
-
-			if (command instanceof DynamicLibraryCommand dylibCommand) {
-				DynamicLibrary dylib = dylibCommand.getDynamicLibrary();
-				libraryPath = dylib.getName().getString();
-			}
-			else if (command instanceof SubLibraryCommand sublibCommand) {
-				libraryPath = sublibCommand.getSubLibraryName().getString();
-			}
-			else if (command instanceof PreboundDynamicLibraryCommand pbdlCommand) {
-				libraryPath = pbdlCommand.getLibraryName();
-			}
-
-			if (libraryPath != null) {
-				// For now, strip off the full path and just the use the filename.  We will utilize
-				// the full path one day when we started looking in dyld_shared_cache files for
-				// libraries.
-				int index = libraryPath.lastIndexOf("/");
-				String libraryName = index != -1 ? libraryPath.substring(index + 1) : libraryPath;
-				if (!libraryName.equals(program.getName())) {
-					addLibrary(libraryName);
-					props.setString(
-						ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
-						libraryName);
-				}
-			}
-		}
-
-		program.getSymbolTable().createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
-	}
-
-	protected void processProgramDescription() {
-		Options props = program.getOptions(Program.PROGRAM_INFO);
-		props.setString("Mach-O File Type",
-			MachHeaderFileTypes.getFileTypeName(machoHeader.getFileType()));
-		props.setString("Mach-O File Type Description",
-			MachHeaderFileTypes.getFileTypeDescription(machoHeader.getFileType()));
-		List<String> flags = MachHeaderFlags.getFlags(machoHeader.getFlags());
-		for (int i = 0; i < flags.size(); ++i) {
-			props.setString("Mach-O Flag " + i, flags.get(i));
-		}
-
-		List<SubUmbrellaCommand> umbrellas = machoHeader.getLoadCommands(SubUmbrellaCommand.class);
-		for (int i = 0; i < umbrellas.size(); ++i) {
-			props.setString("Mach-O Sub-umbrella " + i,
-				umbrellas.get(i).getSubUmbrellaFrameworkName().getString());
-		}
-
-		List<SubFrameworkCommand> frameworks =
-			machoHeader.getLoadCommands(SubFrameworkCommand.class);
-		for (int i = 0; i < frameworks.size(); ++i) {
-			props.setString("Mach-O Sub-framework " + i,
-				frameworks.get(i).getUmbrellaFrameworkName().getString());
-		}
-	}
-
-	protected void renameObjMsgSendRtpSymbol()
-			throws DuplicateNameException, InvalidInputException {
-		Address address = space.getAddress(ObjectiveC1_Constants.OBJ_MSGSEND_RTP);
-		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
-		if (symbol != null && symbol.isDynamic()) {
-			symbol.setName(ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
-		}
-		else {
-			program.getSymbolTable()
-					.createLabel(address, ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME,
-						SourceType.IMPORTED);
-		}
-	}
-
 	protected void processUndefinedSymbols() throws Exception {
 
 		monitor.setMessage("Processing undefined symbols...");
@@ -878,6 +755,11 @@ public class MachoProgramBuilder {
 		}
 	}
 
+	public List<Address> processChainedFixups(MachHeader header) throws Exception {
+		DyldChainedFixups dyldChainedFixups = new DyldChainedFixups(program, header, log, monitor);
+		return dyldChainedFixups.processChainedFixups();
+	}
+
 	protected void processBindings(boolean doClassic) {
 		List<DyldInfoCommand> commands = machoHeader.getLoadCommands(DyldInfoCommand.class);
 		for (DyldInfoCommand command : commands) {
@@ -944,6 +826,8 @@ public class MachoProgramBuilder {
 				DataType loadCommandDataType = loadCommand.toDataType();
 				DataUtilities.createData(program, loadCommandAddr, loadCommandDataType, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				listing.setComment(loadCommandAddr, CodeUnit.PRE_COMMENT,
+					LoadCommandTypes.getLoadCommandName(loadCommand.getCommandType()));
 
 				if (loadCommand instanceof SegmentCommand) {
 					SegmentCommand segmentCommand = (SegmentCommand) loadCommand;
@@ -1117,7 +1001,16 @@ public class MachoProgramBuilder {
 					continue;
 				}
 
-				if (section.getType() == SectionTypes.S_CSTRING_LITERALS) {
+				if (section.getSectionName().equals(SectionNames.CHAIN_STARTS)) {
+					ByteProvider p = new MemoryByteProvider(memory, block.getStart());
+					BinaryReader reader = new BinaryReader(p, machoHeader.isLittleEndian());
+					DyldChainedStartsOffsets chainedStartsOffsets =
+						new DyldChainedStartsOffsets(reader);
+					DataUtilities.createData(program, block.getStart(),
+						chainedStartsOffsets.toDataType(), -1,
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				else if (section.getType() == SectionTypes.S_CSTRING_LITERALS) {
 					markupBlock(block, new TerminatedStringDataType());
 				}
 				else if (section.getType() == SectionTypes.S_4BYTE_LITERALS) {
@@ -1141,83 +1034,6 @@ public class MachoProgramBuilder {
 				if (section.getType() == SectionTypes.S_LAZY_SYMBOL_POINTERS) {
 					AddressSetView set = new AddressSet(block.getStart(), block.getEnd());
 					processLazyPointerSection(set);
-				}
-			}
-		}
-	}
-
-	/**
-	 * See crt.c from opensource.apple.com
-	 */
-	protected void processProgramVars() {
-		if (program.getLanguage().getProcessor() == Processor
-				.findOrPossiblyCreateProcessor("PowerPC")) {
-			return;
-		}
-
-		SymbolTable symbolTable = program.getSymbolTable();
-
-		int defaultPointerSize = program.getDefaultPointerSize();
-
-		DataType intDataType =
-			(defaultPointerSize == 8) ? new QWordDataType() : new DWordDataType();
-		DataType intPointerDataType = PointerDataType.getPointer(intDataType, defaultPointerSize);//int *
-		DataType voidPointerDatatype =
-			PointerDataType.getPointer(new VoidDataType(), defaultPointerSize);//void *
-		DataType charPointerX1DataType =
-			PointerDataType.getPointer(new CharDataType(), defaultPointerSize);//char *
-		DataType charPointerX2DataType =
-			PointerDataType.getPointer(charPointerX1DataType, defaultPointerSize);//char **
-		DataType charPointerX3DataType =
-			PointerDataType.getPointer(charPointerX2DataType, defaultPointerSize);//char ***
-
-		Structure structure = new StructureDataType(SectionNames.PROGRAM_VARS, 0);
-		structure.add(voidPointerDatatype, "mh", "pointer to __mh_execute_header");
-		structure.add(intPointerDataType, "NXArgcPtr", "pointer to argc");
-		structure.add(charPointerX3DataType, "NXArgvPtr", "pointer to argv");
-		structure.add(charPointerX3DataType, "environPtr", "pointer to environment");
-		structure.add(charPointerX2DataType, "__prognamePtr", "pointer to program name");
-
-		Namespace namespace = createNamespace(SectionNames.PROGRAM_VARS);
-
-		List<Section> sections = machoHeader.getAllSections();
-		for (Section section : sections) {
-			if (section.getSectionName().equals(SectionNames.PROGRAM_VARS)) {
-				MemoryBlock memoryBlock = getMemoryBlock(section);
-				try {
-					listing.createData(memoryBlock.getStart(), structure);
-					Data data = listing.getDataAt(memoryBlock.getStart());
-
-					Data mhData = data.getComponent(0);
-					if (symbolTable.getSymbol("__mh_execute_header", mhData.getAddress(0),
-						namespace) == null) {
-						symbolTable.createLabel(mhData.getAddress(0), "__mh_execute_header",
-							namespace, SourceType.IMPORTED);
-					}
-
-					Data argcData = data.getComponent(1);
-					symbolTable.createLabel(argcData.getAddress(0), "NXArgc", namespace,
-						SourceType.IMPORTED);
-					listing.createData(argcData.getAddress(0), intDataType);
-
-					Data argvData = data.getComponent(2);
-					symbolTable.createLabel(argvData.getAddress(0), "NXArgv", namespace,
-						SourceType.IMPORTED);
-					listing.createData(argvData.getAddress(0), charPointerX2DataType);
-
-					Data environData = data.getComponent(3);
-					symbolTable.createLabel(environData.getAddress(0), "environ", namespace,
-						SourceType.IMPORTED);
-					listing.createData(environData.getAddress(0), charPointerX2DataType);
-
-					Data prognameData = data.getComponent(4);
-					symbolTable.createLabel(prognameData.getAddress(0), "__progname", namespace,
-						SourceType.IMPORTED);
-					listing.createData(prognameData.getAddress(0), charPointerX1DataType);
-				}
-				catch (Exception e) {
-					log.appendException(e);
-					return;
 				}
 			}
 		}
@@ -1295,12 +1111,84 @@ public class MachoProgramBuilder {
  		performRelocations(relocationMap);
 	}
 
+	protected void processLibraries() throws Exception {
+		monitor.setMessage("Processing libraries...");
+
+		Options props = program.getOptions(Program.PROGRAM_INFO);
+		int libraryIndex = 0;
+
+		for (LoadCommand command : machoHeader.getLoadCommands()) {
+			if (monitor.isCancelled()) {
+				return;
+			}
+
+			String libraryPath = null;
+
+			if (command instanceof DynamicLibraryCommand dylibCommand) {
+				DynamicLibrary dylib = dylibCommand.getDynamicLibrary();
+				libraryPath = dylib.getName().getString();
+			}
+			else if (command instanceof SubLibraryCommand sublibCommand) {
+				libraryPath = sublibCommand.getSubLibraryName().getString();
+			}
+			else if (command instanceof PreboundDynamicLibraryCommand pbdlCommand) {
+				libraryPath = pbdlCommand.getLibraryName();
+			}
+
+			if (libraryPath != null) {
+				// For now, strip off the full path and just the use the filename.  We will utilize
+				// the full path one day when we started looking in dyld_shared_cache files for
+				// libraries.
+				int index = libraryPath.lastIndexOf("/");
+				String libraryName = index != -1 ? libraryPath.substring(index + 1) : libraryPath;
+				if (!libraryName.equals(program.getName())) {
+					addLibrary(libraryName);
+					props.setString(
+						ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
+						libraryName);
+				}
+			}
+		}
+
+		program.getSymbolTable().createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
+	}
+
+	/**
+	 * Logs encrypted block ranges
+	 * 
+	 * @throws Exception if there was a problem detecting the encrypted block ranges
+	 */
+	protected void processEncryption() throws Exception {
+		monitor.setMessage("Processing encryption...");
+		for (EncryptedInformationCommand cmd : machoHeader
+				.getLoadCommands(EncryptedInformationCommand.class)) {
+			if (cmd.getCryptID() != 0) {
+				log.appendMsg(String.format("ENCRYPTION DETECTED: (file offset 0x%x, size 0x%x)",
+					cmd.getCryptOffset(), cmd.getCryptSize()));
+			}
+		}
+	}
+
+	/**
+	 * Processes {@link LoadCommand}s that we haven't implemented yet.
+	 * 
+	 * @throws CancelledException if the operation was cancelled.
+	 */
+	protected void processUnsupportedLoadCommands() throws CancelledException {
+		monitor.setMessage("Processing unsupported load commands...");
+
+		for (LoadCommand loadCommand : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
+			monitor.checkCancelled();
+			log.appendMsg(loadCommand.getCommandName());
+		}
+	}
+
 	/**
 	 * Performs the given relocations.
 	 * 
 	 * @param relocationMap The relocations to perform, mapped to the addresses they should get
- 	 *   performed at.  The relocations must be performed in their supplied order.
- 	 * @throws CancelledException if the operation was cancelled.
+	 *   performed at.  The relocations must be performed in their supplied order.
+	 * @throws CancelledException if the operation was cancelled.
 	 */
 	private void performRelocations(LinkedHashMap<RelocationInfo, Address> relocationMap)
  			throws CancelledException {
@@ -1360,11 +1248,27 @@ public class MachoProgramBuilder {
 	}
 	
 	/**
- 	 * Handles a relocation error by placing a bookmark and writing to the log
- 	 * 
- 	 * @param address The address of the relocation error
- 	 * @param message The error message
- 	 */
+	 * Marks up {@link LoadCommand} dadta
+	 * 
+	 * @param header The Mach-O header
+	 * @param source A name that represents where the header came from (could be null)
+	 * @throws Exception If there was a problem performing the markup
+	 */
+	protected void markupLoadCommandData(MachHeader header, String source) throws Exception {
+		for (LoadCommand cmd : header.getLoadCommands()) {
+			Address dataAddr = cmd.getDataAddress(header, space);
+			if (dataAddr != null) {
+				cmd.markup(program, header, dataAddr, source, monitor, log);
+			}
+		}
+	}
+
+	/**
+	 * Handles a relocation error by placing a bookmark and writing to the log
+	 * 
+	 * @param address The address of the relocation error
+	 * @param message The error message
+	 */
 	private void handleRelocationError(Address address, String message) {
  		program.getBookmarkManager()
  				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
@@ -1575,351 +1479,15 @@ public class MachoProgramBuilder {
 	}
 
 	/**
-	 * Fixes up any chained fixups.  Relies on the __thread_starts section being present.
-	 * 
-	 * @return A list of addresses where chained fixups were performed.
-	 * @throws Exception if there was a problem reading/writing memory.
-	 */
-	protected List<Address> processChainedFixups() throws Exception {
-
-		List<Address> fixedAddresses = new ArrayList<>();
-
-		// if has Chained Fixups load command, use it
-		List<DyldChainedFixupsCommand> loadCommands =
-			machoHeader.getLoadCommands(DyldChainedFixupsCommand.class);
-		for (LoadCommand loadCommand : loadCommands) {
-			DyldChainedFixupsCommand linkCmd = (DyldChainedFixupsCommand) loadCommand;
-
-			DyldChainedFixupHeader chainHeader = linkCmd.getChainHeader();
-
-			DyldChainedStartsInImage chainedStartsInImage = chainHeader.getChainedStartsInImage();
-
-			DyldChainedStartsInSegment[] chainedStarts = chainedStartsInImage.getChainedStarts();
-			for (DyldChainedStartsInSegment chainStart : chainedStarts) {
-				fixedAddresses.addAll(processSegmentPointerChain(chainHeader, chainStart));
-			}
-			log.appendMsg("Fixed up " + fixedAddresses.size() + " chained pointers.");
-		}
-
-		// if pointer chains fixed by DyldChainedFixupsCommands, then all finished
-		if (loadCommands.size() > 0) {
-			return fixedAddresses;
-		}
-
-		// if has thread_starts use to fixup chained pointers
-		Section threadStarts = machoHeader.getSection(SegmentNames.SEG_TEXT, "__thread_starts");
-		if (threadStarts == null) {
-			return Collections.emptyList();
-		}
-
-		Address threadSectionStart = null;
-		Address threadSectionEnd = null;
-		threadSectionStart = space.getAddress(threadStarts.getAddress());
-		threadSectionEnd = threadSectionStart.add(threadStarts.getSize() - 1);
-
-		monitor.setMessage("Fixing up chained pointers...");
-
-		long nextOffSize = (memory.getInt(threadSectionStart) & 1) * 4 + 4;
-		Address chainHead = threadSectionStart.add(4);
-
-		while (chainHead.compareTo(threadSectionEnd) < 0 && !monitor.isCancelled()) {
-			int headStartOffset = memory.getInt(chainHead);
-			if (headStartOffset == 0xFFFFFFFF || headStartOffset == 0) {
-				break;
-			}
-
-			Address chainStart = program.getImageBase().add(headStartOffset & 0xffffffffL);
-			fixedAddresses.addAll(processPointerChain(chainStart, nextOffSize));
-			chainHead = chainHead.add(4);
-		}
-
-		log.appendMsg("Fixed up " + fixedAddresses.size() + " chained pointers.");
-		return fixedAddresses;
-	}
-
-	private List<Address> processSegmentPointerChain(DyldChainedFixupHeader chainHeader,
-			DyldChainedStartsInSegment chainStart)
-			throws MemoryAccessException, CancelledException {
-
-		List<Address> fixedAddresses = new ArrayList<Address>();
-		long fixedAddressCount = 0;
-
-		if (chainStart.getPointerFormat() == 0) {
-			return fixedAddresses;
-		}
-
-		long dataPageStart = chainStart.getSegmentOffset();
-		dataPageStart = dataPageStart + program.getImageBase().getOffset();
-		long pageSize = chainStart.getPageSize();
-		long pageStartsCount = chainStart.getPageCount();
-
-		long authValueAdd = 0;
-
-		short[] pageStarts = chainStart.getPage_starts();
-
-		short ptrFormatValue = chainStart.getPointerFormat();
-		DyldChainType ptrFormat = DyldChainType.lookupChainPtr(ptrFormatValue);
-
-		monitor.setMessage("Fixing " + ptrFormat.getName() + " chained pointers...");
-
-		monitor.setMaximum(pageStartsCount);
-		for (int index = 0; index < pageStartsCount; index++) {
-			monitor.checkCancelled();
-
-			long page = dataPageStart + (pageSize * index);
-
-			monitor.setProgress(index);
-
-			int pageEntry = pageStarts[index] & 0xffff;
-			if (pageEntry == DYLD_CHAINED_PTR_START_NONE) {
-				continue;
-			}
-
-			List<Address> unchainedLocList = new ArrayList<>(1024);
-
-			long pageOffset = pageEntry; // first entry is byte based
-
-			switch (ptrFormat) {
-				case DYLD_CHAINED_PTR_ARM64E:
-				case DYLD_CHAINED_PTR_ARM64E_KERNEL:
-				case DYLD_CHAINED_PTR_ARM64E_USERLAND:
-				case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
-					processPointerChain(chainHeader, unchainedLocList, ptrFormat, page, pageOffset,
-						authValueAdd);
-					break;
-
-				// These might work, but have not been fully tested!
-				case DYLD_CHAINED_PTR_64:
-				case DYLD_CHAINED_PTR_64_OFFSET:
-				case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
-				case DYLD_CHAINED_PTR_32:
-				case DYLD_CHAINED_PTR_32_CACHE:
-				case DYLD_CHAINED_PTR_32_FIRMWARE:
-				case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-					processPointerChain(chainHeader, unchainedLocList, ptrFormat, page, pageOffset,
-						authValueAdd);
-					break;
-
-				case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
-				default:
-					log.appendMsg(
-						"WARNING: Pointer Chain format " + ptrFormat + " not processed yet!");
-					break;
-			}
-
-			fixedAddressCount += unchainedLocList.size();
-
-			fixedAddresses.addAll(unchainedLocList);
-		}
-
-		log.appendMsg(
-			"Fixed " + fixedAddressCount + " " + ptrFormat.getName() + " chained pointers.");
-
-		return fixedAddresses;
-	}
-
-	/**
-	 * Fixes up any chained pointers, starting at the given address.
-	 * 
-	 * @param chainHeader fixup header chains
-	 * @param unchainedLocList list of locations that were unchained
-	 * @param pointerFormat format of pointers within this chain
-	 * @param page within data pages that has pointers to be unchained
-	 * @param nextOff offset within the page that is the chain start
-	 * @param auth_value_add value to be added to each chain pointer
-	 * 
-	 * @throws MemoryAccessException IO problem reading file
-	 * @throws CancelledException user cancels
-	 */
-	private void processPointerChain(DyldChainedFixupHeader chainHeader,
-			List<Address> unchainedLocList, DyldChainType pointerFormat, long page, long nextOff,
-			long auth_value_add) throws MemoryAccessException, CancelledException {
-
-		long imageBaseOffset = program.getImageBase().getOffset();
-		Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
-
-		long next = -1;
-		boolean start = true;
-		while (next != 0) {
-			monitor.checkCancelled();
-
-			Address chainLoc = chainStart.add(nextOff);
-			final long chainValue = DyldChainedPtr.getChainValue(memory, chainLoc, pointerFormat);
-			long newChainValue = chainValue;
-
-			boolean isAuthenticated = DyldChainedPtr.isAuthenticated(pointerFormat, chainValue);
-			boolean isBound = DyldChainedPtr.isBound(pointerFormat, chainValue);
-
-			String symName = null;
-
-			if (isAuthenticated && !isBound) {
-				long offsetFromSharedCacheBase =
-					DyldChainedPtr.getTarget(pointerFormat, chainValue);
-				//long diversityData = DyldChainedPtr.getDiversity(pointerFormat, chainValue);
-				//boolean hasAddressDiversity =
-				//	DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
-				//long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
-				newChainValue = imageBaseOffset + offsetFromSharedCacheBase + auth_value_add;
-			}
-			else if (!isAuthenticated && isBound) {
-				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
-				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
-				DyldChainedImports chainedImports = chainHeader.getChainedImports();
-				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
-				//int libOrdinal = chainedImport.getLibOrdinal();
-				symName = chainedImport.getName();
-				// lookup the symbol, and then add addend
-				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
-				if (globalSymbols.size() == 1) {
-					newChainValue = globalSymbols.get(0).getAddress().getOffset();
-				}
-				newChainValue += addend;
-			}
-			else if (isAuthenticated && isBound) {
-				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
-				//long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
-				//long diversityData = DyldChainedPtr.getDiversity(pointerFormat, chainValue);
-				//boolean hasAddressDiversity =
-				//	DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
-				//long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
-
-				DyldChainedImports chainedImports = chainHeader.getChainedImports();
-				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
-				symName = chainedImport.getName();
-
-				// lookup the symbol, and then add addend
-				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
-				if (globalSymbols.size() == 1) {
-					newChainValue = globalSymbols.get(0).getAddress().getOffset();
-				}
-				newChainValue = newChainValue + auth_value_add;
-			}
-			else {
-				newChainValue = DyldChainedPtr.getTarget(pointerFormat, chainValue);
-				if (DyldChainedPtr.isRelative(pointerFormat)) {
-					newChainValue += imageBaseOffset;
-				}
-			}
-
-			if (!start || !program.getRelocationTable().hasRelocation(chainLoc)) {
-				int byteLength = 0;
-				Status status = Status.FAILURE;
-				try {
-					RelocationResult result =
-						DyldChainedPtr.setChainValue(memory, chainLoc, pointerFormat,
-							newChainValue);
-					status = result.status();
-					byteLength = result.byteLength();
-				}
-				finally {
-					if (shouldAddChainedFixupsRelocations) {
-						program.getRelocationTable()
-								.add(chainLoc, status,
-									(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) |
-										(isBound ? 2 : 0) | 1,
-									new long[] { newChainValue }, byteLength, symName);
-					}
-				}
-			}
-			// delay creating data until after memory has been changed
-			unchainedLocList.add(chainLoc);
-
-			start = false;
-			next = DyldChainedPtr.getNext(pointerFormat, chainValue);
-			nextOff += next * DyldChainedPtr.getStride(pointerFormat);
-		}
-	}
-
-	/**
-	 * Fixes up any chained pointers, starting at the given address.
-	 * 
-	 * @param chainStart The starting of address of the pointer chain to fix.
-	 * @param nextOffSize The size of the next offset.
-	 * @return A list of addresses where pointer fixes were performed.
-	 * @throws MemoryAccessException if there was a problem reading/writing memory.
-	 */
-	private List<Address> processPointerChain(Address chainStart, long nextOffSize)
-			throws MemoryAccessException {
-		List<Address> fixedAddresses = new ArrayList<>();
-
-		while (!monitor.isCancelled()) {
-			long chainValue = memory.getLong(chainStart);
-
-			fixupPointer(chainStart, chainValue);
-			fixedAddresses.add(chainStart);
-
-			long nextValueOff = ((chainValue >> 51L) & 0x7ffL) * nextOffSize;
-			if (nextValueOff == 0) {
-				break;
-			}
-			chainStart = chainStart.add(nextValueOff);
-		}
-
-		return fixedAddresses;
-	}
-
-	/**
-	 * Fixes up the pointer at the given address.
-	 * 
-	 * @param pointerAddr The address of the pointer to fix.
-	 * @param pointerValue The value at the address of the pointer to fix.
-	 * @throws MemoryAccessException if there was a problem reading/writing memory.
-	 */
-	private void fixupPointer(Address pointerAddr, long pointerValue) throws MemoryAccessException {
-
-		final long BIT63 = (0x1L << 63);
-		final long BIT62 = (0x1L << 62);
-
-		// Bad chain value
-		if ((pointerValue & BIT62) != 0) {
-			// this is a pointer, but is good now
-		}
-
-		long fixedPointerValue = 0;
-		long fixedPointerType = 0;
-
-		// Pointer checked value
-		if ((pointerValue & BIT63) != 0) {
-			//long tagType = (pointerValue >> 49L) & 0x3L;
-			long pacMod = ((pointerValue >> 32) & 0xffff);
-			fixedPointerType = pacMod;
-			fixedPointerValue = program.getImageBase().getOffset() + (pointerValue & 0xffffffffL);
-		}
-		else {
-			fixedPointerValue =
-				((pointerValue << 13) & 0xff00000000000000L) | (pointerValue & 0x7ffffffffffL);
-			if ((pointerValue & 0x40000000000L) != 0) {
-				fixedPointerValue |= 0xfffc0000000000L;
-			}
-		}
-
-		// Add entry to relocation table for the pointer fixup
-		byte origBytes[] = new byte[8];
-		memory.getBytes(pointerAddr, origBytes);
-
-		boolean success = false;
-		try {
-			// Fixup the pointer
-			memory.setLong(pointerAddr, fixedPointerValue);
-			success = true;
-		}
-		finally {
-			Status status = success ? Status.APPLIED : Status.FAILURE;
-			program.getRelocationTable()
-					.add(pointerAddr, status, (int) fixedPointerType,
-						new long[] { fixedPointerValue },
-						origBytes, null);
-		}
-	}
-
-	/**
 	 * Markup the given {@link List} of chained fixups by creating pointers at their locations,
 	 * if possible
 	 * 
+	 * @param header The Mach-O header
 	 * @param chainedFixups  The {@link List} of chained fixups to markup
 	 * @throws CancelledException if the operation was cancelled
 	 */
-	protected void markupChainedFixups(List<Address> chainedFixups) throws CancelledException {
+	protected void markupChainedFixups(MachHeader header, List<Address> chainedFixups)
+			throws CancelledException {
 		for (Address addr : chainedFixups) {
 			monitor.checkCancelled();
 			try {
@@ -1928,6 +1496,134 @@ public class MachoProgramBuilder {
 			catch (CodeUnitInsertionException e) {
 				// No worries, something presumably more important was there already
 			}
+		}
+	}
+
+	/**
+	 * See crt.c from opensource.apple.com
+	 */
+	protected void markupProgramVars() {
+		if (program.getLanguage().getProcessor() == Processor
+				.findOrPossiblyCreateProcessor("PowerPC")) {
+			return;
+		}
+
+		SymbolTable symbolTable = program.getSymbolTable();
+
+		int defaultPointerSize = program.getDefaultPointerSize();
+
+		DataType intDataType =
+			(defaultPointerSize == 8) ? new QWordDataType() : new DWordDataType();
+		DataType intPointerDataType = PointerDataType.getPointer(intDataType, defaultPointerSize);//int *
+		DataType voidPointerDatatype =
+			PointerDataType.getPointer(new VoidDataType(), defaultPointerSize);//void *
+		DataType charPointerX1DataType =
+			PointerDataType.getPointer(new CharDataType(), defaultPointerSize);//char *
+		DataType charPointerX2DataType =
+			PointerDataType.getPointer(charPointerX1DataType, defaultPointerSize);//char **
+		DataType charPointerX3DataType =
+			PointerDataType.getPointer(charPointerX2DataType, defaultPointerSize);//char ***
+
+		Structure structure = new StructureDataType(SectionNames.PROGRAM_VARS, 0);
+		structure.add(voidPointerDatatype, "mh", "pointer to __mh_execute_header");
+		structure.add(intPointerDataType, "NXArgcPtr", "pointer to argc");
+		structure.add(charPointerX3DataType, "NXArgvPtr", "pointer to argv");
+		structure.add(charPointerX3DataType, "environPtr", "pointer to environment");
+		structure.add(charPointerX2DataType, "__prognamePtr", "pointer to program name");
+
+		Namespace namespace = createNamespace(SectionNames.PROGRAM_VARS);
+
+		List<Section> sections = machoHeader.getAllSections();
+		for (Section section : sections) {
+			if (section.getSectionName().equals(SectionNames.PROGRAM_VARS)) {
+				MemoryBlock memoryBlock = getMemoryBlock(section);
+				try {
+					listing.createData(memoryBlock.getStart(), structure);
+					Data data = listing.getDataAt(memoryBlock.getStart());
+
+					Data mhData = data.getComponent(0);
+					if (symbolTable.getSymbol("__mh_execute_header", mhData.getAddress(0),
+						namespace) == null) {
+						symbolTable.createLabel(mhData.getAddress(0), "__mh_execute_header",
+							namespace, SourceType.IMPORTED);
+					}
+
+					Data argcData = data.getComponent(1);
+					symbolTable.createLabel(argcData.getAddress(0), "NXArgc", namespace,
+						SourceType.IMPORTED);
+					listing.createData(argcData.getAddress(0), intDataType);
+
+					Data argvData = data.getComponent(2);
+					symbolTable.createLabel(argvData.getAddress(0), "NXArgv", namespace,
+						SourceType.IMPORTED);
+					listing.createData(argvData.getAddress(0), charPointerX2DataType);
+
+					Data environData = data.getComponent(3);
+					symbolTable.createLabel(environData.getAddress(0), "environ", namespace,
+						SourceType.IMPORTED);
+					listing.createData(environData.getAddress(0), charPointerX2DataType);
+
+					Data prognameData = data.getComponent(4);
+					symbolTable.createLabel(prognameData.getAddress(0), "__progname", namespace,
+						SourceType.IMPORTED);
+					listing.createData(prognameData.getAddress(0), charPointerX1DataType);
+				}
+				catch (Exception e) {
+					log.appendException(e);
+					return;
+				}
+			}
+		}
+	}
+
+	protected void setRelocatableProperty() {
+		Options props = program.getOptions(Program.PROGRAM_INFO);
+		switch (machoHeader.getFileType()) {
+			case MachHeaderFileTypes.MH_EXECUTE:
+				props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, false);
+				break;
+			default:
+				props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME, true);
+				break;
+		}
+	}
+
+	protected void setProgramDescription() {
+		Options props = program.getOptions(Program.PROGRAM_INFO);
+		props.setString("Mach-O File Type",
+			MachHeaderFileTypes.getFileTypeName(machoHeader.getFileType()));
+		props.setString("Mach-O File Type Description",
+			MachHeaderFileTypes.getFileTypeDescription(machoHeader.getFileType()));
+		List<String> flags = MachHeaderFlags.getFlags(machoHeader.getFlags());
+		for (int i = 0; i < flags.size(); ++i) {
+			props.setString("Mach-O Flag " + i, flags.get(i));
+		}
+
+		List<SubUmbrellaCommand> umbrellas = machoHeader.getLoadCommands(SubUmbrellaCommand.class);
+		for (int i = 0; i < umbrellas.size(); ++i) {
+			props.setString("Mach-O Sub-umbrella " + i,
+				umbrellas.get(i).getSubUmbrellaFrameworkName().getString());
+		}
+
+		List<SubFrameworkCommand> frameworks =
+			machoHeader.getLoadCommands(SubFrameworkCommand.class);
+		for (int i = 0; i < frameworks.size(); ++i) {
+			props.setString("Mach-O Sub-framework " + i,
+				frameworks.get(i).getUmbrellaFrameworkName().getString());
+		}
+	}
+
+	protected void renameObjMsgSendRtpSymbol()
+			throws DuplicateNameException, InvalidInputException {
+		Address address = space.getAddress(ObjectiveC1_Constants.OBJ_MSGSEND_RTP);
+		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
+		if (symbol != null && symbol.isDynamic()) {
+			symbol.setName(ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME, SourceType.IMPORTED);
+		}
+		else {
+			program.getSymbolTable()
+					.createLabel(address, ObjectiveC1_Constants.OBJC_MSG_SEND_RTP_NAME,
+						SourceType.IMPORTED);
 		}
 	}
 }

@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.util.Iterator;
 
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.generic.auth.Password;
 
 /**
  * Provides the caller with the ability to perform crypto querying operations
@@ -42,7 +43,7 @@ public interface CryptoSession extends Closeable {
 	 * @param prompt optional prompt that may be displayed to a user
 	 * @return {@link Iterator} of possible passwords
 	 */
-	Iterator<PasswordValue> getPasswordsFor(FSRL fsrl, String prompt);
+	Iterator<Password> getPasswordsFor(FSRL fsrl, String prompt);
 
 	/**
 	 * Pushes a known good password into a cache for later re-retrieval.
@@ -50,7 +51,7 @@ public interface CryptoSession extends Closeable {
 	 * @param fsrl {@link FSRL} path to the file that was unlocked by the password
 	 * @param password the good password
 	 */
-	void addSuccessfulPassword(FSRL fsrl, PasswordValue password);
+	void addSuccessfulPassword(FSRL fsrl, Password password);
 
 	/**
 	 * Returns true if this session has been closed.

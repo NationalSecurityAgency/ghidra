@@ -91,46 +91,30 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
+				Namespace namespace = program.getGlobalNamespace();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					Namespace namespace = program.getGlobalNamespace();
-					try {
-						st.createLabel(addr(program, "0x010058f7"), "MY.DLL_SampleLabel", namespace,
-							SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					st.createLabel(addr(program, "0x010058f7"), "MY.DLL_SampleLabel", namespace,
+						SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
+				Namespace namespace;
 				try {
-					SymbolTable st = program.getSymbolTable();
-					Namespace namespace;
-					try {
-						namespace = st.createNameSpace(program.getGlobalNamespace(), "MY.DLL",
-							SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "0x010058f7"), "SampleLabel", namespace,
-							SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					namespace = st.createNameSpace(program.getGlobalNamespace(), "MY.DLL",
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "0x010058f7"), "SampleLabel", namespace,
+						SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -152,72 +136,56 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
+				Namespace namespace = program.getGlobalNamespace();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					Namespace namespace = program.getGlobalNamespace();
-					try {
-						createDataReference(program, addr(program, "0x01001e81"),
-							addr(program, "0x01001ea0"));
-						st.createLabel(addr(program, "0x01001ea9"), "One", namespace,
-							SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "0x01001eb5"), "Two", namespace,
-							SourceType.IMPORTED);
-						st.createLabel(addr(program, "0x01001ebc"), "Three", namespace,
-							SourceType.ANALYSIS);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					try {
-						st.createLabel(addr(program, "0x01001ec6"), "LAB_01001ec6", namespace,
-							SourceType.DEFAULT);
-						Assert.fail("Shouldn't be able to create symbol for a default label.");
-					}
-					catch (Exception e) {
-						// good; expected
-					}
-					commit = true;
+					createDataReference(program, addr(program, "0x01001e81"),
+						addr(program, "0x01001ea0"));
+					st.createLabel(addr(program, "0x01001ea9"), "One", namespace,
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "0x01001eb5"), "Two", namespace,
+						SourceType.IMPORTED);
+					st.createLabel(addr(program, "0x01001ebc"), "Three", namespace,
+						SourceType.ANALYSIS);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+				try {
+					st.createLabel(addr(program, "0x01001ec6"), "LAB_01001ec6", namespace,
+						SourceType.DEFAULT);
+					Assert.fail("Shouldn't be able to create symbol for a default label.");
+				}
+				catch (Exception e) {
+					// good; expected
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
+				Namespace namespace = program.getGlobalNamespace();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					Namespace namespace = program.getGlobalNamespace();
-					try {
-						createDataReference(program, addr(program, "0x01001e81"),
-							addr(program, "0x01001ea0"));
-						st.createLabel(addr(program, "0x01001ea9"), "One", namespace,
-							SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "0x01001eb5"), "Two", namespace,
-							SourceType.IMPORTED);
-						st.createLabel(addr(program, "0x01001ebc"), "Three", namespace,
-							SourceType.ANALYSIS);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					try {
-						st.createLabel(addr(program, "0x01001ec6"), "LAB_01001ec6", namespace,
-							SourceType.DEFAULT);
-						Assert.fail("Shouldn't be able to create symbol for a default label.");
-					}
-					catch (Exception e) {
-						// good; expected
-					}
-					commit = true;
+					createDataReference(program, addr(program, "0x01001e81"),
+						addr(program, "0x01001ea0"));
+					st.createLabel(addr(program, "0x01001ea9"), "One", namespace,
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "0x01001eb5"), "Two", namespace,
+						SourceType.IMPORTED);
+					st.createLabel(addr(program, "0x01001ebc"), "Three", namespace,
+						SourceType.ANALYSIS);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
+				}
+				try {
+					st.createLabel(addr(program, "0x01001ec6"), "LAB_01001ec6", namespace,
+						SourceType.DEFAULT);
+					Assert.fail("Shouldn't be able to create symbol for a default label.");
+				}
+				catch (Exception e) {
+					// good; expected
 				}
 			}
 		});
@@ -237,68 +205,52 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
+				Namespace namespace = program.getGlobalNamespace();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					Namespace namespace = program.getGlobalNamespace();
-					try {
-						program.getFunctionManager()
-							.getFunctionAt(addr(program, "0x100248f"))
-							.getSymbol()
-							.setName("Bud", SourceType.IMPORTED);
-						createDataReference(program, addr(program, "0x01001e81"),
-							addr(program, "0x01001ea0"));
-						Symbol[] symbols = st.getSymbols(addr(program, "0x01001ea0"));
-						symbols[0].setName("Zero", SourceType.IMPORTED);
-						st.createLabel(addr(program, "0x01001ea9"), "One", namespace,
-							SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "0x01001eb5"), "Two", namespace,
-							SourceType.IMPORTED);
-						st.createLabel(addr(program, "0x01001ebc"), "Three", namespace,
-							SourceType.ANALYSIS);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					program.getFunctionManager()
+						.getFunctionAt(addr(program, "0x100248f"))
+						.getSymbol()
+						.setName("Bud", SourceType.IMPORTED);
+					createDataReference(program, addr(program, "0x01001e81"),
+						addr(program, "0x01001ea0"));
+					Symbol[] symbols = st.getSymbols(addr(program, "0x01001ea0"));
+					symbols[0].setName("Zero", SourceType.IMPORTED);
+					st.createLabel(addr(program, "0x01001ea9"), "One", namespace,
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "0x01001eb5"), "Two", namespace,
+						SourceType.IMPORTED);
+					st.createLabel(addr(program, "0x01001ebc"), "Three", namespace,
+						SourceType.ANALYSIS);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
+				Namespace namespace = program.getGlobalNamespace();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					Namespace namespace = program.getGlobalNamespace();
-					try {
-						program.getFunctionManager()
-							.getFunctionAt(addr(program, "0x100248f"))
-							.getSymbol()
-							.setName("Bud", SourceType.ANALYSIS);
-						createDataReference(program, addr(program, "0x01001e81"),
-							addr(program, "0x01001ea0"));// Leave this as default.
-						Symbol[] symbols = st.getSymbols(addr(program, "0x01001ea0"));
-						symbols[0].setName("Zero", SourceType.ANALYSIS);
-						st.createLabel(addr(program, "0x01001ea9"), "One", namespace,
-							SourceType.IMPORTED);
-						st.createLabel(addr(program, "0x01001eb5"), "Two", namespace,
-							SourceType.ANALYSIS);
-						st.createLabel(addr(program, "0x01001ebc"), "Three", namespace,
-							SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					program.getFunctionManager()
+						.getFunctionAt(addr(program, "0x100248f"))
+						.getSymbol()
+						.setName("Bud", SourceType.ANALYSIS);
+					createDataReference(program, addr(program, "0x01001e81"),
+						addr(program, "0x01001ea0"));// Leave this as default.
+					Symbol[] symbols = st.getSymbols(addr(program, "0x01001ea0"));
+					symbols[0].setName("Zero", SourceType.ANALYSIS);
+					st.createLabel(addr(program, "0x01001ea9"), "One", namespace,
+						SourceType.IMPORTED);
+					st.createLabel(addr(program, "0x01001eb5"), "Two", namespace,
+						SourceType.ANALYSIS);
+					st.createLabel(addr(program, "0x01001ebc"), "Three", namespace,
+						SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -330,52 +282,36 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						// 0100248f
-						// 01003bed
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						Function f01003bed =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
-						f0100248f.setVarArgs(true);
-						f01003bed.setVarArgs(true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 0100248f
+					// 01003bed
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					Function f01003bed =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
+					f0100248f.setVarArgs(true);
+					f01003bed.setVarArgs(true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						// 010033f6
-						// 01003bed
-						Function f010033f6 =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
-						Function f01003bed =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
-						f010033f6.setVarArgs(true);
-						f01003bed.setVarArgs(true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 010033f6
+					// 01003bed
+					Function f010033f6 =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
+					Function f01003bed =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
+					f010033f6.setVarArgs(true);
+					f01003bed.setVarArgs(true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -404,45 +340,29 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						// 0100248f
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						f0100248f.addTag("tagA");
-						f0100248f.addTag("tagB");
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 0100248f
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					f0100248f.addTag("tagA");
+					f0100248f.addTag("tagB");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						// 010033f6
-						Function f010033f6 =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
-						f010033f6.addTag("tagC");
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 010033f6
+					Function f010033f6 =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
+					f010033f6.addTag("tagC");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -472,46 +392,30 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						// 0100248f
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						f0100248f.addTag("tagA");
-						f0100248f.addTag("tagB");
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 0100248f
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					f0100248f.addTag("tagA");
+					f0100248f.addTag("tagB");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						// 0100248f
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						f0100248f.addTag("tagA");
-						f0100248f.addTag("tagB");
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 0100248f
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					f0100248f.addTag("tagA");
+					f0100248f.addTag("tagB");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -537,44 +441,28 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						// 0100248f
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						f0100248f.addTag("tagA");
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 0100248f
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					f0100248f.addTag("tagA");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						// 0100248f
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						f0100248f.addTag("tagB");
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 0100248f
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					f0100248f.addTag("tagB");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -599,52 +487,36 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						// 0100248f
-						// 01003bed
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						Function f01003bed =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
-						f0100248f.setInline(true);
-						f01003bed.setInline(true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 0100248f
+					// 01003bed
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					Function f01003bed =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
+					f0100248f.setInline(true);
+					f01003bed.setInline(true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						// 010033f6
-						// 01003bed
-						Function f010033f6 =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
-						Function f01003bed =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
-						f010033f6.setInline(true);
-						f01003bed.setInline(true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 010033f6
+					// 01003bed
+					Function f010033f6 =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
+					Function f01003bed =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
+					f010033f6.setInline(true);
+					f01003bed.setInline(true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -670,52 +542,36 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						// 0100248f
-						// 01003bed
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						Function f01003bed =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
-						f0100248f.setNoReturn(true);
-						f01003bed.setNoReturn(true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 0100248f
+					// 01003bed
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					Function f01003bed =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
+					f0100248f.setNoReturn(true);
+					f01003bed.setNoReturn(true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						// 010033f6
-						// 01003bed
-						Function f010033f6 =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
-						Function f01003bed =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
-						f010033f6.setNoReturn(true);
-						f01003bed.setNoReturn(true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 010033f6
+					// 01003bed
+					Function f010033f6 =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
+					Function f01003bed =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
+					f010033f6.setNoReturn(true);
+					f01003bed.setNoReturn(true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -743,60 +599,44 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						// 01006420 entry()
-						// 010033f6 FUN_010033f6()
-						// 0100248f FUN_0100248f()
-						Function f01006420 =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x01006420"));
-						Function f010033f6 =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						f01006420.setCallingConvention("__stdcall");
-						f010033f6.setCallingConvention("__thiscall");
-						f0100248f.setCallingConvention("__cdecl");
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 01006420 entry()
+					// 010033f6 FUN_010033f6()
+					// 0100248f FUN_0100248f()
+					Function f01006420 =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x01006420"));
+					Function f010033f6 =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					f01006420.setCallingConvention("__stdcall");
+					f010033f6.setCallingConvention("__thiscall");
+					f0100248f.setCallingConvention("__cdecl");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						// 01003bed FUN_01003bed()
-						// 010033f6 FUN_010033f6()
-						// 0100248f FUN_0100248f()
-						Function f01003bed =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
-						Function f010033f6 =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
-						Function f0100248f =
-							program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
-						f01003bed.setCallingConvention("__cdecl");
-						f010033f6.setCallingConvention("__thiscall");
-						f0100248f.setCallingConvention("__fastcall");
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					// 01003bed FUN_01003bed()
+					// 010033f6 FUN_010033f6()
+					// 0100248f FUN_0100248f()
+					Function f01003bed =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x01003bed"));
+					Function f010033f6 =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x010033f6"));
+					Function f0100248f =
+						program.getFunctionManager().getFunctionAt(addr(program, "0x0100248f"));
+					f01003bed.setCallingConvention("__cdecl");
+					f010033f6.setCallingConvention("__thiscall");
+					f0100248f.setCallingConvention("__fastcall");
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -823,46 +663,30 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					try {
-						st.createLabel(addr(program, "TextOverlay::01001630"), "OVL1630",
-							SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "TextOverlay::01001646"), "OVL1646",
-							SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					st.createLabel(addr(program, "TextOverlay::01001630"), "OVL1630",
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "TextOverlay::01001646"), "OVL1646",
+						SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					try {
-						st.createLabel(addr(program, "TextOverlay::01001639"), "OVL1639",
-							SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "TextOverlay::01001646"), "OVL1646",
-							SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					st.createLabel(addr(program, "TextOverlay::01001639"), "OVL1639",
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "TextOverlay::01001646"), "OVL1646",
+						SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -884,42 +708,26 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						Memory memory = program.getMemory();
-						memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
-							(byte) 0x0, null, true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						Memory memory = program.getMemory();
-						memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
-							(byte) 0x0, null, true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -939,42 +747,26 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						Memory memory = program.getMemory();
-						memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
-							(byte) 0x0, null, true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						Memory memory = program.getMemory();
-						memory.createInitializedBlock("Bar", addr(program, "0x01000000"), 0x200L,
-							(byte) 0x0, null, true);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Bar", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -995,52 +787,36 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						Memory memory = program.getMemory();
-						memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
-							(byte) 0x0, null, true);
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
 
-						SymbolTable st = program.getSymbolTable();
-						Namespace globalNamespace = program.getGlobalNamespace();
-						st.createLabel(addr(program, "Foo:0x01000030"), "Sample0030",
-							globalNamespace, SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					SymbolTable st = program.getSymbolTable();
+					Namespace globalNamespace = program.getGlobalNamespace();
+					st.createLabel(addr(program, "Foo:0x01000030"), "Sample0030",
+						globalNamespace, SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						Memory memory = program.getMemory();
-						memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
-							(byte) 0x0, null, true);
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x200L,
+						(byte) 0x0, null, true);
 
-						SymbolTable st = program.getSymbolTable();
-						Namespace globalNamespace = program.getGlobalNamespace();
-						st.createLabel(addr(program, "Foo:0x01000050"), "Other0050",
-							globalNamespace, SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					SymbolTable st = program.getSymbolTable();
+					Namespace globalNamespace = program.getGlobalNamespace();
+					st.createLabel(addr(program, "Foo:0x01000050"), "Other0050",
+						globalNamespace, SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -1062,60 +838,44 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						Memory memory = program.getMemory();
-						memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x180L,
-							(byte) 0x0, null, true);
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Foo", addr(program, "0x01000000"), 0x180L,
+						(byte) 0x0, null, true);
 
-						SymbolTable st = program.getSymbolTable();
-						Namespace globalNamespace = program.getGlobalNamespace();
-						st.createLabel(addr(program, "Foo:0x01000030"), "Sample0030",
-							globalNamespace, SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "Foo:0x01000079"), "Sample0079",
-							globalNamespace, SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "Foo:0x0100017f"), "Sample017f",
-							globalNamespace, SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					SymbolTable st = program.getSymbolTable();
+					Namespace globalNamespace = program.getGlobalNamespace();
+					st.createLabel(addr(program, "Foo:0x01000030"), "Sample0030",
+						globalNamespace, SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000079"), "Sample0079",
+						globalNamespace, SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x0100017f"), "Sample017f",
+						globalNamespace, SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						Memory memory = program.getMemory();
-						memory.createInitializedBlock("Foo", addr(program, "0x01000080"), 0x180L,
-							(byte) 0x0, null, true);
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("Foo", addr(program, "0x01000080"), 0x180L,
+						(byte) 0x0, null, true);
 
-						SymbolTable st = program.getSymbolTable();
-						Namespace globalNamespace = program.getGlobalNamespace();
-						st.createLabel(addr(program, "Foo:0x01000080"), "Other0080",
-							globalNamespace, SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "Foo:0x01000180"), "Other0180",
-							globalNamespace, SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "Foo:0x01000200"), "Other0200",
-							globalNamespace, SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					SymbolTable st = program.getSymbolTable();
+					Namespace globalNamespace = program.getGlobalNamespace();
+					st.createLabel(addr(program, "Foo:0x01000080"), "Other0080",
+						globalNamespace, SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000180"), "Other0180",
+						globalNamespace, SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "Foo:0x01000200"), "Other0200",
+						globalNamespace, SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -1138,46 +898,30 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						ReferenceManager refMgr = program.getReferenceManager();
-						refMgr.addMemoryReference(addr(program, "0x01001e81"),
-							addr(program, "0x01001ea0"), RefType.DATA, SourceType.USER_DEFINED, 0);
-						refMgr.addMemoryReference(addr(program, "0x01001ea0"),
-							addr(program, "0x01001eba"), RefType.DATA, SourceType.IMPORTED, 0);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					ReferenceManager refMgr = program.getReferenceManager();
+					refMgr.addMemoryReference(addr(program, "0x01001e81"),
+						addr(program, "0x01001ea0"), RefType.DATA, SourceType.USER_DEFINED, 0);
+					refMgr.addMemoryReference(addr(program, "0x01001ea0"),
+						addr(program, "0x01001eba"), RefType.DATA, SourceType.IMPORTED, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						ReferenceManager refMgr = program.getReferenceManager();
-						refMgr.addMemoryReference(addr(program, "0x01001e81"),
-							addr(program, "0x01001ea0"), RefType.DATA, SourceType.USER_DEFINED, 0);
-						refMgr.addMemoryReference(addr(program, "0x01001ea0"),
-							addr(program, "0x01001eba"), RefType.DATA, SourceType.IMPORTED, 0);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					ReferenceManager refMgr = program.getReferenceManager();
+					refMgr.addMemoryReference(addr(program, "0x01001e81"),
+						addr(program, "0x01001ea0"), RefType.DATA, SourceType.USER_DEFINED, 0);
+					refMgr.addMemoryReference(addr(program, "0x01001ea0"),
+						addr(program, "0x01001eba"), RefType.DATA, SourceType.IMPORTED, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -1197,46 +941,30 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
 				try {
-					try {
-						ReferenceManager refMgr = program.getReferenceManager();
-						refMgr.addMemoryReference(addr(program, "0x01001e81"),
-							addr(program, "0x01001ea0"), RefType.DATA, SourceType.USER_DEFINED, 0);
-						refMgr.addMemoryReference(addr(program, "0x01001ea0"),
-							addr(program, "0x01001eba"), RefType.DATA, SourceType.IMPORTED, 0);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					ReferenceManager refMgr = program.getReferenceManager();
+					refMgr.addMemoryReference(addr(program, "0x01001e81"),
+						addr(program, "0x01001ea0"), RefType.DATA, SourceType.USER_DEFINED, 0);
+					refMgr.addMemoryReference(addr(program, "0x01001ea0"),
+						addr(program, "0x01001eba"), RefType.DATA, SourceType.IMPORTED, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
 				try {
-					try {
-						ReferenceManager refMgr = program.getReferenceManager();
-						refMgr.addMemoryReference(addr(program, "0x01001e81"),
-							addr(program, "0x01001ea0"), RefType.DATA, SourceType.IMPORTED, 0);
-						refMgr.addMemoryReference(addr(program, "0x01001ea0"),
-							addr(program, "0x01001eba"), RefType.DATA, SourceType.ANALYSIS, 0);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					ReferenceManager refMgr = program.getReferenceManager();
+					refMgr.addMemoryReference(addr(program, "0x01001e81"),
+						addr(program, "0x01001ea0"), RefType.DATA, SourceType.IMPORTED, 0);
+					refMgr.addMemoryReference(addr(program, "0x01001ea0"),
+						addr(program, "0x01001eba"), RefType.DATA, SourceType.ANALYSIS, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -1262,21 +990,15 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function func = getFunction(program, "0x1000");
 					Parameter parameter1 =
 						new ParameterImpl("stuff", new ByteDataType(), 4, program);
 					func.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function func = getFunction(program, "0x1000");
 				assertEquals("void bob(byte stuff)", func.getPrototypeString(true, false));
@@ -1285,21 +1007,15 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Forced indirect for the return.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Structure struct = new StructureDataType("struct", 20);
 					Function func = getFunction(program, "0x1000");
 					Parameter parameter1 = new ParameterImpl("stuff", struct, 4, program);
 					func.addParameter(parameter1, SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function func = getFunction(program, "0x1000");
 				assertEquals("void bob(struct stuff)", func.getPrototypeString(true, false));
@@ -1327,29 +1043,21 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function func = getFunction(program, "0x1002249");
 					func.getParameter(1).setName("jim", SourceType.USER_DEFINED);
 					func.setReturn(Undefined4DataType.dataType, VariableStorage.UNASSIGNED_STORAGE,
 						SourceType.USER_DEFINED);
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Forced indirect for the return.
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Structure struct = new StructureDataType("struct", 20);
 					Function func = getFunction(program, "0x1002249");
@@ -1358,14 +1066,10 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 					func.setReturn(struct, VariableStorage.UNASSIGNED_STORAGE,
 						SourceType.USER_DEFINED);
 					func.setCallingConvention(CompilerSpec.CALLING_CONVENTION_stdcall);
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -1386,54 +1090,38 @@ public class ProgramDiff2Test extends AbstractProgramDiffTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// P1 program
-				int txId = program.startTransaction("Modify Program 1");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					try {
-						program.getMemory().createInitializedBlock("SomeOverlay",
-							addr(program, "0x01001630"), 0x200, (byte) 0, TaskMonitor.DUMMY, true);
-						program.getMemory().createInitializedBlock("OtherOverlay",
-							addr(program, "0x01001630"), 0x300, (byte) 0, TaskMonitor.DUMMY, true);
-						st.createLabel(addr(program, "SomeOverlay::01001630"), "OVL1630",
-							SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "OtherOverlay::01001866"), "OVL1866",
-							SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					program.getMemory().createInitializedBlock("SomeOverlay",
+						addr(program, "0x01001630"), 0x200, (byte) 0, TaskMonitor.DUMMY, true);
+					program.getMemory().createInitializedBlock("OtherOverlay",
+						addr(program, "0x01001630"), 0x300, (byte) 0, TaskMonitor.DUMMY, true);
+					st.createLabel(addr(program, "SomeOverlay::01001630"), "OVL1630",
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "OtherOverlay::01001866"), "OVL1866",
+						SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// P2 program
-				int txId = program.startTransaction("Modify Program 2");
-				boolean commit = false;
+				SymbolTable st = program.getSymbolTable();
 				try {
-					SymbolTable st = program.getSymbolTable();
-					try {
-						program.getMemory().createInitializedBlock("OtherOverlay",
-							addr(program, "0x01001630"), 0x200, (byte) 0, TaskMonitor.DUMMY, true);
-						program.getMemory().createInitializedBlock("SomeOverlay",
-							addr(program, "0x01001630"), 0x300, (byte) 0, TaskMonitor.DUMMY, true);
-						st.createLabel(addr(program, "SomeOverlay::01001889"), "OVL1889",
-							SourceType.USER_DEFINED);
-						st.createLabel(addr(program, "OtherOverlay::01001646"), "OVL1646",
-							SourceType.USER_DEFINED);
-					}
-					catch (Exception e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					program.getMemory().createInitializedBlock("OtherOverlay",
+						addr(program, "0x01001630"), 0x200, (byte) 0, TaskMonitor.DUMMY, true);
+					program.getMemory().createInitializedBlock("SomeOverlay",
+						addr(program, "0x01001630"), 0x300, (byte) 0, TaskMonitor.DUMMY, true);
+					st.createLabel(addr(program, "SomeOverlay::01001889"), "OVL1889",
+						SourceType.USER_DEFINED);
+					st.createLabel(addr(program, "OtherOverlay::01001646"), "OVL1646",
+						SourceType.USER_DEFINED);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (Exception e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});

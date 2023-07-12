@@ -33,6 +33,12 @@
     href="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#emu_actions">emulator
     controls</A> can then be used.</P>
 
+    <P>To control the initial stack allocation, create a <CODE>STACK</CODE> block in the target
+    program database before emulating. If the stack is already in the target image's memory map,
+    create an overlay block named <CODE>STACK</CODE>. This will initialize the stack pointer
+    without modifying the emulator's memory map. Note that customizing the stack initialization may
+    prevent you from adding a second thread.</P>
+
     <H3><A name="add_emulated_thread"></A> Add Emulated Thread</H3>
 
     <P>This action is available whenever a "pure emulation" trace is active. It spawns a new thread

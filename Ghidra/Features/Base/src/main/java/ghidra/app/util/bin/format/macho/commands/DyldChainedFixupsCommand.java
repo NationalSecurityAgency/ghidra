@@ -20,19 +20,23 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.bin.format.macho.commands.chained.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramModule;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a dyld_chained_fixups_command structure
+ * Represents a <code>dyld_chained_fixups_command</code> structure
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/fixup-chains.h">mach-o/fixup-chains.h</a> 
  */
 public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 
@@ -60,23 +64,63 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
-			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
+	public void markup(Program program, MachHeader header, Address addr, String source,
+			TaskMonitor monitor, MessageLog log) throws CancelledException {
+
+		if (addr == null || datasize == 0) {
+			return;
+		}
+
+		super.markup(program, header, addr, source, monitor, log);
+
 		try {
-			if (isBinary) {
-				super.markup(header, api, baseAddress, isBinary, parentModule, monitor, log);
+			DataUtilities.createData(program, addr, chainHeader.toDataType(), -1,
+				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 
-				List<Address> addrs =
-					api.getCurrentProgram().getMemory().locateAddressesForFileOffset(
-						getDataOffset());
-				if (addrs.size() <= 0) {
-					throw new Exception("Chain Header does not exist in program");
+			Address segsAddr = addr.add(chainHeader.getStartsOffset());
+			DyldChainedStartsInImage chainedStartsInImage = chainHeader.getChainedStartsInImage();
+			DataUtilities.createData(program, segsAddr, chainedStartsInImage.toDataType(), -1,
+				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+
+			int[] segInfoOffset = chainedStartsInImage.getSegInfoOffset();
+			List<DyldChainedStartsInSegment> chainedStarts =
+				chainedStartsInImage.getChainedStarts();
+			int skipCount = 0;
+			for (int i = 0; i < segInfoOffset.length; i++) {
+				if (segInfoOffset[i] == 0) {
+					// The chainStarts list doesn't have entries for 0 offsets, so we must keep
+					// track of the index differences between the 2 entities
+					skipCount++;
+					continue;
 				}
-				Address dyldChainedHeader = addrs.get(0);
-
-				markupChainedFixupHeader(header, api, dyldChainedHeader, parentModule, monitor);
+				DyldChainedStartsInSegment startsInSeg = chainedStarts.get(i - skipCount);
+				if (startsInSeg != null) {
+					DataUtilities.createData(program, segsAddr.add(segInfoOffset[i]),
+						startsInSeg.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
 			}
+		}
+		catch (Exception e) {
+			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(), "Failed to markup %s."
+					.formatted(LoadCommandTypes.getLoadCommandName(getCommandType())));
+		}
+	}
+
+	@Override
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
+			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
+		try {
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
+
+			List<Address> addrs = api.getCurrentProgram()
+					.getMemory()
+					.locateAddressesForFileOffset(getLinkerDataOffset());
+			if (addrs.size() <= 0) {
+				throw new Exception("Chain Header does not exist in program");
+			}
+			Address dyldChainedHeader = addrs.get(0);
+
+			markupChainedFixupHeader(header, api, dyldChainedHeader, parentModule, monitor);
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create " + getCommandName());
@@ -90,17 +134,17 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 		DataType cHeader = chainHeader.toDataType();
 		api.createData(baseAddress, cHeader);
 
-		Address segsAddr = baseAddress.add(chainHeader.getStarts_offset());
+		Address segsAddr = baseAddress.add(chainHeader.getStartsOffset());
 
 		DyldChainedStartsInImage chainedStartsInImage = chainHeader.getChainedStartsInImage();
-		int[] seg_info_offset = chainedStartsInImage.getSeg_info_offset();
+		int[] segInfoOffset = chainedStartsInImage.getSegInfoOffset();
 
-		DyldChainedStartsInSegment[] chainedStarts = chainedStartsInImage.getChainedStarts();
-		for (int i = 0; i < chainedStarts.length; i++) {
-			DyldChainedStartsInSegment startsInSeg = chainedStarts[i];
+		List<DyldChainedStartsInSegment> chainedStarts = chainedStartsInImage.getChainedStarts();
+		for (int i = 0; i < chainedStarts.size(); i++) {
+			DyldChainedStartsInSegment startsInSeg = chainedStarts.get(i);
 			DataType dataType = startsInSeg.toDataType();
 
-			api.createData(segsAddr.add(seg_info_offset[i]), dataType);
+			api.createData(segsAddr.add(segInfoOffset[i]), dataType);
 		}
 	}
 

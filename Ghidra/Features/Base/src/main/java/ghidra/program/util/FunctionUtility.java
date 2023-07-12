@@ -342,7 +342,7 @@ public class FunctionUtility {
 	 * @param function the function
 	 * @return true if the function has a default name.
 	 */
-	static boolean isDefaultFunctionName(Function function) {
+	public static boolean isDefaultFunctionName(Function function) {
 		String defaultFunctionName =
 			SymbolUtilities.getDefaultFunctionName(function.getEntryPoint());
 		return defaultFunctionName.equals(function.getName());

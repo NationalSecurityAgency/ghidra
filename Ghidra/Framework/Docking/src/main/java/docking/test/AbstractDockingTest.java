@@ -1124,8 +1124,8 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 			String name) {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
 		return ownerActions.stream()
-			.filter(action -> action.getName().equals(name))
-			.collect(Collectors.toSet());
+				.filter(action -> action.getName().equals(name))
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -2217,7 +2217,9 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	 */
 	public static Image createScreenImage(Component c) throws AWTException {
 
-		yieldToSwing();
+		if (!Swing.isSwingThread()) {
+			yieldToSwing();
+		}
 
 		Rectangle r = c.getBounds();
 		Point p = r.getLocation();
@@ -2234,7 +2236,9 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 	public static Image createRenderedImage(Component c) {
 
-		yieldToSwing();
+		if (!Swing.isSwingThread()) {
+			yieldToSwing();
+		}
 
 		Image i = runSwing(() -> {
 			try {

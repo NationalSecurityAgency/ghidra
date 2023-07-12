@@ -1188,7 +1188,9 @@ TOKEN :
     |
     <DECLSPEC : "__declspec">
     |
-    <PRAGMA : (("_")+ | "#") "pragma"> : PRAGMALINE
+    <PRAGMA : "#" "pragma"> {parenNesting=-1; SwitchTo(PRAGMALINE); }
+    |
+    <PRAGMA_FUNC : ("__pragma" | "_Pragma")> {parenNesting=0; SwitchTo(PRAGMALINE); }
     | 
     <READABLETO : "__readableTo">
     |
@@ -1376,9 +1378,9 @@ TOKEN :
     |
     <#PDIGIT : [ "0"-"9" ]>
     |
-    <POPEN : "("> { parenNesting++; }
+    <POPEN : "("> { if (parenNesting != -1) parenNesting++; }
     |
-    <PCLOSE : ")"> { parenNesting--; if (parenNesting == 0) SwitchTo(DEFAULT); }
+    <PCLOSE : ")"> { if (parenNesting != -1) parenNesting--; if (parenNesting == 0) SwitchTo(DEFAULT); }
     |
     <PMINUS : "-">
     |
@@ -1484,7 +1486,8 @@ TOKEN :
 //jjt SimpleNode TranslationUnit() #TranslationUnit : {}
 void TranslationUnit() : {}
 {
-    ( ExternalDeclaration() )+ 
+    ( ExternalDeclaration() )+
+    < EOF >
     {
         //jjt         return jjtThis;
         printTypes();
@@ -1963,7 +1966,8 @@ Token MultiLineString() : {
 void PragmaSpec() : {
 }
 {
-  ( ( <PRAGMA> ) PragmaSpecifier() )
+  <PRAGMA> (PragmaSpecifier())+ | 
+  <PRAGMA_FUNC> PragmaSpecifier()
 }
 
  
@@ -2829,7 +2833,7 @@ Object AssignmentExpression() : {
       |
       LOOKAHEAD(3)
       obj = ConditionalExpression()
-    )
+    ) [ PragmaSpec() ]
     {
         return obj;
     }

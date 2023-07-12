@@ -116,6 +116,10 @@ public class SegmentCommand extends LoadCommand {
 		return vmsize;
 	}
 
+	public void setVMsize(long vmSize) {
+		vmsize = vmSize;
+	}
+
 	public long getFileOffset() {
 		return fileoff;
 	}
@@ -126,6 +130,10 @@ public class SegmentCommand extends LoadCommand {
 
 	public long getFileSize() {
 		return filesize;
+	}
+
+	public void setFileSize(long fileSize) {
+		filesize = fileSize;
 	}
 
 	/**
@@ -220,59 +228,53 @@ public class SegmentCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
 		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address addr = baseAddress.getNewAddress(getStartIndex());
-				DataType segmentDT = toDataType();
-				api.createData(addr, segmentDT);
-				api.setPlateComment(addr, getSegmentName());
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
+			Address addr = baseAddress.getNewAddress(getStartIndex());
 
-				Address sectionAddress = addr.add(segmentDT.getLength());
-				for (Section section : sections) {
-					if (monitor.isCancelled()) {
-						return;
-					}
-					DataType sectionDT = section.toDataType();
-					api.createData(sectionAddress, sectionDT);
-					api.setPlateComment(sectionAddress, section.toString());
-					sectionAddress = sectionAddress.add(sectionDT.getLength());
+			Address sectionAddress = addr.add(toDataType().getLength());
+			for (Section section : sections) {
+				if (monitor.isCancelled()) {
+					return;
+				}
+				DataType sectionDT = section.toDataType();
+				api.createData(sectionAddress, sectionDT);
+				api.setPlateComment(sectionAddress, section.toString());
+				sectionAddress = sectionAddress.add(sectionDT.getLength());
 
-					if (section.getType() == SectionTypes.S_ZEROFILL) {
-						continue;
-					}
-					if (header.getFileType() == MachHeaderFileTypes.MH_DYLIB_STUB) {
-						continue;
-					}
+				if (section.getType() == SectionTypes.S_ZEROFILL) {
+					continue;
+				}
+				if (header.getFileType() == MachHeaderFileTypes.MH_DYLIB_STUB) {
+					continue;
+				}
 
-					Address sectionByteAddr = baseAddress.add(section.getOffset());
-					if (section.getSize() > 0) {
-						api.createLabel(sectionByteAddr, section.getSectionName(), true,
-							SourceType.IMPORTED);
-						api.createFragment(parentModule, "SECTION_BYTES", sectionByteAddr,
-							section.getSize());
-					}
+				Address sectionByteAddr = baseAddress.add(section.getOffset());
+				if (section.getSize() > 0) {
+					api.createLabel(sectionByteAddr, section.getSectionName(), true,
+						SourceType.IMPORTED);
+					api.createFragment(parentModule, "SECTION_BYTES", sectionByteAddr,
+						section.getSize());
+				}
 
-					if (section.getRelocationOffset() > 0) {
-						Address relocStartAddr = baseAddress.add(section.getRelocationOffset());
-						long offset = 0;
-						List<RelocationInfo> relocations = section.getRelocations();
-						for (RelocationInfo reloc : relocations) {
-							if (monitor.isCancelled()) {
-								return;
-							}
-							DataType relocDT = reloc.toDataType();
-							Address relocAddr = relocStartAddr.add(offset);
-							api.createData(relocAddr, relocDT);
-							api.setPlateComment(relocAddr, reloc.toString());
-							offset += relocDT.getLength();
+				if (section.getRelocationOffset() > 0) {
+					Address relocStartAddr = baseAddress.add(section.getRelocationOffset());
+					long offset = 0;
+					List<RelocationInfo> relocations = section.getRelocations();
+					for (RelocationInfo reloc : relocations) {
+						if (monitor.isCancelled()) {
+							return;
 						}
-						api.createFragment(parentModule, section.getSectionName() + "_Relocations",
-							relocStartAddr, offset);
+						DataType relocDT = reloc.toDataType();
+						Address relocAddr = relocStartAddr.add(offset);
+						api.createData(relocAddr, relocDT);
+						api.setPlateComment(relocAddr, reloc.toString());
+						offset += relocDT.getLength();
 					}
+					api.createFragment(parentModule, section.getSectionName() + "_Relocations",
+						relocStartAddr, offset);
 				}
 			}
 		}

@@ -401,7 +401,7 @@ public class DummyTool extends PluginTool {
 
 	@Override
 	public void removeContextListener(DockingContextListener listener) {
-		//do nothing		
+		//do nothing
 	}
 
 	@Override
@@ -416,16 +416,16 @@ public class DummyTool extends PluginTool {
 
 	@Override
 	public void addServiceListener(ServiceListener listener) {
-		//do nothing		
+		//do nothing
 	}
 
 	@Override
 	public void removeServiceListener(ServiceListener listener) {
-		//do nothing		
+		//do nothing
 	}
 
 	@Override
-	public PluginClassManager getPluginClassManager() {
+	protected PluginsConfiguration createPluginsConfigurations() {
 		return null;
 	}
 

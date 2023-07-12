@@ -215,7 +215,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 			GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
-		// Set default render to display red if file would not we found
+		// Set default render to display red if file would not be found
 		// Using include paths
 		pathPanel.getTable().setDefaultRenderer(String.class, new GTableCellRenderer() {
 			@Override
@@ -804,22 +804,22 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		paths = expandPaths(paths);
 		pathPanel.setPaths(paths);
 
-		if (languageIDString == null || compilerIDString == null) {
-			Msg.showWarn(getClass(), rootPanel, "Program Architecture not Specified",
-				"A Program Architecture must be specified in order to parse to a file.");
-			return;
-		}
-
-		if (parseToFile) {
+		if (parseToFile) {		
+			if (languageIDString == null || compilerIDString == null) {
+				Msg.showWarn(getClass(), rootPanel, "Program Architecture not Specified",
+					"A Program Architecture must be specified in order to parse to a file.");
+				return;
+			}
+			
 			File file = getSaveFile();
 			if (file != null) {
 				plugin.parse(paths, includePaths, options, languageIDString, compilerIDString,
 					file.getAbsolutePath());
 			}
+			return;
 		}
-		else {
-			plugin.parse(paths, includePaths, options, languageIDString, compilerIDString);
-		}
+		
+		plugin.parse(paths, includePaths, options);
 	}
 
 	private String[] expandPaths(String[] paths) {

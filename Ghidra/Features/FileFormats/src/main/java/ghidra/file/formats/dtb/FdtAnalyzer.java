@@ -79,7 +79,7 @@ public class FdtAnalyzer extends FileFormatAnalyzer {
 			Address address = program.getMinAddress();
 
 			while (true) {
-				monitor.checkCanceled();
+				monitor.checkCancelled();
 
 				if (address.compareTo(program.getMaxAddress()) >= 0) {
 					break;

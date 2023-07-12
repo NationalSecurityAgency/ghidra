@@ -203,6 +203,9 @@ public class StackUnwinder {
 		return unwind(coordinates, level, pcVal, spVal, state, new SavedRegisterMap(), monitor);
 	}
 
+	record StaticAndUnwind(Address staticPc, UnwindInfo info) {
+	}
+
 	/**
 	 * Compute the unwind information for the given program counter and context
 	 * 
@@ -217,8 +220,8 @@ public class StackUnwinder {
 	 * @return the unwind info, possibly incomplete
 	 * @throws CancelledException if the monitor is cancelled
 	 */
-	public UnwindInfo computeUnwindInfo(long snap, int level, Address pcVal, TaskMonitor monitor)
-			throws CancelledException {
+	public StaticAndUnwind computeUnwindInfo(long snap, int level, Address pcVal,
+			TaskMonitor monitor) throws CancelledException {
 		// TODO: Try markup in trace first?
 		ProgramLocation staticPcLoc = mappings == null ? null
 				: mappings.getOpenMappedLocation(
@@ -229,23 +232,27 @@ public class StackUnwinder {
 		}
 		Program program = staticPcLoc.getProgram();
 		Address staticPc = staticPcLoc.getAddress();
-		// TODO: Cache these?
-		UnwindAnalysis ua = new UnwindAnalysis(program);
-		return ua.computeUnwindInfo(staticPc, monitor);
+		try {
+			// TODO: Cache these?
+			UnwindAnalysis ua = new UnwindAnalysis(program);
+			return new StaticAndUnwind(staticPc, ua.computeUnwindInfo(staticPc, monitor));
+		}
+		catch (Exception e) {
+			return new StaticAndUnwind(staticPc, UnwindInfo.errorOnly(e));
+		}
 	}
 
 	<T> AnalysisUnwoundFrame<T> unwind(DebuggerCoordinates coordinates, int level, Address pcVal,
 			Address spVal, PcodeExecutorState<T> state, SavedRegisterMap registerMap,
-			TaskMonitor monitor)
-			throws CancelledException {
+			TaskMonitor monitor) throws CancelledException {
 		try {
-			UnwindInfo info = computeUnwindInfo(coordinates.getSnap(), level, pcVal, monitor);
+			StaticAndUnwind sau = computeUnwindInfo(coordinates.getSnap(), level, pcVal, monitor);
 			return new AnalysisUnwoundFrame<>(tool, coordinates, this, state, level, pcVal, spVal,
-				info, null, registerMap);
+				sau.staticPc, sau.info, registerMap);
 		}
-		catch (UnwindException e) {
+		catch (Exception e) {
 			return new AnalysisUnwoundFrame<>(tool, coordinates, this, state, level, pcVal, spVal,
-				null, e, registerMap);
+				null, UnwindInfo.errorOnly(e), registerMap);
 		}
 	}
 

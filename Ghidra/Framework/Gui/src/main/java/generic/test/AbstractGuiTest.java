@@ -15,8 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -1110,8 +1109,8 @@ public class AbstractGuiTest extends AbstractGenericTest {
 		if (expected.getRGB() == actual.getRGB()) {
 			return;
 		}
-		fail("Expected: [" + expected.getClass().getSimpleName() + "]" + expected +
-			", but got: [" + actual.getClass().getSimpleName() + "]" + actual);
+		fail("Expected: [" + expected.getClass().getSimpleName() + "]" + expected + ", but got: [" +
+			actual.getClass().getSimpleName() + "]" + actual);
 	}
 
 	public static void printMemory() {

@@ -60,27 +60,14 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testLatestByteDiff() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
-					setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
-					setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
+				setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
+				setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 			}
@@ -96,29 +83,16 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testMyByteDiff() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
-					setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
-					setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
+				setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
+				setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
 			}
 		});
 
@@ -132,40 +106,19 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testChangeSameBytes() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+	
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
-					setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
-					setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
+				setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
+				setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
-					setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
-					setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
+				setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
+				setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
 			}
 		});
 
@@ -179,38 +132,17 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testChangeDiffBytes() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", new byte[] { (byte) 0x95 }); // Previously 0x96
-					setBytes(program, "0x100753f", new byte[] { (byte) 0x68 }); // Previously 0x70
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753c", new byte[] { (byte) 0x95 }); // Previously 0x96
+				setBytes(program, "0x100753f", new byte[] { (byte) 0x68 }); // Previously 0x70
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753d", new byte[] { (byte) 0x03 }); // Previously 0x02
-					setBytes(program, "0x1007544", new byte[] { (byte) 0x67 }); // Previously 0x57
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753d", new byte[] { (byte) 0x03 }); // Previously 0x02
+				setBytes(program, "0x1007544", new byte[] { (byte) 0x67 }); // Previously 0x57
 			}
 		});
 
@@ -238,40 +170,19 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testByteConflict() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
-					setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
-					setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753c", new byte[] { (byte) 0x95 });
+				setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
+				setBytes(program, "0x1007544", new byte[] { (byte) 0x67 });
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100753c", new byte[] { (byte) 0x94 });
-					setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
-					setBytes(program, "0x1007544", new byte[] { (byte) 0x68 });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				setBytes(program, "0x100753c", new byte[] { (byte) 0x94 });
+				setBytes(program, "0x100753f", new byte[] { (byte) 0x68 });
+				setBytes(program, "0x1007544", new byte[] { (byte) 0x68 });
 			}
 		});
 
@@ -291,45 +202,31 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testInstrLatestInstrA() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// 1004ab5-1004aba initially is JZ LAB01004bb7
-					// 1004ab6-1004ab7 initially is TEST AH,BH
-					// 1004ab8-1004ab9 initially is ADD [EAX],AL
-					clear(program, "0x1004ab5", "0x1004aba");
-					setBytes(program, "0x1004ab5", new byte[] { (byte) 0x0d });
-					setBytes(program, "0x1004aba", new byte[] { (byte) 0x0e });
-					disassemble(program, "0x1004ab5", "0x1004aba");
+				// 1004ab5-1004aba initially is JZ LAB01004bb7
+				// 1004ab6-1004ab7 initially is TEST AH,BH
+				// 1004ab8-1004ab9 initially is ADD [EAX],AL
+				clear(program, "0x1004ab5", "0x1004aba");
+				setBytes(program, "0x1004ab5", new byte[] { (byte) 0x0d });
+				setBytes(program, "0x1004aba", new byte[] { (byte) 0x0e });
+				disassemble(program, "0x1004ab5", "0x1004aba");
 
-					// 1004adb-1004add disassembles to CMP local_c[EBP],EBX
-					// 1004adc-1004adc disassembles to POP EBP
-					// 1004add-1004add disassembles to CLC
-					clear(program, "0x1004adb", "0x1004add");
-					setBytes(program, "0x1004adb", new byte[] { (byte) 0x29 });
-					disassemble(program, "0x1004adb", "0x1004add");
+				// 1004adb-1004add disassembles to CMP local_c[EBP],EBX
+				// 1004adc-1004adc disassembles to POP EBP
+				// 1004add-1004add disassembles to CLC
+				clear(program, "0x1004adb", "0x1004add");
+				setBytes(program, "0x1004adb", new byte[] { (byte) 0x29 });
+				disassemble(program, "0x1004adb", "0x1004add");
 
-					// 1004b19-1004b1b initially is MOV CX,[EAX]
-					// 1004b1a-1004b1b initially is MOV ECX,[EAX]
-					clear(program, "0x1004b19", "0x1004b1b");
-					setBytes(program, "0x1004b19", new byte[] { (byte) 0x56 });
-					disassemble(program, "0x1004b19", "0x1004b1b");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 1004b19-1004b1b initially is MOV CX,[EAX]
+				// 1004b1a-1004b1b initially is MOV ECX,[EAX]
+				clear(program, "0x1004b19", "0x1004b1b");
+				setBytes(program, "0x1004b19", new byte[] { (byte) 0x56 });
+				disassemble(program, "0x1004b19", "0x1004b1b");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 			}
@@ -349,47 +246,33 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testInstrMyInstrA() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// 1004ab5-1004aba initially is JZ LAB01004bb7
-					// 1004ab6-1004ab7 initially is TEST AH,BH
-					// 1004ab8-1004ab9 initially is ADD [EAX],AL
-					clear(program, "0x1004ab5", "0x1004aba");
-					setBytes(program, "0x1004ab5", new byte[] { (byte) 0x0d });
-					setBytes(program, "0x1004aba", new byte[] { (byte) 0x0e });
-					disassemble(program, "0x1004ab5", "0x1004aba");
+				// 1004ab5-1004aba initially is JZ LAB01004bb7
+				// 1004ab6-1004ab7 initially is TEST AH,BH
+				// 1004ab8-1004ab9 initially is ADD [EAX],AL
+				clear(program, "0x1004ab5", "0x1004aba");
+				setBytes(program, "0x1004ab5", new byte[] { (byte) 0x0d });
+				setBytes(program, "0x1004aba", new byte[] { (byte) 0x0e });
+				disassemble(program, "0x1004ab5", "0x1004aba");
 
-					// 1004adb-1004add disassembles to CMP local_c[EBP],EBX
-					// 1004adc-1004adc disassembles to POP EBP
-					// 1004add-1004add disassembles to CLC
-					clear(program, "0x1004adb", "0x1004add");
-					setBytes(program, "0x1004adb", new byte[] { (byte) 0x29 });
-					disassemble(program, "0x1004adb", "0x1004add");
+				// 1004adb-1004add disassembles to CMP local_c[EBP],EBX
+				// 1004adc-1004adc disassembles to POP EBP
+				// 1004add-1004add disassembles to CLC
+				clear(program, "0x1004adb", "0x1004add");
+				setBytes(program, "0x1004adb", new byte[] { (byte) 0x29 });
+				disassemble(program, "0x1004adb", "0x1004add");
 
-					// 1004b19-1004b1b initially is MOV CX,[EAX]
-					// 1004b1a-1004b1b initially is MOV ECX,[EAX]
-					clear(program, "0x1004b19", "0x1004b1b");
-					setBytes(program, "0x1004b19", new byte[] { (byte) 0x56 });
-					disassemble(program, "0x1004b19", "0x1004b1b");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 1004b19-1004b1b initially is MOV CX,[EAX]
+				// 1004b1a-1004b1b initially is MOV ECX,[EAX]
+				clear(program, "0x1004b19", "0x1004b1b");
+				setBytes(program, "0x1004b19", new byte[] { (byte) 0x56 });
+				disassemble(program, "0x1004b19", "0x1004b1b");
 			}
 		});
 
@@ -407,74 +290,51 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testInstrLatestInstrAMyInstrB() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// 1004ab5-1004aba disassembles to OR EAX,0xfc84
-					clear(program, "0x1004aa5", "0x1004aaa");
-					setBytes(program, "0x1004aa5", new byte[] { (byte) 0x0d });
-					setBytes(program, "0x1004aaa", new byte[] { (byte) 0x0e });
-					disassemble(program, "0x1004aa5", "0x1004aaa");
+				// 1004ab5-1004aba disassembles to OR EAX,0xfc84
+				clear(program, "0x1004aa5", "0x1004aaa");
+				setBytes(program, "0x1004aa5", new byte[] { (byte) 0x0d });
+				setBytes(program, "0x1004aaa", new byte[] { (byte) 0x0e });
+				disassemble(program, "0x1004aa5", "0x1004aaa");
 
-					// 1004adb-1004add disassembles to CMP local_c[EBP],EBX
-					// 1004adc-1004adc disassembles to POP EBP
-					// 1004add-1004add disassembles to CLC
-					clear(program, "0x1004adb", "0x1004add");
-					setBytes(program, "0x1004adb", new byte[] { (byte) 0x29 });
-					disassemble(program, "0x1004adb", "0x1004add");
+				// 1004adb-1004add disassembles to CMP local_c[EBP],EBX
+				// 1004adc-1004adc disassembles to POP EBP
+				// 1004add-1004add disassembles to CLC
+				clear(program, "0x1004adb", "0x1004add");
+				setBytes(program, "0x1004adb", new byte[] { (byte) 0x29 });
+				disassemble(program, "0x1004adb", "0x1004add");
 
-					// 1004b19-1004b1b initially is MOV CX,[EAX]
-					// 1004b1a-1004b1b initially is MOV ECX,[EAX]
-					clear(program, "0x1004b19", "0x1004b1b");
-					setBytes(program, "0x1004b19", new byte[] { (byte) 0x56 });
-					disassemble(program, "0x1004b19", "0x1004b1b");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 1004b19-1004b1b initially is MOV CX,[EAX]
+				// 1004b1a-1004b1b initially is MOV ECX,[EAX]
+				clear(program, "0x1004b19", "0x1004b1b");
+				setBytes(program, "0x1004b19", new byte[] { (byte) 0x56 });
+				disassemble(program, "0x1004b19", "0x1004b1b");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// 1004ab5-1004ab6 disassembles to OR EAX,0xfc84
-					// 1004ab7-1004ab7 disassembles to CLD
-					// 1004ab8-1004ab9 disassembles to ADD [EAX],AL
-					// 1004aba-1004aba disassembles to POP DS
-					clear(program, "0x1004aa5", "0x1004aaa");
-					setBytes(program, "0x1004aa5", new byte[] { (byte) 0x0c });
-					setBytes(program, "0x1004aaa", new byte[] { (byte) 0x1f });
-					disassemble(program, "0x1004aa5", "0x1004aaa");
+				// 1004ab5-1004ab6 disassembles to OR EAX,0xfc84
+				// 1004ab7-1004ab7 disassembles to CLD
+				// 1004ab8-1004ab9 disassembles to ADD [EAX],AL
+				// 1004aba-1004aba disassembles to POP DS
+				clear(program, "0x1004aa5", "0x1004aaa");
+				setBytes(program, "0x1004aa5", new byte[] { (byte) 0x0c });
+				setBytes(program, "0x1004aaa", new byte[] { (byte) 0x1f });
+				disassemble(program, "0x1004aa5", "0x1004aaa");
 
-					// 1004adb-1004add disassembles to SBB 0xfffffff8[EBP],EBX
-					clear(program, "0x1004adb", "0x1004add");
-					setBytes(program, "0x1004adb", new byte[] { (byte) 0x19 });
-					disassemble(program, "0x1004adb", "0x1004add");
+				// 1004adb-1004add disassembles to SBB 0xfffffff8[EBP],EBX
+				clear(program, "0x1004adb", "0x1004add");
+				setBytes(program, "0x1004adb", new byte[] { (byte) 0x19 });
+				disassemble(program, "0x1004adb", "0x1004add");
 
-					// 1004b19-1004b19 disassembles to INC EBP
-					// 1004b1a-1004b1b disassembles to JNP 0x1004b24
-					clear(program, "0x1004b19", "0x1004b1b");
-					setBytes(program, "0x1004b19", new byte[] { (byte) 0x45 });
+				// 1004b19-1004b19 disassembles to INC EBP
+				// 1004b1a-1004b1b disassembles to JNP 0x1004b24
+				clear(program, "0x1004b19", "0x1004b1b");
+				setBytes(program, "0x1004b19", new byte[] { (byte) 0x45 });
 //					setBytes(program, "0x1004b1a", new byte[] {(byte)0x7b});
-					disassemble(program, "0x1004b19", "0x1004b1b");
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				disassemble(program, "0x1004b19", "0x1004b1b");
 			}
 		});
 
@@ -796,63 +656,40 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testDataAddDiffData() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// 100a2c5 initially is "dw" -> ADD
-					clear(program, "0x100a2c5", "0x100a2c6");
-					createData(program, "0x100a2c5", new ArrayDataType(new ByteDataType(), 2, 1));
+				// 100a2c5 initially is "dw" -> ADD
+				clear(program, "0x100a2c5", "0x100a2c6");
+				createData(program, "0x100a2c5", new ArrayDataType(new ByteDataType(), 2, 1));
 
-					// 100a2d8 initially is "ds" string -> OR
-					clear(program, "0x100a2d8", "0x100a2da");
-					DataType dt =
-						program.getDataTypeManager().getDataType(new CategoryPath("/"),
-							"ThreeBytes");
-					assertNotNull(dt);
-					createData(program, "0x100a2d8", dt);
+				// 100a2d8 initially is "ds" string -> OR
+				clear(program, "0x100a2d8", "0x100a2da");
+				DataType dt =
+					program.getDataTypeManager().getDataType(new CategoryPath("/"),
+						"ThreeBytes");
+				assertNotNull(dt);
+				createData(program, "0x100a2d8", dt);
 
-					// 100a2f4 initially is "ddw" -> TEST and ADD
-					clear(program, "0x100a2f4", "0x100a2f7");
-					createData(program, "0x100a2f4", new FloatDataType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 100a2f4 initially is "ddw" -> TEST and ADD
+				clear(program, "0x100a2f4", "0x100a2f7");
+				createData(program, "0x100a2f4", new FloatDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					// 100a2c5 initially is "dw" -> ADD
-					clear(program, "0x100a2c5", "0x100a2c6");
-					createData(program, "0x100a2c5", new ArrayDataType(new CharDataType(), 2, 1));
+				// 100a2c5 initially is "dw" -> ADD
+				clear(program, "0x100a2c5", "0x100a2c6");
+				createData(program, "0x100a2c5", new ArrayDataType(new CharDataType(), 2, 1));
 
-					// 100a2d8 initially is "ds" string -> OR
-					clear(program, "0x100a2d8", "0x100a2da");
-					createData(program, "0x100a2d8", new ArrayDataType(new CharDataType(), 3, 1));
+				// 100a2d8 initially is "ds" string -> OR
+				clear(program, "0x100a2d8", "0x100a2da");
+				createData(program, "0x100a2d8", new ArrayDataType(new CharDataType(), 3, 1));
 
-					// 100a2f4 initially is "ddw" -> TEST and ADD
-					clear(program, "0x100a2f4", "0x100a2f7");
-					createData(program, "0x100a2f4", new TypedefDataType("FloatTypeDef",
-						new FloatDataType()));
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 100a2f4 initially is "ddw" -> TEST and ADD
+				clear(program, "0x100a2f4", "0x100a2f7");
+				createData(program, "0x100a2f4", new TypedefDataType("FloatTypeDef",
+					new FloatDataType()));
 			}
 		});
 
@@ -873,77 +710,54 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testSameDataDiffBytes() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-//	            	// 100a2c5 initially is "dw" -> ADD
-//					clear(program, "0x100a2c5", "0x100a2c6");
-//					setBytes(program, "0x100a2c5", new byte[] {});
-//					disassemble(program, "0x100a2c5", "0x100a2c6");
+				// 100a2c5 initially is "dw" -> ADD
+				// clear(program, "0x100a2c5", "0x100a2c6");
+				// setBytes(program, "0x100a2c5", new byte[] {});
+				// disassemble(program, "0x100a2c5", "0x100a2c6");
 
-					// 100a2d8 initially is "ds" string -> OR
-					clear(program, "0x100a2d8", "0x100a2da");
-					setBytes(program, "0x100a2da", new byte[] { (byte) 0x56 });
+				// 100a2d8 initially is "ds" string -> OR
+				clear(program, "0x100a2d8", "0x100a2da");
+				setBytes(program, "0x100a2da", new byte[] { (byte) 0x56 });
 
-					// 100a2f4 initially is "ddw" -> TEST and ADD
-					clear(program, "0x100a2f4", "0x100a2f7");
-					setBytes(program, "0x100a2f4", new byte[] { (byte) 0x11 });
-					createData(program, "0x100a2f4", new FloatDataType());
+				// 100a2f4 initially is "ddw" -> TEST and ADD
+				clear(program, "0x100a2f4", "0x100a2f7");
+				setBytes(program, "0x100a2f4", new byte[] { (byte) 0x11 });
+				createData(program, "0x100a2f4", new FloatDataType());
 
-					// 100a0ac
-					setBytes(program, "0x100a0ad", new byte[] { (byte) 0x03 });
-					DataType dt =
-						program.getDataTypeManager().getDataType(new CategoryPath("/"),
-							"ThreeBytes");
-					assertNotNull(dt);
-					createData(program, "0x100a0ac", dt);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 100a0ac
+				setBytes(program, "0x100a0ad", new byte[] { (byte) 0x03 });
+				DataType dt =
+					program.getDataTypeManager().getDataType(new CategoryPath("/"),
+						"ThreeBytes");
+				assertNotNull(dt);
+				createData(program, "0x100a0ac", dt);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-//	            	// 100a2c5 initially is "dw" -> ADD
-//					clear(program, "0x100a2c5", "0x100a2c6");
-//					disassemble(program, "0x100a2c5", "0x100a2c6");
+				// 100a2c5 initially is "dw" -> ADD
+				// clear(program, "0x100a2c5", "0x100a2c6");
+				// disassemble(program, "0x100a2c5", "0x100a2c6");
 
-					// 100a2d8 initially is "ds" string -> OR
-					clear(program, "0x100a2d8", "0x100a2da");
-					setBytes(program, "0x100a2da", new byte[] { (byte) 0x34 });
+				// 100a2d8 initially is "ds" string -> OR
+				clear(program, "0x100a2d8", "0x100a2da");
+				setBytes(program, "0x100a2da", new byte[] { (byte) 0x34 });
 
-					// 100a2f4 initially is "ddw" -> TEST and ADD
-					clear(program, "0x100a2f4", "0x100a2f7");
-					setBytes(program, "0x100a2f4", new byte[] { (byte) 0x12 });
-					createData(program, "0x100a2f4", new FloatDataType());
+				// 100a2f4 initially is "ddw" -> TEST and ADD
+				clear(program, "0x100a2f4", "0x100a2f7");
+				setBytes(program, "0x100a2f4", new byte[] { (byte) 0x12 });
+				createData(program, "0x100a2f4", new FloatDataType());
 
-					// 100a0ac
-					setBytes(program, "0x100a0ad", new byte[] { (byte) 0x04 });
-					DataType dt =
-						program.getDataTypeManager().getDataType(new CategoryPath("/"),
-							"UnionSize4");
-					assertNotNull(dt);
-					createData(program, "0x100a0ac", dt);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// 100a0ac
+				setBytes(program, "0x100a0ad", new byte[] { (byte) 0x04 });
+				DataType dt =
+					program.getDataTypeManager().getDataType(new CategoryPath("/"),
+						"UnionSize4");
+				assertNotNull(dt);
+				createData(program, "0x100a0ac", dt);
 			}
 		});
 
@@ -970,54 +784,32 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testLatestByteXMyDataA() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
-			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100a0ad", new byte[] { (byte) 0x03 });
-					setBytes(program, "0x100a0bb", new byte[] { (byte) 0x22 });
-					setBytes(program, "0x100a0c2", new byte[] { (byte) 0x10 });
-					setBytes(program, "0x100a0c4", new byte[] { (byte) 0x56 });
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+			public void modifyLatest(ProgramDB program) {	
+				setBytes(program, "0x100a0ad", new byte[] { (byte) 0x03 });
+				setBytes(program, "0x100a0bb", new byte[] { (byte) 0x22 });
+				setBytes(program, "0x100a0c2", new byte[] { (byte) 0x10 });
+				setBytes(program, "0x100a0c4", new byte[] { (byte) 0x56 });
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					DataType dt =
-						program.getDataTypeManager().getDataType(new CategoryPath("/"),
-							"UnionSize4");
-					assertNotNull(dt);
-					createData(program, "0x100a0ac", dt);
+				DataType dt =
+					program.getDataTypeManager().getDataType(new CategoryPath("/"),
+						"UnionSize4");
+				assertNotNull(dt);
+				createData(program, "0x100a0ac", dt);
 
-					dt =
-						program.getDataTypeManager().getDataType(new CategoryPath("/"),
-							"ThreeBytes");
-					assertNotNull(dt);
-					createData(program, "0x100a0bb", dt);
+				dt =
+					program.getDataTypeManager().getDataType(new CategoryPath("/"),
+						"ThreeBytes");
+				assertNotNull(dt);
+				createData(program, "0x100a0bb", dt);
 
-					dt = new ArrayDataType(new CharDataType(), 5, 1);
-					assertNotNull(dt);
-					createData(program, "0x100a0c0", dt);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				dt = new ArrayDataType(new CharDataType(), 5, 1);
+				assertNotNull(dt);
+				createData(program, "0x100a0c0", dt);
 			}
 		});
 
@@ -1044,65 +836,42 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testLatestByteXDiffData() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					setBytes(program, "0x100a0ad", new byte[] { (byte) 0x03 });
-					setBytes(program, "0x100a0bb", new byte[] { (byte) 0x22 });
-					setBytes(program, "0x100a0c2", new byte[] { (byte) 0x10 });
-					setBytes(program, "0x100a0c4", new byte[] { (byte) 0x56 });
+				setBytes(program, "0x100a0ad", new byte[] { (byte) 0x03 });
+				setBytes(program, "0x100a0bb", new byte[] { (byte) 0x22 });
+				setBytes(program, "0x100a0c2", new byte[] { (byte) 0x10 });
+				setBytes(program, "0x100a0c4", new byte[] { (byte) 0x56 });
 
-					DataType dt =
-						program.getDataTypeManager().getDataType(new CategoryPath("/"),
-							"ThreeBytes");
-					assertNotNull(dt);
-					createData(program, "0x100a0ac", dt);
+				DataType dt =
+					program.getDataTypeManager().getDataType(new CategoryPath("/"),
+						"ThreeBytes");
+				assertNotNull(dt);
+				createData(program, "0x100a0ac", dt);
 
-					createData(program, "0x100a0bb", new DWordDataType());
+				createData(program, "0x100a0bb", new DWordDataType());
 
-					dt = new ArrayDataType(new CharDataType(), 5, 1);
-					assertNotNull(dt);
-					createData(program, "0x100a0c0", dt);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				dt = new ArrayDataType(new CharDataType(), 5, 1);
+				assertNotNull(dt);
+				createData(program, "0x100a0c0", dt);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					DataType dt =
-						program.getDataTypeManager().getDataType(new CategoryPath("/"),
-							"UnionSize4");
-					assertNotNull(dt);
-					createData(program, "0x100a0ac", dt);
+				DataType dt =
+					program.getDataTypeManager().getDataType(new CategoryPath("/"),
+						"UnionSize4");
+				assertNotNull(dt);
+				createData(program, "0x100a0ac", dt);
 
-					dt =
-						program.getDataTypeManager().getDataType(new CategoryPath("/"),
-							"ThreeBytes");
-					assertNotNull(dt);
-					createData(program, "0x100a0bb", dt);
+				dt =
+					program.getDataTypeManager().getDataType(new CategoryPath("/"),
+						"ThreeBytes");
+				assertNotNull(dt);
+				createData(program, "0x100a0bb", dt);
 
-					createData(program, "0x100a0c0", new FloatDataType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				createData(program, "0x100a0c0", new FloatDataType());
 			}
 		});
 
@@ -1138,60 +907,37 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 @Test
     public void testDeleteCatAddDtApplyDt() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					// Create a data that won't conflict with MY program.
-					createData(program, "0x100a0bb", new DWordDataType());
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				// Create a data that won't conflict with MY program.
+				createData(program, "0x100a0bb", new DWordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					CategoryPath catPath = new CategoryPath("/cat1");
-					DataTypeManager dtm = program.getDataTypeManager();
-					Category root = dtm.getCategory(CategoryPath.ROOT);
-					Category cat = dtm.getCategory(catPath);
-					assertNotNull(cat);
-					// Delete category "cat1".
-					root.removeCategory("cat1", TaskMonitor.DUMMY);
-					cat = dtm.getCategory(catPath);
-					assertNull(cat);
-					//Add "cat1" category back
-					cat = dtm.createCategory(catPath);
-					assertNotNull(cat);
-					// Create the Dt1 in MY program to be tested.
-					StructureDataType dt1 = new StructureDataType("Dt1", 0);
-					dt1.add(new ByteDataType());
-					dt1.add(new WordDataType());
-					DataType newDt = cat.addDataType(dt1, DataTypeConflictHandler.DEFAULT_HANDLER);
-					DataType dt = dtm.getDataType(new CategoryPath("/cat1"), "Dt1");
-					assertNotNull(dt);
-					assertEquals(dt, newDt);
-					// Apply "Dt1" to the program.
-					createData(program, "0x100a0ac", dt);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				CategoryPath catPath = new CategoryPath("/cat1");
+				DataTypeManager dtm = program.getDataTypeManager();
+				Category root = dtm.getCategory(CategoryPath.ROOT);
+				Category cat = dtm.getCategory(catPath);
+				assertNotNull(cat);
+				// Delete category "cat1".
+				root.removeCategory("cat1", TaskMonitor.DUMMY);
+				cat = dtm.getCategory(catPath);
+				assertNull(cat);
+				//Add "cat1" category back
+				cat = dtm.createCategory(catPath);
+				assertNotNull(cat);
+				// Create the Dt1 in MY program to be tested.
+				StructureDataType dt1 = new StructureDataType("Dt1", 0);
+				dt1.add(new ByteDataType());
+				dt1.add(new WordDataType());
+				DataType newDt = cat.addDataType(dt1, DataTypeConflictHandler.DEFAULT_HANDLER);
+				DataType dt = dtm.getDataType(new CategoryPath("/cat1"), "Dt1");
+				assertNotNull(dt);
+				assertEquals(dt, newDt);
+				// Apply "Dt1" to the program.
+				createData(program, "0x100a0ac", dt);
 			}
 		});
 

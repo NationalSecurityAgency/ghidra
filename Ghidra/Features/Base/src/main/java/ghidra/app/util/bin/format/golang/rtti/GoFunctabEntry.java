@@ -66,6 +66,10 @@ public class GoFunctabEntry {
 				: null;
 	}
 
+	public long getFuncoff() {
+		return funcoff;
+	}
+
 	private GoModuledata getModuledata() {
 		return programContext.findContainingModuleByFuncData(context.getStructureStart());
 	}

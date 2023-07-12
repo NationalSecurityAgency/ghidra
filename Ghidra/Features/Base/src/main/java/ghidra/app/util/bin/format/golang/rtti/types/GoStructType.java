@@ -57,6 +57,11 @@ public class GoStructType extends GoType {
 	}
 
 	@Override
+	public long getEndOfTypeInfo() throws IOException {
+		return fields.getArrayEnd(GoStructField.class);
+	}
+
+	@Override
 	public void additionalMarkup(MarkupSession session) throws IOException {
 		super.additionalMarkup(session);
 		fields.markupArray(getStructureLabel() + "_fields", GoStructField.class, false, session);

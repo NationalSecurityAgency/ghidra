@@ -9,7 +9,7 @@
 
     <TITLE>Annotations</TITLE>
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
-    <META name="generator" content="Microsoft FrontPage 4.0">
+    
   </HEAD>
 
   <BODY>
@@ -103,7 +103,7 @@
             <BR>
              Notes:
              
-             <ul>
+             <ul style="margin-left: 10px;">
 	             <li>
 		              If you provide a symbol name and not an address, then you will need to
 		            fully-qualify the symbol name if it is not in the global namespace (e.g.,
@@ -119,14 +119,14 @@
             
 
             <TD valign="top" width="12%">
-              <OL>
+              <OL style="margin-left: 15px;">
                 <LI>address or symbol name<BR>
                 </LI>
               </OL>
             </TD>
 
             <TD valign="top" width="10%">
-              <UL type="disc" compact="compact">
+              <UL style="margin-left: 10px;">
                 <LI>@symbol</LI>
 
                 <LI>@sym</LI>
@@ -134,7 +134,7 @@
             </TD>
 
             <TD valign="top" width="25%">
-              <UL>
+              <UL style="margin-left: 10px;">
                 <LI>{@symbol "0x1001004a"}</LI>
 
                 <LI>{@symbol "fred"}</LI>
@@ -153,7 +153,7 @@
             </TD>
 
             <TD valign="top" width="12%">
-              <OL>
+              <OL style="margin-left: 15px;">
                 <LI>address</LI>
 
                 <LI>[display text]</LI>
@@ -161,7 +161,7 @@
             </TD>
 
             <TD valign="top" width="10%">
-              <UL compact="compact" type="disc">
+              <UL style="margin-left: 10px;">
                 <LI>@address</LI>
 
                 <LI>@addr<BR>
@@ -170,7 +170,7 @@
             </TD>
 
             <TD valign="top" width="25%">
-              <UL>
+              <UL style="margin-left: 10px;">
                 <LI>{@address "1001004a"}</LI>
 
                 <LI>{@addr "0x0100100c"}</LI>
@@ -196,7 +196,7 @@
             </TD>
 
             <TD valign="top" width="12%">
-              <OL>
+              <OL style="margin-left: 15px;">
                 <LI>URL</LI>
 
                 <LI>[display text]<BR>
@@ -205,7 +205,7 @@
             </TD>
 
             <TD valign="top" width="10%">
-              <UL>
+              <UL style="margin-left: 10px;">
                 <LI>@url</LI>
 
                 <LI>@hyperlink</LI>
@@ -218,7 +218,7 @@
             </TD>
 
             <TD valign="top" width="25%">
-              <UL>
+              <UL style="margin-left: 10px;">
                 <LI>{@url "http://www.google.com"}</LI>
 
                 <LI>{@url "http://www.google.com" "google"}</LI>
@@ -252,7 +252,7 @@
             symbol name.</TD>
 
             <TD valign="top" width="12%">
-              <OL>
+              <OL style="margin-left: 15px;">
                 <LI>program name (with optional address or symbol)</LI>
 
                 <LI>[display text]<BR>
@@ -261,14 +261,14 @@
             </TD>
 
             <TD valign="top" width="10%">
-              <UL>
+              <UL style="margin-left: 10px;">
                 <LI>@program<BR>
                 </LI>
               </UL>
             </TD>
 
             <TD valign="top" width="25%">
-              <UL>
+              <UL style="margin-left: 10px;">
                 <LI>{@program "WinHelloCPP.exe"}</LI>
 
                 <LI>{@program "WinHelloCPP.exe@01001234"}</LI>
@@ -294,12 +294,12 @@
             </TD>
 
             <TD valign="top" width="12%">
-              <OL>              	
+              <OL style="margin-left: 15px;">              	
                 <LI>"executable path"</LI>
 			  </OL>                
 					
 				<b>OR</b>
-			  <OL>
+			  <OL style="margin-left: 15px;">
 				<LI>"executable path"</LI>
                 <LI>"parameter list" (may be empty quotes)</LI>
                 <LI>"display text" (may be empty quotes)</LI>
@@ -307,13 +307,13 @@
             </TD>
 
             <TD valign="top" width="10%">
-              <UL compact="compact" type="disc">
+              <UL style="margin-left: 10px;">
                 <LI>@execute</LI>
               </UL>
             </TD>
 
             <TD valign="top" width="15%">
-              <UL>
+              <UL style="margin-left: 10px;">
                 <LI>{@execute "C:\Program Files\Mozilla Firefox\firefox.exe"}</LI>
 
                 <LI>{@execute "C:\Program Files\Mozilla Firefox\firefox.exe"
@@ -339,6 +339,11 @@
         </TBODY>
       </TABLE>
 
+	 </BLOCKQUOTE>
+
+
+	 <BLOCKQUOTE>
+
       <P><BR>
       <BR>
       </P>
@@ -348,7 +353,19 @@
       part of the tag. Further, some annotations require quotes, as listed in the table above
       (e.g., the <B>Execute</B> annotation requires quotes). It is considered good practice to
       quote all annotation parameter values.</P>
-    </BLOCKQUOTE><!-- Invalid Annotation Example --><!-- image --><!-- Related Topics -->
+      
+      
+      <P><IMG border="0" src="help/shared/tip.png" alt="Tip">When pressing the <B>Add Annotation</B> 
+      button, any selected text in the comment dialog will be added to the generated annotation. 
+      This is useful if you wish to pre-selected content, such as address text, to be converted 
+      into an annotation.
+      </P>
+      
+      
+    </BLOCKQUOTE>
+
+
+	
 
     <H2>Errors</H2>
 
