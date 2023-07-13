@@ -303,6 +303,22 @@ public class BundleHost {
 	}
 
 	/**
+	 * Return the list of currently managed enabled bundle files.
+	 * 
+	 * @return all the enabled bundle files
+	 */
+	public Collection<ResourceFile> getEnabledBundleFiles() {
+		List<ResourceFile> enabledList = new ArrayList<>();
+		for (ResourceFile bundleFile : bundleMap.getBundleFiles()) {
+			GhidraBundle bundle = bundleMap.get(bundleFile);
+			if (bundle.isEnabled()) {
+				enabledList.add(bundleFile);
+			}
+		}
+		return enabledList;
+	}
+
+	/**
 	 * Attempt to resolve a list of BundleRequirements with active Bundle capabilities.
 	 * 
 	 * @param requirements list of requirements -- satisfied requirements are removed as 

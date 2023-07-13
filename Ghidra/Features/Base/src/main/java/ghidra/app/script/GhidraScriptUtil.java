@@ -124,6 +124,17 @@ public class GhidraScriptUtil {
 	}
 
 	/**
+	 * Returns a list of the current enabled script directories.
+	 * @return a list of the current enabled script directories
+	 */
+	public static List<ResourceFile> getEnabledScriptSourceDirectories() {
+		return bundleHost.getEnabledBundleFiles()
+				.stream()
+				.filter(ResourceFile::isDirectory)
+				.collect(Collectors.toList());
+	}
+
+	/**
 	 * Search the currently managed source directories for the given script file.
 	 * 
 	 * @param sourceFile the source file
