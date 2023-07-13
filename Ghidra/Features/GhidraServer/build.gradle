@@ -21,7 +21,7 @@ apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features GhidraServer'
 
-def yajswRelease = "yajsw-beta-13.01"
+def yajswRelease = "yajsw-stable-13.03"
 
 configurations {
 	runGhidraServer
@@ -42,7 +42,7 @@ CopySpec yajswCopySpec = copySpec {
 	// First check if the file is in the dependencies repo.  If not, check in the bin repo.
 	def yajswZipTree = depsFile.exists() ? zipTree(depsFile) : zipTree(binRepoFile)
 	
-	// In yajsw-beta-13.01.zip there is not a top level directory like there was in previous
+	// In yajsw-stable-13.03.zip there is not a top level directory like there was in previous
 	// versions, so we need the "into".  This is a bug which will be fixed in a future version,
 	// of yajsw, so for the next upgrade we'll likely need to get rid of the into and preface each 
 	// include with a ${yajswRelease} like we used to do.
