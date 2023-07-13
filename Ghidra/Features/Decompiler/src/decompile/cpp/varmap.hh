@@ -20,6 +20,7 @@
 #define __VARMAP_HH__
 
 #include "database.hh"
+#include <unordered_map>
 
 namespace ghidra {
 
@@ -140,6 +141,7 @@ private:
   AddrSpace *space;		///< AddressSpace in which to search
   mutable vector<AddBase> addBase; ///< Collection of pointers into the AddressSpace
   mutable vector<uintb> alias;	///< List of aliased addresses (as offsets)
+  mutable unordered_map<uint4, uintb> calculatedOffsets; ///< Map of offsets of already visited Varnodes so the recursive algorithm doesn't blow the stack
   mutable bool calculated;	///< Have aliases been calculated
   uintb localExtreme;		///< Largest possible offset for a local variable
   uintb localBoundary;		///< Boundary offset separating locals and parameters
@@ -155,7 +157,7 @@ public:
   const vector<AddBase> &getAddBase(void) const { return addBase; }	///< Get the collection of pointer Varnodes
   const vector<uintb> &getAlias(void) const { return alias; }		///< Get the list of alias starting offsets
   static void gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase);
-  static uintb gatherOffset(Varnode *vn);
+  static uintb gatherOffset(Varnode *vn, unordered_map<uint4, uintb> *offsets);
 };
 
 /// \brief A container for hints about the data-type layout of an address space
