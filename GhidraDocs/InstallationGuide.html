@@ -611,6 +611,11 @@ be installed in a pre-existing Eclipse installation.</p>
     These problems are attributed to reported bugs in Java, which will hopefully be fixed in the 
     future.  Disabling the 2nd or 3rd monitor may be necessary to work around the issue.
   </li>
+  <li>
+    GUI icons may not render correctly in some configurations of Linux. Setting 
+    <i>VMARGS=-Dsun.java2d.opengl</i> to <b>true</b> in 
+    <i>&lt;GhidraInstallDir&gt;</i>/support/launch.properties may fix this issue.
+  </li>
 </ul>
 <h3><a name="MacOSIssues"></a>macOS (OS X)</h3>
 <ul>
