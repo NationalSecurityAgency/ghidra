@@ -1192,6 +1192,11 @@ public class MachoProgramBuilder {
 	 */
 	private void performRelocations(LinkedHashMap<RelocationInfo, Address> relocationMap)
  			throws CancelledException {
+
+		if (relocationMap.isEmpty()) {
+			return;
+		}
+
  		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
 		if (handler == null) {
 			log.appendMsg(String.format("No relocation handler for machine type 0x%x",
@@ -1491,7 +1496,7 @@ public class MachoProgramBuilder {
 		for (Address addr : chainedFixups) {
 			monitor.checkCancelled();
 			try {
-				listing.createData(addr, Pointer64DataType.dataType);
+				listing.createData(addr, PointerDataType.dataType);
 			}
 			catch (CodeUnitInsertionException e) {
 				// No worries, something presumably more important was there already

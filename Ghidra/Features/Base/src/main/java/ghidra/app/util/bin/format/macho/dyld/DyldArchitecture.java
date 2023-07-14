@@ -31,21 +31,22 @@ public final class DyldArchitecture {
 	public final static int     DYLD_V1_SIGNATURE_LEN      =  0x10;
 
 	// @formatter:off
-	public final static DyldArchitecture X86     = new DyldArchitecture( CpuTypes.CPU_TYPE_X86,     CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1    i386", "i386",    Endian.LITTLE, false );
-	public final static DyldArchitecture X86_64  = new DyldArchitecture( CpuTypes.CPU_TYPE_X86_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1  x86_64", "x86_64",  Endian.LITTLE, true  );
-	public final static DyldArchitecture X86_64h = new DyldArchitecture( CpuTypes.CPU_TYPE_X86_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1 x86_64h", "x86_64",  Endian.LITTLE, true  );
-	public final static DyldArchitecture POWERPC = new DyldArchitecture( CpuTypes.CPU_TYPE_POWERPC, CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1     ppc", "rosetta", Endian.BIG,    false );
-	public final static DyldArchitecture ARMV6   = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V6,   "dyld_v1   armv6", "armv6",   Endian.LITTLE, false );
-	public final static DyldArchitecture ARMV7   = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7,   "dyld_v1   armv7", "arm7",    Endian.LITTLE, false );
-	public final static DyldArchitecture ARMV7F  = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7F,  "dyld_v1  armv7f", "arm7",    Endian.LITTLE, false );
-	public final static DyldArchitecture ARMV7S  = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7S,  "dyld_v1  armv7s", "arm7",    Endian.LITTLE, false );
-	public final static DyldArchitecture ARMV7K  = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7K,  "dyld_v1  armv7k", "arm7",    Endian.LITTLE, false );
-	public final static DyldArchitecture ARMV8A  = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1   arm64", "AARCH64", Endian.LITTLE, true  );
-	public final static DyldArchitecture ARMV8Ae = new DyldArchitecture(CpuTypes.CPU_TYPE_ARM_64,   CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1  arm64e", "AARCH64", Endian.LITTLE, true  );
+	public final static DyldArchitecture X86      = new DyldArchitecture( CpuTypes.CPU_TYPE_X86,     CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1    i386", "i386",     Endian.LITTLE, false );
+	public final static DyldArchitecture X86_64   = new DyldArchitecture( CpuTypes.CPU_TYPE_X86_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1  x86_64", "x86_64",   Endian.LITTLE, true  );
+	public final static DyldArchitecture X86_64h  = new DyldArchitecture( CpuTypes.CPU_TYPE_X86_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1 x86_64h", "x86_64",   Endian.LITTLE, true  );
+	public final static DyldArchitecture POWERPC  = new DyldArchitecture( CpuTypes.CPU_TYPE_POWERPC, CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1     ppc", "rosetta",  Endian.BIG,    false );
+	public final static DyldArchitecture ARMV6    = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V6,   "dyld_v1   armv6", "armv6",    Endian.LITTLE, false );
+	public final static DyldArchitecture ARMV7    = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7,   "dyld_v1   armv7", "arm7",     Endian.LITTLE, false );
+	public final static DyldArchitecture ARMV7F   = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7F,  "dyld_v1  armv7f", "arm7",     Endian.LITTLE, false );
+	public final static DyldArchitecture ARMV7S   = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7S,  "dyld_v1  armv7s", "arm7",     Endian.LITTLE, false );
+	public final static DyldArchitecture ARMV7K   = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7K,  "dyld_v1  armv7k", "arm7",     Endian.LITTLE, false );
+	public final static DyldArchitecture ARMV8A   = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1   arm64", "AARCH64",  Endian.LITTLE, true  );
+	public final static DyldArchitecture ARMV8Ae  = new DyldArchitecture(CpuTypes.CPU_TYPE_ARM_64,   CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1  arm64e", "AARCH64",  Endian.LITTLE, true  );
+	public final static DyldArchitecture ARM64_32 = new DyldArchitecture(CpuTypes.CPU_TYPE_ARM64_32, CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1arm64_32", "ARM64_32", Endian.LITTLE, false );
 	// @formatter:on
 
 	public final static DyldArchitecture[] ARCHITECTURES = new DyldArchitecture[] { X86, X86_64,
-		X86_64h, POWERPC, ARMV6, ARMV7, ARMV7F, ARMV7S, ARMV7K, ARMV8A, ARMV8Ae };
+		X86_64h, POWERPC, ARMV6, ARMV7, ARMV7F, ARMV7S, ARMV7K, ARMV8A, ARMV8Ae, ARM64_32 };
 	
 	/**
 	 * Returns the architecture object with the given signature.
