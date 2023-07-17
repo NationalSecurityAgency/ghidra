@@ -121,8 +121,6 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 
 		// Add __builtin__ module for code completion
 		builtinModule = (PyModule) imp.load("__builtin__");
-
-		initializePythonPath();
 	}
 
 	/**
@@ -134,7 +132,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 		systemState.path.retainAll(defaultPythonPath);
 
 		// Add in Ghidra script source directories
-		for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
+		for (ResourceFile resourceFile : GhidraScriptUtil.getEnabledScriptSourceDirectories()) {
 			systemState.path.append(Py.newStringOrUnicode(resourceFile.getFile(false).getAbsolutePath()));
 		}
 
@@ -168,6 +166,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 				"Ghidra python interpreter has already been cleaned up.");
 		}
 
+		initializePythonPath();
 		injectScriptHierarchy(script);
 
 		if (buffer.length() > 0) {
@@ -207,6 +206,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 				"Ghidra python interpreter has already been cleaned up.");
 		}
 
+		initializePythonPath();
 		injectScriptHierarchy(script);
 
 		Py.getThreadState().tracefunc = interruptTraceFunction;

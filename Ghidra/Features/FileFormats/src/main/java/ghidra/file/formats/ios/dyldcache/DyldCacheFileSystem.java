@@ -18,11 +18,9 @@ package ghidra.file.formats.ios.dyldcache;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.MachException;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheImage;
+import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.DyldCacheUtils;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
@@ -37,6 +35,7 @@ import ghidra.util.task.TaskMonitor;
 public class DyldCacheFileSystem extends GFileSystemBase {
 
 	private SplitDyldCache splitDyldCache;
+	private Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap;
 	private Map<GFile, Long> addrMap = new HashMap<>();
 	private Map<GFile, Integer> indexMap = new HashMap<>();
 
@@ -46,6 +45,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	@Override
 	public void close() throws IOException {
+		slideFixupMap.clear();
 		addrMap.clear();
 		indexMap.clear();
 		splitDyldCache.close();
@@ -53,7 +53,8 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws CancelledException, IOException {
 		Long addr = addrMap.get(file);
 		if (addr == null) {
 			return null;
@@ -63,7 +64,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 			addr - splitDyldCache.getDyldCacheHeader(index).getBaseAddress();
 		try {
 			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider,
-				splitDyldCache, index, file.getFSRL(), monitor);
+				splitDyldCache, index, slideFixupMap, file.getFSRL(), monitor);
 		}
 		catch (MachException e) {
 			throw new IOException("Invalid Mach-O header detected at 0x" +
@@ -125,6 +126,26 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 				storeFile(file, mappedImage.getAddress(), i);
 				monitor.checkCancelled();
 				monitor.incrementProgress(1);
+			}
+		}
+		
+		// Get slide fixups
+		slideFixupMap = new HashMap<>();
+		for (int i = 0; i < splitDyldCache.size(); i++) {
+			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
+			ByteProvider bp = splitDyldCache.getProvider(i);
+			DyldArchitecture arch = header.getArchitecture();
+			for (DyldCacheSlideInfoCommon slideInfo : header.getSlideInfos()) {
+				try (ByteProvider wrapper = new ByteProviderWrapper(bp,
+					slideInfo.getMappingFileOffset(), slideInfo.getMappingSize())) {
+					BinaryReader wrapperReader =new BinaryReader(wrapper, !arch.getEndianness().isBigEndian());
+					List<DyldCacheSlideFixup> fixups = slideInfo.getSlideFixups(wrapperReader,
+						arch.is64bit() ? 8 : 4, log, monitor);
+					slideFixupMap.put(slideInfo, fixups);
+				}
+				catch (IOException e) {
+					throw new IOException(e);
+				}
 			}
 		}
 	}
