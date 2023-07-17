@@ -19,8 +19,7 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -389,6 +388,8 @@ public class Varnode {
 				VariableStorage storage = factory.getJoinStorage(pieces);
 				// Update "join" address to the one just registered with the pieces
 				addr = factory.getJoinAddress(storage);
+				// Update size to be the size of the pieces 
+				sz = Arrays.stream(pieces).map(x -> x.getSize()).reduce(0, Integer::sum);
 			}
 			catch (InvalidInputException e) {
 				throw new DecoderException("Invalid varnode pieces: " + e.getMessage());
