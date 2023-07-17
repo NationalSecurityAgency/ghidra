@@ -18,7 +18,8 @@ package ghidra.file.formats.ios.dyldcache;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
@@ -45,7 +46,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	@Override
 	public void close() throws IOException {
-		slideFixupMap.clear();
+		slideFixupMap = null;
 		addrMap.clear();
 		indexMap.clear();
 		splitDyldCache.close();
@@ -62,6 +63,11 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		int index = indexMap.get(file);
 		long machHeaderStartIndexInProvider =
 			addr - splitDyldCache.getDyldCacheHeader(index).getBaseAddress();
+
+		if (slideFixupMap == null) {
+			slideFixupMap = DyldCacheDylibExtractor.getSlideFixups(splitDyldCache, monitor);
+		}
+
 		try {
 			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider,
 				splitDyldCache, index, slideFixupMap, file.getFSRL(), monitor);
@@ -126,26 +132,6 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 				storeFile(file, mappedImage.getAddress(), i);
 				monitor.checkCancelled();
 				monitor.incrementProgress(1);
-			}
-		}
-		
-		// Get slide fixups
-		slideFixupMap = new HashMap<>();
-		for (int i = 0; i < splitDyldCache.size(); i++) {
-			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
-			ByteProvider bp = splitDyldCache.getProvider(i);
-			DyldArchitecture arch = header.getArchitecture();
-			for (DyldCacheSlideInfoCommon slideInfo : header.getSlideInfos()) {
-				try (ByteProvider wrapper = new ByteProviderWrapper(bp,
-					slideInfo.getMappingFileOffset(), slideInfo.getMappingSize())) {
-					BinaryReader wrapperReader =new BinaryReader(wrapper, !arch.getEndianness().isBigEndian());
-					List<DyldCacheSlideFixup> fixups = slideInfo.getSlideFixups(wrapperReader,
-						arch.is64bit() ? 8 : 4, log, monitor);
-					slideFixupMap.put(slideInfo, fixups);
-				}
-				catch (IOException e) {
-					throw new IOException(e);
-				}
 			}
 		}
 	}
