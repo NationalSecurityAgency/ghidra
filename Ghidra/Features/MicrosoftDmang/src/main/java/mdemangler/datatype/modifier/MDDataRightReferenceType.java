@@ -28,15 +28,15 @@ import mdemangler.MDMang;
 //     properties
 //  TODO: Seems very closely related to a "reference" type, so might find a way to merge
 //     reference types together.
-public class MDDataRefRefType extends MDModifierType {
+public class MDDataRightReferenceType extends MDModifierType {
 
-	public MDDataRefRefType(MDMang dmang) {
+	public MDDataRightReferenceType(MDMang dmang) {
 		super(dmang, 3);
 	}
 
 	@Override
 	protected void parseInternal() throws MDException {
-		cvMod.setRefRefTemplateParameter();
+		cvMod.setRightReferenceTemplateParameter();
 		super.parseInternal();
 	}
 }

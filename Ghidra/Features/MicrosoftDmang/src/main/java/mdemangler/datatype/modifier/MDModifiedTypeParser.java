@@ -127,7 +127,7 @@ public class MDModifiedTypeParser {
 		plain,
 		pointer,
 		reference,
-		refref,
+		rightreference,
 		carrot, // TODO: eliminate with old code
 		percent, // TODO: eliminate with old code
 		functionpointer, // TODO: eliminate with old code
@@ -150,8 +150,8 @@ public class MDModifiedTypeParser {
 		modType = CvModifierType.reference;
 	}
 
-	public void setRefRefTemplateParameter() {
-		modType = CvModifierType.refref;
+	public void setRightReferenceParameter() {
+		modType = CvModifierType.rightreference;
 	}
 
 	// public void setCarrotType() {
