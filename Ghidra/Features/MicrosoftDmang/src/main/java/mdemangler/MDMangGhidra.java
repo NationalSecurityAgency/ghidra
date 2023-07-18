@@ -452,7 +452,7 @@ public class MDMangGhidra extends MDMang {
 	}
 
 	private DemangledFunctionReference processDemangledFunctionReference(MDModifierType refType) {
-		if (!((refType instanceof MDReferenceType) || (refType instanceof MDDataRefRefType))) {
+		if (!((refType instanceof MDReferenceType) || (refType instanceof MDDataRightReferenceType))) {
 			return null; // Not planning on anything else yet.
 		}
 		DemangledFunctionReference functionReference =
@@ -702,7 +702,7 @@ public class MDMangGhidra extends MDMang {
 				}
 				return resultDataType;
 			}
-			else if (modifierType instanceof MDDataRefRefType) {
+			else if (modifierType instanceof MDDataRightReferenceType) {
 				if ((modifierType.getReferencedType() instanceof MDFunctionType)) {
 					resultDataType.setName(getDataTypeName(datatype));
 					// TODO---------what are we returning... need to work on called routine.
