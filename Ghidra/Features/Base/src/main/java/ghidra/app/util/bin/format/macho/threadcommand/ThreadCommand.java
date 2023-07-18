@@ -61,7 +61,8 @@ public class ThreadCommand extends LoadCommand {
 				threadState = new ThreadStateARM(reader);
 			}
 		}
-		else if (header.getCpuType() == CpuTypes.CPU_TYPE_ARM_64) {
+		else if (header.getCpuType() == CpuTypes.CPU_TYPE_ARM_64 ||
+			header.getCpuType() == CpuTypes.CPU_TYPE_ARM64_32) {
 			if (threadStateHeader.getFlavor() == ThreadStateARM_64.ARM64_THREAD_STATE) {
 				threadState = new ThreadStateARM_64(reader);
 			}	
@@ -96,7 +97,9 @@ public class ThreadCommand extends LoadCommand {
 		struct.add(DWORD, "cmd", null);
 		struct.add(DWORD, "cmdsize", null);
 		struct.add(threadStateHeader.toDataType(), "threadStateHeader", null);
-		struct.add(threadState.toDataType(), "threadState", null);
+		if (threadState != null) {
+			struct.add(threadState.toDataType(), "threadState", null);
+		}
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}

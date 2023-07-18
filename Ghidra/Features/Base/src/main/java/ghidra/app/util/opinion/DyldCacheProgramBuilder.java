@@ -90,6 +90,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			// Set image base
 			setDyldCacheImageBase(splitDyldCache.getDyldCacheHeader(0));
 
+			// Set entry point
+			setDyldCacheEntryPoint(splitDyldCache.getDyldCacheHeader(0));
+
 			// Setup memory
 			// Check if local symbols are present
 			boolean localSymbolsPresent = false;
@@ -110,7 +113,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
 				ByteProvider bp = splitDyldCache.getProvider(i);
 
-				fixSlidePointers(header);
+				fixupSlidePointers(header);
 				markupHeaders(header);
 				markupBranchIslands(header, bp);
 				createLocalSymbols(header);
@@ -133,6 +136,26 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	}
 
 	/**
+	 * Sets the program's entry point (if known).
+	 * 
+	 * @param dyldCacheHeader The "base" DYLD Cache header
+	 * @throws Exception if there was problem setting the program's entry point
+	 */
+	private void setDyldCacheEntryPoint(DyldCacheHeader dyldCacheHeader) throws Exception {
+		monitor.initialize(1, "Setting entry pointer base...");
+		Long entryPoint = dyldCacheHeader.getEntryPoint();
+		if (entryPoint != null) {
+			Address entryPointAddr = space.getAddress(entryPoint);
+			program.getSymbolTable().addExternalEntryPoint(entryPointAddr);
+			createOneByteFunction("entry", entryPointAddr);
+		}
+		else {
+			log.appendMsg("Unable to determine entry point.");
+		}
+		monitor.incrementProgress(1);
+	}
+
+	/**
 	 * Processes the DYLD Cache's memory mappings and creates memory blocks for them.
 	 * 
 	 * @param dyldCacheHeader The {@link DyldCacheHeader}
@@ -145,15 +168,16 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		List<DyldCacheMappingInfo> mappingInfos = dyldCacheHeader.getMappingInfos();
 		monitor.setMessage("Processing DYLD mapped memory blocks...");
 		monitor.initialize(mappingInfos.size());
+		String extension = name.contains(".") ? name.substring(name.indexOf(".")) : "";
 		FileBytes fb = MemoryBlockUtils.createFileBytes(program, bp, monitor);
 		long endOfMappedOffset = 0;
 		boolean bookmarkSet = false;
 		for (DyldCacheMappingInfo mappingInfo : mappingInfos) {
 			long offset = mappingInfo.getFileOffset();
 			long size = mappingInfo.getSize();
-			MemoryBlock block = MemoryBlockUtils.createInitializedBlock(program, false, "DYLD",
-				space.getAddress(mappingInfo.getAddress()), fb, offset, size, "", "",
-				mappingInfo.isRead(), mappingInfo.isWrite(), mappingInfo.isExecute(), log);
+			MemoryBlock block = MemoryBlockUtils.createInitializedBlock(program, false,
+				"DYLD" + extension, space.getAddress(mappingInfo.getAddress()), fb, offset, size,
+				"", "", mappingInfo.isRead(), mappingInfo.isWrite(), mappingInfo.isExecute(), log);
 
 			if (offset + size > endOfMappedOffset) {
 				endOfMappedOffset = offset + size;
@@ -172,7 +196,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		if (endOfMappedOffset < bp.length()) {
 			monitor.setMessage("Processing DYLD unmapped memory block...");
-			MemoryBlock fileBlock = MemoryBlockUtils.createInitializedBlock(program, true, "FILE",
+			MemoryBlock fileBlock =
+				MemoryBlockUtils.createInitializedBlock(program, true, "FILE" + extension,
 				AddressSpace.OTHER_SPACE.getAddress(endOfMappedOffset), fb, endOfMappedOffset,
 				bp.length() - endOfMappedOffset, "Useful bytes that don't get mapped into memory",
 				"", false, false, false, log);
@@ -260,9 +285,9 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @throws MemoryAccessException if there was a problem reading/writing memory.
 	 * @throws CancelledException if user cancels
 	 */
-	private void fixSlidePointers(DyldCacheHeader dyldCacheHeader)
+	private void fixupSlidePointers(DyldCacheHeader dyldCacheHeader)
 			throws MemoryAccessException, CancelledException {
-		if (!options.processChainedFixups()) {
+		if (!options.fixupSlidePointers()) {
 			return;
 		}
 
@@ -272,7 +297,8 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			int version = info.getVersion();
 
 			log.appendMsg("Fixing slide pointers version: " + version);
-			info.fixSlidePointers(program, options.addChainedFixupsRelocations(), log, monitor);
+			info.fixupSlidePointers(program, options.markupSlidePointers(),
+				options.addSlidePointerRelocations(), log, monitor);
 		}
 	}
 

@@ -18,8 +18,9 @@ package ghidra.app.util.opinion;
 /**
  * Options from the {@link DyldCacheLoader}
  * 
- * @param processChainedFixups True if chained fixups should be processed; otherwise, false
- * @param addChainedFixupsRelocations True if chained fixups should be added to the relocation
+ * @param fixupSlidePointers True if slide pointers should be fixed up; otherwise, false
+ * @param markupSlidePointers True if slide pointers should be marked up; otherwise, false
+ * @param addSlidePointerRelocations True if slide pointers should be added to the relocation
  *   table; otherwise false
  * @param processLocalSymbols True if local symbols should be processes; otherwise, false
  * @param markupLocalSymbols True if local symbols should be marked up; otherwise, false
@@ -30,8 +31,8 @@ package ghidra.app.util.opinion;
  *   marked up; otherwise, false
  * @param processLibobjc True if special libobjc should occur; otherwise, false
  */
-public record DyldCacheOptions(boolean processChainedFixups, boolean addChainedFixupsRelocations,
-		boolean processLocalSymbols, boolean markupLocalSymbols, boolean processDylibMemory,
-		boolean processDylibSymbols, boolean processDylibExports,
+public record DyldCacheOptions(boolean fixupSlidePointers, boolean markupSlidePointers,
+		boolean addSlidePointerRelocations, boolean processLocalSymbols, boolean markupLocalSymbols,
+		boolean processDylibMemory, boolean processDylibSymbols, boolean processDylibExports,
 		boolean markupDylibLoadCommandData, boolean processLibobjc) {
 }

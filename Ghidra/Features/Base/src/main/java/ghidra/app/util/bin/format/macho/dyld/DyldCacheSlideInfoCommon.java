@@ -170,6 +170,7 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	 * Fixes up the programs slide pointers
 	 * 
 	 * @param program The {@link Program}
+	 * @param markup True if the slide pointers should be marked up; otherwise, false
 	 * @param addRelocations True if slide pointer locations should be added to the relocation
 	 *   table; otherwise, false
 	 * @param log The log
@@ -177,8 +178,8 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	 * @throws MemoryAccessException If there was a problem accessing memory
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	public void fixSlidePointers(Program program, boolean addRelocations, MessageLog log,
-			TaskMonitor monitor) throws MemoryAccessException, CancelledException {
+	public void fixupSlidePointers(Program program, boolean markup, boolean addRelocations,
+			MessageLog log, TaskMonitor monitor) throws MemoryAccessException, CancelledException {
 
 		Memory memory = program.getMemory();
 		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
@@ -202,20 +203,22 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 				}
 			}
 
-			monitor.initialize(fixups.size(), "Marking up DYLD Cache slide pointers...");
-			for (DyldCacheSlideFixup fixup : fixups) {
-				monitor.increment();
-				Address addr = dataPageAddr.add(fixup.offset());
-				if (addRelocations) {
-					program.getRelocationTable()
-							.add(addr, Status.APPLIED, version, new long[] { fixup.value() },
-								fixup.size(), null);
-				}
-				try {
-					program.getListing().createData(addr, POINTER);
-				}
-				catch (CodeUnitInsertionException e) {
-					// No worries, something presumably more important was there already
+			if (markup) {
+				monitor.initialize(fixups.size(), "Marking up DYLD Cache slide pointers...");
+				for (DyldCacheSlideFixup fixup : fixups) {
+					monitor.increment();
+					Address addr = dataPageAddr.add(fixup.offset());
+					if (addRelocations) {
+						program.getRelocationTable()
+								.add(addr, Status.APPLIED, version, new long[] { fixup.value() },
+									fixup.size(), null);
+					}
+					try {
+						program.getListing().createData(addr, POINTER);
+					}
+					catch (CodeUnitInsertionException e) {
+						// No worries, something presumably more important was there already
+					}
 				}
 			}
 		}
