@@ -452,7 +452,8 @@ public class MDMangGhidra extends MDMang {
 	}
 
 	private DemangledFunctionReference processDemangledFunctionReference(MDModifierType refType) {
-		if (!((refType instanceof MDReferenceType) || (refType instanceof MDDataRightReferenceType))) {
+		if (!((refType instanceof MDReferenceType) ||
+			(refType instanceof MDDataRightReferenceType))) {
 			return null; // Not planning on anything else yet.
 		}
 		DemangledFunctionReference functionReference =
@@ -610,18 +611,19 @@ public class MDMangGhidra extends MDMang {
 				// modifierType.getArrayString();
 				// resultDataType.setArray();
 				//Processing the referenced type (for Ghidra, and then setting attributes on it)
-				processDataType(resultDataType, (MDDataType) modifierType.getReferencedType());
-				resultDataType.incrementPointerLevels();
+				DemangledDataType newResult =
+					processDataType(resultDataType, (MDDataType) modifierType.getReferencedType());
+				newResult.incrementPointerLevels();
 				if (modifierType.getCVMod().isConst()) {
-					resultDataType.setConst();
+					newResult.setConst();
 				}
 				if (modifierType.getCVMod().isVolatile()) {
-					resultDataType.setVolatile();
+					newResult.setVolatile();
 				}
 				if (modifierType.getCVMod().isPointer64()) {
-					resultDataType.setPointer64();
+					newResult.setPointer64();
 				}
-				return resultDataType;
+				return newResult;
 			}
 			// TODO: fix. Following is a kludge because DemangledObject has no
 			// DemangledReference
@@ -648,18 +650,19 @@ public class MDMangGhidra extends MDMang {
 					return fr;
 				}
 				//Processing the referenced type (for Ghidra, and then setting attributes on it)
-				processDataType(resultDataType, (MDDataType) modifierType.getReferencedType());
-				resultDataType.setReference(); // Not sure if we should do/use this.
+				DemangledDataType newResult =
+					processDataType(resultDataType, (MDDataType) modifierType.getReferencedType());
+				newResult.setLValueReference();
 				if (modifierType.getCVMod().isConst()) {
-					resultDataType.setConst();
+					newResult.setConst();
 				}
 				if (modifierType.getCVMod().isVolatile()) {
-					resultDataType.setVolatile();
+					newResult.setVolatile();
 				}
 				if (modifierType.getCVMod().isPointer64()) {
-					resultDataType.setPointer64();
+					newResult.setPointer64();
 				}
-				return resultDataType;
+				return newResult;
 			}
 			// TODO: fix. Following is a kludge because DemangledObject has no DemangledReference
 			// with corresponding referencedType.
@@ -725,7 +728,7 @@ public class MDMangGhidra extends MDMang {
 				}
 				//Processing the referenced type (for Ghidra, and then setting attributes on it)
 				processDataType(resultDataType, (MDDataType) modifierType.getReferencedType());
-				resultDataType.setReference(); // Not sure if we should do/use this.
+				resultDataType.setRValueReference();
 				if (modifierType.getCVMod().isConst()) {
 					resultDataType.setConst();
 				}
@@ -808,7 +811,7 @@ public class MDMangGhidra extends MDMang {
 			}
 		}
 		else if (datatype instanceof MDReferenceType) {
-			resultDataType.setReference();
+			resultDataType.setLValueReference();
 		}
 		else if (datatype instanceof MDArrayBasicType) {
 			resultDataType.setArray(1);
