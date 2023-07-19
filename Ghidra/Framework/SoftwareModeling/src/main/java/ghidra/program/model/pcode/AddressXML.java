@@ -421,8 +421,8 @@ public class AddressXML {
 			}
 			else {
 				decoder.rewindAttributes();
-				Varnode[] pieces = Varnode.decodePieces(decoder);
-				storage = pcodeFactory.getJoinStorage(pieces);
+				Varnode.Join join = Varnode.decodePieces(decoder);
+				storage = pcodeFactory.getJoinStorage(join.pieces);
 			}
 		}
 		catch (InvalidInputException e) {
