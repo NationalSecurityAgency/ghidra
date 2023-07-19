@@ -38,10 +38,10 @@ public class MDCVMod extends MDParsableItem {
 	// with
 	// // old code
 	private static final String POINTER = "*";
-	private static final String REFERENCE = "&";
+	private static final String AMPERSAND = "&";
 	private static final String CARROT = "^";
 	private static final String PERCENT = "%";
-	private static final String REFREF = "&&";
+	private static final String DOUBLE_AMPERSAND = "&&";
 
 	private final static String PTR64 = " __ptr64";
 	private static final String UNALIGNED = "__unaligned ";
@@ -132,7 +132,7 @@ public class MDCVMod extends MDParsableItem {
 		plain,
 		pointer,
 		reference,
-		refref,
+		rightreference,
 		carrot, // TODO: eliminate with old code
 		percent, // TODO: eliminate with old code
 		functionpointer, // TODO: eliminate with old code
@@ -156,8 +156,8 @@ public class MDCVMod extends MDParsableItem {
 		modType = CvModifierType.reference;
 	}
 
-	public void setRefRefTemplateParameter() {
-		modType = CvModifierType.refref;
+	public void setRightReferenceTemplateParameter() {
+		modType = CvModifierType.rightreference;
 	}
 
 	// public void setCarrotType() {
@@ -828,10 +828,10 @@ public class MDCVMod extends MDParsableItem {
 					annotation = PERCENT;
 				}
 				else {
-					annotation = REFERENCE;
+					annotation = AMPERSAND;
 				}
 				break;
-			case refref:
+			case rightreference:
 				if (isCLIProperty()) { // highest precedence, even if isGC is set.
 					annotation = PERCENT;
 				}
@@ -839,7 +839,7 @@ public class MDCVMod extends MDParsableItem {
 					annotation = PERCENT;
 				}
 				else {
-					annotation = REFREF;
+					annotation = DOUBLE_AMPERSAND;
 				}
 				break;
 			case array:

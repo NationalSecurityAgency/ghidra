@@ -138,7 +138,7 @@ public class MDDataTypeParser {
 				break;
 			case 'Q':
 			case 'R':
-				MDDataRefRefType drrt = new MDDataRefRefType(dmang);
+				MDDataRightReferenceType drrt = new MDDataRightReferenceType(dmang);
 				dt = drrt;
 				if (isHighest && (code == 'R')) {
 					drrt.clearConst();

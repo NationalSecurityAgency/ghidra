@@ -502,6 +502,18 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
+	 * Gets the DYLD entry point address (if known)
+	 * 
+	 * @return The DYLD entry point address, or null if it is not known
+	 */
+	public Long getEntryPoint() {
+		if (!hasAccelerateInfo()) {
+			return accelerateInfoSize_dyldInCacheEntry;
+		}
+		return null;
+	}
+
+	/**
 	 * Gets the {@link List} of {@link DyldCacheMappingInfo}s.  Requires header to have been parsed.
 	 * 
 	 * @return The {@link List} of {@link DyldCacheMappingInfo}s

@@ -23,6 +23,7 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.dyld.*;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.*;
@@ -58,6 +59,42 @@ public class DyldCacheDylibExtractor {
 			new PackedSegments(dylibOffset, splitDyldCache, index, slideFixupMap, monitor);
 
 		return packedSegments.getByteProvider(fsrl);
+	}
+
+	/**
+	 * Gets a {@link Map} of {DyldCacheSlideInfoCommon}s to their corresponding 
+	 * {@link DyldCacheSlideFixup}s
+	 * 
+	 * @param splitDyldCache The {@link SplitDyldCache}
+	 * @param monitor {@link TaskMonitor}
+	 * @return A {@link Map} of {DyldCacheSlideInfoCommon}s to their corresponding 
+	 *   {@link DyldCacheSlideFixup}s
+	 * @throws CancelledException If the user cancelled the operation
+	 * @throws IOException If there was an IO-related issue with getting the slide fixups
+	 */
+	public static Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> getSlideFixups(
+			SplitDyldCache splitDyldCache, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap = new HashMap<>();
+		MessageLog log = new MessageLog();
+
+		for (int i = 0; i < splitDyldCache.size(); i++) {
+			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
+			ByteProvider bp = splitDyldCache.getProvider(i);
+			DyldArchitecture arch = header.getArchitecture();
+			for (DyldCacheSlideInfoCommon slideInfo : header.getSlideInfos()) {
+				try (ByteProvider wrapper = new ByteProviderWrapper(bp,
+					slideInfo.getMappingFileOffset(), slideInfo.getMappingSize())) {
+					BinaryReader wrapperReader =
+						new BinaryReader(wrapper, !arch.getEndianness().isBigEndian());
+					List<DyldCacheSlideFixup> fixups = slideInfo.getSlideFixups(wrapperReader,
+						arch.is64bit() ? 8 : 4, log, monitor);
+					slideFixupMap.put(slideInfo, fixups);
+				}
+			}
+		}
+
+		return slideFixupMap;
 	}
 
 	/**
