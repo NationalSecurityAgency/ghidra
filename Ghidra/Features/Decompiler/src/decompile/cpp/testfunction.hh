@@ -36,7 +36,8 @@ class FunctionTestProperty {
   int4 minimumMatch;		///< Minimum number of times property is expected to match
   int4 maximumMatch;		///< Maximum number of times property is expected to match
   string name;			///< Name of the test, to be printed in test summaries
-  std::regex pattern;		///< Regular expression to match against a line of output
+  vector<std::regex> pattern;	///< Regular expression(s) to match against a line(s) of output
+  mutable uint4 patnum;	///< Index of current pattern to match against
   mutable uint4 count;		///< Number of times regular expression has been seen
 public:
   string getName(void) const { return name; }	///< Get the name of the property

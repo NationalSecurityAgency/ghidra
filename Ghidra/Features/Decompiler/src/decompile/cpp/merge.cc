@@ -60,6 +60,34 @@ int4 BlockVarnode::findFront(int4 blocknum,const vector<BlockVarnode> &list)
   return min;
 }
 
+void StackAffectingOps::populate(void)
+
+{
+  for(int4 i=0;i<data.numCalls();++i) {
+    PcodeOp *op = data.getCallSpecs(i)->getOp();
+    addOp(op);
+  }
+  const list<LoadGuard> &storeGuard( data.getStoreGuards() );
+  for(list <LoadGuard>::const_iterator iter=storeGuard.begin();iter!=storeGuard.end();++iter) {
+    if ((*iter).isValid(CPUI_STORE))
+      addOp((*iter).getOp());
+  }
+  finalize();
+}
+
+bool StackAffectingOps::affectsTest(PcodeOp *op,Varnode *vn) const
+
+{
+  if (op->code() == CPUI_STORE) {
+    const LoadGuard *loadGuard = data.getStoreGuard(op);
+    if (loadGuard == (const LoadGuard *)0)
+      return true;
+    return loadGuard->isGuarded(vn->getAddr());
+  }
+  // We could conceivably do secondary testing of CALL ops here
+  return true;
+}
+
 /// \brief Required tests to merge HighVariables that are not Cover related
 ///
 /// This is designed to short circuit merge tests, when we know properties of the
@@ -1571,6 +1599,7 @@ void Merge::clear(void)
   testCache.clear();
   copyTrims.clear();
   protoPartial.clear();
+  stackAffectingOps.clear();
 }
 
 /// \brief Inflate the Cover of a given Varnode with a HighVariable
