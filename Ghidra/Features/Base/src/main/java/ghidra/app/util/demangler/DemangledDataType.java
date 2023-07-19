@@ -47,6 +47,7 @@ public class DemangledDataType extends DemangledType {
 
 	public static final String ARR_NOTATION = "[]";
 	public static final String REF_NOTATION = "&";
+	public static final String RIGHT_REF_NOTATION = "&&";
 	public static final String PTR_NOTATION = "*";
 
 	public static final String VOLATILE = "volatile";
@@ -100,7 +101,10 @@ public class DemangledDataType extends DemangledType {
 	private boolean isComplex;
 	private boolean isEnum;
 	private boolean isPointer64;
-	private boolean isReference;
+	// Cannot be both lref and rref.  Prior to C++11, we only had reference (& operator).
+	// This is now distinguished as left-value reference (l-value reference or lref), and there
+	// is now an additional right-value reference (r-value reference or rref) with the && operator.
+	private boolean isLValueReference;
 	private boolean isRValueReference;
 	private boolean isSigned;
 	private boolean isStruct;
@@ -208,13 +212,20 @@ public class DemangledDataType extends DemangledType {
 		}
 
 		int numPointers = getPointerLevels();
-		if (isReference()) {
-			numPointers++;
-		}
 
 		for (int i = 0; i < numPointers; ++i) {
 			dt = PointerDataType.getPointer(dt, dataTypeManager);
 		}
+
+		if (isLValueReference()) {
+			// Placeholder in prep for more lref work
+			dt = PointerDataType.getPointer(dt, dataTypeManager);
+		}
+		else if (isRValueReference()) {
+			// Placeholder in prep for more rref work
+			dt = PointerDataType.getPointer(dt, dataTypeManager);
+		}
+
 		return dt;
 	}
 
@@ -463,7 +474,13 @@ public class DemangledDataType extends DemangledType {
 	}
 
 	public void setReference() {
-		isReference = true;
+		setLValueReference();
+	}
+
+	public void setLValueReference() {
+		isLValueReference = true;
+		// Cannot be both
+		isRValueReference = false;
 	}
 
 	/**
@@ -471,6 +488,8 @@ public class DemangledDataType extends DemangledType {
 	 */
 	public void setRValueReference() {
 		isRValueReference = true;
+		// Cannot be both
+		isLValueReference = false;
 	}
 
 	public void setSigned() {
@@ -550,7 +569,15 @@ public class DemangledDataType extends DemangledType {
 	}
 
 	public boolean isReference() {
-		return isReference;
+		return isLValueReference() || isRValueReference();
+	}
+
+	public boolean isLValueReference() {
+		return isLValueReference;
+	}
+
+	public boolean isRValueReference() {
+		return isRValueReference;
 	}
 
 	public boolean isSigned() {
@@ -697,11 +724,11 @@ public class DemangledDataType extends DemangledType {
 			buffer.append(SPACE + PTR_NOTATION);
 		}
 
-		if (isReference) {
+		if (isLValueReference) {
 			buffer.append(SPACE + REF_NOTATION);
-			if (isRValueReference) {
-				buffer.append(REF_NOTATION); // &&
-			}
+		}
+		else if (isRValueReference) {
+			buffer.append(SPACE + RIGHT_REF_NOTATION);
 		}
 
 		// the order of __ptr64 and __restrict can vary--with fuzzing...
