@@ -27,14 +27,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 
-import org.apache.logging.log4j.*;
-import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.*;
 
 import docking.widgets.filter.FilterOptions;
 import docking.widgets.table.threaded.ThreadedTableModelStub;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.LoggingInitialization;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.datastruct.Accumulator;
@@ -55,16 +54,11 @@ public class SelectionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private Logger logger;
 
-	public SelectionManagerTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
-		LoggingInitialization.initializeLoggingSystem();
 		logger = LogManager.getLogger(SelectionManager.class);
-		Configurator.setLevel(logger.getName(), Level.DEBUG);
+//		setLogLevel(SelectionManager.class, Level.DEBUG);
 
 		logger.trace("\n\nsetUp(): " + testName.getMethodName());
 
