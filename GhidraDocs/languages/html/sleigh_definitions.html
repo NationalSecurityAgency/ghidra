@@ -1,24 +1,24 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>4. Basic Definitions</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>4.Â Basic Definitions</title>
 <link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="up" href="sleigh.html" title="SLEIGH">
-<link rel="prev" href="sleigh_preprocessing.html" title="3. Preprocessing">
-<link rel="next" href="sleigh_symbols.html" title="5. Introduction to Symbols">
+<link rel="prev" href="sleigh_preprocessing.html" title="3.Â Preprocessing">
+<link rel="next" href="sleigh_symbols.html" title="5.Â Introduction to Symbols">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="navheader">
 <table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">4. Basic Definitions</th></tr>
+<tr><th colspan="3" align="center">4.Â Basic Definitions</th></tr>
 <tr>
 <td width="20%" align="left">
-<a accesskey="p" href="sleigh_preprocessing.html">Prev</a> </td>
-<th width="60%" align="center"> </th>
-<td width="20%" align="right"> <a accesskey="n" href="sleigh_symbols.html">Next</a>
+<a accesskey="p" href="sleigh_preprocessing.html">Prev</a>Â </td>
+<th width="60%" align="center">Â </th>
+<td width="20%" align="right">Â <a accesskey="n" href="sleigh_symbols.html">Next</a>
 </td>
 </tr>
 </table>
@@ -26,15 +26,15 @@
 </div>
 <div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="sleigh_definitions"></a>4. Basic Definitions</h2></div></div></div>
+<a name="sleigh_definitions"></a>4.Â Basic Definitions</h2></div></div></div>
 <p>
 SLEIGH files must start with all the definitions needed by the rest of
 the specification. All definition statements start with the keyword
-<span class="bold"><strong>define</strong></span> and end with a semicolon &#8216;;&#8217;.
+<span class="bold"><strong>define</strong></span> and end with a semicolon â€˜;â€™.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_endianess_definition"></a>4.1. Endianess Definition</h3></div></div></div>
+<a name="sleigh_endianess_definition"></a>4.1.Â Endianess Definition</h3></div></div></div>
 <p>
 The first definition in any SLEIGH specification must be for endianess. Either
 </p>
@@ -46,7 +46,7 @@ define endian=little;
 This defines how the processor interprets contiguous sequences of
 bytes as integers or other values and globally affects values across
 all address spaces. It also affects how integer fields
-within an instruction are interpreted, (see <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1. Defining Tokens and Fields">Section 6.1, &#8220;Defining Tokens and Fields&#8221;</a>),
+within an instruction are interpreted, (see <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1.Â Defining Tokens and Fields">SectionÂ 6.1, â€œDefining Tokens and Fieldsâ€</a>),
 although it is possible to override this setting in the rare case that endianess is
 different for data versus instruction encoding.
 The specification designer generally only needs to worry about
@@ -56,7 +56,7 @@ otherwise the specification language hides endianess issues.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_alignment_definition"></a>4.2. Alignment Definition</h3></div></div></div>
+<a name="sleigh_alignment_definition"></a>4.2.Â Alignment Definition</h3></div></div></div>
 <p>
 An alignment definition looks like
 </p>
@@ -73,7 +73,7 @@ instruction as an error.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_space_definitions"></a>4.3. Space Definitions</h3></div></div></div>
+<a name="sleigh_space_definitions"></a>4.3.Â Space Definitions</h3></div></div></div>
 <p>
 The definition of an address space looks like
 </p>
@@ -115,7 +115,7 @@ and store from dynamic pointers into the space.
 </p>
 <p>
 A space of type <span class="bold"><strong>register_space</strong></span> is
-intended to model the processor&#8217;s general-purpose registers. In terms
+intended to model the processorâ€™s general-purpose registers. In terms
 of accessing and manipulating data within the space, SLEIGH and p-code
 make no distinction between the
 type <span class="bold"><strong>ram_space</strong></span> or the
@@ -157,8 +157,8 @@ At least one space needs to be labeled with
 the <span class="bold"><strong>default</strong></span> attribute. This should be
 the space that the processor accesses with its main address bus. In
 terms of the rest of the specification file, this sets the default
-space referred to by the &#8216;*&#8217; operator (see
-<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2. The '*' Operator">Section 7.7.1.2, &#8220;The '*' Operator&#8221;</a>). It also has meaning to
+space referred to by the â€˜*â€™ operator (see
+<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2.Â The '*' Operator">SectionÂ 7.7.1.2, â€œThe '*' Operatorâ€</a>). It also has meaning to
 GHIDRA.
 </p>
 <p>
@@ -184,7 +184,7 @@ bits).
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_naming_registers"></a>4.4. Naming Registers</h3></div></div></div>
+<a name="sleigh_naming_registers"></a>4.4.Â Naming Registers</h3></div></div></div>
 <p>
 The general purpose registers of the processors can be named with the
 following define syntax:
@@ -194,8 +194,8 @@ define <span class="bold"><strong>spacename</strong></span> offset=<span class="
 </pre></div>
 <p>
 A <span class="emphasis"><em>stringlist</em></span> is either a single string or a white
-space separated list of strings in square brackets &#8216;[&#8217; and &#8216;]&#8217;. A
-string of just &#8220;_&#8221; indicates a skip in the sequence for that
+space separated list of strings in square brackets â€˜[â€™ and â€˜]â€™. A
+string of just â€œ_â€ indicates a skip in the sequence for that
 definition. The offset corresponding to that position in the list of
 names will not have a varnode defined at it.
 </p>
@@ -228,7 +228,7 @@ define register offset=0 size=1
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_bitrange_registers"></a>4.5. Bit Range Registers</h3></div></div></div>
+<a name="sleigh_bitrange_registers"></a>4.5.Â Bit Range Registers</h3></div></div></div>
 <p>
 Many processors define registers that either consist of a single bit
 or otherwise don't use an integral number of bytes. A recurring
@@ -245,7 +245,7 @@ models because the smallest object they can manipulate directly is a
 byte. In order to manipulate single bits, p-code must use a
 combination of bitwise logical, extension, and truncation
 operations. So a register defined as a bit range is not really a
-varnode as described in <a class="xref" href="sleigh.html#sleigh_varnodes" title="1.2. Varnodes">Section 1.2, &#8220;Varnodes&#8221;</a>, but is
+varnode as described in <a class="xref" href="sleigh.html#sleigh_varnodes" title="1.2.Â Varnodes">SectionÂ 1.2, â€œVarnodesâ€</a>, but is
 really just a signal to the SLEIGH compiler to fill in the proper
 operators to simulate the bit manipulation. Using this feature may
 greatly increase the complexity of the compiled specification with
@@ -265,7 +265,7 @@ register. In this example, <span class="emphasis"><em>statusreg</em></span> is d
 first as a 4 byte register, and the bit registers themselves are built
 by the following <span class="bold"><strong>define bitrange</strong></span>
 statement. A single bit register definition consists of an identifier
-for the register, followed by &#8216;=&#8217;, then the name of the register
+for the register, followed by â€˜=â€™, then the name of the register
 containing the bits, and finally a pair of numbers in square
 brackets. The first number indicates the lowest significant bit in the
 containing register of the bit range, where bit 0 is the least
@@ -282,11 +282,11 @@ bit of <span class="emphasis"><em>statusreg</em></span> respectively.
 <p>
 The syntax for defining a new bit register is consistent with the
 pseudo bit range operator, described in
-<a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5. Bit Range Operator">Section 7.7.1.5, &#8220;Bit Range Operator&#8221;</a>, and the resulting symbol
+<a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5.Â Bit Range Operator">SectionÂ 7.7.1.5, â€œBit Range Operatorâ€</a>, and the resulting symbol
 is really just a placeholder for this operator. Whenever SLEIGH sees
 this symbol it generates p-code precisely as if the designer had used
 the bit range operator
-instead. <a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5. Bit Range Operator">Section 7.7.1.5, &#8220;Bit Range Operator&#8221;</a>, provides some
+instead. <a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5.Â Bit Range Operator">SectionÂ 7.7.1.5, â€œBit Range Operatorâ€</a>, provides some
 additional details about how p-code is generated, which apply to the
 use of bit range registers.
 </p>
@@ -299,14 +299,14 @@ used as an alternate syntax for defining overlapping registers.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_userdefined_operations"></a>4.6. User-Defined Operations</h3></div></div></div>
+<a name="sleigh_userdefined_operations"></a>4.6.Â User-Defined Operations</h3></div></div></div>
 <p>
 The specification designer can define new p-code operations using
 a <span class="bold"><strong>define pcodeop</strong></span> statement.  This
 statement automatically reserves an internal form for the new p-code
 operation and associates an identifier with it. This identifier can
 then be used in semantic expressions (see
-<a class="xref" href="sleigh_constructors.html#sleigh_userdef_op" title="7.7.1.8. User-Defined Operations">Section 7.7.1.8, &#8220;User-Defined Operations&#8221;</a>).  The following example defines a
+<a class="xref" href="sleigh_constructors.html#sleigh_userdef_op" title="7.7.1.8.Â User-Defined Operations">SectionÂ 7.7.1.8, â€œUser-Defined Operationsâ€</a>).  The following example defines a
 new p-code operation <span class="emphasis"><em>arctan</em></span>.
 </p>
 <div class="informalexample"><pre class="programlisting">
@@ -338,15 +338,15 @@ actions that are too esoteric or too complicated to implement.
 <table width="100%" summary="Navigation footer">
 <tr>
 <td width="40%" align="left">
-<a accesskey="p" href="sleigh_preprocessing.html">Prev</a> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right"> <a accesskey="n" href="sleigh_symbols.html">Next</a>
+<a accesskey="p" href="sleigh_preprocessing.html">Prev</a>Â </td>
+<td width="20%" align="center">Â </td>
+<td width="40%" align="right">Â <a accesskey="n" href="sleigh_symbols.html">Next</a>
 </td>
 </tr>
 <tr>
-<td width="40%" align="left" valign="top">3. Preprocessing </td>
+<td width="40%" align="left" valign="top">3.Â PreprocessingÂ </td>
 <td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
-<td width="40%" align="right" valign="top"> 5. Introduction to Symbols</td>
+<td width="40%" align="right" valign="top">Â 5.Â Introduction to Symbols</td>
 </tr>
 </table>
 </div>
