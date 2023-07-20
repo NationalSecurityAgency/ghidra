@@ -20,7 +20,8 @@ import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.BitSet;
+import java.util.Date;
 
 import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.*;
@@ -33,13 +34,10 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "ext4", description = "EXT4", factory = Ext4FileSystemFactory.class)
-public class Ext4FileSystem implements GFileSystem {
+public class Ext4FileSystem extends AbstractFileSystem<Ext4File> {
 
 	public static final Charset EXT4_DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
-	private FileSystemIndexHelper<Ext4File> fsih;
-	private FileSystemRefManager refManager = new FileSystemRefManager(this);
-	private FSRLRoot fsrl;
 	private int blockSize;
 	private ByteProvider provider;
 	private String volumeName;
@@ -47,8 +45,7 @@ public class Ext4FileSystem implements GFileSystem {
 	private Ext4SuperBlock superBlock;
 
 	public Ext4FileSystem(FSRLRoot fsrl, ByteProvider provider) {
-		this.fsrl = fsrl;
-		this.fsih = new FileSystemIndexHelper<>(this, fsrl);
+		super(fsrl, FileSystemService.getInstance());
 		this.provider = provider;
 	}
 
@@ -95,8 +92,8 @@ public class Ext4FileSystem implements GFileSystem {
 		monitor.initialize(usedInodeCount);
 
 		BitSet processedInodes = new BitSet(inodes.length);
-		processDirectory(inodes[Ext4Constants.EXT4_INODE_INDEX_ROOTDIR], fsih.getRootDir(), inodes,
-			processedInodes, monitor);
+		processDirectory(inodes[Ext4Constants.EXT4_INODE_INDEX_ROOTDIR], fsIndex.getRootDir(),
+			inodes, processedInodes, monitor);
 		checkUnprocessedInodes(inodes, processedInodes);
 	}
 
@@ -160,8 +157,8 @@ public class Ext4FileSystem implements GFileSystem {
 			return;
 		}
 
-		GFile gfile = fsih.storeFileWithParent(name, parentDir, -1, inode.isDir(), inode.getSize(),
-			new Ext4File(name, inode));
+		GFile gfile = fsIndex.storeFileWithParent(name, parentDir, -1, inode.isDir(),
+			inode.getSize(), new Ext4File(name, inode));
 		if (processedInodes.get(inodeNumber)) {
 			// this inode was already seen and handled earlier. adding a second filename to the fsih is
 			// okay, but don't try to process as a directory, which shouldn't normally be possible
@@ -175,20 +172,10 @@ public class Ext4FileSystem implements GFileSystem {
 	}
 
 	@Override
-	public int getFileCount() {
-		return fsih.getFileCount();
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsih.getListing(directory);
-	}
-
-	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		FileAttributes result = new FileAttributes();
 
-		Ext4File ext4File = fsih.getMetadata(file);
+		Ext4File ext4File = fsIndex.getMetadata(file);
 		if (ext4File != null) {
 			Ext4Inode inode = ext4File.getInode();
 			result.add(NAME_ATTR, ext4File.getName());
@@ -237,7 +224,7 @@ public class Ext4FileSystem implements GFileSystem {
 				throw new IOException(
 					"Symlink too long: " + file.getPath() + ", " + symlinkDebugPath);
 			}
-			Ext4File extFile = fsih.getMetadata(currentFile);
+			Ext4File extFile = fsIndex.getMetadata(currentFile);
 			if (extFile == null) {
 				throw new IOException("Missing Ext4 metadata for " + currentFile.getPath());
 			}
@@ -252,6 +239,7 @@ public class Ext4FileSystem implements GFileSystem {
 				if (currentFile.getParentFile() == null) {
 					throw new IOException("No parent file for " + currentFile);
 				}
+				// TODO: doesn't handle "../../" traversal yet
 				symlinkDestPath =
 					FSUtilities.appendPath(currentFile.getParentFile().getPath(),
 						symlinkDestPath);
@@ -273,7 +261,7 @@ public class Ext4FileSystem implements GFileSystem {
 	}
 
 	private Ext4Inode getInodeFor(GFile file, TaskMonitor monitor) throws IOException {
-		Ext4File extFile = fsih.getMetadata(file);
+		Ext4File extFile = fsIndex.getMetadata(file);
 		if (extFile == null) {
 			return null;
 		}
@@ -362,32 +350,17 @@ public class Ext4FileSystem implements GFileSystem {
 		refManager.onClose();
 		provider.close();
 		provider = null;
-		fsih.clear();
+		fsIndex.clear();
 	}
 
 	@Override
 	public String getName() {
-		return fsrl.getContainer().getName() + " - " + volumeName + " - " + uuid;
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsrl;
+		return "%s - %s - %s".formatted(fsFSRL.getContainer().getName(), volumeName, uuid);
 	}
 
 	@Override
 	public boolean isClosed() {
 		return provider == null;
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsih.lookup(path);
 	}
 
 }
