@@ -19,8 +19,8 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.docking.settings.FormatSettingsDefinition;
@@ -32,6 +32,7 @@ import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.NameTransformer;
+import ghidra.util.UniversalID;
 
 /**
  *
@@ -39,6 +40,16 @@ import ghidra.program.model.symbol.NameTransformer;
  * 
  */
 public class PcodeDataTypeManager {
+
+	// Mask for routing bits at head of a data-type's temporary id
+	private static final long TEMP_ID_MASK = 0xC000000000000000L;
+	// Bits at the head of a temporary id indicating a builtin data-type, distinguished from a DataTypeDB
+	private static final long BUILTIN_ID_HEADER = 0xC000000000000000L;
+	// Bits at the head of a temporary id indicating a non-builtin and non-database data-type
+	private static final long NONDB_ID_HEADER = 0x8000000000000000L;
+
+	private static final long DEFAULT_DECOMPILER_ID = 0xC000000000000000L;	// ID for "undefined" (decompiler side)
+	private static final long CODE_DECOMPILER_ID = 0xE000000000000001L;		// ID for internal "code" data-type
 
 	/**
 	 * A mapping between a DataType and its (name,id) on the decompiler side
@@ -51,47 +62,23 @@ public class PcodeDataTypeManager {
 		public boolean isUtf;		// Is this a UTF encoded character data-type
 		public long id;				// Calculated id for type
 
-		public TypeMap(DecompilerLanguage lang, DataType d, String meta, boolean isChar,
-				boolean isUtf) {
+		public TypeMap(DecompilerLanguage lang, BuiltIn d, String meta, boolean isChar,
+				boolean isUtf, DataTypeManager manager) {
 			dt = d;
-			if (d instanceof BuiltIn) {
-				name = ((BuiltIn) d).getDecompilerDisplayName(lang);
-			}
-			else {
-				name = d.getName();
-			}
+			name = d.getDecompilerDisplayName(lang);
 			metatype = meta;
 			this.isChar = isChar;
 			this.isUtf = isUtf;
-			id = hashName(name);
+			id = manager.getID(d.clone(manager)) | BUILTIN_ID_HEADER;
 		}
 
-		public TypeMap(DataType d, String nm, String meta, boolean isChar, boolean isUtf) {
+		public TypeMap(DataType d, String nm, String meta, boolean isChar, boolean isUtf, long id) {
 			dt = d;
 			name = nm;
 			metatype = meta;
 			this.isChar = isChar;
 			this.isUtf = isUtf;
-			id = hashName(name);
-		}
-
-		/**
-		 * Hashing scheme for decompiler core datatypes that are not in the database
-		 * Must match Datatype::hashName in the decompiler
-		 * @param name is base name of the datatype
-		 * @return the hash value
-		 */
-		public static long hashName(String name) {
-			long res = 123;
-			for (int i = 0; i < name.length(); ++i) {
-				res = (res << 8) | (res >>> 56);
-				res += name.charAt(i);
-				if ((res & 1) == 0) {
-					res ^= 0x00000000feabfeabL; // Some kind of feedback
-				}
-			}
-			res |= 0x8000000000000000L; // Make sure the hash is negative (to distinguish it from database id's)
-			return res;
+			this.id = id;
 		}
 	}
 
@@ -105,8 +92,16 @@ public class PcodeDataTypeManager {
 	// Some C header conventions use an empty prototype to mean a
 	// varargs function. Locking in void can cause data-flow to get
 	// truncated. This boolean controls whether we lock it in or not
-	private TypeMap[] coreBuiltin;				// Core decompiler datatypes and how they map to full datatype objects
+	private Map<Long, TypeMap> coreBuiltin;			// Core decompiler datatypes and how they map to full datatype objects
+	private Map<Long, DataType> mapIDToNonDBDataType = null;	// Map from temporary Id to non-database data-types
+	private Map<UniversalID, Long> mapNonDBDataTypeToID = null;	// Map from a data-type's universal Id to its temporary Id
+	private long tempIDCounter = 0;				// Counter for assigning data-type temporary Id
 	private VoidDataType voidDt;
+	private TypeMap charMap;
+	private TypeMap wCharMap;
+	private TypeMap wChar16Map;
+	private TypeMap wChar32Map;
+	private TypeMap byteMap;
 	private int pointerWordSize;				// Wordsize to assign to all pointer datatypes
 
 	public PcodeDataTypeManager(Program prog, NameTransformer simplifier) {
@@ -121,7 +116,6 @@ public class PcodeDataTypeManager {
 			voidInputIsVarargs = false;
 		}
 		generateCoreTypes();
-		sortCoreTypes();
 		pointerWordSize = ((SleighLanguage) prog.getLanguage()).getDefaultPointerWordSize();
 	}
 
@@ -146,30 +140,29 @@ public class PcodeDataTypeManager {
 	 * @return the data-type object or null if no matching data-type exists
 	 */
 	public DataType findBaseType(String nm, long id) {
-		if (id != 0) {
-			if (id > 0) {
-				DataType dt = progDataTypes.getDataType(id);
-				if (dt != null) {
-					return dt;
+		DataType dt = null;
+		if (id > 0) {
+			dt = progDataTypes.getDataType(id);
+		}
+		else if ((id & TEMP_ID_MASK) == BUILTIN_ID_HEADER) {
+			TypeMap mapDt = coreBuiltin.get(id);
+			if (mapDt == null) {
+				if (id == (DataTypeManager.BAD_DATATYPE_ID | BUILTIN_ID_HEADER)) {
+					dt = BadDataType.dataType;
+				}
+				else {
+					// Reaching here, the id indicates a BuiltIn (that is not a core data-type)
+					dt = builtInDataTypes.getDataType(id ^ BUILTIN_ID_HEADER);
 				}
 			}
 			else {
-				int index = findTypeById(id);
-				if (index >= 0) {
-					return coreBuiltin[index].dt;
-				}
+				dt = mapDt.dt;
 			}
 		}
-		// If we don't have a good id, it may be a builtin type that is not yet placed in the program
-		ArrayList<DataType> datatypes = new ArrayList<>();
-		builtInDataTypes.findDataTypes(nm, datatypes);
-		if (datatypes.size() != 0) {
-			return datatypes.get(0).clone(progDataTypes);
+		else if ((id & TEMP_ID_MASK) == NONDB_ID_HEADER && mapIDToNonDBDataType != null) {
+			dt = mapIDToNonDBDataType.get(id);
 		}
-		if (nm.equals("code")) {		// A special datatype, the decompiler needs
-			return DataType.DEFAULT;
-		}
-		return null;
+		return dt;
 	}
 
 	/**
@@ -772,7 +765,8 @@ public class PcodeDataTypeManager {
 		encoder.writeString(ATTRIB_NAME, "unknown_data1");
 		encoder.writeSignedInteger(ATTRIB_OFFSET, 0);
 		encoder.openElement(ELEM_TYPEREF);
-		encoder.writeString(ATTRIB_NAME, "byte");
+		encoder.writeString(ATTRIB_NAME, byteMap.name);
+		encoder.writeUnsignedInteger(ATTRIB_ID, byteMap.id);
 		encoder.closeElement(ELEM_TYPEREF);
 		encoder.closeElement(ELEM_FIELD);
 		size -= 1;
@@ -785,7 +779,8 @@ public class PcodeDataTypeManager {
 		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
 		encoder.openElement(ELEM_TYPEREF);
-		encoder.writeString(ATTRIB_NAME, "byte");
+		encoder.writeString(ATTRIB_NAME, byteMap.name);
+		encoder.writeUnsignedInteger(ATTRIB_ID, byteMap.id);
 		encoder.closeElement(ELEM_TYPEREF);
 		encoder.closeElement(ELEM_TYPE);
 		encoder.closeElement(ELEM_FIELD);
@@ -923,20 +918,9 @@ public class PcodeDataTypeManager {
 			return;
 		}
 		encoder.openElement(ELEM_TYPEREF);
-		if (type instanceof BuiltIn) {
-			encoder.writeString(ATTRIB_NAME,
-				((BuiltIn) type).getDecompilerDisplayName(displayLanguage));
-		}
-		else {
-			encoder.writeString(ATTRIB_NAME, type.getName());
-			// Get id of type associated with program, will return -1 if not associated (builtin)
-			long id = progDataTypes.getID(type);
-			if (id > 0) {
-				encoder.writeUnsignedInteger(ATTRIB_ID, id);
-			}
-			if (type.getLength() <= 0 && size > 0) {
-				encoder.writeSignedInteger(ATTRIB_SIZE, size);
-			}
+		encodeNameIdAttributes(encoder, type);
+		if (type.getLength() <= 0 && size > 0) {
+			encoder.writeSignedInteger(ATTRIB_SIZE, size);
 		}
 		encoder.closeElement(ELEM_TYPEREF);
 	}
@@ -953,6 +937,42 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
+	 * Assign a temporary id to a data-type.  The data-type is assumed to not be BuiltIn
+	 * or a DataTypeDB.  The id allows DataType objects to be associated data-types returned by the
+	 * decompiler process and is only valid until the start of the next function decompilation.
+	 * @param type is the data-type to be assigned
+	 * @return the temporary id
+	 */
+	private long assignTemporaryId(DataType type) {
+		Long tempId;
+		if (mapNonDBDataTypeToID == null || mapIDToNonDBDataType == null) {
+			mapNonDBDataTypeToID = new HashMap<>();
+			mapIDToNonDBDataType = new HashMap<>();
+		}
+		else {
+			tempId = mapNonDBDataTypeToID.get(type.getUniversalID());
+			if (tempId != null) {
+				return tempId.longValue();
+			}
+		}
+		tempIDCounter += 1;
+		tempId = Long.valueOf(tempIDCounter | NONDB_ID_HEADER);
+		mapNonDBDataTypeToID.put(type.getUniversalID(), tempId);
+		mapIDToNonDBDataType.put(tempId, type);
+		return tempId.longValue();
+	}
+
+	/**
+	 * Throw out any temporary ids (from previous function decompilation) and
+	 * reset the counter.
+	 */
+	public void clearTemporaryIds() {
+		mapNonDBDataTypeToID = null;
+		mapIDToNonDBDataType = null;
+		tempIDCounter = 0;
+	}
+
+	/**
 	 * Encode the name and id associated with a given data-type to a stream as attributes
 	 * of the current element.
 	 * @param encoder is the stream encoder
@@ -960,9 +980,15 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeNameIdAttributes(Encoder encoder, DataType type) throws IOException {
+		long id;
 		if (type instanceof BuiltIn) {
-			encoder.writeString(ATTRIB_NAME,
-				((BuiltIn) type).getDecompilerDisplayName(displayLanguage));
+			String nm = ((BuiltIn) type).getDecompilerDisplayName(displayLanguage);
+			encoder.writeString(ATTRIB_NAME, nm);
+			id = builtInDataTypes.getID(type.clone(builtInDataTypes)) | BUILTIN_ID_HEADER;
+		}
+		else if (type instanceof DefaultDataType) {
+			encoder.writeString(ATTRIB_NAME, type.getName());
+			id = DEFAULT_DECOMPILER_ID;
 		}
 		else {
 			String name = type.getName();
@@ -971,11 +997,12 @@ public class PcodeDataTypeManager {
 			if (!name.equals(displayName)) {
 				encoder.writeString(ATTRIB_LABEL, displayName);
 			}
-			long id = progDataTypes.getID(type);
-			if (id > 0) {
-				encoder.writeUnsignedInteger(ATTRIB_ID, id);
+			id = progDataTypes.getID(type);
+			if (id <= 0) {
+				id = assignTemporaryId(type);
 			}
 		}
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
 	}
 
 	/**
@@ -987,31 +1014,36 @@ public class PcodeDataTypeManager {
 	private void encodeCharTypeRef(Encoder encoder, int size) throws IOException {
 		if (size == dataOrganization.getCharSize()) {
 			encoder.openElement(ELEM_TYPEREF);
-			encoder.writeString(ATTRIB_NAME, "char");	// could have size 1 or 2
+			encoder.writeString(ATTRIB_NAME, charMap.name);	// could have size 1 or 2
+			encoder.writeUnsignedInteger(ATTRIB_ID, charMap.id);
 			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == dataOrganization.getWideCharSize()) {
 			encoder.openElement(ELEM_TYPEREF);
-			encoder.writeString(ATTRIB_NAME, "wchar_t");
+			encoder.writeString(ATTRIB_NAME, wCharMap.name);
+			encoder.writeUnsignedInteger(ATTRIB_ID, wCharMap.id);
 			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 2) {
 			encoder.openElement(ELEM_TYPEREF);
-			encoder.writeString(ATTRIB_NAME, "wchar16");
+			encoder.writeString(ATTRIB_NAME, wChar16Map.name);
+			encoder.writeUnsignedInteger(ATTRIB_ID, wChar16Map.id);
 			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 4) {
 			encoder.openElement(ELEM_TYPEREF);
-			encoder.writeString(ATTRIB_NAME, "wchar32");
+			encoder.writeString(ATTRIB_NAME, wChar32Map.name);
+			encoder.writeUnsignedInteger(ATTRIB_ID, wChar32Map.id);
 			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 1) {
 			encoder.openElement(ELEM_TYPEREF);
-			encoder.writeString(ATTRIB_NAME, "byte");
+			encoder.writeString(ATTRIB_NAME, byteMap.name);
+			encoder.writeUnsignedInteger(ATTRIB_ID, byteMap.id);
 			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
@@ -1101,28 +1133,33 @@ public class PcodeDataTypeManager {
 	 */
 	private void generateCoreTypes() {
 		voidDt = new VoidDataType(progDataTypes);
-		ArrayList<TypeMap> typeList = new ArrayList<>();
-		typeList.add(new TypeMap(DataType.DEFAULT, "undefined", "unknown", false, false));
+		coreBuiltin = new HashMap<Long, TypeMap>();
+		TypeMap type = new TypeMap(DataType.DEFAULT, "undefined", "unknown", false, false,
+			DEFAULT_DECOMPILER_ID);
+		coreBuiltin.put(type.id, type);
 
-		for (DataType dt : Undefined.getUndefinedDataTypes()) {
-			typeList.add(new TypeMap(displayLanguage, dt, "unknown", false, false));
+		for (BuiltIn dt : Undefined.getUndefinedDataTypes()) {
+			type = new TypeMap(displayLanguage, dt, "unknown", false, false, builtInDataTypes);
+			coreBuiltin.put(type.id, type);
 		}
-		for (DataType dt : AbstractIntegerDataType.getSignedDataTypes(progDataTypes)) {
-			typeList.add(
-				new TypeMap(displayLanguage, dt.clone(progDataTypes), "int", false, false));
+		for (BuiltIn dt : AbstractIntegerDataType.getSignedDataTypes(progDataTypes)) {
+			type = new TypeMap(displayLanguage, dt, "int", false, false, builtInDataTypes);
+			coreBuiltin.put(type.id, type);
 		}
-		for (DataType dt : AbstractIntegerDataType.getUnsignedDataTypes(progDataTypes)) {
-			typeList.add(
-				new TypeMap(displayLanguage, dt.clone(progDataTypes), "uint", false, false));
+		for (BuiltIn dt : AbstractIntegerDataType.getUnsignedDataTypes(progDataTypes)) {
+			type = new TypeMap(displayLanguage, dt, "uint", false, false, builtInDataTypes);
+			coreBuiltin.put(type.id, type);
 		}
-		for (DataType dt : AbstractFloatDataType.getFloatDataTypes(progDataTypes)) {
-			typeList.add(new TypeMap(displayLanguage, dt, "float", false, false));
+		for (BuiltIn dt : AbstractFloatDataType.getFloatDataTypes(progDataTypes)) {
+			type = new TypeMap(displayLanguage, dt, "float", false, false, builtInDataTypes);
+			coreBuiltin.put(type.id, type);
 		}
 
-		typeList.add(new TypeMap(DataType.DEFAULT, "code", "code", false, false));
+		type = new TypeMap(DataType.DEFAULT, "code", "code", false, false, CODE_DECOMPILER_ID);
+		coreBuiltin.put(type.id, type);
 
 		// Set "char" datatype
-		DataType charDataType = new CharDataType(progDataTypes);
+		BuiltIn charDataType = new CharDataType(progDataTypes);
 
 		String charMetatype = null;
 		boolean isChar = false;
@@ -1139,57 +1176,39 @@ public class PcodeDataTypeManager {
 		else {
 			isUtf = true;
 		}
-		typeList.add(new TypeMap(displayLanguage, charDataType, charMetatype, isChar, isUtf));
+		charMap = new TypeMap(displayLanguage, charDataType, charMetatype, isChar, isUtf,
+			builtInDataTypes);
+		coreBuiltin.put(charMap.id, charMap);
 
 		// Set up the "wchar_t" datatype
 		WideCharDataType wideDataType = new WideCharDataType(progDataTypes);
-		typeList.add(new TypeMap(displayLanguage, wideDataType, "int", false, true));
+		wCharMap = new TypeMap(displayLanguage, wideDataType, "int", false, true, builtInDataTypes);
+		coreBuiltin.put(wCharMap.id, wCharMap);
 
 		if (wideDataType.getLength() != 2) {
-			typeList.add(new TypeMap(displayLanguage, new WideChar16DataType(progDataTypes), "int",
-				false, true));
+			wChar16Map = new TypeMap(displayLanguage, new WideChar16DataType(progDataTypes), "int",
+				false, true, builtInDataTypes);
+			coreBuiltin.put(wChar16Map.id, wChar16Map);
+		}
+		else {
+			wChar16Map = wCharMap;
 		}
 		if (wideDataType.getLength() != 4) {
-			typeList.add(new TypeMap(displayLanguage, new WideChar32DataType(progDataTypes), "int",
-				false, true));
+			wChar32Map = new TypeMap(displayLanguage, new WideChar32DataType(progDataTypes), "int",
+				false, true, builtInDataTypes);
+			coreBuiltin.put(wChar32Map.id, wChar32Map);
+		}
+		else {
+			wChar32Map = wCharMap;
 		}
 
-		DataType boolDataType = new BooleanDataType(progDataTypes);
-		typeList.add(new TypeMap(displayLanguage, boolDataType, "bool", false, false));
+		BuiltIn boolDataType = new BooleanDataType(progDataTypes);
+		type = new TypeMap(displayLanguage, boolDataType, "bool", false, false, builtInDataTypes);
+		coreBuiltin.put(type.id, type);
 
-		coreBuiltin = new TypeMap[typeList.size()];
-		typeList.toArray(coreBuiltin);
-	}
-
-	/**
-	 * Sort the list of core data-types based their id
-	 */
-	private void sortCoreTypes() {
-		Arrays.sort(coreBuiltin, (o1, o2) -> Long.compare(o1.id, o2.id));
-	}
-
-	/**
-	 * Search for a core-type by id
-	 * @param id to search for
-	 * @return the index of the matching TypeMap or -1
-	 */
-	private int findTypeById(long id) {
-		int min = 0;
-		int max = coreBuiltin.length - 1;
-		while (min <= max) {
-			int mid = (min + max) / 2;
-			TypeMap typeMap = coreBuiltin[mid];
-			if (id == typeMap.id) {
-				return mid;
-			}
-			if (id < typeMap.id) {
-				max = mid - 1;
-			}
-			else {
-				min = mid + 1;
-			}
-		}
-		return -1;
+		// Set aside the "byte" builtin for encoding byte references
+		long byteId = builtInDataTypes.getID(ByteDataType.dataType.clone(builtInDataTypes));
+		byteMap = coreBuiltin.get(byteId | BUILTIN_ID_HEADER);
 	}
 
 	/**
@@ -1202,7 +1221,7 @@ public class PcodeDataTypeManager {
 		encoder.openElement(ELEM_VOID);
 		encoder.closeElement(ELEM_VOID);
 
-		for (TypeMap typeMap : coreBuiltin) {
+		for (TypeMap typeMap : coreBuiltin.values()) {
 			encoder.openElement(ELEM_TYPE);
 			encoder.writeString(ATTRIB_NAME, typeMap.name);
 			encoder.writeSignedInteger(ATTRIB_SIZE, typeMap.dt.getLength());
