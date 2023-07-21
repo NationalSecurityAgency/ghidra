@@ -227,7 +227,7 @@ public abstract class AbstractDemangledFunctionDefinitionDataType extends Demang
 
 		StringBuilder typeBuffer = new StringBuilder();
 		int pointerLevels = getPointerLevels();
-		if (pointerLevels > 0 || isReference() || isRValueReference()) {
+		if (pointerLevels > 0 || isReference()) {
 
 			addParentName(typeBuffer);
 
