@@ -1578,7 +1578,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertEquals("Name of type parsed", "function", demangParamDT.getName());
 		assertEquals("Param Type Name parsed", "boost", demangParamDT.getNamespace().toString());
 		assertEquals("Param Template parsed", "<void ()>", demangParamDT.getTemplate().toString());
-		assertTrue("Is referent", demangParamDT.isReference());
+		assertTrue("Is referent", demangParamDT.isLValueReference());
 
 		assertEquals(
 			"undefined LogLevelMonitor::registerKeysChangedCallback(boost::function<void ()> const &)",
@@ -1611,7 +1611,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertEquals("Param Type Name parsed", "boost", demangParamDT.getNamespace().toString());
 		assertEquals("Param Template parsed", "<void (ares_options *,int *)>",
 			demangParamDT.getTemplate().toString());
-		assertTrue("Is referent", demangParamDT.isReference());
+		assertTrue("Is referent", demangParamDT.isLValueReference());
 		assertTrue("Is Const", demangParamDT.isConst());
 
 		assertEquals(
