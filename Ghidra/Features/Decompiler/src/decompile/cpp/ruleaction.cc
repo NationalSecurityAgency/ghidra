@@ -9437,26 +9437,151 @@ int4 RuleFloatCast::applyOp(PcodeOp *op,Funcdata &data)
 }
 
 /// \class RuleIgnoreNan
-/// \brief Treat FLOAT_NAN as always evaluating to false
+/// \brief Remove certain NaN operations by assuming their result is always \b false
 ///
-/// This makes the assumption that all floating-point calculations
-/// give valid results (not NaN).
+/// This rule can be configured to remove either all FLOAT_NAN operations or only those that
+/// protect floating-point comparisons.
 void RuleIgnoreNan::getOpList(vector<uint4> &oplist) const
 
 {
   oplist.push_back(CPUI_FLOAT_NAN);
 }
 
+/// \brief Check if a boolean Varnode incorporates a floating-point comparison with the given value
+///
+/// The Varnode can either be the direct output of a comparison, or it can be a BOOL_OR or BOOL_AND,
+/// combining output from the comparison.
+/// \param floatVar is the given value the comparison must take as input
+/// \param root is the boolean Varnode
+/// \return \b true if the boolean Varnode incorporates the comparison
+bool RuleIgnoreNan::checkBackForCompare(Varnode *floatVar,Varnode *root)
+
+{
+  if (!root->isWritten()) return false;
+  PcodeOp *def1 = root->getDef();
+  if (!def1->isBoolOutput()) return false;
+  if (def1->getOpcode()->isFloatingPointOp()) {
+    if (def1->numInput() != 2) return false;
+    if (functionalEquality(floatVar, def1->getIn(0)))
+      return true;
+    if (functionalEquality(floatVar, def1->getIn(1)))
+      return true;
+    return false;
+  }
+  OpCode opc = def1->code();
+  if (opc != CPUI_BOOL_AND || opc != CPUI_BOOL_OR)
+    return false;
+  for(int4 i=0;i<2;++i) {
+    Varnode *vn = def1->getIn(i);
+    if (!vn->isWritten()) continue;
+    PcodeOp *def2 = vn->getDef();
+    if (!def2->isBoolOutput()) continue;
+    if (!def2->getOpcode()->isFloatingPointOp()) continue;
+    if (def2->numInput() != 2) continue;
+    if (functionalEquality(floatVar, def2->getIn(0)))
+      return true;
+    if (functionalEquality(floatVar, def2->getIn(1)))
+      return true;
+  }
+  return false;
+}
+
+/// \brief Test if a boolean expression incorporates a floating-point comparison, and remove the NaN data-flow if it does
+///
+/// The given PcodeOp takes input from a NaN operation through a specific slot. We look for a floating-point comparison
+/// PcodeOp (FLOAT_LESS, FLOAT_LESSEQUAL, FLOAT_EQUAL, or FLOAT_NOTEQUAL) that is combined with the given PcodeOp and
+/// has the same input Varnode as the NaN.  The data-flow must be combined either through a BOOL_OR or BOOL_AND
+/// operation, or the given PcodeOp must be a CBRANCH that protects immediate control-flow to another CBRANCH
+/// taking the result of the comparison as input.  If a matching comparison is found, the NaN input to the given
+/// PcodeOp is removed, assuming the output of the NaN operation is always \b false.
+/// Input from an unmodified NaN result must be combined through a BOOL_OR, but a NaN result that has been negated
+/// must combine through a BOOL_AND.
+/// \param floatVar is the input Varnode to NaN operation
+/// \param op is the given PcodeOp to test
+/// \param slot is the input index of the NaN operation
+/// \param matchCode is BOOL_AND if the NaN result has been negated, BOOL_OR if not
+/// \param count is incremented if a comparison is found and the NaN input is removed
+/// \param data is the function
+/// \return the output of the given PcodeOp if it has an opcode matching \b matchCode
+Varnode *RuleIgnoreNan::testForComparison(Varnode *floatVar,PcodeOp *op,int4 slot,OpCode matchCode,int4 &count,Funcdata &data)
+
+{
+  if (op->code() == matchCode) {
+    Varnode *vn = op->getIn(1-slot);
+    if (checkBackForCompare(floatVar,vn)) {
+      data.opSetOpcode(op, CPUI_COPY);
+      data.opRemoveInput(op, 1);
+      data.opSetInput(op, vn, 0);
+      count += 1;
+    }
+    return op->getOut();
+  }
+  if (op->code() != CPUI_CBRANCH)
+    return (Varnode *)0;
+  BlockBasic *parent = op->getParent();
+  bool flowToFromCompare = false;
+  PcodeOp *lastOp;
+  int4 outDir = (matchCode == CPUI_BOOL_OR) ? 0 : 1;
+  if (op->isBooleanFlip())
+    outDir = 1 - outDir;
+  FlowBlock *outBranch = parent->getOut(outDir);
+  lastOp = outBranch->lastOp();
+  if (lastOp != (PcodeOp *)0 && lastOp->code() == CPUI_CBRANCH) {
+    FlowBlock *otherBranch = parent->getOut(1-outDir);
+    if (outBranch->getOut(0) == otherBranch || outBranch->getOut(1) == otherBranch) {
+      if (checkBackForCompare(floatVar, lastOp->getIn(1)))
+	flowToFromCompare = true;
+    }
+  }
+  if (flowToFromCompare) {
+    data.opSetInput(op,data.newConstant(1, 0),1);	// Treat result of NaN as false
+    count += 1;
+  }
+  return (Varnode *)0;
+}
+
 int4 RuleIgnoreNan::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  if (op->numInput()==2)
-    data.opRemoveInput(op,1);
-
-  // Treat these operations as always returning false (0)
-  data.opSetOpcode(op,CPUI_COPY);
-  data.opSetInput(op,data.newConstant(1,0),0);
-  return 1;
+  if (data.getArch()->nan_ignore_all) {
+    // Treat these NaN operation as always returning false (0)
+    data.opSetOpcode(op,CPUI_COPY);
+    data.opSetInput(op,data.newConstant(1,0),0);
+    return 1;
+  }
+  Varnode *floatVar = op->getIn(0);
+  if (floatVar->isFree()) return 0;
+  Varnode *out1 = op->getOut();
+  int4 count = 0;
+  list<PcodeOp *>::const_iterator iter1 = out1->beginDescend();
+  while(iter1 != out1->endDescend()) {
+    PcodeOp *boolRead1 = *iter1;
+    ++iter1;	// out1 may be truncated from boolRead1 below, advance iterator now
+    Varnode *out2;
+    OpCode matchCode = CPUI_BOOL_OR;
+    if (boolRead1->code() == CPUI_BOOL_NEGATE) {
+      matchCode = CPUI_BOOL_AND;
+      out2 = boolRead1->getOut();
+    }
+    else {
+      out2 = testForComparison(floatVar, boolRead1, boolRead1->getSlot(out1), matchCode, count, data);
+    }
+    if (out2 == (Varnode *)0) continue;
+    list<PcodeOp *>::const_iterator iter2 = out2->beginDescend();
+    while(iter2 != out2->endDescend()) {
+      PcodeOp *boolRead2 = *iter2;
+      ++iter2;
+      Varnode *out3 = testForComparison(floatVar,boolRead2, boolRead2->getSlot(out2), matchCode, count, data);
+      if (out3 == (Varnode *)0) continue;
+      list<PcodeOp *>::const_iterator iter3 = out3->beginDescend();
+      while(iter3 != out3->endDescend()) {
+	PcodeOp *boolRead3 = *iter3;
+	++iter3;
+	testForComparison(floatVar, boolRead3, boolRead3->getSlot(out3), matchCode, count, data);
+      }
+    }
+  }
+  return (count > 0) ? 1 : 0;
 }
 
 /// \class RuleFuncPtrEncoding

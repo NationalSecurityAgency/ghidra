@@ -59,6 +59,7 @@ ElementId ELEM_STRUCTALIGN = ElementId("structalign",208);
 ElementId ELEM_TOGGLERULE = ElementId("togglerule",209);
 ElementId ELEM_WARNING = ElementId("warning",210);
 ElementId ELEM_JUMPTABLEMAX = ElementId("jumptablemax",271);
+ElementId ELEM_NANIGNORE = ElementId("nanignore",272);
 
 /// If the parameter is "on" return \b true, if "off" return \b false.
 /// Any other value causes an exception.
@@ -128,6 +129,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionMaxInstruction());
   registerOption(new OptionNamespaceStrategy());
   registerOption(new OptionSplitDatatypes());
+  registerOption(new OptionNanIgnore());
 }
 
 OptionDatabase::~OptionDatabase(void)
@@ -983,6 +985,39 @@ string OptionSplitDatatypes::apply(Architecture *glb,const string &p1,const stri
   if (oldConfig == glb->split_datatype_config)
     return "Split data-type configuration unchanged";
   return "Split data-type configuration set";
+}
+
+string OptionNanIgnore::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  bool oldIgnoreAll = glb->nan_ignore_all;
+  bool oldIgnoreCompare = glb->nan_ignore_compare;
+
+  if (p1 == "none") {			// Don't ignore any NaN operation
+    glb->nan_ignore_all = false;
+    glb->nan_ignore_compare = false;
+  }
+  else if (p1 == "compare") {		// Ignore only NaN operations protecting floating-point comparisons
+    glb->nan_ignore_all = false;
+    glb->nan_ignore_compare = true;
+  }
+  else if (p1 == "all") {		// Ignore all NaN operations
+    glb->nan_ignore_all = true;
+    glb->nan_ignore_compare = true;
+  }
+  else {
+    throw LowlevelError("Unknown nanignore option: "+p1);
+  }
+  Action *root = glb->allacts.getCurrent();
+  if (!glb->nan_ignore_all && !glb->nan_ignore_compare) {
+    root->disableRule("ignorenan");
+  }
+  else {
+    root->enableRule("ignorenan");
+  }
+  if (oldIgnoreAll == glb->nan_ignore_all && oldIgnoreCompare == glb->nan_ignore_compare)
+    return "NaN ignore configuration unchanged";
+  return "Nan ignore configuration set to: " + p1;
 }
 
 } // End namespace ghidra
