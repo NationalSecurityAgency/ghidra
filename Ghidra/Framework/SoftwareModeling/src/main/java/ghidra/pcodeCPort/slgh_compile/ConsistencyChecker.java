@@ -34,9 +34,11 @@ class ConsistencyChecker {
 	private int writenoread;
 
 	private int largetemp;			// number of constructors using a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
+	private int largeint;			// number of constructors that exports constant integers larger then the export size
 	private boolean printextwarning;
 	private boolean printdeadwarning;
 	private boolean printlargetempwarning;	// if true, warning about temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE 
+	private boolean printlargeintwarning;	// if true, warning about interger larger then the export size
 	private SleighCompile compiler;
 	private SubtableSymbol root_symbol;
 	private VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
@@ -1187,6 +1189,32 @@ class ConsistencyChecker {
 			}
 		}
 	}
+	
+	/**
+	 * Checks {@code ct} to see whether exports a constant integer larger than the export size.
+	 * @param ct constructor to check
+	 * @param ctpl is the specific p-code section
+	 */
+	private void checkLargeIntegers(Constructor ct, ConstructTpl ctpl) {
+		HandleTpl result = ctpl.getResult();
+		if (result != null && result.getSpace().isConstSpace() && result.getSize().getType() == const_type.real && result.getPtrOffset().getType() == const_type.real) {
+			long bytes = result.getSize().getReal();
+			long value = result.getPtrOffset().getReal();
+			long bytes_min;
+			if (value < 0) {
+				bytes_min = (Long.SIZE - Long.numberOfLeadingZeros(~value) + 2 + 7) / 8;
+			} else {
+				bytes_min = (Long.SIZE - Long.numberOfLeadingZeros(value) + 7) / 8;
+			}
+			if (bytes < bytes_min) {
+				largeint++;
+				if (printlargeintwarning) {
+					compiler.reportWarning(ct.location,
+							"Constructor export a constant of " + bytes + " bytes, but it's value require " + bytes_min + " to not be truncated.");
+				}
+			}
+		}
+	}
 
 	private void optimize(Constructor ct) {
 		OptimizeRecord currec;
@@ -1216,10 +1244,12 @@ class ConsistencyChecker {
 		writenoread = 0;
 		//number of constructors which reference a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
 		largetemp = 0;
+		largeint = 0;
 		printextwarning = unnecessary;
 		printdeadwarning = warndead;
 		//whether to print information about constructors which reference large temporary varnodes
 		printlargetempwarning = warnlargetemp;
+		printlargeintwarning = true;
 	}
 
 	// Main entry point for size consistency check
@@ -1266,6 +1296,31 @@ class ConsistencyChecker {
 			}
 		}
 		return testresult;
+	}
+	
+	public void testLargeIntegers() {
+		for (int i = 0; i < postorder.size(); ++i) {
+			SubtableSymbol sym = postorder.get(i);
+			int numconstruct = sym.getNumConstructors();
+			Constructor ct;
+			for (int j = 0; j < numconstruct; ++j) {
+				ct = sym.getConstructor(j);
+				int numsections = ct.getNumSections();
+				for (int k = -1; k < numsections; ++k) {
+					ConstructTpl tpl;
+					if (k < 0) {
+						tpl = ct.getTempl();
+					}
+					else {
+						tpl = ct.getNamedTempl(k);
+					}
+					if (tpl == null) {
+						continue;
+					}
+					checkLargeIntegers(ct, tpl);
+				}
+			}
+		}
 	}
 
 	public void testLargeTemporary() {
@@ -1325,5 +1380,9 @@ class ConsistencyChecker {
 	 */
 	public int getNumLargeTemporaries() {
 		return largetemp;
+	}
+	
+	public int getNumLargeIntegers() {
+		return largeint;
 	}
 }
