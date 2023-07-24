@@ -310,7 +310,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	}
 
 	protected static String htmlColor(Color color, String display) {
-		return String.format("<font color=\"%s\">%s</font>", WebColors.toString(color),
+		return String.format("<font color=\"%s\">%s</font>", WebColors.toString(color, false),
 			HTMLUtilities.escapeHTML(display));
 	}
 
