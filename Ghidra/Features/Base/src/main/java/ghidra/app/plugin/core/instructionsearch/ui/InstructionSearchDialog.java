@@ -75,7 +75,7 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 	// Panel for displaying error messages.
 	private MessagePanel messagePanel;
 
-	// The parent pluain object.
+	// The parent plugin object.
 	private InstructionSearchPlugin plugin;
 
 	private JButton searchAllButton;
