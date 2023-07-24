@@ -76,6 +76,7 @@ public class TwoWayBreakdownAddressRangeIterator
 	private final PeekableIterator<AddressRange> rit;
 	private final boolean forward;
 
+	private AddressSpace curSpace = null;
 	private Address cur = null; // max/min address of next range expected
 
 	private final MyEntry entry = new MyEntry();
@@ -86,17 +87,33 @@ public class TwoWayBreakdownAddressRangeIterator
 		this.rit = PeekableIterators.castOrWrap(rit);
 		this.forward = forward;
 
-		if (this.lit.hasNext()) {
-			cur = getStart(this.lit.peek());
-		}
-		if (this.rit.hasNext()) {
-			Address a = getStart(this.rit.peek());
-			cur = cur == null ? a : first(cur, a);
-		}
+		initCur();
 	}
 
-	private Address getBefore(AddressRange r) {
-		return forward ? r.getMinAddress().previous() : r.getMaxAddress().next();
+	private void initCur() {
+		if (lit.hasNext()) {
+			cur = getStart(this.lit.peek());
+		}
+		if (rit.hasNext()) {
+			Address a = getStart(rit.peek());
+			cur = cur == null ? a : first(cur, a);
+		}
+		curSpace = cur == null ? null : cur.getAddressSpace();
+	}
+
+	private Address getBefore(AddressRange r, AddressSpace beforeSpace) {
+		if (forward) {
+			Address prev = r.getMinAddress().previous();
+			if (prev != null) {
+				return prev;
+			}
+			return beforeSpace.getMaxAddress();
+		}
+		Address next = r.getMaxAddress().next();
+		if (next != null) {
+			return next;
+		}
+		return beforeSpace.getMinAddress();
 	}
 
 	private Address getStart(AddressRange r) {
@@ -142,6 +159,25 @@ public class TwoWayBreakdownAddressRangeIterator
 		}
 	}
 
+	private void advanceSpace(PeekableIterator<AddressRange> it) {
+		while (it.hasNext() && it.peek().getAddressSpace() == curSpace) {
+			it.next();
+		}
+	}
+
+	private void advanceSpace() {
+		advanceSpace(lit);
+		advanceSpace(rit);
+	}
+
+	private void advance() {
+		cur = getAfter(entry.key);
+		if (cur == null) { // ended at an extreme
+			advanceSpace();
+			initCur();
+		}
+	}
+
 	@Override
 	protected Entry<AddressRange, Which> seekNext() {
 		if (cur == null) {
@@ -158,13 +194,13 @@ public class TwoWayBreakdownAddressRangeIterator
 		if (ln && !rn) {
 			entry.key = truncateRange(lit.next());
 			entry.val = Which.LEFT;
-			cur = getAfter(entry.key);
+			advance();
 			return entry;
 		}
 		if (!ln && rn) {
 			entry.key = truncateRange(rit.next());
 			entry.val = Which.RIGHT;
-			cur = getAfter(entry.key);
+			advance();
 			return entry;
 		}
 
@@ -179,23 +215,23 @@ public class TwoWayBreakdownAddressRangeIterator
 			Address end = first(getEnd(lit.peek()), getEnd(rit.peek()));
 			entry.key = truncateRange(beg, end);
 			entry.val = Which.BOTH;
-			cur = getAfter(entry.key);
+			advance();
 			return entry;
 		}
 		if (lc && !rc) {
 			Address beg = getStart(lit.peek());
-			Address end = first(getEnd(lit.peek()), getBefore(rit.peek()));
+			Address end = first(getEnd(lit.peek()), getBefore(rit.peek(), beg.getAddressSpace()));
 			entry.key = truncateRange(beg, end);
 			entry.val = Which.LEFT;
-			cur = getAfter(entry.key);
+			advance();
 			return entry;
 		}
 		if (!lc && rc) {
 			Address beg = getStart(rit.peek());
-			Address end = first(getEnd(rit.peek()), getBefore(lit.peek()));
+			Address end = first(getEnd(rit.peek()), getBefore(lit.peek(), beg.getAddressSpace()));
 			entry.key = truncateRange(beg, end);
 			entry.val = Which.RIGHT;
-			cur = getAfter(entry.key);
+			advance();
 			return entry;
 		}
 		throw new AssertionError();

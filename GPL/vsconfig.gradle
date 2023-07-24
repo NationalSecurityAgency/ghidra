@@ -34,7 +34,7 @@ def configureVisualStudio() {
 			println "  -> To manually specify the location of vswhere.exe, add \"-PvswherePath=<vswhere path>\" to the Gradle command line arguments"
 			return
 		}
-		def vswhereProcess = "${vswherePath} -products * -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json -utf8".execute()
+		def vswhereProcess = "\"${vswherePath}\" -products * -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json -utf8".execute()
 		def vswhereOutput = vswhereProcess.text.trim()
 		def vswhereExit = vswhereProcess.exitValue()
 		if (vswhereExit != 0) {

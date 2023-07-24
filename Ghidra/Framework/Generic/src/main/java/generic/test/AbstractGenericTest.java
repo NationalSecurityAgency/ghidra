@@ -15,6 +15,8 @@
  */
 package generic.test;
 
+import static org.junit.Assert.*;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -27,6 +29,12 @@ import java.util.regex.Pattern;
 
 import javax.swing.SwingUtilities;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.*;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.*;
 import org.junit.runner.Description;
@@ -36,8 +44,7 @@ import generic.test.rule.Repeated;
 import generic.test.rule.RepeatedTestRule;
 import generic.util.WindowUtilities;
 import ghidra.GhidraTestApplicationLayout;
-import ghidra.framework.Application;
-import ghidra.framework.ApplicationConfiguration;
+import ghidra.framework.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
@@ -66,6 +73,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	private static ApplicationConfiguration loadedApplicationConfiguration;
 
 	private volatile boolean hasFailed;
+
+	private boolean logSettingsChanged;
 
 	public TestWatcher watchman = new TestWatcher() {
 
@@ -113,6 +122,13 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	@Rule
 	public TestRule repeatedRule = new RepeatedTestRule();
+
+	@After
+	public void resetLogging() {
+		if (logSettingsChanged) {
+			LoggingInitialization.reinitialize();
+		}
+	}
 
 	private void debugBatch(String message) {
 		if (BATCH_MODE) {
@@ -230,6 +246,71 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	protected void testFailed(Throwable e) {
 		// perform diagnostic stuff here when a test has failed
+	}
+
+	/**
+	 * A convenience method for {@link #setLogLevel(String, Level)}.
+	 *
+	 * @param loggerClazz the logger class
+	 * @param newLevel the new level
+	 */
+	protected void setLogLevel(Class<?> loggerClazz, Level newLevel) {
+		setLogLevel(loggerClazz.getName(), newLevel);
+	}
+
+	/**
+	 * A convenience method to change the log level of the given logger name.  The logger name is
+	 * typically the class name that contains specialized logging.  You may also pass a package
+	 * name to get logging for all classes in that package.
+	 * See {@link Configurator#setLevel(String, Level)}
+	 * <P>
+	 * The console appender's log level will be changed if needed to ensure that messages for the
+	 * given log level are displayed.
+	 * <P>
+	 * The log system will be reset to the default settings when the test is finished.
+	 *
+	 * @param loggerName the logger name
+	 * @param newLevel the new log level to use
+	 */
+	protected void setLogLevel(String loggerName, Level newLevel) {
+
+		logSettingsChanged = true;
+
+		Configurator.setLevel(loggerName, newLevel);
+
+		LoggerContext loggerContext = (LoggerContext) LogManager.getContext(false);
+		Configuration configuration = loggerContext.getConfiguration();
+		LoggerConfig rootLoggerConfiguration = configuration.getLoggers().get("");
+
+		AppenderRef consoleAppender = getConsoleAppender(configuration, rootLoggerConfiguration);
+		Level currentLevel = consoleAppender.getLevel();
+		if (currentLevel.compareTo(newLevel) > 0) {
+			// the requested level is lower than the current level, so the messages will be shown
+			return;
+		}
+
+		// Note: we have to tell the console appender to change its level as well.  Otherwise, users
+		// may not see their messages in the console. It is set to DEBUG by default.
+		String consoleAppenderName = "console";
+		rootLoggerConfiguration.removeAppender(consoleAppenderName);
+		Appender appender = configuration.getAppender(consoleAppenderName);
+		rootLoggerConfiguration.addAppender(appender, newLevel, null);
+		loggerContext.updateLoggers();
+	}
+
+	private AppenderRef getConsoleAppender(Configuration configuration,
+			LoggerConfig rootLoggerConfigiguration) {
+		String consoleAppenderName = "console";
+		List<AppenderRef> appenders = rootLoggerConfigiguration.getAppenderRefs();
+		for (AppenderRef ref : appenders) {
+			String refName = ref.getRef();
+			if (refName.equals(consoleAppenderName)) {
+				return ref;
+			}
+		}
+
+		fail("Unable to find the logging console appender");
+		return null;
 	}
 
 	/**

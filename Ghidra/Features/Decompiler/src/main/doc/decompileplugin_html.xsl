@@ -54,6 +54,8 @@
 
 <xsl:param name="chunker.output.indent" select="'yes'"/>   <!-- Do proper indenting of html -->
 
+<xsl:param name="chunker.output.encoding" select="'UTF-8'"/>  <!-- Encode the chunks as UTF-8 files -->
+
 <xsl:param name="admon.graphics" select="1"/>  <!-- Turn on graphic icon for important/note tags -->
 
 <xsl:param name="admon.textlabel" select="0"/>  <!-- Don't display title for important/note tags -->

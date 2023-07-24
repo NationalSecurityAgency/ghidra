@@ -88,6 +88,8 @@ public class DbgLaunchProcessCommand extends AbstractDbgCommand<DbgThread> {
 
 		initialDirectory = fixPath(initialDirectory);
 		environment = fixPath(environment);
+		// NB: The intent here is to enable multi-line input via a single dialog field
+		environment = environment.replace("\\0", "\0");
 
 		dbgeng.createProcess(dbgeng.getLocalServer(), StringUtils.join(newArgs, " "),
 			initialDirectory, environment, createFlags, engCreateFlags, verifierFlags);
@@ -103,7 +105,6 @@ public class DbgLaunchProcessCommand extends AbstractDbgCommand<DbgThread> {
 			output = output.substring(1);
 		}
 		output = output.replace("/", "\\");
-		output = output.replace("\\0", "\0");
 		return output;
 	}
 }

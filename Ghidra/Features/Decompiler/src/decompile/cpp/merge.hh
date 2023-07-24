@@ -41,6 +41,21 @@ public:
 
 class Funcdata;
 
+/// \brief The set of CALL and STORE ops that might indirectly affect stack variables
+///
+/// Intersect tests between local address tied and non-address tied Varnodes need to check for
+/// possible uses of aliases to the address tied Varnode.  This object is populated with the set of
+/// PcodeOps through which any stack Varnode might be modified through an alias.  Given an intersection
+/// of the Cover of an address tied Varnode and a PcodeOp in this set, affectsTest() can do
+/// secondary testing of whether the Varnode is actually modified by the PcodeOp.
+class StackAffectingOps : public PcodeOpSet {
+  Funcdata &data;
+public:
+  StackAffectingOps(Funcdata &fd) : data(fd) {}
+  virtual void populate(void);
+  virtual bool affectsTest(PcodeOp *op,Varnode *vn) const;
+};
+
 /// \brief Class for merging low-level Varnodes into high-level HighVariables
 ///
 /// As a node in Single Static Assignment (SSA) form, a Varnode has at most one defining
@@ -66,6 +81,7 @@ class Funcdata;
 ///   - Merging Varnodes that hold the same data-type
 class Merge {
   Funcdata &data;		///< The function containing the Varnodes to be merged
+  StackAffectingOps stackAffectingOps;		///< Set of CALL and STORE ops indirectly affecting stack variables
   HighIntersectTest testCache;	///< Cached intersection tests
   vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
   vector<PcodeOp *> protoPartial;	///< Roots of unmapped CONCAT trees
@@ -101,7 +117,7 @@ class Merge {
   void processHighRedundantCopy(HighVariable *high);
   void groupPartialRoot(Varnode *vn);
 public:
-  Merge(Funcdata &fd) : data(fd) {} ///< Construct given a specific function
+  Merge(Funcdata &fd) : data(fd), stackAffectingOps(fd), testCache(stackAffectingOps) {} ///< Construct given a specific function
   void clear(void);
   bool inflateTest(Varnode *a,HighVariable *high);
   void inflate(Varnode *a,HighVariable *high);
