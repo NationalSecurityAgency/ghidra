@@ -15,24 +15,68 @@
  */
 package ghidra.feature.vt.api.stringable;
 
-import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CALL_FIXUP;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALLING_CONVENTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALL_FIXUP;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_RETURN_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_INLINE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_NO_RETURN;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_VAR_ARGS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_RETURN_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.INLINE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.NO_RETURN;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.VAR_ARGS;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
 
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CallingConventionChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CommentChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionSignatureChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.HighestSourcePriorityChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ParameterDataTypeChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceChoices;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.program.model.data.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.Undefined;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.PrototypeModel;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.listing.FunctionSignature;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.ParameterImpl;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ReturnParameterImpl;
+import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.program.util.FunctionUtility;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.StringUtilities;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -526,13 +570,14 @@ public class FunctionSignatureStringable extends Stringable {
 
 			// Adjust whether or not the resulting function will use custom storage.
 			boolean useCustomStorage = false;
-			if (hasCustomStorage != toFunction.hasCustomVariableStorage()) {
-				// This should only change to use custom storage if same language.
-				boolean sameLanguage =
-					FunctionUtility.isSameLanguageAndCompilerSpec(toFunction.getProgram(), program);
-				if (!hasCustomStorage || (hasCustomStorage && sameLanguage)) {
-					useCustomStorage = hasCustomStorage;
-				}
+
+			boolean sameLanguage =
+				FunctionUtility.isSameLanguageAndCompilerSpec(toFunction.getProgram(), program);
+
+			// if source program has custom storage and both programs have same language then
+			// set the useCustomStorage flag to enable using custom storage in destination program
+			if (sameLanguage && hasCustomStorage) {
+				useCustomStorage = true;
 			}
 
 			Parameter returnParam =
