@@ -203,6 +203,7 @@ public:
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
   sub_metatype getSubMeta(void) const { return submeta; }	///< Get the \b sub-metatype
   uint8 getId(void) const { return id; }			///< Get the type id
+  uint8 getUnsizedId(void) const;				///< Get the type id, without variable length size adjustment
   int4 getSize(void) const { return size; }			///< Get the type size
   const string &getName(void) const { return name; }		///< Get the type name
   const string &getDisplayName(void) const { return displayName; }	///< Get string to use in display
@@ -766,6 +767,19 @@ inline uint4 Datatype::getDisplayFormat(void) const
 
 {
   return (flags & force_format) >> 12;
+}
+
+/// If the data-type is \e variable \e length, the working id for the data-type has a contribution
+/// based on the specific size of \b this instance.  This contribution is removed, and the base id is returned.
+/// If the data-type is not \e variable \e length, the unaltered id is returned.
+/// \return the base id of the data-type
+inline uint8 Datatype::getUnsizedId(void) const
+
+{
+  if ((flags & variable_length) != 0) {
+    return hashSize(id, size);
+  }
+  return id;
 }
 
 /// Order data-types, with special handling of the \e bool data-type. Data-types are compared

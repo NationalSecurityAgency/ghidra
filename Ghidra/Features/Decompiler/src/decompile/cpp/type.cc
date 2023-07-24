@@ -369,11 +369,7 @@ void Datatype::encodeBasic(type_metatype meta,Encoder &encoder) const
 
 {
   encoder.writeString(ATTRIB_NAME, name);
-  uint8 saveId;
-  if (isVariableLength())
-    saveId = hashSize(id, size);
-  else
-    saveId = id;
+  uint8 saveId = getUnsizedId();
   if (saveId != 0) {
     encoder.writeUnsignedInteger(ATTRIB_ID, saveId);
   }
@@ -575,9 +571,7 @@ uint8 Datatype::hashName(const string &nm)
     if ((res&1)==0)
       res ^= 0xfeabfeab;	// Some kind of feedback
   }
-  uint8 tmp=1;
-  tmp <<= 63;
-  res |= tmp;	// Make sure the hash is negative (to distinguish it from database id's)
+  res |= 0xC000000000000000;	// Add header bits indicating a name hash
   return res;
 }
 
