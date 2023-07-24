@@ -17,30 +17,83 @@ package ghidra.feature.vt.api;
 
 import static ghidra.feature.vt.db.VTTestUtils.addr;
 import static ghidra.feature.vt.db.VTTestUtils.createMatchSetWithOneMatch;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_RETURN_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_SIGNATURE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.INLINE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.NO_RETURN;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_DATA_TYPES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.api.main.VTAssociationStatus;
+import ghidra.feature.vt.api.main.VTMarkupItem;
+import ghidra.feature.vt.api.main.VTMarkupItemStatus;
+import ghidra.feature.vt.api.main.VTMatch;
+import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.api.markuptype.FunctionSignatureMarkupType;
-import ghidra.feature.vt.gui.plugin.*;
-import ghidra.feature.vt.gui.task.*;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTControllerImpl;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.task.ApplyMatchTask;
+import ghidra.feature.vt.gui.task.ClearMatchTask;
+import ghidra.feature.vt.gui.task.VtTask;
 import ghidra.feature.vt.gui.util.MatchInfo;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CallingConventionChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CommentChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionNameChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionSignatureChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.HighestSourcePriorityChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.LabelChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ParameterDataTypeChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.SourcePriorityChoices;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.BooleanDataType;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.CharDataType;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.FloatDataType;
+import ghidra.program.model.data.IntegerDataType;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.TypeDef;
+import ghidra.program.model.data.TypedefDataType;
+import ghidra.program.model.data.Undefined4DataType;
+import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.data.WordDataType;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.CompilerSpecDescription;
+import ghidra.program.model.lang.CompilerSpecID;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.lang.LanguageNotFoundException;
+import ghidra.program.model.lang.LanguageService;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.IncompatibleLanguageException;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.ParameterImpl;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -48,7 +101,6 @@ import ghidra.test.TestEnv;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -347,34 +399,28 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	}
 
 	@Test
-	public void testApplyMatch_ReplaceSignature_CustomSameNumParams_ThisToThis() throws Exception {
+	public void testApplyMatch_ReplaceSignature_CustomSourceNormalDest_SameNumParams_ThisToThis()
+			throws Exception {
 		useMatch("0x00401040", "0x00401040");
 
 		// Check initial values
 		checkSignatures("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
 
-		int txId = sourceProgram.startTransaction("Modify Source");
-		try {
+		tx(sourceProgram, () -> {
 			sourceFunction.setCustomVariableStorage(true);
 
-			sourceFunction.getParameter(0).setDataType(sourceFunction.getParameter(1).getDataType(),
-				SourceType.USER_DEFINED);
-		}
-		finally {
-			sourceProgram.endTransaction(txId, true);
-		}
+			sourceFunction.getParameter(0)
+					.setDataType(sourceFunction.getParameter(1).getDataType(),
+						SourceType.USER_DEFINED);
+		});
 
 		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
 		assertNotNull(personType);
 
-		txId = destinationProgram.startTransaction("Modify Destination");
-		try {
+		tx(destinationProgram, () -> {
 			destinationFunction.setReturnType(personType, SourceType.USER_DEFINED);
-		}
-		finally {
-			destinationProgram.endTransaction(txId, true);
-		}
+		});
 
 		// Check modified values
 		checkSignatures("undefined use(Person * this, Person * person)",
@@ -406,6 +452,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
 
+		assertTrue(destinationFunction.hasCustomVariableStorage());
+
 		// Test unapply
 		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
 		runTask(session, unapplyTask);
@@ -416,6 +464,104 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
 		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		assertFalse(destinationFunction.hasCustomVariableStorage());
+	}
+
+	@Test
+	public void testApplyMatch_ReplaceSignature_CustomSourceAndDest()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+
+		tx(sourceProgram, () -> {
+			sourceFunction.setCustomVariableStorage(true);
+
+			sourceFunction.getParameter(0)
+					.setDataType(sourceFunction.getParameter(1).getDataType(),
+						SourceType.USER_DEFINED);
+		});
+
+
+		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
+		assertNotNull(personType);
+
+		tx(destinationProgram, () -> {
+			destinationFunction.setCustomVariableStorage(true);
+		});
+
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+
+		// Test Apply
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		assertTrue(destinationFunction.hasCustomVariableStorage());
+
+	}
+
+	@Test
+	public void testApplyMatch_ReplaceSignature_NormalSourceCustomDest()
+			throws Exception {
+
+		useMatch("0x00401040", "0x00401040");
+
+		// Check initial values
+		checkSignatures("undefined use(Gadget * this, Person * person)",
+			"undefined FUN_00401040(void * this, undefined4 param_1)");
+
+		tx(destinationProgram, () -> {
+			destinationFunction.setCustomVariableStorage(true);
+		});
+
+		// Set the function signature options for this test
+		ToolOptions applyOptions = controller.getOptions();
+		applyOptions.setEnum(FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
+		applyOptions.setEnum(CALLING_CONVENTION, CallingConventionChoices.SAME_LANGUAGE);
+		applyOptions.setEnum(PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_NAMES, SourcePriorityChoices.REPLACE);
+		applyOptions.setEnum(PARAMETER_COMMENTS, CommentChoices.APPEND_TO_EXISTING);
+		applyOptions.setEnum(NO_RETURN, ReplaceChoices.EXCLUDE);
+		applyOptions.setEnum(FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+
+		assertEquals(VTAssociationStatus.AVAILABLE, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.UNAPPLIED);
+
+		List<VTMatch> matches = new ArrayList<>();
+		matches.add(testMatch);
+
+		// Test Apply
+		ApplyMatchTask task = new ApplyMatchTask(controller, matches);
+		runTask(session, task);
+
+		assertEquals(VTAssociationStatus.ACCEPTED, testMatch.getAssociation().getStatus());
+		checkFunctionSignatureStatus(testMatch, VTMarkupItemStatus.REPLACED);
+
+		assertFalse(destinationFunction.hasCustomVariableStorage());
+
 	}
 
 	@Test
