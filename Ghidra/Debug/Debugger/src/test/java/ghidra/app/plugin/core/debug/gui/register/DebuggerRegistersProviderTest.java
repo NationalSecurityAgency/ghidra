@@ -320,8 +320,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		waitForSwing();
 
 		mb.testBank1.writeRegister("pc", new byte[] { 0x00, 0x40, 0x00, 0x00 });
-		waitOn(mb.testModel.flushEvents());
-		waitForDomainObject(recorder.getTrace());
+		waitRecorder(recorder);
 
 		RegisterRow rowL = findRegisterRow(pc);
 		waitForPass(() -> assertTrue(rowL.isKnown()));
