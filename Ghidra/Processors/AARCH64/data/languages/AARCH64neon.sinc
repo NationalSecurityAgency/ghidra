@@ -3553,7 +3553,7 @@ is b_31=0 & b_30=1 & b_2129=0b101110010 & b_1015=0b000101 & Rd_VPR128.8H & Rn_VP
 }
 
 # C7.2.46 FCADD page C7-1090 line 63037 KEEPWITH
-
+# val is either 90 or 270 depending on the value of bit b_12 (0 or 1)
 fcadd_rotate: "#"^val is b_12  [ val = 90 + 180 * b_12; ] { export *[const]:2 val; }
 
 # C7.2.53 FCADD page C7-2127 line 123874 MATCH x2e00e400/mask=xbf20ec00
@@ -4268,7 +4268,7 @@ is b_31=0 & b_30=1 & b_1029=0b00111011111000110010 & Rd_VPR128.8H & Rn_VPR128.8H
 }
 
 # C7.2.55 FCMLA (by element) page C7-1117 line 64749 KEEPWITH
-
+# Values in set {0,90,180,270} depending on b_1314/1112 values of {0,1,2,3}
 fcmla_rotate: "#"^val is b_15=0 & b_1314 [ val = 90 * b_1314; ] { export *[const]:2 val; }
 fcmla_rotate: "#"^val is b_15=1 & b_1112 [ val = 90 * b_1112; ] { export *[const]:2 val; }
 
