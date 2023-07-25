@@ -196,7 +196,8 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 				goto <L0>;
 				""");
 		assertEquals(3, rows.size());
-		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(0).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;0&gt;</font></html>",
+			rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(2).getClass());
 	}
@@ -211,7 +212,8 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		assertEquals(4, rows.size());
 		assertEquals("<html></html>", rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;0&gt;</font></html>",
+			rows.get(2).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(3).getClass());
 	}
 
@@ -225,7 +227,8 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		assertEquals(3, rows.size());
 		assertEquals("<html></html>", rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;0&gt;</font></html>",
+			rows.get(2).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(2).getClass());
 	}
 
@@ -240,11 +243,15 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 				""");
 		assertEquals(5, rows.size());
 		// NB. templates number labels in order of appearance in BRANCHes
-		assertEquals("<html><font color=\"Blue\">&lt;3&gt;</font></html>", rows.get(0).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(1).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;1&gt;</font></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;3&gt;</font></html>",
+			rows.get(0).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;0&gt;</font></html>",
+			rows.get(1).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;1&gt;</font></html>",
+			rows.get(2).getLabel());
 		assertEquals("<html></html>", rows.get(3).getLabel());
-		assertEquals("<html><font color=\"Blue\">&lt;2&gt;</font></html>", rows.get(4).getLabel());
+		assertEquals("<html><font color=\"#0000ff\">&lt;2&gt;</font></html>",
+			rows.get(4).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(4).getClass());
 	}
 }
