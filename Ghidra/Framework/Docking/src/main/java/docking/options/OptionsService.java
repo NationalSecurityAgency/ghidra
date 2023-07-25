@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.plugintool.util;
+package docking.options;
 
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;

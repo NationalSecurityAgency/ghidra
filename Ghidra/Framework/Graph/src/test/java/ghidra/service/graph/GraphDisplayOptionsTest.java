@@ -271,10 +271,10 @@ public class GraphDisplayOptionsTest {
 
 		Options miscellaneousOptions = graphDisplayOptions.getOptions("Miscellaneous");
 		leafOptionNames = miscellaneousOptions.getLeafOptionNames();
-		assertEquals(Arrays.asList("Use Icons", "Max Graph Size",
-			"Selected Vertex Color", "Default Layout Algorithm", "Default Vertex Color",
-			"Default Vertex Shape", "Selected Edge Color", "Label Position",
-			"Default Edge Color", "Font", "Favored Edge Type"), leafOptionNames);
+		assertEquals(Arrays.asList("Use Icons", "Max Graph Size", "Selected Vertex Color",
+			"Default Layout Algorithm", "Default Vertex Color", "Default Vertex Shape",
+			"Selected Edge Color", "Label Position", "Default Edge Color", "Font",
+			"Favored Edge Type"), leafOptionNames);
 
 	}
 
@@ -318,4 +318,5 @@ public class GraphDisplayOptionsTest {
 		}
 
 	}
+
 }

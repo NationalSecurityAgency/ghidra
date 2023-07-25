@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import docking.options.OptionsService;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import ghidra.app.CorePluginPackage;
@@ -31,7 +32,6 @@ import ghidra.framework.main.AppInfo;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;

@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.options.OptionsService;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooserPanel;
 import docking.widgets.table.GFilterTable;
@@ -31,7 +32,6 @@ import generic.theme.GIcon;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.layout.MiddleLayout;

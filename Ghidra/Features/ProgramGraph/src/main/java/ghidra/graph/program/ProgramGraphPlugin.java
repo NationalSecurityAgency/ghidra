@@ -111,12 +111,9 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	}
 
 	private void registerProgramFlowGraphDisplayOptionsWithTool() {
-		ProgramGraphDisplayOptions displayOptions =
-			new ProgramGraphDisplayOptions(new BlockFlowGraphType(), null);
-
-		// this will register Program Flow Graph Type options with the tool
-		HelpLocation help = new HelpLocation(getName(), "Program Graphs Display Options");
-		displayOptions.registerOptions(tool.getOptions("Graph"), help);
+		// We don't need one of this right now, but creating it will make sure it
+		// shows up in the tool options
+		new ProgramGraphDisplayOptions(new BlockFlowGraphType(), tool);
 	}
 
 	private void intializeOptions() {
@@ -188,79 +185,75 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private void createActions() {
 
-		new ActionBuilder("Graph Block Flow", getName())
-			.menuPath(MENU_GRAPH, "&Block Flow")
-			.menuGroup(MENU_GRAPH, "A")
-			.onAction(c -> graphBlockFlow())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+		new ActionBuilder("Graph Block Flow", getName()).menuPath(MENU_GRAPH, "&Block Flow")
+				.menuGroup(MENU_GRAPH, "A")
+				.onAction(c -> graphBlockFlow())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
-		new ActionBuilder("Graph Code Flow", getName())
-			.menuPath(MENU_GRAPH, "C&ode Flow")
-			.menuGroup(MENU_GRAPH, "B")
-			.onAction(c -> graphCodeFlow())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+		new ActionBuilder("Graph Code Flow", getName()).menuPath(MENU_GRAPH, "C&ode Flow")
+				.menuGroup(MENU_GRAPH, "B")
+				.onAction(c -> graphCodeFlow())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph Calls Using Default Model", getName())
-			.menuPath(MENU_GRAPH, "&Calls")
-			.menuGroup(MENU_GRAPH, "C")
-			.onAction(c -> createDefaultCallGraph())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "&Calls")
+				.menuGroup(MENU_GRAPH, "C")
+				.onAction(c -> createDefaultCallGraph())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		tool.setMenuGroup(new String[] { MENU_GRAPH, "Data" }, "Graph", "Data");
 		HelpLocation helpLoc = new HelpLocation(getName(), "Data_Reference_Graph");
 
 		new ActionBuilder("Graph To/From Data References", getName())
-			.menuPath(MENU_GRAPH, "Data", "To/From &References")
-			.menuGroup(MENU_GRAPH, "Data")
-			.helpLocation(helpLoc)
-			.onAction(c -> graphDataReferences())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "Data", "To/From &References")
+				.menuGroup(MENU_GRAPH, "Data")
+				.helpLocation(helpLoc)
+				.onAction(c -> graphDataReferences())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph To Data References", getName())
-			.menuPath(MENU_GRAPH, "Data", "&To References")
-			.menuGroup(MENU_GRAPH, "Data")
-			.helpLocation(helpLoc)
-			.onAction(c -> graphToDataReferences())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "Data", "&To References")
+				.menuGroup(MENU_GRAPH, "Data")
+				.helpLocation(helpLoc)
+				.onAction(c -> graphToDataReferences())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph From Data References", getName())
-			.menuPath(MENU_GRAPH, "Data", "&From References")
-			.menuGroup(MENU_GRAPH, "Data")
-			.helpLocation(helpLoc)
-			.onAction(c -> graphFromDataReferences())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "Data", "&From References")
+				.menuGroup(MENU_GRAPH, "Data")
+				.helpLocation(helpLoc)
+				.onAction(c -> graphFromDataReferences())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		reuseGraphAction =
-			new ToggleActionBuilder("Reuse Graph", getName())
-				.menuPath(MENU_GRAPH, "Reuse Graph")
-				.menuGroup("Graph Options")
-				.selected(reuseGraph)
-				.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
-				.enabledWhen(this::canGraph)
-				.buildAndInstall(tool);
+			new ToggleActionBuilder("Reuse Graph", getName()).menuPath(MENU_GRAPH, "Reuse Graph")
+					.menuGroup("Graph Options")
+					.selected(reuseGraph)
+					.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
+					.enabledWhen(this::canGraph)
+					.buildAndInstall(tool);
 
 		appendGraphAction =
-			new ToggleActionBuilder("Append Graph", getName())
-				.menuPath(MENU_GRAPH, "Append Graph")
-				.menuGroup("Graph Options")
-				.selected(false)
-				.onAction(c -> updateAppendAndReuseGraph())
-				.enabledWhen(this::canGraph)
-				.buildAndInstall(tool);
+			new ToggleActionBuilder("Append Graph", getName()).menuPath(MENU_GRAPH, "Append Graph")
+					.menuGroup("Graph Options")
+					.selected(false)
+					.onAction(c -> updateAppendAndReuseGraph())
+					.enabledWhen(this::canGraph)
+					.buildAndInstall(tool);
 
 		forceLocationVisibleAction = new ToggleActionBuilder("Show Location in Graph", getName())
-			.menuPath(MENU_GRAPH, "Show Location")
-			.description("Tell the graph to pan/scale as need to keep location changes visible")
-			.menuGroup("Graph Options")
-			.onAction(c -> toggleForceLocationVisible())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "Show Location")
+				.description("Tell the graph to pan/scale as need to keep location changes visible")
+				.menuGroup("Graph Options")
+				.onAction(c -> toggleForceLocationVisible())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		updateSubroutineActions();
 	}
@@ -309,12 +302,12 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private DockingAction buildGraphActionWithModel(String blockModelName, HelpLocation helpLoc) {
 		return new ActionBuilder("Graph Calls using " + blockModelName, getName())
-			.menuPath(MENU_GRAPH, "Calls Using Model", blockModelName)
-			.menuGroup(MENU_GRAPH, "C")
-			.helpLocation(helpLoc)
-			.onAction(c -> createCallGraphUsing(blockModelName))
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "Calls Using Model", blockModelName)
+				.menuGroup(MENU_GRAPH, "C")
+				.helpLocation(helpLoc)
+				.onAction(c -> createCallGraphUsing(blockModelName))
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 	}
 
 	private void graphBlockFlow() {
@@ -349,10 +342,8 @@ public class ProgramGraphPlugin extends ProgramPlugin
 		try {
 			CodeBlockModel model =
 				blockModelService.getNewModelByName(modelName, currentProgram, true);
-			BlockGraphTask task =
-				new BlockGraphTask(graphType, graphEntryPointNexus,
-					reuseGraph, appendToGraph, tool, currentSelection, currentLocation, model,
-					defaultGraphService);
+			BlockGraphTask task = new BlockGraphTask(graphType, graphEntryPointNexus, reuseGraph,
+				appendToGraph, tool, currentSelection, currentLocation, model, defaultGraphService);
 			task.setCodeLimitPerBlock(codeLimitPerBlock);
 			new TaskLauncher(task, tool.getToolFrame());
 		}
