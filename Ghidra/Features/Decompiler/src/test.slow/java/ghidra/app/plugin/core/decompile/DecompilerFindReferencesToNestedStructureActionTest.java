@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.decompile;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.options.OptionsService;
 import ghidra.app.decompiler.DecompileOptions.NamespaceStrategy;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.util.OptionsService;
 
 /**
  * This test is very similar in concept to {@link DecompilerFindReferencesToActionTest}, 

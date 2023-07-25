@@ -37,6 +37,7 @@ import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
 import docking.framework.ApplicationInformationDisplayFactory;
+import docking.options.OptionsService;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.util.image.ToolIconURL;

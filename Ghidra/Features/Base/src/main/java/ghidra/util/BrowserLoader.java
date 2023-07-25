@@ -20,10 +20,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import docking.options.OptionsService;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.framework.plugintool.util.OptionsService;
 
 /** 
  *  BrowserLoader opens a web browser and displays the given url. 
