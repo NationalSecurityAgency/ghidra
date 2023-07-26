@@ -210,6 +210,11 @@ public enum Platform {
 			paths.add("/usr/X11R6/bin");
 			paths.add("/usr/X11R6/lib");
 		}
+		else if (operatingSystem == OperatingSystem.MAC_OS_X) {
+			paths.add("/System/Library/dyld/dyld_shared_cache_arm64e");
+			paths.add(
+				"/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e");
+		}
 		else if (CURRENT_PLATFORM == WIN_X86_64) {
 			String windir = System.getenv("SystemRoot");
 			if (windir != null) {
