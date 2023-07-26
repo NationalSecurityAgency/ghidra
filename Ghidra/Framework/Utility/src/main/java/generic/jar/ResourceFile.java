@@ -31,6 +31,7 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	private static final String JAR_FILE_PREFIX = "jar:file:";
 	private Resource resource;
 	private static Map<String, JarResource> jarRootsMap = new HashMap<String, JarResource>();
+	private long lastModifiedTime;
 
 	/**
 	 * Construct a ResourceFile that represents a normal file in the file system.
@@ -182,7 +183,14 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	 * @return the time that this file was last modified.
 	 */
 	public long lastModified() {
-		return resource.lastModified();
+		long modTime = resource.lastModified();
+		if (modTime == 0) {
+			if (lastModifiedTime == 0) {
+				lastModifiedTime = System.currentTimeMillis();
+			}
+			modTime = lastModifiedTime;
+		}
+		return modTime;
 	}
 
 	/**
