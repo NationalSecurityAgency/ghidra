@@ -44,8 +44,8 @@ public class LibraryPathsDialog extends DialogComponentProvider {
 		tablePanel = new PathnameTablePanel(libraryPaths, false, true, () -> reset());
 		// false=> not editable, true=> add new paths to top of the table
 
-		tablePanel.setFileChooserProperties("Select Directory", "LibrarySearchDirectory",
-			GhidraFileChooserMode.DIRECTORIES_ONLY, false, null);
+		tablePanel.setFileChooserProperties("Select Directory or Filesystem",
+			"LibrarySearchDirectory", GhidraFileChooserMode.FILES_AND_DIRECTORIES, false, null);
 
 		return tablePanel;
 	}

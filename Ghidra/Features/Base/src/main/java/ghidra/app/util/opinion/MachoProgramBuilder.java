@@ -1136,16 +1136,13 @@ public class MachoProgramBuilder {
 			}
 
 			if (libraryPath != null) {
-				// For now, strip off the full path and just the use the filename.  We will utilize
-				// the full path one day when we started looking in dyld_shared_cache files for
-				// libraries.
 				int index = libraryPath.lastIndexOf("/");
 				String libraryName = index != -1 ? libraryPath.substring(index + 1) : libraryPath;
 				if (!libraryName.equals(program.getName())) {
-					addLibrary(libraryName);
+					addLibrary(libraryPath);
 					props.setString(
 						ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
-						libraryName);
+						libraryPath);
 				}
 			}
 		}

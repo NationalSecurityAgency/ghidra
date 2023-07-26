@@ -133,6 +133,21 @@ public class ClientUtil {
 	}
 
 	/**
+	 * Determine if a connected {@link RepositoryServerAdapter} already exists for the specified server.
+	 * @param host server name or address
+	 * @param port server port, 0 indicates that default port applies.
+	 * @return true if connection already exists, else false
+	 */
+	public static boolean isConnected(String host, int port) {
+		if (port <= 0) {
+			port = GhidraServerHandle.DEFAULT_PORT;
+		}
+		ServerInfo server = new ServerInfo(host, port);
+		RepositoryServerAdapter rsa = serverHandles.get(server);
+		return rsa != null && rsa.isConnected();
+	}
+
+	/**
 	 * Eliminate the specified repository server from the connection cache
 	 * @param host host name or IP address
 	 * @param port port (0: use default port)
