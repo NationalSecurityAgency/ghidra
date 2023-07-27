@@ -25,8 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.osgi.BundleHost;
-import ghidra.app.plugin.core.osgi.OSGiException;
+import ghidra.app.plugin.core.osgi.*;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
 import ghidra.app.util.headless.HeadlessAnalyzer;
 import ghidra.framework.Application;
@@ -73,7 +72,7 @@ public class GhidraScriptUtil {
 			throw new RuntimeException("GhidraScriptUtil initialized multiple times!");
 		}
 
-		try {
+		try (OSGiParallelLock lock = new OSGiParallelLock()) {
 			bundleHost = aBundleHost;
 			bundleHost.startFramework();
 		}
