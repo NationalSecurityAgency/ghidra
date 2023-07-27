@@ -646,11 +646,11 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	public static void setErrorsExpected(boolean expected) {
 		if (expected) {
-			Msg.error(AbstractGenericTest.class, ">>>>>>>>>>>>>>>> Expected Exception");
+			Msg.error(AbstractGenericTest.class, ">>>>>>>>>>>>>>>> Expected Errors");
 			ConcurrentTestExceptionHandler.disable();
 		}
 		else {
-			Msg.error(AbstractGenericTest.class, "<<<<<<<<<<<<<<<< End Expected Exception");
+			Msg.error(AbstractGenericTest.class, "<<<<<<<<<<<<<<<< End Expected Errors");
 			ConcurrentTestExceptionHandler.enable();
 		}
 	}

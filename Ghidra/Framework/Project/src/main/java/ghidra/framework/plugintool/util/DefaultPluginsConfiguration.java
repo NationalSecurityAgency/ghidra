@@ -16,6 +16,7 @@
 package ghidra.framework.plugintool.util;
 
 import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginsConfiguration;
 
 /**
  * A configuration that includes all plugins on the classpath.

@@ -41,6 +41,7 @@ import ghidra.framework.main.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.dialog.*;
 import ghidra.framework.preferences.Preferences;
+import ghidra.framework.project.extensions.*;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramContentHandler;

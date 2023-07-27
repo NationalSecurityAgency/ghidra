@@ -182,9 +182,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected void deleteUserScripts() throws IOException {
-
 		Path userScriptDir = Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
-		FileUtilities.forEachFile(userScriptDir, paths -> paths.forEach(p -> delete(p)));
+		FileUtilities.forEachFile(userScriptDir, script -> delete(script));
 	}
 
 //==================================================================================================
@@ -988,10 +987,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		// destroy any NewScriptxxx files...and Temp ones too
 		List<ResourceFile> paths = provider.getBundleHost()
-			.getBundleFiles()
-			.stream()
-			.filter(ResourceFile::isDirectory)
-			.collect(Collectors.toList());
+				.getBundleFiles()
+				.stream()
+				.filter(ResourceFile::isDirectory)
+				.collect(Collectors.toList());
 
 		for (ResourceFile path : paths) {
 			File file = path.getFile(false);

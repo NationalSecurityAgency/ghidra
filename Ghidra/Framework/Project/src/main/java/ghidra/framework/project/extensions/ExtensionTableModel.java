@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.plugintool.dialog;
+package ghidra.framework.project.extensions;
 
 import java.awt.Component;
-import java.io.File;
 import java.util.*;
 
 import docking.widgets.table.*;
@@ -26,13 +25,11 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
-import utilities.util.FileUtilities;
 
 /**
  * Model for the {@link ExtensionTablePanel}. This defines 5 columns for displaying information in
@@ -59,9 +56,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 	/** This is the data source for the model. Whatever is here will be displayed in the table. */
 	private Set<ExtensionDetails> extensions;
-
-	/** Indicates if the model has changed due to an install or uninstall. */
-	private boolean modelChanged = false;
+	private Map<String, Boolean> originalInstallStates = new HashMap<>();
 
 	/**
 	 * Constructor.
@@ -94,21 +89,17 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		if (Application.inSingleJarMode() || SystemUtilities.isInDevelopmentMode()) {
+		if (Application.inSingleJarMode()) {
 			return false;
 		}
 
+		// Do not allow GUI removal of extensions manually installed in installation directory. 
 		ExtensionDetails extension = getSelectedExtension(rowIndex);
-
-		// Do not allow GUI uninstallation of extensions manually installed in installation
-		// directory
-		if (extension.getInstallPath() != null && FileUtilities.isPathContainedWithin(
-			Application.getApplicationLayout().getApplicationInstallationDir().getFile(false),
-			new File(extension.getInstallPath()))) {
+		if (extension.isInstalledInInstallationFolder()) {
 			return false;
 		}
 
-		return (columnIndex == INSTALLED_COL);
+		return columnIndex == INSTALLED_COL;
 	}
 
 	/**
@@ -117,7 +108,6 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 */
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-		super.setValueAt(aValue, rowIndex, columnIndex);
 
 		// We only care about the install column here, as it's the only one that
 		// is editable.
@@ -131,31 +121,50 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			Application.getApplicationLayout().getExtensionInstallationDirs().get(0);
 		if (!installDir.exists() && !installDir.mkdir()) {
 			Msg.showError(this, null, "Directory Error",
-				"Cannot install/uninstall extensions: Failed to create extension installation directory.\n" +
-					"See the \"Ghidra Extension Notes\" section of the Ghidra Installation Guide for more information.");
+				"Cannot install/uninstall extensions: Failed to create extension installation " +
+					"directory.\nSee the \"Ghidra Extension Notes\" section of the Ghidra " +
+					"Installation Guide for more information.");
 		}
 		if (!installDir.canWrite()) {
 			Msg.showError(this, null, "Permissions Error",
-				"Cannot install/uninstall extensions: Invalid write permissions on installation directory.\n" +
-					"See the \"Ghidra Extension Notes\" section of the Ghidra Installation Guide for more information.");
+				"Cannot install/uninstall extensions: Invalid write permissions on installation " +
+					"directory.\nSee the \"Ghidra Extension Notes\" section of the Ghidra " +
+					"Installation Guide for more information.");
 			return;
 		}
 
 		boolean install = ((Boolean) aValue).booleanValue();
 		ExtensionDetails extension = getSelectedExtension(rowIndex);
-
-		if (install) {
-			if (ExtensionUtils.install(extension, true)) {
-				modelChanged = true;
+		if (!install) {
+			if (extension.markForUninstall()) {
+				refreshTable();
 			}
-		}
-		else {
-			if (ExtensionUtils.removeStateFiles(extension)) {
-				modelChanged = true;
-			}
+			return;
 		}
 
-		refreshTable();
+		// Restore an existing extension or install an archived extension
+		if (extension.isPendingUninstall()) {
+			if (extension.clearMarkForUninstall()) {
+				refreshTable();
+				return;
+			}
+		}
+
+		// At this point, the extension is not installed, so we cannot simply clear the uninstall
+		// state.  This means that the extension has not yet been installed.  The only way to get
+		// into this state is by clicking an extension that was discovered in the 'extension 
+		// archives folder'		
+		if (extension.isFromArchive()) {
+			if (ExtensionUtils.installExtensionFromArchive(extension)) {
+				refreshTable();
+			}
+			return;
+		}
+
+		// This is a programming error
+		Msg.error(this,
+			"Unable install an extension that no longer exists. Restart Ghidra and " +
+				"try manually installing the extension: '" + extension.getName() + "'");
 	}
 
 	/**
@@ -164,10 +173,9 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * @param details the extension to check
 	 * @return true if extension version is valid for this version of Ghidra
 	 */
-	private boolean isValidVersion(ExtensionDetails details) {
+	private boolean matchesGhidraVersion(ExtensionDetails details) {
 		String ghidraVersion = Application.getApplicationVersion();
 		String extensionVersion = details.getVersion();
-
 		return ghidraVersion.equals(extensionVersion);
 	}
 
@@ -184,12 +192,28 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			return;
 		}
 
-		try {
-			extensions = ExtensionUtils.getExtensions();
+		Set<ExtensionDetails> archived = ExtensionUtils.getArchiveExtensions();
+		Set<ExtensionDetails> installed = ExtensionUtils.getInstalledExtensions();
+
+		// don't show archived extensions that have been installed
+		for (ExtensionDetails extension : installed) {
+			if (archived.remove(extension)) {
+				Msg.trace(this,
+					"Not showing archived extension that has been installed.  Archive path: " +
+						extension.getArchivePath()); // useful for debugging
+			}
 		}
-		catch (ExtensionException e) {
-			Msg.error(this, "Error loading extensions", e);
-			return;
+
+		extensions = new HashSet<>();
+		extensions.addAll(installed);
+		extensions.addAll(archived);
+
+		for (ExtensionDetails e : extensions) {
+			String name = e.getName();
+			if (originalInstallStates.containsKey(name)) {
+				continue; // preserve the original value
+			}
+			originalInstallStates.put(e.getName(), e.isInstalled());
 		}
 
 		accumulator.addAll(extensions);
@@ -201,7 +225,15 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	 * @return true if the model has changed as a result of installing or uninstalling an extension
 	 */
 	public boolean hasModelChanged() {
-		return modelChanged;
+
+		for (ExtensionDetails e : extensions) {
+			Boolean wasInstalled = originalInstallStates.get(e.getName());
+			if (e.isInstalled() != wasInstalled) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -241,7 +273,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	private class ExtensionNameColumn
 			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
 
-		private ExtVersionRenderer renderer = new ExtVersionRenderer();
+		private ExtRenderer renderer = new ExtRenderer();
 
 		@Override
 		public String getColumnName() {
@@ -271,7 +303,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	private class ExtensionDescriptionColumn
 			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
 
-		private ExtVersionRenderer renderer = new ExtVersionRenderer();
+		private ExtRenderer renderer = new ExtRenderer();
 
 		@Override
 		public String getColumnName() {
@@ -301,7 +333,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 	private class ExtensionVersionColumn
 			extends AbstractDynamicTableColumn<ExtensionDetails, String, Object> {
 
-		private ExtVersionRenderer renderer = new ExtVersionRenderer();
+		private ExtRenderer renderer = new ExtRenderer();
 
 		@Override
 		public String getColumnName() {
@@ -403,14 +435,14 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		}
 	}
 
-	private class ExtVersionRenderer extends AbstractGColumnRenderer<String> {
+	private class ExtRenderer extends AbstractGColumnRenderer<String> {
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			Component comp = super.getTableCellRendererComponent(data);
 
 			ExtensionDetails extension = getSelectedExtension(data.getRowViewIndex());
-			if (!isValidVersion(extension)) {
+			if (!matchesGhidraVersion(extension)) {
 				comp.setForeground(getErrorForegroundColor(data.isSelected()));
 			}
 

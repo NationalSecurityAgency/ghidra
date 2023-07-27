@@ -31,9 +31,9 @@ import docking.actions.PopupActionProvider;
 import docking.util.image.ToolIconURL;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginEvent;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.util.ServiceListener;
+import ghidra.framework.plugintool.util.UndoRedoToolState;
 import ghidra.program.model.listing.Program;
 
 public class DummyTool extends PluginTool {
@@ -425,7 +425,7 @@ public class DummyTool extends PluginTool {
 	}
 
 	@Override
-	protected PluginsConfiguration createPluginsConfigurations() {
+	public PluginsConfiguration createPluginsConfigurations() {
 		return null;
 	}
 
