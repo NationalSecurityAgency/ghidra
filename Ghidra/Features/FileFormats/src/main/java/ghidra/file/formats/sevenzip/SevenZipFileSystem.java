@@ -42,11 +42,7 @@ import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 
 @FileSystemInfo(type = "7zip", description = "7Zip", factory = SevenZipFileSystemFactory.class)
-public class SevenZipFileSystem implements GFileSystem {
-	private FileSystemService fsService;
-	private FileSystemIndexHelper<ISimpleInArchiveItem> fsIndexHelper;
-	private FSRLRoot fsrl;
-	private FileSystemRefManager refManager = new FileSystemRefManager(this);
+public class SevenZipFileSystem extends AbstractFileSystem<ISimpleInArchiveItem> {
 	private Map<Integer, String> passwords = new HashMap<>();
 
 	private IInArchive archive;
@@ -56,9 +52,7 @@ public class SevenZipFileSystem implements GFileSystem {
 	private ArchiveFormat archiveFormat;
 
 	public SevenZipFileSystem(FSRLRoot fsrl, FileSystemService fsService) {
-		this.fsService = fsService;
-		this.fsrl = fsrl;
-		this.fsIndexHelper = new FileSystemIndexHelper<>(this, fsrl);
+		super(fsrl, fsService);
 	}
 
 	/**
@@ -86,7 +80,7 @@ public class SevenZipFileSystem implements GFileSystem {
 			ensurePasswords(monitor);
 		}
 		catch (SevenZipException e) {
-			throw new IOException("Failed to open archive: " + fsrl, e);
+			throw new IOException("Failed to open archive: " + fsFSRL, e);
 		}
 	}
 
@@ -101,20 +95,19 @@ public class SevenZipFileSystem implements GFileSystem {
 		FSUtilities.uncheckedClose(szBPStream, null);
 		szBPStream = null;
 
-		fsIndexHelper.clear();
+		fsIndex.clear();
 		items = null;
 	}
 
 	private void indexFiles(TaskMonitor monitor) throws CancelledException, SevenZipException {
-		monitor.initialize(items.length);
-		monitor.setMessage("Indexing files");
+		monitor.initialize(items.length, "Indexing files");
 		for (ISimpleInArchiveItem item : items) {
 			if (monitor.isCancelled()) {
 				throw new CancelledException();
 			}
 
 			long itemSize = Objects.requireNonNullElse(item.getSize(), -1L);
-			fsIndexHelper.storeFile(fixupItemPath(item), item.getItemIndex(), item.isFolder(),
+			fsIndex.storeFile(fixupItemPath(item), item.getItemIndex(), item.isFolder(),
 				itemSize, item);
 		}
 	}
@@ -124,7 +117,7 @@ public class SevenZipFileSystem implements GFileSystem {
 		if (items.length == 1 && itemPath.isBlank()) {
 			// special case when there is a single unnamed file.
 			// use the name of the 7zip file itself, minus the extension
-			itemPath = FilenameUtils.getBaseName(fsrl.getContainer().getName());
+			itemPath = FilenameUtils.getBaseName(fsFSRL.getContainer().getName());
 		}
 		if (itemPath.isEmpty()) {
 			itemPath = "<blank>";
@@ -134,14 +127,15 @@ public class SevenZipFileSystem implements GFileSystem {
 
 	private String getPasswordForFile(GFile file, ISimpleInArchiveItem encryptedItem,
 			TaskMonitor monitor) {
+		FSRL containerFSRL = fsFSRL.getContainer();
 		int itemIndex = encryptedItem.getItemIndex();
 		if (!passwords.containsKey(itemIndex)) {
 			try (CryptoSession cryptoSession = fsService.newCryptoSession()) {
 				String prompt = passwords.isEmpty()
-						? fsrl.getContainer().getName()
-						: String.format("%s in %s", file.getName(), fsrl.getContainer().getName());
+						? containerFSRL.getName()
+						: "%s in %s".formatted(file.getName(), containerFSRL.getName());
 				for (Iterator<Password> pwIt =
-					cryptoSession.getPasswordsFor(fsrl.getContainer(), prompt); pwIt.hasNext();) {
+					cryptoSession.getPasswordsFor(containerFSRL, prompt); pwIt.hasNext();) {
 					try (Password passwordValue = pwIt.next()) {
 						monitor.setMessage("Testing password for " + file.getName());
 
@@ -158,7 +152,7 @@ public class SevenZipFileSystem implements GFileSystem {
 							passwords.put(unlockedFileIndex, password);
 						}
 						if (!successFileIndexes.isEmpty()) {
-							cryptoSession.addSuccessfulPassword(fsrl.getContainer(), passwordValue);
+							cryptoSession.addSuccessfulPassword(containerFSRL, passwordValue);
 						}
 						if (passwords.containsKey(itemIndex)) {
 							break;
@@ -190,7 +184,7 @@ public class SevenZipFileSystem implements GFileSystem {
 		return arrayResult;
 	}
 
-	private void ensurePasswords(TaskMonitor monitor) throws CancelledException, IOException {
+	private void ensurePasswords(TaskMonitor monitor) throws IOException {
 		// Alert!  Unusual code!
 		// Background: contrary to normal expectations, zip container files can have a
 		// unique password per-embedded-file.
@@ -210,7 +204,7 @@ public class SevenZipFileSystem implements GFileSystem {
 			ISimpleInArchiveItem encryptedItem = null;
 			while ((encryptedItem = getFirstItemWithoutPassword(encryptedItems)) != null &&
 				!monitor.isCancelled()) {
-				GFile gFile = fsIndexHelper.getFileByIndex(encryptedItem.getItemIndex());
+				GFile gFile = fsIndex.getFileByIndex(encryptedItem.getItemIndex());
 				if (gFile == null) {
 					throw new IOException("Unable to retrieve file " + encryptedItem.getPath());
 				}
@@ -226,7 +220,7 @@ public class SevenZipFileSystem implements GFileSystem {
 			if (!noPasswordFoundList.isEmpty()) {
 				Msg.warn(this,
 					"Unable to find password for " + noPasswordFoundList.size() + " file(s) in " +
-						fsrl.getContainer().getName());
+						fsFSRL.getContainer().getName());
 			}
 		}
 	}
@@ -253,44 +247,19 @@ public class SevenZipFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getName() {
-		return fsrl.getContainer().getName();
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsrl;
-	}
-
-	@Override
 	public boolean isClosed() {
 		return szBPStream == null;
 	}
 
 	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsIndexHelper.lookup(path);
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsIndexHelper.getListing(directory);
-	}
-
-	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		FileAttributes result = new FileAttributes();
-		if (fsIndexHelper.getRootDir().equals(file)) {
+		if (fsIndex.getRootDir().equals(file)) {
 			result.add(NAME_ATTR, "/");
 			result.add("Archive Format", archiveFormat.toString());
 		}
 		else {
-			ISimpleInArchiveItem item = fsIndexHelper.getMetadata(file);
+			ISimpleInArchiveItem item = fsIndex.getMetadata(file);
 			if (item == null) {
 				return result;
 			}
@@ -309,7 +278,7 @@ public class SevenZipFileSystem implements GFileSystem {
 			result.add(SIZE_ATTR, uncheckedGet(item::getSize, null));
 
 			Integer crc = uncheckedGet(item::getCRC, null);
-			result.add("CRC", crc != null ? String.format("%08X", crc) : null);
+			result.add("CRC", crc != null ? "%08X".formatted(crc) : null);
 			result.add("Compression Method", uncheckedGet(item::getMethod, null));
 			result.add(CREATE_DATE_ATTR, uncheckedGet(item::getCreationTime, null));
 			result.add(MODIFIED_DATE_ATTR, uncheckedGet(item::getLastWriteTime, null));
@@ -321,7 +290,7 @@ public class SevenZipFileSystem implements GFileSystem {
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		try {
-			ISimpleInArchiveItem item = fsIndexHelper.getMetadata(file);
+			ISimpleInArchiveItem item = fsIndex.getMetadata(file);
 
 			if (item == null) {
 				return null;
@@ -410,8 +379,8 @@ public class SevenZipFileSystem implements GFileSystem {
 			if (currentItem.isEncrypted() && !passwords.containsKey(currentIndex)) {
 				// if we lack a password for this item, don't try to extract it
 				Msg.debug(SevenZipFileSystem.this,
-					"No password for file[" + currentIndex + "] " + currentName + " of " +
-						fsrl.getContainer().getName() + ", unable to extract.");
+					"No password for file[%d] %s of %s, unable to extract.".formatted(currentIndex,
+						currentName, fsFSRL.getContainer().getName()));
 				return null;
 			}
 
@@ -425,8 +394,7 @@ public class SevenZipFileSystem implements GFileSystem {
 			if (!currentItem.isFolder() && extractAskMode == ExtractAskMode.EXTRACT) {
 				try {
 					currentCacheEntryBuilder = fsService.createTempFile(currentItem.getSize());
-					monitor.initialize(currentItem.getSize());
-					monitor.setMessage("Extracting " + currentName);
+					monitor.initialize(currentItem.getSize(), "Extracting " + currentName);
 				}
 				catch (IOException e) {
 					throw new SevenZipException(e);
@@ -441,9 +409,8 @@ public class SevenZipFileSystem implements GFileSystem {
 			String password = passwords.get(currentIndex);
 			if (password == null) {
 
-				Msg.debug(SevenZipFileSystem.this,
-					"No password for file[" + currentIndex + "] " + currentName + " of " +
-						fsrl.getContainer().getName());
+				Msg.debug(SevenZipFileSystem.this, "No password for file[%d] %s of %s"
+						.formatted(currentIndex, currentName, fsFSRL.getContainer().getName()));
 				// hack, return a non-null bad password.  normally shouldn't get here as
 				// encrypted files w/missing password are skipped by getStream()
 				password = "";
@@ -456,8 +423,8 @@ public class SevenZipFileSystem implements GFileSystem {
 			// STEP 3: SevenZip calls this multiple times for all the bytes in the file.
 			// We write them to our temp file.
 			if (currentCacheEntryBuilder == null) {
-				throw new SevenZipException(
-					"Bad Sevenzip Extract Callback state, " + currentIndex + ", " + currentName);
+				throw new SevenZipException("Bad Sevenzip Extract Callback state, %d, %s"
+						.formatted(currentIndex, currentName));
 			}
 			try {
 				currentCacheEntryBuilder.write(data);
@@ -479,9 +446,9 @@ public class SevenZipFileSystem implements GFileSystem {
 			try {
 				FileCacheEntry fce = currentCacheEntryBuilder.finish();
 				if (extractOperationResult == ExtractOperationResult.OK) {
-					GFile gFile = fsIndexHelper.getFileByIndex(currentIndex);
+					GFile gFile = fsIndex.getFileByIndex(currentIndex);
 					if (gFile != null && gFile.getFSRL().getMD5() == null) {
-						fsIndexHelper.updateFSRL(gFile, gFile.getFSRL().withMD5(fce.getMD5()));
+						fsIndex.updateFSRL(gFile, gFile.getFSRL().withMD5(fce.getMD5()));
 					}
 					if (saveResults) {
 						extractResults.put(currentIndex, fce);
@@ -490,8 +457,8 @@ public class SevenZipFileSystem implements GFileSystem {
 						FSUtilities.formatSize(fce.length()));
 				}
 				else {
-					Msg.warn(SevenZipFileSystem.this, "Failed to push file[" + currentIndex +
-						"] " + currentName + " to cache: " + extractOperationResult);
+					Msg.warn(SevenZipFileSystem.this, "Failed to push file[%d] %s to cache: %s"
+							.formatted(currentIndex, currentName, extractOperationResult));
 					extractOperationResultToException(extractOperationResult);
 				}
 			}

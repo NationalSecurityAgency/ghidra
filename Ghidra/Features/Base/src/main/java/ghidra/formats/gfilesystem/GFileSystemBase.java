@@ -16,6 +16,7 @@
 package ghidra.formats.gfilesystem;
 
 import java.io.*;
+import java.util.Comparator;
 import java.util.List;
 
 import ghidra.app.util.bin.ByteProvider;
@@ -151,12 +152,24 @@ public abstract class GFileSystemBase implements GFileSystem {
 		}
 	}
 
+	/**
+	 * Override to specify a file-system specific name comparator.
+	 * 
+	 * @return {@link Comparator} such as {@link String#compareTo(String)} or 
+	 * {@link String#compareToIgnoreCase(String)}
+	 */
+	protected Comparator<String> getFilenameComparator() {
+		return String::compareTo;
+	}
+
 	@Override
 	public GFile lookup(String path) throws IOException {
 		if (path == null || path.equals("/")) {
 			return root;
 		}
-		GFile current = null;
+		Comparator<String> nameComp = getFilenameComparator();
+
+		GFile current = root;
 		String[] parts = path.split("/");
 		partloop: for (String part : parts) {
 			if (part.isEmpty()) {
@@ -164,7 +177,7 @@ public abstract class GFileSystemBase implements GFileSystem {
 			}
 			List<GFile> listing = getListing(current);
 			for (GFile gf : listing) {
-				if (part.equals(gf.getName())) {
+				if (nameComp.compare(part, gf.getName()) == 0) {
 					current = gf;
 					continue partloop;
 				}

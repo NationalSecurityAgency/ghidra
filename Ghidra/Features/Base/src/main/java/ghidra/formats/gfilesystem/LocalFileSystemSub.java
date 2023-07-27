@@ -20,8 +20,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
@@ -152,23 +150,37 @@ public class LocalFileSystemSub implements GFileSystem, GFileHashProvider {
 
 	@Override
 	public GFile lookup(String path) throws IOException {
-		path = StringUtils.defaultString(path, "/");
-
-		// Create a new GFile instance with a FSRL based on the RootFS (and not this FS),
-		File curFile = localfsRootDir;
-		GFileLocal result = rootGFile;
-
-		String[] parts = path.split("/");
-		for (String name : parts) {
-			if (name.isEmpty()) {
-				continue;
-			}
-			curFile = new File(curFile, name);
-			FSRL fsrl = result.getFSRL().appendPath(name);
-			String relPath = FSUtilities.appendPath(result.getPath(), name);
-			result = new GFileLocal(curFile, relPath, fsrl, this, result);
+		File f = LocalFileSystem.lookupFile(localfsRootDir, path, null);
+		if ( f == null ) {
+			return null;
 		}
+		GFile result = getGFile(f);
 		return result;
+	}
+
+	private GFile getGFile(File f) throws IOException {
+		List<File> parts = LocalFileSystem.getFilePathParts(f); // [/subdir/subroot/file, /subdir/subroot, /subdir, /]
+		int rootDirIndex = findRootDirIndex(parts);
+		if (rootDirIndex < 0) {
+			throw new IOException("Invalid directory " + f);
+		}
+		GFile current = rootGFile;
+		for (int i = rootDirIndex - 1; i >= 0; i--) {
+			File part = parts.get(i);
+			FSRL childFSRL = current.getFSRL().appendPath(part.getName());
+			String childPath = FSUtilities.appendPath(current.getPath(), part.getName());
+			current = new GFileLocal(part, childPath, childFSRL, this, current);
+		}
+		return current;
+	}
+
+	private int findRootDirIndex(List<File> dirList) {
+		for (int i = 0; i < dirList.size(); i++) {
+			if (localfsRootDir.equals(dirList.get(i))) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	@Override

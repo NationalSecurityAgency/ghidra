@@ -160,15 +160,32 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * @return {@link GFile} instance or null if no file was added to the index at that path
 	 */
 	public synchronized GFile lookup(String path) {
+		return lookup(null, path, null);
+	}
+
+	/**
+	 * Mirror's {@link GFileSystem#lookup(String)} interface, with additional parameters to
+	 * control the lookup.
+	 * 
+	 * @param baseDir optional starting directory to perform lookup
+	 * @param path path and filename of a file to find
+	 * @param nameComp optional {@link Comparator} that compares file names.  Suggested values are 
+	 * {@code String::compareTo} or {@code String::compareToIgnoreCase} or {@code null} (also exact).
+	 * @return {@link GFile} instance or null if no file was added to the index at that path
+	 */
+	public synchronized GFile lookup(GFile baseDir, String path, Comparator<String> nameComp) {
 		String[] nameparts = (path != null ? path : "").split("/");
-		GFile parent = lookupParent(nameparts);
+		GFile parent = lookupParent(baseDir, nameparts, false, nameComp);
+		if (parent == null) {
+			return null;
+		}
 		String name = (nameparts.length > 0) ? nameparts[nameparts.length - 1] : null;
 		if (name == null || name.isEmpty()) {
 			return parent;
 		}
 
-		Map<String, FileData<METADATATYPE>> dirListing = getDirectoryContents(parent, false);
-		FileData<METADATATYPE> fileData = (dirListing != null) ? dirListing.get(name) : null;
+		FileData<METADATATYPE> fileData =
+			lookupFileInDir(getDirectoryContents(parent, false), name, nameComp);
 		return (fileData != null) ? fileData.file : null;
 	}
 
@@ -197,7 +214,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 			long length, METADATATYPE metadata) {
 
 		String[] nameparts = path.replaceAll("[\\\\]", "/").split("/");
-		GFile parent = lookupParent(nameparts);
+		GFile parent = lookupParent(rootDir, nameparts, true, null);
 
 		String lastpart = nameparts[nameparts.length - 1];
 		FileData<METADATATYPE> fileData =
@@ -301,19 +318,27 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * Walks a list of names of directories in nameparts (stopping prior to the last element)
 	 * starting at the root of the filesystem and returns the final directory.
 	 * <p>
-	 * Directories in a path that have not been encountered before (ie. a file's path references a directory
-	 * that hasn't been mentioned yet as its own file entry) will have a stub entry GFile created for them.
+	 * Directories in a path that have not been encountered before (ie. a file's path references 
+	 * a directory that hasn't been mentioned yet as its own file entry) will have a stub entry 
+	 * GFile created for them if createIfMissing is true.
 	 * <p>
 	 * Superfluous slashes in the original filename (ie. name/sub//subafter_extra_slash) will
 	 * be represented as empty string elements in the nameparts array and will be skipped
 	 * as if they were not there.
 	 * <p>
-	 * @param nameparts
-	 * @return
+	 * @param baseDir optional starting directory to perform lookups
+	 * @param nameparts String[] containing the elements of a path
+	 * @param createIfMissing boolean flag, if true missing elements will have stub entries created
+	 * for them
+	 * @param nameComp optional comparator that will compare names, usually case-sensitive vs case
+	 * insensitive
+	 * @return GFile that represents the parent directory, or null if in read-only mode and not
+	 * found
 	 */
-	protected GFile lookupParent(String[] nameparts) {
+	protected GFile lookupParent(GFile baseDir, String[] nameparts, boolean createIfMissing,
+			Comparator<String> nameComp) {
 
-		GFile currentDir = rootDir;
+		GFile currentDir = Objects.requireNonNullElse(baseDir, rootDir);
 		for (int i = 0; i < nameparts.length - 1; i++) {
 			Map<String, FileData<METADATATYPE>> currentDirContents =
 				getDirectoryContents(currentDir, true);
@@ -321,14 +346,41 @@ public class FileSystemIndexHelper<METADATATYPE> {
 			if (name.isEmpty()) {
 				continue;
 			}
-			FileData<METADATATYPE> fileData = currentDirContents.get(name);
+			FileData<METADATATYPE> fileData = lookupFileInDir(currentDirContents, name, nameComp);
 			if (fileData == null) {
+				if (!createIfMissing) {
+					return null;
+				}
 				fileData = doStoreMissingDir(name, currentDir);
 			}
 			currentDir = fileData.file;
 		}
 
 		return currentDir;
+	}
+
+	protected FileData<METADATATYPE> lookupFileInDir(
+			Map<String, FileData<METADATATYPE>> dirContents, String filename,
+			Comparator<String> nameComp) {
+		if (dirContents == null) {
+			return null;
+		}
+		if (nameComp == null) {
+			// exact match
+			return dirContents.get(filename);
+		}
+		List<FileData<METADATATYPE>> candidateFiles = new ArrayList<>();
+		for (FileData<METADATATYPE> fd : dirContents.values()) {
+			if (nameComp.compare(filename, fd.file.getName()) == 0) {
+				if (fd.file.getName().equals(filename)) {
+					return fd;
+				}
+				candidateFiles.add(fd);
+			}
+		}
+		Collections.sort(candidateFiles,
+			(f1, f2) -> f1.file.getName().compareTo(f2.file.getName()));
+		return !candidateFiles.isEmpty() ? candidateFiles.get(0) : null;
 	}
 
 	/**
