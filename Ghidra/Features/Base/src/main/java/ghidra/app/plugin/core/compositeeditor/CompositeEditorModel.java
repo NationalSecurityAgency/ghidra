@@ -212,7 +212,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 
 		DataType resultDt = DataUtilities.reconcileAppliedDataType(currentDt, dt, true);
-		int resultLen = resultDt.getAlignedLength();
+		int resultLen = resultDt.getLength();
 
 		if (resultDt instanceof Dynamic) {
 			resultLen = DataTypeHelper.requestDtSize(getProvider(), resultDt.getDisplayName(),
@@ -222,7 +222,9 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			throw new InvalidDataTypeException("Data types of size 0 are not allowed.");
 		}
 
-		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen, true);
+		// TODO: Need to handle proper placement for big-endian within a larger component (i.e., right-justified)
+		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen,
+			viewComposite.isPackingEnabled());
 	}
 
 	/**
