@@ -2933,7 +2933,7 @@ define pcodeop InterruptDescriptorTableRegister;
 	InterruptDescriptorTableRegister(m32);
 }
 @ifdef IA64
-:LIDT m64       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=3 ) ... & m64
+:LIDT m64       is $(LONGMODE_ON) & vexMode=0 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=3 ) ... & m64
 {
 	InterruptDescriptorTableRegister(m64);
 }
@@ -3639,18 +3639,18 @@ define pcodeop smm_restore_state;
 :SET^cc rm8     is vexMode=0 & byte=0xf; row=9 & cc; rm8                { rm8 = cc; }
 
 # manual is not consistent on operands
-:SGDT m16       is vexMode=0 & opsize=0 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=0 ) ... & m16
+:SGDT m16       is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=0 ) ... & m16
 {
 	m16 = GlobalDescriptorTableRegister();
 }
 
-:SGDT m32       is vexMode=0 & opsize=1 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=0 ) ... & m32
+:SGDT m32       is $(LONGMODE_OFF) & vexMode=0 & opsize=1 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=0 ) ... & m32
 {
 	m32 = GlobalDescriptorTableRegister();
 }
 
 @ifdef IA64
-:SGDT m64       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=0 ) ... & m64
+:SGDT m64       is $(LONGMODE_ON) & vexMode=0 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=0 ) ... & m64
 {
 	m64 = GlobalDescriptorTableRegister();
 }
@@ -3745,17 +3745,17 @@ define pcodeop smm_restore_state;
                                           shrflags(tmp, rm64,count); shiftresultflags(rm64,count); }
 @endif
 
-:SIDT m16       is vexMode=0 & opsize=0 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=1 ) ... & m16
+:SIDT m16       is $(LONGMODE_OFF) & vexMode=0 & opsize=0 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=1 ) ... & m16
 {
 	m16 = InterruptDescriptorTableRegister();
 }
 
-:SIDT m32       is vexMode=0 & opsize=1 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=1 ) ... & m32
+:SIDT m32       is $(LONGMODE_OFF) & vexMode=0 & opsize=1 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=1 ) ... & m32
 {
 	m32 = InterruptDescriptorTableRegister();
 }
 @ifdef IA64
-:SIDT m64       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=1 ) ... & m64
+:SIDT m64       is $(LONGMODE_ON) & vexMode=0 &  byte=0xf; byte=0x1; ( mod != 0b11 & reg_opcode=1 ) ... & m64
 {
 	m64 = InterruptDescriptorTableRegister();
 }
