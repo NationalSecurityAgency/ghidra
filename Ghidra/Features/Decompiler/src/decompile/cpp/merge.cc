@@ -771,103 +771,71 @@ void Merge::mergeOp(PcodeOp *op)
   }
 }
 
-/// \brief Collect all instances of the given HighVariable whose Cover intersects a p-code op
+/// \brief Collect Varnode instances or pieces from a specific HighVariable that are inputs to a given PcodeOp
 ///
-/// Efficiently test if each instance Varnodes contains the specific p-code op in its Cover
-/// and return a list of the instances that do.
-/// \param vlist will hold the resulting list of intersecting instances
-/// \param high is the given HighVariable
-/// \param op is the specific PcodeOp to test intersection with
-void Merge::collectCovering(vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op)
+/// A Varnode is considered an input if it is a \e direct input to the PcodeOp or if it is
+/// \e indirectly affected by the PcodeOp.  The specific \e read of the Varnode is passed back as
+/// a PcodeOp and slot pair (PcodeOpNode).  The passed back PcodeOp will either be the given PcodeOp or
+/// an INDIRECT caused by the given PcodeOp.
+/// \param high is the specific HighVariable through which to search for input instances
+/// \param oplist will hold the PcodeOpNodes being passed back
+/// \param op is the given PcodeOp
+void Merge::collectInputs(HighVariable *high,vector<PcodeOpNode> &oplist,PcodeOp *op)
 
 {
-  int4 blk = op->getParent()->getIndex();
-  for(int4 i=0;i<high->numInstances();++i) {
-    Varnode *vn = high->getInstance(i);
-    if (vn->getCover()->getCoverBlock(blk).contain(op))
-      vlist.push_back(vn);
-  }
-}
-
-/// \brief Check for for p-code op intersections that are correctable
-///
-/// Given a list of Varnodes that intersect a specific PcodeOp, check that each intersection is
-/// on the boundary, and if so, pass back the \e read op(s) that cause the intersection.
-/// \param vlist is the given list of intersecting Varnodes
-/// \param oplist will hold the boundary intersecting \e read ops
-/// \param slotlist will hold the corresponding input slots of the instance
-/// \param op is the specific intersecting PcodeOp
-/// \return \b false if any instance in the list intersects the PcodeOp on the interior
-bool Merge::collectCorrectable(const vector<Varnode *> &vlist,list<PcodeOp *> &oplist,
-			       vector<int4> &slotlist,PcodeOp *op)
-{
-  int4 blk = op->getParent()->getIndex();
-  vector<Varnode *>::const_iterator viter;
-  list<PcodeOp *>::const_iterator oiter;
-  Varnode *vn;
-  PcodeOp *edgeop;
-  int4 slot,bound;
-  uintm opuindex = CoverBlock::getUIndex(op);
-
-  for(viter=vlist.begin();viter!=vlist.end();++viter) {
-    vn = *viter;
-    bound = vn->getCover()->getCoverBlock(blk).boundary(op);
-    if (bound == 0) return false;
-    if (bound == 2) continue;	// Not defined before op (intersects with write op)
-    for(oiter=vn->beginDescend();oiter!=vn->endDescend();++oiter) {
-      edgeop = *oiter;
-      if (CoverBlock::getUIndex(edgeop) == opuindex) { // Correctable
-	oplist.push_back(edgeop);
-	slot = edgeop->getSlot(vn);
-	slotlist.push_back(slot);
+  VariableGroup *group = (VariableGroup *)0;
+  if (high->piece != (VariablePiece *)0)
+    group = high->piece->getGroup();
+  for(;;) {
+    for(int4 i=0;i<op->numInput();++i) {
+      Varnode *vn = op->getIn(i);
+      if (vn->isAnnotation()) continue;
+      HighVariable *testHigh = vn->getHigh();
+      if (testHigh == high || (testHigh->piece != (VariablePiece *)0 && testHigh->piece->getGroup() == group)) {
+	oplist.emplace_back(op, i);
       }
     }
+    op = op->previousOp();
+    if (op == (PcodeOp *)0 || op->code() != CPUI_INDIRECT)
+      break;
   }
-  return true;
 }
 
-/// \brief Snip instances of the input of an INDIRECT op that interfere with its output
+/// \brief Snip instances of the output of an INDIRECT that are also inputs to to the underlying PcodeOp
 ///
-/// Examine the input and output HighVariable for the given INDIRECT op.
-/// Varnode instances of the input that intersect the output Cover are snipped by creating
-/// a new COPY op from the input to a new temporary and then replacing the Varnode reads
-/// with the temporary.
+/// Examine the output HighVariable for the given INDIRECT op. Varnode instances (or pieces) that are also
+/// inputs to the underlying PcodeOp causing the INDIRECT are snipped by creating a new COPY op from the
+/// Varnode to a new temporary and then replacing the \e read with the temporary.
 /// \param indop is the given INDIRECT op
-void Merge::snipIndirect(PcodeOp *indop)
+/// \return \b true if specific instances are snipped
+bool Merge::snipOutputInterference(PcodeOp *indop)
 
 {
   PcodeOp *op = PcodeOp::getOpFromConst(indop->getIn(1)->getAddr()); // Indirect effect op
-  vector<Varnode *> problemvn;
-  list<PcodeOp *> correctable;
-  vector<int4> correctslot;
 				// Collect instances of output->high that are defined
 				// before (and right up to) op. These need to be snipped.
-  collectCovering(problemvn,indop->getOut()->getHigh(),op);
-  if (problemvn.empty()) return;
-				// Collect vn reads where the snip needs to be.
-				// If cover properly contains op, report an error.
-				// This should not be possible as that vn would have
-				// to intersect with indop->output, which it is merged with.
-  if (!collectCorrectable(problemvn,correctable,correctslot,op))
-    throw LowlevelError("Unable to force indirect merge");
+  vector<PcodeOpNode> correctable;
+  collectInputs(indop->getOut()->getHigh(), correctable, op);
+  if (correctable.empty())
+    return false;
 
-  if (correctable.empty()) return;
-  Varnode *refvn = correctable.front()->getIn(correctslot[0]);
-  PcodeOp *snipop,*insertop;
-
-				// NOTE: the covers for any input to op which is
-				// an instance of the output high must
-				// all intersect so the varnodes must all be
-				// traceable via COPY to the same root
-  snipop = allocateCopyTrim(refvn, op->getAddr(), correctable.front());
-  data.opInsertBefore(snipop,op);
-  list<PcodeOp *>::iterator oiter;
-  int4 i,slot;
-  for(oiter=correctable.begin(),i=0;i<correctslot.size();++oiter,++i) {
-    insertop = *oiter;
-    slot = correctslot[i];
+  sort(correctable.begin(),correctable.end(),PcodeOpNode::compareByHigh);
+  PcodeOp *snipop = (PcodeOp *)0;
+  HighVariable *curHigh = (HighVariable *)0;
+  for(int4 i=0;i<correctable.size();++i) {
+    PcodeOp *insertop = correctable[i].op;
+    int4 slot = correctable[i].slot;
+    Varnode *vn = insertop->getIn(slot);
+    if (vn->getHigh() != curHigh) {
+	// NOTE: the covers for any input to op which is an instance of the output high must
+	// all intersect so the varnodes must all be traceable via COPY to the same root
+      snipop = allocateCopyTrim(vn, insertop->getAddr(), insertop);
+      data.opInsertBefore(snipop,insertop);
+      curHigh = vn->getHigh();
+    }
     data.opSetInput(insertop,snipop->getOut(),slot);
   }
+  return true;
 }
 
 /// \brief Force the merge of all input and output Varnodes to a given INDIRECT op
@@ -879,24 +847,28 @@ void Merge::mergeIndirect(PcodeOp *indop)
 
 {
   Varnode *outvn = indop->getOut();
-  Varnode *invn0 = indop->getIn(0);
   if (!outvn->isAddrForce()) {	// If the output is NOT address forced
     mergeOp(indop);		// We can merge in the same way as a MULTIEQUAL
     return;
   }
 
+  Varnode *invn0 = indop->getIn(0);
   if (mergeTestRequired(outvn->getHigh(),invn0->getHigh())) {
     if (merge(invn0->getHigh(),outvn->getHigh(),false))
       return;
   }
-  snipIndirect(indop);		// If we cannot merge, the only thing that can go
-				// wrong with an input trim, is if the output of
-				// indop is involved in the input to the op causing
-				// the indirect effect. So fix this
+  // If we cannot merge, the only thing that can go wrong with an input trim, is if the output of
+  // indop is involved in the input to the op causing the indirect effect. So test for this.
+  if (snipOutputInterference(indop)) {
+    // If we found (and snipped) something related to the output, try merging again before snipping the INDIRECT
+    if (mergeTestRequired(outvn->getHigh(), invn0->getHigh())) {
+      if (merge(invn0->getHigh(),outvn->getHigh(),false))
+	return;
+    }
+  }
 
-  PcodeOp *newop;
-
-  newop = allocateCopyTrim(invn0, indop->getAddr(), indop);
+  // Snip the INDIRECT itself
+  PcodeOp *newop = allocateCopyTrim(invn0, indop->getAddr(), indop);
   SymbolEntry *entry = outvn->getSymbolEntry();
   if (entry != (SymbolEntry *)0 && entry->getSymbol()->getType()->needsResolution()) {
     data.inheritResolution(entry->getSymbol()->getType(), newop, -1, indop, -1);

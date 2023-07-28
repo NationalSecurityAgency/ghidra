@@ -258,6 +258,7 @@ struct PcodeOpNode {
   PcodeOpNode(void) { op = (PcodeOp *)0; slot = 0; }	///< Unused constructor
   PcodeOpNode(PcodeOp *o,int4 s) { op = o; slot = s; }	///< Constructor
   bool operator<(const PcodeOpNode &op2) const;		///< Simple comparator for putting edges in a sorted container
+  static bool compareByHigh(const PcodeOpNode &a,const PcodeOpNode &b);	///< Compare Varnodes by their HighVariable
 };
 
 /// \brief A node in a tree structure of CPUI_PIECE operations
@@ -374,6 +375,16 @@ inline bool PcodeOpNode::operator<(const PcodeOpNode &op2) const
   if (slot != op2.slot)
     return (slot < op2.slot);
   return false;
+}
+
+/// Allow a sorting that groups together input Varnodes with the same HighVariable
+/// \param a is the first Varnode to compare
+/// \param b is the second Varnode to compare
+/// \return true is \b a should come before \b b
+inline bool PcodeOpNode::compareByHigh(const PcodeOpNode &a, const PcodeOpNode &b)
+
+{
+  return a.op->getIn(a.slot)->getHigh() < b.op->getIn(b.slot)->getHigh();
 }
 
 } // End namespace ghidra
