@@ -150,17 +150,17 @@ public abstract class CompositeEditorPanel extends JPanel
 		table.setDefaultRenderer(DataTypeInstance.class, dtiCellRenderer);
 	}
 
-	private boolean launchBitFieldEditor(int modelColumn, int editingRow) {
+	private boolean launchBitFieldEditor(int modelRow, int modelColumn) {
 		if (model.viewComposite instanceof Structure &&
 			!model.viewComposite.isPackingEnabled() &&
-			model.getDataTypeColumn() == modelColumn && editingRow < model.getNumComponents()) {
+			model.getDataTypeColumn() == modelColumn && modelRow < model.getNumComponents()) {
 			// check if we are attempting to edit a bitfield
-			DataTypeComponent dtComponent = model.getComponent(editingRow);
+			DataTypeComponent dtComponent = model.getComponent(modelRow);
 			if (dtComponent.isBitFieldComponent()) {
 				table.getCellEditor().cancelCellEditing();
 
 				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
-					provider.dtmService, editingRow, model.showHexNumbers, ordinal -> {
+					provider.dtmService, modelRow, model.showHexNumbers, ordinal -> {
 						model.notifyCompositeChanged();
 					});
 				Component c = provider.getComponent();
@@ -187,9 +187,11 @@ public abstract class CompositeEditorPanel extends JPanel
 						return;
 					}
 
-					int modelColumn = table.convertColumnIndexToModel(table.getEditingColumn());
-					if (!launchBitFieldEditor(modelColumn, editingRow)) {
-						model.beginEditingField(editingRow, modelColumn);
+					int modelRow = table.convertRowIndexToModel(editingRow);
+					int editingColumn = table.getEditingColumn();
+					int modelColumn = table.convertColumnIndexToModel(editingColumn);
+					if (!launchBitFieldEditor(modelRow, modelColumn)) {
+						model.beginEditingField(modelRow, modelColumn);
 					}
 				});
 			}
@@ -287,9 +289,6 @@ public abstract class CompositeEditorPanel extends JPanel
 					editBelowField();
 					break;
 			}
-			if (table.isEditing()) {
-				table.getEditorComponent().requestFocus();
-			}
 		}
 		finally {
 			editorAdjusting = false;
@@ -313,6 +312,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		// Handle the editing for this field.
 		int viewColumn = table.convertColumnIndexToView(modelColumn);
 		scrollToCell(row, viewColumn);
+		table.setColumnSelectionInterval(viewColumn, viewColumn);
 		startCellEditing(row, viewColumn);
 		return table.isEditing();
 	}
@@ -331,20 +331,20 @@ public abstract class CompositeEditorPanel extends JPanel
 		int index = row;
 		int fieldNum = table.convertColumnIndexToView(modelColumn);
 
-		int numFields = model.getColumnCount();
+		int numFields = table.getColumnCount();
 		int numComps = model.getRowCount();
 		do {
 			// Determine the new location for the cursor.
 			if (index < numComps) { // on component row
 				if (++fieldNum < (numFields)) { // not on last field
-					if (model.isCellEditable(index, table.convertColumnIndexToModel(fieldNum))) {
+					if (table.isCellEditable(index, fieldNum)) {
 						foundEditable = true;
 					}
 				}
 				else if ((++index < numComps) // on last field for other than last component
 					|| (index == numComps)) { // Last field and row but unlocked
 					fieldNum = 0; // Set it to first field.
-					if (model.isCellEditable(index, table.convertColumnIndexToModel(fieldNum))) {
+					if (table.isCellEditable(index, fieldNum)) {
 						foundEditable = true;
 					}
 				}
@@ -365,6 +365,7 @@ public abstract class CompositeEditorPanel extends JPanel
 			model.setRow(row);
 			model.setColumn(modelColumn);
 		}
+
 		return foundEditable;
 	}
 
@@ -464,6 +465,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		if (locateNextEditField(currentRow)) {
 			return beginEditField(model.getRow(), model.getColumn());
 		}
+
 		return false;
 	}
 
@@ -559,7 +561,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	private void createTable() {
-		table = new GTable(model);
+		table = new CompositeEditorTable(model);
 
 		TableColumnModel columnModel = table.getColumnModel();
 		if (columnModel instanceof GTableColumnModel) {
@@ -570,16 +572,9 @@ public abstract class CompositeEditorPanel extends JPanel
 			}
 		}
 
-		table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
-		table.addMouseListener(new CompositeTableMouseListener());
+		table.setAutoEditEnabled(false); // do not edit when typing
 
-		CompositeEditorTableAction action = provider.actionMgr.getNamedAction(
-			CompositeEditorTableAction.EDIT_ACTION_PREFIX + EditFieldAction.ACTION_NAME);
-		Action swingAction = KeyBindingUtils.adaptDockingActionToNonContextAction(action);
-		InputMap map = table.getInputMap();
-		map.put(action.getKeyBinding(), "StartEditing");
-		ActionMap amap = table.getActionMap();
-		amap.put("StartEditing", swingAction);
+		table.addMouseListener(new CompositeTableMouseListener());
 
 		table.getSelectionModel().addListSelectionListener(e -> {
 			if (e.getValueIsAdjusting()) {
@@ -599,7 +594,9 @@ public abstract class CompositeEditorPanel extends JPanel
 			TableColumnModel cm = table.getColumnModel();
 			int[] selected = cm.getSelectedColumns();
 			if (selected.length == 1) {
-				model.setColumn(selected[0]);
+				int viewIndex = selected[0];
+				int modelIndex = table.convertColumnIndexToModel(viewIndex);
+				model.setColumn(modelIndex);
 			}
 			else {
 				model.setColumn(-1);
@@ -892,7 +889,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
 	 * drop() method.
 	 *
 	 * @param obj Transferable object that is to be dropped.
@@ -920,7 +917,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
 	 * drop() method.
 	 *
 	 * @param p the point of insert
@@ -939,7 +936,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
 	 * drop() method.
 	 * 
 	 * @param p the point of insert
@@ -1158,9 +1155,9 @@ public abstract class CompositeEditorPanel extends JPanel
 			BigInteger endIndex = range.getEnd().getIndex();
 			lsm.addSelectionInterval(startIndex.intValue(), endIndex.intValue() - 1);
 		}
-		int column = model.getColumn();
-		clsm.setAnchorSelectionIndex(column);
-		clsm.setLeadSelectionIndex(column);
+		int modelColumn = model.getColumn();
+		int viewColumn = table.convertColumnIndexToView(modelColumn);
+		clsm.setSelectionInterval(viewColumn, viewColumn);
 	}
 
 	private class ComponentStringCellEditor extends ComponentCellEditor {
@@ -1344,18 +1341,15 @@ public abstract class CompositeEditorPanel extends JPanel
 		@Override
 		public boolean stopCellEditing() {
 
-			ListSelectionModel columnSelectionModel = table.getColumnModel().getSelectionModel();
-			columnSelectionModel.setValueIsAdjusting(true);
-
 			int editingColumn = table.getEditingColumn();
 
 			model.setStatus("");
-
 			if (!isEmptyEditorCell() && !validateUserChoice()) {
 				return false;
 			}
 
-			int editingRow = model.getRow();
+			ListSelectionModel columnSelectionModel = table.getColumnModel().getSelectionModel();
+			columnSelectionModel.setValueIsAdjusting(true);
 
 			DataType dataType = (DataType) editor.getCellEditorValue();
 			if (dataType != null) {
@@ -1371,10 +1365,10 @@ public abstract class CompositeEditorPanel extends JPanel
 				fireEditingCanceled();
 			}
 
-			columnSelectionModel.setAnchorSelectionIndex(editingColumn);
-			columnSelectionModel.setLeadSelectionIndex(editingColumn);
+			columnSelectionModel.setSelectionInterval(editingColumn, editingColumn);
 			columnSelectionModel.setValueIsAdjusting(false);
 
+			int editingRow = model.getRow();
 			NavigationDirection navigationDirection = editor.getNavigationDirection();
 			if (navigationDirection == NavigationDirection.BACKWARD) {
 				editPreviousField(editingRow);
@@ -1450,39 +1444,35 @@ public abstract class CompositeEditorPanel extends JPanel
 			int column = table.columnAtPoint(point);
 			int modelColumn = table.convertColumnIndexToModel(column);
 			int clickCount = e.getClickCount();
-			if (!table.isEditing() && (e.getID() == MouseEvent.MOUSE_PRESSED)) {
-				model.clearStatus(); // Only want to clear status when starting new actions (pressed).
+			if (!table.isEditing() && e.getID() == MouseEvent.MOUSE_PRESSED) {
+				model.clearStatus(); // Only clear status when starting new actions (pressed).
 			}
+
 			if (isPopup) {
 				if (!table.isRowSelected(row)) {
 					table.setRowSelectionInterval(row, row);
 				}
 				return;
 			}
-			if ((clickCount < 2) || (e.getButton() != MouseEvent.BUTTON1)) {
+
+			if (clickCount < 2 || e.getButton() != MouseEvent.BUTTON1) {
 				return;
 			}
-			String status = null;
+
 			if (model.isCellEditable(row, modelColumn)) {
 				return;
 			}
 
-			status = model.getColumnName(modelColumn) + " field is not editable";
-			if ((row >= 0) && (row < model.getNumComponents()) &&
-				((modelColumn == model.getNameColumn()) ||
-					(modelColumn == model.getCommentColumn()))) {
-				if (!model.isCellEditable(row, modelColumn)) {
-					DataType dt = model.getComponent(row).getDataType();
-					if (dt == DataType.DEFAULT) {
-						if (modelColumn == model.getNameColumn()) {
-							status = model.getColumnName(modelColumn) +
-								" field is not editable for Undefined byte.";
-						}
-						else if (modelColumn == model.getCommentColumn()) {
-							status = model.getColumnName(modelColumn) +
-								" field is not editable for Undefined byte.";
-						}
-					}
+			String columnName = model.getColumnName(modelColumn);
+			String status = columnName + " field is not editable";
+
+			boolean isValidRow = row >= 0 && row < model.getNumComponents();
+			boolean isStringColumn = modelColumn == model.getNameColumn() ||
+				modelColumn == model.getCommentColumn();
+			if (isValidRow && isStringColumn) {
+				DataType dt = model.getComponent(row).getDataType();
+				if (dt == DataType.DEFAULT) {
+					status = columnName + " field is not editable for Undefined byte.";
 				}
 			}
 
@@ -1491,4 +1481,26 @@ public abstract class CompositeEditorPanel extends JPanel
 			e.consume();
 		}
 	}
+
+	private class CompositeEditorTable extends GTable {
+
+		public CompositeEditorTable(TableModel model) {
+			super(model);
+		}
+
+		@Override
+		protected void installEditKeyBinding() {
+			// We use a tool action instead of the default action.  We must signal to the table to
+			// not use the default action to prevent the table from getting the action.
+
+			// This code will insert a placeholder of 'none' in the table for this keystroke, which
+			// is the default edit keystroke in Swing.  The actual binding for this keystroke is in
+			// a parent input map of the table.  By placing this keystroke in the table's input map,
+			// we prevent the key processing code from traversing into the parent input map's
+			// bindings.
+			KeyStroke keyStroke = KeyStroke.getKeyStroke("pressed F2");
+			KeyBindingUtils.clearKeyBinding(this, keyStroke);
+		}
+	}
+
 }

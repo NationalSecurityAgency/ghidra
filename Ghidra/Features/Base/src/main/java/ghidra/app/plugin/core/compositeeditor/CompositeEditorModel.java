@@ -271,18 +271,15 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		try {
 			applyingFieldEdit = true;
 			if (columnIndex == getDataTypeColumn()) {
-				setComponentDataType(rowIndex, value);
+				return setComponentDataType(rowIndex, value);
 			}
 			else if (columnIndex == getNameColumn()) {
-				setComponentName(rowIndex, ((String) value).trim());
+				return setComponentName(rowIndex, ((String) value).trim());
 			}
 			else if (columnIndex == getCommentColumn()) {
-				setComponentComment(rowIndex, (String) value);
+				return setComponentComment(rowIndex, (String) value);
 			}
-			else {
-				return false;
-			}
-			return true;
+			return false;
 		}
 		catch (UsrException e) {
 			setStatus(e.getMessage());
@@ -368,7 +365,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	@Override
-	public void setComponentDataType(int rowIndex, Object dataTypeObject) throws UsrException {
+	public boolean setComponentDataType(int rowIndex, Object dataTypeObject) throws UsrException {
 		DataType previousDt = null;
 		int previousLength = 0;
 		String dtName = "";
@@ -392,7 +389,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		else if (dataTypeObject instanceof String) {
 			String dtString = (String) dataTypeObject;
 			if (dtString.equals(dtName)) {
-				return;
+				return false;
 			}
 			DataTypeManager originalDTM = getOriginalDataTypeManager();
 			newDt = DataTypeHelper.parseDataType(rowIndex, dtString, this, originalDTM,
@@ -400,7 +397,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			newLength = newDt.getLength();
 		}
 		if (newDt == null) {
-			return; // Was nothing and is nothing.
+			return false; // Was nothing and is nothing.
 		}
 
 		if (DataTypeComponent.usesZeroLengthComponent(newDt)) {
@@ -417,7 +414,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			DataTypeInstance sizedDataType = DataTypeHelper.getSizedDataType(provider, newDt,
 				suggestedLength, getMaxReplaceLength(rowIndex));
 			if (sizedDataType == null) {
-				return;
+				return false;
 			}
 			newDt = resolveDataType(sizedDataType.getDataType(), viewDTM,
 				DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -427,7 +424,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			}
 		}
 		if ((previousDt != null) && newDt.isEquivalent(previousDt) && newLength == previousLength) {
-			return;
+			return false;
 		}
 
 		int maxLength = getMaxReplaceLength(rowIndex);
@@ -437,6 +434,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 		setComponentDataTypeInstance(rowIndex, newDt, newLength);
 		notifyCompositeChanged();
+		return true;
 	}
 
 	/**
@@ -703,15 +701,15 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 //==================================================================================================
 
 	@Override
-	public boolean beginEditingField(int rowIndex, int columnIndex) {
+	public boolean beginEditingField(int modelRow, int modelColumn) {
 		if (isEditingField()) {
 			return false;
 		}
 		try {
 			stillBeginningEdit = true; // We want to know we are still beginning an edit when we fix the selection.
 			editingField = true;
-			setLocation(rowIndex, columnIndex);
-			setSelection(new int[] { rowIndex });
+			setLocation(modelRow, modelColumn);
+			setSelection(new int[] { modelRow });
 			notifyEditingChanged();
 		}
 		finally {
@@ -733,17 +731,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	@Override
 	public boolean isEditingField() {
 		return !settingValueAt && editingField;
-	}
-
-	@Override
-	public int getFirstEditableColumn(int rowIndex) {
-		int numFields = this.getColumnCount();
-		for (int i = 0; i < numFields; i++) {
-			if (this.isCellEditable(rowIndex, i)) {
-				return i;
-			}
-		}
-		return -1;
 	}
 
 	private void notifyEditingChanged() {
@@ -946,7 +933,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	@Override
-	public boolean isEditFieldAllowed(int rowIndex, int columnIndex) {
+	public boolean isEditFieldAllowed() {
 		return !isEditingField();
 	}
 

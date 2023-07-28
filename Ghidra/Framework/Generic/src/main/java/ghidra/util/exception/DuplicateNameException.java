@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +15,23 @@
  */
 package ghidra.util.exception;
 
-
 /**
  * Exception thrown whenever a method tries give something a name and that name is already used.
  */
 public class DuplicateNameException extends UsrException {
-	
-    /**
-     * constructs a new DuplicatenameException with a default message.
-     */
-    public DuplicateNameException() {
+
+	/**
+	 * constructs a new DuplicatenameException with a default message.
+	 */
+	public DuplicateNameException() {
 		super("That name is already in use.");
 	}
 
-    /**
-     * construct a new DuplicateNameException with a given message.
-     *
-     * @param usrMessage overides the default message.
-     */
+	/**
+	 * construct a new DuplicateNameException with a given message.
+	 *
+	 * @param usrMessage overrides the default message.
+	 */
 	public DuplicateNameException(String usrMessage) {
 		super(usrMessage);
 	}
