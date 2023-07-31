@@ -59,13 +59,22 @@ public class DecompilerScriptUtils {
 
 		DecompileOptions options;
 		options = new DecompileOptions();
-		OptionsService service = tool.getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
-		}
-		decompInterface.setOptions(options);
 
+		if (tool == null) {
+			options.grabFromProgram(program);
+		}
+		else {
+			OptionsService service = tool.getService(OptionsService.class);
+			if (service != null) {
+				ToolOptions opt = service.getOptions("Decompiler");
+				options.grabFromToolAndProgram(null, opt, program);
+			}
+			else {
+				options.grabFromProgram(program);
+			}
+		}
+
+		decompInterface.setOptions(options);
 		decompInterface.toggleCCode(true);
 		decompInterface.toggleSyntaxTree(true);
 		decompInterface.setSimplificationStyle("decompile");
