@@ -326,6 +326,7 @@ public:
 class TypeVoid : public Datatype {
 protected:
   friend class TypeFactory;
+  void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b void data-type, with an id
 public:
   /// Construct from another TypeVoid
   TypeVoid(const TypeVoid &op) : Datatype(op) { flags |= Datatype::coretype; }

@@ -754,6 +754,23 @@ void TypeUnicode::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_TYPE);
 }
 
+/// Parse a \<type> element for the \b id attributes of the \b void data-type.
+/// The \b void data-type is usually marshaled with the \<void> element, but this is an alternate
+/// encoding that allows a specific id to be associated with the data-type when core data-types are specified.
+/// \param decoder is the stream decoder
+/// \param typegrp is the factory owning \b this data-type
+void TypeVoid::decode(Decoder &decoder,TypeFactory &typegrp)
+
+{
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_ID) {
+      id = decoder.readUnsignedInteger();
+    }
+  }
+}
+
 void TypeVoid::encode(Encoder &encoder) const
 
 {
@@ -4069,6 +4086,13 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
     break;
   case TYPE_CODE:
     ct = decodeCode(decoder,false, false, forcecore);
+    break;
+  case TYPE_VOID:
+    {
+      TypeVoid voidType;
+      voidType.decode(decoder,*this);
+      ct = findAdd(voidType);
+    }
     break;
   default:
     for(;;) {
