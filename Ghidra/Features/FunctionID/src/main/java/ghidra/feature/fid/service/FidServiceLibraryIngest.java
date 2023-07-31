@@ -624,6 +624,9 @@ class FidServiceLibraryIngest {
 		}
 		Address entryPoint = function.getEntryPoint();
 		MemoryBlock block = function.getProgram().getMemory().getBlock(entryPoint);
+		if(block == null){
+			return true;
+		}
 		if (!block.isInitialized()) {
 			return true;
 		}
