@@ -1258,10 +1258,7 @@ public class MachoProgramBuilder {
 	 */
 	protected void markupLoadCommandData(MachHeader header, String source) throws Exception {
 		for (LoadCommand cmd : header.getLoadCommands()) {
-			Address dataAddr = cmd.getDataAddress(header, space);
-			if (dataAddr != null) {
-				cmd.markup(program, header, dataAddr, source, monitor, log);
-			}
+			cmd.markup(program, header, source, monitor, log);
 		}
 	}
 

@@ -67,6 +67,9 @@ public final class DyldInfoCommandConstants {
 	public final static int BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB       = 0xC0;
 	public final static int BIND_OPCODE_THREADED                               = 0xD0;
 
+	public final static int BIND_SUBOPCODE_THREADED_SET_BIND_ORDINAL_TABLE_SIZE_ULEB = 0x00;
+	public final static int BIND_SUBOPCODE_THREADED_APPLY = 0x01;
+
 	/*
 	 * The following are used on the flags byte of a terminal node
 	 * in the export information.

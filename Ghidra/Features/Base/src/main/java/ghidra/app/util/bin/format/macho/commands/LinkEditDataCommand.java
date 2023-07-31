@@ -23,9 +23,9 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramModule;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -73,28 +73,10 @@ public class LinkEditDataCommand extends LoadCommand {
 	}
 
 	@Override
-	public Address getDataAddress(MachHeader header, AddressSpace space) {
-		if (dataoff != 0 && datasize != 0) {
-			SegmentCommand segment = getContainingSegment(header, dataoff);
-			if (segment != null) {
-				return space
-						.getAddress(segment.getVMaddress() + (dataoff - segment.getFileOffset()));
-			}
-		}
-		return null;
-	}
-
-	@Override
-	public void markup(Program program, MachHeader header, Address addr, String source,
-			TaskMonitor monitor, MessageLog log) throws CancelledException {
-		if (addr == null || datasize == 0) {
-			return;
-		}
-		String name = LoadCommandTypes.getLoadCommandName(getCommandType());
-		if (source != null) {
-			name += " - " + source;
-		}
-		program.getListing().setComment(addr, CodeUnit.PLATE_COMMENT, name);
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		markupPlateComment(program, fileOffsetToAddress(program, header, dataoff, datasize), source,
+			null);
 	}
 
 	@Override
