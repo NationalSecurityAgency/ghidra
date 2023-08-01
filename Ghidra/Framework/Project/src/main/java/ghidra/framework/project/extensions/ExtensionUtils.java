@@ -108,6 +108,8 @@ public class ExtensionUtils {
 
 	private static Extensions getAllInstalledExtensions() {
 
+		log.trace("Finding all installed extensions...");
+
 		Extensions extensions = new Extensions();
 
 		// Find all extension.properties or extension.properties.uninstalled files in
@@ -138,6 +140,8 @@ public class ExtensionUtils {
 				extensions.add(extension);
 			}
 		}
+
+		log.trace(() -> "All installed extensions: " + extensions.getAsString());
 
 		return extensions;
 	}
@@ -225,7 +229,7 @@ public class ExtensionUtils {
 	 */
 	public static boolean install(File file) {
 
-		log.trace("installing file " + file);
+		log.trace("Installing extension file " + file);
 
 		if (file == null) {
 			log.error("Install file cannot be null");
@@ -239,11 +243,12 @@ public class ExtensionUtils {
 			return false;
 		}
 
-		if (checkForConflictWithDevelopmentExtension(extension)) {
+		Extensions extensions = getAllInstalledExtensions();
+		if (checkForConflictWithDevelopmentExtension(extension, extensions)) {
 			return false;
 		}
 
-		if (checkForDuplicateExtensions(extension)) {
+		if (checkForDuplicateExtensions(extension, extensions)) {
 			return false;
 		}
 
@@ -355,15 +360,19 @@ public class ExtensionUtils {
 		return s.replaceAll("\n", " ");
 	}
 
-	private static boolean checkForDuplicateExtensions(ExtensionDetails newExtension) {
+	private static boolean checkForDuplicateExtensions(ExtensionDetails newExtension,
+			Extensions extensions) {
 
-		Extensions extensions = getAllInstalledExtensions();
+		String name = newExtension.getName();
+		log.trace("Checking for duplicate extensions for '" + name + "'");
+
 		List<ExtensionDetails> matches = extensions.getMatchingExtensions(newExtension);
 		if (matches.isEmpty()) {
+			log.trace("No matching extensions installed");
 			return false;
 		}
 
-		log.trace("Duplicate extensions found by name '" + newExtension.getName() + "'");
+		log.trace("Duplicate extensions found by name '" + name + "'");
 
 		if (matches.size() > 1) {
 			reportMultipleDuplicateExtensionsWhenInstalling(newExtension, matches);
@@ -432,11 +441,15 @@ public class ExtensionUtils {
 		}
 	}
 
-	private static boolean checkForConflictWithDevelopmentExtension(ExtensionDetails newExtension) {
+	private static boolean checkForConflictWithDevelopmentExtension(ExtensionDetails newExtension,
+			Extensions extensions) {
 
-		Extensions extensions = getAllInstalledExtensions();
+		String name = newExtension.getName();
+		log.trace("Checking for duplicate dev mode extensions for '" + name + "'");
+
 		List<ExtensionDetails> matches = extensions.getMatchingExtensions(newExtension);
 		if (matches.isEmpty()) {
+			log.trace("No matching extensions installed");
 			return false;
 		}
 
@@ -444,11 +457,14 @@ public class ExtensionUtils {
 
 			if (extension.isInstalledInInstallationFolder()) {
 
-				OkDialog.showError("Duplicate Extensions Found",
-					"Attempting to install an extension that conflicts with an extension located in " +
-						"the Ghidra installation folder.\nYou must manually remove the existing " +
-						"extension to install the new extension.\nExisting extension: " +
-						extension.getInstallDir());
+				String message = "Attempting to install an extension that conflicts with an " +
+					"extension located in the Ghidra installation folder.\nYou must manually " +
+					"remove the existing extension to install the new extension.\nExisting " +
+					"extension: " + extension.getInstallDir();
+
+				log.trace(removeNewlines(message));
+
+				OkDialog.showError("Duplicate Extensions Found", message);
 				return true;
 			}
 		}
@@ -686,6 +702,8 @@ public class ExtensionUtils {
 		if (hasExistingExtension(newDir, monitor)) {
 			return false;
 		}
+
+		log.trace("Copying extension to " + newDir);
 		FileUtilities.copyDir(sourceFolder, newDir, monitor);
 		return true;
 	}
@@ -948,6 +966,36 @@ public class ExtensionUtils {
 					.stream()
 					.map(list -> list.get(0))
 					.collect(Collectors.toSet());
+		}
+
+		String getAsString() {
+			StringBuilder buffy = new StringBuilder();
+
+			Set<Entry<String, List<ExtensionDetails>>> entries = extensionsByName.entrySet();
+			for (Entry<String, List<ExtensionDetails>> entry : entries) {
+				String name = entry.getKey();
+				buffy.append("Name: ").append(name);
+
+				List<ExtensionDetails> extensions = entry.getValue();
+				if (extensions.size() == 1) {
+					buffy.append(" - ").append(extensions.get(0).getInstallDir()).append('\n');
+				}
+				else {
+					for (ExtensionDetails e : extensions) {
+						buffy.append("\t").append(e.getInstallDir()).append('\n');
+					}
+				}
+			}
+
+			if (buffy.isEmpty()) {
+				return "<no extensions installed>";
+			}
+
+			if (!buffy.isEmpty()) {
+				// remove trailing newline to keep logging consistent
+				buffy.deleteCharAt(buffy.length() - 1);
+			}
+			return buffy.toString();
 		}
 	}
 }
