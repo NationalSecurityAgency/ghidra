@@ -419,7 +419,7 @@ public class GTable extends JTable {
 		putClientProperty("JTable.autoStartsEdit", allowAutoEdit);
 	}
 
-	private void installEditKeyBinding() {
+	protected void installEditKeyBinding() {
 		AbstractAction action = new AbstractAction("StartEdit") {
 			@Override
 			public void actionPerformed(ActionEvent ev) {

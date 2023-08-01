@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.event.KeyEvent;
 
+import javax.swing.JTable;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
@@ -54,8 +55,10 @@ public class EditFieldAction extends CompositeEditorTableAction {
 			}
 
 			// just go to the first editable cell, since the current one is not editable
-			int firstEditableColumn = model.getFirstEditableColumn(row);
-			model.beginEditingField(row, firstEditableColumn);
+			int firstEditableColumn = provider.getFirstEditableColumn(row);
+			JTable table = provider.getTable();
+			int modelColumn = table.convertColumnIndexToModel(firstEditableColumn);
+			model.beginEditingField(row, modelColumn);
 		}
 		requestTableFocus();
 	}
@@ -64,9 +67,7 @@ public class EditFieldAction extends CompositeEditorTableAction {
 	public void adjustEnablement() {
 		boolean shouldEnableEdit = false;
 		if (model.isSingleRowSelection()) {
-			int[] rows = model.getSelectedRows();
-			int firstEditableColumn = model.getFirstEditableColumn(rows[0]);
-			shouldEnableEdit = model.isEditFieldAllowed(rows[0], firstEditableColumn);
+			shouldEnableEdit = model.isEditFieldAllowed();
 		}
 		setEnabled(shouldEnableEdit);
 	}
