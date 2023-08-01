@@ -24,7 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import docking.DialogComponentProvider;
 import docking.test.AbstractDockingTest;
@@ -76,11 +77,6 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		finally {
 			setErrorsExpected(false);
 		}
-	}
-
-	@After
-	public void tearDown() {
-		sleep(1000);
 	}
 
 	/*

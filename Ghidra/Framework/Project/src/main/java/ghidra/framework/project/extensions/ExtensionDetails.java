@@ -16,7 +16,9 @@
 package ghidra.framework.project.extensions;
 
 import java.io.File;
+import java.util.List;
 
+import generic.jar.ResourceFile;
 import generic.json.Json;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
@@ -250,8 +252,16 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 		}
 
 		ApplicationLayout layout = Application.getApplicationLayout();
-		File appInstallDir = layout.getApplicationInstallationDir().getFile(false);
-		if (FileUtilities.isPathContainedWithin(appInstallDir, installDir)) {
+
+		List<ResourceFile> extDirs = layout.getExtensionInstallationDirs();
+		if (extDirs.size() < 2) {
+			Msg.trace(this, "Unexpected extension installation dirs; revisit this assumption");
+			return false;
+		}
+
+		// extDirs.get(0) is the user extension dir
+		ResourceFile appExtDir = extDirs.get(1);
+		if (FileUtilities.isPathContainedWithin(appExtDir.getFile(false), installDir)) {
 			return true;
 		}
 		return false;
