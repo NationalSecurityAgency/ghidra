@@ -17,23 +17,18 @@ package mdemangler.datatype.modifier;
 
 import mdemangler.MDException;
 import mdemangler.MDMang;
+import mdemangler.datatype.MDDataType;
+import mdemangler.datatype.MDDataTypeParser;
 
 /**
- * This class represents a "pointer" data type within a Microsoft mangled symbol.
+ * This class represents a modifier data type coded with a question mark within a Microsoft mangled
+ *  symbol.
  */
-public class MDPointerType extends MDModifierType {
+public class MDQuestionModifierType extends MDModifierType {
 
-	public MDPointerType(MDMang dmang, boolean isHighest, boolean isConst, boolean isVolatile) {
+	public MDQuestionModifierType(MDMang dmang) {
 		super(dmang);
-		if (isHighest) {
-			setConst(isConst);
-			setVolatile(isVolatile);
-		}
-		else {
-			setConst(false);
-			setVolatile(false);
-		}
-		cvMod.setPointerType();
+		cvMod.setQuestionType();
 	}
 
 	@Override
@@ -42,16 +37,7 @@ public class MDPointerType extends MDModifierType {
 	}
 
 	@Override
-	public void insertCVMod(StringBuilder builder) {
-		if (cvMod.isFunction()) {
-			StringBuilder cvBuilder = new StringBuilder();
-			cvMod.insert(cvBuilder);
-			dmang.insertString(builder, cvBuilder.toString());
-		}
-		else {
-			cvMod.insert(builder);
-		}
-		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
-		dmang.cleanOutput(builder);
+	protected MDDataType parseReferencedType() throws MDException {
+		return MDDataTypeParser.parsePrimaryDataType(dmang, false);
 	}
 }
