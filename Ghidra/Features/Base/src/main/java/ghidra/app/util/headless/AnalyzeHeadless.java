@@ -300,6 +300,9 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			else if ("-recursive".equals(args[argi])) {
 				options.enableRecursiveProcessing(true);
 			}
+			else if ("-ignoreSymbolicLinks".equals(args[argi])) {
+				options.enableIgnoringSymbolicLinks(true);
+			}
 			else if ("-readOnly".equalsIgnoreCase(args[argi])) {
 				options.enableReadOnlyProcessing(true);
 			}
@@ -422,6 +425,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		System.out.println("           [-log <path to log file>]");
 		System.out.println("           [-overwrite]");
 		System.out.println("           [-recursive]");
+		System.out.println("           [-ignoreSymbolicLinks]");
 		System.out.println("           [-readOnly]");
 		System.out.println("           [-deleteProject]");
 		System.out.println("           [-noanalysis]");

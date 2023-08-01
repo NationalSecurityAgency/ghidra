@@ -34,7 +34,7 @@
        [-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;]
        [-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;]
        [-log &lt;path to log file&gt;] [-scriptlog &lt;path to script log file&gt;]
-       [-overwrite] [-recursive] [-readOnly] [-deleteProject]
+       [-overwrite] [-recursive] [-ignoreSymbolicLinks] [-readOnly] [-deleteProject]
        [-noanalysis]
        [-processor &lt;languageID&gt;] [-cspec &lt;compilerSpecID&gt;]
        [-analysisTimeoutPerFile &lt;timeout in seconds&gt;]
@@ -272,6 +272,18 @@
 <div role="note">
   <p>Affects -import or -process modes – used for determining whether to process files in current directory or files in current directory + all its subfolders.</p>
 </div>
+</section>
+
+<section>
+  <header><span style="color:#FFD700">-ignoreSymbolicLinks</span></header>
+  <br><br>
+  <ul>
+    <li>If present, prevents descent into directories and project sub-folders when a directory/folder is a symbolic link.</li>
+    <li>This helps avoid infinite recursion e.g /bin/X11/X11.</li>
+  </ul>
+  <div role="note">
+    <p>Does not affect recursion if the initial directory is a symbolic link.</p>
+  </div>
 </section>
 
 <section>

@@ -63,6 +63,9 @@ public class HeadlessOptions {
 	// -recursive
 	boolean recursive;
 
+	// -ignoreSymbolicLinks
+	boolean ignoreSymbolicLinks;
+
 	// -readOnly
 	boolean readOnly;
 
@@ -128,6 +131,7 @@ public class HeadlessOptions {
 		propertiesFilePaths = new ArrayList<>();
 		overwrite = false;
 		recursive = false;
+		ignoreSymbolicLinks = false;
 		readOnly = false;
 		deleteProject = false;
 		analyze = true;
@@ -327,6 +331,16 @@ public class HeadlessOptions {
 	 */
 	public void enableRecursiveProcessing(boolean enabled) {
 		this.recursive = enabled;
+	}
+
+	/**
+	 * This method can be used to enable ignoring of symbolic links during
+	 * <code>-import</code> or <code>-process</code> modes.
+	 *
+	 * @param enabled  if true, enables ignoring of symbolic links
+	 */
+	public void enableIgnoringSymbolicLinks(boolean enabled) {
+		this.ignoreSymbolicLinks = enabled;
 	}
 
 	/**

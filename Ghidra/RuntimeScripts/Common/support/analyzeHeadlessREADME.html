@@ -118,6 +118,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
         [<a href="#log">-log &lt;path to log file&gt;</a>]
         [<a href="#overwrite">-overwrite</a>]
         [<a href="#recursive">-recursive</a>]
+        [<a href="#ignoreSymbolicLinks">-ignoreSymbolicLinks</a>]
         [<a href="#readOnly">-readOnly</a>]
         [<a href="#deleteProject">-deleteProject</a>]
         [<a href="#noanalysis">-noanalysis</a>]
@@ -399,6 +400,15 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     If present, enables recursive descent into directories and project sub-folders when a directory/
     folder has been specified in <typewriter>-import</typewriter> or <typewriter>-process</typewriter> 
     modes.
+    </LI>
+
+    <br><br>
+
+    <LI>
+      <a name="ignoreSymbolicLinks"><typewriter>-ignoreSymbolicLinks</typewriter></a><br>
+      If present, prevents descent into directories and project sub-folders when a directory/
+      folder is a symbolic link. This helps avoid infinite recursion e.g <typewriter>/bin/X11/X11</typewriter>.
+      Does not affect recursion if the initial directory is a symbolic link.
     </LI>
 
     <br><br>

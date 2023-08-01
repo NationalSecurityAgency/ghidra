@@ -17,6 +17,7 @@ package ghidra.app.util.headless;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -1655,11 +1656,14 @@ public class HeadlessAnalyzer {
 	private void processWithImport(File file, String folderPath, boolean isFirstTime)
 			throws IOException {
 
-		boolean importSucceeded;
+		if (!isFirstTime && options.ignoreSymbolicLinks && Files.isSymbolicLink(file.toPath())) {
+			Msg.warn(this, "Ignoring directory symbolic link '" + file.getAbsolutePath() + "'." );
+			return;
+		}
 
 		if (file.isFile()) {
 
-			importSucceeded = processFileWithImport(file, folderPath);
+			boolean importSucceeded = processFileWithImport(file, folderPath);
 
 			// Check to see if there are transient programs lying around due
 			// to programs not being released during Importing
@@ -1700,6 +1704,7 @@ public class HeadlessAnalyzer {
 						Msg.warn(this, "Ignoring file '" + name + "'.");
 						continue;
 					}
+
 					file = new File(dirFile, name);
 
 					// Even a directory name has to have valid characters --
