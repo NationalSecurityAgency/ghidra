@@ -980,6 +980,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		String optionsGroup = "comment6 - Options Group";
 		subGroupPosition = 0; // reset for the next group
 
+		ToggleTypeCastsAction toggleTypeCastsAction = new ToggleTypeCastsAction(owner, tool);
+		setGroupInfo(toggleTypeCastsAction, optionsGroup, subGroupPosition++);
+
 		EditPropertiesAction propertiesAction = new EditPropertiesAction(owner, tool);
 		setGroupInfo(propertiesAction, optionsGroup, subGroupPosition++);
 
@@ -1037,6 +1040,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(convertAction);
 		addLocalAction(findAction);
 		addLocalAction(findReferencesAction);
+		addLocalAction(toggleTypeCastsAction);
 		addLocalAction(propertiesAction);
 		addLocalAction(cloneDecompilerAction);
 		addLocalAction(goToNextBraceAction);
