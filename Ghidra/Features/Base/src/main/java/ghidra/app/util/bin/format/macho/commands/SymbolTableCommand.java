@@ -203,10 +203,8 @@ public class SymbolTableCommand extends LoadCommand {
 
 		}
 		catch (Exception e) {
-			String symbolsName =
-				LoadCommandTypes.getLoadCommandName(getCommandType()) + " (symbols)";
 			log.appendMsg(SymbolTableCommand.class.getSimpleName(),
-				"Failed to markup %s.".formatted(symbolsName));
+				"Failed to markup: " + getContextualName(source, "symbols"));
 		}
 	}
 

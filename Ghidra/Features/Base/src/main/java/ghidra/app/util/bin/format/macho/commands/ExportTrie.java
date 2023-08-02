@@ -35,7 +35,10 @@ public class ExportTrie {
 	
 	private BinaryReader reader;
 	private long base;
+
 	private List<ExportEntry> exports;
+	private List<Long> ulebOffsets;
+	private List<Long> stringOffsets;
 	
 	/**
 	 * Creates an empty {@link ExportTrie}.  This is useful for export trie load commands that are
@@ -43,6 +46,8 @@ public class ExportTrie {
 	 */
 	public ExportTrie() {
 		this.exports = new ArrayList<>();
+		this.ulebOffsets = new ArrayList<>();
+		this.stringOffsets = new ArrayList<>();
 	}
 
 	/**
@@ -105,20 +110,25 @@ public class ExportTrie {
 	private LinkedList<Node> parseNode(String name, int offset) throws IOException {
 		LinkedList<Node> children = new LinkedList<>();
 		reader.setPointerIndex(base + offset);
+		ulebOffsets.add(reader.getPointerIndex() - base);
 		int terminalSize = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		long childrenIndex = reader.getPointerIndex() + terminalSize;
 		if (terminalSize != 0) {
+			ulebOffsets.add(reader.getPointerIndex() - base);
 			long flags = reader.readNext(LEB128::unsigned);
 			long address = 0;
 			long other = 0;
 			String importName = null;
 			if ((flags & EXPORT_SYMBOL_FLAGS_REEXPORT) != 0) {
+				ulebOffsets.add(reader.getPointerIndex() - base);
 				other = reader.readNext(LEB128::unsigned); // dylib ordinal
 				importName = reader.readNextAsciiString();
 			}
 			else {
+				ulebOffsets.add(reader.getPointerIndex() - base);
 				address = reader.readNext(LEB128::unsigned);
 				if ((flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER) != 0) {
+					ulebOffsets.add(reader.getPointerIndex() - base);
 					other = reader.readNext(LEB128::unsigned);
 				}
 			}
@@ -126,9 +136,12 @@ public class ExportTrie {
 			exports.add(export);
 		}
 		reader.setPointerIndex(childrenIndex);
+		ulebOffsets.add(reader.getPointerIndex() - base);
 		int numChildren = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < numChildren; i++) {
+			stringOffsets.add(reader.getPointerIndex() - base);
 			String childName = reader.readNextAsciiString();
+			ulebOffsets.add(reader.getPointerIndex() - base);
 			int childOffset = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 			children.add(new Node(childName, childOffset));
 		}
@@ -163,6 +176,20 @@ public class ExportTrie {
 		}
 	}
 	
+	/**
+	 * {@return ULEB128 offsets from the start of the export trie}
+	 */
+	public List<Long> getUlebOffsets() {
+		return ulebOffsets;
+	}
+
+	/**
+	 * {@return String offsets from the start of the export trie}
+	 */
+	public List<Long> getStringOffsets() {
+		return stringOffsets;
+	}
+
 	/**
 	 * A trie node
 	 */
