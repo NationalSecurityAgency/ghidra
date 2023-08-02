@@ -279,6 +279,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 				// if we are not recreating the function,
 				//  then don't continue because there is already a function here.
 				if (!recreateFunction) {
+					entry = functionContaining.getEntryPoint(); // preserve entry
 					long bodySize = functionContaining.getBody().getNumAddresses();
 					if (bodySize != 1) {
 						return false;
@@ -545,26 +546,29 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Follow flow back from the address trying to find an existing function this fragment belongs to
+	 * Follow flow back from the address trying to find an existing function or reasonable entry point 
+	 * that flows to the specified bodyAddr.  Search is very limited and gives preference to a contiguous 
+	 * fall-through flow.
 	 *
 	 * @param bodyAddr address that should be in the body of a function
-	 * @return
+	 * @return a possible entry point that flows to bodyAddr or null if a reasonable entry not found.
 	 */
 	private Address findFunctionEntry(Address bodyAddr) {
-		Address entry = bodyAddr;
+
+		AddressSpace space = bodyAddr.getAddressSpace();
 
 		// if there is no function, then just follow some flow backwards
 		AddressSet subSet = new AddressSet();
-		Instruction followInstr = program.getListing().getInstructionContaining(entry);
-		while (followInstr != null && !subSet.contains(followInstr.getMinAddress())) {
+		Instruction followInstr = program.getListing().getInstructionContaining(bodyAddr);
+		while (followInstr != null && !subSet.contains(followInstr.getMinAddress()) &&
+			followInstr.getMinAddress().getAddressSpace() == space) {
 			subSet.addRange(followInstr.getMinAddress(), followInstr.getMaxAddress());
 
 			// see if we have wandered backward into a function
 			Function func =
 				program.getFunctionManager().getFunctionContaining(followInstr.getMinAddress());
 			if (func != null) {
-				entry = func.getEntryPoint();
-				break;
+				return func.getEntryPoint();
 			}
 			Address fallFrom = followInstr.getFallFrom();
 			if (fallFrom == null) {
@@ -572,17 +576,17 @@ public class CreateFunctionCmd extends BackgroundCommand {
 				if (!iter.hasNext()) {
 					break;
 				}
+				// TODO: only considering one reference which may not be a flow
 				Reference ref = iter.next();
 				if (ref.getReferenceType().isCall()) {
-					entry = fallFrom;
-					break;
+					return followInstr.getMinAddress(); // may not be in a function body
 				}
 				fallFrom = ref.getFromAddress();
 			}
 			followInstr = program.getListing().getInstructionContaining(fallFrom);
 		}
 
-		return entry;
+		return null;
 	}
 
 	/**
@@ -636,8 +640,8 @@ public class CreateFunctionCmd extends BackgroundCommand {
 
 		FlowType[] dontFollow = { RefType.COMPUTED_CALL, RefType.CONDITIONAL_CALL,
 			RefType.UNCONDITIONAL_CALL, RefType.INDIRECTION };
-		AddressSet start = new AddressSet(entry, entry);
-		FollowFlow flow = new FollowFlow(program, start, dontFollow, includeOtherFunctions, false);
+		FollowFlow flow =
+			new FollowFlow(program, entry, dontFollow, includeOtherFunctions, false, true);
 		return flow.getFlowAddressSet(monitor);
 	}
 

@@ -22,7 +22,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * FollowFlow follows the program's code flow either forward or backward from an initial
@@ -34,7 +33,7 @@ import ghidra.util.task.TaskMonitorAdapter;
  */
 public class FollowFlow {
 	private Program program;
-	private AddressSet initialAddresses;
+	private AddressSetView initialAddresses;
 
 	private boolean followAllFlow = true;
 	private boolean followComputedCall = true;
@@ -47,6 +46,7 @@ public class FollowFlow {
 
 	private boolean followIntoFunction = true;
 	private boolean includeData = true;
+	private AddressSpace restrictedAddressSpace = null; // if set restrict flow to this space only
 	private Address nextSymbolAddr;
 
 	/**
@@ -69,7 +69,7 @@ public class FollowFlow {
 	 * <BR>FlowType.INDIRECTION
 	 *
 	 */
-	public FollowFlow(Program program, AddressSet addressSet, FlowType[] doNotFollow) {
+	public FollowFlow(Program program, AddressSetView addressSet, FlowType[] doNotFollow) {
 		this.program = program;
 		this.initialAddresses = addressSet;
 		updateFollowFlags(doNotFollow);
@@ -95,7 +95,7 @@ public class FollowFlow {
 	 * @param followIntoFunctions true if flows into (or back from) defined functions
 	 * should be followed.
 	 */
-	public FollowFlow(Program program, AddressSet addressSet, FlowType[] doNotFollow,
+	public FollowFlow(Program program, AddressSetView addressSet, FlowType[] doNotFollow,
 			boolean followIntoFunctions) {
 		this(program, addressSet, doNotFollow);
 		this.followIntoFunction = followIntoFunctions;
@@ -123,6 +123,36 @@ public class FollowFlow {
 	public FollowFlow(Program program, AddressSet addressSet, FlowType[] doNotFollow,
 			boolean followIntoFunctions, boolean includeData) {
 		this(program, addressSet, doNotFollow, followIntoFunctions);
+		this.includeData = includeData;
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * @param program the program whose flow we are following.
+	 * @param address the initial address that should be flowed from or flowed to.
+	 * @param doNotFollow array of flow types that are not to be followed.
+	 * @param restrictSingleAddressSpace if true collected flows should be restricted to
+	 * a single address space identified by {@code address}.
+	 * null or empty array indicates follow all flows. The following are valid
+	 * flow types for the doNotFollow array:
+	 * <BR>FlowType.COMPUTED_CALL
+	 * <BR>FlowType.CONDITIONAL_CALL
+	 * <BR>FlowType.UNCONDITIONAL_CALL
+	 * <BR>FlowType.COMPUTED_JUMP
+	 * <BR>FlowType.CONDITIONAL_JUMP
+	 * <BR>FlowType.UNCONDITIONAL_JUMP
+	 * <BR>FlowType.INDIRECTION
+	 * @param followIntoFunctions true if flows into (or back from) defined functions
+	 * should be followed.
+	 * @param includeData true if instruction flows into un-disassembled data should be included
+	 */
+	public FollowFlow(Program program, Address address, FlowType[] doNotFollow,
+			boolean followIntoFunctions, boolean includeData, boolean restrictSingleAddressSpace) {
+		this(program, new AddressSet(address, address), doNotFollow, followIntoFunctions);
+		if (restrictSingleAddressSpace) {
+			restrictedAddressSpace = address.getAddressSpace();
+		}
 		this.includeData = includeData;
 	}
 
@@ -171,7 +201,7 @@ public class FollowFlow {
 	 * @param forward true to determine the flows "from" the startAddresses. false (backward) to 
 	 * determine flows "to" the startAddresses.
 	 */
-	private AddressSet getAddressFlow(TaskMonitor monitor, AddressSet startAddresses,
+	private AddressSet getAddressFlow(TaskMonitor monitor, AddressSetView startAddresses,
 			boolean forward) {
 
 		if (monitor == null) {
@@ -233,7 +263,7 @@ public class FollowFlow {
 	 * @param forward true to determine the flows from the code unit. false to determine flows
 	 * to the code unit.
 	 */
-	private void getCodeUnitFlow(TaskMonitor monitor, AddressSet startAddresses,
+	private void getCodeUnitFlow(TaskMonitor monitor, AddressSetView startAddresses,
 			AddressSet flowAddressSet, CodeUnit codeUnit, boolean forward) {
 		if (codeUnit instanceof Data) {
 			getIndirectCodeFlow(monitor, startAddresses, flowAddressSet, (Data) codeUnit, forward);
@@ -256,7 +286,7 @@ public class FollowFlow {
 		}
 	}
 
-	private void getIndirectCodeFlow(TaskMonitor monitor, AddressSet startAddresses,
+	private void getIndirectCodeFlow(TaskMonitor monitor, AddressSetView startAddresses,
 			AddressSet flowAddressSet, Data data, boolean forward) {
 		// Follow data - isolate each primitive within startAddresses
 		if (!data.isDefined()) {
@@ -289,7 +319,7 @@ public class FollowFlow {
 	 * instruction code units.
 	 * @param monitor a cancellable task monitor
 	 * @param flowAddressSet the address set to be added to
-	 * @param currentCodeUnit the code unit to flow from.
+	 * @param codeUnit the code unit to flow from.
 	 *     Appropriate flows out of this code unit will be traversed.
 	 * @param dataAddr null or the address to flow from within the currentCodeUnit for Data.
 	 */
@@ -492,7 +522,7 @@ public class FollowFlow {
 	 * instruction code units.
 	 *
 	 * @param flowAddressSet the address set to add our addresses to.
-	 * @param currentCodeUnit the Instruction object to flow from.
+	 * @param currentInstr the Instruction object to flow from.
 	 *     Appropriate flows out of this code unit will be traversed.
 	 */
 	private void followInstruction(Stack<CodeUnit> instructionStack, AddressSet flowAddressSet,
@@ -506,7 +536,8 @@ public class FollowFlow {
 		Address[] flowAddresses = getFlowsFromInstruction(currentInstr);
 		for (int index = 0; (flowAddresses != null) && (index < flowAddresses.length); index++) {
 			nextAddress = flowAddresses[index];
-			if (nextAddress != null) {
+			if (nextAddress != null && (restrictedAddressSpace == null ||
+				restrictedAddressSpace == nextAddress.getAddressSpace())) {
 				CodeUnit nextCodeUnit = program.getListing().getCodeUnitContaining(nextAddress);
 				if (nextCodeUnit != null) {
 					if (nextCodeUnit instanceof Data && includeData) {
@@ -538,7 +569,8 @@ public class FollowFlow {
 			}
 		}
 
-		if (nextAddress != null) {
+		if (nextAddress != null && (restrictedAddressSpace == null ||
+			restrictedAddressSpace == nextAddress.getAddressSpace())) {
 			Instruction nextInstruction = program.getListing().getInstructionAt(nextAddress);
 			if (nextInstruction != null) {
 				instructionStack.push(nextInstruction);
@@ -705,7 +737,7 @@ public class FollowFlow {
 	 * matching the ones that should be followed will have the address it flows
 	 * to returned.
 	 * 
-	 * @param the instruction being flowed from.
+	 * @param instr the instruction being flowed from.
 	 * @return array of the addresses being flowed to in the manner we are
 	 * interested in.
 	 */
@@ -737,7 +769,7 @@ public class FollowFlow {
 	 * matching the ones that should be followed will have the address it flows
 	 * from returned.
 	 * 
-	 * @param the instruction being flowed to.
+	 * @param instr the instruction being flowed to.
 	 * @return array of the addresses that flow to the instruction in the manner we are
 	 * interested in.
 	 */
@@ -786,8 +818,9 @@ public class FollowFlow {
 	 * reference to an instruction. If the flow at the address isn't from a pointer to 
 	 * an instruction then just the address passed to this method is added to the flow set.
 	 *
+	 * @param instructionStack code unit stack for subsequent flow analysis
 	 * @param flowAddressSet the address set to add our addresses to.
-	 * @param currentCodeUnit the Data object to flow from.
+	 * @param data the Data object to flow from.
 	 *     Appropriate flows out of this code unit will be traversed.
 	 * @param addr the flow reference address which is contained within data.
 	 */
