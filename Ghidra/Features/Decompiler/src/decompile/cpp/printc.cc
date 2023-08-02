@@ -324,7 +324,7 @@ void PrintC::pushTypeEnd(const Datatype *ct)
     else if (ct->getMetatype()==TYPE_ARRAY) {
       const TypeArray *ctarray = (const TypeArray *)ct;
       ct = ctarray->getBase();
-      push_integer(ctarray->numElements(),4,false,
+      push_integer(ctarray->numElements(),4,false,syntax,
 		   (const Varnode *)0,(const PcodeOp *)0);
     }
     else if (ct->getMetatype()==TYPE_CODE) {
@@ -967,7 +967,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	pushAtom(Atom(fieldname,fieldtoken,EmitMarkup::no_color,ct,fieldid,op));
       }
       if (arrayvalue)
-	push_integer(0,4,false,(Varnode *)0,op);
+	push_integer(0,4,false,syntax,(Varnode *)0,op);
     }
   }
   else if (ct->getMetatype() == TYPE_SPACEBASE) {
@@ -1009,7 +1009,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
       }
     }
     if (arrayvalue)
-      push_integer(0,4,false,(Varnode *)0,op);
+      push_integer(0,4,false,syntax,(Varnode *)0,op);
   }
   else if (ct->getMetatype() == TYPE_ARRAY) {
     if (in1const != 0) {
@@ -1040,7 +1040,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
 	pushVn(in0,op,m);
-	push_integer(0,4,false,(Varnode *)0,op);
+	push_integer(0,4,false,syntax,(Varnode *)0,op);
       }
       else {			// EMIT  (* )[0]
 	pushOp(&subscript,op);
@@ -1048,7 +1048,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
 	pushVn(in0,op,m);
-	push_integer(0,4,false,(Varnode *)0,op);
+	push_integer(0,4,false,syntax,(Varnode *)0,op);
       }
     }
   }
@@ -1198,9 +1198,10 @@ void PrintC::opExtractOp(const PcodeOp *op)
 /// \param val is the given integer value
 /// \param sz is the size (in bytes) to associate with the integer
 /// \param sign is set to \b true if the integer should be treated as a signed value
+/// \param tag is the type of token to associate with the integer
 /// \param vn is the Varnode holding the value
 /// \param op is the PcodeOp using the value
-void PrintC::push_integer(uintb val,int4 sz,bool sign,
+void PrintC::push_integer(uintb val,int4 sz,bool sign,tagtype tag,
 			  const Varnode *vn,const PcodeOp *op)
 {
   bool print_negsign;
@@ -1279,10 +1280,7 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
   if (force_sized_token)
     t << sizeSuffix;
 
-  if (vn==(const Varnode *)0)
-    pushAtom(Atom(t.str(),syntax,EmitMarkup::const_color,op));
-  else
-    pushAtom(Atom(t.str(),vartoken,EmitMarkup::const_color,op,vn));
+  pushAtom(Atom(t.str(),tag,EmitMarkup::const_color,op,vn,val));
 }
 
 /// \brief Push a constant with a floating-point data-type to the RPN stack
@@ -1292,9 +1290,10 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
 /// is decided upon, and the constant is pushed as a single token.
 /// \param val is the given encoded floating-point value
 /// \param sz is the size (in bytes) of the encoded value
+/// \param tag is the type of token to associate with the float
 /// \param vn is the Varnode holding the value
 /// \param op is the PcodeOp using the value
-void PrintC::push_float(uintb val,int4 sz,const Varnode *vn,const PcodeOp *op)
+void PrintC::push_float(uintb val,int4 sz,tagtype tag,const Varnode *vn,const PcodeOp *op)
 {
   string token;
 
@@ -1345,10 +1344,7 @@ void PrintC::push_float(uintb val,int4 sz,const Varnode *vn,const PcodeOp *op)
       }
     }
   }
-  if (vn==(const Varnode *)0)
-    pushAtom(Atom(token,syntax,EmitMarkup::const_color,op));
-  else
-    pushAtom(Atom(token,vartoken,EmitMarkup::const_color,op,vn));
+  pushAtom(Atom(token,tag,EmitMarkup::const_color,op,vn,val));
 }
 
 void PrintC::printUnicode(ostream &s,int4 onechar) const
@@ -1410,16 +1406,16 @@ void PrintC::pushType(const Datatype *ct)
 /// A single Atom representing the boolean value is emitted
 /// \param val is the boolean value (non-zero for \b true)
 /// \param ct is the data-type associated with the value
+/// \param tag is the type of token to associate with the boolean value
 /// \param vn is the Varnode holding the value
 /// \param op is the PcodeOp using the value
-void PrintC::pushBoolConstant(uintb val,const TypeBase *ct,
-				 const Varnode *vn,
-				 const PcodeOp *op)
+void PrintC::pushBoolConstant(uintb val,const TypeBase *ct,tagtype tag,
+				 const Varnode *vn,const PcodeOp *op)
 {
   if (val != 0)
-    pushAtom(Atom(KEYWORD_TRUE,vartoken,EmitMarkup::const_color,op,vn));
+    pushAtom(Atom(KEYWORD_TRUE,tag,EmitMarkup::const_color,op,vn,val));
   else
-    pushAtom(Atom(KEYWORD_FALSE,vartoken,EmitMarkup::const_color,op,vn));
+    pushAtom(Atom(KEYWORD_FALSE,tag,EmitMarkup::const_color,op,vn,val));
 }
 
 /// \brief Return \b true if this language requires a prefix when expressing \e wide characters
@@ -1524,9 +1520,10 @@ void PrintC::resetDefaultsPrintC(void)
 /// Handle unicode, wide characters, etc. Characters come in with the compiler's raw encoding.
 /// \param val is the constant value
 /// \param ct is data-type attached to the value
+/// \param tag is the type of token to associate with the character
 /// \param vn is the Varnode holding the value
 /// \param op is the PcodeOp using the value
-void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,const PcodeOp *op)
+void PrintC::pushCharConstant(uintb val,const Datatype *ct,tagtype tag,const Varnode *vn,const PcodeOp *op)
 
 {
   uint4 displayFormat = 0;
@@ -1546,7 +1543,7 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,con
   }
   if (displayFormat != 0 && displayFormat != Symbol::force_char) {
     if (!castStrategy->caresAboutCharRepresentation(vn, op)) {
-      push_integer(val, ct->getSize(), isSigned, vn, op);
+      push_integer(val, ct->getSize(), isSigned, tag, vn, op);
       return;
     }
   }
@@ -1556,7 +1553,7 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,con
     // unicode code-point. Its either part of a multi-byte UTF-8 encoding or an unknown
     // code-page value. In either case, we print as an integer or an escape sequence.
     if (displayFormat != Symbol::force_hex && displayFormat != Symbol::force_char) {
-      push_integer(val, 1, isSigned, vn, op);
+      push_integer(val, 1, isSigned, tag, vn, op);
       return;
     }
     displayFormat = Symbol::force_hex;	// Fallthru but force a hex representation
@@ -1574,7 +1571,7 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,con
   else
     printUnicode(t,(int4)val);
   t << '\'';
-  pushAtom(Atom(t.str(),vartoken,EmitMarkup::const_color,op,vn));
+  pushAtom(Atom(t.str(),tag,EmitMarkup::const_color,op,vn,val));
 }
 
 /// \brief Push an enumerated value to the RPN stack
@@ -1583,11 +1580,11 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,con
 /// enumeration or where the value cannot be expressed using named elements
 /// \param val is the enumerated value being pushed
 /// \param ct is the enumerated data-type attached to the value
+/// \param tag is the type of token to associate with the value
 /// \param vn is the Varnode holding the value
 /// \param op is the PcodeOp using the value
-void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,
-				 const Varnode *vn,
-				 const PcodeOp *op)
+void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,tagtype tag,
+			      const Varnode *vn,const PcodeOp *op)
 {
   vector<string> valnames;
 
@@ -1598,10 +1595,10 @@ void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,
     for(int4 i=valnames.size()-1;i>0;--i)
       pushOp(&enum_cat,op);
     for(int4 i=0;i<valnames.size();++i)
-      pushAtom(Atom(valnames[i],vartoken,EmitMarkup::const_color,op,vn));
+      pushAtom(Atom(valnames[i],tag,EmitMarkup::const_color,op,vn,val));
   }
   else {
-    push_integer(val,ct->getSize(),false,vn,op);
+    push_integer(val,ct->getSize(),false,tag,vn,op);
     //    ostringstream s;
     //    s << "BAD_ENUM(0x" << hex << val << ")";
     //    pushAtom(Atom(s.str(),vartoken,EmitMarkup::const_color,op,vn));
@@ -1650,8 +1647,7 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
 /// \param op is the PcodeOp using the value
 /// \return \b true if a name was pushed to the RPN stack, return \b false otherwise
 bool PrintC::pushPtrCodeConstant(uintb val,const TypePointer *ct,
-				    const Varnode *vn,
-				    const PcodeOp *op)
+				 const Varnode *vn,const PcodeOp *op)
 {
   AddrSpace *spc = glb->getDefaultCodeSpace();
   Funcdata *fd = (Funcdata *)0;
@@ -1664,7 +1660,7 @@ bool PrintC::pushPtrCodeConstant(uintb val,const TypePointer *ct,
   return false;
 }
 
-void PrintC::pushConstant(uintb val,const Datatype *ct,
+void PrintC::pushConstant(uintb val,const Datatype *ct,tagtype tag,
 			    const Varnode *vn,
 			    const PcodeOp *op)
 {
@@ -1672,25 +1668,25 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   switch(ct->getMetatype()) {
   case TYPE_UINT:
     if (ct->isCharPrint())
-      pushCharConstant(val,(TypeChar *)ct,vn,op);
+      pushCharConstant(val,(TypeChar *)ct,tag,vn,op);
     else if (ct->isEnumType())
-      pushEnumConstant(val,(TypeEnum *)ct,vn,op);
+      pushEnumConstant(val,(TypeEnum *)ct,tag,vn,op);
     else
-      push_integer(val,ct->getSize(),false,vn,op);
+      push_integer(val,ct->getSize(),false,tag,vn,op);
     return;
   case TYPE_INT:
     if (ct->isCharPrint())
-      pushCharConstant(val,(TypeChar *)ct,vn,op);
+      pushCharConstant(val,(TypeChar *)ct,tag,vn,op);
     else if (ct->isEnumType())
-      pushEnumConstant(val,(TypeEnum *)ct,vn,op);
+      pushEnumConstant(val,(TypeEnum *)ct,tag,vn,op);
     else
-      push_integer(val,ct->getSize(),true,vn,op);
+      push_integer(val,ct->getSize(),true,tag,vn,op);
     return;
   case TYPE_UNKNOWN:
-    push_integer(val,ct->getSize(),false,vn,op);
+    push_integer(val,ct->getSize(),false,tag,vn,op);
     return;
   case TYPE_BOOL:
-    pushBoolConstant(val,(const TypeBase *)ct,vn,op);
+    pushBoolConstant(val,(const TypeBase *)ct,tag,vn,op);
     return;
   case TYPE_VOID:
     clear();
@@ -1712,7 +1708,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
     }
     break;
   case TYPE_FLOAT:
-    push_float(val,ct->getSize(),vn,op);
+    push_float(val,ct->getSize(),tag,vn,op);
     return;
   case TYPE_SPACEBASE:
   case TYPE_CODE:
@@ -1731,7 +1727,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   pushMod();
   if (!isSet(force_dec))
     setMod(force_hex);
-  push_integer(val,ct->getSize(),false,vn,op);
+  push_integer(val,ct->getSize(),false,tag,vn,op);
   popMod();
 }
 
@@ -1765,14 +1761,14 @@ bool PrintC::pushEquate(uintb val,int4 sz,const EquateSymbol *sym,const Varnode 
   if (modval == val) {
     pushOp(&binary_plus,(const PcodeOp *)0);
     pushSymbol(sym,vn,op);
-    push_integer(1, sz, false, (const Varnode *)0, (const PcodeOp *)0);
+    push_integer(1, sz, false, syntax, (const Varnode *)0, (const PcodeOp *)0);
     return true;
   }
   modval = (baseval - 1) & mask;
   if (modval == val) {
     pushOp(&binary_minus,(const PcodeOp *)0);
     pushSymbol(sym,vn,op);
-    push_integer(1, sz, false, (const Varnode *)0, (const PcodeOp *)0);
+    push_integer(1, sz, false, syntax, (const Varnode *)0, (const PcodeOp *)0);
     return true;
   }
   return false;
@@ -2092,8 +2088,7 @@ void PrintC::emitEnumDefinition(const TypeEnum *ct)
     emit->spaces(1);
     emit->print(EQUALSIGN,EmitMarkup::no_color);
     emit->spaces(1);
-    push_integer((*iter).first,ct->getSize(),sign,(Varnode *)0,
-		 (PcodeOp *)0);
+    push_integer((*iter).first,ct->getSize(),sign,syntax,(Varnode *)0,(PcodeOp *)0);
     recurse();
     emit->print(SEMICOLON);
     ++iter;
@@ -3087,12 +3082,15 @@ void PrintC::emitSwitchCase(int4 casenum,const BlockSwitch *switchbl)
   int4 i,num;
   uintb val;
   const Datatype *ct;
+  const PcodeOp *op;
     
   ct = switchbl->getSwitchType();
+  op = switchbl->getCaseBlock(casenum)->firstOp();
 
   if (switchbl->isDefaultCase(casenum)) {
+    val = switchbl->getLabel(casenum,0);
     emit->tagLine();
-    emit->print(KEYWORD_DEFAULT,EmitMarkup::keyword_color);
+    emit->tagCaseLabel(KEYWORD_DEFAULT, EmitMarkup::keyword_color, op, val);
     emit->print(COLON);
   }
   else {
@@ -3102,7 +3100,7 @@ void PrintC::emitSwitchCase(int4 casenum,const BlockSwitch *switchbl)
       emit->tagLine();
       emit->print(KEYWORD_CASE,EmitMarkup::keyword_color);
       emit->spaces(1);
-      pushConstant(val,ct,(Varnode *)0,(PcodeOp *)0);
+      pushConstant(val,ct,casetoken,(Varnode *)0,op);
       recurse();
       emit->print(COLON);
     }

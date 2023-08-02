@@ -223,7 +223,7 @@ void PrintLanguage::pushVnExplicit(const Varnode *vn,const PcodeOp *op)
     return;
   }
   if (vn->isConstant()) {
-    pushConstant(vn->getOffset(),vn->getHighTypeReadFacing(op),vn,op);
+    pushConstant(vn->getOffset(),vn->getHighTypeReadFacing(op),vartoken,vn,op);
     return;
   }
   pushSymbolDetail(vn,op,true);
@@ -393,6 +393,9 @@ void PrintLanguage::emitAtom(const Atom &atom)
     break;
   case fieldtoken:
     emit->tagField(atom.name,atom.highlight,atom.ptr_second.ct,atom.offset,atom.op);
+    break;
+  case casetoken:
+    emit->tagCaseLabel(atom.name, atom.highlight, atom.op, atom.ptr_second.intValue);
     break;
   case blanktoken:
     break;			// Print nothing

@@ -1260,6 +1260,14 @@ void BlockGraph::printRaw(ostream &s) const
     (*iter)->printRaw(s);
 }
 
+PcodeOp *BlockGraph::firstOp(void) const
+
+{
+  if (getSize() == 0)
+    return (PcodeOp *)0;
+  return getBlock(0)->firstOp();
+}
+
 FlowBlock *BlockGraph::nextFlowAfter(const FlowBlock *bl) const
 
 {
@@ -2253,6 +2261,13 @@ Address BlockBasic::getStop(void) const
   if (range == (const Range *)0)
     return Address();
   return range->getLastAddr();
+}
+
+PcodeOp *BlockBasic::firstOp(void) const
+
+{
+  if (op.empty()) return (PcodeOp *)0;
+  return (PcodeOp *)op.front();
 }
 
 PcodeOp *BlockBasic::lastOp(void) const
