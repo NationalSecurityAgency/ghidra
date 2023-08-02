@@ -405,11 +405,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	@Override
-	public boolean isDynamicListing() {
-		return true;
-	}
-
-	@Override
 	public String getWindowGroup() {
 		//TODO: Overriding this to align disconnected providers
 		return "Core";

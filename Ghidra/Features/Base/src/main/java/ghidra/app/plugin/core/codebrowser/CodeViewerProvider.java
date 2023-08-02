@@ -178,13 +178,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	/**
-	 * @return true if this listing is backed by a dynamic data source (e.g., debugger)
-	 */
-	public boolean isDynamicListing() {
-		return false;
-	}
-
-	/**
 	 * TODO: Remove or rename this to something that accommodates redirecting writes, e.g., to a
 	 * debug target process, particularly for assembly, which may involve code unit modification
 	 * after a successful write, reported asynchronously :/ .
