@@ -678,24 +678,6 @@ public class DefaultProject implements Project {
 	}
 
 	@Override
-	public ProjectData getProjectData(URL url) {
-		if (projectLocator.getURL().equals(url)) {
-			return fileMgr;
-		}
-		URL remoteURL = getProjectData().getRootFolder().getSharedProjectURL();
-		if (remoteURL != null) {
-			remoteURL = GhidraURL.getProjectURL(url);
-		}
-		if (remoteURL.equals(url)) {
-			return fileMgr;
-		}
-
-		synchronized (otherViews) {
-			return otherViews.get(url);
-		}
-	}
-
-	@Override
 	public ProjectData[] getViewedProjectData() {
 		synchronized (otherViews) {
 

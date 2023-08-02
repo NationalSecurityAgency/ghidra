@@ -371,7 +371,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()),
 					module.getLifespan())
 				.stream()
-				.map(m -> ProgramURLUtils.getFileForHackedUpGhidraURL(project,
+				.map(m -> ProgramURLUtils.getDomainFileFromOpenProject(project,
 					m.getStaticProgramURL()))
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
