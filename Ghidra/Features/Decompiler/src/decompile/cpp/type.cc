@@ -369,11 +369,7 @@ void Datatype::encodeBasic(type_metatype meta,Encoder &encoder) const
 
 {
   encoder.writeString(ATTRIB_NAME, name);
-  uint8 saveId;
-  if (isVariableLength())
-    saveId = hashSize(id, size);
-  else
-    saveId = id;
+  uint8 saveId = getUnsizedId();
   if (saveId != 0) {
     encoder.writeUnsignedInteger(ATTRIB_ID, saveId);
   }
@@ -575,9 +571,7 @@ uint8 Datatype::hashName(const string &nm)
     if ((res&1)==0)
       res ^= 0xfeabfeab;	// Some kind of feedback
   }
-  uint8 tmp=1;
-  tmp <<= 63;
-  res |= tmp;	// Make sure the hash is negative (to distinguish it from database id's)
+  res |= 0xC000000000000000;	// Add header bits indicating a name hash
   return res;
 }
 
@@ -758,6 +752,23 @@ void TypeUnicode::encode(Encoder &encoder) const
   encodeBasic(metatype,encoder);
   encoder.writeBool(ATTRIB_UTF, true);
   encoder.closeElement(ELEM_TYPE);
+}
+
+/// Parse a \<type> element for the \b id attributes of the \b void data-type.
+/// The \b void data-type is usually marshaled with the \<void> element, but this is an alternate
+/// encoding that allows a specific id to be associated with the data-type when core data-types are specified.
+/// \param decoder is the stream decoder
+/// \param typegrp is the factory owning \b this data-type
+void TypeVoid::decode(Decoder &decoder,TypeFactory &typegrp)
+
+{
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_ID) {
+      id = decoder.readUnsignedInteger();
+    }
+  }
 }
 
 void TypeVoid::encode(Encoder &encoder) const
@@ -4075,6 +4086,13 @@ Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
     break;
   case TYPE_CODE:
     ct = decodeCode(decoder,false, false, forcecore);
+    break;
+  case TYPE_VOID:
+    {
+      TypeVoid voidType;
+      voidType.decode(decoder,*this);
+      ct = findAdd(voidType);
+    }
     break;
   default:
     for(;;) {

@@ -37,6 +37,7 @@ import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
 import docking.framework.ApplicationInformationDisplayFactory;
+import docking.options.OptionsService;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.util.image.ToolIconURL;
@@ -49,11 +50,11 @@ import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.UserAgreementDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
-import ghidra.framework.plugintool.dialog.ExtensionTableProvider;
 import ghidra.framework.plugintool.dialog.ManagePluginsDialog;
 import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
+import ghidra.framework.project.extensions.ExtensionTableProvider;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -197,7 +198,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		return new DefaultPluginsConfiguration();
 	}
 
-	protected PluginsConfiguration getPluginsConfiguration() {
+	public PluginsConfiguration getPluginsConfiguration() {
 		return pluginMgr.getPluginsConfiguration();
 	}
 

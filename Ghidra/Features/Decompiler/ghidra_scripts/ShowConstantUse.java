@@ -25,13 +25,13 @@
 
 import java.util.*;
 
+import docking.options.OptionsService;
 import generic.jar.ResourceFile;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.script.*;
 import ghidra.app.tablechooser.*;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;

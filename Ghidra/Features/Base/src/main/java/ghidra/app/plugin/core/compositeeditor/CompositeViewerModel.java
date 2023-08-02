@@ -34,9 +34,9 @@ import utility.function.Callback;
 abstract class CompositeViewerModel extends AbstractTableModel
 		implements DataTypeManagerChangeListener {
 
-	/** 
-	 * Flag indicating that the model is updating the selection and should ignore any attempts to 
-	 * set the selection until it is no longer updating. 
+	/**
+	 * Flag indicating that the model is updating the selection and should ignore any attempts to
+	 * set the selection until it is no longer updating.
 	 */
 	protected boolean updatingSelection = false;
 
@@ -170,7 +170,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	 * Unloads the currently loaded composite data type.
 	 * This should be called when the viewer is removed from view and
 	 * and category/dataType changes no longer need to be listened for.
-	 * It can also be called to unload the current composite before loading 
+	 * It can also be called to unload the current composite before loading
 	 * a new composite data type.
 	 */
 	void unload() {
@@ -238,6 +238,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 			// clear our notion of the last selected column
 			return;
 		}
+
 		this.column = column;
 	}
 
@@ -299,7 +300,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 
 	/**
 	 * Return the path of the data category for the structure being viewed
-	 * @return the path 
+	 * @return the path
 	 */
 	public final CategoryPath getOriginalCategoryPath() {
 		if (originalDataTypePath != null) {
@@ -322,7 +323,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 
 	/**
 	 * Return the size of the structure being viewed in bytes
-	 * @return this size 
+	 * @return this size
 	 */
 	public int getLength() {
 		if (viewComposite != null && !viewComposite.isZeroLength()) {
@@ -332,7 +333,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Return the size of the structure being viewed in bytes as a hex or decimal string depending 
+	 * Return the size of the structure being viewed in bytes as a hex or decimal string depending
 	 * on the model's current display setting for numbers
 	 * @return the length
 	 */
@@ -360,7 +361,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	/**
 	 * Return a header name for the indicated column.
 	 *
-	 * @param columnIndex the index number indicating the component field (column) to get the 
+	 * @param columnIndex the index number indicating the component field (column) to get the
 	 * header for.
 	 */
 	@Override
@@ -371,7 +372,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	/**
 	 * Return a header name for the indicated field (column)
 	 *
-	 * @param columnIndex the index number indicating the component field (column) to get the 
+	 * @param columnIndex the index number indicating the component field (column) to get the
 	 * header for
 	 * @return the name
 	 */
@@ -484,8 +485,8 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Returns the number of component rows in the viewer. There may be a blank row at the end for 
-	 * selecting. Therefore this number can be different than the actual number of components 
+	 * Returns the number of component rows in the viewer. There may be a blank row at the end for
+	 * selecting. Therefore this number can be different than the actual number of components
 	 * currently in the structure being viewed.
 	 *
 	 * @return the number of rows in the model
@@ -504,8 +505,8 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Return the nth component for the structure being viewed. Since the number of rows can exceed 
-	 * the number of components defined within the composite ({@link Composite#getNumComponents()}) 
+	 * Return the nth component for the structure being viewed. Since the number of rows can exceed
+	 * the number of components defined within the composite ({@link Composite#getNumComponents()})
 	 * this method will return null for a blank row.
 	 * 
 	 * @param rowIndex the index of the component to return. First component is index of 0
@@ -519,7 +520,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Returns the number of columns (display fields) for each component in this structure or 
+	 * Returns the number of columns (display fields) for each component in this structure or
 	 * union.
 	 *
 	 * @return the number of display fields for each component
@@ -635,7 +636,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Fixes up the original name and category because a program restoration may have changed the 
+	 * Fixes up the original name and category because a program restoration may have changed the
 	 * original composite.
 	 * @param composite the restored copy of our original composite
 	 */
@@ -671,7 +672,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Called whenever the composite's non-component information changes.  For example, the name, 
+	 * Called whenever the composite's non-component information changes.  For example, the name,
 	 * or description change.
 	 */
 	protected void compositeInfoChanged() {
@@ -686,7 +687,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Determines the full path name for the composite data type based on the original composite 
+	 * Determines the full path name for the composite data type based on the original composite
 	 * and original category.
 	 * @return the full path name
 	 */
@@ -960,10 +961,10 @@ abstract class CompositeViewerModel extends AbstractTableModel
 
 //=================================================================================================
 // Helper methods for CategoryChangeListener methods.
-//=================================================================================================	
+//=================================================================================================
 
 	/**
-	 * Determines whether the indicated composite data type has any sub-components that are within 
+	 * Determines whether the indicated composite data type has any sub-components that are within
 	 * the indicated category or one of its sub-categories.
 	 * @param parentDt the composite data type
 	 * @param catPath the category's path
@@ -971,7 +972,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	 */
 	boolean hasSubDtInCategory(Composite parentDt, String catPath) {
 		DataTypeComponent components[] = parentDt.getDefinedComponents();
-		// FUTURE Add a structure to keep track of which composites were searched so they aren't 
+		// FUTURE Add a structure to keep track of which composites were searched so they aren't
 		// searched multiple times.
 		for (DataTypeComponent component : components) {
 			DataType subDt = component.getDataType();
@@ -989,7 +990,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Determines whether the indicated composite data type has any sub-components that are the 
+	 * Determines whether the indicated composite data type has any sub-components that are the
 	 * indicated data type.
 	 * @param parentDt the composite data type
 	 * @param dtPath the data type to be detected
@@ -1040,7 +1041,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 
 	/**
 	 * Returns the number of rows currently selected.
-	 *  
+	 * 
 	 * <p>Note: In unlocked mode this can include the additional blank line.
 	 * 
 	 * @return the selected row count
@@ -1152,7 +1153,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Returns the selection range containing the specified row index if there is one that contains 
+	 * Returns the selection range containing the specified row index if there is one that contains
 	 * it. Otherwise, returns null.
 	 *
 	 * @param rowIndex the row index
@@ -1214,7 +1215,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * Sets the model's current selection to the indicated selection.  If the selection is empty, 
+	 * Sets the model's current selection to the indicated selection.  If the selection is empty,
 	 * it gets adjusted to the empty last line when in unlocked mode.
 	 * @param selection the new selection
 	 */
@@ -1289,7 +1290,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 	}
 
 	/**
-	 * A notify method to take the listens to notify, along with the method that should be called 
+	 * A notify method to take the listens to notify, along with the method that should be called
 	 * on each listener.
 	 * 
 	 * @param <T> the type of the listener

@@ -24,8 +24,6 @@ import ghidra.framework.Platform;
  * and avoiding duplicate directories.
  */
 public class LibrarySearchPathManager {
-	public final static String CURRENT_DIRECTORY = ".";
-
 	private static List<String> pathList = createPathList();
 
 	private static boolean hasBeenRestored;
@@ -37,8 +35,6 @@ public class LibrarySearchPathManager {
 	}
 
 	private static void loadJavaLibraryPath() {
-		addPath(CURRENT_DIRECTORY);//add current directory
-
 		List<String> paths = Platform.CURRENT_PLATFORM.getAdditionalLibraryPaths();
 		for (String path : paths) {
 			addPath(path);
@@ -79,7 +75,6 @@ public class LibrarySearchPathManager {
 	public static void setLibraryPaths(String[] paths) {
 
 		pathList.clear();
-		addPath(CURRENT_DIRECTORY);//add current directory
 		for (String path : paths) {
 			addPath(path);
 		}
@@ -120,6 +115,7 @@ public class LibrarySearchPathManager {
 
 	/**
 	 * Adds the path at the specified index in path search list.
+	 * @param index The index
 	 * @param path the path to add
 	 * @return true if the path was appended, false if the path was a duplicate
 	 */
@@ -137,9 +133,6 @@ public class LibrarySearchPathManager {
 	 * @return true if the path was removed, false if the path did not exist
 	 */
 	public static boolean removePath(String path) {
-		if (path.equals(CURRENT_DIRECTORY)) {
-			return false;
-		}
 		return pathList.remove(path);
 	}
 

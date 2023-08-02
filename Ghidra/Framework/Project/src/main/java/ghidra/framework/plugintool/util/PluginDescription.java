@@ -148,14 +148,13 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	}
 
 	/**
-	 * Return the type for the plugin: CORE, CONTRIB, PROTOTYPE, or
-	 * DEVELOP. Within a type, plugins are grouped by category.
-	 * @return the type (or null if there is no module)
+	 * Return the name of the module that contains the plugin.
+	 * @return the module name
 	 */
 	public String getModuleName() {
 		if (moduleName == null) {
-			ResourceFile moduleRootDirectory = Application.getMyModuleRootDirectory();
-			moduleName = (moduleRootDirectory == null) ? null : moduleRootDirectory.getName();
+			ResourceFile moduleDir = Application.getModuleContainingClass(pluginClass.getName());
+			moduleName = (moduleDir == null) ? "<No Module>" : moduleDir.getName();
 		}
 
 		return moduleName;

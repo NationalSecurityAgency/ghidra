@@ -192,8 +192,9 @@ void EmitMarkup::tagType(const string &name,syntax_highlight hl,const Datatype *
   encoder->openElement(ELEM_TYPE);
   if (hl != no_color)
     encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
-  if (ct->getId() != 0) {
-    encoder->writeUnsignedInteger(ATTRIB_ID, ct->getId());
+  uint8 typeId = ct->getUnsizedId();
+  if (typeId != 0) {
+    encoder->writeUnsignedInteger(ATTRIB_ID, typeId);
   }
   encoder->writeString(ATTRIB_CONTENT,name);
   encoder->closeElement(ELEM_TYPE);
@@ -207,8 +208,9 @@ void EmitMarkup::tagField(const string &name,syntax_highlight hl,const Datatype 
     encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
   if (ct != (const Datatype *)0) {
     encoder->writeString(ATTRIB_NAME,ct->getName());
-    if (ct->getId() != 0) {
-      encoder->writeUnsignedInteger(ATTRIB_ID, ct->getId());
+    uint8 typeId = ct->getUnsizedId();
+    if (typeId != 0) {
+      encoder->writeUnsignedInteger(ATTRIB_ID, typeId);
     }
     encoder->writeSignedInteger(ATTRIB_OFF, o);
     if (op != (const PcodeOp *)0)

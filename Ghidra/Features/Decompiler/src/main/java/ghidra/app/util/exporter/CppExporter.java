@@ -20,6 +20,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.options.OptionsService;
 import generic.cache.CachingPool;
 import generic.cache.CountingBasicFactory;
 import generic.concurrent.QCallback;
@@ -31,7 +32,6 @@ import ghidra.app.decompiler.parallel.ParallelDecompiler;
 import ghidra.app.util.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;

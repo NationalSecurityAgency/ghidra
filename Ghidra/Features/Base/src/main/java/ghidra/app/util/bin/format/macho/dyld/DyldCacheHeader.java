@@ -389,25 +389,25 @@ public class DyldCacheHeader implements StructConverter {
 		if (!hasSlideInfo()) {
 			return;
 		}
-		if (slideInfoOffset != 0) {
-			DyldCacheSlideInfoCommon slideInfo = parseSlideInfo(slideInfoOffset, log, monitor);
-			if (slideInfo != null) {
-				slideInfoList.add(slideInfo);
+		if (slideInfoOffset != 0 &&
+			mappingInfoList.size() > DyldCacheSlideInfoCommon.DATA_PAGE_MAP_ENTRY) {
+			DyldCacheMappingInfo mappingInfo =
+				mappingInfoList.get(DyldCacheSlideInfoCommon.DATA_PAGE_MAP_ENTRY);
+			DyldCacheSlideInfoCommon info = DyldCacheSlideInfoCommon.parseSlideInfo(reader,
+				slideInfoOffset, mappingInfo.getAddress(), mappingInfo.getSize(),
+				mappingInfo.getFileOffset(), log, monitor);
+			if (info != null) {
+				slideInfoList.add(info);
 			}
 		}
 		else if (cacheMappingAndSlideInfoList.size() > 0) {
-			// last section contains the real slide infos
-			int listLen = cacheMappingAndSlideInfoList.size();
-			DyldCacheMappingAndSlideInfo linkEditInfo =
-				cacheMappingAndSlideInfoList.get(listLen - 1);
 			for (DyldCacheMappingAndSlideInfo info : cacheMappingAndSlideInfoList) {
 				if (info.getSlideInfoFileOffset() == 0) {
 					continue;
 				}
-				long offsetInEditRegion =
-					info.getSlideInfoFileOffset() - linkEditInfo.getSlideInfoFileOffset();
-				DyldCacheSlideInfoCommon slideInfo =
-					parseSlideInfo(info.getSlideInfoFileOffset(), log, monitor);
+				DyldCacheSlideInfoCommon slideInfo = DyldCacheSlideInfoCommon.parseSlideInfo(reader,
+					info.getSlideInfoFileOffset(), info.getAddress(), info.getSize(),
+					info.getFileOffset(), log, monitor);
 				slideInfoList.add(slideInfo);
 			}
 		}
@@ -499,6 +499,18 @@ public class DyldCacheHeader implements StructConverter {
 	 */
 	public String getUUID() {
 		return NumericUtilities.convertBytesToString(uuid);
+	}
+
+	/**
+	 * Gets the DYLD entry point address (if known)
+	 * 
+	 * @return The DYLD entry point address, or null if it is not known
+	 */
+	public Long getEntryPoint() {
+		if (!hasAccelerateInfo()) {
+			return accelerateInfoSize_dyldInCacheEntry;
+		}
+		return null;
 	}
 
 	/**
@@ -754,13 +766,6 @@ public class DyldCacheHeader implements StructConverter {
 			log.appendMsg(DyldCacheHeader.class.getSimpleName(),
 				"Failed to parse dyld_cache_image_info.");
 		}
-	}
-
-	private DyldCacheSlideInfoCommon parseSlideInfo(long offset, MessageLog log,
-			TaskMonitor monitor) throws CancelledException {
-		DyldCacheSlideInfoCommon slideInfo =
-			DyldCacheSlideInfoCommon.parseSlideInfo(reader, offset, log, monitor);
-		return slideInfo;
 	}
 
 	private void parseLocalSymbolsInfo(boolean shouldParse, MessageLog log, TaskMonitor monitor)

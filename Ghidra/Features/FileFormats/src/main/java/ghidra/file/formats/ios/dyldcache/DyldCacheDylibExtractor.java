@@ -22,11 +22,12 @@ import java.util.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingInfo;
+import ghidra.app.util.bin.format.macho.dyld.*;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
@@ -42,19 +43,58 @@ public class DyldCacheDylibExtractor {
 	 * @param dylibOffset The offset of the DYLIB in the given provider
 	 * @param splitDyldCache The {@link SplitDyldCache}
 	 * @param index The DYLIB's {@link SplitDyldCache} index
+	 * @param slideFixupMap A {@link Map} of {@link DyldCacheSlideFixup}s to perform
 	 * @param fsrl {@link FSRL} to assign to the resulting {@link ByteProvider}
 	 * @param monitor {@link TaskMonitor}
 	 * @return {@link ByteProvider} containing the bytes of the DYLIB
 	 * @throws MachException If there was an error parsing the DYLIB headers
 	 * @throws IOException If there was an IO-related issue with extracting the DYLIB
+	 * @throws CancelledException If the user cancelled the operation
 	 */
 	public static ByteProvider extractDylib(long dylibOffset, SplitDyldCache splitDyldCache,
-			int index, FSRL fsrl, TaskMonitor monitor) throws IOException, MachException {
+			int index, Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap,
+			FSRL fsrl, TaskMonitor monitor) throws IOException, MachException, CancelledException {
 
 		PackedSegments packedSegments =
-			new PackedSegments(dylibOffset, splitDyldCache, index, monitor);
+			new PackedSegments(dylibOffset, splitDyldCache, index, slideFixupMap, monitor);
 
 		return packedSegments.getByteProvider(fsrl);
+	}
+
+	/**
+	 * Gets a {@link Map} of {DyldCacheSlideInfoCommon}s to their corresponding 
+	 * {@link DyldCacheSlideFixup}s
+	 * 
+	 * @param splitDyldCache The {@link SplitDyldCache}
+	 * @param monitor {@link TaskMonitor}
+	 * @return A {@link Map} of {DyldCacheSlideInfoCommon}s to their corresponding 
+	 *   {@link DyldCacheSlideFixup}s
+	 * @throws CancelledException If the user cancelled the operation
+	 * @throws IOException If there was an IO-related issue with getting the slide fixups
+	 */
+	public static Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> getSlideFixups(
+			SplitDyldCache splitDyldCache, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap = new HashMap<>();
+		MessageLog log = new MessageLog();
+
+		for (int i = 0; i < splitDyldCache.size(); i++) {
+			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
+			ByteProvider bp = splitDyldCache.getProvider(i);
+			DyldArchitecture arch = header.getArchitecture();
+			for (DyldCacheSlideInfoCommon slideInfo : header.getSlideInfos()) {
+				try (ByteProvider wrapper = new ByteProviderWrapper(bp,
+					slideInfo.getMappingFileOffset(), slideInfo.getMappingSize())) {
+					BinaryReader wrapperReader =
+						new BinaryReader(wrapper, !arch.getEndianness().isBigEndian());
+					List<DyldCacheSlideFixup> fixups = slideInfo.getSlideFixups(wrapperReader,
+						arch.is64bit() ? 8 : 4, log, monitor);
+					slideFixupMap.put(slideInfo, fixups);
+				}
+			}
+		}
+
+		return slideFixupMap;
 	}
 
 	/**
@@ -64,8 +104,10 @@ public class DyldCacheDylibExtractor {
 	 */
 	private static class PackedSegments {
 
+		private ByteProvider provider;
 		private BinaryReader reader;
-		private MachHeader header;
+		private Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap;
+		private MachHeader machoHeader;
 		private SegmentCommand textSegment;
 		private SegmentCommand linkEditSegment;
 		private Map<SegmentCommand, Integer> packedSegmentStarts = new HashMap<>();
@@ -80,17 +122,21 @@ public class DyldCacheDylibExtractor {
 		 * @param dylibOffset The offset of the DYLIB in the given provider
 		 * @param splitDyldCache The {@link SplitDyldCache}
 		 * @param index The DYLIB's {@link SplitDyldCache} index
+		 * @param slideFixupMap A {@link Map} of {@link DyldCacheSlideFixup}s to perform
 		 * @param monitor {@link TaskMonitor}
 		 * @throws MachException If there was an error parsing the DYLIB headers
 		 * @throws IOException If there was an IO-related error
+		 * @throws CancelledException If the user cancelled the operation
 		 */
 		public PackedSegments(long dylibOffset, SplitDyldCache splitDyldCache, int index,
-				TaskMonitor monitor) throws MachException, IOException {
-			ByteProvider provider = splitDyldCache.getProvider(index);
-			this.header = new MachHeader(provider, dylibOffset, false).parse(splitDyldCache);
-			this.textSegment = header.getSegment(SegmentNames.SEG_TEXT);
-			this.linkEditSegment = header.getSegment(SegmentNames.SEG_LINKEDIT);
-			this.reader = new BinaryReader(provider, header.isLittleEndian());
+				Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap,
+				TaskMonitor monitor) throws MachException, IOException, CancelledException {
+			this.provider = splitDyldCache.getProvider(index);
+			this.slideFixupMap = slideFixupMap;
+			this.machoHeader = new MachHeader(provider, dylibOffset, false).parse(splitDyldCache);
+			this.textSegment = machoHeader.getSegment(SegmentNames.SEG_TEXT);
+			this.linkEditSegment = machoHeader.getSegment(SegmentNames.SEG_LINKEDIT);
+			this.reader = new BinaryReader(provider, machoHeader.isLittleEndian());
 			this.monitor = monitor;
 
 			// Keep track of each segment's file offset in the DYLD cache.
@@ -98,14 +144,14 @@ public class DyldCacheDylibExtractor {
 			// packed array.
 			int packedSize = 0;
 			int packedLinkEditSize = 0;
-			for (SegmentCommand segment : header.getAllSegments()) {
+			for (SegmentCommand segment : machoHeader.getAllSegments()) {
 				packedSegmentStarts.put(segment, packedSize);
 
 				// The __LINKEDIT segment is shared across all DYLIB's, so it is very large.  We
 				// Want to create a new packed __LINKEDIT segment with only the relevant info for
 				// the DYLIB we are extracting, resulting in a significantly smaller file.
 				if (segment == linkEditSegment) {
-					for (LoadCommand cmd : header.getLoadCommands()) {
+					for (LoadCommand cmd : machoHeader.getLoadCommands()) {
 						int offset = cmd.getLinkerDataOffset();
 						int size = cmd.getLinkerDataSize();
 						if (offset == 0 || size == 0) {
@@ -136,7 +182,7 @@ public class DyldCacheDylibExtractor {
 			packed = new byte[packedSize];
 			
 			// Copy each segment into the packed array (leaving no gaps)
-			for (SegmentCommand segment : header.getAllSegments()) {
+			for (SegmentCommand segment : machoHeader.getAllSegments()) {
 				long segmentSize = segment.getFileSize();
 				ByteProvider segmentProvider = getSegmentProvider(segment, splitDyldCache);
 				if (segment.getFileOffset() + segmentSize > segmentProvider.length()) {
@@ -158,8 +204,7 @@ public class DyldCacheDylibExtractor {
 			// Fixup various fields in the packed array
 			fixupMachHeader();
 			fixupLoadCommands();
-
-			// TODO: Fixup pointer chains
+			fixupSlidePointers();
 		}
 
 		/**
@@ -210,8 +255,8 @@ public class DyldCacheDylibExtractor {
 						packedSymbolStringTable.length);
 				}
 				else {
-					byte[] bytes =
-						linkEditSegmentProvider.readBytes(cmd.getLinkerDataOffset(), cmd.getLinkerDataSize());
+					byte[] bytes = linkEditSegmentProvider.readBytes(cmd.getLinkerDataOffset(),
+						cmd.getLinkerDataSize());
 					System.arraycopy(bytes, 0, packedLinkEdit, packedLinkEditDataStarts.get(cmd),
 						bytes.length);
 				}
@@ -230,7 +275,7 @@ public class DyldCacheDylibExtractor {
 		 */
 		private byte[] nlistToArray(NList nlist, int stringIndex) {
 			byte[] ret = new byte[nlist.getSize()];
-			DataConverter conv = DataConverter.getInstance(!header.isLittleEndian());
+			DataConverter conv = DataConverter.getInstance(!machoHeader.isLittleEndian());
 			conv.putInt(ret, 0, stringIndex);
 			ret[4] = nlist.getType();
 			ret[5] = nlist.getSection();
@@ -251,8 +296,8 @@ public class DyldCacheDylibExtractor {
 		 */
 		private void fixupMachHeader() throws IOException {
 			// Indicate that the new packed DYLIB is no longer in the cache
-			set(header.getStartIndexInProvider() + 0x18,
-				header.getFlags() & ~MachHeaderFlags.MH_DYLIB_IN_CACHE, 4);
+			set(machoHeader.getStartIndexInProvider() + 0x18,
+				machoHeader.getFlags() & ~MachHeaderFlags.MH_DYLIB_IN_CACHE, 4);
 		}
 
 		/**
@@ -262,7 +307,7 @@ public class DyldCacheDylibExtractor {
 		 */
 		private void fixupLoadCommands() throws IOException {
 			// Fixup indices, offsets, etc in the packed DYLIB's load commands
-			for (LoadCommand cmd : header.getLoadCommands()) {
+			for (LoadCommand cmd : machoHeader.getLoadCommands()) {
 				if (monitor.isCancelled()) {
 					break;
 				}
@@ -563,6 +608,54 @@ public class DyldCacheDylibExtractor {
 			}
 			DataConverter converter = LittleEndianDataConverter.INSTANCE;
 			return size == 8 ? converter.getBytes(value) : converter.getBytes((int) value);
+		}
+
+		/**
+		 * Fixes-up the slide pointers
+		 * 
+		 * @throws IOException If there was an IO-related issue performing the fix-up
+		 * @throws CancelledException If the user cancelled the operation
+		 */
+		private void fixupSlidePointers() throws IOException, CancelledException {
+			// TODO; Optimize this fixup algorithm
+			long total = slideFixupMap.values().stream().flatMap(List::stream).count();
+			monitor.initialize(total, "Fixing slide pointers...");
+			for (DyldCacheSlideInfoCommon slideInfo : slideFixupMap.keySet()) {
+				for (DyldCacheSlideFixup fixup : slideFixupMap.get(slideInfo)) {
+					monitor.increment();
+					long addr = slideInfo.getMappingAddress() + fixup.offset();
+					long fileOffset = slideInfo.getMappingFileOffset() + fixup.offset();
+					SegmentCommand segment = getSegmentContaining(addr);
+					if (segment == null) {
+						// Fixup is not in this Mach-O
+						continue;
+					}
+					byte[] newBytes = toBytes(fixup.value(), fixup.size());
+					try {
+						System.arraycopy(newBytes, 0, packed,
+							(int) getPackedOffset(fileOffset, segment), newBytes.length);
+					}
+					catch (NotFoundException e) {
+						throw new IOException(e);
+					}
+				}
+			}
+		}
+
+		/**
+		 * Gets the {@link SegmentCommand segment} that contains the given virtual address
+		 * 
+		 * @param addr The address
+		 * @return The {@link SegmentCommand segment} that contains the given virtual address
+		 */
+		private SegmentCommand getSegmentContaining(long addr) {
+			for (SegmentCommand segment : machoHeader.getAllSegments()) {
+				if (addr >= segment.getVMaddress() &&
+					addr < segment.getVMaddress() + segment.getVMsize()) {
+					return segment;
+				}
+			}
+			return null;
 		}
 	}
 }

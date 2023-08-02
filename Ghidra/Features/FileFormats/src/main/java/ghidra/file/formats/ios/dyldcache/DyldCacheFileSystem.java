@@ -21,8 +21,7 @@ import java.util.*;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
-import ghidra.app.util.bin.format.macho.dyld.DyldCacheImage;
+import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.DyldCacheUtils;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
@@ -37,6 +36,7 @@ import ghidra.util.task.TaskMonitor;
 public class DyldCacheFileSystem extends GFileSystemBase {
 
 	private SplitDyldCache splitDyldCache;
+	private Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap;
 	private Map<GFile, Long> addrMap = new HashMap<>();
 	private Map<GFile, Integer> indexMap = new HashMap<>();
 
@@ -46,6 +46,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	@Override
 	public void close() throws IOException {
+		slideFixupMap = null;
 		addrMap.clear();
 		indexMap.clear();
 		splitDyldCache.close();
@@ -53,7 +54,8 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 	}
 
 	@Override
-	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
+	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
+			throws CancelledException, IOException {
 		Long addr = addrMap.get(file);
 		if (addr == null) {
 			return null;
@@ -61,9 +63,14 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		int index = indexMap.get(file);
 		long machHeaderStartIndexInProvider =
 			addr - splitDyldCache.getDyldCacheHeader(index).getBaseAddress();
+
+		if (slideFixupMap == null) {
+			slideFixupMap = DyldCacheDylibExtractor.getSlideFixups(splitDyldCache, monitor);
+		}
+
 		try {
 			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider,
-				splitDyldCache, index, file.getFSRL(), monitor);
+				splitDyldCache, index, slideFixupMap, file.getFSRL(), monitor);
 		}
 		catch (MachException e) {
 			throw new IOException("Invalid Mach-O header detected at 0x" +

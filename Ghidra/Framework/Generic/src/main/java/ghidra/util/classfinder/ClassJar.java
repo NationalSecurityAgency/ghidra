@@ -61,7 +61,7 @@ class ClassJar extends ClassLocation {
 	}
 
 	@Override
-	void getClasses(Set<Class<?>> set, TaskMonitor monitor) {
+	protected void getClasses(Set<Class<?>> set, TaskMonitor monitor) {
 		checkForDuplicates(set);
 		set.addAll(classes);
 	}

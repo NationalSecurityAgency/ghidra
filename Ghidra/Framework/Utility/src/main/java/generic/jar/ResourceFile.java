@@ -20,6 +20,8 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import utilities.util.FileUtilities;
+
 /**
  * Class for representing file object regardless of whether they are actual files in the file system or
  * or files stored inside of a jar file.  This class provides most all the same capabilities as the
@@ -30,7 +32,7 @@ import java.util.Map;
 public class ResourceFile implements Comparable<ResourceFile> {
 	private static final String JAR_FILE_PREFIX = "jar:file:";
 	private Resource resource;
-	private static Map<String, JarResource> jarRootsMap = new HashMap<String, JarResource>();
+	private static Map<String, JarResource> jarRootsMap = new HashMap<>();
 
 	/**
 	 * Construct a ResourceFile that represents a normal file in the file system.
@@ -121,6 +123,7 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	/**
 	 * Returns the canonical file path for this file.
 	 * @return the absolute file path for this file.
+	 * @throws IOException if an exception is thrown getting the canonical path
 	 */
 	public String getCanonicalPath() throws IOException {
 		return resource.getCanonicalPath();
@@ -128,7 +131,7 @@ public class ResourceFile implements Comparable<ResourceFile> {
 
 	/**
 	 * Returns a array of ResourceFiles if this ResourceFile is a directory. Otherwise return null.
-	 * @return  the child ResourceFiles if this is a directory, null otherwise.
+	 * @return the child ResourceFiles if this is a directory, null otherwise.
 	 */
 	public ResourceFile[] listFiles() {
 		return resource.listFiles();
@@ -190,7 +193,7 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	 * contents. 
 	 * @return an InputStream for the file's contents.
 	 * @throws FileNotFoundException if the file does not exist.
-	 * @throws IOException 
+	 * @throws IOException if an exception occurs creating the input stream
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, IOException {
 		return resource.getInputStream();
@@ -328,5 +331,14 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	 */
 	public URI toURI() {
 		return resource.toURI();
+	}
+
+	/**
+	 * Returns true if this file's path contains the entire path of the given file.
+	 * @param otherFile the other file to check
+	 * @return true if this file's path contains the entire path of the given file.
+	 */
+	public boolean containsPath(ResourceFile otherFile) {
+		return FileUtilities.isPathContainedWithin(getFile(false), otherFile.getFile(false));
 	}
 }

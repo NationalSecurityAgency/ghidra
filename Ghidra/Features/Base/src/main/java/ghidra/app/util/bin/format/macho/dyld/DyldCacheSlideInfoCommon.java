@@ -18,13 +18,14 @@ package ghidra.app.util.bin.format.macho.dyld;
 import java.io.IOException;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -50,117 +51,179 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info
 	 * @param slideInfoOffset The offset of the slide info to parse
+	 * @param mappingAddress The base address of where the slide fixups will take place
+	 * @param mappingSize The size of the slide fixups block
+	 * @param mappingFileOffset The base file offset of where the slide fixups will take place
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 * @return The slide info object
 	 */
 	public static DyldCacheSlideInfoCommon parseSlideInfo(BinaryReader reader, long slideInfoOffset,
-			MessageLog log, TaskMonitor monitor) {
+			long mappingAddress, long mappingSize, long mappingFileOffset, MessageLog log,
+			TaskMonitor monitor) {
 		if (slideInfoOffset == 0) {
 			return null;
 		}
-		DyldCacheSlideInfoCommon returnedSlideInfo = null;
 
 		monitor.setMessage("Parsing DYLD slide info...");
 		monitor.initialize(1);
 		try {
 			reader.setPointerIndex(slideInfoOffset);
-			int version = reader.readNextInt();
-			reader.setPointerIndex(slideInfoOffset);
-			switch (version) {
-				case 1:
-					returnedSlideInfo = new DyldCacheSlideInfo1(reader);
-					break;
-				case 2:
-					returnedSlideInfo = new DyldCacheSlideInfo2(reader);
-					break;
-				case 3:
-					returnedSlideInfo = new DyldCacheSlideInfo3(reader);
-					break;
-				case 4:
-					returnedSlideInfo = new DyldCacheSlideInfo4(reader);
-					break;
-				default:
-					throw new IOException();
-			}
+			int version = reader.readInt(reader.getPointerIndex());
+			DyldCacheSlideInfoCommon returnedSlideInfo = switch (version) {
+				case 1 -> new DyldCacheSlideInfo1(reader, mappingAddress, mappingSize,
+					mappingFileOffset);
+				case 2 -> new DyldCacheSlideInfo2(reader, mappingAddress, mappingSize,
+					mappingFileOffset);
+				case 3 -> new DyldCacheSlideInfo3(reader, mappingAddress, mappingSize,
+					mappingFileOffset);
+				case 4 -> new DyldCacheSlideInfo4(reader, mappingAddress, mappingSize,
+					mappingFileOffset);
+				default -> throw new IOException("Unrecognized slide info version: " + version);
+			};
 			monitor.incrementProgress(1);
+			returnedSlideInfo.slideInfoOffset = slideInfoOffset;
+			return returnedSlideInfo;
 		}
 		catch (IOException e) {
-			log.appendMsg(DyldCacheHeader.class.getSimpleName(),
+			log.appendMsg(DyldCacheSlideInfoCommon.class.getSimpleName(),
 				"Failed to parse dyld_cache_slide_info.");
 			return null;
 		}
-		returnedSlideInfo.slideInfoOffset = slideInfoOffset;
-		return returnedSlideInfo;
 	}
 
 	protected int version;
 	protected long slideInfoOffset;
+	protected long mappingAddress;
+	protected long mappingSize;
+	protected long mappingFileOffset;
 
 	/**
 	 * Create a new {@link DyldCacheSlideInfoCommon}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info
+	 * @param mappingAddress The base address of where the slide fixups will take place
+	 * @param mappingSize The size of the slide fixups block
+	 * @param mappingFileOffset The base file offset of where the slide fixups will take place
 	 * @throws IOException if there was an IO-related problem creating the DYLD slide info
 	 */
-	public DyldCacheSlideInfoCommon(BinaryReader reader) throws IOException {
-		version = reader.readNextInt();
+	public DyldCacheSlideInfoCommon(BinaryReader reader, long mappingAddress, long mappingSize,
+			long mappingFileOffset)
+			throws IOException {
+		this.mappingAddress = mappingAddress;
+		this.mappingSize = mappingSize;
+		this.mappingFileOffset = mappingFileOffset;
+		this.version = reader.readNextInt();
 	}
 
 	/**
-	 * Gets the version of the DYLD slide info.
-	 * 
-	 * @return The version of the DYLD slide info.
+	 * {@return The version of the DYLD slide info}
 	 */
 	public int getVersion() {
 		return version;
 	}
 
 	/**
-	 * Return the original slide info offset
-	 * 
-	 * @return the original slide info offset
+	 * {@return The original slide info offset}
 	 */
 	public long getSlideInfoOffset() {
 		return slideInfoOffset;
 	}
 
-	public abstract void fixPageChains(Program program, DyldCacheHeader dyldCacheHeader,
-			boolean addRelocations, MessageLog log, TaskMonitor monitor)
-			throws MemoryAccessException, CancelledException;
-
-	protected void addRelocationTableEntry(Program program, Address chainLoc, int type,
-			long chainValue, int appliedByteLength, String name) {
-		// Add entry to relocation table for the pointer fixup
-		program.getRelocationTable()
-				.add(chainLoc, Status.APPLIED, type, new long[] { chainValue }, appliedByteLength,
-					name);
+	/**
+	 * {@return The base address of where the slide fixups will take place}
+	 */
+	public long getMappingAddress() {
+		return mappingAddress;
 	}
 
 	/**
-	 * Create pointers at each fixed chain location.
-	 * 
-	 * @param program The program
-	 * @param unchainedLocList Address list of fixed pointer locations
-	 * @param monitor A cancelable task monitor 
-	 * 
-	 * @throws CancelledException if the user cancels
+	 * {@return The size of the slide fixups block}
 	 */
-	protected void createChainPointers(Program program, List<Address> unchainedLocList,
-			TaskMonitor monitor) throws CancelledException {
-		int numFixedLocations = unchainedLocList.size();
+	public long getMappingSize() {
+		return mappingSize;
+	}
 
-		monitor.setMessage("Fixed " + numFixedLocations + " chained pointers.  Creating Pointers");
+	/**
+	 * {@return The base file offset of where the slide fixups will take place}
+	 */
+	public long getMappingFileOffset() {
+		return mappingFileOffset;
+	}
 
-		// Create pointers at any fixed-up addresses
-		for (Address addr : unchainedLocList) {
-			monitor.checkCancelled();
-			try {
-				program.getListing().createData(addr, Pointer64DataType.dataType);
+	/**
+	 * Walks the slide fixup information and collects a {@link List} of {@link DyldCacheSlideFixup}s
+	 * that will need to be applied to the image
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of the segment to fix up
+	 * @param pointerSize The size of a pointer in bytes
+	 * @param log The log
+	 * @param monitor A cancellable monitor
+	 * @return A {@link List} of {@link DyldCacheSlideFixup}s
+	 * @throws IOException If there was an IO-related issue
+	 * @throws CancelledException If the user cancelled the operation
+	 */
+	public abstract List<DyldCacheSlideFixup> getSlideFixups(BinaryReader reader, int pointerSize,
+			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException;
+
+	/**
+	 * Fixes up the programs slide pointers
+	 * 
+	 * @param program The {@link Program}
+	 * @param markup True if the slide pointers should be marked up; otherwise, false
+	 * @param addRelocations True if slide pointer locations should be added to the relocation
+	 *   table; otherwise, false
+	 * @param log The log
+	 * @param monitor A cancellable monitor
+	 * @throws MemoryAccessException If there was a problem accessing memory
+	 * @throws CancelledException If the user cancelled the operation
+	 */
+	public void fixupSlidePointers(Program program, boolean markup, boolean addRelocations,
+			MessageLog log, TaskMonitor monitor) throws MemoryAccessException, CancelledException {
+
+		Memory memory = program.getMemory();
+		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+		Address dataPageAddr = space.getAddress(mappingAddress);
+
+		try (ByteProvider provider = new MemoryByteProvider(memory, dataPageAddr)) {
+			BinaryReader reader = new BinaryReader(provider, !memory.isBigEndian());
+			
+			List<DyldCacheSlideFixup> fixups =
+				getSlideFixups(reader, program.getDefaultPointerSize(), log, monitor);
+
+			monitor.initialize(fixups.size(), "Fixing DYLD Cache slide pointers...");
+			for (DyldCacheSlideFixup fixup : fixups) {
+				monitor.increment();
+				Address addr = dataPageAddr.add(fixup.offset());
+				if (fixup.size() == 8) {
+					memory.setLong(addr, fixup.value());
+				}
+				else {
+					memory.setInt(addr, (int) fixup.value());
+				}
 			}
-			catch (CodeUnitInsertionException e) {
-				// No worries, something presumably more important was there already
+
+			if (markup) {
+				monitor.initialize(fixups.size(), "Marking up DYLD Cache slide pointers...");
+				for (DyldCacheSlideFixup fixup : fixups) {
+					monitor.increment();
+					Address addr = dataPageAddr.add(fixup.offset());
+					if (addRelocations) {
+						program.getRelocationTable()
+								.add(addr, Status.APPLIED, version, new long[] { fixup.value() },
+									fixup.size(), null);
+					}
+					try {
+						program.getListing().createData(addr, POINTER);
+					}
+					catch (CodeUnitInsertionException e) {
+						// No worries, something presumably more important was there already
+					}
+				}
 			}
+		}
+		catch (IOException e) {
+			throw new MemoryAccessException(e.getMessage(), e);
 		}
 	}
 

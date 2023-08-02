@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.plugintool.dialog;
+package ghidra.framework.project.extensions;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -70,9 +70,6 @@ public class ExtensionTablePanel extends JPanel {
 		// way to restrict column width.
 		TableColumn col = table.getColumnModel().getColumn(ExtensionTableModel.INSTALLED_COL);
 		col.setMaxWidth(25);
-
-		// Finally, load the table with some data.
-		refreshTable();
 	}
 
 	public void dispose() {

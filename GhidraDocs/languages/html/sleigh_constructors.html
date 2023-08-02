@@ -1,24 +1,24 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>7.�Constructors</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>7. Constructors</title>
 <link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="up" href="sleigh.html" title="SLEIGH">
-<link rel="prev" href="sleigh_tokens.html" title="6.�Tokens and Fields">
-<link rel="next" href="sleigh_context.html" title="8.�Using Context">
+<link rel="prev" href="sleigh_tokens.html" title="6. Tokens and Fields">
+<link rel="next" href="sleigh_context.html" title="8. Using Context">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="navheader">
 <table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">7.�Constructors</th></tr>
+<tr><th colspan="3" align="center">7. Constructors</th></tr>
 <tr>
 <td width="20%" align="left">
-<a accesskey="p" href="sleigh_tokens.html">Prev</a>�</td>
-<th width="60%" align="center">�</th>
-<td width="20%" align="right">�<a accesskey="n" href="sleigh_context.html">Next</a>
+<a accesskey="p" href="sleigh_tokens.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="sleigh_context.html">Next</a>
 </td>
 </tr>
 </table>
@@ -26,7 +26,7 @@
 </div>
 <div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="sleigh_constructors"></a>7.�Constructors</h2></div></div></div>
+<a name="sleigh_constructors"></a>7. Constructors</h2></div></div></div>
 <p>
 Fields are the basic building block for family symbols. The mechanisms
 for building up from fields to the
@@ -56,11 +56,11 @@ to think of a constructor as a kind of table in and of itself. But it
 is only the table that has an actual family symbol identifier
 associated with it. Most of this chapter is devoted to describing how
 to define a single constructor. The issues involved in combining
-multiple constructors into a single table are addressed in <a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8.�Tables">Section�7.8, &#8220;Tables&#8221;</a>.
+multiple constructors into a single table are addressed in <a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8. Tables">Section 7.8, “Tables”</a>.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_sections_constructor"></a>7.1.�The Five Sections of a Constructor</h3></div></div></div>
+<a name="sleigh_sections_constructor"></a>7.1. The Five Sections of a Constructor</h3></div></div></div>
 <p>
 A single complex statement in the specification file describes a
 constructor. This statement is always made up of five distinct
@@ -92,12 +92,12 @@ in turn.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_table_header"></a>7.2.�The Table Header</h3></div></div></div>
+<a name="sleigh_table_header"></a>7.2. The Table Header</h3></div></div></div>
 <p>
 Every constructor must be part of a table, which is the element with
 an actual family symbol identifier associated with it. So each
 constructor starts with the identifier of the table it belongs to
-followed by a colon &#8216;:&#8217;.
+followed by a colon ‘:’.
 </p>
 <div class="informalexample"><pre class="programlisting">
 mode1:           <span class="weak">...</span>
@@ -122,18 +122,18 @@ identifier.
 The identifier <span class="emphasis"><em>instruction</em></span> is actually reserved
 for the root table, but should not be used in the table header as the
 SLEIGH parser uses the blank identifier to help distinguish assembly
-mnemonics from operands (see <a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1.�Mnemonic">Section�7.3.1, &#8220;Mnemonic&#8221;</a>).
+mnemonics from operands (see <a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1. Mnemonic">Section 7.3.1, “Mnemonic”</a>).
 </p>
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_display_section"></a>7.3.�The Display Section</h3></div></div></div>
+<a name="sleigh_display_section"></a>7.3. The Display Section</h3></div></div></div>
 <p>
 The <span class="emphasis"><em>display section</em></span> consists of all characters
-after the table header &#8216;:&#8217; up to the SLEIGH
-keyword <span class="bold"><strong>is</strong></span>. The section&#8217;s primary
+after the table header ‘:’ up to the SLEIGH
+keyword <span class="bold"><strong>is</strong></span>. The section’s primary
 purpose is to assign disassembly display meaning to the
-constructor. The section&#8217;s secondary purpose is to define local
+constructor. The section’s secondary purpose is to define local
 identifiers for the pieces out of which the constructor is being
 built. Characters in the display section are treated as literals with
 the following exceptions.
@@ -151,7 +151,7 @@ the following exceptions.
 </ol></div>
 </li>
 <li class="listitem" style="list-style-type: disc">
-    The character &#8216;^&#8217; has special meaning.
+    The character ‘^’ has special meaning.
   </li>
 <li class="listitem" style="list-style-type: disc">
     White space is trimmed from the beginning and end of the section.
@@ -163,13 +163,13 @@ the following exceptions.
 <p>
 </p>
 <p>
-In particular, all punctuation except &#8216;^&#8217; loses its special
+In particular, all punctuation except ‘^’ loses its special
 meaning. Those identifiers that are not treated as literals are
 considered to be new, initially undefined, family symbols. We refer to
 these new symbols as the <span class="emphasis"><em>operands</em></span> of the constructor. And for root
 constructors, these operands frequently correspond to the natural
 assembly operands. Thinking of it as a family symbol, the
-constructor&#8217;s display meaning becomes the string of literals itself,
+constructor’s display meaning becomes the string of literals itself,
 with each identifier replaced with the display meaning of the symbol
 corresponding to that identifier.
 </p>
@@ -182,11 +182,11 @@ mode1: ( op1 ),op2 is          <span class="weak">...</span>
 In the above example, a constructor for
 table <span class="emphasis"><em>mode1</em></span> is being built out of two pieces,
 symbol <span class="emphasis"><em>op1</em></span> and
-symbol <span class="emphasis"><em>op2</em></span>. The characters &#8216;(&#8216;, &#8217;)&#8217;, and &#8216;,&#8217;
+symbol <span class="emphasis"><em>op2</em></span>. The characters ‘(‘, ’)’, and ‘,’
 become literal parts of the disassembly display for symbol
 mode1. After the display strings for <span class="emphasis"><em>op1</em></span>
 and <span class="emphasis"><em>op2</em></span> are found, they are inserted into the
-string of literals, forming the constructor&#8217;s display string. The
+string of literals, forming the constructor’s display string. The
 white space characters surrounding the <span class="emphasis"><em>op1</em></span>
 identifier are preserved as part of this string.
 </p>
@@ -198,7 +198,7 @@ but only their identifiers are established in the display section.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_mnemonic"></a>7.3.1.�Mnemonic</h4></div></div></div>
+<a name="sleigh_mnemonic"></a>7.3.1. Mnemonic</h4></div></div></div>
 <p>
 If the constructor is part of the root instruction table, the first
 string of characters in the display section that does not contain
@@ -212,8 +212,8 @@ if it is legal.
 <p>
 </p>
 <p>
-In the above example, the string &#8220;var1&#8221; is treated as a symbol
-identifier, but the string &#8220;and&#8221; is considered to be the mnemonic of
+In the above example, the string “var1” is treated as a symbol
+identifier, but the string “and” is considered to be the mnemonic of
 the instruction.
 </p>
 <p>
@@ -230,10 +230,10 @@ no such requirement.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_caret"></a>7.3.2.�The '^' character</h4></div></div></div>
+<a name="sleigh_caret"></a>7.3.2. The '^' character</h4></div></div></div>
 <p>
-The &#8216;^&#8217; character in the display section is used to separate
-identifiers from other characters where there shouldn&#8217;t be white space
+The ‘^’ character in the display section is used to separate
+identifiers from other characters where there shouldn’t be white space
 in the disassembly display. This can be used in any manner but is
 usually used to attach display characters from a local symbol to the
 literal characters of the mnemonic.
@@ -244,7 +244,7 @@ literal characters of the mnemonic.
 <p>
 </p>
 <p>
-In the above example, &#8220;bra&#8221; is treated as literal characters in the
+In the above example, “bra” is treated as literal characters in the
 resulting display string followed immediately, with no intervening
 spaces, by the display string of the local
 symbol <span class="emphasis"><em>cc</em></span>. Thus the whole constructor actually
@@ -253,39 +253,39 @@ identifiers <span class="emphasis"><em>cc</em></span>, <span class="emphasis"><e
 and <span class="emphasis"><em>op2</em></span>.
 </p>
 <p>
-If the &#8216;^&#8217; is used as the first (non-whitespace) character in the
+If the ‘^’ is used as the first (non-whitespace) character in the
 display section of a base constructor, this inhibits the first
 identifier in the display from being considered the mnemonic, as
-described in <a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1.�Mnemonic">Section�7.3.1, &#8220;Mnemonic&#8221;</a>. This allows
+described in <a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1. Mnemonic">Section 7.3.1, “Mnemonic”</a>. This allows
 specification of less common situations, where the first part of the
 mnemonic, rather than perhaps a later part, needs to be considered as
-an operand. An initial &#8216;^&#8217; character can also facilitate certain
+an operand. An initial ‘^’ character can also facilitate certain
 recursive constructions.
 </p>
 </div>
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_bit_pattern"></a>7.4.�The Bit Pattern Section</h3></div></div></div>
+<a name="sleigh_bit_pattern"></a>7.4. The Bit Pattern Section</h3></div></div></div>
 <p>
 Syntactically, this section comes between the
 keyword <span class="bold"><strong>is</strong></span> and the delimiter for the
-following section, either an &#8216;{&#8216; or an &#8216;[&#8216;. The <span class="emphasis"><em>bit pattern
+following section, either an ‘{‘ or an ‘[‘. The <span class="emphasis"><em>bit pattern
 section</em></span> describes a
-constructor&#8217;s <span class="emphasis"><em>pattern</em></span>, the subset of possible
+constructor’s <span class="emphasis"><em>pattern</em></span>, the subset of possible
 instruction encodings that the designer wants
 to <span class="emphasis"><em>match</em></span> the constructor being defined.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_constraints"></a>7.4.1.�Constraints</h4></div></div></div>
+<a name="sleigh_constraints"></a>7.4.1. Constraints</h4></div></div></div>
 <p>
 The patterns required for processor specifications can almost always
 be described as a mask and value pair. Given a specific instruction
 encoding, we can decide if the encoding matches our pattern by looking
 at just the bits specified by the <span class="emphasis"><em>mask</em></span> and seeing
 if they match a specific <span class="emphasis"><em>value</em></span>. The fields, as
-defined in <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1.�Defining Tokens and Fields">Section�6.1, &#8220;Defining Tokens and Fields&#8221;</a>, typically give us
+defined in <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1. Defining Tokens and Fields">Section 6.1, “Defining Tokens and Fields”</a>, typically give us
 our masks. So to construct a pattern, we can simply require that the
 field take on a specific value, as in the example below.
 </p>
@@ -294,9 +294,9 @@ field take on a specific value, as in the example below.
 </pre></div>
 <p>
 Assuming the symbol <span class="emphasis"><em>opcode</em></span> was defined as a field, this says that a
-root constructor with mnemonic &#8220;halt&#8221; matches any instruction where
+root constructor with mnemonic “halt” matches any instruction where
 the bits defining this field have the value 0x15. The equation
-&#8220;opcode=0x15&#8221; is called a <span class="emphasis"><em>constraint</em></span>.
+“opcode=0x15” is called a <span class="emphasis"><em>constraint</em></span>.
 </p>
 <p>
 The standard bit encoding of the integer is used when restricting the
@@ -311,13 +311,13 @@ field.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_ampandor"></a>7.4.2.�The '&amp;' and '|' Operators</h4></div></div></div>
+<a name="sleigh_ampandor"></a>7.4.2. The '&amp;' and '|' Operators</h4></div></div></div>
 <p>
 More complicated patterns are built out of logical operators. The
 meaning of these are fairly straightforward. We can force two or more
 constraints to be true at the same time, a <span class="emphasis"><em>logical
-and</em></span> &#8216;&amp;&#8217;, or we can require that either one constraint or
-another must be true, a <span class="emphasis"><em>logical or</em></span> &#8216;|&#8217;. By using these with
+and</em></span> ‘&amp;’, or we can require that either one constraint or
+another must be true, a <span class="emphasis"><em>logical or</em></span> ‘|’. By using these with
 constraints and parentheses for grouping, arbitrarily complicated
 patterns can be constructed.
 </p>
@@ -337,11 +337,11 @@ requires two or more mask/value style checks to correctly implement.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_defining_operands"></a>7.4.3.�Defining Operands and Invoking Subtables</h4></div></div></div>
+<a name="sleigh_defining_operands"></a>7.4.3. Defining Operands and Invoking Subtables</h4></div></div></div>
 <p>
 The principle way of defining a constructor operand, left undefined
 from the display section, is done in the bit pattern section. If an
-operand&#8217;s identifier is used by itself, not as part of a constraint,
+operand’s identifier is used by itself, not as part of a constraint,
 then the operand takes on both the display and semantic definition of
 the global symbol with the same identifier. The syntax is slightly
 confusing at first. The identifier must appear in the pattern as if it
@@ -390,13 +390,13 @@ parsers, a SLEIGH specification is in part a grammar
 specification. The terminal symbols, or tokens, are the bits of an
 instruction, and the constructors and tables are the non-terminating
 symbols. These all build up to the root instruction table, the
-grammar&#8217;s start symbol. So this link from local to global is simply a
+grammar’s start symbol. So this link from local to global is simply a
 statement of the grouping of old symbols into the new constructor.
 </p>
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_variable_length"></a>7.4.4.�Variable Length Instructions</h4></div></div></div>
+<a name="sleigh_variable_length"></a>7.4.4. Variable Length Instructions</h4></div></div></div>
 <p>
 There are some additional complexities to designing a specification
 for a processor with variable length instructions. Some initial
@@ -419,14 +419,14 @@ designer control over how tokens fit together.
 </p>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_semicolon"></a>7.4.4.1.�The ';' Operator</h5></div></div></div>
+<a name="sleigh_semicolon"></a>7.4.4.1. The ';' Operator</h5></div></div></div>
 <p>
 The most important operator for patterns defining variable length
-instructions is the concatenation operator &#8216;;&#8217;. When building a
+instructions is the concatenation operator ‘;’. When building a
 constructor with fields from two or more tokens, the pattern must
 explicitly define the order of the tokens. In terms of the logic of
-the pattern expressions themselves, the &#8216;;&#8217; operator has the same
-meaning as the &#8216;&amp;&#8217; operator. The combined expression matches only if
+the pattern expressions themselves, the ‘;’ operator has the same
+meaning as the ‘&amp;’ operator. The combined expression matches only if
 both subexpressions are true. However, it also requires that the
 subexpressions involve multiple tokens and explicitly indicates an
 order for them.
@@ -456,7 +456,7 @@ corresponding encoding. The second
 instruction, <span class="emphasis"><em>add</em></span>, uses
 fields <span class="emphasis"><em>op</em></span> and <span class="emphasis"><em>reg</em></span>, but it
 also uses field <span class="emphasis"><em>imm16</em></span> contained
-in <span class="emphasis"><em>immtoken</em></span>. The &#8216;;&#8217; operator indicates that
+in <span class="emphasis"><em>immtoken</em></span>. The ‘;’ operator indicates that
 token <span class="emphasis"><em>base</em></span> (via its fields) comes first in the
 encoding, followed by <span class="emphasis"><em>immtoken</em></span>. The constraints
 on <span class="emphasis"><em>base</em></span> will therefore correspond to constraints
@@ -466,25 +466,25 @@ bytes. The length of the final encoding for <span class="emphasis"><em>add</em><
 will be 3 bytes, the sum of the lengths of the two tokens.
 </p>
 <p>
-If two pattern expressions are combined with the &#8216;&amp;&#8217; or &#8216;|&#8217; operator,
-where the concatenation operator &#8216;;&#8217; is also being used, the designer
+If two pattern expressions are combined with the ‘&amp;’ or ‘|’ operator,
+where the concatenation operator ‘;’ is also being used, the designer
 must make sure that the tokens underlying each expression are the same
 and come in the same order. In the example <span class="emphasis"><em>add</em></span>
-instruction for instance, the &#8216;&amp;&#8217; operator combines the &#8220;op=3&#8221; and
-&#8220;reg&#8221; expressions. Both of these expressions involve only the
+instruction for instance, the ‘&amp;’ operator combines the “op=3” and
+“reg” expressions. Both of these expressions involve only the
 token <span class="emphasis"><em>base</em></span>, so the matching requirement is
-satisfied. The &#8216;&amp;&#8217; and &#8216;|&#8217; operators can combine expressions built out
+satisfied. The ‘&amp;’ and ‘|’ operators can combine expressions built out
 of more than one token, but the tokens must come in the same
-order. Also these operators have higher precedence than the &#8216;;&#8217;
+order. Also these operators have higher precedence than the ‘;’
 operator, so parentheses may be necessary to get the intended meaning.
 </p>
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_ellipsis"></a>7.4.4.2.�The '...' Operator</h5></div></div></div>
+<a name="sleigh_ellipsis"></a>7.4.4.2. The '...' Operator</h5></div></div></div>
 <p>
-The ellipsis operator &#8216;...&#8217; is used to satisfy the token matching
-requirements of the &#8216;&amp;&#8217; and &#8216;|&#8217; operators (described in the previous
+The ellipsis operator ‘...’ is used to satisfy the token matching
+requirements of the ‘&amp;’ and ‘|’ operators (described in the previous
 section), when the operands are of different lengths. The ellipsis is
 a unary operator applied to a pattern expression that extends its
 token length before it is combined with another expression. Depending
@@ -496,7 +496,7 @@ extension.
 addrmode: reg is reg &amp; mode=0    {     <span class="weak">...</span>
 addrmode: #imm16 is mode=1; imm16    {  <span class="weak">...</span>
 
-:xor &#8220;A&#8221;,addrmode is op=4 ... &amp; addrmode {	<span class="weak">...</span>
+:xor “A”,addrmode is op=4 ... &amp; addrmode {	<span class="weak">...</span>
 </pre></div>
 <p>
 </p>
@@ -527,7 +527,7 @@ whatever the length of <span class="emphasis"><em>addrmode</em></span> turns out
 <p>
 Since the <span class="emphasis"><em>op</em></span> constraint occurs to the left of the
 ellipsis, it is considered left justified, and the matching
-requirement for &#8216;&amp;&#8217; will insist that <span class="emphasis"><em>base</em></span> is the
+requirement for ‘&amp;’ will insist that <span class="emphasis"><em>base</em></span> is the
 first token in all forms of <span class="emphasis"><em>addrmode</em></span>. This allows
 the <span class="emphasis"><em>xor</em></span> instruction's constraint
 on <span class="emphasis"><em>op</em></span> and the <span class="emphasis"><em>addrmode</em></span>
@@ -538,7 +538,7 @@ constraints on a single byte in the final encoding.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_invisible_operands"></a>7.4.5.�Invisible Operands</h4></div></div></div>
+<a name="sleigh_invisible_operands"></a>7.4.5. Invisible Operands</h4></div></div></div>
 <p>
 It is not necessary for a global symbol, which is needed by a
 constructor, to appear in the display section of the definition. If
@@ -549,15 +549,15 @@ operand</em></span>. Such an operand behaves and is parsed exactly like
 any other operand but there is absolutely no visible indication of the
 operand in the final display of the assembly instruction. The one
 common type of instruction that uses this is the relative branch (see
-<a class="xref" href="sleigh_constructors.html#sleigh_relative_branches" title="7.5.1.�Relative Branches">Section�7.5.1, &#8220;Relative Branches&#8221;</a>) but it is otherwise needed
+<a class="xref" href="sleigh_constructors.html#sleigh_relative_branches" title="7.5.1. Relative Branches">Section 7.5.1, “Relative Branches”</a>) but it is otherwise needed
 only in more esoteric instructions. It is useful in situations where
 you need to break up the parsing of an instruction along lines that
-don&#8217;t quite match the assembly.
+don’t quite match the assembly.
 </p>
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_empty_patterns"></a>7.4.6.�Empty Patterns</h4></div></div></div>
+<a name="sleigh_empty_patterns"></a>7.4.6. Empty Patterns</h4></div></div></div>
 <p>
 Occasionally there is a need for an empty pattern when building
 tables. An empty pattern matches everything. There is a predefined
@@ -567,9 +567,9 @@ to indicate an empty pattern.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_advanced_constraints"></a>7.4.7.�Advanced Constraints</h4></div></div></div>
+<a name="sleigh_advanced_constraints"></a>7.4.7. Advanced Constraints</h4></div></div></div>
 <p>
-A constraint does not have to be of the form &#8220;field = constant&#8221;,
+A constraint does not have to be of the form “field = constant”,
 although this is almost always what is needed. In certain situations,
 it may be more convenient to use a different kind of
 constraint. Special care should be taken when designing these
@@ -584,7 +584,7 @@ of parsing states for a single constraint.
 A constraint can actually be built out of arbitrary
 expressions. These <span class="emphasis"><em>pattern expressions</em></span> are more
 commonly used in disassembly actions and are defined in
-<a class="xref" href="sleigh_constructors.html#sleigh_general_actions" title="7.5.2.�General Actions and Pattern Expressions">Section�7.5.2, &#8220;General Actions and Pattern Expressions&#8221;</a>, but they can also be used in
+<a class="xref" href="sleigh_constructors.html#sleigh_general_actions" title="7.5.2. General Actions and Pattern Expressions">Section 7.5.2, “General Actions and Pattern Expressions”</a>, but they can also be used in
 constraints. So in general, a constraint is any equation where the
 left-hand side is a single family symbol, the right-hand side is an
 arbitrary pattern expression, and the constraint operator is one of
@@ -592,7 +592,7 @@ the following:
 </p>
 <div class="informalexample">
 <div class="table">
-<a name="constraints.htmltable"></a><p class="title"><b>Table�3.�Constraint Operators</b></p>
+<a name="constraints.htmltable"></a><p class="title"><b>Table 3. Constraint Operators</b></p>
 <div class="table-contents"><table xml:id="constraints.htmltable" width="50%" frame="box" rules="all">
 <col width="50%">
 <col width="50%">
@@ -645,7 +645,7 @@ feature of <span class="emphasis"><em>clr</em></span> from <span class="emphasis
 that the two fields, specifying the two register inputs
 to <span class="emphasis"><em>xor</em></span>, are equal. The easiest way to specify
 this special case is with the general constraint,
-&#8220;<span class="emphasis"><em>r2</em></span> = <span class="emphasis"><em>r1</em></span>&#8221;, as in the second
+“<span class="emphasis"><em>r2</em></span> = <span class="emphasis"><em>r1</em></span>”, as in the second
 line of the example. The SLEIGH compiler will implement this by
 enumerating all the cases where <span class="emphasis"><em>r2</em></span>
 equals <span class="emphasis"><em>r1</em></span>, creating as many states as there are
@@ -655,7 +655,7 @@ registers. But the specification itself, at least, remains compact.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_disassembly_actions"></a>7.5.�Disassembly Actions Section</h3></div></div></div>
+<a name="sleigh_disassembly_actions"></a>7.5. Disassembly Actions Section</h3></div></div></div>
 <p>
 After the bit pattern section, there can optionally be a section for
 doing dynamic calculations, which must be between square brackets. For
@@ -671,11 +671,11 @@ time, usually for part of the disassembly display.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_relative_branches"></a>7.5.1.�Relative Branches</h4></div></div></div>
+<a name="sleigh_relative_branches"></a>7.5.1. Relative Branches</h4></div></div></div>
 <p>
 The canonical example of an action at disassembly time is a branch
 relocation. A jump instruction encodes the address of where it jumps
-to as a relative offset to the instruction&#8217;s address, for
+to as a relative offset to the instruction’s address, for
 instance. But when we display the assembly, we want to show the
 absolute address of the jump destination. The correct way to specify
 this is to reserve an identifier in the display section which
@@ -698,7 +698,7 @@ defined in the action section as the integer obtained by adding a
 multiple of <span class="emphasis"><em>simm8</em></span>
 to <span class="emphasis"><em>inst_next</em></span>, a symbol predefined to be equal to
 the address of the following instruction (see
-<a class="xref" href="sleigh_symbols.html#sleigh_predefined_symbols" title="5.2.�Predefined Symbols">Section�5.2, &#8220;Predefined Symbols&#8221;</a>). Now <span class="emphasis"><em>reloc</em></span>
+<a class="xref" href="sleigh_symbols.html#sleigh_predefined_symbols" title="5.2. Predefined Symbols">Section 5.2, “Predefined Symbols”</a>). Now <span class="emphasis"><em>reloc</em></span>
 is a specific symbol with both semantic and display meaning equal to
 the desired absolute address. This address is calculated separately,
 at disassembly time, for every instruction that this constructor
@@ -707,7 +707,7 @@ matches.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_general_actions"></a>7.5.2.�General Actions and Pattern Expressions</h4></div></div></div>
+<a name="sleigh_general_actions"></a>7.5.2. General Actions and Pattern Expressions</h4></div></div></div>
 <p>
 In general, the disassembly actions are encoded as a sequence of
 assignments separated by semicolons. The left-hand side of each
@@ -719,7 +719,7 @@ is built up out of the following typical operators:
 </p>
 <div class="informalexample">
 <div class="table">
-<a name="patexp.htmltable"></a><p class="title"><b>Table�4.�Pattern Expression Operators</b></p>
+<a name="patexp.htmltable"></a><p class="title"><b>Table 4. Pattern Expression Operators</b></p>
 <div class="table-contents"><table xml:id="patexp.htmltable" width="50%" frame="box" rules="all">
 <col width="50%">
 <col width="50%">
@@ -816,7 +816,7 @@ local identifier before it can be used.
 </p>
 <p>
 The left-hand side of an assignment statement can be a context
-variable (see <a class="xref" href="sleigh_tokens.html#sleigh_context_variables" title="6.4.�Context Variables">Section�6.4, &#8220;Context Variables&#8221;</a>). An
+variable (see <a class="xref" href="sleigh_tokens.html#sleigh_context_variables" title="6.4. Context Variables">Section 6.4, “Context Variables”</a>). An
 assignment to such a variable changes the context in which the current
 instruction is being disassembled and can potentially have a drastic
 effect on how the rest of the instruction is disassembled. An
@@ -828,26 +828,26 @@ more <span class="bold"><strong>globalset</strong></span> directives, which
 cause changes to context variables to become more permanent. This
 directive is distinct from the operators in a pattern expression and
 must be invoked as a separate statement. See
-<a class="xref" href="sleigh_context.html" title="8.�Using Context">Section�8, &#8220;Using Context&#8221;</a>, for a discussion of how to
+<a class="xref" href="sleigh_context.html" title="8. Using Context">Section 8, “Using Context”</a>, for a discussion of how to
 effectively use context variables and
-<a class="xref" href="sleigh_context.html#sleigh_global_change" title="8.3.�Global Context Change">Section�8.3, &#8220;Global Context Change&#8221;</a>, for details of
+<a class="xref" href="sleigh_context.html#sleigh_global_change" title="8.3. Global Context Change">Section 8.3, “Global Context Change”</a>, for details of
 the <span class="bold"><strong>globalset</strong></span> directive.
 </p>
 <p>
 Note that there are two syntax forms for the logical operators in a
 pattern expression. When an expression is used as part of a
-constraint, the &#8220;$and&#8221; and &#8220;$or&#8221; forms of the operators must be used
+constraint, the “$and” and “$or” forms of the operators must be used
 in order to distinguish the bitwise operators from the special pattern
-combining operators, &#8216;&amp;&#8217; and &#8216;|&#8217; (as described in
-<a class="xref" href="sleigh_constructors.html#sleigh_ampandor" title="7.4.2.�The '&amp;' and '|' Operators">Section�7.4.2, &#8220;The '&amp;' and '|' Operators&#8221;</a>). However inside the square braces
-of the disassembly action section, &#8216;&amp;&#8217; and &#8216;|&#8217; are interpreted as
+combining operators, ‘&amp;’ and ‘|’ (as described in
+<a class="xref" href="sleigh_constructors.html#sleigh_ampandor" title="7.4.2. The '&amp;' and '|' Operators">Section 7.4.2, “The '&amp;' and '|' Operators”</a>). However inside the square braces
+of the disassembly action section, ‘&amp;’ and ‘|’ are interpreted as
 the usual logical operators.
 </p>
 </div>
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_with_block"></a>7.6.�The With Block</h3></div></div></div>
+<a name="sleigh_with_block"></a>7.6. The With Block</h3></div></div></div>
 <p>
 To avoid tedious repetition and to ease the maintenance of specifications
 already having many, many constructors and tables, the <span class="emphasis"><em>with
@@ -867,9 +867,9 @@ with op1 : mode=1 [ mode=2; ] {
 In the example, both constructors are added to the table identified by
 <span class="emphasis"><em>op1</em></span>. Both require the context field
 <span class="emphasis"><em>mode</em></span> to be equal to 1. The listed constraints take the
-form described in <a class="xref" href="sleigh_constructors.html#sleigh_bit_pattern" title="7.4.�The Bit Pattern Section">Section�7.4, &#8220;The Bit Pattern Section&#8221;</a>, and they are joined to
-those given in the constructor statement as if prepended using &#8216;&amp;&#8217;. Similarly,
-the actions take the form described in <a class="xref" href="sleigh_constructors.html#sleigh_disassembly_actions" title="7.5.�Disassembly Actions Section">Section�7.5, &#8220;Disassembly Actions Section&#8221;</a>
+form described in <a class="xref" href="sleigh_constructors.html#sleigh_bit_pattern" title="7.4. The Bit Pattern Section">Section 7.4, “The Bit Pattern Section”</a>, and they are joined to
+those given in the constructor statement as if prepended using ‘&amp;’. Similarly,
+the actions take the form described in <a class="xref" href="sleigh_constructors.html#sleigh_disassembly_actions" title="7.5. Disassembly Actions Section">Section 7.5, “Disassembly Actions Section”</a>
 and are prepended to the actions given in the constructor statement. Prepending
 the actions allows the statement to override actions in the with block. Both
 technically occur, but only the last one has a noticeable effect. The above
@@ -894,12 +894,12 @@ yet exist, the table is created immediately. Inside a with block that has a
 table header, a nested with block may specify the <span class="emphasis"><em>instruction</em></span>
 table by name, as in "with instruction : {<span class="weak">...</span>}".
 Inside such a block, the rule regarding mnemonic literals is restored (see
-<a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1.�Mnemonic">Section�7.3.1, &#8220;Mnemonic&#8221;</a>).
+<a class="xref" href="sleigh_constructors.html#sleigh_mnemonic" title="7.3.1. Mnemonic">Section 7.3.1, “Mnemonic”</a>).
 </p>
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_semantic_section"></a>7.7.�The Semantic Section</h3></div></div></div>
+<a name="sleigh_semantic_section"></a>7.7. The Semantic Section</h3></div></div></div>
 <p>
 The final section of a constructor definition is the <span class="emphasis"><em>semantic
 section</em></span>. This is a description of how the processor would manipulate
@@ -916,8 +916,8 @@ were varnodes.
 </p>
 <p>
 The semantic section for one constructor is surrounded by curly braces
-&#8216;{&#8216; and &#8216;}&#8217; and consists of zero or more statements separated by
-semicolons &#8216;;&#8217;. Most statements are built up out of C-like syntax,
+‘{‘ and ‘}’ and consists of zero or more statements separated by
+semicolons ‘;’. Most statements are built up out of C-like syntax,
 where the variables are the symbols visible to the constructor. There
 is a direct correspondence between each type of operator used in the
 statements and a p-code operation. The SLEIGH compiler generates
@@ -939,29 +939,29 @@ varnode is <span class="emphasis"><em>r1</em></span>.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_expressions"></a>7.7.1.�Expressions</h4></div></div></div>
+<a name="sleigh_expressions"></a>7.7.1. Expressions</h4></div></div></div>
 <p>
 Expressions are built out of symbols and the binary and unary
-operators listed in <a class="xref" href="sleigh_ref.html#syntaxref.htmltable" title="Table�5.�Semantic Expression Operators and Syntax">Table�5, &#8220;Semantic Expression Operators and Syntax&#8221;</a> in the
+operators listed in <a class="xref" href="sleigh_ref.html#syntaxref.htmltable" title="Table 5. Semantic Expression Operators and Syntax">Table 5, “Semantic Expression Operators and Syntax”</a> in the
 Appendix. All expressions evaluate to an integer, floating point, or
 boolean value, depending on the final operation of the expression. The
 value is then used depending on the kind of statement. Most of the
 operators require that their input and output varnodes all be the same
-size (see <a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3.�Varnode Sizes">Section�7.7.3, &#8220;Varnode Sizes&#8221;</a>). The operators all
+size (see <a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3. Varnode Sizes">Section 7.7.3, “Varnode Sizes”</a>). The operators all
 have a precedence, which is used by the SLEIGH compiler to determine
 the ordering of the final p-code operations. Parentheses can be used
 within expressions to affect this order.
 </p>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_arithmetic_logical"></a>7.7.1.1.�Arithmetic, Logical and Boolean Operators</h5></div></div></div>
+<a name="sleigh_arithmetic_logical"></a>7.7.1.1. Arithmetic, Logical and Boolean Operators</h5></div></div></div>
 <p>
 For the most part these operators should be familiar to software
 developers. The only real differences arise from the fact that
 varnodes are typeless. So for instance, there has to be separate
-operators to distinguish between dividing unsigned numbers &#8216;/&#8217;,
-dividing signed numbers &#8216;s/&#8217;, and dividing floating point numbers
-&#8216;f/&#8217;.
+operators to distinguish between dividing unsigned numbers ‘/’,
+dividing signed numbers ‘s/’, and dividing floating point numbers
+‘f/’.
 </p>
 <p>
 Carry, borrow, and overflow calculations are implemented with separate
@@ -974,11 +974,11 @@ some people in this form (see the descriptions in the Appendix).
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_star_operator"></a>7.7.1.2.�The '*' Operator</h5></div></div></div>
+<a name="sleigh_star_operator"></a>7.7.1.2. The '*' Operator</h5></div></div></div>
 <p>
 The dereference operator, which generates <span class="emphasis"><em>LOAD</em></span>
 operations (and <span class="emphasis"><em>STORE</em></span> operations), has slightly
-unfamiliar syntax. The &#8216;*&#8217; operator, as is usual in many programming
+unfamiliar syntax. The ‘*’ operator, as is usual in many programming
 languages, indicates that the affected variable is a pointer and that
 the expression is <span class="emphasis"><em>dereferencing</em></span> the data being
 pointed to. Unlike most languages, in SLEIGH, it is not immediately
@@ -989,16 +989,16 @@ the <span class="emphasis"><em>default</em></span> space, as labeled in the defi
 of one of the address spaces with
 the <span class="bold"><strong>default</strong></span> attribute. If that is not
 the space desired, the default can be overridden by putting the
-identifier for the space in square brackets immediately after the &#8216;*&#8217;.
+identifier for the space in square brackets immediately after the ‘*’.
 </p>
 <p>
 It is also frequently not clear what the size of the dereferenced data
 is because the pointer variable is typeless. The SLEIGH compiler can
 frequently deduce what the size must be by looking at the operation in
 the context of the entire statement (see
-<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3.�Varnode Sizes">Section�7.7.3, &#8220;Varnode Sizes&#8221;</a>). But in some situations, this
+<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3. Varnode Sizes">Section 7.7.3, “Varnode Sizes”</a>). But in some situations, this
 may not be possible, so there is a way to specify the size
-explicitly. The operator can be followed by a colon &#8216;:&#8217; and an integer
+explicitly. The operator can be followed by a colon ‘:’ and an integer
 indicating the number of bytes being dereferenced. This can be used
 with or without the address space override. We give an example of each
 kind of override in the example below.
@@ -1017,7 +1017,7 @@ set to something other than one.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_extension"></a>7.7.1.3.�Extension</h5></div></div></div>
+<a name="sleigh_extension"></a>7.7.1.3. Extension</h5></div></div></div>
 <p>
 Most processors have instructions that extend small values into big
 values, and many instructions do these minor data manipulations
@@ -1039,15 +1039,15 @@ the <span class="bold"><strong>sext</strong></span> operator.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_truncation"></a>7.7.1.4.�Truncation</h5></div></div></div>
+<a name="sleigh_truncation"></a>7.7.1.4. Truncation</h5></div></div></div>
 <p>
 There are two forms of syntax indicating a truncation of the input
-varnode. In one the varnode is followed by a colon &#8216;:&#8217; and an integer
+varnode. In one the varnode is followed by a colon ‘:’ and an integer
 indicating the number of bytes to copy into the output, starting with
 the least significant byte. In the second form, the varnode is
 followed by an integer, surrounded by parentheses, indicating the
 number of least significant bytes to truncate from the input. This
-second form doesn&#8217;t directly specify the size of the output, which
+second form doesn’t directly specify the size of the output, which
 must be inferred from context.
 </p>
 <div class="informalexample"><pre class="programlisting">
@@ -1067,7 +1067,7 @@ half and <span class="emphasis"><em>hi</em></span> receives the most significant
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_bitrange_operator"></a>7.7.1.5.�Bit Range Operator</h5></div></div></div>
+<a name="sleigh_bitrange_operator"></a>7.7.1.5. Bit Range Operator</h5></div></div></div>
 <p>
 A specific subrange of bits within a varnode can be explicitly
 referenced. Depending on the range, this may amount to just a
@@ -1082,7 +1082,7 @@ restricted to byte alignment.
 </p>
 <p>
 A varnode, <span class="emphasis"><em>r2</em></span> in this example, is immediately
-followed by square brackets &#8216;[&#8217; and &#8216;]&#8217; indicating a bit range, and
+followed by square brackets ‘[’ and ‘]’ indicating a bit range, and
 within the brackets, there are two parameters separated by a
 comma. The first parameter is an integer indicating the least
 significant bit of the resulting bit range. The bits of the varnode
@@ -1101,7 +1101,7 @@ with memory down to byte resolution. The bit range operator will
 generate some combination
 of <span class="emphasis"><em>INT_RIGHT</em></span>, <span class="emphasis"><em>INT_AND</em></span>,
 and <span class="emphasis"><em>SUBPIECE</em></span> to simulate the extraction of
-smaller or unaligned pieces. The &#8220;r2[3,1]&#8221; from the example generates
+smaller or unaligned pieces. The “r2[3,1]” from the example generates
 the following p-code, for instance.
 </p>
 <div class="informalexample"><pre class="programlisting">
@@ -1119,12 +1119,12 @@ these are automatically set to zero.
 </p>
 <p>
 This operator can also be used on the left-hand side of assignments
-with similar behavior and caveats (see <a class="xref" href="sleigh_constructors.html#sleigh_bitrange_assign" title="7.7.2.8.�Bit Range Assignments">Section�7.7.2.8, &#8220;Bit Range Assignments&#8221;</a>).
+with similar behavior and caveats (see <a class="xref" href="sleigh_constructors.html#sleigh_bitrange_assign" title="7.7.2.8. Bit Range Assignments">Section 7.7.2.8, “Bit Range Assignments”</a>).
 </p>
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_addressof"></a>7.7.1.6.�Address-of Operator</h5></div></div></div>
+<a name="sleigh_addressof"></a>7.7.1.6. Address-of Operator</h5></div></div></div>
 <p>
 There is an <span class="emphasis"><em>address-of</em></span> operator for generating
 the address offset of a selected varnode as an integer value for use
@@ -1143,8 +1143,8 @@ specification may produce unexpected results.
 </p>
 </div>
 <p>
-There &#8216;&amp;&#8217; operator in front of a symbol invokes this function. The
-ampersand can also be followed by a colon &#8216;:&#8217; and an integer
+There ‘&amp;’ operator in front of a symbol invokes this function. The
+ampersand can also be followed by a colon ‘:’ and an integer
 explicitly indicating the size of the resulting constant as a varnode.
 </p>
 <div class="informalexample"><pre class="programlisting">
@@ -1164,12 +1164,12 @@ following <span class="emphasis"><em>r1</em></span> is copied
 into <span class="emphasis"><em>r1</em></span>, even though it is not mentioned directly
 in the instruction. Notice that the address-of operator only produces
 the offset portion of the address, and to copy the desired value, the
-&#8216;*&#8217; operator must have a <span class="emphasis"><em>register</em></span> space override.
+‘*’ operator must have a <span class="emphasis"><em>register</em></span> space override.
 </p>
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_managed_code"></a>7.7.1.7.�Managed Code Operations</h5></div></div></div>
+<a name="sleigh_managed_code"></a>7.7.1.7. Managed Code Operations</h5></div></div></div>
 <p>
 SLEIGH provides basic support for instructions where encoding and context
 don't provide a complete description of the semantics. This is the case
@@ -1210,7 +1210,7 @@ of objects to allocate. It returns a pointer to the allocated object.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_userdef_op"></a>7.7.1.8.�User-Defined Operations</h5></div></div></div>
+<a name="sleigh_userdef_op"></a>7.7.1.8. User-Defined Operations</h5></div></div></div>
 <p>
 Any identifier that has been defined as a new p-code operation, using
 the <span class="bold"><strong>define pcodeop</strong></span> statement, can be
@@ -1231,15 +1231,15 @@ define pcodeop arctan;
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_statements"></a>7.7.2.�Statements</h4></div></div></div>
+<a name="sleigh_statements"></a>7.7.2. Statements</h4></div></div></div>
 <p>
 We describe the types of semantic statements that are allowed in SLEIGH.
 </p>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_assign_statements"></a>7.7.2.1.�Assignment Statements and Temporary Variables</h5></div></div></div>
+<a name="sleigh_assign_statements"></a>7.7.2.1. Assignment Statements and Temporary Variables</h5></div></div></div>
 <p>
-Of course SLEIGH allows assignment statements with the &#8216;=&#8217; operator,
+Of course SLEIGH allows assignment statements with the ‘=’ operator,
 where the right-hand side is an arbitrary expression and the left-hand
 side is the varnode being assigned. The assigned varnode can be any
 specific symbol in the scope of the constructor, either a global
@@ -1256,8 +1256,8 @@ result of the expression. The new symbol becomes part of the local
 scope of the constructor, and can be referred to in the following
 semantic statements. The size of the new varnode is calculated by
 examining the statement in context (see
-<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3.�Varnode Sizes">Section�7.7.3, &#8220;Varnode Sizes&#8221;</a>). It is also possible to
-explicitly indicate the size by using the colon &#8216;:&#8217; operator followed
+<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3. Varnode Sizes">Section 7.7.3, “Varnode Sizes”</a>). It is also possible to
+explicitly indicate the size by using the colon ‘:’ operator followed
 by an integer size in bytes. The following examples demonstrate the
 temporary variable <span class="emphasis"><em>tmp</em></span> being defined using both
 forms.
@@ -1305,11 +1305,11 @@ and may be enforced in future compiler versions.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_storage_statements"></a>7.7.2.2.�Storage Statements</h5></div></div></div>
+<a name="sleigh_storage_statements"></a>7.7.2.2. Storage Statements</h5></div></div></div>
 <p>
 SLEIGH supports fairly standard <span class="emphasis"><em>storage statement</em></span>
 syntax to complement the load operator. The left-hand side of an
-assignment statement uses the &#8216;*&#8217; operator to indicate a dynamic
+assignment statement uses the ‘*’ operator to indicate a dynamic
 storage location, followed by an arbitrary expression to calculate the
 location. This syntax of course generates the
 p-code <span class="emphasis"><em>STORE</em></span> operator as the final step of the
@@ -1323,10 +1323,10 @@ statement.
 <p>
 </p>
 <p>
-The same size and address space considerations that apply to the &#8216;*&#8217;
+The same size and address space considerations that apply to the ‘*’
 operator when it is used as a load operator also apply when it is used
 as a store operator, see
-<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2.�The '*' Operator">Section�7.7.1.2, &#8220;The '*' Operator&#8221;</a>. Unless explicit modifiers are
+<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2. The '*' Operator">Section 7.7.1.2, “The '*' Operator”</a>. Unless explicit modifiers are
 given, the default address space is assumed as the storage
 destination, and the size of the data being stored is calculated from
 context. Keep in mind that the address represented by the pointer is
@@ -1336,9 +1336,9 @@ attribute is set to something other than one.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_exports"></a>7.7.2.3.�Exports</h5></div></div></div>
+<a name="sleigh_exports"></a>7.7.2.3. Exports</h5></div></div></div>
 <p>
-The semantic section doesn&#8217;t just specify how to generate p-code for a
+The semantic section doesn’t just specify how to generate p-code for a
 constructor. Except for those constructors in the root table, this
 section also associates a semantic meaning to the table symbol the
 constructor is part of, allowing the table to be used as an operand in
@@ -1374,32 +1374,32 @@ a <span class="emphasis"><em>reference</em></span> to the varnode being exported
 copy of the value. If the table symbol is written to, as the left-hand
 side of an assignment statement, in some other constructor, the
 exported varnode is affected. A constant can be exported if its size
-as a varnode is given explicitly with the &#8216;:&#8217; operator.
+as a varnode is given explicitly with the ‘:’ operator.
 </p>
 <p>
 It is not legal to put a full expression in
 an <span class="bold"><strong>export</strong></span> statement, any expression
-must appear in an earlier statement. However, a single &#8216;&amp;&#8217;
+must appear in an earlier statement. However, a single ‘&amp;’
 operator is allowed as part of the statement and it behaves as it
 would in a normal expression (see
-<a class="xref" href="sleigh_constructors.html#sleigh_addressof" title="7.7.1.6.�Address-of Operator">Section�7.7.1.6, &#8220;Address-of Operator&#8221;</a>). It causes the address of the
+<a class="xref" href="sleigh_constructors.html#sleigh_addressof" title="7.7.1.6. Address-of Operator">Section 7.7.1.6, “Address-of Operator”</a>). It causes the address of the
 varnode being modified to be exported as an integer constant.
 </p>
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_dynamic_references"></a>7.7.2.4.�Dynamic References</h5></div></div></div>
+<a name="sleigh_dynamic_references"></a>7.7.2.4. Dynamic References</h5></div></div></div>
 <p>
 The only other operator allowed as part of
-an <span class="bold"><strong>export</strong></span> statement, is the &#8216;*&#8217;
+an <span class="bold"><strong>export</strong></span> statement, is the ‘*’
 operator. The semantic meaning of this operator is the same as if it
 were used in an expression (see
-<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2.�The '*' Operator">Section�7.7.1.2, &#8220;The '*' Operator&#8221;</a>), but it is worth examining the
+<a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2. The '*' Operator">Section 7.7.1.2, “The '*' Operator”</a>), but it is worth examining the
 effects of this form of export in detail. Bearing in mind that
 an <span class="bold"><strong>export</strong></span> statement exports
-a <span class="emphasis"><em>reference</em></span>, using the &#8216;*&#8217; operator in the
+a <span class="emphasis"><em>reference</em></span>, using the ‘*’ operator in the
 statement exports a <span class="emphasis"><em>dynamic reference</em></span>. The
-varnode being modified by the &#8216;*&#8217; is interpreted as a pointer to
+varnode being modified by the ‘*’ is interpreted as a pointer to
 another varnode. It is this varnode being pointed to which is
 exported, even though the address may be dynamic and cannot be
 determined at disassembly time. This is not the same as dereferencing
@@ -1427,14 +1427,14 @@ calculated from a register <span class="emphasis"><em>reg</em></span> and a fiel
 instruction <span class="emphasis"><em>off</em></span>. The constructor does not export
 the resulting pointer <span class="emphasis"><em>ea</em></span>, it exports the location
 being pointed to by <span class="emphasis"><em>ea</em></span>. Notice the size of this
-location (4) is given explicitly with the &#8216;:&#8217; modifier. The &#8216;*&#8217;
+location (4) is given explicitly with the ‘:’ modifier. The ‘*’
 operator can also be used on constant pointers. In the second example,
 the constant operand <span class="emphasis"><em>reloc</em></span> is used as the offset
 portion of an address into the <span class="emphasis"><em>ram</em></span> address
 space. The constant <span class="emphasis"><em>reloc</em></span> is calculated at
 disassembly time from the instruction
 field <span class="emphasis"><em>abs</em></span>. This is a very common construction for
-jump destinations (see <a class="xref" href="sleigh_constructors.html#sleigh_relative_branches" title="7.5.1.�Relative Branches">Section�7.5.1, &#8220;Relative Branches&#8221;</a>) but
+jump destinations (see <a class="xref" href="sleigh_constructors.html#sleigh_relative_branches" title="7.5.1. Relative Branches">Section 7.5.1, “Relative Branches”</a>) but
 can be used in general. This particular combination of a disassembly
 time action and a dynamic export is a very general way to construct a
 family of varnodes.
@@ -1447,10 +1447,10 @@ levels.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_branching_statements"></a>7.7.2.5.�Branching Statements</h5></div></div></div>
+<a name="sleigh_branching_statements"></a>7.7.2.5. Branching Statements</h5></div></div></div>
 <p>
 This section discusses statements that generate p-code branching
-operations. These are listed in <a class="xref" href="sleigh_ref.html#branchref.htmltable" title="Table�7.�Branching Statements">Table�7, &#8220;Branching Statements&#8221;</a>, in the Appendix.
+operations. These are listed in <a class="xref" href="sleigh_ref.html#branchref.htmltable" title="Table 7. Branching Statements">Table 7, “Branching Statements”</a>, in the Appendix.
 </p>
 <p>
 There are six forms covering the gamut of typical assembly language
@@ -1492,12 +1492,12 @@ destination is the first p-code operation for the (translated) machine
 instruction at that address. For most cases, this is the only kind of
 branching needed. The rarer case of <span class="emphasis"><em>p-code
 relative</em></span> branching is discussed in the following section
-(<a class="xref" href="sleigh_constructors.html#sleigh_pcode_relative" title="7.7.2.6.�P-code Relative Branching">Section�7.7.2.6, &#8220;P-code Relative Branching&#8221;</a>), but for the remainder of
+(<a class="xref" href="sleigh_constructors.html#sleigh_pcode_relative" title="7.7.2.6. P-code Relative Branching">Section 7.7.2.6, “P-code Relative Branching”</a>), but for the remainder of
 this section, we assume the destination is ultimately given as an
 address.
 </p>
 <p>
-There are two ways to specify a branching operation&#8217;s destination
+There are two ways to specify a branching operation’s destination
 address; directly and indirectly. Where a direct address is needed, as
 for the <span class="emphasis"><em>BRANCH</em></span>, <span class="emphasis"><em>CBRANCH</em></span>,
 and <span class="emphasis"><em>CALL</em></span> instructions, The specification can give
@@ -1613,7 +1613,7 @@ must match the size of the destination space.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_pcode_relative"></a>7.7.2.6.�P-code Relative Branching</h5></div></div></div>
+<a name="sleigh_pcode_relative"></a>7.7.2.6. P-code Relative Branching</h5></div></div></div>
 <p>
 In some cases, the semantics of an instruction may require
 branching <span class="emphasis"><em>within</em></span> the semantics of a single
@@ -1623,7 +1623,7 @@ branching. Individual p-code operations can be identified by
 a <span class="emphasis"><em>label</em></span>, and this label can be used as the
 destination specifier, after the <span class="bold"><strong>goto</strong></span>
 keyword. A <span class="emphasis"><em>label</em></span>, within the semantic section, is
-any identifier surrounded by the &#8216;&lt;&#8217; and &#8216;&gt;&#8217; characters. If this
+any identifier surrounded by the ‘&lt;’ and ‘&gt;’ characters. If this
 construction occurs at the beginning of a statement, we say the label
 is <span class="emphasis"><em>defined</em></span>, and that identifier is now associated
 with the first p-code operation corresponding to the following
@@ -1649,7 +1649,7 @@ defined. Multiple references to the same label are allowed.
 <p>
 </p>
 <p>
-In the example above, the string &#8220;loopstart&#8221; is the label identifier
+In the example above, the string “loopstart” is the label identifier
 which appears twice; once at the point where the label is defined at
 the top of the loop, after the initialization, and once as a reference
 where the conditional branch is made for the loop.
@@ -1665,10 +1665,10 @@ instruction is not possible.
 </p>
 <p>
 Internally, branches to labels are encoded as a relative index. Each
-p-code operation is assigned an index corresponding to the operation&#8217;s
+p-code operation is assigned an index corresponding to the operation’s
 position within the entire translation of the instruction. Then the
 branch can be expressed as a relative offset between the branch
-operation&#8217;s index and the destination operation&#8217;s index. The SLEIGH
+operation’s index and the destination operation’s index. The SLEIGH
 compiler encodes this offset as a constant varnode that is used as
 input to
 the <span class="emphasis"><em>BRANCH</em></span>, <span class="emphasis"><em>CBRANCH</em></span>,
@@ -1677,7 +1677,7 @@ or <span class="emphasis"><em>CALL</em></span> operation.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_skip_instruction_branching"></a>7.7.2.7.�Skip Instruction Branching</h5></div></div></div>
+<a name="sleigh_skip_instruction_branching"></a>7.7.2.7. Skip Instruction Branching</h5></div></div></div>
 <p>
 Many processors have a conditional-skip-instruction which must branch over the next instruction
 based upon some condition.  The <span class="emphasis"><em>inst_next2</em></span> symbol has been provided for
@@ -1698,15 +1698,15 @@ instruction when the condition is satisfied.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_bitrange_assign"></a>7.7.2.8.�Bit Range Assignments</h5></div></div></div>
+<a name="sleigh_bitrange_assign"></a>7.7.2.8. Bit Range Assignments</h5></div></div></div>
 <p>
 The bit range operator can appear on the left-hand side of an
-assignment. But as with the &#8216;*&#8217; operator, its meaning is slightly
+assignment. But as with the ‘*’ operator, its meaning is slightly
 different when used on this side. The bit range is specified in square
 brackets, as before, by giving the integer specifying the least
 significant bit of the range, followed by the number of bits in the
 range. In contrast with its use on the right however (see
-<a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5.�Bit Range Operator">Section�7.7.1.5, &#8220;Bit Range Operator&#8221;</a>), the indicated bit range
+<a class="xref" href="sleigh_constructors.html#sleigh_bitrange_operator" title="7.7.1.5. Bit Range Operator">Section 7.7.1.5, “Bit Range Operator”</a>), the indicated bit range
 is filled rather than extracted. Bits obtained from evaluating the
 expression on the right are extracted and spliced into the result at
 the indicated bit offset.
@@ -1729,7 +1729,7 @@ In terms of the rest of the assignment expression, the bit range
 operator is again assumed to have a size equal to the minimum number
 of bytes needed to hold the bit range. In particular, in order to
 satisfy size restrictions (see
-<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3.�Varnode Sizes">Section�7.7.3, &#8220;Varnode Sizes&#8221;</a>), the right-hand side must
+<a class="xref" href="sleigh_constructors.html#sleigh_varnode_sizes" title="7.7.3. Varnode Sizes">Section 7.7.3, “Varnode Sizes”</a>), the right-hand side must
 match this size. Furthermore, it is assumed that any extra bits in the
 right-hand side expression are already set to zero.
 </p>
@@ -1737,7 +1737,7 @@ right-hand side expression are already set to zero.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_varnode_sizes"></a>7.7.3.�Varnode Sizes</h4></div></div></div>
+<a name="sleigh_varnode_sizes"></a>7.7.3. Varnode Sizes</h4></div></div></div>
 <p>
 All statements within the semantic section must be specified up to the
 point where the sizes of all varnodes are unambiguously
@@ -1760,7 +1760,7 @@ The SLEIGH compiler does not make assumptions about the size of a
 constant variable based on the constant value itself. This is true of
 values occurring explicitly in the specification and of values that
 are calculated dynamically in a disassembly action. As described in
-<a class="xref" href="sleigh_constructors.html#sleigh_assign_statements" title="7.7.2.1.�Assignment Statements and Temporary Variables">Section�7.7.2.1, &#8220;Assignment Statements and Temporary Variables&#8221;</a>, temporary variables do not
+<a class="xref" href="sleigh_constructors.html#sleigh_assign_statements" title="7.7.2.1. Assignment Statements and Temporary Variables">Section 7.7.2.1, “Assignment Statements and Temporary Variables”</a>, temporary variables do not
 need to have their size given explicitly.
 </p>
 <p>
@@ -1768,7 +1768,7 @@ The SLEIGH compiler can usually fill in the required size by examining
 these situations in the context of the entire semantic section. Most
 p-code operations have size restrictions on their inputs and outputs,
 which when put together can uniquely determine the unspecified
-sizes. Referring to <a class="xref" href="sleigh_ref.html#syntaxref.htmltable" title="Table�5.�Semantic Expression Operators and Syntax">Table�5, &#8220;Semantic Expression Operators and Syntax&#8221;</a> in the
+sizes. Referring to <a class="xref" href="sleigh_ref.html#syntaxref.htmltable" title="Table 5. Semantic Expression Operators and Syntax">Table 5, “Semantic Expression Operators and Syntax”</a> in the
 Appendix, all arithmetic and logical operations, both integer and
 floating point, must have inputs and outputs all of the same size. The
 only exceptions are as follows. The overflow
@@ -1784,8 +1784,8 @@ a size of 1 byte.
 <p>
 The operators without a size constraint are the load and store
 operators, the extension and truncation operators, and the conversion
-operators. As discussed in <a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2.�The '*' Operator">Section�7.7.1.2, &#8220;The '*' Operator&#8221;</a>, the
-&#8216;*&#8217; operator cannot get size information for the dynamic (pointed-to)
+operators. As discussed in <a class="xref" href="sleigh_constructors.html#sleigh_star_operator" title="7.7.1.2. The '*' Operator">Section 7.7.1.2, “The '*' Operator”</a>, the
+‘*’ operator cannot get size information for the dynamic (pointed-to)
 object from the pointer itself. The other operators by definition
 involve a change of size from input to output.
 </p>
@@ -1793,7 +1793,7 @@ involve a change of size from input to output.
 If the SLEIGH compiler cannot discover the sizes of constants and
 temporaries, it will report an error stating that it could not resolve
 variable sizes for that constructor. This can usually be fixed rapidly
-by appending the size &#8216;:&#8217; modifier to either the &#8216;*&#8217; operator, the
+by appending the size ‘:’ modifier to either the ‘*’ operator, the
 temporary variable definition, or to an explicit integer. Here are
 three examples of statements that generate a size resolution error,
 each followed by a variation which corrects the error.
@@ -1823,7 +1823,7 @@ each followed by a variation which corrects the error.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_unimplemented_semantics"></a>7.7.4.�Unimplemented Semantics</h4></div></div></div>
+<a name="sleigh_unimplemented_semantics"></a>7.7.4. Unimplemented Semantics</h4></div></div></div>
 <p>
 The semantic section must be present for every constructor in the
 specification. But the designer can leave the semantics explicitly
@@ -1849,7 +1849,7 @@ nothing.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_tables"></a>7.8.�Tables</h3></div></div></div>
+<a name="sleigh_tables"></a>7.8. Tables</h3></div></div></div>
 <p>
 A single constructor does not form a new specific
 symbol. The <span class="emphasis"><em>table</em></span> that the constructor is
@@ -1874,13 +1874,13 @@ exploit the similarity to produce an extremely concise description.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_matching"></a>7.8.1.�Matching</h4></div></div></div>
+<a name="sleigh_matching"></a>7.8.1. Matching</h4></div></div></div>
 <p>
 If a table contains exactly one constructor, the meaning of the table
 as a specific symbol is straightforward. The display meaning of the
 symbol comes from the <span class="emphasis"><em>display section</em></span> of the
-constructor, and the symbol&#8217;s semantic meaning comes from the
-constructor&#8217;s <span class="emphasis"><em>semantic section</em></span>.
+constructor, and the symbol’s semantic meaning comes from the
+constructor’s <span class="emphasis"><em>semantic section</em></span>.
 </p>
 <div class="informalexample"><pre class="programlisting">
 mode1: (r1) is addrmode=1 &amp; r1 { export r1; }
@@ -1890,8 +1890,8 @@ mode1: (r1) is addrmode=1 &amp; r1 { export r1; }
 <p>
 The table symbol in this example
 is <span class="emphasis"><em>mode1</em></span>. Assuming this is the only constructor,
-the display meaning of the symbol are the literal characters &#8216;(&#8216;, and
-&#8216;)&#8217; concatenated with the display meaning of <span class="emphasis"><em>r1</em></span>,
+the display meaning of the symbol are the literal characters ‘(‘, and
+‘)’ concatenated with the display meaning of <span class="emphasis"><em>r1</em></span>,
 presumably a register name that has been attached. The semantic
 meaning of <span class="emphasis"><em>mode1</em></span>, because of the export
 statement, becomes whatever register is matched by
@@ -1938,7 +1938,7 @@ symbol.
 </p>
 <div class="informalexample"><pre class="programlisting">
 zA: r1  is addrmode=3 &amp; r1   { export r1; }
-zA: &#8220;0&#8221; is addrmode=3 &amp; r1=0 { export 0:4; } # Special case
+zA: “0” is addrmode=3 &amp; r1=0 { export 0:4; } # Special case
 </pre></div>
 <p>
 </p>
@@ -1983,7 +1983,7 @@ should generally be avoided.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_specific_symbol_trees"></a>7.8.2.�Specific Symbol Trees</h4></div></div></div>
+<a name="sleigh_specific_symbol_trees"></a>7.8.2. Specific Symbol Trees</h4></div></div></div>
 <p>
 When the SLEIGH parser analyzes an instruction, it starts with the
 root symbol <span class="emphasis"><em>instruction</em></span>, and decides which of the
@@ -1993,7 +1993,7 @@ parsing process recurses at this point.  Each of the unresolved family
 symbols is analyzed in the same way to find the matching specific
 symbol. The matching is accomplished either with a table lookup, as
 with a field with attached registers, or with the matching algorithm
-described in <a class="xref" href="sleigh_constructors.html#sleigh_matching" title="7.8.1.�Matching">Section�7.8.1, &#8220;Matching&#8221;</a>. By the end of the
+described in <a class="xref" href="sleigh_constructors.html#sleigh_matching" title="7.8.1. Matching">Section 7.8.1, “Matching”</a>. By the end of the
 parsing process, we have a tree of specific symbols representing the
 parsed instruction. We present a small but complete SLEIGH
 specification to illustrate this hierarchy.
@@ -2049,10 +2049,10 @@ constructor is resolved in turn.
 </p>
 <div class="figure">
 <a name="sleigh_encoding_image"></a><div class="figure-contents"><div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="Diagram1.png" align="middle" width="540" height="225" alt="Two Encodings and the Resulting Specific Symbol Trees"></td></tr></table></div></div>
-<p class="title"><b>Figure�1.�Two Encodings and the Resulting Specific Symbol Trees</b></p>
+<p class="title"><b>Figure 1. Two Encodings and the Resulting Specific Symbol Trees</b></p>
 </div>
 <br class="figure-break"><p>
-In <a class="xref" href="sleigh_constructors.html#sleigh_encoding_image" title="Figure�1.�Two Encodings and the Resulting Specific Symbol Trees">Figure�1, &#8220;Two Encodings and the Resulting Specific Symbol Trees&#8221;</a>, we can see the break down
+In <a class="xref" href="sleigh_constructors.html#sleigh_encoding_image" title="Figure 1. Two Encodings and the Resulting Specific Symbol Trees">Figure 1, “Two Encodings and the Resulting Specific Symbol Trees”</a>, we can see the break down
 of two typical instructions in the example instruction set. For each
 instruction, we see the how the encodings split into the relevant
 fields and the resulting tree of specific symbols. Each node in the
@@ -2066,7 +2066,7 @@ and p-code for these encodings by walking the trees.
 </p>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_disassembly_trees"></a>7.8.2.1.�Disassembly Trees</h5></div></div></div>
+<a name="sleigh_disassembly_trees"></a>7.8.2.1. Disassembly Trees</h5></div></div></div>
 <p>
 If the nodes of each tree are replaced with the display information of
 the corresponding specific symbol, we see how the disassembly
@@ -2074,12 +2074,12 @@ statement is built.
 </p>
 <div class="figure">
 <a name="sleigh_disassembly_image"></a><div class="figure-contents"><div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="Diagram2.png" align="middle" width="310" height="151" alt="Two Disassembly Trees"></td></tr></table></div></div>
-<p class="title"><b>Figure�2.�Two Disassembly Trees</b></p>
+<p class="title"><b>Figure 2. Two Disassembly Trees</b></p>
 </div>
 <br class="figure-break"><p>
-<a class="xref" href="sleigh_constructors.html#sleigh_disassembly_image" title="Figure�2.�Two Disassembly Trees">Figure�2, &#8220;Two Disassembly Trees&#8221;</a>, shows the resulting
+<a class="xref" href="sleigh_constructors.html#sleigh_disassembly_image" title="Figure 2. Two Disassembly Trees">Figure 2, “Two Disassembly Trees”</a>, shows the resulting
 disassembly trees corresponding to the specific symbol trees in
-<a class="xref" href="sleigh_constructors.html#sleigh_encoding_image" title="Figure�1.�Two Encodings and the Resulting Specific Symbol Trees">Figure�1, &#8220;Two Encodings and the Resulting Specific Symbol Trees&#8221;</a>. The display information comes
+<a class="xref" href="sleigh_constructors.html#sleigh_encoding_image" title="Figure 1. Two Encodings and the Resulting Specific Symbol Trees">Figure 1, “Two Encodings and the Resulting Specific Symbol Trees”</a>. The display information comes
 from constructor display sections, the names of attached registers, or
 the integer interpretation of fields. The identifiers in a constructor
 display section serves as placeholders for the subtrees below them. By
@@ -2089,7 +2089,7 @@ statements corresponding to the original instruction encodings.
 </div>
 <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
-<a name="sleigh_pcode_trees"></a>7.8.2.2.�P-code Trees</h5></div></div></div>
+<a name="sleigh_pcode_trees"></a>7.8.2.2. P-code Trees</h5></div></div></div>
 <p>
 A similar procedure produces the resulting p-code translation of the
 instruction. If each node in the specific symbol tree is replaced with
@@ -2097,10 +2097,10 @@ the corresponding p-code, we see how the final translation is built.
 </p>
 <div class="figure">
 <a name="sleigh_pcode_image"></a><div class="figure-contents"><div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="Diagram3.png" align="middle" width="405" height="149" alt="Two P-code Trees"></td></tr></table></div></div>
-<p class="title"><b>Figure�3.�Two P-code Trees</b></p>
+<p class="title"><b>Figure 3. Two P-code Trees</b></p>
 </div>
 <br class="figure-break"><p>
-<a class="xref" href="sleigh_constructors.html#sleigh_pcode_image" title="Figure�3.�Two P-code Trees">Figure�3, &#8220;Two P-code Trees&#8221;</a> lists the final p-code
+<a class="xref" href="sleigh_constructors.html#sleigh_pcode_image" title="Figure 3. Two P-code Trees">Figure 3, “Two P-code Trees”</a> lists the final p-code
 translation for our example instructions and shows the trees from
 which the translation is derived. Symbol names within the p-code for a
 particular node, as with the disassembly tree, are placeholders for
@@ -2108,7 +2108,7 @@ the subtree below them. The final translation is put together by
 concatenating the p-code from each node, traversing the nodes in a
 depth-first order. Thus the p-code of a child tends to come before the
 p-code of the parent node (but see
-<a class="xref" href="sleigh_constructors.html#sleigh_macros" title="7.9.�P-code Macros">Section�7.9, &#8220;P-code Macros&#8221;</a>). Placeholders are filled in with the
+<a class="xref" href="sleigh_constructors.html#sleigh_macros" title="7.9. P-code Macros">Section 7.9, “P-code Macros”</a>). Placeholders are filled in with the
 appropriate varnode, as determined by the export statement of the root
 of the corresponding subtree.
 </p>
@@ -2117,11 +2117,11 @@ of the corresponding subtree.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_macros"></a>7.9.�P-code Macros</h3></div></div></div>
+<a name="sleigh_macros"></a>7.9. P-code Macros</h3></div></div></div>
 <p>
 SLEIGH supports a macro facility for encapsulating semantic
 actions. The syntax, in effect, allows the designer to define p-code
-subroutines which can be invoked as part of a constructor&#8217;s semantic
+subroutines which can be invoked as part of a constructor’s semantic
 action. The subroutine is expanded automatically at compile time.
 </p>
 <p>
@@ -2131,8 +2131,8 @@ anywhere in the file before its first use. This is followed by the
 global identifier for the new macro and a parameter list, comma
 separated and in parentheses. The body of the definition comes next,
 surrounded by curly braces.  The body is a sequence of semantic
-statements with the same syntax as a constructor&#8217;s semantic
-section. The identifiers in the macro&#8217;s parameter list are local in
+statements with the same syntax as a constructor’s semantic
+section. The identifiers in the macro’s parameter list are local in
 scope. The macro can refer to these and any global specific symbol.
 </p>
 <div class="informalexample"><pre class="programlisting">
@@ -2168,7 +2168,7 @@ directive however should not be used in a macro.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_build_directives"></a>7.10.�Build Directives</h3></div></div></div>
+<a name="sleigh_build_directives"></a>7.10. Build Directives</h3></div></div></div>
 <p>
 Because the nodes of a specific symbol tree are traversed in a
 depth-first order, the p-code for a child node in general comes before
@@ -2180,10 +2180,10 @@ used to affect these issues in the rare cases where it is
 necessary. The <span class="bold"><strong>build</strong></span> directive occurs
 as another form of statement in the semantic section of a
 constructor. The keyword <span class="bold"><strong>build</strong></span> is
-followed by one of the constructor&#8217;s operand identifiers. Then,
-instead of filling in the operand&#8217;s associated p-code based on an
+followed by one of the constructor’s operand identifiers. Then,
+instead of filling in the operand’s associated p-code based on an
 arbitrary traversal of the symbol tree, the directive specifies that
-the operand&#8217;s p-code must occur at that point in the p-code for the
+the operand’s p-code must occur at that point in the p-code for the
 parent constructor.
 </p>
 <p>
@@ -2199,7 +2199,7 @@ efficient to treat the condition bit which distinguishes the variants
 as a special operand.
 </p>
 <div class="informalexample"><pre class="programlisting">
-cc: &#8220;c&#8221; is condition=1 { if (flag==1) goto inst_next; }
+cc: “c” is condition=1 { if (flag==1) goto inst_next; }
 cc:     is condition=0 { }
 
 :and^cc  r1,r2 is opcode=0x67 &amp; cc &amp; r1 &amp; r2 {
@@ -2210,7 +2210,7 @@ cc:     is condition=0 { }
 <p>
 </p>
 <p>
-In this example, the conditional variant is distinguished by a &#8216;c&#8217;
+In this example, the conditional variant is distinguished by a ‘c’
 appended to the assembly mnemonic. The <span class="emphasis"><em>cc</em></span> operand
 performs the conditional side-effect, checking a flag in one case, or
 doing nothing in the other. The two forms of the instruction can now
@@ -2223,7 +2223,7 @@ normal action of the instruction.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_delayslot_directives"></a>7.11.�Delay Slot Directives</h3></div></div></div>
+<a name="sleigh_delayslot_directives"></a>7.11. Delay Slot Directives</h3></div></div></div>
 <p>
 For processors with a pipe-lined architecture, multiple instructions
 are typically executing simultaneously. This can lead to processor
@@ -2268,7 +2268,7 @@ Because the <span class="bold"><strong>delayslot</strong></span> directive
 combines two or more instructions into one, the meaning of the
 symbols <span class="emphasis"><em>inst_next</em></span> and <span class="emphasis"><em>inst_next2</em></span> 
 become ambiguous. It is not
-clear anymore what exactly the &#8220;next instruction&#8221; is. SLEIGH uses the
+clear anymore what exactly the “next instruction” is. SLEIGH uses the
 following conventions for interpreting
 an <span class="emphasis"><em>inst_next</em></span> symbol. If it is used in the
 semantic section, the symbol refers to the address of the instruction
@@ -2289,15 +2289,15 @@ when computing the value of <span class="emphasis"><em>inst_next2</em></span>.
 <table width="100%" summary="Navigation footer">
 <tr>
 <td width="40%" align="left">
-<a accesskey="p" href="sleigh_tokens.html">Prev</a>�</td>
-<td width="20%" align="center">�</td>
-<td width="40%" align="right">�<a accesskey="n" href="sleigh_context.html">Next</a>
+<a accesskey="p" href="sleigh_tokens.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="sleigh_context.html">Next</a>
 </td>
 </tr>
 <tr>
-<td width="40%" align="left" valign="top">6.�Tokens and Fields�</td>
+<td width="40%" align="left" valign="top">6. Tokens and Fields </td>
 <td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
-<td width="40%" align="right" valign="top">�8.�Using Context</td>
+<td width="40%" align="right" valign="top"> 8. Using Context</td>
 </tr>
 </table>
 </div>

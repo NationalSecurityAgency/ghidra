@@ -123,7 +123,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		//
 		// Lower Score Panel
 		//
-		String fgColor = WebColors.toString(FG_TOOLTIP_DEFAULT);
+		String fgColor = WebColors.toString(FG_TOOLTIP_DEFAULT, false);
 		lowerRangePanel = new JPanel(new GridLayout(2, 1));
 		JLabel lowLabel =
 			new GHtmlLabel("<html><font size=\"2\" color=\"" + fgColor + "\">low</font>");

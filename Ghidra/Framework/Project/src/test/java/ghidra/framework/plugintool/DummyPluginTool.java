@@ -15,8 +15,6 @@
  */
 package ghidra.framework.plugintool;
 
-import ghidra.framework.plugintool.util.PluginsConfiguration;
-
 /**
  * A dummy version of {@link PluginTool} that tests can use when they need an instance of
  * the PluginTool, but do not wish to use a real version

@@ -148,7 +148,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     
     <br>
 
-    <table style="width:20%" border="1px solid #000">
+    <table border="1" cellspacing="0" cellpadding="5">
         <tr>
             <th>Parameter</th>
             <th>Local Project</th> 
@@ -503,29 +503,33 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     <LI>
     <a name="keystore"><typewriter>-keystore &lt;KeystorePath&gt;</typewriter></a><br>
     When connecting to a Ghidra Server using PKI or SSH authentication, this option allows 
-    specification of a suitable private keystore file. The file should rely on filesystem protection 
-    only to avoid prompting for a password.
+    specification of a suitable private keystore file. The keystore file should always be properly 
+    protected with filesystem protections. Since SSH authentication is intended for batch operations, 
+    we do not support password protected SSH keys. However, we do support password prompting for 
+    PKI authentication. <br>
+    <a href="#authentication">See here for more information regarding which authentication method to use</a>
     </LI>
 
     <br><br>
 
     <LI>
     <a name="connect"><typewriter>-connect &lt;userID&gt;</typewriter></a><br>
-    If used, allows the process owner&apos;s default userID to be overridden with the given 
-    <typewriter>userID</typewriter> when connecting to a Ghidra Server (provided the server has been 
-    configured to allow this).
+    If used, allows the process owner's default userID to be overridden with the given 
+    <typewriter>userID</typewriter> when connecting to a Ghidra Server. In order to use this parameter, 
+    the server must be configured to allow a non-default username (see <a href="../server/svrREADME.html#serverConfig">Ghidra Server Configuration</a> <b>-u</b> option).
     </LI>
 
     <br><br>
 
     <LI>
     <a name="password"><typewriter>-p</typewriter></a><br>
-    When connecting to a server, allows interactive prompting for a password via the console. 
-    Although this method of authentication is normally discouraged, the server connection will 
-    likely fail authentication if a password is required and this parameter is not enabled.
-    <br>
-    <b><u><i>Note: In some cases, password entry will be echoed to the console (a warning will show at 
-    password prompt).</i></u></b>
+	This option may be specified to allow for interactive password prompting when either a specified
+	PKI keystore is password protected or the Ghidra Server requires password authentication. 
+	This option should not be used during batch operations where a user will be unable to enter a 
+	password. <b>If the terminal in use is unable to suppress echoing an entered password, a warning will be 
+	issued with the prompt, and the entered password will be echoed to the terminal. Use of this option
+	is discouraged when such a warning occurs. </b><br>
+	<a href="#authentication">See here for more information regarding which authentication method to use</a>
     </LI>
 
     <br><br>
@@ -638,6 +642,49 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
 
 </UL>
 </P>
+(<a href="#top">Back to Top</a>)
+<div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
+
+<h2><a name="authentication">Headless Analyzer Authentication</a></h2>
+Use this table to figure out which authentication option to use with the Headless Analyzer, based on your Ghidra Server's 
+method of authentication, and the type of analysis operation you are performing.
+<P>        
+    <table border="1" cellspacing="0" cellpadding="5">
+    		<tr>
+    			<th rowspan="2">Type of Operation</th>
+    			<th colspan="5">Authentication Method</th>
+            </tr>
+	        <tr>
+	            <th>SSH Without Password*</th>
+	            <th>SSH With Password</th> 
+	            <th>PKI Without Password</th>
+	            <th>PKI With Password</th>
+	            <th>Username/Password</th>
+	        </tr>
+	        <tr>
+	            <th>Interactive <br> Command Line</th>
+	            <td><a href="#keystore">- keystore</a></td>
+	            <td>Not Supported</td>
+	            <td><a href="#keystore">- keystore</a></td>
+	            <td><a href="#keystore">- keystore</a> <br>and<br> <a href="#password">- p</a></td>
+	            <td><a href="#password">- p</a></td>
+	        </tr>
+	        <tr>
+	            <th>Batch/Script Use</th>
+	            <td><a href="#keystore">- keystore</a></td>
+	            <td>Not Supported</td>
+	            <td><a href="#keystore">- keystore</a></td>
+	            <td>Not Supported</td>
+	            <td>Not Supported</td>
+	        </tr>
+    </table>
+
+	<br>
+	*NOTE: The use of OpenSSH keys are not supported. The following command can be used to generate
+	a suitable SSH key while avoiding the unsupported OpenSSH format: <i>ssh-keygen -b 2048 -t rsa -m pem</i>
+    <br>   	
+</P>
+
 (<a href="#top">Back to Top</a>)
 <div style="border-top: 4px double; margin-top: 1em; padding-top: 1em;"> </div>
 
@@ -1198,13 +1245,12 @@ For example, if <typewriter><i>Script1.java</i></typewriter> sets the continuati
 by <typewriter>Script2.java</typewriter> which also sets the continuation option, the resulting 
 continuation status is shown in the following diagram:
 <br><br>
-<table border="1px solid #000">
+<table border="1px" cellspacing="0" cellpadding="2"> 
     <tr>
-      <td><typewriter><b><i>Script1</i> Continuation Option</b></typewriter></td>
-      <td colspan="4"><typewriter><b><i>Script2</i> Continuation Option</b></typewriter></td>
+      <th rowspan="2"><typewriter><b><i>Script1</i> Continuation Option</b></typewriter></th>
+      <th colspan="4"><typewriter><b><i>Script2</i> Continuation Option</b></typewriter></th>
     </tr>
     <tr>
-      <td></td>
       <td><typewriter><b>ABORT</b></typewriter></td>
       <td><typewriter><b>ABORT_AND_DELETE</b></typewriter></td>
       <td><typewriter><b>CONTINUE_THEN_DELETE</b></typewriter></td>

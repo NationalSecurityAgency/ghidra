@@ -15,14 +15,9 @@
  */
 package ghidra.framework.plugintool.util;
 
-import java.io.File;
 import java.lang.reflect.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
 
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.dialog.ExtensionDetails;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
@@ -32,99 +27,6 @@ import ghidra.util.exception.AssertException;
  *
  */
 public class PluginUtils {
-
-	/**
-	 * Finds all plugin classes loaded from a given set of extensions.
-	 *
-	 * @param extensions set of extensions to search
-	 * @return list of loaded plugin classes, or empty list if none found
-	 */
-	public static List<Class<?>> findLoadedPlugins(Set<ExtensionDetails> extensions) {
-
-		List<Class<?>> pluginClasses = new ArrayList<>();
-		for (ExtensionDetails extension : extensions) {
-
-			if (extension == null || extension.getInstallPath() == null) {
-				continue;
-			}
-
-			List<Class<?>> classes = findLoadedPlugins(new File(extension.getInstallPath()));
-			pluginClasses.addAll(classes);
-		}
-
-		return pluginClasses;
-	}
-
-	/**
-	 * Finds all plugin classes loaded from a particular folder/file.
-	 * <p>
-	 * This uses the {@link ClassSearcher} to find all <code>Plugin.class</code> objects on the
-	 * classpath. For each class, the original resource file is compared against the
-	 * given folder and if it's contained therein (or if it matches a given jar), it's
-	 * added to the return list.
-	 *
-	 * @param dir the directory to search, or a jar file
-	 * @return list of {@link Plugin} classes, or empty list if none found
-	 */
-	private static List<Class<?>> findLoadedPlugins(File dir) {
-
-		// The list of classes to return.
-		List<Class<?>> retPlugins = new ArrayList<>();
-
-		// Find any jar files in the directory provided. Our plugin(s) will always be
-		// in a jar.
-		List<File> jarFiles = new ArrayList<>();
-		findJarFiles(dir, jarFiles);
-
-		// Now get all Plugin.class files that have been loaded, and see if any of them
-		// were loaded from one of the jars we just found.
-		List<Class<? extends Plugin>> plugins = ClassSearcher.getClasses(Plugin.class);
-		for (Class<? extends Plugin> plugin : plugins) {
-			URL location = plugin.getResource('/' + plugin.getName().replace('.', '/') + ".class");
-			if (location == null) {
-				Msg.warn(null, "Class location for plugin [" + plugin.getName() +
-					"] could not be determined.");
-				continue;
-			}
-			String pluginLocation = location.getPath();
-			for (File jar : jarFiles) {
-				URL jarUrl = null;
-				try {
-					jarUrl = jar.toURI().toURL();
-					if (pluginLocation.contains(jarUrl.getPath())) {
-						retPlugins.add(plugin);
-					}
-				}
-				catch (MalformedURLException e) {
-					continue;
-				}
-			}
-		}
-		return retPlugins;
-	}
-
-	/**
-	 * Populates the given list with all discovered jar files found in the given directory and
-	 * its subdirectories.
-	 *
-	 * @param dir the directory to search
-	 * @param jarFiles list of found jar files
-	 */
-	private static void findJarFiles(File dir, List<File> jarFiles) {
-		File[] files = dir.listFiles();
-		if (files == null) {
-			return;
-		}
-		for (File f : files) {
-			if (f.isDirectory()) {
-				findJarFiles(f, jarFiles);
-			}
-
-			if (f.isFile() && f.getName().endsWith(".jar")) {
-				jarFiles.add(f);
-			}
-		}
-	}
 
 	/**
 	 * Returns a new instance of a {@link Plugin}.
@@ -267,38 +169,5 @@ public class PluginUtils {
 					" and " + otherPluginClass.getName());
 			}
 		}
-	}
-
-	/**
-	 * Returns true if the specified Plugin class is well-formed and meets requirements for
-	 * Ghidra Plugins:
-	 * <ul>
-	 * 	<li>Has a constructor with a signature of <code>ThePlugin(PluginTool tool)</code>
-	 * 	<li>Has a {@link PluginInfo @PluginInfo} annotation.
-	 * </ul>
-	 * <p>
-	 * See {@link Plugin}.
-	 * <p>
-	 * @param pluginClass Class to examine.
-	 * @return boolean true if well formed.
-	 */
-	public static boolean isValidPluginClass(Class<? extends Plugin> pluginClass) {
-		try {
-			// will throw exception if missing ctor
-			pluginClass.getConstructor(PluginTool.class);
-
-//		#if ( can_do_strict_checking )
-//			PluginInfo pia = pluginClass.getAnnotation(PluginInfo.class);
-//			return pia != null;
-//		#else
-			// for now
-			return true;
-//			#endif
-		}
-		catch (NoSuchMethodException e) {
-			// no matching constructor method
-		}
-		return false;
-
 	}
 }

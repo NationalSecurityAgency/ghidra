@@ -104,6 +104,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		super.load(dataType);
 	}
 
+	@Override
 	protected Composite createViewCompositeFromOriginalComposite(Composite original) {
 		return (Composite) original.copy(original.getDataTypeManager());
 	}
@@ -208,7 +209,7 @@ public class StackEditorModel extends CompositeEditorModel {
 				if (fieldName == null) {
 					fieldName = "";
 				}
-//				if ((fieldName.length() == 0) 
+//				if ((fieldName.length() == 0)
 //				 && (element.getOffset() == ((StackFrameDataType)viewComposite).getReturnAddressOffset())) {
 //					return "<RETURN_ADDRESS>";
 //				}
@@ -632,7 +633,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		boolean existingPointer = (compDt instanceof Pointer);
 		boolean isPointer = (dataType instanceof Pointer) || existingPointer;
 		int newLength = dataType.getLength();
-		// NOTE : Allow the generic pointer, but don't allow -1 length data 
+		// NOTE : Allow the generic pointer, but don't allow -1 length data
 		//        types (i.e. string) except on pointers.
 		if (!isPointer && (newLength <= 0)) {
 			return false;
@@ -797,7 +798,8 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void setComponentDataTypeInstance(int index, DataType dt, int length) throws UsrException {
+	public void setComponentDataTypeInstance(int index, DataType dt, int length)
+			throws UsrException {
 		checkIsAllowableDataType(dt);
 		((StackFrameDataType) viewComposite).setDataType(index, dt, length);
 	}
@@ -811,27 +813,19 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void setComponentName(int rowIndex, String newName)
-			throws InvalidInputException, InvalidNameException, DuplicateNameException {
+	public boolean setComponentName(int rowIndex, String newName)
+			throws InvalidNameException {
 
 		if (newName.trim().length() == 0) {
 			newName = null;
 		}
-//		if (nameExistsElsewhere(newName, currentIndex)) {
-//			throw new InvalidNameException("Name \"" + newName + "\" already exists.");
-//		}
-//		try {
-//			getComponent(currentIndex).setFieldName(newName);
-//		} catch (DuplicateNameException exc) {
-//		throw new InvalidNameException(exc.getMessage());
-//		}
 
 		// prevent user names that are default values, unless the value is the original name
 		String nameInEditor = (String) getValueAt(rowIndex, NAME);
 		StackFrameDataType stackFrameDataType = ((StackFrameDataType) viewComposite);
 		if (stackFrameDataType.isDefaultName(newName) && !isOriginalFieldName(newName, rowIndex)) {
-			if (SystemUtilities.isEqual(nameInEditor, newName)) {
-				return; // same as current name in the table; do nothing
+			if (Objects.equals(nameInEditor, newName)) {
+				return false; // same as current name in the table; do nothing
 			}
 			throw new InvalidNameException("Cannot set a stack variable name to a default value");
 		}
@@ -840,7 +834,9 @@ public class StackEditorModel extends CompositeEditorModel {
 			updateAndCheckChangeState();
 			fireTableCellUpdated(rowIndex, getNameColumn());
 			notifyCompositeChanged();
+			return true;
 		}
+		return false;
 	}
 
 	/** Gets the original field name within the parent data type for a given row in the editor */
@@ -851,12 +847,14 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void setComponentComment(int currentIndex, String comment) throws InvalidInputException {
+	public boolean setComponentComment(int currentIndex, String comment) {
 		if (((StackFrameDataType) viewComposite).setComment(currentIndex, comment)) {
 			updateAndCheckChangeState();
 			fireTableRowsUpdated(currentIndex, currentIndex);
 			componentDataChanged();
+			return true;
 		}
+		return false;
 	}
 
 	@Override
@@ -912,7 +910,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	@Override
 	public boolean apply() throws EmptyCompositeException, InvalidDataTypeException {
 
-		// commit changes for any fields under edit 
+		// commit changes for any fields under edit
 		if (isEditingField()) {
 			endFieldEditing();
 		}
@@ -940,7 +938,7 @@ public class StackEditorModel extends CompositeEditorModel {
 			original.setLocalSize(edited.getLocalSize());
 			original.setReturnAddressOffset(edited.getReturnAddressOffset());
 
-			// first-pass: remove deleted params from end of param list if possible 
+			// first-pass: remove deleted params from end of param list if possible
 			// to avoid custom storage enablement
 			Parameter[] origParams = function.getParameters();
 			for (int i = origParams.length - 1; i >= 0; --i) {
@@ -1214,7 +1212,7 @@ public class StackEditorModel extends CompositeEditorModel {
 				return;
 			}
 
-			// Don't try to actually rename, since we shouldn't get name change on a 
+			// Don't try to actually rename, since we shouldn't get name change on a
 			// fabricated stack data type.
 			OffsetPairs offsetSelection = getRelOffsetSelection();
 			fireTableDataChanged();
@@ -1285,7 +1283,7 @@ public class StackEditorModel extends CompositeEditorModel {
 
 	//**************************************************************************
 	// The methods below were overridden to prevent data types with a length of
-	// -1 from being applied in the stack editor. We also don't want to get 
+	// -1 from being applied in the stack editor. We also don't want to get
 	// prompted for a length when the user tries to apply a -1 length data type.
 	//**************************************************************************
 	//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -1299,7 +1297,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * This method overrides the CompositeEditorModel to wrap the resolve of the data type 
+	 * This method overrides the CompositeEditorModel to wrap the resolve of the data type
 	 * in a transaction.
 	 */
 	@Override

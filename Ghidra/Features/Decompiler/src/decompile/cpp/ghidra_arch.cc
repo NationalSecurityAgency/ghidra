@@ -771,7 +771,7 @@ void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr
   encoder.openElement(ELEM_COMMAND_GETSTRINGDATA);
   encoder.writeSignedInteger(ATTRIB_MAXSIZE, maxBytes);
   encoder.writeString(ATTRIB_TYPE,ct->getName());
-  encoder.writeUnsignedInteger(ATTRIB_ID, ct->getId());
+  encoder.writeUnsignedInteger(ATTRIB_ID, ct->getUnsizedId());
   addr.encode(encoder);
   encoder.closeElement(ELEM_COMMAND_GETSTRINGDATA);
   sout.write("\000\000\001\017",4);

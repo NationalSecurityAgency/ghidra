@@ -90,10 +90,10 @@ task zipSource (type: Zip) {
 
 task buildExtension (type: Zip) {
 				
-	archiveBaseName = "${ZIP_NAME_PREFIX}_${project.name}"
-	archiveExtension = 'zip'
-	destinationDirectory = DISTRIBUTION_DIR
-	archiveVersion = ''
+	def archiveBaseName = "${ZIP_NAME_PREFIX}_${project.name}"
+	def archiveExtension = 'zip'
+	def destinationDirectory = DISTRIBUTION_DIR
+	def archiveVersion = ''
 	
 	// Make sure that we don't try to copy the same file with the same path into the
 	// zip (this can happen!)

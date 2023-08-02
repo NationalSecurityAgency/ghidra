@@ -30,7 +30,6 @@ import ghidra.framework.data.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.protocol.ghidra.GetUrlContentTypeTask;
@@ -167,27 +166,6 @@ class ToolServicesImpl implements ToolServices {
 	@Override
 	public ToolChest getToolChest() {
 		return toolChest;
-	}
-
-	@Override
-	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event) {
-
-		PluginTool[] similarTools = getSameNamedRunningTools(tool);
-		PluginTool matchingTool = findToolUsingFile(similarTools, domainFile);
-		if (matchingTool != null) {
-			// Bring the matching tool forward.
-			matchingTool.toFront();
-		}
-		else {
-			// Create a new tool and pop it up.
-			Workspace workspace = toolManager.getActiveWorkspace();
-			matchingTool = workspace.runTool(tool.getToolTemplate(true));
-			matchingTool.setVisible(true);
-			matchingTool.acceptDomainFiles(new DomainFile[] { domainFile });
-		}
-
-		// Fire the indicated event in the tool.
-		matchingTool.firePluginEvent(event);
 	}
 
 	private static DefaultLaunchMode getDefaultLaunchMode() {

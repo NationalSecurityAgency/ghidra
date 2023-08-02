@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.decompile.actions;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.options.OptionsService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.util.HelpLocation;
 
 public class EditPropertiesAction extends DockingAction {

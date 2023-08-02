@@ -75,12 +75,6 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		breakpointService = tool.getService(DebuggerLogicalBreakpointService.class);
 	}
 
-	protected void waitAndFlush(TraceRecorder recorder) throws Throwable {
-		waitOn(recorder.getTarget().getModel().flushEvents());
-		waitOn(recorder.flushTransactions());
-		waitForDomainObject(recorder.getTrace());
-	}
-
 	protected void addMapping(Trace trace, Program prog) throws Exception {
 		try (Transaction tx = trace.openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
@@ -132,8 +126,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		Trace trace = recorder.getTrace();
 
 		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
-		waitOn(mb.testModel.flushEvents());
-		waitForDomainObject(trace);
+		waitRecorder(recorder);
 
 		// NB, optionally open trace. Mapping only works if open...
 		traceManager.openTrace(trace);
@@ -249,7 +242,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 		// NOTE: This acts on the corresponding target, not directly on trace
 		waitOn(lb.disableForTrace(trace));
-		waitAndFlush(recorder);
+		waitRecorder(recorder);
 
 		waitForPass(() -> assertEquals(State.DISABLED, row.getState()));
 
@@ -260,7 +253,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 		// This duplicates the initial case, but without it, I just feel incomplete
 		waitOn(lb.enableForTrace(trace));
-		waitAndFlush(recorder);
+		waitRecorder(recorder);
 
 		waitForPass(() -> assertEquals(State.ENABLED, row.getState()));
 	}

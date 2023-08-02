@@ -384,14 +384,14 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 		while (it.hasNext()) {
 			Pair<DBTraceGuestPlatformMappedRange, AddressRange> next = it.next();
 			DBTraceGuestPlatformMappedRange entry = next.getLeft();
-			AddressRange hostRange = next.getRight();
-			result.add(entry.mapGuestToHost(hostRange));
+			AddressRange guestRange = next.getRight();
+			result.add(entry.mapGuestToHost(guestRange));
 		}
 		return result;
 	}
 
 	/**
-	 * Map the an address only if the entire range is contained in a single mapped range
+	 * Map an address only if the entire range is contained in a single mapped range
 	 * 
 	 * @param guestMin the min address of the range to map
 	 * @param guestMax the max address of the range to check

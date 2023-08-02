@@ -1,6 +1,6 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>Decompiler Options</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="../../shared/languages.css">
@@ -38,14 +38,14 @@
 	  </span><span class="emphasis"><em>Decompiler</em></span> - lists <a class="xref" href="DecompilerOptions.html#GeneralOptions" title="General Options">General Options</a> that affect the engine behavior.
 	</li>
 <li class="listitem" style="list-style-type: none">
-	  &#8195;<span class="guiicon">
+	   <span class="guiicon">
 	    <span class="inlinemediaobject"><img src="images/document-properties.png" width="16" height="16"></span>
-	  </span>�<span class="emphasis"><em>Analysis</em></span> - lists <a class="xref" href="DecompilerOptions.html#AnalysisOptions" title="Analysis Options">Analysis Options</a> that affect the Decompiler's transformation process.
+	  </span> <span class="emphasis"><em>Analysis</em></span> - lists <a class="xref" href="DecompilerOptions.html#AnalysisOptions" title="Analysis Options">Analysis Options</a> that affect the Decompiler's transformation process.
 	</li>
 <li class="listitem" style="list-style-type: none">
-	  &#8195;<span class="guiicon">
+	   <span class="guiicon">
 	    <span class="inlinemediaobject"><img src="images/document-properties.png" width="16" height="16"></span>
-	  </span>�<span class="emphasis"><em>Display</em></span> - lists <a class="xref" href="DecompilerOptions.html#DisplayOptions" title="Display Options">Display Options</a> that affect the final presentation of Decompiler output.
+	  </span> <span class="emphasis"><em>Display</em></span> - lists <a class="xref" href="DecompilerOptions.html#DisplayOptions" title="Display Options">Display Options</a> that affect the final presentation of Decompiler output.
 	</li>
 </ul></div>
     </div>
@@ -239,6 +239,40 @@
 	  any other source of data-type information, and the inferred data-types are freely propagated by
 	  the Decompiler to other parts of the function.
 	</p>
+      </dd>
+<dt>
+<a name="AnalysisNanIgnore"></a><span class="term"><span class="bold"><strong>NaN operations</strong></span></span>
+</dt>
+<dd>
+        <p>
+          This option determines how the Decompiler treats floating-point <span class="bold"><strong>NaN</strong></span>
+          (Not a Number) operations.  Many processors automatically perform NaN checks on the operands of
+          floating-point instructions, and unless specifically configured, these show up in Decompiler output
+          as <code class="code">NAN()</code> functional tokens.  Common floating-point source code operations, like
+          <code class="code">&lt;</code>, <code class="code">&gt;</code>, and <code class="code">==</code> can generate <code class="code">NAN</code> tokens as a
+          side effect, even if the original source code was not designed to handle NaN values, and the
+          tokens can clutter the output.
+        </p>
+        <p>
+          The user can optionally configure some or all of the NaN operations to be ignored, meaning that
+          inputs to the NaN operation are <span class="emphasis"><em>assumed</em></span> to be valid floating-point values and the
+          <code class="code">NAN</code> function is removed, replacing it with the value: <span class="bold"><strong>false</strong></span>.
+          The possible settings are:
+          </p>
+<div class="informalexample">
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Ignore none</strong></span> - No NaN operations are removed</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Ignore with comparisons</strong></span> - NaN operations associated with comparisons are removed</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Ignore all</strong></span> - All NaN operations are removed</li>
+</ul></div>
+	  </div>
+<p>
+          The Decompiler considers a NaN operation to be associated with a floating-point comparison if they both
+          can be considered boolean clauses of the same <span class="bold"><strong>if</strong></span> condition.
+        </p>
       </dd>
 <dt>
 <a name="AnalysisForLoops"></a><span class="term"><span class="bold"><strong>Recover -for- loops</strong></span></span>

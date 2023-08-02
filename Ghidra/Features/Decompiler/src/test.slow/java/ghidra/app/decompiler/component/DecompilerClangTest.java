@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import docking.options.OptionsService;
 import docking.options.editor.GhidraColorChooser;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -44,7 +45,6 @@ import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.util.AddEditDialog;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.listing.CodeUnit;
 
 public class DecompilerClangTest extends AbstractDecompilerTest {

@@ -55,7 +55,7 @@ public class SpecExtensionPanel extends JPanel {
 	private boolean unappliedChanges;
 	private SpecExtension specExtension;
 	private List<CompilerElement> tableElements;
-	private ExtensionTableModel tableModel;
+	private SpecExtensionTableModel tableModel;
 	private GTable extensionTable;
 	private JButton exportButton;
 	private JButton removeButton;
@@ -163,7 +163,7 @@ public class SpecExtensionPanel extends JPanel {
 		}
 	}
 
-	private class ExtensionTableModel extends AbstractGTableModel<CompilerElement> {
+	private class SpecExtensionTableModel extends AbstractGTableModel<CompilerElement> {
 		private final String[] columnNames = { "Extension Type", "Name", "Status" };
 
 		@Override
@@ -383,7 +383,7 @@ public class SpecExtensionPanel extends JPanel {
 
 	private void createPanel() {
 		setLayout(new BorderLayout(10, 10));
-		tableModel = new ExtensionTableModel();
+		tableModel = new SpecExtensionTableModel();
 		extensionTable = new CompilerElementTable(tableModel);
 
 		JScrollPane sp = new JScrollPane(extensionTable);

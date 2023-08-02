@@ -1022,23 +1022,23 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return;
 		}
 		TraceMemoryManager mem = current.getTrace().getMemoryManager();
+		AddressSetView guestRegs = platform.getLanguage().getRegisterAddresses();
+		AddressSetView hostRegs = platform.mapGuestToHost(guestRegs);
 		AddressSetView viewKnownMem = view.getViewport()
-				.unionedAddresses(snap -> mem.getAddressesWithState(snap,
-					platform.mapGuestToHost(platform.getLanguage().getRegisterAddresses()),
+				.unionedAddresses(snap -> mem.getAddressesWithState(snap, hostRegs,
 					state -> state == TraceMemoryState.KNOWN));
-		AddressSpace regSpace = current.getPlatform().getAddressFactory().getRegisterSpace();
+		AddressSpace regSpace = platform.getAddressFactory().getRegisterSpace();
 		if (regSpace == null) {
 			viewKnown = new AddressSet(viewKnownMem);
 			return;
 		}
-		TraceMemorySpace regs = getRegisterMemorySpace(regSpace, false);
+		TraceMemorySpace regs = getRegisterMemorySpace(current, regSpace, false);
 		if (regs == null) {
 			viewKnown = new AddressSet(viewKnownMem);
 			return;
 		}
-		AddressSetView hostRegs =
-			platform.mapGuestToHost(platform.getLanguage().getRegisterAddresses());
-		AddressSetView overlayRegs = TraceRegisterUtils.getOverlaySet(regSpace, hostRegs);
+		AddressSetView overlayRegs =
+			TraceRegisterUtils.getOverlaySet(regs.getAddressSpace(), hostRegs);
 		AddressSetView viewKnownRegs = view.getViewport()
 				.unionedAddresses(snap -> regs.getAddressesWithState(snap, overlayRegs,
 					state -> state == TraceMemoryState.KNOWN));
@@ -1049,7 +1049,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (viewKnown == null) {
 			return false;
 		}
-		TraceMemorySpace regs = getRegisterMemorySpace(register.getAddressSpace(), false);
+		TraceMemorySpace regs = getRegisterMemorySpace(current, register.getAddressSpace(), false);
 		if (regs == null && register.getAddressSpace().isRegisterSpace()) {
 			return false;
 		}

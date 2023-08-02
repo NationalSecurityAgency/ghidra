@@ -59,8 +59,7 @@ import ghidra.framework.main.logviewer.ui.FileViewer;
 import ghidra.framework.main.logviewer.ui.FileWatcher;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
-import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.GhidraTool;
@@ -412,6 +411,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		setProject(project);
 		AppInfo.setActiveProject(project);
 		plugin.setActiveProject(project);
+		firePluginEvent(new ProjectPluginEvent(getClass().getSimpleName(), project));
 	}
 
 	/**
@@ -647,7 +647,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			}
 		};
 		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_FILE, "Install Extensions..." }, null,
+			new MenuData(new String[] { ToolConstants.MENU_FILE, "Install Extensions" }, null,
 				CONFIGURE_GROUP);
 		menuData.setMenuSubGroup(CONFIGURE_GROUP + 2);
 		installExtensionsAction.setMenuBarData(menuData);
@@ -674,7 +674,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			}
 		};
 
-		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Configure..." },
+		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Configure" },
 			null, CONFIGURE_GROUP);
 		menuData.setMenuSubGroup(CONFIGURE_GROUP + 1);
 		configureToolAction.setMenuBarData(menuData);

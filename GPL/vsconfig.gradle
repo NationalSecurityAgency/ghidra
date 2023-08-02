@@ -27,12 +27,14 @@ def configureVisualStudio() {
 	
 		// Use vswhere.exe to search for latest Visual Studio installation 
 		println "Searching for latest Visual Studio and required components..."
-		def vswherePath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe"
+		def programFiles = System.getenv()["ProgramFiles(x86)"] ?: "C:\\Program Files (x86)"
+		def vswherePath = findProperty("vswherePath") ?: "${programFiles}\\Microsoft Visual Studio\\Installer\\vswhere.exe"
 		if (!file(vswherePath).exists()) {
-			println "  -> Visual Studio vswhere.exe not found!"
+			println "  -> Visual Studio vswhere.exe not found at \"${vswherePath}\"" 
+			println "  -> To manually specify the location of vswhere.exe, add \"-PvswherePath=<vswhere path>\" to the Gradle command line arguments"
 			return
 		}
-		def vswhereProcess = "${vswherePath} -products * -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json -utf8".execute()
+		def vswhereProcess = "\"${vswherePath}\" -products * -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json -utf8".execute()
 		def vswhereOutput = vswhereProcess.text.trim()
 		def vswhereExit = vswhereProcess.exitValue()
 		if (vswhereExit != 0) {

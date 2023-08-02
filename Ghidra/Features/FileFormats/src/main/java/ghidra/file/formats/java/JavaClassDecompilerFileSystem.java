@@ -39,14 +39,15 @@ import utilities.util.FileUtilities;
 @FileSystemInfo(type = "javaclass", description = "Java Class Decompiler", factory = JavaClassDecompilerFileSystemFactory.class, priority = FileSystemInfo.PRIORITY_LOW)
 public class JavaClassDecompilerFileSystem implements GFileSystem {
 
-	private FSRLRoot fsFSRL;
+	private final FSRLRoot fsFSRL;
+	private final FileSystemService fsService;
+
 	private FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private SingleFileSystemIndexHelper fsIndexHelper;
 	private ByteProvider provider;
 	private FSRL containerFSRL;
 	private String className;
 	private String javaSrcFilename;
-	private FileSystemService fsService;
 
 	public JavaClassDecompilerFileSystem(FSRLRoot fsFSRL, ByteProvider provider,
 			FileSystemService fsService, TaskMonitor monitor)
@@ -128,7 +129,7 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public GFile lookup(String path) throws IOException {
+	public GFile lookup(String path) {
 		return fsIndexHelper.lookup(path);
 	}
 

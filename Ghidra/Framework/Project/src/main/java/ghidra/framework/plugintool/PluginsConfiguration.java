@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.plugintool.util;
+package ghidra.framework.plugintool;
 
 import static java.util.function.Predicate.*;
 
@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 import org.jdom.Element;
 
 import ghidra.framework.main.ProgramaticUseOnly;
-import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.util.*;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 
@@ -56,7 +56,7 @@ public abstract class PluginsConfiguration {
 		List<Class<? extends Plugin>> classes = ClassSearcher.getClasses(Plugin.class, classFilter);
 
 		for (Class<? extends Plugin> pluginClass : classes) {
-			if (!PluginUtils.isValidPluginClass(pluginClass)) {
+			if (!isValidPluginClass(pluginClass)) {
 				Msg.warn(this, "Plugin does not have valid constructor! Skipping " + pluginClass);
 				continue;
 			}
@@ -69,6 +69,19 @@ public abstract class PluginsConfiguration {
 				descriptionsByPackage.computeIfAbsent(pluginPackage, (k) -> new ArrayList<>());
 			list.add(pd);
 		}
+
+	}
+
+	private boolean isValidPluginClass(Class<? extends Plugin> pluginClass) {
+		try {
+			// will throw exception if missing constructor
+			pluginClass.getConstructor(PluginTool.class);
+			return true;
+		}
+		catch (NoSuchMethodException e) {
+			// no matching constructor method
+		}
+		return false;
 
 	}
 

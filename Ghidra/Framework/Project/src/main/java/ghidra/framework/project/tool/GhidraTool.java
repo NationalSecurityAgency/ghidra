@@ -15,10 +15,6 @@
  */
 package ghidra.framework.project.tool;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.ArrayUtils;
 import org.jdom.Element;
 
 import docking.ActionContext;
@@ -30,13 +26,9 @@ import docking.widgets.OptionDialog;
 import ghidra.app.util.FileOpenDropHandler;
 import ghidra.framework.model.Project;
 import ghidra.framework.model.ToolTemplate;
-import ghidra.framework.options.PreferenceState;
-import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.dialog.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.PluginsConfiguration;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
 /**
  * Tool created by the workspace when the user chooses to create a new
@@ -47,15 +39,13 @@ public class GhidraTool extends PluginTool {
 
 	private static final String NON_AUTOSAVE_SAVE_TOOL_TITLE = "Save Tool?";
 
-	// Preference category stored in the tools' xml file, indicating which extensions
-	// this tool is aware of. This is used to recognize when new extensions have been
-	// installed that the user should be made aware of.
-	public static final String EXTENSIONS_PREFERENCE_NAME = "KNOWN_EXTENSIONS";
-
 	public static boolean autoSave = true;
 
 	private FileOpenDropHandler fileOpenDropHandler;
 	private DockingAction configureToolAction;
+
+	private ExtensionManager extensionManager;
+	private boolean hasBeenShown;
 
 	/**
 	 * Construct a new Ghidra Tool.
@@ -75,6 +65,18 @@ public class GhidraTool extends PluginTool {
 	 */
 	public GhidraTool(Project project, GhidraToolTemplate template) {
 		super(project, template);
+	}
+
+	/**
+	 * We need to do this here, since our parent constructor calls methods on us that need the 
+	 * extension manager.
+	 * @return the extension manager
+	 */
+	private ExtensionManager getExtensionManager() {
+		if (extensionManager == null) {
+			extensionManager = new ExtensionManager(this);
+		}
+		return extensionManager;
 	}
 
 	@Override
@@ -120,6 +122,31 @@ public class GhidraTool extends PluginTool {
 	@Override
 	public void restoreWindowingDataFromXml(Element rootElement) {
 		winMgr.restoreWindowDataFromXml(rootElement);
+	}
+
+	@Override
+	public Element saveToXml(boolean includeConfigState) {
+		Element xml = super.saveToXml(includeConfigState);
+		getExtensionManager().saveToXml(xml);
+		return xml;
+	}
+
+	@Override
+	protected boolean restoreFromXml(Element root) {
+		boolean success = super.restoreFromXml(root);
+		getExtensionManager().restoreFromXml(root);
+		return success;
+	}
+
+	@Override
+	public void setVisible(boolean visible) {
+		if (visible) {
+			if (!hasBeenShown) { // first time being shown
+				getExtensionManager().checkForNewExtensions();
+			}
+			hasBeenShown = true;
+		}
+		super.setVisible(visible);
 	}
 
 	@Override
@@ -207,175 +234,6 @@ public class GhidraTool extends PluginTool {
 	}
 
 	protected void showConfig() {
-//		if (hasUnsavedData()) {
-//			OptionDialog.showWarningDialog( getToolFrame(),"Configure Not Allowed!",
-//					"The tool has unsaved data. Configuring the tool can potentially lose\n"+
-//					"data. Therefore, this operation is not allowed with unsaved data.\n\n"+
-//					"Please save your data before configuring the tool.");
-//			return;
-//		}
 		showConfig(true, false);
-	}
-
-	/**
-	 * Looks for extensions that have been installed since the last time this tool
-	 * was launched. If any are found, and if those extensions contain plugins, the user is
-	 * notified and given the chance to install them.
-	 *
-	 */
-	public void checkForNewExtensions() {
-
-		// 1. First remove any extensions that are in the tool preferences that are no longer
-		//    installed. This will happen if the user installs an extension, launches
-		//    a tool, then uninstalls the extension.
-		removeUninstalledExtensions();
-
-		// 2. Now figure out which extensions have been added.
-		Set<ExtensionDetails> newExtensions =
-			ExtensionUtils.getExtensionsInstalledSinceLastToolLaunch(this);
-
-		// 3. Get a list of all plugins contained in those extensions. If there are none, then
-		//    either none of the extensions has any plugins, or Ghidra hasn't been restarted since
-		//    installing the extension(s), so none of the plugin classes have been loaded. In
-		//    either case, there is nothing more to do.
-		List<Class<?>> newPlugins = PluginUtils.findLoadedPlugins(newExtensions);
-		if (newPlugins.isEmpty()) {
-			return;
-		}
-
-		// 4. Notify the user there are new plugins.
-		int option = OptionDialog.showYesNoDialog(getActiveWindow(), "New Plugins Found!",
-			"New extension plugins detected. Would you like to configure them?");
-		if (option == OptionDialog.YES_OPTION) {
-			List<PluginDescription> pluginDescriptions = getPluginDescriptions(this, newPlugins);
-			PluginInstallerDialog pluginInstaller = new PluginInstallerDialog("New Plugins Found!",
-				this, new PluginConfigurationModel(this), pluginDescriptions);
-			showDialog(pluginInstaller);
-		}
-
-		// 5. Update the preference file to reflect the new extensions now known to this tool.
-		addInstalledExtensions(newExtensions);
-	}
-
-	/**
-	 * Finds all {@link PluginDescription} objects that match a given set of plugin classes. This
-	 * effectively tells the caller which of the given plugins have been loaded by the class loader.
-	 * <p>
-	 * Note that this method does not take path/package information into account when finding
-	 * plugins; in the example above, if there is more than one plugin with the name "FooPlugin",
-	 * only one will be found (the one found is not guaranteed to be the first).
-	 *
-	 * @param tool the current tool
-	 * @param plugins the list of plugin classes to search for
-	 * @return list of plugin descriptions
-	 */
-	private List<PluginDescription> getPluginDescriptions(PluginTool tool, List<Class<?>> plugins) {
-
-		// First define the list of plugin descriptions to return
-		List<PluginDescription> retPlugins = new ArrayList<>();
-
-		// Get all plugins that have been loaded
-		PluginsConfiguration pluginClassManager = getPluginsConfiguration();
-		List<PluginDescription> allPluginDescriptions =
-			pluginClassManager.getManagedPluginDescriptions();
-
-		// see if an entry exists in the list of all loaded plugins
-		for (Class<?> plugin : plugins) {
-			String pluginName = plugin.getSimpleName();
-
-			Optional<PluginDescription> desc = allPluginDescriptions.stream()
-					.filter(d -> (pluginName.equals(d.getName())))
-					.findAny();
-			if (desc.isPresent()) {
-				retPlugins.add(desc.get());
-			}
-		}
-
-		return retPlugins;
-	}
-
-	/**
-	 * Removes any extensions in the tool preferences that are no longer installed.
-	 */
-	private void removeUninstalledExtensions() {
-
-		try {
-			// Get all installed extensions
-			Set<ExtensionDetails> installedExtensions =
-				ExtensionUtils.getInstalledExtensions(false);
-			List<String> installedExtensionNames =
-				installedExtensions.stream().map(ext -> ext.getName()).collect(Collectors.toList());
-
-			// Get the list of extensions in the tool preference state
-			DockingWindowManager dockingWindowManager =
-				DockingWindowManager.getInstance(getToolFrame());
-
-			PreferenceState state = getExtensionPreferences(dockingWindowManager);
-
-			String[] extNames = state.getStrings(EXTENSIONS_PREFERENCE_NAME, new String[0]);
-			List<String> preferenceExtensionNames = new ArrayList<>(Arrays.asList(extNames));
-
-			// Now see if any extensions are in the current preferences that are NOT in the installed extensions
-			// list. Those are the ones we need to remove.
-			for (Iterator<String> i = preferenceExtensionNames.iterator(); i.hasNext();) {
-				String extName = i.next();
-				if (!installedExtensionNames.contains(extName)) {
-					i.remove();
-				}
-			}
-
-			// Finally, put the new extension list in the preferences object
-			state.putStrings(EXTENSIONS_PREFERENCE_NAME,
-				preferenceExtensionNames.toArray(new String[preferenceExtensionNames.size()]));
-			dockingWindowManager.putPreferenceState(EXTENSIONS_PREFERENCE_NAME, state);
-		}
-		catch (ExtensionException e) {
-			// This is a problem but isn't catastrophic. Just warn the user and continue.
-			Msg.warn(this, "Couldn't retrieve installed extensions!", e);
-		}
-	}
-
-	/**
-	 * Updates the preferences for this tool with a set of new extensions.
-	 *
-	 * @param newExtensions the extensions to add
-	 */
-	private void addInstalledExtensions(Set<ExtensionDetails> newExtensions) {
-
-		DockingWindowManager dockingWindowManager =
-			DockingWindowManager.getInstance(getToolFrame());
-
-		// Get the current preference object. We need to get the existing prefs so we can add our
-		// new extensions to them. If the extensions category doesn't exist yet, just create one.
-		PreferenceState state = getExtensionPreferences(dockingWindowManager);
-
-		// Now get the list of extensions already in the prefs...
-		String[] extNames = state.getStrings(EXTENSIONS_PREFERENCE_NAME, new String[0]);
-
-		// ...and parse the passed-in extension list to get just the names of the extensions to add.
-		List<String> extensionNamesToAdd =
-			newExtensions.stream().map(ext -> ext.getName()).collect(Collectors.toList());
-
-		// Finally add them together and update the preference state.
-		String[] allPreferences = ArrayUtils.addAll(extNames,
-			extensionNamesToAdd.toArray(new String[extensionNamesToAdd.size()]));
-		state.putStrings(EXTENSIONS_PREFERENCE_NAME, allPreferences);
-		dockingWindowManager.putPreferenceState(EXTENSIONS_PREFERENCE_NAME, state);
-	}
-
-	/**
-	 * Return the extensions portion of the preferences object.
-	 *
-	 * @param dockingWindowManager the docking window manager
-	 * @return the extensions portion of the preference state, or a new preference state object if no extension section exists
-	 */
-	private PreferenceState getExtensionPreferences(DockingWindowManager dockingWindowManager) {
-
-		PreferenceState state = dockingWindowManager.getPreferenceState(EXTENSIONS_PREFERENCE_NAME);
-		if (state == null) {
-			state = new PreferenceState();
-		}
-
-		return state;
 	}
 }

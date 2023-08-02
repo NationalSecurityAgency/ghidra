@@ -3088,6 +3088,35 @@
 	</para>
       </listitem>
     </varlistentry>
+    <varlistentry id="AnalysisNanIgnore">
+      <term><emphasis role="bold">NaN operations</emphasis></term>
+      <listitem>
+        <para>
+          This option determines how the Decompiler treats floating-point <emphasis role="bold">NaN</emphasis>
+          (Not a Number) operations.  Many processors automatically perform NaN checks on the operands of
+          floating-point instructions, and unless specifically configured, these show up in Decompiler output
+          as <code>NAN()</code> functional tokens.  Common floating-point source code operations, like
+          <code>&lt;</code>, <code>&gt;</code>, and <code>==</code> can generate <code>NAN</code> tokens as a
+          side effect, even if the original source code was not designed to handle NaN values, and the
+          tokens can clutter the output.
+        </para>
+        <para>
+          The user can optionally configure some or all of the NaN operations to be ignored, meaning that
+          inputs to the NaN operation are <emphasis>assumed</emphasis> to be valid floating-point values and the
+          <code>NAN</code> function is removed, replacing it with the value: <emphasis role="bold">false</emphasis>.
+          The possible settings are:
+          <informalexample>
+            <itemizedlist mark='bullet'>
+	      <listitem><emphasis role="bold">Ignore none</emphasis> - No NaN operations are removed</listitem>
+	      <listitem><emphasis role="bold">Ignore with comparisons</emphasis> - NaN operations associated with comparisons are removed</listitem>
+	      <listitem><emphasis role="bold">Ignore all</emphasis> - All NaN operations are removed</listitem>
+	    </itemizedlist>
+	  </informalexample>
+          The Decompiler considers a NaN operation to be associated with a floating-point comparison if they both
+          can be considered boolean clauses of the same <emphasis role="bold">if</emphasis> condition.
+        </para>
+      </listitem>
+    </varlistentry>
     <varlistentry id="AnalysisForLoops">
       <term><emphasis role="bold">Recover -for- loops</emphasis></term>
       <listitem>

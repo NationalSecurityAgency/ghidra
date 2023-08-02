@@ -21,6 +21,7 @@ import javax.swing.Icon;
 
 import org.jdom.Element;
 
+import docking.options.OptionsService;
 import docking.tool.ToolConstants;
 import generic.theme.GIcon;
 import ghidra.GhidraOptions;
@@ -38,7 +39,6 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.graph.viewer.options.VisualGraphOptions;
 import ghidra.program.model.listing.Program;

@@ -49,16 +49,12 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
-import docking.options.editor.OptionsDialog;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import generic.util.WindowUtilities;
-import ghidra.framework.options.Options;
-import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.graph.AttributeFilters;
 import ghidra.graph.job.GraphJobRunner;
 import ghidra.graph.viewer.popup.*;
@@ -166,7 +162,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private SelectedEdgePaintable<AttributedVertex, AttributedEdge> selectedEdgePaintable;
 
-	private GraphDisplayOptions graphDisplayOptions = GraphDisplayOptions.DEFAULT;
+	private GraphDisplayOptions graphDisplayOptions = new DefaultGraphDisplayOptions();
 
 	private ChangeListener graphDisplayOptionsChangeListener;
 
@@ -524,30 +520,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void editGraphDisplayOptions() {
-		String rootOptionsName = graphDisplayOptions.getRootOptionsName();
-		String relativePath = rootOptionsName + ".Vertex Colors";
-
-		// if the options are registered in the tool options, just show them
-		// otherwise, create a transient options and create an options dialog. This will
-		// allow the user to edit the options for the current graph instance.
-
-		if (graphDisplayOptions.isRegisteredWithTool()) {
-			OptionsService service = tool.getService(OptionsService.class);
-			service.showOptionsDialog("Graph." + relativePath, "");
-		}
-		else {
-			ToolOptions transientOptions = new ToolOptions("Graph");
-			HelpLocation help = new HelpLocation("GraphServices", "Graph Type Display Options");
-			graphDisplayOptions.registerOptions(transientOptions, help);
-			transientOptions.addOptionsChangeListener(graphDisplayOptions);
-			Options[] optionsArray = new Options[] { transientOptions };
-			String dialogTitle = "Graph Instance Settings (Not Saved in Tool Options)";
-			OptionsDialog dialog = new OptionsDialog(dialogTitle, "Graph", optionsArray, null);
-			// we have one less level for these transient tool options, so no need to prepend "graph."
-			dialog.displayCategory(relativePath, "");
-			tool.showDialog(dialog, componentProvider);
-			dialog.dispose();
-		}
+		HelpLocation help = new HelpLocation("GraphServices", "Graph Type Display Options");
+		graphDisplayOptions.displayEditor(tool, help);
 	}
 
 	private void groupSelectedVertices() {
