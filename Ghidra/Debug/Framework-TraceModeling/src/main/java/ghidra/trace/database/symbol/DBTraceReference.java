@@ -151,25 +151,7 @@ public class DBTraceReference implements TraceReference {
 				return;
 			}
 			Address toAddress = getToAddress();
-			if (dbSym instanceof AbstractDBTraceVariableSymbol) {
-				AbstractDBTraceVariableSymbol varSym = (AbstractDBTraceVariableSymbol) dbSym;
-				// Variables' lifespans are governed by the parent function.
-				// Globals span all time.
-				DBTraceNamespaceSymbol parent = varSym.getParentNamespace();
-				if (parent instanceof TraceSymbolWithLifespan) {
-					TraceSymbolWithLifespan symWl = (TraceSymbolWithLifespan) parent;
-					if (!symWl.getLifespan().intersects(getLifespan())) {
-						throw new IllegalArgumentException(
-							"Associated symbol and reference must have connected lifespans");
-					}
-				}
-				if (!varSym.getVariableStorage().contains(toAddress)) {
-					throw new IllegalArgumentException(String.format(
-						"Variable symbol storage of '%s' must contain Reference's to address (%s)",
-						varSym.getName(), toAddress));
-				}
-			}
-			else if (!Objects.equals(symbol.getAddress(), toAddress)) {
+			if (!Objects.equals(symbol.getAddress(), toAddress)) {
 				throw new IllegalArgumentException(String.format(
 					"Symbol address (%s) of '%s' must match Reference's to address (%s)",
 					symbol.getAddress(), symbol.getName(), toAddress));

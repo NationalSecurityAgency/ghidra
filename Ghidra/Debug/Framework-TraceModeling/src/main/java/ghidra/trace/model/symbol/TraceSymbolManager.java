@@ -18,19 +18,32 @@ package ghidra.trace.model.symbol;
 import java.util.Collection;
 import java.util.Comparator;
 
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 
+/**
+ * The symbol table for traces.
+ * 
+ * <p>
+ * Currently, functions are not supported, so effectively, the only symbol types possible in a trace
+ * are: labels, namespaces, and classes. Global variables are partially implemented, but as they are
+ * not finished, even in {@link Program}, they are not available in traces, either.
+ * 
+ * <p>
+ * This manager supports a "fluid" API syntax. The methods on this manager narrow the scope in terms
+ * of the symbol type. Each returns a view, the methods of which operate on that type specifically.
+ * For example, to get the label at a specific address:
+ * 
+ * <pre>
+ * trace.getSymbolManager().labels().getAt(0, null, addr, false);
+ * </pre>
+ */
 public interface TraceSymbolManager {
 
+	/**
+	 * A comparator that sorts primary symbols first.
+	 */
 	static Comparator<TraceSymbol> PRIMALITY_COMPARATOR = (a, b) -> {
-		boolean aFunc = a instanceof TraceFunctionSymbol;
-		boolean bFunc = b instanceof TraceFunctionSymbol;
-		if (aFunc && !bFunc) {
-			return -1;
-		}
-		if (!aFunc && bFunc) {
-			return 1;
-		}
 		boolean aPrim = a.isPrimary();
 		boolean bPrim = b.isPrimary();
 		if (aPrim && !bPrim) {
@@ -42,47 +55,94 @@ public interface TraceSymbolManager {
 		return 0;
 	};
 
+	/**
+	 * Get the trace for this manager.
+	 * 
+	 * @return the trace
+	 */
 	Trace getTrace();
 
+	/**
+	 * Get a symbol by its unique identifier.
+	 * 
+	 * <p>
+	 * The identifier is only unique within this trace.
+	 * 
+	 * @param symbolID the id
+	 * @return the symbol, or null
+	 */
 	TraceSymbol getSymbolByID(long symbolID);
 
+	/**
+	 * Get the trace's global namespace.
+	 * 
+	 * @return the global namespace
+	 */
 	TraceNamespaceSymbol getGlobalNamespace();
 
+	/**
+	 * Get a view of the labels in the trace.
+	 * 
+	 * @return the labels view
+	 */
 	TraceLabelSymbolView labels();
 
+	/**
+	 * Get a view of the namespaces in the trace.
+	 * 
+	 * @return the namespaces view
+	 */
 	TraceNamespaceSymbolView namespaces();
 
+	/**
+	 * Get a view of the classes in the trace.
+	 * 
+	 * @return the classes view
+	 */
 	TraceClassSymbolView classes();
 
-	TraceFunctionSymbolView functions();
-
-	TraceParameterSymbolView parameters();
-
-	TraceLocalVariableSymbolView localVariables();
-
-	TraceGlobalVariableSymbolView globalVariables();
-
 	/**
-	 * TODO: Document me
+	 * Get a view of all the namespaces (including classes) in the trace.
 	 * 
-	 * Note because functions are namespaces, and duplicate function names are allowed, this
-	 * composed view may have duplicate names.
-	 * 
-	 * @return
+	 * @return the all-namespaces view
 	 */
 	TraceSymbolView<? extends TraceNamespaceSymbol> allNamespaces();
 
-	TraceSymbolWithAddressNoDuplicatesView<? extends TraceVariableSymbol> allLocals();
+	/**
+	 * Get a view of all the symbols except labels in the trace.
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This method is somewhat vestigial. At one point, functions were partially
+	 * implemented, so this would have contained functions, variables, etc. As the manager now only
+	 * supports labels, namespaces, and classes, this is essentially the same as
+	 * {@link #allNamespaces()}.
+	 * 
+	 * @return the not-labels view
+	 */
+	TraceSymbolNoDuplicatesView<? extends TraceSymbol> notLabels();
 
-	TraceSymbolWithAddressNoDuplicatesView<? extends TraceSymbol> allVariables();
-
-	TraceSymbolWithLocationView<? extends TraceSymbol> labelsAndFunctions();
-
-	TraceSymbolNoDuplicatesView<? extends TraceSymbol> notLabelsNorFunctions();
-
+	/**
+	 * Get a view of all symbols in the trace.
+	 * 
+	 * @return the all-symbols view
+	 */
 	TraceSymbolView<? extends TraceSymbol> allSymbols();
 
+	/**
+	 * Get the set of unique symbol IDs that are added going from one snapshot to another.
+	 * 
+	 * @param from the first snapshot key
+	 * @param to the second snapshot key
+	 * @return the set of IDs absent in the first but present in the second
+	 */
 	Collection<Long> getIDsAdded(long from, long to);
 
+	/**
+	 * Get the set of unique symbol IDs that are removed going from one snapshot to another.
+	 * 
+	 * @param from the first snapshot key
+	 * @param to the second snapshot key
+	 * @return the set of IDs present in the first but absent in the second
+	 */
 	Collection<Long> getIDsRemoved(long from, long to);
 }
