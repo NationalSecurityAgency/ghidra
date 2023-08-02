@@ -143,7 +143,8 @@ public class MDMangGhidra extends MDMang {
 			object = processObjectCPP(objectCPP);
 			object.setSpecialPrefix(((MDObjectBracket) item).getPrefix());
 		}
-		//TODO: put other objectReserved derivative types here and return something that Ghidra can use.
+		//TODO: put other objectReserved derivative types here and return something that Ghidra
+		// can use.
 		else {
 			object =
 				new DemangledUnknown(mangledSource, demangledSource, objectReserved.toString());
@@ -740,9 +741,6 @@ public class MDMangGhidra extends MDMang {
 				}
 				return resultDataType;
 			}
-			else if (modifierType instanceof MDStdNullPtrType) {
-				resultDataType.setName(datatype.toString());
-			}
 			else {
 				// not pointer, reference, or array type
 				if ((modifierType.getReferencedType() instanceof MDFunctionType)) {
@@ -819,6 +817,9 @@ public class MDMangGhidra extends MDMang {
 		else if (datatype instanceof MDVarArgsType) {
 			resultDataType.setVarArgs();
 		}
+		else if (datatype instanceof MDStdNullPtrType) {
+			resultDataType.setName(datatype.toString());
+		}
 		else {
 			// MDDataType
 			// TODO MDW64Type needs repeated reference type parsing, just as modifier types need
@@ -852,6 +853,3 @@ public class MDMangGhidra extends MDMang {
 		return dataType.toString();
 	}
 }
-
-/******************************************************************************/
-/******************************************************************************/

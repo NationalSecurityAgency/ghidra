@@ -15,7 +15,6 @@
  */
 package mdemangler;
 
-import mdemangler.datatype.modifier.MDArrayBasicType;
 import mdemangler.datatype.modifier.MDCVMod;
 import mdemangler.naming.MDFragmentName;
 import mdemangler.naming.MDQualification;
@@ -93,11 +92,6 @@ public class MDMangVS2015 extends MDMang {
 	}
 
 	@Override
-	public void appendArrayNotation(StringBuilder builder, MDArrayBasicType arrayBasicType) {
-		arrayBasicType.appendArrayNotation(builder);
-	}
-
-	@Override
 	public boolean allowMDTypeInfoParserDefault() {
 		return true;
 	}
@@ -118,6 +112,3 @@ public class MDMangVS2015 extends MDMang {
 	}
 
 }
-
-/******************************************************************************/
-/******************************************************************************/
