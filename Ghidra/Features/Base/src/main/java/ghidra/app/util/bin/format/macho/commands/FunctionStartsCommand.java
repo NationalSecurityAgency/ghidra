@@ -112,8 +112,8 @@ public class FunctionStartsCommand extends LinkEditDataCommand {
 
 		}
 		catch (Exception e) {
-			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(), "Failed to markup %s."
-					.formatted(LoadCommandTypes.getLoadCommandName(getCommandType())));
+			log.appendMsg(FunctionStartsCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, null));
 		}
 	}
 }

@@ -395,9 +395,8 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 			}
 		}
 		catch (Exception e) {
-			String name = LoadCommandTypes.getLoadCommandName(getCommandType()) + " (indirect)";
 			log.appendMsg(DynamicSymbolTableCommand.class.getSimpleName(),
-				"Failed to markup %s.".formatted(name));
+				"Failed to markup: " + getContextualName(source, "indirect"));
 		}
 	}
 

@@ -20,6 +20,8 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.bin.format.macho.commands.dyld.BindOpcode;
+import ghidra.app.util.bin.format.macho.commands.dyld.BindingTable;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
@@ -45,6 +47,9 @@ public class DyldInfoCommand extends LoadCommand {
 	private int exportOff;
 	private int exportSize;
 	
+	private BindingTable bindingTable;
+	private BindingTable weakBindingTable;
+	private BindingTable lazyBindingTable;
 	private ExportTrie exportTrie;
 
 	/**
@@ -72,6 +77,32 @@ public class DyldInfoCommand extends LoadCommand {
 		exportOff = loadCommandReader.readNextInt();
 		exportSize = loadCommandReader.readNextInt();
 		
+		// TODO: rebase
+
+		if (bindOff > 0 && bindSize > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + bindOff);
+			bindingTable = new BindingTable(dataReader, header, bindSize, false);
+		}
+		else {
+			bindingTable = new BindingTable();
+		}
+
+		if (weakBindOff > 0 && weakBindSize > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + weakBindOff);
+			weakBindingTable = new BindingTable(dataReader, header, weakBindSize, false);
+		}
+		else {
+			weakBindingTable = new BindingTable();
+		}
+
+		if (lazyBindOff > 0 && lazyBindSize > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + lazyBindOff);
+			lazyBindingTable = new BindingTable(dataReader, header, lazyBindSize, true);
+		}
+		else {
+			lazyBindingTable = new BindingTable();
+		}
+
 		if (exportOff > 0 && exportSize > 0) {
 			dataReader.setPointerIndex(header.getStartIndex() + exportOff);
 			exportTrie = new ExportTrie(dataReader);
@@ -152,6 +183,27 @@ public class DyldInfoCommand extends LoadCommand {
 	}
 	
 	/**
+	 * {@return The binding table}
+	 */
+	public BindingTable getBindingTable() {
+		return bindingTable;
+	}
+
+	/**
+	 * {@return The lazy binding table}
+	 */
+	public BindingTable getLazyBindingTable() {
+		return lazyBindingTable;
+	}
+
+	/**
+	 * {@return The weak binding table}
+	 */
+	public BindingTable getWeakBindingTable() {
+		return weakBindingTable;
+	}
+
+	/**
 	 * {@return The export trie}
 	 */
 	public ExportTrie getExportTrie() {
@@ -186,11 +238,10 @@ public class DyldInfoCommand extends LoadCommand {
 	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
 			MessageLog log) throws CancelledException {
 		markupRebaseInfo(program, header, source, monitor, log);
-		markupBindInfo(program, header, source, monitor, log);
-		markupWeakBindInfo(program, header, source, monitor, log);
-		markupLazyBindInfo(program, header, source, monitor, log);
+		markupBindings(program, header, source, monitor, log);
+		markupWeakBindings(program, header, source, monitor, log);
+		markupLazyBindings(program, header, source, monitor, log);
 		markupExportInfo(program, header, source, monitor, log);
-
 	}
 
 	private void markupRebaseInfo(Program program, MachHeader header, String source,
@@ -199,28 +250,80 @@ public class DyldInfoCommand extends LoadCommand {
 			source, "rebase");
 	}
 
-	private void markupBindInfo(Program program, MachHeader header, String source,
+	private void markupBindings(Program program, MachHeader header, String source,
 			TaskMonitor monitor, MessageLog log) {
-		markupPlateComment(program, fileOffsetToAddress(program, header, bindOff, bindSize),
-			source, "bind");
+		Address bindAddr = fileOffsetToAddress(program, header, bindOff, bindSize);
+		markupPlateComment(program, bindAddr, source, "bind");
+		markupBindingTable(program, bindAddr, bindingTable, source, "bind", log);
 	}
 
-	private void markupWeakBindInfo(Program program, MachHeader header, String source,
+	private void markupWeakBindings(Program program, MachHeader header, String source,
 			TaskMonitor monitor, MessageLog log) {
-		markupPlateComment(program, fileOffsetToAddress(program, header, weakBindOff, weakBindSize),
-			source, "weak bind");
+		Address addr = fileOffsetToAddress(program, header, weakBindOff, weakBindSize);
+		markupPlateComment(program, addr, source, "weak bind");
+		markupBindingTable(program, addr, weakBindingTable, source, "weak bind", log);
+
 	}
 
-	private void markupLazyBindInfo(Program program, MachHeader header, String source,
+	private void markupLazyBindings(Program program, MachHeader header, String source,
 			TaskMonitor monitor, MessageLog log) {
-		markupPlateComment(program, fileOffsetToAddress(program, header, lazyBindOff, lazyBindSize),
-			source, "lazy bind");
+		Address addr = fileOffsetToAddress(program, header, lazyBindOff, lazyBindSize);
+		markupPlateComment(program, addr, source, "lazy bind");
+		markupBindingTable(program, addr, lazyBindingTable, source, "lazy bind", log);
+	}
+
+	private void markupBindingTable(Program program, Address addr, BindingTable table,
+			String source, String additionalDescription, MessageLog log) {
+		if (addr == null) {
+			return;
+		}
+		try {
+			DataType bindOpcodeDataType = BindOpcode.toDataType();
+			for (long offset : table.getOpcodeOffsets()) {
+				DataUtilities.createData(program, addr.add(offset), bindOpcodeDataType, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			for (long offset : table.getUlebOffsets()) {
+				DataUtilities.createData(program, addr.add(offset), ULEB128, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			for (long offset : table.getSlebOffsets()) {
+				DataUtilities.createData(program, addr.add(offset), SLEB128, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			for (long offset : table.getStringOffsets()) {
+				DataUtilities.createData(program, addr.add(offset), STRING, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+		}
+		catch (Exception e) {
+			log.appendMsg(DyldInfoCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, additionalDescription));
+		}
 	}
 
 	private void markupExportInfo(Program program, MachHeader header, String source,
 			TaskMonitor monitor, MessageLog log) {
-		markupPlateComment(program, fileOffsetToAddress(program, header, exportOff, exportSize),
-			source, "export");
+		Address exportAddr = fileOffsetToAddress(program, header, exportOff, exportSize);
+		if (exportAddr == null) {
+			return;
+		}
+		markupPlateComment(program, exportAddr, source, "export");
+
+		try {
+			for (long offset : exportTrie.getUlebOffsets()) {
+				DataUtilities.createData(program, exportAddr.add(offset), ULEB128, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			for (long offset : exportTrie.getStringOffsets()) {
+				DataUtilities.createData(program, exportAddr.add(offset), STRING, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+		}
+		catch (Exception e) {
+			log.appendMsg(DyldInfoCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, "export"));
+		}
 	}
 
 	@Override

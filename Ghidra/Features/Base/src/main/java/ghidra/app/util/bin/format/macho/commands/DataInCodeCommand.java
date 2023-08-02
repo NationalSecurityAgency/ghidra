@@ -79,8 +79,8 @@ public class DataInCodeCommand extends LinkEditDataCommand {
 			}
 		}
 		catch (Exception e) {
-			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(), "Failed to markup %s."
-					.formatted(LoadCommandTypes.getLoadCommandName(getCommandType())));
+			log.appendMsg(DataInCodeCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, null));
 		}
 	}
 }

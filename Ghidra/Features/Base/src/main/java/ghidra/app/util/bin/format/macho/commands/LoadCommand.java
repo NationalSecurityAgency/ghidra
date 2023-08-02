@@ -138,14 +138,27 @@ public abstract class LoadCommand implements StructConverter {
 		if (address == null) {
 			return;
 		}
-		String comment = LoadCommandTypes.getLoadCommandName(getCommandType());
+		String comment = getContextualName(source, additionalDescription);
+		program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+	}
+
+	/**
+	 * Gets the name of this {@link LoadCommand} which includes contextual information
+	 * 
+	 * @param source The source of this {@link LoadCommand} (could be null or empty)
+	 * @param additionalDescription Additional information to associate with the {@link LoadCommand}
+	 *   name
+	 * @return The name of this {@link LoadCommand} which includes contextual information
+	 */
+	protected String getContextualName(String source, String additionalDescription) {
+		String markupName = LoadCommandTypes.getLoadCommandName(getCommandType());
 		if (additionalDescription != null && !additionalDescription.isBlank()) {
-			comment += " (" + additionalDescription + ")";
+			markupName += " (" + additionalDescription + ")";
 		}
 		if (source != null && !source.isBlank()) {
-			comment += " - " + source;
+			markupName += " - " + source;
 		}
-		program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+		return markupName;
 	}
 
 	/**
