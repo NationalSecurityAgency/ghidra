@@ -373,6 +373,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 				.stream()
 				.map(m -> ProgramURLUtils.getFileForHackedUpGhidraURL(project,
 					m.getStaticProgramURL()))
+				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 		Set<DomainFile> libraries = DebuggerStaticMappingUtils.collectLibraries(alreadyMapped);
 		alreadyMapped.stream()
