@@ -15,7 +15,7 @@
  */
 package agent.gdb.rmi;
 
-import static org.hamcrest.Matchers.startsWith;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -43,6 +43,7 @@ import ghidra.framework.TestApplicationUtils;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginsConfiguration;
 import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;

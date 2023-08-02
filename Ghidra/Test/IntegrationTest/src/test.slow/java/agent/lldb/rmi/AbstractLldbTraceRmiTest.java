@@ -15,30 +15,14 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.SocketTimeoutException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.io.*;
+import java.net.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,11 +33,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteAsyncResult;
-import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteMethod;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiAcceptor;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin;
+import ghidra.app.plugin.core.debug.service.rmi.trace.*;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.services.TraceRmiService;
 import ghidra.dbg.testutil.DummyProc;
@@ -61,6 +41,7 @@ import ghidra.framework.TestApplicationUtils;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginsConfiguration;
 import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
