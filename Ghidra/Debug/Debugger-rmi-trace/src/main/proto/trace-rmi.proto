@@ -1,0 +1,525 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+package ghidra.rmi.trace;
+
+
+message FilePath {
+	string path = 1;
+}
+
+message DomObjId {
+	uint32 id = 1;
+}
+
+message TxId {
+	int32 id = 1;
+}
+
+message ObjPath {
+	string path = 1;
+}
+
+message Language {
+	string id = 1;
+}
+
+message Compiler {
+	string id = 1;
+}
+
+message Addr {
+	string space = 1;
+	uint64 offset = 2;
+}
+
+message AddrRange {
+	string space = 1;
+	uint64 offset = 2;
+	uint64 extend = 3;
+}
+
+message Snap {
+	int64 snap = 1;
+}
+
+message Span {
+	int64 min = 1;
+	int64 max = 2;
+}
+
+message Box {
+	Span span = 1;
+	AddrRange range = 2;
+}
+
+message ReplyError {
+	string message = 1;
+}
+
+// Trace operations
+
+message RequestCreateTrace {
+	FilePath path = 1;
+	Language language = 2;
+	Compiler compiler = 3;
+	DomObjId oid = 4;
+}
+
+message ReplyCreateTrace {
+}
+
+message RequestSaveTrace {
+	DomObjId oid = 1;
+}
+
+message ReplySaveTrace {
+}
+
+message RequestCloseTrace {
+	DomObjId oid = 1;
+}
+
+message ReplyCloseTrace {
+}
+
+message RequestStartTx {
+	DomObjId oid = 1;
+	bool undoable = 2;
+	string description = 3;
+	TxId txid = 4;
+}
+
+message ReplyStartTx {
+}
+
+message RequestEndTx {
+	DomObjId oid = 1;
+	TxId txid = 2;
+	bool abort = 3;
+}
+
+message ReplyEndTx {
+}
+
+// Memory operations
+
+message RequestCreateOverlaySpace {
+	DomObjId oid = 1;
+	string baseSpace = 2;
+	string name = 3;
+}
+
+message ReplyCreateOverlaySpace {
+}
+
+enum MemoryState {
+	MS_UNKNOWN = 0;
+	MS_KNOWN = 1;
+	MS_ERROR = 2;
+}
+
+message RequestSetMemoryState {
+	DomObjId oid = 1;
+	Snap snap = 2;
+	AddrRange range = 3;
+	MemoryState state = 4;
+}
+
+message ReplySetMemoryState {
+}
+
+message RequestPutBytes {
+	DomObjId oid = 1;
+	Snap snap = 2;
+	Addr start = 3;
+	bytes data = 4;
+}
+
+message ReplyPutBytes {
+	int32 written = 1;
+}
+
+message RequestDeleteBytes {
+	DomObjId oid = 1;
+	Snap snap = 2;
+	AddrRange range = 3;
+}
+
+message ReplyDeleteBytes {
+}
+
+message RegVal {
+	string name = 1;
+	bytes value = 2;
+}
+
+message RequestPutRegisterValue {
+	DomObjId oid = 1;
+	Snap snap = 2;
+	string space = 3;
+	repeated RegVal values = 4;
+}
+
+message ReplyPutRegisterValue {
+	repeated string skipped_names = 1;
+}
+
+message RequestDeleteRegisterValue {
+	DomObjId oid = 1;
+	Snap snap = 2;
+	string space = 3;
+	repeated string names = 4;
+}
+
+message ReplyDeleteRegisterValue {
+}
+
+// Object operations
+
+message ObjSpec {
+	oneof key {
+		int64 id = 1;
+		ObjPath path = 2;
+	}
+}
+
+message ObjDesc {
+	int64 id = 1;
+	ObjPath path = 2;
+}
+
+message ValSpec {
+	ObjSpec parent = 1;
+	Span span = 2;
+	string key = 3;
+	Value value = 4;
+}
+
+message ValDesc {
+	ObjDesc parent = 1;
+	Span span = 2;
+	string key = 3;
+	Value value = 4;
+}
+
+message Null {
+}
+
+message BoolArr {
+	repeated bool arr = 1;
+}
+
+message ShortArr {
+	repeated int32 arr = 1;
+}
+
+message IntArr {
+	repeated int32 arr = 1;
+}
+
+message LongArr {
+	repeated int64 arr = 1;
+}
+
+message StringArr {
+	repeated string arr = 1;
+}
+
+message ValueType {
+	// Names from schema context
+	string name = 1;
+}
+
+message Value {
+	oneof value {
+		Null null_value = 1;
+		bool bool_value = 2;
+		int32 byte_value = 3;
+		uint32 char_value = 4;
+		int32 short_value = 5;
+		int32 int_value = 6;
+		int64 long_value = 7;
+		string string_value = 8;
+		BoolArr bool_arr_value = 9;
+		bytes bytes_value = 10;
+		string char_arr_value = 11;
+		ShortArr short_arr_value = 12;
+		IntArr int_arr_value = 13;
+		LongArr long_arr_value = 14;
+		StringArr string_arr_value = 15;
+
+		Addr address_value = 16;
+		AddrRange range_value = 17;
+
+		ObjSpec child_spec = 18;
+		ObjDesc child_desc = 19;
+	}
+}
+
+message RequestCreateRootObject {
+	DomObjId oid = 1;
+	string schema_context = 2;
+	string root_schema = 3;
+}
+
+message RequestCreateObject {
+	DomObjId oid = 1;
+	ObjPath path = 2;
+}
+
+message ReplyCreateObject {
+	ObjSpec object = 1;
+}
+
+enum Resolution {
+	CR_TRUNCATE = 0;
+	CR_DENY = 1;
+	CR_ADJUST = 2;
+}
+
+message RequestInsertObject {
+	DomObjId oid = 1;
+	ObjSpec object = 2;
+	Span span = 3;
+	Resolution resolution = 4;
+}
+
+message ReplyInsertObject {
+	Span span = 1;
+}
+
+message RequestRemoveObject {
+	DomObjId oid = 1;
+	ObjSpec object = 2;
+	Span span = 3;
+	bool tree = 4;
+}
+
+message ReplyRemoveObject {
+}
+
+message RequestSetValue {
+	DomObjId oid = 1;
+	ValSpec value = 2;
+	Resolution resolution = 3;
+}
+
+message ReplySetValue {
+	Span span = 1;
+}
+
+enum ValueKinds {
+	VK_ELEMENTS = 0;
+	VK_ATTRIBUTES = 1;
+	VK_BOTH = 2;
+}
+
+message RequestRetainValues {
+	DomObjId oid = 1;
+	ObjSpec object = 2;
+	Span span = 3;
+	ValueKinds kinds = 4;
+	repeated string keys = 5;
+}
+
+message ReplyRetainValues {
+}
+
+message RequestGetObject {
+	DomObjId oid = 1;
+	ObjSpec object = 2;
+}
+
+message ReplyGetObject {
+	ObjDesc object = 1;
+}
+
+message RequestGetValues {
+	DomObjId oid = 1;
+	Span span = 2;
+	ObjPath pattern = 3;
+}
+
+message ReplyGetValues {
+	repeated ValDesc values = 1;
+}
+
+message RequestGetValuesIntersecting {
+	DomObjId oid = 1;
+	Box box = 2;
+}
+
+// Analysis operations
+
+message RequestDisassemble {
+	DomObjId oid = 1;
+	Snap snap = 2;
+	Addr start = 3;
+}
+
+message ReplyDisassemble {
+	int64 length = 1;
+}
+
+// UI operations
+
+message RequestActivate {
+	DomObjId oid = 1;
+	ObjSpec object = 2;
+}
+
+message ReplyActivate {
+}
+
+// Snapshots
+
+message RequestSnapshot {
+	DomObjId oid = 1;
+	string description = 2;
+	string datetime = 3;
+	Snap snap = 4;
+}
+
+message ReplySnapshot {
+}
+
+// Client commands
+
+message MethodParameter {
+	string name = 1;
+	ValueType type = 2;
+	bool required = 3;
+	Value default_value = 4;
+	string display = 5;
+	string description = 6;
+}
+
+message MethodArgument {
+	string name = 1;
+	Value value = 2;
+}
+
+message Method {
+	string name = 1;
+	string action = 2;
+	string description = 3;
+	repeated MethodParameter parameters = 4;
+	// I'd like to make them all void, but I think executing a command and capturing its output
+	// justifies being able to return a result. It should be used very sparingly.
+	ValueType return_type = 5;
+}
+
+message RequestNegotiate {
+	string version = 1;
+	repeated Method methods = 2;
+}
+
+message ReplyNegotiate {
+}
+
+message XRequestInvokeMethod {
+	optional DomObjId oid = 1;
+	string name = 2;
+	repeated MethodArgument arguments = 3;
+}
+
+message XReplyInvokeMethod {
+	string error = 1;
+	Value return_value = 2;
+}
+
+// Root
+
+message RootMessage {
+	oneof msg {
+		ReplyError error = 1;
+
+		RequestNegotiate request_negotiate = 2;
+		ReplyNegotiate reply_negotiate = 3;
+
+		RequestCreateTrace request_create_trace = 4;
+		ReplyCreateTrace reply_create_trace = 5;
+
+		RequestSaveTrace request_save_trace = 6;
+		ReplySaveTrace reply_save_trace = 7;
+
+		RequestCloseTrace request_close_trace = 8;
+		ReplyCloseTrace reply_close_trace = 9;
+
+		RequestStartTx request_start_tx = 10;
+		ReplyStartTx reply_start_tx = 11;
+
+		RequestEndTx request_end_tx = 12;
+		ReplyEndTx reply_end_tx = 13;
+
+		RequestCreateOverlaySpace request_create_overlay = 14;
+		ReplyCreateOverlaySpace reply_create_overlay = 15;
+
+		RequestSetMemoryState request_set_memory_state = 16;
+		ReplySetMemoryState reply_set_memory_state = 17;
+
+		RequestPutBytes request_put_bytes = 18;
+		ReplyPutBytes reply_put_bytes = 19;
+
+		RequestDeleteBytes request_delete_bytes = 20;
+		ReplyDeleteBytes reply_delete_bytes = 21;
+
+		RequestPutRegisterValue request_put_register_value = 22;
+		ReplyPutRegisterValue reply_put_register_value = 23;
+
+		RequestDeleteRegisterValue request_delete_register_value = 24;
+		ReplyDeleteRegisterValue reply_delete_register_value = 25;
+
+		RequestCreateRootObject request_create_root_object = 26;
+		// Use same reply as CreateObject
+		RequestCreateObject request_create_object = 27;
+		ReplyCreateObject reply_create_object = 28;
+
+		RequestInsertObject request_insert_object = 29;
+		ReplyInsertObject reply_insert_object = 30;
+
+		RequestRemoveObject request_remove_object = 31;
+		ReplyRemoveObject reply_remove_object = 32;
+
+		RequestSetValue request_set_value = 33;
+		ReplySetValue reply_set_value = 34;
+
+		RequestRetainValues request_retain_values = 35;
+		ReplyRetainValues reply_retain_values = 36;
+
+		RequestGetObject request_get_object = 37;
+		ReplyGetObject reply_get_object = 38;
+
+		RequestGetValues request_get_values = 39;
+		ReplyGetValues reply_get_values = 40;
+
+		RequestGetValuesIntersecting request_get_values_intersecting = 41;
+		// Reuse reply_get_values
+
+		RequestDisassemble request_disassemble = 42;
+		ReplyDisassemble reply_disassemble = 43;
+
+		RequestActivate request_activate = 44;
+		ReplyActivate reply_activate = 45;
+
+		RequestSnapshot request_snapshot = 46;
+		ReplySnapshot reply_snapshot = 47;
+
+		XRequestInvokeMethod xrequest_invoke_method = 48;
+		XReplyInvokeMethod xreply_invoke_method = 49;
+	}
+}

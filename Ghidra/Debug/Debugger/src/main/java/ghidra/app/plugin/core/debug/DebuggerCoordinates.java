@@ -569,7 +569,10 @@ public class DebuggerCoordinates {
 	}
 
 	public TraceProgramView getView() {
-		return view;
+		if (trace == null) {
+			return view; // probably null
+		}
+		return view == null ? trace.getProgramView() : view;
 	}
 
 	public long getSnap() {

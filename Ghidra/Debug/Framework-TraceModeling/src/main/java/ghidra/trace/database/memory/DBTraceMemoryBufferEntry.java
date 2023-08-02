@@ -131,9 +131,16 @@ public class DBTraceMemoryBufferEntry extends DBAnnotatedObject {
 		if (compressed) {
 			decompress();
 		}
-		buffer.put((blockNum << DBTraceMemorySpace.BLOCK_SHIFT) + dstOffset, buf.array(),
-			buf.arrayOffset() + buf.position(), len);
-		buf.position(buf.position() + len);
+		int bufOffset = (blockNum << DBTraceMemorySpace.BLOCK_SHIFT) + dstOffset;
+		if (buf.isReadOnly()) {
+			byte[] temp = new byte[len];
+			buf.get(temp);
+			buffer.put(bufOffset, temp);
+		}
+		else {
+			buffer.put(bufOffset, buf.array(), buf.arrayOffset() + buf.position(), len);
+			buf.position(buf.position() + len);
+		}
 		return len;
 	}
 
