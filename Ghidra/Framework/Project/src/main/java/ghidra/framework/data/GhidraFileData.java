@@ -24,6 +24,8 @@ import java.util.Map;
 
 import javax.swing.Icon;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.DBHandle;
 import db.Field;
 import db.buffers.*;
@@ -209,21 +211,42 @@ public class GhidraFileData {
 
 	/**
 	 * Get a remote Ghidra URL for this domain file if available within a remote repository.
+	 * @param ref reference within a file, may be null.  NOTE: such reference interpretation
+	 * is specific to a domain object and tooling with limited support.
 	 * @return remote Ghidra URL for this file or null
 	 */
-	URL getSharedProjectURL() {
+	URL getSharedProjectURL(String ref) {
 		synchronized (fileSystem) {
 			RepositoryAdapter repository = parent.getProjectFileManager().getRepository();
 			if (versionedFolderItem != null && repository != null) {
 				URL folderURL = parent.getDomainFolder().getSharedProjectURL();
 				try {
-					// Direct URL construction done so that ghidra protocol 
-					// extension may be supported
-					return new URL(folderURL.toExternalForm() + name);
+					String spec = name;
+					if (!StringUtils.isEmpty(ref)) {
+						spec += "#" + ref;
+					}
+					return new URL(folderURL, spec);
 				}
 				catch (MalformedURLException e) {
 					// ignore
 				}
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Get a local Ghidra URL for this domain file if available within a non-transient local 
+	 * project.  A null value is returned for a transient project.
+	 * @param ref reference within a file, may be null.  NOTE: such reference interpretation
+	 * is specific to a domain object and tooling with limited support.
+	 * @return local Ghidra URL for this file or null if transient or not applicable
+	 */
+	URL getLocalProjectURL(String ref) {
+		synchronized (fileSystem) {
+			ProjectLocator projectLocator = parent.getProjectLocator();
+			if (!projectLocator.isTransient()) {
+				return GhidraURL.makeURL(projectLocator, getPathname(), ref);
 			}
 			return null;
 		}
@@ -453,8 +476,7 @@ public class GhidraFileData {
 			return true;
 		}
 		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
-		if (!(dobj instanceof DomainObjectAdapterDB) ||
-			!dobj.isChanged()) {
+		if (!(dobj instanceof DomainObjectAdapterDB) || !dobj.isChanged()) {
 			return true;
 		}
 		LockingTaskMonitor monitor = null;
@@ -881,8 +903,8 @@ public class GhidraFileData {
 							: CheckoutType.NORMAL;
 			}
 			ItemCheckoutStatus checkout =
-				versionedFolderItem.checkout(checkoutType, user, ItemCheckoutStatus.getProjectPath(
-					projectLocator.toString(), projectLocator.isTransient()));
+				versionedFolderItem.checkout(checkoutType, user, ItemCheckoutStatus
+						.getProjectPath(projectLocator.toString(), projectLocator.isTransient()));
 			if (checkout == null) {
 				return false;
 			}
@@ -1690,10 +1712,8 @@ public class GhidraFileData {
 					BufferFile bufferFile = ((DatabaseItem) item).open();
 					try {
 						newParentData.getLocalFileSystem()
-								.createDatabase(pathname, targetName,
-									FileIDFactory.createFileID(), bufferFile, null, contentType,
-									true,
-									monitor, user);
+								.createDatabase(pathname, targetName, FileIDFactory.createFileID(),
+									bufferFile, null, contentType, true, monitor, user);
 					}
 					finally {
 						bufferFile.dispose();
@@ -1703,8 +1723,8 @@ public class GhidraFileData {
 					InputStream istream = ((DataFileItem) item).getInputStream();
 					try {
 						newParentData.getLocalFileSystem()
-								.createDataFile(pathname, targetName,
-									istream, null, contentType, monitor);
+								.createDataFile(pathname, targetName, istream, null, contentType,
+									monitor);
 					}
 					finally {
 						istream.close();
@@ -1745,10 +1765,8 @@ public class GhidraFileData {
 				}
 				try {
 					destFolderData.getLocalFileSystem()
-							.createDatabase(pathname, targetName,
-								FileIDFactory.createFileID(), bufferFile, null, contentType, true,
-								monitor,
-								user);
+							.createDatabase(pathname, targetName, FileIDFactory.createFileID(),
+								bufferFile, null, contentType, true, monitor, user);
 				}
 				finally {
 					bufferFile.dispose();

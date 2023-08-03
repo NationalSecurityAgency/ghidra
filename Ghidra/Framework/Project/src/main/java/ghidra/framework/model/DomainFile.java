@@ -89,12 +89,23 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public String getPathname();
 
 	/**
-	 * Get a remote Ghidra URL for this domain file if available within the associated shared
+	 * Get a remote Ghidra URL for this domain file if available within an associated shared
 	 * project repository.  A null value will be returned if shared file does not exist and
-	 * may be returned if shared repository is not connected or a connection error occurs.
+	 * may also be returned if shared repository is not connected or a connection error occurs.
+	 * @param ref reference within a file, may be null.  NOTE: such reference interpretation
+	 * is specific to a domain object and tooling with limited support.
 	 * @return remote Ghidra URL for this file or null
 	 */
-	public URL getSharedProjectURL();
+	public URL getSharedProjectURL(String ref);
+
+	/**
+	 * Get a local Ghidra URL for this domain file if available within the associated non-transient
+	 * local project.  A null value will be returned if project is transient.
+	 * @param ref reference within a file, may be null.  NOTE: such reference interpretation
+	 * is specific to a domain object and tooling with limited support.
+	 * @return local Ghidra URL for this file or null if transient or not applicable
+	 */
+	public URL getLocalProjectURL(String ref);
 
 	/**
 	 * Returns the local storage location for the project that this DomainFile belongs to.
