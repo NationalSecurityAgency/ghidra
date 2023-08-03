@@ -43,7 +43,7 @@ import ghidra.util.task.TaskMonitor;
  * @param <T> {@link URLLinkObject} implementation class
  */
 public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBContentHandler<T> {
-	
+
 	public static final String URL_METADATA_KEY = "link.url";
 
 	// 16x16 link icon where link is placed in lower-left corner
@@ -93,11 +93,10 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 
 	@SuppressWarnings("unchecked")
 	private T getObject(FolderItem item, int version, Object consumer, TaskMonitor monitor,
-			boolean immutable)
-			throws IOException, VersionException, CancelledException {
+			boolean immutable) throws IOException, VersionException, CancelledException {
 
 		URL url = getURL(item);
-		
+
 		Class<?> domainObjectClass = getDomainObjectClass();
 		if (domainObjectClass == null) {
 			throw new UnsupportedOperationException("");
@@ -105,6 +104,7 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 
 		GhidraURLWrappedContent wrappedContent = null;
 		Object content = null;
+		final Object transientConsumer = new Object();
 		try {
 			GhidraURLConnection c = (GhidraURLConnection) url.openConnection();
 			Object obj = c.getContent(); // read-only access
@@ -115,22 +115,21 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 				throw new IOException("Unsupported linked content");
 			}
 			wrappedContent = (GhidraURLWrappedContent) obj;
-			content = wrappedContent.getContent(consumer);
+			content = wrappedContent.getContent(transientConsumer);
 			if (!(content instanceof DomainFile)) {
 				throw new IOException("Unsupported linked content: " + content.getClass());
 			}
 			DomainFile linkedFile = (DomainFile) content;
 			if (!getDomainObjectClass().isAssignableFrom(linkedFile.getDomainObjectClass())) {
-				throw new BadLinkException(
-					"Expected " + getDomainObjectClass() + " but linked to " +
-						linkedFile.getDomainObjectClass());
+				throw new BadLinkException("Expected " + getDomainObjectClass() +
+					" but linked to " + linkedFile.getDomainObjectClass());
 			}
 			return immutable ? (T) linkedFile.getImmutableDomainObject(consumer, version, monitor)
 					: (T) linkedFile.getReadOnlyDomainObject(consumer, version, monitor);
 		}
 		finally {
 			if (content != null) {
-				wrappedContent.release(content, consumer);
+				wrappedContent.release(content, transientConsumer);
 			}
 		}
 	}
@@ -151,8 +150,7 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 
 	@Override
 	public final DomainObjectMergeManager getMergeManager(DomainObject resultsObj,
-			DomainObject sourceObj,
-			DomainObject originalObj, DomainObject latestObj) {
+			DomainObject sourceObj, DomainObject originalObj, DomainObject latestObj) {
 		return null;
 	}
 

@@ -199,8 +199,7 @@ public class GhidraFolder implements DomainFolder {
 				repository.getName());
 		}
 		try {
-			// Direct URL construction done so that ghidra protocol 
-			// extension may be supported
+			// Direct URL construction done so that ghidra protocol extension may be supported
 			String urlStr = projectURL.toExternalForm();
 			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
 				urlStr = urlStr.substring(0, urlStr.length() - 1);
@@ -215,6 +214,15 @@ public class GhidraFolder implements DomainFolder {
 		catch (MalformedURLException e) {
 			return null;
 		}
+	}
+
+	@Override
+	public URL getLocalProjectURL() {
+		ProjectLocator projectLocator = parent.getProjectLocator();
+		if (!projectLocator.isTransient()) {
+			return GhidraURL.makeURL(projectLocator, getPathname(), null);
+		}
+		return null;
 	}
 
 	@Override
