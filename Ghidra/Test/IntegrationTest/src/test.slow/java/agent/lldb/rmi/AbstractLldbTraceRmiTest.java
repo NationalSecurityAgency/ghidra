@@ -86,7 +86,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	private Path outFile;
 	private Path errFile;
 
-	@BeforeClass
+	// @BeforeClass
 	public static void setupPython() throws Throwable {
 		new ProcessBuilder("gradle", "Debugger-agent-lldb:installPyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())

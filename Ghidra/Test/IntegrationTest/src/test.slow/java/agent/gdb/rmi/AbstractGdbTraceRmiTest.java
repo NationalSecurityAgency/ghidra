@@ -82,7 +82,7 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 	private Path outFile;
 	private Path errFile;
 
-	@BeforeClass
+	// @BeforeClass
 	public static void setupPython() throws Throwable {
 		new ProcessBuilder("gradle", "Debugger-agent-gdb:installPyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())

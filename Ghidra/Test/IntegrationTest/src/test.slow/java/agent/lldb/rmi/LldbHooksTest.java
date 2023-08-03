@@ -29,8 +29,8 @@ import java.util.Objects;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import agent.gdb.model.GdbLinuxSpecimen;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
+import ghidra.dbg.testutil.DummyProc;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.program.model.address.AddressSpace;
@@ -85,9 +85,10 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	// TODO: This passes if you single-step through it but fails on some transactional stuff if run
 	//@Test
 	public void testOnNewThread() throws Exception {
+		String cloneExit = DummyProc.which("expCloneExit");
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 
-			start(conn, "%s".formatted(GdbLinuxSpecimen.CLONE_EXIT.getCommandLine()));
+			start(conn, "%s".formatted(cloneExit));
 			conn.execute("break set -n work");
 			waitForPass(() -> {
 				TraceObject proc = tb.objAny("Processes[]");
@@ -112,10 +113,11 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	// TODO: This passes if you single-step through it but fails on some transactional stuff if run
 	//@Test
 	public void testOnThreadSelected() throws Exception {
+		String cloneExit = DummyProc.which("expCloneExit");
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 			traceManager.openTrace(tb.trace);
 
-			start(conn, "%s".formatted(GdbLinuxSpecimen.CLONE_EXIT.getCommandLine()));
+			start(conn, "%s".formatted(cloneExit));
 			conn.execute("break set -n work");
 			
 			waitForPass(() -> {
