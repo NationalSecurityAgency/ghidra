@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.modules;
 
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
@@ -971,6 +972,9 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			try {
 				Program program = ProgramURLUtils.openHackedUpGhidraURL(programManager,
 					tool.getProject(), url, ProgramManager.OPEN_VISIBLE);
+				if (program == null) {
+					failures.add(new FileNotFoundException(url.toString()));
+				}
 				result.add(program);
 			}
 			catch (Exception e) {
