@@ -411,7 +411,9 @@ public class PcodeExecutor<T> {
 	 * @param frame the frame to finish
 	 */
 	protected void branchToOffset(T offset, PcodeFrame frame) {
-		state.setVar(pc, offset);
+		T truncOff = arithmetic.unaryOp(PcodeOp.COPY, pc.getMinimumByteSize(),
+			(int) arithmetic.sizeOf(offset), offset);
+		state.setVar(pc, truncOff);
 		frame.finishAsBranch();
 	}
 
