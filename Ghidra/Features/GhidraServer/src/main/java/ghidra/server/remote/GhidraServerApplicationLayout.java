@@ -57,6 +57,8 @@ public class GhidraServerApplicationLayout extends ApplicationLayout {
 
 		// User directories (don't let anything use the user home directory...there may not be one)
 		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
+		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(applicationProperties,
+			applicationInstallationDir);
 
 		// Modules - required to find module data files
 		modules = ModuleUtilities.findModules(applicationRootDirs,
