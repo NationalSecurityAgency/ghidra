@@ -25,7 +25,6 @@ import java.util.List;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import agent.gdb.model.GdbLinuxSpecimen;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.testutil.DummyProc;
@@ -146,11 +145,12 @@ public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 
 	@Test
 	public void testOnNewThread() throws Exception {
+		String cloneExit = DummyProc.which("expCloneExit");
 		try (GdbAndTrace conn = startAndSyncGdb()) {
 			conn.execute("""
 					file %s
 					break work
-					start""".formatted(GdbLinuxSpecimen.CLONE_EXIT.getCommandLine()));
+					start""".formatted(cloneExit));
 			waitForPass(() -> {
 				TraceObject inf = tb.obj("Inferiors[1]");
 				assertNotNull(inf);
