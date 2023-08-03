@@ -24,11 +24,10 @@ import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.commands.ExportTrie.ExportEntry;
-import ghidra.app.util.bin.format.macho.commands.chained.DyldChainedFixups;
-import ghidra.app.util.bin.format.macho.commands.chained.DyldChainedStartsOffsets;
+import ghidra.app.util.bin.format.macho.commands.chained.*;
+import ghidra.app.util.bin.format.macho.commands.dyld.*;
 import ghidra.app.util.bin.format.macho.commands.dyld.BindingTable.Binding;
-import ghidra.app.util.bin.format.macho.commands.dyld.ClassicBindProcessor;
-import ghidra.app.util.bin.format.macho.commands.dyld.ClassicLazyBindProcessor;
+import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
@@ -761,48 +760,13 @@ public class MachoProgramBuilder {
 		return dyldChainedFixups.processChainedFixups();
 	}
 
-	protected void processBindings(boolean doClassic) {
-		DataConverter converter = DataConverter.getInstance(program.getLanguage().isBigEndian());
-		SymbolTable symbolTable = program.getSymbolTable();
+	protected void processBindings(boolean doClassic) throws Exception {
 
-		List<Binding> bindings = new ArrayList<>();
 		List<DyldInfoCommand> commands = machoHeader.getLoadCommands(DyldInfoCommand.class);
 		for (DyldInfoCommand command : commands) {
-			bindings.addAll(command.getBindingTable().getBindings());
-			bindings.addAll(command.getLazyBindingTable().getBindings());
-			bindings.addAll(command.getWeakBindingTable().getBindings());
-		}
-
-		List<SegmentCommand> segments = machoHeader.getAllSegments();
-		for (Binding binding : bindings) {
-			if (binding.getUnknownOpcode() != null) {
-				log.appendMsg("Unknown bind opcode: 0x%x".formatted(binding.getUnknownOpcode()));
-				continue;
-			}
-			List<Symbol> symbols = symbolTable.getGlobalSymbols(binding.getSymbolName());
-			if (symbols.isEmpty()) {
-				continue;
-			}
-			Symbol symbol = symbols.get(0);
-			long offset = symbol.getAddress().getOffset();
-			byte[] bytes = (program.getDefaultPointerSize() == 8) ? converter.getBytes(offset)
-					: converter.getBytes((int) offset);
-			Address addr = space.getAddress(segments.get(binding.getSegmentIndex()).getVMaddress() +
-				binding.getSegmentOffset());
-
-			try {
-				program.getMemory().setBytes(addr, bytes);
-				program.getRelocationTable()
-						.add(addr, Status.APPLIED, binding.getType(), null, bytes.length,
-							binding.getSymbolName());
-			}
-			catch (MemoryAccessException e) {
-				handleRelocationError(addr, String.format(
-					"Relocation failure at address %s: error accessing memory.", addr));
-				program.getRelocationTable()
-						.add(addr, Status.FAILURE, binding.getType(), null, bytes.length,
-							binding.getSymbolName());
-			}
+			processBindings(command.getBindingTable());
+			processBindings(command.getLazyBindingTable());
+			processBindings(command.getWeakBindingTable());
 		}
 
 		if (commands.size() == 0 && doClassic) {
@@ -822,6 +786,67 @@ public class MachoProgramBuilder {
 			}
 			catch (Exception e) {
 				log.appendException(e);
+			}
+		}
+	}
+
+	private void processBindings(BindingTable bindingTable) throws Exception {
+		DataConverter converter = DataConverter.getInstance(program.getLanguage().isBigEndian());
+		SymbolTable symbolTable = program.getSymbolTable();
+
+		List<Binding> bindings = bindingTable.getBindings();
+		List<Binding> threadedBindings = bindingTable.getThreadedBindings();
+		List<SegmentCommand> segments = machoHeader.getAllSegments();
+		
+		if (threadedBindings != null) {
+			DyldChainedFixups dyldChainedFixups =
+				new DyldChainedFixups(program, machoHeader, log, monitor);
+			DyldChainedImports chainedImports = new DyldChainedImports(bindings);
+			for (Binding threadedBinding : threadedBindings) {
+				List<Address> fixedAddresses = new ArrayList<>();
+				SegmentCommand segment = segments.get(threadedBinding.getSegmentIndex());
+				dyldChainedFixups.processPointerChain(chainedImports, fixedAddresses,
+					DyldChainType.DYLD_CHAINED_PTR_ARM64E,
+					segments.get(threadedBinding.getSegmentIndex()).getVMaddress(),
+					threadedBinding.getSegmentOffset(), 0);
+				log.appendMsg("Fixed up %d chained pointers in %s".formatted(fixedAddresses.size(),
+					segment.getSegmentName()));
+			}
+		}
+		else {
+			for (Binding binding : bindings) {
+				if (binding.getUnknownOpcode() != null) {
+					log.appendMsg(
+						"Unknown bind opcode: 0x%x".formatted(binding.getUnknownOpcode()));
+					continue;
+				}
+
+				List<Symbol> symbols = symbolTable.getGlobalSymbols(binding.getSymbolName());
+				if (symbols.isEmpty()) {
+					continue;
+				}
+				Symbol symbol = symbols.get(0);
+				long offset = symbol.getAddress().getOffset();
+				byte[] bytes = (program.getDefaultPointerSize() == 8) ? converter.getBytes(offset)
+						: converter.getBytes((int) offset);
+				Address addr =
+					space.getAddress(segments.get(binding.getSegmentIndex()).getVMaddress() +
+						binding.getSegmentOffset());
+
+				boolean success = false;
+				try {
+					program.getMemory().setBytes(addr, bytes);
+					success = true;
+				}
+				catch (MemoryAccessException e) {
+					handleRelocationError(addr, String.format(
+						"Relocation failure at address %s: error accessing memory.", addr));
+				}
+				finally {
+					program.getRelocationTable()
+							.add(addr, success ? Status.APPLIED_OTHER : Status.FAILURE,
+								binding.getType(), null, bytes.length, binding.getSymbolName());
+				}
 			}
 		}
 	}

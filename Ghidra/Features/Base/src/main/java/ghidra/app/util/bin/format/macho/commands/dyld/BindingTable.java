@@ -35,6 +35,7 @@ import ghidra.program.model.data.LEB128;
 public class BindingTable {
 
 	private List<Binding> bindings;
+	private List<Binding> threadedBindings;
 	private List<Long> opcodeOffsets;
 	private List<Long> ulebOffsets;
 	private List<Long> slebOffsets;
@@ -45,6 +46,7 @@ public class BindingTable {
 	 */
 	public BindingTable() {
 		bindings = new ArrayList<>();
+		threadedBindings = null;
 		opcodeOffsets = new ArrayList<>();
 		ulebOffsets = new ArrayList<>();
 		slebOffsets = new ArrayList<>();
@@ -133,7 +135,9 @@ public class BindingTable {
 				}
 				case BIND_OPCODE_DO_BIND: { // 0x90
 					bindings.add(new Binding(binding));
-					binding.segmentOffset += pointerSize;
+					if (threadedBindings == null) {
+						binding.segmentOffset += pointerSize;
+					}
 					break;
 				}
 				case BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB: { // 0xA0
@@ -158,17 +162,15 @@ public class BindingTable {
 					}
 					break;
 				}
-				/*case BIND_OPCODE_THREADED: { // 0xD0
+				case BIND_OPCODE_THREADED: { // 0xD0
 					switch (immediate) {
 						case BIND_SUBOPCODE_THREADED_SET_BIND_ORDINAL_TABLE_SIZE_ULEB:
 							ulebOffsets.add(reader.getPointerIndex() - origIndex);
-							long count = reader.readNext(LEB128::unsigned);
-							for (int i = 0; i < count; ++i) {
-								// TODO
-							}
+							int numThreaded = reader.readNextVarInt(LEB128::unsigned);
+							threadedBindings = new ArrayList<>(numThreaded);
 							break;
 						case BIND_SUBOPCODE_THREADED_APPLY: {
-							// TODO
+							threadedBindings.add(new Binding(binding));
 							break;
 						}
 						default: {
@@ -179,7 +181,7 @@ public class BindingTable {
 						}
 					}
 					break;
-				}*/
+				}
 				default: {
 					Binding unknownBinding = new Binding(binding);
 					unknownBinding.unknownOpcode = Byte.toUnsignedInt(b) & BIND_OPCODE_MASK;
@@ -195,6 +197,13 @@ public class BindingTable {
 	 */
 	public List<Binding> getBindings() {
 		return bindings;
+	}
+
+	/**
+	 * {@return the threaded bindings, or null if threaded bindings are not being used}
+	 */
+	public List<Binding> getThreadedBindings() {
+		return threadedBindings;
 	}
 
 	/**
@@ -234,7 +243,7 @@ public class BindingTable {
 		private int type;
 		private int libraryOrdinal;
 		private long segmentOffset;
-		private int segmentIndex;
+		private int segmentIndex = -1;
 		private long addend;
 		private boolean weak;
 		private Integer unknownOpcode;
