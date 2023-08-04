@@ -200,7 +200,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 					for (Address addr : validCodeList) {
 						// set target context correctly. Target address will get
 						// aligned in DisassembleCmd
-						PseudoDisassembler.setTargeContextForDisassembly(program, addr);
+						PseudoDisassembler.setTargetContextForDisassembly(program, addr);
 
 						// even though they are valid code, don't do them if
 						// there is already code there.
