@@ -723,7 +723,8 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			System.exit(-1);
 		}
 
-		Application.initializeLogging(new File(serverRoot, "server.log"), null);
+		File serverLogFile = new File(serverRoot, "server.log");
+		Application.initializeLogging(serverLogFile, serverLogFile);
 
 		// In the absence of module initialization - we must invoke directly
 		SSLContextInitializer.initialize();
