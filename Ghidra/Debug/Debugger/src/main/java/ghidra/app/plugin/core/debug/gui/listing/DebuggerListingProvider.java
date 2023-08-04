@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.debug.gui.listing;
 
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
@@ -26,8 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.Box;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -210,6 +210,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		protected void specChanged(LocationTrackingSpec spec) {
 			updateTitle();
 			trackingLabel.setText("");
+			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
 			trackingSpecChangeListeners.fire.locationTrackingSpecChanged(spec);
 		}
@@ -335,9 +336,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		addDisplayListener(readsMemTrait.getDisplayListener());
 
-		JPanel northPanel = new JPanel(new BorderLayout());
-		northPanel.add(locationLabel, BorderLayout.WEST);
-		northPanel.add(trackingLabel, BorderLayout.EAST);
+		Box northPanel = Box.createHorizontalBox();
+		northPanel.add(locationLabel);
+		locationLabel.setMinimumSize(new Dimension(0, 0));
+		northPanel.add(Box.createGlue());
+		northPanel.add(trackingLabel);
 		this.setNorthComponent(northPanel);
 		if (isConnected) {
 			setTitle(DebuggerResources.TITLE_PROVIDER_LISTING);
@@ -1066,7 +1069,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	protected void goToAndUpdateTrackingLabel(TraceProgramView curView, ProgramLocation loc) {
-		trackingLabel.setText(trackingTrait.computeLabelText());
+		String labelText = trackingTrait.computeLabelText();
+		trackingLabel.setText(labelText);
+		trackingLabel.setToolTipText(labelText);
 		if (goTo(curView, loc)) {
 			trackingLabel.setForeground(Colors.FOREGROUND);
 		}
