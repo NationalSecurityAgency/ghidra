@@ -17,10 +17,7 @@ package agent.lldb.rmi;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -41,6 +38,7 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.time.TraceSnapshot;
 
+@Ignore("Cannot install python packages in CI")
 public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 20000;
 	private static final long RETRY_MS = 500;
@@ -66,7 +64,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		LldbAndHandler conn = startAndConnectLldb();
 		try {
 			// TODO: Why does using 'set arch' cause a hang at quit?
-			conn.execute("ghidralldb.util.set_convenience_variable('ghidra-language', 'x86:LE:64:default')");
+			conn.execute(
+				"ghidralldb.util.set_convenience_variable('ghidra-language', 'x86:LE:64:default')");
 			conn.execute("ghidra_trace_start");
 			ManagedDomainObject mdo = waitDomainObject("/New Traces/lldb/noname");
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
@@ -95,7 +94,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				assertNotNull(proc);
 				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
-			
+
 			txPut(conn, "threads");
 			waitForPass(() -> assertEquals(1,
 				tb.objValues(lastSnap(conn), "Processes[].Threads[]").size()),
@@ -119,7 +118,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 			start(conn, "%s".formatted(cloneExit));
 			conn.execute("break set -n work");
-			
+
 			waitForPass(() -> {
 				TraceObject inf = tb.objAny("Processes[]");
 				assertNotNull(inf);
@@ -137,7 +136,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				assertNotNull(inf);
 				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
-			
+
 			waitForPass(() -> assertEquals(2,
 				tb.objValues(lastSnap(conn), "Processes[].Threads[]").size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
@@ -148,7 +147,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			waitForPass(() -> {
 				String ti0 = conn.executeCapture("thread info");
 				assertTrue(ti0.contains("#1"));
-			    String threadIndex = threadIndex(traceManager.getCurrentObject());
+				String threadIndex = threadIndex(traceManager.getCurrentObject());
 				assertTrue(ti0.contains(threadIndex));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
@@ -157,7 +156,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			waitForPass(() -> {
 				String ti0 = conn.executeCapture("thread info");
 				assertTrue(ti0.contains("#2"));
-			    String threadIndex = threadIndex(traceManager.getCurrentObject());
+				String threadIndex = threadIndex(traceManager.getCurrentObject());
 				assertTrue(ti0.contains(threadIndex));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
@@ -166,7 +165,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			waitForPass(() -> {
 				String ti0 = conn.executeCapture("thread info");
 				assertTrue(ti0.contains("#1"));
-			    String threadIndex = threadIndex(traceManager.getCurrentObject());
+				String threadIndex = threadIndex(traceManager.getCurrentObject());
 				assertTrue(ti0.contains(threadIndex));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 		}
@@ -210,7 +209,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			start(conn, "bash");
 			conn.execute("breakpoint set -n read");
 			conn.execute("cont");
-			
+
 			waitStopped();
 			waitForPass(() -> assertThat(
 				tb.objValues(lastSnap(conn), "Processes[].Threads[].Stack[]").size(),
@@ -244,7 +243,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			conn.execute("ghidra_trace_txstart 'Tx'");
 			conn.execute("ghidra_trace_putmem `(void(*)())main` 10");
 			conn.execute("ghidra_trace_txcommit");
-			
+
 			waitForPass(() -> {
 				ByteBuffer buf = ByteBuffer.allocate(10);
 				tb.trace.getMemoryManager().getBytes(lastSnap(conn), tb.addr(address), buf);
@@ -262,7 +261,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			conn.execute("ghidra_trace_txstart 'Tx'");
 			conn.execute("ghidra_trace_putreg");
 			conn.execute("ghidra_trace_txcommit");
-			
+
 			String path = "Processes[].Threads[].Stack[].Registers";
 			TraceObject registers = Objects.requireNonNull(tb.objAny(path, Lifespan.at(0)));
 			AddressSpace space = tb.trace.getBaseAddressFactory()
@@ -364,7 +363,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			//assertEquals(null, tb.objValue(brk, lastSnap(conn), "Commands"));
 			//conn.execute("breakpoint command add 'echo test'");
 			//conn.execute("DONE");
-			
+
 			waitForPass(
 				() -> assertEquals("x>3", tb.objValue(brk, lastSnap(conn), "Condition")));
 		}
@@ -389,20 +388,21 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			conn.execute("stepi");
 
 			waitForPass(
-				() -> assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size()));
+				() -> assertEquals(0,
+					tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size()));
 		}
 	}
-	
+
 	private void start(LldbAndTrace conn, String obj) {
-		conn.execute("file "+obj);
+		conn.execute("file " + obj);
 		conn.execute("ghidra_trace_sync_enable");
 		conn.execute("process launch --stop-at-entry");
 		txPut(conn, "processes");
 	}
-	
+
 	private void txPut(LldbAndTrace conn, String obj) {
-		conn.execute("ghidra_trace_txstart 'Tx"+obj+"'");
-		conn.execute("ghidra_trace_put_"+obj);
+		conn.execute("ghidra_trace_txstart 'Tx" + obj + "'");
+		conn.execute("ghidra_trace_put_" + obj);
 		conn.execute("ghidra_trace_txcommit");
 	}
 

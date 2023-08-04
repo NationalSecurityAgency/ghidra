@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import db.Transaction;
@@ -50,6 +51,7 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
+@Ignore("Cannot install python packages in CI")
 public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	//@Test

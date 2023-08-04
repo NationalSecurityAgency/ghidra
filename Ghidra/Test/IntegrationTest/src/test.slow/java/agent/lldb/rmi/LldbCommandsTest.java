@@ -15,32 +15,18 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import generic.Unique;
@@ -49,28 +35,19 @@ import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.framework.model.DomainFile;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
-import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
+@Ignore("Cannot install python packages in CI")
 public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 
 	//@Test
@@ -153,15 +130,17 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 
 	@Test
 	public void testStartTraceCustomize() throws Exception {
-		runThrowError(addr -> """
-				script import ghidralldb
-				ghidra_trace_connect %s
-				file bash
-				script ghidralldb.util.set_convenience_variable('ghidra-language','Toy:BE:64:default')
-				script ghidralldb.util.set_convenience_varaible('ghidra-compiler','default')
-				ghidra_trace_start myToy
-				quit
-				""".formatted(addr));
+		runThrowError(
+			addr -> """
+					script import ghidralldb
+					ghidra_trace_connect %s
+					file bash
+					script ghidralldb.util.set_convenience_variable('ghidra-language','Toy:BE:64:default')
+					script ghidralldb.util.set_convenience_varaible('ghidra-compiler','default')
+					ghidra_trace_start myToy
+					quit
+					"""
+					.formatted(addr));
 		DomainFile dfMyToy = env.getProject().getProjectData().getFile("/New Traces/myToy");
 		assertNotNull(dfMyToy);
 		try (ManagedDomainObject mdo = new ManagedDomainObject(dfMyToy, false, false, monitor)) {
@@ -239,22 +218,23 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testLcsp() throws Exception {
 		// TODO: This test assumes x86-64 on test system
-		String out = runThrowError("""
-				script import ghidralldb
-				_mark_ ---Import---
-				ghidra_trace_info_lcsp 
-				_mark_ ---
-				file bash
-				_mark_ ---File---
-				ghidra_trace_info_lcsp 
-				script ghidralldb.util.set_convenience_variable('ghidra-language','Toy:BE:64:default')
-				_mark_ ---Language---
-				ghidra_trace_info_lcsp 
-				script ghidralldb.util.set_convenience_variable('ghidra-compiler','posStack')
-				_mark_ ---Compiler---
-				ghidra_trace_info_lcsp 
-				quit
-				""");
+		String out = runThrowError(
+			"""
+					script import ghidralldb
+					_mark_ ---Import---
+					ghidra_trace_info_lcsp
+					_mark_ ---
+					file bash
+					_mark_ ---File---
+					ghidra_trace_info_lcsp
+					script ghidralldb.util.set_convenience_variable('ghidra-language','Toy:BE:64:default')
+					_mark_ ---Language---
+					ghidra_trace_info_lcsp
+					script ghidralldb.util.set_convenience_variable('ghidra-compiler','posStack')
+					_mark_ ---Compiler---
+					ghidra_trace_info_lcsp
+					quit
+					""");
 
 //		assertEquals("""
 //				Selected Ghidra language: DATA:LE:64:default
@@ -420,7 +400,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			String eval = extractOutSection(out, "---Start---");
 			String addrstr = eval.split("=")[1].trim();
 			if (addrstr.contains(" ")) {
-				addrstr= addrstr.substring(0, addrstr.indexOf(" "));
+				addrstr = addrstr.substring(0, addrstr.indexOf(" "));
 			}
 			Address addr = tb.addr(Long.decode(addrstr));
 
@@ -496,10 +476,10 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			AddressSpace t1f0 = tb.trace.getBaseAddressFactory()
 					.getAddressSpace(tobj.getCanonicalPath().toString());
 			TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(t1f0, false);
-			
+
 			RegisterValue rax = regs.getValue(snap, tb.reg("rax"));
 			assertEquals("deadbeef", rax.getUnsignedValue().toString(16));
-			
+
 //			RegisterValue ymm0 = regs.getValue(snap, tb.reg("ymm0"));
 //			// LLDB treats registers in arch's endian
 //			assertEquals("1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100",
@@ -552,7 +532,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 
 			RegisterValue rax = regs.getValue(snap, tb.reg("rax"));
 			assertEquals("0", rax.getUnsignedValue().toString(16));
-			
+
 //			RegisterValue ymm0 = regs.getValue(snap, tb.reg("ymm0"));
 //			assertEquals("0", ymm0.getUnsignedValue().toString(16));
 
@@ -672,7 +652,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	}
 
 	// NB: Fails in gdb tests as well
-    //@Test
+	//@Test
 	public void testSetValueNull() throws Exception {
 		assertNull(runTestSetValue("", "(void)null", ""));
 	}
@@ -751,7 +731,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			runTestSetValue("expr char $x[]={'H', 0, 'W'}", "$x", "CHAR_ARR"));
 	}
 
-	@Test 
+	@Test
 	public void testSetValueShortArrUsingString() throws Exception {
 		// Because explicit array type is chosen, we get null terminator
 		assertArrayEquals(new short[] { 'H', 0, 'W', 0 },
@@ -903,23 +883,26 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				""".formatted(addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
-			assertEquals("""
-					Parent          Key       Span     Value           Type
-					Test.Objects[1] vbool     [0,+inf) True            BOOL
-					Test.Objects[1] vboolarr  [0,+inf) [True, False]   BOOL_ARR
-					Test.Objects[1] vbyte     [0,+inf) 1               BYTE
-					Test.Objects[1] vbytearr  [0,+inf) b'\\x01\\x02\\x03' BYTE_ARR
-					Test.Objects[1] vchar     [0,+inf) 'A'             CHAR
-					Test.Objects[1] vchararr  [0,+inf) 'Hello\\x00'     CHAR_ARR
-					Test.Objects[1] vint      [0,+inf) 3               INT
-					Test.Objects[1] vintarr   [0,+inf) [1, 2, 3]       INT_ARR
-					Test.Objects[1] vlong     [0,+inf) 4               LONG
-					Test.Objects[1] vlongarr  [0,+inf) [1, 2, 3]       LONG_ARR
-					Test.Objects[1] vobj      [0,+inf) Test.Objects[1] OBJECT
-					Test.Objects[1] vshort    [0,+inf) 2               SHORT
-					Test.Objects[1] vshortarr [0,+inf) [1, 2, 3]       SHORT_ARR
-					Test.Objects[1] vstring   [0,+inf) '"Hello"'         STRING
-					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS""".replaceAll(" ", "").replaceAll("\n", ""),
+			assertEquals(
+				"""
+						Parent          Key       Span     Value           Type
+						Test.Objects[1] vbool     [0,+inf) True            BOOL
+						Test.Objects[1] vboolarr  [0,+inf) [True, False]   BOOL_ARR
+						Test.Objects[1] vbyte     [0,+inf) 1               BYTE
+						Test.Objects[1] vbytearr  [0,+inf) b'\\x01\\x02\\x03' BYTE_ARR
+						Test.Objects[1] vchar     [0,+inf) 'A'             CHAR
+						Test.Objects[1] vchararr  [0,+inf) 'Hello\\x00'     CHAR_ARR
+						Test.Objects[1] vint      [0,+inf) 3               INT
+						Test.Objects[1] vintarr   [0,+inf) [1, 2, 3]       INT_ARR
+						Test.Objects[1] vlong     [0,+inf) 4               LONG
+						Test.Objects[1] vlongarr  [0,+inf) [1, 2, 3]       LONG_ARR
+						Test.Objects[1] vobj      [0,+inf) Test.Objects[1] OBJECT
+						Test.Objects[1] vshort    [0,+inf) 2               SHORT
+						Test.Objects[1] vshortarr [0,+inf) [1, 2, 3]       SHORT_ARR
+						Test.Objects[1] vstring   [0,+inf) '"Hello"'         STRING
+						Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS"""
+						.replaceAll(" ", "")
+						.replaceAll("\n", ""),
 				extractOutSection(out, "---GetValues---").replaceAll(" ", "").replaceAll("\n", ""));
 		}
 	}
@@ -947,10 +930,10 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
-					Parent      
-					Key  
-					Span   
-					Value    
+					Parent
+					Key
+					Span
+					Value
 					Type
 					Test.Objects[1]
 					vaddr
@@ -1122,8 +1105,8 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 					.toList();
 			assertEquals(3, procWatchLocVals.size());
 			AddressRange rangeMain0 =
-					procWatchLocVals.get(0).getChild().getValue(0, "_range").castValue();
-				Address main0 = rangeMain0.getMinAddress();
+				procWatchLocVals.get(0).getChild().getValue(0, "_range").castValue();
+			Address main0 = rangeMain0.getMinAddress();
 			AddressRange rangeMain1 =
 				procWatchLocVals.get(1).getChild().getValue(0, "_range").castValue();
 			Address main1 = rangeMain1.getMinAddress();
@@ -1131,15 +1114,15 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				procWatchLocVals.get(2).getChild().getValue(0, "_range").castValue();
 			Address main2 = rangeMain2.getMinAddress();
 
-            assertWatchLoc(procWatchLocVals.get(0), "[1]", main0, (int) rangeMain0.getLength(),
-                    Set.of(TraceBreakpointKind.WRITE), "main");
-            assertWatchLoc(procWatchLocVals.get(1), "[2]", main1, (int) rangeMain1.getLength(),
-                    Set.of(TraceBreakpointKind.READ), "main");
-            assertWatchLoc(procWatchLocVals.get(2), "[3]", main2, (int) rangeMain2.getLength(),
-            		Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE), "main");
+			assertWatchLoc(procWatchLocVals.get(0), "[1]", main0, (int) rangeMain0.getLength(),
+				Set.of(TraceBreakpointKind.WRITE), "main");
+			assertWatchLoc(procWatchLocVals.get(1), "[2]", main1, (int) rangeMain1.getLength(),
+				Set.of(TraceBreakpointKind.READ), "main");
+			assertWatchLoc(procWatchLocVals.get(2), "[3]", main2, (int) rangeMain2.getLength(),
+				Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE), "main");
 		}
 	}
-	
+
 	@Test
 	public void testPutEnvironment() throws Exception {
 		runThrowError(addr -> """
@@ -1157,7 +1140,8 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Assumes LLDB on Linux amd64
-			TraceObject env = Objects.requireNonNull(tb.objAny("Processes[].Environment", Lifespan.at(0)));
+			TraceObject env =
+				Objects.requireNonNull(tb.objAny("Processes[].Environment", Lifespan.at(0)));
 			assertEquals("lldb", env.getValue(0, "_debugger").getValue());
 			assertEquals("x86_64", env.getValue(0, "_arch").getValue());
 			assertEquals("linux", env.getValue(0, "_os").getValue());
@@ -1239,15 +1223,15 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			conn.execute("file bash");
 			conn.execute("ghidra_trace_start");
 			conn.execute("ghidra_trace_txstart 'Tx'");
-		    conn.execute("ghidra_trace_put_processes");
+			conn.execute("ghidra_trace_put_processes");
 			conn.execute("ghidra_trace_txcommit");
 			conn.execute("ghidra_trace_install_hooks");
 			conn.execute("breakpoint set -n read");
 			conn.execute("run");
-			
+
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-				
+
 				waitStopped();
 				conn.execute("ghidra_trace_txstart 'Tx'");
 				conn.execute("ghidra_trace_put_frames");
