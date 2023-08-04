@@ -696,9 +696,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				// parent isn't a known class - possibly is an external parent
 				if (parentClass == null) {
-					throw new IllegalArgumentException(
+					Msg.warn(this,
 						"RecoveredClass should already exist for " +
 							siParentTypeinfo.getNamespace().getName(true));
+					continue;
 				}
 
 				updateClassWithParent(parentClass, recoveredClass);
@@ -3547,9 +3548,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			RecoveredClass parentClass = getClass(vmiParentTypeinfo.getNamespace());
 
 			if (parentClass == null) {
-				throw new IllegalArgumentException(
+				Msg.warn(this,
 					"RecoveredClass should already exist for " +
 						vmiParentTypeinfo.getNamespace().getName(true));
+				continue;
 			}
 
 			updateClassWithParent(parentClass, recoveredClass);
@@ -3978,12 +3980,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Vtable classVtable = getVtable(vtables, classNamespace);
 
 			if (classVtable == null) {
-				Msg.debug(this, "No vtable for class: " + classNamespace.getName());
-				return;
+				Msg.warn(this, "No vtable for class: " + classNamespace.getName());
+				continue;
 			}
 
 			Address vftableAddress = classVtable.getVfunctionTop();
 			if (vftableAddress == null) {
+				Msg.error(this, "Null address of first vtable function: " + classNamespace.getName());
 				return;
 			}
 
@@ -4520,17 +4523,23 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Map<Integer, RecoveredClass> orderToParentMap =
 				classToParentOrderMap.get(recoveredClass);
 			if (orderToParentMap == null || orderToParentMap.isEmpty()) {
-				throw new Exception(
+				Msg.error(this,
 					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
 						" should have a parent in the classToParentOrderMap but doesn't");
+				if (orderToParentMap == null) {
+					orderToParentMap = new HashMap<>();
+				}
 			}
 
 			Map<RecoveredClass, Long> parentToOffsetMap =
 				classToParentOffsetMap.get(recoveredClass);
-			if (parentToOffsetMap.isEmpty()) {
-				throw new Exception(
+			if (parentToOffsetMap == null || parentToOffsetMap.isEmpty()) {
+				Msg.error(this,
 					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
 						" should have a parent in the classToParentOffsetMap but doesn't");
+				if (parentToOffsetMap == null) {
+					parentToOffsetMap = new HashMap<>();
+				}
 			}
 
 			int numParents = orderToParentMap.keySet().size();
@@ -4539,8 +4548,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				Long parentOffsetLong = parentToOffsetMap.get(parent);
 				if (parentOffsetLong == null) {
-					throw new Exception(
+					Msg.error(this,
 						"Can't get parent offset for " + parent.getClassNamespace().getName(true));
+					continue;
 				}
 				int parentOffset = parentOffsetLong.intValue();
 
@@ -4549,9 +4559,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				// the
 				// parent doesn't exist
 				if (baseClassStructure == null) {
-					throw new Exception(
+					Msg.error(this,
 						parent.getClassNamespace().getName(true) +
 							" : structure should exist but doesn't.");
+					continue;
 				}
 
 				// if it fits at offset or is at the end and class structure can be grown,
