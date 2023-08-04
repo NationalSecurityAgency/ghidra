@@ -22,7 +22,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import db.Transaction;
@@ -49,7 +48,6 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 
-@Ignore("Cannot install python packages in CI")
 public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	@Test

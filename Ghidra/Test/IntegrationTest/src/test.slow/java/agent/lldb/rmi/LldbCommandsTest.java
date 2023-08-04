@@ -26,7 +26,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import generic.Unique;
@@ -47,7 +46,6 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
-@Ignore("Cannot install python packages in CI")
 public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 
 	//@Test
@@ -80,32 +78,32 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testConnect() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 	}
 
 	@Test
 	public void testDisconnect() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				ghidra_trace_disconnect
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 	}
 
 	@Test
 	public void testStartTraceDefaults() throws Exception {
 		// Default name and lcsp
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				ghidra_trace_start
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("x86:LE:64:default",
@@ -118,11 +116,11 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testStartTraceDefaultNoFile() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				ghidra_trace_start
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			assertThat(mdo.get(), instanceOf(Trace.class));
 		}
@@ -132,7 +130,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	public void testStartTraceCustomize() throws Exception {
 		runThrowError(
 			addr -> """
-					script import ghidralldb
+					%s
 					ghidra_trace_connect %s
 					file bash
 					script ghidralldb.util.set_convenience_variable('ghidra-language','Toy:BE:64:default')
@@ -140,7 +138,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 					ghidra_trace_start myToy
 					quit
 					"""
-					.formatted(addr));
+					.formatted(PREAMBLE, addr));
 		DomainFile dfMyToy = env.getProject().getProjectData().getFile("/New Traces/myToy");
 		assertNotNull(dfMyToy);
 		try (ManagedDomainObject mdo = new ManagedDomainObject(dfMyToy, false, false, monitor)) {
@@ -156,13 +154,13 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	public void testStopTrace() throws Exception {
 		// TODO: This test assumes lldb and the target file bash are x86-64
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				ghidra_trace_start
 				ghidra_trace_stop
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		DomainFile dfBash = env.getProject().getProjectData().getFile("/New Traces/lldb/bash");
 		assertNotNull(dfBash);
 		// TODO: Given the 'quit' command, I'm not sure this assertion is checking anything.
@@ -176,7 +174,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 			refAddr.set(addr);
 			return """
 					file bash
-					script import ghidralldb
+					%s
 					_mark_ ---Import---
 					ghidra_trace_info
 					ghidra_trace_connect %s
@@ -192,7 +190,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 					_mark_ ---Disconnect---
 					ghidra_trace_info
 					quit
-					""".formatted(addr);
+					""".formatted(PREAMBLE, addr);
 		});
 
 		assertEquals("""
@@ -260,7 +258,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 
 		// For sanity check, verify failing to save drops data
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				ghidra_trace_start no-save
@@ -268,14 +266,14 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_new_snap "Scripted snapshot"
 				ghidra_trace_txcommit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/no-save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				ghidra_trace_start save
@@ -284,7 +282,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				ghidra_trace_save
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -294,7 +292,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testSnapshot() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				ghidra_trace_start
@@ -302,7 +300,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_new_snap "Scripted snapshot"
 				ghidra_trace_txcommit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceSnapshot snapshot = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots());
@@ -314,7 +312,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutmem() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -328,7 +326,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				_mark_ ---")
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -345,7 +343,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutmemProcess2() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -359,7 +357,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				_mark_ ---")
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			AddressSpace ram2 = tb.trace.getBaseAddressFactory().getAddressSpace("ram");
@@ -378,7 +376,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	public void testPutmemState() throws Exception {
 		String out = runThrowError(addr -> """
 				settings set interpreter.echo-commands false
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -392,7 +390,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				_mark_ ---")
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -414,7 +412,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testDelmem() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -429,7 +427,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				_mark_ ---")
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -449,7 +447,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				.mapToObj(Integer::toString)
 				.collect(Collectors.joining(",", "{", "}"));
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -463,7 +461,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr, count));
+				""".formatted(PREAMBLE, addr, count));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -501,7 +499,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				.mapToObj(Integer::toString)
 				.collect(Collectors.joining(",", "{", "}"));
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -515,7 +513,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr, count));
+				""".formatted(PREAMBLE, addr, count));
 		// The spaces will be left over, but the values should be zeroed
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
@@ -549,7 +547,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testCreateObj() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				ghidra_trace_start
 				ghidra_trace_txstart "Create Object"
@@ -558,7 +556,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				_mark_ ---")
 				ghidra_trace_txcommit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -573,7 +571,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testInsertObj() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				ghidra_trace_start
 				ghidra_trace_txstart "Create Object"
@@ -583,7 +581,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				_mark_ ---")
 				ghidra_trace_txcommit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -599,7 +597,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testRemoveObj() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -612,7 +610,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -627,7 +625,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	protected <T> T runTestSetValue(String extra, String lldbExpr, String gtype)
 			throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -640,7 +638,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr, extra, lldbExpr, gtype));
+				""".formatted(PREAMBLE, addr, extra, lldbExpr, gtype));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -782,7 +780,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testRetainValues() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				#set language c++
@@ -799,7 +797,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -818,7 +816,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testGetObj() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				ghidra_trace_start
 				ghidra_trace_txstart "Create Object"
@@ -830,7 +828,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_get_obj Test.Objects[1]
 				_mark_ ---")
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -844,7 +842,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testGetValues() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -880,7 +878,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				_mark_ ---")
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(
@@ -910,7 +908,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testGetValuesRng() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				#set language c++
@@ -926,7 +924,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				_mark_ ---")
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
@@ -947,7 +945,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	//@Test
 	public void testActivateObject() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				#set language c++
@@ -960,7 +958,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_activate Test.Objects[1]
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			assertSame(mdo.get(), traceManager.getCurrentTrace());
 			assertEquals("Test.Objects[1]",
@@ -971,7 +969,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testDisassemble() throws Exception {
 		String out = runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				#set language c++
@@ -985,7 +983,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Not concerned about specifics, so long as disassembly occurs
@@ -1001,14 +999,14 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutProcesses() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				ghidra_trace_start
 				ghidra_trace_txstart "Tx"
 				ghidra_trace_put_processes
 				ghidra_trace_txcommit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1023,14 +1021,14 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutAvailable() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				ghidra_trace_start
 				ghidra_trace_txstart "Tx"
 				ghidra_trace_put_available
 				ghidra_trace_txcommit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1045,7 +1043,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutBreakpoints() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -1057,7 +1055,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
@@ -1082,7 +1080,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutWatchpoints() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -1095,7 +1093,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> procWatchLocVals = tb.trace.getObjectManager()
@@ -1126,7 +1124,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutEnvironment() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -1136,7 +1134,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Assumes LLDB on Linux amd64
@@ -1152,7 +1150,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutRegions() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -1162,7 +1160,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1175,7 +1173,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutModules() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -1185,7 +1183,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1199,7 +1197,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testPutThreads() throws Exception {
 		runThrowError(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
 				file bash
 				process launch --stop-at-entry
@@ -1209,7 +1207,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 				ghidra_trace_txcommit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/lldb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1252,9 +1250,9 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testMinimal() throws Exception {
 		Function<String, String> scriptSupplier = addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
-				""".formatted(addr);
+				""".formatted(PREAMBLE, addr);
 		try (LldbAndHandler conn = startAndConnectLldb(scriptSupplier)) {
 			conn.execute("script print('FINISHED')");
 			conn.execute("quit");

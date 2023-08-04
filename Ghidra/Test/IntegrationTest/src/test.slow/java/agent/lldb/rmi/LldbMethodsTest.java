@@ -21,7 +21,6 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import generic.Unique;
@@ -43,7 +42,6 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 
-@Ignore("Cannot install python packages in CI")
 public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 	@Test
