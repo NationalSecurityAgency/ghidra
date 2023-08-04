@@ -15,7 +15,7 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.service.rmi.trace.*;

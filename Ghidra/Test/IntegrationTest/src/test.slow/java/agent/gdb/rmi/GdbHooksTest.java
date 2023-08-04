@@ -37,6 +37,7 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.time.TraceSnapshot;
 
+@Ignore("Cannot install python packages in CI")
 public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 20000;
 	private static final long RETRY_MS = 500;
