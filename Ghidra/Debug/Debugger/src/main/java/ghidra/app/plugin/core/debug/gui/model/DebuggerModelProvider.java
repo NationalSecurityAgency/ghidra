@@ -567,6 +567,9 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	}
 
 	protected void checkPath() {
+		if (Trace.isLegacy(current.getTrace())) {
+			return;
+		}
 		if (objectsTreePanel.getNode(path) == null) {
 			plugin.getTool().setStatusInfo("No such object at path " + path, true);
 		}
