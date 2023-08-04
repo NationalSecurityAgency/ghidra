@@ -112,11 +112,15 @@ class EnumDB extends DataTypeDB implements Enum {
 		long minValue = valueMap.firstKey();
 		long maxValue = valueMap.lastKey();
 
+		if (maxValue > getMaxPossibleValue(length, true)) {
+			if (minValue < 0) {
+				return INVALID;
+			}
+			return UNSIGNED;
+		}
+
 		if (minValue < 0) {
 			return SIGNED;
-		}
-		if (maxValue > getMaxPossibleValue(length, true)) {
-			return UNSIGNED;
 		}
 
 		return NONE;		// we have no negatives and no large unsigned values
@@ -868,6 +872,19 @@ class EnumDB extends DataTypeDB implements Enum {
 			checkIsValid();
 			initializeIfNeeded();
 			return signedState == SIGNED;
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public EnumSignedState getSignedState() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			initializeIfNeeded();
+			return signedState;
 		}
 		finally {
 			lock.release();
