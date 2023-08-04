@@ -186,22 +186,33 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_BRANCH:
-				// PC-relative branch (SB-Type)
-				markAsWarning(program, relocationAddress, "R_RISCV_BRANCH", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				// PC-relative branch (B-Type)
+				int target = (int) (addend + symbolValue - offset);
+				value32 =
+					((target & 0x01e) << 7) | ((target & 0x0800) >> 4) | ((target & 0x03e0) << 20) |
+						((target & 0x1000) << 19) | memory.getInt(relocationAddress);
+				memory.setInt(relocationAddress, value32);
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_JAL:
-				// PC-relative jump (UJ-Type)
-				markAsWarning(program, relocationAddress, "R_RISCV_JAL", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				// PC-relative jump (J-Type)
+				target = (int) (addend + symbolValue - offset);
+				value32 =
+					(target & 0xff000) | ((target & 0x00800) << 9) | ((target & 0x007fe) << 20) |
+						((target & 0x100000) << 11) | memory.getInt(relocationAddress);
+				memory.setInt(relocationAddress, value32);
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_CALL:
 				// PC-relative call MACRO call,tail (auipc+jalr pair)
-				markAsWarning(program, relocationAddress, "R_RISCV_CALL", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				target = (int) (addend + symbolValue - offset);
+				int target_l = target << 20 >> 20;
+				int target_h = target - target_l;
+				value32 = (target_h & 0xfffff000) | memory.getInt(relocationAddress);
+				memory.setInt(relocationAddress, value32);
+				value32 = ((target_l & 0x00000fff) << 20) | memory.getInt(relocationAddress.add(4));
+				memory.setInt(relocationAddress.add(4), value32);
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_CALL_PLT:
 				// PC-relative call (PLT) MACRO call,tail (auipc+jalr pair) PIC
@@ -254,21 +265,25 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_HI20:
 				// Absolute address %hi(symbol) (U-Type)
-				markAsWarning(program, relocationAddress, "R_RISCV_HI20", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				value32 =
+					(int) ((symbolValue + 0x800) & 0xfffff000) | memory.getInt(relocationAddress);
+				memory.setInt(relocationAddress, value32);
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_LO12_I:
 				// Absolute address %lo(symbol) (I-Type)
-				markAsWarning(program, relocationAddress, "R_RISCV_LO12_I", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				value32 =
+					((int) (symbolValue & 0x00000fff) << 20) | memory.getInt(relocationAddress);
+				memory.setInt(relocationAddress, value32);
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_LO12_S:
 				// Absolute address %lo(symbol) (S-Type)
-				markAsWarning(program, relocationAddress, "R_RISCV_LO12_S", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				value32 = (int) (symbolValue & 0x00000fff);
+				value32 = ((value32 & 0x1f) << 7) | ((value32 & 0xfe0) << 20) |
+					memory.getInt(relocationAddress);
+				memory.setInt(relocationAddress, value32);
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TPREL_HI20:
 				// TLS LE thread offset %tprel_hi(symbol) (U-Type)
@@ -406,17 +421,32 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_RVC_BRANCH:
 				// PC-relative branch offset (CB-Type)
-				markAsWarning(program, relocationAddress, "R_RISCV_RVC_BRANCH", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				target = (short) (addend + symbolValue - offset);
+				// 15   13  |  12 11 10|9 7|       6 5 4 3 2|1 0
+				// C.BEQZ offset[8|4:3] src offset[7:6|2:1|5] C1
+				value16 = (short) (((target & 0x100) << 4) | ((target & 0x18) << 7) |
+					((target & 0xc0) >> 1) |
+					((target & 0x06) << 2) | ((target & 0x20) >> 3) |
+					(memory.getShort(relocationAddress) & 0xe383));
+				byteLength = 2;
+				memory.setShort(relocationAddress, value16);
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_RVC_JUMP:
 				// PC-relative jump offset (CJ-Type)
-				markAsWarning(program, relocationAddress, "R_RISCV_RVC_BRANCH", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				target = (short) (addend + symbolValue - offset);
+				// Complicated swizzling going on here.
+				// For details, see The RISC-V Instruction Set Manual Volume I: Unprivileged ISA
+				// 15  13  |  12 11 10 9 8 7 6 5 3 2|1 0
+				// C.J offset[11| 4|9:8|10|6|7|3:1|5] C1
+				value16 = (short) (((target & 0x800) << 1) | ((target & 0x10) << 7) |
+					((target & 0x300) << 1) |
+					((target & 0x400) >> 2) | ((target & 0x40) << 1) | ((target & 0x80) >> 1) |
+					((target & 0x0e) << 2) | ((target & 0x20) >> 3) |
+					(memory.getShort(relocationAddress) & 0xe003));
+				byteLength = 2;
+				memory.setShort(relocationAddress, value16);
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_RVC_LUI:
 				// Absolute address (CI-Type)
