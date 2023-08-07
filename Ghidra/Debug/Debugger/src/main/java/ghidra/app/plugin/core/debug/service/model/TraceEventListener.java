@@ -34,11 +34,9 @@ import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
 import ghidra.util.TimedMsg;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
-import ghidra.util.exception.DuplicateNameException;
 
 public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 
@@ -143,28 +141,6 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		ManagedThreadRecorder rec = recorder.getThreadRecorder(eventThread);
 		recorder.createSnapshot(description, rec == null ? null : rec.getTraceThread(), null);
 		ignoreInvalidation = false;
-
-		if (type == TargetEventType.MODULE_LOADED) {
-			long snap = recorder.getSnap();
-			Object p0 = parameters.get(0);
-			if (!(p0 instanceof TargetModule)) {
-				return;
-			}
-			TargetModule mod = (TargetModule) p0;
-			String modPath = mod.getJoinedPath(".");
-			recorder.parTx.execute("Adjust module load: " + modPath, () -> {
-				TraceModule traceModule = recorder.getTraceModule(mod);
-				if (traceModule == null) {
-					return;
-				}
-				try {
-					traceModule.setLoadedSnap(snap);
-				}
-				catch (DuplicateNameException e) {
-					Msg.error(this, "Could not set module loaded snap", e);
-				}
-			}, modPath);
-		}
 	}
 
 	@AttributeCallback(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)

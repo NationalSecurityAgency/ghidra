@@ -53,7 +53,11 @@ public class GdbModelTargetModuleContainer
 
 	@Internal
 	public GdbModelTargetModule libraryLoaded(String name) {
-		GdbModule mod = Objects.requireNonNull(inferior.getKnownModules().get(name));
+		GdbModule mod = inferior.getKnownModules().get(name);
+		if (mod == null) {
+			// We'll catch it the next time around.
+			return null;
+		}
 		GdbModelTargetModule module = getTargetModule(mod);
 		changeElements(List.of(), List.of(module), "Loaded");
 		return module;
