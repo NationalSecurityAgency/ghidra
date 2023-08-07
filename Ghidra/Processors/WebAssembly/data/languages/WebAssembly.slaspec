@@ -1,7 +1,23 @@
 # sleigh specification file for WebAssembly Processor
 
+## Constants
 # support 128-bit registers for SSE
 @define REG_SIZE 16
+# Base addresses for various register groups in the register space.
+# Keep these in sync with the cspec files!
+# function locals (lN)
+@define REG_LOCALS_BASE 0x10000000
+# function inputs (iN)
+@define REG_INPUTS_BASE 0x20000000
+# function outputs (oN)
+@define REG_OUTPUTS_BASE 0x30000000
+# temporary registers used to hold block arguments during branches (tN)
+@define REG_TEMP_BASE 0x40000000
+# Wasm stack within a function (sN)
+@define REG_STACK_BASE 0x50000000
+# shadow stack space used during emulation (ssN)
+@define REG_SSTACK_BASE 0x80000000
+
 
 define endian=little;
 define alignment=1;
@@ -22,7 +38,7 @@ define register offset=0 size=4 [ _  PC SP SSP LR BRTableInput];
 define register offset=0x1000 size=16   contextreg;
 
 # Wasm stack within a function
-define register offset=0x50000000 size=16 [
+define register offset=$(REG_STACK_BASE) size=16 [
       s0o   s1o   s2o   s3o   s4o   s5o   s6o   s7o
       s8o   s9o  s10o  s11o  s12o  s13o  s14o  s15o
      s16o  s17o  s18o  s19o  s20o  s21o  s22o  s23o
@@ -56,7 +72,7 @@ define register offset=0x50000000 size=16 [
     s240o s241o s242o s243o s244o s245o s246o s247o
     s248o s249o s250o s251o s252o s253o s254o s255o
 ];
-define register offset=0x50000000 size=8 [
+define register offset=$(REG_STACK_BASE) size=8 [
       s0q _   s1q _   s2q _   s3q _   s4q _   s5q _   s6q _   s7q _
       s8q _   s9q _  s10q _  s11q _  s12q _  s13q _  s14q _  s15q _
      s16q _  s17q _  s18q _  s19q _  s20q _  s21q _  s22q _  s23q _
@@ -90,7 +106,7 @@ define register offset=0x50000000 size=8 [
     s240q _ s241q _ s242q _ s243q _ s244q _ s245q _ s246q _ s247q _
     s248q _ s249q _ s250q _ s251q _ s252q _ s253q _ s254q _ s255q _
 ];
-define register offset=0x50000000 size=4 [
+define register offset=$(REG_STACK_BASE) size=4 [
       s0 _ _ _   s1 _ _ _   s2 _ _ _   s3 _ _ _   s4 _ _ _   s5 _ _ _   s6 _ _ _   s7 _ _ _
       s8 _ _ _   s9 _ _ _  s10 _ _ _  s11 _ _ _  s12 _ _ _  s13 _ _ _  s14 _ _ _  s15 _ _ _
      s16 _ _ _  s17 _ _ _  s18 _ _ _  s19 _ _ _  s20 _ _ _  s21 _ _ _  s22 _ _ _  s23 _ _ _
@@ -126,7 +142,7 @@ define register offset=0x50000000 size=4 [
 ];
 
 # Locals within a function
-define register offset=0x10000000 size=16 [
+define register offset=$(REG_LOCALS_BASE) size=16 [
        l0o    l1o    l2o    l3o    l4o    l5o    l6o    l7o
        l8o    l9o   l10o   l11o   l12o   l13o   l14o   l15o
       l16o   l17o   l18o   l19o   l20o   l21o   l22o   l23o
@@ -640,7 +656,7 @@ define register offset=0x10000000 size=16 [
     l4080o l4081o l4082o l4083o l4084o l4085o l4086o l4087o
     l4088o l4089o l4090o l4091o l4092o l4093o l4094o l4095o
 ];
-define register offset=0x10000000 size=8 [
+define register offset=$(REG_LOCALS_BASE) size=8 [
        l0q _    l1q _    l2q _    l3q _    l4q _    l5q _    l6q _    l7q _
        l8q _    l9q _   l10q _   l11q _   l12q _   l13q _   l14q _   l15q _
       l16q _   l17q _   l18q _   l19q _   l20q _   l21q _   l22q _   l23q _
@@ -1154,7 +1170,7 @@ define register offset=0x10000000 size=8 [
     l4080q _ l4081q _ l4082q _ l4083q _ l4084q _ l4085q _ l4086q _ l4087q _
     l4088q _ l4089q _ l4090q _ l4091q _ l4092q _ l4093q _ l4094q _ l4095q _
 ];
-define register offset=0x10000000 size=4 [
+define register offset=$(REG_LOCALS_BASE) size=4 [
        l0 _ _ _    l1 _ _ _    l2 _ _ _    l3 _ _ _    l4 _ _ _    l5 _ _ _    l6 _ _ _    l7 _ _ _
        l8 _ _ _    l9 _ _ _   l10 _ _ _   l11 _ _ _   l12 _ _ _   l13 _ _ _   l14 _ _ _   l15 _ _ _
       l16 _ _ _   l17 _ _ _   l18 _ _ _   l19 _ _ _   l20 _ _ _   l21 _ _ _   l22 _ _ _   l23 _ _ _
@@ -1671,7 +1687,7 @@ define register offset=0x10000000 size=4 [
 
 # Artificial registers used to hold function inputs
 # Only used for the decompiler - emulation places inputs in locals directly
-define register offset=0x20000000 size=16 [
+define register offset=$(REG_INPUTS_BASE) size=16 [
       i0o   i1o   i2o   i3o   i4o   i5o   i6o   i7o
       i8o   i9o  i10o  i11o  i12o  i13o  i14o  i15o
      i16o  i17o  i18o  i19o  i20o  i21o  i22o  i23o
@@ -1705,7 +1721,7 @@ define register offset=0x20000000 size=16 [
     i240o i241o i242o i243o i244o i245o i246o i247o
     i248o i249o i250o i251o i252o i253o i254o i255o
 ];
-define register offset=0x20000000 size=8 [
+define register offset=$(REG_INPUTS_BASE) size=8 [
       i0q _   i1q _   i2q _   i3q _   i4q _   i5q _   i6q _   i7q _
       i8q _   i9q _  i10q _  i11q _  i12q _  i13q _  i14q _  i15q _
      i16q _  i17q _  i18q _  i19q _  i20q _  i21q _  i22q _  i23q _
@@ -1739,7 +1755,7 @@ define register offset=0x20000000 size=8 [
     i240q _ i241q _ i242q _ i243q _ i244q _ i245q _ i246q _ i247q _
     i248q _ i249q _ i250q _ i251q _ i252q _ i253q _ i254q _ i255q _
 ];
-define register offset=0x20000000 size=4 [
+define register offset=$(REG_INPUTS_BASE) size=4 [
       i0 _ _ _   i1 _ _ _   i2 _ _ _   i3 _ _ _   i4 _ _ _   i5 _ _ _   i6 _ _ _   i7 _ _ _
       i8 _ _ _   i9 _ _ _  i10 _ _ _  i11 _ _ _  i12 _ _ _  i13 _ _ _  i14 _ _ _  i15 _ _ _
      i16 _ _ _  i17 _ _ _  i18 _ _ _  i19 _ _ _  i20 _ _ _  i21 _ _ _  i22 _ _ _  i23 _ _ _
@@ -1775,7 +1791,7 @@ define register offset=0x20000000 size=4 [
 ];
 
 # Artificial registers used to hold function outputs
-define register offset=0x30000000 size=16 [
+define register offset=$(REG_OUTPUTS_BASE) size=16 [
       o0o   o1o   o2o   o3o   o4o   o5o   o6o   o7o
       o8o   o9o  o10o  o11o  o12o  o13o  o14o  o15o
      o16o  o17o  o18o  o19o  o20o  o21o  o22o  o23o
@@ -1809,7 +1825,7 @@ define register offset=0x30000000 size=16 [
     o240o o241o o242o o243o o244o o245o o246o o247o
     o248o o249o o250o o251o o252o o253o o254o o255o
 ];
-define register offset=0x30000000 size=8 [
+define register offset=$(REG_OUTPUTS_BASE) size=8 [
       o0q _   o1q _   o2q _   o3q _   o4q _   o5q _   o6q _   o7q _
       o8q _   o9q _  o10q _  o11q _  o12q _  o13q _  o14q _  o15q _
      o16q _  o17q _  o18q _  o19q _  o20q _  o21q _  o22q _  o23q _
@@ -1843,7 +1859,7 @@ define register offset=0x30000000 size=8 [
     o240q _ o241q _ o242q _ o243q _ o244q _ o245q _ o246q _ o247q _
     o248q _ o249q _ o250q _ o251q _ o252q _ o253q _ o254q _ o255q _
 ];
-define register offset=0x30000000 size=4 [
+define register offset=$(REG_OUTPUTS_BASE) size=4 [
       o0 _ _ _   o1 _ _ _   o2 _ _ _   o3 _ _ _   o4 _ _ _   o5 _ _ _   o6 _ _ _   o7 _ _ _
       o8 _ _ _   o9 _ _ _  o10 _ _ _  o11 _ _ _  o12 _ _ _  o13 _ _ _  o14 _ _ _  o15 _ _ _
      o16 _ _ _  o17 _ _ _  o18 _ _ _  o19 _ _ _  o20 _ _ _  o21 _ _ _  o22 _ _ _  o23 _ _ _
@@ -1879,11 +1895,11 @@ define register offset=0x30000000 size=4 [
 ];
 
 # Artificial temporary registers used to hold block arguments during branches
-define register offset=0x40000000 size=4 [ t0 ];
+define register offset=$(REG_TEMP_BASE) size=4 [ t0 ];
 
 # Shadow stack registers used to store the locals, stacks and return addresses for other frames during emulation
 # The current function's locals and stack are always stored in l*/s* registers.
-define register offset=0x80000000 size=4 [ ss0 ];
+define register offset=$(REG_SSTACK_BASE) size=4 [ ss0 ];
 
 # All context registers are set by the pre-analyzer
 define context contextreg
