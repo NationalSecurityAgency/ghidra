@@ -1832,6 +1832,8 @@ void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
     tokenColor = EmitMarkup::global_color;
   else if (sym->getCategory() == Symbol::function_parameter)
     tokenColor = EmitMarkup::param_color;
+  else if (sym->getCategory() == Symbol::equate)
+    tokenColor = EmitMarkup::const_color;
   else
     tokenColor = EmitMarkup::var_color;
   pushSymbolScope(sym);
