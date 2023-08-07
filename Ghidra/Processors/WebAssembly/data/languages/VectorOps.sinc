@@ -20,16 +20,47 @@ loadaddr2: memalign memoffset is memalign; memoffset; sp2_32 {
 	export addr;
 }
 
-# extractN(vector, laneidx) extract a single N-bit lane from the vector
-define pcodeop extract8;
-define pcodeop extract16;
-define pcodeop extract32;
-define pcodeop extract64;
-# replaceN(vector, laneidx, value) replace a single N-bit lane with provided value
-define pcodeop replace8;
-define pcodeop replace16;
-define pcodeop replace32;
-define pcodeop replace64;
+sp1_lane8_val: tmp_sp is ctx_sp; laneidx [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 1) * $(REG_SIZE) + laneidx * 1;] {
+	export *[register]:1 tmp_sp;
+}
+
+sp1_lane16_val: tmp_sp is ctx_sp; laneidx [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 1) * $(REG_SIZE) + laneidx * 2;] {
+	export *[register]:2 tmp_sp;
+}
+
+sp1_lane32_val: tmp_sp is ctx_sp; laneidx [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 1) * $(REG_SIZE) + laneidx * 4;] {
+	export *[register]:4 tmp_sp;
+}
+
+sp1_lane64_val: tmp_sp is ctx_sp; laneidx [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 1) * $(REG_SIZE) + laneidx * 8;] {
+	export *[register]:8 tmp_sp;
+}
+
+sp2_lane8_val: tmp_sp is ctx_sp; laneidx [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 2) * $(REG_SIZE) + laneidx * 1;] {
+	export *[register]:1 tmp_sp;
+}
+
+sp2_lane16_val: tmp_sp is ctx_sp; laneidx [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 2) * $(REG_SIZE) + laneidx * 2;] {
+	export *[register]:2 tmp_sp;
+}
+
+sp2_lane32_val: tmp_sp is ctx_sp; laneidx [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 2) * $(REG_SIZE) + laneidx * 4;] {
+	export *[register]:4 tmp_sp;
+}
+
+sp2_lane64_val: tmp_sp is ctx_sp; laneidx [tmp_sp = $(REG_STACK_BASE) + (ctx_sp - 2) * $(REG_SIZE) + laneidx * 8;] {
+	export *[register]:8 tmp_sp;
+}
+
+# Hack to show only the lane index in the disassembly
+sp1_lane8: laneidx is sp1_lane8_val & laneidx { export sp1_lane8_val; }
+sp1_lane16: laneidx is sp1_lane16_val & laneidx { export sp1_lane16_val; }
+sp1_lane32: laneidx is sp1_lane32_val & laneidx { export sp1_lane32_val; }
+sp1_lane64: laneidx is sp1_lane64_val & laneidx { export sp1_lane64_val; }
+sp2_lane8: laneidx is sp2_lane8_val & laneidx { export sp2_lane8_val; }
+sp2_lane16: laneidx is sp2_lane16_val & laneidx { export sp2_lane16_val; }
+sp2_lane32: laneidx is sp2_lane32_val & laneidx { export sp2_lane32_val; }
+sp2_lane64: laneidx is sp2_lane64_val & laneidx { export sp2_lane64_val; }
 
 ## Vector instructions
 # [i32] -> [v128]
@@ -229,77 +260,73 @@ define pcodeop i8x16_swizzle;
 }
 
 # [v128] -> [i32]
-:i8x16.extract_lane_s laneidx is opc=0xFD; opc2_21; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    local tmp:1 = extract8(sp1_128, laneidx:1);
-    sp1_32 = sext(tmp);
+:i8x16.extract_lane_s sp1_lane8 is opc=0xFD; opc2_21; sp1_lane8; sp1_32; ctx_is_directive=0 {
+    sp1_32 = sext(sp1_lane8);
 }
 
 # [v128] -> [i32]
-:i8x16.extract_lane_u laneidx is opc=0xFD; opc2_22; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    local tmp:1 = extract8(sp1_128, laneidx:1);
-    sp1_32 = zext(tmp);
+:i8x16.extract_lane_u sp1_lane8 is opc=0xFD; opc2_22; sp1_lane8; sp1_32; ctx_is_directive=0 {
+    sp1_32 = zext(sp1_lane8);
 }
 
 # [v128 i32] -> [v128]
-:i8x16.replace_lane laneidx is opc=0xFD; opc2_23; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace8(sp2_128, laneidx:1, sp1_32:1);
+:i8x16.replace_lane sp2_lane8 is opc=0xFD; opc2_23; sp1_32; sp2_lane8; ctx_is_directive=0 {
+    sp2_lane8 = sp1_32:1;
 }
 
 # [v128] -> [i32]
-:i16x8.extract_lane_s laneidx is opc=0xFD; opc2_24; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    local tmp:2 = extract16(sp1_128, laneidx:1);
-    sp1_32 = sext(tmp);
+:i16x8.extract_lane_s sp1_lane16 is opc=0xFD; opc2_24; sp1_lane16; sp1_32; ctx_is_directive=0 {
+    sp1_32 = sext(sp1_lane16);
 }
 
 # [v128] -> [i32]
-:i16x8.extract_lane_u laneidx is opc=0xFD; opc2_25; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    local tmp:2 = extract16(sp1_128, laneidx:1);
-    sp1_32 = zext(tmp);
+:i16x8.extract_lane_u sp1_lane16 is opc=0xFD; opc2_25; sp1_lane16; sp1_32; ctx_is_directive=0 {
+    sp1_32 = zext(sp1_lane16);
 }
 
 # [v128 i32] -> [v128]
-:i16x8.replace_lane laneidx is opc=0xFD; opc2_26; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace16(sp2_128, laneidx:1, sp1_32:2);
+:i16x8.replace_lane sp2_lane16 is opc=0xFD; opc2_26; sp1_32; sp2_lane16; ctx_is_directive=0 {
+    sp2_lane16 = sp1_32:2;
 }
 
 # [v128] -> [i32]
-:i32x4.extract_lane laneidx is opc=0xFD; opc2_27; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = extract32(sp1_128, laneidx:1);
+:i32x4.extract_lane sp1_lane32 is opc=0xFD; opc2_27; sp1_lane32; sp1_32; ctx_is_directive=0 {
+    sp1_32 = sp1_lane32;
 }
 
 # [v128 i32] -> [v128]
-:i32x4.replace_lane laneidx is opc=0xFD; opc2_28; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace32(sp2_128, laneidx:1, sp1_32);
+:i32x4.replace_lane sp2_lane32 is opc=0xFD; opc2_28; sp1_32; sp2_lane32; ctx_is_directive=0 {
+    sp2_lane32 = sp1_32;
 }
 
 # [v128] -> [i64]
-:i64x2.extract_lane laneidx is opc=0xFD; opc2_29; laneidx; sp1_128; sp1_64; ctx_is_directive=0 {
-    sp1_64 = extract64(sp1_128, laneidx:1);
+:i64x2.extract_lane sp1_lane64 is opc=0xFD; opc2_29; sp1_lane64; sp1_64; ctx_is_directive=0 {
+    sp1_64 = sp1_lane64;
 }
 
 # [v128 i64] -> [v128]
-:i64x2.replace_lane laneidx is opc=0xFD; opc2_30; laneidx; sp1_64; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace64(sp2_128, laneidx:1, sp1_64);
+:i64x2.replace_lane sp2_lane64 is opc=0xFD; opc2_30; sp1_64; sp2_lane64; ctx_is_directive=0 {
+    sp2_lane64 = sp1_64;
 }
 
 # [v128] -> [f32]
-:f32x4.extract_lane laneidx is opc=0xFD; opc2_31; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = extract32(sp1_128, laneidx:1);
+:f32x4.extract_lane sp1_lane32 is opc=0xFD; opc2_31; sp1_lane32; sp1_32; ctx_is_directive=0 {
+    sp1_32 = sp1_lane32;
 }
 
 # [v128 f32] -> [v128]
-:f32x4.replace_lane laneidx is opc=0xFD; opc2_32; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace32(sp2_128, laneidx:1, sp1_32);
+:f32x4.replace_lane sp2_lane32 is opc=0xFD; opc2_32; sp1_32; sp2_lane32; ctx_is_directive=0 {
+    sp2_lane32 = sp1_32;
 }
 
 # [v128] -> [f64]
-:f64x2.extract_lane laneidx is opc=0xFD; opc2_33; laneidx; sp1_128; sp1_64; ctx_is_directive=0 {
-    sp1_64 = extract64(sp1_128, laneidx:1);
+:f64x2.extract_lane sp1_lane64 is opc=0xFD; opc2_33; sp1_lane64; sp1_64; ctx_is_directive=0 {
+    sp1_64 = sp1_lane64;
 }
 
 # [v128 f64] -> [v128]
-:f64x2.replace_lane laneidx is opc=0xFD; opc2_34; laneidx; sp1_64; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace64(sp2_128, laneidx:1, sp1_64);
+:f64x2.replace_lane sp2_lane64 is opc=0xFD; opc2_34; sp1_64; sp2_lane64; ctx_is_directive=0 {
+    sp2_lane64 = sp1_64;
 }
 
 define pcodeop i8x16_eq;
@@ -597,44 +624,47 @@ define pcodeop v128_any_true;
 }
 
 # [i32 v128] -> [v128]
-:v128.load8_lane loadaddr2 laneidx is opc=0xFD; opc2_84; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace8(sp1_128, laneidx:1, *:1 loadaddr2);
-}
-
-define pcodeop v128_load16_lane;
-# [i32 v128] -> [v128]
-:v128.load16_lane loadaddr2 laneidx is opc=0xFD; opc2_85; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace16(sp1_128, laneidx:1, *:2 loadaddr2);
+:v128.load8_lane loadaddr2 sp2_lane8 is opc=0xFD; opc2_84; loadaddr2; sp1_128; sp2_128; sp2_lane8; ctx_is_directive=0 {
+    sp2_128 = sp1_128;
+    sp2_lane8 = *:1 loadaddr2;
 }
 
 # [i32 v128] -> [v128]
-:v128.load32_lane loadaddr2 laneidx is opc=0xFD; opc2_86; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace32(sp1_128, laneidx:1, *:4 loadaddr2);
+:v128.load16_lane loadaddr2 sp2_lane16 is opc=0xFD; opc2_85; loadaddr2; sp1_128; sp2_128; sp2_lane16; ctx_is_directive=0 {
+    sp2_128 = sp1_128;
+    sp2_lane16 = *:2 loadaddr2;
 }
 
 # [i32 v128] -> [v128]
-:v128.load64_lane loadaddr2 laneidx is opc=0xFD; opc2_87; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = replace64(sp1_128, laneidx:1, *:8 loadaddr2);
+:v128.load32_lane loadaddr2 sp2_lane32 is opc=0xFD; opc2_86; loadaddr2; sp1_128; sp2_128; sp2_lane32; ctx_is_directive=0 {
+    sp2_128 = sp1_128;
+    sp2_lane32 = *:4 loadaddr2;
+}
+
+# [i32 v128] -> [v128]
+:v128.load64_lane loadaddr2 sp2_lane64 is opc=0xFD; opc2_87; loadaddr2; sp1_128; sp2_128; sp2_lane64; ctx_is_directive=0 {
+    sp2_128 = sp1_128;
+    sp2_lane64 = *:8 loadaddr2;
 }
 
 # [i32 v128] -> []
-:v128.store8_lane storeaddr laneidx is opc=0xFD; opc2_88; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    *:1 storeaddr = extract8(sp1_128, laneidx:1);
+:v128.store8_lane storeaddr sp1_lane8 is opc=0xFD; opc2_88; storeaddr; sp1_lane8; ctx_is_directive=0 {
+    *:1 storeaddr = sp1_lane8;
 }
 
 # [i32 v128] -> []
-:v128.store16_lane storeaddr laneidx is opc=0xFD; opc2_89; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    *:2 storeaddr = extract16(sp1_128, laneidx:1);
+:v128.store16_lane storeaddr sp1_lane16 is opc=0xFD; opc2_89; storeaddr; sp1_lane16; ctx_is_directive=0 {
+    *:2 storeaddr = sp1_lane16;
 }
 
 # [i32 v128] -> []
-:v128.store32_lane storeaddr laneidx is opc=0xFD; opc2_90; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    *:4 storeaddr = extract32(sp1_128, laneidx:1);
+:v128.store32_lane storeaddr sp1_lane32 is opc=0xFD; opc2_90; storeaddr; sp1_lane32; ctx_is_directive=0 {
+    *:4 storeaddr = sp1_lane32;
 }
 
 # [i32 v128] -> []
-:v128.store64_lane storeaddr laneidx is opc=0xFD; opc2_91; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    *:8 storeaddr = extract64(sp1_128, laneidx:1);
+:v128.store64_lane storeaddr sp1_lane64 is opc=0xFD; opc2_91; storeaddr; sp1_lane64; ctx_is_directive=0 {
+    *:8 storeaddr = sp1_lane64;
 }
 
 # [i32] -> [v128]
