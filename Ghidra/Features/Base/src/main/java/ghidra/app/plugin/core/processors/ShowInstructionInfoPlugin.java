@@ -483,7 +483,7 @@ class ShowInfoAction extends ListingContextAction {
 
 		this.plugin = plugin;
 
-		setPopupMenuData(new MenuData(new String[] { "Instruction Info..." }, null, "Disassembly"));
+		setPopupMenuData(new MenuData(new String[] { "Instruction Info" }, null, "Disassembly"));
 
 	}
 
@@ -505,8 +505,8 @@ class ShowProcessorManualAction extends ProgramContextAction {
 		this.plugin = plugin;
 
 		setMenuBarData(
-			new MenuData(new String[] { "Tools", "Processor Manual..." }, null, "Disassembly"));
-		setPopupMenuData(new MenuData(new String[] { "Processor Manual..." }, null, "Disassembly"));
+			new MenuData(new String[] { "Tools", "Processor Manual" }, null, "Disassembly"));
+		setPopupMenuData(new MenuData(new String[] { "Processor Manual" }, null, "Disassembly"));
 
 		this.setEnabled(true);
 	}

@@ -28,7 +28,6 @@ import org.jdom.Element;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.DefaultRowFilterTransformer;
 import docking.widgets.table.RowFilterTransformer;
-import ghidra.app.services.GoToService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.symbol.Symbol;
@@ -50,7 +49,7 @@ class SymbolPanel extends JPanel {
 	private GhidraTableFilterPanel<SymbolRowObject> tableFilterPanel;
 
 	SymbolPanel(SymbolProvider provider, SymbolTableModel model, SymbolRenderer renderer,
-			final PluginTool tool, GoToService gotoService) {
+			PluginTool tool) {
 
 		super(new BorderLayout());
 
@@ -74,8 +73,7 @@ class SymbolPanel extends JPanel {
 			}
 		});
 
-		GoToService goToService = tool.getService(GoToService.class);
-		symTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		symTable.installNavigation(tool);
 
 		for (int i = 0; i < symTable.getColumnCount(); i++) {
 			TableColumn column = symTable.getColumnModel().getColumn(i);
