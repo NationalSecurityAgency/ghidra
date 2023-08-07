@@ -20,11 +20,6 @@ loadaddr2: memalign memoffset is memalign; memoffset; sp2_32 {
 	export addr;
 }
 
-# splatN(value) construct vector by replicating the N-bit value
-define pcodeop splat8;
-define pcodeop splat16;
-define pcodeop splat32;
-define pcodeop splat64;
 # extractN(vector, laneidx) extract a single N-bit lane from the vector
 define pcodeop extract8;
 define pcodeop extract16;
@@ -96,22 +91,52 @@ define pcodeop replace64;
 
 # [i32] -> [v128]
 :v128.load8_splat loadaddr is opc=0xFD; opc2_7; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = splat8(*:1 loadaddr);
+    local tmp:1 = *:1 loadaddr;
+    sp1_128[0,8] = tmp;
+    sp1_128[8,8] = tmp;
+    sp1_128[16,8] = tmp;
+    sp1_128[24,8] = tmp;
+    sp1_128[32,8] = tmp;
+    sp1_128[40,8] = tmp;
+    sp1_128[48,8] = tmp;
+    sp1_128[56,8] = tmp;
+    sp1_128[64,8] = tmp;
+    sp1_128[72,8] = tmp;
+    sp1_128[80,8] = tmp;
+    sp1_128[88,8] = tmp;
+    sp1_128[96,8] = tmp;
+    sp1_128[104,8] = tmp;
+    sp1_128[112,8] = tmp;
+    sp1_128[120,8] = tmp;
 }
 
 # [i32] -> [v128]
 :v128.load16_splat loadaddr is opc=0xFD; opc2_8; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = splat16(*:2 loadaddr);
+    local tmp:2 = *:2 loadaddr;
+    sp1_128[0,16] = tmp;
+    sp1_128[16,16] = tmp;
+    sp1_128[32,16] = tmp;
+    sp1_128[48,16] = tmp;
+    sp1_128[64,16] = tmp;
+    sp1_128[80,16] = tmp;
+    sp1_128[96,16] = tmp;
+    sp1_128[112,16] = tmp;
 }
 
 # [i32] -> [v128]
 :v128.load32_splat loadaddr is opc=0xFD; opc2_9; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = splat32(*:4 loadaddr);
+    local tmp:4 = *:4 loadaddr;
+    sp1_128[0,32] = tmp;
+    sp1_128[32,32] = tmp;
+    sp1_128[64,32] = tmp;
+    sp1_128[96,32] = tmp;
 }
 
 # [i32] -> [v128]
 :v128.load64_splat loadaddr is opc=0xFD; opc2_10; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = splat64(*:8 loadaddr);
+    local tmp:8 = *:8 loadaddr;
+    sp1_128[0,64] = tmp;
+    sp1_128[64,64] = tmp;
 }
 
 # [i32 v128] -> []
@@ -139,32 +164,68 @@ define pcodeop i8x16_swizzle;
 
 # [i32] -> [v128]
 :i8x16.splat is opc=0xFD; opc2_15; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_128 = splat8(sp1_32:1);
+    local tmp:1 = sp1_32:1;
+    sp1_128[0,8] = tmp;
+    sp1_128[8,8] = tmp;
+    sp1_128[16,8] = tmp;
+    sp1_128[24,8] = tmp;
+    sp1_128[32,8] = tmp;
+    sp1_128[40,8] = tmp;
+    sp1_128[48,8] = tmp;
+    sp1_128[56,8] = tmp;
+    sp1_128[64,8] = tmp;
+    sp1_128[72,8] = tmp;
+    sp1_128[80,8] = tmp;
+    sp1_128[88,8] = tmp;
+    sp1_128[96,8] = tmp;
+    sp1_128[104,8] = tmp;
+    sp1_128[112,8] = tmp;
+    sp1_128[120,8] = tmp;
 }
 
 # [i32] -> [v128]
 :i16x8.splat is opc=0xFD; opc2_16; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_128 = splat16(sp1_32:2);
+    local tmp:2 = sp1_32:2;
+    sp1_128[0,16] = tmp;
+    sp1_128[16,16] = tmp;
+    sp1_128[32,16] = tmp;
+    sp1_128[48,16] = tmp;
+    sp1_128[64,16] = tmp;
+    sp1_128[80,16] = tmp;
+    sp1_128[96,16] = tmp;
+    sp1_128[112,16] = tmp;
 }
 
 # [i32] -> [v128]
 :i32x4.splat is opc=0xFD; opc2_17; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_128 = splat32(sp1_32:4);
+    local tmp:4 = sp1_32:4;
+    sp1_128[0,32] = tmp;
+    sp1_128[32,32] = tmp;
+    sp1_128[64,32] = tmp;
+    sp1_128[96,32] = tmp;
 }
 
 # [i64] -> [v128]
 :i64x2.splat is opc=0xFD; opc2_18; sp1_128; sp1_64; ctx_is_directive=0 {
-    sp1_128 = splat64(sp1_64:8);
+    local tmp:8 = sp1_64:8;
+    sp1_128[0,64] = tmp;
+    sp1_128[64,64] = tmp;
 }
 
 # [f32] -> [v128]
 :f32x4.splat is opc=0xFD; opc2_19; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_128 = splat32(sp1_32:4);
+    local tmp:4 = sp1_32:4;
+    sp1_128[0,32] = tmp;
+    sp1_128[32,32] = tmp;
+    sp1_128[64,32] = tmp;
+    sp1_128[96,32] = tmp;
 }
 
 # [f64] -> [v128]
 :f64x2.splat is opc=0xFD; opc2_20; sp1_128; sp1_64; ctx_is_directive=0 {
-    sp1_128 = splat64(sp1_64:8);
+    local tmp:8 = sp1_64:8;
+    sp1_128[0,64] = tmp;
+    sp1_128[64,64] = tmp;
 }
 
 # [v128] -> [i32]
