@@ -66,12 +66,12 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		case 5:
 			break;
 		default:
-			System.out.println("DEBUG RISCV: " +
-					type + " " + relocationAddress + " " +
-					String.format("%x", symbolValue) + " " +
-					String.format("%x", addend) + " " +
-					String.format("%x", offset) + " " +
-					String.format("%x", base));// + " " +
+//			System.out.println("DEBUG RISCV: " +
+//					type + " " + relocationAddress + " " +
+//					String.format("%x", symbolValue) + " " +
+//					String.format("%x", addend) + " " +
+//					String.format("%x", offset) + " " +
+//					String.format("%x", base));// + " " +
 					//String.format("%x", memory.getInt(relocationAddress)));
 			break;
 		}
@@ -146,43 +146,37 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_TLS_DTPMOD32:
 				// TLS relocation word32 = S->TLSINDEX
 				markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTPMOD32", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TLS_DTPMOD64:
 				// TLS relocation word64 = S->TLSINDEX
 				markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTPMOD32", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TLS_DTPREL32:
 				// TLS relocation word32 = TLS + S + A - TLS_TP_OFFSET
 				markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTPREL32", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TLS_DTPREL64:
 				// TLS relocation word64 = TLS + S + A - TLS_TP_OFFSET
 				markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTPREL64", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TLS_TPREL32:
 				// TLS relocation word32 = TLS + S + A + S_TLS_OFFSET - TLS_DTV_OFFSET
 				markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTREL32", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TLS_TPREL64:
 				// TLS relocation word64 = TLS + S + A + S_TLS_OFFSET - TLS_DTV_OFFSET
 				markAsWarning(program, relocationAddress, "R_RISCV_TLS_TPREL64", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_BRANCH:
@@ -217,50 +211,43 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_CALL_PLT:
 				// PC-relative call (PLT) MACRO call,tail (auipc+jalr pair) PIC
 				markAsWarning(program, relocationAddress, "R_RISCV_CALL_PLT", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_GOT_HI20:
 				// PC-relative GOT reference MACRO la
 				markAsWarning(program, relocationAddress, "R_RISCV_GOT_HI20", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TLS_GOT_HI20:
 				// PC-relative TLS IE GOT offset MACRO la.tls.ie
 				markAsWarning(program, relocationAddress, "R_RISCV_TLS_GOT_HI20", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TLS_GD_HI20:
 				// PC-relative TLS GD reference MACRO la.tls.gd
 				markAsWarning(program, relocationAddress, "R_RISCV_TLS_GD_HI20", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_PCREL_HI20:
 				// PC-relative reference %pcrel_hi(symbol) (U-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_PCREL_HI20", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_PCREL_LO12_I:
 				// PC-relative reference %pcrel_lo(symbol) (I-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_PCREL_LO12_I", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_PCREL_LO12_S:
 				// PC-relative reference %pcrel_lo(symbol) (S-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_PCREL_LO12_S", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_HI20:
@@ -288,35 +275,29 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_TPREL_HI20:
 				// TLS LE thread offset %tprel_hi(symbol) (U-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_TPREL_HI20", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TPREL_LO12_I:
 				// TLS LE thread offset %tprel_lo(symbol) (I-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_TPREL_LO12_I", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TPREL_LO12_S:
 				// TLS LE thread offset %tprel_lo(symbol) (S-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_TPREL_LO12_S", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TPREL_ADD:
 				// TLS LE thread usage %tprel_add(symbol)
 				markAsWarning(program, relocationAddress, "R_RISCV_TPREL_ADD", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_ADD8:
 				// 8-bit label addition word8 = old + S + A
-				markAsWarning(program, relocationAddress, "R_RISCV_ADD8", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value8 = memory.getByte(relocationAddress);
 				value8 += (byte) symbolValue;
 				value8 += (byte) addend;
@@ -326,8 +307,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_ADD16:
 				// 16-bit label addition word16 = old + S + A
-				markAsWarning(program, relocationAddress, "R_RISCV_ADD16", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value16 = memory.getShort(relocationAddress);
 				value16 += (short) symbolValue;
 				value16 += (short) addend;
@@ -337,8 +316,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_ADD32:
 				// 32-bit label addition word32 = old + S + A
-				markAsWarning(program, relocationAddress, "R_RISCV_ADD32", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value32 = memory.getInt(relocationAddress);
 				value32 += (int) symbolValue;
 				value32 += (int) addend;
@@ -347,8 +324,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_ADD64:
 				// 64-bit label addition word64 = old + S + A
-				markAsWarning(program, relocationAddress, "R_RISCV_ADD64", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value64 = memory.getLong(relocationAddress);
 				value64 += symbolValue;
 				value64 += addend;
@@ -358,8 +333,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB8:
 				// 8-bit label subtraction word8 = old - S - A
-				markAsWarning(program, relocationAddress, "R_RISCV_SUB8", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value8 = memory.getByte(relocationAddress);
 				value8 -= (byte) symbolValue;
 				value8 -= (byte) addend;
@@ -369,8 +342,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB16:
 				// 16-bit label subtraction word16 = old - S - A
-				markAsWarning(program, relocationAddress, "R_RISCV_SUB16", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value16 = memory.getShort(relocationAddress);
 				value16 -= (short) symbolValue;
 				value16 -= (short) addend;
@@ -380,8 +351,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB32:
 				// 32-bit label subtraction word32 = old - S - A
-				markAsWarning(program, relocationAddress, "R_RISCV_SUB32", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value32 = memory.getInt(relocationAddress);
 				value32 -= (int) symbolValue;
 				value32 -= (int) addend;
@@ -390,8 +359,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB64:
 				// 64-bit label subtraction word64 = old - S - A
-				markAsWarning(program, relocationAddress, "R_RISCV_SUB64", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value64 = memory.getLong(relocationAddress);
 				value64 -= symbolValue;
 				value64 -= addend;
@@ -402,15 +369,13 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_GNU_VTINHERIT:
 				// GNU C++ vtable hierarchy 
 				markAsWarning(program, relocationAddress, "R_RISCV_GNU_VTINHERIT", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_GNU_VTENTRY:
 				// GNU C++ vtable member usage 
 				markAsWarning(program, relocationAddress, "R_RISCV_GNU_VTENTRY", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_ALIGN:
@@ -451,36 +416,31 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_RVC_LUI:
 				// Absolute address (CI-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_RVC_LUI", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_GPREL_I:
 				// GP-relative reference (I-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_GPREL_I", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_GPREL_S:
 				// GP-relative reference (S-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_GPREL_S", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TPREL_I:
 				// TP-relative TLS LE load (I-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_TPREL_I", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_TPREL_S:
 				// TP-relative TLS LE store (S-Type)
 				markAsWarning(program, relocationAddress, "R_RISCV_TPREL_S", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_RELAX:
@@ -522,8 +482,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_32_PCREL:
 				// 32-bit PC relative
 				markAsWarning(program, relocationAddress, "R_RISCV_32_PCREL", symbolName,
-					symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
+					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			default:
