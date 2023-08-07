@@ -7644,11 +7644,13 @@ public class RecoveredClassHelper {
 
 		Address[] functionThunkAddresses = function.getFunctionThunkAddresses(true);
 
-		// add any thunk addresses to the list
-		List<Address> functionAddresses =
-			new ArrayList<Address>(Arrays.asList(functionThunkAddresses));
+		List<Address> functionAddresses = new ArrayList<>();
 		// add the function itself to the list
 		functionAddresses.add(function.getEntryPoint());
+		if (functionThunkAddresses != null) {
+			// add any thunk addresses to the list
+			functionAddresses.addAll(Arrays.asList(functionThunkAddresses));
+		}
 
 		for (Address address : functionAddresses) {
 			monitor.checkCancelled();
@@ -7673,7 +7675,7 @@ public class RecoveredClassHelper {
 				Address vftableAddress = dataContaining.getAddress();
 
 				Symbol vftableSymbol = api.getSymbolAt(vftableAddress);
-				if (!vftableSymbol.getName().contains("vftable")) {
+				if (vftableSymbol == null || !vftableSymbol.getName().contains("vftable")) {
 					continue;
 				}
 
@@ -7826,25 +7828,9 @@ public class RecoveredClassHelper {
 		ParameterDefinition[] currentArgs = functionDefinition.getArguments();
 		ParameterDefinition[] changedArgs = newFunctionDefinition.getArguments();
 
-		// only update if there are differences and the func sigs have same length
-		// if they don't have same length then something was possibly overridden in a child and
-		// it needs to stay the same as it was except the name
-		if (!currentArgs.equals(changedArgs) && (currentArgs.length == changedArgs.length)) {
-			ParameterDefinition[] newArgs = new ParameterDefinition[currentArgs.length];
-			for (int i = 0; i < currentArgs.length; i++) {
-				if (currentArgs[i].getName().equals("this") ||
-					currentArgs[i].equals(changedArgs[i])) {
-					newArgs[i] = currentArgs[i];
-				}
-				else {
-					newArgs[i] = changedArgs[i];
-					changed = true;
-				}
-			}
-			if (changed) {
-				functionDefinition.setArguments(newArgs);
-			}
-
+		// only update if there are differences
+		if (!currentArgs.equals(changedArgs)) {
+			functionDefinition.setArguments(changedArgs);
 		}
 
 		if (!functionDefinition.getReturnType().equals(newFunctionDefinition.getReturnType())) {
