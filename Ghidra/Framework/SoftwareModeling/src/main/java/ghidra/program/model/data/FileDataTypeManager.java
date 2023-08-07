@@ -22,8 +22,8 @@ import db.DBConstants;
 import generic.jar.ResourceFile;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
-import ghidra.program.model.lang.*;
-import ghidra.program.util.DefaultLanguageService;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
@@ -92,54 +92,6 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		try {
 			return new FileDataTypeManager(new ResourceFile(packedDbfile), DBConstants.CREATE,
 				TaskMonitor.DUMMY);
-		}
-		catch (CancelledException e) {
-			throw new AssertException(e); // unexpected without task monitor use
-		}
-	}
-
-	/**
-	 * Create a new data-type file archive using the default data organization
-	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
-	 * @return data-type manager backed by specified packedDbFile
-	 * @throws IOException if an IO error occurs
-	 */
-	public static FileDataTypeManager createFileArchive(File packedDbfile, LanguageID languageId,
-			CompilerSpecID compilerSpecId)
-			throws LanguageNotFoundException, CompilerSpecNotFoundException, IOException {
-		try {
-			FileDataTypeManager dtm =
-				new FileDataTypeManager(new ResourceFile(packedDbfile), DBConstants.CREATE,
-					TaskMonitor.DUMMY);
-
-			LanguageService languageService = DefaultLanguageService.getLanguageService();
-			Language language = languageService.getLanguage(languageId);
-			CompilerSpec compilerSpec = language.getCompilerSpecByID(compilerSpecId);
-
-			//dtm.setProgramArchitecture()
-			return dtm;
-		}
-		catch (CancelledException e) {
-			throw new AssertException(e); // unexpected without task monitor use
-		}
-	}
-
-	/**
-	 * Create a new data-type file archive using the default data organization
-	 * @param packedDbfile archive file (filename must end with DataTypeFileManager.SUFFIX)
-	 * @return data-type manager backed by specified packedDbFile
-	 * @throws IOException if an IO error occurs
-	 */
-	public static FileDataTypeManager createFileArchive(File packedDbfile, String languageId,
-			String compilerSpecId) throws IOException {
-		try {
-			FileDataTypeManager dtm =
-				new FileDataTypeManager(new ResourceFile(packedDbfile), DBConstants.CREATE,
-					TaskMonitor.DUMMY);
-
-			//dtm.setProgramArchitecture()
-
-			return dtm;
 		}
 		catch (CancelledException e) {
 			throw new AssertException(e); // unexpected without task monitor use
