@@ -124,6 +124,7 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "certification.local.manifest"
 		exclude ".project"
 		exclude ".classpath"
+		exclude ".pydevproject"
 		exclude "Module.manifest"
 		exclude "build.gradle"
 		exclude "buildNatives.gradle"		
