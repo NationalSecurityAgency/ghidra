@@ -16,6 +16,7 @@
 package ghidra.program.emulation;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
@@ -269,6 +270,20 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 		}
 	}
 
+	private void updateContextValue(Emulate emulate, Address currentAddress) {
+		WasmFunctionAnalysis funcAnalysis = getAnalysis(currentAddress);
+		if (funcAnalysis == null) {
+			return;
+		}
+
+		BigInteger context = funcAnalysis.getContext(currentAddress);
+		if (context == null) {
+			return;
+		}
+
+		emulate.setContextRegisterValue(new RegisterValue(contextRegister, context));
+	}
+
 	@Override
 	public void initialExecuteCallback(Emulate emulate, Address current_address, RegisterValue contextRegisterValue) throws LowlevelError {
 		if (analysisProvider == null) {
@@ -276,10 +291,7 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 		}
 
 		// Set initial context value
-		WasmFunctionAnalysis funcAnalysis = getAnalysis(current_address);
-		if (funcAnalysis != null) {
-			emulate.setContextRegisterValue(new RegisterValue(contextRegister, funcAnalysis.getContext(current_address)));
-		}
+		updateContextValue(emulate, current_address);
 
 		// Set SSP register if not set
 		helper.setInitialSSP(emulate.getMemoryState());
@@ -287,10 +299,6 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 
 	@Override
 	public void postExecuteCallback(Emulate emulate, Address lastExecuteAddress, PcodeOp[] lastExecutePcode, int lastPcodeIndex, Address currentAddress) throws LowlevelError {
-		// Set updated context value
-		WasmFunctionAnalysis funcAnalysis = getAnalysis(currentAddress);
-		if (funcAnalysis != null) {
-			emulate.setContextRegisterValue(new RegisterValue(contextRegister, funcAnalysis.getContext(currentAddress)));
-		}
+		updateContextValue(emulate, currentAddress);
 	}
 }
