@@ -6,13 +6,10 @@ define token I128 (64)
 
 define token laneidx_1 (8)
     laneidx = (0, 7) dec
-;
-
-define token laneidx_4 (32)
-    laneidx0_3 = (0, 31) hex
-    laneidx4_7 = (0, 31) hex
-    laneidx8_11 = (0, 31) hex
-    laneidx12_15 = (0, 31) hex
+    laneidx0 = (0, 7)
+    laneidx1 = (0, 7)
+    laneidx2 = (0, 7)
+    laneidx3 = (0, 7)
 ;
 
 loadaddr2: memalign memoffset is memalign; memoffset; sp2_32 {
@@ -61,6 +58,53 @@ sp2_lane8: laneidx is sp2_lane8_val & laneidx { export sp2_lane8_val; }
 sp2_lane16: laneidx is sp2_lane16_val & laneidx { export sp2_lane16_val; }
 sp2_lane32: laneidx is sp2_lane32_val & laneidx { export sp2_lane32_val; }
 sp2_lane64: laneidx is sp2_lane64_val & laneidx { export sp2_lane64_val; }
+
+# Hack: take advantage of the fact that sp1 is immediately after sp2 in memory,
+# such that lanes 16-31 overflow into sp1.
+# (For some reason, conditioning on bit (4, 4) of the laneidx did not work - sp2 was always selected)
+shuf0: is sp2_lane8_val { export sp2_lane8_val; }
+shuf1: is sp2_lane8_val { export sp2_lane8_val; }
+shuf2: is sp2_lane8_val { export sp2_lane8_val; }
+shuf3: is sp2_lane8_val { export sp2_lane8_val; }
+shuf4: is sp2_lane8_val { export sp2_lane8_val; }
+shuf5: is sp2_lane8_val { export sp2_lane8_val; }
+shuf6: is sp2_lane8_val { export sp2_lane8_val; }
+shuf7: is sp2_lane8_val { export sp2_lane8_val; }
+shuf8: is sp2_lane8_val { export sp2_lane8_val; }
+shuf9: is sp2_lane8_val { export sp2_lane8_val; }
+shuf10: is sp2_lane8_val { export sp2_lane8_val; }
+shuf11: is sp2_lane8_val { export sp2_lane8_val; }
+shuf12: is sp2_lane8_val { export sp2_lane8_val; }
+shuf13: is sp2_lane8_val { export sp2_lane8_val; }
+shuf14: is sp2_lane8_val { export sp2_lane8_val; }
+shuf15: is sp2_lane8_val { export sp2_lane8_val; }
+
+shuf_impl: is shuf0 ; shuf1 ; shuf2 ; shuf3 ; shuf4 ; shuf5 ; shuf6 ; shuf7 ; shuf8 ; shuf9 ; shuf10 ; shuf11 ; shuf12 ; shuf13 ; shuf14 ; shuf15 {
+    t0o[0,8] = shuf0;
+    t0o[8,8] = shuf1;
+    t0o[16,8] = shuf2;
+    t0o[24,8] = shuf3;
+    t0o[32,8] = shuf4;
+    t0o[40,8] = shuf5;
+    t0o[48,8] = shuf6;
+    t0o[56,8] = shuf7;
+    t0o[64,8] = shuf8;
+    t0o[72,8] = shuf9;
+    t0o[80,8] = shuf10;
+    t0o[88,8] = shuf11;
+    t0o[96,8] = shuf12;
+    t0o[104,8] = shuf13;
+    t0o[112,8] = shuf14;
+    t0o[120,8] = shuf15;
+}
+
+laneidx0_3: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] { export laneidx_disp; }
+laneidx4_7: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] { export laneidx_disp; }
+laneidx8_11: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] { export laneidx_disp; }
+laneidx12_15: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] { export laneidx_disp; }
+
+shuf_disp: laneidx0_3 laneidx4_7 laneidx8_11 laneidx12_15 is laneidx0_3 ; laneidx4_7 ; laneidx8_11 ; laneidx12_15 {
+}
 
 ## Vector instructions
 # [i32] -> [v128]
@@ -181,10 +225,9 @@ sp2_lane64: laneidx is sp2_lane64_val & laneidx { export sp2_lane64_val; }
     sp0_128[64,64] = f128_1;
 }
 
-define pcodeop i8x16_shuffle;
 # [v128 v128] -> [v128]
-:i8x16.shuffle laneidx0_3 laneidx4_7 laneidx8_11 laneidx12_15 is opc=0xFD; opc2_13; laneidx0_3; laneidx4_7; laneidx8_11; laneidx12_15; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i8x16_shuffle(laneidx0_3:4, laneidx4_7:4, laneidx8_11:4, laneidx12_15:4, sp1_128, sp2_128);
+:i8x16.shuffle shuf_disp is opc=0xFD; opc2_13; ( shuf_impl & shuf_disp ) ; sp2_128; ctx_is_directive=0 {
+    sp2_128 = t0o;
 }
 
 define pcodeop i8x16_swizzle;
