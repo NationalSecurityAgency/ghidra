@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
@@ -34,7 +33,7 @@ import ghidra.util.classfinder.ExtensionPoint;
 
 public interface AutoReadMemorySpec extends ExtensionPoint {
 	class Private {
-		private final Map<String, AutoReadMemorySpec> specsByName = new TreeMap<>();
+		private final Map<String, AutoReadMemorySpec> specsByName = new HashMap<>();
 		private final ChangeListener classListener = this::classesChanged;
 
 		private Private() {
@@ -72,7 +71,7 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 
 	static Map<String, AutoReadMemorySpec> allSpecs() {
 		synchronized (PRIVATE) {
-			return Map.copyOf(PRIVATE.specsByName);
+			return new TreeMap<>(PRIVATE.specsByName);
 		}
 	}
 
