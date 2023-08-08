@@ -254,7 +254,7 @@ class StructureEditorModel extends CompEditorModel {
 		if ((rowIndex < 0) || (rowIndex >= getRowCount())) {
 			return false;
 		}
-		// There shouldn't be a selection when this is called.
+
 		switch (columnIndex) {
 			case DATATYPE:
 				return true;

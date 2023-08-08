@@ -1137,6 +1137,9 @@ public class PcodeDataTypeManager {
 		TypeMap type = new TypeMap(DataType.DEFAULT, "undefined", "unknown", false, false,
 			DEFAULT_DECOMPILER_ID);
 		coreBuiltin.put(type.id, type);
+		type = new TypeMap(displayLanguage, VoidDataType.dataType, "void", false, false,
+			builtInDataTypes);
+		coreBuiltin.put(type.id, type);
 
 		for (BuiltIn dt : Undefined.getUndefinedDataTypes()) {
 			type = new TypeMap(displayLanguage, dt, "unknown", false, false, builtInDataTypes);
@@ -1218,8 +1221,6 @@ public class PcodeDataTypeManager {
 	 */
 	public void encodeCoreTypes(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_CORETYPES);
-		encoder.openElement(ELEM_VOID);
-		encoder.closeElement(ELEM_VOID);
 
 		for (TypeMap typeMap : coreBuiltin.values()) {
 			encoder.openElement(ELEM_TYPE);

@@ -540,7 +540,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			this.program = p;
 			this.domainFile = domainFile;
 			if (domainFile instanceof LinkedDomainFile linkedDomainFile) {
-				this.ghidraURL = linkedDomainFile.getSharedProjectURL();
+				this.ghidraURL = linkedDomainFile.getSharedProjectURL(null);
 			}
 			else {
 				this.ghidraURL = null;

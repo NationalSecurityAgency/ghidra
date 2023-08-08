@@ -102,7 +102,12 @@ public class TestDummyDomainFile implements DomainFile {
 	}
 
 	@Override
-	public URL getSharedProjectURL() {
+	public URL getSharedProjectURL(String ref) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public URL getLocalProjectURL(String ref) {
 		throw new UnsupportedOperationException();
 	}
 

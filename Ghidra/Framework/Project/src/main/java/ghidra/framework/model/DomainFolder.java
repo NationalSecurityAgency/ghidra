@@ -35,8 +35,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public interface DomainFolder extends Comparable<DomainFolder> {
 
-	public static final Icon OPEN_FOLDER_ICON =
-		new GIcon("icon.datatree.node.domain.folder.open");
+	public static final Icon OPEN_FOLDER_ICON = new GIcon("icon.datatree.node.domain.folder.open");
 
 	public static final Icon CLOSED_FOLDER_ICON =
 		new GIcon("icon.datatree.node.domain.folder.closed");
@@ -90,12 +89,20 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	public String getPathname();
 
 	/**
-	 * Get a remote Ghidra URL for this domain folder within the associated shared
-	 * project repository.  URL path will end with "/".  A null value will be returned if not 
-	 * associated with a shared project.
+	 * Get a remote Ghidra URL for this domain folder if available within an associated shared
+	 * project repository.  URL path will end with "/".  A null value will be returned if shared 
+	 * folder does not exist and may also be returned if shared repository is not connected or a 
+	 * connection error occurs.
 	 * @return remote Ghidra URL for this folder or null
 	 */
 	public URL getSharedProjectURL();
+
+	/**
+	 * Get a local Ghidra URL for this domain file if available within the associated non-transient
+	 * local project.  A null value will be returned if project is transient.
+	 * @return local Ghidra URL for this folder or null if transient or not applicable
+	 */
+	public URL getLocalProjectURL();
 
 	/**
 	 * Returns true if this file is in a writable project.
@@ -219,8 +226,8 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	 * @throws IOException thrown if an IO or access error occurs.
 	 * @throws CancelledException if task monitor cancelled operation.
 	 */
-	public DomainFolder copyTo(DomainFolder newParent, TaskMonitor monitor) throws IOException,
-			CancelledException;
+	public DomainFolder copyTo(DomainFolder newParent, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Copy this folder into the newParent folder as a link file.  Restrictions:

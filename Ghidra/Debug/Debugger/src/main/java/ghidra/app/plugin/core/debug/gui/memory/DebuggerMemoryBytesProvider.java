@@ -16,14 +16,14 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.util.*;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -133,6 +133,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		protected void specChanged(LocationTrackingSpec spec) {
 			updateTitle();
 			trackingLabel.setText("");
+			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
 		}
 	}
@@ -206,9 +207,11 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		createActions();
 		addDisplayListener(readsMemTrait.getDisplayListener());
 
-		JPanel northPanel = new JPanel(new BorderLayout());
-		northPanel.add(locationLabel, BorderLayout.WEST);
-		northPanel.add(trackingLabel, BorderLayout.EAST);
+		Box northPanel = Box.createHorizontalBox();
+		northPanel.add(locationLabel);
+		locationLabel.setMinimumSize(new Dimension(0, 0));
+		northPanel.add(Box.createGlue());
+		northPanel.add(trackingLabel);
 		decorationComponent.add(northPanel, BorderLayout.NORTH);
 
 		goToTrait.goToCoordinates(current);
@@ -479,7 +482,9 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	}
 
 	protected void goToAndUpdateTrackingLabel(TraceProgramView curView, ProgramLocation loc) {
-		trackingLabel.setText(trackingTrait.computeLabelText());
+		String labelText = trackingTrait.computeLabelText();
+		trackingLabel.setText(labelText);
+		trackingLabel.setToolTipText(labelText);
 		if (goTo(curView, loc)) {
 			trackingLabel.setForeground(Colors.FOREGROUND);
 		}

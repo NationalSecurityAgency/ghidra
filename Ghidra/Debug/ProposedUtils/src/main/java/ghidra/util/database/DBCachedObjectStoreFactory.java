@@ -929,6 +929,7 @@ public class DBCachedObjectStoreFactory {
 		PrimitiveCodec<String[]> STRING_ARR =
 			new ArrayObjectCodec<>(new LengthBoundCodec<>(STRING));
 
+		// TODO: No floats?
 		Map<Byte, PrimitiveCodec<?>> CODECS_BY_SELECTOR = Stream
 				.of(BOOL, BYTE, CHAR, SHORT, INT, LONG, STRING, BOOL_ARR, BYTE_ARR, CHAR_ARR,
 					SHORT_ARR, INT_ARR, LONG_ARR, STRING_ARR)

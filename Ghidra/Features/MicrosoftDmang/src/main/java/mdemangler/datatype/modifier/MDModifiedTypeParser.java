@@ -27,19 +27,13 @@ import mdemangler.naming.MDQualification;
  */
 // TODO: Consider looking at getPtrRefDataType()
 public class MDModifiedTypeParser {
-	public static final char SPACE = ' ';
-
-	public static final char POINTER_CHAR = '*';
-	public static final char REFERENCE_CHAR = '&';
-	public static final char CARROT_CHAR = '^';
-	public static final char PERCENT_CHAR = '%';
 	// private static final String FUNCTIONPOINTER = "*"; //TODO: eliminate with
 	// old code
 	// private static final String FUNCTIONREFERENCE = "&"; //TODO: eliminate
 	// with old code
 	// private static final String POINTER = "*";
 	// private static final String REFERENCE = "&";
-	// private static final String CARROT = "^";
+	// private static final String CARET = "^";
 	// private static final String PERCENT = "%";
 	// private static final String REFREF = "&&";
 
@@ -128,7 +122,7 @@ public class MDModifiedTypeParser {
 		pointer,
 		reference,
 		rightreference,
-		carrot, // TODO: eliminate with old code
+		caret, // TODO: eliminate with old code
 		percent, // TODO: eliminate with old code
 		functionpointer, // TODO: eliminate with old code
 		functionreference, // TODO: eliminate with old code
@@ -154,8 +148,8 @@ public class MDModifiedTypeParser {
 		modType = CvModifierType.rightreference;
 	}
 
-	// public void setCarrotType() {
-	// modType = cvModifierType.carrot;
+	// public void setCaretType() {
+	// modType = cvModifierType.caret;
 	// }
 	//
 	// public void setPercentType() {
@@ -384,7 +378,7 @@ public class MDModifiedTypeParser {
 				dmang.increment();
 				setGC();
 				// if (isPointerType()) {
-				// setCarrotType();
+				// setCaretType();
 				// }
 				// else if (isReferenceType()) {
 				// setPercentType();
@@ -394,7 +388,7 @@ public class MDModifiedTypeParser {
 				dmang.increment();
 				// if ((modType == cvModifierType.pointer) ||
 				// (modType == cvModifierType.functionpointer) ||
-				// (modType == cvModifierType.carrot) ||
+				// (modType == cvModifierType.caret) ||
 				// (modType == cvModifierType.percent) ||
 				// (modType == cvModifierType.reference) ||
 				// (modType == cvModifierType.functionreference)) {

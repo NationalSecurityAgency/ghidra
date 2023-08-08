@@ -177,8 +177,8 @@ public class DyldChainedFixups {
 				case DYLD_CHAINED_PTR_ARM64E_KERNEL:
 				case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 				case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
-					processPointerChain(chainHeader, unchainedLocList, ptrFormat, page, pageOffset,
-						authValueAdd);
+					processPointerChain(chainHeader.getChainedImports(), unchainedLocList,
+						ptrFormat, page, pageOffset, authValueAdd);
 					break;
 
 				// These might work, but have not been fully tested!
@@ -189,8 +189,8 @@ public class DyldChainedFixups {
 				case DYLD_CHAINED_PTR_32_CACHE:
 				case DYLD_CHAINED_PTR_32_FIRMWARE:
 				case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-					processPointerChain(chainHeader, unchainedLocList, ptrFormat, page, pageOffset,
-						authValueAdd);
+					processPointerChain(chainHeader.getChainedImports(), unchainedLocList,
+						ptrFormat, page, pageOffset, authValueAdd);
 					break;
 
 				case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
@@ -214,7 +214,7 @@ public class DyldChainedFixups {
 	/**
 	 * Fixes up any chained pointers, starting at the given address.
 	 * 
-	 * @param chainHeader fixup header chains (could be null)
+	 * @param chainedImports chained imports (could be null)
 	 * @param unchainedLocList list of locations that were unchained
 	 * @param pointerFormat format of pointers within this chain
 	 * @param page within data pages that has pointers to be unchained
@@ -224,7 +224,7 @@ public class DyldChainedFixups {
 	 * @throws MemoryAccessException IO problem reading file
 	 * @throws CancelledException user cancels
 	 */
-	private void processPointerChain(DyldChainedFixupHeader chainHeader,
+	public void processPointerChain(DyldChainedImports chainedImports,
 			List<Address> unchainedLocList, DyldChainType pointerFormat, long page, long nextOff,
 			long auth_value_add) throws MemoryAccessException, CancelledException {
 
@@ -243,9 +243,9 @@ public class DyldChainedFixups {
 			boolean isAuthenticated = DyldChainedPtr.isAuthenticated(pointerFormat, chainValue);
 			boolean isBound = DyldChainedPtr.isBound(pointerFormat, chainValue);
 
-			if (isBound && chainHeader == null) {
+			if (isBound && chainedImports == null) {
 				log.appendMsg(
-					"Error: dyld_chained_fixups_header required to process bound chain fixup at " +
+					"Error: dyld_chained_import array required to process bound chain fixup at " +
 						chainLoc);
 				return;
 			}
@@ -264,7 +264,6 @@ public class DyldChainedFixups {
 			else if (!isAuthenticated && isBound) {
 				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
 				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
-				DyldChainedImports chainedImports = chainHeader.getChainedImports();
 				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
 				//int libOrdinal = chainedImport.getLibOrdinal();
 				symName = chainedImport.getName();
@@ -283,7 +282,6 @@ public class DyldChainedFixups {
 				//	DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
 				//long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
 
-				DyldChainedImports chainedImports = chainHeader.getChainedImports();
 				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
 				symName = chainedImport.getName();
 

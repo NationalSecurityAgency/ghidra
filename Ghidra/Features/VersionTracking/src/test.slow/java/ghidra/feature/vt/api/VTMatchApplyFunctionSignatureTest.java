@@ -15,85 +15,30 @@
  */
 package ghidra.feature.vt.api;
 
-import static ghidra.feature.vt.db.VTTestUtils.addr;
-import static ghidra.feature.vt.db.VTTestUtils.createMatchSetWithOneMatch;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_RETURN_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_SIGNATURE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.INLINE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.NO_RETURN;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_DATA_TYPES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static ghidra.feature.vt.db.VTTestUtils.*;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.main.VTAssociationStatus;
-import ghidra.feature.vt.api.main.VTMarkupItem;
-import ghidra.feature.vt.api.main.VTMarkupItemStatus;
-import ghidra.feature.vt.api.main.VTMatch;
-import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.FunctionSignatureMarkupType;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTControllerImpl;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.task.ApplyMatchTask;
-import ghidra.feature.vt.gui.task.ClearMatchTask;
-import ghidra.feature.vt.gui.task.VtTask;
+import ghidra.feature.vt.gui.plugin.*;
+import ghidra.feature.vt.gui.task.*;
 import ghidra.feature.vt.gui.util.MatchInfo;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CallingConventionChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CommentChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionNameChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionSignatureChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.HighestSourcePriorityChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.LabelChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ParameterDataTypeChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.SourcePriorityChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.BooleanDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.CharDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FloatDataType;
-import ghidra.program.model.data.IntegerDataType;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.StructureDataType;
-import ghidra.program.model.data.TypeDef;
-import ghidra.program.model.data.TypedefDataType;
-import ghidra.program.model.data.Undefined4DataType;
-import ghidra.program.model.data.VoidDataType;
-import ghidra.program.model.data.WordDataType;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.CompilerSpecDescription;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.lang.LanguageNotFoundException;
-import ghidra.program.model.lang.LanguageService;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.IncompatibleLanguageException;
-import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.listing.ParameterImpl;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.data.*;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -104,8 +49,6 @@ import ghidra.util.task.TaskMonitor;
 
 public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedIntegrationTest {
 
-//	private static final String TEST_SOURCE_PROGRAM_NAME = "VersionTracking/WallaceSrc";
-//	private static final String TEST_DESTINATION_PROGRAM_NAME = "VersionTracking/WallaceVersion2";
 	private TestEnv env;
 	private PluginTool tool;
 	private VTController controller;
@@ -130,8 +73,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	public void setUp() throws Exception {
 
 		env = new TestEnv();
-		sourceProgram = createSourceProgram();// env.getProgram(TEST_SOURCE_PROGRAM_NAME);
-		destinationProgram = createDestinationProgram();// env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+		sourceProgram = createSourceProgram();
+		destinationProgram = createDestinationProgram();
 		tool = env.getTool();
 
 		tool.addPlugin(VTPlugin.class.getName());
@@ -142,37 +85,15 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
 				sourceProgram, destinationProgram, this);
 
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				controller.openVersionTrackingSession(session);
-			}
-		});
+		runSwing(() -> controller.openVersionTrackingSession(session));
 
 		setAllOptionsToDoNothing();
 
-//
-//		env = new VTTestEnv();
-//		session = env.createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
-//		try {
-//			correlator =
-//				vtTestEnv.correlate(new ExactMatchInstructionsProgramCorrelatorFactory(), null,
-//					TaskMonitor.DUMMY);
-//		}
-//		catch (Exception e) {
-//			Assert.fail(e.getMessage());
-//			e.printStackTrace();
-//		}
-//		sourceProgram = env.getSourceProgram();
-//		destinationProgram = env.getDestinationProgram();
-//		controller = env.getVTController();
-//		env.showTool();
-//
 //		Logger functionLogger = Logger.getLogger(FunctionDB.class);
-//		functionLogger.setLevel(Level.TRACE);
-//
+//		Configurator.setLevel(functionLogger.getName(), org.apache.logging.log4j.Level.TRACE);
+//		
 //		Logger variableLogger = Logger.getLogger(VariableSymbolDB.class);
-//		variableLogger.setLevel(Level.TRACE);
+//		Configurator.setLevel(variableLogger.getName(), org.apache.logging.log4j.Level.TRACE);
 
 	}
 
@@ -478,7 +399,6 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		checkSignatures("undefined use(Gadget * this, Person * person)",
 			"undefined FUN_00401040(void * this, undefined4 param_1)");
 
-
 		tx(sourceProgram, () -> {
 			sourceFunction.setCustomVariableStorage(true);
 
@@ -487,14 +407,12 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 						SourceType.USER_DEFINED);
 		});
 
-
 		DataType personType = sourceProgram.getDataTypeManager().getDataType("/Person");
 		assertNotNull(personType);
 
 		tx(destinationProgram, () -> {
 			destinationFunction.setCustomVariableStorage(true);
 		});
-
 
 		// Set the function signature options for this test
 		ToolOptions applyOptions = controller.getOptions();
@@ -744,24 +662,14 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	public void testApplyMatch_ReplaceSignatureAndCallingConventionDifferentLanguageFailUsingNameMatch()
 			throws Exception {
 
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				controller.closeCurrentSessionIgnoringChanges();
-			}
-		});
+		runSwing(() -> controller.closeCurrentSessionIgnoringChanges());
 
 		env.release(destinationProgram);
 		destinationProgram = createToyDestinationProgram();// env.getProgram("helloProgram"); // get a program without cdecl
 		session =
 			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
 				sourceProgram, destinationProgram, this);
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				controller.openVersionTrackingSession(session);
-			}
-		});
+		runSwing(() -> controller.openVersionTrackingSession(session));
 
 		useMatch("0x00401040", "0x00010938");
 
@@ -1699,12 +1607,9 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		final String[] sourceStringBox = new String[1];
 		final String[] destinationStringBox = new String[1];
 
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				sourceStringBox[0] = sourceFunction.getPrototypeString(false, false);
-				destinationStringBox[0] = destinationFunction.getPrototypeString(false, false);
-			}
+		runSwing(() -> {
+			sourceStringBox[0] = sourceFunction.getPrototypeString(false, false);
+			destinationStringBox[0] = destinationFunction.getPrototypeString(false, false);
 		});
 
 		assertEquals(expectedSourceSignature, sourceStringBox[0]);

@@ -108,7 +108,12 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		if (hostRange == null) {
 			return;
 		}
-		getMemoryOps(true).setState(snap, toOverlay(hostRange), state);
+		TraceMemoryOperations ops = getMemoryOps(true);
+		if (ops == null) {
+			throw new AssertionError("Cannot get memory operations for writing. " +
+				"This usually indicates a schema issue.");
+		}
+		ops.setState(snap, toOverlay(hostRange), state);
 	}
 
 	@Override
@@ -178,7 +183,12 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		if (hostStart == null) {
 			return 0;
 		}
-		return getMemoryOps(true).putBytes(snap, toOverlay(hostStart), buf);
+		TraceMemoryOperations ops = getMemoryOps(true);
+		if (ops == null) {
+			throw new AssertionError("Cannot get memory operations for writing. " +
+				"This usually indicates a schema issue.");
+		}
+		return ops.putBytes(snap, toOverlay(hostStart), buf);
 	}
 
 	@Override

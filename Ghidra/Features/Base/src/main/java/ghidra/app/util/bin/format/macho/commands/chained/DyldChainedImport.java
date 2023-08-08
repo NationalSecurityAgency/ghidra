@@ -20,6 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.MachConstants;
+import ghidra.app.util.bin.format.macho.commands.dyld.BindingTable.Binding;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -70,6 +71,15 @@ public class DyldChainedImport implements StructConverter {
 			default:
 				throw new IOException("Bad Chained import format: " + imports_format);
 		}
+	}
+
+	public DyldChainedImport(Binding binding) {
+		this.imports_format = 0;
+		this.lib_ordinal = binding.getLibraryOrdinal();
+		this.weak_import = binding.isWeak();
+		this.name_offset = 0;
+		this.addend = 0;
+		this.symbolName = binding.getSymbolName();
 	}
 
 	@Override

@@ -387,8 +387,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		// The demangled string contains this string: {unnamed_type#1}
 		//
-		String mangled =
-			"_ZN14GoalDefinitionUt_aSERKS0_";
+		String mangled = "_ZN14GoalDefinitionUt_aSERKS0_";
 
 		String demangled = process.demangle(mangled);
 
@@ -397,16 +396,14 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertType(object, DemangledFunction.class);
 
 		String signature = object.getSignature(false);
-		assertEquals(
-			"undefined GoalDefinition::{unnamed_type#1}::operator=({unnamed const &)",
+		assertEquals("undefined GoalDefinition::{unnamed_type#1}::operator=({unnamed const &)",
 			signature);
 	}
 
 	@Test
 	public void testParse_DecltypeAuto() throws Exception {
 
-		String mangled =
-			"_Z9enum_castIN17FurnaceBlockActorUt_EEDcT_";
+		String mangled = "_Z9enum_castIN17FurnaceBlockActorUt_EEDcT_";
 
 		String demangled = process.demangle(mangled);
 
@@ -1034,9 +1031,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		 			std::__ndk1::allocator<{lambda(dummy::it::other::Namespace*)#1}>,
 		 			int (dummy::it::other::Namespace*)
 		 		>
-
+		
 		 	'__func' has 3 template parameters, the operator and the allocator
-
+		
 		 */
 
 		String dummyNs = "dummy::it::other::Namespace";
@@ -1103,13 +1100,13 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	public void testOperator_WithTemplatesMissingATemplateArgument() throws Exception {
 
 		/*
-
+		
 		 	Note: the empty template type: '<, std...'
 		 		<, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>
-
-
+		
+		
 		 	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::_Bind<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > (EduAppConfigs::*(EduAppConfigs const*))() const>::operator()<, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >()
-
+		
 		 */
 		String mangled =
 			"_ZNSt5_BindIFM13EduAppConfigsKFNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEPKS0_EEclIJES6_EET0_DpOT_";
@@ -1163,9 +1160,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	public void testLambdaWithLambdaParameters() throws Exception {
 
 		/*
-
+		
 		 lambda contents - lambdas in templates and as a parameter
-
+		
 		 	bool (***
 		 			const* std::
 		 				__addressof<
@@ -1185,7 +1182,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		 							{lambda(bool (*** const&)(AssertHandlerContext const&))#1}
 		 					    )
 		 	     )(AssertHandlerContext const&)
-
+		
 		 */
 
 		String mangled =
@@ -1230,25 +1227,25 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String demangled = process.demangle(mangled);
 
 		/*
-
+		
 		 	Full demangled:
-
+		
 			Operator Text
-
+		
 				entt::
 				basic_registry<EntityId>::
 				assure<FilteredTransformationAttributes<PreHillsEdgeTransformation> >() const::
 				{lambda(entt::sparse_set<EntityId>&, entt::basic_registry<EntityId>&, EntityId)#1}::
 				operator void (*)(entt::sparse_set<EntityId>&, entt::basic_registry<EntityId>&, EntityId)() const
-
+		
 			Operartor Without Namespace
-
+		
 		 		operator void (*)(entt::sparse_set<EntityId>&, entt::basic_registry<EntityId>&, EntityId)()
-
+		
 		 	Simplified Cast Operator Construct
-
+		
 		 		operator void (*)(A,B,C)()
-
+		
 		 */
 
 		DemangledObject object = parser.parse(mangled, demangled);
@@ -1872,20 +1869,20 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 
 		/*
-
+		
 		 	Demangled:
-
+		
 		  auto && JsonUtil::
 			addMember<std::shared_ptr<JsonUtil::JsonSchemaObjectNode<JsonUtil::EmptyClass,AvoidBlockGoal::Definition>>,AvoidBlockGoal::Definition,float>
 			(
-
+		
 				std::shared_ptr<JsonUtil::JsonSchemaObjectNode<JsonUtil::EmptyClass,AvoidBlockGoal::Definition>>,
 			    float AvoidBlockGoal::Definition::*,
 			    char const *,
 			    float AvoidBlockGoal::Definition::* const&
-
+		
 			)
-
+		
 		 */
 		String mangled =
 			"_ZN8JsonUtil9addMemberISt10shared_ptrINS_20JsonSchemaObjectNodeINS_10EmptyClassEN14AvoidBlockGoal10DefinitionEEEES5_fEEODaT_MT0_T1_PKcRKSC_";
@@ -1928,17 +1925,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 
-		// 20230719: Note that argument in the following function is not correctly parsed.
-		//  The argument is a non-pointer/ref reference to a function that returns void and
-		//  which takes the argument list shown.  Parser looks for double closing parenthesis,
-		//  but that is found on the last argument of the template parameter.  It actually needed
-		//  to find the last closing parethesis and know that there could be nested pairs.
-		// Modification on 20230719 has "(* &&)" emitted in place of "(*)" because of lref/rref
-		//  work in GP-3649, but the "&&" was found due to the closing parenthesis issue, which
-		//  already existed.
-		//  TODO: needs fixed
 		assertEquals(
-			"undefined WebCore::TextCodecICU::registerCodecs(void (* &&)(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&))",
+			"undefined WebCore::TextCodecICU::registerCodecs(void (*)(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&))",
 			signature);
 	}
 

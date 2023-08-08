@@ -23,6 +23,8 @@ import java.util.*;
 
 import javax.swing.Icon;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
@@ -116,16 +118,13 @@ public class DomainFileProxy implements DomainFile {
 		return parentPath + DomainFolder.SEPARATOR + getName();
 	}
 
-	private URL getSharedFileURL(URL sharedProjectURL) {
+	private URL getSharedFileURL(URL sharedProjectURL, String ref) {
 		try {
-			// Direct URL construction done so that ghidra protocol 
-			// extension may be supported
-			String urlStr = sharedProjectURL.toExternalForm();
-			if (urlStr.endsWith("/")) {
-				urlStr = urlStr.substring(0, urlStr.length() - 1);
+			String spec = getPathname().substring(1); // remove leading '/'
+			if (!StringUtils.isEmpty(ref)) {
+				spec += "#" + ref;
 			}
-			urlStr += getPathname();
-			return new URL(urlStr);
+			return new URL(sharedProjectURL, spec);
 		}
 		catch (MalformedURLException e) {
 			// ignore
@@ -133,7 +132,7 @@ public class DomainFileProxy implements DomainFile {
 		return null;
 	}
 
-	private URL getSharedFileURL(Properties properties) {
+	private URL getSharedFileURL(Properties properties, String ref) {
 		if (properties == null) {
 			return null;
 		}
@@ -166,9 +165,8 @@ public class DomainFileProxy implements DomainFile {
 				return null;
 			}
 			ServerInfo serverInfo = repository.getServerInfo();
-			return GhidraURL.makeURL(serverInfo.getServerName(),
-				serverInfo.getPortNumber(), repository.getName(),
-				item.getPathName());
+			return GhidraURL.makeURL(serverInfo.getServerName(), serverInfo.getPortNumber(),
+				repository.getName(), item.getPathName(), ref);
 		}
 		catch (IOException e) {
 			// ignore
@@ -182,15 +180,27 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
-	public URL getSharedProjectURL() {
+	public URL getSharedProjectURL(String ref) {
 		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
 			URL projectURL = projectLocation.getURL();
 			if (GhidraURL.isServerRepositoryURL(projectURL)) {
-				return getSharedFileURL(projectURL);
+				return getSharedFileURL(projectURL, ref);
 			}
 			Properties properties =
 				ProjectFileManager.readProjectProperties(projectLocation.getProjectDir());
-			return getSharedFileURL(properties);
+			return getSharedFileURL(properties, ref);
+		}
+		return null;
+	}
+
+	@Override
+	public URL getLocalProjectURL(String ref) {
+		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
+			URL projectURL = projectLocation.getURL();
+			if (GhidraURL.isServerRepositoryURL(projectURL)) {
+				return null;
+			}
+			return GhidraURL.makeURL(projectLocation, getPathname(), ref);
 		}
 		return null;
 	}

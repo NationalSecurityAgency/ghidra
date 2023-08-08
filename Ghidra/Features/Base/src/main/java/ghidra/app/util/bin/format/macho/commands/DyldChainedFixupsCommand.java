@@ -64,14 +64,13 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 	}
 
 	@Override
-	public void markup(Program program, MachHeader header, Address addr, String source,
-			TaskMonitor monitor, MessageLog log) throws CancelledException {
-
-		if (addr == null || datasize == 0) {
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		Address addr = fileOffsetToAddress(program, header, dataoff, datasize);
+		if (addr == null) {
 			return;
 		}
-
-		super.markup(program, header, addr, source, monitor, log);
+		super.markup(program, header, source, monitor, log);
 
 		try {
 			DataUtilities.createData(program, addr, chainHeader.toDataType(), -1,
@@ -101,8 +100,8 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 			}
 		}
 		catch (Exception e) {
-			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(), "Failed to markup %s."
-					.formatted(LoadCommandTypes.getLoadCommandName(getCommandType())));
+			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, null));
 		}
 	}
 

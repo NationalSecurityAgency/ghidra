@@ -79,14 +79,9 @@ class WorkspaceImpl implements Workspace {
 		PluginTool tool = toolManager.getTool(this, template);
 		if (tool != null) {
 			tool.setVisible(true);
-
-			if (tool instanceof GhidraTool) {
-				GhidraTool gTool = (GhidraTool) tool;
-				gTool.checkForNewExtensions();
-			}
 			runningTools.add(tool);
 
-			// alert the tool manager that we changed
+			// alert the tool manager that we have changed
 			toolManager.setWorkspaceChanged(this);
 			toolManager.fireToolAddedEvent(this, tool);
 		}
@@ -161,6 +156,7 @@ class WorkspaceImpl implements Workspace {
 		String defaultTool = System.getProperty("ghidra.defaulttool");
 		if (defaultTool != null && !defaultTool.equals("")) {
 			PluginTool tool = toolManager.getTool(defaultTool);
+			tool.setVisible(isActive);
 			runningTools.add(tool);
 			toolManager.fireToolAddedEvent(this, tool);
 			return;
@@ -175,27 +171,23 @@ class WorkspaceImpl implements Workspace {
 			}
 
 			PluginTool tool = toolManager.getTool(toolName);
-			if (tool != null) {
-				tool.setVisible(isActive);
-
-				if (tool instanceof GhidraTool) {
-					GhidraTool gTool = (GhidraTool) tool;
-					gTool.checkForNewExtensions();
-				}
-
-				boolean hadChanges = tool.hasConfigChanged();
-				tool.restoreWindowingDataFromXml(element);
-
-				Element toolDataElem = element.getChild("DATA_STATE");
-				tool.restoreDataStateFromXml(toolDataElem);
-				if (hadChanges) {
-					// restore the dirty state, which is cleared by the restoreDataState call
-					tool.setConfigChanged(true);
-				}
-
-				runningTools.add(tool);
-				toolManager.fireToolAddedEvent(this, tool);
+			if (tool == null) {
+				continue;
 			}
+
+			tool.setVisible(isActive);
+			boolean hadChanges = tool.hasConfigChanged();
+			tool.restoreWindowingDataFromXml(element);
+
+			Element toolDataElem = element.getChild("DATA_STATE");
+			tool.restoreDataStateFromXml(toolDataElem);
+			if (hadChanges) {
+				// restore the dirty state, which is cleared by the restoreDataState call
+				tool.setConfigChanged(true);
+			}
+
+			runningTools.add(tool);
+			toolManager.fireToolAddedEvent(this, tool);
 		}
 	}
 

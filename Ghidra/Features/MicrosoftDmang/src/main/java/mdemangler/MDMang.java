@@ -21,7 +21,6 @@ import java.util.List;
 
 import mdemangler.MDContext.MDContextType;
 import mdemangler.datatype.MDDataType;
-import mdemangler.datatype.modifier.MDArrayBasicType;
 import mdemangler.datatype.modifier.MDCVMod;
 import mdemangler.naming.MDFragmentName;
 import mdemangler.naming.MDQualification;
@@ -478,10 +477,6 @@ public class MDMang {
 		return fn.parseFragmentName_Md();
 	}
 
-	public void appendArrayNotation(StringBuilder builder, MDArrayBasicType arrayBasicType) {
-		// default empty
-	}
-
 	public boolean allowMDTypeInfoParserDefault() {
 		return false;
 	}
@@ -529,6 +524,3 @@ public class MDMang {
 	}
 
 }
-
-/******************************************************************************/
-/******************************************************************************/

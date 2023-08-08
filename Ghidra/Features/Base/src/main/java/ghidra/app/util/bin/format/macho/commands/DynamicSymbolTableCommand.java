@@ -24,7 +24,6 @@ import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -347,44 +346,32 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
-	public Address getDataAddress(MachHeader header, AddressSpace space) {
-		if (indirectsymoff != 0 && nindirectsyms != 0) {
-			SegmentCommand segment = getContainingSegment(header, indirectsymoff);
-			if (segment != null) {
-				return space.getAddress(
-					segment.getVMaddress() + (indirectsymoff - segment.getFileOffset()));
-			}
-		}
-		return null;
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		markupIndirectSymbolTable(program, header, source, monitor, log);
+
+		// TODO: Handle more than just the indirect symbol table
+
 	}
 
-	@Override
-	public void markup(Program program, MachHeader header, Address indirectSymbolTableAddr,
-			String source, TaskMonitor monitor, MessageLog log) throws CancelledException {
-		// TODO: Handle more than just the indirect symbol table
+	private void markupIndirectSymbolTable(Program program, MachHeader header, String source,
+			TaskMonitor monitor, MessageLog log) {
+		Address indirectSymbolTableAddr =
+			fileOffsetToAddress(program, header, indirectsymoff, nindirectsyms);
 		if (indirectSymbolTableAddr == null) {
 			return;
 		}
+
+		markupPlateComment(program, indirectSymbolTableAddr, source, "indirect");
 		
-		Listing listing = program.getListing();
-		ReferenceManager referenceManager = program.getReferenceManager();
-		String name = LoadCommandTypes.getLoadCommandName(getCommandType()) + " (indirect)";
-		if (source != null) {
-			name += " - " + source;
-		}
 		SymbolTableCommand symbolTable = header.getFirstLoadCommand(SymbolTableCommand.class);
-		Address symbolTableAddr = null;
-		Address stringTableAddr = null;
-		if (symbolTable != null) {
-			symbolTableAddr =
-				symbolTable.getDataAddress(header, indirectSymbolTableAddr.getAddressSpace());
-			if (symbolTable.getStringTableOffset() != 0) {
-				stringTableAddr = symbolTableAddr
-						.add(symbolTable.getStringTableOffset() - symbolTable.getSymbolOffset());
-			}
-		}
+		Address symbolTableAddr = fileOffsetToAddress(program, header,
+			symbolTable.getSymbolOffset(), symbolTable.getNumberOfSymbols());
+		Address stringTableAddr = fileOffsetToAddress(program, header,
+			symbolTable.getStringTableOffset(), symbolTable.getStringTableSize());
+
+		ReferenceManager referenceManager = program.getReferenceManager();
 		try {
-			listing.setComment(indirectSymbolTableAddr, CodeUnit.PLATE_COMMENT, name);
 			for (int i = 0; i < nindirectsyms; i++) {
 				int nlistIndex = indirectSymbols[i];
 				Address dataAddr = indirectSymbolTableAddr.add(i * DWORD.getLength());
@@ -409,7 +396,7 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 		}
 		catch (Exception e) {
 			log.appendMsg(DynamicSymbolTableCommand.class.getSimpleName(),
-				"Failed to markup %s.".formatted(name));
+				"Failed to markup: " + getContextualName(source, "indirect"));
 		}
 	}
 

@@ -118,8 +118,7 @@ public class GnuDemanglerParser {
 	 *
 	 */
 	private static final Pattern ARRAY_POINTER_REFERENCE_PATTERN =
-		Pattern.compile(
-			"\\s(?:const[\\[\\]\\d\\*&]{0,4}\\s)*\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
+		Pattern.compile("\\s(?:const[\\[\\]\\d\\*&]{0,4}\\s)*\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
 
 	/*
 	 * Sample:  bob(short (&)[7])
@@ -836,16 +835,15 @@ public class GnuDemanglerParser {
 					if (hasPointerParens) {
 						Demangled namespace = dt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunctionPointer(datatype);
-						int firstParenEnd = datatype.indexOf(')', i + 1);
-						int secondParenEnd = datatype.indexOf(')', firstParenEnd + 1);
-						if (secondParenEnd == -1) {
+						int paramParenEnd = datatype.lastIndexOf(')');
+						if (paramParenEnd == -1) {
 							throw new DemanglerParseException(
 								"Did not find ending to closure: " + datatype);
 						}
 
 						dfp.getReturnType().setNamespace(namespace);
 						dt = dfp;
-						i = secondParenEnd + 1; // two sets of parens (normal case)
+						i = paramParenEnd + 1; // two sets of parens (normal case)
 					}
 					else {
 
@@ -970,8 +968,8 @@ public class GnuDemanglerParser {
 
 		Demangled namespace = dt.getNamespace();
 		String name = leading;
-		DemangledDataType newDt = parseArrayPointerOrReference(datatype, name, lambdaString,
-			matcher);
+		DemangledDataType newDt =
+			parseArrayPointerOrReference(datatype, name, lambdaString, matcher);
 		newDt.setNamespace(namespace);
 		return newDt;
 	}
@@ -993,8 +991,8 @@ public class GnuDemanglerParser {
 
 		Demangled namespace = dt.getNamespace();
 		String name = leading;
-		DemangledDataType newDt = parseArrayPointerOrReference(datatype, name, templatedString,
-			matcher);
+		DemangledDataType newDt =
+			parseArrayPointerOrReference(datatype, name, templatedString, matcher);
 		newDt.setNamespace(namespace);
 		return newDt;
 	}
@@ -1052,9 +1050,9 @@ public class GnuDemanglerParser {
 		/*
 			Note: really, this should just be checking a list of known disallowed characters,
 				  which is something like:
-
+		
 				  <,>,(,),&,*,[,]
-
+		
 		 		  It seems like the current code below is unnecessarily restrictive
 		 */
 
@@ -1369,9 +1367,9 @@ public class GnuDemanglerParser {
 
 		/*
 		 	Examples:
-
+		
 		 		NS1::Function<>()::StructureName::StructureConstructor()
-
+		
 		 */
 
 		String nameString = removeBadSpaces(demangled).trim();
@@ -1553,13 +1551,13 @@ public class GnuDemanglerParser {
 			 Samples:
 			 	 prefix: construction vtable for
 			 	 name:   construction-vtable
-
+			
 			 	 prefix: vtable for
 			 	 name:   vtable
-
+			
 			 	 prefix: typeinfo name for
 			 	 name:   typeinfo-name
-
+			
 			 	 prefix: covariant return thunk
 			 	 name:   covariant-return
 			*/

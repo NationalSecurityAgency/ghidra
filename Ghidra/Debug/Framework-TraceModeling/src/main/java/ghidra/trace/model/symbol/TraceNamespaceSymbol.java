@@ -20,6 +20,9 @@ import java.util.Collection;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.trace.model.Trace;
 
+/**
+ * A trace namespace symbol.
+ */
 public interface TraceNamespaceSymbol extends TraceSymbol, Namespace {
 	@Override
 	Trace getTrace();
@@ -37,6 +40,11 @@ public interface TraceNamespaceSymbol extends TraceSymbol, Namespace {
 	@Override
 	TraceNamespaceSymbol getParentNamespace();
 
+	/**
+	 * Get the children of this namespace
+	 * 
+	 * @return the children
+	 */
 	Collection<? extends TraceSymbol> getChildren();
 
 	@Override

@@ -37,6 +37,7 @@ src/decompile/datatests/modulo.xml||GHIDRA||||END|
 src/decompile/datatests/modulo2.xml||GHIDRA||||END|
 src/decompile/datatests/multiret.xml||GHIDRA||||END|
 src/decompile/datatests/namespace.xml||GHIDRA||||END|
+src/decompile/datatests/nan.xml||GHIDRA||||END|
 src/decompile/datatests/nestedoffset.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_globcall.xml||GHIDRA||||END|

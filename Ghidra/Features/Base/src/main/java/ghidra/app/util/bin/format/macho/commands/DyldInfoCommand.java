@@ -20,11 +20,15 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.bin.format.macho.commands.dyld.BindOpcode;
+import ghidra.app.util.bin.format.macho.commands.dyld.BindingTable;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramModule;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -32,17 +36,20 @@ import ghidra.util.task.TaskMonitor;
  * Represents a dyld_info_command structure
  */
 public class DyldInfoCommand extends LoadCommand {
-	private int rebase_off;
-	private int rebase_size;
-	private int bind_off;
-	private int bind_size;
-	private int weak_bind_off;
-	private int weak_bind_size;
-	private int lazy_bind_off;
-	private int lazy_bind_size;
-	private int export_off;
-	private int export_size;
+	private int rebaseOff;
+	private int rebaseSize;
+	private int bindOff;
+	private int bindSize;
+	private int weakBindOff;
+	private int weakBindSize;
+	private int lazyBindOff;
+	private int lazyBindSize;
+	private int exportOff;
+	private int exportSize;
 	
+	private BindingTable bindingTable;
+	private BindingTable weakBindingTable;
+	private BindingTable lazyBindingTable;
 	private ExportTrie exportTrie;
 
 	/**
@@ -59,24 +66,148 @@ public class DyldInfoCommand extends LoadCommand {
 			throws IOException {
 		super(loadCommandReader);
 
-		rebase_off = loadCommandReader.readNextInt();
-		rebase_size = loadCommandReader.readNextInt();
-		bind_off = loadCommandReader.readNextInt();
-		bind_size = loadCommandReader.readNextInt();
-		weak_bind_off = loadCommandReader.readNextInt();
-		weak_bind_size = loadCommandReader.readNextInt();
-		lazy_bind_off = loadCommandReader.readNextInt();
-		lazy_bind_size = loadCommandReader.readNextInt();
-		export_off = loadCommandReader.readNextInt();
-		export_size = loadCommandReader.readNextInt();
+		rebaseOff = loadCommandReader.readNextInt();
+		rebaseSize = loadCommandReader.readNextInt();
+		bindOff = loadCommandReader.readNextInt();
+		bindSize = loadCommandReader.readNextInt();
+		weakBindOff = loadCommandReader.readNextInt();
+		weakBindSize = loadCommandReader.readNextInt();
+		lazyBindOff = loadCommandReader.readNextInt();
+		lazyBindSize = loadCommandReader.readNextInt();
+		exportOff = loadCommandReader.readNextInt();
+		exportSize = loadCommandReader.readNextInt();
 		
-		if (export_off > 0 && export_size > 0) {
-			dataReader.setPointerIndex(header.getStartIndex() + export_off);
+		// TODO: rebase
+
+		if (bindOff > 0 && bindSize > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + bindOff);
+			bindingTable = new BindingTable(dataReader, header, bindSize, false);
+		}
+		else {
+			bindingTable = new BindingTable();
+		}
+
+		if (weakBindOff > 0 && weakBindSize > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + weakBindOff);
+			weakBindingTable = new BindingTable(dataReader, header, weakBindSize, false);
+		}
+		else {
+			weakBindingTable = new BindingTable();
+		}
+
+		if (lazyBindOff > 0 && lazyBindSize > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + lazyBindOff);
+			lazyBindingTable = new BindingTable(dataReader, header, lazyBindSize, true);
+		}
+		else {
+			lazyBindingTable = new BindingTable();
+		}
+
+		if (exportOff > 0 && exportSize > 0) {
+			dataReader.setPointerIndex(header.getStartIndex() + exportOff);
 			exportTrie = new ExportTrie(dataReader);
 		}
 		else {
 			exportTrie = new ExportTrie();
 		}
+	}
+
+	/**
+	 * {@return The rebase info offset}
+	 */
+	public int getRebaseOffset() {
+		return rebaseOff;
+	}
+
+	/**
+	 * {@return The rebase info size}
+	 */
+	public int getRebaseSize() {
+		return rebaseSize;
+	}
+
+	/**
+	 * {@return The bind info offset}
+	 */
+	public int getBindOffset() {
+		return bindOff;
+	}
+
+	/**
+	 * {@return The bind info size}
+	 */
+	public int getBindSize() {
+		return bindSize;
+	}
+
+	/**
+	 * {@return The weak bind info offset}
+	 */
+	public int getWeakBindOffset() {
+		return weakBindOff;
+	}
+
+	/**
+	 * {@return The weak bind info size}
+	 */
+	public int getWeakBindSize() {
+		return weakBindSize;
+	}
+
+	/**
+	 * {@return The lazy bind info offset}
+	 */
+	public int getLazyBindOffset() {
+		return lazyBindOff;
+	}
+
+	/**
+	 * {@return The lazy bind info size}
+	 */
+	public int getLazyBindSize() {
+		return lazyBindSize;
+	}
+
+	/**
+	 * {@return The export info offset}
+	 */
+	public int getExportOffset() {
+		return exportOff;
+	}
+
+	/**
+	 * {@return The export info size}
+	 */
+	public int getExportSize() {
+		return exportSize;
+	}
+	
+	/**
+	 * {@return The binding table}
+	 */
+	public BindingTable getBindingTable() {
+		return bindingTable;
+	}
+
+	/**
+	 * {@return The lazy binding table}
+	 */
+	public BindingTable getLazyBindingTable() {
+		return lazyBindingTable;
+	}
+
+	/**
+	 * {@return The weak binding table}
+	 */
+	public BindingTable getWeakBindingTable() {
+		return weakBindingTable;
+	}
+
+	/**
+	 * {@return The export trie}
+	 */
+	public ExportTrie getExportTrie() {
+		return exportTrie;
 	}
 
 	@Override
@@ -85,146 +216,149 @@ public class DyldInfoCommand extends LoadCommand {
 	}
 
 	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		StructureDataType struct = new StructureDataType(getCommandName(), 0);
+		struct.add(DWORD, "cmd", null);
+		struct.add(DWORD, "cmdsize", null);
+		struct.add(DWORD, "rebase_off", "file offset to rebase info");
+		struct.add(DWORD, "rebase_size", "size of rebase info");
+		struct.add(DWORD, "bind_off", "file offset to binding info");
+		struct.add(DWORD, "bind_size", "size of binding info");
+		struct.add(DWORD, "weak_bind_off", "file offset to weak binding info");
+		struct.add(DWORD, "weak_bind_size", "size of weak binding info");
+		struct.add(DWORD, "lazy_bind_off", "file offset to lazy binding info");
+		struct.add(DWORD, "lazy_bind_size", "size of lazy binding info");
+		struct.add(DWORD, "export_off", "file offset to lazy binding info");
+		struct.add(DWORD, "export_size", "size of lazy binding info");
+		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
+		return struct;
+	}
+
+	@Override
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		markupRebaseInfo(program, header, source, monitor, log);
+		markupBindings(program, header, source, monitor, log);
+		markupWeakBindings(program, header, source, monitor, log);
+		markupLazyBindings(program, header, source, monitor, log);
+		markupExportInfo(program, header, source, monitor, log);
+	}
+
+	private void markupRebaseInfo(Program program, MachHeader header, String source,
+			TaskMonitor monitor, MessageLog log) {
+		markupPlateComment(program, fileOffsetToAddress(program, header, rebaseOff, rebaseSize),
+			source, "rebase");
+	}
+
+	private void markupBindings(Program program, MachHeader header, String source,
+			TaskMonitor monitor, MessageLog log) {
+		Address bindAddr = fileOffsetToAddress(program, header, bindOff, bindSize);
+		markupPlateComment(program, bindAddr, source, "bind");
+		markupBindingTable(program, bindAddr, bindingTable, source, "bind", log);
+	}
+
+	private void markupWeakBindings(Program program, MachHeader header, String source,
+			TaskMonitor monitor, MessageLog log) {
+		Address addr = fileOffsetToAddress(program, header, weakBindOff, weakBindSize);
+		markupPlateComment(program, addr, source, "weak bind");
+		markupBindingTable(program, addr, weakBindingTable, source, "weak bind", log);
+
+	}
+
+	private void markupLazyBindings(Program program, MachHeader header, String source,
+			TaskMonitor monitor, MessageLog log) {
+		Address addr = fileOffsetToAddress(program, header, lazyBindOff, lazyBindSize);
+		markupPlateComment(program, addr, source, "lazy bind");
+		markupBindingTable(program, addr, lazyBindingTable, source, "lazy bind", log);
+	}
+
+	private void markupBindingTable(Program program, Address addr, BindingTable table,
+			String source, String additionalDescription, MessageLog log) {
+		if (addr == null) {
+			return;
+		}
+		try {
+			DataType bindOpcodeDataType = BindOpcode.toDataType();
+			for (long offset : table.getOpcodeOffsets()) {
+				DataUtilities.createData(program, addr.add(offset), bindOpcodeDataType, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			for (long offset : table.getUlebOffsets()) {
+				DataUtilities.createData(program, addr.add(offset), ULEB128, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			for (long offset : table.getSlebOffsets()) {
+				DataUtilities.createData(program, addr.add(offset), SLEB128, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			for (long offset : table.getStringOffsets()) {
+				DataUtilities.createData(program, addr.add(offset), STRING, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+		}
+		catch (Exception e) {
+			log.appendMsg(DyldInfoCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, additionalDescription));
+		}
+	}
+
+	private void markupExportInfo(Program program, MachHeader header, String source,
+			TaskMonitor monitor, MessageLog log) {
+		Address exportAddr = fileOffsetToAddress(program, header, exportOff, exportSize);
+		if (exportAddr == null) {
+			return;
+		}
+		markupPlateComment(program, exportAddr, source, "export");
+
+		try {
+			for (long offset : exportTrie.getUlebOffsets()) {
+				DataUtilities.createData(program, exportAddr.add(offset), ULEB128, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+			for (long offset : exportTrie.getStringOffsets()) {
+				DataUtilities.createData(program, exportAddr.add(offset), STRING, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+		}
+		catch (Exception e) {
+			log.appendMsg(DyldInfoCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, "export"));
+		}
+	}
+
+	@Override
 	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
 		try {
 			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
 
-			if (rebase_size > 0) {
-				Address start = baseAddress.getNewAddress(rebase_off);
+			if (rebaseSize > 0) {
+				Address start = baseAddress.getNewAddress(rebaseOff);
 				api.createFragment(parentModule, getCommandName() + "_REBASE", start,
-					rebase_size);
+					rebaseSize);
 			}
-			if (bind_size > 0) {
-				Address start = baseAddress.getNewAddress(bind_off);
-				api.createFragment(parentModule, getCommandName() + "_BIND", start, bind_size);
+			if (bindSize > 0) {
+				Address start = baseAddress.getNewAddress(bindOff);
+				api.createFragment(parentModule, getCommandName() + "_BIND", start, bindSize);
 			}
-			if (weak_bind_size > 0) {
-				Address start = baseAddress.getNewAddress(weak_bind_off);
+			if (weakBindSize > 0) {
+				Address start = baseAddress.getNewAddress(weakBindOff);
 				api.createFragment(parentModule, getCommandName() + "_WEAK_BIND", start,
-					weak_bind_size);
+					weakBindSize);
 			}
-			if (lazy_bind_size > 0) {
-				Address start = baseAddress.getNewAddress(lazy_bind_off);
+			if (lazyBindSize > 0) {
+				Address start = baseAddress.getNewAddress(lazyBindOff);
 				api.createFragment(parentModule, getCommandName() + "_LAZY_BIND", start,
-					lazy_bind_size);
+					lazyBindSize);
 			}
-			if (export_size > 0) {
-				Address start = baseAddress.getNewAddress(export_off);
+			if (exportSize > 0) {
+				Address start = baseAddress.getNewAddress(exportOff);
 				api.createFragment(parentModule, getCommandName() + "_EXPORT", start,
-					export_size);
+					exportSize);
 			}
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create " + getCommandName());
 		}
-	}
-
-	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType struct = new StructureDataType(getCommandName(), 0);
-		struct.add(DWORD, "cmd", null);
-		struct.add(DWORD, "cmdsize", null);
-		struct.add(DWORD, "rebase_off", null);
-		struct.add(DWORD, "rebase_size", null);
-		struct.add(DWORD, "bind_off", null);
-		struct.add(DWORD, "bind_size", null);
-		struct.add(DWORD, "weak_bind_off", null);
-		struct.add(DWORD, "weak_bind_size", null);
-		struct.add(DWORD, "lazy_bind_off", null);
-		struct.add(DWORD, "lazy_bind_size", null);
-		struct.add(DWORD, "export_off", null);
-		struct.add(DWORD, "export_size", null);
-		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
-		return struct;
-	}
-
-	/**
-	 * file offset to rebase info
-	 * @return file offset to rebase info
-	 */
-	public int getRebaseOffset() {
-		return rebase_off;
-	}
-
-	/**
-	 * size of rebase info
-	 * @return size of rebase info
-	 */
-	public int getRebaseSize() {
-		return rebase_size;
-	}
-
-	/**
-	 * file offset to binding info
-	 * @return file offset to binding info
-	 */
-	public int getBindOffset() {
-		return bind_off;
-	}
-
-	/**
-	 * size of binding info
-	 * @return size of binding info
-	 */
-	public int getBindSize() {
-		return bind_size;
-	}
-
-	/**
-	 * file offset to weak binding info
-	 * @return file offset to weak binding info
-	 */
-	public int getWeakBindOffset() {
-		return weak_bind_off;
-	}
-
-	/**
-	 * size of weak binding info
-	 * @return size of weak binding info
-	 */
-	public int getWeakBindSize() {
-		return weak_bind_size;
-	}
-
-	/**
-	 * file offset to lazy binding info
-	 * @return file offset to lazy binding info
-	 */
-	public int getLazyBindOffset() {
-		return lazy_bind_off;
-	}
-
-	/**
-	 * size of lazy binding infs
-	 * @return
-	 */
-	public int getLazyBindSize() {
-		return lazy_bind_size;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public int getExportOffset() {
-		return export_off;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public int getExportSize() {
-		return export_size;
-	}
-	
-	/**
-	 * Gets the {@link ExportTrie}
-	 * 
-	 * @return The {@link ExportTrie}
-	 */
-	public ExportTrie getExportTrie() {
-		return exportTrie;
 	}
 }

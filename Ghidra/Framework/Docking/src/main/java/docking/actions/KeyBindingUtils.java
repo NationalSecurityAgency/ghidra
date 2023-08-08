@@ -419,6 +419,13 @@ public class KeyBindingUtils {
 
 		KeyStroke keyStroke = null;
 		KeyStroke[] keys = inputMap.allKeys();
+		if (keys == null) {
+			Msg.debug(KeyBindingUtils.class,
+				"Cannot remove action by name; does not exist: '" + actionName + "' " +
+					"on component: " + component.getClass().getSimpleName());
+			return;
+		}
+
 		for (KeyStroke ks : keys) {
 			Object object = inputMap.get(ks);
 			if (actionName.equals(object)) {

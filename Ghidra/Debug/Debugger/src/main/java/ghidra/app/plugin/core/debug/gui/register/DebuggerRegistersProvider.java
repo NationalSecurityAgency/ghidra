@@ -937,7 +937,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	TraceData getRegisterData(Register register) {
-		TraceCodeSpace space = getRegisterCodeSpace(false);
+		TraceCodeSpace space = getRegisterCodeSpace(register.getAddressSpace(), false);
 		if (space == null) {
 			return null;
 		}
@@ -1153,14 +1153,24 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return getRegisterMemorySpace(current, space, createIfAbsent);
 	}
 
-	protected TraceCodeSpace getRegisterCodeSpace(boolean createIfAbsent) {
-		TraceThread curThread = current.getThread();
-		if (curThread == null) {
+	protected static TraceCodeSpace getRegisterCodeSpace(DebuggerCoordinates coords,
+			AddressSpace space, boolean createIfAbsent) {
+		if (!space.isRegisterSpace()) {
+			return coords.getTrace()
+					.getCodeManager()
+					.getCodeSpace(space, createIfAbsent);
+		}
+		TraceThread thread = coords.getThread();
+		if (thread == null) {
 			return null;
 		}
-		return current.getTrace()
+		return coords.getTrace()
 				.getCodeManager()
-				.getCodeRegisterSpace(curThread, current.getFrame(), createIfAbsent);
+				.getCodeRegisterSpace(thread, coords.getFrame(), createIfAbsent);
+	}
+
+	protected TraceCodeSpace getRegisterCodeSpace(AddressSpace space, boolean createIfAbsent) {
+		return getRegisterCodeSpace(current, space, createIfAbsent);
 	}
 
 	protected Set<Register> collectBaseRegistersWithKnownValues(TraceThread thread) {

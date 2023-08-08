@@ -62,6 +62,17 @@ public interface TraceObjectValue {
 	Object getValue();
 
 	/**
+	 * A convenience to get and cast the value, without checking
+	 * 
+	 * @param <T> the desired type
+	 * @return the value
+	 */
+	@SuppressWarnings("unchecked")
+	default <T> T castValue() {
+		return (T) getValue();
+	}
+
+	/**
 	 * Get the value as an object
 	 * 
 	 * @return the child

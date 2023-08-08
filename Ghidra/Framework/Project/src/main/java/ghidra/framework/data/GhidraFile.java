@@ -124,9 +124,20 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public URL getSharedProjectURL() {
+	public URL getSharedProjectURL(String ref) {
 		try {
-			return getFileData().getSharedProjectURL();
+			return getFileData().getSharedProjectURL(ref);
+		}
+		catch (IOException e) {
+			// ignore
+		}
+		return null;
+	}
+
+	@Override
+	public URL getLocalProjectURL(String ref) {
+		try {
+			return getFileData().getLocalProjectURL(ref);
 		}
 		catch (IOException e) {
 			// ignore
@@ -456,10 +467,9 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public boolean checkout(boolean exclusive, TaskMonitor monitor) throws IOException,
-			CancelledException {
-		return getFileData().checkout(exclusive,
-			monitor != null ? monitor : TaskMonitor.DUMMY);
+	public boolean checkout(boolean exclusive, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		return getFileData().checkout(exclusive, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -470,10 +480,9 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public void merge(boolean okToUpgrade, TaskMonitor monitor) throws IOException,
-			VersionException, CancelledException {
-		getFileData().merge(okToUpgrade,
-			monitor != null ? monitor : TaskMonitor.DUMMY);
+	public void merge(boolean okToUpgrade, TaskMonitor monitor)
+			throws IOException, VersionException, CancelledException {
+		getFileData().merge(okToUpgrade, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -521,8 +530,8 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	public DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
 			throw new UnsupportedOperationException("newParent does not support copyTo");
 		}
@@ -559,8 +568,7 @@ public class GhidraFile implements DomainFile {
 	 * @throws CancelledException if task is cancelled
 	 */
 	void convertToPrivateFile(TaskMonitor monitor) throws IOException, CancelledException {
-		getFileData().convertToPrivateFile(
-			monitor != null ? monitor : TaskMonitor.DUMMY);
+		getFileData().convertToPrivateFile(monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override

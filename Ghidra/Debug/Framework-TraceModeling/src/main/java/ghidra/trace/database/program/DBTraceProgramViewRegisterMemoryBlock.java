@@ -131,6 +131,11 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 	}
 
 	@Override
+	public AddressRange getAddressRange() {
+		return range;
+	}
+
+	@Override
 	public Address getStart() {
 		return range.getMinAddress();
 	}

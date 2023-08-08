@@ -57,7 +57,8 @@
 		<logger name="generic.random" level="WARN"/>
 		<logger name="ghidra.app.plugin.core.progmgr.ProgramManagerPlugin" level="WARN"/>
 		<logger name="ghidra.net" level="WARN"/>		
-		<logger name="ghidra.app.plugin.core.misc.RecoverySnapshotMgrPlugin" level="INFO"/>		 
+		<logger name="ghidra.app.plugin.core.misc.RecoverySnapshotMgrPlugin" level="INFO"/>		
+		<logger name="ghidra.framework.project.extensions" level="DEBUG" /> 
 		<logger name="ghidra.framework.store.local" level="INFO"/>				
 		<logger name="ghidra.pcodeCPort.slgh_compile" level="INFO"/>
 		<logger name="ghidra.plugins" level="INFO"/>		
@@ -73,7 +74,10 @@
 		<logger name="ghidra.app.util.importer" level="INFO" />
 		<logger name="ghidra.app.util.opinion" level="DEBUG" />
 		<logger name="ghidra.util.classfinder" level="DEBUG" />			
-		<logger name="ghidra.util.task" level="DEBUG" />		
+		<logger name="ghidra.util.task" level="DEBUG" />	
+		<logger name="org.jungrapht.visualization" level="WARN" />
+		<logger name="org.jungrapht.visualization.DefaultVisualizationServer" level="DEBUG" />
+			
 		
 		<Root level="ALL">
 			<AppenderRef ref="console" level="TRACE"/>      

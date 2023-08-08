@@ -240,11 +240,6 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	public boolean setPrimary() {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			AddressRangeImpl range = new AddressRangeImpl(address, address);
-			if (!manager.functions.getIntersecting(lifespan, thread, range, false,
-				true).isEmpty()) {
-				// Labels cannot supersede a function
-				return false;
-			}
 			boolean result = doSetPrimary(true);
 			if (!result) {
 				return false;

@@ -17,9 +17,11 @@ package ghidra.app.util.bin.format.macho.commands.chained;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.macho.commands.dyld.BindingTable.Binding;
 import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
@@ -34,7 +36,7 @@ public class DyldChainedImports implements StructConverter {
 	private int importsCount;
 	private int importsFormat;
 	private long importsOffset;
-	private DyldChainedImport chainedImports[];
+	private DyldChainedImport[] chainedImports;
 
 	DyldChainedImports(BinaryReader reader, DyldChainedFixupHeader cfh) throws IOException {
 		long ptrIndex = reader.getPointerIndex();
@@ -48,6 +50,15 @@ public class DyldChainedImports implements StructConverter {
 			starts.add(new DyldChainedImport(reader, cfh, importsFormat));
 		}
 		chainedImports = starts.toArray(DyldChainedImport[]::new);
+	}
+
+	public DyldChainedImports(List<Binding> bindings) {
+		importsCount = bindings.size();
+		chainedImports = new DyldChainedImport[bindings.size()];
+		int i = 0;
+		for (Binding binding : bindings) {
+			chainedImports[i++] = new DyldChainedImport(binding);
+		}
 	}
 
 	@Override

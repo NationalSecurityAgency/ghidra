@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.jdom.JDOMException;
 
 import db.*;
@@ -192,7 +193,18 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			valueStore.getIndex(DBTraceObject.class, DBTraceObjectValue.CHILD_COLUMN);
 
 		objectsView = Collections.unmodifiableCollection(objectStore.asMap().values());
-		valuesView = Collections.unmodifiableCollection(valueStore.asMap().values());
+		valuesView = new AbstractCollection<>() {
+			@Override
+			public Iterator<TraceObjectValue> iterator() {
+				return IteratorUtils.chainedIterator(valueStore.asMap().values().iterator(),
+					rangeValueMap.values().iterator());
+			}
+
+			@Override
+			public int size() {
+				return objectStore.getRecordCount() + rangeValueMap.size();
+			}
+		};
 	}
 
 	protected void loadRootSchema() {

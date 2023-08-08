@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.opinion;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1032,8 +1033,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			if (providerFsrl != null) {
 				try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
 					GFile parentFile = fileRef.file.getParentFile();
-					result.add(
-						new FileSystemSearchPath(fileRef.fsRef, Path.of(parentFile.getPath())));
+					File f = new File(parentFile.getPath()); // File API will sanitize Windows-style paths
+					result.add(new FileSystemSearchPath(fileRef.fsRef, f.toPath()));
 				}
 				catch (IOException | CancelledException e) {
 					log.appendException(e);
@@ -1141,8 +1142,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected FSRL resolveLibraryFile(GFileSystem fs, Path libraryParentPath, String libraryName)
 			throws IOException {
-		GFile libraryParentDir =
-			fs.lookup(libraryParentPath != null ? libraryParentPath.toString() : null);
+		GFile libraryParentDir = fs.lookup(
+			libraryParentPath != null ? FilenameUtils.separatorsToUnix(libraryParentPath.toString())
+					: null);
 		boolean compareWithoutExtension = isOptionalLibraryFilenameExtensions() &&
 			FilenameUtils.getExtension(libraryName).equals("");
 		if (libraryParentDir != null) {

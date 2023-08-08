@@ -17,6 +17,9 @@ package ghidra.trace.model.symbol;
 
 import ghidra.program.model.listing.GhidraClass;
 
+/**
+ * A trace class symbol
+ */
 public interface TraceClassSymbol extends TraceNamespaceSymbol, GhidraClass {
-
+	// Nothing to add.
 }

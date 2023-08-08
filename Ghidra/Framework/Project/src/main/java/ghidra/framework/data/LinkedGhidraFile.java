@@ -25,6 +25,8 @@ import java.util.Map;
 import javax.help.UnsupportedOperationException;
 import javax.swing.Icon;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.*;
@@ -100,17 +102,28 @@ class LinkedGhidraFile implements LinkedDomainFile {
 	}
 
 	@Override
-	public URL getSharedProjectURL() {
+	public URL getSharedProjectURL(String ref) {
 		URL folderURL = parent.getSharedProjectURL();
 		if (GhidraURL.isServerRepositoryURL(folderURL)) {
-			// Direct URL construction done so that ghidra protocol 
-			// extension may be supported
 			try {
-				return new URL(folderURL.toExternalForm() + fileName);
+				String spec = fileName;
+				if (!StringUtils.isEmpty(ref)) {
+					spec += "#" + ref;
+				}
+				return new URL(folderURL, spec);
 			}
 			catch (MalformedURLException e) {
 				// ignore
 			}
+		}
+		return null;
+	}
+
+	@Override
+	public URL getLocalProjectURL(String ref) {
+		ProjectLocator projectLocator = parent.getProjectLocator();
+		if (!projectLocator.isTransient()) {
+			return GhidraURL.makeURL(projectLocator, getPathname(), ref);
 		}
 		return null;
 	}

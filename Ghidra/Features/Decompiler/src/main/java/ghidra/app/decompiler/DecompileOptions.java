@@ -124,6 +124,37 @@ public class DecompileOptions {
 	private final static boolean SPLITPOINTERS_OPTIONDEFAULT = true;	// Must match Architecture::resetDefaultsInternal
 	private boolean splitPointers;
 
+	private final static String NANIGNORE_OPTIONSTRING = "Analysis.NaN operations";
+	private final static String NANIGNORE_OPTIONDESCRIPTION =
+		"Specify how much to ignore floating-point NaN operations in decompiler output";
+
+	public enum NanIgnoreEnum {
+
+		None("none", "Ignore none"),
+		Compare("compare", "Ignore with comparisons"),
+		All("all", "Ignore all");
+
+		private String label;
+		private String optionString;
+
+		private NanIgnoreEnum(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	private final static NanIgnoreEnum NANIGNORE_OPTIONDEFAULT = NanIgnoreEnum.Compare;	// Must match Architecture::resetDefaultsInternal
+	private NanIgnoreEnum nanIgnore;
+
 	private final static String NULLTOKEN_OPTIONSTRING = "Display.Print 'NULL' for null pointers";
 	private final static String NULLTOKEN_OPTIONDESCRIPTION =
 		"If set, any zero valued pointer (null pointer) will " +
@@ -412,6 +443,7 @@ public class DecompileOptions {
 		splitStructures = SPLITSTRUCTURES_OPTIONDEFAULT;
 		splitArrays = SPLITARRAYS_OPTIONDEFAULT;
 		splitPointers = SPLITPOINTERS_OPTIONDEFAULT;
+		nanIgnore = NANIGNORE_OPTIONDEFAULT;
 		ignoreunimpl = IGNOREUNIMPL_OPTIONDEFAULT;
 		inferconstptr = INFERCONSTPTR_OPTIONDEFAULT;
 		analyzeForLoops = ANALYZEFORLOOPS_OPTIONDEFAULT;
@@ -473,6 +505,7 @@ public class DecompileOptions {
 			opt.getBoolean(SPLITSTRUCTURES_OPTIONSTRING, SPLITSTRUCTURES_OPTIONDEFAULT);
 		splitArrays = opt.getBoolean(SPLITARRAYS_OPTIONSTRING, SPLITARRAYS_OPTIONDEFAULT);
 		splitPointers = opt.getBoolean(SPLITPOINTERS_OPTIONSTRING, SPLITPOINTERS_OPTIONDEFAULT);
+		nanIgnore = opt.getEnum(NANIGNORE_OPTIONSTRING, NANIGNORE_OPTIONDEFAULT);
 
 		nullToken = opt.getBoolean(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT);
 		inplaceTokens = opt.getBoolean(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT);
@@ -592,6 +625,9 @@ public class DecompileOptions {
 		opt.registerOption(SPLITPOINTERS_OPTIONSTRING, SPLITPOINTERS_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisSplitPointers"),
 			SPLITPOINTERS_OPTIONDESCRIPTION);
+		opt.registerOption(NANIGNORE_OPTIONSTRING, NANIGNORE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisNanIgnore"),
+			NANIGNORE_OPTIONDESCRIPTION);
 		opt.registerOption(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayNull"), NULLTOKEN_OPTIONDESCRIPTION);
 		opt.registerOption(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT,
@@ -757,6 +793,9 @@ public class DecompileOptions {
 			String p2 = splitArrays ? "array" : "";
 			String p3 = splitPointers ? "pointer" : "";
 			appendOption(encoder, ELEM_SPLITDATATYPE, p1, p2, p3);
+		}
+		if (nanIgnore != NANIGNORE_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_NANIGNORE, nanIgnore.getOptionString(), "", "");
 		}
 
 		appendOption(encoder, ELEM_READONLY, readOnly ? "on" : "off", "", "");

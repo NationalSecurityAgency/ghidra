@@ -17,7 +17,6 @@ package ghidra.framework.plugintool;
 
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.Project;
-import ghidra.framework.plugintool.util.PluginsConfiguration;
 
 /**
  * PluginTool that is used by the Merge process to resolve conflicts

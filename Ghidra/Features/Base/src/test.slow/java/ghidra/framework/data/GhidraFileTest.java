@@ -27,6 +27,7 @@ import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.*;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -84,6 +85,15 @@ public class GhidraFileTest extends AbstractGhidraHeadedIntegrationTest {
 	public void tearDown() {
 		deleteAll(privateProjectDir);
 		deleteAll(sharedProjectDir);
+	}
+
+	@Test
+	public void testLocalURL() throws IOException {
+		createDB(privateFS, "/a", "file1");
+		assertEquals(GhidraURL.makeURL(pfm.getProjectLocator(), "/a/file1", "xyz"),
+			pfm.getFile("/a/file1").getLocalProjectURL("xyz"));
+		assertEquals(GhidraURL.makeURL(pfm.getProjectLocator(), "/a/file1", null),
+			pfm.getFile("/a/file1").getLocalProjectURL(null));
 	}
 
 	@Test
