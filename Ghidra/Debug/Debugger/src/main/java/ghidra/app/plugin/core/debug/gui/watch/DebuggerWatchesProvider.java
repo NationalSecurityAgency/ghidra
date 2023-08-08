@@ -280,6 +280,9 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			if (dataType == null) {
 				return null;
 			}
+			if (currentTrace == null) {
+				return dataType;
+			}
 			try (Transaction tx = currentTrace.openTransaction("Resolve DataType")) {
 				return currentTrace.getDataTypeManager().resolve(dataType, null);
 			}
