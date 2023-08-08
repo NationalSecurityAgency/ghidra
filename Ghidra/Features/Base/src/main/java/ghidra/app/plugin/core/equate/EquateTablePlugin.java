@@ -67,20 +67,6 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 	}
 
 	@Override
-	public void serviceAdded(Class<?> interfaceClass, Object service) {
-		if (interfaceClass == GoToService.class) {
-			provider.setGoToService((GoToService) service);
-		}
-	}
-
-	@Override
-	public void serviceRemoved(Class<?> interfaceClass, Object service) {
-		if (interfaceClass == GoToService.class) {
-			provider.setGoToService(null);
-		}
-	}
-
-	@Override
 	public void dispose() {
 		updateMgr.dispose();
 		if (currentProgram != null) {
