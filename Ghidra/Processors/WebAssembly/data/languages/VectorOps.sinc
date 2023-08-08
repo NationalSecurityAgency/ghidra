@@ -624,34 +624,29 @@ define pcodeop f64x2_ge;
     sp2_128 = f64x2_ge(sp1_128, sp2_128);
 }
 
-define pcodeop v128_not;
 # [v128] -> [v128]
 :v128.not is opc=0xFD; opc2_77; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_not(sp1_128);
+    sp1_128 = ~sp1_128;
 }
 
-define pcodeop v128_and;
 # [v128 v128] -> [v128]
 :v128.and is opc=0xFD; opc2_78; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = v128_and(sp1_128, sp2_128);
+    sp2_128 = sp2_128 & sp1_128;
 }
 
-define pcodeop v128_andnot;
 # [v128 v128] -> [v128]
 :v128.andnot is opc=0xFD; opc2_79; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = v128_andnot(sp1_128, sp2_128);
+    sp2_128 = sp2_128 & ~sp1_128;
 }
 
-define pcodeop v128_or;
 # [v128 v128] -> [v128]
 :v128.or is opc=0xFD; opc2_80; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = v128_or(sp1_128, sp2_128);
+    sp2_128 = sp2_128 | sp1_128;
 }
 
-define pcodeop v128_xor;
 # [v128 v128] -> [v128]
 :v128.xor is opc=0xFD; opc2_81; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = v128_xor(sp1_128, sp2_128);
+    sp2_128 = sp2_128 ^ sp1_128;
 }
 
 define pcodeop v128_bitselect;
@@ -660,10 +655,9 @@ define pcodeop v128_bitselect;
     sp3_128 = v128_bitselect(sp1_128, sp2_128, sp3_128);
 }
 
-define pcodeop v128_any_true;
 # [v128] -> [i32]
 :v128.any_true is opc=0xFD; opc2_83; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = v128_any_true(sp1_128);
+    sp1_32 = zext(sp1_128 != 0);
 }
 
 # [i32 v128] -> [v128]
@@ -720,16 +714,19 @@ define pcodeop v128_any_true;
     sp1_128 = zext(*:8 loadaddr);
 }
 
-define pcodeop f32x4_demote_f64x2_zero;
 # [v128] -> [v128]
 :f32x4.demote_f64x2_zero is opc=0xFD; opc2_94; sp1_128; ctx_is_directive=0 {
-    sp1_128 = f32x4_demote_f64x2_zero(sp1_128);
+    t0o = 0;
+    t0o[0, 32] = float2float(sp1_128[0, 64]);
+    t0o[32, 32] = float2float(sp1_128[64, 64]);
+    sp1_128 = t0o;
 }
 
-define pcodeop f64x2_promote_low_f32x4;
 # [v128] -> [v128]
 :f64x2.promote_low_f32x4 is opc=0xFD; opc2_95; sp1_128; ctx_is_directive=0 {
-    sp1_128 = f64x2_promote_low_f32x4(sp1_128);
+    t0o[0, 64] = float2float(sp1_128[0, 32]);
+    t0o[64, 64] = float2float(sp1_128[32, 32]);
+    sp1_128 = t0o;
 }
 
 define pcodeop i8x16_abs;
@@ -738,10 +735,24 @@ define pcodeop i8x16_abs;
     sp1_128 = i8x16_abs(sp1_128);
 }
 
-define pcodeop i8x16_neg;
 # [v128] -> [v128]
 :i8x16.neg is opc=0xFD; opc2_97; sp1_128; ctx_is_directive=0 {
-    sp1_128 = i8x16_neg(sp1_128);
+    sp1_128[  0,8] = -sp1_128[  0,8];
+    sp1_128[  8,8] = -sp1_128[  8,8];
+    sp1_128[ 16,8] = -sp1_128[ 16,8];
+    sp1_128[ 24,8] = -sp1_128[ 24,8];
+    sp1_128[ 32,8] = -sp1_128[ 32,8];
+    sp1_128[ 40,8] = -sp1_128[ 40,8];
+    sp1_128[ 48,8] = -sp1_128[ 48,8];
+    sp1_128[ 56,8] = -sp1_128[ 56,8];
+    sp1_128[ 64,8] = -sp1_128[ 64,8];
+    sp1_128[ 72,8] = -sp1_128[ 72,8];
+    sp1_128[ 80,8] = -sp1_128[ 80,8];
+    sp1_128[ 88,8] = -sp1_128[ 88,8];
+    sp1_128[ 96,8] = -sp1_128[ 96,8];
+    sp1_128[104,8] = -sp1_128[104,8];
+    sp1_128[112,8] = -sp1_128[112,8];
+    sp1_128[120,8] = -sp1_128[120,8];
 }
 
 define pcodeop i8x16_popcnt;
@@ -816,10 +827,24 @@ define pcodeop i8x16_shr_u;
     sp2_128 = i8x16_shr_u(sp1_32, sp2_128);
 }
 
-define pcodeop i8x16_add;
 # [v128 v128] -> [v128]
 :i8x16.add is opc=0xFD; opc2_110; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i8x16_add(sp1_128, sp2_128);
+    sp2_128[  0,8] = sp2_128[  0,8] + sp1_128[  0,8];
+    sp2_128[  8,8] = sp2_128[  8,8] + sp1_128[  8,8];
+    sp2_128[ 16,8] = sp2_128[ 16,8] + sp1_128[ 16,8];
+    sp2_128[ 24,8] = sp2_128[ 24,8] + sp1_128[ 24,8];
+    sp2_128[ 32,8] = sp2_128[ 32,8] + sp1_128[ 32,8];
+    sp2_128[ 40,8] = sp2_128[ 40,8] + sp1_128[ 40,8];
+    sp2_128[ 48,8] = sp2_128[ 48,8] + sp1_128[ 48,8];
+    sp2_128[ 56,8] = sp2_128[ 56,8] + sp1_128[ 56,8];
+    sp2_128[ 64,8] = sp2_128[ 64,8] + sp1_128[ 64,8];
+    sp2_128[ 72,8] = sp2_128[ 72,8] + sp1_128[ 72,8];
+    sp2_128[ 80,8] = sp2_128[ 80,8] + sp1_128[ 80,8];
+    sp2_128[ 88,8] = sp2_128[ 88,8] + sp1_128[ 88,8];
+    sp2_128[ 96,8] = sp2_128[ 96,8] + sp1_128[ 96,8];
+    sp2_128[104,8] = sp2_128[104,8] + sp1_128[104,8];
+    sp2_128[112,8] = sp2_128[112,8] + sp1_128[112,8];
+    sp2_128[120,8] = sp2_128[120,8] + sp1_128[120,8];
 }
 
 define pcodeop i8x16_add_sat_s;
@@ -834,10 +859,24 @@ define pcodeop i8x16_add_sat_u;
     sp2_128 = i8x16_add_sat_u(sp1_128, sp2_128);
 }
 
-define pcodeop i8x16_sub;
 # [v128 v128] -> [v128]
 :i8x16.sub is opc=0xFD; opc2_113; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i8x16_sub(sp1_128, sp2_128);
+    sp2_128[  0,8] = sp2_128[  0,8] - sp1_128[  0,8];
+    sp2_128[  8,8] = sp2_128[  8,8] - sp1_128[  8,8];
+    sp2_128[ 16,8] = sp2_128[ 16,8] - sp1_128[ 16,8];
+    sp2_128[ 24,8] = sp2_128[ 24,8] - sp1_128[ 24,8];
+    sp2_128[ 32,8] = sp2_128[ 32,8] - sp1_128[ 32,8];
+    sp2_128[ 40,8] = sp2_128[ 40,8] - sp1_128[ 40,8];
+    sp2_128[ 48,8] = sp2_128[ 48,8] - sp1_128[ 48,8];
+    sp2_128[ 56,8] = sp2_128[ 56,8] - sp1_128[ 56,8];
+    sp2_128[ 64,8] = sp2_128[ 64,8] - sp1_128[ 64,8];
+    sp2_128[ 72,8] = sp2_128[ 72,8] - sp1_128[ 72,8];
+    sp2_128[ 80,8] = sp2_128[ 80,8] - sp1_128[ 80,8];
+    sp2_128[ 88,8] = sp2_128[ 88,8] - sp1_128[ 88,8];
+    sp2_128[ 96,8] = sp2_128[ 96,8] - sp1_128[ 96,8];
+    sp2_128[104,8] = sp2_128[104,8] - sp1_128[104,8];
+    sp2_128[112,8] = sp2_128[112,8] - sp1_128[112,8];
+    sp2_128[120,8] = sp2_128[120,8] - sp1_128[120,8];
 }
 
 define pcodeop i8x16_sub_sat_s;
@@ -930,10 +969,16 @@ define pcodeop i16x8_abs;
     sp1_128 = i16x8_abs(sp1_128);
 }
 
-define pcodeop i16x8_neg;
 # [v128] -> [v128]
 :i16x8.neg is opc=0xFD; opc2_129; sp1_128; ctx_is_directive=0 {
-    sp1_128 = i16x8_neg(sp1_128);
+    sp1_128[  0,16] = -sp1_128[  0,16];
+    sp1_128[ 16,16] = -sp1_128[ 16,16];
+    sp1_128[ 32,16] = -sp1_128[ 32,16];
+    sp1_128[ 48,16] = -sp1_128[ 48,16];
+    sp1_128[ 64,16] = -sp1_128[ 64,16];
+    sp1_128[ 80,16] = -sp1_128[ 80,16];
+    sp1_128[ 96,16] = -sp1_128[ 96,16];
+    sp1_128[112,16] = -sp1_128[112,16];
 }
 
 define pcodeop i16x8_q15mulr_sat_s;
@@ -1008,10 +1053,16 @@ define pcodeop i16x8_shr_u;
     sp2_128 = i16x8_shr_u(sp1_32, sp2_128);
 }
 
-define pcodeop i16x8_add;
 # [v128 v128] -> [v128]
 :i16x8.add is opc=0xFD; opc2_142; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i16x8_add(sp1_128, sp2_128);
+    sp2_128[  0,16] = sp2_128[  0,16] + sp1_128[  0,16];
+    sp2_128[ 16,16] = sp2_128[ 16,16] + sp1_128[ 16,16];
+    sp2_128[ 32,16] = sp2_128[ 32,16] + sp1_128[ 32,16];
+    sp2_128[ 48,16] = sp2_128[ 48,16] + sp1_128[ 48,16];
+    sp2_128[ 64,16] = sp2_128[ 64,16] + sp1_128[ 64,16];
+    sp2_128[ 80,16] = sp2_128[ 80,16] + sp1_128[ 80,16];
+    sp2_128[ 96,16] = sp2_128[ 96,16] + sp1_128[ 96,16];
+    sp2_128[112,16] = sp2_128[112,16] + sp1_128[112,16];
 }
 
 define pcodeop i16x8_add_sat_s;
@@ -1026,10 +1077,16 @@ define pcodeop i16x8_add_sat_u;
     sp2_128 = i16x8_add_sat_u(sp1_128, sp2_128);
 }
 
-define pcodeop i16x8_sub;
 # [v128 v128] -> [v128]
 :i16x8.sub is opc=0xFD; opc2_145; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i16x8_sub(sp1_128, sp2_128);
+    sp2_128[  0,16] = sp2_128[  0,16] - sp1_128[  0,16];
+    sp2_128[ 16,16] = sp2_128[ 16,16] - sp1_128[ 16,16];
+    sp2_128[ 32,16] = sp2_128[ 32,16] - sp1_128[ 32,16];
+    sp2_128[ 48,16] = sp2_128[ 48,16] - sp1_128[ 48,16];
+    sp2_128[ 64,16] = sp2_128[ 64,16] - sp1_128[ 64,16];
+    sp2_128[ 80,16] = sp2_128[ 80,16] - sp1_128[ 80,16];
+    sp2_128[ 96,16] = sp2_128[ 96,16] - sp1_128[ 96,16];
+    sp2_128[112,16] = sp2_128[112,16] - sp1_128[112,16];
 }
 
 define pcodeop i16x8_sub_sat_s;
@@ -1116,10 +1173,12 @@ define pcodeop i32x4_abs;
     sp1_128 = i32x4_abs(sp1_128);
 }
 
-define pcodeop i32x4_neg;
 # [v128] -> [v128]
 :i32x4.neg is opc=0xFD; opc2_161; sp1_128; ctx_is_directive=0 {
-    sp1_128 = i32x4_neg(sp1_128);
+    sp1_128[  0,32] = -sp1_128[  0,32];
+    sp1_128[ 32,32] = -sp1_128[ 32,32];
+    sp1_128[ 64,32] = -sp1_128[ 64,32];
+    sp1_128[ 96,32] = -sp1_128[ 96,32];
 }
 
 define pcodeop i32x4_all_true;
@@ -1176,16 +1235,20 @@ define pcodeop i32x4_shr_u;
     sp2_128 = i32x4_shr_u(sp1_32, sp2_128);
 }
 
-define pcodeop i32x4_add;
 # [v128 v128] -> [v128]
 :i32x4.add is opc=0xFD; opc2_174; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i32x4_add(sp1_128, sp2_128);
+    sp2_128[  0,32] = sp2_128[  0,32] + sp1_128[  0,32];
+    sp2_128[ 32,32] = sp2_128[ 32,32] + sp1_128[ 32,32];
+    sp2_128[ 64,32] = sp2_128[ 64,32] + sp1_128[ 64,32];
+    sp2_128[ 96,32] = sp2_128[ 96,32] + sp1_128[ 96,32];
 }
 
-define pcodeop i32x4_sub;
 # [v128 v128] -> [v128]
 :i32x4.sub is opc=0xFD; opc2_177; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i32x4_sub(sp1_128, sp2_128);
+    sp2_128[  0,32] = sp2_128[  0,32] - sp1_128[  0,32];
+    sp2_128[ 32,32] = sp2_128[ 32,32] - sp1_128[ 32,32];
+    sp2_128[ 64,32] = sp2_128[ 64,32] - sp1_128[ 64,32];
+    sp2_128[ 96,32] = sp2_128[ 96,32] - sp1_128[ 96,32];
 }
 
 define pcodeop i32x4_mul;
@@ -1254,10 +1317,10 @@ define pcodeop i64x2_abs;
     sp1_128 = i64x2_abs(sp1_128);
 }
 
-define pcodeop i64x2_neg;
 # [v128] -> [v128]
 :i64x2.neg is opc=0xFD; opc2_193; sp1_128; ctx_is_directive=0 {
-    sp1_128 = i64x2_neg(sp1_128);
+    sp1_128[  0,64] = -sp1_128[  0,64];
+    sp1_128[ 64,64] = -sp1_128[ 64,64];
 }
 
 define pcodeop i64x2_all_true;
@@ -1314,16 +1377,16 @@ define pcodeop i64x2_shr_u;
     sp2_128 = i64x2_shr_u(sp1_32, sp2_128);
 }
 
-define pcodeop i64x2_add;
 # [v128 v128] -> [v128]
 :i64x2.add is opc=0xFD; opc2_206; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i64x2_add(sp1_128, sp2_128);
+    sp2_128[  0,64] = sp2_128[  0,64] + sp1_128[  0,64];
+    sp2_128[ 64,64] = sp2_128[ 64,64] + sp1_128[ 64,64];
 }
 
-define pcodeop i64x2_sub;
 # [v128 v128] -> [v128]
 :i64x2.sub is opc=0xFD; opc2_209; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i64x2_sub(sp1_128, sp2_128);
+    sp2_128[  0,64] = sp2_128[  0,64] - sp1_128[  0,64];
+    sp2_128[ 64,64] = sp2_128[ 64,64] - sp1_128[ 64,64];
 }
 
 define pcodeop i64x2_mul;
@@ -1398,10 +1461,12 @@ define pcodeop f32x4_abs;
     sp1_128 = f32x4_abs(sp1_128);
 }
 
-define pcodeop f32x4_neg;
 # [v128] -> [v128]
 :f32x4.neg is opc=0xFD; opc2_225; sp1_128; ctx_is_directive=0 {
-    sp1_128 = f32x4_neg(sp1_128);
+    sp1_128[  0,32] = f- sp1_128[  0,32];
+    sp1_128[ 32,32] = f- sp1_128[ 32,32];
+    sp1_128[ 64,32] = f- sp1_128[ 64,32];
+    sp1_128[ 96,32] = f- sp1_128[ 96,32];
 }
 
 define pcodeop f32x4_sqrt;
@@ -1410,28 +1475,36 @@ define pcodeop f32x4_sqrt;
     sp1_128 = f32x4_sqrt(sp1_128);
 }
 
-define pcodeop f32x4_add;
 # [v128 v128] -> [v128]
 :f32x4.add is opc=0xFD; opc2_228; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f32x4_add(sp1_128, sp2_128);
+    sp2_128[  0,32] = sp2_128[  0,32] f+ sp1_128[  0,32];
+    sp2_128[ 32,32] = sp2_128[ 32,32] f+ sp1_128[ 32,32];
+    sp2_128[ 64,32] = sp2_128[ 64,32] f+ sp1_128[ 64,32];
+    sp2_128[ 96,32] = sp2_128[ 96,32] f+ sp1_128[ 96,32];
 }
 
-define pcodeop f32x4_sub;
 # [v128 v128] -> [v128]
 :f32x4.sub is opc=0xFD; opc2_229; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f32x4_sub(sp1_128, sp2_128);
+    sp2_128[  0,32] = sp2_128[  0,32] f- sp1_128[  0,32];
+    sp2_128[ 32,32] = sp2_128[ 32,32] f- sp1_128[ 32,32];
+    sp2_128[ 64,32] = sp2_128[ 64,32] f- sp1_128[ 64,32];
+    sp2_128[ 96,32] = sp2_128[ 96,32] f- sp1_128[ 96,32];
 }
 
-define pcodeop f32x4_mul;
 # [v128 v128] -> [v128]
 :f32x4.mul is opc=0xFD; opc2_230; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f32x4_mul(sp1_128, sp2_128);
+    sp2_128[  0,32] = sp2_128[  0,32] f* sp1_128[  0,32];
+    sp2_128[ 32,32] = sp2_128[ 32,32] f* sp1_128[ 32,32];
+    sp2_128[ 64,32] = sp2_128[ 64,32] f* sp1_128[ 64,32];
+    sp2_128[ 96,32] = sp2_128[ 96,32] f* sp1_128[ 96,32];
 }
 
-define pcodeop f32x4_div;
 # [v128 v128] -> [v128]
 :f32x4.div is opc=0xFD; opc2_231; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f32x4_div(sp1_128, sp2_128);
+    sp2_128[  0,32] = sp2_128[  0,32] f/ sp1_128[  0,32];
+    sp2_128[ 32,32] = sp2_128[ 32,32] f/ sp1_128[ 32,32];
+    sp2_128[ 64,32] = sp2_128[ 64,32] f/ sp1_128[ 64,32];
+    sp2_128[ 96,32] = sp2_128[ 96,32] f/ sp1_128[ 96,32];
 }
 
 define pcodeop f32x4_min;
@@ -1464,10 +1537,10 @@ define pcodeop f64x2_abs;
     sp1_128 = f64x2_abs(sp1_128);
 }
 
-define pcodeop f64x2_neg;
 # [v128] -> [v128]
 :f64x2.neg is opc=0xFD; opc2_237; sp1_128; ctx_is_directive=0 {
-    sp1_128 = f64x2_neg(sp1_128);
+    sp1_128[  0,64] = f- sp1_128[  0,64];
+    sp1_128[ 64,64] = f- sp1_128[ 64,64];
 }
 
 define pcodeop f64x2_sqrt;
@@ -1476,28 +1549,28 @@ define pcodeop f64x2_sqrt;
     sp1_128 = f64x2_sqrt(sp1_128);
 }
 
-define pcodeop f64x2_add;
 # [v128 v128] -> [v128]
 :f64x2.add is opc=0xFD; opc2_240; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f64x2_add(sp1_128, sp2_128);
+    sp2_128[  0,64] = sp2_128[  0,64] f+ sp1_128[  0,64];
+    sp2_128[ 64,64] = sp2_128[ 64,64] f+ sp1_128[ 64,64];
 }
 
-define pcodeop f64x2_sub;
 # [v128 v128] -> [v128]
 :f64x2.sub is opc=0xFD; opc2_241; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f64x2_sub(sp1_128, sp2_128);
+    sp2_128[  0,64] = sp2_128[  0,64] f- sp1_128[  0,64];
+    sp2_128[ 64,64] = sp2_128[ 64,64] f- sp1_128[ 64,64];
 }
 
-define pcodeop f64x2_mul;
 # [v128 v128] -> [v128]
 :f64x2.mul is opc=0xFD; opc2_242; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f64x2_mul(sp1_128, sp2_128);
+    sp2_128[  0,64] = sp2_128[  0,64] f* sp1_128[  0,64];
+    sp2_128[ 64,64] = sp2_128[ 64,64] f* sp1_128[ 64,64];
 }
 
-define pcodeop f64x2_div;
 # [v128 v128] -> [v128]
 :f64x2.div is opc=0xFD; opc2_243; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f64x2_div(sp1_128, sp2_128);
+    sp2_128[  0,64] = sp2_128[  0,64] f/ sp1_128[  0,64];
+    sp2_128[ 64,64] = sp2_128[ 64,64] f/ sp1_128[ 64,64];
 }
 
 define pcodeop f64x2_min;
