@@ -3553,9 +3553,8 @@ is b_31=0 & b_30=1 & b_2129=0b101110010 & b_1015=0b000101 & Rd_VPR128.8H & Rn_VP
 }
 
 # C7.2.46 FCADD page C7-1090 line 63037 KEEPWITH
-
-fcadd_rotate: #90 is b_12=0 { export 90:1; }
-fcadd_rotate: #270 is b_12=1 { export 270:1; }
+# val is either 90 or 270 depending on the value of bit b_12 (0 or 1)
+fcadd_rotate: "#"^val is b_12  [ val = 90 + 180 * b_12; ] { export *[const]:2 val; }
 
 # C7.2.53 FCADD page C7-2127 line 123874 MATCH x2e00e400/mask=xbf20ec00
 # CONSTRUCT x2e40e400/mask=xffe0ec00 MATCHED 1 DOCUMENTED OPCODES
@@ -4269,15 +4268,9 @@ is b_31=0 & b_30=1 & b_1029=0b00111011111000110010 & Rd_VPR128.8H & Rn_VPR128.8H
 }
 
 # C7.2.55 FCMLA (by element) page C7-1117 line 64749 KEEPWITH
-
-fcmla_rotate: #0 is b_15=0 & b_1314=0b00 { export 0:1; }
-fcmla_rotate: #90 is b_15=0 & b_1314=0b01 { export 90:1; }
-fcmla_rotate: #180 is b_15=0 & b_1314=0b10 { export 180:1; }
-fcmla_rotate: #270 is b_15=0 & b_1314=0b11 { export 270:1; }
-fcmla_rotate: #0 is b_15=1 & b_1112=0b00 { export 0:1; }
-fcmla_rotate: #90 is b_15=1 & b_1112=0b01 { export 90:1; }
-fcmla_rotate: #180 is b_15=1 & b_1112=0b10 { export 180:1; }
-fcmla_rotate: #270 is b_15=1 & b_1112=0b11 { export 270:1; }
+# Values in set {0,90,180,270} depending on b_1314/1112 values of {0,1,2,3}
+fcmla_rotate: "#"^val is b_15=0 & b_1314 [ val = 90 * b_1314; ] { export *[const]:2 val; }
+fcmla_rotate: "#"^val is b_15=1 & b_1112 [ val = 90 * b_1112; ] { export *[const]:2 val; }
 
 # C7.2.62 FCMLA (by element) page C7-2154 line 125620 MATCH x2f001000/mask=xbf009400
 # CONSTRUCT x2f401000/mask=xffc09c00 MATCHED 1 DOCUMENTED OPCODES
