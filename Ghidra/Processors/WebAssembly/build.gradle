@@ -24,5 +24,4 @@ eclipse.project.name = 'Processors WebAssembly'
 
 dependencies {
 	api project(':Base')
-	helpPath project(path: ':Base', configuration: 'helpPath')
 }
