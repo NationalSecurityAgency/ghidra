@@ -159,7 +159,7 @@ public class WasmElementSegment implements StructConverter {
 		int elemSize = getElementType().getSize();
 		int count = (int) this.count.asLong();
 		byte[] result = new byte[count * elemSize];
-		Arrays.fill(result, (byte) 0xff);
+		Arrays.fill(result, (byte) 0x00);
 
 		if (funcidxs != null) {
 			for (int i = 0; i < count; i++) {

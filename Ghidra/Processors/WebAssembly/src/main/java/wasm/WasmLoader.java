@@ -294,7 +294,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		long byteSize = elementDataType.getLength() * numElements;
 		Address dataStart = getTableAddress(program.getAddressFactory(), tableidx, 0);
 		try {
-			MemoryBlock block = program.getMemory().createInitializedBlock(".table" + tableidx, dataStart, byteSize, (byte) 0xff, monitor, false);
+			MemoryBlock block = program.getMemory().createInitializedBlock(".table" + tableidx, dataStart, byteSize, (byte) 0x00, monitor, false);
 			block.setRead(true);
 			block.setWrite(true);
 			block.setExecute(false);
@@ -326,7 +326,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			if (initBytes == null) {
 				block = program.getMemory().createUninitializedBlock(".global" + globalidx, dataStart, dataType.getLength(), false);
 			} else {
-				block = program.getMemory().createInitializedBlock(".global" + globalidx, dataStart, dataType.getLength(), (byte) 0xff, monitor, false);
+				block = program.getMemory().createInitializedBlock(".global" + globalidx, dataStart, dataType.getLength(), (byte) 0x00, monitor, false);
 				program.getMemory().setBytes(dataStart, initBytes);
 			}
 			block.setRead(true);
