@@ -20,8 +20,16 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.MachConstants;
+import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.importer.MessageLog;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Represents a dyld_chained_fixups_header structure.
@@ -66,6 +74,50 @@ public class DyldChainedFixupHeader implements StructConverter {
 
 		reader.setPointerIndex(ptrIndex + symbolsOffset);
 		chainedImports.initSymbols(reader, this);
+	}
+
+	/**
+	 * Marks up this data structure with data structures and comments
+	 * 
+	 * @param program The {@link Program} to mark up
+	 * @param address The {@link Address} of this data structure
+	 * @param header The Mach-O header
+	 * @param monitor A cancellable task monitor
+	 * @param log The log
+	 * @throws CancelledException if the user cancelled the operation
+	 */
+	public void markup(Program program, Address address, MachHeader header, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		try {
+			if (startsOffset != 0) {
+				Address startsAddr = address.add(startsOffset);
+				DataUtilities.createData(program, startsAddr, chainedStartsInImage.toDataType(), -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				chainedStartsInImage.markup(program, startsAddr, header, monitor, log);
+			}
+			if (importsOffset != 0 && symbolsOffset != 0) {
+				ReferenceManager referenceManager = program.getReferenceManager();
+				Address importsAddr = address.add(importsOffset);
+				Address symbolsAddr = address.add(symbolsOffset);
+				DyldChainedImport[] chainedImportArray = chainedImports.getChainedImports();
+				for (int i = 0; i < importsCount; i++) {
+					DyldChainedImport chainedImport = chainedImportArray[i];
+					DataType dt = chainedImport.toDataType();
+					Data d = DataUtilities.createData(program, importsAddr.add(i * dt.getLength()),
+						dt, -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+					Address strAddr = symbolsAddr.add(chainedImport.getNameOffset());
+					DataUtilities.createData(program,
+						symbolsAddr.add(chainedImport.getNameOffset()), STRING, -1,
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+					referenceManager.addMemoryReference(d.getMinAddress(), strAddr, RefType.DATA,
+						SourceType.IMPORTED, 0);
+				}
+			}
+		}
+		catch (Exception e) {
+			log.appendMsg(DyldChainedFixupHeader.class.getSimpleName(),
+				"Failed to markup dyld_chained_fixups_header");
+		}
 	}
 
 	@Override

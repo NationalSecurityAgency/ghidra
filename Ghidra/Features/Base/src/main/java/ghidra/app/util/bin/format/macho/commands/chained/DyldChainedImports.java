@@ -20,18 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.commands.dyld.BindingTable.Binding;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Represents a dyld_chained_import array.
  * 
  * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/fixup-chains.h">mach-o/fixup-chains.h</a> 
  */
-public class DyldChainedImports implements StructConverter {
+public class DyldChainedImports {
 
 	private int importsCount;
 	private int importsFormat;
@@ -59,15 +55,6 @@ public class DyldChainedImports implements StructConverter {
 		for (Binding binding : bindings) {
 			chainedImports[i++] = new DyldChainedImport(binding);
 		}
-	}
-
-	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		DataType chainedImportDt = chainedImports[0].toDataType();
-		DataType dt =
-			new ArrayDataType(chainedImportDt, importsCount, chainedImportDt.getLength());
-
-		return dt;
 	}
 
 	public int getImportsCount() {
