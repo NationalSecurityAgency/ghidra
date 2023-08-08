@@ -136,7 +136,10 @@ public class WasmFunctionAnalysis {
 		 * and select instructions.
 		 */
 		public void setOperandSize(Address address, ValType type) {
-			setRegister(address, REG_OPERAND_SIZE, type.getSize());
+			if (type != null) {
+				// might be null if we're in an unreachable area
+				setRegister(address, REG_OPERAND_SIZE, type.getSize());
+			}
 		}
 
 		/** Mark this global.* instruction as operating on the C stack pointer. */
