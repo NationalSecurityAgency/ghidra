@@ -487,11 +487,11 @@ valtype_128: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=1
 }
 
 :f32.const f32 is opc=0x43; f32; sp0_32; ctx_is_directive=0 {
-	sp0_32 = float2float(f32:4);
+	sp0_32 = f32:4;
 }
 
 :f64.const f64 is opc=0x44; f64; sp0_64; ctx_is_directive=0 {
-	sp0_64 = float2float(f64:8);
+	sp0_64 = f64:8;
 }
 
 @include "BasicOps.sinc"
