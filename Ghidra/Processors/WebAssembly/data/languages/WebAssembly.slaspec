@@ -1895,6 +1895,7 @@ define register offset=$(REG_OUTPUTS_BASE) size=4 [
 ];
 
 # Artificial temporary registers used to hold block arguments during branches
+define register offset=$(REG_TEMP_BASE) size=16 [ t0o ];
 define register offset=$(REG_TEMP_BASE) size=4 [ t0 ];
 
 # Shadow stack registers used to store the locals, stacks and return addresses for other frames during emulation
