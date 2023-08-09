@@ -15,6 +15,8 @@
  */
 package ghidra.program.emulation;
 
+import java.math.BigInteger;
+
 import ghidra.app.emulator.Emulator;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.program.model.address.AddressSpace;
@@ -32,6 +34,7 @@ public class WasmEmulationHelper {
      */
     private AddressSpace regSpace;
     private long stackBase;
+    private long inputsBase;
     private long localsBase;
     private Register sspRegister;
     private Register lrRegister;
@@ -43,7 +46,60 @@ public class WasmEmulationHelper {
         lrRegister = language.getRegister("LR");
         regSpace = language.getAddressFactory().getAddressSpace("register");
         stackBase = language.getRegister("s0").getOffset();
+        inputsBase = language.getRegister("i0").getOffset();
         localsBase = language.getRegister("l0").getOffset();
+    }
+
+    public void simulateCall(Emulator emulator, long retAddress, long funcAddress, long... inputs) {
+        BigInteger[] biInputs = new BigInteger[inputs.length];
+        for (int i = 0; i < inputs.length; i++) {
+            biInputs[i] = BigInteger.valueOf(inputs[i]);
+        }
+        simulateCall(emulator, retAddress, funcAddress, biInputs);
+    }
+
+    /**
+     * Simulate a function call. Call this before emulating a WASM function, and
+     * the call will return to retAddress when it completes.
+     * 
+     * @param emulate
+     *            the emulation context
+     * @param retAddress
+     *            the address to which the function will return on completion
+     * @param funcAddress
+     *            the address of the function to call
+     * @param inputs
+     *            the inputs to provide to the function
+     */
+    public void simulateCall(Emulator emulator, long retAddress, long funcAddress, BigInteger... inputs) {
+        MemoryState memState = emulator.getMemState();
+
+        setInitialSSP(memState);
+
+        // Push dummy locals
+        pushShadowStackRegs(memState, 0, 0);
+        // Push dummy stack
+        pushShadowStackRegs(memState, 0, 0);
+        // Push target LR
+        memState.setValue(lrRegister, retAddress);
+        pushShadowStackLR(memState);
+
+        // Set inputs
+        for (int i = 0; i < inputs.length; i++) {
+            memState.setValue(regSpace, inputsBase + i * WasmLoader.REG_SIZE, WasmLoader.REG_SIZE, inputs[i]);
+        }
+
+        // Set up for call
+        memState.setValue(emulator.getPCRegisterName(), funcAddress);
+        emulator.setExecuteAddress(funcAddress);
+    }
+
+    public void simulateReturn(Emulator emulator, long... outputs) {
+        BigInteger[] biOutputs = new BigInteger[outputs.length];
+        for (int i = 0; i < outputs.length; i++) {
+            biOutputs[i] = BigInteger.valueOf(outputs[i]);
+        }
+        simulateReturn(emulator, biOutputs);
     }
 
     /**
@@ -56,7 +112,7 @@ public class WasmEmulationHelper {
      *            the function outputs to push onto the caller's stack. The number
      *            of outputs must match the function signature.
      */
-    public void simulateReturn(Emulator emulator, long... outputs) {
+    public void simulateReturn(Emulator emulator, BigInteger... outputs) {
         MemoryState memState = emulator.getMemState();
 
         // Pop LR from shadow stack
@@ -67,7 +123,7 @@ public class WasmEmulationHelper {
 
         // Push outputs onto stack
         for (int i = 0; i < outputs.length; i++) {
-            memState.setValue(regSpace, getStackOffset(stackHeight + i), 8, outputs[i]);
+            memState.setValue(regSpace, getStackOffset(stackHeight + i), WasmLoader.REG_SIZE, outputs[i]);
         }
 
         // Pop shadow locals into locals
