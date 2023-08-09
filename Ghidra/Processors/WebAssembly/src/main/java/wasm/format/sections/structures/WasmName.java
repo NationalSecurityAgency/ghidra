@@ -31,8 +31,12 @@ public class WasmName implements StructConverter {
 
 	public WasmName(BinaryReader reader) throws IOException {
 		size = reader.readNext(LEB128Info::unsigned);
-		byte[] data = reader.readNextByteArray((int) size.asLong());
-		value = new String(data, StandardCharsets.UTF_8);
+		if (size.asLong() == 0) {
+			value = "";
+		} else {
+			byte[] data = reader.readNextByteArray((int) size.asLong());
+			value = new String(data, StandardCharsets.UTF_8);
+		}
 	}
 
 	public long getSize() {

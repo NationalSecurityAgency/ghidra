@@ -26,6 +26,7 @@ import wasm.format.StructureBuilder;
 
 public class WasmDataSegment implements StructConverter {
 
+	private LEB128Info mode;
 	private LEB128Info index;
 	private ConstantExpression offsetExpr;
 	private long fileOffset;
@@ -33,15 +34,16 @@ public class WasmDataSegment implements StructConverter {
 	private byte[] data;
 
 	public WasmDataSegment(BinaryReader reader) throws IOException {
-		int mode = reader.readNextUnsignedByte();
-		if (mode == 2) {
+		mode = reader.readNext(LEB128Info::unsigned);
+		long modeVal = mode.asLong();
+		if (modeVal == 2) {
 			index = reader.readNext(LEB128Info::unsigned);
 		} else {
 			/* for mode < 2, index defaults to 0 */
 			index = null;
 		}
 
-		if (mode == 0 || mode == 2) {
+		if (modeVal == 0 || modeVal == 2) {
 			/* "active" segment with predefined offset */
 			offsetExpr = new ConstantExpression(reader);
 		} else {
@@ -51,7 +53,11 @@ public class WasmDataSegment implements StructConverter {
 
 		size = reader.readNext(LEB128Info::unsigned);
 		fileOffset = reader.getPointerIndex();
-		data = reader.readNextByteArray((int) size.asLong());
+		if (size.asLong() == 0) {
+			data = new byte[0];
+		} else {
+			data = reader.readNextByteArray((int) size.asLong());
+		}
 	}
 
 	public long getIndex() {
@@ -87,7 +93,7 @@ public class WasmDataSegment implements StructConverter {
 		}
 		StructureBuilder builder = new StructureBuilder(structName);
 
-		builder.add(BYTE, "mode");
+		builder.addUnsignedLeb128(mode, "mode");
 		if (index != null) {
 			builder.addUnsignedLeb128(index, "index");
 		}

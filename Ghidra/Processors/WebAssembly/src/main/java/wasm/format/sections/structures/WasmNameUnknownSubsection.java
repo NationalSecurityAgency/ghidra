@@ -26,7 +26,11 @@ public class WasmNameUnknownSubsection extends WasmNameSubsection {
 
 	public WasmNameUnknownSubsection(BinaryReader reader) throws IOException {
 		super(reader);
-		contents = reader.readNextByteArray((int) getContentSize());
+		if (getContentSize() == 0) {
+			contents = new byte[0];
+		} else {
+			contents = reader.readNextByteArray((int) getContentSize());
+		}
 	}
 
 	@Override
