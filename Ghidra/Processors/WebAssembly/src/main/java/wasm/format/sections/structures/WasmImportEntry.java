@@ -17,6 +17,8 @@ package wasm.format.sections.structures;
 
 import java.io.IOException;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.StructConverter;
@@ -112,7 +114,7 @@ public class WasmImportEntry implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureBuilder builder = new StructureBuilder("import_" + getName());
+		StructureBuilder builder = new StructureBuilder("import_" + StringEscapeUtils.escapeJava(getName()));
 		builder.add(module, "module");
 		builder.add(field, "field");
 		builder.add(BYTE, "kind");

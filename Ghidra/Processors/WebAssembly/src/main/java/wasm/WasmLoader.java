@@ -636,7 +636,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 
 	private MemoryBlock createCustomSectionBlock(Program program, FileBytes fileBytes, WasmUnknownCustomSection customSection, Address address)
 			throws Exception {
-		MemoryBlock block = program.getMemory().createInitializedBlock(customSection.getCustomName(), address, fileBytes, customSection.getContentOffset(), customSection.getCustomSize(), false);
+		MemoryBlock block = program.getMemory().createInitializedBlock(customSection.getName(), address, fileBytes, customSection.getContentOffset(), customSection.getCustomSize(), false);
 		block.setRead(true);
 		block.setWrite(false);
 		block.setExecute(false);
@@ -654,6 +654,9 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			}
 			WasmUnknownCustomSection customSection = (WasmUnknownCustomSection) section;
 			try {
+				if (customSection.getCustomSize() == 0) {
+					continue;
+				}
 				monitor.setMessage("Creating custom section " + section.getName());
 				MemoryBlock block = createCustomSectionBlock(program, fileBytes, customSection, address);
 				address = address.add(block.getSize());

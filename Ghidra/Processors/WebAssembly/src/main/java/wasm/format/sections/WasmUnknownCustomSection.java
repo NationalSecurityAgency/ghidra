@@ -17,6 +17,8 @@ package wasm.format.sections;
 
 import java.io.IOException;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
@@ -43,7 +45,7 @@ public class WasmUnknownCustomSection extends WasmCustomSection {
 
 	@Override
 	public String getName() {
-		return ".custom" + getCustomName(); // to avoid DataType conflict
+		return ".custom." + StringEscapeUtils.escapeJava(getCustomName()); // to avoid DataType conflict
 	}
 
 	public long getContentOffset() {
