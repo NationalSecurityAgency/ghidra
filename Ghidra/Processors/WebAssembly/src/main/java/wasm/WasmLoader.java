@@ -291,6 +291,9 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private static void createTableBlock(Program program, DataType elementDataType, long numElements, int tableidx, TaskMonitor monitor) {
+		if (numElements == 0) {
+			return;
+		}
 		long byteSize = elementDataType.getLength() * numElements;
 		Address dataStart = getTableAddress(program.getAddressFactory(), tableidx, 0);
 		try {
@@ -307,6 +310,9 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private static void createMemoryBlock(Program program, int memidx, long length, TaskMonitor monitor) {
+		if (length == 0) {
+			return;
+		}
 		Address dataStart = getMemoryAddress(program.getAddressFactory(), memidx, 0);
 		try {
 			MemoryBlock block = program.getMemory().createInitializedBlock(".memory" + memidx, dataStart, length, (byte) 0x00, monitor, false);
