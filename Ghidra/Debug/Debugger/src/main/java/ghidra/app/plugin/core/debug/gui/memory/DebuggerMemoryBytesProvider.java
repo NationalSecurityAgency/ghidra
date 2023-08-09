@@ -16,14 +16,14 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -207,11 +207,9 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		createActions();
 		addDisplayListener(readsMemTrait.getDisplayListener());
 
-		Box northPanel = Box.createHorizontalBox();
+		JPanel northPanel = new JPanel(new BorderLayout());
 		northPanel.add(locationLabel);
-		locationLabel.setMinimumSize(new Dimension(0, 0));
-		northPanel.add(Box.createGlue());
-		northPanel.add(trackingLabel);
+		northPanel.add(trackingLabel, BorderLayout.EAST);
 		decorationComponent.add(northPanel, BorderLayout.NORTH);
 
 		goToTrait.goToCoordinates(current);

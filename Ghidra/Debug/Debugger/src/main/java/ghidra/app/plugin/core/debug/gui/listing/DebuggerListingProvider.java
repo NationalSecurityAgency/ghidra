@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.debug.gui.listing;
 
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
@@ -26,8 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.Box;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -334,11 +334,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		addDisplayListener(readsMemTrait.getDisplayListener());
 
-		Box northPanel = Box.createHorizontalBox();
+		JPanel northPanel = new JPanel(new BorderLayout());
 		northPanel.add(locationLabel);
-		locationLabel.setMinimumSize(new Dimension(0, 0));
-		northPanel.add(Box.createGlue());
-		northPanel.add(trackingLabel);
+		northPanel.add(trackingLabel, BorderLayout.EAST);
 		this.setNorthComponent(northPanel);
 		if (isConnected) {
 			setTitle(DebuggerResources.TITLE_PROVIDER_LISTING);
