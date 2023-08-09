@@ -36,9 +36,14 @@
         <varnode space="register" offset="0x50000000" size="0x10000000"/>
         <register name="SP"/>
       </unaffected>
-      <pcode inject="uponentry" dynamic="true" />
     </prototype>
   </default_proto>
+  <callotherfixup targetop="funcEntryCallOther">
+    <pcode dynamic="true">
+      <input name="in_offset" />
+      <input name="locals_offset" />
+    </pcode>
+  </callotherfixup>
   <callotherfixup targetop="popCallOther">
     <pcode dynamic="true">
       <input name="regoffset" />

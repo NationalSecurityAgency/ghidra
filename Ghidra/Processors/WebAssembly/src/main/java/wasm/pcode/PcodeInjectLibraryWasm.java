@@ -36,10 +36,10 @@ public class PcodeInjectLibraryWasm extends PcodeInjectLibrary {
 
 	@Override
 	public InjectPayload allocateInject(String sourceName, String name, int tp) {
-		if (tp == InjectPayload.CALLMECHANISM_TYPE) {
-			return new InjectPayloadWasmEntry(name, tp, sourceName);
-		} else if (tp == InjectPayload.CALLOTHERFIXUP_TYPE) {
+		if (tp == InjectPayload.CALLOTHERFIXUP_TYPE) {
 			switch (name) {
+			case "funcEntryCallOther":
+				return new InjectPayloadWasmEntry(sourceName);
 			case "popCallOther":
 			case "callEpilogueCallOther":
 			case "callPrologueCallOther":

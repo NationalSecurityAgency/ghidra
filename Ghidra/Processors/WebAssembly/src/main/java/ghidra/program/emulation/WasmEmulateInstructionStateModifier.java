@@ -129,6 +129,7 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 		helper = new WasmEmulationHelper(emu.getLanguage());
 		localsBase = emu.getLanguage().getRegister("l0").getOffset();
 
+		registerPcodeOpBehavior("funcEntryCallOther", new FuncEntryOpBehaviour());
 		registerPcodeOpBehavior("popCallOther", new PopOpBehaviour());
 		registerPcodeOpBehavior("pushCallOther", new PushOpBehaviour());
 		registerPcodeOpBehavior("callPrologueCallOther", new CallPrologueOpBehaviour());
@@ -150,6 +151,33 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 		}
 		prevAnalysis = analysis;
 		return analysis;
+	}
+
+	private class FuncEntryOpBehaviour implements OpBehaviorOther {
+		@Override
+		public void evaluate(Emulate emu, Varnode out, Varnode[] inputs) {
+			MemoryState memState = emu.getMemoryState();
+			if (inputs.length != 3) {
+				throw new LowlevelError("funcEntryCallOther requires two inputs");
+			}
+
+			long inputOffset = inputs[1].getOffset();
+			long localsOffset = inputs[2].getOffset();
+			AddressSpace regSpace = emu.getLanguage().getAddressFactory().getAddressSpace("register");
+
+			WasmFunctionAnalysis funcAnalysis = getAnalysis(emu.getExecuteAddress());
+			if (funcAnalysis == null) {
+				throw new LowlevelError("Unable to find Wasm function analysis for address " +
+						emu.getExecuteAddress());
+			}
+			int numParams = funcAnalysis.getSignature().getParams().length;
+			int numLocals = funcAnalysis.getSignature().getLocals().length;
+			helper.copyRegisters(memState, inputOffset, localsOffset, numParams);
+			byte[] zero = new byte[WasmLoader.REG_SIZE];
+			for(int i=numParams; i<numLocals; i++) {
+				memState.setChunk(zero, regSpace, localsOffset + i * WasmLoader.REG_SIZE, zero.length);
+			}
+		}
 	}
 
 	private class PopOpBehaviour implements OpBehaviorOther {
@@ -208,6 +236,11 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 		@Override
 		public void evaluate(Emulate emu, Varnode out, Varnode[] inputs) {
 			MemoryState memState = emu.getMemoryState();
+			if (inputs.length != 2) {
+				throw new LowlevelError("callPrologueCallOther requires one input");
+			}
+
+			long baseOffset = inputs[1].getOffset();
 
 			// Push locals onto shadow stack
 			WasmFunctionAnalysis funcAnalysis = getAnalysis(emu.getExecuteAddress());
@@ -217,7 +250,7 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 			}
 			helper.pushShadowStackRegs(memState, localsBase, funcAnalysis.getSignature().getLocals().length);
 
-			// Pop params into locals
+			// Pop params into i* registers
 			StackEffect stackEffect = funcAnalysis.getStackEffect(emu.getExecuteAddress());
 			if (stackEffect == null) {
 				throw new LowlevelError("Unable to find stack effect for function at " + emu.getExecuteAddress());
@@ -225,7 +258,7 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 
 			long stackOffset = helper.getStackOffset(stackEffect.getPopHeight());
 			int count = stackEffect.getToPop().length;
-			helper.copyRegisters(memState, stackOffset, localsBase, count);
+			helper.copyRegisters(memState, stackOffset, baseOffset, count);
 
 			// Push stack onto shadow stack
 			helper.pushShadowStackRegs(memState, helper.getStackOffset(0), stackEffect.getPopHeight());

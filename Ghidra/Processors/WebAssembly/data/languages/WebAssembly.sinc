@@ -29,6 +29,7 @@ define token I64 (64)
 
 ################################################################
 
+define pcodeop funcEntryCallOther;
 define pcodeop popCallOther;
 define pcodeop pushCallOther;
 define pcodeop callPrologueCallOther;
@@ -210,6 +211,8 @@ macro doBranch(br_target) {
 
 ## Locals directives at the start of the function
 :.locals is count; ctx_is_directive=1; ctx_directive_type=$(DIRECTIVE_LOCALS) {
+	nop();
+	funcEntryCallOther(&i0, &l0);
 }
 
 :.local "count="^count "type="^typeidx is count; typeidx; ctx_is_directive=1; ctx_directive_type=$(DIRECTIVE_LOCAL) {
