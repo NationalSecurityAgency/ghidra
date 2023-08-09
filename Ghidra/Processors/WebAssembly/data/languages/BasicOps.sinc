@@ -352,8 +352,7 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 	sp2_32 = sp1_32;
 }
 :f32.copysign  is opc=0x98; sp1_32; sp2_32; ctx_is_directive=0 {
-	if((sp2_32 f< int2float(0:4)) == (sp1_32 f< int2float(0:4))) goto inst_next;
-	sp2_32 = f- sp2_32;
+	sp2_32 = (sp2_32 & 0x7fffffff) | (sp1_32 & 0x80000000);
 }
 :f64.abs  is opc=0x99; sp1_64; ctx_is_directive=0 {
 	sp1_64 = abs(sp1_64);
@@ -398,8 +397,7 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 	sp2_64 = sp1_64;
 }
 :f64.copysign  is opc=0xA6; sp1_64; sp2_64; ctx_is_directive=0 {
-	if((sp2_64 f< int2float(0:4)) == (sp1_64 f< int2float(0:4))) goto inst_next;
-	sp2_64 = f- sp2_64;
+	sp2_64 = (sp2_64 & 0x7fffffffffffffff) | (sp1_64 & 0x8000000000000000);
 }
 :i32.wrap_i64  is opc=0xA7; sp1_32; sp1_64; ctx_is_directive=0 {
 	sp1_32 = sp1_64:4;
