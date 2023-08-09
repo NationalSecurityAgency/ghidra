@@ -308,9 +308,12 @@ public enum SleighUtils {
 						match(tree, SleighParser.OP_DEREFERENCE, onSize, onOffset);
 						return;
 					default:
-						throw new AssertionError(
-							"OP_DEREFERENCE with 2 children where child[0] is " +
-								SleighParser.tokenNames[child0.getType()]);
+						matchTree(tree, SleighParser.OP_DEREFERENCE, children -> {
+							throw new AssertionError(
+								"OP_DEREFERENCE with 2 children where child[0] is " +
+									SleighParser.tokenNames[child0.getType()]);
+						});
+						return;
 				}
 			case 1:
 				match(tree, SleighParser.OP_DEREFERENCE, onOffset);

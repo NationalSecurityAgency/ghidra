@@ -87,12 +87,7 @@ public class FridaModelTargetModuleContainerImpl extends FridaModelTargetObjectI
 			Msg.error(this, "Module " + info.getModuleName(index) + " not found!");
 			return;
 		}
-		FridaThread thread = getManager().getCurrentThread();
-		TargetThread eventThread =
-			(TargetThread) getModel().getModelObject(thread);
 		changeElements(List.of(), List.of(targetModule), Map.of(), "Loaded");
-		broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
-			"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
 	}
 
 	@Override
@@ -109,11 +104,6 @@ public class FridaModelTargetModuleContainerImpl extends FridaModelTargetObjectI
 			FridaCause cause) {
 		FridaModelTargetModule targetModule = getTargetModule(info.getModule(index));
 		if (targetModule != null) {
-			FridaThread thread = getManager().getCurrentThread();
-			TargetThread eventThread =
-				(TargetThread) getModel().getModelObject(thread);
-			broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
-				"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
 			FridaModelImpl impl = (FridaModelImpl) model;
 			impl.deleteModelObject(targetModule.getModule());
 		}

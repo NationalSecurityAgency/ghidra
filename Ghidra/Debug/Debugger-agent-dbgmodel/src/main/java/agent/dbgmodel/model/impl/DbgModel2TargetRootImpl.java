@@ -181,9 +181,8 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	public void objectSelected(Object object) {
 		List<String> objPath = findObject(object);
-		model.fetchModelObject(objPath, RefreshBehavior.REFRESH_WHEN_ABSENT).thenAccept(obj -> 
-			update(obj)
-		);
+		model.fetchModelObject(objPath, RefreshBehavior.REFRESH_WHEN_ABSENT)
+				.thenAccept(obj -> update(obj));
 	}
 
 	@Override
@@ -241,11 +240,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			if (mod == null) {
 				return;
 			}
-			getObject(getManager().getEventThread()).thenAccept(t -> {
-				TargetThread eventThread = (TargetThread) t;
-				broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
-					"Library " + info.getModuleName() + " loaded", List.of(mod));
-			});
 			getObject(getManager().getEventProcess()).thenAccept(p -> {
 				DbgModelTargetProcess eventProcess = (DbgModelTargetProcess) p;
 				DbgModel2TargetObjectImpl memory =
@@ -262,11 +256,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			if (mod == null) {
 				return;
 			}
-			getObject(getManager().getEventThread()).thenAccept(t -> {
-				TargetThread eventThread = (TargetThread) t;
-				broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
-					"Library " + info.getModuleName() + " unloaded", List.of(mod));
-			});
 			getObject(getManager().getEventProcess()).thenAccept(p -> {
 				DbgModelTargetProcess eventProcess = (DbgModelTargetProcess) p;
 				DbgModel2TargetObjectImpl memory =
@@ -604,7 +593,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			stateful.fetchAttributes(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
-	
+
 	private TargetEventType getEventType(DbgState state, DbgCause cause, DbgReason reason) {
 		switch (state) {
 			case RUNNING:

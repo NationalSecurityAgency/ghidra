@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model.launch;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.loop;
 
 import java.io.IOException;
 import java.util.*;
@@ -275,7 +275,8 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		for (Entry<String, ParameterDescription<?>> entry : params.entrySet()) {
 			map.put(entry.getKey(), entry.getValue().defaultValue);
 		}
-		map.put(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, program.getExecutablePath());
+		map.put(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
+			TargetCmdLineLauncher.quoteImagePathIfSpaces(program.getExecutablePath()));
 		return map;
 	}
 

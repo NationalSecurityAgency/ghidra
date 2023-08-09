@@ -75,11 +75,7 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 			//modulesByName.remove(name);
 			module = getTargetModule(name);
 		}
-		TargetThread eventThread =
-			(TargetThread) getModel().getModelObject(getManager().getEventThread());
 		changeElements(List.of(), List.of(module), Map.of(), "Loaded");
-		broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
-			"Library " + name + " loaded", List.of(module));
 	}
 
 	@Override
@@ -87,10 +83,6 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 	public void libraryUnloaded(String name) {
 		DbgModelTargetModule targetModule = getTargetModule(name);
 		if (targetModule != null) {
-			TargetThread eventThread =
-				(TargetThread) getModel().getModelObject(getManager().getEventThread());
-			broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
-				"Library " + name + " unloaded", List.of(targetModule));
 			DbgModelImpl impl = (DbgModelImpl) model;
 			impl.deleteModelObject(targetModule.getDbgModule());
 		}
