@@ -17,8 +17,8 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import java.util.*;
 
-import ghidra.app.cmd.disassemble.DisassembleCommand;
-import ghidra.app.cmd.function.*;
+import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
+import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
@@ -37,7 +37,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Applier for {@link AbstractProcedureStartMsSymbol} and  {@link AbstractThunkMsSymbol} symbols.
  */
-public class FunctionSymbolApplier extends MsSymbolApplier {
+public class FunctionSymbolApplier extends MsSymbolApplier
+		implements DeferrableFunctionSymbolApplier {
 
 	private static final String BLOCK_INDENT = "   ";
 
@@ -132,6 +133,16 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 					thunkSymbol.getLength());
 			}
 		}
+	}
+
+	long getLength() {
+		if (procedureSymbol != null) {
+			return procedureSymbol.getProcedureLength();
+		}
+		else if (thunkSymbol != null) {
+			return thunkSymbol.getLength();
+		}
+		throw new AssertException("Unexpected Symbol type");
 	}
 
 	/**
@@ -252,15 +263,16 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	}
 
 	private boolean applyFunction(TaskMonitor monitor) {
-		function = createFunction(monitor);
+		function = applicator.getExistingOrCreateOneByteFunction(address);
 		if (function == null) {
 			return false;
 		}
+		applicator.scheduleDeferredFunctionWork(this);
 
 		boolean succeededSetFunctionSignature = false;
 		if (thunkSymbol == null) {
-			function.setThunkedFunction(null);
 			if (function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+				function.setThunkedFunction(null);
 				succeededSetFunctionSignature = setFunctionDefinition(monitor);
 				function.setNoReturn(isNonReturning);
 			}
@@ -272,28 +284,6 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 		currentFrameSize = 0;
 		return true;
-	}
-
-	private Function createFunction(TaskMonitor monitor) {
-
-		// Does function already exist?
-		Function myFunction = applicator.getProgram().getListing().getFunctionAt(address);
-		if (myFunction != null) {
-			// Actually not sure if we should set to 0 or calculate from the function here.
-			// Need to investigate more, so at least keeping it as a separate 'else' for now.
-			return myFunction;
-		}
-
-		// Disassemble
-		Instruction instr = applicator.getProgram().getListing().getInstructionAt(address);
-		if (instr == null) {
-			DisassembleCommand cmd = new DisassembleCommand(address, null, true);
-			cmd.applyTo(applicator.getProgram(), monitor);
-		}
-
-		myFunction = createFunctionCommand(monitor);
-
-		return myFunction;
 	}
 
 	/**
@@ -350,21 +340,6 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			return false;
 		}
 		return true;
-	}
-
-	private Function createFunctionCommand(TaskMonitor monitor) {
-		CreateFunctionCmd funCmd = new CreateFunctionCmd(address);
-		if (!funCmd.applyTo(applicator.getProgram(), monitor)) {
-			funCmd = new CreateFunctionCmd(null, address, new AddressSet(address, address),
-				SourceType.DEFAULT);
-			if (!funCmd.applyTo(applicator.getProgram(), monitor)) {
-				applicator
-						.appendLogMsg("Failed to apply function at address " + address.toString() +
-							"; attempting to use possible existing function");
-				return applicator.getProgram().getListing().getFunctionAt(address);
-			}
-		}
-		return funCmd.getFunction();
 	}
 
 	private boolean notDone() {
@@ -500,4 +475,16 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		}
 
 	}
+
+	@Override
+	public void doDeferredProcessing() {
+		// TODO:
+		// Try to processes parameters, locals, scopes if applicable.
+	}
+
+	@Override
+	public Address getAddress() {
+		return address;
+	}
+
 }
