@@ -28,7 +28,11 @@ public class WasmUnknownCustomSection extends WasmCustomSection {
 	public WasmUnknownCustomSection(BinaryReader reader) throws IOException {
 		super(reader);
 		contentOffset = reader.getPointerIndex();
-		contents = reader.readNextByteArray((int) getCustomSize());
+		if (getCustomSize() == 0) {
+			contents = new byte[0];
+		} else {
+			contents = reader.readNextByteArray((int) getCustomSize());
+		}
 	}
 
 	@Override
