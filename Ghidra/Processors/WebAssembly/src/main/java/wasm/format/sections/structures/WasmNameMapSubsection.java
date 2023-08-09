@@ -17,6 +17,8 @@ package wasm.format.sections.structures;
 
 import java.io.IOException;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
@@ -40,11 +42,11 @@ public class WasmNameMapSubsection extends WasmNameSubsection {
 
 	@Override
 	public void addToStructure(StructureBuilder builder) throws DuplicateNameException, IOException {
-		builder.add(nameMap, entityName + "_names");
+		builder.add(nameMap, StringEscapeUtils.escapeJava(entityName) + "_names");
 	}
 
 	@Override
 	public String getName() {
-		return ".name." + entityName;
+		return ".name." + StringEscapeUtils.escapeJava(entityName);
 	}
 }
