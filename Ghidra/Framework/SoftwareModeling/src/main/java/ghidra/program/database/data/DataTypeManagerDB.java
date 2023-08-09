@@ -31,6 +31,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
 import ghidra.docking.settings.*;
 import ghidra.framework.Application;
+import ghidra.framework.model.RuntimeIOException;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.graph.*;
@@ -123,10 +124,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private TreeSet<String> knownCallingConventions;
 	private TreeSet<String> definedCallingConventions;
 
-	protected DBHandle dbHandle;
-	private int mode; // open mode (see DBConstants)
+	protected final boolean readOnlyMode;
+	protected final DBHandle dbHandle;
 	protected final String tablePrefix;
 	protected final ErrorHandler errHandler;
+
 	private DataTypeConflictHandler currentHandler;
 
 	private CategoryDB root;
@@ -209,8 +211,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * support the save or saveAs operation.  No Language is associated with instance.
 	 * 
 	 * @param dataOrganization applicable data organization
+	 * @throws RuntimeIOException if database error occurs during creation
 	 */
-	protected DataTypeManagerDB(DataOrganization dataOrganization) {
+	protected DataTypeManagerDB(DataOrganization dataOrganization) throws RuntimeIOException {
 		this.lock = new Lock("DataTypeManagerDB");
 		this.errHandler = new DbErrorHandler();
 		this.dataOrganization = dataOrganization;
@@ -218,8 +221,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 		try {
 			dbHandle = new DBHandle();
+			readOnlyMode = false;
 			int id = startTransaction("");
-
 			try {
 				init(DBConstants.CREATE, TaskMonitor.DUMMY);
 			}
@@ -231,7 +234,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 		}
 		catch (IOException e) {
-			errHandler.dbError(e);
+			throw new RuntimeIOException(e);
 		}
 	}
 
@@ -254,6 +257,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		this.errHandler = new DbErrorHandler();
 		this.lock = new Lock("DataTypeManagerDB");
 		this.tablePrefix = "";
+		this.readOnlyMode = (openMode == DBConstants.READ_ONLY);
 
 		File file = packedDBfile.getFile(false);
 		if (file == null && openMode != DBConstants.READ_ONLY) {
@@ -359,6 +363,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			throws CancelledException, IOException, VersionException {
 		this.tablePrefix = tablePrefix != null ? tablePrefix : "";
 		this.dbHandle = handle;
+		this.readOnlyMode = (openMode == DBConstants.READ_ONLY);
 		this.addrMap = addrMap;
 		this.errHandler = errHandler;
 		this.lock = lock;
@@ -367,7 +372,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private void init(int openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
-		this.mode = openMode;
 		updateID();
 		initializeAdapters(openMode, monitor);
 		if (checkForSourceArchiveUpdatesNeeded(openMode, monitor)) {
@@ -795,6 +799,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @param store if true database update will occur and datatypes will be updated if
 	 * any change to the data organization is detected (a stored copy may be used to
 	 * detect this condition).  This should never be passed as true if opened read-only.
+	 * This should be false during create mode where only the state is affected without 
+	 * changing the Database or existing datatypes.
 	 * @param monitor task monitor
 	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if processing cancelled - data types may not properly reflect
@@ -812,10 +818,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				? programArchitecture.getCompilerSpec().getDataOrganization()
 				: DataOrganizationImpl.getDefaultOrganization();
 
-		if (mode == DBConstants.CREATE) {
-			saveDataOrganization();
-		}
-		else if (store) {
+		if (store) {
 			try {
 				compilerSpecChanged(monitor);
 				updateLastChangeTime();
@@ -839,8 +842,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * updated compiler specification
 	 */
 	protected void compilerSpecChanged(TaskMonitor monitor) throws IOException, CancelledException {
-		
-		if (mode == DBConstants.READ_ONLY) {
+
+		if (readOnlyMode) {
 			throw new ReadOnlyException();
 		}
 
@@ -861,6 +864,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return !Objects.equals(readDataOrganization(), getDataOrganization());
 	}
 
+	/**
+	 * Save the current data organization to facilitate future change detection and 
+	 * upgrades.
+	 * @throws IOException if failure occured while saving data organization.
+	 */
 	protected void saveDataOrganization() throws IOException {
 		DataOrganizationImpl.save(getDataOrganization(), getDataMap(true), "dataOrg.");
 	}
@@ -4620,14 +4628,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private class DbErrorHandler implements ErrorHandler {
 
 		@Override
-		public void dbError(IOException e) {
+		public void dbError(IOException e) throws RuntimeIOException {
 
 			String message = e.getMessage();
 			if (e instanceof ClosedException) {
 				message = "Data type archive is closed: " + getName();
+				Msg.showError(this, null, "IO ERROR", message, e);
 			}
 
-			Msg.showError(this, null, "IO ERROR", message, e);
+			throw new RuntimeIOException(e);
 		}
 	}
 
