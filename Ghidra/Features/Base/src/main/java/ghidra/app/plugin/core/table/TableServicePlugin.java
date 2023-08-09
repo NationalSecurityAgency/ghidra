@@ -138,13 +138,7 @@ public class TableServicePlugin extends ProgramPlugin
 			GhidraProgramTableModel<T> model, String windowSubMenu, Navigatable navigatable) {
 
 		GoToService gotoService = tool.getService(GoToService.class);
-
-		if (gotoService != null && navigatable == null) {
-			navigatable = gotoService.getDefaultNavigatable();
-		}
-
 		Program program = model.getProgram();
-
 		TableComponentProvider<T> cp = new TableComponentProvider<>(this, title, tableTypeName,
 			model, program.getDomainFile().getName(), gotoService, windowSubMenu, navigatable);
 		addProvider(program, cp);
@@ -157,14 +151,8 @@ public class TableServicePlugin extends ProgramPlugin
 			String windowSubMenu, Navigatable navigatable) {
 
 		GoToService gotoService = tool.getService(GoToService.class);
-
-		if (gotoService != null && navigatable == null) {
-			navigatable = gotoService.getDefaultNavigatable();
-		}
-
 		MarkerService markerService = tool.getService(MarkerService.class);
 		Program program = model.getProgram();
-
 		TableComponentProvider<T> cp = new TableComponentProvider<>(this, title, tableTypeName,
 			model, program.getDomainFile().getName(), gotoService, markerService, markerColor,
 			markerIcon, windowSubMenu, navigatable);
