@@ -907,7 +907,9 @@ public interface TargetObjectSchema {
 			return false;
 		}
 		AttributeSchema schema = getAttributeSchema(key);
-		if (schema == AttributeSchema.DEFAULT_ANY || schema == AttributeSchema.DEFAULT_OBJECT) {
+		if (schema == AttributeSchema.DEFAULT_ANY ||
+			schema == AttributeSchema.DEFAULT_OBJECT ||
+			schema == AttributeSchema.DEFAULT_VOID) {
 			// FIXME: Remove this hack once we stop depending on this prefix
 			return key.startsWith(TargetObject.PREFIX_INVISIBLE);
 		}
