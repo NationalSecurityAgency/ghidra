@@ -17,7 +17,7 @@ package wasm.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.InjectContext;
-import ghidra.program.model.lang.InjectPayloadSleigh;
+import ghidra.program.model.lang.InjectPayloadCallother;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.PcodeOp;
 import wasm.WasmLoader;
@@ -26,13 +26,13 @@ import wasm.analysis.WasmFuncSignature;
 import wasm.format.WasmEnums.ValType;
 
 /**
- * The "uponentry" injection for a Wasm function. We inject code to copy from
+ * The function entry injection for a Wasm function. We inject code to copy from
  * the artificial "inputs" registers into the real "locals" registers.
  */
-public class InjectPayloadWasmEntry extends InjectPayloadSleigh {
+public class InjectPayloadWasmEntry extends InjectPayloadCallother {
 
-	public InjectPayloadWasmEntry(String nm, int tp, String sourceName) {
-		super(nm, tp, sourceName);
+	public InjectPayloadWasmEntry(String sourceName) {
+		super(sourceName);
 	}
 
 	@Override
