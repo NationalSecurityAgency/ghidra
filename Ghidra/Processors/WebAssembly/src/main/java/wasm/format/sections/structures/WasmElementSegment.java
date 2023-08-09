@@ -34,7 +34,7 @@ import wasm.format.WasmModule;
 
 public class WasmElementSegment implements StructConverter {
 
-	private int flags;
+	private LEB128Info flags;
 	private ElementSegmentMode mode;
 
 	private LEB128Info tableidx; /* if (flags & 3) == 2 */
@@ -54,8 +54,9 @@ public class WasmElementSegment implements StructConverter {
 	}
 
 	public WasmElementSegment(BinaryReader reader) throws IOException {
-		flags = reader.readNextUnsignedByte();
-		if ((flags & 3) == 2) {
+		flags = reader.readNext(LEB128Info::unsigned);
+		long flagVal = flags.asLong();
+		if ((flagVal & 3) == 2) {
 			/* active segment with explicit table index */
 			tableidx = reader.readNext(LEB128Info::unsigned);
 		} else {
@@ -63,24 +64,24 @@ public class WasmElementSegment implements StructConverter {
 			tableidx = null;
 		}
 
-		if ((flags & 1) == 0) {
+		if ((flagVal & 1) == 0) {
 			/* active segment */
 			mode = ElementSegmentMode.active;
 			offset = new ConstantExpression(reader);
-		} else if ((flags & 2) == 0) {
+		} else if ((flagVal & 2) == 0) {
 			mode = ElementSegmentMode.passive;
 		} else {
 			mode = ElementSegmentMode.declarative;
 		}
 
-		if ((flags & 3) == 0) {
+		if ((flagVal & 3) == 0) {
 			/* implicit element type */
 			elemkind = 0;
 			elemtype = ValType.funcref;
 		} else {
 			/* explicit element type */
 			int typeCode = reader.readNextUnsignedByte();
-			if ((flags & 4) == 0) {
+			if ((flagVal & 4) == 0) {
 				/* elemkind */
 				elemkind = typeCode;
 			} else {
@@ -90,7 +91,7 @@ public class WasmElementSegment implements StructConverter {
 		}
 
 		count = reader.readNext(LEB128Info::unsigned);
-		if ((flags & 4) == 0) {
+		if ((flagVal & 4) == 0) {
 			/* vector of funcidx */
 			funcidxs = new ArrayList<>();
 			for (int i = 0; i < count.asLong(); i++) {
@@ -124,7 +125,7 @@ public class WasmElementSegment implements StructConverter {
 	}
 
 	public ValType getElementType() {
-		if ((flags & 4) == 0) {
+		if ((flags.asLong() & 4) == 0) {
 			if (elemkind == 0) {
 				return ValType.funcref;
 			}
@@ -185,14 +186,14 @@ public class WasmElementSegment implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureBuilder builder = new StructureBuilder("element_segment");
-		builder.add(BYTE, "flags");
+		builder.addUnsignedLeb128(flags, "flags");
 		if (tableidx != null) {
 			builder.addUnsignedLeb128(tableidx, "tableidx");
 		}
 		if (offset != null) {
 			builder.add(offset, "offset");
 		}
-		if ((flags & 3) != 0) {
+		if ((flags.asLong() & 3) != 0) {
 			/* both elemkind and reftype are single bytes */
 			builder.add(BYTE, "element_type");
 		}

@@ -75,11 +75,11 @@ public final class ConstantExpression implements StructConverter {
 			break;
 		case 0x41:
 			type = ConstantInstruction.I32_CONST;
-			value = reader.readNext(LEB128Info::unsigned);
+			value = reader.readNext(LEB128Info::signed);
 			break;
 		case 0x42:
 			type = ConstantInstruction.I64_CONST;
-			value = reader.readNext(LEB128Info::unsigned);
+			value = reader.readNext(LEB128Info::signed);
 			break;
 		case 0x43:
 			type = ConstantInstruction.F32_CONST;
