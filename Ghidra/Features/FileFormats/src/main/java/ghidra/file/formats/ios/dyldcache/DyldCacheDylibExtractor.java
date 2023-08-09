@@ -152,6 +152,9 @@ public class DyldCacheDylibExtractor {
 				// the DYLIB we are extracting, resulting in a significantly smaller file.
 				if (segment == linkEditSegment) {
 					for (LoadCommand cmd : machoHeader.getLoadCommands()) {
+						if (cmd instanceof SymbolTableCommand symbolTable) {
+							symbolTable.addSymbols(getLocalSymbols(splitDyldCache));
+						}
 						int offset = cmd.getLinkerDataOffset();
 						int size = cmd.getLinkerDataSize();
 						if (offset == 0 || size == 0) {
@@ -218,6 +221,31 @@ public class DyldCacheDylibExtractor {
 		}
 
 		/**
+		 * Gets a {@link List} of local {@link NList symbol}s
+		 * 
+		 * @param splitDyldCache The {@link SplitDyldCache}
+		 * @return A {@link List} of local {@link NList symbol}s (could be empty)
+		 */
+		private List<NList> getLocalSymbols(SplitDyldCache splitDyldCache) {
+			long base = splitDyldCache.getDyldCacheHeader(0).getBaseAddress();
+			for (int i = 0; i < splitDyldCache.size(); i++) {
+				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
+				DyldCacheLocalSymbolsInfo info = header.getLocalSymbolsInfo();
+				if (info == null) {
+					continue;
+				}
+				for (DyldCacheLocalSymbolsEntry entry : info.getLocalSymbolsEntries()) {
+					int index = entry.getNListStartIndex();
+					int count = entry.getNListCount();
+					if (base + entry.getDylibOffset() == textSegment.getVMaddress() && count > 0) {
+						return info.getNList().subList(index, index + count);
+					}
+				}
+			}
+			return List.of();
+		}
+
+		/**
 		 * Creates a packed __LINKEDIT segment array
 		 * 
 		 * @param linkEditSegmentProvider The {@link ByteProvider} that contains the __LINKEDIT
@@ -233,16 +261,14 @@ public class DyldCacheDylibExtractor {
 			for (LoadCommand cmd : packedLinkEditDataStarts.keySet()) {
 				if (cmd instanceof SymbolTableCommand symbolTable &&
 					symbolTable.getNumberOfSymbols() > 0) {
-					byte[] packedSymbolStringTable = new byte[cmd.getLinkerDataSize()];
 					List<NList> symbols = symbolTable.getSymbols();
+					byte[] packedSymbolStringTable = new byte[NList.getSize(symbols)];
 					int nlistIndex = 0;
 					int stringIndex = symbols.get(0).getSize() * symbols.size();
 					int stringIndexOrig = stringIndex;
 					for (NList nlist : symbols) {
-						byte[] nlistArray = nlistToArray(nlist, stringIndex);
+						byte[] nlistArray = nlistToArray(nlist, stringIndex - stringIndexOrig);
 						byte[] stringArray = nlist.getString().getBytes(StandardCharsets.US_ASCII);
-						System.arraycopy(toBytes(stringIndex - stringIndexOrig, 4), 0, nlistArray,
-							0, 4);
 						System.arraycopy(nlistArray, 0, packedSymbolStringTable, nlistIndex,
 							nlistArray.length);
 						System.arraycopy(stringArray, 0, packedSymbolStringTable, stringIndex,
@@ -394,11 +420,13 @@ public class DyldCacheDylibExtractor {
 			if (cmd.getSymbolOffset() > 0) {
 				long symbolOffset = fixup(cmd.getStartIndex() + 0x8, getLinkEditAdjustment(cmd), 4,
 					linkEditSegment);
+				set(cmd.getStartIndex() + 0xc, cmd.getNumberOfSymbols(), 4);
 				if (cmd.getStringTableOffset() > 0) {
 					if (cmd.getNumberOfSymbols() > 0) {
 						set(cmd.getStartIndex() + 0x10,
 							symbolOffset + cmd.getNumberOfSymbols() * cmd.getSymbolAt(0).getSize(),
 							4);
+						set(cmd.getStartIndex() + 0x14, cmd.getStringTableSize(), 4);
 					}
 					else {
 						set(cmd.getStartIndex() + 0x10, symbolOffset, 4);
