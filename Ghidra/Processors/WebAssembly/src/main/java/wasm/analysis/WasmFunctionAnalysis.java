@@ -379,18 +379,12 @@ public class WasmFunctionAnalysis {
 		return valueStack.remove(valueStack.size() - 1);
 	}
 
-	private ValType popValue(Address instAddress, ValType type) {
-		ValType top = popValue(instAddress);
-		if (type == null) {
-			return top;
+	private ValType popValue(Address instAddress, ValType expected) {
+		ValType actual = popValue(instAddress);
+		if (actual != expected && actual != null && expected != null) {
+			throw new ValidationException(instAddress, "pop type mismatch: got " + actual + ", expected " + expected);
 		}
-		if (top == null) {
-			return type;
-		}
-		if (top != type) {
-			throw new ValidationException(instAddress, "pop type mismatch: got " + top + ", expected " + type);
-		}
-		return top;
+		return actual;
 	}
 
 	private void pushValues(Address instAddress, ValType[] types) {
@@ -399,10 +393,12 @@ public class WasmFunctionAnalysis {
 		}
 	}
 
-	private void popValues(Address instAddress, ValType[] types) {
+	private ValType[] popValues(Address instAddress, ValType[] types) {
+		ValType[] popped = new ValType[types.length];
 		for (int i = types.length - 1; i >= 0; i--) {
-			popValue(instAddress, types[i]);
+			popped[i] = popValue(instAddress, types[i]);
 		}
+		return popped;
 	}
 	// #endregion
 
@@ -441,15 +437,6 @@ public class WasmFunctionAnalysis {
 	// #endregion
 
 	// #region Common instruction code
-	private void branchToBlock(Address instAddress, long labelidx) {
-		ControlFrame block = getBlock(instAddress, labelidx);
-		ValType[] arguments = block.getBranchArguments();
-		popValues(instAddress, arguments);
-		setStackEffect(instAddress, valueStack.size(), arguments, block.initialStack.size(), arguments);
-		block.addBranch(instAddress);
-		pushValues(instAddress, arguments);
-	}
-
 	private void memoryLoad(BinaryReader reader, Address instAddress, ValType destType) throws IOException {
 		readLeb128(reader); /* align */
 		readLeb128(reader); /* offset */
@@ -537,14 +524,27 @@ public class WasmFunctionAnalysis {
 
 		case 0x0C: /* br l */ {
 			long labelidx = readLeb128(reader);
-			branchToBlock(instAddress, labelidx);
+
+			ControlFrame block = getBlock(instAddress, labelidx);
+			ValType[] arguments = block.getBranchArguments();
+			popValues(instAddress, arguments);
+			setStackEffect(instAddress, valueStack.size(), arguments, block.initialStack.size(), arguments);
+			block.addBranch(instAddress);
+
 			markUnreachable(instAddress);
 			break;
 		}
 		case 0x0D: /* br_if l */ {
 			long labelidx = readLeb128(reader);
 			popValue(instAddress, ValType.i32);
-			branchToBlock(instAddress, labelidx);
+
+			ControlFrame block = getBlock(instAddress, labelidx);
+			ValType[] arguments = block.getBranchArguments();
+			popValues(instAddress, arguments);
+			setStackEffect(instAddress, valueStack.size(), arguments, block.initialStack.size(), arguments);
+			block.addBranch(instAddress);
+			pushValues(instAddress, arguments);
+
 			break;
 		}
 		case 0x0E: /* br_table l* l */ {
@@ -554,7 +554,15 @@ public class WasmFunctionAnalysis {
 				Address caseAddress = func.getStartAddr().add(reader.getPointerIndex());
 				contextreg.setBrTableCase(caseAddress, (i < count) ? i : -1);
 				long labelidx = readLeb128(reader);
-				branchToBlock(caseAddress, labelidx);
+
+				ControlFrame block = getBlock(caseAddress, labelidx);
+				ValType[] arguments = block.getBranchArguments();
+				ValType[] actualArgs = popValues(caseAddress, arguments);
+				setStackEffect(caseAddress, valueStack.size(), arguments, block.initialStack.size(), arguments);
+				block.addBranch(caseAddress);
+				if (i < count) {
+					pushValues(caseAddress, actualArgs);
+				}
 			}
 			markUnreachable(instAddress);
 			break;
