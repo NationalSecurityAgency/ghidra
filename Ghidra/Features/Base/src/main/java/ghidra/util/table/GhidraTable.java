@@ -127,7 +127,7 @@ public class GhidraTable extends GTable {
 			return;
 		}
 
-		if (this.navigatable == null) {
+		if (navigationKeyListener == null) {
 			navigationKeyListener = new KeyAdapter() {
 				@Override
 				public void keyPressed(KeyEvent e) {
