@@ -1029,6 +1029,7 @@ public class WasmFunctionAnalysis {
 				readLeb128(reader); /* tableidx */
 				popValue(instAddress, ValType.i32);
 				popValue(instAddress);
+				pushValue(instAddress, ValType.i32);
 				break;
 			}
 			case 0x10: /* table.size x */ {
