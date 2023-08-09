@@ -234,10 +234,6 @@ public enum GadpValueUtils {
 				return TargetEventType.THREAD_CREATED;
 			case EV_THREAD_EXITED:
 				return TargetEventType.THREAD_EXITED;
-			case EV_MODULE_LOADED:
-				return TargetEventType.MODULE_LOADED;
-			case EV_MODULE_UNLOADED:
-				return TargetEventType.MODULE_UNLOADED;
 			case EV_BREAKPOINT_HIT:
 				return TargetEventType.BREAKPOINT_HIT;
 			case EV_STEP_COMPLETED:
@@ -264,10 +260,6 @@ public enum GadpValueUtils {
 				return Gadp.TargetEventType.EV_THREAD_CREATED;
 			case THREAD_EXITED:
 				return Gadp.TargetEventType.EV_THREAD_EXITED;
-			case MODULE_LOADED:
-				return Gadp.TargetEventType.EV_MODULE_LOADED;
-			case MODULE_UNLOADED:
-				return Gadp.TargetEventType.EV_MODULE_UNLOADED;
 			case BREAKPOINT_HIT:
 				return Gadp.TargetEventType.EV_BREAKPOINT_HIT;
 			case STEP_COMPLETED:
