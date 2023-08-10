@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.IntUnaryOperator;
+import java.util.function.LongToIntFunction;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -134,6 +136,10 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 		registerPcodeOpBehavior("pushCallOther", new PushOpBehaviour());
 		registerPcodeOpBehavior("callPrologueCallOther", new CallPrologueOpBehaviour());
 		registerPcodeOpBehavior("callEpilogueCallOther", new CallEpilogueOpBehaviour());
+
+		registerPcodeOpBehavior("ctz", new BitCountOpBehaviour("ctz", Integer::numberOfTrailingZeros, Long::numberOfTrailingZeros));
+		registerPcodeOpBehavior("clz", new BitCountOpBehaviour("clz", Integer::numberOfLeadingZeros, Long::numberOfLeadingZeros));
+		registerPcodeOpBehavior("popcnt", new BitCountOpBehaviour("popcnt", Integer::bitCount, Long::bitCount));
 	}
 
 	private WasmFunctionAnalysis getAnalysis(Address address) {
@@ -151,6 +157,38 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 		}
 		prevAnalysis = analysis;
 		return analysis;
+	}
+
+	private class BitCountOpBehaviour implements OpBehaviorOther {
+		String name;
+		IntUnaryOperator i32Func;
+		LongToIntFunction i64Func;
+		public BitCountOpBehaviour(String name, IntUnaryOperator i32Func, LongToIntFunction i64Func) {
+			this.name = name;
+			this.i32Func = i32Func;
+			this.i64Func = i64Func;
+		}
+
+		@Override
+		public void evaluate(Emulate emu, Varnode out, Varnode[] inputs) {
+			MemoryState memState = emu.getMemoryState();
+			if (inputs.length != 2) {
+				throw new LowlevelError(name + " requires one input");
+			}
+
+			int size = inputs[1].getSize();
+			long value = memState.getValue(inputs[1]);
+			int result;
+			if (size == 4) {
+				result = i32Func.applyAsInt((int)value);
+			} else if (size == 8) {
+				result = i64Func.applyAsInt(value);
+			} else {
+				throw new LowlevelError(name + " cannot be applied to object of size " + size);
+			}
+
+			memState.setValue(out, (long)result);
+		}
 	}
 
 	private class FuncEntryOpBehaviour implements OpBehaviorOther {
