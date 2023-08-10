@@ -322,8 +322,11 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 	sp1_32 = floor(sp1_32);
 }
 :f32.trunc  is opc=0x8F; sp1_32; ctx_is_directive=0 {
-	sp1_32 = trunc(sp1_32);
-	sp1_32 = int2float(sp1_32);
+	if (sp1_32 f>= 0) goto <pos>;
+	sp1_32 = ceil(sp1_32);
+	goto inst_next;
+<pos>
+	sp1_32 = floor(sp1_32);
 }
 :f32.nearest  is opc=0x90; sp1_32; ctx_is_directive=0 {
 	sp1_32 = round(sp1_32);
@@ -344,11 +347,11 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 	sp2_32 = sp2_32 f/ sp1_32;
 }
 :f32.min  is opc=0x96; sp1_32; sp2_32; ctx_is_directive=0 {
-	if(sp1_32 f> sp2_32) goto inst_next;
+	if(sp1_32 f> sp2_32 || nan(sp2_32)) goto inst_next;
 	sp2_32 = sp1_32;
 }
 :f32.max  is opc=0x97; sp1_32; sp2_32; ctx_is_directive=0 {
-	if(sp1_32 f< sp2_32) goto inst_next;
+	if(sp1_32 f< sp2_32 || nan(sp2_32)) goto inst_next;
 	sp2_32 = sp1_32;
 }
 :f32.copysign  is opc=0x98; sp1_32; sp2_32; ctx_is_directive=0 {
@@ -367,8 +370,11 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 	sp1_64 = floor(sp1_64);
 }
 :f64.trunc  is opc=0x9D; sp1_64; ctx_is_directive=0 {
-	sp1_64 = trunc(sp1_64);
-	sp1_64 = int2float(sp1_64);
+	if (sp1_64 f>= 0) goto <pos>;
+	sp1_64 = ceil(sp1_64);
+	goto inst_next;
+<pos>
+	sp1_64 = floor(sp1_64);
 }
 :f64.nearest  is opc=0x9E; sp1_64; ctx_is_directive=0 {
 	sp1_64 = round(sp1_64);
@@ -389,11 +395,11 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 	sp2_64 = sp2_64 f/ sp1_64;
 }
 :f64.min  is opc=0xA4; sp1_64; sp2_64; ctx_is_directive=0 {
-	if(sp1_64 f> sp2_64) goto inst_next;
+	if(sp1_64 f> sp2_64 || nan(sp2_64)) goto inst_next;
 	sp2_64 = sp1_64;
 }
 :f64.max  is opc=0xA5; sp1_64; sp2_64; ctx_is_directive=0 {
-	if(sp1_64 f< sp2_64) goto inst_next;
+	if(sp1_64 f< sp2_64 || nan(sp2_64)) goto inst_next;
 	sp2_64 = sp1_64;
 }
 :f64.copysign  is opc=0xA6; sp1_64; sp2_64; ctx_is_directive=0 {
