@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import db.*;
 import db.util.ErrorHandler;
 import generic.jar.ResourceFile;
+import ghidra.framework.model.RuntimeIOException;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.DBStringMapAdapter;
 import ghidra.program.database.ProgramAddressFactory;
@@ -138,8 +139,9 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	 * Constructor for new temporary data-type manager using the default DataOrganization.
 	 * Note that this manager does not support the save or saveAs operation.
 	 * @param rootName Name of the root category.
+	 * @throws RuntimeIOException if database error occurs during creation
 	 */
-	public StandAloneDataTypeManager(String rootName) {
+	public StandAloneDataTypeManager(String rootName) throws RuntimeIOException {
 		super(DataOrganizationImpl.getDefaultOrganization());
 		this.name = rootName;
 	}
@@ -149,8 +151,10 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	 * Note that this manager does not support the save or saveAs operation.
 	 * @param rootName Name of the root category.
 	 * @param dataOrganzation applicable data organization
+	 * @throws RuntimeIOException if database error occurs during creation
 	 */
-	public StandAloneDataTypeManager(String rootName, DataOrganization dataOrganzation) {
+	public StandAloneDataTypeManager(String rootName, DataOrganization dataOrganzation)
+			throws RuntimeIOException {
 		super(dataOrganzation);
 		this.name = rootName;
 	}

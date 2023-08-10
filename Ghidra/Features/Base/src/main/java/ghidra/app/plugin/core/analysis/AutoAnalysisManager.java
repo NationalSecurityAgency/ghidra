@@ -1319,6 +1319,10 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			return;
 		}
 
+		if (!p.isChanged()) {
+			return; // avoid storing task times if no other unsaved change exists
+		}
+
 		StoredAnalyzerTimes times = StoredAnalyzerTimes.getStoredAnalyzerTimes(program);
 
 		String taskNames[] = getTimedTasks();

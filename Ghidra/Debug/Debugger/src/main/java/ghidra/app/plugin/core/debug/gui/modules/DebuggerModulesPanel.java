@@ -92,6 +92,9 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		@Override
 		public String getValue(ValueRow rowObject, Settings settings, Trace data,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			if (data == null) {
+				return "";
+			}
 			ValueAttribute<AddressRange> attr =
 				rowObject.getAttribute(TargetModule.RANGE_ATTRIBUTE_NAME, AddressRange.class);
 			if (attr == null) {
