@@ -32,6 +32,7 @@ import struct
 from java.io import File
 from java.math import BigInteger
 from ghidra.app.emulator import EmulatorHelper
+from ghidra.app.plugin.core.analysis import AutoAnalysisManager
 from ghidra.program.emulation import WasmEmulationHelper
 from ghidra.program.flatapi import FlatProgramAPI
 from ghidra.program.model.listing import Program
@@ -161,9 +162,19 @@ def import_program(dirname, filename):
     prog = importFile(File(os.path.join(dirname, filename)))
     if prog is None:
         raise Exception("Failed to import file!")
+
     tx = prog.startTransaction("analysis")
-    analyzeAll(prog)
+    mgr = AutoAnalysisManager.getAnalysisManager(prog)
+
+    # Disable C stack analysis for wast tests
+    options = prog.getOptions(Program.ANALYSIS_PROPERTIES)
+    options.setInt("Wasm Pre-Analyzer.C Stack Pointer", -1)
+    mgr.initializeOptions(options)
+
+    mgr.reAnalyzeAll(None)
+    mgr.waitForAnalysis(None, monitor)
     prog.endTransaction(tx, True)
+
     prog_api = EmulatedProgram(prog)
     return prog_api
 
