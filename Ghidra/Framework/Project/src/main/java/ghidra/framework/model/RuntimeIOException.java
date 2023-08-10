@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package db.util;
+package ghidra.framework.model;
 
 import java.io.IOException;
 
 /**
- * Report database errors.
+ * {@link RuntimeIOException} provide a wrapped {@link IOException} wrapped
+ * within a {@link RuntimeException}.
  */
-public interface ErrorHandler {
-	
+public class RuntimeIOException extends RuntimeException {
+
 	/**
-	 * Notification that an IO exception occurred.
-	 * 
-	 * @param e {@link IOException} which was cause of error
-	 * @throws RuntimeException optional exception which may be thrown when
-	 * responding to error condition.
+	 * Construct {@link RuntimeIOException}
+	 * @param e {@link IOException} instance
 	 */
-	public void dbError(IOException e) throws RuntimeException;
+	public RuntimeIOException(IOException e) {
+		super(e);
+	}
 }
