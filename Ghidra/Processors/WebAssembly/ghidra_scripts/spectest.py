@@ -77,6 +77,18 @@ ret_addr = 0x80000000
 class EmulationError(Exception):
     pass
 
+def parse_ref(eit, eiv):
+    if eiv == "null":
+        return 0
+    if eit in ("externref", "exnref"):
+        # 0x0 is reserved for null, so we arbitrarily choose a nonzero encoding
+        # for externref objects. (This is essentially a host environment choice)
+        assert int(eiv) < 0x80000000
+        return 0x80000000 + int(eiv)
+    # this shouldn't actually happen: funcref is opaque to the host environment
+    # so wast commands should only be testing against funcref null
+    return int(eiv)
+
 def encode_arg(ei):
     eit = ei["type"]
     eiv = ei["value"]
@@ -85,9 +97,7 @@ def encode_arg(ei):
     elif eit in ("i64", "f64"):
         return struct.pack("<Q", int(eiv))
     elif eit in ("externref", "funcref", "exnref"):
-        if eiv == "null":
-            eiv = str(null_val)
-        return struct.pack("<I", int(eiv))
+        return struct.pack("<I", parse_ref(eit, eiv))
     elif eit == "v128":
         eilt = ei["lane_type"]
         if eilt == "i8":
@@ -235,10 +245,8 @@ def compare_result_value(ei, ri):
         compare_f64("f64 result", riv, eiv)
     elif eit in ("externref", "funcref", "exnref"):
         assert_equal("ref result length", len(ri), 4)
-        if eiv == "null":
-            eiv = str(null_val)
         riv, = struct.unpack("<I", ri)
-        assert_equal("ref result", riv, long(eiv))
+        assert_equal("ref result", riv, parse_ref(eit, eiv))
     elif eit == "v128":
         assert_equal("v128 result length", len(ri), 16)
         eilt = ei["lane_type"]
@@ -335,7 +343,7 @@ def main():
         elif ctype == "assert_trap":
             try:
                 execute_action(progs, command["action"])
-                eprint(prefix, "ERROR: assert_trap %s did not trap" % format_action(command["action"]))
+                eprint(prefix, "ERROR: assert_trap %s did not trap; expected %r" % (format_action(command["action"]), command["text"]))
                 failed_cmds += 1
             except EmulationError as e:
                 if e.args[0] == command["text"]:
