@@ -189,7 +189,10 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		GdbModelTargetInferior inf = inferiors.getTargetInferior(thread.getInferior());
 		GdbModelTargetThread t = inf.threads.getTargetThread(thread);
 		if (frame == null) {
-			setFocus(t);
+			GdbModelSelectableObject curFocus = getFocus();
+			if (curFocus != null && !PathUtils.isAncestor(t.getPath(), curFocus.getPath())) {
+				setFocus(t);
+			}
 			return;
 		}
 		GdbModelTargetStackFrame f = t.stack.getTargetFrame(frame);

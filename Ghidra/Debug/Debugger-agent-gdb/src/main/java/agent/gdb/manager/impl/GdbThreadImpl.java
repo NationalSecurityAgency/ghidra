@@ -135,7 +135,7 @@ public class GdbThreadImpl implements GdbThread {
 	@Override
 	public CompletableFuture<Void> setActive(boolean internal) {
 		// Bypass the select-me-first logic
-		return manager.execute(new GdbSetActiveThreadCommand(manager, id, null, internal));
+		return manager.execute(new GdbSetActiveThreadCommand(manager, id, internal));
 	}
 
 	@Override
