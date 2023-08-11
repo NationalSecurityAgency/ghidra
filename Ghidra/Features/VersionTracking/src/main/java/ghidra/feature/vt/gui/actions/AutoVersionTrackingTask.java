@@ -82,7 +82,7 @@ public class AutoVersionTrackingTask extends Task {
 	private static int NUM_CORRELATORS = 8;
 
 	/**
-	 * Constructor for AutoVersionTrackingCommand
+	 * Constructor for a modal/blocking AutoVersionTrackingTask
 	 *
 	 * @param controller The Version Tracking controller for this session containing option and
 	 * tool information needed for this command.
@@ -482,8 +482,6 @@ public class AutoVersionTrackingTask extends Task {
 					match.getSourceAddress());
 				continue;
 			}
-
-
 
 			// remove any matches that have identical source functions - if more than one
 			// with exactly the same instructions and operands then cannot determine a unique match

@@ -53,7 +53,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public final static String READ_ONLY_PROPERTY = "READ_ONLY";
 
 	/**
-	 * Get the name of  the StoredObj that is associated with the data.
+	 * Get the name of this project file
 	 * @return the name
 	 */
 	public String getName();
@@ -83,7 +83,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public DomainFile setName(String newName) throws InvalidNameException, IOException;
 
 	/**
-	 * Returns the path name to the domain object.
+	 * Returns the full path name to this file
 	 * @return the path name
 	 */
 	public String getPathname();
@@ -114,7 +114,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public ProjectLocator getProjectLocator();
 
 	/**
-	 * Returns content-type string
+	 * Returns content-type string for this file
 	 * @return the file content type or a reserved content type {@link ContentHandler#MISSING_CONTENT}
 	 * or {@link ContentHandler#UNKNOWN_CONTENT}.
 	 */
@@ -134,8 +134,11 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Returns changes made to versioned file by others since checkout was performed.
+	 * NOTE: This method is unable to cope with version issues which may require an
+	 * upgrade.
 	 * @return change set or null
-	 * @throws VersionException latest version was created with a newer version of software
+	 * @throws VersionException latest version was created with a different version of software
+	 * which prevents rapid determination of change set.
 	 * @throws IOException if a folder item access error occurs or change set was 
 	 * produced by newer version of software and can not be read
 	 */
@@ -426,7 +429,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @param keep if true, the private database will be renamed with a .keep
 	 * extension.
 	 * @throws NotConnectedException if shared project and not connected to repository
-	 * @throws FileInUseException if this file is in-use / checked-out.
+	 * @throws FileInUseException if this file is in-use.
 	 * @throws IOException if file is not checked-out or an IO / access error occurs.
 	 */
 	public void undoCheckout(boolean keep) throws IOException;
@@ -549,7 +552,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Get the list of consumers (Objects) for this domain file.
-	 * @return empty array list if there are no consumers
+	 * @return true if linking is supported allowing a link-file to be created which 
+	 * references this file, else false.
 	 */
 	public List<?> getConsumers();
 
@@ -593,7 +597,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	/**
 	 * Returns the length of this domain file.  This size is the minimum disk space
 	 * used for storing this file, but does not account for additional storage space
-	 * used to tracks changes, etc. 
+	 * used to track changes, etc. 
 	 * @return file length
 	 * @throws IOException if IO or access error occurs
 	 */

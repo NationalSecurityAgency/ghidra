@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.io.IOException;
+import java.lang.reflect.Method;
+
 import ghidra.app.script.GhidraScript;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.Project;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.local.LocalFolderItem;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
 
 public class CleanupMergeDatabasesScript extends GhidraScript {
 
@@ -31,8 +30,8 @@ public class CleanupMergeDatabasesScript extends GhidraScript {
 
 		Project project = state.getProject();
 
-		ProjectFileManager fileMgr = (ProjectFileManager) project.getProjectData();
-		LocalFileSystem fs = (LocalFileSystem) fileMgr.getPrivateFileSystem();
+		DefaultProjectData projectData = (DefaultProjectData) project.getProjectData();
+		LocalFileSystem fs = (LocalFileSystem) projectData.getPrivateFileSystem();
 
 		int cnt = cleanupFolder(fs, "/");
 
@@ -61,9 +60,8 @@ public class CleanupMergeDatabasesScript extends GhidraScript {
 		}
 
 		// fs.getItemNames(folderPath, true)
-		String[] itemNames =
-			(String[]) invokeInstanceMethod("getItemNames", fs, new Class[] { String.class,
-				boolean.class }, new Object[] { folderPath, true });
+		String[] itemNames = (String[]) invokeInstanceMethod("getItemNames", fs,
+			new Class[] { String.class, boolean.class }, new Object[] { folderPath, true });
 
 		for (String itemName : itemNames) {
 			if (!itemName.startsWith(LocalFileSystem.HIDDEN_ITEM_PREFIX)) {
@@ -78,8 +76,9 @@ public class CleanupMergeDatabasesScript extends GhidraScript {
 			else {
 				// make sure we get item out of index
 				//fs.deallocateItemStorage(folderPath, itemName);
-				invokeInstanceMethod("deallocateItemStorage", fs, new Class[] { String.class,
-					String.class }, new Object[] { folderPath, itemName });
+				invokeInstanceMethod("deallocateItemStorage", fs,
+					new Class[] { String.class, String.class },
+					new Object[] { folderPath, itemName });
 			}
 			++cnt;
 		}

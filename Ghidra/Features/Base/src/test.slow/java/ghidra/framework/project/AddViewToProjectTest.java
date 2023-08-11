@@ -15,16 +15,18 @@
  */
 package ghidra.framework.project;
 
+import static org.junit.Assert.*;
+
 import java.net.URL;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
-import ghidra.framework.model.Project;
-import ghidra.framework.model.ProjectLocator;
+import ghidra.framework.data.DefaultProjectData;
+import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
-import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
-import ghidra.test.ProjectTestUtils;
+import ghidra.test.*;
+import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Test class for adding and a view to a project, and removing
@@ -32,7 +34,7 @@ import ghidra.test.ProjectTestUtils;
  */
 public class AddViewToProjectTest extends AbstractGhidraHeadlessIntegrationTest {
 
-	private final static String DIRECTORY_NAME = AbstractGenericTest.getTestDirectoryPath();
+	private final static String DIRECTORY_NAME = getTestDirectoryPath();
 	private final static String PROJECT_NAME1 = "TestAddViewToProject";
 	private final static String PROJECT_VIEW1 = "TestView1";
 	private final static String PROJECT_VIEW2 = "TestView2";
@@ -52,23 +54,8 @@ public class AddViewToProjectTest extends AbstractGhidraHeadlessIntegrationTest 
 		ProjectTestUtils.deleteProject(DIRECTORY_NAME, PROJECT_VIEW2);
 	}
 
-	/**
-	 * Do the test.
-	 * @param args same args that are passed to RegressionTester.main()
-	 */
 	@Test
 	public void testAddToView() throws Exception {
-
-//        String filename =  System.getProperty("user.dir") +
-//            File.separator + "testGhidraPreferences";
-//
-//        try {
-//            Preferences.load(filename);
-//
-//        } catch (IOException e) {
-//        }
-//
-//        Preferences.setFilename(filename);
 
 		// make sure we have projects to use as the project view...
 		ProjectTestUtils.getProject(DIRECTORY_NAME, PROJECT_VIEW1).close();
@@ -87,12 +74,12 @@ public class AddViewToProjectTest extends AbstractGhidraHeadlessIntegrationTest 
 			// validate the view was added to project
 			ProjectLocator[] projViews = project.getProjectViews();
 			for (ProjectLocator projView : projViews) {
-				System.out.println("added view: " + projView);
+				Msg.debug(this, "** added view: " + projView);
 			}
 
 			// remove the view...
 			project.removeProjectView(view);
-			System.out.println("removed view: " + view);
+			Msg.debug(this, "** removed view: " + view);
 
 			projViews = project.getProjectViews();
 			for (ProjectLocator projView : projViews) {
@@ -102,6 +89,61 @@ public class AddViewToProjectTest extends AbstractGhidraHeadlessIntegrationTest 
 			}
 		}
 		finally {
+			project.close();
+		}
+	}
+
+	@Test
+	public void testCloseViewWithOpenProgram() throws Exception {
+
+		DomainObject dobj = null;
+
+		// make sure we have projects to use as the project view...
+		Project project = ProjectTestUtils.getProject(DIRECTORY_NAME, PROJECT_VIEW1);
+		try {
+			ToyProgramBuilder builder = new ToyProgramBuilder("Test", true);
+			DomainFolder rootFolder = project.getProjectData().getRootFolder();
+			rootFolder.createFile("Test", builder.getProgram(), TaskMonitor.DUMMY);
+			builder.dispose();
+			project.close();
+
+			// get project (create it if it doesn't exist...)
+			project = ProjectTestUtils.getProject(DIRECTORY_NAME, PROJECT_NAME1);
+
+			URL view = GhidraURL.makeURL(DIRECTORY_NAME, PROJECT_VIEW1);
+			DefaultProjectData projectData =
+				(DefaultProjectData) project.addProjectView(view, true);
+			Msg.debug(this, "** added view: " + view);
+			assertNotNull(projectData);
+
+			DomainFile f = projectData.getFile("/Test");
+			assertNotNull(f);
+
+			// Open file and hold onto
+			dobj = f.getDomainObject(this, true, false, TaskMonitor.DUMMY);
+			Msg.debug(this, "** opened program: " + f);
+
+			assertFalse(projectData.isClosed());
+			assertFalse(projectData.isDisposed());
+
+			// remove the view while program open...
+			project.removeProjectView(view);
+			Msg.debug(this, "** removed view: " + view);
+
+			assertTrue(projectData.isClosed());
+			assertFalse(projectData.isDisposed());
+
+			Msg.debug(this, "** releasing program: " + f);
+			dobj.release(this);
+			dobj = null;
+
+			assertTrue(projectData.isClosed());
+			assertTrue(projectData.isDisposed());
+		}
+		finally {
+			if (dobj != null) {
+				dobj.release(this);
+			}
 			project.close();
 		}
 	}

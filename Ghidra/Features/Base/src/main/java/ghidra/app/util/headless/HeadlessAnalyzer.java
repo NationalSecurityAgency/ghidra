@@ -878,7 +878,7 @@ public class HeadlessAnalyzer {
 
 					// Get parent folder to pass to GhidraScript
 					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").toURI())
-						.getParentFile();
+							.getParentFile();
 
 					currScript = (GhidraScript) c.getConstructor().newInstance();
 					currScript.setScriptArgs(scriptArgs);
@@ -1575,13 +1575,12 @@ public class HeadlessAnalyzer {
 				}
 				else {
 					if (options.readOnly) {
-						Msg.info(this, "REPORT: Discarded file import due to readOnly option: " +
-							loaded);
+						Msg.info(this,
+							"REPORT: Discarded file import due to readOnly option: " + loaded);
 					}
 					else {
-						Msg.info(this,
-							"REPORT: Discarded file import as a result of script " +
-								"activity or analysis timeout: " + loaded);
+						Msg.info(this, "REPORT: Discarded file import as a result of script " +
+							"activity or analysis timeout: " + loaded);
 					}
 				}
 			}
@@ -1627,9 +1626,9 @@ public class HeadlessAnalyzer {
 		}
 	}
 
-	private LoadResults<Program> loadPrograms(File file, String folderPath) throws VersionException,
-			InvalidNameException, DuplicateNameException, CancelledException, IOException,
-			LoadException {
+	private LoadResults<Program> loadPrograms(File file, String folderPath)
+			throws VersionException, InvalidNameException, DuplicateNameException,
+			CancelledException, IOException, LoadException {
 		MessageLog messageLog = new MessageLog();
 
 		if (options.loaderClass == null) {

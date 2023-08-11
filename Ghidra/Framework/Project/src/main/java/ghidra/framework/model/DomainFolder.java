@@ -83,7 +83,7 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	public ProjectData getProjectData();
 
 	/**
-	 * Returns the path name to the domain object.
+	 * Returns the full path name to this folder
 	 * @return the path name
 	 */
 	public String getPathname();
@@ -183,11 +183,10 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 			throws InvalidNameException, IOException, CancelledException;
 
 	/**
-	 * Create a subfolder of this folder.
+	 * Create a subfolder within this folder.
 	 * @param folderName sub-folder name
-	 * @return the folder
-	 * @throws DuplicateFileException if a folder by
-	 * this name already exists
+	 * @return the new folder
+	 * @throws DuplicateFileException if a folder by this name already exists
 	 * @throws InvalidNameException if name is an empty string of if it contains characters other 
 	 * than alphanumerics.
 	 * @throws IOException if IO or access error occurs
@@ -195,16 +194,16 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	public DomainFolder createFolder(String folderName) throws InvalidNameException, IOException;
 
 	/**
-	 * Deletes this folder and all of its contents
+	 * Deletes this folder, if empty, from the local filesystem
 	 * @throws IOException if IO or access error occurs
-	 * @throws FolderNotEmptyException Thrown if the subfolder is not empty.
+	 * @throws FolderNotEmptyException Thrown if this folder is not empty.
 	 */
 	public void delete() throws IOException;
 
 	/**
-	 * Move this folder into the newParent folder.  If connected to an archive
-	 * this affects both private and repository folders and files.  If not
-	 * connected, only private folders and files are affected.
+	 * Move this folder into the newParent folder.  If connected to a repository
+	 * this moves both private and repository folders/files.  If not
+	 * connected, only private folders/files are moved.
 	 * @param newParent new parent folder within the same project
 	 * @return the newly relocated folder (the original DomainFolder object becomes invalid since 
 	 * it is immutable)
@@ -220,7 +219,7 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	 * Copy this folder into the newParent folder.
 	 * @param newParent new parent folder
 	 * @param monitor the task monitor
-	 * @return the copied folder
+	 * @return the new copied folder
 	 * @throws DuplicateFileException if a folder or file by
 	 * this name already exists in the newParent folder
 	 * @throws IOException thrown if an IO or access error occurs.
@@ -230,16 +229,17 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 			throws IOException, CancelledException;
 
 	/**
-	 * Copy this folder into the newParent folder as a link file.  Restrictions:
+	 * Create a new link-file in the specified newParent which will reference this folder 
+	 * (i.e., linked-folder). Restrictions:
 	 * <ul>
 	 * <li>Specified newParent must reside within a different project since internal linking is
 	 * not currently supported.</li>
 	 * </ul>
 	 * If this folder is associated with a temporary transient project (i.e., not a locally 
-	 * managed project) the generated link will refer to the remote file with a remote
+	 * managed project) the generated link will refer to the remote folder with a remote
 	 * Ghidra URL, otherwise a local project storage path will be used.
-	 * @param newParent new parent folder
-	 * @return newly created domain file or null if link use not supported.
+	 * @param newParent new parent folder where link-file is to be created
+	 * @return newly created domain file (i.e., link-file) or null if link use not supported.
 	 * @throws IOException if an IO or access error occurs.
 	 */
 	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException;

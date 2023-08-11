@@ -73,7 +73,7 @@ public class AnalysisStateInfo {
 		if (stateMap == null) {
 			stateMap = new HashMap<>();
 			programStates.put(program, stateMap);
-			program.addCloseListener(() -> programStates.remove(program));
+			program.addCloseListener(doa -> programStates.remove(program));
 		}
 		stateMap.put(state.getClass(), state);
 	}

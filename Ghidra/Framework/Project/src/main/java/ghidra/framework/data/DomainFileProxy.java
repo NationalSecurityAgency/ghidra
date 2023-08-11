@@ -23,14 +23,11 @@ import java.util.*;
 
 import javax.swing.Icon;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.RepositoryItem;
-import ghidra.framework.store.ItemCheckoutStatus;
-import ghidra.framework.store.Version;
+import ghidra.framework.store.*;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.InvalidNameException;
 import ghidra.util.ReadOnlyException;
@@ -120,11 +117,13 @@ public class DomainFileProxy implements DomainFile {
 
 	private URL getSharedFileURL(URL sharedProjectURL, String ref) {
 		try {
-			String spec = getPathname().substring(1); // remove leading '/'
-			if (!StringUtils.isEmpty(ref)) {
-				spec += "#" + ref;
+			// Direct URL construction done so that ghidra protocol extension may be supported
+			String urlStr = sharedProjectURL.toExternalForm();
+			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
+				urlStr = urlStr.substring(0, urlStr.length() - 1);
 			}
-			return new URL(sharedProjectURL, spec);
+			urlStr += getPathname();
+			return new URL(urlStr);
 		}
 		catch (MalformedURLException e) {
 			// ignore
@@ -136,12 +135,12 @@ public class DomainFileProxy implements DomainFile {
 		if (properties == null) {
 			return null;
 		}
-		String serverName = properties.getProperty(ProjectFileManager.SERVER_NAME);
-		String repoName = properties.getProperty(ProjectFileManager.REPOSITORY_NAME);
+		String serverName = properties.getProperty(DefaultProjectData.SERVER_NAME);
+		String repoName = properties.getProperty(DefaultProjectData.REPOSITORY_NAME);
 		if (serverName == null || repoName == null) {
 			return null;
 		}
-		int port = Integer.parseInt(properties.getProperty(ProjectFileManager.PORT_NUMBER, "0"));
+		int port = Integer.parseInt(properties.getProperty(DefaultProjectData.PORT_NUMBER, "0"));
 
 		if (!ClientUtil.isConnected(serverName, port)) {
 			return null; // avoid initiating a server connection. 
@@ -187,7 +186,7 @@ public class DomainFileProxy implements DomainFile {
 				return getSharedFileURL(projectURL, ref);
 			}
 			Properties properties =
-				ProjectFileManager.readProjectProperties(projectLocation.getProjectDir());
+				DefaultProjectData.readProjectProperties(projectLocation.getProjectDir());
 			return getSharedFileURL(properties, ref);
 		}
 		return null;

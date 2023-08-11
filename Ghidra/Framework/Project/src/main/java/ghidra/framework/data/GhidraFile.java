@@ -33,7 +33,7 @@ public class GhidraFile implements DomainFile {
 
 	// FIXME: This implementation assumes a single implementation of the DomainFile and DomainFolder interfaces
 
-	protected ProjectFileManager fileManager;
+	protected DefaultProjectData projectData;
 
 	private LocalFileSystem fileSystem;
 	private DomainFolderChangeListener listener;
@@ -45,13 +45,13 @@ public class GhidraFile implements DomainFile {
 		this.parent = parent;
 		this.name = name;
 
-		this.fileManager = parent.getProjectFileManager();
+		this.projectData = parent.getProjectData();
 		this.fileSystem = parent.getLocalFileSystem();
 		this.listener = parent.getChangeListener();
 	}
 
 	public LocalFileSystem getUserFileSystem() {
-		return fileManager.getUserFileSystem();
+		return projectData.getUserFileSystem();
 	}
 
 	private GhidraFileData getFileData() throws FileNotFoundException, IOException {
@@ -97,8 +97,8 @@ public class GhidraFile implements DomainFile {
 
 	void clearDomainObj() {
 		String path = getPathname();
-		DomainObjectAdapter doa = fileManager.getOpenedDomainObject(path);
-		if (doa != null && fileManager.clearDomainObject(getPathname())) {
+		DomainObjectAdapter doa = projectData.getOpenedDomainObject(path);
+		if (doa != null && projectData.clearDomainObject(getPathname())) {
 			listener.domainFileObjectClosed(this, doa);
 		}
 	}
@@ -120,7 +120,7 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public ProjectLocator getProjectLocator() {
-		return fileManager.getProjectLocator();
+		return projectData.getProjectLocator();
 	}
 
 	@Override
@@ -215,10 +215,10 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public DomainObject getOpenedDomainObject(Object consumer) {
-		DomainObjectAdapter domainObj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter domainObj = projectData.getOpenedDomainObject(getPathname());
 		if (domainObj != null) {
 			if (!domainObj.addConsumer(consumer)) {
-				fileManager.clearDomainObject(getPathname());
+				projectData.clearDomainObject(getPathname());
 				throw new IllegalStateException("Domain Object is closed: " + domainObj.getName());
 			}
 		}
@@ -248,7 +248,7 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public void save(TaskMonitor monitor) throws IOException, CancelledException {
-		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter dobj = projectData.getOpenedDomainObject(getPathname());
 		if (dobj == null) {
 			throw new AssertException("Cannot save, domainObj not open");
 		}
@@ -263,7 +263,7 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public boolean canSave() {
-		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter dobj = projectData.getOpenedDomainObject(getPathname());
 		if (dobj == null) {
 			return false;
 		}
@@ -573,7 +573,7 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public ArrayList<?> getConsumers() {
-		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter dobj = projectData.getOpenedDomainObject(getPathname());
 		if (dobj == null) {
 			return new ArrayList<>();
 		}
@@ -582,13 +582,13 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public boolean isChanged() {
-		DomainObjectAdapter dobj = fileManager.getOpenedDomainObject(getPathname());
+		DomainObjectAdapter dobj = projectData.getOpenedDomainObject(getPathname());
 		return dobj != null && dobj.isChanged();
 	}
 
 	@Override
 	public boolean isOpen() {
-		return fileManager.getOpenedDomainObject(getPathname()) != null;
+		return projectData.getOpenedDomainObject(getPathname()) != null;
 	}
 
 	@Override
@@ -640,7 +640,7 @@ public class GhidraFile implements DomainFile {
 			return false;
 		}
 		GhidraFile other = (GhidraFile) obj;
-		if (fileManager != other.fileManager) {
+		if (projectData != other.projectData) {
 			return false;
 		}
 		return getPathname().equals(other.getPathname());
@@ -653,11 +653,11 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public String toString() {
-		ProjectLocator projectLocator = parent.getProjectData().getProjectLocator();
+		ProjectLocator projectLocator = projectData.getProjectLocator();
 		if (projectLocator.isTransient()) {
-			return fileManager.getProjectLocator().getName() + getPathname();
+			return projectLocator.getName() + getPathname();
 		}
-		return fileManager.getProjectLocator().getName() + ":" + getPathname();
+		return projectLocator.getName() + ":" + getPathname();
 	}
 
 }
