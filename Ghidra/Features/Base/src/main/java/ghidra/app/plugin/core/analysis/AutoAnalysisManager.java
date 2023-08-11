@@ -1329,7 +1329,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		String taskNames[] = getTimedTasks();
 		for (String element : taskNames) {
 			long taskTimeMSec = getTaskTime(timedTasks, element);
-			System.out.println(element + ": " + taskTimeMSec);
 			times.addTime(element, taskTimeMSec);
 		}
 
