@@ -89,7 +89,7 @@ public class MakeProgramSelectionAction extends DockingAction {
 	 */
 	public MakeProgramSelectionAction(Plugin plugin, GhidraTable table) {
 		super("Make Selection", plugin.getName(), KeyBindingType.SHARED);
-		this.plugin = plugin;
+		this.plugin = Objects.requireNonNull(plugin);
 		this.table = Objects.requireNonNull(table);
 		init();
 	}
