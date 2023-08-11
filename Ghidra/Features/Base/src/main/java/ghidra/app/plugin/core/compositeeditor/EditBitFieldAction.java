@@ -25,10 +25,6 @@ import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.data.Structure;
 import ghidra.util.exception.AssertException;
 
-/**
- * Action for use in the composite data type editor.
- * This action has help associated with it.
- */
 public class EditBitFieldAction extends CompositeEditorTableAction {
 
 	public final static String ACTION_NAME = "Edit Bitfield";
@@ -37,7 +33,7 @@ public class EditBitFieldAction extends CompositeEditorTableAction {
 	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
 	public EditBitFieldAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, null);
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, null);
 		setDescription(DESCRIPTION);
 		if (!(model instanceof CompEditorModel)) {
 			throw new AssertException("unsupported use");

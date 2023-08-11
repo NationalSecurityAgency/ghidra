@@ -34,7 +34,7 @@ public class EditComponentAction extends CompositeEditorTableAction {
 	private DataTypeManagerService dtmService;
 
 	public EditComponentAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
 		this.dtmService = provider.dtmService;
 		setDescription(DESCRIPTION);
 		adjustEnablement();
