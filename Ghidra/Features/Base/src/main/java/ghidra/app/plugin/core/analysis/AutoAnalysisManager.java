@@ -1319,8 +1319,9 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			return;
 		}
 
-		if (!p.isChanged()) {
-			return; // avoid storing task times if no other unsaved change exists
+		// Save task times for temporary program or if saveable changes have been made
+		if (!p.isTemporary() && !p.isChanged()) {
+			return;
 		}
 
 		StoredAnalyzerTimes times = StoredAnalyzerTimes.getStoredAnalyzerTimes(program);
@@ -1328,6 +1329,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		String taskNames[] = getTimedTasks();
 		for (String element : taskNames) {
 			long taskTimeMSec = getTaskTime(timedTasks, element);
+			System.out.println(element + ": " + taskTimeMSec);
 			times.addTime(element, taskTimeMSec);
 		}
 
