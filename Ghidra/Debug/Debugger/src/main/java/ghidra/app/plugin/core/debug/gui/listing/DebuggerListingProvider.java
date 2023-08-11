@@ -902,7 +902,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		Address address = loc.getAddress();
 		TraceStaticMapping mapping = trace.getStaticMappingManager().findContaining(address, snap);
 		if (mapping != null) {
-			DomainFile df = ProgramURLUtils.getFileForHackedUpGhidraURL(tool.getProject(),
+			DomainFile df = ProgramURLUtils.getDomainFileFromOpenProject(tool.getProject(),
 				mapping.getStaticProgramURL());
 			if (df != null) {
 				doTryOpenProgram(df, DomainFile.DEFAULT_VERSION, ProgramManager.OPEN_CURRENT);
