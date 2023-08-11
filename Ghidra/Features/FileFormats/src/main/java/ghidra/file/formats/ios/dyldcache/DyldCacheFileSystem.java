@@ -120,7 +120,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		MessageLog log = new MessageLog();
 		monitor.setMessage("Opening DYLD cache...");
 		
-		splitDyldCache = new SplitDyldCache(provider, false, log, monitor);
+		splitDyldCache = new SplitDyldCache(provider, true, log, monitor);
 		for (int i = 0; i < splitDyldCache.size(); i++) {
 			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
 			monitor.setMessage("Find files...");

@@ -29,7 +29,6 @@ import docking.ActionContext;
 import docking.widgets.table.GTableTextCellEditor;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import generic.theme.GIcon;
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataUtilities;
@@ -161,8 +160,7 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 
 		stringRepCol.setCellEditor(new StringRepCellEditor());
 
-		GoToService goToService = tool.getService(GoToService.class);
-		table.installNavigation(goToService, goToService.getDefaultNavigatable());
+		table.installNavigation(tool);
 
 		filterPanel = new GhidraTableFilterPanel<>(table, stringModel);
 

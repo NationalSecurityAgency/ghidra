@@ -500,6 +500,7 @@ public class MachoProgramBuilder {
 
 	protected void processSymbolTables(MachHeader header, boolean processExports) throws Exception {
 		monitor.setMessage("Processing symbol tables...");
+		SymbolTable symbolTable = program.getSymbolTable();
 		List<SymbolTableCommand> commands = header.getLoadCommands(SymbolTableCommand.class);
 		for (SymbolTableCommand symbolTableCommand : commands) {
 			List<NList> symbols = symbolTableCommand.getSymbols();
@@ -533,7 +534,7 @@ public class MachoProgramBuilder {
 				}
 
 				if (processExports && symbol.isExternal()) {
-					program.getSymbolTable().addExternalEntryPoint(addr);
+					symbolTable.addExternalEntryPoint(addr);
 				}
 
 				String string = symbol.getString();
@@ -546,14 +547,19 @@ public class MachoProgramBuilder {
 					markAsThumb(addr);
 				}
 
-				if (program.getSymbolTable().getGlobalSymbol(string, addr) != null) {
+				if (symbolTable.getGlobalSymbol(string, addr) != null) {
 					continue;
 				}
 				try {
 					if (!symbol.isExternal() || processExports) {
-						program.getSymbolTable().createLabel(addr, string, SourceType.IMPORTED);
+						Symbol primary = symbolTable.getPrimarySymbol(addr);
+						Symbol newSymbol =
+							symbolTable.createLabel(addr, string, SourceType.IMPORTED);
+						if (primary != null && primary.getName().equals("<redacted>")) {
+							newSymbol.setPrimary();
+						}
 						if (symbol.isExternal()) {
-							program.getSymbolTable().addExternalEntryPoint(addr);
+							symbolTable.addExternalEntryPoint(addr);
 						}
 					}
 				}
@@ -569,6 +575,8 @@ public class MachoProgramBuilder {
 		// from a dyld_shared_cache.  If the Mach-O is fully-formed and contains binding information
 		// (found in the DyldChainedFixupsCommand or DyldInfoCommand), thunk analysis properly
 		// associates indirect symbols with their "real" symbol and we shouldn't do anything here.
+		// We hope to one day include binding information in our extracted dylibs, at which point
+		// this method can fully go away.
 		if (machoHeader.getFirstLoadCommand(DyldChainedFixupsCommand.class) != null ||
 			machoHeader.getFirstLoadCommand(DyldInfoCommand.class) != null) {
 			return;

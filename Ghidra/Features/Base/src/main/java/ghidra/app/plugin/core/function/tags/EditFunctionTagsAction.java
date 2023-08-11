@@ -36,7 +36,7 @@ public class EditFunctionTagsAction extends ListingContextAction {
 	private FunctionTagPlugin plugin;
 
 	// Menu option that will show up when right-clicking on a function in the listing
-	private final String MENU_LABEL = "Edit Tags...";
+	private final String MENU_LABEL = "Edit Tags";
 
 	/**
 	 * Constructor.

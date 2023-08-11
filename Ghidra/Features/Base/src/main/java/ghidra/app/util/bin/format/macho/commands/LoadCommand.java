@@ -22,9 +22,11 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.EndianSettingsDefinition;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -199,6 +201,28 @@ public abstract class LoadCommand implements StructConverter {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Recursively sets the given {@link Data} and its components to big/little endian
+	 * 
+	 * @param data The {@link Data}
+	 * @param bigEndian True to set to big endian; false to set to little endian
+	 * @throws Exception if there was a problem setting the endianness
+	 */
+	public static void setEndian(Data data, boolean bigEndian) throws Exception {
+		for (int i = 0; i < data.getNumComponents(); i++) {
+			Data component = data.getComponent(i);
+			SettingsDefinition[] settings = component.getDataType().getSettingsDefinitions();
+			for (int j = 0; j < settings.length; j++) {
+				if (settings[j] instanceof EndianSettingsDefinition endianSetting) {
+					endianSetting.setBigEndian(component, true);
+				}
+			}
+			for (int j = 0; j < component.getNumComponents(); j++) {
+				setEndian(component.getComponent(j), bigEndian);
+			}
+		}
 	}
 
 	//-------------------Legacy code to support Raw Binary markup----------------------------------

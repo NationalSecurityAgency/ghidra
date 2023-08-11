@@ -245,6 +245,7 @@ task assembleDistribution (type: Copy) {
 	exclude "**/certification.local.manifest"
 	exclude "**/.project"
 	exclude "**/.classpath"
+	exclude "**/.pydevproject"
 	exclude "**/delete.me"
 	exclude "**/.vs/**"
 	exclude "**/*.vcxproj.user"

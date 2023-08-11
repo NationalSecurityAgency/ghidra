@@ -133,11 +133,12 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		// only allow global actions through if we are derived from the connect/primary navigatable
 		table.setActionsEnabled(navigatable.isConnected());
 
-		if (gotoService != null) {
-			if (navigatable != null) {
-				navigatable.addNavigatableListener(this);
-			}
-			table.installNavigation(gotoService, navigatable);
+		if (navigatable != null) {
+			navigatable.addNavigatableListener(this);
+			table.installNavigation(tool, navigatable);
+		}
+		else {
+			table.installNavigation(tool);
 		}
 
 		panel.add(threadedPanel, BorderLayout.CENTER);
@@ -155,7 +156,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
 		selectionNavigationAction
-			.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
 		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
 			@Override

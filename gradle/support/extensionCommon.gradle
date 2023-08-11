@@ -47,6 +47,7 @@ task zipExtensions (type: Zip) {
 		exclude 'certification.manifest'
 		exclude "*.project"
 		exclude "*.classpath"
+		exclude "*.pydevproject"
 		exclude 'dist/**'
 		exclude '.gradle/**/*'
 		exclude 'ghidra_scripts/bin/'

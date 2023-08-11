@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import ghidra.app.cmd.function.*;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.app.cmd.function.*;
 import ghidra.app.services.AnalysisPriority;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.model.address.*;
@@ -387,7 +387,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 			}
 		} else {
 			// if nothing defined here, disassemble
-			address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
+			address = PseudoDisassembler.setTargetContextForDisassembly(program, address);
 			DisassembleCommand cmd = new DisassembleCommand(address, null, true);
 			cmd.applyTo(program, monitor);
 		}

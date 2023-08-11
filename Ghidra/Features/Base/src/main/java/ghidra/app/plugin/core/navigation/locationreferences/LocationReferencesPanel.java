@@ -24,7 +24,6 @@ import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelListener;
 
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramSelection;
@@ -58,8 +57,7 @@ public class LocationReferencesPanel extends JPanel {
 		setLayout(new BorderLayout(10, 10));
 
 		PluginTool tool = locationReferencesProvider.getTool();
-		GoToService goToService = tool.getService(GoToService.class);
-		table.installNavigation(goToService, goToService.getDefaultNavigatable());
+		table.installNavigation(tool);
 
 		GhidraTableFilterPanel<LocationReference> tableFilterPanel =
 			new GhidraTableFilterPanel<>(table, tableModel);
