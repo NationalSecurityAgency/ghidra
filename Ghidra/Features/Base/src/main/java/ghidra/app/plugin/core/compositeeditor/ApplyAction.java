@@ -33,7 +33,7 @@ public class ApplyAction extends CompositeEditorTableAction {
 	private final static String[] POPUP_PATH = new String[] { "Apply Edits" };
 
 	public ApplyAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 
 		setDescription("Apply editor changes");
 		adjustEnablement();

@@ -40,7 +40,7 @@ public class PointerAction extends CompositeEditorTableAction {
 	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_P, 0);
 
 	public PointerAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, null, null, null);
+		super(provider, ACTION_NAME, GROUP_NAME, null, null, null);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KEY_STROKE, DefaultLevel));
 		adjustEnablement();

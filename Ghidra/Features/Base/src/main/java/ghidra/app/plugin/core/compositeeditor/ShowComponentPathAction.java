@@ -33,7 +33,7 @@ public class ShowComponentPathAction extends CompositeEditorTableAction {
 	private static String[] MENU_PATH = new String[] { ACTION_NAME };
 
 	public ShowComponentPathAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
 		setDescription(DESCRIPTION);
 		adjustEnablement();
 	}

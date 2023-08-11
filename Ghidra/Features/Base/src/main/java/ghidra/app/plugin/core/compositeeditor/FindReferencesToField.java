@@ -34,7 +34,7 @@ public class FindReferencesToField extends CompositeEditorTableAction {
 	private static String[] popupPath = new String[] { ACTION_NAME };
 
 	public FindReferencesToField(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null, null);
+		super(provider, ACTION_NAME, GROUP_NAME, popupPath, null, null);
 		setDescription(DESCRIPTION);
 		adjustEnablement();
 		setHelpLocation(new HelpLocation(HelpTopics.FIND_REFERENCES, "Data_Types"));
