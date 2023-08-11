@@ -181,4 +181,8 @@ class TestThread implements PcodeThread<Void> {
 	@Override
 	public void clearAllInjects() {
 	}
+
+	@Override
+	public void stepPatch(String sleigh) {
+	}
 }
