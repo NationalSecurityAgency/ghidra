@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import java.math.BigInteger;
 import java.util.*;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import ghidra.app.plugin.core.debug.gui.watch.WatchRow;
 import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
+import ghidra.app.services.DebuggerWatchesService;
 import ghidra.app.tablechooser.*;
 import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.docking.settings.*;
@@ -28,6 +32,7 @@ import ghidra.pcode.emu.BytesPcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.struct.StructuredSleigh;
+import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
@@ -40,63 +45,33 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 
-/**
- * NOTE: Testing with bash: set_shellopts
- */
 public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI {
 
 	public class Injects extends StructuredSleigh {
-		Var RAX = lang("RAX", type("void *"));
-		Var RSP = lang("RSP", type("void *"));
-
 		protected Injects() {
 			super(currentProgram);
 		}
-
-		public Var POP() {
-			Var tgt = local("tgt", RSP.cast(type("void **")).deref());
-			RSP.set(RSP.addi(8));
-			return tgt;
-		}
-
-		public void RET() {
-			_goto(POP());
-		}
-
-		public void RET(RVal val) {
-			RAX.set(val);
-			RET();
-		}
-
-		/**
-		 * TODO: A framework for stubbing the functions. This is close, and the system calls stuff
-		 * can get us closer in its handling of calling conventions. We need either to generate
-		 * Sleigh that gets the parameters in place, or if we're going to use the aliasing idea that
-		 * the syscall stuff does, then we need to allow injection of the already-compiled Sleigh
-		 * program. For now, we'll have to declare the parameter-holding register as a language
-		 * variable.
-		 */
-		@StructuredUserop
-		public void strlen(/*@Param(name = "RDI", type = "char *") Var s*/) {
-			Var s = lang("RDI", type("char *"));
-			Var t = temp(type("char *"));
-			_for(t.set(s), t.deref().neq(0), t.inc(), () -> {
-			});
-			RET(t.subi(s));
-		}
 	}
 
-	public final List<Watch> watches = List.of(
-		watch("RAX", type("int")),
-		watch("RCX", type("int"),
-			set(FormatSettingsDefinition.DEF, FormatSettingsDefinition.DECIMAL)),
-		watch("RSP", type("void *")));
-	// TODO: Snarf from Watches window?
+	protected List<Watch> collectWatches() {
+		DebuggerWatchesService watchService =
+			state.getTool().getService(DebuggerWatchesService.class);
+		List<Watch> watches = new ArrayList<>();
+		for (WatchRow row : watchService.getWatches()) {
+			DataType type = row.getDataType();
+			watches.add(new Watch(row.getExpression(),
+				type == null ? null : type(type.getName()), row.getSettings()));
+		}
+		return watches;
+	}
 
 	@Override
 	protected void run() throws Exception {
+		List<Watch> watches = collectWatches();
+
 		Trace trace = emulateLaunch(currentProgram, currentAddress);
 		TracePlatform platform = trace.getPlatformManager().getHostPlatform();
 		long snap = 0;
@@ -114,7 +89,12 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 		for (Watch w : watches) {
 			PcodeExpression ce = SleighProgramCompiler
 					.compileExpression((SleighLanguage) platform.getLanguage(), w.expression);
-			tableDialog.addCustomColumn(new CheckRowWatchDisplay(loader, w, compiled.size()));
+			if (w.type != null) {
+				tableDialog.addCustomColumn(new CheckRowWatchDisplay(loader, w, compiled.size()));
+			}
+			else {
+				tableDialog.addCustomColumn(new CheckRowRawDisplay(w, compiled.size()));
+			}
 			compiled.add(ce);
 		}
 
@@ -163,6 +143,13 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 					public void stepPcodeOp() {
 						super.stepPcodeOp();
 						position = position.steppedPcodeForward(thread, 1);
+						tableDialog.add(createRow());
+					}
+
+					@Override
+					public void stepPatch(String sleigh) {
+						super.stepPatch(sleigh);
+						position = position.patched(thread, language, sleigh);
 						tableDialog.add(createRow());
 					}
 
@@ -334,6 +321,51 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 		}
 	}
 
+	public class CheckRowRawDisplay implements TypedDisplay<CheckRow, String> {
+		private final boolean isBigEndian = currentProgram.getLanguage().isBigEndian();
+		private final Watch watch;
+		private final int index;
+
+		public CheckRowRawDisplay(Watch watch, int index) {
+			this.watch = watch;
+			this.index = index;
+		}
+
+		@Override
+		public String getColumnName() {
+			return watch.expression;
+		}
+
+		@Override
+		public Class<String> getColumnClass() {
+			return String.class;
+		}
+
+		private String getStringValue(CheckRow r) {
+			Pair<byte[], ValueLocation> p = r.values.get(index);
+			Address addr = p.getRight() == null ? null : p.getRight().getAddress();
+			byte[] bytes = p.getLeft();
+			if (addr == null || !addr.getAddressSpace().isMemorySpace()) {
+				BigInteger asBigInt =
+					Utils.bytesToBigInteger(bytes, bytes.length, isBigEndian, false);
+				return "0x" + asBigInt.toString(16);
+			}
+			return "{ " + NumericUtilities.convertBytesToString(bytes, " ") + " }";
+		}
+
+		@Override
+		public int compareTyped(CheckRow r1, CheckRow r2) {
+			String s1 = getStringValue(r1);
+			String s2 = getStringValue(r2);
+			return s1.compareTo(s2);
+		}
+
+		@Override
+		public String getTypedValue(CheckRow r) {
+			return getStringValue(r);
+		}
+	}
+
 	public class CheckRowWatchDisplay implements TypedDisplay<CheckRow, Object> {
 		private final boolean isBigEndian = currentProgram.getLanguage().isBigEndian();
 		private final Watch watch;
@@ -349,6 +381,9 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 		}
 
 		private Object getObjectValue(CheckRow r) {
+			if (type == null) {
+				return null;
+			}
 			try {
 				Pair<byte[], ValueLocation> p = r.values.get(index);
 				Address addr = p.getRight() == null ? null : p.getRight().getAddress();
@@ -412,7 +447,7 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 
 		@Override
 		public boolean execute(AddressableRowObject rowObject) {
-			CheckRow row = (EmuDeskCheckScript.CheckRow) rowObject;
+			CheckRow row = (CheckRow) rowObject;
 			try {
 				emulate(row.schedule, monitor);
 			}

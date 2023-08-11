@@ -444,6 +444,12 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 	}
 
+	@Override
+	public void stepPatch(String sleigh) {
+		PcodeProgram prog = getMachine().compileSleigh("patch", sleigh + ";");
+		executor.execute(prog, library);
+	}
+
 	/**
 	 * Start execution of the instruction or inject at the program counter
 	 */
@@ -499,10 +505,11 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			overrideCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
 		}
 		if (contextreg != Register.NO_CONTEXT) {
-			RegisterValue flowCtx =
-				defaultContext.getFlowValue(instruction.getRegisterValue(contextreg));
-			RegisterValue commitCtx = getContextAfterCommits();
-			overrideContext(flowCtx.combineValues(commitCtx));
+			RegisterValue ctx = new RegisterValue(contextreg, BigInteger.ZERO)
+					.combineValues(defaultContext.getDefaultValue(contextreg, counter))
+					.combineValues(defaultContext.getFlowValue(context))
+					.combineValues(getContextAfterCommits());
+			overrideContext(ctx);
 		}
 		postExecuteInstruction();
 		frame = null;
