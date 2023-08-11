@@ -112,6 +112,10 @@ public class SegmentCommand extends LoadCommand {
 		return vmaddr;
 	}
 
+	public void setVMaddress(long vmaddr) {
+		this.vmaddr = vmaddr;
+	}
+
 	public long getVMsize() {
 		return vmsize;
 	}

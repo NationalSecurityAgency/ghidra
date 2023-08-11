@@ -768,7 +768,7 @@ public class DyldCacheHeader implements StructConverter {
 		}
 	}
 
-	private void parseLocalSymbolsInfo(boolean shouldParse, MessageLog log, TaskMonitor monitor)
+	public void parseLocalSymbolsInfo(boolean shouldParse, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
 		if (!shouldParse || localSymbolsOffset == 0) {
 			return;

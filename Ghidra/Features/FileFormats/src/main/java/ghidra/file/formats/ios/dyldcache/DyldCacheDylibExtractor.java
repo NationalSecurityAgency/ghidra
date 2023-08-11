@@ -195,8 +195,14 @@ public class DyldCacheDylibExtractor {
 				}
 				byte[] bytes;
 				if (segment == linkEditSegment) {
-					bytes =
-						createPackedLinkEditSegment(segmentProvider, packedLinkEditSize);
+					bytes = createPackedLinkEditSegment(segmentProvider, packedLinkEditSize);
+
+					// We don't want our packed __LINKEDIT segment to overlap with other DYLIB's
+					// that might get extracted and added to the same program.  Rather than
+					// computing the optimal address it should go at (which will required looking
+					// at every other DYLIB in the cache which is slow), just make the address very
+					// far away from the other DYLIB's
+					segment.setVMaddress(textSegment.getVMaddress() << 4);
 				}
 				else {
 					bytes = segmentProvider.readBytes(segment.getFileOffset(), segmentSize);
@@ -221,28 +227,15 @@ public class DyldCacheDylibExtractor {
 		}
 
 		/**
-		 * Gets a {@link List} of local {@link NList symbol}s
+		 * Gets a {@link List} of local {@link NList symbol}s for the DYLIB being extracted
 		 * 
 		 * @param splitDyldCache The {@link SplitDyldCache}
 		 * @return A {@link List} of local {@link NList symbol}s (could be empty)
 		 */
 		private List<NList> getLocalSymbols(SplitDyldCache splitDyldCache) {
-			long base = splitDyldCache.getDyldCacheHeader(0).getBaseAddress();
-			for (int i = 0; i < splitDyldCache.size(); i++) {
-				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
-				DyldCacheLocalSymbolsInfo info = header.getLocalSymbolsInfo();
-				if (info == null) {
-					continue;
-				}
-				for (DyldCacheLocalSymbolsEntry entry : info.getLocalSymbolsEntries()) {
-					int index = entry.getNListStartIndex();
-					int count = entry.getNListCount();
-					if (base + entry.getDylibOffset() == textSegment.getVMaddress() && count > 0) {
-						return info.getNList().subList(index, index + count);
-					}
-				}
-			}
-			return List.of();
+			long base = splitDyldCache.getBaseAddress();
+			DyldCacheLocalSymbolsInfo info = splitDyldCache.getLocalSymbolInfo();
+			return info != null ? info.getNList(textSegment.getVMaddress() - base) : List.of();
 		}
 
 		/**
@@ -378,13 +371,17 @@ public class DyldCacheDylibExtractor {
 		 */
 		private void fixupSegment(SegmentCommand segment, boolean is64bit) throws IOException {
 			long adjustment = packedSegmentAdjustments.getOrDefault(segment, 0);
-			if (segment.getFileOffset() > 0) {
-				fixup(segment.getStartIndex() + (is64bit ? 0x28 : 0x20), adjustment,
-					is64bit ? 8 : 4, segment);
+			if (segment.getVMaddress() > 0) {
+				set(segment.getStartIndex() + (is64bit ? 0x18 : 0x18), segment.getVMaddress(),
+					is64bit ? 8 : 4);
 			}
 			if (segment.getVMsize() > 0) {
 				set(segment.getStartIndex() + (is64bit ? 0x20 : 0x1c), segment.getVMsize(),
 					is64bit ? 8 : 4);
+			}
+			if (segment.getFileOffset() > 0) {
+				fixup(segment.getStartIndex() + (is64bit ? 0x28 : 0x20), adjustment,
+					is64bit ? 8 : 4, segment);
 			}
 			if (segment.getFileSize() > 0) {
 				set(segment.getStartIndex() + (is64bit ? 0x30 : 0x24), segment.getFileSize(),
