@@ -28,6 +28,7 @@ import org.junit.*;
 
 import generic.test.TestUtils;
 import ghidra.framework.model.*;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.FileSystemEventManager;
 import ghidra.framework.store.local.LocalFileSystem;
@@ -37,13 +38,13 @@ import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.task.TaskMonitor;
 
-public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest {
+public class DefaultProjectDataTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private File privateProjectDir;
 	private File sharedProjectDir;
 	private FileSystem sharedFS;
 	private LocalFileSystem privateFS;
-	private ProjectFileManager fileMgr;
+	private DefaultProjectData projectData;
 	private DomainFolder root;
 	private List<MyEvent> events = new ArrayList<>();
 
@@ -83,9 +84,9 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		sharedFS = LocalFileSystem.getLocalFileSystem(sharedProjectDir.getAbsolutePath(), false,
 			true, false, true);
 
-		fileMgr = new ProjectFileManager(privateFS, sharedFS);
-		fileMgr.addDomainFolderChangeListener(new MyDomainFolderChangeListener());
-		root = fileMgr.getRootFolder();
+		projectData = new DefaultProjectData(privateFS, sharedFS);
+		projectData.addDomainFolderChangeListener(new MyDomainFolderChangeListener());
+		root = projectData.getRootFolder();
 		flushFileSystemEventsAndClearTestQueue();
 	}
 
@@ -97,7 +98,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@After
 	public void tearDown() {
-		fileMgr.dispose();
+		projectData.dispose();
 		deleteAll(privateProjectDir);
 		deleteAll(sharedProjectDir);
 	}
@@ -137,8 +138,14 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	@Test
+	public void testGetLocalProjectURL() {
+		assertEquals(GhidraURL.makeURL(projectData.getProjectLocator()),
+			projectData.getLocalProjectURL());
+	}
+
+	@Test
 	public void testGetRootFolder() throws Exception {
-		DomainFolder rootFolder = fileMgr.getRootFolder();
+		DomainFolder rootFolder = projectData.getRootFolder();
 		assertEquals("/", rootFolder.getPathname());
 		assertEquals(3, rootFolder.getFolders().length);
 	}
@@ -146,11 +153,11 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testGetFolder() throws Exception {
 
-		DomainFolder rootFolder = fileMgr.getRootFolder();
-		DomainFolder df1 = fileMgr.getFolder("/");
-		DomainFolder df2 = fileMgr.getFolder("/a");
-		DomainFolder df3 = fileMgr.getFolder("/a/y");
-		DomainFolder df4 = fileMgr.getFolder("/a/x");
+		DomainFolder rootFolder = projectData.getRootFolder();
+		DomainFolder df1 = projectData.getFolder("/");
+		DomainFolder df2 = projectData.getFolder("/a");
+		DomainFolder df3 = projectData.getFolder("/a/y");
+		DomainFolder df4 = projectData.getFolder("/a/x");
 
 		assertNotNull(rootFolder);
 		assertEquals(rootFolder, df1);
@@ -178,7 +185,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testCreateFile() throws Exception {
-		DomainFolder folder = fileMgr.getFolder("/a");
+		DomainFolder folder = projectData.getFolder("/a");
 		folder.getFiles(); // visit folder to receive change events from this folder
 		flushFileSystemEventsAndClearTestQueue();
 
@@ -195,18 +202,18 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEventsSize(2);
 		checkEvent(events.get(1), "File Added", null, null, "/a/file2", null, null);
 
-		DomainFile df = fileMgr.getFileByID(fileID1);
+		DomainFile df = projectData.getFileByID(fileID1);
 		assertNotNull(df);
 		assertEquals("file1", df.getName());
 		assertTrue(!df.isVersioned());
 
-		df = fileMgr.getFileByID(fileID2);
+		df = projectData.getFileByID(fileID2);
 		assertNotNull(df2);
 		assertEquals("file2", df.getName());
 
 		df1.addToVersionControl("", false, TaskMonitor.DUMMY);
 
-		df = fileMgr.getFileByID(fileID1);
+		df = projectData.getFileByID(fileID1);
 		assertNotNull(df1);
 		assertEquals("file1", df.getName());
 		assertTrue(df.isVersioned());
@@ -216,7 +223,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testFileIndex() throws Exception {
 
-		DomainFileIndex fileIndex = (DomainFileIndex) getInstanceField("fileIndex", fileMgr);
+		DomainFileIndex fileIndex = (DomainFileIndex) getInstanceField("fileIndex", projectData);
 		assertNotNull(fileIndex);
 
 		@SuppressWarnings("unchecked")
@@ -224,21 +231,21 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 			(HashMap<String, String>) getInstanceField("fileIdToPathIndex", fileIndex);
 		assertNotNull(fileIdToPathIndex);
 
-		DomainFolder folder = fileMgr.getFolder("/a");
+		DomainFolder folder = projectData.getFolder("/a");
 
 		DomainFile df1 = createFile(folder, "file1");
 		String fileID = df1.getFileID();
 
-		assertEquals(df1, fileMgr.getFileByID(fileID));
+		assertEquals(df1, projectData.getFileByID(fileID));
 
 		// invalidate folder data to force search
 
-		GhidraFolderData rootFolderData = fileMgr.getRootFolderData();
+		GhidraFolderData rootFolderData = projectData.getRootFolderData();
 		rootFolderData.dispose();
 
 		assertTrue(fileIdToPathIndex.isEmpty()); // folder invalidation should cause map to clear
 
-		assertEquals(df1, fileMgr.getFileByID(fileID));
+		assertEquals(df1, projectData.getFileByID(fileID));
 
 		assertFalse(fileIdToPathIndex.isEmpty()); // index should become populated
 	}
@@ -246,7 +253,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testFileIndexUndoCheckout() throws Exception {
 // TODO: This only tests the connected state - a remote file-system is required to test the disconnect/re-connected condition
-		DomainFolder folder = fileMgr.getFolder("/a");
+		DomainFolder folder = projectData.getFolder("/a");
 
 		DomainFile df1 = createFile(folder, "file1");
 		String fileID = df1.getFileID();
@@ -265,7 +272,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testFileIndexHijack() throws Exception {
 // TODO: This only tests the connected state - a remote file-system is required to test the disconnect/re-connected condition
-		DomainFolder folder = fileMgr.getFolder("/a");
+		DomainFolder folder = projectData.getFolder("/a");
 		folder.getFiles(); // visit folder to enable folder change listener
 
 		// create shared file /a/file1 and keep checked-out
@@ -285,7 +292,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 		df1.setName("file2");
 
-		DomainFile df2 = fileMgr.getFile("/a/file2");
+		DomainFile df2 = projectData.getFile("/a/file2");
 
 		assertTrue(!fileID.equals(df2.getFileID()));
 
@@ -451,7 +458,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testFolderRenamedEvent3() throws Exception {
-		fileMgr.getFolder("/a"); // force folder refresh to reduce event count
+		projectData.getFolder("/a"); // force folder refresh to reduce event count
 		flushFileSystemEventsAndClearTestQueue();
 
 		// exists in localFS so "b" folder should not get created again
@@ -495,7 +502,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testRenameFolder6() throws Exception {
-		DomainFolder aFolder = fileMgr.getFolder("/a");
+		DomainFolder aFolder = projectData.getFolder("/a");
 		assertNotNull(aFolder);
 		aFolder.getFolders(); // visit folder to receive change events for it
 
@@ -601,12 +608,12 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 		// versioned folder was moved to /c/a, but private folder /a should still exist
 
-		GhidraFolder folder = (GhidraFolder) fileMgr.getFolder("/a");
+		GhidraFolder folder = (GhidraFolder) projectData.getFolder("/a");
 		assertNotNull(folder);
 		assertTrue(folder.privateExists());
 		assertFalse(folder.sharedExists());
 
-		folder = (GhidraFolder) fileMgr.getFolder("/c/a");
+		folder = (GhidraFolder) projectData.getFolder("/c/a");
 		assertNotNull(folder);
 		assertFalse(folder.privateExists());
 		assertTrue(folder.sharedExists());

@@ -21,7 +21,7 @@ import java.net.URL;
 
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.client.RepositoryAdapter;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
 import ghidra.framework.store.LockException;
@@ -126,13 +126,13 @@ public class DefaultLocalGhidraProtocolConnector extends GhidraProtocolConnector
 	 * @return project data instance or null if project not found
 	 * @throws IOException if IO error occurs
 	 */
-	ProjectFileManager getLocalProjectData(boolean readOnlyAccess) throws IOException {
+	DefaultProjectData getLocalProjectData(boolean readOnlyAccess) throws IOException {
 		if (connect(readOnlyAccess) != StatusCode.OK) {
 			return null;
 		}
 
 		try {
-			return new ProjectFileManager(localStorageLocator, !readOnlyAccess, false);
+			return new DefaultProjectData(localStorageLocator, !readOnlyAccess, false);
 		}
 		catch (NotOwnerException | ReadOnlyException e) {
 			statusCode = StatusCode.UNAUTHORIZED;

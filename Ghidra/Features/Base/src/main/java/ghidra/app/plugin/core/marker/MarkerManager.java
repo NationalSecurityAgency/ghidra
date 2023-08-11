@@ -33,7 +33,6 @@ import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.util.AddressIndexMap;
-import ghidra.framework.model.DomainObjectClosedListener;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -510,28 +509,17 @@ public class MarkerManager implements MarkerService {
 		private final AddressColorCache colorCache = new AddressColorCache();
 		private final ColorBlender blender = new ColorBlender();
 
-		private final MarkerSetCache cache;
-		private final Program program;
-		private final DomainObjectClosedListener closeListener = this::programClosed;
-
 		public MarkerSetCacheEntry(MarkerSetCache cache, Program program) {
-			this.cache = cache;
-			this.program = program;
 			/**
 			 * Use this close listener approach instead of plugin events, since we don't get a
 			 * ProgramClosedPluginEvent when a trace view is closed, but we can listen for its
 			 * domain object closing, which works for plain programs, too.
 			 */
-			program.addCloseListener(closeListener);
+			program.addCloseListener(dobj -> cache.programClosed(program));
 		}
 
 		void clearColors() {
 			colorCache.clear();
-		}
-
-		private void programClosed() {
-			program.removeCloseListener(closeListener);
-			cache.programClosed(program);
 		}
 
 		MarkerSetImpl getByName(String name) {

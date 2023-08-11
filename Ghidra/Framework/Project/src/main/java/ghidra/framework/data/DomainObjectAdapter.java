@@ -54,8 +54,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	protected Map<EventQueueID, DomainObjectChangeSupport> changeSupportMap =
 		new ConcurrentHashMap<EventQueueID, DomainObjectChangeSupport>();
 	private volatile boolean eventsEnabled = true;
-	private Set<DomainObjectClosedListener> closeListeners =
-		new CopyOnWriteArraySet<DomainObjectClosedListener>();
+	private Set<DomainObjectClosedListener> closeListeners = new CopyOnWriteArraySet<>();
 
 	private ArrayList<Object> consumers;
 	protected Map<String, String> metadata = new LinkedHashMap<String, String>();
@@ -210,7 +209,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	private void notifyCloseListeners() {
 		for (DomainObjectClosedListener listener : closeListeners) {
-			listener.domainObjectClosed();
+			listener.domainObjectClosed(this);
 		}
 		closeListeners.clear();
 	}

@@ -36,7 +36,7 @@ import docking.wizard.WizardPanel;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.archive.RestoreDialog;
 import ghidra.framework.data.GhidraFileData;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.main.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.dialog.*;
@@ -694,7 +694,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 		Project project = env.getProject();
 		program = env.getProgram("WinHelloCPP.exe");
-		ProjectFileManager projectData = (ProjectFileManager) project.getProjectData();
+		DefaultProjectData projectData = (DefaultProjectData) project.getProjectData();
 		projectData.getRootFolder().createFile("HelloCpp.exe", program, TaskMonitor.DUMMY);
 
 		// Create other project to be viewed
