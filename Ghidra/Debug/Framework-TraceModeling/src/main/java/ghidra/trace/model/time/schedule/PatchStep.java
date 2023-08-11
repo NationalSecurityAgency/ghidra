@@ -309,8 +309,7 @@ public class PatchStep implements Step {
 	@Override
 	public <T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException {
-		PcodeProgram prog = emuThread.getMachine().compileSleigh("schedule", sleigh + ";");
-		emuThread.getExecutor().execute(prog, emuThread.getUseropLibrary());
+		emuThread.stepPatch(sleigh);
 	}
 
 	@Override
