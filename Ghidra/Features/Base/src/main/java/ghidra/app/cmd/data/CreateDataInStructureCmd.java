@@ -27,6 +27,9 @@ import ghidra.program.model.listing.Program;
  */
 public class CreateDataInStructureCmd implements Command {
 
+	// TODO: Not sure any of this will work for a packed structure which does not support
+	// offset-based component manipulation (see GP-3740)
+
 	private Address addr;
 	private int[] componentPath;
 	private DataType newDataType;
@@ -115,7 +118,7 @@ public class CreateDataInStructureCmd implements Command {
 //			        MemBuffer memBuf = new ProgramStructureProviderContext(program,addr, 
 //	    	        					struct, dataComp.getParentOffset());
 					DataTypeInstance dti =
-						DataTypeInstance.getDataTypeInstance(newDataType, -1, true);
+						DataTypeInstance.getDataTypeInstance(newDataType, -1, false);
 					struct.replace(index, dti.getDataType(), dti.getLength());
 				}
 			}

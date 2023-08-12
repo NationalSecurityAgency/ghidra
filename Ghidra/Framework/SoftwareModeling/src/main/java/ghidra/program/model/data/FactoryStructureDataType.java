@@ -88,9 +88,8 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 	protected Structure setCategoryPath(Structure struct, MemBuffer buf) {
 		CategoryPath path = CategoryPath.ROOT;
 		try {
-			path =
-				new CategoryPath(new CategoryPath(CategoryPath.ROOT, getName()), "" +
-					buf.getAddress());
+			path = new CategoryPath(new CategoryPath(CategoryPath.ROOT, getName()),
+				"" + buf.getAddress());
 		}
 		catch (Exception e) {
 		}
@@ -136,8 +135,12 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 	}
 
 	protected DataTypeComponent addComponent(Structure es, DataType dt, String componentName) {
+		return es.add(dt, dt.getLength(), componentName, null);
+	}
 
-		return es.add(dt, dt.getAlignedLength(), componentName, null);
+	protected DataTypeComponent addComponent(Structure es, DataType dt, int length,
+			String componentName) {
+		return es.add(dt, length, componentName, null);
 	}
 
 	protected abstract void populateDynamicStructure(MemBuffer buf, Structure es);

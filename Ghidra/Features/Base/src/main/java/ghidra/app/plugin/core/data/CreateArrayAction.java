@@ -141,6 +141,7 @@ class CreateArrayAction extends ListingContextAction {
 		}
 
 		int length = sel.getByteLength();
+		// Arrays currently use aligned-length only
 		int numElements = length / dt.getAlignedLength();
 
 		Command cmd = new CreateArrayInStructureCmd(from.getAddress(), numElements, dt,
@@ -161,6 +162,7 @@ class CreateArrayAction extends ListingContextAction {
 			}
 			length += dtc.getLength();
 		}
+		// Arrays currently use aligned-length only
 		return length / dt.getAlignedLength();
 	}
 
@@ -171,6 +173,7 @@ class CreateArrayAction extends ListingContextAction {
 			DataTypeComponent dtc = struct.getComponent(index++);
 			length += dtc.getLength();
 		}
+		// Arrays currently use aligned-length only
 		return length / dt.getAlignedLength();
 	}
 
