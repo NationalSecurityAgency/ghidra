@@ -23,6 +23,7 @@ import java.io.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import agent.gdb.pty.PtyChild.Echo;
 import agent.gdb.pty.PtySession;
 import ghidra.app.script.AskDialog;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -78,6 +79,19 @@ public class SshPtyTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSessionBash() throws IOException, InterruptedException {
 		try (SshPty pty = factory.openpty()) {
 			PtySession bash = pty.getChild().session(new String[] { "bash" }, null);
+			OutputStream out = pty.getParent().getOutputStream();
+			out.write("exit\n".getBytes("UTF-8"));
+			out.flush();
+			new StreamPumper(pty.getParent().getInputStream(), System.out).start();
+			assertEquals(0, bash.waitExited());
+		}
+	}
+
+	@Test
+	public void testDisableEcho() throws IOException, InterruptedException {
+		try (SshPty pty = factory.openpty()) {
+			PtySession bash =
+				pty.getChild().session(new String[] { "bash" }, null, Echo.OFF);
 			OutputStream out = pty.getParent().getOutputStream();
 			out.write("exit\n".getBytes("UTF-8"));
 			out.flush();

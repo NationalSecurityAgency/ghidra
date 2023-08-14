@@ -105,6 +105,8 @@ public abstract class AbstractGdbCommand<T> implements GdbCommand<T> {
 		 * will likely type "start" into the existing CLI. Thus, we have to be careful not to let
 		 * spurious {@code ^running} command-completion events actually complete any command, except
 		 * ones where we expect that result. This seems a bug in GDB to me.
+		 * 
+		 * UPDATE: It looks like this will be fixed in gdb-14.
 		 */
 		if (evt instanceof GdbCommandRunningEvent) {
 			return false;

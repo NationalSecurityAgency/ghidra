@@ -21,12 +21,12 @@ import java.io.OutputStream;
 import agent.gdb.pty.PtyEndpoint;
 
 public class LinuxPtyEndpoint implements PtyEndpoint {
-	//private final int fd;
+	protected final int fd;
 	private final FdOutputStream outputStream;
 	private final FdInputStream inputStream;
 
 	LinuxPtyEndpoint(int fd) {
-		//this.fd = fd;
+		this.fd = fd;
 		this.outputStream = new FdOutputStream(fd);
 		this.inputStream = new FdInputStream(fd);
 	}

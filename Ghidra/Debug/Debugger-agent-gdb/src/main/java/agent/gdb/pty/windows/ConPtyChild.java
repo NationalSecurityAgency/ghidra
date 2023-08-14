@@ -16,8 +16,7 @@
 package agent.gdb.pty.windows;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.Kernel32;
@@ -76,10 +75,12 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 	}
 
 	@Override
-	public LocalWindowsNativeProcessPtySession session(String[] args, Map<String, String> env)
-			throws IOException {
+	public LocalWindowsNativeProcessPtySession session(String[] args, Map<String, String> env,
+			Collection<TermMode> mode) throws IOException {
 		/**
 		 * TODO: How to incorporate environment into CreateProcess?
+		 * 
+		 * TODO: How to control local echo?
 		 */
 
 		STARTUPINFOEX si = prepareStartupInfo();
@@ -105,7 +106,7 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 	}
 
 	@Override
-	public String nullSession() throws IOException {
+	public String nullSession(Collection<TermMode> mode) throws IOException {
 		throw new UnsupportedOperationException("ConPTY does not have a name");
 	}
 }

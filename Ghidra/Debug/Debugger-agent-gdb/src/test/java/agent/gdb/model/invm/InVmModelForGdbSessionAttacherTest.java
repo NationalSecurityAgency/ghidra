@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.model.gadp;
+package agent.gdb.model.invm;
 
 import agent.gdb.model.AbstractModelForGdbSessionAttacherTest;
 
-public class GadpModelForGdbSessiopnAttacherTest extends AbstractModelForGdbSessionAttacherTest {
+public class InVmModelForGdbSessionAttacherTest extends AbstractModelForGdbSessionAttacherTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
-		return new GadpGdbModelHost();
+		return new InVmGdbModelHost();
 	}
 }
