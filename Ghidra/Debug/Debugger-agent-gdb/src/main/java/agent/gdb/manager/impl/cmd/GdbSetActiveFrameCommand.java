@@ -19,27 +19,28 @@ import agent.gdb.manager.evt.GdbCommandDoneEvent;
 import agent.gdb.manager.evt.GdbThreadSelectedEvent;
 import agent.gdb.manager.impl.*;
 
-public class GdbSetActiveThreadCommand extends AbstractGdbCommand<Void> {
-	private final int threadId;
+public class GdbSetActiveFrameCommand extends AbstractGdbCommandWithThreadId<Void> {
+	private final Integer frameId;
 	private final boolean internal;
 
 	/**
-	 * Select the given thread
+	 * Select the given thread and frame
 	 * 
 	 * @param manager the manager to execute the command
 	 * @param threadId the desired thread Id
 	 * @param frameId the desired frame level
 	 * @param internal true to prevent announcement of the change
 	 */
-	public GdbSetActiveThreadCommand(GdbManagerImpl manager, int threadId, boolean internal) {
-		super(manager);
-		this.threadId = threadId;
+	public GdbSetActiveFrameCommand(GdbManagerImpl manager, Integer threadId, int frameId,
+			boolean internal) {
+		super(manager, threadId);
+		this.frameId = frameId;
 		this.internal = internal;
 	}
 
 	@Override
-	public String encode() {
-		return "-thread-select " + threadId;
+	protected String encode(String threadPart) {
+		return "-interpreter-exec" + threadPart + " console \"frame " + frameId + "\"";
 	}
 
 	@Override

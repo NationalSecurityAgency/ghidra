@@ -16,13 +16,11 @@
 package agent.gdb.pty.ssh;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.help.UnsupportedOperationException;
-
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSchException;
 
 import agent.gdb.pty.PtyChild;
 import ghidra.dbg.util.ShellUtils;
@@ -38,8 +36,23 @@ public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
 		this.channel = channel;
 	}
 
+	private String sttyString(Collection<TermMode> mode) {
+		StringBuilder sb = new StringBuilder();
+		if (mode.contains(Echo.OFF)) {
+			sb.append("-echo ");
+		}
+		else if (mode.contains(Echo.ON)) {
+			sb.append("echo ");
+		}
+		if (sb.isEmpty()) {
+			return "";
+		}
+		return "stty " + sb + "&& ";
+	}
+
 	@Override
-	public SshPtySession session(String[] args, Map<String, String> env) throws IOException {
+	public SshPtySession session(String[] args, Map<String, String> env, Collection<TermMode> mode)
+			throws IOException {
 		/**
 		 * TODO: This syntax assumes a UNIX-style shell, and even among them, this may not be
 		 * universal. This certainly works for my version of bash :)
@@ -52,7 +65,7 @@ public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
 						.collect(Collectors.joining(" ")) +
 					" ";
 		String cmdStr = ShellUtils.generateLine(Arrays.asList(args));
-		channel.setCommand(envStr + cmdStr);
+		channel.setCommand(sttyString(mode) + envStr + cmdStr);
 		try {
 			channel.connect();
 		}
@@ -62,11 +75,11 @@ public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
 		return new SshPtySession(channel);
 	}
 
-	private String getTtyNameAndStartNullSession() throws IOException {
+	private String getTtyNameAndStartNullSession(Collection<TermMode> mode) throws IOException {
 		// NB. UNIX sleep is only required to support integer durations
-		channel.setCommand(
-			("sh -c 'tty && ctrlc() { echo; } && trap ctrlc INT && while true; do sleep " +
-				Integer.MAX_VALUE + "; done'"));
+		channel.setCommand(sttyString(mode) +
+			"sh -c 'tty && ctrlc() { echo; } && trap ctrlc INT && while true; do sleep " +
+			Integer.MAX_VALUE + "; done'");
 		try {
 			channel.connect();
 		}
@@ -85,9 +98,9 @@ public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
 	}
 
 	@Override
-	public String nullSession() throws IOException {
+	public String nullSession(Collection<TermMode> mode) throws IOException {
 		if (name == null) {
-			this.name = getTtyNameAndStartNullSession();
+			this.name = getTtyNameAndStartNullSession(mode);
 			if ("".equals(name)) {
 				throw new IOException("Could not determine child remote tty name");
 			}
