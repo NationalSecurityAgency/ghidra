@@ -15,7 +15,7 @@
  */
 package agent.gdb.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.*;
 
 import java.io.*;
@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.service.rmi.trace.*;
@@ -39,7 +38,7 @@ import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.services.TraceRmiService;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.testutil.DummyProc;
-import ghidra.framework.TestApplicationUtils;
+import ghidra.framework.*;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
@@ -54,6 +53,19 @@ import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebuggerGUITest {
+	/**
+	 * The tests are touchy about anything being printed on stderr, because that's usually where
+	 * Python stack traces go that otherwise are ignored. Unfortunately, GDB also emits some
+	 * warnings there, and these are more common in containers where permissions and resources are
+	 * more restricted. Thus, we add some commands here to disable the features that commonly cause
+	 * these warnings: Leave ASLR alone, and don't try to display source code.
+	 */
+	public static final String PREAMBLE = """
+			set python print-stack full
+			python import ghidragdb
+			set disable-randomization off
+			set source open off
+			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
 	protected static final int TIMEOUT_SECONDS = 300;
@@ -84,11 +96,22 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 
 	// @BeforeClass
 	public static void setupPython() throws Throwable {
-		new ProcessBuilder("gradle", "Debugger-agent-gdb:installPyPackage")
+		new ProcessBuilder("gradle", "Debugger-agent-gdb:assemblePyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())
 				.inheritIO()
 				.start()
 				.waitFor();
+	}
+
+	protected void setPythonPath(ProcessBuilder pb) throws IOException {
+		String sep =
+			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS ? ";" : ":";
+		String rmiPyPkg = Application.getModuleSubDirectory("Debugger-rmi-trace",
+			"build/pypkg/src").getAbsolutePath();
+		String gdbPyPkg = Application.getModuleSubDirectory("Debugger-agent-gdb",
+			"build/pypkg/src").getAbsolutePath();
+		String add = rmiPyPkg + sep + gdbPyPkg;
+		pb.environment().compute("PYTHONPATH", (k, v) -> v == null ? add : (v + sep + add));
 	}
 
 	protected Path getGdbPath() {
@@ -147,6 +170,8 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInGdb execInGdb(String script) throws IOException {
 		ProcessBuilder pb = new ProcessBuilder(gdbPath.toString());
+		setPythonPath(pb);
+
 		// If commands come from file, GDB will quit after EOF.
 		Msg.info(this, "outFile: " + outFile);
 		Msg.info(this, "errFile: " + errFile);
@@ -283,10 +308,9 @@ public abstract class AbstractGdbTraceRmiTest extends AbstractGhidraHeadedDebugg
 
 	protected GdbAndHandler startAndConnectGdb() throws Exception {
 		return startAndConnectGdb(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 	}
 
 	@SuppressWarnings("resource")

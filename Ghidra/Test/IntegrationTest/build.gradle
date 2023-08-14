@@ -78,9 +78,8 @@ ext.addExports([
 	'java.desktop/sun.java2d=ALL-UNNAMED'
 ])
 
-// The CI system runs these tests as root and pip complains about using venv
-// Disable them for now
-/* integrationTest {
-	dependsOn { project(':Debugger-agent-gdb').installPyPackage }
-	dependsOn { project(':Debugger-agent-lldb').installPyPackage }
-} */
+integrationTest {
+	dependsOn { project(':Debugger-rmi-trace').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-gdb').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-lldb').assemblePyPackage }
+}

@@ -9,5 +9,5 @@ src/llvm-project/lldb/bindings/java/java-typemaps.swig||Apache License 2.0 with 
 src/llvm-project/lldb/bindings/java/java.swig||Apache License 2.0 with LLVM Exceptions||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|
-src/main/py/ghidralldb/schema.xml||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|
+src/main/py/src/ghidralldb/schema.xml||GHIDRA||||END|
