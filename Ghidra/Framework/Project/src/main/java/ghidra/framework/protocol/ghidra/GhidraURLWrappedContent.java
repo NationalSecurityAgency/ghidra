@@ -22,6 +22,7 @@ import java.util.List;
 
 import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.*;
+import ghidra.framework.store.FileSystem;
 import ghidra.util.InvalidNameException;
 
 /**
@@ -133,9 +134,8 @@ public class GhidraURLWrappedContent {
 			}
 		}
 		if (folder == null) {
-			// TODO: URL location not found
 			closeProjectData();
-			throw new FileNotFoundException("URL specifies unknown path: " + folderPath);
+			throw new FileNotFoundException("URL specifies unknown folder path: " + folderPath);
 		}
 
 		if (folderItemName == null) {
@@ -156,7 +156,12 @@ public class GhidraURLWrappedContent {
 		}
 
 		closeProjectData();
-		throw new FileNotFoundException("URL specifies unknown path: " + folderPath);
+		String path = folderPath;
+		if (!path.endsWith(FileSystem.SEPARATOR)) {
+			path += FileSystem.SEPARATOR;
+		}
+		path += folderItemName;
+		throw new FileNotFoundException("URL specifies unknown path: " + path);
 	}
 
 	/**
