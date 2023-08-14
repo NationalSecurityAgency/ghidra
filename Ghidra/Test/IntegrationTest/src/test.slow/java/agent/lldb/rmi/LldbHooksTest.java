@@ -308,7 +308,6 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 			conn.execute("cont");
 			waitRunning();
-			waitStopped();
 
 			waitForPass(() -> {
 				TraceSnapshot snapshot =

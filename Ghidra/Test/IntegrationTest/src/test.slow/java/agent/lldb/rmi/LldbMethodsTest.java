@@ -820,7 +820,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 		}
 	}
 
-	@Test
+	//@Test There appear to be issues with hardware register availability in our virtual environments
 	public void testBreakHardwareExpression() throws Exception {
 		try (LldbAndHandler conn = startAndConnectLldb()) {
 			start(conn, "bash");
