@@ -16,12 +16,51 @@
 package agent.gdb.manager.impl;
 
 import java.math.BigInteger;
-import java.util.Objects;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * The abstraction for a line of output from {@code info proc mappings}
  */
 public class GdbMemoryMapping {
+
+	static class Index {
+		final NavigableMap<BigInteger, GdbMemoryMapping> mappings;
+		final Map<String, BigInteger> bases;
+
+		public Index(NavigableMap<BigInteger, GdbMemoryMapping> mappings) {
+			this.mappings = mappings;
+			this.bases = new HashMap<>();
+			for (GdbMemoryMapping mapping : mappings.values()) {
+				if (mapping.objfile == null || mapping.objfile.isBlank()) {
+					continue;
+				}
+				// Values should be ordered ascending by address
+				if (bases.containsKey(mapping.objfile)) {
+					continue;
+				}
+				bases.put(mapping.objfile, mapping.start);
+			}
+		}
+
+		public BigInteger computeBase(BigInteger vma) {
+			Entry<BigInteger, GdbMemoryMapping> floor = mappings.floorEntry(vma);
+			if (floor == null) {
+				return vma;
+			}
+			GdbMemoryMapping mapping = floor.getValue();
+			// NB. Ends given by GDB are exclusive
+			if (mapping.objfile.isBlank() || mapping.end.compareTo(vma) <= 0) {
+				return vma;
+			}
+			return Objects.requireNonNull(bases.get(mapping.objfile));
+		}
+
+		public long computeBase(long vma) {
+			return computeBase(BigInteger.valueOf(vma)).longValueExact();
+		}
+	}
+
 	private final BigInteger start;
 	private final BigInteger end;
 	private final BigInteger size;
