@@ -1,0 +1,21 @@
+@define LA64 ""
+
+@define REGSIZE 8
+@define FREGSIZE 4
+@define ADDRSIZE 8
+@include "loongarch_main.sinc"
+@include "Loongarch32_Instructions.sinc"
+@include "Loongarch64_Instructions.sinc"
+@include "privileged-32.sinc"
+@include "privileged-64.sinc"
+@include "float_Instructions.sinc"
+@include "double_Instructions.sinc"
+
+
+@include "lasx.sinc"
+@include "lbt.sinc"
+@include "lsx.sinc"
+@include "lvz.sinc"
+
+
+
