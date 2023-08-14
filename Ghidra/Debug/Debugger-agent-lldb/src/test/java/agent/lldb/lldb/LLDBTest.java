@@ -39,15 +39,17 @@ public class LLDBTest extends AbstractGhidraHeadlessIntegrationTest {
 	public static void assumeLibLoadable() {
 		try {
 			System.load("/usr/lib/liblldb.so");
+			return;
 		}
 		catch (UnsatisfiedLinkError ex) {
 		}
 		try {
 			System.load("/usr/lib/liblldb.dylib");
+			return;
 		}
 		catch (UnsatisfiedLinkError ex) {
-			assumeTrue("lldb not available", false);
 		}
+		assumeTrue("lldb not available", false);
 	}
 
 	private SBDebugger sbd;
