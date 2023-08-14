@@ -189,6 +189,30 @@ public class MachHeader implements StructConverter {
 		return this;
 	}
 
+	/**
+	 * Parses only this {@link MachHeader}'s {@link SegmentCommand segments}
+	 * 
+	 * @return A {@List} of this {@link MachHeader}'s {@link SegmentCommand segments}
+	 * @throws IOException If there was an IO-related error
+	 * @throws MachException if the load command is invalid
+	 */
+	public List<SegmentCommand> parseSegments() throws IOException, MachException {
+		List<SegmentCommand> segments = new ArrayList<>();
+		_reader.setPointerIndex(_commandIndex);
+		for (int i = 0; i < nCmds; ++i) {
+			int type = _reader.peekNextInt();
+			if (type == LoadCommandTypes.LC_SEGMENT || type == LoadCommandTypes.LC_SEGMENT_64) {
+				segments.add(new SegmentCommand(_reader, is32bit()));
+			}
+			else {
+				type = _reader.readNextInt();
+				int size = _reader.readNextInt();
+				_reader.setPointerIndex(_reader.getPointerIndex() + size - 8);
+			}
+		}
+		return segments;
+	}
+
 	public int getMagic() {
 		return magic;
 	}

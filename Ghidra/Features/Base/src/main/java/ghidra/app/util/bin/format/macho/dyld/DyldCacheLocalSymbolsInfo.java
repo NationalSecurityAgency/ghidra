@@ -116,6 +116,15 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 	}
 
 	/**
+	 * Gets the {@link List} of {@link DyldCacheLocalSymbolsEntry}s.
+	 * 
+	 * @return The {@link List} of {@link DyldCacheLocalSymbolsEntry}
+	 */
+	public List<DyldCacheLocalSymbolsEntry> getLocalSymbolsEntries() {
+		return localSymbolsEntryList;
+	}
+
+	/**
 	 * Gets the {@link List} of {@link NList}.
 	 * 
 	 * @return The {@link List} of {@link NList}
@@ -125,12 +134,20 @@ public class DyldCacheLocalSymbolsInfo implements StructConverter {
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheLocalSymbolsEntry}s.
+	 * Gets the {@link List} of {@link NList} for the given dylib offset.
 	 * 
-	 * @return The {@link List} of {@link DyldCacheLocalSymbolsEntry}
+	 * @param dylibOffset The offset of dylib in the DYLD Cache
+	 * @return The {@link List} of {@link NList} for the given dylib offset
 	 */
-	public List<DyldCacheLocalSymbolsEntry> getLocalSymbolsEntries() {
-		return localSymbolsEntryList;
+	public List<NList> getNList(long dylibOffset) {
+		for (DyldCacheLocalSymbolsEntry entry : localSymbolsEntryList) {
+			int index = entry.getNListStartIndex();
+			int count = entry.getNListCount();
+			if (dylibOffset == entry.getDylibOffset()) {
+				return nlistList.subList(index, index + count);
+			}
+		}
+		return List.of();
 	}
 
 	@Override
