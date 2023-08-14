@@ -35,21 +35,28 @@ public class DummyProc implements AutoCloseable {
 			return Application.getOSFile(cmd).getAbsolutePath();
 		}
 		catch (Exception e) {
+			// probably Application is not initialized
 			// just try next strategy
 		}
 
 		// Try the build/exe/<cmd>/ and build/exe/<cmd>/<platform>/ directory
-		for (ResourceFile modRoot : Application.getModuleRootDirectories()) {
-			ResourceFile exe = new ResourceFile(modRoot, "build/exe/" + cmd + "/" + cmd);
-			if (exe.exists() && exe.getFile(false).canExecute()) {
-				return exe.getAbsolutePath();
+		try {
+			for (ResourceFile modRoot : Application.getModuleRootDirectories()) {
+				ResourceFile exe = new ResourceFile(modRoot, "build/exe/" + cmd + "/" + cmd);
+				if (exe.exists() && exe.getFile(false).canExecute()) {
+					return exe.getAbsolutePath();
+				}
+				ResourceFile platformExe = new ResourceFile(modRoot,
+					"build/exe/" + cmd + "/" + Platform.CURRENT_PLATFORM.getDirectoryName() + "/" +
+						cmd);
+				if (platformExe.exists() && platformExe.getFile(false).canExecute()) {
+					return platformExe.getAbsolutePath();
+				}
 			}
-			ResourceFile platformExe = new ResourceFile(modRoot,
-				"build/exe/" + cmd + "/" + Platform.CURRENT_PLATFORM.getDirectoryName() + "/" +
-					cmd);
-			if (platformExe.exists() && platformExe.getFile(false).canExecute()) {
-				return platformExe.getAbsolutePath();
-			}
+		}
+		catch (Exception e) {
+			// probably Application is not initialized
+			// just try next strategy
 		}
 
 		// Try the current directory
