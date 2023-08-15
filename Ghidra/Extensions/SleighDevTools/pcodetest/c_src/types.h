@@ -107,6 +107,8 @@ typedef unsigned int u4;
 typedef signed int i4;
 #ifdef HAS_LONGLONG
 typedef long long i8;
+#endif
+#if defined(HAS_LONGLONG) || defined(HAS__DOUBLE)
 typedef unsigned long long u8;
 #endif
 #ifdef HAS_FLOAT
@@ -132,6 +134,8 @@ typedef signed int i4;
 #endif
 #ifdef HAS_LONGLONG
 typedef long long i8;
+#endif
+#if defined(HAS_LONGLONG) || defined(HAS__DOUBLE)
 typedef unsigned long long u8;
 #endif
 #ifdef HAS_FLOAT
@@ -197,9 +201,7 @@ typedef __UINT8_TYPE__ u1;
 typedef __UINT16_TYPE__ u2;
 typedef __UINT32_TYPE__ u4;
 #if defined(__UINT64_TYPE__)
-#ifdef HAS_LONGLONG
 typedef __UINT64_TYPE__ u8;
-#endif
 #endif
 
 #ifdef __SIZEOF_FLOAT__

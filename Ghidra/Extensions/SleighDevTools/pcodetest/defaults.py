@@ -20,19 +20,17 @@
 
 PCodeTest.defaults.toolchain_root = '/local/ToolChains'
 PCodeTest.defaults.build_root = '/local/build-pcodetest'
-PCodeTest.defaults.gcc_version = '7.3.0'
+PCodeTest.defaults.gcc_version = '9.2.0'
 PCodeTest.defaults.skip_files = []
 PCodeTest.defaults.export_root = os.getcwd() + '/../../../../../ghidra.bin/Ghidra/Test/TestResources/data/pcodetests/'
 PCodeTest.defaults.pcodetest_src = os.getcwd() + '/c_src'
 
 # PCodeTest.defaults that cannot be overridden on the command line
-
+# These are set by processor test definitions in the pcode_defs.py file
 PCodeTest.defaults.build_all = 0
 PCodeTest.defaults.ccflags = ''
 PCodeTest.defaults.has_decimal128 = 0
 PCodeTest.defaults.has_decimal32 = 0
-
-
 PCodeTest.defaults.has_decimal64 = 0
 PCodeTest.defaults.has_double = 1
 PCodeTest.defaults.has_float = 1
