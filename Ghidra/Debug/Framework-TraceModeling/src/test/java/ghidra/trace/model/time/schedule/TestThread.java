@@ -61,14 +61,7 @@ class TestThread implements PcodeThread<Void> {
 
 	@Override
 	public PcodeExecutor<Void> getExecutor() {
-		return new PcodeExecutor<>(TraceScheduleTest.TOY_BE_64_LANG, machine.getArithmetic(),
-			getState(), Reason.EXECUTE_READ) {
-			public PcodeFrame execute(PcodeProgram program, PcodeUseropLibrary<Void> library) {
-				machine.record.add("x:" + name);
-				// TODO: Verify the actual effect
-				return null; //super.execute(program, library);
-			}
-		};
+		return new PcodeExecutor<>(getLanguage(), getArithmetic(), getState(), Reason.EXECUTE_READ);
 	}
 
 	@Override
@@ -89,6 +82,11 @@ class TestThread implements PcodeThread<Void> {
 	@Override
 	public void skipPcodeOp() {
 		machine.record.add("sp:" + name);
+	}
+
+	@Override
+	public void stepPatch(String sleigh) {
+		machine.record.add("x:" + name);
 	}
 
 	@Override
@@ -180,9 +178,5 @@ class TestThread implements PcodeThread<Void> {
 
 	@Override
 	public void clearAllInjects() {
-	}
-
-	@Override
-	public void stepPatch(String sleigh) {
 	}
 }
