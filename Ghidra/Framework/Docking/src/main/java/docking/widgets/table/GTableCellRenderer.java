@@ -50,8 +50,23 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 
 	private static final Color BG_DRAG = new GColor("color.bg.table.row.drag");
 
-	private static DecimalFormat decimalFormat;
-	private static Map<Integer, DecimalFormat> decimalFormatCache;
+	/*
+	 * The map uses thread local variables to ensure that rendering and background model 
+	 * manipulation are thread safe.
+	 */
+	private static Map<Integer, ThreadLocal<DecimalFormat>> decimalFormatCache =
+		new HashMap<>();
+	static {
+
+		int n = FloatingPointPrecisionSettingsDefinition.MAX_PRECISION;
+		for (int i = 0; i <= n; i++) {
+			int precision = i;
+			ThreadLocal<DecimalFormat> localFormatter = ThreadLocal.withInitial(
+				() -> new DecimalFormat(createDecimalFormat(precision)));
+			decimalFormatCache.put(precision, localFormatter);
+		}
+	}
+
 	private ThemeListener themeListener = e -> {
 		if (e.isLookAndFeelChanged()) {
 			updateUI();
@@ -191,52 +206,44 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 	 * @return a formatted representation of the Number value
 	 */
 	protected String formatNumber(Number value, Settings settings) {
-		String numberString = value.toString();
 
 		if (NumericUtilities.isIntegerType(value)) {
 			int radix = INTEGER_RADIX_SETTING.getRadix(settings);
 			SignednessFormatMode signMode = INTEGER_SIGNEDNESS_MODE_SETTING.getFormatMode(settings);
-
 			long number = value.longValue();
-			numberString = NumericUtilities.formatNumber(number, radix, signMode);
-
+			return NumericUtilities.formatNumber(number, radix, signMode);
 		}
-		else if (NumericUtilities.isFloatingPointType(value)) {
+
+		if (NumericUtilities.isFloatingPointType(value)) {
 			Double number = value.doubleValue();
 			if (number.isNaN() || number.isInfinite()) {
-				numberString = Character.toString('\u221e'); // infinity symbol
+				return Character.toString('\u221e'); // infinity symbol
 			}
-			else {
-				int digitsPrecision = FLOATING_POINT_PRECISION_SETTING.getPrecision(settings);
-				numberString = getFormatter(digitsPrecision).format(number);
-			}
+			int precision = FLOATING_POINT_PRECISION_SETTING.getPrecision(settings);
+			return getFormatter(precision).format(number);
 		}
-		else if (value instanceof BigInteger) {
+
+		if (value instanceof BigInteger) {
 			int radix = INTEGER_RADIX_SETTING.getRadix(settings);
-			numberString = ((BigInteger) value).toString(radix);
+			return ((BigInteger) value).toString(radix);
 		}
-		else if (value instanceof BigDecimal) {
-			numberString = ((BigDecimal) value).toPlainString();
+
+		if (value instanceof BigDecimal) {
+
+			int precision = FLOATING_POINT_PRECISION_SETTING.getPrecision(settings);
+			DecimalFormat formatter = getFormatter(precision);
+			formatter.format(value);
+
+			return ((BigDecimal) value).toPlainString();
 		}
-		return numberString;
+		return value.toString();
 	}
 
 	private DecimalFormat getFormatter(int digitsPrecision) {
-		if (decimalFormat == null) {
-			initFormatCache();
-		}
-
-		digitsPrecision = Math.max(0,
+		int precision = Math.max(0,
 			Math.min(digitsPrecision, FloatingPointPrecisionSettingsDefinition.MAX_PRECISION));
-
-		return decimalFormatCache.get(digitsPrecision);
-	}
-
-	private static void initFormatCache() {
-		decimalFormatCache = new HashMap<>(FloatingPointPrecisionSettingsDefinition.MAX_PRECISION);
-		for (int i = 0; i <= FloatingPointPrecisionSettingsDefinition.MAX_PRECISION; i++) {
-			decimalFormatCache.put(i, new DecimalFormat(createDecimalFormat(i)));
-		}
+		ThreadLocal<DecimalFormat> localFormat = decimalFormatCache.get(precision);
+		return localFormat.get();
 	}
 
 	private static String createDecimalFormat(int digitsPrecision) {
