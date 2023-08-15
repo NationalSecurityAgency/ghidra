@@ -127,7 +127,7 @@ def process_event(self, listener, event):
             rc = event_process.GetBroadcaster().AddListener(listener, ALL_EVENTS)
             if rc is False:
                 print("add listener for process failed")
-        event_thread = lldb.SBThread_GetThreadFromEvent(event)
+
         commands.put_state(event_process)
         type = event.GetType()
         if lldb.SBTarget.EventIsTargetEvent(event):
