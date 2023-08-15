@@ -130,6 +130,9 @@ public class SymbolTableCommand extends LoadCommand {
 	 * @param list The {@link List} of {@link NList}s to add
 	 */
 	public void addSymbols(List<NList> list) {
+		if (list.isEmpty()) {
+			return;
+		}
 		symbols.addAll(list);
 		nsyms += list.size();
 		stroff += list.size() * list.get(0).getSize();
