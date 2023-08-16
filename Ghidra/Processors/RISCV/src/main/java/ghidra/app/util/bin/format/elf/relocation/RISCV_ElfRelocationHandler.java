@@ -15,15 +15,15 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
-import java.util.Iterator;
+import java.util.Map;
 
 import ghidra.app.util.bin.format.elf.*;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.reloc.*;
 import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.exception.NotFoundException;
 
 /**
@@ -50,6 +50,12 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
 		return elf.e_machine() == ElfConstants.EM_RISCV;
+	}
+
+	@Override
+	public RISCV_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
+			Map<ElfSymbol, Address> symbolMap) {
+		return new RISCV_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
 
 	/**
@@ -81,62 +87,48 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 	/**
 	 * PC relative relocations like R_RISCV_PCREL_LO12_I find their target indirectly,
 	 * using their symbolValue to locate the address of the matching R_RISCV_PCREL_HI20
-	 * or R_RISCV_GOT_HI20.
-	 * That *HI20 relocation's symbol value points to the actual target.
-	 * This function attempts to locate that actual target by querying Ghidra's Relocation
-	 * and Symbol tables. There can be more than one relocation assigned to a given address,
-	 * so we need to search.
-	 * 
-	 * Note that this function probably belongs within ElfRelocationContext, but we have no
-	 * published strategy for integration testing that class.
-	 *
-	 * @return the relocation symbol value associated with the linked relocation type.
+	 * or R_RISCV_GOT_HI20.  The HI20 relocation's symbol identifies the actual target.
+	 * @param elfRelocationContext ELF relocation context for RISCV
+	 * @param hi20Symbol symbol which identifies a HI20 relocation offset
+	 * @param relocAddrOffsetAdj relocation offset adjustment to be used when computing
+	 * actual address offet within the target program.
+	 * @return the 32-bit HI20 relative offset value or 0 if HI20 relocation not found
 	 */
-	static int getSymbolValueIndirect(ElfRelocationContext elfRelocationContext, int hi20Addr) {
+	private static int getSymbolValueIndirect(ElfRelocationContext elfRelocationContext,
+			ElfSymbol hi20Symbol, long relocAddrOffsetAdj) {
 
-		int target;
-		// Get the relevant Ghidra tables
-		Program program = elfRelocationContext.getProgram();
-		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-		RelocationTable relocationTable = program.getRelocationTable();
-
-		// get the possible address of R_RISCV_PCREL_HI20 relocation holding the target address
-		Address hi20Address = program.getAddressFactory().getAddress(space.getSpaceID(), hi20Addr);
-
-		// we need an address set with one holding a single address to retrieve multiple relocations
-		AddressSet relocationAddressSet = new AddressSet(hi20Address);
-		// get any relocations at this address - hopefully R_RISCV_PCREL_HI20 and likely R_RISCV_RELAX
-		Iterator<Relocation> relocs = relocationTable.getRelocations(relocationAddressSet);
-		// search the relocations for a R_RISCV_PCREL_HI20 relocation
-		while (relocs.hasNext()) {
-			Relocation rel = relocs.next();
-			// there may be other valid relocation types to process
-			if ((rel.getType() == RISCV_ElfRelocationConstants.R_RISCV_PCREL_HI20) ||
-				(rel.getType() == RISCV_ElfRelocationConstants.R_RISCV_GOT_HI20)) {
-				int refSymbolIndex = (int) rel.getValues()[0];
-//				System.out.println("Matching PCREL_HI20 value is 0x" + Long.toHexString(refSymbolIndex));
-				// Note that an elf symbol index is not the same thing as a regular symbol index.
-				ElfSymbol elfSym = elfRelocationContext.getSymbol(refSymbolIndex);
-				int targetOffset = (int) elfRelocationContext.getSymbolValue(elfSym);
-//				System.out.println(
-//					"PCREL_HI20 Symbol \"" + elfRelocationContext.getSymbolName(refSymbolIndex) +
-//						"\" found with offset 0x" + Long.toHexString(targetOffset));
-				// compute the target offset from the referred auipc instruction
-				target = targetOffset - hi20Addr;
-//				System.out.println("PCREL_HI20 Symbol location is 0x" + Long.toHexString(target));
-				return target;
-			}
+		RISCV_ElfRelocationContext relocContext = (RISCV_ElfRelocationContext) elfRelocationContext;
+		ElfRelocation hi20Reloc = relocContext.getHi20Relocation(hi20Symbol);
+		if (hi20Reloc == null) {
+			return 0;
 		}
-		return 0;
+
+		int symIndex = hi20Reloc.getSymbolIndex();
+		ElfSymbol sym = elfRelocationContext.getSymbol(symIndex);
+		long symOffset = elfRelocationContext.getSymbolValue(sym);
+
+		// must apply HI20 addend to symbol offset
+		long targetOffset = symOffset + hi20Reloc.getAddend();
+
+		// must adjust to account for image-base
+		long hi20RelocOffset = hi20Reloc.getOffset() + relocAddrOffsetAdj;
+
+		// TODO: should we perform range check for 64-bit case?
+		return (int) (targetOffset - hi20RelocOffset);
 	}
 
 	@Override
 	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
-			ElfRelocation relocation,
-			Address relocationAddress) throws MemoryAccessException, NotFoundException {
+			ElfRelocation relocation, Address relocationAddress)
+			throws MemoryAccessException, NotFoundException {
 		ElfHeader elf = elfRelocationContext.getElfHeader();
 		if (!canRelocate(elf)) {
 			return RelocationResult.FAILURE;
+		}
+
+		if (!relocation.hasAddend()) {
+			// Implementation only supports Elf_Rela relocations for RISCV
+			return RelocationResult.UNSUPPORTED;
 		}
 
 		Program program = elfRelocationContext.getProgram();
@@ -147,8 +139,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			return RelocationResult.SKIPPED;
 		}
 
-		long addend = relocation.hasAddend() ? relocation.getAddend()
-				: is32 ? memory.getInt(relocationAddress) : memory.getLong(relocationAddress);
+		long addend = relocation.getAddend();
 		long offset = relocationAddress.getOffset();
 		long base = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 
@@ -267,7 +258,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				target = (int) (addend + symbolValue - offset);
 				value32 =
 					((target & 0x01e) << 7) | ((target & 0x0800) >> 4) | ((target & 0x03e0) << 20) |
-						((target & 0x1000) << 19) | memory.getInt(relocationAddress);
+						((target & 0x1000) << 19) | (memory.getInt(relocationAddress) & 0x1fff07f);
 				memory.setInt(relocationAddress, value32);
 				break;
 
@@ -276,7 +267,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				target = (int) (addend + symbolValue - offset);
 				value32 =
 					(target & 0xff000) | ((target & 0x00800) << 9) | ((target & 0x007fe) << 20) |
-						((target & 0x100000) << 11) | memory.getInt(relocationAddress);
+						((target & 0x100000) << 11) | (memory.getInt(relocationAddress) & 0xfff);
 				memory.setInt(relocationAddress, value32);
 				break;
 
@@ -288,9 +279,9 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				// PC-relative call MACRO call,tail (auipc+jalr pair)
 				target = (int) (addend + symbolValue - offset);
 				memory.setInt(relocationAddress,
-					getHi20(target) | memory.getInt(relocationAddress));
+					getHi20(target) | (memory.getInt(relocationAddress) & 0xfff));
 				memory.setInt(relocationAddress.add(4),
-					(getLo12(target) << 20) | memory.getInt(relocationAddress.add(4)));
+					(getLo12(target) << 20) | (memory.getInt(relocationAddress.add(4)) & 0xfffff));
 				byteLength = 8;
 				break;
 
@@ -312,18 +303,21 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				// PC-relative, not tested on 32 bit objects
 				target = (int) (addend + symbolValue - offset);
 				memory.setInt(relocationAddress,
-					getHi20(target) | memory.getInt(relocationAddress));
+					getHi20(target) | (memory.getInt(relocationAddress) & 0xfff));
 				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_PCREL_LO12_I:
 				// PC-relative reference %pcrel_lo(symbol) (I-Type), relative to the cited pc_rel_hi20
-				target = getSymbolValueIndirect(elfRelocationContext, (int) symbolValue);
+				target = getSymbolValueIndirect(elfRelocationContext, sym,
+					relocationAddress.getOffset() - relocation.getOffset());
 				if (target == 0) {
-					markAsWarning(program, relocationAddress, "R_RISCV_PCREL_LO12_I", symbolName,
-						symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
-					return RelocationResult.UNSUPPORTED;
+					markAsError(program, relocationAddress, type, symbolName,
+						"Failed to locate HI20 relocation for R_RISCV_PCREL_LO12_I",
+						elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
 				}
-				value32 = ((target & 0x00000fff) << 20) | memory.getInt(relocationAddress);
+				value32 =
+					((target & 0x00000fff) << 20) | (memory.getInt(relocationAddress) & 0xfffff);
 				memory.setInt(relocationAddress, value32);
 				break;
 
@@ -331,29 +325,32 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				// PC-relative reference %pcrel_lo(symbol) (S-Type)
 				//    S-type immediates split the 12 bit value into separate 7 bit and 5 bit fields.
 				// Warning: untested!
-				target = getSymbolValueIndirect(elfRelocationContext, (int) symbolValue);
+				target = getSymbolValueIndirect(elfRelocationContext, sym,
+					relocationAddress.getOffset() - relocation.getOffset());
 				if (target == 0) {
-					markAsWarning(program, relocationAddress, "R_RISCV_PCREL_LO12_I", symbolName,
-						symbolIndex,
-						"TODO, needs support ", elfRelocationContext.getLog());
-					return RelocationResult.UNSUPPORTED;
+					markAsError(program, relocationAddress, type, symbolName,
+						"Failed to locate HI20 relocation for R_RISCV_PCREL_LO12_S",
+						elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
 				}
 				value32 = ((target & 0x000007f) << 25) | (target & 0x00000f80) |
-					memory.getInt(relocationAddress);
+					(memory.getInt(relocationAddress) & 0x1fff07f);
 				memory.setInt(relocationAddress, value32);
 				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_HI20:
 				// Absolute address %hi(symbol) (U-Type)
 				value32 =
-					(int) ((symbolValue + 0x800) & 0xfffff000) | memory.getInt(relocationAddress);
+					(int) ((symbolValue + 0x800) & 0xfffff000) |
+						(memory.getInt(relocationAddress) & 0xfff);
 				memory.setInt(relocationAddress, value32);
 				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_LO12_I:
 				// Absolute address %lo(symbol) (I-Type)
 				value32 =
-					((int) (symbolValue & 0x00000fff) << 20) | memory.getInt(relocationAddress);
+					((int) (symbolValue & 0x00000fff) << 20) |
+						(memory.getInt(relocationAddress) & 0xfffff);
 				memory.setInt(relocationAddress, value32);
 				break;
 
@@ -361,7 +358,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				// Absolute address %lo(symbol) (S-Type)
 				value32 = (int) (symbolValue & 0x00000fff);
 				value32 = ((value32 & 0x1f) << 7) | ((value32 & 0xfe0) << 20) |
-					memory.getInt(relocationAddress);
+					(memory.getInt(relocationAddress) & 0x1fff07f);
 				memory.setInt(relocationAddress, value32);
 				break;
 
@@ -391,11 +388,8 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_ADD8:
 				// 8-bit label addition word8 = old + S + A
-				markAsWarning(program, relocationAddress, "R_RISCV_ADD8", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
 				value8 = memory.getByte(relocationAddress);
-				value8 += (byte) symbolValue;
-				value8 += (byte) addend;
+				value8 += (byte) (symbolValue + addend);
 				memory.setByte(relocationAddress, value8);
 				byteLength = 1;
 				break;
@@ -403,8 +397,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_ADD16:
 				// 16-bit label addition word16 = old + S + A
 				value16 = memory.getShort(relocationAddress);
-				value16 += (short) symbolValue;
-				value16 += (short) addend;
+				value16 += (short) (symbolValue + addend);
 				memory.setShort(relocationAddress, value16);
 				byteLength = 2;
 				break;
@@ -412,16 +405,14 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_ADD32:
 				// 32-bit label addition word32 = old + S + A
 				value32 = memory.getInt(relocationAddress);
-				value32 += (int) symbolValue;
-				value32 += (int) addend;
+				value32 += (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, value32);
 				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_ADD64:
 				// 64-bit label addition word64 = old + S + A
 				value64 = memory.getLong(relocationAddress);
-				value64 += symbolValue;
-				value64 += addend;
+				value64 += (symbolValue + addend);
 				memory.setLong(relocationAddress, value64);
 				byteLength = 8;
 				break;
@@ -429,8 +420,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB8:
 				// 8-bit label subtraction word8 = old - S - A
 				value8 = memory.getByte(relocationAddress);
-				value8 -= (byte) symbolValue;
-				value8 -= (byte) addend;
+				value8 -= (byte) (symbolValue + addend);
 				memory.setByte(relocationAddress, value8);
 				byteLength = 1;
 				break;
@@ -438,8 +428,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB16:
 				// 16-bit label subtraction word16 = old - S - A
 				value16 = memory.getShort(relocationAddress);
-				value16 -= (short) symbolValue;
-				value16 -= (short) addend;
+				value16 -= (short) (symbolValue + addend);
 				memory.setShort(relocationAddress, value16);
 				byteLength = 2;
 				break;
@@ -447,16 +436,14 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB32:
 				// 32-bit label subtraction word32 = old - S - A
 				value32 = memory.getInt(relocationAddress);
-				value32 -= (int) symbolValue;
-				value32 -= (int) addend;
+				value32 -= (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, value32);
 				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB64:
 				// 64-bit label subtraction word64 = old - S - A
 				value64 = memory.getLong(relocationAddress);
-				value64 -= symbolValue;
-				value64 -= addend;
+				value64 -= (symbolValue + addend);
 				memory.setLong(relocationAddress, value64);
 				byteLength = 8;
 				break;
@@ -545,40 +532,38 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				return RelocationResult.SKIPPED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SUB6:
-				// Local label subtraction 
-				markAsWarning(program, relocationAddress, "R_RISCV_SUB6", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				int loc8 = memory.getByte(relocationAddress);
+				value8 = (byte) (symbolValue + addend);
+				value8 = (byte) ((loc8 & 0xc0) | (((loc8 & 0x3f) - value8) & 0x3f));
+				memory.setByte(relocationAddress, value8);
+				byteLength = 1;
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SET6:
-				// Local label subtraction 
-				markAsWarning(program, relocationAddress, "R_RISCV_SET6", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				loc8 = memory.getByte(relocationAddress);
+				value8 = (byte) (symbolValue + addend);
+				value8 = (byte) ((loc8 & 0xc0) | (value8 & 0x3f));
+				memory.setByte(relocationAddress, value8);
+				byteLength = 1;
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SET8:
-				// Local label subtraction 
-				markAsWarning(program, relocationAddress, "R_RISCV_SET8", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				value8 = (byte) (symbolValue + addend);
+				memory.setByte(relocationAddress, value8);
+				byteLength = 1;
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_SET16:
-				// Local label subtraction 
-				markAsWarning(program, relocationAddress, "R_RISCV_SET16", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
-
-			case RISCV_ElfRelocationConstants.R_RISCV_SET32:
-				// Local label subtraction 
-				markAsWarning(program, relocationAddress, "R_RISCV_SET32", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+				value16 = (short) (symbolValue + addend);
+				memory.setShort(relocationAddress, value8);
+				byteLength = 2;
+				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_32_PCREL:
-				// 32-bit PC relative
-				markAsWarning(program, relocationAddress, "R_RISCV_32_PCREL", symbolName,
-					symbolIndex, "TODO, needs support ", elfRelocationContext.getLog());
-				return RelocationResult.UNSUPPORTED;
+			case RISCV_ElfRelocationConstants.R_RISCV_SET32:
+				value32 = (int) (symbolValue + addend);
+				memory.setInt(relocationAddress, value8);
+				break;
 
 			default:
 				// 58-191 Reserved Reserved for future standard use
