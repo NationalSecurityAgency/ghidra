@@ -45,6 +45,7 @@ import ida_struct
 import ida_typeinf
 import ida_ua
 import ida_xref
+import idaapi
 import idautils
 import idc
 import datetime
@@ -777,6 +778,7 @@ class XmlExporter(IdaXml):
         self.start_element(DATATYPES, True)
         self.export_structures()
         self.export_enums()
+        self.export_hexrays_types()
         self.end_element(DATATYPES)
         self.display_cpu_time(timer)
 
@@ -1006,18 +1008,18 @@ class XmlExporter(IdaXml):
             demangled = ida_name.get_demangled_name(addr,
                                             DEMANGLED_TYPEINFO,
                                             self.inf.demnames, True)
-            if demangled != None and demangled == "'string'":
+            if demangled != None and (demangled == "'string'" or '(' not in demangled):
                 demangled = None
             outbuf = ''
-            # TODO: How to handle print_type for function typeinfo cmts
-            #outbuf = idaapi.print_type(addr, False)
+            outbuf = idaapi.print_type(addr, False)
             has_typeinfo = (demangled != None or (outbuf != None and
                             len(outbuf) > 0))
             if demangled != None:
                 self.export_typeinfo_cmt(demangled)
-            elif has_typeinfo == True:
-                self.export_typeinfo_cmt(outbuf[:-1])
+            elif has_typeinfo:
+                self.export_prototype(function)
             self.export_stack_frame(function)
+            self.export_manual_cc(function)
             self.end_element(FUNCTION)
         self.end_element(FUNCTIONS)
         self.display_cpu_time(timer)
@@ -2183,6 +2185,225 @@ class XmlExporter(IdaXml):
         xml_declaration  = "<?xml version=\"1.0\" standalone=\"yes\"?>"
         xml_declaration += "\n<?program_dtd version=\"1\"?>\n"
         self.write_to_xmlfile(xml_declaration)
+
+    def export_hexrays_types(self):
+        """
+        Exports information about standard HexRays datatypes.
+        It's needed for parsing of function's signatures.
+        """
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_BOOL1")
+        self.write_attribute(DATATYPE, "bool")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_BOOL2")
+        self.write_attribute(DATATYPE, "undefined2")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_BOOL4")
+        self.write_attribute(DATATYPE, "undefined4")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int8")
+        self.write_attribute(DATATYPE, "sbyte")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int16")
+        self.write_attribute(DATATYPE, "sword")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int32")
+        self.write_attribute(DATATYPE, "sdword")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int64")
+        self.write_attribute(DATATYPE, "sqword")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int128")
+        self.write_attribute(DATATYPE, "int16")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_BYTE")
+        self.write_attribute(DATATYPE, "undefined1")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_WORD")
+        self.write_attribute(DATATYPE, "undefined2")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_DWORD")
+        self.write_attribute(DATATYPE, "undefined4")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_QWORD")
+        self.write_attribute(DATATYPE, "undefined8")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_OWORD")
+        self.write_attribute(DATATYPE, "int16")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_TBYTE")
+        self.write_attribute(DATATYPE, "float10")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_UNKNOWN")
+        self.write_attribute(DATATYPE, "undefined")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "BYTE")
+        self.write_attribute(DATATYPE, "undefined1")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "WORD")
+        self.write_attribute(DATATYPE, "undefined2")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "DWORD")
+        self.write_attribute(DATATYPE, "undefined4")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "LONG")
+        self.write_attribute(DATATYPE, "undefined4")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_QWORD")
+        self.write_attribute(DATATYPE, "undefined8")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__ptr32")
+        self.write_attribute(DATATYPE, "pointer32")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__ptr64")
+        self.write_attribute(DATATYPE, "pointer64")
+        self.close_tag()
+
+    def export_prototype(self, function):
+        func_type_data_t = self.get_function_type_data_t(function)
+        rettype = func_type_data_t.rettype.dstr()
+        cm = func_type_data_t.cc & idaapi.CM_CC_MASK
+        cc = "__none_decl "
+        variadic = False
+        if cm == idaapi.CM_CC_INVALID:
+            cc = "__invalid_decl "
+        elif cm == idaapi.CM_CC_UNKNOWN:
+            cc = "__unknown_decl "
+        elif cm == idaapi.CM_CC_VOIDARG:
+            # function without arguments if has other cc and argnum == 0,
+            # represent as f() - unknown list
+            cc = ''
+        elif cm == idaapi.CM_CC_CDECL:
+            # stack
+            cc = "__cdecl "
+        elif cm == idaapi.CM_CC_ELLIPSIS:
+            # cdecl + ellipsis
+            cc = "__cdecl "
+            variadic = True
+        elif cm == idaapi.CM_CC_STDCALL:
+            # stack, purged
+            cc = "__stdcall "
+        elif cm == idaapi.CM_CC_PASCAL:
+            # stack, purged, reverse order of args
+            # TODO: Ghidra doesn't support Pascal calling convention, see #496 issue
+            cc = "__pascal "
+        elif cm == idaapi.CM_CC_FASTCALL:
+            # stack, purged (x86), first args are in regs (compiler-dependent)
+            # TODO: Ghidra don't parse '__fastcall' or '__regparm'
+            cc = "__fastcall "
+        elif cm == idaapi.CM_CC_THISCALL:
+            # stack, purged (x86), first arg is in reg (compiler-dependent)
+            cc = "__thiscall "
+        elif cm == idaapi.CM_CC_MANUAL:
+            # TODO: What does it means for Ghidra?
+            # special case for compiler specific
+            cc = "__manual_decl "
+        elif cm == idaapi.CM_CC_SPOILED:
+            # TODO: Ghidra doesn't support spoiled arguments
+            # This is NOT a cc! Mark of __spoil record the low nibble is count
+            # and after n {spoilreg_t} present real cm_t byte.
+            cc = "__spoil_decl "
+        elif cm == idaapi.CM_CC_SPECIALE:
+            # CM_CC_SPECIAL with ellipsis
+            return
+        elif cm == idaapi.CM_CC_SPECIALP:
+            # Equal to CM_CC_SPECIAL, but with purged stack.
+            return
+        elif cm == idaapi.CM_CC_SPECIAL:
+            # locations of all arguments and the return value are present
+            # in the function declaration.
+            return
+        parameters = self.get_parameters(func_type_data_t, variadic)
+        name = self.get_symbol_name(function.startEA)
+        self.export_typeinfo_cmt(rettype + ' ' + cc + name + parameters)
+
+    @staticmethod
+    def get_parameters(func_type_data_t, variadic=False):
+        parameters = '(...)' if variadic else '()'
+        if len(func_type_data_t) > 0:
+            parameters = '('
+            for parameter in func_type_data_t:
+                parameters += parameter.type.dstr()
+                parameters += ' '
+                parameters += parameter.name
+                parameters += ', '
+            parameters = parameters[:-2] + (", ...)" if variadic else ')')
+        return parameters
+
+    def export_manual_cc(self, function):
+        func_type_data_t = self.get_function_type_data_t(function)
+        cc = func_type_data_t.cc
+        cm = cc & idaapi.CM_CC_MASK
+        if cm == idaapi.CM_CC_SPECIAL or cm == idaapi.CM_CC_SPECIALE or cm == idaapi.CM_CC_SPECIALP:
+            # TODO: XML doesn't support varargs without TYPEINFO_CMT
+            for arg in func_type_data_t:
+                if arg.argloc.is_reg1():
+                    self.start_element(REGISTER_VAR)
+                    name_var = arg.name
+                    type = arg.type
+                    name_reg = ida_idp.get_reg_name(arg.argloc.reg1(), type.get_size())
+                    self.write_attribute(NAME, name_var)
+                    self.write_attribute(REGISTER, name_reg)
+                    self.write_attribute(DATATYPE, type.dstr())
+                    self.close_tag()
+                if arg.argloc.is_reg2():
+                    # TODO: REGISTER_VAR doesn't support multiple registers
+                    pass
+                if arg.argloc.is_rrel():
+                    # TODO: Other storage of arguments
+                    pass
+        if cm == idaapi.CM_CC_SPOILED:
+            pass
+
+    @staticmethod
+    def get_function_type_data_t(function):
+        tinfo_t = idaapi.tinfo_t()
+        idaapi.get_tinfo(function.startEA, tinfo_t)
+        func_type_data_t = idaapi.func_type_data_t()
+        tinfo_t.get_func_details(func_type_data_t)
+        return func_type_data_t
 
 
 class XmlImporter(IdaXml):

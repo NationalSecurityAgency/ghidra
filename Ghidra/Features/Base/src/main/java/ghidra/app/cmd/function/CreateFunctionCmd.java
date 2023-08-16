@@ -213,7 +213,6 @@ public class CreateFunctionCmd extends BackgroundCommand {
 					if (functionModel == null) {
 						functionModel = new PartitionCodeSubModel(program);
 					}
-// TODO: What if function already exists ??
 					if (createFunction(monitor, funcName, functionModel, nameSpace, origEntry,
 						origBody, tmpSource)) {
 						functionsCreated++;
@@ -282,7 +281,8 @@ public class CreateFunctionCmd extends BackgroundCommand {
 					entry = functionContaining.getEntryPoint(); // preserve entry
 					long bodySize = functionContaining.getBody().getNumAddresses();
 					if (bodySize != 1) {
-						return false;
+						newFunc = functionContaining;
+						return true;
 					}
 				}
 
@@ -475,7 +475,8 @@ public class CreateFunctionCmd extends BackgroundCommand {
 		if (bodySize > 1) {
 			if (!recreateFunction) {
 				// Function at entry already exists and recreateFunction not enabled
-				return false;
+				newFunc = existingFunction;
+				return true;
 			}
 			// if it is a thunk, then we're done
 			if (resolveThunk(entry, null, monitor)) {
