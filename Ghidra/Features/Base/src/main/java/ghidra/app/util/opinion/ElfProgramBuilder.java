@@ -989,6 +989,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
+			if (relrRelocationType != 0) {
+				reloc.setType(relrRelocationType);
+			}
+
 			long type = reloc.getType();
 			if (type == 0) {
 				continue; // ignore relocation type 0 (i.e., ..._NONE)
@@ -1005,11 +1009,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						: baseAddress.addWrap(reloc.getOffset());
 
 			long[] values = new long[] { reloc.getSymbolIndex() };
-
-			if (relrRelocationType != 0) {
-				type = relrRelocationType;
-				reloc.setType(relrRelocationType);
-			}
 
 			Status status = Status.SKIPPED;
 			int byteLength = 0;
