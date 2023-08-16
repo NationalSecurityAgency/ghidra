@@ -755,7 +755,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			int currentIndex = getMinIndexSelected();
 			DataType dt = getNextCycleDataType(cycleGroup);
 			if (dt != null) {
-				DataTypeInstance dti = DataTypeHelper.getFixedLength(this, currentIndex, dt);
+				DataTypeInstance dti = DataTypeHelper.getFixedLength(this, currentIndex, dt,
+					usesAlignedLengthComponents());
 				if (dti == null) {
 					return;
 				}
@@ -1162,7 +1163,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			dtName = dt.getDisplayName();
 			if (dtString.equals(dtName)) {
 				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
-					element.getLength(), true);
+					element.getLength(), usesAlignedLengthComponents());
 			}
 		}
 
@@ -1194,7 +1195,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		if (maxLength > 0 && newLength > maxLength) {
 			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
 		}
-		return DataTypeInstance.getDataTypeInstance(newDt, newLength, true);
+		return DataTypeInstance.getDataTypeInstance(newDt, newLength,
+			usesAlignedLengthComponents());
 	}
 
 	@SuppressWarnings("unused") // the exception is thrown by subclasses
