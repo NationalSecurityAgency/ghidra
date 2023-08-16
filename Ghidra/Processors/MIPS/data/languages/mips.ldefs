@@ -13,6 +13,7 @@
     <compiler name="default" spec="mips32be.cspec" id="default"/>
     <compiler name="Visual Studio" spec="mips32be.cspec" id="windows"/>
     <compiler name="eabi" spec="mips32be_eabi.cspec" id="eabi"/>
+    <external_name tool="gnu" name="mips:3000"/>
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
@@ -30,6 +31,7 @@
     <compiler name="default" spec="mips32le.cspec" id="default"/>
     <compiler name="Visual Studio" spec="mips32le.cspec" id="windows"/>
     <compiler name="eabi" spec="mips32le_eabi.cspec" id="eabi"/>
+    <external_name tool="gnu" name="mips:3000"/>
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
