@@ -32,9 +32,9 @@ import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A class for extracting DYLIB files from a {@link DyldCacheFileSystem}
+ * A class for extracting components from a {@link DyldCacheFileSystem}
  */
-public class DyldCacheDylibExtractor {
+public class DyldCacheExtractor {
 
 	/**
 	 * Gets an {@link ByteProvider} that reads a DYLIB from a {@link DyldCacheFileSystem}.  The
@@ -59,6 +59,22 @@ public class DyldCacheDylibExtractor {
 			new PackedSegments(dylibOffset, splitDyldCache, index, slideFixupMap, monitor);
 
 		return packedSegments.getByteProvider(fsrl);
+	}
+
+	/**
+	 * Converts the given value to a byte array
+	 * 
+	 * @param value The value to convert to a byte array
+	 * @param size The number of bytes to convert (must be 4 or 8)
+	 * @return The value as a byte array of the given size
+	 * @throws IllegalArgumentException if size is an unsupported value
+	 */
+	private static byte[] toBytes(long value, int size) throws IllegalArgumentException {
+		if (size != 4 && size != 8) {
+			throw new IllegalArgumentException("Size must be 4 or 8 (got " + size + ")");
+		}
+		DataConverter converter = LittleEndianDataConverter.INSTANCE;
+		return size == 8 ? converter.getBytes(value) : converter.getBytes((int) value);
 	}
 
 	/**
@@ -617,22 +633,6 @@ public class DyldCacheDylibExtractor {
 			}
 			throw new IOException(
 				"Failed to find provider for segment: " + segment.getSegmentName());
-		}
-
-		/**
-		 * Converts the given value to a byte array
-		 * 
-		 * @param value The value to convert to a byte array
-		 * @param size The number of bytes to convert (must be 4 or 8)
-		 * @return The value as a byte array of the given size
-		 * @throws IllegalArgumentException if size is an unsupported value
-		 */
-		private byte[] toBytes(long value, int size) throws IllegalArgumentException {
-			if (size != 4 && size != 8) {
-				throw new IllegalArgumentException("Size must be 4 or 8 (got " + size + ")");
-			}
-			DataConverter converter = LittleEndianDataConverter.INSTANCE;
-			return size == 8 ? converter.getBytes(value) : converter.getBytes((int) value);
 		}
 
 		/**
