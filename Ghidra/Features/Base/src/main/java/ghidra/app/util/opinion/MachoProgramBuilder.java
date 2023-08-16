@@ -633,7 +633,7 @@ public class MachoProgramBuilder {
 				int symbolIndex = indirectSymbols[i];
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
 				if (symbol != null) {
-					String name = generateValidName(symbol.getString());
+					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 					if (name != null && name.length() > 0) {
 						try {
 							program.getSymbolTable()
@@ -701,7 +701,7 @@ public class MachoProgramBuilder {
 				return;
 			}
 			try {
-				String name = generateValidName(symbol.getString());
+				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 				if (name != null && name.length() > 0) {
 					program.getSymbolTable().createLabel(start, name, SourceType.IMPORTED);
 				}
@@ -751,7 +751,7 @@ public class MachoProgramBuilder {
 		}
 		for (NList symbol : absoluteSymbols) {
 			try {
-				String name = generateValidName(symbol.getString());
+				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 				if (name != null && name.length() > 0) {
 					program.getSymbolTable().createLabel(start, name, SourceType.IMPORTED);
 				}
@@ -1200,7 +1200,9 @@ public class MachoProgramBuilder {
 			}
 		}
 
-		program.getSymbolTable().createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
+		if (program.getSymbolTable().getLibrarySymbol(Library.UNKNOWN) == null) {
+			program.getSymbolTable().createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
+		}
 	}
 
 	/**
@@ -1485,7 +1487,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private Namespace createNamespace(String namespaceName) {
+	protected Namespace createNamespace(String namespaceName) {
 		try {
 			return program.getSymbolTable()
 					.createNameSpace(program.getGlobalNamespace(), namespaceName,
@@ -1501,10 +1503,6 @@ public class MachoProgramBuilder {
 			log.appendException(e);
 		}
 		return program.getGlobalNamespace();
-	}
-
-	private String generateValidName(String name) {
-		return SymbolUtilities.replaceInvalidChars(name, true);
 	}
 
 	/**

@@ -70,7 +70,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 			addr - splitDyldCache.getDyldCacheHeader(index).getBaseAddress();
 
 		if (slideFixupMap == null) {
-			slideFixupMap = DyldCacheDylibExtractor.getSlideFixups(splitDyldCache, monitor);
+			slideFixupMap = DyldCacheExtractor.getSlideFixups(splitDyldCache, monitor);
 		}
 
 		if (!parsedLocalSymbols) {
@@ -82,7 +82,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		}
 
 		try {
-			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider,
+			return DyldCacheExtractor.extractDylib(machHeaderStartIndexInProvider,
 				splitDyldCache, index, slideFixupMap, file.getFSRL(), monitor);
 		}
 		catch (MachException e) {

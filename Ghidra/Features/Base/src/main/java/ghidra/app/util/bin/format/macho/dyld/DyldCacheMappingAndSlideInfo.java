@@ -32,9 +32,11 @@ import ghidra.util.exception.DuplicateNameException;
 @SuppressWarnings("unused")
 public class DyldCacheMappingAndSlideInfo implements StructConverter {
 	
-	public static long DYLD_CACHE_MAPPING_AUTH_DATA     = 1 << 3L;
-	public static long DYLD_CACHE_MAPPING_DIRTY_DATA    = 1 << 1L;
-	public static long DYLD_CACHE_MAPPING_CONST_DATA    = 1 << 2L;
+	public static long DYLD_CACHE_MAPPING_AUTH_DATA = 0x1;
+	public static long DYLD_CACHE_MAPPING_DIRTY_DATA = 0x2;
+	public static long DYLD_CACHE_MAPPING_CONST_DATA = 0x4;
+	public static long DYLD_CACHE_MAPPING_TEXT_STUBS = 0x8;
+	public static long DYLD_CACHE_DYNAMIC_CONFIG_DATA = 0x10;
 
 	private long address;
 	private long size;
@@ -128,6 +130,14 @@ public class DyldCacheMappingAndSlideInfo implements StructConverter {
 		return (flags & DYLD_CACHE_MAPPING_CONST_DATA) != 0;
 	}
 
+	public boolean isTextStubs() {
+		return (flags & DYLD_CACHE_MAPPING_TEXT_STUBS) != 0;
+	}
+
+	public boolean isConfigData() {
+		return (flags & DYLD_CACHE_DYNAMIC_CONFIG_DATA) != 0;
+	}
+
 	/**
 	 * Returns true if the initial protections include READ.
 	 * 
@@ -153,6 +163,17 @@ public class DyldCacheMappingAndSlideInfo implements StructConverter {
 	 */
 	public boolean isExecute() {
 		return (initProt & SegmentConstants.PROTECTION_X) != 0;
+	}
+
+	/**
+	 * Returns true if the mapping contains the given address
+	 * 
+	 * @param addr The address to check
+	 * @return True if the mapping contains the given address; otherwise, false
+	 */
+	public boolean contains(long addr) {
+		return Long.compareUnsigned(addr, address) >= 0 &&
+			Long.compareUnsigned(addr, address + size) < 0;
 	}
 
 	@Override

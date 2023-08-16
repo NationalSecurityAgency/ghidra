@@ -200,6 +200,17 @@ public class SegmentCommand extends LoadCommand {
 		return (flags & SegmentConstants.FLAG_APPLE_PROTECTED) != 0;
 	}
 
+	/**
+	 * Returns true if the segment contains the given address
+	 * 
+	 * @param addr The address to check
+	 * @return True if the segment contains the given address; otherwise, false
+	 */
+	public boolean contains(long addr) {
+		return Long.compareUnsigned(addr, vmaddr) >= 0 &&
+			Long.compareUnsigned(addr, vmaddr + vmsize) < 0;
+	}
+
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType(getCommandName(), 0);
