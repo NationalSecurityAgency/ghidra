@@ -91,7 +91,7 @@ public class SystemUtilities {
 		if (url.getPath().contains("/build/libs")) {
 			return true; // Source repository Gradle JavaExec task mode
 		}
-		return switch(url.getProtocol()) {
+		return switch (url.getProtocol()) {
 			case "file" -> true; // Eclipse run config mode (class files)
 			case "jar" -> false; // Release mode (jar files)
 			case "bundleresource" -> false; // GhidraDev Utility.jar access mode
@@ -100,25 +100,33 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Get the user that is running the ghidra application
+	 * Get the user that is running the ghidra application.  This name may be modified to 
+	 * eliminate any spaces or leading domain name which may be present in Java's 
+	 * {@code user.name} system property.
 	 * @return the user name
 	 */
 	public static String getUserName() {
 		if (userName == null) {
 			String uname = System.getProperty("user.name");
 
-			// remove the spaces since some operating systems allow
+			// Remove the spaces since some operating systems allow
 			// spaces and some do not, Java's File class doesn't
+			StringBuilder nameBuf = new StringBuilder();
 			if (uname.indexOf(" ") >= 0) {
-				userName = "";
 				StringTokenizer tokens = new StringTokenizer(uname, " ", false);
 				while (tokens.hasMoreTokens()) {
-					userName += tokens.nextToken();
+					nameBuf.append(tokens.nextToken());
 				}
+				uname = nameBuf.toString();
 			}
-			else {
-				userName = uname;
+
+			// Remove leading Domain Name if present
+			int slashIndex = uname.lastIndexOf('\\');
+			if (slashIndex >= 0) {
+				uname = uname.substring(slashIndex + 1);
 			}
+
+			userName = uname;
 		}
 		return userName;
 	}
