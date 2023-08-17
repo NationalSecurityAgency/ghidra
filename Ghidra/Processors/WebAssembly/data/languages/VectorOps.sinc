@@ -98,10 +98,10 @@ shuf_impl: is shuf0 ; shuf1 ; shuf2 ; shuf3 ; shuf4 ; shuf5 ; shuf6 ; shuf7 ; sh
     t0o[120,8] = shuf15;
 }
 
-laneidx0_3: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] { export laneidx_disp; }
-laneidx4_7: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] { export laneidx_disp; }
-laneidx8_11: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] { export laneidx_disp; }
-laneidx12_15: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] { export laneidx_disp; }
+laneidx0_3: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] {}
+laneidx4_7: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] {}
+laneidx8_11: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] {}
+laneidx12_15: laneidx_disp is laneidx0; laneidx1; laneidx2; laneidx3 [ laneidx_disp = (laneidx3 << 24) | (laneidx2 << 16) | (laneidx1 << 8) | laneidx0; ] {}
 
 shuf_disp: laneidx0_3 laneidx4_7 laneidx8_11 laneidx12_15 is laneidx0_3 ; laneidx4_7 ; laneidx8_11 ; laneidx12_15 {
 }
