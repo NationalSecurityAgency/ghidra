@@ -377,4 +377,12 @@
   </pcode>
 </callfixup>
 
+<callfixup name="__RTC_CheckEsp">
+  <target name="__RTC_CheckEsp"/>
+  <pcode>
+   <body><![CDATA[
+      temp:4 = 0;
+   ]]></body>
+  </pcode>
+</callfixup>
 </compiler_spec>
