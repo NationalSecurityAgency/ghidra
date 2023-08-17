@@ -116,11 +116,11 @@ public class DefaultProjectData implements ProjectData {
 		try {
 			init(false, isInWritableProject);
 			if (resetOwner) {
-				owner = SystemUtilities.getUserName();
+				owner = getUserName();
 				properties.putString(OWNER, owner);
 				properties.writeState();
 			}
-			else if (isInWritableProject && !SystemUtilities.getUserName().equals(owner)) {
+			else if (isInWritableProject && !isOwner(owner)) {
 				if (owner == null) {
 					throw new NotOwnerException("Older projects may only be opened as a View.\n" +
 						"You must first create a new project or open an existing current project, \n" +
@@ -185,7 +185,7 @@ public class DefaultProjectData implements ProjectData {
 	DefaultProjectData(LocalFileSystem fileSystem, FileSystem versionedFileSystem)
 			throws IOException {
 		this.localStorageLocator = new ProjectLocator(null, "Test");
-		owner = SystemUtilities.getUserName();
+		owner = getUserName();
 		boolean success = false;
 		try {
 			synchronized (fileSystem) {
@@ -215,6 +215,34 @@ public class DefaultProjectData implements ProjectData {
 		else {
 			versionedFSListener = null;
 		}
+	}
+
+	private boolean isOwner(String name) {
+		// Tolerate user name using either the new or old format
+		return SystemUtilities.getUserName().equals(name) || getUserName().equals(name);
+	}
+
+	/**
+	 * Get user name in a format consistent with the older {@link SystemUtilities#getUserName()} 
+	 * implementation.  This is done to ensure we can still recognize the OWNER of older
+	 * projects.
+	 * 
+	 * @return current user name using legacy formatting.
+	 */
+	private String getUserName() {
+		String uname = System.getProperty("user.name");
+
+		// Remove the spaces since some operating systems allow
+		// spaces and some do not, Java's File class doesn't
+		String userName = uname;
+		if (uname.indexOf(" ") >= 0) {
+			userName = "";
+			StringTokenizer tokens = new StringTokenizer(uname, " ", false);
+			while (tokens.hasMoreTokens()) {
+				userName += tokens.nextToken();
+			}
+		}
+		return userName;
 	}
 
 	/**
@@ -276,7 +304,7 @@ public class DefaultProjectData implements ProjectData {
 					throw new ReadOnlyException(
 						"Project " + localStorageLocator.getName() + " is read-only");
 				}
-				owner = properties.getString(OWNER, SystemUtilities.getUserName());
+				owner = properties.getString(OWNER, getUserName());
 			}
 			else {
 				owner = "<unknown>"; // Unknown owner
@@ -298,7 +326,7 @@ public class DefaultProjectData implements ProjectData {
 		}
 
 		if (!properties.exists()) {
-			owner = SystemUtilities.getUserName();
+			owner = getUserName();
 			properties.putString(OWNER, owner);
 			properties.writeState();
 		}

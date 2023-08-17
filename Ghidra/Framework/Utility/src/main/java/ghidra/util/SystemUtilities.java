@@ -100,33 +100,41 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Get the user that is running the ghidra application.  This name may be modified to 
+	 * Clean the specified user name to eliminate any spaces or leading domain name 
+	 * which may be present (e.g., "MyDomain\John Doe" becomes "JohnDoe").
+	 * @param name user name string to be cleaned-up
+	 * @return the clean user name
+	 */
+	public static String getCleanUserName(String name) {
+		String uname = name;
+		// Remove the spaces since some operating systems allow
+		// spaces and some do not, Java's File class doesn't
+		StringBuilder nameBuf = new StringBuilder();
+		if (uname.indexOf(" ") >= 0) {
+			StringTokenizer tokens = new StringTokenizer(uname, " ", false);
+			while (tokens.hasMoreTokens()) {
+				nameBuf.append(tokens.nextToken());
+			}
+			uname = nameBuf.toString();
+		}
+
+		// Remove leading Domain Name if present
+		int slashIndex = uname.lastIndexOf('\\');
+		if (slashIndex >= 0) {
+			uname = uname.substring(slashIndex + 1);
+		}
+		return uname;
+	}
+
+	/**
+	 * Get the user that is running the application.  This name may be modified to 
 	 * eliminate any spaces or leading domain name which may be present in Java's 
-	 * {@code user.name} system property.
+	 * {@code user.name} system property (see {@link #getCleanUserName(String)}).
 	 * @return the user name
 	 */
 	public static String getUserName() {
 		if (userName == null) {
-			String uname = System.getProperty("user.name");
-
-			// Remove the spaces since some operating systems allow
-			// spaces and some do not, Java's File class doesn't
-			StringBuilder nameBuf = new StringBuilder();
-			if (uname.indexOf(" ") >= 0) {
-				StringTokenizer tokens = new StringTokenizer(uname, " ", false);
-				while (tokens.hasMoreTokens()) {
-					nameBuf.append(tokens.nextToken());
-				}
-				uname = nameBuf.toString();
-			}
-
-			// Remove leading Domain Name if present
-			int slashIndex = uname.lastIndexOf('\\');
-			if (slashIndex >= 0) {
-				uname = uname.substring(slashIndex + 1);
-			}
-
-			userName = uname;
+			userName = getCleanUserName(System.getProperty("user.name"));
 		}
 		return userName;
 	}
