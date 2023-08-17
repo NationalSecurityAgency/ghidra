@@ -6,7 +6,6 @@ define token opbyte (8)
 	bytev = (0, 7)
 
 	topbit = (7, 7)
-	v = (0, 6)
 	v0 = (0, 6)
 	v1 = (0, 6)
 	v2 = (0, 6)
@@ -26,6 +25,25 @@ define token I32 (32)
 define token I64 (64)
 	f64 = (0,63)
 ;
+
+attach names valtype [
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x10
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x20
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x30
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x40
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x50
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ externref # 0x60
+  funcref _ _ _ _ _ _ _ _ _ _ v128 f64 f32 i64 i32 # 0x70
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x80
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0x90
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xa0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xb0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xc0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xd0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xe0
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ # 0xf0
+];
 
 ################################################################
 
@@ -182,10 +200,6 @@ count: ULeb128 is ULeb128 {
 	export ULeb128;
 }
 
-reftype: "reftype="^bytev is bytev {
-	export *[const]:1 bytev;
-}
-
 # An explicit no-op operation, to be used before
 # callother instructions to work around Ghidra issue #3390
 # (which causes incorrect decompilation if the first pcodeop
@@ -290,7 +304,7 @@ macro doBranch(br_target) {
 }
 
 ## Reference Instructions
-:ref.null reftype is opc=0xd0; reftype; sp0_32; ctx_is_directive=0 {
+:ref.null valtype is opc=0xd0; valtype; sp0_32; ctx_is_directive=0 {
 	sp0_32 = 0;
 }
 :ref.is_null is opc=0xd1; sp1_32; ctx_is_directive=0 {
@@ -333,33 +347,21 @@ macro select128(sp1_32, sp2_128, sp3_128) {
 
 # In the current version of Wasm, only one type index is permitted in select t*.
 # This is functionally identical to regular select.
-valtype_32: valtype is topbit=0 & v=1; valtype {}
-valtype_32: valtype is topbit=1 & v=1; topbit=0 & v=0; valtype {}
-valtype_32: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=0 & v=0; valtype {}
-valtype_32: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype {}
-valtype_32: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype {}
-valtype_64: valtype is topbit=0 & v=1; valtype & (bytev=0x7e | bytev=0x7c) {}
-valtype_64: valtype is topbit=1 & v=1; topbit=0 & v=0; valtype & (bytev=0x7e | bytev=0x7c) {}
-valtype_64: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=0 & v=0; valtype & (bytev=0x7e | bytev=0x7c) {}
-valtype_64: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype & (bytev=0x7e | bytev=0x7c) {}
-valtype_64: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype & (bytev=0x7e | bytev=0x7c) {}
-valtype_128: valtype is topbit=0 & v=1; valtype & bytev=0x7b {}
-valtype_128: valtype is topbit=1 & v=1; topbit=0 & v=0; valtype & bytev=0x7b {}
-valtype_128: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=0 & v=0; valtype & bytev=0x7b {}
-valtype_128: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype & bytev=0x7b {}
-valtype_128: valtype is topbit=1 & v=1; topbit=1 & v=0; topbit=1 & v=0; topbit=1 & v=0; topbit=0 & v=0; valtype & bytev=0x7b {}
-
-:select valtype_32 is opc=0x1c; valtype_32; sp1_32; sp2_32; sp3_32; ctx_is_directive=0 {
+select_valtype: valtype is valtype; sp1_32; sp2_32; sp3_32 {
 	# i32, f32, funcref, externref
 	select32(sp1_32, sp2_32, sp3_32);
 }
-:select valtype_64 is opc=0x1c; valtype_64; sp1_32; sp2_64; sp3_64; ctx_is_directive=0 {
+select_valtype: valtype is valtype & (bytev=0x7e | bytev=0x7c); sp1_32; sp2_64; sp3_64 {
 	# i64, f64
 	select64(sp1_32, sp2_64, sp3_64);
 }
-:select valtype_128 is opc=0x1c; valtype_128; sp1_32; sp2_128; sp3_128; ctx_is_directive=0 {
+select_valtype: valtype is valtype & bytev=0x7b; sp1_32; sp2_128; sp3_128 {
 	# v128
 	select128(sp1_32, sp2_128, sp3_128);
+}
+
+# opc2_1 is used here to check that the LEB128 length of the type vector is 1.
+:select select_valtype is opc=0x1c; opc2_1; select_valtype; ctx_is_directive=0 {
 }
 
 ## Variable Instructions
