@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,8 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractUserDefinedTypeMsSymbol;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractComplexMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -80,16 +82,18 @@ public class TypedefSymbolApplier extends MsSymbolApplier {
 	}
 
 	// Typedefs
-	private DataType applyUserDefinedTypeMsSymbol(AbstractUserDefinedTypeMsSymbol symbol) {
+	private DataType applyUserDefinedTypeMsSymbol(AbstractUserDefinedTypeMsSymbol symbol)
+			throws CancelledException, PdbException {
 
 		String name = symbol.getName();
 
+		AbstractMsType mType = applicator.getPdb().getTypeRecord(getTypeRecordNumber());
 		MsTypeApplier applier = applicator.getTypeApplier(symbol.getTypeRecordNumber());
 		// TODO:... NOT SURE IF WILL ALWAYS BE A DATATYPE OR WILL BE A VARIABLE OR ????
 		if (applier == null) {
 			return null;
 		}
-		DataType dataType = applier.getDataType();
+		DataType dataType = applicator.getCompletedDataType(getTypeRecordNumber());
 		if (dataType == null) {
 			return null;
 		}
@@ -101,17 +105,8 @@ public class TypedefSymbolApplier extends MsSymbolApplier {
 		//  create a TypeDefDataType which uses an existing underlying DataType.
 		// Note, too, that we do not compare name with dataType.getName() as the latter does not
 		//  contain namespace information.
-		if (applier instanceof CompositeTypeApplier) {
-			CompositeTypeApplier compositeApplier = (CompositeTypeApplier) applier;
-			String compositeName = compositeApplier.getName();
-			if (name.equals(compositeName)) {
-				return dataType;
-			}
-		}
-		else if (applier instanceof EnumTypeApplier) {
-			EnumTypeApplier enumApplier = (EnumTypeApplier) applier;
-			String enumName = enumApplier.getMsType().getName();
-			if (name.equals(enumName)) {
+		if (mType instanceof AbstractComplexMsType) {
+			if (name.equals(mType.getName())) {
 				return dataType;
 			}
 		}

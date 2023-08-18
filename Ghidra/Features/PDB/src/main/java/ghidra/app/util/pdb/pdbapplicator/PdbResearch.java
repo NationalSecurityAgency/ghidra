@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -326,29 +326,6 @@ public class PdbResearch {
 		}
 	}
 
-	/**
-	 * Developmental method for breakpoints.  TODO: will delete this from production.
-	 * @param recordNumber the record number tha is being processed (set negative to ignore)
-	 * @param applier the applier that might have additional, such as the name of the type of
-	 * interest
-	 */
-	static void checkBreak(int recordNumber, MsTypeApplier applier) {
-
-		String nn = applier.getMsType().getName();
-		if ("std::__1::__map_value_compare<std::__1::basic_string<char>,std::__1::__value_type<std::__1::basic_string<char>,std::__1::basic_string<wchar_t> >,std::__1::less<void>,1>"
-				.equals(nn)) {
-			doNothingSetBreakPointHere();
-		}
-		if ("class std::__1::__iostream_category".equals(nn)) {
-			doNothingSetBreakPointHere();
-		}
-		if ("std::__1::__do_message".equals(nn)) {
-			doNothingSetBreakPointHere();
-		}
-
-		//checkBreak(recordNumber);
-	}
-
 	//==============================================================================================
 	//==============================================================================================
 	static private void initDeveloperOrderRecordNumbers() {
@@ -401,9 +378,10 @@ public class PdbResearch {
 		for (int indexNumber : developerDebugOrderIndexNumbers) {
 			monitor.checkCancelled();
 			PdbResearch.checkBreak(indexNumber);
-			MsTypeApplier applier =
-				applicator.getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
-			applier.apply();
+			FixupContext fixupContext = new FixupContext();
+			fixupContext.addStagedRecord(indexNumber);
+			applicator.getProcessedDataType(RecordNumber.typeRecordNumber(indexNumber),
+				fixupContext, true);
 		}
 
 	}
@@ -448,10 +426,10 @@ public class PdbResearch {
 		MsSymbolApplier applier = applicator.getSymbolApplier(iter);
 		if (applier instanceof TypedefSymbolApplier) {
 			TypedefSymbolApplier typedefApplier = (TypedefSymbolApplier) applier;
-			MsTypeApplier typeApplier =
-				applicator.getTypeApplier(typedefApplier.getTypeRecordNumber());
-			System.out.println("UDT " + typedefApplier.getName() + " depends on " +
-				typeApplier.getMsType().toString());
+			RecordNumber typeNumber = typedefApplier.getTypeRecordNumber();
+			AbstractMsType type = applicator.getPdb().getTypeRecord(typeNumber);
+			System.out
+					.println("UDT " + typedefApplier.getName() + " depends on " + type.toString());
 //			applier.apply();
 //			procSym(symbolGroup);
 		}

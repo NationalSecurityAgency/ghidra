@@ -19,6 +19,7 @@ import java.util.Objects;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractRegisterRelativeAddressMsSymbol;
 import ghidra.program.model.data.DataType;
@@ -67,7 +68,8 @@ public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
 		}
 	}
 
-	private boolean createFunctionVariable(FunctionSymbolApplier applier) {
+	private boolean createFunctionVariable(FunctionSymbolApplier applier)
+			throws CancelledException, PdbException {
 		Objects.requireNonNull(applier, "FunctionSymbolApplier cannot be null");
 		Function function = applier.getFunction();
 
@@ -105,8 +107,8 @@ public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
 //		}
 		int offset = (int) (relativeOffset & 0xffffffffL);
 
-		MsTypeApplier dataTypeApplier = applicator.getTypeApplier(symbol.getTypeRecordNumber());
-		DataType dt = dataTypeApplier.getDataType();
+		RecordNumber typeRecord = symbol.getTypeRecordNumber();
+		DataType dt = applicator.getCompletedDataType(typeRecord);
 		if (dt != null) {
 //			Variable m16 = stackFrame.getVariableContaining(-16);
 //			Variable m8 = stackFrame.getVariableContaining(-8);

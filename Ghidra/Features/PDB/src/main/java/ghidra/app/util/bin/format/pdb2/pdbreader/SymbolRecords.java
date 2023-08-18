@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -180,9 +180,6 @@ public class SymbolRecords {
 	 */
 	public int getCvSigLength(int streamNumber)
 			throws CancelledException, IOException, PdbException {
-//		if (cvSignatureCase1and2Stream == MsfStream.NIL_STREAM_NUMBER) {
-//			throw new PdbException("CvSigLength not initialized");
-//		}
 		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
 			return 0; // returning inconsequential value; fact of NIL will be dealt with elsewhere
 		}

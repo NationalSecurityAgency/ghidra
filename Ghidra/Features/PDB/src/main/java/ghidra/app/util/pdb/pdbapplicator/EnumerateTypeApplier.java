@@ -15,64 +15,58 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.Numeric;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractEnumerateMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.pdb.PdbNamespaceUtils;
 import ghidra.program.model.data.DataType;
+import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractEnumerateMsType} types.
  */
 public class EnumerateTypeApplier extends MsTypeApplier {
 
-	private String fieldName;
-	private Numeric numeric;
-
+	// Intended for: AbstractEnumerateMsType
 	/**
 	 * Constructor for enumerate type applier, for transforming a enumerate into a
 	 * Ghidra DataType.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractEnumerateMsType} to process.
 	 */
-	public EnumerateTypeApplier(DefaultPdbApplicator applicator, AbstractEnumerateMsType msType) {
-		super(applicator, msType);
+	public EnumerateTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
 	@Override
-	BigInteger getSize() {
-		return BigInteger.ZERO;
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException {
+		DataType dataType = applyEnumerateMsType((AbstractEnumerateMsType) type);
+		//dataType is null for now... so no resolve
+		//return applicator.resolve(dataType);
+		return null;
 	}
 
-	@Override
-	void apply() {
-		dataType = applyEnumerateMsType((AbstractEnumerateMsType) msType);
-//		DataType dataType = applyEnumerateMsType((AbstractEnumerateMsType) msType);
-//		ghDataType = dataType; // temporary while below is commented-out
-		// TODO: uncomment when above method not returning null
-//		ghDataTypeDB = applicator.resolve(dataType);
+	String getName(AbstractEnumerateMsType type) {
+		return PdbNamespaceUtils.fixUnnamed(type.getName(), type.getRecordNumber().getNumber());
 	}
 
-	String getName() {
-		return fieldName;
-	}
-
-	Numeric getNumeric() {
-		return numeric;
+	Numeric getNumeric(AbstractEnumerateMsType type) {
+		return type.getNumeric();
 	}
 
 	private DataType applyEnumerateMsType(AbstractEnumerateMsType type) {
 
 		//TODO: currently dropping these on the floor.  The access methods above do the same work.
 
-		fieldName = PdbNamespaceUtils.fixUnnamed(type.getName(), index);
+		String fieldName =
+			PdbNamespaceUtils.fixUnnamed(type.getName(), type.getRecordNumber().getNumber());
 
 		// TODO: Need to build test sample with these.
 		// TODO: Need to see if can do real number; need to modify Numeric for both
 		//  integral and real numbers.  Possibly need to make Numeric a "type" instead
 		//  of just something to read using ByteReader.
-		numeric = type.getNumeric();
+		Numeric numeric = type.getNumeric();
 
 		return null;
 	}

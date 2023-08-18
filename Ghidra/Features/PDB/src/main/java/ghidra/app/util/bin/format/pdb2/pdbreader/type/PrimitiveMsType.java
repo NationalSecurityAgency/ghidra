@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader.type;
 
+import java.math.BigInteger;
+
 import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
 
 /**
@@ -52,6 +54,11 @@ public class PrimitiveMsType extends AbstractMsType {
 			builder.insert(0, " ");
 		}
 		builder.insert(0, typeString);
+	}
+
+	@Override
+	public BigInteger getSize() {
+		return BigInteger.valueOf(getTypeSize());
 	}
 
 	/**
@@ -259,7 +266,7 @@ public class PrimitiveMsType extends AbstractMsType {
 			//=======================================
 			// Unsigned Character types
 			//=======================================
-			// 8-bit unsigned 
+			// 8-bit unsigned
 			case 0x0020:
 				typeString = "unsigned char";
 				typeSize = 1;
@@ -396,7 +403,7 @@ public class PrimitiveMsType extends AbstractMsType {
 				typeString = "T_CHAR16";
 				typeSize = 2;
 				break;
-			// 16-bit pointer to a 16-bit unicode char 
+			// 16-bit pointer to a 16-bit unicode char
 			case 0x017a:
 				typeString = "T_PCHAR16";
 				typeSize = 2;
@@ -440,7 +447,7 @@ public class PrimitiveMsType extends AbstractMsType {
 				typeString = "T_CHAR32";
 				typeSize = 4;
 				break;
-			// 16-bit pointer to a 32-bit unicode char 
+			// 16-bit pointer to a 32-bit unicode char
 			case 0x017b:
 				typeString = "T_PCHAR32";
 				typeSize = 2;

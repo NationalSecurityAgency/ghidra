@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb.PdbBitField;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractBitfieldMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.util.exception.CancelledException;
@@ -28,61 +28,35 @@ import ghidra.util.exception.CancelledException;
  * Applier for {@link AbstractBitfieldMsType} types.
  */
 public class BitfieldTypeApplier extends MsTypeApplier {
-	private MsTypeApplier elementTypeApplier = null;
 
+	// Intended for: AbstractBitfieldMsType
 	/**
 	 * Constructor for bitfield applier.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractBitfieldMsType} to processes
 	 */
-	public BitfieldTypeApplier(DefaultPdbApplicator applicator, AbstractBitfieldMsType msType) {
-		super(applicator, msType);
+	public BitfieldTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
 	@Override
-	BigInteger getSize() {
-		if (elementTypeApplier == null) {
-			return BigInteger.ZERO;
-		}
-		return elementTypeApplier.getSize();
-	}
-
-	@Override
-	void apply() throws PdbException, CancelledException {
-		// The bitfield does not get resolved/commited to the DataTypeManager.
-		dataType = applyBitfieldMsType((AbstractBitfieldMsType) msType);
-	}
-
-	private DataType applyBitfieldMsType(AbstractBitfieldMsType type) {
-		elementTypeApplier = applicator.getTypeApplier(type.getElementRecordNumber());
-		if (elementTypeApplier instanceof ModifierTypeApplier) {
-			elementTypeApplier =
-				((ModifierTypeApplier) elementTypeApplier).getModifiedTypeApplier();
-		}
-		if (!(elementTypeApplier instanceof PrimitiveTypeApplier ||
-			(elementTypeApplier instanceof EnumTypeApplier))) {
-			applicator.appendLogMsg(
-				"Unable to process underlying type for Bitfield: " + type.getName());
-			return null;
-		}
-		DataType baseDataType = elementTypeApplier.getDataType();
-
-		DataType bitFieldDataType = null;
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException {
+		AbstractBitfieldMsType mType = (AbstractBitfieldMsType) type;
+		RecordNumber elementRecordNumber = mType.getElementRecordNumber();
+		DataType baseDataType =
+			applicator.getProcessedDataType(elementRecordNumber, fixupContext, breakCycle);
+		DataType bitFieldDataType;
 		try {
 			bitFieldDataType = new Pdb2BitField(baseDataType.clone(applicator.getDataTypeManager()),
-				type.getBitLength(), type.getBitPosition());
+				mType.getBitLength(), mType.getBitPosition());
 		}
 		catch (InvalidDataTypeException e) {
 			applicator.appendLogMsg(
 				"Problem creating PdbBitField for " + type.getName() + ", error: " + e.toString());
 			return null;
 		}
+		// do not resolve bit-fields!
 		return bitFieldDataType;
-	}
-
-	@Override
-	void resolve() {
-		// Do not resolve Bitfield Types... will be resolved with composite!!!
 	}
 
 	/**
