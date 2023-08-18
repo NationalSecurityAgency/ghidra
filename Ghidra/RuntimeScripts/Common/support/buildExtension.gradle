@@ -124,6 +124,7 @@ task buildExtension (type: Zip) {
 		exclude '.gradle/**'
 		exclude '.classpath'
 		exclude '.project'
+		exclude '.pydevproject'
 		exclude '.settings/**'
 		exclude 'developer_scripts'
 		exclude '.antProperties.xml'

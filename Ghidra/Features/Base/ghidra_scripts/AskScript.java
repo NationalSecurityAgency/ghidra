@@ -75,7 +75,16 @@ public class AskScript extends GhidraScript {
 			}
 
 			Program prog = askProgram("Please choose a program to open.");
-			println("Program picked: " + prog.getName());
+			if (prog != null) {
+				// NOTE: if prog is not null script must release it when done using.
+				// This may also be accomplished via an overridden cleanup(boolean) method.
+				try {
+					println("Program picked: " + prog.getName());
+				}
+				finally {
+					prog.release(this); // will remain open in tool if applicable
+				}
+			}
 
 			DomainFile domFile = askDomainFile("Which domain file would you like?");
 			println("Domain file: " + domFile.getName());

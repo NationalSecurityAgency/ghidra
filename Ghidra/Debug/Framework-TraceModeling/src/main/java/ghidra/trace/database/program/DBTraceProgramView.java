@@ -47,10 +47,10 @@ import ghidra.trace.database.*;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.listing.DBTraceDefinedUnitsView;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.database.symbol.DBTraceFunctionSymbolView;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
-import ghidra.trace.model.TraceTimeViewport.*;
+import ghidra.trace.model.TraceTimeViewport.Occlusion;
+import ghidra.trace.model.TraceTimeViewport.RangeQueryOcclusion;
 import ghidra.trace.model.bookmark.TraceBookmark;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
@@ -128,22 +128,6 @@ public class DBTraceProgramView implements TraceProgramView {
 			listenFor(TraceDataTypeChangeType.MOVED, this::dataTypeMoved);
 			listenFor(TraceDataTypeChangeType.RENAMED, this::dataTypeRenamed);
 			listenFor(TraceDataTypeChangeType.DELETED, this::dataTypeDeleted);
-
-			listenFor(TraceFunctionChangeType.CHANGED, this::functionChanged);
-			listenFor(TraceFunctionChangeType.CHANGED_PURGE, this::functionChangedPurge);
-			listenFor(TraceFunctionChangeType.CHANGED_INLINE, this::functionChangedInline);
-			listenFor(TraceFunctionChangeType.CHANGED_NORETURN, this::functionChangedNoReturn);
-			listenFor(TraceFunctionChangeType.CHANGED_CALL_FIXUP, this::functionChangedCallFixup);
-			listenFor(TraceFunctionChangeType.CHANGED_RETURN, this::functionChangedReturn);
-			listenFor(TraceFunctionChangeType.CHANGED_PARAMETERS, this::functionChangedParameters);
-			listenFor(TraceFunctionChangeType.CHANGED_THUNK, this::functionChangedThunk);
-			listenFor(TraceFunctionChangeType.CHANGED_BODY, this::functionChangedBody);
-			listenFor(TraceFunctionChangeType.TAG_APPLIED, this::functionChangedTagApplied);
-			listenFor(TraceFunctionChangeType.TAG_REMOVED, this::functionChangedTagRemoved);
-
-			listenFor(TraceFunctionTagChangeType.ADDED, this::functionTagAdded);
-			listenFor(TraceFunctionTagChangeType.CHANGED, this::functionTagChanged);
-			listenFor(TraceFunctionTagChangeType.DELETED, this::functionTagDeleted);
 
 			listenFor(TraceInstructionChangeType.FLOW_OVERRIDE_CHANGED,
 				this::instructionFlowOverrideChanged);
@@ -465,107 +449,6 @@ public class DBTraceProgramView implements TraceProgramView {
 				null, null, oldPath, newIsNull));
 		}
 
-		private void gatherThunksTo(Collection<TraceFunctionSymbol> into,
-				TraceFunctionSymbol function) {
-			into.add(function);
-			for (Address address : function.getFunctionThunkAddresses()) {
-				TraceFunctionSymbol thunkTo = functionManager.getFunctionAt(address);
-				if (thunkTo != null) {
-					gatherThunksTo(into, thunkTo);
-				}
-			}
-		}
-
-		private Collection<TraceFunctionSymbol> gatherThunksTo(TraceFunctionSymbol function) {
-			List<TraceFunctionSymbol> result = new ArrayList<>();
-			gatherThunksTo(result, function);
-			return result;
-		}
-
-		private void functionChangedGeneric(TraceAddressSpace space, TraceFunctionSymbol function,
-				int type, int subType) {
-			DomainObjectEventQueues queues = isFunctionVisible(space, function);
-			if (queues == null) {
-				return;
-			}
-			for (TraceFunctionSymbol f : gatherThunksTo(function)) {
-				queues.fireEvent(new ProgramChangeRecord(type, subType, f.getEntryPoint(),
-					f.getEntryPoint(), f, null, null));
-			}
-		}
-
-		private void functionChanged(TraceAddressSpace space, TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_CHANGED, 0);
-		}
-
-		private void functionChangedPurge(TraceAddressSpace space, TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_CHANGED,
-				ChangeManager.FUNCTION_CHANGED_PURGE);
-		}
-
-		private void functionChangedInline(TraceAddressSpace space, TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_CHANGED,
-				ChangeManager.FUNCTION_CHANGED_INLINE);
-		}
-
-		private void functionChangedNoReturn(TraceAddressSpace space,
-				TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_CHANGED,
-				ChangeManager.FUNCTION_CHANGED_NORETURN);
-		}
-
-		private void functionChangedCallFixup(TraceAddressSpace space,
-				TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_CHANGED,
-				ChangeManager.FUNCTION_CHANGED_CALL_FIXUP);
-		}
-
-		private void functionChangedReturn(TraceAddressSpace space, TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_CHANGED,
-				ChangeManager.FUNCTION_CHANGED_RETURN);
-		}
-
-		private void functionChangedParameters(TraceAddressSpace space,
-				TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_CHANGED,
-				ChangeManager.FUNCTION_CHANGED_PARAMETERS);
-		}
-
-		private void functionChangedThunk(TraceAddressSpace space, TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_CHANGED,
-				ChangeManager.FUNCTION_CHANGED_THUNK);
-		}
-
-		private void functionChangedBody(TraceAddressSpace space, TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_FUNCTION_BODY_CHANGED, 0);
-		}
-
-		private void functionChangedTagApplied(TraceAddressSpace space,
-				TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION, 0);
-		}
-
-		private void functionChangedTagRemoved(TraceAddressSpace space,
-				TraceFunctionSymbol function) {
-			functionChangedGeneric(space, function, ChangeManager.DOCR_TAG_REMOVED_FROM_FUNCTION,
-				0);
-		}
-
-		private void functionTagAdded(FunctionTag tag) {
-			fireEventAllViews(new ProgramChangeRecord(ChangeManager.DOCR_FUNCTION_TAG_CREATED, null,
-				null, tag, null, null));
-		}
-
-		private void functionTagChanged(FunctionTag tag) {
-			fireEventAllViews(new ProgramChangeRecord(ChangeManager.DOCR_FUNCTION_TAG_CHANGED, null,
-				null, tag, null, null));
-		}
-
-		private void functionTagDeleted(FunctionTag tag) {
-			fireEventAllViews(new ProgramChangeRecord(ChangeManager.DOCR_FUNCTION_TAG_DELETED, null,
-				null, tag, null, null));
-		}
-
 		private void instructionFlowOverrideChanged(TraceAddressSpace space,
 				TraceInstruction instruction, FlowOverride oldOverride, FlowOverride newOverride) {
 			DomainObjectEventQueues queues = isCodeVisible(space, instruction);
@@ -667,39 +550,12 @@ public class DBTraceProgramView implements TraceProgramView {
 				null, null, id, null, null));
 		}
 
-		private void checkVariableFunctionChanged(TraceAddressSpace space, TraceSymbol symbol) {
-			if (!(symbol instanceof TraceVariableSymbol)) {
-				return;
-			}
-			TraceFunctionSymbol function = ((TraceVariableSymbol) symbol).getFunction();
-			if (function == null) {
-				return;
-			}
-			int subType = symbol instanceof TraceParameterSymbol ? //
-					ChangeManager.FUNCTION_CHANGED_PARAMETERS : 0;
-			for (TraceFunctionSymbol f : gatherThunksTo(function)) {
-				// NOTE: Should probably not see functions in register views anyway...
-				DomainObjectEventQueues queues = getEventQueues(space);
-				if (queues == null) {
-					continue;
-				}
-				queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_FUNCTION_CHANGED,
-					subType, f.getEntryPoint(), f.getEntryPoint(), f, null, null));
-			}
-		}
-
 		private void symbolAdded(TraceAddressSpace space, TraceSymbol symbol) {
 			DomainObjectEventQueues queues = isSymbolVisible(space, symbol);
 			if (queues == null) {
 				return;
 			}
 			fireSymbolAdded(queues, symbol);
-			if (symbol instanceof TraceFunctionSymbol) {
-				TraceFunctionSymbol function = (TraceFunctionSymbol) symbol;
-				queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_FUNCTION_ADDED,
-					function.getEntryPoint(), function.getEntryPoint(), function, null, null));
-			}
-			checkVariableFunctionChanged(space, symbol);
 		}
 
 		public void fireSymbolAdded(DomainObjectEventQueues queues, TraceSymbol symbol) {
@@ -714,7 +570,6 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_SYMBOL_SOURCE_CHANGED,
 				symbol.getAddress(), symbol.getAddress(), symbol, null, null));
-			checkVariableFunctionChanged(space, symbol);
 		}
 
 		private void symbolSetAsPrimary(TraceAddressSpace space, TraceSymbol symbol,
@@ -731,7 +586,6 @@ public class DBTraceProgramView implements TraceProgramView {
 			assert oldQueues == newQueues || oldQueues == null;
 			newQueues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_SYMBOL_SET_AS_PRIMARY,
 				symbol.getAddress(), symbol.getAddress(), null, oldPrimary, newPrimary));
-			checkVariableFunctionChanged(space, symbol);
 		}
 
 		private void symbolRenamed(TraceAddressSpace space, TraceSymbol symbol, String oldName,
@@ -742,7 +596,6 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_SYMBOL_RENAMED,
 				symbol.getAddress(), symbol.getAddress(), symbol, oldName, newName));
-			checkVariableFunctionChanged(space, symbol);
 		}
 
 		private void symbolParentChanged(TraceAddressSpace space, TraceSymbol symbol,
@@ -753,7 +606,6 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_SYMBOL_SCOPE_CHANGED,
 				symbol.getAddress(), symbol.getAddress(), symbol, oldParent, newParent));
-			checkVariableFunctionChanged(space, symbol);
 		}
 
 		private void symbolAssociationAdded(TraceAddressSpace space, TraceSymbol symbol,
@@ -786,7 +638,6 @@ public class DBTraceProgramView implements TraceProgramView {
 			}
 			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_SYMBOL_ADDRESS_CHANGED,
 				oldAddress, oldAddress, symbol, oldAddress, newAddress));
-			checkVariableFunctionChanged(space, symbol);
 		}
 
 		private void symbolLifespanChanged(TraceAddressSpace space, TraceSymbolWithLifespan symbol,
@@ -799,20 +650,9 @@ public class DBTraceProgramView implements TraceProgramView {
 			boolean inNew = isSymbolWithLifespanVisible(symbol, newSpan);
 			if (inOld && !inNew) {
 				fireSymbolRemoved(queues, symbol);
-				if (symbol instanceof TraceFunctionSymbol) {
-					TraceFunctionSymbol function = (TraceFunctionSymbol) symbol;
-					queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_FUNCTION_REMOVED,
-						function.getEntryPoint(), function.getEntryPoint(), function,
-						function.getBody(), null));
-				}
 			}
 			if (!inOld && inNew) {
 				fireSymbolAdded(queues, symbol);
-				if (symbol instanceof TraceFunctionSymbol) {
-					TraceFunctionSymbol function = (TraceFunctionSymbol) symbol;
-					queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_FUNCTION_ADDED,
-						function.getEntryPoint(), function.getEntryPoint(), function, null, null));
-				}
 			}
 		}
 
@@ -822,13 +662,6 @@ public class DBTraceProgramView implements TraceProgramView {
 				return;
 			}
 			fireSymbolRemoved(queues, symbol);
-			if (symbol instanceof TraceFunctionSymbol) {
-				TraceFunctionSymbol function = (TraceFunctionSymbol) symbol;
-				queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_FUNCTION_REMOVED,
-					function.getEntryPoint(), function.getEntryPoint(), function,
-					function.getBody(), null));
-			}
-			checkVariableFunctionChanged(space, symbol);
 		}
 
 		protected void fireSymbolRemoved(DomainObjectEventQueues queues, TraceSymbol symbol) {
@@ -1224,7 +1057,7 @@ public class DBTraceProgramView implements TraceProgramView {
 
 	@Override
 	public Address getImageBase() {
-		return language.getAddressFactory().getAddressSet().getMinAddress();
+		return language.getDefaultSpace().getMinAddress();
 	}
 
 	@Override
@@ -1775,51 +1608,8 @@ public class DBTraceProgramView implements TraceProgramView {
 		return getEventQueues(space);
 	}
 
-	protected Occlusion<TraceFunctionSymbol> getFunctionOcclusion(TraceFunctionSymbol func) {
-		return new QueryOcclusion<>() {
-			DBTraceFunctionSymbolView functions = trace.getSymbolManager().functions();
-			AddressSetView body = func.getBody();
-
-			@Override
-			public Iterable<? extends TraceFunctionSymbol> query(AddressRange range,
-					Lifespan span) {
-				// NB. No functions in register space!
-				return functions.getIntersecting(Lifespan.at(span.lmax()), null, range, false);
-			}
-
-			public boolean itemOccludes(AddressRange range, TraceFunctionSymbol f) {
-				return body.intersects(f.getBody());
-			}
-
-			@Override
-			public void removeItem(AddressSet remains, TraceFunctionSymbol t) {
-				remains.delete(t.getBody());
-			}
-		};
-	}
-
-	protected boolean isFunctionVisible(TraceFunctionSymbol function, Lifespan lifespan) {
-		AddressSetView body = function.getBody();
-		AddressRange bodySpan = new AddressRangeImpl(body.getMinAddress(), body.getMaxAddress());
-		return viewport.isCompletelyVisible(bodySpan, function.getLifespan(), function,
-			getFunctionOcclusion(function));
-	}
-
-	protected DomainObjectEventQueues isFunctionVisible(TraceAddressSpace space,
-			TraceFunctionSymbol function) {
-		DomainObjectEventQueues queues = getEventQueues(space);
-		if (queues == null) {
-			return null;
-		}
-		return isFunctionVisible(function, function.getLifespan()) ? queues : null;
-	}
-
 	protected boolean isSymbolWithLifespanVisible(TraceSymbolWithLifespan symbol,
 			Lifespan lifespan) {
-		if (symbol instanceof TraceFunctionSymbol) {
-			TraceFunctionSymbol func = (TraceFunctionSymbol) symbol;
-			return isFunctionVisible(func, lifespan);
-		}
 		if (!viewport.containsAnyUpper(lifespan)) {
 			return false;
 		}
@@ -1831,14 +1621,6 @@ public class DBTraceProgramView implements TraceProgramView {
 		DomainObjectEventQueues queues = getEventQueues(space);
 		if (queues == null) {
 			return null;
-		}
-		if (symbol instanceof TraceVariableSymbol) {
-			TraceVariableSymbol var = (TraceVariableSymbol) symbol;
-			TraceFunctionSymbol func = var.getFunction();
-			if (func == null) {
-				return queues;
-			}
-			return isFunctionVisible(space, func);
 		}
 		if (!(symbol instanceof TraceSymbolWithLifespan)) {
 			return queues;

@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
@@ -203,5 +204,22 @@ public class NList implements StructConverter {
 	@Override
 	public String toString() {
 		return string;
+	}
+
+	/**
+	 * Gets the size in bytes of the given {@link NList}s (including associated strings)
+	 * 
+	 * @param nlists A {@link List} of {@link NList}s
+	 * @return The size in bytes of the given {@link NList}s (including associated strings)
+	 */
+	public static int getSize(List<NList> nlists) {
+		if (!nlists.isEmpty()) {
+			int totalStringSize = 0;
+			for (NList nlist : nlists) {
+				totalStringSize += nlist.getString().length() + 1; // Add 1 for null terminator
+			}
+			return nlists.size() * nlists.get(0).getSize() + totalStringSize;
+		}
+		return 0;
 	}
 }

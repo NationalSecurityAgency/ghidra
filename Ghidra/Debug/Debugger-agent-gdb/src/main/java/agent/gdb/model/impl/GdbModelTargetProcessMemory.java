@@ -131,7 +131,8 @@ public class GdbModelTargetProcessMemory
 		}
 		return inferior.listMappings().exceptionally(ex -> {
 			Msg.error(this, "Could not list regions. Using default.");
-			return Map.of(); // empty map will be replaced with default
+			// empty map will be replaced with default
+			return new TreeMap<>();
 		}).thenAccept(this::updateUsingMappings);
 	}
 

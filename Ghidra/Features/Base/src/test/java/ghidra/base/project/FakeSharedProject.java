@@ -81,8 +81,8 @@ public class FakeSharedProject {
 	// Note: this how we share multiple projects
 	void setVersionedFileSystem(LocalFileSystem fs) {
 
-		ProjectFileManager fm = getProjectFileManager();
-		invokeInstanceMethod("setVersionedFileSystem", fm, argTypes(FileSystem.class), args(fs));
+		DefaultProjectData pd = getProjectData();
+		invokeInstanceMethod("setVersionedFileSystem", pd, argTypes(FileSystem.class), args(fs));
 	}
 
 	/**
@@ -94,12 +94,12 @@ public class FakeSharedProject {
 	}
 
 	/**
-	 * Gets the project file manager
+	 * Gets the project data instance
 	 * 
-	 * @return the project file manager
+	 * @return the project data instance
 	 */
-	public ProjectFileManager getProjectFileManager() {
-		return (ProjectFileManager) gProject.getProjectData();
+	public DefaultProjectData getProjectData() {
+		return (DefaultProjectData) gProject.getProjectData();
 	}
 
 	/**
@@ -108,8 +108,8 @@ public class FakeSharedProject {
 	 * @return the root folder of this project
 	 */
 	public RootGhidraFolder getRootFolder() {
-		ProjectFileManager pfm = getProjectFileManager();
-		return (RootGhidraFolder) pfm.getRootFolder();
+		DefaultProjectData pd = getProjectData();
+		return (RootGhidraFolder) pd.getRootFolder();
 	}
 
 	/**
@@ -181,6 +181,7 @@ public class FakeSharedProject {
 	 * 	<li>calling {@link #addDomainFile(String)}</li>
 	 *  <li>Adding a versioned file to another project that shares the same repo with this project</li>
 	 * </ul>
+	 * @param parentPath the parent folder path
 	 * @param filename the filename
 	 * @return the file
 	 */
@@ -194,8 +195,7 @@ public class FakeSharedProject {
 	 * Creates a folder by the given name in the given parent folder, creating the parent 
 	 * folder if needed
 	 * 
-	 * @param parentPath the parent folder path
-	 * @param name the name of the folder to create
+	 * @param path the full path of the folder to create
 	 * @return the created folder
 	 * @throws Exception if there are any exceptions creating the folder
 	 */
@@ -367,7 +367,7 @@ public class FakeSharedProject {
 	 * @see FakeRepository#dispose()
 	 */
 	public void dispose() {
-		ProjectLocator projectLocator = getProjectFileManager().getProjectLocator();
+		ProjectLocator projectLocator = getProjectData().getProjectLocator();
 		programManager.disposeOpenPrograms();
 		gProject.close();
 		FileUtilities.deleteDir(projectLocator.getProjectDir());
@@ -388,7 +388,7 @@ public class FakeSharedProject {
 		}
 
 		ProjectLocator pl = df.getProjectLocator();
-		ProjectLocator mypl = getProjectFileManager().getProjectLocator();
+		ProjectLocator mypl = getProjectData().getProjectLocator();
 		if (!pl.equals(mypl)) {
 			throw new IllegalArgumentException("Domain file '" + df + "' is not in this project: " +
 				mypl.getName() + "\nYou must call addDomainFile(filename).");
@@ -397,9 +397,8 @@ public class FakeSharedProject {
 
 	private void waitForFileSystemEvents() {
 		LocalFileSystem versionedFileSystem = getVersionedFileSystem();
-		FileSystemEventManager eventManager =
-			(FileSystemEventManager) TestUtils.getInstanceField("eventManager",
-				versionedFileSystem);
+		FileSystemEventManager eventManager = (FileSystemEventManager) TestUtils
+				.getInstanceField("eventManager", versionedFileSystem);
 
 		eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
@@ -444,16 +443,16 @@ public class FakeSharedProject {
 	}
 
 	LocalFileSystem getVersionedFileSystem() {
-		ProjectFileManager fileManager = getProjectFileManager();
+		DefaultProjectData projectData = getProjectData();
 		LocalFileSystem fs =
-			(LocalFileSystem) TestUtils.invokeInstanceMethod("getVersionedFileSystem", fileManager);
+			(LocalFileSystem) TestUtils.invokeInstanceMethod("getVersionedFileSystem", projectData);
 		return fs;
 	}
 
 	void refresh() {
-		ProjectFileManager fileManager = getProjectFileManager();
+		DefaultProjectData projectData = getProjectData();
 		try {
-			fileManager.refresh(true);
+			projectData.refresh(true);
 		}
 		catch (IOException e) {
 			// shouldn't happen

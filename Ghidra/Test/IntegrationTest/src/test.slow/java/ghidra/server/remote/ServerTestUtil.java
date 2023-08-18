@@ -802,9 +802,9 @@ public class ServerTestUtil {
 	public static void createRepositoryItem(LocalFileSystem repoFilesystem, String name,
 			String folderPath, Program program) throws Exception {
 
-		ContentHandler contentHandler = DomainObjectAdapter.getContentHandler(program);
-		long checkoutId = contentHandler.createFile(repoFilesystem, null, folderPath, name,
-			program, TaskMonitor.DUMMY);
+		ContentHandler<?> contentHandler = DomainObjectAdapter.getContentHandler(program);
+		long checkoutId = contentHandler.createFile(repoFilesystem, null, folderPath, name, program,
+			TaskMonitor.DUMMY);
 		LocalFolderItem item = repoFilesystem.getItem(folderPath, name);
 		if (item == null) {
 			throw new IOException("Item not found: " + FileSystem.SEPARATOR + name);

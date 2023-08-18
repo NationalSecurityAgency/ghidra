@@ -7234,11 +7234,13 @@ int4 RuleSubNormal::applyOp(PcodeOp *op,Funcdata &data)
   if (!shiftop->getIn(1)->isConstant()) return 0;
   Varnode *a = shiftop->getIn(0);
   if (a->isFree()) return 0;
+  Varnode *outvn = op->getOut();
+  if (outvn->isPrecisHi() || outvn->isPrecisLo()) return 0;
   int4 n = shiftop->getIn(1)->getOffset();
   int4 c = op->getIn(1)->getOffset();
   int4 k = (n/8);
   int4 insize = a->getSize();
-  int4 outsize = op->getOut()->getSize();
+  int4 outsize = outvn->getSize();
 
   // Total shift + outsize must be greater equal to size of input
   if ((n+8*c+8*outsize < 8*insize)&&(n != k*8)) return 0;

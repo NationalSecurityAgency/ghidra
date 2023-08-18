@@ -83,25 +83,72 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * Get the preferred length for a new component. For Unions and internally
-	 * aligned structures the preferred component length for a fixed-length dataType
-	 * will be the length of that dataType. Otherwise the length returned will be no
-	 * larger than the specified length.
+	 * Get the preferred length for a new component. If type is dynamic length must be specified
+	 * (assuming {@link Dynamic#canSpecifyLength()} is true).  Otherwise, when packing is enabled
+	 * the {@link DataType#getAlignedLength()} is returned; when packing disabled for Union
+	 * use of fixed-length type size is forced. Otherwise the decision
+	 * is deferred to {@link DataTypeComponentImpl#getPreferredComponentLength(DataType, int)}.
+	 * During packing the actual component length may be changed.
 	 * 
 	 * @param dataType new component datatype
-	 * @param length   constrained length or -1 to force use of dataType size.
-	 *                 Dynamic types such as string must have a positive length
+	 * @param length   constrained length or -1 to force use of dataType size for non-packing.
+	 *                 Dynamic types such as string must have a positive length specified.
+	 *                 This value is ignored for fixed-length types if maxLength has been 
 	 *                 specified.
+	 * @param maxLength applies to non-packed structures only to indicate available space for
+	 *                 fixed-length types using {@link DataType#getLength()}. Specify -1
+	 *                 to ignore this value.
 	 * @return preferred component length
+	 * @throws IllegalArgumentException if length not specified for a {@link Dynamic} dataType.
 	 */
-	protected int getPreferredComponentLength(DataType dataType, int length) {
+	protected int getPreferredComponentLength(DataType dataType, int length, int maxLength) {
+
 		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
 			return 0;
 		}
-		if ((isPackingEnabled() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
-			length = -1; // force use of datatype size
+
+		if (!(dataType instanceof Dynamic)) {
+			if (isPackingEnabled()) {
+				length = dataType.getAlignedLength();
+				if (length > 0) {
+					return length;
+				}
+			}
+			else if (this instanceof Union) {
+				// enforce Union component size for fixed-length types
+				length = dataType.getLength();
+				if (length > 0) {
+					return length;
+				}
+			}
+			else if (maxLength >= 0) {
+				// length determined by datatype but must not exceed maxLength
+				length = Math.min(dataType.getLength(), maxLength);
+				if (length > 0) {
+					return length;
+				}
+			}
 		}
+
 		return DataTypeComponentImpl.getPreferredComponentLength(dataType, length);
+	}
+
+	/**
+	 * Get the preferred length for a new component. If type is dynamic length must be specified
+	 * (assuming {@link Dynamic#canSpecifyLength()} is true).  Otherwise, when packing is enabled
+	 * the {@link DataType#getAlignedLength()} is returned; when packing disabled for Union
+	 * use of fixed-length type size is forced. Otherwise the decision
+	 * is deferred to {@link DataTypeComponentImpl#getPreferredComponentLength(DataType, int)}.
+	 * During packing the actual component length may be changed.
+	 * 
+	 * @param dataType new component datatype
+	 * @param length   constrained length or -1 to force use of dataType size for non-packing.
+	 *                 Dynamic types such as string must have a positive length specified.
+	 * @return preferred component length
+	 * @throws IllegalArgumentException if length not specified for a {@link Dynamic} dataType.
+	 */
+	protected int getPreferredComponentLength(DataType dataType, int length) {
+		return getPreferredComponentLength(dataType, length, -1);
 	}
 
 	@Override

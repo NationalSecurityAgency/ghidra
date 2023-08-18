@@ -24,6 +24,9 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public interface DataTypeComponent {
 
+	// TODO: known issue accessing big-endian data when component-length differs from 
+	// datatype length.
+
 	/** The default prefix for the name of a component. */
 	public final static String DEFAULT_FIELD_NAME_PREFIX = "field";
 

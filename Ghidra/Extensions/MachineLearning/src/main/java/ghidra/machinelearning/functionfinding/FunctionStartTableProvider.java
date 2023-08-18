@@ -19,7 +19,6 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import ghidra.app.services.GoToService;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.AddressSet;
@@ -138,10 +137,7 @@ public class FunctionStartTableProvider extends ProgramAssociatedComponentProvid
 		startTable = tablePanel.getTable();
 		startTable.setName("Potential Functions in " + model.getProgram().getName());
 
-		GoToService goToService = tool.getService(GoToService.class);
-		if (goToService != null) {
-			startTable.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+		startTable.installNavigation(tool);
 		startTable.setNavigateOnSelectionEnabled(true);
 		startTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		startTable.setPreferredScrollableViewportSize(new Dimension(900, 300));

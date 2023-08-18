@@ -77,6 +77,11 @@ public class DataTypeInstance {
 	/**
 	 * Generate a data-type instance
 	 * Factory and Dynamic data-types are NOT handled.
+	 * <br>
+	 * This container does not dictate the placement of a fixed-length type within this
+	 * container.  It is suggested that big-endian use should evaulate the datatype
+	 * at the far end of the container.
+	 * 
 	 * @param dataType data type
 	 * @param buf memory buffer
 	 * @param useAlignedLength if true a fixed-length primitive data type will use its 
@@ -95,6 +100,11 @@ public class DataTypeInstance {
 	/**
 	 * Attempt to create a fixed-length data-type instance.
 	 * Factory and non-sizable Dynamic data-types are NOT handled.
+	 * <br>
+	 * This container does not dictate the placement of a fixed-length type within this
+	 * container.  It is suggested that big-endian use should evaulate the datatype
+	 * at the far end of the container.
+	 * 
 	 * @param dataType data type
 	 * @param length length for sizable Dynamic data-types, otherwise ignored
 	 * @param useAlignedLength if true a fixed-length primitive data type will use its 
@@ -128,6 +138,7 @@ public class DataTypeInstance {
 			}
 		}
 		else if (useAlignedLength) {
+			// TODO: big-endian should place type at end of this container
 			length = dataType.getAlignedLength();
 		}
 		else {
@@ -145,10 +156,11 @@ public class DataTypeInstance {
 	 * Attempt to create a data-type instance associated with a specific memory location.
 	 * Factory and Dynamic data-types are handled.
 	 * <br>
-	 * NOTE: fixed-length primitive datatypes assume {@link DataType#getLength() raw datatype length}
-	 * intended for {@link Data} use.
+	 * This container does not dictate the placement of a fixed-length type within this
+	 * container.  It is suggested that big-endian use should evaulate the datatype
+	 * at the far end of the container.
 	 * 
-	 * @param dataType
+	 * @param dataType the data type
 	 * @param buf memory location
 	 * @param length length for sizable Dynamic data-types, otherwise ignored
 	 * @param useAlignedLength if true a fixed-length primitive data type will use its 

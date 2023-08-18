@@ -94,7 +94,8 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 		}
 
 		@Override
-		public void domainObjectClosed() {
+		public void domainObjectClosed(DomainObject dobj) {
+			// assume dobj == program
 			dispose();
 		}
 
@@ -353,9 +354,8 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 		 * trace, or bogus external libraries in a mapped program, scoring libraries before module
 		 * names should not cause problems.
 		 */
-		Comparator<IndexEntry> comparator = byIsLibrary
-				.thenComparing(byNameSource)
-				.thenComparing(byFolderUses);
+		Comparator<IndexEntry> comparator =
+			byIsLibrary.thenComparing(byNameSource).thenComparing(byFolderUses);
 		return projectData.getFileByID(entries.stream().max(comparator).get().dfID);
 	}
 
@@ -371,8 +371,9 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()),
 					module.getLifespan())
 				.stream()
-				.map(m -> ProgramURLUtils.getFileForHackedUpGhidraURL(project,
+				.map(m -> ProgramURLUtils.getDomainFileFromOpenProject(project,
 					m.getStaticProgramURL()))
+				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 		Set<DomainFile> libraries = DebuggerStaticMappingUtils.collectLibraries(alreadyMapped);
 		alreadyMapped.stream()

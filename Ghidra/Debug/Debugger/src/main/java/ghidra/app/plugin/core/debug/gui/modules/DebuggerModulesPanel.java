@@ -21,8 +21,10 @@ import javax.swing.event.ListSelectionEvent;
 
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.*;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueAttribute;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.target.schema.TargetObjectSchema;
@@ -81,6 +83,34 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		}
 	}
 
+	private static class ModuleMappingColumn extends TraceValueKeyColumn {
+		@Override
+		public String getColumnName() {
+			return "Mapping";
+		}
+
+		@Override
+		public String getValue(ValueRow rowObject, Settings settings, Trace data,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			if (data == null) {
+				return "";
+			}
+			ValueAttribute<AddressRange> attr =
+				rowObject.getAttribute(TargetModule.RANGE_ATTRIBUTE_NAME, AddressRange.class);
+			if (attr == null) {
+				return "";
+			}
+			AddressRange range = attr.getValue();
+
+			// TODO: Cache this? Would flush on:
+			//    1. Mapping changes
+			//    2. Range/Life changes to this module
+			//    3. Snapshot navigation
+			return DebuggerStaticMappingUtils.computeMappedFiles(data, rowObject.currentSnap(),
+				range);
+		}
+	}
+
 	private static class ModulePathColumn extends TraceValueKeyColumn {
 		@Override
 		public String getColumnName() {
@@ -117,6 +147,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			descriptor.addVisibleColumn(new ModuleBaseColumn(), 1, true);
 			descriptor.addVisibleColumn(new ModuleMaxColumn());
 			descriptor.addVisibleColumn(new ModuleNameColumn());
+			descriptor.addVisibleColumn(new ModuleMappingColumn());
 			descriptor.addVisibleColumn(new ModuleLengthColumn());
 			return descriptor;
 		}

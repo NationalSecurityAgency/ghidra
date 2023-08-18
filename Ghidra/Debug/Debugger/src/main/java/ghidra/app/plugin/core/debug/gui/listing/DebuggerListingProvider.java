@@ -210,6 +210,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		protected void specChanged(LocationTrackingSpec spec) {
 			updateTitle();
 			trackingLabel.setText("");
+			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
 			trackingSpecChangeListeners.fire.locationTrackingSpecChanged(spec);
 		}
@@ -336,7 +337,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		addDisplayListener(readsMemTrait.getDisplayListener());
 
 		JPanel northPanel = new JPanel(new BorderLayout());
-		northPanel.add(locationLabel, BorderLayout.WEST);
+		northPanel.add(locationLabel);
 		northPanel.add(trackingLabel, BorderLayout.EAST);
 		this.setNorthComponent(northPanel);
 		if (isConnected) {
@@ -402,11 +403,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		ControlMode mode = controlService.getCurrentMode(trace);
 		return !mode.canEdit(current);
-	}
-
-	@Override
-	public boolean isDynamicListing() {
-		return true;
 	}
 
 	@Override
@@ -906,7 +902,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		Address address = loc.getAddress();
 		TraceStaticMapping mapping = trace.getStaticMappingManager().findContaining(address, snap);
 		if (mapping != null) {
-			DomainFile df = ProgramURLUtils.getFileForHackedUpGhidraURL(tool.getProject(),
+			DomainFile df = ProgramURLUtils.getDomainFileFromOpenProject(tool.getProject(),
 				mapping.getStaticProgramURL());
 			if (df != null) {
 				doTryOpenProgram(df, DomainFile.DEFAULT_VERSION, ProgramManager.OPEN_CURRENT);
@@ -1071,7 +1067,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	protected void goToAndUpdateTrackingLabel(TraceProgramView curView, ProgramLocation loc) {
-		trackingLabel.setText(trackingTrait.computeLabelText());
+		String labelText = trackingTrait.computeLabelText();
+		trackingLabel.setText(labelText);
+		trackingLabel.setToolTipText(labelText);
 		if (goTo(curView, loc)) {
 			trackingLabel.setForeground(Colors.FOREGROUND);
 		}

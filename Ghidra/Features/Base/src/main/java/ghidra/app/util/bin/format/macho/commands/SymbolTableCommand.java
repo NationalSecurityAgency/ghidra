@@ -123,6 +123,22 @@ public class SymbolTableCommand extends LoadCommand {
 		return symbols;
 	}
 
+	/**
+	 * Adds the given {@link List} of {@link NList}s to this symbol/string table, and adjusts the
+	 * affected symbol table load command fields appropriately
+	 * 
+	 * @param list The {@link List} of {@link NList}s to add
+	 */
+	public void addSymbols(List<NList> list) {
+		if (list.isEmpty()) {
+			return;
+		}
+		symbols.addAll(list);
+		nsyms += list.size();
+		stroff += list.size() * list.get(0).getSize();
+		strsize = symbols.stream().mapToInt(e -> e.getString().length() + 1).sum();
+	}
+
 	public NList getSymbolAt(int index) {
 		if ((index & DynamicSymbolTableConstants.INDIRECT_SYMBOL_LOCAL) != 0 ||
 			(index & DynamicSymbolTableConstants.INDIRECT_SYMBOL_ABS) != 0) {
@@ -159,14 +175,7 @@ public class SymbolTableCommand extends LoadCommand {
 
 	@Override
 	public int getLinkerDataSize() {
-		if (!symbols.isEmpty()) {
-			int totalStringSize = 0;
-			for (NList nlist : symbols) {
-				totalStringSize += nlist.getString().length() + 1; // Add 1 for null terminator
-			}
-			return nsyms * symbols.get(0).getSize() + totalStringSize;
-		}
-		return 0;
+		return NList.getSize(symbols);
 	}
 
 	@Override

@@ -203,7 +203,7 @@ public class StackEditorModel extends CompositeEditorModel {
 				dt = element.getDataType();
 				dtLen = dt.getLength();
 				return DataTypeInstance.getDataTypeInstance(dt,
-					(dtLen > 0) ? dtLen : element.getLength(), true);
+					(dtLen > 0) ? dtLen : element.getLength(), usesAlignedLengthComponents());
 			case NAME:
 				String fieldName = getFieldNameAtRow(rowIndex, (StackFrameDataType) viewComposite);
 				if (fieldName == null) {
@@ -813,8 +813,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public boolean setComponentName(int rowIndex, String newName)
-			throws InvalidNameException {
+	public boolean setComponentName(int rowIndex, String newName) throws InvalidNameException {
 
 		if (newName.trim().length() == 0) {
 			newName = null;
@@ -1125,8 +1124,9 @@ public class StackEditorModel extends CompositeEditorModel {
 		OffsetPairs offsetSelection = getRelOffsetSelection();
 		int transID = startTransaction("Apply Data Type \"" + dt.getName() + "\"");
 		try {
-			fieldEdited(DataTypeInstance.getDataTypeInstance(dt, dtLength, true), index,
-				getDataTypeColumn());
+			fieldEdited(
+				DataTypeInstance.getDataTypeInstance(dt, dtLength, usesAlignedLengthComponents()),
+				index, getDataTypeColumn());
 			setRelOffsetSelection(offsetSelection);
 		}
 		finally {
@@ -1155,6 +1155,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		if (max == Integer.MAX_VALUE) {
 			return Integer.MAX_VALUE;
 		}
+		// Arrays currently use aligned-length only
 		return max / dtc.getDataType().getAlignedLength();
 	}
 
@@ -1318,7 +1319,7 @@ public class StackEditorModel extends CompositeEditorModel {
 			dtName = dt.getDisplayName();
 			if (dtString.equals(dtName)) {
 				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
-					element.getLength(), true);
+					element.getLength(), usesAlignedLengthComponents());
 			}
 		}
 
@@ -1344,7 +1345,8 @@ public class StackEditorModel extends CompositeEditorModel {
 		if (maxLength > 0 && newLength > maxLength) {
 			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
 		}
-		return DataTypeInstance.getDataTypeInstance(newDt, newLength, true);
+		return DataTypeInstance.getDataTypeInstance(newDt, newLength,
+			usesAlignedLengthComponents());
 	}
 
 	@Override

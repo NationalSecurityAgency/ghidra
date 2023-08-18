@@ -21,15 +21,20 @@ import javax.swing.*;
 
 import docking.action.*;
 import docking.widgets.table.GTable;
+import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 
 /**
- * CompositeEditorAction is an abstract class that should be extended for any
- * action that is to be associated with a composite editor.
+ * CompositeEditorAction is an abstract class that should be extended for any action that is to be 
+ * associated with a composite editor.
+ * <p>
+ * Note: Any new actions must be registered in the editor manager via the actions's name.
  */
 abstract public class CompositeEditorTableAction extends DockingAction implements EditorAction {
+
+	private static final String PREFIX = DataTypeEditorManager.EDIT_ACTION_PREFIX;
 
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
@@ -43,13 +48,18 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 	protected Plugin plugin;
 	protected PluginTool tool;
 
-	public static final String EDIT_ACTION_PREFIX = "Editor: ";
+	// note: Only call this constructor if you know you do not want to use the shared editor prefix;
+	//       If you call this, then you must manage your own menu/popup/toolbar data installation
+	protected CompositeEditorTableAction(CompositeEditorProvider provider, String name) {
+		super(name, provider.plugin.getName());
+		init(provider);
+	}
 
 	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
 			String[] popupPath, String[] menuPath, Icon icon) {
-		super(name, provider.plugin.getName(), KeyBindingType.SHARED);
-		this.provider = provider;
-		model = provider.getModel();
+		super(PREFIX + name, provider.plugin.getName(),
+			KeyBindingType.SHARED);
+		init(provider);
 		if (menuPath != null) {
 			setMenuBarData(new MenuData(menuPath, icon, group));
 		}
@@ -59,6 +69,11 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		if (icon != null) {
 			setToolBarData(new ToolBarData(icon, group));
 		}
+	}
+
+	private void init(CompositeEditorProvider editorProvider) {
+		this.provider = editorProvider;
+		this.model = provider.getModel();
 		this.plugin = provider.plugin;
 		this.tool = plugin.getTool();
 		model.addCompositeEditorModelListener(this);
@@ -100,9 +115,8 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 
 	public String getHelpName() {
 		String actionName = getName();
-		if (actionName.startsWith(CompositeEditorTableAction.EDIT_ACTION_PREFIX)) {
-			actionName =
-				actionName.substring(CompositeEditorTableAction.EDIT_ACTION_PREFIX.length());
+		if (actionName.startsWith(PREFIX)) {
+			actionName = actionName.substring(PREFIX.length());
 		}
 		return actionName;
 	}

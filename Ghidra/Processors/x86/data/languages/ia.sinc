@@ -4436,240 +4436,45 @@ define pcodeop fsin;
 :FXCH freg      is vexMode=0 & byte=0xD9; frow=12 & fpage=1 & freg          { local tmp = ST0; ST0 = freg; freg = tmp; }          
 :FXCH           is vexMode=0 & byte=0xD9; byte=0xC9                 { local tmp = ST0; ST0 = ST1; ST1 = tmp; }                    
 
-# this saves the FPU state into 512 bytes of memory similar to the 32-bit mode
+# fxsave and fxrstor
+define pcodeop _fxsave;
+define pcodeop _fxrstor;
+@ifdef IA64
+define pcodeop _fxsave64;
+define pcodeop _fxrstor64;
+@endif
+
+# this saves the FPU state into 512 bytes of memory
 :FXSAVE Mem    is $(LONGMODE_OFF) & vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=0 ) ... & Mem
 {
-# not saved in the same spacing as the actual processor
-  *:2  (Mem)      = FPUControlWord;
-  *:2  (Mem +  2) = FPUStatusWord;
-  *:2  (Mem +  4) = FPUTagWord; #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
-  *:2  (Mem +  6) = FPULastInstructionOpcode;
-  *:4  (Mem +  8) = FPUInstructionPointer;
-  *:2  (Mem + 12) = FPUPointerSelector;
-  *:4  (Mem + 16) = FPUDataPointer;
-  *:2  (Mem + 20) = FPUDataSelector;
-  *:4  (Mem + 24) = MXCSR;
-  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
+  _fxsave(Mem);
+}
 
-# saved the FPU ST registers to the ST/MM area of the structure,
-  *:10 (Mem +  32) = ST0;
-  *:10 (Mem +  48) = ST1;
-  *:10 (Mem +  64) = ST2;
-  *:10 (Mem +  80) = ST3;
-  *:10 (Mem +  96) = ST4;
-  *:10 (Mem + 112) = ST5;
-  *:10 (Mem + 128) = ST6;
-  *:10 (Mem + 144) = ST7;
-
-  *:16 (Mem + 160) = XMM0;
-  *:16 (Mem + 176) = XMM1;
-  *:16 (Mem + 192) = XMM2;
-  *:16 (Mem + 208) = XMM3;
-  *:16 (Mem + 224) = XMM4;
-  *:16 (Mem + 240) = XMM5;
-  *:16 (Mem + 256) = XMM6;
-  *:16 (Mem + 272) = XMM7;
+:FXRSTOR Mem   is $(LONGMODE_OFF) & vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
+{
+  _fxrstor(Mem);
 }
 
 @ifdef IA64
 # this saves the FPU state into 512 bytes of memory similar to the 32-bit mode
 :FXSAVE Mem    is $(LONGMODE_ON) & vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=0 ) ... & Mem
 {
-  *:2  (Mem)      = FPUControlWord;
-  *:2  (Mem +  2) = FPUStatusWord;
-  *:2  (Mem +  4) = FPUTagWord; #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
-  *:2  (Mem +  6) = FPULastInstructionOpcode;
-  *:4  (Mem +  8) = FPUInstructionPointer;
-  *:2  (Mem + 12) = FPUPointerSelector;
-  *:4  (Mem + 16) = FPUDataPointer;
-  *:2  (Mem + 20) = FPUDataSelector;
-  *:4  (Mem + 24) = MXCSR;
-  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
-
-
-# saved the FPU ST registers to the ST/MM area of the structure,
-  *:10 (Mem +  32) = ST0;
-  *:10 (Mem +  48) = ST1;
-  *:10 (Mem +  64) = ST2;
-  *:10 (Mem +  80) = ST3;
-  *:10 (Mem +  96) = ST4;
-  *:10 (Mem + 112) = ST5;
-  *:10 (Mem + 128) = ST6;
-  *:10 (Mem + 144) = ST7;
-
-  *:16 (Mem + 160) = XMM0;
-  *:16 (Mem + 176) = XMM1;
-  *:16 (Mem + 192) = XMM2;
-  *:16 (Mem + 208) = XMM3;
-  *:16 (Mem + 224) = XMM4;
-  *:16 (Mem + 240) = XMM5;
-  *:16 (Mem + 256) = XMM6;
-  *:16 (Mem + 272) = XMM7;
-  *:16 (Mem + 288) = XMM8;
-  *:16 (Mem + 304) = XMM9;
-  *:16 (Mem + 320) = XMM10;
-  *:16 (Mem + 336) = XMM11;
-  *:16 (Mem + 352) = XMM12;
-  *:16 (Mem + 368) = XMM13;
-  *:16 (Mem + 384) = XMM14;
-  *:16 (Mem + 400) = XMM15;
+  _fxsave(Mem);
 }
 
-# this saves the FPU state into 512 bytes of memory similar to the 32-bit mode
 :FXSAVE64 Mem    is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=0 ) ... & Mem
 {
-  *:2  (Mem)      = FPUControlWord;
-  *:2  (Mem +  2) = FPUStatusWord;
-  *:2  (Mem +  4) = FPUTagWord; #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
-  *:2  (Mem +  6) = FPULastInstructionOpcode;
-  *:8  (Mem +  8) = FPUInstructionPointer;
-  *:8  (Mem + 16) = FPUDataPointer;
-  *:4  (Mem + 24) = MXCSR;
-  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
-
-# saved the FPU ST registers to the ST/MM area of the structure,
-  *:10 (Mem +  32) = ST0;
-  *:10 (Mem +  48) = ST1;
-  *:10 (Mem +  64) = ST2;
-  *:10 (Mem +  80) = ST3;
-  *:10 (Mem +  96) = ST4;
-  *:10 (Mem + 112) = ST5;
-  *:10 (Mem + 128) = ST6;
-  *:10 (Mem + 144) = ST7;
-
-
-  *:16 (Mem + 160) = XMM0;
-  *:16 (Mem + 176) = XMM1;
-  *:16 (Mem + 192) = XMM2;
-  *:16 (Mem + 208) = XMM3;
-  *:16 (Mem + 224) = XMM4;
-  *:16 (Mem + 240) = XMM5;
-  *:16 (Mem + 256) = XMM6;
-  *:16 (Mem + 272) = XMM7;
-  *:16 (Mem + 288) = XMM8;
-  *:16 (Mem + 304) = XMM9;
-  *:16 (Mem + 320) = XMM10;
-  *:16 (Mem + 336) = XMM11;
-  *:16 (Mem + 352) = XMM12;
-  *:16 (Mem + 368) = XMM13;
-  *:16 (Mem + 384) = XMM14;
-  *:16 (Mem + 400) = XMM15;
-}
-@endif
-
-:FXRSTOR Mem   is $(LONGMODE_OFF) & vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
-{
-  FPUControlWord           = *:2  (Mem);
-  FPUStatusWord            = *:2  (Mem +  2);
-  FPUTagWord               = *:2  (Mem +  4); #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
-  FPULastInstructionOpcode = *:2  (Mem +  6);
-  FPUInstructionPointer    = *:4  (Mem +  8);
-  FPUPointerSelector       = *:2  (Mem + 12);
-  FPUDataPointer           = *:4  (Mem + 16);
-  FPUDataSelector          = *:2  (Mem + 20);
-  MXCSR                    = *:4  (Mem + 24);
-  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
-
-# saved the FPU ST registers to the ST/MM area of the structure,
-  ST0 = *:10 (Mem +  32);
-  ST1 = *:10 (Mem +  48);
-  ST2 = *:10 (Mem +  64);
-  ST3 = *:10 (Mem +  80);
-  ST4 = *:10 (Mem +  96);
-  ST5 = *:10 (Mem + 112);
-  ST6 = *:10 (Mem + 128);
-  ST7 = *:10 (Mem + 144);
-
-  XMM0 = *:16 (Mem + 160);
-  XMM1 = *:16 (Mem + 176);
-  XMM2 = *:16 (Mem + 192);
-  XMM3 = *:16 (Mem + 208);
-  XMM4 = *:16 (Mem + 224);
-  XMM5 = *:16 (Mem + 240);
-  XMM6 = *:16 (Mem + 256);
-  XMM7 = *:16 (Mem + 272);
-}
-
-@ifdef IA64
-:FXRSTOR64 Mem   is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
-{
-  FPUControlWord           = *:2  (Mem);
-  FPUStatusWord            = *:2  (Mem +  2);
-  FPUTagWord               = *:2  (Mem +  4); #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
-  FPULastInstructionOpcode = *:2  (Mem +  6);
-  FPUInstructionPointer    = *:8  (Mem +  8);
-  FPUDataPointer           = *:8  (Mem + 16);
-  MXCSR                    = *:4  (Mem + 24);
- # MXCSR_MASK not modeled, since it is processor specific, set to 0.
-
-# saved the FPU ST registers to the ST/MM area of the structure,
-  ST0 = *:10 (Mem +  32);
-  ST1 = *:10 (Mem +  48);
-  ST2 = *:10 (Mem +  64);
-  ST3 = *:10 (Mem +  80);
-  ST4 = *:10 (Mem +  96);
-  ST5 = *:10 (Mem + 112);
-  ST6 = *:10 (Mem + 128);
-  ST7 = *:10 (Mem + 144);
-
-  XMM0 = *:16 (Mem + 160);
-  XMM1 = *:16 (Mem + 176);
-  XMM2 = *:16 (Mem + 192);
-  XMM3 = *:16 (Mem + 208);
-  XMM4 = *:16 (Mem + 224);
-  XMM5 = *:16 (Mem + 240);
-  XMM6 = *:16 (Mem + 256);
-  XMM7 = *:16 (Mem + 272);
-  XMM8 = *:16 (Mem + 288);
-  XMM9 = *:16 (Mem + 304);
-  XMM10 = *:16 (Mem + 320);
-  XMM11 = *:16 (Mem + 336);
-  XMM12 = *:16 (Mem + 352);
-  XMM13 = *:16 (Mem + 368);
-  XMM14 = *:16 (Mem + 384);
-  XMM15 = *:16 (Mem + 400);
+  _fxsave64(Mem);
 }
 
 :FXRSTOR Mem   is $(LONGMODE_ON) & vexMode=0 & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
 {
-  FPUControlWord           = *:2  (Mem);
-  FPUStatusWord            = *:2  (Mem +  2);
-  FPUTagWord               = *:2  (Mem +  4); #The real implementation saves an 'abridged' tag word, but that is a non-trivial operation
-  FPULastInstructionOpcode = *:2  (Mem +  6);
-  FPUInstructionPointer    = *:4  (Mem +  8);
-  FPUPointerSelector       = *:2  (Mem + 12);
-  FPUDataPointer           = *:4  (Mem + 16);
-  FPUDataSelector          = *:2  (Mem + 20);
-  MXCSR                    = *:4  (Mem + 24);
-  # MXCSR_MASK not modeled, since it is processor specific, set to 0.
+  _fxrstor(Mem);
+}
 
-# saved the FPU ST registers to the ST/MM area of the structure,
-  ST0 = *:10 (Mem +  32);
-  ST1 = *:10 (Mem +  48);
-  ST2 = *:10 (Mem +  64);
-  ST3 = *:10 (Mem +  80);
-  ST4 = *:10 (Mem +  96);
-  ST5 = *:10 (Mem + 112);
-  ST6 = *:10 (Mem + 128);
-  ST7 = *:10 (Mem + 144);
-
-
-  XMM0 = *:16 (Mem + 160);
-  XMM1 = *:16 (Mem + 176);
-  XMM2 = *:16 (Mem + 192);
-  XMM3 = *:16 (Mem + 208);
-  XMM4 = *:16 (Mem + 224);
-  XMM5 = *:16 (Mem + 240);
-  XMM6 = *:16 (Mem + 256);
-  XMM7 = *:16 (Mem + 272);
-  XMM8 = *:16 (Mem + 288);
-  XMM9 = *:16 (Mem + 304);
-  XMM10 = *:16 (Mem + 320);
-  XMM11 = *:16 (Mem + 336);
-  XMM12 = *:16 (Mem + 352);
-  XMM13 = *:16 (Mem + 368);
-  XMM14 = *:16 (Mem + 384);
-  XMM15 = *:16 (Mem + 400);
+:FXRSTOR64 Mem   is $(LONGMODE_ON) & vexMode=0 & $(REX_W) & byte=0x0F; byte=0xAE; ( mod != 0b11 & reg_opcode=1 ) ... & Mem
+{
+  _fxrstor64(Mem);
 }
 @endif
 

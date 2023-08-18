@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.*;
 import ghidra.util.table.*;
@@ -61,10 +60,7 @@ public class AllFunctionsPanel extends JPanel {
 		add(tablePanel, BorderLayout.CENTER);
 		add(filterPanel, BorderLayout.SOUTH);
 
-		GoToService goToService = provider.getTool().getService(GoToService.class);
-		if (goToService != null) {
-			table.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
+		table.installNavigation(provider.getTool());
 	}
 
 	/**

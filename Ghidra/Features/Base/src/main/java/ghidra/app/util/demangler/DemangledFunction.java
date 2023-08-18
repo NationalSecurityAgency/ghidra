@@ -387,7 +387,7 @@ public class DemangledFunction extends DemangledObject {
 		// the function to the correct address.
 
 		if (address.isMemoryAddress()) {
-			address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
+			address = PseudoDisassembler.setTargetContextForDisassembly(program, address);
 		}
 
 		if (!passesPreconditions(program, address)) {

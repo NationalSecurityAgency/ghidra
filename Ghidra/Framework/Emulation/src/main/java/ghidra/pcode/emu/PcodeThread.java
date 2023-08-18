@@ -197,6 +197,13 @@ public interface PcodeThread<T> {
 	void skipPcodeOp();
 
 	/**
+	 * Apply a patch to the emulator
+	 * 
+	 * @param sleigh a line of sleigh semantic source to execute (excluding the final semicolon)
+	 */
+	void stepPatch(String sleigh);
+
+	/**
 	 * Get the current frame, if present
 	 * 
 	 * <p>

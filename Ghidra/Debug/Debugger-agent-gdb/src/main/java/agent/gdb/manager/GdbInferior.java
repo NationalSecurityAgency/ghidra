@@ -16,8 +16,7 @@
 package agent.gdb.manager;
 
 import java.math.BigInteger;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbManager.StepCmd;
@@ -133,14 +132,14 @@ public interface GdbInferior extends GdbConsoleOperations, GdbMemoryOperations {
 	 * 
 	 * @return a map of start addresses to mapped memory regions
 	 */
-	Map<BigInteger, GdbMemoryMapping> getKnownMappings();
+	NavigableMap<BigInteger, GdbMemoryMapping> getKnownMappings();
 
 	/**
 	 * List the memory mappings of this inferior's process
 	 * 
 	 * @return a future that completes with a map of start addresses to mapped memory regions
 	 */
-	CompletableFuture<Map<BigInteger, GdbMemoryMapping>> listMappings();
+	CompletableFuture<NavigableMap<BigInteger, GdbMemoryMapping>> listMappings();
 
 	/**
 	 * Change CLI focus to this inferior

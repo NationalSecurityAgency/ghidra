@@ -31,54 +31,54 @@ import ghidra.dbg.testutil.DummyProc;
 public enum MacOSSpecimen implements DebuggerTestSpecimen, DebuggerModelTestUtils {
 	SPIN {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expSpin");
 		}
 	},
 	FORK_EXIT {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expFork");
 		}
 	},
 	CLONE_EXIT {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expCloneExit");
 		}
 	},
 	PRINT {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expPrint");
 		}
 	},
 	REGISTERS {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expRegisters");
 		}
 	},
 	STACK {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expStack");
 		}
 	},
 	CREATE_PROCESS {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expCreateProcess");
 		}
 	},
 	CREATE_THREAD_EXIT {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expCreateThreadExit");
 		}
 	};
 
-	abstract String getCommandLine();
+	public abstract String getCommandLine();
 
 	@Override
 	public DummyProc runDummy() throws Throwable {
@@ -117,24 +117,19 @@ public enum MacOSSpecimen implements DebuggerTestSpecimen, DebuggerModelTestUtil
 	}
 
 	@Override
-	public boolean isRunningIn(TargetProcess process, AbstractDebuggerModelTest test)
-			throws Throwable {
+	public boolean isRunningIn(TargetProcess process, AbstractDebuggerModelTest test) throws Throwable {
 		// NB. ShellUtils.parseArgs removes the \s. Not good.
 		String expected = getBinModuleName();
 		TargetObject session = process.getParent().getParent();
-		Collection<TargetModule> modules =
-			test.m.findAll(TargetModule.class, session.getPath(), true).values();
-		return modules.stream()
-				.anyMatch(m -> expected.equalsIgnoreCase(getShortName(m.getModuleName())));
+		Collection<TargetModule> modules = test.m.findAll(TargetModule.class, session.getPath(), true).values();
+		return modules.stream().anyMatch(m -> expected.equalsIgnoreCase(getShortName(m.getModuleName())));
 	}
 
 	@Override
-	public boolean isAttachable(DummyProc dummy, TargetAttachable attachable,
-			AbstractDebuggerModelTest test) throws Throwable {
+	public boolean isAttachable(DummyProc dummy, TargetAttachable attachable, AbstractDebuggerModelTest test)
+			throws Throwable {
 		waitOn(attachable.fetchAttributes());
-		long pid =
-			attachable.getTypedAttributeNowByName(LldbModelTargetAvailable.PID_ATTRIBUTE_NAME,
-				Long.class, -1L);
+		long pid = attachable.getTypedAttributeNowByName(LldbModelTargetAvailable.PID_ATTRIBUTE_NAME, Long.class, -1L);
 		return pid == dummy.pid;
 	}
 }

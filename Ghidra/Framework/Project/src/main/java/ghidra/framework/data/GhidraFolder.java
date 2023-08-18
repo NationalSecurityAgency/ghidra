@@ -20,7 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.FileSystem;
@@ -32,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class GhidraFolder implements DomainFolder {
 
-	private ProjectFileManager fileManager;
+	private DefaultProjectData projectData;
 	private LocalFileSystem fileSystem;
 	private FileSystem versionedFileSystem;
 	private DomainFolderChangeListener listener;
@@ -40,10 +39,10 @@ public class GhidraFolder implements DomainFolder {
 	private GhidraFolder parent;
 	private String name;
 
-	GhidraFolder(ProjectFileManager fileManager, DomainFolderChangeListener listener) {
-		this.fileManager = fileManager;
-		this.fileSystem = fileManager.getLocalFileSystem();
-		this.versionedFileSystem = fileManager.getVersionedFileSystem();
+	GhidraFolder(DefaultProjectData projectData, DomainFolderChangeListener listener) {
+		this.projectData = projectData;
+		this.fileSystem = projectData.getLocalFileSystem();
+		this.versionedFileSystem = projectData.getVersionedFileSystem();
 		this.listener = listener;
 		this.name = FileSystem.SEPARATOR;
 	}
@@ -52,7 +51,7 @@ public class GhidraFolder implements DomainFolder {
 		this.parent = parent;
 		this.name = name;
 
-		this.fileManager = parent.getProjectFileManager();
+		this.projectData = parent.getProjectData();
 		this.fileSystem = parent.getLocalFileSystem();
 		this.versionedFileSystem = parent.getVersionedFileSystem();
 		this.listener = parent.getChangeListener();
@@ -67,15 +66,11 @@ public class GhidraFolder implements DomainFolder {
 	}
 
 	LocalFileSystem getUserFileSystem() {
-		return fileManager.getUserFileSystem();
+		return projectData.getUserFileSystem();
 	}
 
 	DomainFolderChangeListener getChangeListener() {
 		return listener;
-	}
-
-	ProjectFileManager getProjectFileManager() {
-		return fileManager;
 	}
 
 	GhidraFileData getFileData(String fileName) throws FileNotFoundException, IOException {
@@ -88,7 +83,7 @@ public class GhidraFolder implements DomainFolder {
 
 	GhidraFolderData getFolderData() throws FileNotFoundException {
 		if (parent == null) {
-			return fileManager.getRootFolderData();
+			return projectData.getRootFolderData();
 		}
 		GhidraFolderData folderData = parent.getFolderData().getFolderData(name, false);
 		if (folderData == null) {
@@ -106,7 +101,7 @@ public class GhidraFolder implements DomainFolder {
 	private GhidraFolderData createFolderData(String folderName) throws IOException {
 		synchronized (fileSystem) {
 			GhidraFolderData parentData =
-				parent == null ? fileManager.getRootFolderData() : createFolderData();
+				parent == null ? projectData.getRootFolderData() : createFolderData();
 			GhidraFolderData folderData = parentData.getFolderData(folderName, false);
 			if (folderData == null) {
 				try {
@@ -121,7 +116,7 @@ public class GhidraFolder implements DomainFolder {
 	}
 
 	private GhidraFolderData createFolderData() throws IOException {
-		GhidraFolderData rootFolderData = fileManager.getRootFolderData();
+		GhidraFolderData rootFolderData = projectData.getRootFolderData();
 		if (parent == null) {
 			return rootFolderData;
 		}
@@ -153,12 +148,12 @@ public class GhidraFolder implements DomainFolder {
 
 	@Override
 	public ProjectLocator getProjectLocator() {
-		return fileManager.getProjectLocator();
+		return projectData.getProjectLocator();
 	}
 
 	@Override
-	public ProjectFileManager getProjectData() {
-		return fileManager;
+	public DefaultProjectData getProjectData() {
+		return projectData;
 	}
 
 	String getPathname(String childName) {
@@ -185,22 +180,12 @@ public class GhidraFolder implements DomainFolder {
 
 	@Override
 	public URL getSharedProjectURL() {
-		ProjectLocator projectLocator = getProjectLocator();
-		URL projectURL = projectLocator.getURL();
-		if (!GhidraURL.isServerRepositoryURL(projectURL)) {
-			RepositoryAdapter repository = fileManager.getRepository();
-			if (repository == null) {
-				return null;
-			}
-			// NOTE: only supports ghidra protocol without extension protocol.
-			// Assumes any extension protocol use would be reflected in projectLocator URL.
-			ServerInfo serverInfo = repository.getServerInfo();
-			projectURL = GhidraURL.makeURL(serverInfo.getServerName(), serverInfo.getPortNumber(),
-				repository.getName());
+		URL projectURL = projectData.getSharedProjectURL();
+		if (projectURL == null) {
+			return null;
 		}
 		try {
-			// Direct URL construction done so that ghidra protocol 
-			// extension may be supported
+			// Direct URL construction done so that ghidra protocol extension may be supported
 			String urlStr = projectURL.toExternalForm();
 			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
 				urlStr = urlStr.substring(0, urlStr.length() - 1);
@@ -218,8 +203,17 @@ public class GhidraFolder implements DomainFolder {
 	}
 
 	@Override
+	public URL getLocalProjectURL() {
+		ProjectLocator projectLocator = projectData.getProjectLocator();
+		if (!projectLocator.isTransient()) {
+			return GhidraURL.makeURL(projectLocator, getPathname(), null);
+		}
+		return null;
+	}
+
+	@Override
 	public boolean isInWritableProject() {
-		return !getProjectData().getLocalFileSystem().isReadOnly();
+		return !fileSystem.isReadOnly();
 	}
 
 	@Override
@@ -311,7 +305,7 @@ public class GhidraFolder implements DomainFolder {
 				}
 			}
 			catch (IOException e) {
-				Msg.error(this, "file error for " + parent.getPathname(fileName), e);
+				Msg.error(this, "file error for " + getPathname(fileName), e);
 			}
 			return null;
 		}
@@ -416,7 +410,7 @@ public class GhidraFolder implements DomainFolder {
 			return false;
 		}
 		GhidraFolder other = (GhidraFolder) obj;
-		if (fileManager != other.fileManager) {
+		if (projectData != other.projectData) {
 			return false;
 		}
 		return getPathname().equals(other.getPathname());
@@ -429,11 +423,11 @@ public class GhidraFolder implements DomainFolder {
 
 	@Override
 	public String toString() {
-		ProjectLocator projectLocator = fileManager.getProjectLocator();
+		ProjectLocator projectLocator = projectData.getProjectLocator();
 		if (projectLocator.isTransient()) {
-			return fileManager.getProjectLocator().getName() + getPathname();
+			return projectData.getProjectLocator().getName() + getPathname();
 		}
-		return fileManager.getProjectLocator().getName() + ":" + getPathname();
+		return projectData.getProjectLocator().getName() + ":" + getPathname();
 	}
 
 }

@@ -22,6 +22,7 @@ import ghidra.program.model.lang.CompilerSpec;
 import mdemangler.datatype.MDDataType;
 import mdemangler.datatype.MDVarArgsType;
 import mdemangler.datatype.complex.*;
+import mdemangler.datatype.extended.MDArrayReferencedType;
 import mdemangler.datatype.modifier.*;
 import mdemangler.functiontype.*;
 import mdemangler.naming.*;
@@ -143,7 +144,8 @@ public class MDMangGhidra extends MDMang {
 			object = processObjectCPP(objectCPP);
 			object.setSpecialPrefix(((MDObjectBracket) item).getPrefix());
 		}
-		//TODO: put other objectReserved derivative types here and return something that Ghidra can use.
+		//TODO: put other objectReserved derivative types here and return something that Ghidra
+		// can use.
 		else {
 			object =
 				new DemangledUnknown(mangledSource, demangledSource, objectReserved.toString());
@@ -740,9 +742,6 @@ public class MDMangGhidra extends MDMang {
 				}
 				return resultDataType;
 			}
-			else if (modifierType instanceof MDStdNullPtrType) {
-				resultDataType.setName(datatype.toString());
-			}
 			else {
 				// not pointer, reference, or array type
 				if ((modifierType.getReferencedType() instanceof MDFunctionType)) {
@@ -819,6 +818,12 @@ public class MDMangGhidra extends MDMang {
 		else if (datatype instanceof MDVarArgsType) {
 			resultDataType.setVarArgs();
 		}
+		else if (datatype instanceof MDArrayReferencedType arrRefType) {
+			return processDataType(resultDataType, arrRefType.getReferencedType());
+		}
+		else if (datatype instanceof MDStdNullPtrType) {
+			resultDataType.setName(datatype.toString());
+		}
 		else {
 			// MDDataType
 			// TODO MDW64Type needs repeated reference type parsing, just as modifier types need
@@ -852,6 +857,3 @@ public class MDMangGhidra extends MDMang {
 		return dataType.toString();
 	}
 }
-
-/******************************************************************************/
-/******************************************************************************/

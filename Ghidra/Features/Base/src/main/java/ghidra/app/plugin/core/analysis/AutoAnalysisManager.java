@@ -57,7 +57,7 @@ import ghidra.util.task.*;
  * Provides support for auto analysis tasks.
  * Manages a pipeline or priority of tasks to run given some event has occurred.
  */
-public class AutoAnalysisManager implements DomainObjectListener, DomainObjectClosedListener {
+public class AutoAnalysisManager implements DomainObjectListener {
 
 	/**
 	 * The name of the shared thread pool that analyzers can uses to do parallel processing.
@@ -145,7 +145,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	private AutoAnalysisManager(Program program) {
 		this.program = program;
 		eventQueueID = program.createPrivateEventQueue(this, 500);
-		program.addCloseListener(this);
+		program.addCloseListener(dobj -> dispose());
 		initializeAnalyzers();
 	}
 
@@ -359,11 +359,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		int subType = functionChangeRecord.getSubEventType();
 		return subType == ChangeManager.FUNCTION_CHANGED_PARAMETERS ||
 			subType == ChangeManager.FUNCTION_CHANGED_RETURN;
-	}
-
-	@Override
-	public void domainObjectClosed() {
-		dispose();
 	}
 
 	@Override
@@ -961,10 +956,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 
 		PluginTool anyTool = null;
-		Iterator<PluginTool> iterator = toolSet.iterator();
-		while (iterator.hasNext()) {
-			PluginTool tool = iterator.next();
-
+		for (PluginTool tool : toolSet) {
 			anyTool = tool;
 			JFrame toolFrame = tool.getToolFrame();
 			if (toolFrame != null && toolFrame.isActive()) {
@@ -1316,6 +1308,11 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 		Program p = program; // program may get cleared by domain object change event
 		if (p == null || p.isClosed()) {
+			return;
+		}
+
+		// Save task times for temporary program or if saveable changes have been made
+		if (!p.isTemporary() && !p.isChanged()) {
 			return;
 		}
 

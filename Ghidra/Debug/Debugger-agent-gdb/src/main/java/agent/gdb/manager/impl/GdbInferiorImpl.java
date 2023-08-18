@@ -252,9 +252,12 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	protected CompletableFuture<Map<String, GdbModule>> doListModules() {
-		return manager.execMaintInfoSectionsAllObjects(this).thenApply(lines -> {
-			parseAndUpdateAllModuleSections(lines);
-			return unmodifiableModules;
+		return manager.execMaintInfoSectionsAllObjects(this).thenCompose(lines -> {
+			return listMappings().thenApply(mappings -> {
+				GdbMemoryMapping.Index index = new GdbMemoryMapping.Index(mappings);
+				parseAndUpdateAllModuleSections(lines, index);
+				return unmodifiableModules;
+			});
 		});
 	}
 
@@ -297,7 +300,7 @@ public class GdbInferiorImpl implements GdbInferior {
 		return name;
 	}
 
-	protected void parseAndUpdateAllModuleSections(String[] lines) {
+	protected void parseAndUpdateAllModuleSections(String[] lines, GdbMemoryMapping.Index index) {
 		Set<String> modNamesSeen = new HashSet<>();
 		Set<String> secNamesSeen = new HashSet<>();
 		GdbModuleImpl curModule = null;
@@ -312,7 +315,7 @@ public class GdbInferiorImpl implements GdbInferior {
 				curModule = modules.computeIfAbsent(name, this::resyncCreateModule);
 			}
 			else if (curModule != null) {
-				curModule.processSectionLine(line, secNamesSeen);
+				curModule.processSectionLine(line, secNamesSeen, index);
 			}
 		}
 		if (curModule != null) {
@@ -323,12 +326,12 @@ public class GdbInferiorImpl implements GdbInferior {
 	}
 
 	@Override
-	public Map<BigInteger, GdbMemoryMapping> getKnownMappings() {
+	public NavigableMap<BigInteger, GdbMemoryMapping> getKnownMappings() {
 		return unmodifiableMappings;
 	}
 
 	@Override
-	public CompletableFuture<Map<BigInteger, GdbMemoryMapping>> listMappings() {
+	public CompletableFuture<NavigableMap<BigInteger, GdbMemoryMapping>> listMappings() {
 		return consoleCapture("info proc mappings", CompletesWithRunning.CANNOT)
 				.thenApply(this::parseMappings);
 	}
@@ -361,7 +364,7 @@ public class GdbInferiorImpl implements GdbInferior {
 		return new GdbMemoryMapping(start, end, size, offset, "rwx", objfile);
 	}
 
-	protected Map<BigInteger, GdbMemoryMapping> parseMappings(String out) {
+	protected NavigableMap<BigInteger, GdbMemoryMapping> parseMappings(String out) {
 		Set<BigInteger> startsSeen = new TreeSet<>();
 		for (String line : out.split("\n")) {
 			try {

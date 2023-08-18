@@ -22,10 +22,12 @@ import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.jdom.JDOMException;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.*;
+import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
+import ghidra.app.util.bin.format.macho.commands.SegmentNames;
 import ghidra.app.util.bin.format.macho.prelink.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -44,26 +46,9 @@ public class MachoPrelinkUtils {
 	 */
 	public static boolean isMachoPrelink(ByteProvider provider, TaskMonitor monitor) {
 		try {
-			MachHeader header = new MachHeader(provider);
-			BinaryReader reader = new BinaryReader(provider, header.isLittleEndian());
-			reader.setPointerIndex(header.getSize());
-
-			// Doing a full header parse is too slow...we really just need to see if a segment
-			// exists that starts with __PRELINK.  Parse the minimal amount to do that check.
-			for (int i = 0; i < header.getNumberOfCommands(); i++) {
-				int type = reader.peekNextInt();
-				if (type == LoadCommandTypes.LC_SEGMENT || type == LoadCommandTypes.LC_SEGMENT_64) {
-					SegmentCommand segment = new SegmentCommand(reader, header.is32bit());
-					if (segment.getSegmentName().startsWith("__PRELINK")) {
-						return true;
-					}
-				}
-				else {
-					type = reader.readNextInt();
-					int size = reader.readNextInt();
-					reader.setPointerIndex(reader.getPointerIndex() + size - 8);
-				}
-			}
+			return new MachHeader(provider).parseSegments()
+					.stream()
+					.anyMatch(segment -> segment.getSegmentName().startsWith("__PRELINK"));
 		}
 		catch (MachException | IOException e) {
 			// Assume it's not a Mach-O PRELINK...fall through

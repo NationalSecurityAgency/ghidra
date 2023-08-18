@@ -26,9 +26,12 @@ import javax.swing.table.TableModel;
 import docking.widgets.table.GTable;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
+import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.framework.plugintool.ServiceProviderStub;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.Msg;
 
 /**
  * Navigation is only supported if the underlying table model
@@ -43,7 +46,7 @@ import ghidra.program.util.ProgramSelection;
 public class GhidraTable extends GTable {
 
 	private Navigatable navigatable;
-	private GoToService gotoService;
+	private ServiceProvider serviceProvider;
 	private boolean navigateOnSelection;
 	private KeyListener navigationKeyListener;
 	private MouseListener navigationMouseListener;
@@ -77,15 +80,54 @@ public class GhidraTable extends GTable {
 
 	/**
 	 * Sets the GoTo service to use when navigation is enabled on this table.
-	 * @param goToService the GoTo service.
+	 * @param goToService the GoTo service
+	 * @param nav the navigable
+	 * @deprecated use {@link #installNavigation(ServiceProvider)} or 
+	 * 		{@link #installNavigation(ServiceProvider,Navigatable)}
+	 */
+	@Deprecated
+	public void installNavigation(GoToService goToService, Navigatable nav) {
+		installNavigation(new GoToServiceProvider(goToService), nav);
+	}
+
+	/**
+	 * Sets the service provider to use when navigation is enabled on this table.  The service 
+	 * provider will be used to retrieve the {@link GoToService}, as needed after the system has 
+	 * been initialized.   If you do not have a {@link Navigatable} preferences, then call 
+	 * {@link #installNavigation(ServiceProvider)} instead.
+	 * 
+	 * @param sp the service provider
 	 * @param nav the navigable
 	 */
-	public void installNavigation(GoToService goToService, Navigatable nav) {
+	public void installNavigation(ServiceProvider sp, Navigatable nav) {
+
 		if (nav == null) {
+			// When null, the default navigatable will be used.  But, clients calling this method
+			// with a null navigatable have likely made a mistake.  Clients that do not have a valid
+			// navigatable should call installNavigation(serviceProvider) instead.
+			Msg.debug(this, "Attempted to install navigation on a table using a null Navigatable");
+		}
+
+		this.navigatable = nav;
+		installNavigation(sp);
+	}
+
+	/**
+	 * Sets the service provider to use when navigation is enabled on this table.  The service 
+	 * provider will be used to retrieve the {@link GoToService}, as needed after the system has 
+	 * been initialized.
+	 * 
+	 * @param sp the service provider
+	 */
+	public void installNavigation(ServiceProvider sp) {
+
+		if (sp == null) {
+			Msg.error(this,
+				"Attempt to install navigation on this table failed; service provider is null");
 			return;
 		}
 
-		if (this.navigatable == null) {
+		if (navigationKeyListener == null) {
 			navigationKeyListener = new KeyAdapter() {
 				@Override
 				public void keyPressed(KeyEvent e) {
@@ -119,16 +161,19 @@ public class GhidraTable extends GTable {
 			selectionModel.addListSelectionListener(navigationSelectionListener);
 		}
 
-		this.gotoService = goToService;
-		this.navigatable = nav;
+		this.serviceProvider = sp;
 	}
 
+	/**
+	 * Removes any installed navigation components, such as listeners, a navigatable and the 
+	 * service provider.
+	 */
 	public void removeNavigation() {
 		removeKeyListener(navigationKeyListener);
 		removeMouseListener(navigationMouseListener);
 		selectionModel.removeListSelectionListener(navigationSelectionListener);
 
-		this.gotoService = null;
+		this.serviceProvider = null;
 		this.navigatable = null;
 	}
 
@@ -181,11 +226,11 @@ public class GhidraTable extends GTable {
 	 * @param column the column
 	 */
 	public void navigate(int row, int column) {
-		if (navigatable == null) {
+		if (serviceProvider == null) {
 			return;
 		}
-		column = convertColumnIndexToModel(column);
 
+		column = convertColumnIndexToModel(column);
 		if (row < 0 || column < 0) {
 			return;
 		}
@@ -194,14 +239,19 @@ public class GhidraTable extends GTable {
 			return;
 		}
 
+		GoToService goToService = serviceProvider.getService(GoToService.class);
+		if (goToService == null) {
+			return;
+		}
+
 		ProgramTableModel ptm = (ProgramTableModel) dataModel;
 		ProgramLocation loc = ptm.getProgramLocation(row, column);
 		if (loc != null && loc.getAddress().isExternalAddress()) {
-			gotoService.goTo(loc.getAddress(), ptm.getProgram());
+			goToService.goTo(loc.getAddress(), ptm.getProgram());
 			return;
 		}
 		Program program = ptm.getProgram();
-		gotoService.goTo(navigatable, loc, program);
+		goToService.goTo(navigatable, loc, program);
 	}
 
 	/**
@@ -294,6 +344,28 @@ public class GhidraTable extends GTable {
 
 			int column = Math.max(0, getSelectedColumn());
 			navigateOnCurrentSelection(getSelectedRow(), column);
+		}
+	}
+
+	private class GoToServiceProvider extends ServiceProviderStub {
+
+		private GoToService goToService;
+
+		GoToServiceProvider(GoToService goToService) {
+			this.goToService = goToService;
+			if (goToService == null) {
+				Msg.error(this,
+					"Attempt to install the GoToService on this table failed; service is null");
+			}
+		}
+
+		@SuppressWarnings("unchecked") // cast is safe; we checked the class
+		@Override
+		public <T> T getService(Class<T> serviceClass) {
+			if (serviceClass == GoToService.class) {
+				return (T) goToService;
+			}
+			return null;
 		}
 	}
 

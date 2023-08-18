@@ -1157,6 +1157,22 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testStdNullBackref() throws Exception {
+		mangled = "?fn@@QAAHH$$T0@Z";
+		mdTruth = "public: int __cdecl fn(int,std::nullptr_t,std::nullptr_t)";
+		msTruth = mdTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void test_OBackref() throws Exception {
+		mangled = "?fn@@QAAHH_OBY01H0@Z";
+		mdTruth = "public: int __cdecl fn(int,int[][2],int[][2])";
+		msTruth = mdTruth;
+		demangleAndTest();
+	}
+
+	@Test
 	public void testSpecial__F() throws Exception {
 		mangled =
 			"??__Fname0@?1??name1@name2@name3@name4@@CAXPEAUname5@@P84@EAAJPEAPEAG@ZW4name6@@PEAUname7@@@Z@YAXXZ";
@@ -1361,7 +1377,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testStdNullptrArgVar() throws Exception {
 		mangled = "?Name@@3$$TA";
-		msTruth = "std::nullptr_t";
+		msTruth = "std::nullptr_t Name";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
@@ -7389,7 +7405,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testDollarDollar_4() throws Exception {
 		mangled = "?Name@@3$$TA"; //manufactured--interestingly, this is probably not valid: see mstruth. //This is a DataType $$T Modifier
-		msTruth = "std::nullptr_t";
+		msTruth = "std::nullptr_t Name";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
@@ -9075,7 +9091,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "?var@@3$$TA";
 		//mstruth = "?var@@3$$TA";
 		//mdtruth = "";
-		msTruth = "std::nullptr_t";
+		msTruth = "std::nullptr_t var";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
@@ -9083,7 +9099,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	@Test
 	public void testManagedProperties_DollarDollarT() throws Exception {
 		mangled = "?var@@3$$T";
-		msTruth = "std::nullptr_t";
+		msTruth = "std::nullptr_t var";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
@@ -14681,6 +14697,46 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mangled = "??__E?Initialized@CurrentDomain@<CrtImplementationDetails>@@$$Q2HA@@YMXXZ";
 		msTruth =
 			"void __clrcall `dynamic initializer for 'public: static int <CrtImplementationDetails>::CurrentDomain::Initialized''(void)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testLRefToFunction() throws Exception {
+		mangled = "?var@@3A6AHH@ZA";
+		msTruth = "int (__cdecl& var)(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testRRefToFunction() throws Exception {
+		mangled = "?var@@3$$R6AHH@ZA";
+		msTruth = "int (__cdecl&& var)(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testModifierToLRefToFunction() throws Exception {
+		mangled = "?var@@3?DA6AHH@ZA";
+		msTruth = "int (__cdecl&const volatile var)(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testModifierToRRefToFunction() throws Exception {
+		mangled = "?var@@3?D$$R6AHH@ZA";
+		msTruth = "int (__cdecl&&const volatile var)(int)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testNestedModifiersWithArrayProperties() throws Exception {
+		mangled = "?var@@3PAY01$$RAY01HA";
+		msTruth = "int (&& (* var)[2])[2]";
 		mdTruth = msTruth;
 		demangleAndTest();
 	}

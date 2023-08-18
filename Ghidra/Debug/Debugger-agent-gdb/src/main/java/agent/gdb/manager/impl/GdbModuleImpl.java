@@ -150,7 +150,8 @@ public class GdbModuleImpl implements GdbModule {
 		return minimalSymbols.request();
 	}
 
-	protected void processSectionLine(String line, Set<String> namesSeen) {
+	protected void processSectionLine(String line, Set<String> namesSeen,
+			GdbMemoryMapping.Index index) {
 		Matcher matcher = inferior.manager.matchSectionLine(line);
 		if (matcher != null) {
 			try {
@@ -167,7 +168,7 @@ public class GdbModuleImpl implements GdbModule {
 					}
 				}
 				if (attrs.contains("ALLOC")) {
-					long b = vmaStart - offset;
+					long b = index.computeBase(vmaStart);
 					base = base == null ? b : MathUtilities.unsignedMin(base, b);
 					max = max == null ? b : MathUtilities.unsignedMax(max, vmaEnd);
 				}

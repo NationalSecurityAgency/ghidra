@@ -19,27 +19,41 @@ import mdemangler.MDException;
 import mdemangler.MDMang;
 
 /**
- * This class represents a "data ref ref" data type within a Microsoft mangled symbol.
+ * This class represents a "data right reference" data type within a Microsoft mangled symbol.
  * It is one of a number of "extended" data types not originally planned by Microsoft.
  */
-// Added 20170330
-//  TODO: Not sure what this is and Not sure of all the intricacies.
-//     ...but checked that these are all allowed: EIF, CV (ABCD), array property, maanaged
-//     properties
-//  TODO: Seems very closely related to a "reference" type, so might find a way to merge
-//     reference types together.
 public class MDDataRightReferenceType extends MDModifierType {
 
-	public MDDataRightReferenceType(MDMang dmang) {
+	public MDDataRightReferenceType(MDMang dmang, boolean isHighest, boolean isConst,
+			boolean isVolatile) {
 		super(dmang, 3);
+		if (isHighest) {
+			setConst(isConst);
+			setVolatile(isVolatile);
+		}
+		else {
+			setConst(false);
+			setVolatile(false);
+		}
+		cvMod.setRightReferenceTemplateParameter();
 	}
 
 	@Override
 	protected void parseInternal() throws MDException {
-		cvMod.setRightReferenceTemplateParameter();
 		super.parseInternal();
 	}
-}
 
-/******************************************************************************/
-/******************************************************************************/
+	@Override
+	public void insertCVMod(StringBuilder builder) {
+		if (cvMod.isFunction()) {
+			StringBuilder cvBuilder = new StringBuilder();
+			cvMod.insert(cvBuilder);
+			dmang.insertString(builder, cvBuilder.toString());
+		}
+		else {
+			cvMod.insert(builder);
+		}
+		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
+		dmang.cleanOutput(builder);
+	}
+}

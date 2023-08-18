@@ -212,7 +212,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 
 		DataType resultDt = DataUtilities.reconcileAppliedDataType(currentDt, dt, true);
-		int resultLen = resultDt.getAlignedLength();
+		int resultLen = resultDt.getLength();
 
 		if (resultDt instanceof Dynamic) {
 			resultLen = DataTypeHelper.requestDtSize(getProvider(), resultDt.getDisplayName(),
@@ -222,7 +222,9 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			throw new InvalidDataTypeException("Data types of size 0 are not allowed.");
 		}
 
-		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen, true);
+		// TODO: Need to handle proper placement for big-endian within a larger component (i.e., right-justified)
+		return DataTypeInstance.getDataTypeInstance(resultDt, resultLen,
+			viewComposite.isPackingEnabled());
 	}
 
 	/**
@@ -753,7 +755,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			int currentIndex = getMinIndexSelected();
 			DataType dt = getNextCycleDataType(cycleGroup);
 			if (dt != null) {
-				DataTypeInstance dti = DataTypeHelper.getFixedLength(this, currentIndex, dt);
+				DataTypeInstance dti = DataTypeHelper.getFixedLength(this, currentIndex, dt,
+					usesAlignedLengthComponents());
 				if (dti == null) {
 					return;
 				}
@@ -1160,7 +1163,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			dtName = dt.getDisplayName();
 			if (dtString.equals(dtName)) {
 				return DataTypeInstance.getDataTypeInstance(element.getDataType(),
-					element.getLength(), true);
+					element.getLength(), usesAlignedLengthComponents());
 			}
 		}
 
@@ -1192,7 +1195,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		if (maxLength > 0 && newLength > maxLength) {
 			throw new UsrException(newDt.getDisplayName() + " doesn't fit.");
 		}
-		return DataTypeInstance.getDataTypeInstance(newDt, newLength, true);
+		return DataTypeInstance.getDataTypeInstance(newDt, newLength,
+			usesAlignedLengthComponents());
 	}
 
 	@SuppressWarnings("unused") // the exception is thrown by subclasses

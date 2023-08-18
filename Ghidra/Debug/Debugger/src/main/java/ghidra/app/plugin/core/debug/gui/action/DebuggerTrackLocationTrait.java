@@ -248,6 +248,9 @@ public class DebuggerTrackLocationTrait {
 		// Change of current frame
 		// Change of tracking settings
 		DebuggerCoordinates cur = current;
+		if (cur.getView() == null) {
+			return AsyncUtils.nil();
+		}
 		TraceThread thread = cur.getThread();
 		if (thread == null || spec == null) {
 			return AsyncUtils.nil();

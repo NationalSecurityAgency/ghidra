@@ -68,6 +68,7 @@ Release
 .classpath
 .settings/
 .prefs
+.pydevproject
 
 # Ignore XTEXT generated dirs/files
 */*/*/*/xtend-gen

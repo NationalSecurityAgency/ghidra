@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import db.Transaction;
 import db.DBHandle;
+import db.Transaction;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
 import ghidra.program.model.address.Address;
@@ -70,6 +70,10 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 				return trace.getBaseAddressFactory();
 			}
 		}, null, false, monitor);
+
+		if (openMode == DBOpenMode.CREATE) {
+			saveDataOrganization();
+		}
 	}
 
 	@Override

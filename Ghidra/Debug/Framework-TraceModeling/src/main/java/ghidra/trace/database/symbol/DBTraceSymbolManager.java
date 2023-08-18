@@ -21,10 +21,12 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.*;
+import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
@@ -37,7 +39,6 @@ import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceFunctionTagChangeType;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
@@ -90,164 +91,6 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		@Override
 		protected Long getRecordValue() {
 			return symbolID;
-		}
-	}
-
-	@DBAnnotatedObjectInfo(version = 0)
-	public static class DBTraceFunctionTag extends DBAnnotatedObject implements FunctionTag {
-
-		static final String TABLE_NAME = "FunctionTags";
-
-		static final String NAME_COLUMN_NAME = "Name";
-		static final String COMMENT_COLUMN_NAME = "Comment";
-
-		@DBAnnotatedColumn(NAME_COLUMN_NAME)
-		static DBObjectColumn NAME_COLUMN;
-		@DBAnnotatedColumn(COMMENT_COLUMN_NAME)
-		static DBObjectColumn COMMENT_COLUMN;
-
-		@DBAnnotatedField(column = NAME_COLUMN_NAME, indexed = true)
-		String name;
-		@DBAnnotatedField(column = COMMENT_COLUMN_NAME)
-		String comment;
-
-		protected final DBTraceSymbolManager manager;
-
-		public DBTraceFunctionTag(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
-				DBRecord record) {
-			super(store, record);
-			this.manager = manager;
-		}
-
-		protected void set(String name, String comment) {
-			this.name = name;
-			this.comment = comment;
-			update(NAME_COLUMN, COMMENT_COLUMN);
-		}
-
-		@Override
-		public int hashCode() {
-			return Long.hashCode(key);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (!(obj instanceof FunctionTag)) {
-				return false;
-			}
-			if (obj == this) {
-				return true;
-			}
-			FunctionTag that = (FunctionTag) obj;
-			if (!Objects.equals(this.getName(), that.getName())) {
-				return false;
-			}
-			if (!Objects.equals(this.getComment(), that.getComment())) {
-				return false;
-			}
-			return true;
-		}
-
-		@Override
-		public int compareTo(FunctionTag o) {
-			int result;
-			result = this.getName().compareToIgnoreCase(o.getName());
-			if (result != 0) {
-				return result;
-			}
-			result = this.getComment().compareToIgnoreCase(o.getComment());
-			if (result != 0) {
-				return result;
-			}
-			return 0;
-		}
-
-		@Override
-		public long getId() {
-			return key;
-		}
-
-		@Override
-		public String getName() {
-			try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-				return name;
-			}
-		}
-
-		@Override
-		public String getComment() {
-			try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-				return comment;
-			}
-		}
-
-		@Override
-		public void setName(String name) {
-			try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-				this.name = name;
-				update(NAME_COLUMN);
-			}
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceFunctionTagChangeType.CHANGED, null, this));
-		}
-
-		@Override
-		public void setComment(String comment) {
-			try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-				this.comment = comment;
-				update(COMMENT_COLUMN);
-			}
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceFunctionTagChangeType.CHANGED, null, this));
-		}
-
-		@Override
-		public void delete() {
-			try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-				for (DBTraceFunctionTagMapping mapping : manager.tagMappingsByTag.get(key)) {
-					manager.tagMappingStore.delete(mapping);
-				}
-				manager.tagStore.delete(this);
-			}
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceFunctionTagChangeType.DELETED, null, this));
-		}
-	}
-
-	@DBAnnotatedObjectInfo(version = 0)
-	public static class DBTraceFunctionTagMapping extends DBAnnotatedObject {
-
-		static final String TABLE_NAME = "FunctionTagMappings";
-
-		static final String FUNCTION_COLUMN_NAME = "Function";
-		static final String TAG_COLUMN_NAME = "Tag";
-
-		@DBAnnotatedColumn(FUNCTION_COLUMN_NAME)
-		static DBObjectColumn FUNCTION_COLUMN;
-		@DBAnnotatedColumn(TAG_COLUMN_NAME)
-		static DBObjectColumn TAG_COLUMN;
-
-		@DBAnnotatedField(column = FUNCTION_COLUMN_NAME, indexed = true)
-		private long functionKey;
-		@DBAnnotatedField(column = TAG_COLUMN_NAME, indexed = true)
-		private long tagKey;
-
-		public DBTraceFunctionTagMapping(DBCachedObjectStore<?> store, DBRecord record) {
-			super(store, record);
-		}
-
-		protected void set(DBTraceFunctionSymbol function, DBTraceFunctionTag tag) {
-			this.functionKey = function.getKey();
-			this.tagKey = tag.getKey();
-			update(FUNCTION_COLUMN, TAG_COLUMN);
-		}
-
-		public long getFunctionKey() {
-			return functionKey;
-		}
-
-		public long getTagKey() {
-			return tagKey;
 		}
 	}
 
@@ -351,25 +194,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		CLASS {
 			@Override
 			boolean isValidParent(DBTraceNamespaceSymbol parent) {
-				return isNoFunctionAncestor(parent);
-			}
-		},
-		FUNCTION {
-			@Override
-			boolean isValidParent(DBTraceNamespaceSymbol parent) {
-				return isNoFunctionAncestor(parent);
-			}
-		},
-		PARAMETER {
-			@Override
-			boolean isValidParent(DBTraceNamespaceSymbol parent) {
-				return parent instanceof Function;
-			}
-		},
-		LOCAL_VAR {
-			@Override
-			boolean isValidParent(DBTraceNamespaceSymbol parent) {
-				return parent instanceof Function;
+				return true;
 			}
 		},
 		GLOBAL_VAR {
@@ -382,15 +207,6 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		public static final List<MySymbolTypes> VALUES = List.of(values());
 
 		abstract boolean isValidParent(DBTraceNamespaceSymbol parent);
-
-		boolean isNoFunctionAncestor(DBTraceNamespaceSymbol parent) {
-			for (DBTraceNamespaceSymbol p = parent; p != null; p = p.parent) {
-				if (p instanceof Function) {
-					return false;
-				}
-			}
-			return true;
-		}
 	}
 
 	protected final DBTrace trace;
@@ -401,41 +217,23 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	protected final DBTraceAddressSnapRangePropertyMap<Long, DBTraceSymbolIDEntry> idMap;
 
-	protected final DBCachedObjectStore<DBTraceFunctionTag> tagStore;
-	protected final DBCachedObjectIndex<String, DBTraceFunctionTag> tagsByName;
-
-	protected final DBCachedObjectStore<DBTraceFunctionTagMapping> tagMappingStore;
-	protected final DBCachedObjectIndex<Long, DBTraceFunctionTagMapping> tagMappingsByFunc;
-	protected final DBCachedObjectIndex<Long, DBTraceFunctionTagMapping> tagMappingsByTag;
-
+	// NB. This is unused since the purging of trace function symbols
+	// In theory, may get used by global variables.
 	protected final DBCachedObjectStore<DBTraceVariableStorageEntry> storageStore;
 	protected final DBCachedObjectIndex<VariableStorage, DBTraceVariableStorageEntry> storageByStorage;
 
 	protected final DBCachedObjectStore<DBTraceLabelSymbol> labelStore;
 	protected final DBCachedObjectStore<DBTraceNamespaceSymbol> namespaceStore;
 	protected final DBCachedObjectStore<DBTraceClassSymbol> classStore;
-	protected final DBCachedObjectStore<DBTraceFunctionSymbol> functionStore;
-	protected final DBCachedObjectIndex<Long, DBTraceFunctionSymbol> functionsByThunked;
-	protected final DBCachedObjectStore<DBTraceParameterSymbol> parameterStore;
-	protected final DBCachedObjectStore<DBTraceLocalVariableSymbol> localVarStore;
-	// Seems only for "global register" variables
-	protected final DBCachedObjectStore<DBTraceGlobalVariableSymbol> globalVarStore;
 	protected final DBTraceNamespaceSymbol globalNamespace;
 
 	protected final DBTraceLabelSymbolView labels;
 	protected final DBTraceNamespaceSymbolView namespaces;
 	protected final DBTraceClassSymbolView classes;
-	protected final DBTraceFunctionSymbolView functions;
-	protected final DBTraceParameterSymbolView parameters;
-	protected final DBTraceLocalVariableSymbolView localVars;
-	protected final DBTraceGlobalVariableSymbolView globalVars;
 
 	protected final DBTraceSymbolMultipleTypesView<? extends DBTraceNamespaceSymbol> allNamespaces;
 	protected final DBTraceSymbolMultipleTypesNoDuplicatesView<? extends DBTraceNamespaceSymbol> uniqueNamespaces;
-	protected final DBTraceSymbolMultipleTypesWithAddressNoDuplicatesView<? extends AbstractDBTraceVariableSymbol> allLocals;
-	protected final DBTraceSymbolMultipleTypesWithAddressNoDuplicatesView<?> allVariables;
-	protected final DBTraceSymbolMultipleTypesWithLocationView<?> labelsAndFunctions;
-	protected final DBTraceSymbolMultipleTypesNoDuplicatesView<?> notLabelsNorFunctions;
+	protected final DBTraceSymbolMultipleTypesNoDuplicatesView<?> notLabels;
 	protected final DBTraceSymbolMultipleTypesView<?> allSymbols;
 
 	protected final Map<Byte, AbstractDBTraceSymbolSingleTypeView<?>> symbolViews = new HashMap<>();
@@ -457,17 +255,6 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			baseLanguage, trace, threadManager, DBTraceSymbolIDEntry.class,
 			DBTraceSymbolIDEntry::new);
 
-		tagStore = factory.getOrCreateCachedStore(DBTraceFunctionTag.TABLE_NAME,
-			DBTraceFunctionTag.class, (s, r) -> new DBTraceFunctionTag(this, s, r), true);
-		tagsByName = tagStore.getIndex(String.class, DBTraceFunctionTag.NAME_COLUMN);
-
-		tagMappingStore = factory.getOrCreateCachedStore(DBTraceFunctionTagMapping.TABLE_NAME,
-			DBTraceFunctionTagMapping.class, DBTraceFunctionTagMapping::new, true);
-		tagMappingsByFunc =
-			tagMappingStore.getIndex(long.class, DBTraceFunctionTagMapping.FUNCTION_COLUMN);
-		tagMappingsByTag =
-			tagMappingStore.getIndex(long.class, DBTraceFunctionTagMapping.TAG_COLUMN);
-
 		storageStore = factory.getOrCreateCachedStore(DBTraceVariableStorageEntry.TABLE_NAME,
 			DBTraceVariableStorageEntry.class,
 			(s, r) -> new DBTraceVariableStorageEntry(this, s, r), true);
@@ -480,18 +267,6 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			DBTraceNamespaceSymbol.class, (s, r) -> new DBTraceNamespaceSymbol(this, s, r), true);
 		classStore = factory.getOrCreateCachedStore(DBTraceClassSymbol.TABLE_NAME,
 			DBTraceClassSymbol.class, (s, r) -> new DBTraceClassSymbol(this, s, r), true);
-		functionStore = factory.getOrCreateCachedStore(DBTraceFunctionSymbol.TABLE_NAME,
-			DBTraceFunctionSymbol.class, (s, r) -> new DBTraceFunctionSymbol(this, s, r), true);
-		functionsByThunked =
-			functionStore.getIndex(long.class, DBTraceFunctionSymbol.THUNKED_COLUMN);
-		parameterStore = factory.getOrCreateCachedStore(DBTraceParameterSymbol.TABLE_NAME,
-			DBTraceParameterSymbol.class, (s, r) -> new DBTraceParameterSymbol(this, s, r), true);
-		localVarStore = factory.getOrCreateCachedStore(DBTraceLocalVariableSymbol.TABLE_NAME,
-			DBTraceLocalVariableSymbol.class, (s, r) -> new DBTraceLocalVariableSymbol(this, s, r),
-			true);
-		globalVarStore = factory.getOrCreateCachedStore(DBTraceGlobalVariableSymbol.TABLE_NAME,
-			DBTraceGlobalVariableSymbol.class,
-			(s, r) -> new DBTraceGlobalVariableSymbol(this, s, r), true);
 
 		globalNamespace = getOrCreateGlobalNamespace();
 
@@ -499,25 +274,13 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		labels = putInMap(new DBTraceLabelSymbolView(this));
 		namespaces = putInMap(new DBTraceNamespaceSymbolView(this));
 		classes = putInMap(new DBTraceClassSymbolView(this));
-		functions = putInMap(new DBTraceFunctionSymbolView(this));
-		parameters = putInMap(new DBTraceParameterSymbolView(this));
-		localVars = putInMap(new DBTraceLocalVariableSymbolView(this));
-		globalVars = putInMap(new DBTraceGlobalVariableSymbolView(this));
 
-		allNamespaces = new DBTraceSymbolMultipleTypesView<>(this, namespaces, classes, functions);
+		allNamespaces = new DBTraceSymbolMultipleTypesView<>(this, namespaces, classes);
 		uniqueNamespaces =
 			new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces, classes);
-		allLocals = new DBTraceSymbolMultipleTypesWithAddressNoDuplicatesView<>(this, parameters,
-			localVars);
-		allVariables = new DBTraceSymbolMultipleTypesWithAddressNoDuplicatesView<>(this, parameters,
-			localVars, globalVars);
-		labelsAndFunctions = new DBTraceSymbolMultipleTypesWithLocationView<AbstractDBTraceSymbol>(
-			this, labels, functions);
-		notLabelsNorFunctions = new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces,
-			classes, parameters, localVars, globalVars);
-		allSymbols = new DBTraceSymbolMultipleTypesView<>(this, labels, namespaces, classes,
-			functions, parameters, localVars, globalVars);
-
+		notLabels =
+			new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces, classes);
+		allSymbols = new DBTraceSymbolMultipleTypesView<>(this, labels, namespaces, classes);
 	}
 
 	protected DataType checkIndirection(VariableStorage s, DataType formal) {
@@ -595,8 +358,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	// Internal
 	public void replaceDataTypes(long oldID, long newID) {
-		// TODO Auto-generated method stub
-		// DataTypes of Function returns, params, locals, globalRegs
+		// Would apply to functions and variables, but those are not supported.
 	}
 
 	protected void assertValidThreadAddress(TraceThread thread, Address address) {
@@ -645,26 +407,6 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	}
 
 	@Override
-	public DBTraceFunctionSymbolView functions() {
-		return functions;
-	}
-
-	@Override
-	public DBTraceParameterSymbolView parameters() {
-		return parameters;
-	}
-
-	@Override
-	public DBTraceLocalVariableSymbolView localVariables() {
-		return localVars;
-	}
-
-	@Override
-	public DBTraceGlobalVariableSymbolView globalVariables() {
-		return globalVars;
-	}
-
-	@Override
 	public TraceSymbolView<? extends DBTraceNamespaceSymbol> allNamespaces() {
 		return allNamespaces;
 	}
@@ -674,23 +416,8 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	}
 
 	@Override
-	public TraceSymbolWithAddressNoDuplicatesView<? extends AbstractDBTraceVariableSymbol> allLocals() {
-		return allLocals;
-	}
-
-	@Override
-	public TraceSymbolWithAddressNoDuplicatesView<? extends AbstractDBTraceSymbol> allVariables() {
-		return allVariables;
-	}
-
-	@Override
-	public TraceSymbolWithLocationView<? extends AbstractDBTraceSymbol> labelsAndFunctions() {
-		return labelsAndFunctions;
-	}
-
-	@Override
-	public TraceSymbolNoDuplicatesView<? extends AbstractDBTraceSymbol> notLabelsNorFunctions() {
-		return notLabelsNorFunctions;
+	public TraceSymbolNoDuplicatesView<? extends AbstractDBTraceSymbol> notLabels() {
+		return notLabels;
 	}
 
 	@Override
@@ -700,10 +427,9 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	// Internal
 	public DBTraceNamespaceSymbol checkIsMine(Namespace ns) {
-		if (!(ns instanceof DBTraceNamespaceSymbol)) {
+		if (!(ns instanceof DBTraceNamespaceSymbol dbns)) {
 			return null;
 		}
-		DBTraceNamespaceSymbol dbns = (DBTraceNamespaceSymbol) ns;
 		if (dbns.manager != this) {
 			return null;
 		}
@@ -713,13 +439,8 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		if (namespaceStore.contains(dbns)) {
 			return dbns;
 		}
-		if (dbns instanceof DBTraceClassSymbol) {
-			if (classStore.contains((DBTraceClassSymbol) dbns)) {
-				return dbns;
-			}
-		}
-		if (dbns instanceof DBTraceFunctionSymbol) {
-			if (functionStore.contains((DBTraceFunctionSymbol) dbns)) {
+		if (dbns instanceof DBTraceClassSymbol dbcs) {
+			if (classStore.contains(dbcs)) {
 				return dbns;
 			}
 		}
@@ -728,10 +449,9 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	// Internal
 	public AbstractDBTraceSymbol checkIsMine(Symbol symbol) {
-		if (!(symbol instanceof AbstractDBTraceSymbol)) {
+		if (!(symbol instanceof AbstractDBTraceSymbol dbSym)) {
 			return null;
 		}
-		AbstractDBTraceSymbol dbSym = (AbstractDBTraceSymbol) symbol;
 		if (dbSym.manager != this) {
 			return null;
 		}
@@ -750,25 +470,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		return dbSym;
 	}
 
-	// Internal
-	public DBTraceFunctionSymbol checkIsMine(Function function) {
-		if (!(function instanceof DBTraceFunctionSymbol)) {
-			return null;
-		}
-		DBTraceFunctionSymbol dbFunc = (DBTraceFunctionSymbol) function;
-		if (dbFunc.manager != this) {
-			return null;
-		}
-		if (dbFunc.isDeleted()) {
-			return null;
-		}
-		if (functionStore.contains(dbFunc)) {
-			return dbFunc;
-		}
-		return null;
-	}
-
-	// Internal
+	@Internal
 	public DBTraceNamespaceSymbol assertIsMine(Namespace ns) {
 		DBTraceNamespaceSymbol dbns = checkIsMine(ns);
 		if (dbns == null) {
@@ -777,22 +479,13 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		return dbns;
 	}
 
-	// Internal
+	@Internal
 	public AbstractDBTraceSymbol assertIsMine(Symbol symbol) {
 		AbstractDBTraceSymbol dbSym = checkIsMine(symbol);
 		if (dbSym == null) {
 			throw new IllegalArgumentException("Given symbol is not in this trace");
 		}
 		return dbSym;
-	}
-
-	// Internal
-	public DBTraceFunctionSymbol assertIsMine(Function function) {
-		DBTraceFunctionSymbol dbFunc = checkIsMine(function);
-		if (dbFunc == null) {
-			throw new IllegalArgumentException("Given function is not in this trace");
-		}
-		return dbFunc;
 	}
 
 	protected static void assertValidName(String name) throws InvalidInputException {
@@ -802,8 +495,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	}
 
 	/**
-	 * Checks for duplicate names, allowing {@link SymbolType#LABEL} and
-	 * {@link SymbolType#FUNCTION}.
+	 * Checks for duplicate names, allowing {@link SymbolType#LABEL}
 	 * 
 	 * @param name the proposed name
 	 * @param parent the parent namespace
@@ -811,7 +503,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	 */
 	protected void assertUniqueName(String name, DBTraceNamespaceSymbol parent)
 			throws DuplicateNameException {
-		for (AbstractDBTraceSymbol symbol : notLabelsNorFunctions.getChildren(parent)) {
+		for (AbstractDBTraceSymbol symbol : notLabels.getChildren(parent)) {
 			if (name.equals(symbol.name)) {
 				throw new DuplicateNameException(name);
 			}
@@ -866,8 +558,8 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			TraceThread thread, Address address, String name, DBTraceNamespaceSymbol parent)
 			throws DuplicateNameException {
 		if (address.isMemoryAddress()) {
-			for (AbstractDBTraceSymbol duplicate : labelsAndFunctions.getIntersecting(lifespan,
-				thread, new AddressRangeImpl(address, address), false, true)) {
+			for (AbstractDBTraceSymbol duplicate : labels.getIntersecting(lifespan, thread,
+				new AddressRangeImpl(address, address), false, true)) {
 				if (duplicate == exclude) {
 					continue;
 				}
@@ -885,8 +577,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	protected void assertNotDuplicate(AbstractDBTraceSymbol exclude, String name,
 			DBTraceNamespaceSymbol parent) throws DuplicateNameException {
-		for (AbstractDBTraceSymbol duplicate : notLabelsNorFunctions.getChildrenNamed(name,
-			parent)) {
+		for (AbstractDBTraceSymbol duplicate : notLabels.getChildrenNamed(name, parent)) {
 			if (duplicate == exclude) {
 				continue;
 			}

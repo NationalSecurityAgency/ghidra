@@ -114,6 +114,34 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 	}
 
 	/**
+	 * Check if a new thread is specified
+	 * 
+	 * @return the new thread id, or null if unspecified
+	 */
+	public Integer checkNewThreadId() {
+		String newTid = getInfo().getString("new-thread-id");
+		if (newTid == null) {
+			return null;
+		}
+		try {
+			return Integer.parseInt(newTid);
+		}
+		catch (NumberFormatException e) {
+			Msg.error(this, "Unexpected thread id in: " + newTid);
+		}
+		return null;
+	}
+
+	/**
+	 * Check if a new frame is specified
+	 * 
+	 * @return the new frame, or null if unspecified
+	 */
+	public GdbMiFieldList checkFrame() {
+		return getInfo().getFieldList("frame");
+	}
+
+	/**
 	 * Assume a value is specified, and get it as a string
 	 * 
 	 * @return the value

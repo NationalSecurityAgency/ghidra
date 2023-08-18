@@ -223,6 +223,8 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 		DBTraceObject parent = doCreateCanonicalParentObject();
 		InternalTraceObjectValue value = parent.setValue(lifespan, path.key(), this, resolution);
+		// TODO: Should I re-order the recursion, so values are inserted from root to this?
+		// TODO: Should child lifespans be allowed to exceed the parent's?
 		DBTraceObjectValPath path = parent.doInsert(lifespan, resolution);
 		return path.append(value);
 	}
@@ -505,12 +507,39 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	}
 
+	protected Lifespan doAdjust(Lifespan span, String key, Object value) {
+		// Ordered by min, so I only need to consider the first conflict
+		// If start is contained in an entry, assume the user means to overwrite it.
+		for (InternalTraceObjectValue val : doGetValues(span, key)) {
+			if (Objects.equals(value, val.getValue())) {
+				continue; // not a conflict
+			}
+			if (val.getLifespan().contains(span.min())) {
+				continue; // user probably wants to overwrite the remainder of this entry
+			}
+			// Every entry intersects the span, so if we get one, adjust
+			return span.withMax(val.getMinSnap() - 1);
+		}
+		return span;
+	}
+
 	// TODO: Could/should this return Stream instead?
 	protected Collection<? extends InternalTraceObjectValue> doGetValues(Lifespan span,
 			String key) {
 		return doGetValues(span.lmin(), span.lmax(), key);
 	}
 
+	/**
+	 * The implementation of {@link #getValues(Lifespan, String)}
+	 * 
+	 * <p>
+	 * This collects entries ordered by min snap
+	 * 
+	 * @param lower the lower snap
+	 * @param upper the upper snap
+	 * @param key the key
+	 * @return the collection of values
+	 */
 	protected Collection<? extends InternalTraceObjectValue> doGetValues(long lower, long upper,
 			String key) {
 		// Collect triplet-indexed values
@@ -745,6 +774,9 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			}
 			if (resolution == ConflictResolution.DENY) {
 				doCheckConflicts(lifespan, key, value);
+			}
+			else if (resolution == ConflictResolution.ADJUST) {
+				lifespan = doAdjust(lifespan, key, value);
 			}
 			var setter = new ValueLifespanSetter(lifespan, value) {
 				DBTraceObject canonicalLifeChanged = null;

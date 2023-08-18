@@ -1883,6 +1883,9 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @param transformer the function to turn a String into a T
 	 * @param key the values used to create a key for lookup in the script properties file
 	 * @return null if no value was found in the aforementioned sources
+	 * @throws IllegalArgumentException if the loaded String value cannot be parsed into a
+	 *                                  <code>T</code> or property not defined when in headless
+	 *                                  mode.
 	 */
 	private <T> T loadAskValue(StringTransformer<T> transformer, String key) {
 		T value = loadAskValue(null, transformer, key);
@@ -1897,11 +1900,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @param defaultValue an optional default value that will be used if no suitable
 	 *                     value can be found in script args or a properties file
 	 * @param transformer the function to turn a String into a T
-	 * @param key the values used to create a key for lookup in the script properties file
+	 * @param key the value property key used for lookup in the script properties file
 	 * @return null if no value was found in the aforementioned sources
 	 *
 	 * @throws IllegalArgumentException if the loaded String value cannot be parsed into a
-	 *                                  <code>T</code>.
+	 *                                  <code>T</code> or property not defined when in headless
+	 *                                  mode and no defaultValue has been specified.
 	 */
 	private <T> T loadAskValue(T defaultValue, StringTransformer<T> transformer, String key) {
 
@@ -2513,7 +2517,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	public Address askAddress(String title, String message) throws CancelledException {
 		return askAddress(title, message, null);
 	}
-	
+
 	/**
 	 * Returns an Address, using the String parameters for guidance.  The actual behavior of the
 	 * method depends on your environment, which can be GUI or headless.
@@ -2550,15 +2554,16 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid Address
 	 * 			specified in the .properties file
 	 */
-	public Address askAddress(String title, String message, String defaultValue) throws CancelledException {
+	public Address askAddress(String title, String message, String defaultValue)
+			throws CancelledException {
 
 		String key = join(title, message);
-		
+
 		Address defaultAddr = null;
 		if (defaultValue != null) {
 			defaultAddr = currentProgram.getAddressFactory().getAddress(defaultValue);
 		}
-		
+
 		// if defaultAddr is null then it assumes no default value
 		Address existingValue = loadAskValue(defaultAddr, this::parseAddress, key);
 		if (isRunningHeadless()) {
@@ -2683,7 +2688,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *
 	 * @param title the title of the pop-up dialog (in GUI mode) or the variable name (in
 	 * 			headless mode)
-	 * @return the user-specified Program
+	 * @return the user-selected Program with this script as the consumer or null if a program was 
+	 * not selected.  NOTE: It is very important that the program instance returned by this method 
+	 * ALWAYS be properly released when no longer needed.  The script which invoked this method must be
+	 * specified as the consumer upon release (i.e., {@code program.release(this) } - failure to 
+	 * properly release the program may result in improper project disposal.  If the program was 
+	 * opened by the tool, the tool will be a second consumer responsible for its own release.
 	 * @throws VersionException if the Program is out-of-date from the version of GHIDRA
 	 * @throws IOException if there is an error accessing the Program's DomainObject
 	 * @throws CancelledException if the operation is cancelled
@@ -2693,33 +2703,34 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	public Program askProgram(String title)
 			throws VersionException, IOException, CancelledException {
 
-		DomainFile existingValue = loadAskValue(this::parseDomainFile, title);
-		if (isRunningHeadless()) {
-			return (Program) existingValue.getDomainObject(this, false, false, monitor);
+		DomainFile choice = loadAskValue(this::parseDomainFile, title);
+		if (!isRunningHeadless()) {
+			choice = doAsk(Program.class, title, "", choice, lastValue -> {
+
+				DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
+				dtd.show();
+				if (dtd.wasCancelled()) {
+					throw new CancelledException();
+				}
+
+				return dtd.getDomainFile();
+			});
 		}
-
-		DomainFile choice = doAsk(Program.class, title, "", existingValue, lastValue -> {
-
-			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
-			dtd.show();
-			if (dtd.wasCancelled()) {
-				throw new CancelledException();
-			}
-
-			return dtd.getDomainFile();
-		});
 
 		if (choice == null) {
 			return null;
 		}
 
+		Program p = (Program) choice.getDomainObject(this, false, false, monitor);
+
 		PluginTool tool = state.getTool();
 		if (tool == null) {
-			return (Program) choice.getDomainObject(this, false, false, monitor);
+			return p;
 		}
 
 		ProgramManager pm = tool.getService(ProgramManager.class);
-		return pm.openProgram(choice);
+		pm.openProgram(p);
+		return p;
 	}
 
 	/**
@@ -2768,10 +2779,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *
 	 * @param title the title of the pop-up dialog (in GUI mode) or the variable name (in headless
 	 * 		mode or when using .properties file)
-	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid	domain
-	 * 			file specified in the .properties file
 	 * @return the user-selected domain file
 	 * @throws CancelledException if the operation is cancelled
+	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid	domain
+	 * 			file specified in the .properties file
 	 */
 	public DomainFile askDomainFile(String title) throws CancelledException {
 
@@ -3015,8 +3026,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			throw new ImproperUseException(
 				"The askPassword() method can only be used when running headed Ghidra.");
 		}
-		PasswordDialog dialog =
-			new PasswordDialog(title, null, null, prompt, null, null);
+		PasswordDialog dialog = new PasswordDialog(title, null, null, prompt, null, null);
 		try {
 			state.getTool().showDialog(dialog);
 			if (!dialog.okWasPressed()) {

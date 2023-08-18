@@ -45,7 +45,7 @@ public class DBTraceProgramViewMemoryRegionBlock extends AbstractDBTraceProgramV
 	}
 
 	@Override
-	protected AddressRange getAddressRange() {
+	public AddressRange getAddressRange() {
 		return region.getRange();
 	}
 

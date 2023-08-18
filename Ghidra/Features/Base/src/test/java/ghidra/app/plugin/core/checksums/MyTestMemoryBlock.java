@@ -19,7 +19,7 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.List;
 
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
 
 class MyTestMemoryBlock implements MemoryBlock {
@@ -44,6 +44,11 @@ class MyTestMemoryBlock implements MemoryBlock {
 	@Override
 	public boolean contains(Address addr) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public AddressRange getAddressRange() {
+		return new AddressRangeImpl(start, end);
 	}
 
 	@Override

@@ -229,44 +229,6 @@ public interface Trace extends DataTypeManagerDomainObject {
 			new TraceDataTypeChangeType<>();
 	}
 
-	public static final class TraceFunctionChangeType<U>
-			extends DefaultTraceChangeType<TraceFunctionSymbol, U> {
-		// NOTE: ADDED/DELETED/LIFESPAN_CHANGED are SymbolChangeTypes
-		public static final TraceFunctionChangeType<Void> CHANGED = new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<Integer> CHANGED_PURGE =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<Boolean> CHANGED_INLINE =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<Boolean> CHANGED_NORETURN =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<String> CHANGED_CALL_FIXUP =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<Void> CHANGED_RETURN =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<Void> CHANGED_PARAMETERS =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<TraceFunctionSymbol> CHANGED_THUNK =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<AddressSetView> CHANGED_BODY =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<FunctionTag> TAG_APPLIED =
-			new TraceFunctionChangeType<>();
-		public static final TraceFunctionChangeType<FunctionTag> TAG_REMOVED =
-			new TraceFunctionChangeType<>();
-		// TODO: VARIABLE_REFERENCE_ADDED? Or would these be reported by ref manager?
-		// TODO: VARIABLE_REFERENCE_DELETED? Or would these be reported by ref manager?
-	}
-
-	public static final class TraceFunctionTagChangeType<U>
-			extends DefaultTraceChangeType<FunctionTag, U> {
-		public static final TraceFunctionTagChangeType<Void> ADDED =
-			new TraceFunctionTagChangeType<>();
-		public static final TraceFunctionTagChangeType<Void> CHANGED =
-			new TraceFunctionTagChangeType<>();
-		public static final TraceFunctionTagChangeType<Void> DELETED =
-			new TraceFunctionTagChangeType<>();
-	}
-
 	public static final class TraceInstructionChangeType<U>
 			extends DefaultTraceChangeType<TraceInstruction, U> {
 		public static final TraceInstructionChangeType<FlowOverride> FLOW_OVERRIDE_CHANGED =

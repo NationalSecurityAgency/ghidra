@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +51,7 @@ public abstract class ObjectiveC_Method implements StructConverter {
 		if (implementation == 0) {
 			return;
 		}
-		if (getName() == null && getName().length() == 0) {
+		if (getName() == null || getName().length() == 0) {
 			return;
 		}
 
