@@ -106,11 +106,12 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
 		assertEquals("{@symbol symbol\\{Name\\}}", word.getWord());
+
 	}
-	
+
 	@Test
 	public void testSanitize() {
-		
+
 		String comment = null;
 		String sanitized = CommentUtils.sanitize(comment);
 		assertNull(sanitized);

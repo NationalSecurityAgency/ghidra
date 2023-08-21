@@ -201,14 +201,21 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSymbolAnnotation_WithBracesInName_Escaped() {
 		String rawComment = "This is a symbol {@sym mySym\\{0\\}} annotation";
 		String display = CommentUtils.getDisplayString(rawComment, program);
-		assertEquals("This is a symbol mySym\\{0\\} annotation", display);
+		assertEquals("This is a symbol mySym{0} annotation", display);
+	}
+
+	@Test
+	public void testSymbolAnnotation_WithEscapedItemsOutsideOfAnnotation() {
+		String rawComment = "This is a foo\\} symbol {@sym mySym\\{0\\}} annotation \\{bar";
+		String display = CommentUtils.getDisplayString(rawComment, program);
+		assertEquals("This is a foo} symbol mySym{0} annotation {bar", display);
 	}
 
 	@Test
 	public void testSymbolAnnotation_FullyEscaped() {
 		String rawComment = "This is a symbol \\{@sym bob\\} annotation";
 		String display = CommentUtils.getDisplayString(rawComment, program);
-		assertEquals(rawComment, display);
+		assertEquals("This is a symbol {@sym bob} annotation", display);
 	}
 
 	@Test
