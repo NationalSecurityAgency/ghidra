@@ -46,6 +46,10 @@ public abstract class MsTypeApplier {
 
 	protected Set<MsTypeApplier> waitSet = new HashSet<>();
 
+	public int getIndex() {
+		return index;
+	}
+	
 	/**
 	 * Constructor.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.

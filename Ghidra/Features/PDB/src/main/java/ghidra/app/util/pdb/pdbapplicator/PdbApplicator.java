@@ -21,6 +21,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Interface for PDB Applicator.
@@ -50,6 +51,12 @@ public interface PdbApplicator {
 	 * @return the original image base for the binary
 	 */
 	public long getOriginalImageBase();
+
+	/**
+	 * Returns the TaskMonitor
+	 * @return the monitor
+	 */
+	public TaskMonitor getMonitor();
 
 	/**
 	 * Returns the {@link PeCoffSectionMsSymbol}s from the "Linker" module

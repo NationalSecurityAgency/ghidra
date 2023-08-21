@@ -143,6 +143,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	private PdbCategories categoryUtils;
 	private PdbPrimitiveTypeApplicator pdbPrimitiveTypeApplicator;
 	private TypeApplierFactory typeApplierParser;
+	private ComplexTypeMapper complexTypeMapper;
 	private ComplexTypeApplierMapper complexApplierMapper;
 	private JungDirectedGraph<MsTypeApplier, GEdge<MsTypeApplier>> applierDependencyGraph;
 	/**
@@ -239,7 +240,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 //		PdbResearch.studyCompositeFwdRefDef(pdb, monitor);
 //		PdbResearch.study1(pdb, monitor);
 
-		complexApplierMapper.mapAppliers(monitor);
+//		complexApplierMapper.mapAppliers(monitor);
+
+		complexTypeMapper.mapTypes(this);
+		complexApplierMapper.mapAppliers(complexTypeMapper, monitor);
 
 		processSequentially();
 
@@ -352,6 +356,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		categoryUtils = setPdbCatogoryUtils(pdb.getFilename());
 		pdbPrimitiveTypeApplicator = new PdbPrimitiveTypeApplicator(dataTypeManager);
 		typeApplierParser = new TypeApplierFactory(this);
+		complexTypeMapper = new ComplexTypeMapper();
 		complexApplierMapper = new ComplexTypeApplierMapper(this);
 		applierDependencyGraph = new JungDirectedGraph<>();
 		isClassByNamespace = new TreeMap<>();
