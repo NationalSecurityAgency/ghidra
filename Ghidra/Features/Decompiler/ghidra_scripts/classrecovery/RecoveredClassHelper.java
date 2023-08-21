@@ -7644,11 +7644,13 @@ public class RecoveredClassHelper {
 
 		Address[] functionThunkAddresses = function.getFunctionThunkAddresses(true);
 
-		// add any thunk addresses to the list
-		List<Address> functionAddresses =
-			new ArrayList<Address>(Arrays.asList(functionThunkAddresses));
+		List<Address> functionAddresses = new ArrayList<>();
 		// add the function itself to the list
 		functionAddresses.add(function.getEntryPoint());
+		if (functionThunkAddresses != null) {
+			// add any thunk addresses to the list
+			functionAddresses.addAll(Arrays.asList(functionThunkAddresses));
+		}
 
 		for (Address address : functionAddresses) {
 			monitor.checkCancelled();
@@ -7673,7 +7675,7 @@ public class RecoveredClassHelper {
 				Address vftableAddress = dataContaining.getAddress();
 
 				Symbol vftableSymbol = api.getSymbolAt(vftableAddress);
-				if (!vftableSymbol.getName().contains("vftable")) {
+				if (vftableSymbol == null || !vftableSymbol.getName().contains("vftable")) {
 					continue;
 				}
 
