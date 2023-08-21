@@ -31,11 +31,7 @@
 #0x00060000	0xfffe0000	r0:5,r5:5,r10:5,u15:2+1	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0', 'imm15_2+1_s0']
 :alsl.wu RD, RJ32src, RK32src, alsl_shift  is op17_31=0x3 & RD & RJ32src & RK32src & alsl_shift {
 	local result:4 = (RJ32src << alsl_shift) + RK32src;
-@ifdef LA64
 	RD = zext(result);
-@else
-	RD = result;
-@endif
 }
 
 
@@ -204,16 +200,15 @@
 
 #la-base-64.txt cu52i.d mask=0x03000000	[@orig_name=lu52i.d, @qemu]
 #0x03000000	0xffc00000	r0:5,r5:5,s10:12	['reg0_5_s0', 'reg5_5_s0', 'simm10_12_s0']
-:lu52i.d RD, RJsrc,  simm10_12        is op22_31=0xc & RD & RJsrc & simm10_12 {
-	local simm52i:$(REGSIZE) = (simm10_12 << 52) + (RJsrc & 0xfffffffffffff);
-	RD = simm52i;
+:lu52i.d RD, RJsrc, simm52i           is op22_31=0xc & RD & RJsrc & simm52i {
+	RD = simm52i + (RJsrc & 0xfffffffffffff);
 }
 
 
 #la-base-64.txt cu32i.d mask=0x16000000	[@orig_name=lu32i.d, @qemu]
 #0x16000000	0xfe000000	r0:5,s5:20	['reg0_5_s0', 'simm5_20_s0']
-:lu32i.d RD, simm5_20                 is op25_31=0xb & RD & RD32 & simm5_20 {
-	RD = (simm5_20 << 32) + zext(RD32);
+:lu32i.d RD, simm32i                  is op25_31=0xb & RD & RD32 & simm32i {
+	RD = simm32i + zext(RD32);
 }
 
 
@@ -280,7 +275,6 @@
 
 #la-atomics-64.txt ll.d mask=0x22000000	[@orig_fmt=DJSk14ps2]
 #0x22000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
-#TODO: FIX RELATIVE OFFSET
 :ll.d  RD, ldstptr_addr               is op24_31=0x22 & RD & ldstptr_addr {
 	RD = *[ram]:8 ldstptr_addr;
 }
@@ -288,7 +282,6 @@
 
 #la-atomics-64.txt sc.d mask=0x23000000	[@orig_fmt=DJSk14ps2]
 #0x23000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
-#TODO: FIX RELATIVE OFFSET
 :sc.d  RD, ldstptr_addr               is op24_31=0x23 & RD & ldstptr_addr {
 	*[ram]:8 ldstptr_addr = RD;
 }
@@ -342,54 +335,66 @@
 #la-atomics-64.txt ammax.d mask=0x38658000	[@orig_fmt=DKJ]
 #0x38658000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammax.d RD, RJsrc, RKsrc             is op15_31=0x70cb & RD & RJsrc & RKsrc {
-	local val:8 = *[ram]:8 RJsrc;
-	RD = val;
-	*[ram]:8 RJsrc = (zext(RKsrc s>= val) * RKsrc) + (zext(RKsrc s< val) * val);
+	local val1:8 = *[ram]:8 RJsrc;
+	local val2:8 = RKsrc;
+	local test = (val1 s>= val2);
+	RD = sext(val1);
+	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
 #la-atomics-64.txt ammin.d mask=0x38668000	[@orig_fmt=DKJ]
 #0x38668000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammin.d RD, RJsrc, RKsrc             is op15_31=0x70cd & RD & RJsrc & RKsrc {
-	local val:8 = *[ram]:8 RJsrc;
-	RD = val;
-	*[ram]:8 RJsrc = (zext(RKsrc s<= val) * RKsrc) + (zext(RKsrc s> val) * val);
+	local val1:8 = *[ram]:8 RJsrc;
+	local val2:8 = RKsrc;
+	local test = (val1 s<= val2);
+	RD = sext(val1);
+	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
 #la-atomics-64.txt ammax.wu mask=0x38670000	[@orig_fmt=DKJ]
 #0x38670000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammax.wu RD, RJsrc, RK32src          is op15_31=0x70ce & RD & RJsrc & RK32src {
-	local val:4 = *[ram]:4 RJsrc;
-	RD = zext(val);
-	*[ram]:4 RJsrc = (zext(RK32src >= val) * RK32src) + (zext(RK32src < val) * val);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 >= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
 #la-atomics-64.txt ammax.du mask=0x38678000	[@orig_fmt=DKJ]
 #0x38678000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammax.du RD, RJsrc, RKsrc            is op15_31=0x70cf & RD & RJsrc & RKsrc {
-	local val:8 = *[ram]:8 RJsrc;
-	RD = val;
-	*[ram]:8 RJsrc = (zext(RKsrc >= val) * RKsrc) + (zext(RKsrc < val) * val);
+	local val1:8 = *[ram]:8 RJsrc;
+	local val2:8 = RKsrc;
+	local test = (val1 >= val2);
+	RD = sext(val1);
+	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
 #la-atomics-64.txt ammin.wu mask=0x38680000	[@orig_fmt=DKJ]
 #0x38680000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammin.wu RD, RJsrc, RK32src          is op15_31=0x70d0 & RD & RJsrc & RK32src {
-	local val:4 = *[ram]:4 RJsrc;
-	RD = zext(val);
-	*[ram]:4 RJsrc = (zext(RK32src <= val) * RK32src) + (zext(RK32src > val) * val);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 <= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
 #la-atomics-64.txt ammin.du mask=0x38688000	[@orig_fmt=DKJ]
 #0x38688000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammin.du RD, RJsrc, RKsrc            is op15_31=0x70d1 & RD & RJsrc & RKsrc {
-	local val:8 = *[ram]:8 RJsrc;
-	RD = val;
-	*[ram]:8 RJsrc = (zext(RKsrc <= val) * RKsrc) + (zext(RKsrc > val) * val);
+	local val1:8 = *[ram]:8 RJsrc;
+	local val2:8 = RKsrc;
+	local test = (val1 <= val2);
+	RD = sext(val1);
+	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -447,9 +452,11 @@
 #0x386e8000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammax_db.d RD, RJsrc, RKsrc          is op15_31=0x70dd & RD & RJsrc & RKsrc {
 	dbar(0:1);
-	local val:8 = *[ram]:8 RJsrc;
-	RD = val;
-	*[ram]:8 RJsrc = (zext(RKsrc s>= val) * RKsrc) + (zext(RKsrc s< val) * val);
+	local val1:8 = *[ram]:8 RJsrc;
+	local val2:8 = RKsrc;
+	local test = (val1 s>= val2);
+	RD = sext(val1);
+	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -457,9 +464,11 @@
 #0x386f8000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammin_db.d RD, RJsrc, RKsrc          is op15_31=0x70df & RD & RJsrc & RKsrc {
 	dbar(0:1);
-	local val:8 = *[ram]:8 RJsrc;
-	RD = val;
-	*[ram]:8 RJsrc = (zext(RKsrc s<= val) * RKsrc) + (zext(RKsrc s> val) * val);
+	local val1:8 = *[ram]:8 RJsrc;
+	local val2:8 = RKsrc;
+	local test = (val1 s<= val2);
+	RD = sext(val1);
+	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -467,9 +476,11 @@
 #0x38700000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammax_db.wu RD, RJsrc, RK32src       is op15_31=0x70e0 & RD & RJsrc & RK32src {
 	dbar(0:1);
-	local val:4 = *[ram]:4 RJsrc;
-	RD = zext(val);
-	*[ram]:4 RJsrc = (zext(RK32src >= val) * RK32src) + (zext(RK32src < val) * val);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 >= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -477,9 +488,11 @@
 #0x38708000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammax_db.du RD, RJsrc, RKsrc         is op15_31=0x70e1 & RD & RJsrc & RKsrc {
 	dbar(0:1);
-	local val:8 = *[ram]:8 RJsrc;
-	RD = val;
-	*[ram]:8 RJsrc = (zext(RKsrc >= val) * RKsrc) + (zext(RKsrc < val) * val);
+	local val1:8 = *[ram]:8 RJsrc;
+	local val2:8 = RKsrc;
+	local test = (val1 >= val2);
+	RD = sext(val1);
+	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -487,9 +500,11 @@
 #0x38710000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammin_db.wu RD, RJsrc, RK32src       is op15_31=0x70e2 & RD & RJsrc & RK32src {
 	dbar(0:1);
-	local val:4 = *[ram]:4 RJsrc;
-	RD = zext(val);
-	*[ram]:4 RJsrc = (zext(RK32src <= val) * RK32src) + (zext(RK32src > val) * val);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 <= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -497,9 +512,11 @@
 #0x38718000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammin_db.du RD, RJsrc, RKsrc         is op15_31=0x70e3 & RD & RJsrc & RKsrc {
 	dbar(0:1);
-	local val:8 = *[ram]:8 RJsrc;
-	RD = val;
-	*[ram]:8 RJsrc = (zext(RKsrc <= val) * RKsrc) + (zext(RKsrc > val) * val);
+	local val1:8 = *[ram]:8 RJsrc;
+	local val2:8 = RKsrc;
+	local test = (val1 <= val2);
+	RD = sext(val1);
+	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -683,10 +700,9 @@ define pcodeop crcc.w.d.w;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	RD = sext(*[ram]:8 vaddr);
-	<end>
 }
 
 #la-bound-64.txt ldle.d mask=0x387b8000	
@@ -695,10 +711,9 @@ define pcodeop crcc.w.d.w;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	RD = sext(*[ram]:1 vaddr);
-	<end>
 }
 
 
@@ -708,10 +723,9 @@ define pcodeop crcc.w.d.w;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:8 vaddr = RDsrc:8;
-	<end>
 }
 
 #la-bound-64.txt stle.d mask=0x387f8000	
@@ -720,10 +734,9 @@ define pcodeop crcc.w.d.w;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:8 vaddr = RDsrc:8;
-	<end>
 }
 
 

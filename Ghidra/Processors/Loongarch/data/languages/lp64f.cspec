@@ -51,6 +51,21 @@
         <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa7"/>
         </pentry>
+        <pentry minsize="1" maxsize="4" metatype="float">
+          <register name="fa7"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8" metatype="float">
+          <addr space="join" piece1="fa0" piece2="fa1"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8" metatype="float">
+          <addr space="join" piece1="fa2" piece2="fa3"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8" metatype="float">
+          <addr space="join" piece1="fa4" piece2="fa5"/>
+        </pentry>
+        <pentry minsize="5" maxsize="8" metatype="float">
+          <addr space="join" piece1="fa6" piece2="fa7"/>
+        </pentry>
         <pentry minsize="1" maxsize="8">
           <register name="a0"/>
         </pentry>

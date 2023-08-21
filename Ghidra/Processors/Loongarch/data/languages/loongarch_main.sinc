@@ -1,7 +1,7 @@
 
 define endian=little;
 
-define alignment=1;
+define alignment=4;
 
 define space ram     type=ram_space       size=$(REGSIZE) default;
 define space register type=register_space size=4;
@@ -224,8 +224,8 @@ define token instr(32)
 	op0_4     = ( 0, 4)
 	op0_31    = ( 0,31)
 
-	cond      = (16,19)
-	cond_s    = (15,15)
+	ccf      = (16,19)
+	ccf_s    = (15,15)
 	
 	simm5_20  = ( 5,24) signed
 	simm5_13  = ( 5,17) signed
@@ -233,8 +233,7 @@ define token instr(32)
 	simm10_8  = (10,17) signed
 	simm10_5  = (10,14) signed
 	simm10_14 = (10,23) signed
-	offs16    = (10,25) signed
-	off16     = (10,25)
+	simm10_16 = (10,25) signed
 	simm10_12 = (10,21) signed
 	simm10_11 = (10,20) signed
 	simm10_10 = (10,19) signed
@@ -295,6 +294,7 @@ define token instr(32)
 	imm10_4   = (10,13)
 	imm10_3   = (10,12)
 	imm10_2   = (10,11)
+	imm10_16  = (10,25)
 	imm10_14  = (10,23)
 	imm10_12  = (10,21)
 	imm10_1   = (10,10)
@@ -431,7 +431,7 @@ FRK: frK is frK { export frK; }
 @endif
 
 # Immediate operand sub-constructors
-addu16_imm: val  is offs16 [val = offs16 << 16;] { export *[const]:$(REGSIZE) val; }
+addu16_imm: val  is simm10_16 [val = simm10_16 << 16;] { export *[const]:$(REGSIZE) val; }
 
 alsl_shift: sa2  is imm15_2 [sa2 = imm15_2 + 1;] { export *[const]:1 sa2; }
 
@@ -446,14 +446,15 @@ pcadd12: reloffs  is simm5_20 [reloffs = inst_start + (simm5_20 << 12);] { expor
 pcala12: reloffs  is simm5_20 [reloffs = (inst_start & ~0xfff) + (simm5_20 << 12);] { export *[const]:$(REGSIZE) reloffs; }
 pcadd18: reloffs  is simm5_20 [reloffs = inst_start + (simm5_20 << 18);] { export *[const]:$(REGSIZE) reloffs; }
 
-Rel16: reloc  is offs16            [ reloc = inst_start + (offs16 << 2); ]                                 { export *:$(ADDRSIZE) reloc; }
-Rel21: reloc  is off16 & simm0_5  [ reloc = inst_start + (((simm0_5 << 16) + off16) << 2); ]   { export *:$(ADDRSIZE) reloc; }
-Rel26: reloc  is off16 & simm0_10 [ reloc = inst_start + (((simm0_10 << 16) | off16) << 2); ] { export *:$(ADDRSIZE) reloc; }
+Rel16: reloc  is simm10_16            [ reloc = inst_start + (simm10_16 << 2); ]                                 { export *:$(ADDRSIZE) reloc; }
+Rel21: reloc  is imm10_16 & simm0_5  [ reloc = inst_start + (((simm0_5 << 16) + imm10_16) << 2); ]   { export *:$(ADDRSIZE) reloc; }
+Rel26: reloc  is imm10_16 & simm0_10 [ reloc = inst_start + (((simm0_10 << 16) | imm10_16) << 2); ] { export *:$(ADDRSIZE) reloc; }
 
-RelJ16: RJsrc, offs16  is RJsrc & offs16 { local tmp:$(ADDRSIZE) = RJsrc + (offs16 << 2); export tmp; }
+RelJ16: RJsrc, simm10_16  is RJsrc & simm10_16 { local tmp:$(ADDRSIZE) = RJsrc + (simm10_16 << 2); export tmp; }
 
-simm12i: immed  is simm5_20 [immed = simm5_20 << 12;] { export *[const]:$(REGSIZE) immed; }
-
+simm12i: immed  is simm5_20  [immed = simm5_20  << 12; ] { export *[const]:$(REGSIZE) immed; }
+simm32i: immed  is simm5_20  [immed = simm5_20  << 32; ] { export *[const]:$(REGSIZE) immed; }
+simm52i: immed  is simm10_12 [immed = simm10_12 << 52; ] { export *[const]:$(REGSIZE) immed; }
 
 # general pcodeops
 define pcodeop break;

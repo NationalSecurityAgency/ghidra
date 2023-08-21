@@ -434,7 +434,6 @@ define pcodeop xvld;
 
 #lasx.txt xvld mask=0x2c800000	
 #0x2c800000	0xffc00000	x0:5, r5:5,so10:12	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvld xrD, RJsrc,simm10_12            is op22_31=0xb2 & xrD & RJsrc & simm10_12 {
 	xrD = xvld(xrD, RJsrc, simm10_12:$(REGSIZE));
 }
@@ -443,7 +442,6 @@ define pcodeop xvst;
 
 #lasx.txt xvst mask=0x2cc00000	
 #0x2cc00000	0xffc00000	x0:5, r5:5,so10:12	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvst xrD, RJsrc,simm10_12            is op22_31=0xb3 & xrD & RJsrc & simm10_12 {
 	xrD = xvst(xrD, RJsrc, simm10_12:$(REGSIZE));
 }
@@ -452,7 +450,6 @@ define pcodeop xvldrepl.d;
 
 #lasx.txt xvldrepl.d mask=0x32100000	[@orig_fmt=XdJSk9ps3]
 #0x32100000	0xfff80000	x0:5, r5:5,so10:9<<3	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_9_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvldrepl.d xrD, RJsrc,simm10_9       is op19_31=0x642 & xrD & RJsrc & simm10_9 {
 	xrD = xvldrepl.d(xrD, RJsrc, simm10_9:$(REGSIZE));
 }
@@ -461,7 +458,6 @@ define pcodeop xvldrepl.w;
 
 #lasx.txt xvldrepl.w mask=0x32200000	[@orig_fmt=XdJSk10ps2]
 #0x32200000	0xfff00000	x0:5, r5:5,so10:10<<2	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_10_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvldrepl.w xrD, RJsrc,simm10_10      is op20_31=0x322 & xrD & RJsrc & simm10_10 {
 	xrD = xvldrepl.w(xrD, RJsrc, simm10_10:$(REGSIZE));
 }
@@ -470,7 +466,6 @@ define pcodeop xvldrepl.h;
 
 #lasx.txt xvldrepl.h mask=0x32400000	[@orig_fmt=XdJSk11ps1]
 #0x32400000	0xffe00000	x0:5, r5:5,so10:11<<1	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_11_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvldrepl.h xrD, RJsrc,simm10_11      is op21_31=0x192 & xrD & RJsrc & simm10_11 {
 	xrD = xvldrepl.h(xrD, RJsrc, simm10_11:$(REGSIZE));
 }
@@ -479,7 +474,6 @@ define pcodeop xvldrepl.b;
 
 #lasx.txt xvldrepl.b mask=0x32800000	
 #0x32800000	0xffc00000	x0:5, r5:5,so10:12	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvldrepl.b xrD, RJsrc,simm10_12      is op22_31=0xca & xrD & RJsrc & simm10_12 {
 	xrD = xvldrepl.b(xrD, RJsrc, simm10_12:$(REGSIZE));
 }
@@ -488,7 +482,6 @@ define pcodeop xvstelm.d;
 
 #lasx.txt xvstelm.d mask=0x33100000	[@orig_fmt=XdJSk8ps3Un2]
 #0x33100000	0xfff00000	x0:5, r5:5,so10:8<<3,u18:2	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_2_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvstelm.d xrD, RJsrc,simm10_8, imm18_2  is op20_31=0x331 & xrD & RJsrc & simm10_8 & imm18_2 {
 	xrD = xvstelm.d(xrD, RJsrc, simm10_8:$(REGSIZE), imm18_2:$(REGSIZE));
 }
@@ -497,7 +490,6 @@ define pcodeop xvstelm.w;
 
 #lasx.txt xvstelm.w mask=0x33200000	[@orig_fmt=XdJSk8ps2Un3]
 #0x33200000	0xffe00000	x0:5, r5:5,so10:8<<2,u18:3	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_3_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvstelm.w xrD, RJsrc,simm10_8, imm18_3  is op21_31=0x199 & xrD & RJsrc & simm10_8 & imm18_3 {
 	xrD = xvstelm.w(xrD, RJsrc, simm10_8:$(REGSIZE), imm18_3:$(REGSIZE));
 }
@@ -506,7 +498,6 @@ define pcodeop xvstelm.h;
 
 #lasx.txt xvstelm.h mask=0x33400000	[@orig_fmt=XdJSk8ps1Un4]
 #0x33400000	0xffc00000	x0:5, r5:5,so10:8<<1,u18:4	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_4_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvstelm.h xrD, RJsrc,simm10_8, imm18_4  is op22_31=0xcd & xrD & RJsrc & simm10_8 & imm18_4 {
 	xrD = xvstelm.h(xrD, RJsrc, simm10_8:$(REGSIZE), imm18_4:$(REGSIZE));
 }
@@ -515,7 +506,6 @@ define pcodeop xvstelm.b;
 
 #lasx.txt xvstelm.b mask=0x33800000	
 #0x33800000	0xff800000	x0:5, r5:5,so10:8,u18:5	['xreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_5_s0']
-#TODO: FIX RELATIVE OFFSET
 :xvstelm.b xrD, RJsrc,simm10_8, imm18_5  is op23_31=0x67 & xrD & RJsrc & simm10_8 & imm18_5 {
 	xrD = xvstelm.b(xrD, RJsrc, simm10_8:$(REGSIZE), imm18_5:$(REGSIZE));
 }

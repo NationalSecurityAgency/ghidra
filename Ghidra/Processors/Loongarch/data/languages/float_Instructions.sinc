@@ -102,7 +102,6 @@ define pcodeop uncertain_fcsr;
 
 #la-fp.txt bcnez mask=0x48000100	[@orig_fmt=CjSd5k16ps2]
 #0x48000100	0xfc000300	c5:3,sb0:5|10:16<<2	['fcc5_3_s0', 'sbranch0_0_s2']
-#TODO: FIX RELATIVE OFFSET
 :bcnez  fccJ, Rel21                  is op26_31=0x12 & fccJ & op8_9=1 & Rel21 {
 	if(fccJ != 0) goto Rel21;
 }
@@ -168,7 +167,8 @@ define pcodeop uncertain_fcsr;
 :fmax.s  frD, frJ, frK               is op15_31=0x211 & frD & frJ & frK {
 	local jval = frJ;
 	local kval = frK;
-	frD = (zext(jval f>= kval) * jval) + (zext(jval f< kval) * jval);
+	local test = (jval f>= kval);
+	frD = (zext(test) * jval) + (zext(!test) * kval);
 }
 
 #la-fp-s.txt fmin.s mask=0x010a8000	
@@ -176,7 +176,8 @@ define pcodeop uncertain_fcsr;
 :fmin.s  frD, frJ, frK               is op15_31=0x215 & frD & frJ & frK {
 	local jval = frJ;
 	local kval = frK;
-	frD = (zext(jval f<= kval) * jval) + (zext(jval f> kval) * jval);
+	local test = (jval f<= kval);
+	frD = (zext(test) * jval) + (zext(!test) * kval);
 }
 
 
@@ -185,7 +186,8 @@ define pcodeop uncertain_fcsr;
 :fmaxa.s  frD, frJ, frK              is op15_31=0x219 & frD & frJ & frK {
 	local jval = frJ;
 	local kval = frK;
-	frD = (zext(abs(jval) f>= abs(kval)) * jval) + (zext(abs(jval) f< abs(kval)) * jval);
+	local test = (abs(jval) f>= abs(kval));
+	frD = (zext(test) * jval) + (zext(!test) * kval);
 }
 
 #la-fp-s.txt fmina.s mask=0x010e8000	
@@ -193,7 +195,8 @@ define pcodeop uncertain_fcsr;
 :fmina.s  frD, frJ, frK              is op15_31=0x21d & frD & frJ & frK {
 	local jval = frJ;
 	local kval = frK;
-	frD = (zext(abs(jval) f<= abs(kval)) * jval) + (zext(abs(jval) f> abs(kval)) * jval);
+	local test = (abs(jval) f<= abs(kval));
+	frD = (zext(test) * jval) + (zext(!test) * kval);
 }
 
 
@@ -371,9 +374,8 @@ define pcodeop uncertain_fcsr;
 
 #la-fp-s.txt ffint.s.l mask=0x011d1800	
 #0x011d1800	0xfffffc00	f0:5,f5:5	['freg0_5_s0', 'freg5_5_s0']
-:ffint.s.l  frD,frJ                  is op10_31=0x4746 & frD & frJ {
-	local val:8 = int2float(frJ);
-	frD = frJ(0);
+:ffint.s.l  frD, drD                  is op10_31=0x4746 & frD & drD {
+	frD = int2float(drD);
 }
 
 
@@ -411,20 +413,20 @@ define pcodeop uncertain_fcsr;
 	*[ram]:4 ldstx_addr = frD;
 }
 
-SNaN: "c"  is cond_s = 0 { }
-SNaN: "s"  is cond_s = 1 { }
+SNaN: "c"  is ccf_s = 0 { }
+SNaN: "s"  is ccf_s = 1 { }
 
-fcond: SNaN^"af"   is cond=0x0 & SNaN { FCMPR = 0; }
-fcond: SNaN^"lt"   is cond=0x1 & SNaN { FCMPR = FCMP1 f< FCMP2; }
-fcond: SNaN^"eq"   is cond=0x2 & SNaN { FCMPR = FCMP1 f== FCMP2; }
-fcond: SNaN^"le"   is cond=0x3 & SNaN { FCMPR = FCMP1 f<= FCMP2; }
-fcond: SNaN^"un"   is cond=0x4 & SNaN { FCMPR = nan(FCMP1) || nan(FCMP2); }
-fcond: SNaN^"ult"  is cond=0x5 & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (FCMP1 f< FCMP2); }
-fcond: SNaN^"ueq"  is cond=0x6 & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (FCMP1 f== FCMP2); }
-fcond: SNaN^"ule"  is cond=0x7 & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (FCMP1 f<= FCMP2); }
-fcond: SNaN^"ne"   is cond=0x8 & SNaN { FCMPR = FCMP1 f!= FCMP2; }
-fcond: SNaN^"or"   is cond=0xa & SNaN { FCMPR = !(nan(FCMP1) || nan(FCMP2)); }
-fcond: SNaN^"une"  is cond=0xc & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (FCMP1 f!= FCMP2); }
+fcond: SNaN^"af"   is ccf=0x0 & SNaN { FCMPR = 0; }
+fcond: SNaN^"lt"   is ccf=0x1 & SNaN { FCMPR = FCMP1 f< FCMP2; }
+fcond: SNaN^"eq"   is ccf=0x2 & SNaN { FCMPR = FCMP1 f== FCMP2; }
+fcond: SNaN^"le"   is ccf=0x3 & SNaN { FCMPR = FCMP1 f<= FCMP2; }
+fcond: SNaN^"un"   is ccf=0x4 & SNaN { FCMPR = nan(FCMP1) || nan(FCMP2); }
+fcond: SNaN^"ult"  is ccf=0x5 & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (FCMP1 f< FCMP2); }
+fcond: SNaN^"ueq"  is ccf=0x6 & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (FCMP1 f== FCMP2); }
+fcond: SNaN^"ule"  is ccf=0x7 & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (FCMP1 f<= FCMP2); }
+fcond: SNaN^"ne"   is ccf=0x8 & SNaN { FCMPR = FCMP1 f!= FCMP2; }
+fcond: SNaN^"or"   is ccf=0xa & SNaN { FCMPR = !(nan(FCMP1) || nan(FCMP2)); }
+fcond: SNaN^"une"  is ccf=0xc & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (FCMP1 f!= FCMP2); }
 
 #la-fp-s.txt fcmp.caf.s mask=0x0c100000	
 #0x0c100000	0xffff8018	c0:3, f5:5, f10:5	['fcc0_3_s0', 'freg5_5_s0', 'freg10_5_s0']
@@ -442,10 +444,9 @@ fcond: SNaN^"une"  is cond=0xc & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (F
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	frD = sext(*[ram]:4 vaddr);
-	<end>
 }
 
 
@@ -455,10 +456,9 @@ fcond: SNaN^"une"  is cond=0xc & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (F
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	frD = sext(*[ram]:4 vaddr);
-	<end>
 }
 
 
@@ -468,10 +468,9 @@ fcond: SNaN^"une"  is cond=0xc & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (F
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:4 vaddr = frD;
-	<end>
 }
 
 
@@ -481,9 +480,8 @@ fcond: SNaN^"une"  is cond=0xc & SNaN { FCMPR = (nan(FCMP1) || nan(FCMP2)) || (F
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:4 vaddr = frD;
-	<end>
 }
 

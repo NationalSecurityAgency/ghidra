@@ -1,6 +1,9 @@
 #la-privileged-32.txt csrxchg mask=0x04000000	[@primary]
 #0x04000000	0xff000000	r0:5,r5:5,u10:14	['reg0_5_s0', 'reg5_5_s0', 'imm10_14_s0']
-csr: csr is imm10_14 [csr = $(CSR_OFFSET) + imm10_14 * $(REGSIZE);] {local tmp:$(REGSIZE) = csr; export *[register]:$(REGSIZE) tmp; }
+csr: csr is imm10_14 [csr = $(CSR_OFFSET) + imm10_14 * $(REGSIZE);] {
+	local tmp:$(REGSIZE) = csr;
+	export *[register]:$(REGSIZE) tmp;
+}
 
 :csrxchg  RD, RJsrc, csr is op24_31=0x4 & RD & RJsrc & csr {
 	local csrval:$(REGSIZE) = csr;

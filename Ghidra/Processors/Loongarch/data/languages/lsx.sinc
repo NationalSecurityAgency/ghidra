@@ -434,7 +434,6 @@ define pcodeop vld;
 
 #lsx.txt vld mask=0x2c000000	
 #0x2c000000	0xffc00000	v0:5, r5:5, so10:12	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :vld vrD, RJsrc, simm10_12            is op22_31=0xb0 & vrD & RJsrc & simm10_12 {
 	vrD = vld(vrD, RJsrc, simm10_12:$(REGSIZE));
 }
@@ -443,7 +442,6 @@ define pcodeop vst;
 
 #lsx.txt vst mask=0x2c400000	
 #0x2c400000	0xffc00000	v0:5, r5:5, so10:12	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :vst vrD, RJsrc, simm10_12            is op22_31=0xb1 & vrD & RJsrc & simm10_12 {
 	vrD = vst(vrD, RJsrc, simm10_12:$(REGSIZE));
 }
@@ -452,7 +450,6 @@ define pcodeop vldrepl.d;
 
 #lsx.txt vldrepl.d mask=0x30100000	[@orig_fmt=VdJSk9ps3]
 #0x30100000	0xfff80000	v0:5, r5:5, so10:9<<3	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_9_s0']
-#TODO: FIX RELATIVE OFFSET
 :vldrepl.d vrD, RJsrc, simm10_9       is op19_31=0x602 & vrD & RJsrc & simm10_9 {
 	vrD = vldrepl.d(vrD, RJsrc, simm10_9:$(REGSIZE));
 }
@@ -461,7 +458,6 @@ define pcodeop vldrepl.w;
 
 #lsx.txt vldrepl.w mask=0x30200000	[@orig_fmt=VdJSk10ps2]
 #0x30200000	0xfff00000	v0:5, r5:5, so10:10<<2	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_10_s0']
-#TODO: FIX RELATIVE OFFSET
 :vldrepl.w vrD, RJsrc, simm10_10      is op20_31=0x302 & vrD & RJsrc & simm10_10 {
 	vrD = vldrepl.w(vrD, RJsrc, simm10_10:$(REGSIZE));
 }
@@ -470,7 +466,6 @@ define pcodeop vldrepl.h;
 
 #lsx.txt vldrepl.h mask=0x30400000	[@orig_fmt=VdJSk11ps1]
 #0x30400000	0xffe00000	v0:5, r5:5, so10:11<<1	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_11_s0']
-#TODO: FIX RELATIVE OFFSET
 :vldrepl.h vrD, RJsrc, simm10_11      is op21_31=0x182 & vrD & RJsrc & simm10_11 {
 	vrD = vldrepl.h(vrD, RJsrc, simm10_11:$(REGSIZE));
 }
@@ -479,7 +474,6 @@ define pcodeop vldrepl.b;
 
 #lsx.txt vldrepl.b mask=0x30800000	
 #0x30800000	0xffc00000	v0:5, r5:5, so10:12	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :vldrepl.b vrD, RJsrc, simm10_12      is op22_31=0xc2 & vrD & RJsrc & simm10_12 {
 	vrD = vldrepl.b(vrD, RJsrc, simm10_12:$(REGSIZE));
 }
@@ -488,7 +482,6 @@ define pcodeop vstelm.d;
 
 #lsx.txt vstelm.d mask=0x31100000	[@orig_fmt=VdJSk8ps3Un1]
 #0x31100000	0xfff80000	v0:5, r5:5, so10:8<<3,u18:1	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_1_s0']
-#TODO: FIX RELATIVE OFFSET
 :vstelm.d vrD, RJsrc, simm10_8, imm18_1  is op19_31=0x622 & vrD & RJsrc & simm10_8 & imm18_1 {
 	vrD = vstelm.d(vrD, RJsrc, simm10_8:$(REGSIZE), imm18_1:$(REGSIZE));
 }
@@ -497,7 +490,6 @@ define pcodeop vstelm.w;
 
 #lsx.txt vstelm.w mask=0x31200000	[@orig_fmt=VdJSk8ps2Un2]
 #0x31200000	0xfff00000	v0:5, r5:5, so10:8<<2,u18:2	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_2_s0']
-#TODO: FIX RELATIVE OFFSET
 :vstelm.w vrD, RJsrc, simm10_8, imm18_2  is op20_31=0x312 & vrD & RJsrc & simm10_8 & imm18_2 {
 	vrD = vstelm.w(vrD, RJsrc, simm10_8:$(REGSIZE), imm18_2:$(REGSIZE));
 }
@@ -506,7 +498,6 @@ define pcodeop vstelm.h;
 
 #lsx.txt vstelm.h mask=0x31400000	[@orig_fmt=VdJSk8ps1Un3]
 #0x31400000	0xffe00000	v0:5, r5:5, so10:8<<1,u18:3	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_3_s0']
-#TODO: FIX RELATIVE OFFSET
 :vstelm.h vrD, RJsrc, simm10_8, imm18_3  is op21_31=0x18a & vrD & RJsrc & simm10_8 & imm18_3 {
 	vrD = vstelm.h(vrD, RJsrc, simm10_8:$(REGSIZE), imm18_3:$(REGSIZE));
 }
@@ -515,7 +506,6 @@ define pcodeop vstelm.b;
 
 #lsx.txt vstelm.b mask=0x31800000	
 #0x31800000	0xffc00000	v0:5, r5:5, so10:8,u18:4	['vreg0_5_s0', 'reg5_5_s0', 'soffs10_8_s0', 'imm18_4_s0']
-#TODO: FIX RELATIVE OFFSET
 :vstelm.b vrD, RJsrc, simm10_8, imm18_4  is op22_31=0xc6 & vrD & RJsrc & simm10_8 & imm18_4 {
 	vrD = vstelm.b(vrD, RJsrc, simm10_8:$(REGSIZE), imm18_4:$(REGSIZE));
 }

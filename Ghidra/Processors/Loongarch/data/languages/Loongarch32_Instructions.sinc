@@ -10,11 +10,7 @@
 	local add1:4 = RJ32src;
 	local add2:4 = RK32src;
 	local result = add1 + add2;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 #la-base-32.txt addi.w mask=0x02800000	[@la32, @primary, @qemu]
@@ -23,11 +19,7 @@
 	local add1:4 = RJ32src;
 	local add2:4 = simm10_12;
 	local result = add1 + add2;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 
@@ -35,11 +27,7 @@
 #0x00040000	0xfffe0000	r0:5,r5:5,r10:5,u15:2+1	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0', 'imm15_2+1_s0']
 :alsl.w  RD, RJ32src, RK32src, alsl_shift  is op17_31=0x2 & RD & RJ32src & RK32src & alsl_shift {
 	local result:4 = (RJ32src << alsl_shift) + RK32src;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 
@@ -122,25 +110,23 @@
 #la-base-32.txt lu12i.w mask=0x14000000	[@la32, @primary, @qemu]
 #0x14000000	0xfe000000	r0:5,s5:20	['reg0_5_s0', 'simm5_20_s0']
 :lu12i.w  RD, simm12i          is op25_31=0xa & RD & simm12i {
-@ifdef LA64
 	RD = sext(simm12i);
-@else
-	RD = simm12i;
-@endif
 }
 
 
 #la-base-32.txt maskeqz mask=0x00130000	[@la32, @qemu]
 #0x00130000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
 :maskeqz  RD, RJsrc, RKsrc     is op15_31=0x26 & RD & RJsrc & RKsrc {
-	RD = (zext(RKsrc == 0) * 0) +  (zext(RKsrc != 0) * RJsrc);
+	local test = (RKsrc == 0);
+	RD = (zext(test) * 0) +  (zext(!test) * RJsrc);
 }
 
 
 #la-base-32.txt masknez mask=0x00138000	[@la32, @qemu]
 #0x00138000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
 :masknez  RD, RJsrc, RKsrc     is op15_31=0x27 & RD & RJsrc & RKsrc {
-	RD = (zext(RKsrc != 0) * 0) +  (zext(RKsrc == 0) * RJsrc);
+	local test = (RKsrc != 0);
+	RD = (zext(test) * 0) +  (zext(!test) * RJsrc);
 }
 
 
@@ -275,11 +261,9 @@
 	local tmp1:4 = RJ32src s>> shift;
 	local tmp2:4 = RJ32src << (32 - shift);
 	local result = tmp1 + tmp2;
-@ifdef LA64
+
 	RD = sext(result);
-@else
-	RD = result;
-@endif
+
 }
 
 #la-base-32.txt rotri.w mask=0x004c8000	[@la32, @qemu]
@@ -289,11 +273,9 @@
 	local tmp1:4 = RJ32src s>> shift;
 	local tmp2:4 = RJ32src << (32 - shift);
 	local result = tmp1 + tmp2;
-@ifdef LA64
+
 	RD = sext(result);
-@else
-	RD = result;
-@endif
+
 }
 
 
@@ -302,11 +284,7 @@
 :sll.w  RD, RJ32src, RK32src   is op15_31=0x2e & RD & RJ32src & RK32src {
 	local shift:1 = RK32src(0) & 0x1f;
 	local result:4 = RJ32src << shift;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 #la-base-32.txt slli.w mask=0x00408000	[@la32, @primary, @qemu]
@@ -314,11 +292,7 @@
 :slli.w  RD, RJ32src, imm10_5  is op15_31=0x81 & RD & RJ32src& imm10_5 {
 	local shift:1 = imm10_5 & 0x1f;
 	local result:4 = RJ32src << shift;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 
@@ -352,11 +326,7 @@
 :srl.w  RD, RJ32src, RK32src   is op15_31=0x2f & RD & RJ32src & RK32src {
 	local shift:1 = RK32src(0) & 0x1f;
 	local result:4 = RJ32src >> shift;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 #la-base-32.txt srli.w mask=0x00448000	[@la32, @primary, @qemu]
@@ -364,11 +334,7 @@
 :srli.w  RD, RJ32src, imm10_5  is op15_31=0x89 & RD & RJ32src & imm10_5 {
 	local shift:1 = imm10_5 & 0x1f;
 	local result:4 = RJ32src >> shift;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 
@@ -377,11 +343,7 @@
 :sra.w  RD, RJ32src, RK32src   is op15_31=0x30 & RD & RJ32src & RK32src {
 	local shift:1 = RK32src(0) & 0x1f;
 	local result:4 = RJ32src s>> shift;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 #la-base-32.txt srai.w mask=0x00488000	[@la32, @primary, @qemu]
@@ -389,11 +351,7 @@
 :srai.w  RD, RJ32src, imm10_5  is op15_31=0x91 & RD & RJ32src & imm10_5 {
 	local shift:1 = imm10_5 & 0x1f;
 	local result:4 = RJ32src s>> shift;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 
@@ -403,11 +361,7 @@
 	local sub1:4 = RJ32src;
 	local sub2:4 = RK32src;
 	local result = sub1 - sub2;
-@ifdef LA64
 	RD = sext(result);
-@else
-	RD = result;
-@endif
 }
 
 
@@ -440,11 +394,7 @@
 #0x24000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
 :ldptr.w  RD, ldstptr_addr     is op24_31=0x24 & RD & RJsrc & ldstptr_addr {
 	local data:4 = *[ram]:4 ldstptr_addr;
-@ifdef LA64
 	RD = sext(data);
-@else
-	RD = data;
-@endif
 }
 
 
@@ -473,11 +423,7 @@
 #0x28800000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
 :ld.w  RD, ldst_addr           is op22_31=0xa2 & RD & RJsrc & ldst_addr {
 	local data:4 = *[ram]:4 ldst_addr;
-@ifdef LA64
 	RD = sext(data);
-@else
-	RD = data;
-@endif
 }
 
 
@@ -560,11 +506,7 @@
 #0x38080000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
 :ldx.w  RD, ldstx_addr         is op15_31=0x7010 & RD & ldstx_addr {
 	local data:4 = *[ram]:4 ldstx_addr;
-@ifdef LA64
 	RD = sext(data);
-@else
-	RD = data;
-@endif
 }
 
 
@@ -707,20 +649,19 @@
 
 #la-base-32.txt jirl mask=0x4c000000	[@orig_fmt=DJSk16ps2, @la32, @primary, @qemu]
 #0x4c000000	0xfc000000	r0:5,r5:5,so10:16<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_16_s0']
-:jirl  RD, RelJ16              is op26_31=0x13 & RD & RJsrc & offs16 & RelJ16 {
+:jirl  RD, RelJ16              is op26_31=0x13 & RD & RJsrc & RelJ16 {
 	RD = inst_next;
-	local addr:$(ADDRSIZE) = RJsrc + (offs16 << 2);
 	call [RelJ16];
 }
 
 # alias of jirl zero, ra, 0
-:ret                           is op26_31=0x13 & rD=0x0 & rJ=0x1 & RJsrc & offs16=0 {
+:ret                           is op26_31=0x13 & rD=0x0 & rJ=0x1 & RJsrc & simm10_16=0 {
 	local retAddr = RJsrc;
 	return [retAddr];
 }
 
 # alias of jirl zer, rj, 0
-:jr RJsrc                      is op26_31=0x13 & rD=0x0 & RJsrc & offs16=0 {
+:jr RJsrc                      is op26_31=0x13 & rD=0x0 & RJsrc & simm10_16=0 {
 	local retAddr = RJsrc;
 	return [retAddr];
 }
@@ -733,20 +674,14 @@
 
 #la-atomics-32.txt ll.w mask=0x20000000	[@orig_fmt=DJSk14ps2, @la32, @primary]
 #0x20000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
-#TODO: FIX RELATIVE OFFSET
 :ll.w  RD, ldstptr_addr        is op24_31=0x20 & RD & ldstptr_addr {
 	local data:4 = *[ram]:4 ldstptr_addr;
-@ifdef LA64
 	RD = sext(data);
-@else
-	RD = data;
-@endif
 }
 
 
 #la-atomics-32.txt sc.w mask=0x21000000	[@orig_fmt=DJSk14ps2, @la32, @primary]
 #0x21000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
-#TODO: FIX RELATIVE OFFSET
 :sc.w  RD, ldstptr_addr        is op24_31=0x21 & RD & ldstptr_addr {
 	*[ram]:4 ldstptr_addr = RD:4;
 }
@@ -800,18 +735,22 @@
 #la-atomics-32.txt ammax.w mask=0x38650000	[@orig_fmt=DKJ]
 #0x38650000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammax.w  RD, RJsrc, RK32src   is op15_31=0x70ca & RD & RJsrc & RK32src {
-	local val:4 = *[ram]:4 RJsrc;
-	RD = sext(val);
-	*[ram]:4 RJsrc = (zext(RK32src s>= val) * RK32src) + (zext(RK32src s< val) * val);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 s>= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
 #la-atomics-32.txt ammin.w mask=0x38660000	[@orig_fmt=DKJ]
 #0x38660000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammin.w  RD, RJsrc, RK32src   is op15_31=0x70cc & RD & RJsrc & RK32src {
-	local val:4 = *[ram]:4 RJsrc;
-	RD = sext(val);
-	*[ram]:4 RJsrc = (zext(RK32src s<= val) * RK32src) + (zext(RK32src s> val) * val);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 s<= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -869,9 +808,11 @@
 #0x386e0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammax_db.w  RD, RJsrc, RK32src is op15_31=0x70dc & RD & RJsrc & RK32src {
 	dbar(0:1);
-	local val:4 = *[ram]:4 RJsrc;
-	RD = sext(val);
-	*[ram]:4 RJsrc = (zext(RK32src s>= val) * RK32src) + (zext(RK32src s< val) * val);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 s>= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -879,9 +820,11 @@
 #0x386f0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
 :ammin_db.w  RD, RJsrc, RK32src is op15_31=0x70de & RD & RJsrc & RK32src {
 	dbar(0:1);
-	local val:4 = *[ram]:4 RJsrc;
-	RD = sext(val);
-	*[ram]:4 RJsrc = (zext(RK32src s<= val) * RK32src) + (zext(RK32src s> val) * val);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 s<= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
 
@@ -911,11 +854,7 @@
 :cto.w RD, RJ32src             is op10_31=0x6 & RD & RJ32src {
 	local tmp:4 = 0;
 	tzcount32(~RJ32src, tmp);
-@ifdef LA64
 	RD = zext(tmp);
-@else
-	RD = tmp;
-@endif
 }
 
 #la-bitops-32.txt ctz.w mask=0x00001c00	[@la32, @qemu]
@@ -923,11 +862,7 @@
 :ctz.w RD, RJ32src             is op10_31=0x7 & RD & RJ32src {
 	local tmp:4 = 0;
 	tzcount32(RJ32src, tmp);
-@ifdef LA64
 	RD = zext(tmp);
-@else
-	RD = tmp;
-@endif
 }
 
 
@@ -936,11 +871,7 @@
 :revb.2h RD, RJ32src           is op10_31=0xc & RD & RJ32src {
 	tmp0:4 = (zext(RJ32src[0,8]) << 8) + zext(RJ32src[8,8]);
 	tmp1:4 = (zext(RJ32src[16,8]) << 8) + zext(RJ32src[24,8]);
-@ifdef LA64
 	RD = sext((tmp1 << 16) + tmp0);
-@else
-	RD = (tmp1 << 16) + tmp0;
-@endif
 }
 
 
@@ -949,11 +880,7 @@
 :bitrev.4b RD, RJ32src         is op10_31=0x12 & RD & RJ32src {
 	local v:4 = 0;
 	byterev32(RJ32src, v);
-@ifdef LA64
 	RD = sext(v);
-@else
-	RD = v;
-@endif
 }
 
 
@@ -962,11 +889,7 @@
 :bitrev.w RD, RJ32src          is op10_31=0x14 & RD & RJ32src {
 	local v:4 = 0;
 	bitrev32(RJ32src, v);
-@ifdef LA64
 	RD = sext(v);
-@else
-	RD = v;
-@endif
 }
 
 
@@ -977,11 +900,7 @@
 	local mask:4 = (1 <<  bitstop) - 1;
 	local tmp_hi:4 = RK32src & ~mask;
 	local tmp_lo:4 = (RJ32src & (mask << (32-bitstop)) >> (32-bitstop));
-@ifdef LA64
 	RD = sext(tmp_hi + tmp_lo);
-@else
-	RD = tmp_hi + tmp_lo;
-@endif
 }
 
 define pcodeop crc.w.b.w;
@@ -1046,11 +965,7 @@ define pcodeop bstrins.w;
 	local len:1 = msb + 1 - lsb;
 	local mask:4 = (1 << len) - 1;
 	local repl:4 = (RJ32src & (mask << lsb)) >> lsb;
-@ifdef LA64
 	RD = sext((RD32 & (~mask)) | repl);
-@else
-	RD = (RD & (~mask)) | repl;
-@endif
 }
 
 
@@ -1062,11 +977,7 @@ define pcodeop bstrins.w;
 	local len:1 = msb + 1 - lsb;
 	local mask:4 = (1 << len) - 1;
 	local repl:4 = (RJ32src & (mask << lsb)) >> lsb;
-@ifdef LA64
 	RD = sext(repl);
-@else
-	RD = repl;
-@endif
 }
 
 
@@ -1078,17 +989,15 @@ define pcodeop bstrins.w;
 #la-bound.txt asrtle mask=0x00010000	[@orig_name=asrtle.d]
 #0x00010000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
 :asrtle.d RJsrc, RKsrc         is op15_31=0x2 & op0_4=0x0 & RJsrc & RKsrc {
-	if (RJsrc <= RKsrc) goto <end>;
+	if (RJsrc <= RKsrc) goto inst_next;
 	addr_bound_exception(RJsrc, RKsrc);
-	<end>
 }
 
 #la-bound.txt asrtgt mask=0x00018000	[@orig_name=asrtgt.d]
 #0x00018000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
 :asrtgt.d RJsrc, RKsrc         is op15_31=0x3 & op0_4=0x0 & RJsrc & RKsrc {
-	if (RJsrc > RKsrc) goto <end>;
+	if (RJsrc > RKsrc) goto inst_next;
 	addr_bound_exception(RJsrc, RKsrc);
-	<end>
 }
 
 
@@ -1098,10 +1007,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	RD = sext(*[ram]:1 vaddr);
-	<end>
 }
 
 #la-bound.txt ldgt.h mask=0x38788000	
@@ -1110,10 +1018,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	RD = sext(*[ram]:2 vaddr);
-	<end>
 }
 
 #la-bound.txt ldgt.w mask=0x38790000	
@@ -1122,10 +1029,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	RD = sext(*[ram]:4 vaddr);
-	<end>
 }
 
 
@@ -1135,10 +1041,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	RD = sext(*[ram]:1 vaddr);
-	<end>
 }
 
 #la-bound.txt ldle.h mask=0x387a8000	
@@ -1147,10 +1052,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	RD = sext(*[ram]:2 vaddr);
-	<end>
 }
 
 #la-bound.txt ldle.w mask=0x387b0000	
@@ -1159,10 +1063,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	RD = sext(*[ram]:4 vaddr);
-	<end>
 }
 
 
@@ -1172,10 +1075,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <store>;
 	bound_check_exception(vaddr, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:1 RJsrc = RDsrc:1;
-	<end>
 }
 
 #la-bound.txt stgt.h mask=0x387c8000	
@@ -1184,10 +1086,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <store>;
 	bound_check_exception(vaddr, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:2 vaddr = RDsrc:2;
-	<end>
 }
 
 #la-bound.txt stgt.w mask=0x387d0000	
@@ -1196,10 +1097,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:4 vaddr = RDsrc:4;
-	<end>
 }
 
 #la-bound.txt stle.b mask=0x387e0000	
@@ -1208,10 +1108,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:1 vaddr = RDsrc:1;
-	<end>
 }
 
 #la-bound.txt stle.h mask=0x387e8000	
@@ -1220,10 +1119,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:2 vaddr = RDsrc:2;
-	<end>
 }
 
 #la-bound.txt stle.w mask=0x387f0000	
@@ -1232,10 +1130,9 @@ define pcodeop bstrins.w;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:4 vaddr = RDsrc:4;
-	<end>
 }
 
 

@@ -1330,7 +1330,6 @@ define pcodeop ldl.w;
 
 #lbt.txt ldl.w mask=0x2e000000	[@lbt]
 #0x2e000000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :ldl.w RD, RJ, simm10_12      is op22_31=0xb8 & RD & RJ & simm10_12 {
 	RD = ldl.w(RD, RJ, simm10_12:$(REGSIZE));
 }
@@ -1339,7 +1338,6 @@ define pcodeop ldr.w;
 
 #lbt.txt ldr.w mask=0x2e400000	[@lbt]
 #0x2e400000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :ldr.w RD, RJ, simm10_12      is op22_31=0xb9 & RD & RJ & simm10_12 {
 	RD = ldr.w(RD, RJ, simm10_12:$(REGSIZE));
 }
@@ -1348,7 +1346,6 @@ define pcodeop ldl.d;
 
 #lbt.txt ldl.d mask=0x2e800000	[@lbt]
 #0x2e800000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :ldl.d RD, RJ, simm10_12      is op22_31=0xba & RD & RJ & simm10_12 {
 	RD = ldl.d(RD, RJ, simm10_12:$(REGSIZE));
 }
@@ -1357,7 +1354,6 @@ define pcodeop ldr.d;
 
 #lbt.txt ldr.d mask=0x2ec00000	[@lbt]
 #0x2ec00000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :ldr.d RD, RJ, simm10_12      is op22_31=0xbb & RD & RJ & simm10_12 {
 	RD = ldr.d(RD, RJ, simm10_12:$(REGSIZE));
 }
@@ -1366,7 +1362,6 @@ define pcodeop stl.w;
 
 #lbt.txt stl.w mask=0x2f000000	[@lbt]
 #0x2f000000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :stl.w RD, RJ, simm10_12      is op22_31=0xbc & RD & RJ & simm10_12 {
 	RD = stl.w(RD, RJ, simm10_12:$(REGSIZE));
 }
@@ -1375,7 +1370,6 @@ define pcodeop str.w;
 
 #lbt.txt str.w mask=0x2f400000	[@lbt]
 #0x2f400000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :str.w RD, RJ, simm10_12      is op22_31=0xbd & RD & RJ & simm10_12 {
 	RD = str.w(RD, RJ, simm10_12:$(REGSIZE));
 }
@@ -1384,7 +1378,6 @@ define pcodeop stl.d;
 
 #lbt.txt stl.d mask=0x2f800000	[@lbt]
 #0x2f800000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :stl.d RD, RJ, simm10_12      is op22_31=0xbe & RD & RJ & simm10_12 {
 	RD = stl.d(RD, RJ, simm10_12:$(REGSIZE));
 }
@@ -1393,7 +1386,6 @@ define pcodeop str.d;
 
 #lbt.txt str.d mask=0x2fc00000	[@lbt]
 #0x2fc00000	0xffc00000	r0:5, r5:5, so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
-#TODO: FIX RELATIVE OFFSET
 :str.d RD, RJ, simm10_12      is op22_31=0xbf & RD & RJ & simm10_12 {
 	RD = str.d(RD, RJ, simm10_12:$(REGSIZE));
 }
@@ -1410,7 +1402,7 @@ define pcodeop jiscr1;
 
 #lbt.txt jiscr1 mask=0x48000300	[@lbt, @orig_fmt=Sd5k16ps2]
 #0x48000300	0xfc0003e0	s0:5|10:16<<2	['simm0_0_s2']
-:jiscr1 Rel26                 is op26_31=0x12 & op5_9=0x18 & off16 & Rel26 {
+:jiscr1 Rel26                 is op26_31=0x12 & op5_9=0x18 & Rel26 {
 	jiscr1(Rel26);
 }
 

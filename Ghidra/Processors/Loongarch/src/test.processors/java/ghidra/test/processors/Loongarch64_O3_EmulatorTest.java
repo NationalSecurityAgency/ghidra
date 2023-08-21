@@ -20,7 +20,7 @@ import junit.framework.Test;
 
 public class Loongarch64_O3_EmulatorTest extends ProcessorEmulatorTestAdapter {
 
-	private static final String LANGUAGE_ID = "Loongarch:LE:64:default";
+	private static final String LANGUAGE_ID = "Loongarch:LE:64:lp64d";
 	private static final String COMPILER_SPEC_ID = "default";
 
 	private static final String[] REG_DUMP_SET = new String[] {};

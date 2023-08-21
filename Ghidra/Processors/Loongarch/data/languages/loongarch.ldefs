@@ -10,7 +10,7 @@
             processorspec="loongarch32.pspec"
             manualindexfile="../manuals/loongarch.idx"
             id="Loongarch:LE:32:ilp32f">
-    <description>Loongson Architecture</description>
+    <description>Loongson 3 32-bit with 32-bit FP</description>
     <compiler name="gnu" spec="ilp32f.cspec" id="default"/>
     <external_name tool="gdb" name="loongarch"/>
   </language>
@@ -24,7 +24,7 @@
             processorspec="loongarch32.pspec"
             manualindexfile="../manuals/loongarch.idx"
             id="Loongarch:LE:32:ilp32d">
-    <description>Loongson Architecture</description>
+    <description>Loongson 3 32-bit with 64-bit FP</description>
     <compiler name="default" spec="ilp32d.cspec" id="default"/>
     <external_name tool="gdb" name="loongarch"/>
   </language>
@@ -39,8 +39,9 @@
             processorspec="loongarch64.pspec"
             manualindexfile="../manuals/loongarch.idx"
             id="Loongarch:LE:64:lp64d">
-    <description>Loongson Architecture</description>
+    <description>Loongson 3 64-bit with 64-bit FP</description>
     <compiler name="default" spec="lp64d.cspec" id="default"/>
+    <external_name tool="gdb" name="loongarch"/>
   </language>
   
     <language processor="Loongarch"
@@ -52,7 +53,7 @@
             processorspec="loongarch64.pspec"
             manualindexfile="../manuals/loongarch.idx"
             id="Loongarch:LE:64:lp64f">
-    <description>Loongson Architecture</description>
+    <description>Loongson 3 64-bit with 64-bit FP</description>
     <compiler name="default" spec="lp64f.cspec" id="default"/>
     <external_name tool="gdb" name="loongarch"/>
   </language>

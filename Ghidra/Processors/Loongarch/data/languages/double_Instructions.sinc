@@ -34,7 +34,8 @@
 :fmax.d  drD, drJ, drK          is op15_31=0x212 & drD & drJ & drK {
 	local jval = drJ;
 	local kval = drK;
-	drD = (zext(jval f>= kval) * jval) + (zext(jval f< kval) * jval);
+	local test = jval f>= kval;
+	drD = (zext(test) * jval) + (zext(!test) * kval);
 }
 
 
@@ -43,7 +44,8 @@
 :fmin.d  drD, drJ, drK          is op15_31=0x216 & drD & drJ & drK {
 	local jval = drJ;
 	local kval = drK;
-	drD = (zext(jval f<= kval) * jval) + (zext(jval f> kval) * jval);
+	local test = jval f<= kval;
+	drD = (zext(test) * jval) + (zext(!test) * kval);
 }
 
 
@@ -52,7 +54,8 @@
 :fmaxa.d  drD, drJ, drK         is op15_31=0x21a & drD & drJ & drK {
 	local jval = drJ;
 	local kval = drK;
-	drD = (zext(abs(jval) f>= abs(kval)) * jval) + (zext(abs(jval) f< abs(kval)) * jval);
+	local test = (abs(jval) f>= abs(kval));
+	drD = (zext(test) * jval) + (zext(!test) * kval);
 }
 
 
@@ -61,7 +64,8 @@
 :fmina.d  drD, drJ, drK         is op15_31=0x21e & drD & drJ & drK {
 	local jval = drJ;
 	local kval = drK;
-	drD = (zext(abs(jval) f<= abs(kval)) * jval) + (zext(abs(jval) f> abs(kval)) * jval);
+	local test = (abs(jval) f<= abs(kval));
+	drD = (zext(test) * jval) + (zext(!test) * kval);
 }
 
 
@@ -279,20 +283,20 @@
 	drD = f- ((drJ f* drK) f- drA);
 }
 
-dSNaN: "c"  is cond_s = 0 { }
-dSNaN: "s"  is cond_s = 1 { }
+dSNaN: "c"  is ccf_s = 0 { }
+dSNaN: "s"  is ccf_s = 1 { }
 
-dcond: dSNaN^"af"   is cond=0x0 & dSNaN { DCMPR = 0; }
-dcond: dSNaN^"lt"   is cond=0x1 & dSNaN { DCMPR = DCMP1 f< DCMP2; }
-dcond: dSNaN^"eq"   is cond=0x2 & dSNaN { DCMPR = DCMP1 f== DCMP2; }
-dcond: dSNaN^"le"   is cond=0x3 & dSNaN { DCMPR = DCMP1 f<= DCMP2; }
-dcond: dSNaN^"un"   is cond=0x4 & dSNaN { DCMPR = nan(DCMP1) || nan(DCMP2); }
-dcond: dSNaN^"ult"  is cond=0x5 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f< DCMP2); }
-dcond: dSNaN^"ueq"  is cond=0x6 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f== DCMP2); }
-dcond: dSNaN^"ule"  is cond=0x7 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f<= DCMP2); }
-dcond: dSNaN^"ne"   is cond=0x8 & dSNaN { DCMPR = DCMP1 f!= DCMP2; }
-dcond: dSNaN^"or"   is cond=0xa & dSNaN { DCMPR = !(nan(DCMP1) || nan(DCMP2)); }
-dcond: dSNaN^"une"  is cond=0xc & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f!= DCMP2); }
+dcond: dSNaN^"af"   is ccf=0x0 & dSNaN { DCMPR = 0; }
+dcond: dSNaN^"lt"   is ccf=0x1 & dSNaN { DCMPR = DCMP1 f< DCMP2; }
+dcond: dSNaN^"eq"   is ccf=0x2 & dSNaN { DCMPR = DCMP1 f== DCMP2; }
+dcond: dSNaN^"le"   is ccf=0x3 & dSNaN { DCMPR = DCMP1 f<= DCMP2; }
+dcond: dSNaN^"un"   is ccf=0x4 & dSNaN { DCMPR = nan(DCMP1) || nan(DCMP2); }
+dcond: dSNaN^"ult"  is ccf=0x5 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f< DCMP2); }
+dcond: dSNaN^"ueq"  is ccf=0x6 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f== DCMP2); }
+dcond: dSNaN^"ule"  is ccf=0x7 & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f<= DCMP2); }
+dcond: dSNaN^"ne"   is ccf=0x8 & dSNaN { DCMPR = DCMP1 f!= DCMP2; }
+dcond: dSNaN^"or"   is ccf=0xa & dSNaN { DCMPR = !(nan(DCMP1) || nan(DCMP2)); }
+dcond: dSNaN^"une"  is ccf=0xc & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || (DCMP1 f!= DCMP2); }
 
 #la-fp-d.txt fcmp.caf.d mask=0x0c200000	
 #0x0c200000	0xffff8018	c0:3, f5:5, f10:5	['fcc0_3_s0', 'freg5_5_s0', 'freg10_5_s0']
@@ -337,10 +341,9 @@ dcond: dSNaN^"une"  is cond=0xc & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || 
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	drD = sext(*[ram]:8 vaddr);
-	<end>
 }
 
 
@@ -350,10 +353,9 @@ dcond: dSNaN^"une"  is cond=0xc & dSNaN { DCMPR = (nan(DCMP1) || nan(DCMP2)) || 
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <load>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<load>
 	drD = sext(*[ram]:8 vaddr);
-	<end>
 }
 
 define pcodeop fstgt.d;
@@ -364,10 +366,9 @@ define pcodeop fstgt.d;
 	local vaddr = RJsrc;
 	if (vaddr > RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:8 vaddr = drD;
-	<end>
 }
 
 define pcodeop fstle.d;
@@ -378,10 +379,9 @@ define pcodeop fstle.d;
 	local vaddr = RJsrc;
 	if (vaddr <= RKsrc) goto <store>;
 	bound_check_exception(RJsrc, RKsrc);
-	goto <end>;
+	goto inst_next;
 	<store>
 	*[ram]:8 vaddr = drD;
-	<end>
 }
 
 
