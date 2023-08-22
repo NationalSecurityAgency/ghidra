@@ -319,6 +319,12 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		toggleInsButton.setBackground(Palette.NO_COLOR);
 		toggleOutsButton.setBackground(Palette.NO_COLOR);
 
+		// This is needed for Flat Dark theme to work correctly, due to the fact that it wants to
+		// paint its parent background when the button is opaque.  The parent background will get
+		// painted over any items that lie between the button and the parent.
+		toggleInsButton.setOpaque(false);
+		toggleOutsButton.setOpaque(false);
+
 		Rectangle parentBounds = vertexImageLabel.getBounds();
 		Dimension size = toggleInsButton.getPreferredSize();
 
