@@ -272,48 +272,36 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 						break;
 					}
 					if (!name.equals(block.getName())) {
-						int id = program.startTransaction("Rename Memory Block");
-						try {
-							block.setName(name);
-							program.endTransaction(id, true);
-						}
-						catch (LockException e) {
-							program.endTransaction(id, false);
-							this.provider.setStatusText(e.getMessage());
-							return;
-						}
-						catch (RuntimeException e1) {
-							program.endTransaction(id, false);
-							throw e1;
-						}
+
+						program.withTransaction("Rename Memory Block", () -> {
+							try {
+								block.setName(name);
+							}
+							catch (LockException e) {
+								provider.setStatusText(e.getMessage());
+							}
+						});
+
 					}
 					break;
 				case READ: {
-					int id = program.startTransaction("Set Read State");
-					try {
+
+					program.withTransaction("Set Read State", () -> {
 						boolean value = ((Boolean) aValue).booleanValue();
 						block.setRead(value);
 						provider.setStatusText("");
-						program.endTransaction(id, true);
-					}
-					catch (RuntimeException e) {
-						program.endTransaction(id, false);
-						throw e;
-					}
+					});
+
 					break;
 				}
 				case WRITE: {
-					int id = program.startTransaction("Set Write State");
-					try {
+
+					program.withTransaction("Set Write State", () -> {
 						boolean value = ((Boolean) aValue).booleanValue();
 						block.setWrite(value);
 						provider.setStatusText("");
-						program.endTransaction(id, true);
-					}
-					catch (RuntimeException e) {
-						program.endTransaction(id, false);
-						throw e;
-					}
+					});
+
 					break;
 				}
 				case EXECUTE: {
@@ -514,8 +502,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 	}
 
 	private String getByteSourceDescription(List<MemoryBlockSourceInfo> sourceInfos) {
-		List<MemoryBlockSourceInfo> limited = sourceInfos.size() < 5 ? sourceInfos : sourceInfos.subList(0, 4);
-		
+		List<MemoryBlockSourceInfo> limited =
+			sourceInfos.size() < 5 ? sourceInfos : sourceInfos.subList(0, 4);
+
 		//@formatter:off
 		String description = limited
 							.stream()
