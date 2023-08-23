@@ -265,8 +265,9 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 			processFunctionJumpReferences(program, entry, monitor);
 		}
 		else {
-			// check if there is any fallthru flow to the potential entry point
-			if (hasFallThruTo(program, entry)) {
+			// check if there could be any fallthru flow to the potential entry point
+			if (checkIfCouldHaveFallThruTo(program, entry)) {
+				// if there could be, even later in analysis, don't create the function
 				return;
 			}
 			AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
@@ -274,7 +275,7 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 		}
 	}
 
-	private boolean hasFallThruTo(Program program, Address location) {
+	private boolean checkIfCouldHaveFallThruTo(Program program, Address location) {
 		Instruction instr= program.getListing().getInstructionAt(location);
 		if (instr == null) {
 			return true;
@@ -283,11 +284,15 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 		if (fallFrom != null) {
 			Instruction fallInstr = program.getListing().getInstructionContaining(fallFrom);
 			if (fallInstr != null && location.equals(fallInstr.getFallThrough())) {
-				// if there is a function above, then it falls into this routine
-				if (program.getFunctionManager().getFunctionContaining(fallFrom) != null) {
-					return true;
-				}
+				// if there is no instruction yet, function may not be created yet
+				return true;
 			}
+		}
+
+		if (instr.getFlowType() == RefType.TERMINATOR) {
+			// a single instruction that is terminal consider
+			// as having a possible future fallthru to
+			return true;
 		}
 		return false;
 	}
