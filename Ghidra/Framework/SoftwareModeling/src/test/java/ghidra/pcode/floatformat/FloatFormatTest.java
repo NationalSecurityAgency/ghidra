@@ -33,21 +33,6 @@ public class FloatFormatTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCreateFloat() {
-		int i = 0;
-		for (double x : BigFloatTest.testDoubleList) {
-			if (!Double.isFinite(x)) {
-				continue;
-			}
-			FloatFormat.SmallFloatData data = FloatFormat.getSmallFloatData(x);
-			double y = FloatFormat.createDouble(data.sign < 0,
-				data.unscaled << (64 - data.fracbits), data.scale);
-			Assert.assertEquals("case #" + Integer.toString(i), x, y, 0);
-			++i;
-		}
-	}
-
-	@Test
 	public void testGetEncodingMinval() {
 		FloatFormat ff = new FloatFormat(4);
 
@@ -269,6 +254,30 @@ public class FloatFormatTest extends AbstractGenericTest {
 		Assert.assertEquals(intbits, encoding.longValue());
 		Assert.assertEquals(big, ff.decodeBigFloat(encoding));
 
+		big = ff.getBigFloat(Float.MIN_VALUE);
+		encoding = ff.getEncoding(big);
+		intbits = Float.floatToRawIntBits(Float.MIN_VALUE);
+		Assert.assertEquals(intbits, encoding.longValue());
+		Assert.assertEquals(Float.MIN_VALUE, (float) ff.decodeHostFloat(intbits), 0);
+
+		big = ff.getBigFloat(Float.MAX_VALUE);
+		encoding = ff.getEncoding(big);
+		intbits = Float.floatToRawIntBits(Float.MAX_VALUE);
+		Assert.assertEquals(intbits, encoding.longValue());
+		Assert.assertEquals(Float.MAX_VALUE, (float) ff.decodeHostFloat(intbits), 0);
+
+		big = ff.getBigFloat(-Float.MIN_VALUE);
+		encoding = ff.getEncoding(big);
+		intbits = Float.floatToRawIntBits(-Float.MIN_VALUE);
+		Assert.assertEquals(intbits, (int) encoding.longValue());
+		Assert.assertEquals(-Float.MIN_VALUE, (float) ff.decodeHostFloat(intbits), 0);
+
+		big = ff.getBigFloat(-Float.MAX_VALUE);
+		encoding = ff.getEncoding(big);
+		intbits = Float.floatToRawIntBits(-Float.MAX_VALUE);
+		Assert.assertEquals(intbits, (int) encoding.longValue());
+		Assert.assertEquals(-Float.MAX_VALUE, (float) ff.decodeHostFloat(intbits), 0);
+
 		f = 3.75f;
 		intbits = Float.floatToRawIntBits(f);
 		big = ff.getBigFloat(f);
@@ -429,6 +438,12 @@ public class FloatFormatTest extends AbstractGenericTest {
 		long encoding = ff.getEncoding(f);
 		Assert.assertEquals(intbits, encoding);
 		Assert.assertEquals(f, (float) ff.decodeHostFloat(encoding), 0);
+
+		intbits = 1; // smallest subnormal value
+		Assert.assertEquals(Float.MIN_VALUE, (float) ff.decodeHostFloat(intbits), 0);
+
+		intbits = 0x80000001; // smallest subnormal value
+		Assert.assertEquals(-Float.MIN_VALUE, (float) ff.decodeHostFloat(intbits), 0);
 
 		f = 8.908155E-39f;
 		intbits = Float.floatToRawIntBits(f);
@@ -1473,10 +1488,9 @@ public class FloatFormatTest extends AbstractGenericTest {
 
 		doTestValueOfBigInteger(BigDecimal.valueOf(2.1234567890123456789e123));
 		doTestValueOfBigInteger(BigDecimal.valueOf(2.1234567890123456789e123).negate());
-		
+
 		// NOTE: BigDecimal.valueOf(Double.MAX_VALUE) produces a value greater than Double.MAX_VALUE		
 		// doTestValueOfBigInteger(BigDecimal.valueOf(Double.MAX_VALUE));
-
 
 		BigFloat bf = ff.decodeBigFloat(Double.doubleToRawLongBits(Double.MAX_VALUE));
 		bf = ff.getBigFloat(bf.toBigInteger());
@@ -1640,14 +1654,12 @@ public class FloatFormatTest extends AbstractGenericTest {
 			ff.toDecimalString(ff.decodeBigFloat(0x0065006700610050L)));
 		assertEquals("2.123456789012346",
 			ff.toDecimalString(ff.decodeBigFloat(0x4000FCD6E9BA37B3L)));
-		assertEquals("0.3",
-			ff.toDecimalString(ff.decodeBigFloat(0x3FD3333333333333L)));
+		assertEquals("0.3", ff.toDecimalString(ff.decodeBigFloat(0x3FD3333333333333L)));
 	}
 
 	@Test
 	public void testFloatDecodeWithToString() {
 		FloatFormat ff = FloatFormatFactory.getFloatFormat(4);
-		assertEquals("-1.4682312",
-			ff.toDecimalString(ff.decodeBigFloat(0xbfbbef00L), true));
+		assertEquals("-1.4682312", ff.toDecimalString(ff.decodeBigFloat(0xbfbbef00L), true));
 	}
 }
