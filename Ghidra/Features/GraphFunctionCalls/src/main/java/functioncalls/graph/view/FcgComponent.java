@@ -54,6 +54,12 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 	}
 
 	@Override
+	protected void setGraph(FunctionCallGraph g) {
+		this.fcGraph = g;
+		super.setGraph(g);
+	}
+
+	@Override
 	protected FcgVertex getInitialVertex() {
 		return fcGraph.getSource();
 	}
