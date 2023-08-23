@@ -673,8 +673,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		waitForSwing();
 		provider = plugin.getMemoryMapProvider();
 		table = provider.getTable();
-		model = (MemoryMapModel) table.getModel();
-
+		model = provider.getModel();
 	}
 
 	private Address getAddr(long offset) {

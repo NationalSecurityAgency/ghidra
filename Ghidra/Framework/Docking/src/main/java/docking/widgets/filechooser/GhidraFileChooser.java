@@ -109,7 +109,8 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 	private static final Icon ICON_HOME = new GIcon("icon.filechooser.places.home");
 	private static final Icon ICON_RECENT = new GIcon("icon.filechooser.places.recent");
 
-	// base and overlay?
+	private final static Cursor WAIT_CURSOR = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
+	private final static Cursor DEFAULT_CURSOR = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
 
 	/** Instruction to display only files. */
 	public static final int FILES_ONLY = 0;
@@ -464,13 +465,13 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				waitPanel.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				waitPanel.setCursor(WAIT_CURSOR);
 				e.consume();
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e) {
-				waitPanel.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				waitPanel.setCursor(DEFAULT_CURSOR);
 			}
 		});
 		waitPanel.addMouseMotionListener(new MouseMotionAdapter() {
