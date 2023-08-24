@@ -15,15 +15,16 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteMethod;
 import ghidra.app.plugin.core.debug.service.rmi.trace.ValueDecoder;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
@@ -42,6 +43,7 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 
 	@Test

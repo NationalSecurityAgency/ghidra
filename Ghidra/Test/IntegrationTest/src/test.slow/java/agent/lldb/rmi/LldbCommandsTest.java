@@ -27,8 +27,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiAcceptor;
 import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
@@ -46,6 +48,7 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 
 	//@Test
