@@ -2957,20 +2957,9 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
       Varnode *rootVn = PieceNode::findRoot(vn);
       if (vn == rootVn) return -1;
       if (rootVn->getDef()->isPartialRoot()) {
-	// Getting PIECEd into a structured thing.  Unless vn is a leaf, it should be implicit
-	if (def->code() != CPUI_PIECE) return -1;
-	if (vn->loneDescend() == (PcodeOp *)0) return -1;
-	Varnode *vn0 = def->getIn(0);
-	Varnode *vn1 = def->getIn(1);
-	Address addr = vn->getAddr();
-	if (!addr.getSpace()->isBigEndian())
-	  addr = addr + vn1->getSize();
-	if (addr != vn0->getAddr()) return -1;
-	addr = vn->getAddr();
-	if (addr.getSpace()->isBigEndian())
-	  addr = addr + vn0->getSize();
-	if (addr != vn1->getAddr()) return -1;
-	// If we reach here vn is a non-leaf in a CONCAT tree and should be implicit
+	// Varnode is getting PIECEd into a structure.  All such PIECE operations should be explicit.
+	// Internal PIECE operations will be hidden.
+	return -1;
       }
     }
     else {
@@ -2982,12 +2971,13 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
     // or a dynamic mapping causing the bit to be set. In either case, it should probably be explicit
     return -1;
   }
-  else if (vn->isProtoPartial() && def->code() != CPUI_PIECE) {
-    // Varnode is part of structure. Write to structure should be an explicit statement
+  else if (vn->isProtoPartial()) {
+    // Varnode is getting PIECEd into a structure.  All such PIECE operations should be explicit.
+    // Internal PIECE operations will be hidden.
     return -1;
   }
-  else if (def->code() == CPUI_PIECE && def->getIn(0)->isProtoPartial() && !vn->isProtoPartial()) {
-    // The base of PIECE operations building a structure
+  else if (def->code() == CPUI_PIECE && def->getIn(0)->isProtoPartial()) {
+    // The base of PIECE operations building a structure should be explicit.
     return -1;
   }
   if (vn->hasNoDescend()) return -1;	// Must have at least one descendant
