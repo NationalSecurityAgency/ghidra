@@ -279,12 +279,12 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 	private void createActions() {
 		hexDisplayAction = new ToggleActionBuilder("Toggle Hex Mode", plugin.getName())
-			.menuPath("Show Enum Values in Hex")
-			.description("Toggles Enum value column to show values in hex or decimal")
-			.keyBinding("Shift-H")
-			.selected(true)
-			.onAction(c -> editorPanel.setHexDisplayMode(hexDisplayAction.isSelected()))
-			.buildAndInstallLocal(this);
+				.menuPath("Show Enum Values in Hex")
+				.description("Toggles Enum value column to show values in hex or decimal")
+				.keyBinding("Shift-H")
+				.selected(true)
+				.onAction(c -> editorPanel.setHexDisplayMode(hexDisplayAction.isSelected()))
+				.buildAndInstallLocal(this);
 
 		addAction = new EnumPluginAction("Add Enum Value", e -> editorPanel.addEntry());
 		addAction.setEnabled(true);
@@ -297,7 +297,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			new EnumPluginAction("Delete Enum Value", e -> editorPanel.deleteSelectedEntries());
 		deleteAction.setEnabled(false);
 		deleteAction
-			.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
+				.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
 		deleteAction.setToolBarData(new ToolBarData(DELETE_ICON, editGroup));
 		deleteAction.setDescription("Delete the selected enum entries");
 
@@ -454,7 +454,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	private void applyName(Enum newEnuum) {
-		String editorName = editorPanel.getEnumName();
+		String editorName = editorPanel.getEnumName().trim();
 		if (originalEnumName.equals(editorName)) {
 			return; // nothing to do
 		}
