@@ -133,12 +133,13 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 			// repair the damage for all non-returning functions
 			if (repairDamageEnabled) {
-				AddressSet clearInstSet = new AddressSet();
 				noreturns = noReturnSet.getAddresses(true);
-				for (Address address : noreturns) {
-					clearInstSet.add(findPotentialDamagedLocations(program, address));
+				for (Address address : noreturns) {	
+					AddressSet potentialDamagedLocations = findPotentialDamagedLocations(program, address);
+
+					repairDamagedLocations(monitor, potentialDamagedLocations, noReturnSet);
 				}
-				repairDamagedLocations(monitor, clearInstSet);
+
 			}
 		}
 		finally {
@@ -154,14 +155,23 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	 * 
 	 * @param taskMonitor for cancellation
 	 * @param clearInstSet locations to clear and repair
+	 * @param protectedLocations - locations that should be protected from clearing
 	 */
-	private void repairDamagedLocations(TaskMonitor taskMonitor, AddressSet clearInstSet) {
+	private void repairDamagedLocations(TaskMonitor taskMonitor, AddressSet clearInstSet, AddressSet protectedLocations) {
 		if (clearInstSet == null || clearInstSet.isEmpty()) {
 			return;
 		}
 		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
 
 		AddressSetView protectedSet = analysisManager.getProtectedLocations();
+		
+		protectedSet = protectedSet.union(protectedLocations);
+
+		// TODO: are there other protected locations,
+		//       that should never be seeds for locations to be cleared?
+		//       For example:
+		//          - functions that were marked non-returning by the analyzer.
+		//          - locations that are known function start patterns?
 
 		// entries including data flow referenced from instructions will be repaired
 
@@ -243,7 +253,8 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Find locations that need repairing
+	 * Find locations that need repairing.  The locations returned are only the
+	 * start of a flow that occurs after a call to a non-returning function.
 	 * 
 	 * @param cp current program
 	 * @param entry non-returning function entry point
@@ -278,6 +289,11 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				}
 			}
 			if (fallthruAddr == null) {
+				continue;
+			}
+			
+			// never add in the entry point that is being marked no return
+			if (fallthruAddr.equals(entry)) {
 				continue;
 			}
 
