@@ -77,6 +77,7 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext {
 				(type == RISCV_ElfRelocationConstants.R_RISCV_GOT_HI20)) {
 				return relocations[relIndex];
 			}
+			++relIndex;
 		}
 		return null;
 	}
