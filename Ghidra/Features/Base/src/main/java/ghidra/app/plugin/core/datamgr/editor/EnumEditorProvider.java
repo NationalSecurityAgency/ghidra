@@ -457,7 +457,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	private void applyName(Enum newEnuum) {
-		String editorName = editorPanel.getEnumName();
+		String editorName = editorPanel.getEnumName().trim();
 		if (originalEnumName.equals(editorName)) {
 			return; // nothing to do
 		}
