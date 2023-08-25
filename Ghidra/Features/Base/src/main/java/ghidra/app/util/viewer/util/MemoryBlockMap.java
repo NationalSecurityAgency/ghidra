@@ -38,7 +38,7 @@ public class MemoryBlockMap implements AddressPixelMap {
 			return;
 		}
 
-		blocks = program.getMemory().getBlocks();
+		blocks = includeBlocks();
 		pixels = new int[blocks.length];
 		long totalSize = 0;
 		for (MemoryBlock block : blocks) {
@@ -48,6 +48,10 @@ public class MemoryBlockMap implements AddressPixelMap {
 		for (int i = 0; i < blocks.length; i++) {
 			pixels[i] = Math.round(blocks[i].getSize() / addressesPerPixel);
 		}
+	}
+
+	protected MemoryBlock[] includeBlocks() {
+		return program.getMemory().getBlocks();
 	}
 
 	@Override
