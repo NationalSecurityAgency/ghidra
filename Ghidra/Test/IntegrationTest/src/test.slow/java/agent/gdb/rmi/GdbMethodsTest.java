@@ -23,9 +23,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import db.Transaction;
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteMethod;
 import ghidra.app.plugin.core.debug.service.rmi.trace.ValueDecoder;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
@@ -48,6 +50,7 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 
 	@Test
