@@ -33,7 +33,6 @@ import ghidra.util.*;
 import ghidra.util.datastruct.LongLongHashtable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>ProgramMerge</CODE> is a class for merging the differences between two
@@ -1295,14 +1294,15 @@ public class ProgramMerge {
 	 */
 	public Reference replaceReference(Reference resultRef, Reference originRef) {
 		ReferenceManager rm = resultProgram.getReferenceManager();
+		if (resultRef != null) {
+			rm.delete(resultRef); // remove old reference
+		}
 		if (originRef != null) {
 			if (originRef.isExternalReference()) {
 				updateExternalLocation(resultProgram, (ExternalReference) originRef);
 			}
 			return addReference(originRef, -1, true);
 		}
-
-		rm.delete(resultRef);
 		return null;
 	}
 
