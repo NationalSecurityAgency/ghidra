@@ -28,8 +28,8 @@ d8PlusRaAddress: S8IMM(A)					is S8IMM & A			{tmp:$(REGISTER_SIZE) = A+S8IMM; ex
 d8PlusRaOrZeroAddress: S8IMM(RA_OR_ZERO)	is S8IMM & RA_OR_ZERO	{tmp:$(REGISTER_SIZE) = RA_OR_ZERO+S8IMM; export tmp; }
 
 sd4PlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+SD4_VLE; export tmp;  }
-sd4HPlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+(SD4_VLE << 1); export tmp;  }
-sd4WPlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+(SD4_VLE << 2); export tmp;  }
+sd4HPlusRxAddr: SD4_OFF(RX_VLE)	is SD4_VLE & RX_VLE		[SD4_OFF = SD4_VLE << 1;] {tmp:$(REGISTER_SIZE) = RX_VLE+SD4_OFF; export tmp;  }
+sd4WPlusRxAddr: SD4_OFF(RX_VLE)	is SD4_VLE & RX_VLE		[SD4_OFF = SD4_VLE << 2;] {tmp:$(REGISTER_SIZE) = RX_VLE+SD4_OFF; export tmp;  }
 
 OIMM: val						is UI5_VLE [ val = UI5_VLE+1; ] { export *[const]:$(REGISTER_SIZE) val; }
 
