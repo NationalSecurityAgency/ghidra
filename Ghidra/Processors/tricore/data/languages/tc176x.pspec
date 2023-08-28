@@ -668,6 +668,7 @@
     <symbol name="CAN_NPCR1" address="0xf000430c" entry="false"/>
     <symbol name="CAN_NBTR1" address="0xf0004310" entry="false"/>
     <symbol name="CAN_NECNT1" address="0xf0004314" entry="false"/>
+    <symbol name="CAN_NFCR1" address="0xf0004318" entry="false"/>
     <symbol name="CAN_MOFCR0" address="0xf0004400" entry="false"/>
     <symbol name="CAN_MOFCR1" address="0xf0004420" entry="false"/>
     <symbol name="CAN_MOFCR2" address="0xf0004440" entry="false"/>
