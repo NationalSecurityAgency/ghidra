@@ -15,15 +15,14 @@
  */
 package ghidra.util.table;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JTable;
+import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import docking.widgets.table.*;
-import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -49,210 +48,201 @@ public class GhidraTableFilterPanel<ROW_OBJECT> extends GTableFilterPanel<ROW_OB
 		super(table, tableModel, filterLabel);
 	}
 
-	@Override
-	// overridden because of our knowledge of threaded models and program table models
+	@Override // overridden because of our knowledge of program table models
 	protected RowObjectFilterModel<ROW_OBJECT> createTextFilterModel(
-			RowObjectTableModel<ROW_OBJECT> model) {
+			RowObjectTableModel<ROW_OBJECT> clientModel) {
 
-		// NOTE: order is important here, since ThreadedTableModels can also be sorted table
-		// models.  We want to handle those first!
-		RowObjectFilterModel<ROW_OBJECT> newModel = super.createTextFilterModel(model);
-		if (newModel instanceof ThreadedTableModel<?, ?>) {
-			// we don't wrap Threaded models, as they can do their own filtering
-			return newModel;
+		RowObjectFilterModel<ROW_OBJECT> filterModel = super.createTextFilterModel(clientModel);
+		if (!(clientModel instanceof ProgramTableModel)) {
+			return filterModel; // nothing to do
 		}
 
-		// Next, see if we need to create a wrapper to handle ProgramTableModel implementations
-		if (!(model instanceof ProgramTableModel)) {
-			return newModel; // nope, the given model is not a ProgramTableModel; no new 
+		if (filterModel instanceof ProgramTableModel) {
+			// the model is already filterable and a ProgramTableModel (e.g., a ThreadedTableModel)
+			return filterModel;
 		}
 
-		return new ProgramTableModelWrapperWrapper(newModel, newModel);
+		return new FilterModelToProgramModelAdapter(filterModel, (ProgramTableModel) clientModel);
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
-	private class ProgramTableModelWrapperWrapper
-			implements RowObjectFilterModel<ROW_OBJECT>, ProgramTableModel {
+	/**
+	 * A class to adapt a table model that can filter into a {@link ProgramTableModel}.
+	 */
+	private class FilterModelToProgramModelAdapter
+			implements RowObjectFilterModel<ROW_OBJECT>, ProgramTableModel, WrappingTableModel {
 
-		private final RowObjectFilterModel<ROW_OBJECT> wrappedFilterModel;
-		private final RowObjectFilterModel<ROW_OBJECT> wrappedTableModel;
+		private final RowObjectFilterModel<ROW_OBJECT> filterModel;
+		private final ProgramTableModel programModel;
 
-		private ProgramTableModelWrapperWrapper(RowObjectFilterModel<ROW_OBJECT> tableModel,
-				RowObjectFilterModel<ROW_OBJECT> filterModel) {
-			this.wrappedTableModel = tableModel;
-			this.wrappedFilterModel = filterModel;
+		private FilterModelToProgramModelAdapter(RowObjectFilterModel<ROW_OBJECT> tableModel,
+				ProgramTableModel programModel) {
+			this.filterModel = tableModel;
+			this.programModel = programModel;
 		}
 
 		@Override
 		public String getName() {
-			return wrappedTableModel.getName();
+			return filterModel.getName();
+		}
+
+		@Override
+		public void fireTableChanged(TableModelEvent event) {
+			if (filterModel instanceof WrappingTableModel) {
+				((WrappingTableModel) filterModel).fireTableChanged(event);
+			}
+		}
+
+		@Override
+		public void wrappedModelChangedFromTableChangedEvent() {
+			if (filterModel instanceof WrappingTableModel) {
+				((WrappingTableModel) filterModel).wrappedModelChangedFromTableChangedEvent();
+			}
 		}
 
 		@Override
 		public ROW_OBJECT getRowObject(int row) {
-			return wrappedTableModel.getRowObject(row);
+			return filterModel.getRowObject(row);
 		}
 
 		@Override
 		public List<ROW_OBJECT> getModelData() {
-			return wrappedTableModel.getModelData();
+			return filterModel.getModelData();
 		}
 
 		@Override
 		public int getModelRow(int viewRow) {
-			return wrappedFilterModel.getModelRow(viewRow);
+			return filterModel.getModelRow(viewRow);
 		}
 
 		@Override
 		public int getRowIndex(ROW_OBJECT t) {
-			return wrappedFilterModel.getRowIndex(t);
+			return filterModel.getRowIndex(t);
 		}
 
 		@Override
 		public int getViewIndex(ROW_OBJECT t) {
-			return wrappedFilterModel.getViewIndex(t);
+			return filterModel.getViewIndex(t);
 		}
 
 		@Override
 		public int getModelIndex(ROW_OBJECT t) {
-			return wrappedFilterModel.getModelIndex(t);
+			return filterModel.getModelIndex(t);
 		}
 
 		@Override
 		public int getUnfilteredRowCount() {
-			return wrappedFilterModel.getUnfilteredRowCount();
+			return filterModel.getUnfilteredRowCount();
 		}
 
 		@Override
 		public int getViewRow(int modelRow) {
-			return wrappedFilterModel.getViewRow(modelRow);
+			return filterModel.getViewRow(modelRow);
 		}
 
 		@Override
 		public boolean isFiltered() {
-			return wrappedFilterModel.isFiltered();
+			return filterModel.isFiltered();
 		}
 
 		@Override
 		public void setTableFilter(TableFilter<ROW_OBJECT> tableFilter) {
-			wrappedFilterModel.setTableFilter(tableFilter);
+			filterModel.setTableFilter(tableFilter);
 		}
 
 		@Override
 		public TableFilter<ROW_OBJECT> getTableFilter() {
-			return wrappedFilterModel.getTableFilter();
+			return filterModel.getTableFilter();
 		}
 
 		@Override
 		public void fireTableDataChanged() {
-			wrappedTableModel.fireTableDataChanged();
+			filterModel.fireTableDataChanged();
 		}
 
 		@Override
 		public void addTableModelListener(TableModelListener l) {
-			wrappedTableModel.addTableModelListener(l);
+			filterModel.addTableModelListener(l);
 		}
 
 		@Override
 		public void removeTableModelListener(TableModelListener l) {
-			wrappedTableModel.removeTableModelListener(l);
+			filterModel.removeTableModelListener(l);
 		}
 
 		@Override
 		public Class<?> getColumnClass(int columnIndex) {
-			return wrappedTableModel.getColumnClass(columnIndex);
+			return filterModel.getColumnClass(columnIndex);
 		}
 
 		@Override
 		public int getColumnCount() {
-			return wrappedTableModel.getColumnCount();
+			return filterModel.getColumnCount();
 		}
 
 		@Override
 		public String getColumnName(int columnIndex) {
-			return wrappedTableModel.getColumnName(columnIndex);
+			return filterModel.getColumnName(columnIndex);
 		}
 
 		@Override
 		public int getRowCount() {
-			return wrappedTableModel.getRowCount();
+			return filterModel.getRowCount();
 		}
 
 		@Override
 		public List<ROW_OBJECT> getUnfilteredData() {
-			List<ROW_OBJECT> list = new ArrayList<>();
-			int rowCount = getUnfilteredRowCount();
-			for (int i = 0; i < rowCount; i++) {
-				list.add(wrappedTableModel.getRowObject(i));
-			}
-			return list;
+			return filterModel.getUnfilteredData();
 		}
 
 		@Override
 		public Object getColumnValueForRow(ROW_OBJECT t, int columnIndex) {
-			return wrappedTableModel.getColumnValueForRow(t, columnIndex);
+			return filterModel.getColumnValueForRow(t, columnIndex);
 		}
 
 		@Override
 		public Object getValueAt(int rowIndex, int columnIndex) {
-			return wrappedTableModel.getValueAt(rowIndex, columnIndex);
+			return filterModel.getValueAt(rowIndex, columnIndex);
 		}
 
 		@Override
 		public boolean isCellEditable(int rowIndex, int columnIndex) {
-			return wrappedTableModel.isCellEditable(rowIndex, columnIndex);
+			return filterModel.isCellEditable(rowIndex, columnIndex);
 		}
 
 		@Override
 		public void setValueAt(Object value, int rowIndex, int columnIndex) {
-			wrappedTableModel.setValueAt(value, rowIndex, columnIndex);
+			filterModel.setValueAt(value, rowIndex, columnIndex);
 		}
 
-		private TableModel getBaseTableModel() {
-			if (wrappedTableModel instanceof TableModelWrapper<?>) {
-				TableModelWrapper<ROW_OBJECT> tableModelWrapper =
-					(TableModelWrapper<ROW_OBJECT>) wrappedTableModel;
-				return tableModelWrapper.getWrappedModel();
-			}
-			return wrappedTableModel;
-		}
-
-		private ProgramTableModel getProgramTableModel() {
-			TableModel baseTableModel = getBaseTableModel();
-			if (baseTableModel instanceof ProgramTableModel) {
-				return (ProgramTableModel) baseTableModel;
-			}
-			return null;
+		@Override
+		public TableModel getWrappedModel() {
+			return filterModel;
 		}
 
 		@Override
 		public Program getProgram() {
-			ProgramTableModel programTableModel = getProgramTableModel();
-			if (programTableModel != null) {
-				return programTableModel.getProgram();
-			}
-			return null;
+			return programModel.getProgram();
 		}
 
 		@Override
 		public ProgramLocation getProgramLocation(int row, int column) {
-			ProgramTableModel programTableModel = getProgramTableModel();
-			if (programTableModel != null) {
-				return programTableModel.getProgramLocation(row, column);
-			}
-			return null;
+			// Note: the given row is the filtered row index
+			int unfilteredRow = getModelRow(row);
+			return programModel.getProgramLocation(unfilteredRow, column);
 		}
 
 		@Override
 		public ProgramSelection getProgramSelection(int[] rows) {
-			ProgramTableModel programTableModel = getProgramTableModel();
-			if (programTableModel != null) {
-				return programTableModel.getProgramSelection(rows);
+			// Note: the given rows are the filtered row indexes
+			int[] unfilteredRows = new int[rows.length];
+			for (int i = 0; i < rows.length; i++) {
+				unfilteredRows[i] = getModelRow(rows[i]);
 			}
-			return null;
+			return programModel.getProgramSelection(unfilteredRows);
 		}
 	}
 
