@@ -128,6 +128,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		table = new MemoryMapTable(tableModel);
 		filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
 
+		table.installNavigation(tool);
 		table.setAutoCreateColumnsFromModel(false);
 
 		GTableCellRenderer monoRenderer = new GTableCellRenderer();
