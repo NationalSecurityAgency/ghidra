@@ -174,7 +174,18 @@ public class BytesFieldFactory extends FieldFactory {
 		}
 
 		CodeUnit cu = (CodeUnit) obj;
-		int length = Math.min(cu.getLength(), 100);
+		int length;
+
+		// Instructions: use prototype length so we display all bytes for length-override case
+		if (cu instanceof Instruction) {
+			// Consider all parsed bytes even if the overlap the next instruction due to the
+			// use of an instruction length-override.
+			length = ((Instruction) cu).getParsedLength();
+		}
+		else {
+			length = Math.min(cu.getLength(), 100);
+		}
+
 		byte[] bytes = new byte[length];
 		Memory memory = cu.getProgram().getMemory();
 		try {

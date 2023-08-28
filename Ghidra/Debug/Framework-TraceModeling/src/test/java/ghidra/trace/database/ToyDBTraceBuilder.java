@@ -564,7 +564,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		InstructionBlock block = dis.pseudoDisassembleBlock(memBuf, defaultContextValue, 1);
 		Instruction pseudoIns = block.iterator().next();
 		return code.instructions()
-				.create(Lifespan.nowOn(snap), start, platform, pseudoIns.getPrototype(), pseudoIns);
+				.create(Lifespan.nowOn(snap), start, platform, pseudoIns.getPrototype(), pseudoIns,
+					0);
 	}
 
 	/**

@@ -235,6 +235,8 @@ public interface Trace extends DataTypeManagerDomainObject {
 			new TraceInstructionChangeType<>();
 		public static final TraceInstructionChangeType<Boolean> FALL_THROUGH_OVERRIDE_CHANGED =
 			new TraceInstructionChangeType<>();
+		public static final TraceInstructionChangeType<Integer> LENGTH_OVERRIDE_CHANGED =
+			new TraceInstructionChangeType<>();
 	}
 
 	public static final class TraceMemoryBytesChangeType

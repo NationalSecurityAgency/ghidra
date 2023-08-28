@@ -19,10 +19,12 @@ import java.util.List;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.PcodeOverride;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.util.CodeUnitInsertionException;
 
 /**
  * Interface to define an instruction for a processor.
@@ -30,9 +32,10 @@ import ghidra.program.model.symbol.RefType;
 public interface Instruction extends CodeUnit, ProcessorContext {
 
 	public static final int INVALID_DEPTH_CHANGE = InstructionPrototype.INVALID_DEPTH_CHANGE; // 2^24
+	public static final int MAX_LENGTH_OVERRIDE = 7;
 
 	/**
-	 * Get the prototype for this instruction.
+	 * @return the prototype for this instruction.
 	 */
 	public InstructionPrototype getPrototype();
 
@@ -46,6 +49,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	/**
 	 * Get objects used by this operand (Address, Scalar, Register ...)
 	 * @param opIndex index of the operand.
+	 * @return objects used by this operand (Address, Scalar, Register ...)
 	 */
 	public Object[] getOpObjects(int opIndex);
 
@@ -108,6 +112,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	/**
 	 * Get the operand reference type for the given operand index.
 	 * @param index operand index
+	 * @return the operand reference type for the given operand index.
 	 */
 	public RefType getOperandRefType(int index);
 
@@ -134,7 +139,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	public Address getFallThrough();
 
 	/**
-	 * Get the Address for the instruction that fell through to
+	 * @return the Address for the instruction that fell through to
 	 * this instruction.
 	 * This is useful for handling instructions that are found
 	 * in a delay slot.
@@ -159,31 +164,85 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	public Address[] getDefaultFlows();
 
 	/**
-	 * Get the flow type of this instruction (how this
+	 * @return the flow type of this instruction (how this
 	 * instruction flows to the next instruction).
 	 */
 	public FlowType getFlowType();
 
 	/**
-	 * Returns true if this instruction has no execution flow other than fall-through.
+	 * @return true if this instruction has no execution flow other than fall-through.
 	 */
 	public boolean isFallthrough();
 
 	/**
-	 * Returns true if this instruction has a fall-through flow.
+	 * @return true if this instruction has a fall-through flow.
 	 */
 	public boolean hasFallthrough();
 
 	/**
-	 * Returns the flow override which may have been set on this instruction.
+	 * @return the flow override which may have been set on this instruction.
 	 */
 	public FlowOverride getFlowOverride();
 
 	/**
 	 * Set the flow override for this instruction.
-	 * @param flowOverride
+	 * @param flowOverride flow override setting or {@link FlowOverride#NONE} to clear.
 	 */
 	public void setFlowOverride(FlowOverride flowOverride);
+
+	/**
+	 * Set instruction length override.  Specified length must be in the range 0..7 where 0 clears 
+	 * the setting and adopts the default length.  The specified length must be less than the actual 
+	 * number of bytes consumed by the prototype and be a multiple of the language specified 
+	 * instruction alignment. 
+	 * <p>
+	 * NOTE: Use of the feature with a delay slot instruction is discouraged.
+	 * @param length effective instruction code unit length.
+	 * @throws CodeUnitInsertionException if expanding instruction length conflicts with another 
+	 * instruction or length is not a multiple of the language specified instruction alignment.
+	 */
+	public void setLengthOverride(int length) throws CodeUnitInsertionException;
+
+	/**
+	 * Determine if an instruction length override has been set.
+	 * @return true if length override has been set else false.
+	 */
+	public boolean isLengthOverridden();
+
+	/**
+	 * Get the actual number of bytes parsed when forming this instruction.  While this method
+	 * will generally return the same value as {@link #getLength()}, its value will differ when
+	 * {@link #setLengthOverride(int)} has been used. In addition, it is important to note that
+	 * {@link #getMaxAddress()} will always reflect a non-overlapping address which reflects 
+	 * {@link #getLength()}.
+	 * This method is equivalent to the following code for a given instruction:
+	 * <br>
+	 * <pre>
+	 * {@link InstructionPrototype} proto = instruction.{@link #getPrototype()};
+	 * int length = proto.{@link InstructionPrototype#getLength() getLength()};
+	 * </pre>
+	 * @return the actual number of bytes parsed when forming this instruction
+	 */
+	public int getParsedLength();
+
+	/**
+	 * Get the actual bytes parsed when forming this instruction.  While this method
+	 * will generally return the same value as {@link #getBytes()}, it will return more bytes when
+	 * {@link #setLengthOverride(int)} has been used.  In this override situation, the bytes 
+	 * returned will generally duplicate some of the parsed bytes associated with the next
+	 * instruction that this instruction overlaps.
+	 * This method is equivalent to the following code for a given instruction:
+	 * <br>
+	 * <pre>
+	 * {@link InstructionPrototype} proto = instruction.{@link #getPrototype()};
+	 * {@link Memory} mem = instruction.{@link #getMemory()};
+	 * byte[] bytes = mem.getBytes(instruction.{@link #getAddress()}, proto.getLength());
+	 * int length = proto.{@link InstructionPrototype#getLength() getLength()};
+	 * </pre>
+	 * @return the actual number of bytes parsed when forming this instruction
+	 * @throws MemoryAccessException if the full number of bytes could not be read
+	 */
+	public byte[] getParsedBytes() throws MemoryAccessException;
 
 	/**
 	 * Get an array of PCode operations (micro code) that this instruction
@@ -223,21 +282,22 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * some RISC processors such as SPARC and the PA-RISC. This
 	 * returns an integer instead of a boolean in case some other
 	 * processor executes more than one instruction from a delay slot.
+	 * @return delay slot depth (number of instructions)
 	 */
 	public int getDelaySlotDepth();
 
 	/**
-	 * Return true if this instruction was disassembled in a delay slot
+	 * @return true if this instruction was disassembled in a delay slot
 	 */
 	public boolean isInDelaySlot();
 
 	/**
-	 * Get the instruction following this one in address order.
+	 * @return the instruction following this one in address order or null if none found.
 	 */
 	public Instruction getNext();
 
 	/**
-	 * Get the instruction before this one in address order.
+	 * @return the instruction before this one in address order or null if none found.
 	 */
 	public Instruction getPrevious();
 
@@ -256,7 +316,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	public void clearFallThroughOverride();
 
 	/**
-	 * Returns true if this instructions fallthrough has been overriden.
+	 * @return true if this instructions fallthrough has been overriden.
 	 */
 	public boolean isFallThroughOverridden();
 

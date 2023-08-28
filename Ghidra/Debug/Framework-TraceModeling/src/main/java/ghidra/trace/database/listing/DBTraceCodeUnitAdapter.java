@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -276,11 +276,6 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 	@Override
 	default String[] getCommentAsArray(int commentType) {
 		return DBTraceCommentAdapter.arrayFromComment(getComment(commentType));
-	}
-
-	@Override
-	default boolean isSuccessor(CodeUnit codeUnit) {
-		return getMaxAddress().isSuccessor(codeUnit.getMinAddress());
 	}
 
 	@Override

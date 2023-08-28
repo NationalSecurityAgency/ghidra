@@ -72,10 +72,16 @@ public class InstructionUtils {
 		textBuf.append(
 			"\nConstructor Line #'s:\n" + getString(debug.getConstructorLineNumbers(), true))
 				.append('\n');
-		textBuf.append("\nByte Length : " + instruction.getLength());
+		int len = instruction.getLength();
+		textBuf.append("\nByte Length : " + len);
+		if (instruction.isLengthOverridden()) {
+			textBuf.append("\n  >>> reflects length override, actual length is " +
+				instruction.getParsedLength());
+		}
 		try {
+			byte[] bytes = instruction.getParsedBytes();
 			textBuf.append(
-				"\nInstr Bytes : " + SleighDebugLogger.getFormattedBytes(instruction.getBytes()));
+				"\nInstr Bytes : " + SleighDebugLogger.getFormattedBytes(bytes));
 			textBuf.append("\nMask        : " + debug.getFormattedInstructionMask(-1));
 			textBuf.append("\nMasked Bytes: " + debug.getFormattedMaskedValue(-1)).append('\n');
 		}

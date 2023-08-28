@@ -669,7 +669,8 @@ public class SymbolicPropogator {
 			else {
 				int instrByteHashCode = -1;
 				try {
-					instrByteHashCode = Arrays.hashCode(instr.getBytes());
+					byte[] bytes = instr.getParsedBytes();
+					instrByteHashCode = Arrays.hashCode(bytes);
 				}
 				catch (MemoryAccessException e) {
 					// this should NEVER happen, should always be able to get the bytes...

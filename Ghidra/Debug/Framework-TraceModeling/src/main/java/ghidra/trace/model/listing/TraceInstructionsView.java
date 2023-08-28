@@ -37,11 +37,12 @@ public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceIn
 	 * @param platform the platform
 	 * @param prototype the instruction prototype
 	 * @param context the input disassembly context for the instruction
+	 * @param forcedLengthOverride reduced instruction byte-length (1..7) or 0 to use default length
 	 * @return the new instruction
 	 * @throws CodeUnitInsertionException if the instruction cannot be created
 	 */
 	TraceInstruction create(Lifespan lifespan, Address address, TracePlatform platform,
-			InstructionPrototype prototype, ProcessorContextView context)
+			InstructionPrototype prototype, ProcessorContextView context, int forcedLengthOverride)
 			throws CodeUnitInsertionException;
 
 	/**
@@ -50,10 +51,10 @@ public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceIn
 	 * @see #create(Lifespan, Address, TracePlatform, InstructionPrototype, ProcessorContextView)
 	 */
 	default TraceInstruction create(Lifespan lifespan, Address address,
-			InstructionPrototype prototype, ProcessorContextView context)
+			InstructionPrototype prototype, ProcessorContextView context, int forcedLengthOverride)
 			throws CodeUnitInsertionException {
 		return create(lifespan, address, getTrace().getPlatformManager().getHostPlatform(),
-			prototype, context);
+			prototype, context, forcedLengthOverride);
 	}
 
 	/**

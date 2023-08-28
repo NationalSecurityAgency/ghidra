@@ -2871,6 +2871,7 @@ public class ProgramDiff {
 			if (i1 == i2) {
 				return true;
 			}
+			// Checking length and prototype will handle use of length-override
 			if (i1.getLength() != i2.getLength()) {
 				return false;
 			}
@@ -2888,7 +2889,9 @@ public class ProgramDiff {
 			}
 
 			try {
-				if (!Arrays.equals(i1.getBytes(), i2.getBytes())) {
+				byte[] bytes1 = i1.getParsedBytes();
+				byte[] bytes2 = i2.getParsedBytes();
+				if (!Arrays.equals(bytes1, bytes2)) {
 					return false; // bytes differ
 				}
 			}

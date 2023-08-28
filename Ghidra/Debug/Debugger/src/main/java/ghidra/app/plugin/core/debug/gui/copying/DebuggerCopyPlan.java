@@ -131,7 +131,8 @@ public class DebuggerCopyPlan {
 					}
 					long off = ins.getMinAddress().subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);
-					intoListing.createInstruction(dest, ins.getPrototype(), ins, ins);
+					intoListing.createInstruction(dest, ins.getPrototype(), ins, ins,
+						ins.getLength());
 				}
 			}
 		},
@@ -143,8 +144,7 @@ public class DebuggerCopyPlan {
 
 			@Override
 			public void copy(TraceProgramView from, AddressRange fromRange, Program into,
-					Address intoAddress, TaskMonitor monitor)
-					throws Exception {
+					Address intoAddress, TaskMonitor monitor) throws Exception {
 				Listing intoListing = into.getListing();
 				for (Data data : from.getListing()
 						.getDefinedData(new AddressSet(fromRange), true)) {
@@ -204,8 +204,8 @@ public class DebuggerCopyPlan {
 				}
 			}
 
-			private Namespace findOrCopyNamespace(Namespace ns, SymbolTable intoTable,
-					Program into) throws Exception {
+			private Namespace findOrCopyNamespace(Namespace ns, SymbolTable intoTable, Program into)
+					throws Exception {
 				if (ns.isGlobal()) {
 					return into.getGlobalNamespace();
 				}
@@ -442,8 +442,8 @@ public class DebuggerCopyPlan {
 	public boolean isRequiresInitializedMemory(TraceProgramView from, Program dest) {
 		return checkBoxes.entrySet().stream().anyMatch(ent -> {
 			Copier copier = ent.getKey();
-			return copier.isRequiresInitializedMemory() &&
-				copier.isAvailable(from, dest) && ent.getValue().isSelected();
+			return copier.isRequiresInitializedMemory() && copier.isAvailable(from, dest) &&
+				ent.getValue().isSelected();
 		});
 	}
 }
