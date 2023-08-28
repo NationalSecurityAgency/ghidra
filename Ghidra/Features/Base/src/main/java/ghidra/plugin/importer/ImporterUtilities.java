@@ -230,6 +230,13 @@ public class ImporterUtilities {
 
 		Objects.requireNonNull(monitor);
 
+		// Don't allow Add To Program while "things are happening" to the program
+		if (!program.canLock()) {
+			Msg.showWarn(null, null, "Add To Program",
+				"Cannot Add To Program while program is locked.  Please wait or stop running tasks.");
+			return;
+		}
+
 		try {
 			ByteProvider provider = fsService.getByteProvider(fsrl, false, monitor);
 			if (provider.length() == 0) {
