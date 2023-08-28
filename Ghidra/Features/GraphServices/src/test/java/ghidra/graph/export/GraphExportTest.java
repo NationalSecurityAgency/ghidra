@@ -69,7 +69,9 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void setGraph(AttributedGraph graph, GraphDisplay exporter) {
 		try {
-			exporter.setGraph(graph, "Test", false, TaskMonitor.DUMMY);
+			GraphDisplayOptions options =
+				new GraphDisplayOptionsBuilder(graph.getGraphType()).build();
+			exporter.setGraph(graph, options, "Test", false, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// can't happen with dummy
@@ -85,109 +87,41 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testCSV() throws Exception {
 		List<String> lines = processDialog(new CsvEdgeListGraphExporter());
 
-		assertOutput(lines,
-			"A,B",
-			"B,C",
-			"B,D",
-			"C,E",
-			"D,E");
+		assertOutput(lines, "A,B", "B,C", "B,D", "C,E", "D,E");
 	}
 
 	@Test
 	public void testDIMACS() throws Exception {
 		List<String> lines = processDialog(new DimacsGraphExporter());
-		assertOutput(lines,
-			"c",
-			"c SOURCE: Generated using the JGraphT library",
-			"c",
-			"p edge 5 5",
-			"e A B",
-			"e B C",
-			"e B D",
-			"e C E",
-			"e D E");
+		assertOutput(lines, "c", "c SOURCE: Generated using the JGraphT library", "c", "p edge 5 5",
+			"e A B", "e B C", "e B D", "e C E", "e D E");
 	}
 
 	@Test
 	public void testDOT() throws Exception {
 		List<String> lines = processDialog(new DotGraphExporter());
 
-		assertOutput(lines,
-			"digraph Ghidra {",
-			"  \"A\" [ Type=\"X\" Inverted=\"true\" Name=\"A\" ];",
-			"  \"B\" [ Type=\"Y\" Name=\"B\" ];",
-			"  \"C\" [ Type=\"Y\" Name=\"C\" ];",
-			"  \"D\" [ Type=\"Y\" Name=\"D\" ];",
-			"  \"E\" [ Type=\"Z\" Name=\"E\" ];",
-			"  \"A\" -> \"B\" [ EType=\"Fall\" ];",
-			"  \"B\" -> \"C\" [ EType=\"JMP\" ];",
-			"  \"B\" -> \"D\" [ EType=\"Fall\" ];",
-			"  \"C\" -> \"E\" [ EType=\"Fall\" ];",
-			"  \"D\" -> \"E\" [ EType=\"Call\" ];",
-			"}");
+		assertOutput(lines, "digraph Ghidra {",
+			"  \"A\" [ Type=\"X\" Inverted=\"true\" label=\"A\" ];",
+			"  \"B\" [ Type=\"Y\" label=\"B\" ];", "  \"C\" [ Type=\"Y\" label=\"C\" ];",
+			"  \"D\" [ Type=\"Y\" label=\"D\" ];", "  \"E\" [ Type=\"Z\" label=\"E\" ];",
+			"  \"A\" -> \"B\" [ EType=\"Fall\" ];", "  \"B\" -> \"C\" [ EType=\"JMP\" ];",
+			"  \"B\" -> \"D\" [ EType=\"Fall\" ];", "  \"C\" -> \"E\" [ EType=\"Fall\" ];",
+			"  \"D\" -> \"E\" [ EType=\"Call\" ];", "}");
 	}
 
 	@Test
 	public void testGML() throws Exception {
 		List<String> lines = processDialog(new GmlGraphExporter());
-		assertOutput(lines,
-			"Creator \"JGraphT GML Exporter\"",
-			"Version 1",
-			"graph",
-			"[",
-			"	label \"\"",
-			"	directed 1",
-			"	node",
-			"	[",
-			"		id A",
-			"	]",
-			"	node",
-			"	[",
-			"		id B",
-			"	]",
-			"	node",
-			"	[",
-			"		id C",
-			"	]",
-			"	node",
-			"	[",
-			"		id D",
-			"	]",
-			"	node",
-			"	[",
-			"		id E",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 1",
-			"		source A",
-			"		target B",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 2",
-			"		source B",
-			"		target C",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 3",
-			"		source B",
-			"		target D",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 4",
-			"		source C",
-			"		target E",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 5",
-			"		source D",
-			"		target E",
-			"	]",
-			"]");
+		assertOutput(lines, "Creator \"JGraphT GML Exporter\"", "Version 1", "graph", "[",
+			"	label \"\"", "	directed 1", "	node", "	[", "		id A", "	]", "	node",
+			"	[", "		id B", "	]", "	node", "	[", "		id C", "	]", "	node",
+			"	[", "		id D", "	]", "	node", "	[", "		id E", "	]", "	edge",
+			"	[", "		id 1", "		source A", "		target B", "	]", "	edge",
+			"	[", "		id 2", "		source B", "		target C", "	]", "	edge",
+			"	[", "		id 3", "		source B", "		target D", "	]", "	edge",
+			"	[", "		id 4", "		source C", "		target E", "	]", "	edge",
+			"	[", "		id 5", "		source D", "		target E", "	]", "]");
 	}
 
 	@Test
@@ -195,49 +129,49 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 		List<String> lines = processDialog(new GraphMlGraphExporter());
 		// @formatter:off
 		assertOutput(lines,
-			"<?xml version=\"1.0\" encoding=\"UTF-8\"?><graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">", 
-			"    <key id=\"key9\" for=\"node\" attr.name=\"Type\" attr.type=\"string\"/>", 
-			"    <key id=\"key1\" for=\"node\" attr.name=\"Inverted\" attr.type=\"string\"/>", 
-			"    <key id=\"key10\" for=\"node\" attr.name=\"Name\" attr.type=\"string\"/>", 
-			"    <key id=\"key15\" for=\"edge\" attr.name=\"EType\" attr.type=\"string\"/>", 
-			"    <graph edgedefault=\"directed\">", 
-			"        <node id=\"A\">", 
-			"            <data key=\"key9\">X</data>", 
-			"            <data key=\"key1\">true</data>", 
-			"            <data key=\"key10\">A</data>", 
-			"        </node>", 
-			"        <node id=\"B\">", 
-			"            <data key=\"key9\">Y</data>", 
-			"            <data key=\"key10\">B</data>", 
-			"        </node>", 
-			"        <node id=\"C\">", 
-			"            <data key=\"key9\">Y</data>", 
-			"            <data key=\"key10\">C</data>", 
-			"        </node>", 
-			"        <node id=\"D\">", 
-			"            <data key=\"key9\">Y</data>", 
-			"            <data key=\"key10\">D</data>", 
-			"        </node>", 
-			"        <node id=\"E\">", 
-			"            <data key=\"key9\">Z</data>", 
-			"            <data key=\"key10\">E</data>", 
-			"        </node>", 
-			"        <edge id=\"1\" source=\"A\" target=\"B\">", 
-			"            <data key=\"key15\">Fall</data>", 
-			"        </edge>", 
-			"        <edge id=\"2\" source=\"B\" target=\"C\">", 
-			"            <data key=\"key15\">JMP</data>", 
-			"        </edge>", 
-			"        <edge id=\"3\" source=\"B\" target=\"D\">", 
-			"            <data key=\"key15\">Fall</data>", 
-			"        </edge>", 
-			"        <edge id=\"4\" source=\"C\" target=\"E\">", 
-			"            <data key=\"key15\">Fall</data>", 
-			"        </edge>", 
-			"        <edge id=\"5\" source=\"D\" target=\"E\">", 
-			"            <data key=\"key15\">Call</data>", 
-			"        </edge>", 
-			"    </graph>", 
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?><graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+			"    <key id=\"key9\" for=\"node\" attr.name=\"Type\" attr.type=\"string\"/>",
+			"    <key id=\"key1\" for=\"node\" attr.name=\"Inverted\" attr.type=\"string\"/>",
+			"    <key id=\"key10\" for=\"node\" attr.name=\"Name\" attr.type=\"string\"/>",
+			"    <key id=\"key15\" for=\"edge\" attr.name=\"EType\" attr.type=\"string\"/>",
+			"    <graph edgedefault=\"directed\">",
+			"        <node id=\"A\">",
+			"            <data key=\"key9\">X</data>",
+			"            <data key=\"key1\">true</data>",
+			"            <data key=\"key10\">A</data>",
+			"        </node>",
+			"        <node id=\"B\">",
+			"            <data key=\"key9\">Y</data>",
+			"            <data key=\"key10\">B</data>",
+			"        </node>",
+			"        <node id=\"C\">",
+			"            <data key=\"key9\">Y</data>",
+			"            <data key=\"key10\">C</data>",
+			"        </node>",
+			"        <node id=\"D\">",
+			"            <data key=\"key9\">Y</data>",
+			"            <data key=\"key10\">D</data>",
+			"        </node>",
+			"        <node id=\"E\">",
+			"            <data key=\"key9\">Z</data>",
+			"            <data key=\"key10\">E</data>",
+			"        </node>",
+			"        <edge id=\"1\" source=\"A\" target=\"B\">",
+			"            <data key=\"key15\">Fall</data>",
+			"        </edge>",
+			"        <edge id=\"2\" source=\"B\" target=\"C\">",
+			"            <data key=\"key15\">JMP</data>",
+			"        </edge>",
+			"        <edge id=\"3\" source=\"B\" target=\"D\">",
+			"            <data key=\"key15\">Fall</data>",
+			"        </edge>",
+			"        <edge id=\"4\" source=\"C\" target=\"E\">",
+			"            <data key=\"key15\">Fall</data>",
+			"        </edge>",
+			"        <edge id=\"5\" source=\"D\" target=\"E\">",
+			"            <data key=\"key15\">Call</data>",
+			"        </edge>",
+			"    </graph>",
 			"</graphml>");
 		// @formatter:on
 	}
@@ -263,27 +197,14 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testMATRIX() throws Exception {
 		List<String> lines = processDialog(new MatrixGraphExporter());
-		assertOutput(lines,
-			"A B 1",
-			"B C 1",
-			"B D 1",
-			"C E 1",
-			"D E 1");
+		assertOutput(lines, "A B 1", "B C 1", "B D 1", "C E 1", "D E 1");
 	}
 
 	@Test
 	public void testVISIO() throws Exception {
 		List<String> lines = processDialog(new VisioGraphExporter());
-		assertOutput(lines,
-			"Shape,A,,A",
-			"Shape,B,,B",
-			"Shape,C,,C",
-			"Shape,D,,D",
-			"Shape,E,,E",
-			"Link,A-->B,,,A,B",
-			"Link,B-->C,,,B,C",
-			"Link,B-->D,,,B,D",
-			"Link,C-->E,,,C,E",
+		assertOutput(lines, "Shape,A,,A", "Shape,B,,B", "Shape,C,,C", "Shape,D,,D", "Shape,E,,E",
+			"Link,A-->B,,,A,B", "Link,B-->C,,,B,C", "Link,B-->D,,,B,D", "Link,C-->E,,,C,E",
 			"Link,D-->E,,,D,E");
 	}
 
@@ -300,8 +221,7 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private List<String> processDialog(AttributedGraphExporter exporter) throws IOException {
 		dialog = getDialogComponent(GraphExporterDialog.class);
-		String filePath =
-			createTempFilePath("GraphExportTest", "." + exporter.getFileExtension());
+		String filePath = createTempFilePath("GraphExportTest", "." + exporter.getFileExtension());
 		runSwing(() -> dialog.setOutputFile(filePath));
 		dialog.setExporter(exporter);
 		pressButtonByText(dialog, "OK");
@@ -360,12 +280,10 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 			for (int i = 0; i < expected.length; i++) {
 				if (i >= actual.size()) {
 					fail(testName.getMethodName() + ": output line " + (i + 1) + ": expected :\"" +
-						expected[i] +
-						"\", got: EOF");
+						expected[i] + "\", got: EOF");
 				}
 				assertEquals(testName.getMethodName() + ": output line " + (i + 1) + ": ",
-					expected[i],
-					actual.get(i));
+					expected[i], actual.get(i));
 			}
 		}
 		catch (Throwable e) {

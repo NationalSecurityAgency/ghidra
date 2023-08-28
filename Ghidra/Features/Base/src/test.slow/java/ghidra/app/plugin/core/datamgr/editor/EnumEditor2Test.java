@@ -545,7 +545,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 			nameField.setText(newName);
 		});
 
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+		DockingActionIf applyAction = getAction(plugin, "Editor: Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
 
 		performAction(applyAction);
@@ -566,7 +566,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 			nameField.setText(newDescription);
 		});
 
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+		DockingActionIf applyAction = getAction(plugin, "Editor: Apply Enum Changes");
 		assertTrue(applyAction.isEnabled());
 
 		performAction(applyAction);
