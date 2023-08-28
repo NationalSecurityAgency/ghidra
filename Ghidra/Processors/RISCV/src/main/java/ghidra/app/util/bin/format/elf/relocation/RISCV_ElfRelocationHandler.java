@@ -163,8 +163,8 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				value32 = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, value32);
 				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
-					warnExternalOffsetRelocation(program, relocationAddress,
-						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					warnExternalOffsetRelocation(program, relocationAddress, symbolAddr, symbolName,
+						addend, elfRelocationContext.getLog());
 					if (elf.is32Bit()) {
 						applyComponentOffsetPointer(program, relocationAddress, addend);
 					}
@@ -177,8 +177,8 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setLong(relocationAddress, value64);
 				byteLength = 8;
 				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
-					warnExternalOffsetRelocation(program, relocationAddress,
-						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					warnExternalOffsetRelocation(program, relocationAddress, symbolAddr, symbolName,
+						addend, elfRelocationContext.getLog());
 					if (elf.is64Bit()) {
 						applyComponentOffsetPointer(program, relocationAddress, addend);
 					}
@@ -254,20 +254,18 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				return RelocationResult.UNSUPPORTED;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_BRANCH:
-				// PC-relative branch (B-Type)
+				// PC-relative branch (SB-Type)
 				target = (int) (addend + symbolValue - offset);
-				value32 =
-					((target & 0x01e) << 7) | ((target & 0x0800) >> 4) | ((target & 0x03e0) << 20) |
-						((target & 0x1000) << 19) | (memory.getInt(relocationAddress) & 0x1fff07f);
+				value32 = encodeSBTypeImm(target) |
+					(memory.getInt(relocationAddress) & ~encodeSBTypeImm(-1));
 				memory.setInt(relocationAddress, value32);
 				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_JAL:
-				// PC-relative jump (J-Type)
+				// PC-relative jump (UJ-Type)
 				target = (int) (addend + symbolValue - offset);
-				value32 =
-					(target & 0xff000) | ((target & 0x00800) << 9) | ((target & 0x007fe) << 20) |
-						((target & 0x100000) << 11) | (memory.getInt(relocationAddress) & 0xfff);
+				value32 = encodeUJTypeImm(target) |
+					(memory.getInt(relocationAddress) & ~encodeUJTypeImm(-1));
 				memory.setInt(relocationAddress, value32);
 				break;
 
@@ -340,17 +338,15 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case RISCV_ElfRelocationConstants.R_RISCV_HI20:
 				// Absolute address %hi(symbol) (U-Type)
-				value32 =
-					(int) ((symbolValue + 0x800) & 0xfffff000) |
-						(memory.getInt(relocationAddress) & 0xfff);
+				value32 = (int) ((symbolValue + 0x800) & 0xfffff000) |
+					(memory.getInt(relocationAddress) & 0xfff);
 				memory.setInt(relocationAddress, value32);
 				break;
 
 			case RISCV_ElfRelocationConstants.R_RISCV_LO12_I:
 				// Absolute address %lo(symbol) (I-Type)
-				value32 =
-					((int) (symbolValue & 0x00000fff) << 20) |
-						(memory.getInt(relocationAddress) & 0xfffff);
+				value32 = ((int) (symbolValue & 0x00000fff) << 20) |
+					(memory.getInt(relocationAddress) & 0xfffff);
 				memory.setInt(relocationAddress, value32);
 				break;
 
@@ -469,29 +465,18 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_RVC_BRANCH: {
 				// PC-relative branch offset (CB-Type)
 				short target_s = (short) (addend + symbolValue - offset);
-				// 15   13  |  12 11 10|9 7|       6 5 4 3 2|1 0
-				// C.BEQZ offset[8|4:3] src offset[7:6|2:1|5] C1
-				value16 = (short) (((target_s & 0x100) << 4) | ((target_s & 0x18) << 7) |
-					((target_s & 0xc0) >> 1) |
-					((target_s & 0x06) << 2) | ((target_s & 0x20) >> 3) |
-					(memory.getShort(relocationAddress) & 0xe383));
+				value16 = (short) (encodeCBTypeImm(target_s) |
+					(memory.getShort(relocationAddress) & ~encodeCBTypeImm(-1)));
 				memory.setShort(relocationAddress, value16);
 				byteLength = 2;
 				break;
 			}
 
 			case RISCV_ElfRelocationConstants.R_RISCV_RVC_JUMP: {
+				// PC-relative jump offset (CJ-Type)
 				short target_s = (short) (addend + symbolValue - offset);
-				// Complicated swizzling going on here.
-				// For details, see The RISC-V Instruction Set Manual Volume I: Unprivileged ISA
-				// 15  13  |  12 11 10 9 8 7 6 5 3 2|1 0
-				// C.J offset[11| 4|9:8|10|6|7|3:1|5] C1
-				value16 = (short) (((target_s & 0x800) << 1) | ((target_s & 0x10) << 7) |
-					((target_s & 0x300) << 1) |
-					((target_s & 0x400) >> 2) | ((target_s & 0x40) << 1) |
-					((target_s & 0x80) >> 1) |
-					((target_s & 0x0e) << 2) | ((target_s & 0x20) >> 3) |
-					(memory.getShort(relocationAddress) & 0xe003));
+				value16 = (short) (encodeCJTypeImm(target_s) |
+					(memory.getShort(relocationAddress) & ~encodeCJTypeImm(-1)));
 				memory.setShort(relocationAddress, value16);
 				byteLength = 2;
 				break;
@@ -574,4 +559,32 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		}
 		return new RelocationResult(Status.APPLIED, byteLength);
 	}
+
+	private static int getBitField(int val, int shiftRight, int bitSize) {
+		return ((val >> shiftRight) & ((1 << bitSize) - 1));
+	}
+
+	private static int encodeSBTypeImm(int val) {
+		return (getBitField(val, 1, 4) << 8) | (getBitField(val, 5, 6) << 25) |
+			(getBitField(val, 11, 1) << 7) | (getBitField(val, 12, 1) << 31);
+	}
+
+	private static int encodeUJTypeImm(int val) {
+		return (getBitField(val, 1, 10) << 21) | (getBitField(val, 11, 1) << 20) |
+			(getBitField(val, 12, 8) << 12) | (getBitField(val, 20, 1) << 31);
+	}
+
+	private static int encodeCBTypeImm(int val) {
+		return (getBitField(val, 1, 2) << 3) | (getBitField(val, 3, 2) << 10) |
+			(getBitField(val, 5, 1) << 2) | (getBitField(val, 6, 2) << 5) |
+			(getBitField(val, 8, 1) << 12);
+	}
+
+	private static int encodeCJTypeImm(int val) {
+		return (getBitField(val, 1, 3) << 3) | (getBitField(val, 4, 1) << 11) |
+			(getBitField(val, 5, 1) << 2) | (getBitField(val, 6, 1) << 7) |
+			(getBitField(val, 7, 1) << 6) | (getBitField(val, 8, 2) << 9) |
+			(getBitField(val, 10, 1) << 8) | (getBitField(val, 11, 1) << 12);
+	}
+
 }
