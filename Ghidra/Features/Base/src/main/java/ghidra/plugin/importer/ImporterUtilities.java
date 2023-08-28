@@ -240,7 +240,7 @@ public class ImporterUtilities {
 			}
 
 			LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
-				loader -> loader.supportsLoadIntoProgram());
+				loader -> loader.supportsLoadIntoProgram(program));
 
 			SystemUtilities.runSwingLater(() -> {
 				AddToProgramDialog dialog =
@@ -279,8 +279,8 @@ public class ImporterUtilities {
 			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(provider);
 
 			SystemUtilities.runSwingLater(() -> {
-				ImporterDialog importerDialog =
-					new ImporterDialog(tool, programManager, loaderMap, provider, suggestedPath);
+				ImporterDialog importerDialog = new ImporterDialog(tool, programManager, loaderMap,
+					provider, suggestedPath);
 				if (destinationFolder != null) {
 					importerDialog.setDestinationFolder(destinationFolder);
 				}
