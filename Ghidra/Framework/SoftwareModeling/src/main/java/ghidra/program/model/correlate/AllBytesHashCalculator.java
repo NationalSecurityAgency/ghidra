@@ -26,7 +26,7 @@ import ghidra.program.model.mem.MemoryAccessException;
 public class AllBytesHashCalculator implements HashCalculator {
 	@Override
 	public int calcHash(int startHash, Instruction inst) throws MemoryAccessException {
-		byte[] bytes = inst.getBytes();
+		byte[] bytes = inst.getParsedBytes();
 		for(int i=0;i<bytes.length;++i) {
 			startHash = SimpleCRC32.hashOneByte(startHash, bytes[i]);
 		}

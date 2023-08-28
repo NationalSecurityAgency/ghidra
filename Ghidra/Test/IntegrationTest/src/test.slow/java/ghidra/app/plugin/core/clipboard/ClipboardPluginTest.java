@@ -162,7 +162,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			new ClassicSampleX86ProgramBuilder("notepad", false, this);
 
 		// need a default label at 01002cf0, so make up a reference
-		builder.createMemoryReference("01002ce5", "01002cf0", RefType.FALL_THROUGH,
+		builder.createMemoryReference("01002ce5", "01002cf0", RefType.DATA,
 			SourceType.ANALYSIS);
 
 		return builder.getProgram();

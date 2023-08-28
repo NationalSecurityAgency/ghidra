@@ -708,18 +708,19 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
-	@SuppressWarnings("rawtypes")
-	public PropertyMap getPropertyMap(String propertyName) {
+	public PropertyMap<?> getPropertyMap(String propertyName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
-			MemBuffer memBuf, ProcessorContextView context) throws CodeUnitInsertionException {
+			MemBuffer memBuf, ProcessorContextView context, int forcedLengthOverride)
+			throws CodeUnitInsertionException {
 		// TODO: Why memBuf? Can it vary from program memory?
 		return codeOperations.instructions()
-				.create(Lifespan.nowOn(program.snap), addr, platform, prototype, context);
+				.create(Lifespan.nowOn(program.snap), addr, platform, prototype, context,
+					forcedLengthOverride);
 	}
 
 	@Override

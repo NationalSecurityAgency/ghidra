@@ -94,7 +94,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 				new ProgramProcessorContext(program.getProgramContext(), atAddress);
 			InstructionPrototype proto = program.getLanguage().parse(buf, context, false);
 			Instruction createdInstruction =
-				listing.createInstruction(atAddress, proto, buf, context);
+				listing.createInstruction(atAddress, proto, buf, context, 0);
 			commit = true;
 			return createdInstruction;
 		}

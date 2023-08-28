@@ -22,7 +22,8 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.module.TreeManager;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -107,7 +108,7 @@ class ListingDB implements Listing {
 
 	@Override
 	public Instruction getInstructionContaining(Address addr) {
-		return codeMgr.getInstructionContaining(addr);
+		return codeMgr.getInstructionContaining(addr, false);
 	}
 
 	@Override
@@ -261,14 +262,15 @@ class ListingDB implements Listing {
 	}
 
 	@Override
-	public PropertyMap getPropertyMap(String propertyName) {
+	public PropertyMap<?> getPropertyMap(String propertyName) {
 		return codeMgr.getPropertyMap(propertyName);
 	}
 
 	@Override
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
-			MemBuffer memBuf, ProcessorContextView context) throws CodeUnitInsertionException {
-		return codeMgr.createCodeUnit(addr, prototype, memBuf, context);
+			MemBuffer memBuf, ProcessorContextView context, int length)
+			throws CodeUnitInsertionException {
+		return codeMgr.createCodeUnit(addr, prototype, memBuf, context, length);
 	}
 
 	@Override
@@ -278,8 +280,7 @@ class ListingDB implements Listing {
 	}
 
 	@Override
-	public Data createData(Address addr, DataType dataType)
-			throws CodeUnitInsertionException {
+	public Data createData(Address addr, DataType dataType) throws CodeUnitInsertionException {
 		return codeMgr.createCodeUnit(addr, dataType, dataType.getLength());
 	}
 
@@ -292,8 +293,7 @@ class ListingDB implements Listing {
 	@Override
 	public void clearCodeUnits(Address startAddr, Address endAddr, boolean clearContext) {
 		try {
-			codeMgr.clearCodeUnits(startAddr, endAddr, clearContext,
-				TaskMonitor.DUMMY);
+			codeMgr.clearCodeUnits(startAddr, endAddr, clearContext, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// can't happen with dummy monitor

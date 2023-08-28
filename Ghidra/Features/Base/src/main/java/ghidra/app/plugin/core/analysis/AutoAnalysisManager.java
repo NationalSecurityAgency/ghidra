@@ -445,6 +445,7 @@ public class AutoAnalysisManager implements DomainObjectListener {
 					break;
 				case ChangeManager.DOCR_FALLTHROUGH_CHANGED:
 				case ChangeManager.DOCR_FLOWOVERRIDE_CHANGED:
+				case ChangeManager.DOCR_LENGTH_OVERRIDE_CHANGED:
 					// TODO: not sure if this should be done this way or explicitly
 					// via the application commands (this is inconsistent with other
 					// codeDefined cases which do not rely on change events (e.g., disassembly)

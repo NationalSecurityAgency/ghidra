@@ -97,7 +97,7 @@ public class SymbolUtilities2Test extends AbstractGhidraHeadedIntegrationTest {
 			new ProgramProcessorContext(program.getProgramContext(), addr(0x200));
 		DumbMemBufferImpl membuf = new DumbMemBufferImpl(program.getMemory(), addr(0x200));
 		InstructionPrototype proto = program.getLanguage().parse(membuf, context, false);
-		listing.createInstruction(addr(0x200), proto, membuf, context);
+		listing.createInstruction(addr(0x200), proto, membuf, context, 0);
 		Symbol symbol = symbolTable.getPrimarySymbol(addr(0x200));
 		assertEquals("LAB_CODE_0200", symbol.getName());
 

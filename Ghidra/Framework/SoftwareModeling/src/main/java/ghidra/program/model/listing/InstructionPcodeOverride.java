@@ -28,7 +28,8 @@ import ghidra.util.Msg;
 
 public class InstructionPcodeOverride implements PcodeOverride {
 
-	protected Instruction instr;
+	protected final Instruction instr;
+
 	private boolean callOverrideApplied = false;
 	private boolean jumpOverrideApplied = false;
 	private boolean callOtherCallOverrideApplied = false;
@@ -64,7 +65,7 @@ public class InstructionPcodeOverride implements PcodeOverride {
 	public Address getFallThroughOverride() {
 		Address defaultFallAddr = instr.getDefaultFallThrough();
 		Address fallAddr = instr.getFallThrough();
-		if (fallAddr != null && !fallAddr.equals(defaultFallAddr)) {
+		if (fallAddr != null && (instr.isLengthOverridden() || !fallAddr.equals(defaultFallAddr))) {
 			return fallAddr;
 		}
 		return null;

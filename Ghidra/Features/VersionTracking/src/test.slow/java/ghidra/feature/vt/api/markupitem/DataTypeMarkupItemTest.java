@@ -15,10 +15,9 @@
  */
 package ghidra.feature.vt.api.markupitem;
 
-import static ghidra.feature.vt.api.main.VTMarkupItemApplyActionType.REPLACE;
-import static ghidra.feature.vt.db.VTTestUtils.addr;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static ghidra.feature.vt.api.main.VTMarkupItemApplyActionType.*;
+import static ghidra.feature.vt.db.VTTestUtils.*;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -379,7 +378,7 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 				new ProgramProcessorContext(program.getProgramContext(), atAddress);
 			InstructionPrototype proto = program.getLanguage().parse(buf, context, false);
 			Instruction createdInstruction =
-				listing.createInstruction(atAddress, proto, buf, context);
+				listing.createInstruction(atAddress, proto, buf, context, 0);
 			commit = true;
 			return createdInstruction;
 		}

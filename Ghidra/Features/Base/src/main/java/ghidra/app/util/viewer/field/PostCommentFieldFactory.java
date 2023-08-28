@@ -177,12 +177,20 @@ public class PostCommentFieldFactory extends FieldFactory {
 			}
 		}
 
-		if (instr.isFallThroughOverridden()) {
+		if (instr.isLengthOverridden() || instr.isFallThroughOverridden()) {
 			Address fallThrough = instr.getFallThrough();
-			String fallthroughComment = "-- Fallthrough Override: " +
-				(fallThrough != null ? fallThrough.toString() : "NO-FALLTHROUGH");
+			String fallthroughComment =
+				"-- Fallthrough" + (instr.isFallThroughOverridden() ? " Override" : "") + ": " +
+					(fallThrough != null ? fallThrough.toString() : "NO-FALLTHROUGH");
 			comments.addFirst(fallthroughComment);
 		}
+
+		if (instr.isLengthOverridden()) {
+			String lengthOverrideComment = "-- Length Override: " + instr.getLength() +
+				" (actual length is " + instr.getParsedLength() + ")";
+			comments.addFirst(lengthOverrideComment);
+		}
+
 		FlowOverride flowOverride = instr.getFlowOverride();
 		if (flowOverride != FlowOverride.NONE) {
 			String flowOverrideComment =

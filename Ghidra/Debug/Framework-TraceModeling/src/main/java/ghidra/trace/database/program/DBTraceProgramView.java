@@ -129,6 +129,8 @@ public class DBTraceProgramView implements TraceProgramView {
 			listenFor(TraceDataTypeChangeType.RENAMED, this::dataTypeRenamed);
 			listenFor(TraceDataTypeChangeType.DELETED, this::dataTypeDeleted);
 
+			listenFor(TraceInstructionChangeType.LENGTH_OVERRIDE_CHANGED,
+				this::instructionLengthOverrideChanged);
 			listenFor(TraceInstructionChangeType.FLOW_OVERRIDE_CHANGED,
 				this::instructionFlowOverrideChanged);
 			listenFor(TraceInstructionChangeType.FALL_THROUGH_OVERRIDE_CHANGED,
@@ -466,9 +468,19 @@ public class DBTraceProgramView implements TraceProgramView {
 				return;
 			}
 			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_FALLTHROUGH_CHANGED,
-				instruction.getMinAddress(), instruction.getMaxAddress(), null, null, null));
+				instruction.getMinAddress(), instruction.getMinAddress(), null, null, null));
 		}
 
+		private void instructionLengthOverrideChanged(TraceAddressSpace space,
+				TraceInstruction instruction, int oldLengthOverride, int newLengthOverride) {
+			DomainObjectEventQueues queues = isCodeVisible(space, instruction);
+			if (queues == null) {
+				return;
+			}
+			queues.fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_LENGTH_OVERRIDE_CHANGED,
+				instruction.getMinAddress(), instruction.getMinAddress(), null, null, null));
+		}
+		
 		private void memoryBytesChanged(TraceAddressSpace space, TraceAddressSnapRange range,
 				byte[] oldIsNull, byte[] bytes) {
 			DomainObjectEventQueues queues = isBytesVisible(space, range);

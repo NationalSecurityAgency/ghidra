@@ -109,8 +109,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            property map (StringTranslations).
 	 * 19-Jan-2023 - version 26   Improved relocation data records to incorporate status and 
 	 *                            byte-length when original FileBytes should be used.
+	 * 10-Jul-2023 - VERSION 27   Add support for Instruction length override which utilizes
+	 *                            unused flag bits.
 	 */
-	static final int DB_VERSION = 26;
+	static final int DB_VERSION = 27;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
