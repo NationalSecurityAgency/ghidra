@@ -995,7 +995,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			int symbolIndex = reloc.getSymbolIndex();
 			String symbolName = symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : "";
-			if (symbolName != null && isUnsupportedASCIISymbolName(symbolName)) {
+			if (symbolName != null && SymbolUtilities.containsInvalidChars(symbolName)) {
 				symbolName = getEscapedSymbolName(symbolName);
 			}
 
@@ -2094,9 +2094,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					isPrimary = (existingSym == null);
 				}
 
-				if (name != null && isUnsupportedASCIISymbolName(name)) {
+				if (SymbolUtilities.containsInvalidChars(name)) {
 					String escapedName = getEscapedSymbolName(name);
-					log("Unsupported ASCII symbol name has been escaped: \"" + escapedName + "\"");
+					log("Unsupported symbol name has been escaped: \"" + escapedName + "\"");
 					name = escapedName;
 				}
 
@@ -2134,36 +2134,25 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private boolean isUnsupportedASCIISymbolName(String name) {
-		for (char c : name.toCharArray()) {
-			if (!StringUtilities.isAsciiChar(c) || c == ' ') {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private String getEscapedSymbolName(String name) {
+		// Do not preclude use of UTF8 strings
 		StringBuilder escapedBuf = new StringBuilder();
-		for (char c : name.toCharArray()) {
-			if (c < 0 || c > 0x7f) {
-				// format non-ASCII as escaped numeric hex value \xNN
-				escapedBuf.append("\\x%02x".formatted((int) c));
-			}
-			else if (c < ' ') {
-				// format as ^Control character for consistency with readelf
-				c += 64; // get ASCII control character, starts with ^@
+		name.codePoints().forEach(cp -> {
+			if (cp < 0x20) {
+				// Format as ^Control character for consistency with readelf
+				cp += 0x40; // get ASCII control character, starts with ^@
 				escapedBuf.append('^');
-				escapedBuf.append(c);
+				escapedBuf.appendCodePoint(cp);
 			}
-			else if (c == 0x7f) {
-				// format as ^? character for consistency with readelf
+			else if (cp == 0x7F) {
+				// Format as ^? character for consistency with readelf
 				escapedBuf.append("^?");
 			}
 			else {
-				escapedBuf.append(c);
+				// Assume valid code point
+				escapedBuf.appendCodePoint(cp);
 			}
-		}
+		});
 		return escapedBuf.toString();
 	}
 
@@ -2841,8 +2830,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private int createString(Address address) throws CodeUnitInsertionException {
 		Data d = listing.getDataAt(address);
-		if (d == null || !TerminatedStringDataType.dataType.isEquivalent(d.getDataType())) {
-			d = listing.createData(address, TerminatedStringDataType.dataType, -1);
+		if (d == null || !StringUTF8DataType.dataType.isEquivalent(d.getDataType())) {
+			d = listing.createData(address, StringUTF8DataType.dataType, -1);
 		}
 		return d.getLength();
 	}
