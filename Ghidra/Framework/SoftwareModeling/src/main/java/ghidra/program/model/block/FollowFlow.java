@@ -100,7 +100,7 @@ public class FollowFlow {
 		this(program, addressSet, doNotFollow);
 		this.followIntoFunction = followIntoFunctions;
 	}
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -159,32 +159,32 @@ public class FollowFlow {
 	/**
 	 * updateFollowFlags
 	 *
-	 * @param doNotFollow array of flow types that are not to be followed.
+	 * @param doNotFollowFlows array of flow types that are not to be followed.
 	 * null or empty array indicates follow all flows.
 	 */
-	private void updateFollowFlags(FlowType[] doNotFollow) {
-		if ((doNotFollow != null) && (doNotFollow.length > 0)) {
+	private void updateFollowFlags(FlowType[] doNotFollowFlows) {
+		if ((doNotFollowFlows != null) && (doNotFollowFlows.length > 0)) {
 			followAllFlow = false;
-			for (int index = 0; index < doNotFollow.length; index++) {
-				if (doNotFollow[index].equals(RefType.COMPUTED_CALL)) {
+			for (FlowType flowType : doNotFollowFlows) {
+				if (flowType.equals(RefType.COMPUTED_CALL)) {
 					followComputedCall = false;
 				}
-				else if (doNotFollow[index].equals(RefType.CONDITIONAL_CALL)) {
+				else if (flowType.equals(RefType.CONDITIONAL_CALL)) {
 					followConditionalCall = false;
 				}
-				else if (doNotFollow[index].equals(RefType.UNCONDITIONAL_CALL)) {
+				else if (flowType.equals(RefType.UNCONDITIONAL_CALL)) {
 					followUnconditionalCall = false;
 				}
-				else if (doNotFollow[index].equals(RefType.COMPUTED_JUMP)) {
+				else if (flowType.equals(RefType.COMPUTED_JUMP)) {
 					followComputedJump = false;
 				}
-				else if (doNotFollow[index].equals(RefType.CONDITIONAL_JUMP)) {
+				else if (flowType.equals(RefType.CONDITIONAL_JUMP)) {
 					followConditionalJump = false;
 				}
-				else if (doNotFollow[index].equals(RefType.UNCONDITIONAL_JUMP)) {
+				else if (flowType.equals(RefType.UNCONDITIONAL_JUMP)) {
 					followUnconditionalJump = false;
 				}
-				else if (doNotFollow[index].equals(RefType.INDIRECTION)) {
+				else if (flowType.equals(RefType.INDIRECTION)) {
 					followPointers = false;
 				}
 			}
@@ -200,6 +200,8 @@ public class FollowFlow {
 	 * @param startAddresses the initial addresses that should be flowed from or flowed to.
 	 * @param forward true to determine the flows "from" the startAddresses. false (backward) to 
 	 * determine flows "to" the startAddresses.
+	 * @return code unit flow represented by an address set as determined by the flow options.
+	 * An empty address set will be returned if cancelled.
 	 */
 	private AddressSet getAddressFlow(TaskMonitor monitor, AddressSetView startAddresses,
 			boolean forward) {
@@ -341,7 +343,8 @@ public class FollowFlow {
 		if (!followIntoFunction) {
 			try {
 				nextSymbolAddr = getNextSymbolAddress(start_addr.add(1), nextSymbolAddr);
-			} catch (AddressOutOfBoundsException e) {
+			}
+			catch (AddressOutOfBoundsException e) {
 				nextSymbolAddr = null;
 			}
 		}
@@ -454,7 +457,8 @@ public class FollowFlow {
 	 * @param flowAddressSet the address set to hold the entire flow.
 	 * @return the original instruction or the first instruction that is part of a delay slot.
 	 */
-	private Instruction getAdjustedInstruction(Instruction currentInstr, AddressSet flowAddressSet) {
+	private Instruction getAdjustedInstruction(Instruction currentInstr,
+			AddressSet flowAddressSet) {
 		Address currentAddress = currentInstr.getMinAddress();
 
 		// Return if code unit already encountered
@@ -506,7 +510,8 @@ public class FollowFlow {
 			if (symbols.hasNext()) {
 				Symbol symbol = symbols.next();
 				Address addr = symbol.getAddress();
-				if (addr.getAddressSpace().equals(curAddr.getAddressSpace()) && memory.contains(addr)) {
+				if (addr.getAddressSpace().equals(curAddr.getAddressSpace()) &&
+					memory.contains(addr)) {
 					return addr;
 				}
 			}
@@ -607,7 +612,8 @@ public class FollowFlow {
 		 * Follow Flows Backward *
 		 *************************/
 		Address[] flowFromAddresses = getFlowsAndPointersToInstruction(currentInstr);
-		for (int index = 0; (flowFromAddresses != null) && (index < flowFromAddresses.length); index++) {
+		for (int index = 0; (flowFromAddresses != null) &&
+			(index < flowFromAddresses.length); index++) {
 			fromAddress = flowFromAddresses[index];
 			if (fromAddress != null) {
 				CodeUnit nextCodeUnit = program.getListing().getCodeUnitContaining(fromAddress);
@@ -664,9 +670,8 @@ public class FollowFlow {
 		do {
 			// check each delay slot instruction for flows into it.
 			try {
-				instruction =
-					listing.getInstructionContaining(instruction.getMinAddress().subtractNoWrap(
-						alignment));
+				instruction = listing.getInstructionContaining(
+					instruction.getMinAddress().subtractNoWrap(alignment));
 				if (instruction == null) {
 					break;
 				}
@@ -723,7 +728,8 @@ public class FollowFlow {
 				(currentFlowType.equals(RefType.CONDITIONAL_JUMP) && !followConditionalJump) ||
 				(currentFlowType.equals(RefType.UNCONDITIONAL_JUMP) && !followUnconditionalJump) ||
 				(currentFlowType.equals(RefType.CONDITIONAL_CALL) && !followConditionalCall) ||
-				(currentFlowType.equals(RefType.UNCONDITIONAL_CALL) && !followUnconditionalCall) || (currentFlowType.equals(RefType.INDIRECTION) && !followPointers))) {
+				(currentFlowType.equals(RefType.UNCONDITIONAL_CALL) && !followUnconditionalCall) ||
+				(currentFlowType.equals(RefType.INDIRECTION) && !followPointers))) {
 			shouldFollowFlow = false;
 		}
 		else {
@@ -843,10 +849,10 @@ public class FollowFlow {
 				ReferenceManager referenceManager = program.getReferenceManager();
 				Reference[] memRefs = referenceManager.getReferencesFrom(addr);
 				boolean foundRef = false;
-				for (int i = 0; i < memRefs.length; i++) {
-					RefType rt = memRefs[i].getReferenceType();
+				for (Reference memRef : memRefs) {
+					RefType rt = memRef.getReferenceType();
 					if (rt.isData()) {
-						if (pushInstruction(instructionStack, memRefs[i].getToAddress())) {
+						if (pushInstruction(instructionStack, memRef.getToAddress())) {
 							foundRef = true; // pointer was to an instruction.
 						}
 					}
@@ -937,7 +943,8 @@ public class FollowFlow {
 	 * when the FollowFlow was constructed and the type of flow requested.
 	 * This method follows flows in the forward direction.
 	 * @param monitor a cancellable task monitor, may be null
-	 * @return the resulting address set.
+	 * @return code unit flow represented by an address set as determined by the flow options.
+	 * An empty address set will be returned if cancelled.
 	 */
 	public AddressSet getFlowAddressSet(TaskMonitor monitor) {
 		return getAddressFlow(monitor, initialAddresses, true);
@@ -951,11 +958,11 @@ public class FollowFlow {
 	 * backwards direction to determine the addresses that are flowing to those in the initial
 	 * set.
 	 * @param monitor a cancellable task monitor, may be null
-	 * @return the resulting address set.
+	 * @return code unit flow represented by an address set as determined by the flow options.
+	 * An empty address set will be returned if cancelled.
 	 */
 	public AddressSet getFlowToAddressSet(TaskMonitor monitor) {
 		return getAddressFlow(monitor, initialAddresses, false);
 	}
 
 } // end FollowFlow class
-
