@@ -509,7 +509,9 @@ public interface DataTypeManager {
 	public SourceArchive getLocalSourceArchive();
 
 	/**
-	 * Change the given data type so that its source archive is the given archive
+	 * Change the given data type and its dependencies so thier source archive is set to
+	 * given archive.  Only those data types not already associated with a source archive
+	 * will be changed.
 	 *
 	 * @param datatype the type
 	 * @param archive the archive

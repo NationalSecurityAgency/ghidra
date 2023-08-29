@@ -69,7 +69,7 @@
             <TR valign="top">
               <TD><B>User Defined</B></TD>
 
-              <TD style="">There are four user defined data types: Structures, Unions, Enums, and
+              <TD>There are four user defined data types: Structures, Unions, Enums, and
               Typedefs. They can be created, modified, and renamed as needed.</TD>
             </TR>
 
@@ -328,7 +328,7 @@
                 Archives</B><BR>
                 </TD>
 
-                <TD style="">Files containing data type definitions, which have ".gdt" as their
+                <TD>Files containing data type definitions, which have ".gdt" as their
                 file suffix.</TD>
               </TR>
 
@@ -336,7 +336,7 @@
                 <TD style="width: 160px;"><B>Project Data Type Archives</B><BR>
                 </TD>
 
-                <TD style="">Special files located within the Ghidra project directory structure,
+                <TD>Special files located within the Ghidra project directory structure,
                 which also contain data type definitions. These are available in the <A href=
                 "../FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A> and can be saved
                 as versions in a shared project repository.</TD>
@@ -592,9 +592,14 @@
           none, a message dialog will appear indicating that no changes were detected.</P>
 
           <P><IMG alt="" src="help/shared/note.png">
-          The source archive must be editable in order to commit File archives must be <A href=
+          The source archive must be editable in order to commit.  File archives must be <A href=
           "data_type_manager_description.htm#open_for_editing">open for editing</A> and project
           archives that are under version control must be checked-out.</P>
+          
+          <P><IMG alt="" src="help/shared/note.png">Any data type dependencies for a comitted 
+          data type, which do not already have a source archive, will become associated to the same
+          source archive.</P>
+          
         </BLOCKQUOTE>
 
         <H3>Reverting Changes in an Archive Back To a Source Archive</H3>
