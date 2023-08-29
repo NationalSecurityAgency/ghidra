@@ -295,8 +295,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		setBaseAction.setDescription("Set Image Base");
 		tool.addLocalAction(this, setBaseAction);
 
-		MakeProgramSelectionAction action =
-			new MakeProgramSelectionAction(plugin, table);
+		MakeProgramSelectionAction action = new MakeProgramSelectionAction(plugin, table);
 		action.getToolBarData().setToolBarGroup("B"); // the other actions are in group 'A'
 		tool.addLocalAction(this, action);
 	}
@@ -368,10 +367,6 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	JTable getTable() {
 		return table;
-	}
-
-	MemoryMapModel getModel() {
-		return tableModel;
 	}
 
 	/**
