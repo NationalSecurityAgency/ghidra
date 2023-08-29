@@ -30,6 +30,13 @@ public interface WrappingTableModel extends TableModel {
 	public TableModel getWrappedModel();
 
 	/**
+	 * Returns the unwrapped model's row for the given view row.
+	 * @param viewRow the row in the GUI
+	 * @return the row in the wrapped model's indexing
+	 */
+	public int getModelRow(int viewRow);
+
+	/**
 	 * Allows this wrapping model to get update notifications directly from the filtering framework
 	 */
 	public void wrappedModelChangedFromTableChangedEvent();

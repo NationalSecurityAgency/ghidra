@@ -26,21 +26,21 @@ public interface ProgramTableModel {
 	/**
 	 * Returns a program location corresponding the given row and column.
 	 * <p>
-	 * Motivation: Given a table that has a column that contains addresses. If the user clicks on 
+	 * Motivation: Given a table that has a column that contains addresses. If the user clicks on
 	 * this column, then it would be nice to have the CodeBrowser navigate to this address.
-	 * @param row the row
+	 * @param modelRow the row
 	 * @param modelColumn the column in the model's index
 	 * @return a program location corresponding the given row and column
 	 */
-	public ProgramLocation getProgramLocation(int row, int modelColumn);
+	public ProgramLocation getProgramLocation(int modelRow, int modelColumn);
 
 	/**
-	 * Returns a program selection corresponding to the specified row index array. This array will 
+	 * Returns a program selection corresponding to the specified row index array. This array will
 	 * contain the currently selected rows.
-	 * @param rows the currently selected rows.
+	 * @param modelRows the currently selected rows.
 	 * @return a program selection
 	 */
-	public ProgramSelection getProgramSelection(int[] rows);
+	public ProgramSelection getProgramSelection(int[] modelRows);
 
 	/**
 	 * Returns the program associated with this ProgramTableModel.

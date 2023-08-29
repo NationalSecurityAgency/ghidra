@@ -22,8 +22,7 @@ import java.awt.Rectangle;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellEditor;
+import javax.swing.table.*;
 
 import org.junit.*;
 
@@ -55,7 +54,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	private Program program;
 	private Memory memory;
 	private JTable table;
-	private MemoryMapModel model;
+	private TableModel model;
 
 	private Program buildProgram(String programName) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(programName, ProgramBuilder._TOY);
@@ -118,7 +117,8 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 				assertFalse(action.isEnabled());
 			}
 			else {
-				assertTrue(action.isEnabled());
+				assertTrue("Action not enabled when it should be: " + action.getName(),
+					action.isEnabled());
 			}
 		}
 	}
@@ -674,7 +674,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		waitForSwing();
 		provider = plugin.getMemoryMapProvider();
 		table = provider.getTable();
-		model = provider.getModel();
+		model = table.getModel();
 	}
 
 	private Address getAddr(long offset) {
