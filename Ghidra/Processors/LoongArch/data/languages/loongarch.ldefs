@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="LoongArch"
+            endian="little"
+            size="64"
+            variant="default"
+            version="1.0"
+            slafile="loongarch64.sla"
+            processorspec="loongarch64.pspec"
+            id="loongarch:LE:64:default">
+    <description>LoongArch 64-bit</description>
+    <compiler name="default" spec="loongarch64.cspec" id="default"/>
+  </language>
+</language_definitions>

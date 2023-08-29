@@ -1,0 +1,420 @@
+define endian=little;
+define alignment=4;
+
+define space ram type=ram_space size=$(XLEN) default;
+define space register type=register_space size=4;
+
+define register offset=0x0000 size=$(XLEN) [ pc ];
+# define register offset=0x1000 size=$(XLEN) [ r0  r1  r2  r3  r4  r5  r6  r7
+#                                              r8  r9  r10 r11 r12 r13 r14 r15
+#                                              r16 r17 r18 r19 r20 r21 r22 r23
+#                                              r24 r25 r26 r27 r28 r29 r30 r31 ];
+define register offset=0x1000 size=$(XLEN) [ zero ra tp sp a0 a1 a2 a3
+                                             a4 a5 a6 a7 t0 t1 t2 t3
+                                             t4 t5 t6 t7 t8 r21 fp s0
+                                             s1 s2 s3 s4 s5 s6 s7 s8 ];
+
+define token instr (32)
+  rd=(0,4)
+  rj=(5,9)
+  rk=(10,14)
+  imm8=(10,17)
+  simm12=(10,21) signed
+  uimm12=(10,21)
+  simm14=(10,23) signed
+  simm16=(10,25) signed
+  uimm16=(10,25)
+  simm20=(5,24) signed
+  simm21_h5=(0,4) signed
+  simm26_h10=(0,9) signed
+  sa2=(15,16)
+  sa3=(15,17)
+  shamt5=(10,14)
+  shamt6=(10,15)
+  code=(0,14)
+  hint=(0,4)
+  msbw=(16,20)
+  lsbw=(10,14)
+  msbd=(16,21)
+  lsbd=(10,15)
+  bit15=(15,15)
+  bit21=(21,21)
+  opcode_2r=(10,31)
+  opcode_3r=(15,31)
+  opcode_4r=(20,31)
+  opcode_2ri8=(18,31)
+  opcode_2ri12=(22,31)
+  opcode_2ri14=(24,31)
+  opcode_2ri16=(26,31)
+  opcode_1ri20=(25,31)
+  opcode_3r_sa2=(17,31)
+  opcode_3r_sa3=(18,31)
+  opcode_2r_imm6=(16,31)
+;
+
+offs16 : simm16 is simm16 { local offs:$(XLEN) = simm16 << 2; export offs; }
+offs21 : simm21 is uimm16 & simm21_h5 [ simm21 = (simm21_h5 << 16) | uimm16; ] { local offs:$(XLEN) = simm21 << 2; export offs; }
+# for PC-relative branches
+dest16 : reloc is simm16 [ reloc = inst_start + simm16 * 4; ]
+{
+	export *[ram]:$(XLEN) reloc;
+}
+dest21 : reloc is uimm16 & simm21_h5 [ reloc = inst_start + ((simm21_h5 << 16) | uimm16) * 4; ]
+{
+	export *[ram]:$(XLEN) reloc;
+}
+dest26 : reloc is uimm16 & simm26_h10 [ reloc = inst_start + ((simm26_h10 << 16) | uimm16) * 4; ]
+{
+	export *[ram]:$(XLEN) reloc;
+}
+
+attach variables [ rd rj rk ] [ zero ra tp sp a0 a1 a2 a3
+                                a4 a5 a6 a7 t0 t1 t2 t3
+                                t4 t5 t6 t7 t8 r21 fp s0
+                                s1 s2 s3 s4 s5 s6 s7 s8 ];
+
+# NOTE: Add "zero = 0" to instructions that may use the zero register, to make the decompiler know zero register contains zero
+
+# special forms
+
+# move is "or rd,rj,zero"
+:move rd,rj is opcode_3r=0x2a & rd & rj & rk=0
+{
+	zero = 0;
+	rd = rj;
+}
+
+# TODO: describe the semantics
+
+:clo.w rd,rj is opcode_2r=0x4 & rd & rj {}
+:clz.w rd,rj is opcode_2r=0x5 & rd & rj {}
+:cto.w rd,rj is opcode_2r=0x6 & rd & rj {}
+:ctz.w rd,rj is opcode_2r=0x7 & rd & rj {}
+:clo.d rd,rj is opcode_2r=0x8 & rd & rj {}
+:clz.d rd,rj is opcode_2r=0x9 & rd & rj {}
+:cto.d rd,rj is opcode_2r=0xa & rd & rj {}
+:ctz.d rd,rj is opcode_2r=0xb & rd & rj {}
+:revb.2h rd,rj is opcode_2r=0xc & rd & rj {}
+:revb.4h rd,rj is opcode_2r=0xd & rd & rj {}
+:revb.2w rd,rj is opcode_2r=0xe & rd & rj {}
+:revb.d rd,rj is opcode_2r=0xf & rd & rj {}
+:revh.2w rd,rj is opcode_2r=0x10 & rd & rj {}
+:revh.d rd,rj is opcode_2r=0x11 & rd & rj {}
+:bitrev.4b rd,rj is opcode_2r=0x12 & rd & rj {}
+:bitrev.8b rd,rj is opcode_2r=0x13 & rd & rj {}
+:bitrev.w rd,rj is opcode_2r=0x14 & rd & rj {}
+:bitrev.d rd,rj is opcode_2r=0x15 & rd & rj {}
+:ext.w.h rd,rj is opcode_2r=0x16 & rd & rj {}
+:ext.w.b rd,rj is opcode_2r=0x17 & rd & rj {}
+:rdtimel.w rd,rj is opcode_2r=0x18 & rd & rj {}
+:rdtimeh.w rd,rj is opcode_2r=0x19 & rd & rj {}
+:rdtime.d rd,rj is opcode_2r=0x1a & rd & rj {}
+:cpucfg rd,rj is opcode_2r=0x1b & rd & rj {}
+
+:asrtle.d rj,rk is opcode_3r=0x2 & rd=0 & rj & rk {}
+:asrtgt.d rj,rk is opcode_3r=0x3 & rd=0 & rj & rk {}
+
+:alsl.w rd,rj,rk,sa2 is opcode_3r_sa2=0x2 & rd & rj & rk & sa2 {}
+:alsl.wu rd,rj,rk,sa2 is opcode_3r_sa2=0x3 & rd & rj & rk & sa2 {}
+:bytepick.w rd,rj,rk,sa2 is opcode_3r_sa2=0x4 & rd & rj & rk & sa2 {}
+:bytepick.d rd,rj,rk,sa3 is opcode_3r_sa3=0x3 & rd & rj & rk & sa3 {}
+
+:add.w rd,rj,rk is opcode_3r=0x20 & rd & rj & rk {}
+:add.d rd,rj,rk is opcode_3r=0x21 & rd & rj & rk
+{
+	rd = rj + rk;
+}
+:sub.w rd,rj,rk is opcode_3r=0x22 & rd & rj & rk {}
+:sub.d rd,rj,rk is opcode_3r=0x23 & rd & rj & rk
+{
+	rd = rj - rk;
+}
+:slt rd,rj,rk is opcode_3r=0x24 & rd & rj & rk {}
+:sltu rd,rj,rk is opcode_3r=0x25 & rd & rj & rk {}
+:maskeqz rd,rj,rk is opcode_3r=0x26 & rd & rj & rk {}
+:masknez rd,rj,rk is opcode_3r=0x27 & rd & rj & rk {}
+:nor rd,rj,rk is opcode_3r=0x28 & rd & rj & rk
+{
+	rd = ~(rj | rk);
+}
+:and rd,rj,rk is opcode_3r=0x29 & rd & rj & rk
+{
+	rd = rj & rk;
+}
+:or rd,rj,rk is opcode_3r=0x2a & rd & rj & rk
+{
+	rd = rj | rk;
+}
+:xor rd,rj,rk is opcode_3r=0x2b & rd & rj & rk
+{
+	rd = rj ^ rk;
+}
+:orn rd,rj,rk is opcode_3r=0x2c & rd & rj & rk
+{
+	rd = rj | (~rk);
+}
+:andn rd,rj,rk is opcode_3r=0x2d & rd & rj & rk
+{
+	rd = rj & (~rk);
+}
+
+:sll.w rd,rj,rk is opcode_3r=0x2e & rd & rj & rk {}
+:srl.w rd,rj,rk is opcode_3r=0x2f & rd & rj & rk {}
+:sra.w rd,rj,rk is opcode_3r=0x30 & rd & rj & rk {}
+:sll.d rd,rj,rk is opcode_3r=0x31 & rd & rj & rk {}
+:srl.d rd,rj,rk is opcode_3r=0x32 & rd & rj & rk {}
+:sra.d rd,rj,rk is opcode_3r=0x33 & rd & rj & rk {}
+:rotr.w rd,rj,rk is opcode_3r=0x36 & rd & rj & rk {}
+:rotr.d rd,rj,rk is opcode_3r=0x37 & rd & rj & rk {}
+:mul.w rd,rj,rk is opcode_3r=0x38 & rd & rj & rk {}
+:mulh.w rd,rj,rk is opcode_3r=0x39 & rd & rj & rk {}
+:mulh.wu rd,rj,rk is opcode_3r=0x3a & rd & rj & rk {}
+:mul.d rd,rj,rk is opcode_3r=0x3b & rd & rj & rk {}
+:mulh.d rd,rj,rk is opcode_3r=0x3c & rd & rj & rk {}
+:mulh.du rd,rj,rk is opcode_3r=0x3d & rd & rj & rk {}
+:mulw.d.w rd,rj,rk is opcode_3r=0x3e & rd & rj & rk {}
+:mulw.d.wu rd,rj,rk is opcode_3r=0x3f & rd & rj & rk {}
+:div.w rd,rj,rk is opcode_3r=0x40 & rd & rj & rk {}
+:mod.w rd,rj,rk is opcode_3r=0x41 & rd & rj & rk {}
+:div.wu rd,rj,rk is opcode_3r=0x42 & rd & rj & rk {}
+:mod.wu rd,rj,rk is opcode_3r=0x43 & rd & rj & rk {}
+:div.d rd,rj,rk is opcode_3r=0x44 & rd & rj & rk {}
+:mod.d rd,rj,rk is opcode_3r=0x45 & rd & rj & rk {}
+:div.du rd,rj,rk is opcode_3r=0x46 & rd & rj & rk {}
+:mod.du rd,rj,rk is opcode_3r=0x47 & rd & rj & rk {}
+:crc.w.b.w rd,rj,rk is opcode_3r=0x48 & rd & rj & rk {}
+:crc.w.h.w rd,rj,rk is opcode_3r=0x49 & rd & rj & rk {}
+:crc.w.w.w rd,rj,rk is opcode_3r=0x4a & rd & rj & rk {}
+:crc.w.d.w rd,rj,rk is opcode_3r=0x4b & rd & rj & rk {}
+:crcc.w.b.w rd,rj,rk is opcode_3r=0x4c & rd & rj & rk {}
+:crcc.w.h.w rd,rj,rk is opcode_3r=0x4d & rd & rj & rk {}
+:crcc.w.w.w rd,rj,rk is opcode_3r=0x4e & rd & rj & rk {}
+:crcc.w.d.w rd,rj,rk is opcode_3r=0x4f & rd & rj & rk {}
+:break code is opcode_3r=0x54 & code {}
+:dbcl code is opcode_3r=0x55 & code {}
+:syscall code is opcode_3r=0x56 & code {}
+
+:alsl.d rd,rj,rk,sa2 is opcode_3r_sa2=0x16 & rd & rj & rk & sa2 {}
+:slli.w rd,rj,shamt5 is opcode_3r=0x81 & rd & rj & shamt5 {}
+:slli.d rd,rj,shamt6 is opcode_2r_imm6=0x41 & rd & rj & shamt6 {}
+:srli.w rd,rj,shamt5 is opcode_3r=0x89 & rd & rj & shamt5 {}
+:srli.d rd,rj,shamt6 is opcode_2r_imm6=0x45 & rd & rj & shamt6 {}
+:srai.w rd,rj,shamt5 is opcode_3r=0x91 & rd & rj & shamt5 {}
+:srai.d rd,rj,shamt6 is opcode_2r_imm6=0x49 & rd & rj & shamt6 {}
+:rotri.w rd,rj,shamt5 is opcode_3r=0x99 & rd & rj & shamt5 {}
+:rotri.d rd,rj,shamt6 is opcode_2r_imm6=0x4d & rd & rj & shamt6 {}
+
+:bstrins.w rd,rj,msbw,lsbw is opcode_2ri12=0x1 & bit21=1 & bit15=0 & rd & rj & msbw & lsbw
+{
+	zero = 0;
+	local v32:4 = rd:4;
+	local nbits:$(XLEN) = msbw - lsbw + 1;
+	# v32[lsbw,nbits] = rj[0,nbits];
+	local mask:4 = (1 << nbits) - 1;
+	local result:4 = (v32 & (~(mask << lsbw))) | (rj:4 & mask);
+	rd = sext(result);
+}
+:bstrpick.w rd,rj,msbw,lsbw is opcode_2ri12=0x1 & bit21=1 & bit15=1 & rd & rj & msbw & lsbw
+{
+	local nbits:$(XLEN) = msbw - lsbw + 1;
+	# local bstr32:4 = rj[lsbw,nbits];
+	local mask:4 = (1 << nbits) - 1;
+	local bstr32:4 = (rj:4 >> lsbw) & mask;
+	rd = sext(bstr32);
+}
+:bstrins.d rd,rj,msbd,lsbd is opcode_2ri12=0x2 & rd & rj & msbd & lsbd
+{
+	zero = 0;
+	local nbits:$(XLEN) = msbd - lsbd + 1;
+	# rd[lsbd,nbits] = rj[0,nbits];
+	local mask:$(XLEN) = (1 << nbits) - 1;
+	local result:$(XLEN) = (rd & (~(mask << lsbd))) | (rj & mask);
+	rd = result;
+}
+:bstrpick.d rd,rj,msbd,lsbd is opcode_2ri12=0x3 & rd & rj & msbd & lsbd
+{
+	local nbits:$(XLEN) = msbd - lsbd + 1;
+	# rd = rj[lsbd,nbits];
+	local mask:$(XLEN) = (1 << nbits) - 1;
+	rd = (rj >> lsbd) & mask;
+}
+
+:slti rd,rj,simm12 is opcode_2ri12=0x8 & rd & rj & simm12 {}
+:sltui rd,rj,simm12 is opcode_2ri12=0x9 & rd & rj & simm12 {}
+:addi.w rd,rj,simm12 is opcode_2ri12=0xa & rd & rj & simm12 {}
+:addi.d rd,rj,simm12 is opcode_2ri12=0xb & rd & rj & simm12
+{
+	zero = 0;
+	rd = rj + simm12;
+}
+:lu52i.d rd,rj,simm12 is opcode_2ri12=0xc & rd & rj & simm12
+{
+	rd = (simm12 << 52) | rj;
+}
+:andi rd,rj,uimm12 is opcode_2ri12=0xd & rd & rj & uimm12
+{
+	rd = rj & uimm12;
+}
+:ori rd,rj,uimm12 is opcode_2ri12=0xe & rd & rj & uimm12
+{
+	rd = rj | uimm12;
+}
+:xori rd,rj,uimm12 is opcode_2ri12=0xf & rd & rj & uimm12
+{
+	rd = rj ^ uimm12;
+}
+
+:addu16i.d rd,rj,simm16 is opcode_2ri16=0x4 & rd & rj & simm16
+{
+	rd = rj + (simm16 << 16);
+}
+:lu12i.w rd,simm20 is opcode_1ri20=0xa & rd & simm20
+{
+	rd = simm20 << 12;
+}
+:lu32i.d rd,simm20 is opcode_1ri20=0xb & rd & simm20
+{
+	rd[32,32] = simm20;
+}
+:pcaddi rd,simm20 is opcode_1ri20=0xc & rd & simm20 {}
+:pcalau12i rd,simm20 is opcode_1ri20=0xd & rd & simm20
+{
+	rd = ((inst_start >> 12) + simm20) << 12;
+}
+:pcaddu12i rd,simm20 is opcode_1ri20=0xe & rd & simm20
+{
+	rd = inst_start + (simm20 << 12);
+}
+:pcaddu18i rd,simm20 is opcode_1ri20=0xf & rd & simm20
+{
+	rd = inst_start + (simm20 << 18);
+}
+
+:ll.w rd,rj,simm14 is opcode_2ri14=0x20 & rd & rj & simm14 {}
+:sc.w rd,rj,simm14 is opcode_2ri14=0x21 & rd & rj & simm14 {}
+:ll.d rd,rj,simm14 is opcode_2ri14=0x22 & rd & rj & simm14 {}
+:sc.d rd,rj,simm14 is opcode_2ri14=0x23 & rd & rj & simm14 {}
+:ldptr.w rd,rj,simm14 is opcode_2ri14=0x24 & rd & rj & simm14 {}
+:stptr.w rd,rj,simm14 is opcode_2ri14=0x25 & rd & rj & simm14 {}
+:ldptr.d rd,rj,simm14 is opcode_2ri14=0x26 & rd & rj & simm14 {}
+:stptr.d rd,rj,simm14 is opcode_2ri14=0x27 & rd & rj & simm14 {}
+
+:ld.b rd,rj,simm12 is opcode_2ri12=0xa0 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	rd = sext(*[ram]:1 ea);
+}
+:ld.h rd,rj,simm12 is opcode_2ri12=0xa1 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	rd = sext(*[ram]:2 ea);
+}
+:ld.w rd,rj,simm12 is opcode_2ri12=0xa2 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	rd = sext(*[ram]:4 ea);
+}
+:ld.d rd,rj,simm12 is opcode_2ri12=0xa3 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	rd = *[ram]:8 ea;
+}
+:st.b rd,rj,simm12 is opcode_2ri12=0xa4 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	*[ram]:1 ea = rd:1;
+}
+:st.h rd,rj,simm12 is opcode_2ri12=0xa5 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	*[ram]:2 ea = rd:2;
+}
+:st.w rd,rj,simm12 is opcode_2ri12=0xa6 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	*[ram]:4 ea = rd:4;
+}
+:st.d rd,rj,simm12 is opcode_2ri12=0xa7 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	*[ram]:8 ea = rd;
+}
+:ld.bu rd,rj,simm12 is opcode_2ri12=0xa8 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	rd = zext(*[ram]:1 ea);
+}
+:ld.hu rd,rj,simm12 is opcode_2ri12=0xa9 & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	rd = zext(*[ram]:2 ea);
+}
+:ld.wu rd,rj,simm12 is opcode_2ri12=0xaa & rd & rj & simm12
+{
+	local ea:$(XLEN) = rj + simm12;
+	rd = zext(*[ram]:4 ea);
+}
+:preld hint,rj,simm12 is opcode_2ri12=0xab & hint & rj & simm12 {}
+
+:ldx.b rd,rj,rk is opcode_3r=0x7000 & rd & rj & rk {}
+:ldx.h rd,rj,rk is opcode_3r=0x7008 & rd & rj & rk {}
+:ldx.w rd,rj,rk is opcode_3r=0x7010 & rd & rj & rk {}
+:ldx.d rd,rj,rk is opcode_3r=0x7018 & rd & rj & rk {}
+:stx.b rd,rj,rk is opcode_3r=0x7020 & rd & rj & rk {}
+:stx.h rd,rj,rk is opcode_3r=0x7028 & rd & rj & rk {}
+:stx.w rd,rj,rk is opcode_3r=0x7030 & rd & rj & rk {}
+:stx.d rd,rj,rk is opcode_3r=0x7038 & rd & rj & rk {}
+:ldx.bu rd,rj,rk is opcode_3r=0x7040 & rd & rj & rk {}
+:ldx.hu rd,rj,rk is opcode_3r=0x7048 & rd & rj & rk {}
+:ldx.wu rd,rj,rk is opcode_3r=0x7050 & rd & rj & rk {}
+:preldx hint,rj,rk is opcode_3r=0x7058 & hint & rj & rk {}
+
+:beqz rj,dest21 is opcode_2ri16=0x10 & rj & dest21
+{
+	if (rj == 0) goto dest21;
+}
+:bnez rj,dest21 is opcode_2ri16=0x11 & rj & dest21
+{
+	if (rj != 0) goto dest21;
+}
+#:bceqz
+#:bcenz
+:jirl rd,rj,offs16 is opcode_2ri16=0x13 & rd & rj & offs16
+{
+	local target:$(XLEN) = rj + offs16;
+	rd = inst_next;
+	goto [target];
+}
+:b dest26 is opcode_2ri16=0x14 & dest26
+{
+	goto dest26;
+}
+:bl dest26 is opcode_2ri16=0x15 & dest26
+{
+	ra = inst_next;
+	goto dest26;
+}
+:beq rj,rd,dest16 is opcode_2ri16=0x16 & rd & rj & dest16
+{
+	if (rd == rj) goto dest16;
+}
+:bne rj,rd,dest16 is opcode_2ri16=0x17 & rd & rj & dest16
+{
+	if (rd != rj) goto dest16;
+}
+:blt rj,rd,dest16 is opcode_2ri16=0x18 & rd & rj & dest16
+{
+	if (rj s< rd) goto dest16;
+}
+:bge rj,rd,dest16 is opcode_2ri16=0x19 & rd & rj & dest16
+{
+	if (rj s>= rd) goto dest16;
+}
+:bltu rj,rd,dest16 is opcode_2ri16=0x1a & rd & rj & dest16
+{
+	if (rj < rd) goto dest16;
+}
+:bgeu rj,rd,dest16 is opcode_2ri16=0x1b & rd & rj & dest16
+{
+	if (rj >= rd) goto dest16;
+}

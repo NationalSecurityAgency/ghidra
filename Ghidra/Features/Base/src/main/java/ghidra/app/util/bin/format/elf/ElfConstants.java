@@ -510,6 +510,8 @@ public interface ElfConstants {
 	public static final short EM_LANAI = 244;
 	/** Linux kernel bpf virtual machine */
 	public static final short EM_BPF = 247;
+	/** LoongArch */
+	public static final short EM_LOONGARCH = 258;
 
 	/** used by NetBSD/avr32 - AVR 32-bit */
 	public static final short EM_AVR32_unofficial = 0x18ad;

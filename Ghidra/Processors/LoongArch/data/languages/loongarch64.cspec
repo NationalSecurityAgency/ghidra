@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>
+	<pointer_size value="8" />
+  </data_organization>
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="sp" space="ram"/>
+  <default_proto>
+    <prototype name="__stdcall" extrapop="2" stackshift="2" strategy="register">
+      <input>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a0"/>
+	</pentry>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a1"/>
+	</pentry>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a2"/>
+	</pentry>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a3"/>
+	</pentry>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a4"/>
+	</pentry>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a5"/>
+	</pentry>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a6"/>
+	</pentry>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a7"/>
+	</pentry>
+      </input>
+      <output>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a0"/>
+	</pentry>
+        <pentry minsize="1" maxsize="8">
+	  <register name="a1"/>
+	</pentry>
+      </output>
+      <unaffected>
+        <register name="s0"/>
+        <register name="s1"/>
+        <register name="s2"/>
+        <register name="s3"/>
+        <register name="s4"/>
+        <register name="s5"/>
+        <register name="s6"/>
+        <register name="s7"/>
+        <register name="s8"/>
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>

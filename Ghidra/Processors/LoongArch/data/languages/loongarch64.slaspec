@@ -1,0 +1,2 @@
+@define XLEN 8
+@include "loongarch.sinc"
