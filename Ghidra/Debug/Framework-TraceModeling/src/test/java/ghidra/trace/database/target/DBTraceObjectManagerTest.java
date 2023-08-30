@@ -46,6 +46,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
 			        <attribute name='curTarget' schema='Target' />
 			        <attribute name='Targets' schema='TargetContainer' />
+			        <attribute schema='VOID' />
 			    </schema>
 			    <schema name='TargetContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='ONCE'>
@@ -1061,6 +1062,35 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			assertNull(stringVal.truncateOrDelete(Lifespan.ALL));
 			assertTrue(stringVal.isDeleted());
 			assertFalse(split.isDeleted()); // Other values not affected
+		}
+	}
+
+	@Test
+	public void testAttributeDefaultVisibility() {
+		try (Transaction tx = b.startTransaction()) {
+			TraceObjectValue rootVal =
+				manager.createRootObject(ctx.getSchema(new SchemaName("Session")));
+			root = rootVal.getChild();
+
+			TraceObject object = manager.createObject(TraceObjectKeyPath.parse("OutsideSchema"));
+			object.insert(Lifespan.ALL, ConflictResolution.DENY);
+			assertFalse(object.getCanonicalParent(0).isHidden());
+
+			TraceObject elemOutside =
+				manager.createObject(TraceObjectKeyPath.parse("OutsideSchema[0]"));
+			elemOutside.insert(Lifespan.ALL, ConflictResolution.DENY);
+			assertFalse(elemOutside.getCanonicalParent(0).isHidden());
+
+			TraceObject attrOutside =
+				manager.createObject(TraceObjectKeyPath.parse("OutsideSchema.Attr"));
+			attrOutside.insert(Lifespan.ALL, ConflictResolution.DENY);
+			assertFalse(attrOutside.getCanonicalParent(0).isHidden());
+
+			// TODO: This underscore convention is deprecated, but still in use
+			TraceObject hiddenOutside =
+				manager.createObject(TraceObjectKeyPath.parse("OutsideSchema._Attr"));
+			hiddenOutside.insert(Lifespan.ALL, ConflictResolution.DENY);
+			assertTrue(hiddenOutside.getCanonicalParent(0).isHidden());
 		}
 	}
 }

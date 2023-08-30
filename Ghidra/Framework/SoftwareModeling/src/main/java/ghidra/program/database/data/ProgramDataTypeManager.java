@@ -64,6 +64,17 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 		upgrade = (openMode == DBConstants.UPGRADE);
 	}
 
+	/**
+	 * Save the current data organization to facilitate future change detection and 
+	 * upgrades.  This method must be invoked by {@link ProgramDB} during the final
+	 * stage of program creation (i.e., openMode == CREATE).
+	 * @throws IOException if failure occured while saving data organization.
+	 */
+	@Override
+	public void saveDataOrganization() throws IOException {
+		super.saveDataOrganization();
+	}
+
 	@Override
 	protected void dataSettingChanged(Address dataAddr) {
 		program.setChanged(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED, dataAddr,
@@ -81,6 +92,7 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB
 		try {
 			setProgramArchitecture(p, p.getSymbolTable().getVariableStorageManager(), false,
 				TaskMonitor.DUMMY);
+
 			// NOTE: Due to late manner in which program architecture is established, any
 			// response to a data organization change must be handled during a language
 			// upgrade and setLanguage

@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.service.modules;
 
 import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.MapEntry;
@@ -237,5 +238,67 @@ public enum DebuggerStaticMappingUtils {
 			return new AddressRangeImpl(space.getAddress(min), spaceMax);
 		}
 		return new AddressRangeImpl(space.getAddress(min), space.getAddress(max));
+	}
+
+	/**
+	 * Parse the final file name from the given URL.
+	 * 
+	 * <p>
+	 * This is used when listing the "image" name for mappings, since displaying a full URL would
+	 * probably clutter the table. This generally matches the "program name," but in certain cases
+	 * may not.
+	 * 
+	 * @param staticProgramURL the URL of the static program image
+	 * @return the piece after the final "/"
+	 */
+	public static String getImageName(URL staticProgramURL) {
+		String[] parts = staticProgramURL.toExternalForm().split("/");
+		return parts[parts.length - 1];
+	}
+
+	/**
+	 * Compute a string suitable for displaying the mapped module names for a given range
+	 * 
+	 * <p>
+	 * Ideally, the entire range is covered by a single mapping entry. In that case, the "image
+	 * name" (see {@link #getImageName(URL)}) for that one mapping is returned. If a single mapping
+	 * is found, but it only partially covers the given range, an asterisk is appended. If no
+	 * mappings are found, the empty string is returned. If multiple mappings are found, they are
+	 * each listed alphabetically. No asterisk is displayed in the case of multiple images, since
+	 * it's implied that none cover the entire range.
+	 * 
+	 * @param trace the trace whose mappings to query
+	 * @param snap the relevant snapshot
+	 * @param range the address range to consider
+	 * @return the names of any mapped images
+	 */
+	public static String computeMappedFiles(Trace trace, long snap, AddressRange range) {
+		List<TraceStaticMapping> mappings = List.copyOf(
+			trace.getStaticMappingManager().findAllOverlapping(range, Lifespan.at(snap)));
+		if (mappings.isEmpty()) {
+			return "";
+		}
+		if (mappings.size() == 1) {
+			TraceStaticMapping single = mappings.get(0);
+			AddressRange mappedRange = single.getTraceAddressRange();
+			if (mappedRange.contains(range.getMinAddress()) &&
+				mappedRange.contains(range.getMaxAddress())) {
+				return getImageName(single.getStaticProgramURL());
+			}
+			return getImageName(single.getStaticProgramURL()) + "*";
+		}
+		/**
+		 * Its possible multiple mappings to the same image are at play. This would happen if the
+		 * user is mapping by sections instead of modules.
+		 */
+		List<String> names = mappings.stream()
+				.map(m -> getImageName(m.getStaticProgramURL()))
+				.sorted()
+				.distinct()
+				.toList();
+		if (names.size() == 1) {
+			return names.get(0) + "*";
+		}
+		return names.stream().collect(Collectors.joining(","));
 	}
 }

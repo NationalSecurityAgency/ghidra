@@ -13,26 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.exception;
+package agent.gdb.model.gadp;
 
-/**
- * Exception thrown whenever a method tries give something a name and that name is already used.
- */
-public class DuplicateNameException extends UsrException {
+import agent.gdb.model.AbstractModelForGdbSessionAttacherTest;
 
-	/**
-	 * constructs a new DuplicatenameException with a default message.
-	 */
-	public DuplicateNameException() {
-		super("That name is already in use.");
-	}
-
-	/**
-	 * construct a new DuplicateNameException with a given message.
-	 *
-	 * @param usrMessage overrides the default message.
-	 */
-	public DuplicateNameException(String usrMessage) {
-		super(usrMessage);
+public class GadpModelForGdbSessionAttacherTest extends AbstractModelForGdbSessionAttacherTest {
+	@Override
+	public ModelHost modelHost() throws Throwable {
+		return new GadpGdbModelHost();
 	}
 }

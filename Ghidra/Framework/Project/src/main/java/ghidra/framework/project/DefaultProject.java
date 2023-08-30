@@ -76,8 +76,8 @@ public class DefaultProject implements Project {
 	 * 
 	 * @param projectManager the manager of this project
 	 * @param projectLocator location and name of project
-	 * @param repository shared repository associated with the new project. Can
-	 *            be null for non-shared projects
+	 * @param repository shared repository associated with the new project. Can be null for
+	 *            non-shared projects
 	 * @throws IOException if I/O error occurs.
 	 * @throws LockException if unable to establish project lock
 	 */
@@ -684,7 +684,17 @@ public class DefaultProject implements Project {
 		if (projectLocator.getURL().equals(url)) {
 			return fileMgr;
 		}
-		return otherViews.get(url);
+		URL remoteURL = getProjectData().getRootFolder().getSharedProjectURL();
+		if (remoteURL != null) {
+			remoteURL = GhidraURL.getProjectURL(url);
+		}
+		if (remoteURL.equals(url)) {
+			return fileMgr;
+		}
+
+		synchronized (otherViews) {
+			return otherViews.get(url);
+		}
 	}
 
 	@Override

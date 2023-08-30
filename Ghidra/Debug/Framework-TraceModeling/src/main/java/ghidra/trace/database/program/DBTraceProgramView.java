@@ -1227,7 +1227,7 @@ public class DBTraceProgramView implements TraceProgramView {
 
 	@Override
 	public Address getImageBase() {
-		return language.getAddressFactory().getAddressSet().getMinAddress();
+		return language.getDefaultSpace().getMinAddress();
 	}
 
 	@Override

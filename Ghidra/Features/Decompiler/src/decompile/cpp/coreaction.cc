@@ -1023,6 +1023,28 @@ AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vec
   return resSpace;
 }
 
+/// \brief Check if we need to try to infer a constant pointer from the input of the given COPY
+///
+/// In general, we do want try, but there is a special case where the COPY feeds into a RETURN and
+/// the function does \e not return a pointer.  We also consider the \b infer_pointers boolean.
+/// \param op is the given COPY op
+/// \param data is the function
+/// \return \b true if we should try to infer
+bool ActionConstantPtr::checkCopy(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *vn = op->getOut();
+  PcodeOp *retOp = vn->loneDescend();
+  if (retOp != (PcodeOp *)0 && retOp->code() == CPUI_RETURN && data.getFuncProto().isOutputLocked()) {
+    type_metatype meta = data.getFuncProto().getOutput()->getType()->getMetatype();
+    if (meta != TYPE_PTR && meta != TYPE_UNKNOWN) {
+      return false;		// Do NOT infer, we know the constant can't be pointer
+    }
+    return true;		// Try to infer, regardless of infer_pointers config, because we KNOW it is a pointer
+  }
+  return data.getArch()->infer_pointers;
+}
+
 /// \brief Determine if given Varnode might be a pointer constant.
 ///
 /// If it is a pointer, return the symbol it points to, or NULL otherwise. If it is determined
@@ -1054,23 +1076,36 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     // Check if the constant is involved in a potential pointer expression
     // as the base
     switch(op->code()) {
-    case CPUI_RETURN:
     case CPUI_CALL:
     case CPUI_CALLIND:
-      // A constant parameter or return value could be a pointer
-      if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+    {
       if (slot==0)
+	return (SymbolEntry *)0;
+      // A constant parameter could be a pointer
+      FuncCallSpecs *fc = data.getCallSpecs(op);
+      if (fc != (FuncCallSpecs *)0 && fc->isInputLocked() && fc->numParams() > slot-1) {
+	type_metatype meta = fc->getParam(slot-1)->getType()->getMetatype();
+	if (meta != TYPE_PTR && meta != TYPE_UNKNOWN) {
+	  return (SymbolEntry *)0;	// Definitely not passing a pointer
+	}
+      }
+      else if (!glb->infer_pointers)
+	return (SymbolEntry *)0;
+      break;
+    }
+    case CPUI_COPY:
+      if (!checkCopy(op, data))
 	return (SymbolEntry *)0;
       break;
     case CPUI_PIECE:
       // Pointers get concatenated in structures
-    case CPUI_COPY:
     case CPUI_INT_EQUAL:
     case CPUI_INT_NOTEQUAL:
     case CPUI_INT_LESS:
     case CPUI_INT_LESSEQUAL:
       // A comparison with a constant could be a pointer
+      if (!glb->infer_pointers)
+	return (SymbolEntry *)0;
       break;
     case CPUI_INT_ADD:
       outvn = op->getOut();

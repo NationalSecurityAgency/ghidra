@@ -61,11 +61,12 @@ public enum ProgramURLUtils {
 			String asString = ghidraURL.toExternalForm();
 			int bangLoc = asString.indexOf('!');
 			if (bangLoc == -1) {
-				ProjectData projectData = project.getProjectData(ghidraURL);
+				ProjectData projectData =
+					project.getProjectData(GhidraURL.getProjectURL(ghidraURL));
 				if (projectData == null) {
 					return null;
 				}
-				return projectData.getFile(ghidraURL.getPath());
+				return projectData.getFile(GhidraURL.getProjectPathname(ghidraURL));
 			}
 			URL localProjURL = new URL(asString.substring(0, bangLoc));
 			ProjectData projectData = project.getProjectData(localProjURL);
@@ -84,6 +85,9 @@ public enum ProgramURLUtils {
 	public static Program openHackedUpGhidraURL(ProgramManager programManager, Project project,
 			URL ghidraURL, int state) {
 		DomainFile file = getFileForHackedUpGhidraURL(project, ghidraURL);
+		if (file == null) {
+			return null;
+		}
 		return programManager.openProgram(file, DomainFile.DEFAULT_VERSION, state);
 	}
 }

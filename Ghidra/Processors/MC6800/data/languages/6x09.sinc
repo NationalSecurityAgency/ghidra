@@ -570,7 +570,6 @@ macro compare(reg, op)
         $(C) = (tmp < val);
         tmp = tmp - val;
         setNZFlags(tmp);
-        reg = tmp;
 }
 
 macro logicalAnd(reg, op)

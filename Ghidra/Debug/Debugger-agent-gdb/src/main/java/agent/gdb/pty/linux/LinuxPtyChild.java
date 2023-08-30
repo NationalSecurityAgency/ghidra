@@ -23,10 +23,13 @@ import java.util.*;
 
 import agent.gdb.pty.PtyChild;
 import agent.gdb.pty.PtySession;
+import agent.gdb.pty.linux.PosixC.Termios;
 import agent.gdb.pty.local.LocalProcessPtySession;
 import ghidra.util.Msg;
 
 public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
+	static final PosixC LIB_POSIX = PosixC.INSTANCE;
+
 	private final String name;
 
 	LinuxPtyChild(int fd, String name) {
@@ -35,7 +38,8 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 	}
 
 	@Override
-	public String nullSession() {
+	public String nullSession(Collection<TermMode> mode) {
+		applyMode(mode);
 		return name;
 	}
 
@@ -53,19 +57,15 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 	 *           received by the leader by mistake if sent immediately upon spawning a new session.
 	 *           Users should send a simple command, e.g., "echo", to confirm that the requested
 	 *           program is active before sending special characters.
-	 * 
-	 * @param args the image path and arguments
-	 * @param env the environment
-	 * @return a handle to the subprocess
-	 * @throws IOException
 	 */
 	@Override
-	public PtySession session(String[] args, Map<String, String> env) throws IOException {
-		return sessionUsingJavaLeader(args, env);
+	public PtySession session(String[] args, Map<String, String> env, Collection<TermMode> mode)
+			throws IOException {
+		return sessionUsingJavaLeader(args, env, mode);
 	}
 
-	protected PtySession sessionUsingJavaLeader(String[] args, Map<String, String> env)
-			throws IOException {
+	protected PtySession sessionUsingJavaLeader(String[] args, Map<String, String> env,
+			Collection<TermMode> mode) throws IOException {
 		final List<String> argsList = new ArrayList<>();
 		String javaCommand =
 			System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
@@ -81,6 +81,8 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 			builder.environment().putAll(env);
 		}
 		builder.inheritIO();
+
+		applyMode(mode);
 
 		try {
 			return new LocalProcessPtySession(builder.start());
@@ -147,5 +149,18 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 		}
 
 		return null;
+	}
+
+	private void applyMode(Collection<TermMode> mode) {
+		if (mode.contains(Echo.OFF)) {
+			disableEcho();
+		}
+	}
+
+	private void disableEcho() {
+		Termios.ByReference tmios = new Termios.ByReference();
+		LIB_POSIX.tcgetattr(fd, tmios);
+		tmios.c_lflag &= ~Termios.ECHO;
+		LIB_POSIX.tcsetattr(fd, Termios.TCSANOW, tmios);
 	}
 }

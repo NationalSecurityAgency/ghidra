@@ -75,6 +75,8 @@ public abstract class RenameTask {
 					dialog.setStatusText("Cannot have empty name");
 					return false;
 				}
+
+				name = name.trim();
 				if (name.equals(oldName)) {		// No change to name
 					newName = name;
 					return true;				// but valid (ends up being equivalent to cancel

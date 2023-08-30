@@ -16,14 +16,17 @@
 package ghidra.app.plugin.core.debug.gui.modules;
 
 import db.Transaction;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 
 public class ModuleRow {
+	private final DebuggerModulesProvider provider;
 	private final TraceModule module;
 
-	public ModuleRow(TraceModule module) {
+	public ModuleRow(DebuggerModulesProvider provider, TraceModule module) {
+		this.provider = provider;
 		this.module = module;
 	}
 
@@ -52,6 +55,15 @@ public class ModuleRow {
 
 	public String getName() {
 		return module.getName();
+	}
+
+	public String getMapping() {
+		// TODO: Cache this? Would flush on:
+		//    1. Mapping changes
+		//    2. Range/Life changes to this module
+		//    3. Snapshot navigation
+		return DebuggerStaticMappingUtils.computeMappedFiles(module.getTrace(),
+			provider.current.getSnap(), module.getRange());
 	}
 
 	public Address getBase() {

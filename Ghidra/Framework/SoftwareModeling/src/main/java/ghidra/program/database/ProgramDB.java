@@ -1773,6 +1773,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 		listing.setProgram(this);
 
+		if (openMode == DBConstants.CREATE) {
+			getDataTypeManager().saveDataOrganization();
+		}
+
 		monitor.checkCancelled();
 
 		if (openMode == UPGRADE) {

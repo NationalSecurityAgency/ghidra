@@ -17,7 +17,7 @@ package agent.gdb.model.invm;
 
 import agent.gdb.model.AbstractModelForGdbSessionAttacherTest;
 
-public class InVmModelForGdbSessiopnAttacherTest extends AbstractModelForGdbSessionAttacherTest {
+public class InVmModelForGdbSessionAttacherTest extends AbstractModelForGdbSessionAttacherTest {
 	@Override
 	public ModelHost modelHost() throws Throwable {
 		return new InVmGdbModelHost();

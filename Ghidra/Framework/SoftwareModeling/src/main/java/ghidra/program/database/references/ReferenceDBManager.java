@@ -303,6 +303,17 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	 * @return combined reference type, or the newType if unable to combine
 	 */
 	private RefType combineReferenceType(RefType newType, RefType oldType) {
+		// check if types are the same, if same no use doing work replacing reference
+		if (newType == oldType) {
+			return oldType;
+		}
+		// any flow reference should be used over the existing ref to the same location
+		if (newType.isFlow()) {
+			return newType;  // allow any new flow ref to replace old type
+		}
+		if (oldType.isFlow()) {
+			return oldType; // always keep flow over new data ref
+		}
 		if (newType == RefType.DATA) {
 			if (oldType.isData()) {
 				return oldType;

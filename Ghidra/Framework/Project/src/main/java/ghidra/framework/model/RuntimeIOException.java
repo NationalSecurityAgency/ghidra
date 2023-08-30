@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.gdb.model.gadp;
+package ghidra.framework.model;
 
-import agent.gdb.model.AbstractModelForGdbSessionAttacherTest;
+import java.io.IOException;
 
-public class GadpModelForGdbSessiopnAttacherTest extends AbstractModelForGdbSessionAttacherTest {
-	@Override
-	public ModelHost modelHost() throws Throwable {
-		return new GadpGdbModelHost();
+/**
+ * {@link RuntimeIOException} provide a wrapped {@link IOException} wrapped
+ * within a {@link RuntimeException}.
+ */
+public class RuntimeIOException extends RuntimeException {
+
+	/**
+	 * Construct {@link RuntimeIOException}
+	 * @param e {@link IOException} instance
+	 */
+	public RuntimeIOException(IOException e) {
+		super(e);
 	}
 }

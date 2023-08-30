@@ -495,14 +495,14 @@ vcvt_56_128_dt: ".u32.f32"
 	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c0911=0b011 & thv_c0404=0 & thv_c0606=0))
 	& vcvt_56_64_dt & Dd & Dm
-	unimpl
+    { }
 
 # F6.1.60 p8002 A1 Q == 1 (c0606)
 :vcvt^vcvt_56_128_dt	Qd,Qm
 	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c0911=0b011 &     c0404=0 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c0911=0b011 & thv_c0404=0 & thv_c0606=1))
 	& vcvt_56_128_dt & Qd & Qm
-	unimpl
+	{ }
 
 # F6.1.61 p8005 A1 opc2==100 && size==10 (c1618, c0809)
 :vcvt^COND^".u32.f32"	Sd,Sm
@@ -516,7 +516,7 @@ vcvt_56_128_dt: ".u32.f32"
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b10))
 	& COND & Sd & Sm
-	{ build COND; Sd = zext(Sm f> 0) * (trunc(Sm));  }
+	{ build COND; Sd = trunc(Sm);  }
 
 # F6.1.61 p8005 A1 opc2==100 && size==11 (c1618, c0809)
 :vcvt^COND^".u32.f64"	Sd,Dm
@@ -530,7 +530,7 @@ vcvt_56_128_dt: ".u32.f32"
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b11))
 	& COND & Sd & Dm
-	{ build COND; local tmp:8 = zext(Dm f> 0:8) * (trunc(Dm)); Sd = tmp:4; }
+	{ build COND; local tmp:8 = trunc(Dm); Sd = tmp:4; }
 
 # The rounding mode depends on c0707=0 => FPSCR else ZERO
 
@@ -665,14 +665,14 @@ vcvt_59_64_dt: ".u16.f16"
 	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c1011=0b11 &     c0707=0 &     c0404=1 &     c0606=0)
 	|   (TMode=1 & thv_c2931=0b111  & thv_c2327=0b11111 &               thv_c2121=1 & thv_c1011=0b11 & thv_c0707=0 & thv_c0404=1 & thv_c0606=0))
 	& vcvt_59_32_dt & vcvt_59_fbits & Dd & Dm
-	unimpl
+    { }	
 
 # F6.1.63 p8012 A1 Q = 1 (c0606)
 :vcvt^vcvt_59_64_dt	Qd,Qm,vcvt_59_fbits
 	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2527=0b001   &     c2323=1 &     c2121=1 &     c1011=0b11 &     c0707=0 &     c0404=1 &     c0606=1)
 	|   (TMode=1 & thv_c2931=0b111  & thv_c2327=0b11111 &               thv_c2121=1 & thv_c1011=0b11 & thv_c0707=0 & thv_c0404=1 & thv_c0606=1))
 	& vcvt_59_64_dt & vcvt_59_fbits & Qd & Qm
-	unimpl
+	{ }
 
 vcvt_60_fbits_built: fbits is TMode=0 &     c0707=0 &     c0505 &     c0003 [fbits = 16 - (    c0003 * 2 +     c0505); ] { export * [const]:1 fbits; }
 vcvt_60_fbits_built: fbits is TMode=1 & thv_c0707=0 & thv_c0505 & thv_c0003 [fbits = 16 - (thv_c0003 * 2 + thv_c0505); ] { export * [const]:1 fbits; }
@@ -814,14 +814,14 @@ vcvt_amnp_simd_128_dt: ".u32" is TMode=1 & thv_c0707=1 & thv_c0809 & vcvt_amnp_s
 	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c1011=0b00 &     c0404=0 &     c0606=0)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c1011=0b00 & thv_c0404=0 & thv_c0606=0))
 	& vcvt_amnp_simd_RM & vcvt_amnp_simd_64_dt & Dd & Dm
-	unimpl
+    { }	
 
 # F6.1.65,69,71,73 p8019,8028,8032,8036 A1 128-bit SIMD vector variant Q = 1(c0606)
 :vcvt^vcvt_amnp_simd_RM^vcvt_amnp_simd_128_dt^".f32"	Qd,Qm
 	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b10 &     c1617=0b11 &     c1011=0b00 &     c0404=0 &     c0606=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b10 & thv_c1617=0b11 & thv_c1011=0b00 & thv_c0404=0 & thv_c0606=1))
 	& vcvt_amnp_simd_RM & vcvt_amnp_simd_128_dt & Qd & Qm
-	unimpl
+	{ }
 
 vcvt_amnp_fp_RM: "a"
 	is ((TMode=0 &     c1617=0b00)
@@ -862,14 +862,14 @@ vcvt_amnp_fp_d_dt: ".s32" is TMode=1 & thv_c0707=1 & thv_c1617 & vcvt_amnp_fp_RM
 	is ((TMode=0 &  ARMcond=0 &   c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b11 & thv_c1819=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b10))
 	& vcvt_amnp_fp_RM & vcvt_amnp_fp_s_dt & Sd & Sm
-	unimpl
+	{ }
 
 # F6.1.66,70,72,74 p8021,8030,8034,8038 Double-precision scalar variant size = 11 (c0809)
 :vcvt^vcvt_amnp_fp_RM^vcvt_amnp_fp_d_dt^".f64"	Sd,Dm
 	is ((TMode=0 & ARMcond=0 &     c2831=0b1111 &     c2327=0b11101 &     c2021=0b11 &     c1819=0b11 &     c1011=0b10 &     c0606=1 &     c0404=0 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11101 & thv_c2021=0b11 & thv_c1819=0b11 & thv_c1011=0b10 & thv_c0606=1 & thv_c0404=0 & thv_c0809=0b11))
 	& vcvt_amnp_fp_RM & vcvt_amnp_fp_d_dt & Sd & Dm
-	unimpl
+	{ }
 
 # vcvtb and vcvtt
 

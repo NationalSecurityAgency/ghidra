@@ -60,6 +60,25 @@ public interface TargetLauncher extends TargetObject {
 		 */
 		TargetParameterMap PARAMETERS = TargetMethod.makeParameters(PARAMETER_CMDLINE_ARGS);
 
+		/**
+		 * Check if the given image path contains spaces, and surround it in double quotes
+		 * ({@code "}) if necessary.
+		 * 
+		 * <p>
+		 * Without the quotes the launcher will likely confuse the spaces for separating arguments.
+		 * When constructing the command-line to launch a program, this method must be used, even if
+		 * the image is the only "argument."
+		 * 
+		 * @param imagePath the path to the image on the target platform.
+		 * @return the path, possibly surrounded in quotes.
+		 */
+		static String quoteImagePathIfSpaces(String imagePath) {
+			if (imagePath.contains(" ")) {
+				return '"' + imagePath + '"';
+			}
+			return imagePath;
+		}
+
 		@Override
 		default public TargetParameterMap getParameters() {
 			return PARAMETERS;

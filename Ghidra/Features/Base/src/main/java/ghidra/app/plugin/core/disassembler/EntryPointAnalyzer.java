@@ -352,7 +352,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			if (value instanceof Address) {
 				Address codeLoc = (Address) value;
 				if (codeLoc.getOffset() != 0) {
-					PseudoDisassembler.setTargeContextForDisassembly(program, codeLoc);
+					PseudoDisassembler.setTargetContextForDisassembly(program, codeLoc);
 					// align if necessary
 					int instructionAlignment = program.getLanguage().getInstructionAlignment();
 					if (codeLoc.getOffset() % instructionAlignment != 0) {
