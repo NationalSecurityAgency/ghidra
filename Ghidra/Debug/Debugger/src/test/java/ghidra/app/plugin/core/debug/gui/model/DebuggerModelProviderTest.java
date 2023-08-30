@@ -915,6 +915,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		traceManager.activateObject(processes);
 		waitForTasks();
 		traceManager.activateObject(root);
+		waitForTasks();
 		modelProvider.setPath(root.getCanonicalPath());
 		waitForTasks();
 
