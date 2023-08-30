@@ -31,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Information about {@link StructureMapping} classes and their metadata.
  * <p>
- * To use the full might and majesty of StructureMapping(tm), a DataTypeMapper must be created. It
+ * To use the full might and majesty of StructureMapping&trade;, a DataTypeMapper must be created. It
  * must be able to {@link #addArchiveSearchCategoryPath(CategoryPath...) find} 
  * ({@link #addProgramSearchCategoryPath(CategoryPath...) more find}) the Ghidra structure data
  * types being used, and it must {@link #registerStructure(Class) know} about all classes that are
@@ -166,9 +166,11 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @param <T> structure mapped class type
 	 * @param clazz class that represents a structure, marked with {@link StructureMapping} 
 	 * annotation
+	 * @param context {@link DataTypeMapperContext}
 	 * @throws IOException if the class's Ghidra structure data type could not be found
 	 */
-	public <T> void registerStructure(Class<T> clazz) throws IOException {
+	public <T> void registerStructure(Class<T> clazz, DataTypeMapperContext context)
+			throws IOException {
 		StructureMapping sma = clazz.getAnnotation(StructureMapping.class);
 		List<String> structNames = sma != null ? Arrays.asList(sma.structureName()) : List.of();
 		Structure structDT = getType(structNames, Structure.class);
@@ -187,7 +189,7 @@ public class DataTypeMapper implements AutoCloseable {
 
 		try {
 			StructureMappingInfo<T> structMappingInfo =
-				StructureMappingInfo.fromClass(clazz, structDT);
+				StructureMappingInfo.fromClass(clazz, structDT, context);
 			mappingInfo.put(clazz, structMappingInfo);
 		}
 		catch (IllegalArgumentException e) {
@@ -199,11 +201,13 @@ public class DataTypeMapper implements AutoCloseable {
 	 * Registers the specified {@link StructureMapping structure mapping} classes.
 	 *  
 	 * @param classes list of classes to register
+	 * @param context {@link DataTypeMapperContext}
 	 * @throws IOException if a class's Ghidra structure data type could not be found
 	 */
-	public void registerStructures(List<Class<?>> classes) throws IOException {
+	public void registerStructures(List<Class<?>> classes, DataTypeMapperContext context)
+			throws IOException {
 		for (Class<?> clazz : classes) {
-			registerStructure(clazz);
+			registerStructure(clazz, context);
 		}
 	}
 
@@ -544,5 +548,4 @@ public class DataTypeMapper implements AutoCloseable {
 		}
 		return new StructureContext<>(this, smi, null);
 	}
-
 }

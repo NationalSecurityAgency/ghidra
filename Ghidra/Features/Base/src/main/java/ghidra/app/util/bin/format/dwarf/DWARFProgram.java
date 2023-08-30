@@ -1201,25 +1201,32 @@ public class DWARFProgram implements Closeable {
 
 	private DWARFLocationList readLocationList(DWARFNumericAttribute loclistAttr,
 			DWARFCompilationUnit cu) throws IOException {
-		switch (loclistAttr.getAttributeForm()) {
-			case DW_FORM_sec_offset:
-				int dwarfVer = cu.getDWARFVersion();
-				if (dwarfVer < 5) {
-					debugLocation.setPointerIndex(loclistAttr.getUnsignedValue());
-					return DWARFLocationList.readV4(debugLocation, cu);
-				}
-				else if (dwarfVer == 5) {
-					debugLocLists.setPointerIndex(loclistAttr.getUnsignedValue());
+		try {
+			switch (loclistAttr.getAttributeForm()) {
+				case DW_FORM_sec_offset:
+					int dwarfVer = cu.getDWARFVersion();
+					if (dwarfVer < 5) {
+						debugLocation.setPointerIndex(loclistAttr.getUnsignedValue());
+						return DWARFLocationList.readV4(debugLocation, cu);
+					}
+					else if (dwarfVer == 5) {
+						debugLocLists.setPointerIndex(loclistAttr.getUnsignedValue());
+						return DWARFLocationList.readV5(debugLocLists, cu);
+					}
+					break;
+				case DW_FORM_loclistx:
+					int index = loclistAttr.getUnsignedIntExact();
+					long locOffset = locationListTable.getOffset(index, cu);
+					debugLocLists.setPointerIndex(locOffset);
 					return DWARFLocationList.readV5(debugLocLists, cu);
-				}
-				break;
-			case DW_FORM_loclistx:
-				int index = loclistAttr.getUnsignedIntExact();
-				long locOffset = locationListTable.getOffset(index, cu);
-				debugLocLists.setPointerIndex(locOffset);
-				return DWARFLocationList.readV5(debugLocLists, cu);
-			default:
-				break; // fallthru to throw
+				default:
+					break; // fallthru to throw
+			}
+		}
+		catch (IOException | IllegalArgumentException e) {
+			throw new IOException(
+				"Failed to read location list specified by %s".formatted(loclistAttr.toString()),
+				e);
 		}
 		throw new IOException(
 			"Unsupported loclist form %s".formatted(loclistAttr.getAttributeForm()));
