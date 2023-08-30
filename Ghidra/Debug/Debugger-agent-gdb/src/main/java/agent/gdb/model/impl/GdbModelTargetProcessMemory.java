@@ -193,6 +193,9 @@ public class GdbModelTargetProcessMemory
 	}
 
 	protected void invalidateMemoryCaches() {
+		if (!valid) {
+			return;
+		}
 		broadcast().invalidateCacheRequested(this);
 	}
 
