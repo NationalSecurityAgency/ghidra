@@ -579,6 +579,10 @@
 	call Rel26;
 }
 
+:bl  Rel26                     is op26_31=0x15 & Rel26 & imm10_16=1 & simm0_10=0 {
+	ra = inst_next;
+	goto Rel26;
+}
 
 #la-base-32.txt beq mask=0x58000000	[@orig_fmt=JDSk16ps2, @la32, @primary, @qemu]
 #0x58000000	0xfc000000	r5:5,r0:5,sb10:16<<2	['reg5_5_s0', 'reg0_5_s0', 'sbranch10_16_s0']
@@ -660,10 +664,10 @@
 	return [retAddr];
 }
 
-# alias of jirl zer, rj, 0
+# alias of jirl zero, rj, 0
 :jr RJsrc                      is op26_31=0x13 & rD=0x0 & RJsrc & simm10_16=0 {
 	local retAddr = RJsrc;
-	return [retAddr];
+	goto [retAddr];
 }
 
 
