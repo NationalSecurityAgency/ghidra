@@ -1022,6 +1022,8 @@ void Funcdata::linkProtoPartial(Varnode *vn)
   if (rootVn == vn) return;
 
   HighVariable *rootHigh = rootVn->getHigh();
+  if (!rootHigh->isSameGroup(high))
+    return;
   Varnode *nameRep = rootHigh->getNameRepresentative();
   Symbol *sym = linkSymbol(nameRep);
   if (sym == (Symbol *)0) return;
