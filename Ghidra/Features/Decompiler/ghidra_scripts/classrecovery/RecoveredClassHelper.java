@@ -16,7 +16,17 @@
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.
 package classrecovery;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
@@ -30,21 +40,80 @@ import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeIterator;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.GlobalNamespace;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.Category;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeConflictHandler;
+import ghidra.program.model.data.DataTypeDependencyException;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.FunctionDefinition;
+import ghidra.program.model.data.FunctionDefinitionDataType;
+import ghidra.program.model.data.NoisyStructureBuilder;
+import ghidra.program.model.data.ParameterDefinition;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.Undefined1DataType;
+import ghidra.program.model.data.Undefined4DataType;
+import ghidra.program.model.data.Undefined8DataType;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.lang.PrototypeModel;
+import ghidra.program.model.listing.Bookmark;
+import ghidra.program.model.listing.BookmarkManager;
+import ghidra.program.model.listing.BookmarkType;
+import ghidra.program.model.listing.CircularDependencyException;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.FlowOverride;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.FunctionSignature;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ReturnParameterImpl;
+import ghidra.program.model.listing.Variable;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.pcode.HighVariable;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeOpAST;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
-import ghidra.util.bytesearch.*;
+import ghidra.util.bytesearch.GenericByteSequencePattern;
+import ghidra.util.bytesearch.GenericMatchAction;
+import ghidra.util.bytesearch.Match;
+import ghidra.util.bytesearch.MemoryBytePatternSearcher;
 import ghidra.util.datastruct.ListAccumulator;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class RecoveredClassHelper {
@@ -4770,6 +4839,90 @@ public class RecoveredClassHelper {
 			}
 		}
 		return vfunctionSuffix;
+	}
+
+	/**
+	 * Method to update any class functions that are not already using it to use the given 
+	 * class structure
+	 * @param recoveredClass the given class
+	 * @param classStructure the given class structure
+	 * @throws CancelledException if cancelled
+	 */
+	protected void updateClassFunctionsNotUsingNewClassStructure(RecoveredClass recoveredClass,
+			Structure classStructure) throws CancelledException {
+
+		if (classStructure == null) {
+			return;
+		}
+
+		Namespace classNamespace = recoveredClass.getClassNamespace();
+
+		SymbolIterator symbols = symbolTable.getSymbols(classNamespace);
+
+		FunctionManager functionManager = program.getFunctionManager();
+
+		while (symbols.hasNext()) {
+			monitor.checkCancelled();
+
+			Symbol symbol = symbols.next();
+
+			Function function = functionManager.getFunctionAt(symbol.getAddress());
+
+			if (function == null) {
+				continue;
+			}
+
+			if (function.isThunk()) {
+				continue;
+			}
+			
+			PrototypeModel callingConvention = function.getCallingConvention();
+			if (callingConvention == null) {
+				Msg.debug(this, "no calling convention for: " + function.getEntryPoint());
+				continue;
+			}
+
+			if (!callingConvention.hasThisPointer()) {
+				continue;
+			}
+
+			Parameter[] parameters = function.getParameters();
+			if (parameters.length == 0) {
+				continue;
+			}
+
+			DataType dataType = parameters[0].getDataType();
+			if (!(dataType instanceof Pointer pointer)) {
+				continue;
+			}
+
+			DataType pointedToDt = pointer.getDataType();
+			if (!pointedToDt.equals(classStructure)) {
+				Pointer classStructurePointer = new PointerDataType(classStructure);
+				try {
+					List<Variable> newParamList = new ArrayList<>();
+					for (Parameter param : parameters) {
+
+						newParamList.add(param);
+					}
+					
+					FunctionUpdateType updateType = FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
+					if (function.hasCustomVariableStorage()) {
+						updateType = FunctionUpdateType.CUSTOM_STORAGE;
+					}
+
+					newParamList.get(0).setDataType(classStructurePointer, SourceType.ANALYSIS);
+					function.replaceParameters(newParamList,
+						updateType, false, SourceType.ANALYSIS);
+				}
+				catch (InvalidInputException | DuplicateNameException e) {
+					Msg.error(this, "Could not update function at " + function.getEntryPoint() +
+						" with new class structure due to exception: " + e.getMessage());
+				}
+
+			}
+
+		}
 	}
 
 	private boolean hasDeletingDestructorInNamespace(Address address, Namespace namespace)

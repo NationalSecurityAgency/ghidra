@@ -17,7 +17,15 @@
 package classrecovery;
 
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
@@ -26,20 +34,67 @@ import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressIterator;
+import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeIterator;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.CharDataType;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeConflictHandler;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.program.model.data.InvalidDataTypeException;
+import ghidra.program.model.data.LongDataType;
+import ghidra.program.model.data.LongLongDataType;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.PointerTypedef;
+import ghidra.program.model.data.StringDataType;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.TerminatedStringDataType;
+import ghidra.program.model.data.UnsignedIntegerDataType;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.listing.Bookmark;
+import ghidra.program.model.listing.BookmarkType;
+import ghidra.program.model.listing.CircularDependencyException;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.DumbMemBufferImpl;
+import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.Msg;
-import ghidra.util.bytesearch.*;
-import ghidra.util.exception.*;
+import ghidra.util.bytesearch.GenericByteSequencePattern;
+import ghidra.util.bytesearch.GenericMatchAction;
+import ghidra.util.bytesearch.Match;
+import ghidra.util.bytesearch.MemoryBytePatternSearcher;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
@@ -4508,12 +4563,16 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		if (!recoveredClass.hasVftable()) {
+
 			Structure classStructure = createSimpleClassStructure(recoveredClass, null);
 			if (classStructure == null) {
 				Msg.error(this, "Could not create class structure for " +
 					recoveredClass.getClassNamespace().getName(true));
 			}
-			// return here because if there is no vftable for a class the script cannot
+
+			updateClassFunctionsNotUsingNewClassStructure(recoveredClass,
+				classStructure);
+			// return in this case because if there is no vftable for a class the script cannot
 			// identify any member functions so there is no need to process the rest of this
 			// method
 			return;
@@ -4559,6 +4618,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes,
 			classStruct);
 
+		updateClassFunctionsNotUsingNewClassStructure(recoveredClass, classStruct);
 	}
 
 	private Structure createSimpleClassStructure(RecoveredClass recoveredClass,
