@@ -419,7 +419,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private final DebuggerModuleMapProposalDialog moduleProposalDialog;
 	private final DebuggerSectionMapProposalDialog sectionProposalDialog;
 
-	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
+	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	private Program currentProgram;
 	private ProgramLocation currentLocation;
 

@@ -140,7 +140,7 @@ public class TableServicePlugin extends ProgramPlugin
 		GoToService gotoService = tool.getService(GoToService.class);
 		Program program = model.getProgram();
 		TableComponentProvider<T> cp = new TableComponentProvider<>(this, title, tableTypeName,
-			model, program.getDomainFile().getName(), gotoService, windowSubMenu, navigatable);
+			model, program, gotoService, windowSubMenu, navigatable);
 		addProvider(program, cp);
 		return cp;
 	}
@@ -154,8 +154,8 @@ public class TableServicePlugin extends ProgramPlugin
 		MarkerService markerService = tool.getService(MarkerService.class);
 		Program program = model.getProgram();
 		TableComponentProvider<T> cp = new TableComponentProvider<>(this, title, tableTypeName,
-			model, program.getDomainFile().getName(), gotoService, markerService, markerColor,
-			markerIcon, windowSubMenu, navigatable);
+			model, program, gotoService, markerService, markerColor, markerIcon, windowSubMenu,
+			navigatable);
 		addProvider(program, cp);
 		return cp;
 	}

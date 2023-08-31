@@ -36,6 +36,7 @@ import ghidra.util.task.TaskMonitor;
 public class DyldCacheFileSystem extends GFileSystemBase {
 
 	private SplitDyldCache splitDyldCache;
+	private boolean parsedLocalSymbols = false;
 	private Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap;
 	private Map<GFile, Long> addrMap = new HashMap<>();
 	private Map<GFile, Integer> indexMap = new HashMap<>();
@@ -47,9 +48,13 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 	@Override
 	public void close() throws IOException {
 		slideFixupMap = null;
+		parsedLocalSymbols = false;
 		addrMap.clear();
 		indexMap.clear();
-		splitDyldCache.close();
+		if (splitDyldCache != null) {
+			splitDyldCache.close();
+			splitDyldCache = null;
+		}
 		super.close();
 	}
 
@@ -65,11 +70,19 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 			addr - splitDyldCache.getDyldCacheHeader(index).getBaseAddress();
 
 		if (slideFixupMap == null) {
-			slideFixupMap = DyldCacheDylibExtractor.getSlideFixups(splitDyldCache, monitor);
+			slideFixupMap = DyldCacheExtractor.getSlideFixups(splitDyldCache, monitor);
+		}
+
+		if (!parsedLocalSymbols) {
+			for (int i = 0; i < splitDyldCache.size(); i++) {
+				splitDyldCache.getDyldCacheHeader(i)
+						.parseLocalSymbolsInfo(true, new MessageLog(), monitor);
+			}
+			parsedLocalSymbols = true;
 		}
 
 		try {
-			return DyldCacheDylibExtractor.extractDylib(machHeaderStartIndexInProvider,
+			return DyldCacheExtractor.extractDylib(machHeaderStartIndexInProvider,
 				splitDyldCache, index, slideFixupMap, file.getFSRL(), monitor);
 		}
 		catch (MachException e) {
@@ -120,7 +133,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		MessageLog log = new MessageLog();
 		monitor.setMessage("Opening DYLD cache...");
 		
-		splitDyldCache = new SplitDyldCache(provider, true, log, monitor);
+		splitDyldCache = new SplitDyldCache(provider, false, log, monitor);
 		for (int i = 0; i < splitDyldCache.size(); i++) {
 			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
 			monitor.setMessage("Find files...");

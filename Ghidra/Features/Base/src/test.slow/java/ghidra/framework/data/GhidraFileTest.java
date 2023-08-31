@@ -41,7 +41,7 @@ public class GhidraFileTest extends AbstractGhidraHeadedIntegrationTest {
 	private FileSystem sharedFS;
 	private LocalFileSystem privateFS;
 
-	private ProjectFileManager pfm;
+	private DefaultProjectData projectData;
 	private GhidraFolder root;
 
 	public GhidraFileTest() {
@@ -76,8 +76,8 @@ public class GhidraFileTest extends AbstractGhidraHeadedIntegrationTest {
 			false, false, true);
 		sharedFS = LocalFileSystem.getLocalFileSystem(sharedProjectDir.getAbsolutePath(), false,
 			true, false, true);
-		pfm = new ProjectFileManager(privateFS, sharedFS);
-		root = pfm.getRootFolder();
+		projectData = new DefaultProjectData(privateFS, sharedFS);
+		root = projectData.getRootFolder();
 
 	}
 
@@ -88,12 +88,12 @@ public class GhidraFileTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testLocalURL() throws IOException {
+	public void testGetLocalProjectURL() throws IOException {
 		createDB(privateFS, "/a", "file1");
-		assertEquals(GhidraURL.makeURL(pfm.getProjectLocator(), "/a/file1", "xyz"),
-			pfm.getFile("/a/file1").getLocalProjectURL("xyz"));
-		assertEquals(GhidraURL.makeURL(pfm.getProjectLocator(), "/a/file1", null),
-			pfm.getFile("/a/file1").getLocalProjectURL(null));
+		assertEquals(GhidraURL.makeURL(projectData.getProjectLocator(), "/a/file1", "xyz"),
+			projectData.getFile("/a/file1").getLocalProjectURL("xyz"));
+		assertEquals(GhidraURL.makeURL(projectData.getProjectLocator(), "/a/file1", null),
+			projectData.getFile("/a/file1").getLocalProjectURL(null));
 	}
 
 	@Test
@@ -345,7 +345,7 @@ public class GhidraFileTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void refresh() throws IOException {
 		// refresh everything regardless of visited state
-		pfm.refresh(true);
+		projectData.refresh(true);
 	}
 
 	private void deleteAll(File file) {

@@ -34,8 +34,6 @@ dependencies {
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger-gadp', configuration: 'testArtifacts')
-
-	pypkgInstall project(path: ':Debugger-rmi-trace', configuration: 'pypkgInstall')
 }
 
 tasks.nodepJar {

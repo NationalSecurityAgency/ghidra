@@ -171,13 +171,7 @@ public class ClientUtil {
 	 * @return default user name
 	 */
 	public static String getUserName() {
-		String name = SystemUtilities.getUserName();
-		// exclude domain prefix which may be included
-		int slashIndex = name.lastIndexOf('\\');
-		if (slashIndex >= 0) {
-			name = name.substring(slashIndex + 1);
-		}
-		return name;
+		return SystemUtilities.getUserName();
 	}
 
 	/**
@@ -446,8 +440,8 @@ public class ClientUtil {
 	static void processSignatureCallback(String serverName, SignatureCallback sigCb)
 			throws IOException {
 		try {
-			SignedToken signedToken = ApplicationKeyManagerUtils.getSignedToken(
-				sigCb.getRecognizedAuthorities(), sigCb.getToken());
+			SignedToken signedToken = ApplicationKeyManagerUtils
+					.getSignedToken(sigCb.getRecognizedAuthorities(), sigCb.getToken());
 			sigCb.sign(signedToken.certChain, signedToken.signature);
 			Msg.info(ClientUtil.class, "PKI Authenticating to " + serverName + " as user '" +
 				signedToken.certChain[0].getSubjectX500Principal() + "'");

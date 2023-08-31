@@ -50,7 +50,8 @@ public class AddToProgramDialog extends ImporterDialog {
 	 */
 	protected AddToProgramDialog(PluginTool tool, FSRL fsrl, LoaderMap loaderMap,
 			ByteProvider byteProvider, Program addToProgram) {
-		super("Add To Program:  " + fsrl.getPath(), tool, loaderMap, byteProvider, null);
+		super("Add To Program:  " + fsrl.getPath(), tool,
+			filterSupportedLoaders(loaderMap, addToProgram), byteProvider, null);
 		this.addToProgram = addToProgram;
 		folderNameTextField.setText(getFolderName(addToProgram));
 		nameTextField.setText(addToProgram.getName());
@@ -73,10 +74,6 @@ public class AddToProgramDialog extends ImporterDialog {
 			setStatusText("Please select a format.");
 			return false;
 		}
-		if (!loader.supportsLoadIntoProgram()) {
-			setStatusText(loader.getName() + " does not support add to program.");
-			return false;
-		}
 		optionsButton.setEnabled(true);
 
 		LoadSpec loadSpec = getSelectedLoadSpec(loader);
@@ -92,11 +89,6 @@ public class AddToProgramDialog extends ImporterDialog {
 		setStatusText("");
 		setOkEnabled(true);
 		return true;
-	}
-
-	@Override
-	protected boolean isSupported(Loader loader) {
-		return loader.supportsLoadIntoProgram();
 	}
 
 	@Override
@@ -145,5 +137,24 @@ public class AddToProgramDialog extends ImporterDialog {
 			return "";
 		}
 		return parent.toString();
+	}
+
+	/**
+	 * Returns a new {@link LoaderMap} with loaders that do not support loading into the given
+	 * program filtered out
+	 * 
+	 * @param loaderMap The loaders and their corresponding load specifications
+	 * @param program The {@link Program} trying to be loaded in to
+	 * @return A new {@link LoaderMap} with loaders that do not support loading into the given
+	 *   program filtered out
+	 */
+	private static LoaderMap filterSupportedLoaders(LoaderMap loaderMap, Program program) {
+		LoaderMap newMap = new LoaderMap();
+		for (Loader loader : loaderMap.keySet()) {
+			if (loader.supportsLoadIntoProgram(program)) {
+				newMap.put(loader, loaderMap.get(loader));
+			}
+		}
+		return newMap;
 	}
 }

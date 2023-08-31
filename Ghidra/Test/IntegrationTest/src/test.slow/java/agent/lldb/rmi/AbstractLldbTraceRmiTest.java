@@ -36,7 +36,7 @@ import ghidra.app.plugin.core.debug.service.rmi.trace.*;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.services.TraceRmiService;
 import ghidra.dbg.testutil.DummyProc;
-import ghidra.framework.TestApplicationUtils;
+import ghidra.framework.*;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
@@ -53,6 +53,14 @@ import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebuggerGUITest {
+	/**
+	 * Some features have to be disabled to avoid permissions issues in the test container. Namely,
+	 * don't try to disable ASLR.
+	 */
+	public static final String PREAMBLE = """
+			script import ghidralldb
+			settings set target.disable-aslr false
+			""";
 	// Connecting should be the first thing the script does, so use a tight timeout.
 	protected static final int CONNECT_TIMEOUT_MS = 3000;
 	protected static final int TIMEOUT_SECONDS = 300;
@@ -87,18 +95,34 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 
 	// @BeforeClass
 	public static void setupPython() throws Throwable {
-		new ProcessBuilder("gradle", "Debugger-agent-lldb:installPyPackage")
+		new ProcessBuilder("gradle", "Debugger-agent-lldb:assemblePyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())
 				.inheritIO()
 				.start()
 				.waitFor();
 	}
 
+	protected void setPythonPath(ProcessBuilder pb) throws IOException {
+		String sep =
+			OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS ? ";" : ":";
+		String rmiPyPkg = Application.getModuleSubDirectory("Debugger-rmi-trace",
+			"build/pypkg/src").getAbsolutePath();
+		String gdbPyPkg = Application.getModuleSubDirectory("Debugger-agent-lldb",
+			"build/pypkg/src").getAbsolutePath();
+		String add = rmiPyPkg + sep + gdbPyPkg;
+		pb.environment().compute("PYTHONPATH", (k, v) -> v == null ? add : (v + sep + add));
+	}
+
 	@Before
 	public void setupTraceRmi() throws Throwable {
 		traceRmi = addPlugin(tool, TraceRmiPlugin.class);
 
-		lldbPath = Paths.get(DummyProc.which("lldb"));
+		try {
+			lldbPath = Paths.get(DummyProc.which("lldb-16"));
+		}
+		catch (RuntimeException e) {
+			lldbPath = Paths.get(DummyProc.which("lldb"));
+		}
 		outFile = Files.createTempFile("lldbout", null);
 		errFile = Files.createTempFile("lldberr", null);
 	}
@@ -146,6 +170,8 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	@SuppressWarnings("resource") // Do not close stdin 
 	protected ExecInLldb execInLldb(String script) throws IOException {
 		ProcessBuilder pb = new ProcessBuilder(lldbPath.toString());
+		setPythonPath(pb);
+
 		// If commands come from file, LLDB will quit after EOF.
 		Msg.info(this, "outFile: " + outFile);
 		Msg.info(this, "errFile: " + errFile);
@@ -257,9 +283,9 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 
 	protected LldbAndHandler startAndConnectLldb() throws Exception {
 		return startAndConnectLldb(addr -> """
-				script import ghidralldb
+				%s
 				ghidra_trace_connect %s
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 	}
 
 	@SuppressWarnings("resource")
@@ -397,6 +423,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	}
 
 	protected record Tabular(List<String> headings, List<Row> rows) {
+
 		static final Pattern SPACES = Pattern.compile(" *");
 		static final Pattern WORDS = Pattern.compile("\\w+");
 

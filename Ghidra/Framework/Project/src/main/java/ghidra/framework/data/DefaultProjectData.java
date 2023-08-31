@@ -16,12 +16,14 @@
 package ghidra.framework.data;
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 
 import docking.widgets.OptionDialog;
 import generic.timer.GhidraSwinglessTimer;
 import ghidra.framework.client.*;
 import ghidra.framework.model.*;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.*;
 import ghidra.framework.store.FileSystem;
@@ -37,9 +39,16 @@ import utilities.util.FileUtilities;
 /**
  * Helper class to manage files within a project.
  */
-public class ProjectFileManager implements ProjectData {
+public class DefaultProjectData implements ProjectData {
 
-	/**Name of folder that stores user's data*/
+	/**
+	 * {@code fileTrackingMap} is used to identify DefaultProjectData instances which are
+	 * tracking specific DomainObjectAdapter instances which are open.
+	 */
+	private static Map<DomainObjectAdapter, DefaultProjectData> fileTrackingMap =
+		Collections.synchronizedMap(new IdentityHashMap<>());
+
+	// Names of folders that stores project data
 	public static final String MANGLED_DATA_FOLDER_NAME = "data";
 	public static final String INDEXED_DATA_FOLDER_NAME = "idata";
 	public static final String USER_FOLDER_NAME = "user";
@@ -77,13 +86,16 @@ public class ProjectFileManager implements ProjectData {
 
 	private RootGhidraFolderData rootFolderData;
 
-	private Map<String, DomainObjectAdapter> openDomainObjects =
-		new HashMap<>();
+	private Map<String, DomainObjectAdapter> openDomainObjects = new HashMap<>();
 
 	private TaskMonitorAdapter projectDisposalMonitor = new TaskMonitorAdapter();
 
 	private ProjectLock projectLock;
 	private String owner;
+
+	private int inUseCount = 0; // open file count plus active merge sessions
+	private boolean closed = false;
+	private boolean disposed = false;
 
 	/**
 	 * Constructor for existing projects.
@@ -96,7 +108,7 @@ public class ProjectFileManager implements ProjectData {
 	 * write lock (i.e., project in-use)
 	 * @throws FileNotFoundException if project directory not found
 	 */
-	public ProjectFileManager(ProjectLocator localStorageLocator, boolean isInWritableProject,
+	public DefaultProjectData(ProjectLocator localStorageLocator, boolean isInWritableProject,
 			boolean resetOwner) throws NotOwnerException, IOException, LockException {
 
 		this.localStorageLocator = localStorageLocator;
@@ -104,11 +116,11 @@ public class ProjectFileManager implements ProjectData {
 		try {
 			init(false, isInWritableProject);
 			if (resetOwner) {
-				owner = SystemUtilities.getUserName();
+				owner = getUserName();
 				properties.putString(OWNER, owner);
 				properties.writeState();
 			}
-			else if (isInWritableProject && !SystemUtilities.getUserName().equals(owner)) {
+			else if (isInWritableProject && !isOwner(owner)) {
 				if (owner == null) {
 					throw new NotOwnerException("Older projects may only be opened as a View.\n" +
 						"You must first create a new project or open an existing current project, \n" +
@@ -142,7 +154,7 @@ public class ProjectFileManager implements ProjectData {
 	 * @throws LockException if {@code isInWritableProject} is true and unable to establish project 
 	 * lock (i.e., project in-use)
 	 */
-	public ProjectFileManager(ProjectLocator localStorageLocator, RepositoryAdapter repository,
+	public DefaultProjectData(ProjectLocator localStorageLocator, RepositoryAdapter repository,
 			boolean isInWritableProject) throws IOException, LockException {
 		this.localStorageLocator = localStorageLocator;
 		this.repository = repository;
@@ -170,10 +182,10 @@ public class ProjectFileManager implements ProjectData {
 	 * @param versionedFileSystem an existing versioned file-system
 	 * @throws IOException if an IO error occurs
 	 */
-	ProjectFileManager(LocalFileSystem fileSystem, FileSystem versionedFileSystem)
+	DefaultProjectData(LocalFileSystem fileSystem, FileSystem versionedFileSystem)
 			throws IOException {
 		this.localStorageLocator = new ProjectLocator(null, "Test");
-		owner = SystemUtilities.getUserName();
+		owner = getUserName();
 		boolean success = false;
 		try {
 			synchronized (fileSystem) {
@@ -203,6 +215,34 @@ public class ProjectFileManager implements ProjectData {
 		else {
 			versionedFSListener = null;
 		}
+	}
+
+	private boolean isOwner(String name) {
+		// Tolerate user name using either the new or old format
+		return SystemUtilities.getUserName().equals(name) || getUserName().equals(name);
+	}
+
+	/**
+	 * Get user name in a format consistent with the older {@link SystemUtilities#getUserName()} 
+	 * implementation.  This is done to ensure we can still recognize the OWNER of older
+	 * projects.
+	 * 
+	 * @return current user name using legacy formatting.
+	 */
+	private String getUserName() {
+		String uname = System.getProperty("user.name");
+
+		// Remove the spaces since some operating systems allow
+		// spaces and some do not, Java's File class doesn't
+		String userName = uname;
+		if (uname.indexOf(" ") >= 0) {
+			userName = "";
+			StringTokenizer tokens = new StringTokenizer(uname, " ", false);
+			while (tokens.hasMoreTokens()) {
+				userName += tokens.nextToken();
+			}
+		}
+		return userName;
 	}
 
 	/**
@@ -264,7 +304,7 @@ public class ProjectFileManager implements ProjectData {
 					throw new ReadOnlyException(
 						"Project " + localStorageLocator.getName() + " is read-only");
 				}
-				owner = properties.getString(OWNER, SystemUtilities.getUserName());
+				owner = properties.getString(OWNER, getUserName());
 			}
 			else {
 				owner = "<unknown>"; // Unknown owner
@@ -286,7 +326,7 @@ public class ProjectFileManager implements ProjectData {
 		}
 
 		if (!properties.exists()) {
-			owner = SystemUtilities.getUserName();
+			owner = getUserName();
 			properties.putString(OWNER, owner);
 			properties.writeState();
 		}
@@ -530,7 +570,7 @@ public class ProjectFileManager implements ProjectData {
 
 	/**
 	 * Returns the owner of the project that is associated with this 
-	 * ProjectFileManager.  A value of null indicates an old multiuser
+	 * DefaultProjectData.  A value of null indicates an old multiuser
 	 * project.
 	 * @return the owner of the project 
 	 */
@@ -731,9 +771,8 @@ public class ProjectFileManager implements ProjectData {
 
 	@Override
 	public void updateRepositoryInfo(RepositoryAdapter newRepository, boolean force,
-			TaskMonitor monitor)
-			throws IOException, CancelledException {
-		
+			TaskMonitor monitor) throws IOException, CancelledException {
+
 		newRepository.connect();
 		if (!newRepository.isConnected()) {
 			throw new IOException("new respository not connected");
@@ -761,8 +800,8 @@ public class ProjectFileManager implements ProjectData {
 			long checkoutId = item.getCheckoutId();
 			int checkoutVersion = item.getCheckoutVersion();
 
-			ItemCheckoutStatus otherCheckoutStatus = newRepository.getCheckout(
-				df.getParent().getPathname(), df.getName(), checkoutId);
+			ItemCheckoutStatus otherCheckoutStatus =
+				newRepository.getCheckout(df.getParent().getPathname(), df.getName(), checkoutId);
 
 			if (!newRepository.getUser().getName().equals(otherCheckoutStatus.getUser())) {
 				return true;
@@ -793,6 +832,7 @@ public class ProjectFileManager implements ProjectData {
 	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if task cancelled
 	 */
+	@Override
 	public boolean hasInvalidCheckouts(List<DomainFile> checkoutList,
 			RepositoryAdapter newRepository, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -856,6 +896,7 @@ public class ProjectFileManager implements ProjectData {
 	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if task cancelled
 	 */
+	@Override
 	public List<DomainFile> findCheckedOutFiles(TaskMonitor monitor)
 			throws IOException, CancelledException {
 		List<DomainFile> list = new ArrayList<>();
@@ -864,8 +905,7 @@ public class ProjectFileManager implements ProjectData {
 	}
 
 	private void findCheckedOutFiles(String folderPath, List<DomainFile> checkoutList,
-			TaskMonitor monitor)
-			throws IOException, CancelledException {
+			TaskMonitor monitor) throws IOException, CancelledException {
 
 		for (String name : fileSystem.getItemNames(folderPath)) {
 			monitor.checkCancelled();
@@ -902,6 +942,30 @@ public class ProjectFileManager implements ProjectData {
 		}
 	}
 
+	@Override
+	public URL getSharedProjectURL() {
+		URL projectURL = localStorageLocator.getURL();
+		if (!GhidraURL.isServerRepositoryURL(projectURL)) {
+			if (repository == null) {
+				return null;
+			}
+			// NOTE: only supports ghidra protocol without extension protocol.
+			// Assumes any extension protocol use would be reflected in ProjectLocator URL.
+			ServerInfo serverInfo = repository.getServerInfo();
+			projectURL = GhidraURL.makeURL(serverInfo.getServerName(), serverInfo.getPortNumber(),
+				repository.getName());
+		}
+		return projectURL;
+	}
+
+	@Override
+	public URL getLocalProjectURL() {
+		if (!localStorageLocator.isTransient()) {
+			return localStorageLocator.getURL();
+		}
+		return null;
+	}
+
 	/**
 	 * Returns the standard user data filename associated with the specified file ID.
 	 * @param associatedFileID the file id
@@ -934,7 +998,7 @@ public class ProjectFileManager implements ProjectData {
 		}
 
 		userDataReconcileTimer = new GhidraSwinglessTimer(USER_DATA_RECONCILE_DELAY_MS, () -> {
-			synchronized (ProjectFileManager.this) {
+			synchronized (DefaultProjectData.this) {
 				startReconcileUserDataFiles();
 			}
 		});
@@ -1184,14 +1248,64 @@ public class ProjectFileManager implements ProjectData {
 		return projectDir;
 	}
 
+	public synchronized boolean isClosed() {
+		return closed;
+	}
+
+	public synchronized boolean isDisposed() {
+		return disposed;
+	}
+
 	@Override
 	public void close() {
+		synchronized (this) {
+			if (!closed) {
+				Msg.debug(this, "Closing ProjectData: " + projectDir);
+				closed = true;
+			}
+			if (inUseCount != 0) {
+				return; // delay dispose
+			}
+		}
 		dispose();
 	}
 
-	public void dispose() {
+	private synchronized void incrementInUseCount() {
+		++inUseCount;
+	}
+
+	private void decrementInUseCount() {
+		synchronized (this) {
+			if (inUseCount <= 0) {
+				Msg.error(this, "DefaultProjectData in-use tracking is out-of-sync: " + projectDir);
+			}
+			if (--inUseCount > 0 || !closed) {
+				return;
+			}
+		}
+		dispose();
+	}
+
+	/**
+	 * Immediately dispose this project data store instance.  If this project has an associated
+	 * {@link RepositoryAdapter} it will be disconnected as well.  This method should generally not
+	 * be used directly when there may be open {@link DomainObject} instances which may rely
+	 * on an associated server connection.  The {@link #clone()} method should be used when
+	 * open {@link DomainObject} instances may exist and should be allowed to persist until
+	 * they are closed.
+	 */
+	protected void dispose() {
 
 		synchronized (this) {
+			if (disposed) {
+				return;
+			}
+
+			Msg.debug(this, "Disposing ProjectData: " + projectDir);
+
+			closed = true;
+			disposed = true;
+
 			if (userDataReconcileTimer != null) {
 				userDataReconcileTimer.stop();
 			}
@@ -1255,7 +1369,7 @@ public class ProjectFileManager implements ProjectData {
 	/**
 	 * Returns the open domain object (opened for update) for the specified path.
 	 * @param pathname the path name
-	 * @return the domain object
+	 * @return the domain object or null if not open
 	 */
 	synchronized DomainObjectAdapter getOpenedDomainObject(String pathname) {
 		return openDomainObjects.get(pathname);
@@ -1298,4 +1412,55 @@ public class ProjectFileManager implements ProjectData {
 	public TaskMonitor getProjectDisposalMonitor() {
 		return projectDisposalMonitor;
 	}
+
+	/**
+	 * Signals the start of a complex merge operation.
+	 * The {@link #mergeEnded()} must be invoked after this method invocation when the
+	 * merge operation has completed.
+	 */
+	void mergeStarted() {
+		incrementInUseCount();
+	}
+
+	/**
+	 * Signals the completion of a complex merge operation (see {@link #mergeStarted()}).
+	 */
+	void mergeEnded() {
+		decrementInUseCount();
+	}
+
+	/**
+	 * Signals that a <b>non-link</b> file has been opened as the specified 
+	 * {@link DomainObjectAdapter doa} from this project data store and should be
+	 * tracked.  This will delay disposal of this object until the specified domain object is
+	 * either closed or saved to a different project store (i.e., hand-off operation).
+	 * It is important that this method not be invoked when opening a link-file
+	 * since it is the referenced file being opened that must be tracked and not the 
+	 * opening of the link-file itself.
+	 * @param doa domain object
+	 */
+	void trackDomainFileInUse(DomainObjectAdapter doa) {
+		DefaultProjectData projectData = fileTrackingMap.put(doa, this);
+		if (projectData == this) {
+			return; // no change in associated project
+		}
+
+		if (projectData != null) {
+			projectData.decrementInUseCount();
+		}
+		else {
+			doa.addCloseListener(dobj -> domainObjectClosed(dobj));
+		}
+
+		incrementInUseCount();
+	}
+
+	private static void domainObjectClosed(DomainObject dobj) {
+
+		DefaultProjectData projectData = fileTrackingMap.remove(dobj);
+		if (projectData != null) {
+			projectData.decrementInUseCount();
+		}
+	}
+
 }

@@ -524,8 +524,8 @@ public class AddEditDialog extends DialogComponentProvider {
 			@Override
 			public Dimension getPreferredSize() {
 				Dimension size = super.getPreferredSize();
-				// change the preferred size to use the width determined by the # of columns in 
-				// combo box editor instead of the largest item in the combo box data model to 
+				// change the preferred size to use the width determined by the # of columns in
+				// combo box editor instead of the largest item in the combo box data model to
 				// prevent the dialog from growing huge when a large label gets added to its recent
 				// items
 				Dimension editorSize = getEditor().getEditorComponent().getPreferredSize();
@@ -604,7 +604,11 @@ public class AddEditDialog extends DialogComponentProvider {
 	}
 
 	private String getText() {
-		return labelNameChoices.getText();
+		String text = labelNameChoices.getText();
+		if (text != null) {
+			text = text.trim();
+		}
+		return text;
 	}
 
 	public class NamespaceWrapper {

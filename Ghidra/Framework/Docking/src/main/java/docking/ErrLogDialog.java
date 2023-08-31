@@ -157,21 +157,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 			new GIconLabel(UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.RIGHT),
 			BorderLayout.WEST);
 
-		JLabel messageLabel;
-		if (HTMLUtilities.isHTML(message)) {
-			messageLabel = new GHtmlLabel(message) {
-				@Override
-				public Dimension getPreferredSize() {
-					// rendering HTML the label can expand larger than the screen; keep it reasonable
-					Dimension size = super.getPreferredSize();
-					size.width = 300;
-					return size;
-				}
-			};
-		}
-		else {
-			messageLabel = new GLabel(message);
-		}
+		JLabel messageLabel = createMessageLabel(message);
 
 		introPanel.add(messageLabel, BorderLayout.CENTER);
 
@@ -207,6 +193,25 @@ public class ErrLogDialog extends AbstractErrDialog {
 		// show the details panel if it was showing previously
 		detailsPane.setVisible(isShowingDetails);
 		detailsPane.selectFirstError();
+	}
+
+	private JLabel createMessageLabel(String message) {
+
+		if (HTMLUtilities.isHTML(message)) {
+			// Client HTML; keep as-is
+			return new MaxWidthHtmlLabel(message);
+		}
+
+		if (message.indexOf('\n') != 0) {
+			// JLabels do not handle newlines, so we must update the text to reflect the client's
+			// desired newlines.  Escape any content that may have angle brackets so it does not get
+			// removed when we convert the text to HTML.  Convert newlines to break tags so the
+			// label will correctly line wrap as intended by the client.
+			String html = HTMLUtilities.toLiteralHTML(message, 0);
+			return new MaxWidthHtmlLabel(html);
+		}
+
+		return new GLabel(message);
 	}
 
 	@Override
@@ -269,6 +274,10 @@ public class ErrLogDialog extends AbstractErrDialog {
 	String getBaseTitle() {
 		return baseTitle;
 	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
 
 	private class ErrorDetailsSplitPane extends JSplitPane {
 
@@ -582,6 +591,21 @@ public class ErrLogDialog extends AbstractErrDialog {
 			public GColumnRenderer<Date> getColumnRenderer() {
 				return renderer;
 			}
+		}
+	}
+
+	private class MaxWidthHtmlLabel extends GHtmlLabel {
+
+		MaxWidthHtmlLabel(String text) {
+			super(text);
+		}
+
+		@Override
+		public Dimension getPreferredSize() {
+			// rendering HTML can expand larger than the screen; keep it reasonable
+			Dimension size = super.getPreferredSize();
+			size.width = 300;
+			return size;
 		}
 	}
 }

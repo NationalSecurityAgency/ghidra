@@ -26,7 +26,7 @@ import org.junit.*;
 
 import docking.action.DockingActionIf;
 import generic.test.TestUtils;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.ItemCheckoutStatus;
@@ -276,7 +276,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	private void checkProjectInfo(Class<?> filesystemClass, String storageType) {
-		ProjectFileManager projectData = (ProjectFileManager) project.getProjectData();
+		DefaultProjectData projectData = (DefaultProjectData) project.getProjectData();
 		String msg = "Expected " + filesystemClass.getSimpleName() + ": ";
 		assertTrue(msg + "Local FileSystem", filesystemClass.isInstance(
 			TestUtils.invokeInstanceMethod("getLocalFileSystem", projectData)));

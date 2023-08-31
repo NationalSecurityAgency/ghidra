@@ -57,7 +57,7 @@ import ghidra.util.task.*;
  * Provides support for auto analysis tasks.
  * Manages a pipeline or priority of tasks to run given some event has occurred.
  */
-public class AutoAnalysisManager implements DomainObjectListener, DomainObjectClosedListener {
+public class AutoAnalysisManager implements DomainObjectListener {
 
 	/**
 	 * The name of the shared thread pool that analyzers can uses to do parallel processing.
@@ -145,7 +145,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	private AutoAnalysisManager(Program program) {
 		this.program = program;
 		eventQueueID = program.createPrivateEventQueue(this, 500);
-		program.addCloseListener(this);
+		program.addCloseListener(dobj -> dispose());
 		initializeAnalyzers();
 	}
 
@@ -362,11 +362,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	}
 
 	@Override
-	public void domainObjectClosed() {
-		dispose();
-	}
-
-	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (program == null) {
 			return;
@@ -450,6 +445,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 					break;
 				case ChangeManager.DOCR_FALLTHROUGH_CHANGED:
 				case ChangeManager.DOCR_FLOWOVERRIDE_CHANGED:
+				case ChangeManager.DOCR_LENGTH_OVERRIDE_CHANGED:
 					// TODO: not sure if this should be done this way or explicitly
 					// via the application commands (this is inconsistent with other
 					// codeDefined cases which do not rely on change events (e.g., disassembly)
@@ -961,10 +957,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 
 		PluginTool anyTool = null;
-		Iterator<PluginTool> iterator = toolSet.iterator();
-		while (iterator.hasNext()) {
-			PluginTool tool = iterator.next();
-
+		for (PluginTool tool : toolSet) {
 			anyTool = tool;
 			JFrame toolFrame = tool.getToolFrame();
 			if (toolFrame != null && toolFrame.isActive()) {
@@ -1316,6 +1309,11 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 		Program p = program; // program may get cleared by domain object change event
 		if (p == null || p.isClosed()) {
+			return;
+		}
+
+		// Save task times for temporary program or if saveable changes have been made
+		if (!p.isTemporary() && !p.isChanged()) {
 			return;
 		}
 

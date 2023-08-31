@@ -28,13 +28,15 @@ import ghidra.program.model.data.*;
  */
 public class ShowDataTypeInTreeAction extends CompositeEditorTableAction {
 
+	public final static String ACTION_NAME = "Show In Data Type Manager";
+
 	// This action should go after the row-based actions, which have this group:
 	// 3_COMPONENT_EDITOR_ACTION
 	private static final String TOOLBAR_GROUP = "4_COMPONENT_EDITOR_ACTION";
 	private static final Icon ICON = new GIcon("icon.plugin.composite.editor.show.type");
 
 	public ShowDataTypeInTreeAction(CompositeEditorProvider provider) {
-		super(provider, "Show In Data Type Manager", TOOLBAR_GROUP, null /*popupPath*/,
+		super(provider, ACTION_NAME, TOOLBAR_GROUP, null /*popupPath*/,
 			null /*menuPath*/, ICON);
 
 		setToolBarData(new ToolBarData(ICON, TOOLBAR_GROUP));

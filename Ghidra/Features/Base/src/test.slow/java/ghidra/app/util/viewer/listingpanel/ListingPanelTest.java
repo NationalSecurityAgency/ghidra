@@ -236,7 +236,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(EolCommentFieldLocation.class, loc.getClass());
 		bfloc = (EolCommentFieldLocation) loc;
 		assertEquals(0, bfloc.getRow());
-		assertEquals(72, bfloc.getCharOffset());
+		assertEquals(70, bfloc.getCharOffset());
 	}
 
 	@Test
@@ -257,7 +257,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 
 		ListingField f = (ListingField) l.getField(4);
-		assertEquals(comment1 + "  " + comment2, f.getText());
+		assertEquals(comment1 + " " + comment2, f.getText());
 
 		FieldFactory ff = f.getFieldFactory();
 		RowColLocation rc = f.textOffsetToScreenLocation(3);
@@ -306,13 +306,7 @@ public class ListingPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		showTool(tool);
 
 		AtomicReference<AddressSetView> addresses = new AtomicReference<>();
-		CodeViewerService cvs = tool.getService(CodeViewerService.class);
-		cvs.addListingDisplayListener(new AddressSetDisplayListener() {
-			@Override
-			public void visibleAddressesChanged(AddressSetView visibleAddresses) {
-				addresses.set(visibleAddresses);
-			}
-		});
+		cvs.addListingDisplayListener(visibleAddresses -> addresses.set(visibleAddresses));
 
 		assertNull(addresses.get());
 		cvs.goTo(new ProgramLocation(program, addr(0x1008000)), false);

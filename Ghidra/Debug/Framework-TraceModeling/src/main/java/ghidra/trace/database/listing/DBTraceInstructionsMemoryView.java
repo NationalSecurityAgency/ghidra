@@ -59,9 +59,10 @@ public class DBTraceInstructionsMemoryView
 	@Override
 	public DBTraceInstruction create(Lifespan lifespan, Address address,
 			TracePlatform platform, InstructionPrototype prototype,
-			ProcessorContextView context) throws CodeUnitInsertionException {
+			ProcessorContextView context, int forcedLengthOverride)
+			throws CodeUnitInsertionException {
 		return delegateWrite(address.getAddressSpace(),
-			m -> m.create(lifespan, address, platform, prototype, context));
+			m -> m.create(lifespan, address, platform, prototype, context, forcedLengthOverride));
 	}
 
 	@Override

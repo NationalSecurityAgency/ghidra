@@ -88,10 +88,10 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			new SplitDyldCache(provider, options.processLocalSymbols(), log, monitor)) {
 
 			// Set image base
-			setDyldCacheImageBase(splitDyldCache.getDyldCacheHeader(0));
+			setDyldCacheImageBase(splitDyldCache);
 
 			// Set entry point
-			setDyldCacheEntryPoint(splitDyldCache.getDyldCacheHeader(0));
+			setDyldCacheEntryPoint(splitDyldCache);
 
 			// Setup memory
 			// Check if local symbols are present
@@ -125,25 +125,25 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Sets the program's image base.
 	 * 
-	 * @param dyldCacheHeader The "base" DYLD Cache header
+	 * @param splitDyldCache The split DYLD cache
 	 * @throws Exception if there was problem setting the program's image base
 	 */
-	private void setDyldCacheImageBase(DyldCacheHeader dyldCacheHeader) throws Exception {
+	private void setDyldCacheImageBase(SplitDyldCache splitDyldCache) throws Exception {
 		monitor.setMessage("Setting image base...");
 		monitor.initialize(1);
-		program.setImageBase(space.getAddress(dyldCacheHeader.getBaseAddress()), true);
+		program.setImageBase(space.getAddress(splitDyldCache.getBaseAddress()), true);
 		monitor.incrementProgress(1);
 	}
 
 	/**
 	 * Sets the program's entry point (if known).
 	 * 
-	 * @param dyldCacheHeader The "base" DYLD Cache header
+	 * @param splitDyldCache The split DYLD cache
 	 * @throws Exception if there was problem setting the program's entry point
 	 */
-	private void setDyldCacheEntryPoint(DyldCacheHeader dyldCacheHeader) throws Exception {
+	private void setDyldCacheEntryPoint(SplitDyldCache splitDyldCache) throws Exception {
 		monitor.initialize(1, "Setting entry pointer base...");
-		Long entryPoint = dyldCacheHeader.getEntryPoint();
+		Long entryPoint = splitDyldCache.getDyldCacheHeader(0).getEntryPoint();
 		if (entryPoint != null) {
 			Address entryPointAddr = space.getAddress(entryPoint);
 			program.getSymbolTable().addExternalEntryPoint(entryPointAddr);

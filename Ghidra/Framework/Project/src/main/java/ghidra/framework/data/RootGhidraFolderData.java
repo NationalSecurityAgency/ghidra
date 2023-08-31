@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +20,18 @@ import ghidra.framework.store.FileSystem;
 
 public class RootGhidraFolderData extends GhidraFolderData {
 
-	RootGhidraFolderData(ProjectFileManager fileManager, DomainFolderChangeListener listener) {
-		super(fileManager, listener);
+	RootGhidraFolderData(DefaultProjectData projectData, DomainFolderChangeListener listener) {
+		super(projectData, listener);
 	}
 
 	@Override
 	GhidraFolder getDomainFolder() {
-		return new RootGhidraFolder(getProjectFileManager(), getChangeListener());
+		return new RootGhidraFolder(getProjectData(), getChangeListener());
 	}
 
 	/**
 	 * Provided for testing use only
-	 * @param fs
+	 * @param fs versioned file system
 	 */
 	void setVersionedFileSystem(FileSystem fs) {
 		versionedFileSystem = fs;

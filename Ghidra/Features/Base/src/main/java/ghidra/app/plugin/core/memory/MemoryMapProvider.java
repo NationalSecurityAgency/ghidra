@@ -26,7 +26,6 @@ import javax.swing.table.TableModel;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
-import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField.MaxLengthField;
 import generic.theme.GIcon;
@@ -41,18 +40,19 @@ import ghidra.program.model.mem.MemoryBlockType;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
+import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.actions.MakeProgramSelectionAction;
 
 /**
  * Provider for the memory map Component.
- *
  */
 class MemoryMapProvider extends ComponentProviderAdapter {
 	private final static int MAX_SIZE = 256;
 
 	private JPanel mainPanel;
-	private GTable memTable;
-	private JScrollPane memPane;
-	private MemoryMapModel mapModel;
+	private MemoryMapModel tableModel;
+	private GhidraTable table;
+	private GTableFilterPanel<MemoryBlock> filterPanel;
 
 	private DockingAction addAction;
 	private DockingAction moveAction;
@@ -84,6 +84,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	@Override
 	public void componentShown() {
 		updateMap();
+		contextChanged();
 	}
 
 	@Override
@@ -96,7 +97,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		if (program == null) {
 			return null;
 		}
-		return new ProgramActionContext(this, program);
+		return new ProgramActionContext(this, program, table);
 	}
 
 	void setStatusText(String msg) {
@@ -105,7 +106,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	void dispose() {
 		removeFromTool();
-		memTable.dispose();
+		filterPanel.dispose();
 		plugin = null;
 		program = null;
 		tool = null;
@@ -113,7 +114,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	void setProgram(Program program) {
 		this.program = program;
-		updateMap(program);
+		updateProgram(program);
 		arrangeTable();
 	}
 
@@ -121,69 +122,68 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		return memManager;
 	}
 
-	/**
-	 * Creates the Main Panel for the Memory Map Dialog
-	 */
 	private JPanel buildMainPanel() {
 		JPanel memPanel = new JPanel(new BorderLayout());
-		mapModel = new MemoryMapModel(this, null);
-		memTable = new MemoryMapTable(mapModel);
+		tableModel = new MemoryMapModel(this, null);
+		table = new MemoryMapTable(tableModel);
+		filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
 
-		memTable.setAutoCreateColumnsFromModel(false);
+		table.installNavigation(tool);
+		table.setAutoCreateColumnsFromModel(false);
 
 		GTableCellRenderer monoRenderer = new GTableCellRenderer();
 		monoRenderer.setFont(monoRenderer.getFixedWidthFont());
 
-		TableColumn column = memTable.getColumn(MemoryMapModel.START_COL);
+		TableColumn column = table.getColumn(MemoryMapModel.START_COL);
 		column.setCellRenderer(monoRenderer);
-		column = memTable.getColumn(MemoryMapModel.END_COL);
+		column = table.getColumn(MemoryMapModel.END_COL);
 		column.setCellRenderer(monoRenderer);
-		column = memTable.getColumn(MemoryMapModel.LENGTH_COL);
+		column = table.getColumn(MemoryMapModel.LENGTH_COL);
 		column.setCellRenderer(monoRenderer);
 
-		column = memTable.getColumn(MemoryMapModel.READ_COL);
+		column = table.getColumn(MemoryMapModel.READ_COL);
 		column.setCellRenderer(new GBooleanCellRenderer());
-		column = memTable.getColumn(MemoryMapModel.WRITE_COL);
+		column = table.getColumn(MemoryMapModel.WRITE_COL);
 		column.setCellRenderer(new GBooleanCellRenderer());
-		column = memTable.getColumn(MemoryMapModel.EXECUTE_COL);
+		column = table.getColumn(MemoryMapModel.EXECUTE_COL);
 		column.setCellRenderer(new GBooleanCellRenderer());
-		column = memTable.getColumn(MemoryMapModel.VOLATILE_COL);
+		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
 		column.setCellRenderer(new GBooleanCellRenderer());
-		column = memTable.getColumn(MemoryMapModel.OVERLAY_COL);
+		column = table.getColumn(MemoryMapModel.OVERLAY_COL);
 		column.setCellRenderer(new GBooleanCellRenderer());
-		column = memTable.getColumn(MemoryMapModel.INIT_COL);
+		column = table.getColumn(MemoryMapModel.INIT_COL);
 		column.setCellRenderer(new GBooleanCellRenderer());
 
-		memTable.setDefaultEditor(String.class,
+		table.setDefaultEditor(String.class,
 			new GTableTextCellEditor(new MaxLengthField(MAX_SIZE)));
 
-		memPane = new JScrollPane(memTable);
-		memTable.setPreferredScrollableViewportSize(new Dimension(700, 105));
+		table.setPreferredScrollableViewportSize(new Dimension(700, 105));
 
-		memTable.addMouseListener(new MouseHandler());
+		table.addMouseListener(new MouseHandler());
 
-		memTable.addKeyListener(new KeyHandler());
+		table.addKeyListener(new KeyHandler());
 
-		memTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		ListSelectionModel lsm = memTable.getSelectionModel();
+		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		ListSelectionModel lsm = table.getSelectionModel();
 
 		lsm.addListSelectionListener(e -> {
-			// Ignore extra messages.
 			if (e.getValueIsAdjusting()) {
 				return;
 			}
 
 			ListSelectionModel model = (ListSelectionModel) e.getSource();
 			enableOptions(model);
+			contextChanged();
 		});
 
-		memPanel.add(new GLabel("Memory Blocks", SwingConstants.CENTER), BorderLayout.NORTH);
-		memPanel.add(memPane, BorderLayout.CENTER);
+		memPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+		memPanel.add(filterPanel, BorderLayout.SOUTH);
 
 		return memPanel;
 	}
 
 	private void addLocalActions() {
+
 		Icon addImage = new GIcon("icon.plugin.memorymap.add");
 
 		addAction = new MemoryMapAction("Add Block", addImage) {
@@ -294,6 +294,10 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		setBaseAction.setDescription("Set Image Base");
 		tool.addLocalAction(this, setBaseAction);
+
+		MakeProgramSelectionAction action = new MakeProgramSelectionAction(plugin, table);
+		action.getToolBarData().setToolBarGroup("B"); // the other actions are in group 'A'
+		tool.addLocalAction(this, action);
 	}
 
 	private void setBase() {
@@ -332,12 +336,6 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	/**
-	 * Enable/disable the expand up/down actions according to the selected
-	 * block.
-	 *
-	 * @param numSelected number of blocks selected
-	 */
 	private void enableExpandActions(int numSelected) {
 		if (numSelected != 1) {
 			expandUpAction.setEnabled(false);
@@ -368,7 +366,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	}
 
 	JTable getTable() {
-		return memTable;
+		return table;
 	}
 
 	/**
@@ -376,7 +374,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	 */
 	void updateMap() {
 		if (isVisible()) {
-			mapModel.update();
+			tableModel.update();
 			arrangeTable();
 			updateTitle();
 		}
@@ -385,7 +383,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	void updateData() {
 		if (isVisible()) {
 			updateTitle();
-			memTable.repaint();
+			table.repaint();
 		}
 	}
 
@@ -398,9 +396,9 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	/**
 	 * Update the memory map with the new program's memory
 	 */
-	private void updateMap(Program updateProgram) {
+	private void updateProgram(Program updatedProgram) {
 		enableOptions(null);
-		if (updateProgram == null) {
+		if (updatedProgram == null) {
 			addAction.setEnabled(false);
 			setBaseAction.setEnabled(false);
 		}
@@ -408,8 +406,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			setBaseAction.setEnabled(true);
 		}
 
-		mapModel = new MemoryMapModel(this, updateProgram);
-		memTable.setModel(mapModel);
+		tableModel.setProgram(updatedProgram);
 		updateTitle();
 	}
 
@@ -420,48 +417,48 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		// memTable.setRowHeight(20);
 		TableColumn column;
 
-		column = memTable.getColumn(MemoryMapModel.READ_COL);
+		column = table.getColumn(MemoryMapModel.READ_COL);
 		if (column != null) {
 			column.setMaxWidth(25);
 			column.setMinWidth(25);
 			column.setResizable(false);
 		}
 
-		column = memTable.getColumn(MemoryMapModel.WRITE_COL);
+		column = table.getColumn(MemoryMapModel.WRITE_COL);
 		if (column != null) {
 			column.setMaxWidth(25);
 			column.setMinWidth(25);
 			column.setResizable(false);
 		}
 
-		column = memTable.getColumn(MemoryMapModel.EXECUTE_COL);
+		column = table.getColumn(MemoryMapModel.EXECUTE_COL);
 		if (column != null) {
 			column.setMaxWidth(25);
 			column.setMinWidth(25);
 			column.setResizable(false);
 		}
 
-		column = memTable.getColumn(MemoryMapModel.VOLATILE_COL);
+		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
 		if (column != null) {
 			column.setMaxWidth(65);
 			column.setMinWidth(65);
 			column.setResizable(false);
 		}
 
-		column = memTable.getColumn(MemoryMapModel.OVERLAY_COL);
+		column = table.getColumn(MemoryMapModel.OVERLAY_COL);
 		if (column != null) {
 			column.setMaxWidth(65);
 			column.setMinWidth(65);
 			column.setResizable(false);
 		}
 
-		column = memTable.getColumn(MemoryMapModel.BLOCK_TYPE_COL);
+		column = table.getColumn(MemoryMapModel.BLOCK_TYPE_COL);
 		if (column != null) {
 			column.setMinWidth(60);
 //			column.setResizable(true);
 		}
 
-		column = memTable.getColumn(MemoryMapModel.INIT_COL);
+		column = table.getColumn(MemoryMapModel.INIT_COL);
 		if (column != null) {
 			column.setMaxWidth(80);
 			column.setMinWidth(80);
@@ -484,7 +481,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			if (!e.isPopupTrigger()) {
 				if ((e.getModifiersEx() &
 					(InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0) {
-					selectAddress();
+					navigateToAddress();
 				}
 			}
 		}
@@ -499,30 +496,30 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		@Override
 		public void keyPressed(KeyEvent e) {
 			if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-				selectAddress();
+				navigateToAddress();
 				e.consume();
 			}
 		}
 	}
 
-	private void selectAddress() {
-		int row = memTable.getSelectedRow();
-		int viewColumn = memTable.getSelectedColumn();
-		int col = memTable.convertColumnIndexToModel(viewColumn);
-		MemoryBlock block = mapModel.getBlockAt(row);
-		if (block != null && (col == 1 || col == 2)) {
-			Address addr = (col == 1 ? block.getStart() : block.getEnd());
+	private void navigateToAddress() {
+		int viewRow = table.getSelectedRow();
+		int viewColumn = table.getSelectedColumn();
+		int modelColumn = table.convertColumnIndexToModel(viewColumn);
+		MemoryBlock block = tableModel.getBlockAt(viewRow);
+		if (block != null && (modelColumn == 1 || modelColumn == 2)) {
+			Address addr = (modelColumn == 1 ? block.getStart() : block.getEnd());
 			plugin.blockSelected(block, addr);
-			memTable.setRowSelectionInterval(row, row);
+			table.setRowSelectionInterval(viewRow, viewRow);
 		}
 	}
 
 	private MemoryBlock getSelectedBlock() {
-		int row = memTable.getSelectedRow();
+		int row = table.getSelectedRow();
 		if (row < 0) {
 			return null;
 		}
-		return mapModel.getBlockAt(row);
+		return tableModel.getBlockAt(row);
 	}
 
 	/**
@@ -534,12 +531,12 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			return;
 		}
 		ArrayList<MemoryBlock> delBlocks = new ArrayList<>();
-		int delRows[] = memTable.getSelectedRows();
+		int delRows[] = table.getSelectedRows();
 		for (int element : delRows) {
-			MemoryBlock block = mapModel.getBlockAt(element);
+			MemoryBlock block = tableModel.getBlockAt(element);
 			delBlocks.add(block);
 		}
-		memTable.clearSelection();
+		table.clearSelection();
 		deleteBlock(delBlocks);
 	}
 
@@ -642,12 +639,12 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	 */
 	private void mergeBlocks() {
 		ArrayList<MemoryBlock> blocks = new ArrayList<>();
-		int rows[] = memTable.getSelectedRows();
+		int rows[] = table.getSelectedRows();
 		for (int element : rows) {
-			MemoryBlock block = mapModel.getBlockAt(element);
+			MemoryBlock block = tableModel.getBlockAt(element);
 			blocks.add(block);
 		}
-		memTable.clearSelection();
+		table.clearSelection();
 		memManager.mergeBlocks(blocks);
 	}
 
@@ -670,9 +667,9 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		return plugin.getTool();
 	}
 
-// ==================================================================================================
+//==================================================================================================
 // Inner Classes
-// ==================================================================================================
+//==================================================================================================
 
 	private class MemoryMapTable extends GhidraTable {
 		MemoryMapTable(TableModel model) {
@@ -691,7 +688,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	private abstract class MemoryMapAction extends DockingAction {
 		MemoryMapAction(String name, Icon icon) {
 			super(name, plugin.getName());
-			this.setToolBarData(new ToolBarData(icon, null));
+			this.setToolBarData(new ToolBarData(icon, "A"));
 		}
 
 		public boolean checkExclusiveAccess() {

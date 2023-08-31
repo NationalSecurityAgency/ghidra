@@ -16,6 +16,7 @@
 package ghidra.framework.model;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 import ghidra.framework.client.RepositoryAdapter;
@@ -91,6 +92,18 @@ public class TestDummyProjectData implements ProjectData {
 
 	@Override
 	public ProjectLocator getProjectLocator() {
+		// stub
+		return null;
+	}
+
+	@Override
+	public URL getSharedProjectURL() {
+		// stub
+		return null;
+	}
+
+	@Override
+	public URL getLocalProjectURL() {
 		// stub
 		return null;
 	}

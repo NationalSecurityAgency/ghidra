@@ -45,10 +45,10 @@ import docking.widgets.dialogs.NumberRangeInputDialog;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.compositeeditor.ApplyAction;
-import ghidra.app.plugin.core.compositeeditor.CompositeEditorTableAction;
 import ghidra.app.plugin.core.datamgr.actions.*;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
+import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
@@ -777,7 +777,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		// the owner for the action is the tool, since the registered item is just a placeholder
 		// because the editor actions are shared actions
 		String owner = " (" + ToolConstants.SHARED_OWNER + ')';
-		String actionName = CompositeEditorTableAction.EDIT_ACTION_PREFIX + ApplyAction.ACTION_NAME;
+		String actionName = DataTypeEditorManager.EDIT_ACTION_PREFIX + ApplyAction.ACTION_NAME;
 		String optionName = actionName + owner;
 		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 

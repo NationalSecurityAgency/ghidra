@@ -514,10 +514,10 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		RowObjectFilterModel<ROW_OBJECT> newModel = createTextFilterModel(currentModel);
 
 		// only wrapped models are set on tables, since they have to replace the original
-		if (newModel instanceof TableModelWrapper) {
+		if (newModel instanceof WrappingTableModel) {
 			table.setModel(newModel);
 
-			TableModelWrapper<ROW_OBJECT> wrapper = (TableModelWrapper<ROW_OBJECT>) newModel;
+			WrappingTableModel wrapper = (WrappingTableModel) newModel;
 			currentModel.addTableModelListener(new TranslatingTableModelListener(wrapper));
 		}
 
@@ -527,7 +527,6 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		return newModel;
 	}
 
-	// Cast from ThreadedTableModel...
 	protected RowObjectFilterModel<ROW_OBJECT> createTextFilterModel(
 			RowObjectTableModel<ROW_OBJECT> model) {
 		RowObjectFilterModel<ROW_OBJECT> newModel = null;
@@ -894,9 +893,9 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	 */
 	private class TranslatingTableModelListener implements TableModelListener {
 
-		private TableModelWrapper<ROW_OBJECT> tableModelWrapper;
+		private WrappingTableModel tableModelWrapper;
 
-		TranslatingTableModelListener(TableModelWrapper<ROW_OBJECT> tableModelWrapper) {
+		TranslatingTableModelListener(WrappingTableModel tableModelWrapper) {
 			this.tableModelWrapper = tableModelWrapper;
 		}
 
@@ -907,7 +906,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 			// so that the indices used in the event are correct for the filtered state of the
 			// view.
 			//
-			tableModelWrapper.fireTableDataChanged(translateEventForFilter(e));
+			tableModelWrapper.fireTableChanged(translateEventForFilter(e));
 		}
 
 		private TableModelEvent translateEventForFilter(TableModelEvent event) {
@@ -948,9 +947,8 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 			}
 
 			isUpdatingModel = true;
-			if (textFilterModel instanceof TableModelWrapper) {
-				TableModelWrapper<ROW_OBJECT> tableModelWrapper =
-					(TableModelWrapper<ROW_OBJECT>) textFilterModel;
+			if (textFilterModel instanceof WrappingTableModel) {
+				WrappingTableModel tableModelWrapper = (WrappingTableModel) textFilterModel;
 				tableModelWrapper.wrappedModelChangedFromTableChangedEvent();
 			}
 			filterField.alert();

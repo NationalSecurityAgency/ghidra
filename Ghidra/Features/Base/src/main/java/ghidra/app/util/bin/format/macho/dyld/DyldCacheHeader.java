@@ -652,7 +652,7 @@ public class DyldCacheHeader implements StructConverter {
 		addHeaderField(struct, QWORD, "localSymbolsOffset","file offset of where local symbols are stored");
 		addHeaderField(struct, QWORD, "localSymbolsSize", "size of local symbols information");
 		addHeaderField(struct, new ArrayDataType(BYTE, 16, 1), "uuid","unique value for each shared cache file");
-		addHeaderField(struct, QWORD, "cacheType", "0 for development, 1 for production");
+		addHeaderField(struct, QWORD, "cacheType", "0 for development, 1 for production, 2 for multi-cache");
 		addHeaderField(struct, DWORD, "branchPoolsOffset","file offset to table of uint64_t pool addresses");
 		addHeaderField(struct, DWORD, "branchPoolsCount", "number of uint64_t entries");
 		if (hasAccelerateInfo()) {
@@ -768,7 +768,7 @@ public class DyldCacheHeader implements StructConverter {
 		}
 	}
 
-	private void parseLocalSymbolsInfo(boolean shouldParse, MessageLog log, TaskMonitor monitor)
+	public void parseLocalSymbolsInfo(boolean shouldParse, MessageLog log, TaskMonitor monitor)
 			throws CancelledException {
 		if (!shouldParse || localSymbolsOffset == 0) {
 			return;

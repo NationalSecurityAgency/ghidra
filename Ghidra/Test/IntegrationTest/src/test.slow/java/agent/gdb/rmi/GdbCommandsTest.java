@@ -25,11 +25,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import db.Transaction;
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiAcceptor;
 import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
@@ -51,7 +52,7 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
 
-@Ignore("Cannot install python packages in CI")
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 	//@Test
@@ -69,11 +70,10 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	public void testConnectErrorNoArg() throws Exception {
 		try {
 			runThrowError("""
-					set python print-stack full
-					python import ghidragdb
+					%s
 					ghidra trace connect
 					quit
-					""");
+					""".formatted(PREAMBLE));
 			fail();
 		}
 		catch (GdbError e) {
@@ -85,35 +85,32 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testConnect() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 	}
 
 	@Test
 	public void testDisconnect() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				ghidra trace disconnect
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 	}
 
 	@Test
 	public void testStartTraceDefaults() throws Exception {
 		// Default name and lcsp
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				ghidra trace start
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("x86:LE:64:default",
@@ -126,12 +123,11 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testStartTraceDefaultNoFile() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				ghidra trace start
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			assertThat(mdo.get(), instanceOf(Trace.class));
 		}
@@ -140,15 +136,14 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testStartTraceCustomize() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				set ghidra-language Toy:BE:64:default
 				set ghidra-compiler default
 				ghidra trace start myToy
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		DomainFile dfMyToy = env.getProject().getProjectData().getFile("/New Traces/myToy");
 		assertNotNull(dfMyToy);
 		try (ManagedDomainObject mdo = new ManagedDomainObject(dfMyToy, false, false, monitor)) {
@@ -164,14 +159,13 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	public void testStopTrace() throws Exception {
 		// TODO: This test assumes gdb and the target file bash are x86-64
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				ghidra trace start
 				ghidra trace stop
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		DomainFile dfBash = env.getProject().getProjectData().getFile("/New Traces/gdb/bash");
 		assertNotNull(dfBash);
 		// TODO: Given the 'quit' command, I'm not sure this assertion is checking anything.
@@ -184,10 +178,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		String out = runThrowError(addr -> {
 			refAddr.set(addr);
 			return """
-					set python print-stack full
+					%s
 					file bash
-					echo \\n
-					python import ghidragdb
 					echo \\n---Import---\\n
 					ghidra trace info
 					ghidra trace connect %s
@@ -203,7 +195,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 					echo \\n---Disconnect---\\n
 					ghidra trace info
 					quit
-					""".formatted(addr);
+					""".formatted(PREAMBLE, addr);
 		});
 
 		assertEquals("""
@@ -230,8 +222,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	public void testLcsp() throws Exception {
 		// TODO: This test assumes x86-64 on test system
 		String out = runThrowError("""
-				set python print-stack full
-				python import ghidragdb
+				%s
 				echo \\n---Import---\\n
 				ghidra trace lcsp
 				echo \\n---\\n
@@ -245,7 +236,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---Compiler---\\n
 				ghidra trace lcsp
 				quit
-				""");
+				""".formatted(PREAMBLE));
 		assertEquals("""
 				Selected Ghidra language: DATA:LE:64:default
 				Selected Ghidra compiler: pointer64""",
@@ -270,8 +261,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 
 		// For sanity check, verify failing to save drops data
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				ghidra trace start no-save
@@ -279,15 +269,14 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace tx-commit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/no-save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(0, tb.trace.getTimeManager().getAllSnapshots().size());
 		}
 
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				ghidra trace start save
@@ -296,7 +285,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				ghidra trace save
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/save")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals(1, tb.trace.getTimeManager().getAllSnapshots().size());
@@ -306,8 +295,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testSnapshot() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				ghidra trace start
@@ -315,7 +303,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace new-snap "Scripted snapshot"
 				ghidra trace tx-commit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceSnapshot snapshot = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots());
@@ -327,8 +315,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutmem() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -342,7 +329,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -358,8 +345,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutmemInferior2() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				add-inferior
 				inferior 2
@@ -375,7 +361,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			AddressSpace ram2 = tb.trace.getBaseAddressFactory().getAddressSpace("ram2");
@@ -393,8 +379,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutmemState() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -408,7 +393,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -426,8 +411,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testDelmem() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -442,7 +426,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -462,8 +446,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				.mapToObj(Integer::toString)
 				.collect(Collectors.joining(",", "{", "}"));
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -476,7 +459,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr, count));
+				""".formatted(PREAMBLE, addr, count));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			long snap = Unique.assertOne(tb.trace.getTimeManager().getAllSnapshots()).getKey();
@@ -505,8 +488,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				.mapToObj(Integer::toString)
 				.collect(Collectors.joining(",", "{", "}"));
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -520,7 +502,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr, count));
+				""".formatted(PREAMBLE, addr, count));
 		// The spaces will be left over, but the values should be zeroed
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
@@ -545,8 +527,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testCreateObj() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
@@ -555,7 +536,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				ghidra trace tx-commit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -570,8 +551,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testInsertObj() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
@@ -581,7 +561,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				ghidra trace tx-commit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -597,8 +577,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRemoveObj() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
@@ -608,7 +587,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace remove-obj Test.Objects[1]
 				ghidra trace tx-commit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -624,8 +603,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			throws Exception {
 		String expPrint = DummyProc.which("expPrint");
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file %s
 				start
@@ -638,7 +616,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr, expPrint, extra, gdbExpr, gtype));
+				""".formatted(PREAMBLE, addr, expPrint, extra, gdbExpr, gtype));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/expPrint")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -781,8 +759,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testRetainValues() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				set language c++
@@ -799,7 +776,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -818,8 +795,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testGetObj() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				ghidra trace start
 				ghidra trace tx-start "Create Object"
@@ -831,7 +807,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace get-obj Test.Objects[1]
 				echo \\n---
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			TraceObject object = tb.trace.getObjectManager()
@@ -846,8 +822,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	public void testGetValues() throws Exception {
 		String expPrint = DummyProc.which("expPrint");
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file %s
 				set language c++
@@ -878,7 +853,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(addr, expPrint));
+				""".formatted(PREAMBLE, addr, expPrint));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/expPrint")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
@@ -905,8 +880,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testGetValuesRng() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				set language c++
@@ -922,7 +896,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				echo \\n---
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
@@ -935,8 +909,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testActivateObject() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				set language c++
@@ -949,7 +922,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace activate Test.Objects[1]
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			assertSame(mdo.get(), traceManager.getCurrentTrace());
 			assertEquals("Test.Objects[1]",
@@ -960,8 +933,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testDisassemble() throws Exception {
 		String out = runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				set language c++
@@ -975,7 +947,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Not concerned about specifics, so long as disassembly occurs
@@ -991,8 +963,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutInferiors() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				add-inferior
 				ghidra trace start
@@ -1000,7 +971,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace put-inferiors
 				ghidra trace tx-commit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1015,8 +986,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutAvailable() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				add-inferior
 				ghidra trace start
@@ -1024,7 +994,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace put-available
 				ghidra trace tx-commit
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1039,8 +1009,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutBreakpoints() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -1055,7 +1024,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			List<TraceObjectValue> infBreakLocVals = tb.trace.getObjectManager()
@@ -1090,8 +1059,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutEnvironment() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -1101,7 +1069,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Assumes GDB on Linux amd64
@@ -1116,8 +1084,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutRegions() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -1127,7 +1094,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1140,8 +1107,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutModules() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -1151,7 +1117,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1165,8 +1131,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutThreads() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -1176,7 +1141,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics
@@ -1187,8 +1152,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 	@Test
 	public void testPutFrames() throws Exception {
 		runThrowError(addr -> """
-				set python print-stack full
-				python import ghidragdb
+				%s
 				ghidra trace connect %s
 				file bash
 				start
@@ -1200,7 +1164,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				ghidra trace tx-commit
 				kill
 				quit
-				""".formatted(addr));
+				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			// Would be nice to control / validate the specifics

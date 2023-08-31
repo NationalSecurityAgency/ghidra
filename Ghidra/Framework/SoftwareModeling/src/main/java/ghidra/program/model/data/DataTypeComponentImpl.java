@@ -356,16 +356,17 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	 *                 Dynamic types such as string must have a positive length
 	 *                 specified.
 	 * @return preferred component length
+	 * @throws IllegalArgumentException if length not specified for a {@link Dynamic} dataType.
 	 */
 	public static int getPreferredComponentLength(DataType dataType, int length) {
 		if (DataTypeComponent.usesZeroLengthComponent(dataType)) {
 			return 0;
 		}
-		int dtLength = dataType.getAlignedLength();
+		int dtLength = dataType.getLength();
 		if (length <= 0) {
 			length = dtLength;
 		}
-		else if (dtLength > 0 && dtLength < length) {
+		else if (dtLength >= 0 && dtLength < length) { // constrain fixed-length type
 			length = dtLength;
 		}
 		if (length <= 0) {

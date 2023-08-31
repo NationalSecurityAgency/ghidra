@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.compositeeditor;
+package agent.gdb.model.gadp;
 
-public interface StructureEditorOptionManager {
-	
-	public abstract boolean showStructureNumbersInHex();
+import agent.gdb.model.AbstractModelForGdbSessionAttacherTest;
+
+public class GadpModelForGdbSessionAttacherTest extends AbstractModelForGdbSessionAttacherTest {
+	@Override
+	public ModelHost modelHost() throws Throwable {
+		return new GadpGdbModelHost();
+	}
 }

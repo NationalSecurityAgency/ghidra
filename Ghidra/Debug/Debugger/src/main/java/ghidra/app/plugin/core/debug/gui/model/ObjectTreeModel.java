@@ -25,6 +25,7 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectClosedListener;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
@@ -45,7 +46,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public void domainObjectClosed() {
+		public void domainObjectClosed(DomainObject dobj) {
 			setTrace(null);
 		}
 

@@ -65,6 +65,9 @@ public class FdInputStream extends InputStream {
 		if (closed) {
 			throw new IOException("Stream closed");
 		}
+		if (len == 0) {
+			return 0;
+		}
 		Memory buf = new Memory(len);
 		int ret = LIB_POSIX.read(fd, buf, len);
 		buf.read(0, b, off, ret);

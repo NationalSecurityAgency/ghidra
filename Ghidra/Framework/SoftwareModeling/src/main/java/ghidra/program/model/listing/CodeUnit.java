@@ -20,6 +20,7 @@ package ghidra.program.model.listing;
 import java.util.ConcurrentModificationException;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.InstructionPrototype;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -175,19 +176,18 @@ public interface CodeUnit extends MemBuffer, PropertySet {
 	public void setCommentAsArray(int commentType, String[] comment);
 
 	/**
-	 * Return true if the given CodeUnit follows
-	 * directly after this code unit.
-	 * @param codeUnit the codeUnit being tested to see if it follows this codeUnit.
-	 */
-	public boolean isSuccessor(CodeUnit codeUnit);
-
-	/**
-	 * Get length of this code unit.
+	 * Get length of this code unit.  
+	 * NOTE: If an {@link Instruction#isLengthOverridden() instruction length-override} is
+	 * set this method will return the reduced length.
+	 * @return code unit length
 	 */
 	public int getLength();
 
 	/**
 	 * Get the bytes that make up this code unit.
+	 * NOTE: If an {@link Instruction#isLengthOverridden() instruction length-override} is
+	 * set this method will not return all bytes associated with the 
+	 * {@link InstructionPrototype instruction prototype}.
 	 * @return an array of bytes that are in memory at the codeunits address.  The
 	 * array length is the same as the codeUnits length
 	 * @throws MemoryAccessException if the full number of bytes could not be read.

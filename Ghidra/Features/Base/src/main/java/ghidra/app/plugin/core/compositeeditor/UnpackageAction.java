@@ -43,7 +43,7 @@ public class UnpackageAction extends CompositeEditorTableAction {
 	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
 	public UnpackageAction(StructureEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		adjustEnablement();

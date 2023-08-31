@@ -205,7 +205,8 @@ public interface GoToService {
 			GoToServiceListener listener, TaskMonitor monitor);
 
 	/**
-	 * Returns the default navigatable that is the destination for GoTo events.
+	 * Returns the default navigatable that is the destination for GoTo events.  This navigatable 
+	 * will not be null. 
 	 * @return the navigatable
 	 */
 	public Navigatable getDefaultNavigatable();

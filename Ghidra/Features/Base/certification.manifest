@@ -220,6 +220,8 @@ src/main/help/help/topics/DbViewerPlugin/images/DatabaseViewer.png||GHIDRA||||EN
 src/main/help/help/topics/DisassembledViewPlugin/DisassembledViewPlugin.htm||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/images/DisassembledViewPluginMain.png||GHIDRA||||END|
 src/main/help/help/topics/DisassemblerPlugin/Disassembly.htm||GHIDRA||||END|
+src/main/help/help/topics/DisassemblerPlugin/images/LengthOverrideLockPrefixExample.png||GHIDRA||||END|
+src/main/help/help/topics/DisassemblerPlugin/images/LengthOverrideLockPrefixExample2.png||GHIDRA||||END|
 src/main/help/help/topics/DisassemblerPlugin/images/ProcessorOptions.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/Docking_Windows.htm||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/Tool.png||GHIDRA||||END|

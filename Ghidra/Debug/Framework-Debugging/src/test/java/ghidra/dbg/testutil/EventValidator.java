@@ -203,12 +203,6 @@ public class EventValidator
 				case THREAD_EXITED:
 					validateDestroyed(type.name(), TargetThread.class, threads, parameters);
 					break;
-				case MODULE_LOADED:
-					validateCreated(type.name(), TargetModule.class, modules, parameters);
-					break;
-				case MODULE_UNLOADED:
-					validateDestroyed(type.name(), TargetModule.class, modules, parameters);
-					break;
 				case STOPPED:
 				case RUNNING:
 				case BREAKPOINT_HIT:

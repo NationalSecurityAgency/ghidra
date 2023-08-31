@@ -20,8 +20,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
@@ -36,7 +34,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
-import ghidra.util.StringUtilities;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 
 /**
@@ -47,7 +44,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private static final String GROUP_TITLE = "EOL Comments Field";
 	private static final String SEMICOLON_PREFIX = "; ";
 	public static final String ENABLE_WORD_WRAP_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
+		GROUP_TITLE + Options.DELIMITER + FieldUtils.WORD_WRAP_OPTION_NAME;
 	public static final String MAX_DISPLAY_LINES_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Maximum Lines To Display";
 	public static final String ENABLE_SHOW_SEMICOLON_MSG =
@@ -106,11 +103,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		fieldOptions.registerOption(MAX_DISPLAY_LINES_MSG, 6, hl,
 			"The maximum number of lines used to display the end-of-line comment.");
 		fieldOptions.registerOption(ENABLE_WORD_WRAP_MSG, false, hl,
-			"Enables word wrapping in the end-of-line comments field.  If word " +
-				"wrapping is on, user enter new lines are ignored and the entire comment is" +
-				" displayed in paragraph form.  If word wrapping is off, comments are " +
-				"displayed in line format however the user entered them.  Lines that are too " +
-				"long for the field, are truncated.");
+			FieldUtils.WORD_WRAP_OPTION_DESCRIPTION);
 
 		fieldOptions.registerOption(ENABLE_SHOW_SEMICOLON_MSG, false, hl,
 			"Displays a semi-colon before each line in the end-of-line comment. " +
@@ -363,10 +356,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 			AttributedString currentPrefixString, boolean showPrefix, boolean wordWrap,
 			int nextRow) {
 
-		if (wordWrap) {
-			comments = adjustCommentsForWrapping(comments);
-		}
-
 		List<FieldElement> fieldElements = new ArrayList<>();
 		if (comments.length == 0) {
 			return fieldElements;
@@ -397,32 +386,9 @@ public class EolCommentFieldFactory extends FieldFactory {
 		return fieldElements;
 	}
 
-	private String[] adjustCommentsForWrapping(String[] comments) {
-		List<String> list = new ArrayList<>();
-		int lastComment = comments.length - 1;
-		for (int i = 0; i < lastComment; i++) {
-			String string = comments[i];
-			if (!StringUtils.isBlank(string) && !StringUtilities.endsWithWhiteSpace(string)) {
-				list.add(string + " ");
-			}
-			else {
-				list.add(string);
-			}
-		}
-		if (lastComment >= 0) {
-			list.add(comments[lastComment]);
-		}
-		comments = list.toArray(new String[list.size()]);
-		return comments;
-	}
-
 	private List<FieldElement> convertToRefFieldElements(String[] comments, Program program,
 			AttributedString currentPrefixString, boolean showPrefix, boolean wordWrap,
 			boolean showRefAddress, Address refAddress, int nextRow) {
-
-		if (wordWrap) {
-			comments = adjustCommentsForWrapping(comments);
-		}
 
 		int numCommentLines = comments.length;
 		List<FieldElement> fieldElements = new ArrayList<>();
