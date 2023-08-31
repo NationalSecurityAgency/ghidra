@@ -20,12 +20,12 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbManager;
 import agent.gdb.model.impl.GdbModelImpl;
-import agent.gdb.pty.PtyFactory;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 import ghidra.dbg.util.ShellUtils;
 import ghidra.program.model.listing.Program;
+import ghidra.pty.PtyFactory;
 
 @FactoryDescription(
 	brief = "gdb",

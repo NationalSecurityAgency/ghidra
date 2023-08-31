@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +16,7 @@
 package ghidra.app.services;
 
 public interface ClipboardService {
-    public void registerClipboardContentProvider( ClipboardContentProviderService service );
-    public void deRegisterClipboardContentProvider( ClipboardContentProviderService service );
+	public void registerClipboardContentProvider(ClipboardContentProviderService service);
+
+	public void deRegisterClipboardContentProvider(ClipboardContentProviderService service);
 }

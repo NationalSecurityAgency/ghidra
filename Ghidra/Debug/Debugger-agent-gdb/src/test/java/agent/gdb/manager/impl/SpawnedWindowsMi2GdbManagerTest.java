@@ -21,8 +21,8 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Ignore;
 
 import agent.gdb.manager.GdbManager;
-import agent.gdb.pty.PtyFactory;
-import agent.gdb.pty.windows.ConPtyFactory;
+import ghidra.pty.PtyFactory;
+import ghidra.pty.windows.ConPtyFactory;
 
 @Ignore("Need compatible version on CI")
 public class SpawnedWindowsMi2GdbManagerTest extends AbstractGdbManagerTest {

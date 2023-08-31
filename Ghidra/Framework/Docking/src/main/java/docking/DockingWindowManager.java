@@ -705,11 +705,13 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		placeholderManager.removeComponent(provider);
 	}
 
-//==================================================================================================
-// Package-level Action Methods
-//==================================================================================================
-
-	Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
+	/**
+	 * Get the local actions installed on the given provider
+	 * 
+	 * @param provider the provider
+	 * @return an iterator over the actions
+	 */
+	public Iterator<DockingActionIf> getComponentActions(ComponentProvider provider) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			return placeholder.getActions();
@@ -718,6 +720,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		List<DockingActionIf> emptyList = Collections.emptyList();
 		return emptyList.iterator();
 	}
+
+//==================================================================================================
+// Package-level Action Methods
+//==================================================================================================
 
 	void removeProviderAction(ComponentProvider provider, DockingActionIf action) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);

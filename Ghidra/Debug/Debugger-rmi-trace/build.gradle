@@ -25,6 +25,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-rmi-trace'
 
 dependencies {
+	api project(':Pty')
 	api project(':Debugger')
 }
 
