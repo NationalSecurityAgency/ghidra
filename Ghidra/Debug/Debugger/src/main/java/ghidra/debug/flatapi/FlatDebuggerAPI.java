@@ -38,6 +38,7 @@ import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.PathUtils;
+import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -1130,6 +1131,28 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
+	 * Evaluate a Sleigh expression in the given context
+	 * 
+	 * @param coordinates the context
+	 * @param expression the Sleigh expression
+	 * @return the value
+	 */
+	default BigInteger evaluate(DebuggerCoordinates coordinates, String expression) {
+		return TraceSleighUtils.evaluate(expression, coordinates.getTrace(),
+			coordinates.getViewSnap(), coordinates.getThread(), coordinates.getFrame());
+	}
+
+	/**
+	 * Evaluate a Sleigh expression in the current context
+	 * 
+	 * @param expression the Sleigh expression
+	 * @return the value
+	 */
+	default BigInteger evaluate(String expression) {
+		return evaluate(getCurrentDebuggerCoordinates(), expression);
+	}
+
+	/**
 	 * Get the program counter for the given context
 	 * 
 	 * @param coordinates the context
@@ -1260,8 +1283,8 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * The success or failure of this method depends on a few factors. First is the user-selected
-	 * control mode for the trace. See {@link #setControlMode(ControlMode)}. In read-only mode,
-	 * this will always fail. When editing traces, a write almost always succeeds. Exceptions would
+	 * control mode for the trace. See {@link #setControlMode(ControlMode)}. In read-only mode, this
+	 * will always fail. When editing traces, a write almost always succeeds. Exceptions would
 	 * probably indicate I/O errors. When editing via emulation, a write should almost always
 	 * succeed. Second, when editing the target, the state of the target matters. If the trace has
 	 * no target, this will always fail. If the target is not accepting commands, e.g., because the
@@ -1324,8 +1347,8 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * The success or failure of this methods depends on a few factors. First is the user-selected
-	 * control mode for the trace. See {@link #setControlMode(ControlMode)}. In read-only mode,
-	 * this will always fail. When editing traces, a write almost always succeeds. Exceptions would
+	 * control mode for the trace. See {@link #setControlMode(ControlMode)}. In read-only mode, this
+	 * will always fail. When editing traces, a write almost always succeeds. Exceptions would
 	 * probably indicate I/O errors. When editing via emulation, a write should only fail if the
 	 * register is not accessible to Sleigh, e.g., the context register. Second, when editing the
 	 * target, the state of the target matters. If the trace has no target, this will always fail.
