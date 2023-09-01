@@ -11,7 +11,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="40" postbits="24">
+  <patternpairs totalbits="40" postbits="21">
     <prepatterns>
       <data>00001101 11110000</data> <!-- ret.n  //0 filler -->
     </prepatterns>
@@ -21,7 +21,7 @@
       <funcstart after="func"/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="48" postbits="24">
+  <patternpairs totalbits="48" postbits="21">
     <prepatterns>
       <data>00001101 11110000 00000000</data> <!-- ret.n  //1 filler -->
       <data>..000110 ........ 1.......</data> <!-- j -off //0 filler -->
@@ -32,7 +32,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="48" postbits="24">
+  <patternpairs totalbits="48" postbits="21">
     <prepatterns>
       <data>10000000 00000000 00000000</data> <!-- ret  //0 filler -->
     </prepatterns>
@@ -42,7 +42,7 @@
       <funcstart after="func"/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="56" postbits="24">
+  <patternpairs totalbits="56" postbits="21">
     <prepatterns>
       <data>10000000 00000000 00000000 00000000</data> <!-- ret  //1 filler -->
       <data>00001101 11110000 00000000 00000000</data> <!-- ret.n  //2 filler -->
@@ -64,7 +64,7 @@
       <funcstart after="func"/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="64" postbits="24">
+  <patternpairs totalbits="64" postbits="21">
     <prepatterns>
       <data>10000000 00000000 00000000 00000000 00000000</data> <!-- ret  //2 filler -->
       <data>00001101 11110000 00000000 00000000 00000000</data> <!-- ret.n  //3 filler -->
@@ -87,7 +87,7 @@
       <funcstart after="func"/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="72" postbits="24">
+  <patternpairs totalbits="48" postbits="21">
     <prepatterns>
       <data>10000000 00000000 00000000 00000000 00000000 00000000</data> <!-- ret  //3 filler -->
       <data>00010010 11000001 0...0000 00001101 11110000 00000000</data> <!-- addi a1,a1,off ; ret.n  //1 filler -->
@@ -100,7 +100,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="80" postbits="24">
+  <patternpairs totalbits="64" postbits="21">
     <prepatterns>
       <data>00010010 11000001 0...0000 00001101 11110000 00000000 00000000</data> <!-- addi a1,a1,off ; ret.n  //2 filler -->
       <data>....1010 00010001 00001101 11110000 00000000 00000000 00000000</data> <!-- add.n a1,a1,at ; ret.n  //3 filler -->
@@ -111,7 +111,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="88" postbits="24">
+  <patternpairs totalbits="80" postbits="21">
     <prepatterns>
       <data>00010010 11000001 0...0000 00001101 11110000 00000000 00000000 00000000</data> <!-- addi a1,a1,off ; ret.n  //3 filler -->
     </prepatterns>
@@ -121,7 +121,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="64" postbits="48">
+  <patternpairs totalbits="37" postbits="29">
     <prepatterns>
       <data>00001101 11110000</data> <!-- ret.n  //0 filler -->
     </prepatterns>
@@ -131,7 +131,7 @@
       <funcstart after="func"/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="72" postbits="48">
+  <patternpairs totalbits="36" postbits="29">
     <prepatterns>
       <data>00001101 11110000 00000000</data> <!-- ret.n  //1 filler -->
       <data>..000110 ........ 1.......</data> <!-- j -off //0 filler -->
@@ -142,7 +142,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="72" postbits="48">
+  <patternpairs totalbits="50" postbits="29">
     <prepatterns>
       <data>10000000 00000000 00000000</data> <!-- ret  //0 filler -->
     </prepatterns>
@@ -152,7 +152,7 @@
       <funcstart after="func"/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="80" postbits="48"> <!-- Main patterns -->
+  <patternpairs totalbits="44" postbits="29"> <!-- Main patterns -->
     <prepatterns>
       <data>00001101 11110000 00000000 00000000</data> <!-- ret.n  //2 filler -->
       <data>..000110 ........ 1....... 00000000</data> <!-- j -off //1 filler -->
@@ -163,7 +163,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="80" postbits="48">
+  <patternpairs totalbits="47" postbits="29">
     <prepatterns>
       <data>....1010 00010001 00001101 11110000</data> <!-- add.n a1,a1,at ; ret.n  //0 filler -->
     </prepatterns>
@@ -173,7 +173,7 @@
       <funcstart after="func"/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="88" postbits="48">
+  <patternpairs totalbits="52" postbits="29">
     <prepatterns>
       <data>00001101 11110000 00000000 00000000 00000000</data> <!-- ret.n  //3 filler -->
       <data>..000110 ........ 1....... 00000000 00000000</data> <!-- j -off //2 filler -->
@@ -185,7 +185,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="88" postbits="48">
+  <patternpairs totalbits="60" postbits="29">
     <prepatterns>
       <data>00010010 11000001 0...0000 00001101 11110000</data> <!-- addi a1,a1,off ; ret.n  //0 filler -->
     </prepatterns>
@@ -195,7 +195,7 @@
       <funcstart after="func"/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="96" postbits="48">
+  <patternpairs totalbits="60" postbits="29">
     <prepatterns>
       <data>00010010 11000001 0...0000 00001101 11110000 00000000</data> <!-- addi a1,a1,off ; ret.n  //1 filler -->
       <data>..000110 ........ 1....... 00000000 00000000 00000000</data> <!-- j -off //3 filler -->
@@ -207,7 +207,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="104" postbits="48">
+  <patternpairs totalbits="64" postbits="29">
     <prepatterns>
       <data>00010010 11000001 0...0000 00001101 11110000 00000000 00000000</data> <!-- addi a1,a1,off ; ret.n  //2 filler -->
       <data>....1010 00010001 00001101 11110000 00000000 00000000 00000000</data> <!-- add.n a1,a1,at ; ret.n  //3 filler -->
@@ -218,7 +218,7 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="112" postbits="48">
+  <patternpairs totalbits="64" postbits="29">
     <prepatterns>
       <data>00010010 11000001 0...0000 00001101 11110000 00000000 00000000 00000000</data> <!-- addi a1,a1,off ; ret.n  //3 filler -->
     </prepatterns>

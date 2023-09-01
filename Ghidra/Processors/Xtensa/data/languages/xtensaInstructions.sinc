@@ -578,10 +578,14 @@ macro extract_bit(bit, result) {
 
 # J.L is a macro.
 
-# The manual suggests that RET is equivalent to JX A0, yet RET has bit 5 unset, JX doesn’t.
 # RET (JX A0) - Non-Windowed Return, pg. 478.
 :ret is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b10 & op0 = 0 {
     return [a0];
+}
+
+# The manual suggests that RET is equivalent to JX A0, yet RET has bit 5 unset, JX doesn’t.
+:ret is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b00 & op0 = 0 {
+	return [a0];
 }
 
 # JX - Uncoditional Jump Register, pg. 368.
@@ -972,23 +976,21 @@ macro extract_bit(bit, result) {
 
 # RET.N - Narrow Non-Windowed Return, pg. 479.
 :ret.n is n_ar = 0b1111 & n_as = 0 & n_at = 0 & n_op0 = 0b1101 {
-	o2=a2;
     return [a0];
 }
 
 # RETW - Windowed Return, pg. 480.
 :retw is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b01 & op0 = 0 {
-# Assume call8
-    o2=a2;
-    a1 = a1 + WindowBase;
-    return [a0];
+	local addr:4 = (a0 & 0x3fffffff) | (inst_start & 0xc0000000);
+	restoreRegWindow();
+	return [addr];
 }
 
 # RETW.N - Narrow Windowed Return, pg. 482.
 :retw.n is n_ar = 0b1111 & n_as = 0 & n_at = 0b0001 & n_op0 = 0b1101 {
-    o2=a2;
-    a1 = a1 + WindowBase;
-    return [a0];
+	local addr:4 = (a0 & 0x3fffffff) | (inst_start & 0xc0000000);
+	restoreRegWindow();
+	return [addr];
 }
 
 # RFDD - Return from Debug and Dispatch, pg. 484.
