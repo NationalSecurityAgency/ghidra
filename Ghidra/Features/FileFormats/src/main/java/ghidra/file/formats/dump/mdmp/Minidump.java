@@ -193,7 +193,7 @@ public class Minidump extends DumpFile {
 				}
 			}
 		}
-		addInteriorAddressObject("DumpHeader", 0, 0L, headerMax);
+		addInteriorAddressObject("DumpHeader", 0L, 0L, headerMax);
 
 		sv = getStreamByType(Directory.MODULE_LIST_STREAM);
 		if (sv != null) {
@@ -265,7 +265,7 @@ public class Minidump extends DumpFile {
 				for (int i = 0; i < memstr.getNumberOfMemoryRanges(); i++) {
 					MemoryRange64 memoryRange = memstr.getMemoryRange(i);
 
-					addInteriorAddressObject(DumpFileLoader.MEMORY, (int) offset,
+					addInteriorAddressObject(DumpFileLoader.MEMORY, offset,
 						memoryRange.getStartOfMemoryRange(), memoryRange.getDataSize());
 					offset += memoryRange.getDataSize();
 				}
@@ -308,7 +308,7 @@ public class Minidump extends DumpFile {
 
 				offset = t.getStackRVA();
 				if (createBlocks && offset != 0) {
-					addInteriorAddressObject("ThreadStack_" + tid, (int) offset,
+					addInteriorAddressObject("ThreadStack_" + tid, offset,
 						t.getStackStartOfMemoryRange(), t.getStackDataSize());
 				}
 			}
@@ -332,7 +332,7 @@ public class Minidump extends DumpFile {
 
 				offset = t.getStackRVA();
 				if (createBlocks && offset != 0) {
-					addInteriorAddressObject("ThreadStack_" + tid, (int) offset,
+					addInteriorAddressObject("ThreadStack_" + tid, offset,
 						t.getStackStartOfMemoryRange(), t.getStackDataSize());
 				}
 			}

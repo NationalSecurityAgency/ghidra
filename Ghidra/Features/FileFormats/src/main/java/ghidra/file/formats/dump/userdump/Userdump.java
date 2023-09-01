@@ -73,7 +73,7 @@ public class Userdump extends DumpFile {
 		data.add(new DumpData(0, "DumpHeader", dt.getLength()));
 
 		long regionOffset = header.getMemoryRegionOffset();
-		addInteriorAddressObject("DumpHeader", 0, 0L, regionOffset);
+		addInteriorAddressObject("DumpHeader", 0L, 0L, regionOffset);
 		long blocksLength = reader.length() - regionOffset;
 		addInteriorAddressObject("RawBlocks", regionOffset,
 			header.getMemoryRegionOffset(), blocksLength);
@@ -100,7 +100,7 @@ public class Userdump extends DumpFile {
 
 			long stackOffset = t.getStackRVA();
 			if (createBlocks && stackOffset != 0) {
-				addInteriorAddressObject("ThreadStack_" + tid, (int) stackOffset,
+				addInteriorAddressObject("ThreadStack_" + tid, stackOffset,
 					t.getStackStartOfMemoryRange(), t.getStackDataSize());
 			}
 			offset += dt.getLength();
@@ -133,7 +133,7 @@ public class Userdump extends DumpFile {
 
 			long regionSize = minfo.getRegionSize();
 			if (createBlocks) {
-				addInteriorAddressObject("Memory", (int) rva, minfo.getBaseAddress(), regionSize);
+				addInteriorAddressObject("Memory", rva, minfo.getBaseAddress(), regionSize);
 			}
 			//ArrayDataType block =
 			//	new ArrayDataType(ByteDataType.dataType, (int) regionSize, 1);
