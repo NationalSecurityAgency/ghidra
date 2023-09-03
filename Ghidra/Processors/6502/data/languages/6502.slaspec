@@ -35,7 +35,6 @@ macro popSR() {
 	local ccr = *:1 SP;
 	N = ccr[7,1];
 	V = ccr[6,1];
-	B = ccr[4,1];
 	D = ccr[3,1];
 	I = ccr[2,1];
 	Z = ccr[1,1];
@@ -43,10 +42,9 @@ macro popSR() {
 }
 
 macro pushSR() {
-	local ccr:1 = 0xff;
+	local ccr:1 = 0xff;  # Break (B) flag and bit 5 set to 1
 	ccr[7,1] = N;
 	ccr[6,1] = V;
-	ccr[4,1] = B;
 	ccr[3,1] = D;
 	ccr[2,1] = I;
 	ccr[1,1] = Z;
@@ -60,13 +58,12 @@ macro resultFlags(value) {
 	N = (value s< 0);
 }
 
-macro subtraction_flags1(register, operand, result) {
-	local complement_register = ~register;
-	
-	V = ( ((register & ~operand & ~result) | (complement_register & operand & result)) & 0b10000000 ) != 0;
-	N = (result s< 0);
-	Z = (result == 0);
-	C = ( ((complement_register & operand) | (operand & result) | (result & complement_register)) & 0b10000000 ) != 0;
+macro adc(op1) {
+    local result:2 = zext(A) + zext(op1) + zext(C);
+    resultFlags(result:1);
+    V = (~(A ^ op1) & (A ^ result:1) & 0x80) != 0;
+    C = (result & 0x100) != 0;
+    A = result:1;
 }
 
 
@@ -92,9 +89,28 @@ OP1: imm16,X    is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; 
 # Absolute Indexed Y
 OP1: imm16,Y    is bbb=6 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
 # Indirect X
-OP1: (imm8,X)   is bbb=0 & X; imm8		{ addr:2 = zext(imm8 + X); tmp:2 = *:2 addr; export *:1 tmp; }
+OP1: (imm8,X)   is bbb=0 & X; imm8		{
+    # When the first (low) byte of address to load is 0xff,
+    # the second (high) byte to load is at 0x0000, not 0x0100
+    addr8_lo:1 = imm8 + X;
+    addr8_hi:1 = addr8_lo + 1;
+    addr16_lo:2 = zext(addr8_lo);
+    addr16_hi:2 = zext(addr8_hi);
+    tmp:2 = zext(*:1 addr16_hi) << 8 | zext(*:1 addr16_lo);
+    export *:1 tmp;
+}
 # Indirect Y
-OP1: (imm8),Y   is bbb=4 & Y; imm8		{ addr:2 = imm8; tmp:2 = *:2 addr; tmp = tmp + zext(Y); export *:1 tmp; }
+OP1: (imm8),Y   is bbb=4 & Y; imm8		{
+    # When the first (low) byte of address to load is 0xff,
+    # the second (high) byte to load is at 0x0000, not 0x0100
+    addr8_lo:1 = imm8;
+    addr8_hi:1 = addr8_lo + 1;
+    addr16_lo:2 = zext(addr8_lo);
+    addr16_hi:2 = zext(addr8_hi);
+    tmp:2 = zext(*:1 addr16_hi) << 8 | zext(*:1 addr16_lo);
+    tmp = tmp + zext(Y);
+    export *:1 tmp;
+}
 
 # Immediate
 OP2: "#"imm8    is bbb=0; imm8			{ tmp:1 = imm8; export tmp; }
@@ -118,7 +134,18 @@ OP2LD: imm16,Y  is bbb=7 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; 
 
 ADDR8:  imm8    is imm8		{ export *:1 imm8; }
 ADDR16: imm16   is imm16   	{ export *:1 imm16; }
-ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
+ADDRI:  (imm16)   is imm16    {
+    # With page given by high byte of imm16 (e.g. 0x01),
+    # when the first (low) byte of address to load is 0xff,
+    # the second (high) byte to load is at 0x0100, not 0x0200
+    addr8_lo:1 = imm16:1;
+    addr8_hi:1 = addr8_lo + 1;
+    page:2 = imm16 & 0xff00;
+    addr16_lo:2 = page | zext(addr8_lo);
+    addr16_hi:2 = page | zext(addr8_hi);
+    tmp:2 = zext(*:1 addr16_hi) << 8 | zext(*:1 addr16_lo);
+    export tmp;
+}
 
 
 # Instructions
@@ -126,15 +153,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :ADC OP1     is (cc=1 & aaa=3) ... & OP1
 {
-	local op1 = OP1;
-	local tmpC = C;
-	
-	C = carry(A, op1);
-	
-	A = A + op1 + tmpC;
-
-	resultFlags(A);
-	V = C;
+	adc(OP1);
 }
 
 :AND OP1     is (cc=1 & aaa=1) ... & OP1
@@ -194,7 +213,6 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 {
 	*:2 (SP - 1) = inst_next;
 	SP = SP - 2;
-	B = 1;
 	pushSR();
 	I = 1;
 	local target:2 = 0xFFFE;
@@ -313,8 +331,10 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :JSR   ADDR16    is op=0x20; ADDR16
 {
-	*:2 (SP-1) = inst_next;
-	SP=SP-2; 
+	# Value stored is actually the address before the location the program
+	# will eventually return to. Thus, the effective return address is PC + 1.
+	*:2 (SP-1) = inst_next - 1;
+	SP=SP-2;
 	call ADDR16;
 }
 
@@ -418,20 +438,12 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	tmp:2 = *:2 SP;
 	SP = SP+1;
 	
-	return [tmp];
+	return [tmp + 1];
 }
 
 :SBC OP1     is (cc=1 & aaa=7) ... & OP1
 {
-	local op1 = OP1;
-	local result = A - op1 - !C;
-	
-	subtraction_flags1(A, op1, result);
-	A = result;	
-	
-	# resultFlags(tmp);
-	# C = ((A <= op1) * C) | (A < op1);
-	# A = tmp;
+	adc(~OP1);
 }
 
 :SEC     is op=0x38
