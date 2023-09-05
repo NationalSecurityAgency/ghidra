@@ -21,10 +21,16 @@ import ghidra.pty.Pty;
 import ghidra.pty.PtyFactory;
 import ghidra.pty.linux.LinuxPty;
 
-public class MacosPtyFactory implements PtyFactory {
+public enum MacosPtyFactory implements PtyFactory {
+	INSTANCE;
+
 	@Override
-	public Pty openpty() throws IOException {
-		return LinuxPty.openpty();
+	public Pty openpty(short cols, short rows) throws IOException {
+		LinuxPty pty = LinuxPty.openpty();
+		if (cols != 0 && rows != 0) {
+			pty.getParent().setWindowSize(cols, rows);
+		}
+		return pty;
 	}
 
 	@Override

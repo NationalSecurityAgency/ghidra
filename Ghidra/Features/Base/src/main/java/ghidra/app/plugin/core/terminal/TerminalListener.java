@@ -28,7 +28,7 @@ public interface TerminalListener {
 	 * @param cols the number of columns
 	 * @param rows the number of rows
 	 */
-	default void resized(int cols, int rows) {
+	default void resized(short cols, short rows) {
 	}
 
 	/**

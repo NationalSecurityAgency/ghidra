@@ -116,7 +116,8 @@ public class TerminalTextField implements TextField {
 			g.setColor(cursorColor);
 			int x = startX + findX(cursorLoc.col());
 			g.drawRect(x, -getHeightAbove(), em - 1, getHeight() - 1);
-			g.drawRect(x + 1, -getHeightAbove() + 1, em - 3, getHeight() - 3);
+			// This technique looks ugly with display scaling
+			//g.drawRect(x + 1, -getHeightAbove() + 1, em - 3, getHeight() - 3);
 		}
 	}
 

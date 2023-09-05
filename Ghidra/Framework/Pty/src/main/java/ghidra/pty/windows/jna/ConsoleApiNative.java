@@ -18,6 +18,7 @@ package ghidra.pty.windows.jna;
 import java.util.List;
 
 import com.sun.jna.*;
+import com.sun.jna.Structure.FieldOrder;
 import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinNT.*;
@@ -31,8 +32,9 @@ public interface ConsoleApiNative extends StdCallLibrary {
 			SECURITY_ATTRIBUTES.ByReference lpPipeAttributes, DWORD nSize);
 
 	HRESULT CreatePseudoConsole(COORD.ByValue size, HANDLE hInput, HANDLE hOutput,
-			DWORD dwFlags,
-			HANDLEByReference phPC);
+			DWORD dwFlags, HANDLEByReference phPC);
+
+	HRESULT ResizePseudoConsole(HANDLE hPC, COORD.ByValue size);
 
 	void ClosePseudoConsole(HANDLE hPC);
 
@@ -85,20 +87,16 @@ public interface ConsoleApiNative extends StdCallLibrary {
 			HANDLEByReference phToken);
 	*/
 
-	public static class COORD extends Structure implements Structure.ByValue {
-		public static class ByReference extends COORD
-				implements Structure.ByReference {
+	@FieldOrder({ "X", "Y" })
+	public static class COORD extends Structure {
+		public static class ByValue extends COORD implements Structure.ByValue {
 		}
 
-		public static final List<String> FIELDS = createFieldsOrder("X", "Y");
+		public static class ByReference extends COORD implements Structure.ByReference {
+		}
 
 		public short X;
 		public short Y;
-
-		@Override
-		protected List<String> getFieldOrder() {
-			return FIELDS;
-		}
 	}
 
 	public static class SECURITY_ATTRIBUTES extends Structure {

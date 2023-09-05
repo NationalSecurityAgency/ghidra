@@ -20,12 +20,11 @@ import java.io.IOException;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinDef.DWORD;
 import com.sun.jna.platform.win32.WinNT.HANDLEByReference;
+import com.sun.jna.platform.win32.COM.COMUtils;
 
 import ghidra.pty.*;
 import ghidra.pty.windows.jna.ConsoleApiNative;
 import ghidra.pty.windows.jna.ConsoleApiNative.COORD;
-
-import com.sun.jna.platform.win32.COM.COMUtils;
 
 public class ConPty implements Pty {
 	static final DWORD DW_ZERO = new DWORD(0);
@@ -33,11 +32,6 @@ public class ConPty implements Pty {
 	static final DWORD PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE = new DWORD(0x20016);
 	static final DWORD EXTENDED_STARTUPINFO_PRESENT =
 		new DWORD(Kernel32.EXTENDED_STARTUPINFO_PRESENT);
-	private static final COORD SIZE = new COORD();
-	static {
-		SIZE.X = Short.MAX_VALUE;
-		SIZE.Y = 1;
-	}
 
 	private final Pipe pipeToChild;
 	private final Pipe pipeFromChild;
@@ -47,7 +41,7 @@ public class ConPty implements Pty {
 	private final ConPtyParent parent;
 	private final ConPtyChild child;
 
-	public static ConPty openpty() {
+	public static ConPty openpty(short cols, short rows) {
 		// Create communication channels
 
 		Pipe pipeToChild = Pipe.createPipe();
@@ -58,8 +52,11 @@ public class ConPty implements Pty {
 
 		HANDLEByReference lphPC = new HANDLEByReference();
 
+		COORD.ByValue size = new COORD.ByValue();
+		size.X = cols;
+		size.Y = rows;
 		COMUtils.checkRC(ConsoleApiNative.INSTANCE.CreatePseudoConsole(
-			SIZE,
+			size,
 			pipeToChild.getReadHandle().getNative(),
 			pipeFromChild.getWriteHandle().getNative(),
 			DW_ZERO,
@@ -76,7 +73,8 @@ public class ConPty implements Pty {
 		// TODO: See if this can all be combined with named pipes.
 		// Would be nice if that's sufficient to support new-ui
 
-		this.parent = new ConPtyParent(pipeToChild.getWriteHandle(), pipeFromChild.getReadHandle());
+		this.parent = new ConPtyParent(pipeToChild.getWriteHandle(), pipeFromChild.getReadHandle(),
+			pseudoConsoleHandle);
 		this.child = new ConPtyChild(pipeFromChild.getWriteHandle(), pipeToChild.getReadHandle(),
 			pseudoConsoleHandle);
 	}

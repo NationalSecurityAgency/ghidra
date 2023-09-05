@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.terminal.vt;
 
 import ghidra.app.plugin.core.terminal.vt.VtCharset.G;
+import ghidra.app.plugin.core.terminal.vt.VtHandler.KeyMode;
 
 public enum VtState {
 	/**
@@ -61,11 +62,10 @@ public enum VtState {
 				case ']':
 					return OSC_PARAM;
 				case '=':
-					handler.handleApplicationKeypad(true);
+					handler.handleKeypadMode(KeyMode.APPLICATION);
 					return CHAR;
 				case '>':
-					// Normal keypad
-					handler.handleApplicationKeypad(false);
+					handler.handleKeypadMode(KeyMode.NORMAL);
 					return CHAR;
 				case 'D':
 					handler.handleScrollViewportDown(1, true);
@@ -267,7 +267,8 @@ public enum VtState {
 	OSC_PARAM {
 		@Override
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
-			if (0x20 <= b && b <= 0x7f) {
+			// For whatever reason, Windows includes the null terminator in titles
+			if (0x20 <= b && b <= 0x7f || b == 0) {
 				parser.oscParam.put(b);
 				return OSC_PARAM;
 			}

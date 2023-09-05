@@ -61,11 +61,10 @@ public class ThreadedTerminal extends DefaultTerminal {
 		super.close();
 	}
 
-	@SuppressWarnings("unused") // diagnostic
-	private void printBuffer() {
-		byte[] bytes = new byte[buffer.remaining()];
-		buffer.get(buffer.position(), bytes);
-		//System.err.println("<< " + NumericUtilities.convertBytesToString(bytes, ":"));
+	static void printBuffer(String prefix, ByteBuffer bb) {
+		byte[] bytes = new byte[bb.remaining()];
+		bb.get(bb.position(), bytes);
+		System.err.print(prefix);
 		try {
 			String str = new String(bytes, "US-ASCII");
 			for (char c : str.toCharArray()) {
@@ -93,7 +92,7 @@ public class ThreadedTerminal extends DefaultTerminal {
 					return;
 				}
 				buffer.flip();
-				//printBuffer();
+				//printBuffer("<< ", buffer);
 				synchronized (buffer) {
 					provider.processInput(buffer);
 				}

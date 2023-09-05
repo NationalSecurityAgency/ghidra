@@ -20,10 +20,15 @@ import java.io.IOException;
 import ghidra.pty.Pty;
 import ghidra.pty.PtyFactory;
 
-public class ConPtyFactory implements PtyFactory {
+public enum ConPtyFactory implements PtyFactory {
+	INSTANCE;
+
 	@Override
-	public Pty openpty() throws IOException {
-		return ConPty.openpty();
+	public Pty openpty(short cols, short rows) throws IOException {
+		if (cols == 0 || rows == 0) {
+			return ConPty.openpty((short) 80, (short) 25);
+		}
+		return ConPty.openpty(cols, rows);
 	}
 
 	@Override

@@ -29,6 +29,7 @@ import ghidra.app.services.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 
 /**
  * The plugin that provides {@link TerminalService}
@@ -52,13 +53,15 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 	}
 
 	public TerminalProvider createProvider(Charset charset, VtOutput outputCb) {
-		TerminalProvider provider = new TerminalProvider(this, charset);
-		provider.setOutputCallback(outputCb);
-		provider.addToTool();
-		provider.setVisible(true);
-		providers.add(provider);
-		provider.setClipboardService(clipboardService);
-		return provider;
+		return Swing.runNow(() -> {
+			TerminalProvider provider = new TerminalProvider(this, charset);
+			provider.setOutputCallback(outputCb);
+			provider.addToTool();
+			provider.setVisible(true);
+			providers.add(provider);
+			provider.setClipboardService(clipboardService);
+			return provider;
+		});
 	}
 
 	@Override
@@ -72,6 +75,7 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 		return new ThreadedTerminal(createProvider(charset, buf -> {
 			while (buf.hasRemaining()) {
 				try {
+					//ThreadedTerminal.printBuffer(">> ", buf);
 					channel.write(buf);
 				}
 				catch (IOException e) {

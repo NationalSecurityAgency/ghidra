@@ -16,15 +16,15 @@
 package ghidra.pty.windows;
 
 import ghidra.pty.PtyParent;
-import ghidra.util.Msg;
 
 public class ConPtyParent extends ConPtyEndpoint implements PtyParent {
-	public ConPtyParent(Handle writeHandle, Handle readHandle) {
-		super(writeHandle, readHandle);
+	public ConPtyParent(Handle writeHandle, Handle readHandle,
+			PseudoConsoleHandle pseudoConsoleHandle) {
+		super(writeHandle, readHandle, pseudoConsoleHandle);
 	}
 
 	@Override
-	public void setWindowSize(int rows, int cols) {
-		Msg.error(this, "Pty window size not implemented on Windows");
+	public void setWindowSize(short cols, short rows) {
+		pseudoConsoleHandle.resize(rows, cols);
 	}
 }

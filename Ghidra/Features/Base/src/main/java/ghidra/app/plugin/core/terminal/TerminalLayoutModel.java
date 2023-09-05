@@ -87,10 +87,13 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	protected VtBuffer buffer = bufPrimary;
 
 	// Flags for what's been enabled
+	protected boolean showCursor;
 	protected boolean bracketedPaste;
 	protected boolean reportMousePress;
 	protected boolean reportMouseRelease;
 	protected boolean reportFocus;
+	protected KeyMode cursorKeyMode = KeyMode.NORMAL;
+	protected KeyMode keypadMode = KeyMode.NORMAL;
 
 	private Object lock = new Object();
 
@@ -133,6 +136,8 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		reportMousePress = false;
 		reportMouseRelease = false;
 		reportFocus = false;
+		cursorKeyMode = KeyMode.NORMAL;
+		keypadMode = KeyMode.NORMAL;
 	}
 
 	public void processInput(ByteBuffer buffer) {
@@ -275,7 +280,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 			try {
 				// A little strange using both unicode and vt charsets....
 				buffer.putChar(curVtCharset.mapChar(cb.get()));
-				buffer.moveCursorRight(1);
+				buffer.moveCursorRight(1, true, showCursor);
 			}
 			catch (Throwable t) {
 				Msg.error(this, "Error handling character: " + t, t);
@@ -291,7 +296,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 
 	@Override
 	public void handleBackSpace() {
-		buffer.moveCursorLeft(1);
+		buffer.moveCursorLeft(1, true);
 	}
 
 	@Override
@@ -308,7 +313,7 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 
 	@Override
 	public void handleLineFeed() {
-		buffer.moveCursorDown(1);
+		buffer.moveCursorDown(1, true);
 	}
 
 	@Override
@@ -392,15 +397,17 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 	}
 
 	@Override
-	public void handleApplicationCursorKeys(boolean en) {
-		// Not sure what this means. Ignore for now.
-		Msg.trace(this, "TODO: handleApplicationCursorKeys: " + en);
+	public void handleCursorKeyMode(KeyMode mode) {
+		this.cursorKeyMode = mode;
 	}
 
 	@Override
-	public void handleApplicationKeypad(boolean en) {
-		// Not sure what this means. Ignore for now.
-		Msg.trace(this, "TODO: handleApplicationKeypad: " + en);
+	public void handleKeypadMode(KeyMode mode) {
+		/**
+		 * This will be difficult to implement in Swing/AWT, since the OS and Java will already have
+		 * mapped the key, including incorporating the NUMLOCK state. Ignore until it matters.
+		 */
+		Msg.trace(this, "TODO: handleKeypadMode: " + mode);
 	}
 
 	@Override
@@ -417,6 +424,11 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 
 	@Override
 	public void handleShowCursor(boolean show) {
+		this.showCursor = show;
+		if (show) {
+			bufPrimary.checkVerticalScroll();
+			bufAlternate.checkVerticalScroll();
+		}
 		panel.fieldPanel.setCursorOn(show);
 	}
 
@@ -470,13 +482,13 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 				buffer.moveCursorUp(n);
 				return;
 			case DOWN:
-				buffer.moveCursorDown(n);
+				buffer.moveCursorDown(n, false);
 				return;
 			case FORWARD:
-				buffer.moveCursorRight(n);
+				buffer.moveCursorRight(n, false, showCursor);
 				return;
 			case BACK:
-				buffer.moveCursorLeft(n);
+				buffer.moveCursorLeft(n, false);
 				return;
 		}
 	}
@@ -603,6 +615,10 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		return buffer.getCurX();
 	}
 
+	public int resetCursorBottom() {
+		return buffer.resetBottomY();
+	}
+
 	public int getCols() {
 		return buffer.getCols();
 	}
@@ -629,5 +645,9 @@ public class TerminalLayoutModel implements LayoutModel, VtHandler {
 		layouts.clear();
 		layoutCache.clear();
 		buildLayouts();
+	}
+
+	public void setMaxScrollBackSize(int rows) {
+		bufPrimary.setMaxScrollBack(rows);
 	}
 }

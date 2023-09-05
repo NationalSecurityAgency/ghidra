@@ -19,5 +19,11 @@ package ghidra.pty;
  * The parent (UNIX "master") end of a pseudo-terminal
  */
 public interface PtyParent extends PtyEndpoint {
-	void setWindowSize(int cols, int rows);
+	/**
+	 * Resize the terminal window to the given width and height, in characters
+	 * 
+	 * @param cols the width in characters
+	 * @param rows the height in characters
+	 */
+	void setWindowSize(short cols, short rows);
 }

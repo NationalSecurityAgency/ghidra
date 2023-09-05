@@ -32,11 +32,10 @@ import ghidra.pty.windows.jna.ConsoleApiNative;
 import ghidra.pty.windows.jna.ConsoleApiNative.STARTUPINFOEX;
 
 public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
-	private final Handle pseudoConsoleHandle;
 
-	public ConPtyChild(Handle writeHandle, Handle readHandle, Handle pseudoConsoleHandle) {
-		super(writeHandle, readHandle);
-		this.pseudoConsoleHandle = pseudoConsoleHandle;
+	public ConPtyChild(Handle writeHandle, Handle readHandle,
+			PseudoConsoleHandle pseudoConsoleHandle) {
+		super(writeHandle, readHandle, pseudoConsoleHandle);
 	}
 
 	protected STARTUPINFOEX prepareStartupInfo() {

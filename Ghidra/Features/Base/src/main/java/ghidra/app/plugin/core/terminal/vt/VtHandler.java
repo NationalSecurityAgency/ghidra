@@ -125,6 +125,7 @@ public interface VtHandler {
 	public static final byte[] Q7 = ascii("?7");
 	public static final byte[] Q12 = ascii("?12");
 	public static final byte[] Q25 = ascii("?25");
+	public static final byte[] Q47 = ascii("?47");
 	public static final byte[] Q1000 = ascii("?1000");
 	public static final byte[] Q1004 = ascii("?1004");
 	public static final byte[] Q1034 = ascii("?1034");
@@ -503,6 +504,29 @@ public interface VtHandler {
 	}
 
 	/**
+	 * For cursor and keypad, specifies normal or application mode
+	 * 
+	 * <p>
+	 * This affects the codes sent by the terminal.
+	 */
+	public enum KeyMode {
+		NORMAL {
+			@Override
+			public <T> T choose(T normal, T application) {
+				return normal;
+			}
+		},
+		APPLICATION {
+			@Override
+			public <T> T choose(T normal, T application) {
+				return application;
+			}
+		};
+
+		public abstract <T> T choose(T normal, T application);
+	}
+
+	/**
 	 * Check if the given buffer's contents are equal to that of the given array
 	 * 
 	 * @param buf the buffer
@@ -663,7 +687,7 @@ public interface VtHandler {
 			handleInsertMode(en);
 		}
 		else if (bufEq(csiParam, Q1)) {
-			handleApplicationCursorKeys(en);
+			handleCursorKeyMode(en ? KeyMode.APPLICATION : KeyMode.NORMAL);
 		}
 		else if (bufEq(csiParam, Q7)) {
 			handleAutoWrapMode(en);
@@ -673,6 +697,10 @@ public interface VtHandler {
 		}
 		else if (bufEq(csiParam, Q25)) {
 			handleShowCursor(en);
+		}
+		else if (bufEq(csiParam, Q47)) {
+			// NB. Same as 1047?
+			handleAltScreenBuffer(en, false);
 		}
 		else if (bufEq(csiParam, Q1000)) {
 			handleReportMouseEvents(en, en);
@@ -684,6 +712,7 @@ public interface VtHandler {
 			handleMetaKey(en);
 		}
 		else if (bufEq(csiParam, Q1047)) {
+			// NB. Same as 47?
 			handleAltScreenBuffer(en, false);
 		}
 		else if (bufEq(csiParam, Q1048)) {
@@ -981,6 +1010,11 @@ public interface VtHandler {
 	// TODO: 104;c;c;c... is color reset. I've not implemented setting them, though.
 	// No c given = reset all
 
+	// Windows includes the null terminator
+	static String truncateAtNull(String str) {
+		return str.split("\000", 2)[0];
+	}
+
 	/**
 	 * Handle an OSC sequence
 	 * 
@@ -994,7 +1028,7 @@ public interface VtHandler {
 
 			matcher = PAT_OSC_WINDOW_TITLE.matcher(paramStr);
 			if (matcher.matches()) {
-				handleWindowTitle(matcher.group("title"));
+				handleWindowTitle(truncateAtNull(matcher.group("title")));
 				return;
 			}
 
@@ -1349,18 +1383,18 @@ public interface VtHandler {
 	void handleInsertMode(boolean en);
 
 	/**
-	 * Toggle application handling of the cursor keys
+	 * Toggle cursor key mode
 	 * 
-	 * @param en true (default) for application control, false for local control
+	 * @param mode the key mode
 	 */
-	void handleApplicationCursorKeys(boolean en);
+	void handleCursorKeyMode(KeyMode mode);
 
 	/**
-	 * Toggle application handling of the keypad
+	 * Toggle keypad mode
 	 * 
-	 * @param en true for application control, false for local control
+	 * @param mode the key mode
 	 */
-	void handleApplicationKeypad(boolean en);
+	void handleKeypadMode(KeyMode mode);
 
 	/**
 	 * Toggle auto-wrap mode

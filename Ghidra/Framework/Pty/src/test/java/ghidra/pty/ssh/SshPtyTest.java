@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.script.AskDialog;
+import ghidra.pty.Pty;
 import ghidra.pty.PtyChild.Echo;
 import ghidra.pty.PtySession;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -77,7 +78,7 @@ public class SshPtyTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSessionBash() throws IOException, InterruptedException {
-		try (SshPty pty = factory.openpty()) {
+		try (Pty pty = factory.openpty()) {
 			PtySession bash = pty.getChild().session(new String[] { "bash" }, null);
 			OutputStream out = pty.getParent().getOutputStream();
 			out.write("exit\n".getBytes("UTF-8"));
@@ -89,7 +90,7 @@ public class SshPtyTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDisableEcho() throws IOException, InterruptedException {
-		try (SshPty pty = factory.openpty()) {
+		try (Pty pty = factory.openpty()) {
 			PtySession bash =
 				pty.getChild().session(new String[] { "bash" }, null, Echo.OFF);
 			OutputStream out = pty.getParent().getOutputStream();

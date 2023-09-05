@@ -39,11 +39,11 @@ public class TerminalGhidraScript extends GhidraScript {
 
 	protected void displayInTerminal(PtyParent parent, Runnable waiter) throws PluginException {
 		TerminalService terminalService = ensureTerminalService();
-		try (Terminal term = terminalService.createWithStreams(Charset.forName("US-ASCII"),
+		try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
 			parent.getInputStream(), parent.getOutputStream())) {
 			term.addTerminalListener(new TerminalListener() {
 				@Override
-				public void resized(int cols, int rows) {
+				public void resized(short cols, short rows) {
 					parent.setWindowSize(cols, rows);
 				}
 			});
