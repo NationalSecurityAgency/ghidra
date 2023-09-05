@@ -27,7 +27,7 @@ dependencies {
 	api project(':Generic')
 	api project(':SoftwareModeling')
 	api project(':ProposedUtils')
-	
+
 	api "net.java.dev.jna:jna:5.4.0"
 	api "net.java.dev.jna:jna-platform:5.4.0"
 

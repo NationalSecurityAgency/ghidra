@@ -24,7 +24,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import agent.gdb.manager.*;
 import agent.gdb.manager.impl.cmd.GdbCommandError;
-import agent.gdb.pty.PtyFactory;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
@@ -34,6 +33,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.AnnotatedSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
+import ghidra.pty.PtyFactory;
 
 public class GdbModelImpl extends AbstractDebuggerObjectModel {
 	// TODO: Need some minimal memory modeling per architecture on the model/agent side.
