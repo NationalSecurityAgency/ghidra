@@ -26,6 +26,8 @@ import ghidra.pty.windows.ConPtyFactory;
  * A mechanism for opening pseudo-terminals
  */
 public interface PtyFactory {
+	short DEFAULT_COLS = 80;
+	short DEFAULT_ROWS = 25;
 
 	/**
 	 * Choose a factory of local pty's for the host operating system
@@ -35,11 +37,11 @@ public interface PtyFactory {
 	static PtyFactory local() {
 		switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
 			case MAC_OS_X:
-				return new MacosPtyFactory();
+				return MacosPtyFactory.INSTANCE;
 			case LINUX:
-				return new LinuxPtyFactory();
+				return LinuxPtyFactory.INSTANCE;
 			case WINDOWS:
-				return new ConPtyFactory();
+				return ConPtyFactory.INSTANCE;
 			default:
 				throw new UnsupportedOperationException();
 		}
@@ -48,10 +50,40 @@ public interface PtyFactory {
 	/**
 	 * Open a new pseudo-terminal
 	 * 
+	 * @param cols the initial width in characters, or 0 to let the system decide both dimensions
+	 * @param rows the initial height in characters, or 0 to let the system decide both dimensions
 	 * @return new new Pty
 	 * @throws IOException for an I/O error, including cancellation
 	 */
-	Pty openpty() throws IOException;
+	Pty openpty(short cols, short rows) throws IOException;
 
+	/**
+	 * Open a new pseudo-terminal of the default size ({@value #DEFAULT_COLS} x
+	 * {@value #DEFAULT_ROWS})
+	 * 
+	 * @return new new Pty
+	 * @throws IOException for an I/O error, including cancellation
+	 */
+	default Pty openpty() throws IOException {
+		return openpty(DEFAULT_COLS, DEFAULT_ROWS);
+	}
+
+	/**
+	 * Open a new pseudo-terminal
+	 * 
+	 * @param cols the initial width in characters, or 0 to let the system decide both dimensions
+	 * @param rows the initial height in characters, or 0 to let the system decide both dimensions
+	 * @return new new Pty
+	 * @throws IOException for an I/O error, including cancellation
+	 */
+	default Pty openpty(int cols, int rows) throws IOException {
+		return openpty((short) cols, (short) rows);
+	}
+
+	/**
+	 * Get a human-readable description of the factory
+	 * 
+	 * @return the description
+	 */
 	String getDescription();
 }

@@ -61,17 +61,112 @@ public interface Terminal extends AutoCloseable {
 	}
 
 	/**
-	 * Set the terminal size to the given dimensions, as do <em>not</em> resize it to the window.
+	 * Set the terminal size to the given dimensions, and do <em>not</em> resize it to the window.
 	 * 
-	 * @param rows the number of rows
 	 * @param cols the number of columns
+	 * @param rows the number of rows
 	 */
-	void setFixedSize(int rows, int cols);
+	void setFixedSize(short cols, short rows);
 
 	/**
-	 * Fit the terminals dimensions to the containing window.
+	 * @see #setFixedSize(short, short)
+	 */
+	default void setFixedSize(int cols, int rows) {
+		setFixedSize((short) cols, (short) rows);
+	}
+
+	/**
+	 * Fit the terminal's dimensions to the containing window.
 	 */
 	void setDynamicSize();
+
+	/**
+	 * Set the maximum size of the scroll-back buffer in lines
+	 * 
+	 * <p>
+	 * This only affects the primary buffer. The alternate buffer has no scroll-back.
+	 */
+	void setMaxScrollBackRows(int rows);
+
+	/**
+	 * Get the maximum number of characters in each row
+	 * 
+	 * @return the column count
+	 */
+	int getColumns();
+
+	/**
+	 * Get the maximum number of rows in the display (not counting scroll-back)
+	 * 
+	 * @return the row count
+	 */
+	int getRows();
+
+	/**
+	 * Get the number of lines in the scroll-back buffer
+	 * 
+	 * @return the size of the buffer in lines
+	 */
+	int getScrollBackRows();
+
+	/**
+	 * Get all the text in the terminal, including the scroll-back buffer
+	 * 
+	 * @return the full text
+	 */
+	String getFullText();
+
+	/**
+	 * Get the text in the terminal, excluding the scroll-back buffer
+	 * 
+	 * @return the display text
+	 */
+	String getDisplayText();
+
+	/**
+	 * Get the given line's text
+	 * 
+	 * <p>
+	 * The line at the top of the display has index 0. Lines in the scroll-back buffer have negative
+	 * indices.
+	 * 
+	 * @param line the index, 0 up
+	 * @return the text in the line
+	 */
+	String getLineText(int line);
+
+	/**
+	 * Get the text in the given range
+	 * 
+	 * <p>
+	 * The line at the top of the display has index 0. Lines in the scroll-back buffer have negative
+	 * indices.
+	 * 
+	 * @param startCol the first column to include in the starting line
+	 * @param startLine the first line to include
+	 * @param endCol the first column to <em>exclude</em> in the ending line
+	 * @param endLine the last line to include
+	 * @return the text in the given range
+	 */
+	String getRangeText(int startCol, int startLine, int endCol, int endLine);
+
+	/**
+	 * Get the cursor's current line
+	 * 
+	 * <p>
+	 * Lines are indexed 0 up where the top line of the display is 0. The cursor can never be in the
+	 * scroll-back buffer.
+	 * 
+	 * @return the line, 0 up, top to bottom
+	 */
+	int getCursorRow();
+
+	/**
+	 * Get the cursor's current column
+	 * 
+	 * @return the column, 0 up, left to right
+	 */
+	int getCursorColumn();
 
 	@Override
 	void close();

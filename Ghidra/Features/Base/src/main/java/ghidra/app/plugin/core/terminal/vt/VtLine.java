@@ -22,6 +22,7 @@ public class VtLine {
 	protected int cols;
 	protected int len;
 	protected char[] chars;
+	protected boolean wrappedToNext;
 	private VtAttributes[] cellAttrs;
 
 	/**
@@ -80,6 +81,7 @@ public class VtLine {
 	public void putChar(int x, char c, VtAttributes attrs) {
 		int oldLen = len;
 		len = Math.max(len, x + 1);
+		wrappedToNext = false; // Maybe remove
 		for (int i = oldLen; i < x; i++) {
 			chars[i] = ' ';
 			cellAttrs[i] = VtAttributes.DEFAULTS;
@@ -118,6 +120,7 @@ public class VtLine {
 	public void reset(int cols) {
 		this.cols = cols;
 		this.len = 0;
+		this.wrappedToNext = false;
 		if (this.cols != cols || this.chars == null) {
 			this.chars = new char[cols];
 			this.cellAttrs = new VtAttributes[cols];
@@ -147,6 +150,7 @@ public class VtLine {
 	 */
 	public void clear() {
 		len = 0;
+		wrappedToNext = false;
 	}
 
 	/**
@@ -156,6 +160,7 @@ public class VtLine {
 	 */
 	public void clearToEnd(int x) {
 		len = Math.min(len, x);
+		wrappedToNext = false;
 	}
 
 	/**
@@ -167,6 +172,7 @@ public class VtLine {
 	public void clearToStart(int x, VtAttributes attrs) {
 		if (len <= x) {
 			len = 0;
+			wrappedToNext = false;
 			return;
 		}
 		for (int i = 0; i <= x; i++) {
@@ -183,7 +189,8 @@ public class VtLine {
 	 */
 	public void delete(int start, int end) {
 		if (len <= end) {
-			len = start;
+			len = Math.min(len, start);
+			wrappedToNext = false;
 			return;
 		}
 		int shift = end - start;
@@ -208,7 +215,8 @@ public class VtLine {
 	 */
 	public void erase(int start, int end, VtAttributes attrs) {
 		if (len <= end) {
-			len = start;
+			len = Math.min(len, start);
+			wrappedToNext = false;
 			return;
 		}
 		for (int x = start; x < end; x++) {
@@ -238,6 +246,7 @@ public class VtLine {
 			chars[x] = ' ';
 		}
 		len = Math.min(cols, len + n);
+		wrappedToNext = false;
 	}
 
 	/**

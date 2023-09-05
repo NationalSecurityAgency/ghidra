@@ -41,6 +41,7 @@ public class VtBuffer {
 	protected int curY;
 	protected int savedX;
 	protected int savedY;
+	protected int bottomY; // for scrolling UI after an update
 	protected int scrollStart;
 	protected int scrollEnd; // exclusive
 
@@ -128,6 +129,8 @@ public class VtBuffer {
 		if (c == 0) {
 			return;
 		}
+		checkVerticalScroll();
+		// At this point, we have no choice but to wrap
 		lines.get(curY).putChar(curX, c, curAttrs);
 	}
 
@@ -136,7 +139,7 @@ public class VtBuffer {
 	 */
 	public void tab() {
 		int n = TAB_WIDTH + (-curX % TAB_WIDTH);
-		moveCursorRight(n);
+		moveCursorRight(n, false, false);
 	}
 
 	/**
@@ -147,7 +150,7 @@ public class VtBuffer {
 			return;
 		}
 		int n = (curX - 1) % TAB_WIDTH + 1;
-		moveCursorLeft(n);
+		moveCursorLeft(n, false);
 	}
 
 	/**
@@ -157,6 +160,13 @@ public class VtBuffer {
 	 * This does <em>not</em> move the cursor down.
 	 */
 	public void carriageReturn() {
+		if (curX == 0) {
+			return;
+		}
+		int prevY = curY - 1;
+		if (prevY >= 0 && prevY < lines.size()) {
+			lines.get(prevY).wrappedToNext = false;
+		}
 		curX = 0;
 	}
 
@@ -236,57 +246,82 @@ public class VtBuffer {
 	 * that the cursor remains in the display. The value of n must be positive, otherwise behavior
 	 * is undefined. To move the cursor up, use {@link #moveCursorUp(int)}.
 	 * 
-	 * @param n
+	 * <p>
+	 * ConPty has a habit of moving the cursor past the end of the current line before sending CRLF.
+	 * (Though, I imagine there are other applications that might do this.) The {@code dedupWrap}
+	 * parameter is made to accommodate this. If it is set, n is a single line, and the previous
+	 * line was wrapped, then this does nothing more than remove the wrapped flag from the previous
+	 * line.
+	 * 
+	 * @param n the number of lines to move down
+	 * @param dedupWrap whether to detect and ignore a line feed after wrapping
 	 */
-	public void moveCursorDown(int n) {
-		curY += n;
-		checkVerticalScroll();
+	public void moveCursorDown(int n, boolean dedupWrap) {
+		int prevY = curY - 1;
+		if (dedupWrap && n == 1 && prevY >= 0 && prevY < lines.size() &&
+			lines.get(prevY).wrappedToNext) {
+			lines.get(prevY).wrappedToNext = false;
+		}
+		else {
+			curY += n;
+			bottomY = Math.max(bottomY, curY);
+			checkVerticalScroll();
+		}
 	}
 
 	/**
 	 * Move the cursor left (backward) n columns
 	 * 
 	 * <p>
-	 * If the cursor would move left of the display, it is instead moved to the far right of the
-	 * previous row, unless the cursor is already on the top row, in which case, it will be placed
-	 * in the top-left corner of the display. NOTE: If the cursor is moved to the previous row, no
-	 * heed is given to "leftovers." It doesn't matter how far to the left the cursor would have
-	 * been; it is moved to the far right column and exactly one row up. The value of n must be
-	 * positive, otherwise behavior is undefined. To move the cursor right, use
-	 * {@link #moveCursorRight(int)}.
+	 * The cursor is clamped into the display. If wrap is specified, the cursor would exceed the
+	 * left side of the display, and the previous line was wrapped onto the current line, then the
+	 * cursor will instead be moved to the end of the previous line. (It doesn't matter how far the
+	 * cursor would exceed the left; it moves up at most one line.) The value of n must be positive,
+	 * otherwise behavior is undefined. To move the cursor right, use {@link #moveCursorRight(int)}.
 	 * 
 	 * @param n the number of columns
+	 * @param wrap whether to wrap the cursor to the previous line if would exceed the left of the
+	 *            display
 	 */
-	public void moveCursorLeft(int n) {
-		if (curX - n >= 0) {
-			curX -= n;
-		}
-		else if (curY > 0) {
+	public void moveCursorLeft(int n, boolean wrap) {
+		int prevY = curY - 1;
+		if (wrap && curX - n < 0 && prevY >= 0 && prevY < lines.size() &&
+			lines.get(prevY).wrappedToNext) {
 			curX = cols - 1;
 			curY--;
+			lines.get(curY).wrappedToNext = false;
 		}
+		curX = Math.max(0, Math.min(curX - n, cols - 1));
 	}
 
 	/**
 	 * Move the cursor right (forward) n columns
 	 * 
 	 * <p>
-	 * If the cursor would move right of the display, it is instead moved to the far left of the
-	 * next row. If the cursor is already on the bottom row, the viewport is scrolled down a line.
-	 * NOTE: If the cursor is moved to the next row, no heed is given to "leftovers." It doesn't
-	 * matter how far to the right the cursor would have been; it is moved to the far left column
-	 * and exactly one row down. The value of n must be positive, otherwise behavior is undefined.
-	 * To move the cursor left, use {@link #moveCursorLeft(int)}.
+	 * The cursor is clamped into the display. If wrap is specified and the cursor would exceed the
+	 * right side of the display, the cursor will instead be wrapped to the start of the next line,
+	 * possibly scrolling the viewport down. (It doesn't matter how far the cursor exceeds the
+	 * right; the cursor moves down exactly one line.) The value of n must be positive, otherwise
+	 * behavior is undefined. To move the cursor left, use {@link #moveCursorLeft(int)}.
 	 * 
 	 * @param n the number of columns
+	 * @param wrap whether to wrap the cursor to the next line if it would exceed the right of the
+	 *            display
 	 */
-	public void moveCursorRight(int n) {
-		curX += n;
-		if (curX >= cols) {
+	public void moveCursorRight(int n, boolean wrap, boolean isCursorShowing) {
+		if (wrap && curX + n >= cols) {
+			checkVerticalScroll();
 			curX = 0;
+			lines.get(curY).wrappedToNext = true;
 			curY++;
+			bottomY = Math.max(bottomY, curY);
+			if (isCursorShowing) {
+				checkVerticalScroll();
+			}
 		}
-		checkVerticalScroll();
+		else {
+			curX = Math.max(0, Math.min(curX + n, cols - 1));
+		}
 	}
 
 	/**
@@ -313,6 +348,7 @@ public class VtBuffer {
 	public void restoreCursorPos() {
 		curX = savedX;
 		curY = savedY;
+		bottomY = Math.max(bottomY, curY);
 	}
 
 	/**
@@ -326,8 +362,9 @@ public class VtBuffer {
 	 * @param col the desired column, 0 up, left to right
 	 */
 	public void moveCursor(int row, int col) {
-		this.curX = Math.max(0, Math.min(cols - 1, col));
-		this.curY = Math.max(0, Math.min(rows - 1, row));
+		curX = Math.max(0, Math.min(cols - 1, col));
+		curY = Math.max(0, Math.min(rows - 1, row));
+		bottomY = Math.max(bottomY, curY);
 	}
 
 	/**
@@ -370,6 +407,9 @@ public class VtBuffer {
 	public void erase(Erasure erasure) {
 		switch (erasure) {
 			case TO_DISPLAY_END:
+				if (curY >= lines.size()) {
+					return;
+				}
 				for (int y = curY; y < rows; y++) {
 					VtLine line = lines.get(y);
 					if (y == curY) {
@@ -403,12 +443,21 @@ public class VtBuffer {
 				scrollBack.clear();
 				return;
 			case TO_LINE_END:
+				if (curY >= lines.size()) {
+					return;
+				}
 				lines.get(curY).clearToEnd(curX);
 				return;
 			case TO_LINE_START:
+				if (curY >= lines.size()) {
+					return;
+				}
 				lines.get(curY).clearToStart(curX, curAttrs);
 				return;
 			case FULL_LINE:
+				if (curY >= lines.size()) {
+					return;
+				}
 				lines.get(curY).clear();
 				return;
 		}
@@ -462,6 +511,9 @@ public class VtBuffer {
 	 * @param n the number of blanks to insert.
 	 */
 	public void insertChars(int n) {
+		if (curY >= lines.size()) {
+			return;
+		}
 		lines.get(curY).insert(curX, n);
 	}
 
@@ -475,6 +527,9 @@ public class VtBuffer {
 	 * @param n the number of characters to delete
 	 */
 	public void deleteChars(int n) {
+		if (curY >= lines.size()) {
+			return;
+		}
 		lines.get(curY).delete(curX, curX + n);
 	}
 
@@ -488,6 +543,9 @@ public class VtBuffer {
 	 * @param n the number of characters to erase
 	 */
 	public void eraseChars(int n) {
+		if (curY >= lines.size()) {
+			return;
+		}
 		lines.get(curY).erase(curX, curX + n, curAttrs);
 	}
 
@@ -749,5 +807,11 @@ public class VtBuffer {
 			gatherLineText(buf, startRow, startCol, endRow, endCol, i, line, lineSep);
 		}
 		return buf.toString();
+	}
+
+	public int resetBottomY() {
+		int ret = bottomY;
+		bottomY = curY;
+		return ret;
 	}
 }

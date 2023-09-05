@@ -24,14 +24,10 @@ public class LinuxPtyParent extends LinuxPtyEndpoint implements PtyParent {
 	}
 
 	@Override
-	public void setWindowSize(int cols, int rows) {
-		if (cols > 0xffff || rows > 0xffff) {
-			throw new IllegalArgumentException(
-				"Dimensions limited to unsigned shorts. Got cols=" + cols + ",rows=" + rows);
-		}
+	public void setWindowSize(short cols, short rows) {
 		Winsize.ByReference ws = new Winsize.ByReference();
-		ws.ws_col = (short) cols;
-		ws.ws_row = (short) rows;
+		ws.ws_col = cols;
+		ws.ws_row = rows;
 		ws.write();
 		PosixC.INSTANCE.ioctl(fd, Winsize.TIOCSWINSZ, ws.getPointer());
 	}

@@ -227,12 +227,16 @@ public class GhidraSshPtyFactory implements PtyFactory {
 	}
 
 	@Override
-	public SshPty openpty() throws IOException {
+	public SshPty openpty(short cols, short rows) throws IOException {
 		if (session == null) {
 			session = connectAndAuthenticate();
 		}
 		try {
-			return new SshPty((ChannelExec) session.openChannel("exec"));
+			SshPty pty = new SshPty((ChannelExec) session.openChannel("exec"));
+			if (cols != 0 && rows != 0) {
+				pty.getParent().setWindowSize(cols, rows);
+			}
+			return pty;
 		}
 		catch (JSchException e) {
 			throw new IOException("SSH connection error", e);

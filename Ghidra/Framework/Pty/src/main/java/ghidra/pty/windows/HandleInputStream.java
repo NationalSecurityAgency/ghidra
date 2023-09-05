@@ -88,7 +88,8 @@ public class HandleInputStream extends InputStream {
 	}
 
 	@Override
-	public synchronized void close() throws IOException {
+	public void close() throws IOException {
 		closed = true;
+		handle.close();
 	}
 }

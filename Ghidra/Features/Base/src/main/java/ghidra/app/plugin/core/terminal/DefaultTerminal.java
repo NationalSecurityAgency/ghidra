@@ -56,12 +56,62 @@ public class DefaultTerminal implements Terminal {
 	}
 
 	@Override
-	public void setFixedSize(int rows, int cols) {
-		provider.setFixedSize(rows, cols);
+	public void setFixedSize(short cols, short rows) {
+		provider.setFixedSize(cols, rows);
 	}
 
 	@Override
 	public void setDynamicSize() {
 		provider.setDyanmicSize();
+	}
+
+	@Override
+	public int getColumns() {
+		return provider.getColumns();
+	}
+
+	@Override
+	public int getRows() {
+		return provider.getRows();
+	}
+
+	@Override
+	public void setMaxScrollBackRows(int rows) {
+		provider.setMaxScrollBackRows(rows);
+	}
+
+	@Override
+	public int getScrollBackRows() {
+		return provider.getScrollBackRows();
+	}
+
+	@Override
+	public String getDisplayText() {
+		return getRangeText(0, 0, getColumns(), getRows());
+	}
+
+	@Override
+	public String getFullText() {
+		return getRangeText(0, -getScrollBackRows(), getColumns(), getRows());
+	}
+
+	@Override
+	public String getLineText(int line) {
+		return getRangeText(0, line, getColumns(), line);
+	}
+
+	@Override
+	public String getRangeText(int startCol, int startLine, int endCol, int endLine) {
+		return provider.getRangeText(startCol, startLine, endCol, endLine);
+	}
+
+	@Override
+	public int getCursorColumn() {
+		return provider.getCursorColumn();
+	}
+
+	@Override
+	public int getCursorRow() {
+		return provider.getCursorRow();
 	}
 }

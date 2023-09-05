@@ -209,7 +209,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 				if (provider.isLocalActionKeyBinding(e)) {
 					return; // Do not consume, so action can take it
 				}
-				eventEncoder.keyPressed(e);
+				eventEncoder.keyPressed(e, model.cursorKeyMode, model.keypadMode);
 				e.consume();
 			}
 
@@ -324,7 +324,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		terminalListeners.remove(listener);
 	}
 
-	protected void notifyTerminalResized(int cols, int rows) {
+	protected void notifyTerminalResized(short cols, short rows) {
 		for (TerminalListener l : terminalListeners) {
 			try {
 				l.resized(cols, rows);
@@ -530,7 +530,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		fieldPanel.setCursorPosition(BigInteger.valueOf(model.getCursorRow() + scrollBack), 0, 0,
 			model.getCursorColumn());
 		if (scroll) {
-			fieldPanel.scrollToCursor();
+			fieldPanel.scrollTo(new FieldLocation(model.resetCursorBottom() + scrollBack));
 		}
 	}
 
@@ -664,14 +664,14 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 
 	protected void resizeTerminalToWindow() {
 		Rectangle bounds = scroller.getViewportBorderBounds();
-		int rows = bounds.height / metrics.getHeight();
 		int cols = bounds.width / metrics.charWidth('M');
-		resizeTerminal(rows, cols);
+		int rows = bounds.height / metrics.getHeight();
+		resizeTerminal((short) cols, (short) rows);
 	}
 
-	protected void resizeTerminal(int rows, int cols) {
-		if (model.resizeTerminal(cols, rows)) {
-			notifyTerminalResized(model.getCols(), model.getRows());
+	protected void resizeTerminal(short cols, short rows) {
+		if (model.resizeTerminal(Short.toUnsignedInt(cols), Short.toUnsignedInt(rows))) {
+			notifyTerminalResized((short) model.getCols(), (short) model.getRows());
 		}
 	}
 
@@ -683,14 +683,14 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	 * needed. If the terminal size changes as a result of this call,
 	 * {@link TerminalListener#resized(int, int)} is invoked.
 	 * 
-	 * @param rows the number of rows
 	 * @param cols the number of columns
+	 * @param rows the number of rows
 	 */
-	public void setFixedTerminalSize(int rows, int cols) {
+	public void setFixedTerminalSize(short cols, short rows) {
 		this.fixedSize = true;
 		scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		resizeTerminal(rows, cols);
+		resizeTerminal(cols, rows);
 	}
 
 	/**
@@ -708,5 +708,21 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 		scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		resizeTerminalToWindow();
+	}
+
+	public int getColumns() {
+		return model.getCols();
+	}
+
+	public int getRows() {
+		return model.getRows();
+	}
+
+	public int getCursorColumn() {
+		return model.getCursorColumn();
+	}
+
+	public int getCursorRow() {
+		return model.getCursorRow();
 	}
 }

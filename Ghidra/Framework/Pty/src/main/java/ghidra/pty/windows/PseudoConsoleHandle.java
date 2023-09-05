@@ -16,8 +16,10 @@
 package ghidra.pty.windows;
 
 import com.sun.jna.platform.win32.WinNT.HANDLE;
+import com.sun.jna.platform.win32.COM.COMUtils;
 
 import ghidra.pty.windows.jna.ConsoleApiNative;
+import ghidra.pty.windows.jna.ConsoleApiNative.COORD;
 
 public class PseudoConsoleHandle extends Handle {
 
@@ -39,5 +41,12 @@ public class PseudoConsoleHandle extends Handle {
 	@Override
 	protected State newState(HANDLE handle) {
 		return new PseudoConsoleState(handle);
+	}
+
+	public void resize(short rows, short cols) {
+		COORD.ByValue size = new COORD.ByValue();
+		size.X = cols;
+		size.Y = rows;
+		COMUtils.checkRC(ConsoleApiNative.INSTANCE.ResizePseudoConsole(getNative(), size));
 	}
 }

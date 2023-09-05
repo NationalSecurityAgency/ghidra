@@ -299,11 +299,42 @@ public class TerminalProvider extends ComponentProviderAdapter {
 		return false;
 	}
 
-	public void setFixedSize(int rows, int cols) {
-		panel.setFixedTerminalSize(rows, cols);
+	public void setFixedSize(short cols, short rows) {
+		panel.setFixedTerminalSize(cols, rows);
 	}
 
 	public void setDyanmicSize() {
 		panel.setDynamicTerminalSize();
+	}
+
+	public int getColumns() {
+		return panel.getColumns();
+	}
+
+	public int getRows() {
+		return panel.getRows();
+	}
+
+	public void setMaxScrollBackRows(int rows) {
+		panel.model.setMaxScrollBackSize(rows);
+	}
+
+	public int getScrollBackRows() {
+		return panel.model.getScrollBackSize();
+	}
+
+	public String getRangeText(int startCol, int startLine, int endCol, int endLine) {
+		int scrollBack = getScrollBackRows();
+		return panel.getSelectedText(new FieldRange(
+			new FieldLocation(startLine + scrollBack, 0, 0, startCol),
+			new FieldLocation(endLine + scrollBack, 0, 0, endCol)));
+	}
+
+	public int getCursorColumn() {
+		return panel.getCursorColumn();
+	}
+
+	public int getCursorRow() {
+		return panel.getCursorRow();
 	}
 }

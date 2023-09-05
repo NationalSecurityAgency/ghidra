@@ -21,12 +21,15 @@ import java.io.OutputStream;
 import ghidra.pty.PtyEndpoint;
 
 public class ConPtyEndpoint implements PtyEndpoint {
-	protected InputStream inputStream;
-	protected OutputStream outputStream;
+	protected final InputStream inputStream;
+	protected final OutputStream outputStream;
+	protected final PseudoConsoleHandle pseudoConsoleHandle;
 
-	public ConPtyEndpoint(Handle writeHandle, Handle readHandle) {
+	public ConPtyEndpoint(Handle writeHandle, Handle readHandle,
+			PseudoConsoleHandle pseudoConsoleHandle) {
 		this.inputStream = new HandleInputStream(readHandle);
 		this.outputStream = new HandleOutputStream(writeHandle);
+		this.pseudoConsoleHandle = pseudoConsoleHandle;
 	}
 
 	@Override

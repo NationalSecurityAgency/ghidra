@@ -40,7 +40,7 @@ public class ConPtyTest extends AbstractPtyTest {
 
 	@Test
 	public void testSessionCmd() throws IOException, InterruptedException {
-		try (Pty pty = ConPty.openpty()) {
+		try (Pty pty = ConPtyFactory.INSTANCE.openpty()) {
 			PtySession cmd = pty.getChild().session(new String[] { DummyProc.which("cmd") }, null);
 			pty.getParent().getOutputStream().write("exit\r\n".getBytes());
 			assertEquals(0, cmd.waitExited());
@@ -49,7 +49,7 @@ public class ConPtyTest extends AbstractPtyTest {
 
 	@Test
 	public void testSessionNonExistent() throws IOException, InterruptedException {
-		try (Pty pty = ConPty.openpty()) {
+		try (Pty pty = ConPtyFactory.INSTANCE.openpty()) {
 			pty.getChild().session(new String[] { "thisHadBetterNoExist" }, null);
 			fail();
 		}
@@ -60,7 +60,7 @@ public class ConPtyTest extends AbstractPtyTest {
 
 	@Test
 	public void testSessionCmdEchoTest() throws IOException, InterruptedException {
-		try (Pty pty = ConPty.openpty()) {
+		try (Pty pty = ConPtyFactory.INSTANCE.openpty()) {
 			PtyParent parent = pty.getParent();
 			PrintWriter writer = new PrintWriter(parent.getOutputStream());
 			BufferedReader reader = loggingReader(parent.getInputStream());
@@ -84,7 +84,7 @@ public class ConPtyTest extends AbstractPtyTest {
 
 	@Test
 	public void testSessionGdbLineLength() throws IOException, InterruptedException {
-		try (Pty pty = ConPty.openpty()) {
+		try (Pty pty = ConPtyFactory.INSTANCE.openpty()) {
 			PtyParent parent = pty.getParent();
 			PrintWriter writer = new PrintWriter(parent.getOutputStream());
 			BufferedReader reader = loggingReader(parent.getInputStream());
@@ -137,7 +137,7 @@ public class ConPtyTest extends AbstractPtyTest {
 
 	@Test
 	public void testGdbInterruptConPty() throws Exception {
-		try (Pty pty = ConPty.openpty()) {
+		try (Pty pty = ConPtyFactory.INSTANCE.openpty()) {
 			PtyParent parent = pty.getParent();
 			PrintWriter writer = new PrintWriter(parent.getOutputStream());
 			//BufferedReader reader = loggingReader(parent.getInputStream());
@@ -171,7 +171,7 @@ public class ConPtyTest extends AbstractPtyTest {
 
 	@Test
 	public void testGdbMiConPty() throws Exception {
-		try (Pty pty = ConPty.openpty()) {
+		try (Pty pty = ConPtyFactory.INSTANCE.openpty()) {
 			PtyParent parent = pty.getParent();
 			PrintWriter writer = new PrintWriter(parent.getOutputStream());
 			//BufferedReader reader = loggingReader(parent.getInputStream());

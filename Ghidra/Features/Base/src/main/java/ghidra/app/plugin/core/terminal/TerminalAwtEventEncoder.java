@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
 
+import ghidra.app.plugin.core.terminal.vt.VtHandler.KeyMode;
 import ghidra.util.Msg;
 
 /**
@@ -45,24 +46,32 @@ public abstract class TerminalAwtEventEncoder {
 	}
 
 	public static final byte ESC = (byte) 0x1b;
-	public static final byte FUNC = (byte) 0x4f;
 
 	public static final byte[] CODE_INSERT = vtseq(2);
 	public static final byte[] CODE_DELETE = vtseq(3);
-	public static final byte[] CODE_HOME = { ESC, '[', 'H' };
-	public static final byte[] CODE_END = { ESC, '[', 'F' };
+	// Believe it or not, \r is ENTER on both Windows and Linux!
+	public static final byte[] CODE_ENTER = { '\r' };
 	public static final byte[] CODE_PAGE_UP = vtseq(5);
 	public static final byte[] CODE_PAGE_DOWN = vtseq(6);
 	public static final byte[] CODE_NUMPAD5 = { ESC, '[', 'E' };
 
-	public static final byte[] CODE_UP = { ESC, FUNC, 'A' };
-	public static final byte[] CODE_DOWN = { ESC, FUNC, 'B' };
-	public static final byte[] CODE_RIGHT = { ESC, FUNC, 'C' };
-	public static final byte[] CODE_LEFT = { ESC, FUNC, 'D' };
-	public static final byte[] CODE_F1 = { ESC, FUNC, 'P' };
-	public static final byte[] CODE_F2 = { ESC, FUNC, 'Q' };
-	public static final byte[] CODE_F3 = { ESC, FUNC, 'R' };
-	public static final byte[] CODE_F4 = { ESC, FUNC, 'S' };
+	public static final byte[] CODE_UP_NORMAL = { ESC, '[', 'A' };
+	public static final byte[] CODE_DOWN_NORMAL = { ESC, '[', 'B' };
+	public static final byte[] CODE_RIGHT_NORMAL = { ESC, '[', 'C' };
+	public static final byte[] CODE_LEFT_NORMAL = { ESC, '[', 'D' };
+	public static final byte[] CODE_UP_APPLICATION = { ESC, 'O', 'A' };
+	public static final byte[] CODE_DOWN_APPLICATION = { ESC, 'O', 'B' };
+	public static final byte[] CODE_RIGHT_APPLICATION = { ESC, 'O', 'C' };
+	public static final byte[] CODE_LEFT_APPLICATION = { ESC, 'O', 'D' };
+	public static final byte[] CODE_HOME_NORMAL = { ESC, '[', 'H' };
+	public static final byte[] CODE_END_NORMAL = { ESC, '[', 'F' };
+	public static final byte[] CODE_HOME_APPLICATION = { ESC, 'O', 'H' };
+	public static final byte[] CODE_END_APPLICATION = { ESC, 'O', 'F' };
+
+	public static final byte[] CODE_F1 = { ESC, '[', '1', 'P' };
+	public static final byte[] CODE_F2 = { ESC, '[', '1', 'Q' };
+	public static final byte[] CODE_F3 = { ESC, '[', '1', 'R' };
+	public static final byte[] CODE_F4 = { ESC, '[', '1', 'S' };
 	public static final byte[] CODE_F5 = vtseq(15);
 	public static final byte[] CODE_F6 = vtseq(17);
 	public static final byte[] CODE_F7 = vtseq(18);
@@ -155,22 +164,23 @@ public abstract class TerminalAwtEventEncoder {
 		}
 	}
 
-	protected byte[] getAnsiKeyCode(KeyEvent e) {
+	protected byte[] getAnsiKeyCode(KeyEvent e, KeyMode cursorMode, KeyMode keypadMode) {
 		if (e.getModifiersEx() != 0) {
 			return getModifiedAnsiKeyCode(e);
 		}
 		return switch (e.getKeyCode()) {
 			case KeyEvent.VK_INSERT -> CODE_INSERT;
 			// NB. CODE_DELETE is handled in keyTyped
-			case KeyEvent.VK_HOME -> CODE_HOME;
-			case KeyEvent.VK_END -> CODE_END;
+			// Yes, HOME and END are considered CURSOR keys
+			case KeyEvent.VK_HOME -> cursorMode.choose(CODE_HOME_NORMAL, CODE_HOME_APPLICATION);
+			case KeyEvent.VK_END -> cursorMode.choose(CODE_END_NORMAL, CODE_END_APPLICATION);
 			case KeyEvent.VK_PAGE_UP -> CODE_PAGE_UP;
 			case KeyEvent.VK_PAGE_DOWN -> CODE_PAGE_DOWN;
 			case KeyEvent.VK_NUMPAD5 -> CODE_NUMPAD5;
-			case KeyEvent.VK_UP -> CODE_UP;
-			case KeyEvent.VK_DOWN -> CODE_DOWN;
-			case KeyEvent.VK_RIGHT -> CODE_RIGHT;
-			case KeyEvent.VK_LEFT -> CODE_LEFT;
+			case KeyEvent.VK_UP -> cursorMode.choose(CODE_UP_NORMAL, CODE_UP_APPLICATION);
+			case KeyEvent.VK_DOWN -> cursorMode.choose(CODE_DOWN_NORMAL, CODE_DOWN_APPLICATION);
+			case KeyEvent.VK_RIGHT -> cursorMode.choose(CODE_RIGHT_NORMAL, CODE_RIGHT_APPLICATION);
+			case KeyEvent.VK_LEFT -> cursorMode.choose(CODE_LEFT_NORMAL, CODE_LEFT_APPLICATION);
 			case KeyEvent.VK_F1 -> CODE_F1;
 			case KeyEvent.VK_F2 -> CODE_F2;
 			case KeyEvent.VK_F3 -> CODE_F3;
@@ -196,8 +206,8 @@ public abstract class TerminalAwtEventEncoder {
 		};
 	}
 
-	public void keyPressed(KeyEvent e) {
-		byte[] bytes = getAnsiKeyCode(e);
+	public void keyPressed(KeyEvent e, KeyMode cursorKeyMode, KeyMode keypadMode) {
+		byte[] bytes = getAnsiKeyCode(e, cursorKeyMode, keypadMode);
 		bb.put(bytes);
 		generateBytesExc();
 	}
@@ -278,6 +288,10 @@ public abstract class TerminalAwtEventEncoder {
 
 	public void sendChar(char c) {
 		switch (c) {
+			case 0x0a:
+				bb.put(CODE_ENTER);
+				generateBytesExc();
+				break;
 			case 0x7f:
 				bb.put(CODE_DELETE);
 				generateBytesExc();
@@ -296,7 +310,9 @@ public abstract class TerminalAwtEventEncoder {
 	protected void generateBytesExc() {
 		bb.flip();
 		try {
-			generateBytes(bb);
+			if (bb.hasRemaining()) {
+				generateBytes(bb);
+			}
 		}
 		catch (Throwable t) {
 			Msg.error(this, "Error generating bytes: " + t, t);
