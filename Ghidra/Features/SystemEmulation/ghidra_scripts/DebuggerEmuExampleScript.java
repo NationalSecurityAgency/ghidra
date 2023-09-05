@@ -33,13 +33,11 @@ import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
-import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.app.services.ProgramManager;
+import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -54,7 +52,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 
-public class DebuggerEmuExampleScript extends GhidraScript {
+public class DebuggerEmuExampleScript extends GhidraScript implements FlatDebuggerAPI {
 	private final static Charset UTF8 = Charset.forName("utf8");
 
 	@Override
@@ -63,9 +61,6 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 * First, get all the services and stuff:
 		 */
 		PluginTool tool = state.getTool();
-		ProgramManager programManager = tool.getService(ProgramManager.class);
-		DebuggerTraceManagerService traceManager =
-			tool.getService(DebuggerTraceManagerService.class);
 		SleighLanguage language = (SleighLanguage) getLanguage(new LanguageID("x86:LE:64:default"));
 
 		/*
@@ -103,7 +98,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 			}
 			program.save("Init", monitor);
 			// Display the program in the UI
-			programManager.openProgram(program);
+			openProgram(program);
 		}
 		finally {
 			if (program != null) {
@@ -121,8 +116,8 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		try {
 			trace = ProgramEmulationUtils.launchEmulationTrace(program, entry, this);
 			// Display the trace in the UI
-			traceManager.openTrace(trace);
-			traceManager.activateTrace(trace);
+			openTrace(trace);
+			activateTrace(trace);
 		}
 		finally {
 			if (trace != null) {
@@ -131,7 +126,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		}
 		// Get the initial thread
 		TraceThread traceThread = trace.getThreadManager().getAllThreads().iterator().next();
-		traceManager.activateThread(traceThread);
+		activateThread(traceThread);
 
 		/*
 		 * Instead of using the UI's emulator, this script will create its own with a custom
@@ -172,8 +167,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 			for (int i = 0; i < 10; i++) {
 				println("Executing: " + thread.getCounter());
 				thread.stepInstruction();
-				snapshot =
-					time.createSnapshot("Stepped to " + thread.getCounter());
+				snapshot = time.createSnapshot("Stepped to " + thread.getCounter());
 				emulator.writeDown(host, snapshot.getKey(), 0);
 			}
 			printerr("We should not have completed 10 steps!");
@@ -182,7 +176,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 			println("Terminated via interrupt. Good.");
 		}
 		// Display the final snapshot in the UI
-		traceManager.activateSnap(snapshot.getKey());
+		activateSnap(snapshot.getKey());
 
 		/*
 		 * Inspect the machine. You can always do this by accessing the state directly, but for
@@ -210,7 +204,6 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 * source (live target, emulated, imported, etc.) It's also built into utilities, making it
 		 * easier to use.
 		 */
-		println("RCX+4 (trace) = " +
-			TraceSleighUtils.evaluate("RCX+4", trace, snapshot.getKey(), traceThread, 0));
+		println("RCX+4 (trace) = " + evaluate("RCX+4"));
 	}
 }
