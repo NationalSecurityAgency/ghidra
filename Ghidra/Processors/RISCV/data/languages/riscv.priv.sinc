@@ -3,6 +3,10 @@
 define pcodeop wfi;
 define pcodeop sfence.vm;
 define pcodeop sfence.vma;
+define pcodeop sfence.w.inval;
+define pcodeop sfence.inval.ir;
+define pcodeop hfence.vvma;
+define pcodeop hfence.gvma;
 
 # Trap-Return
 
@@ -29,13 +33,11 @@ define pcodeop sfence.vma;
 	return [sepc];
 }
 
-
 # uret  00200073 ffffffff SIMPLE (0, 0) 
 :uret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x40
 {
 	return [uepc];
 }
-
 
 # Interrupt-Management
 
@@ -44,7 +46,6 @@ define pcodeop sfence.vma;
 {
 	wfi();
 }
-
 
 # Supervisor Memory-Management
 
@@ -66,75 +67,84 @@ define pcodeop sfence.vma;
 	sfence.vma(rs1, rs2);
 }
 
+# hfence.vvma s,t 22000073 fe007fff SIMPLE (0, 0)
+:hfence.vvma rs1,rs2 is rs2 & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2531=0x11
+{
+	hfence.vvma(rs1, rs2);
+}
 
-
+# hfence.gvma s,t 62000073 fe007fff SIMPLE (0, 0)
+:hfence.gvma rs1,rs2 is rs2 & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2531=0x31
+{
+	hfence.gvma(rs1, rs2);
+}
 
 # Hypervisor Memory-Management
 #TODO  move to rv32h and rv64h?
 
-:hlv.b rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x30 & rs1 & rd & op2024=0x0
+:hlv.b rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x30 & rs1 & rd & op2024=0x0
 {
 	rd = sext(*[ram]:1 rs1);
 }
 
-:hlv.bu rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x30 & rs1 & rd & op2024=0x1
+:hlv.bu rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x30 & rs1 & rd & op2024=0x1
 {
 	rd = zext(*[ram]:1 rs1);
 }
 
-:hlv.h rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x0
+:hlv.h rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x0
 {
 	rd = sext(*[ram]:2 rs1);
 }
 
-:hlv.hu rd,rs1, is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x1
+:hlv.hu rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x1
 {
 	rd = zext(*[ram]:2 rs1);
 }
 
-:hlvx.hu rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x3
+:hlvx.hu rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x32 & rs1 & rd & op2024=0x3
 {
 	rd = zext(*[ram]:2 rs1);
 }
 
-:hlv.w rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x0
+:hlv.w rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x0
 {
 	assignW(rd, *[ram]:4 rs1);
 }
 
-:hlvx.wu rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x3
+:hlvx.wu rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x3
 {
 	zassignW(rd, *[ram]:4 rs1);
 }
 
-:hsv.b rs1,rs2 is op0006=0x73 & funct3=0x4 & funct7=0x31 & op0711=0x0 & rs1 & rs2
+:hsv.b rs2,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x31 & op0711=0x0 & rs1 & rs2
 {
 	*[ram]:1 rs1 = rs2:1;
 }
 
-:hsv.h rs1,rs2 is op0006=0x73 & funct3=0x4 & funct7=0x33 & op0711=0x0 & rs1 & rs2
+:hsv.h rs2,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x33 & op0711=0x0 & rs1 & rs2
 {
 	*[ram]:2 rs1 = rs2:2;
 }
 
-:hsv.w rs1,rs2 is op0006=0x73 & funct3=0x4 & funct7=0x35 & op0711=0x0 & rs1 & rs2
+:hsv.w rs2,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x35 & op0711=0x0 & rs1 & rs2
 {
 	*[ram]:4 rs1 = rs2:4;
 }
 
 @if ADDRSIZE == "64"
 
-:hlv.wu rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x1
+:hlv.wu rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x34 & rs1 & rd & op2024=0x1
 {
 	rd = zext(*[ram]:4 rs1);
 }
 
-:hlv.d rd,rs1 is op0006=0x73 & funct3=0x4 & funct7=0x36 & rs1 & rd & op2024=0x0
+:hlv.d rd,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x36 & rs1 & rd & op2024=0x0
 {
 	rd = *[ram]:8 rs1;
 }
 
-:hsv.d rs1,rs2 is op0006=0x73 & funct3=0x4 & funct7=0x37 & op0711=0x0 & rs1 & rs2
+:hsv.d rs2,(rs1) is op0006=0x73 & funct3=0x4 & funct7=0x37 & op0711=0x0 & rs1 & rs2
 {
 	*[ram]:8 rs1 = rs2;
 }
