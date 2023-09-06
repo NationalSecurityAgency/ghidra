@@ -250,8 +250,9 @@ define pcodeop uncertain_fcsr;
 #la-fp-s.txt fcopysign.s mask=0x01128000	
 #0x01128000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
 :fcopysign.s  frD, frJ, frK          is op15_31=0x225 & frD & frJ & frK {
-	local kval = frK;
-	frD = frJ f* (kval/abs(kval));
+	local kval = frK & 0x80000000;
+	local jval = frJ & 0x7fffffff;
+	frD = kval | jval ;
 }
 
 
@@ -390,7 +391,7 @@ define pcodeop uncertain_fcsr;
 #la-fp-s.txt fld.s mask=0x2b000000	
 #0x2b000000	0xffc00000	f0:5,r5:5,so10:12	['freg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
 :fld.s  frD, ldst_addr               is op22_31=0xac & frD & ldst_addr {
-	frD = sext(*[ram]:4 ldst_addr);
+	frD = *[ram]:4 ldst_addr;
 }
 
 

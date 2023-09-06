@@ -102,6 +102,33 @@
           <addr space="join" piece1="a0" piece2="a1"/>
         </pentry>
       </output>
+      <killedbycall>
+        <register name="t0"/>
+        <register name="t1"/>
+        <register name="t2"/>
+        <register name="t3"/>
+        <register name="t4"/>
+        <register name="t5"/>
+        <register name="t6"/>
+        <register name="t7"/>
+        <register name="t8"/>
+        <register name="ft0"/>
+        <register name="ft1"/>
+        <register name="ft2"/>
+        <register name="ft3"/>
+        <register name="ft4"/>
+        <register name="ft5"/>
+        <register name="ft6"/>
+        <register name="ft7"/>
+        <register name="ft8"/>
+        <register name="ft9"/>
+        <register name="ft10"/>
+        <register name="ft11"/>
+        <register name="ft12"/>
+        <register name="ft13"/>
+        <register name="ft14"/>
+        <register name="ft15"/>
+      </killedbycall>
       <unaffected>
         <register name="s0"/>
         <register name="s1"/>

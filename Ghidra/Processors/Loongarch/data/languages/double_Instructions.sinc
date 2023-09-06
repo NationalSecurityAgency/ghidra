@@ -79,8 +79,9 @@
 #la-fp-d.txt fcopysign.d mask=0x01130000	
 #0x01130000	0xffff8000	f0:5, f5:5, f10:5	['freg0_5_s0', 'freg5_5_s0', 'freg10_5_s0']
 :fcopysign.d  drD, drJ, drK     is op15_31=0x226 & drD & drJ & drK {
-	local kval = drK;
-	drD = drJ f* (kval/abs(kval));
+	local kval = drK & 0x8000000000000000;
+	local jval = drJ & 0x7fffffffffffffff;
+	drD = kval | jval ;
 }
 
 
