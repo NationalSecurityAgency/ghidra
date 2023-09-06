@@ -27,4 +27,6 @@ eclipse.project.name = 'Framework Pty'
 dependencies {
 	api project(':Framework-Debugging')
 	api "com.jcraft:jsch:0.1.55"
+
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 }
