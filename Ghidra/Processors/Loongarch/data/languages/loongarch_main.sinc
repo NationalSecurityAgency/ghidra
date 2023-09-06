@@ -3,11 +3,12 @@ define endian=little;
 
 define alignment=4;
 
-define space ram     type=ram_space       size=$(REGSIZE) default;
-define space register type=register_space size=4;
+define space ram      type=ram_space        size=$(REGSIZE) default;
+define space iocsr    type=ram_space        size=$(REGSIZE);
+define space register type=register_space   size=4;
 
 define register offset=0x0 size=8 [
-	pc	scr0	scr1	scr2	scr3
+	pc   scr0 scr1 scr2 scr3
 ];
 
 define register offset=0x40 size=1 [
@@ -38,11 +39,11 @@ define register offset=0x100 size=4 [
 	r0_lo  r0_hi  ra_lo  ra_hi  tp_lo  tp_hi  sp_lo  sp_hi
 	a0_lo  a0_hi  a1_lo  a1_hi  a2_lo  a2_hi  a3_lo  a3_hi
 	a4_lo  a4_hi  a5_lo  a5_hi  a6_lo  a6_hi  a7_lo  a7_hi
-	t0_lo t0_hi t1_lo t1_hi t2_lo t2_hi t3_lo t3_hi
-	t4_lo t4_hi t5_lo t5_hi t6_lo t6_hi t7_lo t7_hi
-	t8_lo t8_hi r21_lo r21_hi fp_lo fp_hi s0_lo s0_hi
-	s1_lo s1_hi s2_lo s2_hi s3_lo s3_hi s4_lo s4_hi
-	s5_lo s5_hi s6_lo s6_hi s7_lo s7_hi s8_lo s8_hi
+	t0_lo  t0_hi  t1_lo  t1_hi  t2_lo  t2_hi  t3_lo  t3_hi
+	t4_lo  t4_hi  t5_lo  t5_hi  t6_lo  t6_hi  t7_lo  t7_hi
+	t8_lo  t8_hi  r21_lo r21_hi fp_lo  fp_hi  s0_lo  s0_hi
+	s1_lo  s1_hi  s2_lo  s2_hi  s3_lo  s3_hi  s4_lo  s4_hi
+	s5_lo  s5_hi  s6_lo  s6_hi  s7_lo  s7_hi  s8_lo  s8_hi
 ];
 
 @endif
@@ -133,45 +134,44 @@ define register offset=0x1000 size=32 [
 
 @define CSR_OFFSET "0x2000" #used for the csr instructions csrxchg/cssrd/cssrw
 define register offset=$(CSR_OFFSET) size=$(REGSIZE) [
-	crmd prmd euen misc ecfg estat era badv
-	badi csr9 csr10 csr11 eentry csr13 csr14 csr15
-	tlbidx tlbehi tlbelo0 tlbelo1 csr20 csr21 csr22 csr23
-	asid pgdl pgdh pgd pwcl pwch stlbps rvacfg
-	cpuid prcfg1 prcfg2 prcfg3 csr36 csr37 csr38 csr39
-	csr40 csr41 csr42 csr43 csr44 csr45 csr46 csr47
-	save0 save1 save2 save3 save4 save5 save6 save7
-	save8 save9 save10 save11 save12 save13 save14 save15
-	tid tcfg tval cntc ticlr csr69 csr70 csr71
-	csr72 csr73 csr74 csr75 csr76 csr78 csr79
-	csr80 csr81 csr82 csr83 csr84 csr85 csr86 csr87
-	csr88 csr89 csr90 csr91 csr92 csr93 csr94 csr95
-	llbctl csr97 csr98 csr99 csr100 csr101 csr102 csr103
-	csr104 csr105 csr106 csr107 csr108 csr109 csr110 csr111
-	csr112 csr113 csr114 csr115 csr116 csr117 csr118 csr119
-	csr120 csr121 csr122 csr123 csr124 csr125 csr126 csr127
-	impctl1 impctl2 csr130 csr131 csr132 csr133 csr134 csr135
-	tlbrentry tlbrbadv tlbrera tlbrsave tlbrelo0 tlbrelo1 tlbrehi tlbrprmd
-	merrctl merrinfo1 merrinfo2 merrentry merrera merrsave csr150 csr151
-	ctag csr153 csr154 csr155 csr156 csr157 csr158 csr159
-	csr160 csr161 csr162 csr163 csr164 csr165 csr166 csr167
-	csr168 csr169 csr170 csr171 csr172 csr173 csr174 csr175
-	csr176 csr177 csr178 csr179 csr180 csr181 csr182 csr183
-	csr184 csr185 csr186 csr187 csr188 csr189 csr190 csr191
-	csr192 csr193 csr194 csr195 csr196 csr197 csr198 csr199
-	csr200 csr201 csr202 csr203 csr204 csr205 csr206 csr207
-	csr208 csr209 csr210 csr211 csr212 csr213 csr214 csr215
-	csr216 csr217 csr218 csr219 csr220 csr221 csr222 csr223
-	csr224 csr225 csr226 csr227 csr228 csr229 csr230 csr231
-	csr232 csr233 csr234 csr235 csr236 csr237 csr238 csr239
-	csr240 csr241 csr242 csr243 csr244 csr245 csr246 csr247
-	csr248 csr249 csr250 csr251 csr252 csr253 csr254 csr255
-	csr256 csr257 csr258 csr259 csr260 csr261 csr262 csr263
-	
+	crmd      prmd      euen      misc      ecfg      estat     era       badv
+	badi      csr9      csr10     csr11     eentry    csr13     csr14     csr15
+	tlbidx    tlbehi    tlbelo0   tlbelo1   csr20     csr21     csr22     csr23
+	asid      pgdl      pgdh      pgd       pwcl      pwch      stlbps    rvacfg
+	cpuid     prcfg1    prcfg2    prcfg3    csr36     csr37     csr38     csr39
+	csr40     csr41     csr42     csr43     csr44     csr45     csr46     csr47
+	save0     save1     save2     save3     save4     save5     save6     save7
+	save8     save9     save10    save11    save12    save13    save14    save15
+	tid       tcfg      tval      cntc      ticlr     csr69     csr70     csr71
+	csr72     csr73     csr74     csr75     csr76     csr78     csr79
+	csr80     csr81     csr82     csr83     csr84     csr85     csr86     csr87
+	csr88     csr89     csr90     csr91     csr92     csr93     csr94     csr95
+	llbctl    csr97     csr98     csr99     csr100    csr101    csr102    csr103
+	csr104    csr105    csr106    csr107    csr108    csr109    csr110    csr111
+	csr112    csr113    csr114    csr115    csr116    csr117    csr118    csr119
+	csr120    csr121    csr122    csr123    csr124    csr125    csr126    csr127
+	impctl1   impctl2   csr130    csr131    csr132    csr133    csr134    csr135
+	tlbrentry tlbrbadv  tlbrera   tlbrsave  tlbrelo0  tlbrelo1  tlbrehi   tlbrprmd
+	merrctl   merrinfo1 merrinfo2 merrentry merrera   merrsave  csr150    csr151
+	ctag      csr153    csr154    csr155    csr156    csr157    csr158    csr159
+	csr160    csr161    csr162    csr163    csr164    csr165    csr166    csr167
+	csr168    csr169    csr170    csr171    csr172    csr173    csr174    csr175
+	csr176    csr177    csr178    csr179    csr180    csr181    csr182    csr183
+	csr184    csr185    csr186    csr187    csr188    csr189    csr190    csr191
+	csr192    csr193    csr194    csr195    csr196    csr197    csr198    csr199
+	csr200    csr201    csr202    csr203    csr204    csr205    csr206    csr207
+	csr208    csr209    csr210    csr211    csr212    csr213    csr214    csr215
+	csr216    csr217    csr218    csr219    csr220    csr221    csr222    csr223
+	csr224    csr225    csr226    csr227    csr228    csr229    csr230    csr231
+	csr232    csr233    csr234    csr235    csr236    csr237    csr238    csr239
+	csr240    csr241    csr242    csr243    csr244    csr245    csr246    csr247
+	csr248    csr249    csr250    csr251    csr252    csr253    csr254    csr255
+	csr256    csr257    csr258    csr259    csr260    csr261    csr262    csr263
 ];
 
 # Dummy registers for floating point comparison
 define register offset=0x5000 size=4 [
-	FCMP1  FCMP2
+	FCMP1 FCMP2
 ];
 
 define register offset=0x5008 size=1 [
@@ -179,7 +179,7 @@ define register offset=0x5008 size=1 [
 ];
 
 define register offset=0x5100 size=8 [
-	DCMP1  DCMP2
+	DCMP1 DCMP2
 ];
 
 define register offset=0x5110 size=1 [
@@ -187,9 +187,9 @@ define register offset=0x5110 size=1 [
 ];
 
 define register offset=0x50 size=4   contextreg;
+
 define context contextreg
-phase = (0,1)
-;
+	phase = (0,1) ;
 
 define token instr(32)
 	instword  = ( 0,31)
@@ -224,9 +224,9 @@ define token instr(32)
 	op0_4     = ( 0, 4)
 	op0_31    = ( 0,31)
 
-	ccf      = (16,19)
-	ccf_s    = (15,15)
-	
+	ccf       = (16,19)
+	ccf_s     = (15,15)
+
 	simm5_20  = ( 5,24) signed
 	simm5_13  = ( 5,17) signed
 	simm10_9  = (10,18) signed
@@ -239,7 +239,7 @@ define token instr(32)
 	simm10_10 = (10,19) signed
 	simm0_5   = ( 0, 4) signed
 	simm0_10  = ( 0, 9) signed
-	
+
 	rK        = (10,14)
 	rK32      = (10,14)
 
@@ -249,16 +249,16 @@ define token instr(32)
 	rD        = ( 0, 4)
 	rD32      = ( 0, 4)
 
-	xrK     = (10,14)
-	xrJ     = ( 5, 9)
-	xrD     = ( 0, 4)
-	xrA     = (15,19)
-	
-	vrK     = (10,14)
-	vrJ     = ( 5, 9)
-	vrD     = ( 0, 4)
-	vrA     = (15,19)
-	
+	xrK       = (10,14)
+	xrJ       = ( 5, 9)
+	xrD       = ( 0, 4)
+	xrA       = (15,19)
+
+	vrK       = (10,14)
+	vrJ       = ( 5, 9)
+	vrD       = ( 0, 4)
+	vrA       = (15,19)
+
 	lbtrJ     = ( 5, 6)
 	lbtrD     = ( 0, 1)
 
@@ -272,9 +272,9 @@ define token instr(32)
 	drD       = ( 0, 4)
 	drA       = (15,19)
 
-	fccJ     = ( 5, 7)
-	fccD     = ( 0, 2)
-	fccA     = (15,17)
+	fccJ      = ( 5, 7)
+	fccD      = ( 0, 2)
+	fccA      = (15,17)
 
 	imm5_5    = ( 5, 9)
 	imm5_3    = ( 5, 7)
@@ -389,6 +389,7 @@ attach variables [xrD xrJ xrK xrA] [
 attach variables [ fccD fccJ fccA] [
 	fcc0 fcc1 fcc2 fcc3 fcc4 fcc5 fcc6 fcc7
 ];
+
 # Register subconstructors
 RD: rD    is rD        { export rD; }
 
@@ -421,13 +422,21 @@ RK32src: rK  is rK & rK32   { export rK32; }
 RK32src: rK  is rK & rK32=0 { export 0:4; }
 
 @if FREGSIZE == "8"
-FRD: drD is drD { export drD; }
-FRJ: drJ is drJ { export drJ; }
-FRK: drK is drK { export drK; }
+
+FRD: drD  is drD { export drD; }
+
+FRJ: drJ  is drJ { export drJ; }
+
+FRK: drK  is drK { export drK; }
+
 @else
-FRD: frD is frD { export frD; }
-FRJ: frJ is frJ { export frJ; }
-FRK: frK is frK { export frK; }
+
+FRD: frD  is frD { export frD; }
+
+FRJ: frJ  is frJ { export frJ; }
+
+FRK: frK  is frK { export frK; }
+
 @endif
 
 # Immediate operand sub-constructors
@@ -443,17 +452,21 @@ ldstx_addr: RJsrc(RKsrc)  is RJsrc & RKsrc { local vaddr:$(REGSIZE) = RJsrc + RK
 
 pcadd2:  reloffs   is simm5_20 [reloffs = inst_start + (simm5_20 << 2);]  { export *[const]:$(REGSIZE) reloffs; }
 pcadd12: reloffs  is simm5_20 [reloffs = inst_start + (simm5_20 << 12);] { export *[const]:$(REGSIZE) reloffs; }
+
 pcala12: reloffs  is simm5_20 [reloffs = (inst_start & ~0xfff) + (simm5_20 << 12);] { export *[const]:$(REGSIZE) reloffs; }
+
 pcadd18: reloffs  is simm5_20 [reloffs = inst_start + (simm5_20 << 18);] { export *[const]:$(REGSIZE) reloffs; }
 
-Rel16: reloc  is simm10_16            [ reloc = inst_start + (simm10_16 << 2); ]                                 { export *:$(ADDRSIZE) reloc; }
+Rel16: reloc  is simm10_16            [ reloc = inst_start + (simm10_16 << 2); ]                               { export *:$(ADDRSIZE) reloc; }
 Rel21: reloc  is imm10_16 & simm0_5  [ reloc = inst_start + (((simm0_5 << 16) + imm10_16) << 2); ]   { export *:$(ADDRSIZE) reloc; }
 Rel26: reloc  is imm10_16 & simm0_10 [ reloc = inst_start + (((simm0_10 << 16) | imm10_16) << 2); ] { export *:$(ADDRSIZE) reloc; }
 
 RelJ16: RJsrc, simm10_16  is RJsrc & simm10_16 { local tmp:$(ADDRSIZE) = RJsrc + (simm10_16 << 2); export tmp; }
 
 simm12i: immed  is simm5_20  [immed = simm5_20  << 12; ] { export *[const]:$(REGSIZE) immed; }
+
 simm32i: immed  is simm5_20  [immed = simm5_20  << 32; ] { export *[const]:$(REGSIZE) immed; }
+
 simm52i: immed  is simm10_12 [immed = simm10_12 << 52; ] { export *[const]:$(REGSIZE) immed; }
 
 # general pcodeops

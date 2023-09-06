@@ -57,7 +57,7 @@ seq: imm10_8 is imm10_8 { export *[const]:1 imm10_8; }
 #la-privileged-32.txt iocsrrd.b mask=0x06480000	
 #0x06480000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
 :iocsrrd.b  RD, RJsrc is op10_31=0x19200 & RD & RJsrc {
-	local val:1 = iocsrrd(RJsrc, 1:1);
+	local val:1 = *[iocsr]:1 RJsrc;
 	RD = sext(val);
 }
 
@@ -65,7 +65,7 @@ seq: imm10_8 is imm10_8 { export *[const]:1 imm10_8; }
 #la-privileged-32.txt iocsrrd.h mask=0x06480400	
 #0x06480400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
 :iocsrrd.h  RD, RJsrc is op10_31=0x19201 & RD & RJsrc {
-	local val:2 = iocsrrd(RJsrc, 2:1);
+	local val:2 = *[iocsr]:2 RJsrc;
 	RD = sext(val);
 }
 
@@ -73,7 +73,7 @@ seq: imm10_8 is imm10_8 { export *[const]:1 imm10_8; }
 #la-privileged-32.txt iocsrrd.w mask=0x06480800	
 #0x06480800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
 :iocsrrd.w  RD, RJsrc is op10_31=0x19202 & RD & RJsrc {
-	local val:4 = iocsrrd(RJsrc, 4:1);
+	local val:4 = *[iocsr]:4 RJsrc;
 	RD = sext(val);
 }
 
@@ -81,22 +81,25 @@ seq: imm10_8 is imm10_8 { export *[const]:1 imm10_8; }
 
 #la-privileged-32.txt iocsrwr.b mask=0x06481000	
 #0x06481000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
-:iocsrwr.b  RD, RJsrc is op10_31=0x19204 & RD & RJsrc {
-	iocsrwr(RD, RJsrc, 1:1);
+:iocsrwr.b  RDsrc, RJsrc is op10_31=0x19204 & RDsrc & RJsrc {
+    local val:1 = RDsrc:1;
+    *[iocsr]:1 RJsrc = val;
 }
 
 
 #la-privileged-32.txt iocsrwr.h mask=0x06481400	
 #0x06481400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
-:iocsrwr.h  RD, RJsrc is op10_31=0x19205 & RD & RJsrc {
-    iocsrwr(RD, RJsrc, 2:1);
+:iocsrwr.h  RDsrc, RJsrc is op10_31=0x19205 & RDsrc & RJsrc {
+    local val:2= RDsrc:2;
+    *[iocsr]:2 RJsrc = val;
 }
 
 
 #la-privileged-32.txt iocsrwr.w mask=0x06481800	
 #0x06481800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
-:iocsrwr.w  RD, RJsrc is op10_31=0x19206 & RD & RJsrc {
-	iocsrwr(RD, RJsrc, 4:1);
+:iocsrwr.w  RDsrc, RJsrc is op10_31=0x19206 & RDsrc & RJsrc {
+    local val:4= RDsrc:4;
+    *[iocsr]:4 RJsrc = val;
 }
 
 
@@ -152,7 +155,7 @@ define pcodeop ertn;
 #la-privileged-32.txt eret mask=0x06483800	[@orig_name=ertn, @primary]
 #0x06483800	0xffffffff
 :ertn  is instword=0x06483800 {
-	local ret = ertn();
+	local ret:$(REGSIZE) = ertn();
 	return [ret];
 }
 

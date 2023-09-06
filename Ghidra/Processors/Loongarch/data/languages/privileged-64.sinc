@@ -1,14 +1,14 @@
 #la-privileged-64.txt iocsrrd.d mask=0x06480c00	
 #0x06480c00	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
 :iocsrrd.d  RD, RJsrc is op10_31=0x19203 & RD & RJsrc {
-	RD = iocsrrd(RJsrc, 8:1);
+	RD = *[iocsr]:8 RJsrc;
 }
 
 
 #la-privileged-64.txt iocsrwr.d mask=0x06481c00	
 #0x06481c00	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
-:iocsrwr.d  RD, RJsrc is op10_31=0x19207 & RD & RJsrc {
-	iocsrwr(RD, RJsrc, 64:1);
+:iocsrwr.d  RDsrc, RJsrc is op10_31=0x19207 & RDsrc & RJsrc {
+	*[iocsr]:8 RJsrc = RDsrc;
 }
 
 
