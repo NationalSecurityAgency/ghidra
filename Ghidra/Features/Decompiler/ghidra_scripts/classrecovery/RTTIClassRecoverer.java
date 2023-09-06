@@ -150,28 +150,27 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
 			// if class is non-virtual have to search for an existing class datatype
-			if (!recoveredClass.hasVftable()) {
-				DataType[] possibleExistingClassStructures =
-					extendedFlatAPI.getDataTypes(recoveredClass.getName());
-				if (possibleExistingClassStructures.length == 0) {
+
+			DataType[] possibleExistingClassStructures =
+				extendedFlatAPI.getDataTypes(recoveredClass.getName());
+			if (possibleExistingClassStructures.length == 0) {
+				continue;
+			}
+			for (int i = 0; i < possibleExistingClassStructures.length; i++) {
+				monitor.checkCancelled();
+				if (!(possibleExistingClassStructures[i] instanceof Structure)) {
 					continue;
 				}
-				for (int i = 0; i < possibleExistingClassStructures.length; i++) {
-					monitor.checkCancelled();
-					if (!(possibleExistingClassStructures[i] instanceof Structure)) {
-						continue;
-					}
-					if (possibleExistingClassStructures[i].isNotYetDefined()) {
-						continue;
-					}
-
-					Structure existingClassStructure =
-						(Structure) possibleExistingClassStructures[i];
-
-					recoveredClass.addExistingClassStructure(existingClassStructure);
-					break;
+				if (possibleExistingClassStructures[i].isNotYetDefined()) {
+					continue;
 				}
+
+				Structure existingClassStructure = (Structure) possibleExistingClassStructures[i];
+
+				recoveredClass.addExistingClassStructure(existingClassStructure);
+				break;
 			}
+
 			//Iterate over constructor/destructor functions
 			List<Function> constructorOrDestructorFunctions =
 				recoveredClass.getConstructorOrDestructorFunctions();

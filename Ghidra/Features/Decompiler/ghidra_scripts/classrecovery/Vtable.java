@@ -18,32 +18,12 @@ package classrecovery;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.address.GlobalNamespace;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.LongDataType;
-import ghidra.program.model.data.LongLongDataType;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.Bookmark;
-import ghidra.program.model.listing.BookmarkType;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
+import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -152,8 +132,6 @@ public class Vtable {
 			return;
 		}
 
-		// setIsConstructionVtable();
-
 		if (!isValid) {
 			return;
 		}
@@ -227,7 +205,6 @@ public class Vtable {
 
 	protected void setTypeinfoAddress()  {
 
-		GccTypeinfo typeinfo = getReferencedTypeinfo();
 		typeinfoAddress = typeinfo.getAddress();
 		typeinfoNamespace = typeinfo.getNamespace();
 
@@ -303,7 +280,6 @@ public class Vtable {
 
 	protected void setHasVfunctions() throws CancelledException {
 
-		Address typeinfoRefAddress = getTypeinfoRefAddress();
 		if (isPrimary == null) {
 			isValid = false;
 			return;
@@ -539,6 +515,22 @@ public class Vtable {
 		return length;
 	}
 
+	public List<Long> getOffsets() {
+
+		List<Long> offsetValues = new ArrayList<Long>();
+		offsetValues.add(topOffsetValue);
+
+		// skip to next offset above the first one which we already knew and have added 
+		// add all the values until all including the value at the vtableAddress are added
+		Address nextOffsetAddress = typeinfoRefAddress.subtract(2 * defaultPointerSize);
+		while (nextOffsetAddress.getOffset() <= vtableAddress.getOffset()) {
+			offsetValues.add(extendedFlatAPI.getLongValueAt(nextOffsetAddress));
+			nextOffsetAddress = nextOffsetAddress.subtract(defaultPointerSize);
+		}
+
+		return offsetValues;
+	}
+
 	private void findInternalVtables() throws CancelledException {
 
 		// if the current table is already an internal vtable there won't be any
@@ -725,7 +717,7 @@ public class Vtable {
 	}
 
 	public Data createVftableArray(Address vftableAddress, int numFunctionPointers)
-			throws CancelledException, AddressOutOfBoundsException {
+			throws AddressOutOfBoundsException {
 
 		listing.clearCodeUnits(vftableAddress,
 				vftableAddress.add((numFunctionPointers * defaultPointerSize - 1)), false);
