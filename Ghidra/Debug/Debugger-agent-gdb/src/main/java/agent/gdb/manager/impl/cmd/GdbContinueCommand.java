@@ -43,7 +43,6 @@ public class GdbContinueCommand extends AbstractGdbCommandWithThreadId<Void>
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		evt = checkErrorViaCli(evt); // TODO: Deprecated, since that hack can crash GDB
 		return handleExpectingRunning(evt, pending);
 	}
 
