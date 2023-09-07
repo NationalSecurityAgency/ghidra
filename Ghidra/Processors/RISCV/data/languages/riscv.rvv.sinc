@@ -1569,10 +1569,16 @@
 # vsetvl  rd, rs1, rs2    # rd = new vl, rs1 = AVL, rs2 = new vtype value
 :vsetvl   rd, rs1, rs2     is op3131=0x1 & op2530=0x0 & rs2 & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
 
-#TODO  huh
 # vsetvli      31=0 vtypei         rs1 14..12=0x7 rd 6..0=0x57
 # vsetvli rd, rs1, vtypei # rd = new vl, rs1 = AVL, vtypei = new vtype setting
-:vsetvli  rd, rs1, vtypei  is op3131=0x0 & vtypei & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
+:vsetvli   rd, rs1, "e8,m1,tu,mu"     is op2030=0x000 & op3131=0x0 & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
+:vsetvli   rd, rs1, "e8,m2,tu,mu"     is op2030=0x001 & op3131=0x0 & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
+:vsetvli   rd, rs1, "e16,m4,ta,mu"    is op2030=0x04a & op3131=0x0 & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
+:vsetvli   rd, rs1, "e32,mf4,tu,mu"   is op2030=0x016 & op3131=0x0 & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
+:vsetvli   rd, rs1, "e64,mf8,tu,ma"   is op2030=0x09d & op3131=0x0 & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
+:vsetvli   rd, rs1, "e8,m8,ta,ma"     is op2030=0x0c3 & op3131=0x0 & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
+:vsetvli   rd, rs1, "e8,m2,ta,ma"     is op2030=0x0c1 & op3131=0x0 & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
+:vsetvli   rd, rs1, vtypei            is op3131=0x0 & vtypei & rs1 & op1214=0x7 & rd & op0006=0x57  unimpl
 
 # vsext.vf2      31..26=0x12 vm vs2 19..15=7 14..12=0x2 vd 6..0=0x57
 # vsext.vf2 vd, vs2, vm  # Sign-extend SEW/2 source to SEW destination
