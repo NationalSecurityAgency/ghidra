@@ -2,10 +2,10 @@
 @define FREGSIZE 8
 @define ADDRSIZE 4
 @include "loongarch_main.sinc"
-@include "Loongarch32_Instructions.sinc"
+@include "Loongarch32_instructions.sinc"
 @include "privileged-32.sinc"
-@include "float_Instructions.sinc"
-@include "double_Instructions.sinc"
+@include "loongarch_float.sinc"
+@include "loongarch_double.sinc"
 
 #@include "lasx.sinc"
 #@include "lbt.sinc"
