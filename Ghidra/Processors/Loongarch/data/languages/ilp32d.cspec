@@ -77,7 +77,7 @@
         <pentry minsize="1" maxsize="4">
           <register name="a7"/>
         </pentry>
-    		<pentry minsize="5" maxsize="8">
+    	<pentry minsize="5" maxsize="8">
           <addr space="join" piece1="a0" piece2="a1"/>
         </pentry>
         <pentry minsize="5" maxsize="8">
@@ -143,14 +143,14 @@
         <register name="s8"/>
         <register name="sp"/>
         <register name="fp"/>
-        <register name="fa24"/>
-        <register name="fa25"/>
-        <register name="fa26"/>
-        <register name="fa27"/>
-        <register name="fa28"/>
-        <register name="fa29"/>
-        <register name="fa30"/>
-        <register name="fa30"/>
+        <register name="fs0"/>
+        <register name="fs1"/>
+        <register name="fs2"/>
+        <register name="fs3"/>
+        <register name="fs4"/>
+        <register name="fs5"/>
+        <register name="fs6"/>
+        <register name="fs7"/>
       </unaffected>
     </prototype>
   </default_proto>

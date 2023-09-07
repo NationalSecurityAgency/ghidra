@@ -3,7 +3,6 @@
 @define ADDRSIZE 4
 @include "loongarch_main.sinc"
 @include "Loongarch32_instructions.sinc"
-@include "privileged-32.sinc"
 @include "loongarch_float.sinc"
 @include "loongarch_double.sinc"
 
