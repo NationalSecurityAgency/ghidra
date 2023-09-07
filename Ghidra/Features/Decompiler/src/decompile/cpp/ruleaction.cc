@@ -10477,6 +10477,7 @@ int4 RuleSimplifyConstantLUT::applyOp(PcodeOp *op, Funcdata &data)
   }
 
   PcodeOp* shiftOp = shift->getDef();
+  if (shiftOp == (PcodeOp*) 0) return 0;
   if (shiftOp->code() != CPUI_INT_RIGHT) {
     // Don't choke on an intermediate SUBPIECE(x, 0)
     if (shiftOp->code() != CPUI_SUBPIECE) return 0;
@@ -10484,6 +10485,7 @@ int4 RuleSimplifyConstantLUT::applyOp(PcodeOp *op, Funcdata &data)
 
     shift = shiftOp->getIn(0);
     shiftOp = shift->getDef();
+    if (shiftOp == (PcodeOp*) 0) return 0;
     if (shiftOp->code() != CPUI_INT_RIGHT) return 0;
   }
 
