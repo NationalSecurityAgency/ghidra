@@ -21,6 +21,4 @@ data/languages/lp64d.cspec||GHIDRA||||END|
 data/languages/lp64f.cspec||GHIDRA||||END|
 data/languages/lsx.sinc||GHIDRA||||END|
 data/languages/lvz.sinc||GHIDRA||||END|
-data/languages/privileged-32.sinc||GHIDRA||||END|
-data/languages/privileged-64.sinc||GHIDRA||||END|
 data/manuals/loongarch.idx||GHIDRA||||END|

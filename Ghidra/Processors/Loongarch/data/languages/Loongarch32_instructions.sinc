@@ -1140,4 +1140,186 @@ define pcodeop bstrins.w;
 }
 
 
+#########################
+# PRIVILEGED INSTRUCTIONS
+#########################
+
+#la-privileged-32.txt csrxchg mask=0x04000000	[@primary]
+#0x04000000	0xff000000	r0:5,r5:5,u10:14	['reg0_5_s0', 'reg5_5_s0', 'imm10_14_s0']
+csr: csr is imm10_14 [csr = $(CSR_OFFSET) + imm10_14 * $(REGSIZE);] {
+	export *[register]:$(REGSIZE) csr;
+}
+
+:csrxchg  RD, RJsrc, csr is op24_31=0x4 & RD & RJsrc & csr {
+	local csrval:$(REGSIZE) = csr;
+	local mask = RJsrc;
+	csr = RD & mask;
+	RD = csrval & mask;
+}
+
+:cssrd  RD, csr is op24_31=0x4 & RD & op5_9=0 & csr {
+	RD = csr;
+}
+
+:cssrw  RD, csr is op24_31=0x4 & RD & op5_9=1 & csr {
+	local csrval:$(REGSIZE) = csr;
+	csr = RD;
+	RD = csrval;
+}
+
+define pcodeop cacop;
+#la-privileged-32.txt cacop mask=0x06000000	[@orig_fmt=Ud5JSk12, @primary]
+#0x06000000	0xffc00000	u0:5,r5:5,s10:12	['imm0_5_s0', 'reg5_5_s0', 'simm10_12_s0']
+cache_obj: op0_2 is op0_2 { local tmp:1 = op0_2; export *[const]:1 tmp; }
+op_type: "initialization" is op3_4=0 { export 0:1; } 
+op_type: "consistency"    is op3_4=1 { export 1:1; } 
+op_type: "coherency"      is op3_4=2 { export 2:1; } 
+op_type: "Custom"         is op3_4=3 { export 3:1; }
+
+:cacop  op_type^"("^cache_obj^")", ldst_addr is op22_31=0x18 & cache_obj & op_type & ldst_addr {
+	cacop(op_type, cache_obj, ldst_addr);
+}
+
+
+define pcodeop lddir;
+level: imm10_8 is imm10_8 { export *[const]:1 imm10_8; }
+#la-privileged-32.txt lddir mask=0x06400000	
+#0x06400000	0xfffc0000	r0:5,r5:5,u10:8	['reg0_5_s0', 'reg5_5_s0', 'imm10_8_s0']
+:lddir  RD, RJsrc, level is op18_31=0x190 & RD & RJsrc & level {
+	RD = lddir(RJsrc, level);
+}
+
+
+define pcodeop ldpte;
+seq: imm10_8 is imm10_8 { export *[const]:1 imm10_8; }
+#la-privileged-32.txt ldpte mask=0x06440000	
+#0x06440000	0xfffc001f	r5:5,u10:8	['reg5_5_s0', 'imm10_8_s0']
+:ldpte  RJsrc, seq is op18_31=0x191 & op0_4=0x0 & RJsrc & seq {
+	ldpte(RJsrc, seq);
+}
+
+
+
+#la-privileged-32.txt iocsrrd.b mask=0x06480000	
+#0x06480000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrrd.b  RD, RJsrc is op10_31=0x19200 & RD & RJsrc {
+	local val:1 = *[iocsr]:1 RJsrc;
+	RD = sext(val);
+}
+
+
+#la-privileged-32.txt iocsrrd.h mask=0x06480400	
+#0x06480400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrrd.h  RD, RJsrc is op10_31=0x19201 & RD & RJsrc {
+	local val:2 = *[iocsr]:2 RJsrc;
+	RD = sext(val);
+}
+
+
+#la-privileged-32.txt iocsrrd.w mask=0x06480800	
+#0x06480800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrrd.w  RD, RJsrc is op10_31=0x19202 & RD & RJsrc {
+	local val:4 = *[iocsr]:4 RJsrc;
+	RD = sext(val);
+}
+
+
+
+#la-privileged-32.txt iocsrwr.b mask=0x06481000	
+#0x06481000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrwr.b  RDsrc, RJsrc is op10_31=0x19204 & RDsrc & RJsrc {
+    local val:1 = RDsrc:1;
+    *[iocsr]:1 RJsrc = val;
+}
+
+
+#la-privileged-32.txt iocsrwr.h mask=0x06481400	
+#0x06481400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrwr.h  RDsrc, RJsrc is op10_31=0x19205 & RDsrc & RJsrc {
+    local val:2= RDsrc:2;
+    *[iocsr]:2 RJsrc = val;
+}
+
+
+#la-privileged-32.txt iocsrwr.w mask=0x06481800	
+#0x06481800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrwr.w  RDsrc, RJsrc is op10_31=0x19206 & RDsrc & RJsrc {
+    local val:4= RDsrc:4;
+    *[iocsr]:4 RJsrc = val;
+}
+
+
+define pcodeop tlbclr;
+#la-privileged-32.txt tlbclr mask=0x06482000	
+#0x06482000	0xffffffff
+:tlbclr  is instword=0x06482000 {
+	tlbclr();
+}
+
+
+define pcodeop tlbflush;
+#la-privileged-32.txt tlbflush mask=0x06482400	
+#0x06482400	0xffffffff
+:tlbflush  is instword=0x06482400 {
+	tlbflush();
+}
+
+
+define pcodeop tlbsrch;
+#la-privileged-32.txt tlbsrch mask=0x06482800	[@primary]
+#0x06482800	0xffffffff
+:tlbsrch  is instword=0x06482800 {
+	tlbsrch();
+}
+
+
+define pcodeop tlbrd;
+#la-privileged-32.txt tlbrd mask=0x06482c00	[@primary]
+#0x06482c00	0xffffffff
+:tlbrd  is instword=0x06482c00 {
+	tlbrd();
+}
+
+
+define pcodeop tlbwr;
+#la-privileged-32.txt tlbwr mask=0x06483000	[@primary]
+#0x06483000	0xffffffff
+:tlbwr  is instword=0x06483000 {
+	tlbwr();
+}
+
+
+define pcodeop tlbfill;
+#la-privileged-32.txt tlbfill mask=0x06483400	[@primary]
+#0x06483400	0xffffffff
+:tlbfill  is instword=0x06483400 {
+	tlbfill();
+}
+
+
+define pcodeop ertn;
+#la-privileged-32.txt eret mask=0x06483800	[@orig_name=ertn, @primary]
+#0x06483800	0xffffffff
+:ertn  is instword=0x06483800 {
+	local ret:$(REGSIZE) = ertn();
+	return [ret];
+}
+
+
+define pcodeop idle;
+#la-privileged-32.txt idle mask=0x06488000	[@primary]
+#0x06488000	0xffff8000	u0:15	['imm0_15_s0']
+:idle  imm0_15 is op15_31=0xc91 & imm0_15 {
+	idle(imm0_15:2);
+}
+
+
+define pcodeop invtlb;
+#la-privileged-32.txt tlbinv mask=0x06498000	[@orig_name=invtlb, @orig_fmt=Ud5JK, @primary]
+#0x06498000	0xffff8000	u0:5,r5:5,r10:5	['imm0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:invtlb  RJsrc, RKsrc, imm0_5 is op15_31=0xc93 & RJsrc & RKsrc & imm0_5 {
+	invtlb(RJsrc, RKsrc, imm0_5:1);
+}
+
+
 
