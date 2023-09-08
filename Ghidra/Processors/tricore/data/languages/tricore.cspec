@@ -36,35 +36,35 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
       <input>
-          <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
+          <pentry minsize="4" maxsize="4" metatype="ptr">   <!-- This is the first pointer -->
               <register name="a4"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="4" maxsize="4" metatype="ptr">
               <register name="a5"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="4" maxsize="4" metatype="ptr">
               <register name="a6"/>
           </pentry>
-           <pentry minsize="1" maxsize="4">
+          <pentry minsize="4" maxsize="4" metatype="ptr">
               <register name="a7"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
+          <pentry minsize="1" maxsize="4" extension="inttype">   <!-- This is the first non pointer -->
               <register name="d4"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d5"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d6"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d7"/>
           </pentry>
           <pentry minsize="5" maxsize="8">    <!-- This is the first >4 byte non pointer -->
               <register name="e4"/>
           </pentry>
           <pentry minsize="1" maxsize="500" align="4">
-              <addr offset="16" space="ram"/>
+              <addr offset="16" space="stack"/>
           </pentry>
       </input>
       
@@ -75,10 +75,10 @@
          return storage location.  A fix is needed, or use custom storage.  -->
          
       <output>
-        <pentry minsize="1" maxsize="4" metatype="ptr">
+        <pentry minsize="4" maxsize="4" metatype="ptr">
           <register name="a2"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8" extension="inttype">
           <register name="e2"/>
         </pentry>
       </output>
@@ -91,6 +91,10 @@
 		<register name="d13"/>
 		<register name="d14"/>
 		<register name="d15"/>
+		<register name="a0"/>
+		<register name="a1"/>
+		<register name="a8"/>
+		<register name="a9"/>
 		<register name="a10"/>
 		<register name="a11"/>
 		<register name="a12"/>
@@ -106,39 +110,39 @@
          
     <prototype name="__stdcall_data" extrapop="0" stackshift="0" strategy="register">
       <input>
-          <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="a4"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d4"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d5"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="a5"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="a6"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d6"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="a7"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d7"/>
           </pentry>
           <pentry minsize="5" maxsize="8">    <!-- This is the first >4 byte non pointer -->
               <register name="e4"/>
           </pentry>
           <pentry minsize="1" maxsize="500" align="4">
-              <addr offset="16" space="ram"/>
+              <addr offset="16" space="stack"/>
           </pentry>
       </input>
       <output>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="8"  extension="inttype">
           <register name="e2"/>
         </pentry>
       </output>
@@ -151,6 +155,10 @@
 		<register name="d13"/>
 		<register name="d14"/>
 		<register name="d15"/>
+		<register name="a0"/>
+		<register name="a1"/>
+		<register name="a8"/>
+		<register name="a9"/>
 		<register name="a10"/>
 		<register name="a11"/>
 		<register name="a12"/>
