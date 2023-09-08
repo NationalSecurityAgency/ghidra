@@ -706,6 +706,7 @@ define token instr (32)
   csr_F0=(20,26)
   csr_F8=(20,25)
   csr_FC=(20,25)
+  op2029=(20,29)
   op2030=(20,30)
   op2031=(20,31)
   sop2031=(20,31) signed
