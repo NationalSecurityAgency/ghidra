@@ -18,8 +18,8 @@ package ghidra.program.model.symbol;
 /**
  * Replace illegal characters in the given name with '_'.  The transformer treats the name as a
  * C++ symbol. Letters and digits are generally legal. '~' is allowed at the start of the symbol.
- * Template parameters, surrounded by '<' and '>', allow additional special characters. Certain
- * special characters are allowed after the keyword "operator".
+ * Template parameters, surrounded by '&lt;' and '&gt;', allow additional special characters. 
+ * Certain special characters are allowed after the keyword "operator".
  */
 public class IllegalCharCppTransformer implements NameTransformer {
 

@@ -16,6 +16,7 @@
 package docking;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
@@ -24,12 +25,12 @@ import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 
 /**
- * A class that can be used as an interface for using actions associated with keybindings.  This
+ * A class that can be used as an interface for using actions associated with keybindings. This
  * class is meant to only by used by internal Ghidra key event processing.
  */
 public abstract class DockingKeyBindingAction extends AbstractAction {
 
-	private DockingActionIf docakbleAction;
+	private DockingActionIf dockingAction;
 
 	protected final KeyStroke keyStroke;
 	protected final Tool tool;
@@ -37,7 +38,7 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 	public DockingKeyBindingAction(Tool tool, DockingActionIf action, KeyStroke keyStroke) {
 		super(KeyBindingUtils.parseKeyStroke(keyStroke));
 		this.tool = tool;
-		this.docakbleAction = action;
+		this.dockingAction = action;
 		this.keyStroke = keyStroke;
 	}
 
@@ -63,7 +64,7 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 		ComponentProvider provider = tool.getActiveComponentProvider();
 		ActionContext context = getLocalContext(provider);
 		context.setSourceObject(e.getSource());
-		docakbleAction.actionPerformed(context);
+		dockingAction.actionPerformed(context);
 	}
 
 	protected ActionContext getLocalContext(ComponentProvider localProvider) {
@@ -77,5 +78,9 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 		}
 
 		return new DefaultActionContext(localProvider, null);
+	}
+
+	public List<DockingActionIf> getActions() {
+		return List.of(dockingAction);
 	}
 }

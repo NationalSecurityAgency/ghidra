@@ -2995,12 +2995,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * only be used in headed mode.
 	 * <p>
 	 * In the GUI environment, this method displays a password popup dialog that prompts the user
-	 * for a secret, usually a password or other credential. There is no pre-population of the
-	 * input. If the user cancels the dialog, it is immediately disposed, and any input to that
-	 * dialog is cleared from memory. If the user completes the dialog, then the secret is returned
-	 * in a wrapped buffer. The buffer can be cleared by calling {@link Secret#close()}; however, it
-	 * is meant to be used in a {@code try-with-resources} block. The pattern does not guarantee
-	 * protection of the secret, but it will help you avoid some typical pitfalls:
+	 * for a password. There is no pre-population of the input. If the user cancels the dialog, it 
+	 * is immediately disposed, and any input to that dialog is cleared from memory. If the user 
+	 * completes the dialog, then the password is returned in a wrapped buffer. The buffer can be 
+	 * cleared by calling {@link Password#close()}; however, it is meant to be used in a 
+	 * {@code try-with-resources} block. The pattern does not guarantee protection of the password, 
+	 * but it will help you avoid some typical pitfalls:
 	 * 
 	 * <pre>
 	 * String user = askString("Login", "Username:");

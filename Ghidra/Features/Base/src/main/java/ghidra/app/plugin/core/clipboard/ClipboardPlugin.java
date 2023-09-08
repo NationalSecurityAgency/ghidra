@@ -173,7 +173,8 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 	}
 
 	/**
-	 * @see java.awt.datatransfer.ClipboardOwner#lostOwnership(java.awt.datatransfer.Clipboard, java.awt.datatransfer.Transferable)
+	 * @see java.awt.datatransfer.ClipboardOwner#lostOwnership(java.awt.datatransfer.Clipboard,
+	 *      java.awt.datatransfer.Transferable)
 	 */
 	@Override
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {
@@ -353,11 +354,19 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 		// maker interface
 	}
 
+	private String getActionOwner(ClipboardContentProviderService clipboardService) {
+		String owner = clipboardService.getClipboardActionOwner();
+		if (owner != null) {
+			return owner;
+		}
+		return getName();
+	}
+
 	private class CopyAction extends DockingAction implements ICopy {
 		private final ClipboardContentProviderService clipboardService;
 
 		private CopyAction(ClipboardContentProviderService clipboardService) {
-			super("Copy", ClipboardPlugin.this.getName());
+			super("Copy", getActionOwner(clipboardService));
 			this.clipboardService = clipboardService;
 
 			setPopupMenuData(new MenuData(new String[] { "Copy" }, "Clipboard"));
@@ -365,6 +374,7 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 				"Clipboard"));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Copy"));
+			clipboardService.customizeClipboardAction(this);
 		}
 
 		@Override
@@ -390,7 +400,7 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 		private final ClipboardContentProviderService clipboardService;
 
 		private PasteAction(ClipboardContentProviderService clipboardService) {
-			super("Paste", ClipboardPlugin.this.getName());
+			super("Paste", ClipboardPlugin.this.getActionOwner(clipboardService));
 			this.clipboardService = clipboardService;
 
 			setPopupMenuData(new MenuData(new String[] { "Paste" }, "Clipboard"));
@@ -398,6 +408,7 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 				new ToolBarData(new GIcon("icon.plugin.clipboard.paste"), "Clipboard"));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Paste"));
+			clipboardService.customizeClipboardAction(this);
 		}
 
 		@Override
@@ -426,12 +437,13 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 		private final ClipboardContentProviderService clipboardService;
 
 		private CopySpecialAction(ClipboardContentProviderService clipboardService) {
-			super("Copy Special", ClipboardPlugin.this.getName());
+			super("Copy Special", ClipboardPlugin.this.getActionOwner(clipboardService));
 			this.clipboardService = clipboardService;
 
 			setPopupMenuData(new MenuData(new String[] { "Copy Special..." }, "Clipboard"));
 			setEnabled(false);
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Copy_Special"));
+			clipboardService.customizeClipboardAction(this);
 		}
 
 		@Override
@@ -457,12 +469,13 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 		private final ClipboardContentProviderService clipboardService;
 
 		private CopySpecialAgainAction(ClipboardContentProviderService clipboardService) {
-			super("Copy Special Again", ClipboardPlugin.this.getName());
+			super("Copy Special Again", ClipboardPlugin.this.getActionOwner(clipboardService));
 			this.clipboardService = clipboardService;
 
 			setPopupMenuData(new MenuData(new String[] { "Copy Special Again" }, "Clipboard"));
 			setEnabled(false);
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Copy_Special"));
+			clipboardService.customizeClipboardAction(this);
 		}
 
 		@Override

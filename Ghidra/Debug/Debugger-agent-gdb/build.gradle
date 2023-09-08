@@ -29,8 +29,9 @@ dependencies {
 	api project(':Framework-AsyncComm')
 	api project(':Framework-Debugging')
 	api project(':Debugger-gadp')
-	api 'com.jcraft:jsch:0.1.55'
+	api project(':Pty')
 
+	testImplementation project(path: ':Pty', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger-gadp', configuration: 'testArtifacts')
