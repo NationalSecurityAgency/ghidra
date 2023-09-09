@@ -29,7 +29,7 @@
 # mop=0  unit-stride        VSE<EEW>
 # mop=1  indexed-unordered  VSUXEI<EEW>
 # mop=2  strided            VSSE<EEW>
-# mop=3  indexed-ordered    VSXEI<EEW>
+# mop=3  indexed-ordered    VSOXEI<EEW>
 # lumop=0  unit-stride
 # lumop=8  unit-stride,whole registers
 # lumop=16 unit-stride fault-only-first
@@ -866,7 +866,8 @@
 
 # vle1024ff.v      nf 28=1 27..26=0 vm 24..20=0x10 rs1 14..12=0x7  vd 6..0=0x07
 # vle1024ff.v vd, (rs1), vm  # 1024-bit unit-stride fault-only-first load
-:vle1024ff.v  vd, (rs1), vm   is nf & op2828=0x1 & op2627=0x0 & vm & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle1024ff.v  vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle1024ff.v  vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
 # vle128.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x0  vd 6..0=0x07
 # vle128.v  vd, (rs1), vm  #  128-bit unit-stride load
@@ -875,7 +876,8 @@
 
 # vle128ff.v       nf 28=1 27..26=0 vm 24..20=0x10 rs1 14..12=0x0  vd 6..0=0x07
 # vle128ff.v  vd, (rs1), vm  #  128-bit unit-stride fault-only-first load
-:vle128ff.v   vd, (rs1), vm   is nf & op2828=0x1 & op2627=0x0 & vm & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vle128ff.v   vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vle128ff.v   vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vle16.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x5  vd 6..0=0x07
 # vle16.v   vd, (rs1), vm  #   16-bit unit-stride load
@@ -884,16 +886,18 @@
 
 # vle16ff.v        nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x5  vd 6..0=0x07
 # vle16ff.v   vd, (rs1), vm  #   16-bit unit-stride fault-only-first load
-:vle16ff.v    vd, (rs1), vm   is nf & op2828=0x0 & op2627=0x0 & vm & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle16ff.v    vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle16ff.v    vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
 
 # vle256.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x5  vd 6..0=0x07
 # vle256.v  vd, (rs1), vm  #  256-bit unit-stride load
-:vle256.v   vd, (rs1),        is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vle256.v   vd, (rs1),"v0.t"  is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle256.v   vd, (rs1),         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle256.v   vd, (rs1), "v0.t"  is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
 
 # vle256ff.v       nf 28=1 27..26=0 vm 24..20=0x10 rs1 14..12=0x5  vd 6..0=0x07
 # vle256ff.v  vd, (rs1), vm  #  256-bit unit-stride fault-only-first load
-:vle256ff.v   vd, (rs1), vm   is nf & op2828=0x1 & op2627=0x0 & vm & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle256ff.v   vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle256ff.v   vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
 
 # vle32.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x6  vd 6..0=0x07
 # vle32.v   vd, (rs1), vm  #   32-bit unit-stride load
@@ -902,7 +906,8 @@
 
 # vle32ff.v        nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x6  vd 6..0=0x07
 # vle32ff.v   vd, (rs1), vm  #   32-bit unit-stride fault-only-first load
-:vle32ff.v    vd, (rs1), vm   is nf & op2828=0x0 & op2627=0x0 & vm & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vle32ff.v    vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vle32ff.v    vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
 
 # vle512.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x6  vd 6..0=0x07
 # vle512.v  vd, (rs1), vm  #  512-bit unit-stride load
@@ -911,21 +916,23 @@
 
 # vle512ff.v       nf 28=1 27..26=0 vm 24..20=0x10 rs1 14..12=0x6  vd 6..0=0x07
 # vle512ff.v  vd, (rs1), vm  #  512-bit unit-stride fault-only-first load
-:vle512ff.v   vd, (rs1), vm   is nf & op2828=0x1 & op2627=0x0 & vm & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vle512ff.v   vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vle512ff.v   vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
 
 # vle64.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x7  vd 6..0=0x07
 # vle64.v   vd, (rs1), vm  #   64-bit unit-stride load
 :vle64.v    vd, (rs1)          is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
-:vle64.v    vd, (rs1),"v0.t"   is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle64.v    vd, (rs1), "v0.t"   is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
 # vle64ff.v        nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x7  vd 6..0=0x07
 # vle64ff.v   vd, (rs1), vm  #   64-bit unit-stride fault-only-first load
-:vle64ff.v    vd, (rs1), vm   is nf & op2828=0x0 & op2627=0x0 & vm & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle64ff.v    vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle64ff.v    vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
 # vle8.v         nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x0  vd 6..0=0x07
 # vle8.v    vd, (rs1), vm  #    8-bit unit-stride load
 :vle8.v     vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
-:vle8.v     vd, (rs1),"v0.t"  is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vle8.v     vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vlm8.v    vd, (rs1)        # Load byte vector of length ceil(vl/8)
 :vlm.v      vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & vm & op2024=0x0b & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
@@ -934,9 +941,38 @@
 :vloxei8.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 :vloxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
+# vloxei16.v Vector indexed-ordered load instructions
+:vloxei16.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vloxei16.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+
+# vloxei32.v Vector indexed-ordered load instructions
+:vloxei32.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vloxei32.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+
+# vloxei64.v Vector indexed-ordered load instructions
+:vloxei64.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vloxei64.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+
+# vluxei8.v Vector indexed-ordered load instructions
+:vluxei8.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vluxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+
+# vluxei16.v Vector indexed-ordered load instructions
+:vluxei16.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vluxei16.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+
+# vluxei32.v Vector indexed-ordered load instructions
+:vluxei32.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vluxei32.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+
+# vluxei64.v Vector indexed-ordered load instructions
+:vluxei64.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vluxei64.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+
 # vle8ff.v         nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x0  vd 6..0=0x07
 # vle8ff.v    vd, (rs1), vm  #    8-bit unit-stride fault-only-first load
-:vle8ff.v     vd, (rs1), vm   is nf & op2828=0x0 & op2627=0x0 & vm & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vle8ff.v     vd, (rs1)           is nf & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vle8ff.v     vd, (rs1), "v0.t"   is nf & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vlse1024.v      nf 28=1 27..26=2 vm rs2 rs1 14..12=0x7  vd 6..0=0x07
 # vlse1024.v vd, (rs1), rs2, vm  # 1024-bit strided load
@@ -1801,67 +1837,83 @@
 
 # vsuxei1024.v     nf 28=1 27..26=1 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsuxei1024.v  vs3, (rs1), vs2, vm # unordered 1024-bit indexed store of SEW data
-:vsuxei1024.v   vs3, (rs1), vs2, vm  is nf & op2828=0x1 & op2627=0x1 & vm & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsuxei1024.v   vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsuxei1024.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
 
 # vsuxei128.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsuxei128.v  vs3, (rs1), vs2, vm # unordered 128-bit indexed store of SEW data
-:vsuxei128.v   vs3, (rs1), vs2, vm  is nf & op2828=0x1 & op2627=0x1 & vm & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsuxei128.v   vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsuxei128.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
 
 # vsuxei16.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsuxei16.v  vs3, (rs1), vs2, vm # unordered 16-bit indexed store of SEW data
-:vsuxei16.v   vs3, (rs1), vs2, vm  is nf & op2828=0x0 & op2627=0x1 & vm & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsuxei16.v   vs3, (rs1), vs2          is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsuxei16.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
 
 # vsuxei256.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsuxei256.v  vs3, (rs1), vs2, vm # unordered 256-bit indexed store of SEW data
-:vsuxei256.v   vs3, (rs1), vs2, vm  is nf & op2828=0x1 & op2627=0x1 & vm & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsuxei256.v   vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsuxei256.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
 
 # vsuxei32.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsuxei32.v  vs3, (rs1), vs2, vm # unordered 32-bit indexed store of SEW data
-:vsuxei32.v   vs3, (rs1), vs2, vm  is nf & op2828=0x0 & op2627=0x1 & vm & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsuxei32.v   vs3, (rs1), vs2          is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsuxei32.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
 
 # vsuxei512.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsuxei512.v  vs3, (rs1), vs2, vm # unordered 512-bit indexed store of SEW data
-:vsuxei512.v   vs3, (rs1), vs2, vm  is nf & op2828=0x1 & op2627=0x1 & vm & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsuxei512.v   vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsuxei512.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
 
 # vsuxei64.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsuxei64.v  vs3, (rs1), vs2, vm # unordered 64-bit indexed store of SEW data
-:vsuxei64.v   vs3, (rs1), vs2, vm  is nf & op2828=0x0 & op2627=0x1 & vm & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsuxei64.v   vs3, (rs1), vs2          is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsuxei64.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
 
 # vsuxei8.v        nf 28=0 27..26=1 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsuxei8.v   vs3, (rs1), vs2, vm # unordered  8-bit indexed store of SEW data
-:vsuxei8.v    vs3, (rs1), vs2, vm  is nf & op2828=0x0 & op2627=0x1 & vm & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsuxei8.v    vs3, (rs1), vs2          is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsuxei8.v    vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
 
-# vsxei1024.v      nf 28=1 27..26=3 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
-# vsxei1024.v   vs3, (rs1), vs2, vm  # ordered 1024-bit indexed store of SEW data
-:vsxei1024.v    vs3, (rs1), vs2, vm   is nf & op2828=0x1 & op2627=0x3 & vm & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+# vsoxei1024.v      nf 28=1 27..26=3 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
+# vsoxei1024.v   vs3, (rs1), vs2, vm  # ordered 1024-bit indexed store of SEW data
+:vsoxei1024.v    vs3, (rs1), vs2         is nf & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsoxei1024.v    vs3, (rs1), vs2, "v0.t" is nf & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
 
-# vsxei128.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
-# vsxei128.v   vs3, (rs1), vs2, vm  # ordered 128-bit indexed store of SEW data
-:vsxei128.v    vs3, (rs1), vs2, vm   is nf & op2828=0x1 & op2627=0x3 & vm & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+# vsoxei128.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
+# vsoxei128.v   vs3, (rs1), vs2, vm  # ordered 128-bit indexed store of SEW data
+:vsoxei128.v    vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsoxei128.v    vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
 
-# vsxei16.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
-# vsxei16.v   vs3, (rs1), vs2, vm  # ordered 16-bit indexed store of SEW data
-:vsxei16.v    vs3, (rs1), vs2, vm   is nf & op2828=0x0 & op2627=0x3 & vm & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+# vsoxei16.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
+# vsoxei16.v   vs3, (rs1), vs2, vm  # ordered 16-bit indexed store of SEW data
+:vsoxei16.v    vs3, (rs1), vs2           is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsoxei16.v    vs3, (rs1), vs2, "v0.t"   is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
 
-# vsxei256.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
-# vsxei256.v   vs3, (rs1), vs2, vm  # ordered 256-bit indexed store of SEW data
-:vsxei256.v    vs3, (rs1), vs2, vm   is nf & op2828=0x1 & op2627=0x3 & vm & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+# vsoxei256.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
+# vsoxei256.v   vs3, (rs1), vs2, vm  # ordered 256-bit indexed store of SEW data
+:vsoxei256.v    vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsoxei256.v    vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
 
-# vsxei32.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
-# vsxei32.v   vs3, (rs1), vs2, vm  # ordered 32-bit indexed store of SEW data
-:vsxei32.v    vs3, (rs1), vs2, vm   is nf & op2828=0x0 & op2627=0x3 & vm & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+# vsoxei32.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
+# vsoxei32.v   vs3, (rs1), vs2, vm  # ordered 32-bit indexed store of SEW data
+:vsoxei32.v    vs3, (rs1), vs2           is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsoxei32.v    vs3, (rs1), vs2, "v0.t"   is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
 
-# vsxei512.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
-# vsxei512.v   vs3, (rs1), vs2, vm  # ordered 512-bit indexed store of SEW data
-:vsxei512.v    vs3, (rs1), vs2, vm   is nf & op2828=0x1 & op2627=0x3 & vm & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+# vsoxei512.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
+# vsoxei512.v   vs3, (rs1), vs2, vm  # ordered 512-bit indexed store of SEW data
+:vsoxei512.v    vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsoxei512.v    vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
 
-# vsxei64.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
-# vsxei64.v   vs3, (rs1), vs2, vm  # ordered 64-bit indexed store of SEW data
-:vsxei64.v    vs3, (rs1), vs2, vm   is nf & op2828=0x0 & op2627=0x3 & vm & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+# vsoxei64.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
+# vsoxei64.v   vs3, (rs1), vs2, vm  # ordered 64-bit indexed store of SEW data
+:vsoxei64.v    vs3, (rs1), vs2           is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsoxei64.v    vs3, (rs1), vs2, "v0.t"   is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
 
-# vsxei8.v         nf 28=0 27..26=3 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
-# vsxei8.v    vs3, (rs1), vs2, vm  # ordered  8-bit indexed store of SEW data
-:vsxei8.v     vs3, (rs1), vs2, vm   is nf & op2828=0x0 & op2627=0x3 & vm & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+# vsoxei8.v         nf 28=0 27..26=3 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
+# vsoxei8.v    vs3, (rs1), vs2, vm  # ordered  8-bit indexed store of SEW data
+:vsoxei8.v     vs3, (rs1), vs2           is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsoxei8.v     vs3, (rs1), vs2, "v0.t"   is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
 
 # vwadd.vv       31..26=0x31 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwadd.vv  vd, vs2, vs1, vm  # vector-vector
