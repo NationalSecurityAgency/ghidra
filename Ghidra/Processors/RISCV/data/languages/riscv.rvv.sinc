@@ -69,15 +69,18 @@
 
 # vadd.vi        31..26=0x00 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vadd.vi vd, vs2, simm5, vm   # vector-immediate
-:vadd.vi  vd, vs2, simm5, vm    is op2631=0x0 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vadd.vi  vd, vs2, simm5         is op2631=0 & op2525=0x1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vadd.vi  vd, vs2, simm5, "v0.t" is op2631=0 & op2525=0x0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vadd.vv         31..26=0x00 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vadd.vv vd, vs2, vs1, vm   # Vector-vector
-:vadd.vv  vd, vs2, vs1, vm    is op2631=0x0 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vadd.vv  vd, vs2, vs1         is op2631=0 & op2525=0x1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vadd.vv  vd, vs2, vs1, "v0.t" is op2631=0 & op2525=0x0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
 
 # vadd.vx        31..26=0x00 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vadd.vx vd, vs2, rs1, vm   # vector-scalar
-:vadd.vx  vd, vs2, rs1, vm    is op2631=0x0 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vadd.vx  vd, vs2, rs1         is op2631=0 & op2525=0x1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vadd.vx  vd, vs2, rs1, "v0.t" is op2631=0 & op2525=0x0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 # vamoaddei16.v  31..27=0x00 wd vm vs2 rs1 14..12=0x5 vd 6..0=0x2f
 # vamoaddei16.v vd, (rs1), vs2, vs3,  vm # Write original value to register, wd=1
@@ -669,7 +672,12 @@
 
 # vfsqrt.v       31..26=0x13 vm vs2 19..15=0x00 14..12=0x1 vd 6..0=0x57
 # vfsqrt.v vd, vs2, vm   # Vector-vector square root
-:vfsqrt.v  vd, vs2, vm    is op2631=0x13 & vm & vs2 & op1519=0x0 & op1214=0x1 & vd & op0006=0x57  unimpl
+:vfsqrt.v   vd, vs2         is op2631=0x13 & op2525=1 & vs2 & op1519=0x0 & op1214=0x1 & vd & op0006=0x57 unimpl
+:vfsqrt.v   vd, vs2, "v0.t" is op2631=0x13 & op2525=0 & vs2 & op1519=0x0 & op1214=0x1 & vd & op0006=0x57 unimpl
+:vfrsqrt7.v vd, vs2         is op2631=0x13 & op2525=1 & vs2 & op1519=0x4 & op1214=0x1 & vd & op0006=0x57 unimpl
+:vfrsqrt7.v vd, vs2, "v0.t" is op2631=0x13 & op2525=0 & vs2 & op1519=0x4 & op1214=0x1 & vd & op0006=0x57 unimpl
+:vfrec7.v   vd, vs2         is op2631=0x13 & op2525=1 & vs2 & op1519=0x5 & op1214=0x1 & vd & op0006=0x57 unimpl
+:vfrec7.v   vd, vs2, "v0.t" is op2631=0x13 & op2525=0 & vs2 & op1519=0x5 & op1214=0x1 & vd & op0006=0x57 unimpl
 
 # vfsub.vf        31..26=0x02 vm vs2 rs1 14..12=0x5 vd 6..0=0x57
 # vfsub.vf vd, vs2, rs1, vm   # Vector-scalar vd[i] = vs2[i] - f[rs1]
@@ -807,9 +815,9 @@
 # vl1re64.v  vd, (rs1)
 :vl1re64.v   vd, (rs1) is op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
-# vl1re8.v       31..29=0 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
-# vl1re8.v   vd, (rs1)
-:vl1re8.v    vd, (rs1) is op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+# vl1r.v       31..29=0 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
+# vl1r.v   vd, (rs1)
+:vl1r.v    vd, (rs1) is op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vl2re16.v      31..29=1 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x5 vd  6..0=0x07
 # vl2re16.v  vd, (rs1)
@@ -823,9 +831,9 @@
 # vl2re64.v  vd, (rs1)
 :vl2re64.v   vd, (rs1) is op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
-# vl2re8.v       31..29=1 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
-# vl2re8.v   vd, (rs1)
-:vl2re8.v    vd, (rs1) is op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+# vl2r.v       31..29=1 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
+# vl2r.v   vd, (rs1)
+:vl2r.v    vd, (rs1) is op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vl4re16.v      31..29=3 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x5 vd  6..0=0x07
 # vl4re16.v  vd, (rs1)
@@ -839,9 +847,9 @@
 # vl4re64.v  vd, (rs1)
 :vl4re64.v   vd, (rs1) is op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
-# vl4re8.v       31..29=3 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
-# vl4re8.v   vd, (rs1)
-:vl4re8.v    vd, (rs1) is op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+# vl4r.v       31..29=3 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
+# vl4r.v   vd, (rs1)
+:vl4r.v    vd, (rs1) is op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vl8re16.v      31..29=7 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x5 vd  6..0=0x07
 # vl8re16.v  vd, (rs1)
@@ -855,14 +863,28 @@
 # vl8re64.v  vd, (rs1)
 :vl8re64.v   vd, (rs1) is op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
-# vl8re8.v       31..29=7 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
-# vl8re8.v   vd, (rs1)
-:vl8re8.v    vd, (rs1) is op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+# vl8r.v       31..29=7 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vd  6..0=0x07
+# vl8r.v   vd, (rs1)
+:vl8r.v    vd, (rs1) is op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0x1 & op2024=0x8 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vle1024.v      nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x7  vd 6..0=0x07
 # vle1024.v vd, (rs1), vm  # 1024-bit unit-stride load
-:vle1024.v  vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
-:vle1024.v  vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle1024.v  vd, (rs1)         is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle1024.v  vd, (rs1), "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg2e1024.v  vd, (rs1)         is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg2e1024.v  vd, (rs1), "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg3e1024.v  vd, (rs1)         is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg3e1024.v  vd, (rs1), "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg4e1024.v  vd, (rs1)         is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg4e1024.v  vd, (rs1), "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg5e1024.v  vd, (rs1)         is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg5e1024.v  vd, (rs1), "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg6e1024.v  vd, (rs1)         is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg6e1024.v  vd, (rs1), "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg7e1024.v  vd, (rs1)         is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg7e1024.v  vd, (rs1), "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg8e1024.v  vd, (rs1)         is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg8e1024.v  vd, (rs1), "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
 # vle1024ff.v      nf 28=1 27..26=0 vm 24..20=0x10 rs1 14..12=0x7  vd 6..0=0x07
 # vle1024ff.v vd, (rs1), vm  # 1024-bit unit-stride fault-only-first load
@@ -871,8 +893,22 @@
 
 # vle128.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x0  vd 6..0=0x07
 # vle128.v  vd, (rs1), vm  #  128-bit unit-stride load
-:vle128.v   vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
-:vle128.v   vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vle128.v   vd, (rs1)         is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vle128.v   vd, (rs1), "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg2e128.v   vd, (rs1)         is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg2e128.v   vd, (rs1), "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg3e128.v   vd, (rs1)         is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg3e128.v   vd, (rs1), "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg4e128.v   vd, (rs1)         is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg4e128.v   vd, (rs1), "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg5e128.v   vd, (rs1)         is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg5e128.v   vd, (rs1), "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg6e128.v   vd, (rs1)         is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg6e128.v   vd, (rs1), "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg7e128.v   vd, (rs1)         is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg7e128.v   vd, (rs1), "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg8e128.v   vd, (rs1)         is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg8e128.v   vd, (rs1), "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vle128ff.v       nf 28=1 27..26=0 vm 24..20=0x10 rs1 14..12=0x0  vd 6..0=0x07
 # vle128ff.v  vd, (rs1), vm  #  128-bit unit-stride fault-only-first load
@@ -880,139 +916,531 @@
 :vle128ff.v   vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vle16.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x5  vd 6..0=0x07
-# vle16.v   vd, (rs1), vm  #   16-bit unit-stride load
-:vle16.v    vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vle16.v    vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+# vle16.v   vd, (rs1), vm  #   16-bit unit-stride load into 1 to 8 registers
+:vle16.v    vd, (rs1)          is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle16.v    vd, (rs1), "v0.t"  is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg2e16.v vd, (rs1)         is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg2e16.v vd, (rs1), "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg3e16.v vd, (rs1)         is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg3e16.v vd, (rs1), "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg4e16.v vd, (rs1)         is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg4e16.v vd, (rs1), "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg5e16.v vd, (rs1)         is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg5e16.v vd, (rs1), "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg6e16.v vd, (rs1)         is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg6e16.v vd, (rs1), "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg7e16.v vd, (rs1)         is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg7e16.v vd, (rs1), "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg8e16.v vd, (rs1)         is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg8e16.v vd, (rs1), "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
 
 # vle16ff.v        nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x5  vd 6..0=0x07
 # vle16ff.v   vd, (rs1), vm  #   16-bit unit-stride fault-only-first load
-:vle16ff.v    vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vle16ff.v    vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle16ff.v     vd, (rs1)         is nf &  op2931=0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vle16ff.v     vd, (rs1), "v0.t" is nf &  op2931=0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg2e16ff.v vd, (rs1)         is nf &  op2931=1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg2e16ff.v vd, (rs1), "v0.t" is nf &  op2931=1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg3e16ff.v vd, (rs1)         is nf &  op2931=2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg3e16ff.v vd, (rs1), "v0.t" is nf &  op2931=2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg4e16ff.v vd, (rs1)         is nf &  op2931=3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg4e16ff.v vd, (rs1), "v0.t" is nf &  op2931=3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg5e16ff.v vd, (rs1)         is nf &  op2931=4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg5e16ff.v vd, (rs1), "v0.t" is nf &  op2931=4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg6e16ff.v vd, (rs1)         is nf &  op2931=5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg6e16ff.v vd, (rs1), "v0.t" is nf &  op2931=5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg7e16ff.v vd, (rs1)         is nf &  op2931=6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg7e16ff.v vd, (rs1), "v0.t" is nf &  op2931=6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg8e16ff.v vd, (rs1)         is nf &  op2931=7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg8e16ff.v vd, (rs1), "v0.t" is nf &  op2931=7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
 
 # vle256.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x5  vd 6..0=0x07
 # vle256.v  vd, (rs1), vm  #  256-bit unit-stride load
-:vle256.v   vd, (rs1),         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vle256.v   vd, (rs1), "v0.t"  is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle256.v       vd, (rs1),         is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle256.v       vd, (rs1), "v0.t"  is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg2e256.v   vd, (rs1),         is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg2e256.v   vd, (rs1), "v0.t"  is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg3e256.v   vd, (rs1),         is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg3e256.v   vd, (rs1), "v0.t"  is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg4e256.v   vd, (rs1),         is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg4e256.v   vd, (rs1), "v0.t"  is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg5e256.v   vd, (rs1),         is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg5e256.v   vd, (rs1), "v0.t"  is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg6e256.v   vd, (rs1),         is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg6e256.v   vd, (rs1), "v0.t"  is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg7e256.v   vd, (rs1),         is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg7e256.v   vd, (rs1), "v0.t"  is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg8e256.v   vd, (rs1),         is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlseg8e256.v   vd, (rs1), "v0.t"  is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
 
 # vle256ff.v       nf 28=1 27..26=0 vm 24..20=0x10 rs1 14..12=0x5  vd 6..0=0x07
 # vle256ff.v  vd, (rs1), vm  #  256-bit unit-stride fault-only-first load
-:vle256ff.v   vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vle256ff.v   vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vle256ff.v     vd, (rs1)         is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vle256ff.v     vd, (rs1), "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg2e256ff.v vd, (rs1)         is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg2e256ff.v vd, (rs1), "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg3e256ff.v vd, (rs1)         is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg3e256ff.v vd, (rs1), "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg4e256ff.v vd, (rs1)         is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg4e256ff.v vd, (rs1), "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg5e256ff.v vd, (rs1)         is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg5e256ff.v vd, (rs1), "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg6e256ff.v vd, (rs1)         is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg6e256ff.v vd, (rs1), "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg7e256ff.v vd, (rs1)         is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg7e256ff.v vd, (rs1), "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg8e256ff.v vd, (rs1)         is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg8e256ff.v vd, (rs1), "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
 
 # vle32.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x6  vd 6..0=0x07
-# vle32.v   vd, (rs1), vm  #   32-bit unit-stride load
-:vle32.v    vd, (rs1)          is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
-:vle32.v    vd, (rs1), "v0.t"  is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+# vle32.v  vd, (rs1), vm  #   32-bit unit-stride load
+:vle32.v     vd, (rs1)          is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vle32.v     vd, (rs1), "v0.t"  is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg2e32.v vd, (rs1)          is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg2e32.v vd, (rs1), "v0.t"  is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg3e32.v vd, (rs1)          is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg3e32.v vd, (rs1), "v0.t"  is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg4e32.v vd, (rs1)          is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg4e32.v vd, (rs1), "v0.t"  is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg5e32.v vd, (rs1)          is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg5e32.v vd, (rs1), "v0.t"  is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg6e32.v vd, (rs1)          is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg6e32.v vd, (rs1), "v0.t"  is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg7e32.v vd, (rs1)          is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg7e32.v vd, (rs1), "v0.t"  is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg8e32.v vd, (rs1)          is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg8e32.v vd, (rs1), "v0.t"  is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
 
 # vle32ff.v        nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x6  vd 6..0=0x07
 # vle32ff.v   vd, (rs1), vm  #   32-bit unit-stride fault-only-first load
-:vle32ff.v    vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
-:vle32ff.v    vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vle32ff.v     vd, (rs1)         is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vle32ff.v     vd, (rs1), "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg2e32ff.v vd, (rs1)         is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg2e32ff.v vd, (rs1), "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg3e32ff.v vd, (rs1)         is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg3e32ff.v vd, (rs1), "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg4e32ff.v vd, (rs1)         is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg4e32ff.v vd, (rs1), "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg5e32ff.v vd, (rs1)         is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg5e32ff.v vd, (rs1), "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg6e32ff.v vd, (rs1)         is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg6e32ff.v vd, (rs1), "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg7e32ff.v vd, (rs1)         is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg7e32ff.v vd, (rs1), "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg8e32ff.v vd, (rs1)         is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg8e32ff.v vd, (rs1), "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
 
 # vle512.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x6  vd 6..0=0x07
 # vle512.v  vd, (rs1), vm  #  512-bit unit-stride load
-:vle512.v   vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
-:vle512.v   vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vle512.v   vd, (rs1)         is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vle512.v   vd, (rs1), "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg2e512.v   vd, (rs1)         is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg2e512.v   vd, (rs1), "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg3e512.v   vd, (rs1)         is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg3e512.v   vd, (rs1), "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg4e512.v   vd, (rs1)         is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg4e512.v   vd, (rs1), "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg5e512.v   vd, (rs1)         is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg5e512.v   vd, (rs1), "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg6e512.v   vd, (rs1)         is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg6e512.v   vd, (rs1), "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg7e512.v   vd, (rs1)         is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg7e512.v   vd, (rs1), "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg8e512.v   vd, (rs1)         is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlseg8e512.v   vd, (rs1), "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
 
 # vle512ff.v       nf 28=1 27..26=0 vm 24..20=0x10 rs1 14..12=0x6  vd 6..0=0x07
 # vle512ff.v  vd, (rs1), vm  #  512-bit unit-stride fault-only-first load
-:vle512ff.v   vd, (rs1)         is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
-:vle512ff.v   vd, (rs1), "v0.t" is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vle512ff.v     vd, (rs1)         is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vle512ff.v     vd, (rs1), "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg2e512ff.v vd, (rs1)         is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg2e512ff.v vd, (rs1), "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg3e512ff.v vd, (rs1)         is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg3e512ff.v vd, (rs1), "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg4e512ff.v vd, (rs1)         is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg4e512ff.v vd, (rs1), "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg5e512ff.v vd, (rs1)         is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg5e512ff.v vd, (rs1), "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg6e512ff.v vd, (rs1)         is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg6e512ff.v vd, (rs1), "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg7e512ff.v vd, (rs1)         is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg7e512ff.v vd, (rs1), "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg8e512ff.v vd, (rs1)         is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg8e512ff.v vd, (rs1), "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
 
 # vle64.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x7  vd 6..0=0x07
 # vle64.v   vd, (rs1), vm  #   64-bit unit-stride load
-:vle64.v    vd, (rs1)          is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
-:vle64.v    vd, (rs1), "v0.t"   is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle64.v    vd, (rs1)          is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle64.v    vd, (rs1), "v0.t"  is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg2e64.v    vd, (rs1)          is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg2e64.v    vd, (rs1), "v0.t"  is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg3e64.v    vd, (rs1)          is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg3e64.v    vd, (rs1), "v0.t"  is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg4e64.v    vd, (rs1)          is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg4e64.v    vd, (rs1), "v0.t"  is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg5e64.v    vd, (rs1)          is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg5e64.v    vd, (rs1), "v0.t"  is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg6e64.v    vd, (rs1)          is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg6e64.v    vd, (rs1), "v0.t"  is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg7e64.v    vd, (rs1)          is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg7e64.v    vd, (rs1), "v0.t"  is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg8e64.v    vd, (rs1)          is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlseg8e64.v    vd, (rs1), "v0.t"  is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
 # vle64ff.v        nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x7  vd 6..0=0x07
 # vle64ff.v   vd, (rs1), vm  #   64-bit unit-stride fault-only-first load
-:vle64ff.v    vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
-:vle64ff.v    vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vle64ff.v     vd, (rs1)         is nf & op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vle64ff.v     vd, (rs1), "v0.t" is nf & op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg2e64ff.v vd, (rs1)         is nf & op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg2e64ff.v vd, (rs1), "v0.t" is nf & op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg3e64ff.v vd, (rs1)         is nf & op2931=0x2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg3e64ff.v vd, (rs1), "v0.t" is nf & op2931=0x2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg4e64ff.v vd, (rs1)         is nf & op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg4e64ff.v vd, (rs1), "v0.t" is nf & op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg5e64ff.v vd, (rs1)         is nf & op2931=0x4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg5e64ff.v vd, (rs1), "v0.t" is nf & op2931=0x4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg6e64ff.v vd, (rs1)         is nf & op2931=0x5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg6e64ff.v vd, (rs1), "v0.t" is nf & op2931=0x5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg7e64ff.v vd, (rs1)         is nf & op2931=0x6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg7e64ff.v vd, (rs1), "v0.t" is nf & op2931=0x6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg8e64ff.v vd, (rs1)         is nf & op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg8e64ff.v vd, (rs1), "v0.t" is nf & op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x10 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
 
 # vle8.v         nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x0  vd 6..0=0x07
-# vle8.v    vd, (rs1), vm  #    8-bit unit-stride load
-:vle8.v     vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
-:vle8.v     vd, (rs1), "v0.t" is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+# vle8.v    vd, (rs1), vm  #    8-bit unit-stride load, optionally segmented
+:vle8.v     vd, (rs1)         is nf & op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vle8.v     vd, (rs1), "v0.t" is nf & op2931=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg2e8.v vd, (rs1)         is nf & op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg2e8.v vd, (rs1), "v0.t" is nf & op2931=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg3e8.v vd, (rs1)         is nf & op2931=0x2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg3e8.v vd, (rs1), "v0.t" is nf & op2931=0x2 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg4e8.v vd, (rs1)         is nf & op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg4e8.v vd, (rs1), "v0.t" is nf & op2931=0x3 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg5e8.v vd, (rs1)         is nf & op2931=0x4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg5e8.v vd, (rs1), "v0.t" is nf & op2931=0x4 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg6e8.v vd, (rs1)         is nf & op2931=0x5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg6e8.v vd, (rs1), "v0.t" is nf & op2931=0x5 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg7e8.v vd, (rs1)         is nf & op2931=0x6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg7e8.v vd, (rs1), "v0.t" is nf & op2931=0x6 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg8e8.v vd, (rs1)         is nf & op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlseg8e8.v vd, (rs1), "v0.t" is nf & op2931=0x7 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vlm8.v    vd, (rs1)        # Load byte vector of length ceil(vl/8)
 :vlm.v      vd, (rs1)         is nf & op2828=0x0 & op2627=0x0 & vm & op2024=0x0b & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vloxei8.v Vector indexed-ordered load instructions
-:vloxei8.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
-:vloxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vloxei8.v  vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg2ei8.v  vd, (rs1),vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg2ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg3ei8.v  vd, (rs1),vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg3ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg4ei8.v  vd, (rs1),vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg4ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg5ei8.v  vd, (rs1),vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg5ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg6ei8.v  vd, (rs1),vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg6ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg7ei8.v  vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg7ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg8ei8.v  vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vloxseg8ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
 
 # vloxei16.v Vector indexed-ordered load instructions
-:vloxei16.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vloxei16.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vloxei16.v     vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxei16.v     vd, (rs1),vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg2ei16.v vd, (rs1),vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg2ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg3ei16.v vd, (rs1),vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg3ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg4ei16.v vd, (rs1),vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg4ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg5ei16.v vd, (rs1),vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg5ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg6ei16.v vd, (rs1),vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg6ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg7ei16.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg7ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg8ei16.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vloxseg8ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
 
 # vloxei32.v Vector indexed-ordered load instructions
-:vloxei32.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
-:vloxei32.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vloxei32.v     vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxei32.v     vd, (rs1),vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg2ei32.v vd, (rs1),vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg2ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg3ei32.v vd, (rs1),vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg3ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg4ei32.v vd, (rs1),vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg4ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg5ei32.v vd, (rs1),vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg5ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg6ei32.v vd, (rs1),vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg6ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg7ei32.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg7ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg8ei32.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vloxseg8ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
 
 # vloxei64.v Vector indexed-ordered load instructions
-:vloxei64.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
-:vloxei64.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vloxei64.v     vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxei64.v     vd, (rs1),vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg2ei64.v vd, (rs1),vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg2ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg3ei64.v vd, (rs1),vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg3ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg4ei64.v vd, (rs1),vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg4ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg5ei64.v vd, (rs1),vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg5ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg6ei64.v vd, (rs1),vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg6ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg7ei64.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg7ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg8ei64.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vloxseg8ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
 
 # vluxei8.v Vector indexed-ordered load instructions
-:vluxei8.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
-:vluxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vluxei8.v      vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vluxei8.v      vd, (rs1),vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg2uxei8.v  vd, (rs1),vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg2uxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg3uxei8.v  vd, (rs1),vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg3uxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg4uxei8.v  vd, (rs1),vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg4uxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg5uxei8.v  vd, (rs1),vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg5uxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg6uxei8.v  vd, (rs1),vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg6uxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg7uxei8.v  vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg7uxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg8uxei8.v  vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg8uxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
 
 # vluxei16.v Vector indexed-ordered load instructions
-:vluxei16.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vluxei16.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vluxei16.v  vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vluxei16.v  vd, (rs1),vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg2uxei16.v vd, (rs1),vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg2uxei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg3uxei16.v vd, (rs1),vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg3uxei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg4uxei16.v vd, (rs1),vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg4uxei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg5uxei16.v vd, (rs1),vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg5uxei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg6uxei16.v vd, (rs1),vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg6uxei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg7uxei16.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg7uxei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg8uxei16.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vlseg8uxei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
 
 # vluxei32.v Vector indexed-ordered load instructions
-:vluxei32.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
-:vluxei32.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vluxei32.v     vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vluxei32.v     vd, (rs1),vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg2uxei32.v vd, (rs1),vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg2uxei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg3uxei32.v vd, (rs1),vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg3uxei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg4uxei32.v vd, (rs1),vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg4uxei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg5uxei32.v vd, (rs1),vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg5uxei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg6uxei32.v vd, (rs1),vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg6uxei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg7uxei32.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg7uxei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg8uxei32.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vlseg8uxei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
 
 # vluxei64.v Vector indexed-ordered load instructions
-:vluxei64.v  vd, (rs1),vs2         is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
-:vluxei64.v  vd, (rs1),vs2, "v0.t" is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vluxei64.v     vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vluxei64.v     vd, (rs1),vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg2uxei64.v vd, (rs1),vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg2uxei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg3uxei64.v vd, (rs1),vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg3uxei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg4uxei64.v vd, (rs1),vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg4uxei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg5uxei64.v vd, (rs1),vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg5uxei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg6uxei64.v vd, (rs1),vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg6uxei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg7uxei64.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg7uxei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg8uxei64.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vlseg8uxei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
 
 # vle8ff.v         nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x0  vd 6..0=0x07
-# vle8ff.v    vd, (rs1), vm  #    8-bit unit-stride fault-only-first load
-:vle8ff.v     vd, (rs1)           is nf & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
-:vle8ff.v     vd, (rs1), "v0.t"   is nf & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+# vle8ff.v    vd, (rs1), vm  #  8-bit unit-stride fault-only-first load
+:vle8ff.v     vd, (rs1)         is nf & op2931=0 & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vle8ff.v     vd, (rs1), "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg2e8ff.v vd, (rs1)         is nf & op2931=1 & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg2e8ff.v vd, (rs1), "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg3e8ff.v vd, (rs1)         is nf & op2931=2 & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg3e8ff.v vd, (rs1), "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg4e8ff.v vd, (rs1)         is nf & op2931=3 & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg4e8ff.v vd, (rs1), "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg5e8ff.v vd, (rs1)         is nf & op2931=4 & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg5e8ff.v vd, (rs1), "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg6e8ff.v vd, (rs1)         is nf & op2931=5 & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg6e8ff.v vd, (rs1), "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg7e8ff.v vd, (rs1)         is nf & op2931=6 & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg7e8ff.v vd, (rs1), "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg8e8ff.v vd, (rs1)         is nf & op2931=7 & op2828=0x0 & op2627=0x0 &  op2525=1 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vlseg8e8ff.v vd, (rs1), "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x0 &  op2525=0 & op2024=0x10 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
 
 # vlse1024.v      nf 28=1 27..26=2 vm rs2 rs1 14..12=0x7  vd 6..0=0x07
 # vlse1024.v vd, (rs1), rs2, vm  # 1024-bit strided load
-:vlse1024.v  vd, (rs1), rs2         is nf & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
-:vlse1024.v  vd, (rs1), rs2, "v0.t" is nf & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlse1024.v      vd, (rs1), rs2         is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlse1024.v      vd, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg2e1024.v  vd, (rs1), rs2         is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg2e1024.v  vd, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg3e1024.v  vd, (rs1), rs2         is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg3e1024.v  vd, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg4e1024.v  vd, (rs1), rs2         is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg4e1024.v  vd, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg5e1024.v  vd, (rs1), rs2         is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg5e1024.v  vd, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg6e1024.v  vd, (rs1), rs2         is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg6e1024.v  vd, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg7e1024.v  vd, (rs1), rs2         is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg7e1024.v  vd, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg8e1024.v  vd, (rs1), rs2         is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg8e1024.v  vd, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
 # vlse128.v       nf 28=1 27..26=2 vm rs2 rs1 14..12=0x0  vd 6..0=0x07
 # vlse128.v  vd, (rs1), rs2, vm  #  128-bit strided load
-:vlse128.v   vd, (rs1), rs2         is nf & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
-:vlse128.v   vd, (rs1), rs2, "v0.t" is nf & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlse128.v     vd, (rs1), rs2         is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlse128.v     vd, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg2e128.v vd, (rs1), rs2         is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg2e128.v vd, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg3e128.v vd, (rs1), rs2         is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg3e128.v vd, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg4e128.v vd, (rs1), rs2         is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg4e128.v vd, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg5e128.v vd, (rs1), rs2         is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg5e128.v vd, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg6e128.v vd, (rs1), rs2         is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg6e128.v vd, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg7e128.v vd, (rs1), rs2         is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg7e128.v vd, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg8e128.v vd, (rs1), rs2         is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg8e128.v vd, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vlse16.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x5  vd 6..0=0x07
-# vlse16.v   vd, (rs1), rs2, vm  #   16-bit strided load
-:vlse16.v    vd, (rs1), rs2         is nf & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vlse16.v    vd, (rs1), rs2, "v0.t" is nf & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+# vlse16.v    vd, (rs1), rs2, vm  #   16-bit strided load
+:vlse16.v     vd, (rs1), rs2         is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlse16.v     vd, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg2e16.v vd, (rs1), rs2         is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg2e16.v vd, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg3e16.v vd, (rs1), rs2         is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg3e16.v vd, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg4e16.v vd, (rs1), rs2         is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg4e16.v vd, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg5e16.v vd, (rs1), rs2         is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg5e16.v vd, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg6e16.v vd, (rs1), rs2         is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg6e16.v vd, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg7e16.v vd, (rs1), rs2         is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg7e16.v vd, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg8e16.v vd, (rs1), rs2         is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg8e16.v vd, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
 
 # vlse256.v       nf 28=1 27..26=2 vm rs2 rs1 14..12=0x5  vd 6..0=0x07
 # vlse256.v  vd, (rs1), rs2, vm  #  256-bit strided load
-:vlse256.v   vd, (rs1), rs2         is nf & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
-:vlse256.v   vd, (rs1), rs2, "v0.t" is nf & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlse256.v     vd, (rs1), rs2         is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlse256.v     vd, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg2e256.v vd, (rs1), rs2         is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg2e256.v vd, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg3e256.v vd, (rs1), rs2         is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg3e256.v vd, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg4e256.v vd, (rs1), rs2         is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg4e256.v vd, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg5e256.v vd, (rs1), rs2         is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg5e256.v vd, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg6e256.v vd, (rs1), rs2         is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg6e256.v vd, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg7e256.v vd, (rs1), rs2         is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg7e256.v vd, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg8e256.v vd, (rs1), rs2         is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
+:vlsseg8e256.v vd, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vd & op0006=0x7  unimpl
 
 # vlse32.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x6  vd 6..0=0x07
 # vlse32.v   vd, (rs1), rs2, vm  #   32-bit strided load
-:vlse32.v    vd, (rs1), rs2         is nf & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
-:vlse32.v    vd, (rs1), rs2, "v0.t" is nf & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlse32.v     vd, (rs1), rs2         is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlse32.v     vd, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg2e32.v vd, (rs1), rs2         is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg2e32.v vd, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg3e32.v vd, (rs1), rs2         is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg3e32.v vd, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg4e32.v vd, (rs1), rs2         is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg4e32.v vd, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg5e32.v vd, (rs1), rs2         is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg5e32.v vd, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg6e32.v vd, (rs1), rs2         is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg6e32.v vd, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg7e32.v vd, (rs1), rs2         is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg7e32.v vd, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg8e32.v vd, (rs1), rs2         is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg8e32.v vd, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
 
 # vlse512.v       nf 28=1 27..26=2 vm rs2 rs1 14..12=0x6  vd 6..0=0x07
 # vlse512.v  vd, (rs1), rs2, vm  #  512-bit strided load
-:vlse512.v   vd, (rs1), rs2,        is nf & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
-:vlse512.v   vd, (rs1), rs2, "v0.t" is nf & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlse512.v     vd, (rs1), rs2,        is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlse512.v     vd, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg2e512.v vd, (rs1), rs2,        is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg2e512.v vd, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg3e512.v vd, (rs1), rs2,        is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg3e512.v vd, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg4e512.v vd, (rs1), rs2,        is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg4e512.v vd, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg5e512.v vd, (rs1), rs2,        is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg5e512.v vd, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg6e512.v vd, (rs1), rs2,        is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg6e512.v vd, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg7e512.v vd, (rs1), rs2,        is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg7e512.v vd, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg8e512.v vd, (rs1), rs2,        is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
+:vlsseg8e512.v vd, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vd & op0006=0x7  unimpl
 
 # vlse64.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x7  vd 6..0=0x07
 # vlse64.v   vd, (rs1), rs2, vm  #   64-bit strided load
-:vlse64.v    vd, (rs1), rs2         is nf & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
-:vlse64.v    vd, (rs1), rs2, "v0.t" is nf & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlse64.v    vd, (rs1), rs2         is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlse64.v    vd, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg2e64.v vd, (rs1), rs2         is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg2e64.v vd, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg3e64.v vd, (rs1), rs2         is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg3e64.v vd, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg4e64.v vd, (rs1), rs2         is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg4e64.v vd, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg5e64.v vd, (rs1), rs2         is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg5e64.v vd, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg6e64.v vd, (rs1), rs2         is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg6e64.v vd, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg7e64.v vd, (rs1), rs2         is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg7e64.v vd, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg8e64.v vd, (rs1), rs2         is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
+:vlsseg8e64.v vd, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vd & op0006=0x7  unimpl
 
 # vlse8.v         nf 28=0 27..26=2 vm rs2 rs1 14..12=0x0  vd 6..0=0x07
 # vlse8.v    vd, (rs1), rs2, vm  #   8-bit strided load
-:vlse8.v     vd, (rs1), rs2          is nf & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
-:vlse8.v     vd, (rs1), rs2, "v0.t"  is nf & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlse8.v     vd, (rs1), rs2          is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlse8.v     vd, (rs1), rs2, "v0.t"  is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg2e8.v vd, (rs1), rs2          is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg2e8.v vd, (rs1), rs2, "v0.t"  is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg3e8.v vd, (rs1), rs2          is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg3e8.v vd, (rs1), rs2, "v0.t"  is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg4e8.v vd, (rs1), rs2          is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg4e8.v vd, (rs1), rs2, "v0.t"  is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg5e8.v vd, (rs1), rs2          is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg5e8.v vd, (rs1), rs2, "v0.t"  is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg6e8.v vd, (rs1), rs2          is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg6e8.v vd, (rs1), rs2, "v0.t"  is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg7e8.v vd, (rs1), rs2          is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg7e8.v vd, (rs1), rs2, "v0.t"  is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg8e8.v vd, (rs1), rs2          is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
+:vlsseg8e8.v vd, (rs1), rs2, "v0.t"  is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vd & op0006=0x7  unimpl
 
 # vlxei1024.v      nf 28=1 27..26=3 vm vs2 rs1 14..12=0x7  vd 6..0=0x07
 # vlxei1024.v   vd, (rs1), vs2, vm  #   1024-bit indexed load of SEW data
@@ -1538,11 +1966,15 @@
 
 # vrsub.vi       31..26=0x03 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vrsub.vi vd, vs2, simm5, vm   # vd[i] = imm - vs2[i]
-:vrsub.vi  vd, vs2, simm5, vm    is op2631=0x3 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vrsub.vi  vd, vs2, simm5         is op2631=0x3 & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vrsub.vi  vd, vs2, simm5, "v0.t" is op2631=0x3 & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vrsub.vx       31..26=0x03 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vrsub.vx vd, vs2, rs1, vm   # vd[i] = rs1 - vs2[i]
-:vrsub.vx  vd, vs2, rs1, vm    is op2631=0x3 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vneg.v    vd, vs2               is op2631=0x3 & op2525=1 & vs2 & op1519=0 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vneg.v    vd, vs2, "v0.t"       is op2631=0x3 & op2525=0 & vs2 & op1519=0 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vrsub.vx  vd, vs2, rs1          is op2631=0x3 & op2525=1 & vs2 & rs1      & op1214=0x4 & vd & op0006=0x57 unimpl
+:vrsub.vx  vd, vs2, rs1, "v0.t"  is op2631=0x3 & op2525=0 & vs2 & rs1      & op1214=0x4 & vd & op0006=0x57 unimpl
 
 # vs1r.v         31..29=0 28=0 27..26=0 25=1 24..20=0x08 rs1 14..12=0x0 vs3 6..0=0x27
 # vs1r.v   vs3, (rs1)
@@ -1594,43 +2026,155 @@
 
 # vse1024.v      nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x7 vs3 6..0=0x27
 # vse1024.v vs3, (rs1), vm  # 1024-bit unit-stride store
-:vse1024.v  vs3, (rs1),          is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
-:vse1024.v  vs3, (rs1), "v0.t"   is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vse1024.v      vs3, (rs1),          is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vse1024.v      vs3, (rs1), "v0.t"   is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg2e1024.v  vs3, (rs1),          is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg2e1024.v  vs3, (rs1), "v0.t"   is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg3e1024.v  vs3, (rs1),          is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg3e1024.v  vs3, (rs1), "v0.t"   is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg4e1024.v  vs3, (rs1),          is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg4e1024.v  vs3, (rs1), "v0.t"   is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg5e1024.v  vs3, (rs1),          is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg5e1024.v  vs3, (rs1), "v0.t"   is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg6e1024.v  vs3, (rs1),          is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg6e1024.v  vs3, (rs1), "v0.t"   is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg7e1024.v  vs3, (rs1),          is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg7e1024.v  vs3, (rs1), "v0.t"   is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg8e1024.v  vs3, (rs1),          is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg8e1024.v  vs3, (rs1), "v0.t"   is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
 
 # vse128.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x0 vs3 6..0=0x27
 # vse128.v  vs3, (rs1), vm  #  128-bit unit-stride store
-:vse128.v   vs3, (rs1)           is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
-:vse128.v   vs3, (rs1), "v0.t"   is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vse128.v       vs3, (rs1)           is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vse128.v       vs3, (rs1), "v0.t"   is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg2e128.v   vs3, (rs1)           is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg2e128.v   vs3, (rs1), "v0.t"   is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg3e128.v   vs3, (rs1)           is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg3e128.v   vs3, (rs1), "v0.t"   is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg4e128.v   vs3, (rs1)           is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg4e128.v   vs3, (rs1), "v0.t"   is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg5e128.v   vs3, (rs1)           is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg5e128.v   vs3, (rs1), "v0.t"   is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg6e128.v   vs3, (rs1)           is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg6e128.v   vs3, (rs1), "v0.t"   is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg7e128.v   vs3, (rs1)           is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg7e128.v   vs3, (rs1), "v0.t"   is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg8e128.v   vs3, (rs1)           is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg8e128.v   vs3, (rs1), "v0.t"   is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
 
 # vse16.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x5 vs3 6..0=0x27
-# vse16.v   vs3, (rs1), vm  #   16-bit unit-stride store
-:vse16.v    vs3, (rs1)           is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
-:vse16.v    vs3, (rs1), "v0.t"   is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+# vse16.v       vs3, (rs1), vm  #   16-bit unit-stride store
+:vse16.v        vs3, (rs1)           is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vse16.v        vs3, (rs1), "v0.t"   is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg2e16.v    vs3, (rs1)           is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg2e16.v    vs3, (rs1), "v0.t"   is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg3e16.v    vs3, (rs1)           is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg3e16.v    vs3, (rs1), "v0.t"   is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg4e16.v    vs3, (rs1)           is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg4e16.v    vs3, (rs1), "v0.t"   is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg5e16.v    vs3, (rs1)           is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg5e16.v    vs3, (rs1), "v0.t"   is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg6e16.v    vs3, (rs1)           is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg6e16.v    vs3, (rs1), "v0.t"   is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg7e16.v    vs3, (rs1)           is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg7e16.v    vs3, (rs1), "v0.t"   is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg8e16.v    vs3, (rs1)           is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg8e16.v    vs3, (rs1), "v0.t"   is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
 
 # vse256.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x5 vs3 6..0=0x27
 # vse256.v  vs3, (rs1), vm  #  256-bit unit-stride store
-:vse256.v   vs3, (rs1)           is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
-:vse256.v   vs3, (rs1), "v0.t"   is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vse256.v       vs3, (rs1)           is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vse256.v       vs3, (rs1), "v0.t"   is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg2e256.v   vs3, (rs1)           is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg2e256.v   vs3, (rs1), "v0.t"   is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg3e256.v   vs3, (rs1)           is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg3e256.v   vs3, (rs1), "v0.t"   is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg4e256.v   vs3, (rs1)           is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg4e256.v   vs3, (rs1), "v0.t"   is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg5e256.v   vs3, (rs1)           is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg5e256.v   vs3, (rs1), "v0.t"   is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg6e256.v   vs3, (rs1)           is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg6e256.v   vs3, (rs1), "v0.t"   is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg7e256.v   vs3, (rs1)           is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg7e256.v   vs3, (rs1), "v0.t"   is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg8e256.v   vs3, (rs1)           is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsseg8e256.v   vs3, (rs1), "v0.t"   is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
 
 # vse32.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x6 vs3 6..0=0x27
 # vse32.v   vs3, (rs1), vm  #   32-bit unit-stride store
-:vse32.v    vs3, (rs1)           is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
-:vse32.v    vs3, (rs1), "v0.t"   is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vse32.v        vs3, (rs1)           is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vse32.v        vs3, (rs1), "v0.t"   is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg2e32.v    vs3, (rs1)           is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg2e32.v    vs3, (rs1), "v0.t"   is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg3e32.v    vs3, (rs1)           is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg3e32.v    vs3, (rs1), "v0.t"   is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg4e32.v    vs3, (rs1)           is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg4e32.v    vs3, (rs1), "v0.t"   is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg5e32.v    vs3, (rs1)           is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg5e32.v    vs3, (rs1), "v0.t"   is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg6e32.v    vs3, (rs1)           is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg6e32.v    vs3, (rs1), "v0.t"   is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg7e32.v    vs3, (rs1)           is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg7e32.v    vs3, (rs1), "v0.t"   is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg8e32.v    vs3, (rs1)           is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg8e32.v    vs3, (rs1), "v0.t"   is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
 
 # vse512.v       nf 28=1 27..26=0 vm 24..20=0 rs1 14..12=0x6 vs3 6..0=0x27
 # vse512.v  vs3, (rs1), vm  #  512-bit unit-stride store
-:vse512.v   vs3, (rs1)           is nf & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
-:vse512.v   vs3, (rs1), "v0.t"   is nf & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vse512.v   vs3, (rs1)           is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vse512.v   vs3, (rs1), "v0.t"   is nf & op2931=0 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg2e512.v   vs3, (rs1)           is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg2e512.v   vs3, (rs1), "v0.t"   is nf & op2931=1 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg3e512.v   vs3, (rs1)           is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg3e512.v   vs3, (rs1), "v0.t"   is nf & op2931=2 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg4e512.v   vs3, (rs1)           is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg4e512.v   vs3, (rs1), "v0.t"   is nf & op2931=3 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg5e512.v   vs3, (rs1)           is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg5e512.v   vs3, (rs1), "v0.t"   is nf & op2931=4 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg6e512.v   vs3, (rs1)           is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg6e512.v   vs3, (rs1), "v0.t"   is nf & op2931=5 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg7e512.v   vs3, (rs1)           is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg7e512.v   vs3, (rs1), "v0.t"   is nf & op2931=6 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg8e512.v   vs3, (rs1)           is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsseg8e512.v   vs3, (rs1), "v0.t"   is nf & op2931=7 & op2828=0x1 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
 
 # vse64.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x7 vs3 6..0=0x27
 # vse64.v   vs3, (rs1), vm  #   64-bit unit-stride store
-:vse64.v    vs3, (rs1)           is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
-:vse64.v    vs3, (rs1), "v0.t"   is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vse64.v    vs3, (rs1)           is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vse64.v    vs3, (rs1), "v0.t"   is nf & op2931=0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg2e64.v    vs3, (rs1)           is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg2e64.v    vs3, (rs1), "v0.t"   is nf & op2931=1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg3e64.v    vs3, (rs1)           is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg3e64.v    vs3, (rs1), "v0.t"   is nf & op2931=2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg4e64.v    vs3, (rs1)           is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg4e64.v    vs3, (rs1), "v0.t"   is nf & op2931=3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg5e64.v    vs3, (rs1)           is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg5e64.v    vs3, (rs1), "v0.t"   is nf & op2931=4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg6e64.v    vs3, (rs1)           is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg6e64.v    vs3, (rs1), "v0.t"   is nf & op2931=5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg7e64.v    vs3, (rs1)           is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg7e64.v    vs3, (rs1), "v0.t"   is nf & op2931=6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg8e64.v    vs3, (rs1)           is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsseg8e64.v    vs3, (rs1), "v0.t"   is nf & op2931=7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
 
 # vse8.v         nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x0 vs3 6..0=0x27
 # vse8.v    vs3, (rs1), vm  #    8-bit unit-stride store
-:vse8.v     vs3, (rs1)           is nf & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
-:vse8.v     vs3, (rs1), "v0.t"   is nf & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vse8.v     vs3, (rs1)           is nf & op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vse8.v     vs3, (rs1), "v0.t"   is nf & op2931=0x0 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg2e8.v vs3, (rs1)           is nf & op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg2e8.v vs3, (rs1), "v0.t"   is nf & op2931=0x1 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg3e8.v vs3, (rs1)           is nf & op2931=0x2 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg3e8.v vs3, (rs1), "v0.t"   is nf & op2931=0x2 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg4e8.v vs3, (rs1)           is nf & op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg4e8.v vs3, (rs1), "v0.t"   is nf & op2931=0x3 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg5e8.v vs3, (rs1)           is nf & op2931=0x4 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg5e8.v vs3, (rs1), "v0.t"   is nf & op2931=0x4 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg6e8.v vs3, (rs1)           is nf & op2931=0x5 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg6e8.v vs3, (rs1), "v0.t"   is nf & op2931=0x5 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg7e8.v vs3, (rs1)           is nf & op2931=0x6 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg7e8.v vs3, (rs1), "v0.t"   is nf & op2931=0x6 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg8e8.v vs3, (rs1)           is nf & op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=1 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsseg8e8.v vs3, (rs1), "v0.t"   is nf & op2931=0x7 & op2828=0x0 & op2627=0x0 & op2525=0 & op2024=0x0 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
 
 :vsm.v      vs3, (rs1)  is nf & op2828=0x0 & op2627=0x0 & op2024=0x0b & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
 
@@ -1747,43 +2291,155 @@
 
 # vsse1024.v      nf 28=1 27..26=2 vm rs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsse1024.v vs3, (rs1), rs2, vm  # 1024-bit strided store
-:vsse1024.v  vs3, (rs1), rs2         is nf & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
-:vsse1024.v  vs3, (rs1), rs2, "v0.t" is nf & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsse1024.v     vs3, (rs1), rs2         is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsse1024.v     vs3, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg2e1024.v vs3, (rs1), rs2         is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg2e1024.v vs3, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg3e1024.v vs3, (rs1), rs2         is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg3e1024.v vs3, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg4e1024.v vs3, (rs1), rs2         is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg4e1024.v vs3, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg5e1024.v vs3, (rs1), rs2         is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg5e1024.v vs3, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg6e1024.v vs3, (rs1), rs2         is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg6e1024.v vs3, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg7e1024.v vs3, (rs1), rs2         is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg7e1024.v vs3, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg8e1024.v vs3, (rs1), rs2         is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vssseg8e1024.v vs3, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
 
 # vsse128.v       nf 28=1 27..26=2 vm rs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsse128.v  vs3, (rs1), rs2, vm  #  128-bit strided store
-:vsse128.v   vs3, (rs1), rs2         is nf & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
-:vsse128.v   vs3, (rs1), rs2, "v0.t" is nf & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsse128.v     vs3, (rs1), rs2         is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsse128.v     vs3, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg2e128.v vs3, (rs1), rs2         is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg2e128.v vs3, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg3e128.v vs3, (rs1), rs2         is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg3e128.v vs3, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg4e128.v vs3, (rs1), rs2         is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg4e128.v vs3, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg5e128.v vs3, (rs1), rs2         is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg5e128.v vs3, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg6e128.v vs3, (rs1), rs2         is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg6e128.v vs3, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg7e128.v vs3, (rs1), rs2         is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg7e128.v vs3, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg8e128.v vs3, (rs1), rs2         is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vssseg8e128.v vs3, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
 
 # vsse16.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsse16.v   vs3, (rs1), rs2, vm  #   16-bit strided store
-:vsse16.v    vs3, (rs1), rs2         is nf & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
-:vsse16.v    vs3, (rs1), rs2, "v0.t" is nf & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsse16.v     vs3, (rs1), rs2         is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsse16.v     vs3, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg2e16.v vs3, (rs1), rs2         is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg2e16.v vs3, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg3e16.v vs3, (rs1), rs2         is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg3e16.v vs3, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg4e16.v vs3, (rs1), rs2         is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg4e16.v vs3, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg5e16.v vs3, (rs1), rs2         is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg5e16.v vs3, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg6e16.v vs3, (rs1), rs2         is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg6e16.v vs3, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg7e16.v vs3, (rs1), rs2         is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg7e16.v vs3, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg8e16.v vs3, (rs1), rs2         is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg8e16.v vs3, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
 
 # vsse256.v       nf 28=1 27..26=2 vm rs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsse256.v  vs3, (rs1), rs2, vm  #  256-bit strided store
-:vsse256.v   vs3, (rs1), rs2         is nf & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
-:vsse256.v   vs3, (rs1), rs2, "v0.t" is nf & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsse256.v     vs3, (rs1), rs2         is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsse256.v     vs3, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg2e256.v vs3, (rs1), rs2         is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg2e256.v vs3, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg3e256.v vs3, (rs1), rs2         is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg3e256.v vs3, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg4e256.v vs3, (rs1), rs2         is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg4e256.v vs3, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg5e256.v vs3, (rs1), rs2         is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg5e256.v vs3, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg6e256.v vs3, (rs1), rs2         is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg6e256.v vs3, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg7e256.v vs3, (rs1), rs2         is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg7e256.v vs3, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg8e256.v vs3, (rs1), rs2         is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vssseg8e256.v vs3, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
 
 # vsse32.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsse32.v   vs3, (rs1), rs2, vm  #   32-bit strided store
-:vsse32.v    vs3, (rs1), rs2         is nf & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
-:vsse32.v    vs3, (rs1), rs2, "v0.t" is nf & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsse32.v     vs3, (rs1), rs2         is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsse32.v     vs3, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg2e32.v vs3, (rs1), rs2         is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg2e32.v vs3, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg3e32.v vs3, (rs1), rs2         is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg3e32.v vs3, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg4e32.v vs3, (rs1), rs2         is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg4e32.v vs3, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg5e32.v vs3, (rs1), rs2         is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg5e32.v vs3, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg6e32.v vs3, (rs1), rs2         is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg6e32.v vs3, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg7e32.v vs3, (rs1), rs2         is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg7e32.v vs3, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg8e32.v vs3, (rs1), rs2         is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg8e32.v vs3, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 
 # vsse512.v       nf 28=1 27..26=2 vm rs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsse512.v  vs3, (rs1), rs2  #  512-bit strided store
-:vsse512.v   vs3, (rs1), rs2         is nf & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
-:vsse512.v   vs3, (rs1), rs2, "v0.t" is nf & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsse512.v     vs3, (rs1), rs2         is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsse512.v     vs3, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg2e512.v vs3, (rs1), rs2         is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg2e512.v vs3, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg3e512.v vs3, (rs1), rs2         is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg3e512.v vs3, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg4e512.v vs3, (rs1), rs2         is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg4e512.v vs3, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg5e512.v vs3, (rs1), rs2         is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg5e512.v vs3, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg6e512.v vs3, (rs1), rs2         is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg6e512.v vs3, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg7e512.v vs3, (rs1), rs2         is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg7e512.v vs3, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg8e512.v vs3, (rs1), rs2         is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vssseg8e512.v vs3, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 
 # vsse64.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsse64.v   vs3, (rs1), rs2, vm  #   64-bit strided store
-:vsse64.v    vs3, (rs1), rs2         is nf & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
-:vsse64.v    vs3, (rs1), rs2, "v0.t" is nf & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsse64.v     vs3, (rs1), rs2         is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsse64.v     vs3, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg2e64.v vs3, (rs1), rs2         is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg2e64.v vs3, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg3e64.v vs3, (rs1), rs2         is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg3e64.v vs3, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg4e64.v vs3, (rs1), rs2         is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg4e64.v vs3, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg5e64.v vs3, (rs1), rs2         is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg5e64.v vs3, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg6e64.v vs3, (rs1), rs2         is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg6e64.v vs3, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg7e64.v vs3, (rs1), rs2         is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg7e64.v vs3, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg8e64.v vs3, (rs1), rs2         is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vssseg8e64.v vs3, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 
 # vsse8.v         nf 28=0 27..26=2 vm rs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsse8.v    vs3, (rs1), rs2, vm  #    8-bit strided store
-:vsse8.v     vs3, (rs1), rs2         is nf & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
-:vsse8.v     vs3, (rs1), rs2, "v0.t" is nf & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsse8.v     vs3, (rs1), rs2         is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsse8.v     vs3, (rs1), rs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg2e8.v vs3, (rs1), rs2         is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg2e8.v vs3, (rs1), rs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg3e8.v vs3, (rs1), rs2         is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg3e8.v vs3, (rs1), rs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg4e8.v vs3, (rs1), rs2         is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg4e8.v vs3, (rs1), rs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg5e8.v vs3, (rs1), rs2         is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg5e8.v vs3, (rs1), rs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg6e8.v vs3, (rs1), rs2         is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg6e8.v vs3, (rs1), rs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg7e8.v vs3, (rs1), rs2         is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg7e8.v vs3, (rs1), rs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg8e8.v vs3, (rs1), rs2         is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=1 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vssseg8e8.v vs3, (rs1), rs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x2 & op2525=0 & rs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 
 #TODO  this is broken
 # vssra.vi       31..26=0x2b vm vs2 simm5 14..12=0x3 vd 6..0=0x57
@@ -1829,91 +2485,318 @@
 
 # vsub.vv         31..26=0x02 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vsub.vv vd, vs2, vs1, vm   # Vector-vector
-:vsub.vv  vd, vs2, vs1, vm    is op2631=0x2 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vsub.vv  vd, vs2, vs1         is op2631=0x2 & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vsub.vv  vd, vs2, vs1, "v0.t" is op2631=0x2 & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+
 
 # vsub.vx        31..26=0x02 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vsub.vx vd, vs2, rs1, vm   # vector-scalar
-:vsub.vx  vd, vs2, rs1, vm    is op2631=0x2 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vsub.vx  vd, vs2, rs1         is op2631=0x2 & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vsub.vx  vd, vs2, rs1, "v0.t" is op2631=0x2 & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 # vsuxei1024.v     nf 28=1 27..26=1 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsuxei1024.v  vs3, (rs1), vs2, vm # unordered 1024-bit indexed store of SEW data
-:vsuxei1024.v   vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
-:vsuxei1024.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsuxei1024.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsuxei1024.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei1024.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei1024.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei1024.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei1024.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei1024.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei1024.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei1024.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 
 # vsuxei128.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsuxei128.v  vs3, (rs1), vs2, vm # unordered 128-bit indexed store of SEW data
-:vsuxei128.v   vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
-:vsuxei128.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsuxei128.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsuxei128.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei128.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei128.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei128.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei128.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei128.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei128.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei128.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 
 # vsuxei16.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsuxei16.v  vs3, (rs1), vs2, vm # unordered 16-bit indexed store of SEW data
-:vsuxei16.v   vs3, (rs1), vs2          is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
-:vsuxei16.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsuxei16.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsuxei16.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei16.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei16.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei16.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei16.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei16.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei16.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei16.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 
 # vsuxei256.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsuxei256.v  vs3, (rs1), vs2, vm # unordered 256-bit indexed store of SEW data
-:vsuxei256.v   vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
-:vsuxei256.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsuxei256.v   vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsuxei256.v   vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei256.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei256.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei256.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei256.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei256.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei256.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei256.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 
 # vsuxei32.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsuxei32.v  vs3, (rs1), vs2, vm # unordered 32-bit indexed store of SEW data
-:vsuxei32.v   vs3, (rs1), vs2          is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
-:vsuxei32.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsuxei32.v   vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsuxei32.v   vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei32.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei32.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei32.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei32.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei32.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei32.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei32.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 
 # vsuxei512.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsuxei512.v  vs3, (rs1), vs2, vm # unordered 512-bit indexed store of SEW data
-:vsuxei512.v   vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
-:vsuxei512.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsuxei512.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsuxei512.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei512.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei512.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei512.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei512.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei512.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei512.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei512.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 
 # vsuxei64.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsuxei64.v  vs3, (rs1), vs2, vm # unordered 64-bit indexed store of SEW data
-:vsuxei64.v   vs3, (rs1), vs2          is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
-:vsuxei64.v   vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsuxei64.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsuxei64.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei64.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei64.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei64.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei64.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei64.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei64.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei64.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 
 # vsuxei8.v        nf 28=0 27..26=1 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsuxei8.v   vs3, (rs1), vs2, vm # unordered  8-bit indexed store of SEW data
-:vsuxei8.v    vs3, (rs1), vs2          is nf & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
-:vsuxei8.v    vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsuxei8.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsuxei8.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei8.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg2uxei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei8.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg3uxei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei8.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg4uxei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei8.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg5uxei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei8.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg6uxei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei8.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg7uxei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei8.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsseg8uxei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 
 # vsoxei1024.v      nf 28=1 27..26=3 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsoxei1024.v   vs3, (rs1), vs2, vm  # ordered 1024-bit indexed store of SEW data
-:vsoxei1024.v    vs3, (rs1), vs2         is nf & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
-:vsoxei1024.v    vs3, (rs1), vs2, "v0.t" is nf & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsoxei1024.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxei1024.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei1024.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei1024.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei1024.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei1024.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei1024.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei1024.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei1024.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 
 # vsoxei128.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsoxei128.v   vs3, (rs1), vs2, vm  # ordered 128-bit indexed store of SEW data
-:vsoxei128.v    vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
-:vsoxei128.v    vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsoxei128.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxei128.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei128.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei128.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei128.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei128.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei128.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei128.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei128.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 
 # vsoxei16.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsoxei16.v   vs3, (rs1), vs2, vm  # ordered 16-bit indexed store of SEW data
-:vsoxei16.v    vs3, (rs1), vs2           is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
-:vsoxei16.v    vs3, (rs1), vs2, "v0.t"   is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsoxei16.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxei16.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei16.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei16.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei16.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei16.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei16.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei16.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei16.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 
 # vsoxei256.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsoxei256.v   vs3, (rs1), vs2, vm  # ordered 256-bit indexed store of SEW data
-:vsoxei256.v    vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
-:vsoxei256.v    vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27  unimpl
+:vsoxei256.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxei256.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei256.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei256.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei256.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei256.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei256.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei256.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei256.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 
 # vsoxei32.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsoxei32.v   vs3, (rs1), vs2, vm  # ordered 32-bit indexed store of SEW data
-:vsoxei32.v    vs3, (rs1), vs2           is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
-:vsoxei32.v    vs3, (rs1), vs2, "v0.t"   is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsoxei32.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxei32.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei32.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei32.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei32.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei32.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei32.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei32.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei32.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 
 # vsoxei512.v       nf 28=1 27..26=3 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsoxei512.v   vs3, (rs1), vs2, vm  # ordered 512-bit indexed store of SEW data
-:vsoxei512.v    vs3, (rs1), vs2          is nf & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
-:vsoxei512.v    vs3, (rs1), vs2, "v0.t"  is nf & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27  unimpl
+:vsoxei512.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxei512.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei512.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei512.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei512.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei512.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei512.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei512.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei512.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 
 # vsoxei64.v        nf 28=0 27..26=3 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsoxei64.v   vs3, (rs1), vs2, vm  # ordered 64-bit indexed store of SEW data
-:vsoxei64.v    vs3, (rs1), vs2           is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
-:vsoxei64.v    vs3, (rs1), vs2, "v0.t"   is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27  unimpl
+:vsoxei64.v     vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxei64.v     vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei64.v vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei64.v vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei64.v vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei64.v vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei64.v vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei64.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei64.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 
 # vsoxei8.v         nf 28=0 27..26=3 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsoxei8.v    vs3, (rs1), vs2, vm  # ordered  8-bit indexed store of SEW data
-:vsoxei8.v     vs3, (rs1), vs2           is nf & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
-:vsoxei8.v     vs3, (rs1), vs2, "v0.t"   is nf & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27  unimpl
+:vsoxei8.v      vs3, (rs1), vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxei8.v      vs3, (rs1), vs2, "v0.t" is nf & op2931=0 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei8.v  vs3, (rs1), vs2         is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg2ei8.v  vs3, (rs1), vs2, "v0.t" is nf & op2931=1 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei8.v  vs3, (rs1), vs2         is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg3ei8.v  vs3, (rs1), vs2, "v0.t" is nf & op2931=2 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei8.v  vs3, (rs1), vs2         is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg4ei8.v  vs3, (rs1), vs2, "v0.t" is nf & op2931=3 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei8.v  vs3, (rs1), vs2         is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg5ei8.v  vs3, (rs1), vs2, "v0.t" is nf & op2931=4 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei8.v  vs3, (rs1), vs2         is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg6ei8.v  vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei8.v  vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg7ei8.v  vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei8.v  vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsoxseg8ei8.v  vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x3 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 
 # vwadd.vv       31..26=0x31 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwadd.vv  vd, vs2, vs1, vm  # vector-vector
