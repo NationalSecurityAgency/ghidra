@@ -1214,8 +1214,8 @@
 :vluxseg6ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
 :vluxseg7ei8.v  vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
 :vluxseg7ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
-:vlseg8uxei8.v  vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
-:vlseg8uxei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vluxseg8ei8.v  vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
+:vluxseg8ei8.v  vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vd & op0006=0x7 unimpl
 
 # vluxei16.v Vector indexed-ordered load instructions
 :vluxei16.v  vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
@@ -1232,8 +1232,8 @@
 :vluxseg6ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
 :vluxseg7ei16.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
 :vluxseg7ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
-:vlseg8uxei16.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
-:vlseg8uxei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vluxseg8ei16.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
+:vluxseg8ei16.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vd & op0006=0x7 unimpl
 
 # vluxei32.v Vector indexed-ordered load instructions
 :vluxei32.v     vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
@@ -1250,8 +1250,8 @@
 :vluxseg6ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
 :vluxseg7ei32.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
 :vluxseg7ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
-:vlseg8uxei32.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
-:vlseg8uxei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vluxseg8ei32.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
+:vluxseg8ei32.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x7 unimpl
 
 # vluxei64.v Vector indexed-ordered load instructions
 :vluxei64.v     vd, (rs1),vs2         is nf & op2931=0 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
@@ -1268,8 +1268,8 @@
 :vluxseg6ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
 :vluxseg7ei64.v vd, (rs1),vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
 :vluxseg7ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
-:vlseg8uxei64.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
-:vlseg8uxei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vluxseg8ei64.v vd, (rs1),vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
+:vluxseg8ei64.v vd, (rs1),vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vd & op0006=0x7 unimpl
 
 # vle8ff.v         nf 28=0 27..26=0 vm 24..20=0x10 rs1 14..12=0x0  vd 6..0=0x07
 # vle8ff.v    vd, (rs1), vm  #  8-bit unit-stride fault-only-first load
@@ -1476,7 +1476,8 @@
 
 # vmacc.vv       31..26=0x2d vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vmacc.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) + vd[i]
-:vmacc.vv  vd, vs1, vs2, vm     is op2631=0x2d & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vmacc.vv  vd, vs1, vs2         is op2631=0x2d & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vmacc.vv  vd, vs1, vs2, "v0.t" is op2631=0x2d & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vmacc.vx       31..26=0x2d vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vmacc.vx vd, rs1, vs2, vm    # vd[i] = +(x[rs1] * vs2[i]) + vd[i]
@@ -1496,11 +1497,14 @@
 
 # vmadd.vv       31..26=0x29 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vmadd.vv vd, vs1, vs2, vm    # vd[i] = (vs1[i] * vd[i]) + vs2[i]
-:vmadd.vv  vd, vs1, vs2, vm     is op2631=0x29 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vmadd.vv  vd, vs1, vs2, vm     is op2631=0x29 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vmadd.vv  vd, vs1, vs2         is op2631=0x29 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vmadd.vv  vd, vs1, vs2, "v0.t" is op2631=0x29 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vmadd.vx       31..26=0x29 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vmadd.vx vd, rs1, vs2, vm    # vd[i] = (x[rs1] * vd[i]) + vs2[i]
-:vmadd.vx  vd, rs1, vs2, vm     is op2631=0x29 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vmadd.vx  vd, rs1, vs2         is op2631=0x29 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vmadd.vx  vd, rs1, vs2, "v0.t" is op2631=0x29 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vmand.mm       31..26=0x19 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vmand.mm vd, vs2, vs1     # vd[i] =   vs2.mask[i] &amp;&amp;  vs1.mask[i]
@@ -2206,88 +2210,108 @@
 # 
 # vsext.vf2      31..26=0x12 vm vs2 19..15=7 14..12=0x2 vd 6..0=0x57
 # vsext.vf2 vd, vs2, vm  # Sign-extend SEW/2 source to SEW destination
-:vsext.vf2  vd, vs2, vm   is op2631=0x12 & vm & vs2 & op1519=0x7 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vsext.vf2  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0x7 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vsext.vf2  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x7 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vsext.vf4      31..26=0x12 vm vs2 19..15=5 14..12=0x2 vd 6..0=0x57
 # vsext.vf4 vd, vs2, vm  # Sign-extend SEW/4 source to SEW destination
-:vsext.vf4  vd, vs2, vm   is op2631=0x12 & vm & vs2 & op1519=0x5 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vsext.vf4  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0x5 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vsext.vf4  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x5 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vsext.vf8      31..26=0x12 vm vs2 19..15=3 14..12=0x2 vd 6..0=0x57
 # vsext.vf8 vd, vs2, vm  # Sign-extend SEW/8 source to SEW destination
-:vsext.vf8  vd, vs2, vm   is op2631=0x12 & vm & vs2 & op1519=0x3 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vsext.vf8  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0x3 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vsext.vf8  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x3 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vslide1down.vx 31..26=0x0f vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vslide1down.vx  vd, vs2, rs1, vm      # vd[i] = vs2[i+1], vd[vl-1]=x[rs1]
-:vslide1down.vx   vd, vs2, rs1, vm       is op2631=0xf & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vslide1down.vx   vd, vs2, rs1         is op2631=0xf & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vslide1down.vx   vd, vs2, rs1, "v0.t" is op2631=0xf & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vslide1up.vx   31..26=0x0e vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vslide1up.vx  vd, vs2, rs1, vm        # vd[0]=x[rs1], vd[i+1] = vs2[i]
-:vslide1up.vx   vd, vs2, rs1, vm         is op2631=0xe & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vslide1up.vx   vd, vs2, rs1         is op2631=0xe & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vslide1up.vx   vd, vs2, rs1, "v0.t" is op2631=0xe & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 #TODO  this is broken
 # vslidedown.vi  31..26=0x0f vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vslidedown.vi vd, vs2, simm5[4:0], vm # vd[i] = vs2[i+uimm]
-:vslidedown.vi  vd, vs2, simm5[4:0], vm  is op2631=0xf & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vslidedown.vi  vd, vs2, simm5[4:0]         is op2631=0xf & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vslidedown.vi  vd, vs2, simm5[4:0], "v0.t" is op2631=0xf & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vslidedown.vx  31..26=0x0f vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vslidedown.vx vd, vs2, rs1, vm       # vd[i] = vs2[i+rs1]
-:vslidedown.vx  vd, vs2, rs1, vm        is op2631=0xf & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vslidedown.vx  vd, vs2, rs1         is op2631=0xf & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vslidedown.vx  vd, vs2, rs1, "v0.t" is op2631=0xf & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 #TODO  this is broken
 # vslideup.vi    31..26=0x0e vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vslideup.vi vd, vs2, simm5[4:0], vm  # vd[i+uimm] = vs2[i]
-:vslideup.vi  vd, vs2, simm5[4:0], vm   is op2631=0xe & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vslideup.vi  vd, vs2, simm5[4:0]         is op2631=0xe & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vslideup.vi  vd, vs2, simm5[4:0], "v0.t" is op2631=0xe & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vslideup.vx    31..26=0x0e vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vslideup.vx vd, vs2, rs1, vm        # vd[i+rs1] = vs2[i]
-:vslideup.vx  vd, vs2, rs1, vm         is op2631=0xe & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vslideup.vx  vd, vs2, rs1         is op2631=0xe & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vslideup.vx  vd, vs2, rs1, "v0.t" is op2631=0xe & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 #TODO  this is broken
 # vsll.vi        31..26=0x25 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vsll.vi vd, vs2, simm5, vm   # vector-immediate
-:vsll.vi  vd, vs2, simm5, vm    is op2631=0x25 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vsll.vi  vd, vs2, simm5         is op2631=0x25 & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vsll.vi  vd, vs2, simm5, "v0.t" is op2631=0x25 & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vsll.vv        31..26=0x25 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vsll.vv vd, vs2, vs1, vm   # Vector-vector
-:vsll.vv  vd, vs2, vs1, vm    is op2631=0x25 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vsll.vv  vd, vs2, vs1         is op2631=0x25 & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vsll.vv  vd, vs2, vs1, "v0.t" is op2631=0x25 & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
 
 # vsll.vx        31..26=0x25 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vsll.vx vd, vs2, rs1, vm   # vector-scalar
-:vsll.vx  vd, vs2, rs1, vm    is op2631=0x25 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vsll.vx  vd, vs2, rs1,        is op2631=0x25 & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vsll.vx  vd, vs2, rs1, "v0.t" is op2631=0x25 & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 # vsmul.vv       31..26=0x27 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vsmul.vv vd, vs2, vs1, vm  # vd[i] = clip(roundoff_signed(vs2[i]*vs1[i], SEW-1))
-:vsmul.vv  vd, vs2, vs1, vm   is op2631=0x27 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vsmul.vv  vd, vs2, vs1,        is op2631=0x27 & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vsmul.vv  vd, vs2, vs1, "v0.t" is op2631=0x27 & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
 
 # vsmul.vx       31..26=0x27 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vsmul.vx vd, vs2, rs1, vm  # vd[i] = clip(roundoff_signed(vs2[i]*x[rs1], SEW-1))
-:vsmul.vx  vd, vs2, rs1, vm   is op2631=0x27 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vsmul.vx  vd, vs2, rs1,        is op2631=0x27 & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vsmul.vx  vd, vs2, rs1, "v0.t" is op2631=0x27 & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 #OTOD  this is broken
 # vsra.vi        31..26=0x29 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vsra.vi vd, vs2, simm5, vm   # vector-immediate
-:vsra.vi  vd, vs2, simm5, vm    is op2631=0x29 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vsra.vi  vd, vs2, simm5         is op2631=0x29 & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vsra.vi  vd, vs2, simm5, "v0.t" is op2631=0x29 & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vsra.vv        31..26=0x29 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vsra.vv vd, vs2, vs1, vm   # Vector-vector
-:vsra.vv  vd, vs2, vs1, vm    is op2631=0x29 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vsra.vv  vd, vs2, vs1         is op2631=0x29 & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vsra.vv  vd, vs2, vs1, "v0.t" is op2631=0x29 & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
 
 # vsra.vx        31..26=0x29 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vsra.vx vd, vs2, rs1, vm   # vector-scalar
-:vsra.vx  vd, vs2, rs1, vm    is op2631=0x29 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vsra.vx  vd, vs2, rs1         is op2631=0x29 & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vsra.vx  vd, vs2, rs1, "v0.t" is op2631=0x29 & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 #TODO  this is broken
 # vsrl.vi        31..26=0x28 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vsrl.vi vd, vs2, simm5, vm   # vector-immediate
-:vsrl.vi  vd, vs2, simm5, vm    is op2631=0x28 & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vsrl.vi  vd, vs2, simm5         is op2631=0x28 & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vsrl.vi  vd, vs2, simm5, "v0.t" is op2631=0x28 & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vsrl.vv        31..26=0x28 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vsrl.vv vd, vs2, vs1, vm   # Vector-vector
-:vsrl.vv  vd, vs2, vs1, vm    is op2631=0x28 & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vsrl.vi  vd, vs2, simm5         is op2631=0x28 & op2525=1 & vs2 & simm5 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vsrl.vi  vd, vs2, simm5, "v0.t" is op2631=0x28 & op2525=0 & vs2 & simm5 & op1214=0x0 & vd & op0006=0x57 unimpl
 
 # vsrl.vx        31..26=0x28 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vsrl.vx vd, vs2, rs1, vm   # vector-scalar
-:vsrl.vx  vd, vs2, rs1, vm    is op2631=0x28 & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vsrl.vx  vd, vs2, rs1         is op2631=0x28 & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vsrl.vx  vd, vs2, rs1, "v0.t" is op2631=0x28 & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 # vsse1024.v      nf 28=1 27..26=2 vm rs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsse1024.v vs3, (rs1), rs2, vm  # 1024-bit strided store
@@ -2510,8 +2534,8 @@
 :vsuxseg6ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei1024.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei1024.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei1024.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei1024.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 
 # vsuxei128.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsuxei128.v  vs3, (rs1), vs2, vm # unordered 128-bit indexed store of SEW data
@@ -2529,8 +2553,8 @@
 :vsuxseg6ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei128.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei128.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei128.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei128.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 
 # vsuxei16.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsuxei16.v  vs3, (rs1), vs2, vm # unordered 16-bit indexed store of SEW data
@@ -2548,8 +2572,8 @@
 :vsuxseg6ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei16.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei16.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei16.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei16.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 
 # vsuxei256.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x5 vs3 6..0=0x27
 # vsuxei256.v  vs3, (rs1), vs2, vm # unordered 256-bit indexed store of SEW data
@@ -2567,8 +2591,8 @@
 :vsuxseg6ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei256.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei256.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei256.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei256.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x5 & vs3 & op0006=0x27 unimpl
 
 # vsuxei32.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsuxei32.v  vs3, (rs1), vs2, vm # unordered 32-bit indexed store of SEW data
@@ -2586,8 +2610,8 @@
 :vsuxseg6ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei32.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei32.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei32.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei32.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 
 # vsuxei512.v      nf 28=1 27..26=1 vm vs2 rs1 14..12=0x6 vs3 6..0=0x27
 # vsuxei512.v  vs3, (rs1), vs2, vm # unordered 512-bit indexed store of SEW data
@@ -2605,8 +2629,8 @@
 :vsuxseg6ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei512.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei512.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei512.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei512.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x1 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x6 & vs3 & op0006=0x27 unimpl
 
 # vsuxei64.v       nf 28=0 27..26=1 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsuxei64.v  vs3, (rs1), vs2, vm # unordered 64-bit indexed store of SEW data
@@ -2624,8 +2648,8 @@
 :vsuxseg6ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei64.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei64.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei64.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei64.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x7 & vs3 & op0006=0x27 unimpl
 
 # vsuxei8.v        nf 28=0 27..26=1 vm vs2 rs1 14..12=0x0 vs3 6..0=0x27
 # vsuxei8.v   vs3, (rs1), vs2, vm # unordered  8-bit indexed store of SEW data
@@ -2643,8 +2667,8 @@
 :vsuxseg6ei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=5 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei8.v vs3, (rs1), vs2         is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 :vsuxseg7ei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=6 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei8.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
-:vsseg8uxei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei8.v vs3, (rs1), vs2         is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=1 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
+:vsuxseg8ei8.v vs3, (rs1), vs2, "v0.t" is nf & op2931=7 & op2828=0x0 & op2627=0x1 & op2525=0 & vs2 & rs1 & op1214=0x0 & vs3 & op0006=0x27 unimpl
 
 # vsoxei1024.v      nf 28=1 27..26=3 vm vs2 rs1 14..12=0x7 vs3 6..0=0x27
 # vsoxei1024.v   vs3, (rs1), vs2, vm  # ordered 1024-bit indexed store of SEW data
@@ -2800,35 +2824,49 @@
 
 # vwadd.vv       31..26=0x31 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwadd.vv  vd, vs2, vs1, vm  # vector-vector
-:vwadd.vv   vd, vs2, vs1, vm   is op2631=0x31 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vwadd.vv   vd, vs2, vs1         is op2631=0x31 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwadd.vv   vd, vs2, vs1, "v0.t" is op2631=0x31 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vwadd.vx       31..26=0x31 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwadd.vx  vd, vs2, rs1, vm  # vector-scalar
-:vwadd.vx   vd, vs2, rs1, vm   is op2631=0x31 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vwcvt.x.x.v vd, vs2              is op2631=0x31 & op2525=1 & vs2 & op1519=0 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwcvt.x.x.v vd, vs2, "v0.t"      is op2631=0x31 & op2525=0 & vs2 & op1519=0 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwadd.vx    vd, vs2, rs1         is op2631=0x31 & op2525=1 & vs2 & rs1      & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwadd.vx    vd, vs2, rs1, "v0.t" is op2631=0x31 & op2525=0 & vs2 & rs1      & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vwadd.wv       31..26=0x35 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwadd.wv  vd, vs2, vs1, vm  # vector-vector
-:vwadd.wv   vd, vs2, vs1, vm   is op2631=0x35 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vwadd.wv   vd, vs2, vs1         is op2631=0x35 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwadd.wv   vd, vs2, vs1, "v0.t" is op2631=0x35 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vwadd.wx       31..26=0x35 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwadd.wx  vd, vs2, rs1, vm  # vector-scalar
-:vwadd.wx   vd, vs2, rs1, vm   is op2631=0x35 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vwadd.wx   vd, vs2, rs1        is op2631=0x35 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwadd.wx   vd, vs2, rs1, "v0.t" is op2631=0x35 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vwaddu.vv      31..26=0x30 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwaddu.vv  vd, vs2, vs1, vm  # vector-vector
-:vwaddu.vv   vd, vs2, vs1, vm   is op2631=0x30 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+#??:vwcvtu.x.x.v vd, vs2              is op2631=0x30 & op2525=1 & vs2 & op1519=0 & op1214=0x2 & vd & op0006=0x57 unimpl
+#??:vwcvtu.x.x.v vd, vs2, "v0.t"      is op2631=0x30 & op2525=0 & vs2 & op1519=0 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwaddu.vv    vd, vs2, vs1         is op2631=0x30 & op2525=1 & vs2 & vs1      & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwaddu.vv    vd, vs2, vs1, "v0.t" is op2631=0x30 & op2525=0 & vs2 & vs1      & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vwaddu.vx      31..26=0x30 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwaddu.vx  vd, vs2, rs1, vm  # vector-scalar
-:vwaddu.vx   vd, vs2, rs1, vm   is op2631=0x30 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vwcvtu.x.x.v vd, vs2             is op2631=0x30 & op2525=1 & vs2 & op1519=0 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwcvtu.x.x.v vd, vs2, "v0.t"     is op2631=0x30 & op2525=0 & vs2 & op1519=0 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwaddu.vx   vd, vs2, rs1         is op2631=0x30 & op2525=1 & vs2 & rs1      & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwaddu.vx   vd, vs2, rs1, "v0.t" is op2631=0x30 & op2525=0 & vs2 & rs1      & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vwaddu.wv      31..26=0x34 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwaddu.wv  vd, vs2, vs1, vm  # vector-vector
-:vwaddu.wv   vd, vs2, vs1, vm   is op2631=0x34 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vwaddu.wv   vd, vs2, vs1         is op2631=0x34 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwaddu.wv   vd, vs2, vs1, "v0.t" is op2631=0x34 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vwaddu.wx      31..26=0x34 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwaddu.wx  vd, vs2, rs1, vm  # vector-scalar
-:vwaddu.wx   vd, vs2, rs1, vm   is op2631=0x34 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vwaddu.wx   vd, vs2, rs1         is op2631=0x34 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwaddu.wx   vd, vs2, rs1, "v0.t" is op2631=0x34 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vwmacc.vv      31..26=0x3d vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwmacc.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) + vd[i]
@@ -2892,57 +2930,71 @@
 
 # vwsub.vv       31..26=0x33 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwsub.vv  vd, vs2, vs1, vm  # vector-vector
-:vwsub.vv   vd, vs2, vs1, vm   is op2631=0x33 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vwsub.vv   vd, vs2, vs1         is op2631=0x33 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwsub.vv   vd, vs2, vs1, "v0.t" is op2631=0x33 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vwsub.vx       31..26=0x33 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwsub.vx  vd, vs2, rs1, vm  # vector-scalar
-:vwsub.vx   vd, vs2, rs1, vm   is op2631=0x33 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vwsub.vx   vd, vs2, rs1         is op2631=0x33 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwsub.vx   vd, vs2, rs1, "v0.t" is op2631=0x33 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vwsub.wv       31..26=0x37 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwsub.wv  vd, vs2, vs1, vm  # vector-vector
-:vwsub.wv   vd, vs2, vs1, vm   is op2631=0x37 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vwsub.wv   vd, vs2, vs1         is op2631=0x37 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwsub.wv   vd, vs2, vs1, "v0.t" is op2631=0x37 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vwsub.wx       31..26=0x37 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwsub.wx  vd, vs2, rs1, vm  # vector-scalar
-:vwsub.wx   vd, vs2, rs1, vm   is op2631=0x37 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vwsub.wx   vd, vs2, rs1         is op2631=0x37 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwsub.wx   vd, vs2, rs1, "v0.t" is op2631=0x37 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vwsubu.vv      31..26=0x32 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwsubu.vv  vd, vs2, vs1, vm  # vector-vector
-:vwsubu.vv   vd, vs2, vs1, vm   is op2631=0x32 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vwsubu.vv   vd, vs2, vs1         is op2631=0x32 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwsubu.vv   vd, vs2, vs1, "v0.t" is op2631=0x32 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vwsubu.vx      31..26=0x32 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwsubu.vx  vd, vs2, rs1, vm  # vector-scalar
-:vwsubu.vx   vd, vs2, rs1, vm   is op2631=0x32 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vwsubu.vx   vd, vs2, rs1         is op2631=0x32 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwsubu.vx   vd, vs2, rs1, "v0.t" is op2631=0x32 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vwsubu.wv      31..26=0x36 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vwsubu.wv  vd, vs2, vs1, vm  # vector-vector
-:vwsubu.wv   vd, vs2, vs1, vm   is op2631=0x36 & vm & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vwsubu.wv   vd, vs2, vs1         is op2631=0x36 & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vwsubu.wv   vd, vs2, vs1, "v0.t" is op2631=0x36 & op2525=0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vwsubu.wx      31..26=0x36 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwsubu.wx  vd, vs2, rs1, vm  # vector-scalar
-:vwsubu.wx   vd, vs2, rs1, vm   is op2631=0x36 & vm & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57  unimpl
+:vwsubu.wx   vd, vs2, rs1         is op2631=0x36 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwsubu.wx   vd, vs2, rs1, "v0.t" is op2631=0x36 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vxor.vi        31..26=0x0b vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vxor.vi vd, vs2, simm5, vm    # vector-immediate
-:vxor.vi  vd, vs2, simm5, vm     is op2631=0xb & vm & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57  unimpl
+:vxor.vi  vd, vs2, simm5         is op2631=0xb & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vxor.vi  vd, vs2, simm5, "v0.t" is op2631=0xb & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vxor.vv         31..26=0x0b vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vxor.vv vd, vs2, vs1, vm    # Vector-vector
-:vxor.vv  vd, vs2, vs1, vm     is op2631=0xb & vm & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57  unimpl
+:vxor.vv  vd, vs2, vs1         is op2631=0xb & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vxor.vv  vd, vs2, vs1, "v0.t" is op2631=0xb & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
 
 # vxor.vx        31..26=0x0b vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vxor.vx vd, vs2, rs1, vm    # vector-scalar
-:vxor.vx  vd, vs2, rs1, vm     is op2631=0xb & vm & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57  unimpl
+:vxor.vx  vd, vs2, rs1         is op2631=0xb & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vxor.vx  vd, vs2, rs1, "v0.t" is op2631=0xb & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
 
 # vzext.vf2      31..26=0x12 vm vs2 19..15=6 14..12=0x2 vd 6..0=0x57
 # vzext.vf2 vd, vs2, vm  # Zero-extend SEW/2 source to SEW destination
-:vzext.vf2  vd, vs2, vm   is op2631=0x12 & vm & vs2 & op1519=0x6 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vzext.vf2  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0x6 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vzext.vf2  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x6 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vzext.vf4      31..26=0x12 vm vs2 19..15=4 14..12=0x2 vd 6..0=0x57
 # vzext.vf4 vd, vs2, vm  # Zero-extend SEW/4 source to SEW destination
-:vzext.vf4  vd, vs2, vm   is op2631=0x12 & vm & vs2 & op1519=0x4 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vzext.vf2  vd,             is op2631=0x12 & op2525=1 & vs2 & op1519=0x4 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vzext.vf4  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x4 & op1214=0x2 & vd & op0006=0x57 unimpl
 
 # vzext.vf8      31..26=0x12 vm vs2 19..15=2 14..12=0x2 vd 6..0=0x57
 # vzext.vf8 vd, vs2, vm  # Zero-extend SEW/8 source to SEW destination
-:vzext.vf8  vd, vs2, vm   is op2631=0x12 & vm & vs2 & op1519=0x2 & op1214=0x2 & vd & op0006=0x57  unimpl
+:vzext.vf8  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0x2 & op1214=0x2 & vd & op0006=0x57 unimpl
+:vzext.vf8  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x2 & op1214=0x2 & vd & op0006=0x57 unimpl
 
