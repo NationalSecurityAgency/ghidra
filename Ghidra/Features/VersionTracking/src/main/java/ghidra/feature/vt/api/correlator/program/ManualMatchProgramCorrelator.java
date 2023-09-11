@@ -29,8 +29,8 @@ public class ManualMatchProgramCorrelator extends VTAbstractProgramCorrelator {
 	public static final String NAME = "Manual Match";
 
 	public ManualMatchProgramCorrelator(Program sourceProgram, Program destinationProgram) {
-		super(null, sourceProgram, sourceProgram.getMemory(), destinationProgram,
-			destinationProgram.getMemory(), new ToolOptions(NAME));
+		super(sourceProgram, sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(),
+			new ToolOptions(NAME));
 	}
 
 	@Override

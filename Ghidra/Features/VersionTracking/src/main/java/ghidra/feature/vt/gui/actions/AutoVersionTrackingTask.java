@@ -23,11 +23,11 @@ import ghidra.feature.vt.api.correlator.program.*;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.feature.vt.api.util.VTOptions;
-import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.AddressCorrelatorManager;
 import ghidra.feature.vt.gui.task.ApplyMarkupItemTask;
 import ghidra.feature.vt.gui.util.MatchInfo;
+import ghidra.feature.vt.gui.util.MatchInfoFactory;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.OperandType;
@@ -69,43 +69,42 @@ public class AutoVersionTrackingTask extends Task {
 
 	private static final String NAME = "Auto Version Tracking Command";
 	private VTSession session;
+	private MatchInfoFactory matchInfoFactory;
+	private AddressCorrelatorManager addressCorrelator;
 	private Program sourceProgram;
 	private Program destinationProgram;
-	private PluginTool serviceProvider;
 	private AddressSetView sourceAddressSet;
 	private AddressSetView destinationAddressSet;
-	private VTController controller;
 	private double minCombinedReferenceCorrelatorScore;
 	private double minCombinedReferenceCorrelatorConfidence;
-	private final ToolOptions applyOptions;
+	private ToolOptions applyOptions;
 	private String statusMsg = null;
 	private static int NUM_CORRELATORS = 8;
 
 	/**
 	 * Constructor for a modal/blocking AutoVersionTrackingTask
 	 *
-	 * @param controller The Version Tracking controller for this session containing option and
-	 * tool information needed for this command.
+
 	 * @param session The Version Tracking session containing the source, destination, correlator
 	 * and match information needed for this command.
+	 * @param options the options used when applying matches
 	 * @param minCombinedReferenceCorrelatorScore The minimum score used to limit matches created by
 	 * the Combined Reference Correlator.
 	 * @param minCombinedReferenceCorrelatorConfidence The minimum confidence used to limit matches
 	 * created by the Combined Reference Correlator.
 	 */
-	public AutoVersionTrackingTask(VTController controller, VTSession session,
+	public AutoVersionTrackingTask(VTSession session, ToolOptions options,
 			double minCombinedReferenceCorrelatorScore,
 			double minCombinedReferenceCorrelatorConfidence) {
 		super(NAME, true, true, true);
 		this.session = session;
+		this.matchInfoFactory = new MatchInfoFactory();
+		this.addressCorrelator = new AddressCorrelatorManager(() -> session);
 		this.sourceProgram = session.getSourceProgram();
 		this.destinationProgram = session.getDestinationProgram();
-		this.serviceProvider = controller.getTool();
-		this.controller = controller;
 		this.minCombinedReferenceCorrelatorScore = minCombinedReferenceCorrelatorScore;
 		this.minCombinedReferenceCorrelatorConfidence = minCombinedReferenceCorrelatorConfidence;
-		this.applyOptions = controller.getOptions();
-
+		this.applyOptions = options;
 	}
 
 	@Override
@@ -267,8 +266,6 @@ public class AutoVersionTrackingTask extends Task {
 				" with some apply markup errors. See the log or the markup table for more details";
 		}
 		statusMsg = NAME + " completed successfully" + applyMarkupStatus;
-
-		controller.getTool().setStatusInfo(statusMsg);
 	}
 
 	private int getNumberOfDataMatches(TaskMonitor monitor) throws CancelledException {
@@ -323,8 +320,8 @@ public class AutoVersionTrackingTask extends Task {
 		monitor.setMessage(
 			"Finding and applying good " + factory.getName() + " matches and markup.");
 
-		VTProgramCorrelator correlator = factory.createCorrelator(serviceProvider, sourceProgram,
-			sourceAddressSet, destinationProgram, destinationAddressSet, options);
+		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram, sourceAddressSet,
+			destinationProgram, destinationAddressSet, options);
 
 		VTMatchSet results = correlator.correlate(session, monitor);
 		monitor.initialize(results.getMatchCount());
@@ -353,8 +350,8 @@ public class AutoVersionTrackingTask extends Task {
 		monitor.setMessage(
 			"Finding and applying good " + factory.getName() + " matches and markup.");
 
-		VTProgramCorrelator correlator = factory.createCorrelator(serviceProvider, sourceProgram,
-			sourceAddressSet, destinationProgram, destinationAddressSet, options);
+		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram, sourceAddressSet,
+			destinationProgram, destinationAddressSet, options);
 
 		VTMatchSet results = correlator.correlate(session, monitor);
 		monitor.initialize(results.getMatchCount());
@@ -395,14 +392,14 @@ public class AutoVersionTrackingTask extends Task {
 				continue;
 			}
 
-			MatchInfo matchInfo = controller.getMatchInfo(match);
+			MatchInfo matchInfo = matchInfoFactory.getMatchInfo(match, addressCorrelator);
 			Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(monitor);
 			if (markupItems == null || markupItems.size() == 0) {
 				continue;
 			}
 
 			ApplyMarkupItemTask markupTask =
-				new ApplyMarkupItemTask(controller.getSession(), markupItems, applyOptions);
+				new ApplyMarkupItemTask(session, markupItems, applyOptions);
 
 			markupTask.run(monitor);
 			boolean currentMatchHasErrors = markupTask.hasErrors();
@@ -473,7 +470,7 @@ public class AutoVersionTrackingTask extends Task {
 			// instructions as each other but not necessarily the same operands.
 			Set<VTMatch> relatedMatches = getRelatedMatches(match, matches, monitor);
 
-			// remove related matches from the copy of set of matches which gets checked 
+			// remove related matches from the copy of set of matches which gets checked
 			// and skipped if not in the set
 			removeMatches(copyOfMatches, relatedMatches);
 
@@ -538,12 +535,12 @@ public class AutoVersionTrackingTask extends Task {
 			if (tryToSetAccepted(association)) {
 
 				// If accept match succeeds apply the markup for the match
-				MatchInfo matchInfo = controller.getMatchInfo(match);
+				MatchInfo matchInfo = matchInfoFactory.getMatchInfo(match, addressCorrelator);
 				Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(monitor);
 				if (markupItems != null && markupItems.size() != 0) {
 
 					ApplyMarkupItemTask markupTask =
-						new ApplyMarkupItemTask(controller.getSession(), markupItems, applyOptions);
+						new ApplyMarkupItemTask(session, markupItems, applyOptions);
 					markupTask.run(monitor);
 					boolean currentMatchHasErrors = markupTask.hasErrors();
 					if (currentMatchHasErrors) {

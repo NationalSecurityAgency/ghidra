@@ -51,7 +51,7 @@ public class FindChangedFunctionsScript extends GhidraVersionTrackingScript {
 		}
 
 		// Prompt the user to load the two programs that will be analyzed.
-		// This will only allow you to select programs from the currently-open 
+		// This will only allow you to select programs from the currently-open
 		// project in Ghidra, so import them if you haven't already.
 		p1 = askProgram("Program1_Version1");
 		if (p1 == null) {
@@ -64,9 +64,9 @@ public class FindChangedFunctionsScript extends GhidraVersionTrackingScript {
 
 		// Make sure the selected programs are not open and locked by Ghidra. If so,
 		// warn the user.
-		if (areProgramsLocked(p1, p2)) {
-			Msg.showError(this, null, "Program is locked!",
-				"One of the programs you selected is locked by Ghidra. Please correct and try again.");
+		if (areProgramsLocked()) {
+			Msg.showError(this, null, "Program is locked!", "One of the programs you selected is " +
+				"locked by Ghidra. Please correct and try again.");
 			return;
 		}
 
@@ -94,12 +94,10 @@ public class FindChangedFunctionsScript extends GhidraVersionTrackingScript {
 	 * <p>
 	 * Note: calling {@link Program#isLocked()} does not work here; we must
 	 * check to see if one of the programs is the currently-open program.
-	 *  
-	 * @param p1 the first program
-	 * @param p2 the second program
+	 *
 	 * @return true if either program is locked
 	 */
-	private boolean areProgramsLocked(Program p1, Program p2) {
+	private boolean areProgramsLocked() {
 		return p1 == currentProgram || p2 == currentProgram;
 	}
 }

@@ -15,8 +15,7 @@
  */
 package ghidra.feature.vt.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -45,8 +44,8 @@ public class VTSessionDBTest extends VTBaseTestCase {
 
 	@Test
 	public void testCreateAndGetMatchSet() throws Exception {
-		VTProgramCorrelator correlator = VTTestUtils.createProgramCorrelator(null,
-			db.getSourceProgram(), db.getDestinationProgram());
+		VTProgramCorrelator correlator =
+			VTTestUtils.createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram());
 		VTMatchSet matchSet = db.createMatchSet(correlator);
 		assertNotNull(matchSet);
 
@@ -60,7 +59,7 @@ public class VTSessionDBTest extends VTBaseTestCase {
 	}
 
 	//
-	// This methods allows us to test that we can create/save/and restore version tracking 
+	// This methods allows us to test that we can create/save/and restore version tracking
 	// managers...it takes a while, so we don't wanna do it all the time...plus this code is
 	// ultimately tested during usage...we did it here for TDD purposes.
 	//
@@ -68,23 +67,23 @@ public class VTSessionDBTest extends VTBaseTestCase {
 //		assertEquals( "Untitled", db.getName() );
 //
 //		db.endTransaction( testTransactionID, false );
-//		
+//
 //		GhidraProject project = GhidraProject.createProject( "C:\\Temp\\", "GhidrProject", true );
 //		DomainFolder rootFolder = project.getRootFolder();
 //		DomainFile file = rootFolder.createFile( "foop", db, TaskMonitor.DUMMY );
-//		
+//
 //		Program sourceProgram = db.getSourceProgram();
 //		Program destinationProgram = db.getDestinationProgram();
-//		
+//
 //		db.close();
-//		
-//		DomainObject domainObject = file.getDomainObject( null, false, false, 
+//
+//		DomainObject domainObject = file.getDomainObject( null, false, false,
 //			TaskMonitor.DUMMY );
 //		assertTrue( domainObject instanceof VTSessionDB );
 //		assertEquals( "foop", domainObject.getName() );
-//		
+//
 //		db = (VTSessionDB) domainObject;
-//		
+//
 //		Program unrelatedProgram = createProgram( "TEST" );
 //		try {
 //			db.setPrograms( unrelatedProgram, unrelatedProgram);
@@ -93,9 +92,9 @@ public class VTSessionDBTest extends VTBaseTestCase {
 //		catch (IllegalArgumentException e) {
 //			// expected case
 //		}
-//		
+//
 //		db.setPrograms(sourceProgram, destinationProgram );
-//		
+//
 //		testTransactionID = db.startTransaction( "Test" ); // for cleanup
 //	}
 }
