@@ -82,14 +82,14 @@ frs2: fr2024 is fr2024 { export fr2024; }
 frs3: fr2731 is fr2731 { export fr2731; }
 
 #TODO  dest may be bad, might need an assign macro
-#frdS:  fr0711 is fr0711 { local tmp = fr0711:$(SFLEN); export tmp; }
+frdS:  fr0711 is fr0711 { local tmp = fr0711:$(SFLEN); export tmp; }
 frs1S: fr1519 is fr1519 { local tmp = fr1519:$(SFLEN); export tmp; }
 frs2S: fr2024 is fr2024 { local tmp = fr2024:$(SFLEN); export tmp; }
 frs3S: fr2731 is fr2731 { local tmp = fr2731:$(SFLEN); export tmp; }
 
 @if ((FPSIZE == "64") || (FPSIZE == "128"))
 #TODO  dest may be bad, might need an assign macro
-#frdD:  fr0711 is fr0711 { local tmp = fr0711:$(DFLEN); export tmp; }
+frdD:  fr0711 is fr0711 { local tmp = fr0711:$(DFLEN); export tmp; }
 frs1D: fr1519 is fr1519 { local tmp = fr1519:$(DFLEN); export tmp; }
 frs2D: fr2024 is fr2024 { local tmp = fr2024:$(DFLEN); export tmp; }
 frs3D: fr2731 is fr2731 { local tmp = fr2731:$(DFLEN); export tmp; }
@@ -366,7 +366,7 @@ vs3: v0711 is v0711 { export v0711; }
 vd:  v0711 is v0711 { export v0711; }
 
 simm5: sop1519 is sop1519 { local tmp:$(XLEN) = sop1519; export tmp; }
-# zimm: op1519 is op1519 { local tmp:$(XLEN) = op1519; export tmp; }
+uimm5: op1519 is op1519 { local tmp:$(XLEN) = op1519; export tmp; }
 
 nf: op2931 is op2931 { local tmp:$(XLEN) = op2931; export tmp; }
 
