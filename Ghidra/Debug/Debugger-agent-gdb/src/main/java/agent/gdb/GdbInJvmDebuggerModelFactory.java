@@ -47,16 +47,33 @@ public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	public final Property<Boolean> useExistingOption =
 		Property.fromAccessors(boolean.class, this::isUseExisting, this::setUseExisting);
 
-	// TODO: newLine option?
+	private boolean useCrlf = System.lineSeparator().equals("\r\n");;
+	@FactoryOption("Use DOS line endings (unchecked for UNIX and Cygwin))")
+	public final Property<Boolean> crlfNewLineOption =
+		Property.fromAccessors(Boolean.class, this::isUseCrlf, this::setUseCrlf);
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
 		List<String> gdbCmdLine = ShellUtils.parseArgs(gdbCmd);
 		GdbModelImpl model = new GdbModelImpl(PtyFactory.local());
+		if (useCrlf) {
+			model.setDosNewLine();
+		}
+		else {
+			model.setUnixNewLine();
+		}
 		return model
 				.startGDB(existing ? null : gdbCmdLine.get(0),
 					gdbCmdLine.subList(1, gdbCmdLine.size()).toArray(String[]::new))
 				.thenApply(__ -> model);
+	}
+
+	public boolean isUseCrlf() {
+		return useCrlf;
+	}
+
+	public void setUseCrlf(boolean useCrlf) {
+		this.useCrlf = useCrlf;
 	}
 
 	@Override
