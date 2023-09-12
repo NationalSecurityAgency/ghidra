@@ -28,11 +28,11 @@ import ghidra.util.Msg;
  */
 public class OrExpressionSolver extends AbstractBinaryExpressionSolver<OrExpression> {
 	protected static class Matchers implements ExpressionMatcher.Context {
-		protected ExpressionMatcher<ConstantValue> val = var(ConstantValue.class);
-		protected ExpressionMatcher<ConstantValue> size = var(ConstantValue.class);
-		protected ExpressionMatcher<PatternValue> fld = fldSz(size);
+		protected final ExpressionMatcher<ConstantValue> val = var(ConstantValue.class);
+		protected final ExpressionMatcher<ConstantValue> size = var(ConstantValue.class);
+		protected final ExpressionMatcher<PatternValue> fld = fldSz(size);
 
-		protected ExpressionMatcher<?> neqConst = or(
+		protected final ExpressionMatcher<?> neqConst = or(
 			and(shr(sub(opnd(fld), val), size), cv(1)),
 			and(shr(sub(val, opnd(fld)), size), cv(1)));
 	}

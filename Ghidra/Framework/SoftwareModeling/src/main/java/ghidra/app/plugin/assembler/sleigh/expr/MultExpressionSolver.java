@@ -20,6 +20,7 @@ import java.util.Set;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+
 import ghidra.app.plugin.processors.sleigh.expression.MultExpression;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 

@@ -44,6 +44,14 @@ public class AssemblyEOI extends AssemblyTerminal {
 		}
 		return Collections.emptySet();
 	}
+	
+	@Override
+	public Collection<AssemblyParseToken> matchAll(AssemblyGrammar grammar,
+			AssemblyNumericSymbols symbols) {
+		
+			return Collections.singleton(new AssemblyParseToken(grammar, this, ""));
+	}
+
 
 	@Override
 	public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {

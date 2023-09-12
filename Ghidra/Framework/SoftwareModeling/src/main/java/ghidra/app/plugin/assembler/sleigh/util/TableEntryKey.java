@@ -18,6 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.util;
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseActionGotoTable;
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseTransitionTable;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
+import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyWildcardTerminal;
 
 /**
  * A key in a (sparse) LR(0) transition table or LALR(1) action/goto table
@@ -37,7 +38,12 @@ public class TableEntryKey implements Comparable<TableEntryKey> {
 	 */
 	public TableEntryKey(int state, AssemblySymbol sym) {
 		this.state = state;
-		this.sym = sym;
+		if (sym instanceof AssemblyWildcardTerminal) {
+			AssemblyWildcardTerminal awt = (AssemblyWildcardTerminal) sym;
+			this.sym = awt.getInternal();
+		} else {
+			this.sym = sym;
+		}
 	}
 
 	@Override

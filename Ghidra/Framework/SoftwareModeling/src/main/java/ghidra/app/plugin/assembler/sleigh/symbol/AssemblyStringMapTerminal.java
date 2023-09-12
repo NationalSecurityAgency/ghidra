@@ -56,6 +56,17 @@ public class AssemblyStringMapTerminal extends AssemblyTerminal {
 		}
 		return result;
 	}
+	
+	@Override
+	public Collection<AssemblyParseNumericToken> matchAll(AssemblyGrammar grammar, AssemblyNumericSymbols symbols) {
+		Collection<AssemblyParseNumericToken> result = new LinkedHashSet<>();
+		for (Entry<String, Integer> ent : map.entries()) {
+			String str = ent.getKey();
+			result.add(new AssemblyParseNumericToken(grammar, this, str, ent.getValue()));
+		}
+		return result;
+	}
+
 
 	@Override
 	public Collection<String> getSuggestions(String string, AssemblyNumericSymbols symbols) {

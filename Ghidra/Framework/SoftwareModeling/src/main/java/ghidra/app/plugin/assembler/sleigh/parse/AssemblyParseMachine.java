@@ -18,6 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.parse;
 import java.util.*;
 
 import generic.util.DequePush;
+
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyProduction;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential.TruncatedWhiteSpaceParseToken;

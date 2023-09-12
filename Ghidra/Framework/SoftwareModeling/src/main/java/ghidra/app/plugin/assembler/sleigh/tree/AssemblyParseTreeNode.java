@@ -18,6 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.tree;
 import java.io.PrintStream;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
+import ghidra.app.plugin.assembler.sleigh.sem.AssemblyOperandData;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
 
 /**
@@ -26,6 +27,7 @@ import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
 public abstract class AssemblyParseTreeNode {
 	protected AssemblyParseBranch parent = null;
 	protected final AssemblyGrammar grammar;
+	protected AssemblyOperandData operandData = null;
 
 	/**
 	 * Construct a node for a tree parsed by the given grammar
@@ -34,6 +36,14 @@ public abstract class AssemblyParseTreeNode {
 	 */
 	public AssemblyParseTreeNode(AssemblyGrammar grammar) {
 		this.grammar = grammar;
+	}
+	
+	public AssemblyOperandData getOperandData() {
+		return operandData;
+	}
+
+	public void setOperandData(AssemblyOperandData operandData) {
+		this.operandData = operandData;
 	}
 
 	/**

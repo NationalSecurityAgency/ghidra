@@ -109,6 +109,20 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 		this.forbids = forbids == null ? Set.of() : forbids;
 	}
 
+	AssemblyResolvedPatterns(String description, Constructor cons,
+			List<? extends AssemblyResolution> children, AssemblyResolution right,
+			AssemblyPatternBlock ins, AssemblyPatternBlock ctx,
+			Set<AssemblyResolvedBackfill> backfills, Set<AssemblyResolvedPatterns> forbids,
+			AssemblyOperandData operandData) {
+		super(description, children, right);
+		this.cons = cons;
+		this.ins = ins;
+		this.ctx = ctx;
+		this.backfills = backfills == null ? Set.of() : backfills;
+		this.forbids = forbids == null ? Set.of() : forbids;
+		this.operandData = operandData;
+	}
+	
 	/**
 	 * Build a new successful SLEIGH constructor resolution from a string representation
 	 * 
@@ -170,7 +184,8 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 			newForbids.add(f.shift(amt));
 		}
 		return new AssemblyResolvedPatterns(description, cons, children, right, newIns, ctx,
-			Collections.unmodifiableSet(newBackfills), Collections.unmodifiableSet(newForbids));
+			Collections.unmodifiableSet(newBackfills), Collections.unmodifiableSet(newForbids),
+			operandData);
 	}
 
 	/**
@@ -189,8 +204,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 		AssemblyPatternBlock newIns = this.ins.truncate(amt);
 
 		return new AssemblyResolvedPatterns("Truncated: " + description, cons, null, right,
-			newIns, ctx,
-			null, null);
+			newIns, ctx, null, null, operandData);
 	}
 
 	/**
@@ -216,7 +230,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 			}
 		}
 		return new AssemblyResolvedPatterns(description, cons, children, right, ins, ctx,
-			backfills, Collections.unmodifiableSet(newForbids));
+			backfills, Collections.unmodifiableSet(newForbids), operandData);
 	}
 
 	/**
@@ -276,8 +290,10 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 		}
 		Set<AssemblyResolvedPatterns> newForbids = new HashSet<>(this.forbids);
 		newForbids.addAll(that.forbids);
+		
+		AssemblyOperandData passOn = this.operandData == null ? that.operandData : this.operandData;
 		return new AssemblyResolvedPatterns(description, cons, children, right, newIns, newCtx,
-			Collections.unmodifiableSet(newBackfills), Collections.unmodifiableSet(newForbids));
+			Collections.unmodifiableSet(newBackfills), Collections.unmodifiableSet(newForbids), passOn);
 	}
 
 	/**
@@ -290,7 +306,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 		Set<AssemblyResolvedBackfill> newBackfills = new HashSet<>(this.backfills);
 		newBackfills.add(bf);
 		return new AssemblyResolvedPatterns(description, cons, children, right, ins, ctx,
-			Collections.unmodifiableSet(newBackfills), forbids);
+			Collections.unmodifiableSet(newBackfills), forbids, operandData == null ? bf.operandData : operandData);
 	}
 
 	/**
@@ -303,7 +319,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 		Set<AssemblyResolvedPatterns> combForbids = new HashSet<>(this.forbids);
 		combForbids.addAll(more);
 		return new AssemblyResolvedPatterns(description, cons, children, right, ins, ctx,
-			backfills, Collections.unmodifiableSet(more));
+			backfills, Collections.unmodifiableSet(more), operandData);
 	}
 
 	/**
@@ -314,7 +330,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	 */
 	public AssemblyResolvedPatterns withDescription(String desc) {
 		return new AssemblyResolvedPatterns(desc, cons, children, right, ins, ctx, backfills,
-			forbids);
+			forbids, operandData);
 	}
 
 	/**
@@ -325,8 +341,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	 */
 	public AssemblyResolvedPatterns withConstructor(Constructor cons) {
 		return new AssemblyResolvedPatterns(description, cons, children, right, ins, ctx,
-			backfills,
-			forbids);
+			backfills, forbids, operandData);
 	}
 
 	/**
@@ -335,14 +350,14 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	 * @param cop the context operation specifying the location of the value to encode
 	 * @param val the masked value to encode
 	 * @return the result
-	 * 
+	 * <p>
 	 *         This is the forward (as in disassembly) direction of applying context operations. The
 	 *         pattern expression is evaluated, and the result is written as specified.
 	 */
 	public AssemblyResolvedPatterns writeContextOp(ContextOp cop, MaskedLong val) {
 		AssemblyPatternBlock newCtx = this.ctx.writeContextOp(cop, val);
 		return new AssemblyResolvedPatterns(description, cons, children, right, ins, newCtx,
-			backfills, forbids);
+			backfills, forbids, operandData);
 	}
 
 	/**
@@ -371,27 +386,28 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	public AssemblyResolvedPatterns copyAppendDescription(String append) {
 		AssemblyResolvedPatterns cp = new AssemblyResolvedPatterns(
 			description + ": " + append, cons, children, right, ins.copy(), ctx.copy(), backfills,
-			forbids);
+			forbids, operandData);
 		return cp;
 	}
 
 	@Override
 	public AssemblyResolvedPatterns withRight(AssemblyResolution right) {
 		AssemblyResolvedPatterns cp = new AssemblyResolvedPatterns(description, cons,
-			children, right, ins.copy(), ctx.copy(), backfills, forbids);
+			children, right, ins.copy(), ctx.copy(), backfills, forbids, operandData);
 		return cp;
 	}
 
 	public AssemblyResolvedPatterns nopLeftSibling() {
 		return new AssemblyResolvedPatterns("nop-left", null, null, this, ins.copy(),
-			ctx.copy(), backfills, forbids);
+			ctx.copy(), backfills, forbids, operandData);
 	}
 
 	@Override
 	public AssemblyResolvedPatterns parent(String description, int opCount) {
 		List<AssemblyResolution> allRight = getAllRight();
 		AssemblyResolvedPatterns cp = new AssemblyResolvedPatterns(description, cons,
-			allRight.subList(0, opCount), allRight.get(opCount), ins, ctx, backfills, forbids);
+			allRight.subList(0, opCount), allRight.get(opCount), ins, ctx, backfills, forbids,
+			operandData);
 		return cp;
 	}
 
@@ -405,7 +421,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	public AssemblyResolvedPatterns maskOut(ContextOp cop) {
 		AssemblyPatternBlock newCtx = this.ctx.maskOut(cop);
 		return new AssemblyResolvedPatterns(description, cons, children, right, ins, newCtx,
-			backfills, forbids);
+			backfills, forbids, operandData);
 	}
 
 	/**
@@ -482,7 +498,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	 * @param sem the constructor whose context changes to solve
 	 * @param vals any defined symbols
 	 * @return the result
-	 * @see AssemblyConstructorSemantic#solveContextChanges(AssemblyResolvedPatterns, Map)
+	 * @see AssemblyConstructorSemantic#solveContextChanges(AssemblyResolvedPatterns, Map, Map)
 	 */
 	public AssemblyResolvedPatterns solveContextChangesForForbids(
 			AssemblyConstructorSemantic sem, Map<String, Long> vals) {
@@ -499,7 +515,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 			newForbids.add((AssemblyResolvedPatterns) t);
 		}
 		return new AssemblyResolvedPatterns(description, cons, children, right, ins, ctx,
-			backfills, Collections.unmodifiableSet(newForbids));
+			backfills, Collections.unmodifiableSet(newForbids), operandData);
 	}
 
 	/**

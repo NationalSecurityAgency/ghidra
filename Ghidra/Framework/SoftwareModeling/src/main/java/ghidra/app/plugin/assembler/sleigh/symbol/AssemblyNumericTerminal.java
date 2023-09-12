@@ -17,9 +17,14 @@ package ghidra.app.plugin.assembler.sleigh.symbol;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseNumericToken;
+
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.address.AddressSpace;
 
 /**
@@ -143,6 +148,141 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 				.map(val -> new AssemblyParseNumericToken(grammar, this, lab, val))
 				.collect(Collectors.toList());
 	}
+
+    @Override
+    public Collection<AssemblyParseNumericToken> matchAll(AssemblyGrammar grammar, AssemblyNumericSymbols labels) {
+        System.out.println("WARNING: Numeric Tokens may not be fully implemented!!!!!!");
+
+        Collection<AssemblyParseNumericToken> out = new ArrayList<>();
+        getInterestingLongs(null)
+                // Now convert each masked value to a token
+                .mapToObj(x -> {
+                    return longToToken(x, grammar);
+                })
+                // Finally add all the tokens to our output
+                .forEach(out::addAll);
+
+        if (labels.languageLabels.size() > 100) {
+            System.out.println(
+                    "WARNING: A large number of labels found! Things will be slow if you don't filter your numeric/address wildcards!!!!!!");
+        }
+
+        labels.languageLabels.forEach((label, addresses) -> {
+            addresses.forEach(
+                    address -> out.add(new AssemblyParseNumericToken(grammar, this, label, address.getOffset())));
+        });
+
+        return out;
+    }
+
+    public Collection<AssemblyParseNumericToken> matchAllWithAddress(AssemblyGrammar grammar,
+            AssemblyNumericSymbols labels, Address anticipatedAddress) {
+        Collection<AssemblyParseNumericToken> out = this.matchAll(grammar, labels);
+
+        getInterestingLongs(anticipatedAddress)
+                // Now convert each masked value to a token
+                .mapToObj(x -> {
+                    return longToToken(x, grammar);
+                })
+                // Finally add all the tokens to our output
+                .forEach(out::addAll);
+
+        return out;
+    }
+
+    /** Return a long with n least significant bits filled in. */
+    public static long fillBits(long n) {
+        long out = 0;
+        while (n > 0) {
+            out = out << 1;
+            out += 1;
+            n -= 1;
+        }
+        return out;
+    }
+
+    /**
+     * Stream of all longs having only one bit set or one bit not set
+     * 
+     * @return
+     */
+    public static LongStream getOneBitLongs() {
+        return LongStream.concat(LongStream.of(0), LongStream.range(0, 32)
+                // get a long for each single bit enabled
+                .flatMap(x -> {
+                    long bitPos = 1 << x;
+                    return LongStream.of(bitPos, -1 * bitPos);
+                }));
+    }
+
+    /**
+     * Returns a stream of longs consisting of all 1-bit-set longs, all
+     * 1-bit-not-set longs, and (optionally) all of these previously described
+     * numbers relative to the given address.
+     * 
+     * @param relativeToAddress
+     * @return
+     */
+    public static LongStream getInterestingLongs(Address relativeToAddress) {
+
+        LongStream out = getOneBitLongs();
+        LongStream addressBased = LongStream.of();
+        if (relativeToAddress != null) {
+            addressBased = getOneBitLongs()
+                    // Convert each of these to addresses, adding to the base of the address space
+                    // and by adding to the anticipated address
+                    .mapToObj(x -> {
+                        Address y;
+                        try {
+                            y = relativeToAddress.add(x);
+                        } catch (AddressOutOfBoundsException e) {
+                            y = null;
+                        }
+
+                        Address z;
+                        try {
+                            z = relativeToAddress.getNewAddress(x);
+                        } catch (AddressOutOfBoundsException e) {
+                            z = null;
+                        }
+                        return Stream.of(y, z);
+                    }).flatMap(x -> x)
+
+                    // Get rid of nulls
+                    .filter(xx -> xx != null)
+                    // Convert to longs
+                    .mapToLong(x -> Long.parseUnsignedLong(x.toString(), 16));
+        }
+
+        return LongStream.concat(out, addressBased).distinct()
+                // Mask out the low n bits (for 0 <= n < 32)
+                .flatMap(x -> {
+                    if (x > 0) {
+                        return LongStream.range(0, 32).map(n -> {
+
+                            long mask = Long.MAX_VALUE ^ (fillBits(n));
+                            return x & mask;
+                        });
+
+                    }
+                    return LongStream.of(x);
+                })
+                .distinct();
+    }
+
+    Collection<AssemblyParseNumericToken> longToToken(long x, AssemblyGrammar grammar) {
+        String str;
+        String baseValue;
+        if (x < 0) {
+            baseValue = Long.toHexString(-1 * x);
+            str = String.format("-0x%s", baseValue);
+        } else {
+            baseValue = Long.toHexString(x);
+            str = String.format("0x%s", x);
+        }
+        return makeToken(str, baseValue, 16, x < 0, grammar);
+    }
+
 
 	/**
 	 * Try to match a numeric literal, after the optional sign, encoded in hex, decimal, or octal

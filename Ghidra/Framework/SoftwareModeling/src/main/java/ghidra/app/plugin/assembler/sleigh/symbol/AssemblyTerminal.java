@@ -50,6 +50,16 @@ public abstract class AssemblyTerminal extends AssemblySymbol {
 	 */
 	public abstract Collection<? extends AssemblyParseToken> match(String buffer, int pos,
 			AssemblyGrammar grammar, AssemblyNumericSymbols symbols);
+	
+	/**
+	 * Just like "match" but always claims that "buffer" (which isn't even
+	 * passed to this function) is a match with this AssemblyTerminal at pos
+	 * (which, again, isn't even passed)
+	 * @param grammar the grammar containing this terminal
+	 * @param labels the program labels, if applicable
+	 * @return the matched token, or null
+	 */
+	public abstract Collection<? extends AssemblyParseToken> matchAll(AssemblyGrammar grammar, AssemblyNumericSymbols labels);
 
 	/**
 	 * Provide a collection of strings that this terminal would have accepted

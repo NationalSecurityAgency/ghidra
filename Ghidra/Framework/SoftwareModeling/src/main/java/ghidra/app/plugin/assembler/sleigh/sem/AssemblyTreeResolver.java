@@ -63,6 +63,7 @@ public class AssemblyTreeResolver {
 	protected final AssemblyGrammar grammar;
 	protected final AssemblyPatternBlock context;
 	protected final AssemblyContextGraph ctxGraph;
+	protected final AssemblyOperandData operandData;
 
 	/**
 	 * Construct a resolver for the given parse tree
@@ -82,6 +83,7 @@ public class AssemblyTreeResolver {
 		this.grammar = tree.getGrammar();
 		this.context = context.fillMask();
 		this.ctxGraph = ctxGraph;
+		this.operandData = AssemblyOperandData.buildAssemblyOperandDataTree(tree);
 	}
 
 	/**
@@ -108,7 +110,11 @@ public class AssemblyTreeResolver {
 		}
 
 		Stream<AssemblyResolvedPatterns> patStream =
-			protStream.map(p -> p.state).distinct().flatMap(s -> s.resolve(empty, errors));
+			protStream.map(p -> p.state).distinct().flatMap(s -> {
+				// add operand data to results structure
+				empty.setOperandData(operandData);
+				return s.resolve(empty, errors);
+			});
 
 		AssemblyResolutionResults results = new AssemblyResolutionResults();
 		patStream.forEach(results::add);
@@ -119,6 +125,7 @@ public class AssemblyTreeResolver {
 		// TODO: Remove this? It's subsumed by filterByDisassembly, and more accurately....
 		results = filterForbidden(results);
 		results = filterByDisassembly(results);
+		results = fillMasksVals(results);
 		results.addAll(errors);
 		return results;
 	}
@@ -273,6 +280,24 @@ public class AssemblyTreeResolver {
 			catch (InsufficientBytesException | UnknownInstructionException e) {
 				return AssemblyResolution.error("Disassembly failed: " + e.getMessage(), rc);
 			}
+		});
+	}
+
+	/**
+	 * Apply the shifts to the operand data (i.e. add trailing and leading bytes),
+	 * and add masks and vals that are missing.
+	 * 
+	 * @param temp the results
+	 * @return results with operand data shifted
+	 */
+	protected AssemblyResolutionResults fillMasksVals(AssemblyResolutionResults temp) {
+		return temp.apply(rc -> {
+			if (!rc.isError()) {
+				int instructionLength = rc.getInstructionLength();
+				rc.operandData.applyShifts(instructionLength);
+				rc.operandData.fillMissingMasksVals(instructionLength);
+			}
+			return rc;
 		});
 	}
 
@@ -440,7 +465,13 @@ public class AssemblyTreeResolver {
 			int offset = opSym.getRelativeOffset();
 			results = parent("Resolving recursive constructor: " + cons.getSourceFile() + ":" +
 				cons.getLineno(), results, 1);
-			results = results.apply(rc -> rc.shift(offset));
+			results = results.apply(rc -> {
+				rc.operandData = rc.operandData.copy();
+				AssemblyResolvedPatterns shifted = rc.shift(offset);
+				// add shift for root node
+				rc.operandData.addByteShift(shifted.ins.getOffset());
+				return shifted;
+			});
 			results = resolvePatterns(sem, 0, results).apply(rc -> rc.withConstructor(cons));
 		}
 		return results;

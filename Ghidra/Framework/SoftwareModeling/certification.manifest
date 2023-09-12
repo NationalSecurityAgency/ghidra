@@ -24,6 +24,7 @@ src/main/antlr/ghidra/sleigh/grammar/SleighCompiler.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/SleighEcho.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/SleighLexer.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/SleighParser.g||GHIDRA||||END|
+src/main/java/ghidra/app/plugin/assembler/README.md||GHIDRA||||END|
 src/main/java/ghidra/program/database/databaseTables.txt||GHIDRA||||END|
 src/main/java/ghidra/program/database/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/address/package.html||GHIDRA||||END|

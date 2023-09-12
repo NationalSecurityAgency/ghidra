@@ -27,6 +27,9 @@ import ghidra.app.plugin.assembler.sleigh.symbol.*;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.assembler.sleigh.util.TableEntry;
+import ghidra.app.plugin.querylanguage.lexer.ast.InstructionNode;
+
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A class to encapsulate LALR(1) parsing for a given grammar
@@ -373,6 +376,32 @@ public class AssemblyParser {
 
 		Set<AssemblyParseResult> ret = new LinkedHashSet<>();
 		for (AssemblyParseMachine m : results) {
+			if (m.accepted) {
+				ret.add(AssemblyParseResult.accept(m.getTree()));
+			}
+			else if (m.error != 0) {
+				Set<String> suggestions = new TreeSet<>();
+				for (AssemblyTerminal t : m.expected) {
+					suggestions.addAll(t.getSuggestions(m.got, symbols));
+				}
+				ret.add(AssemblyParseResult.error(m.got, suggestions));
+			}
+			else {
+				throw new AssertionError("INTERNAL: Unfinished machine was returned");
+			}
+		}
+		return ret;
+	}
+	
+	public Collection<AssemblyParseResult> parse(final InstructionNode input, AssemblyNumericSymbols symbols, TaskMonitor monitor) {
+		AssemblyParseMachineWild init = new AssemblyParseMachineWild(this, input, 0, null, symbols, monitor);
+		Set<AssemblyParseMachineWild> results = init.exhaust();
+
+		Set<AssemblyParseResult> ret = new LinkedHashSet<>();
+		for (AssemblyParseMachineWild m : results) {
+			if (monitor.isCancelled()) {
+				return new LinkedHashSet<>();
+			}
 			if (m.accepted) {
 				ret.add(AssemblyParseResult.accept(m.getTree()));
 			}

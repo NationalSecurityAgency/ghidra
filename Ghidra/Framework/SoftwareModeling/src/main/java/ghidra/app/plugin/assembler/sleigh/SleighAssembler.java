@@ -24,6 +24,7 @@ import ghidra.app.plugin.assembler.sleigh.parse.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNumericSymbols;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
+import ghidra.app.plugin.querylanguage.lexer.ast.InstructionNode;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -181,6 +182,12 @@ public class SleighAssembler implements Assembler {
 	public Collection<AssemblyParseResult> parseLine(String line) {
 		return parser.parse(line, getNumericSymbols());
 	}
+	
+	@Override
+	public Collection<AssemblyParseResult> parseLine(InstructionNode line, TaskMonitor monitor) {
+		return parser.parse(line, getNumericSymbols(), monitor);
+	}
+
 
 	@Override
 	public AssemblyResolutionResults resolveTree(AssemblyParseResult parse, Address at) {
@@ -232,6 +239,38 @@ public class SleighAssembler implements Assembler {
 		}
 		AssemblyResolutionResults results = new AssemblyResolutionResults();
 		for (AssemblyParseResult p : parse) {
+			results.absorb(resolveTree(p, at, ctx));
+		}
+		return results;
+	}
+	
+	@Override
+	public AssemblyResolutionResults resolveLine(Address at, InstructionNode line,
+			AssemblyPatternBlock ctx, TaskMonitor monitor) throws AssemblySyntaxException {
+
+		if (!ctx.isFullMask()) {
+			throw new AssemblyError(
+				"Context must be fully-specified (full length, no shift, no unknowns)");
+		}
+		if (lang.getContextBaseRegister() != null &&
+			ctx.length() < lang.getContextBaseRegister().getMinimumByteSize()) {
+			throw new AssemblyError(
+				"Context must be fully-specified (full length, no shift, no unknowns)");
+		}
+		Collection<AssemblyParseResult> parse = parseLine(line, monitor);
+		if (monitor.isCancelled()) {
+			return new AssemblyResolutionResults();
+		}
+		parse = selector.filterParse(parse);
+		if (!parse.iterator().hasNext()) { // Iterator.isEmpty()???
+			throw new AssemblySelectionError(
+				"Must select at least one parse result. Report errors via AssemblySyntaxError");
+		}
+		AssemblyResolutionResults results = new AssemblyResolutionResults();
+		for (AssemblyParseResult p : parse) {
+			if (monitor.isCancelled()) {
+				return new AssemblyResolutionResults();
+			}
 			results.absorb(resolveTree(p, at, ctx));
 		}
 		return results;

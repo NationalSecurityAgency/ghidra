@@ -49,6 +49,12 @@ public class AssemblyStringTerminal extends AssemblyTerminal {
 		}
 		return Collections.emptySet();
 	}
+	
+	@Override
+	public Collection<AssemblyParseToken> matchAll(AssemblyGrammar grammar,
+			AssemblyNumericSymbols symbols) {
+		return Collections.singleton(new AssemblyParseToken(grammar, this, str));
+	}
 
 	@Override
 	public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {

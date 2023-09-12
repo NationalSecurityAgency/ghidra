@@ -139,7 +139,19 @@ public class AssemblyResolvedBackfill extends AssemblyResolution {
 				return ar;
 			}
 			AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
-			return rc.shift(offset);
+			AssemblyResolvedPatterns shifted = rc.shift(offset);
+			
+			// get the operand data structure of the operand we want to populate info with
+			AssemblyOperandData od = cur.operandData.findDescription(description);
+			// populate operand data node with mask, value, shift, and expression for
+			// backfill operands this is similar code for operand data population for normal
+			// operands in AssemblyOperandState
+			od.setMask(rc.ins.getMask());
+			od.setVal(rc.ins.getVals());
+			od.addByteShift(shifted.ins.getOffset());
+			od.setExpression(exp);
+			od.makeBackfill();
+			return shifted;
 		}
 		catch (NeedsBackfillException e) {
 			return AssemblyResolution.error("Solution still requires backfill", description);

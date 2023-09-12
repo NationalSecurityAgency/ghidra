@@ -136,6 +136,18 @@ public class AssemblyOperandState extends AbstractAssemblyState {
 				errors.add((AssemblyResolvedError) sol);
 				return Stream.of();
 			}
+
+			fromRight.operandData = fromRight.operandData.copy();
+
+			// get the operand data structure of the operand we want to populate info with
+			// find this structure using the code name (e.g. reg64 or simm32)
+			AssemblyOperandData operandData = fromRight.operandData.findOperandData(terminal.getName());
+
+			// when we populate backfills, we won't have the code name to find the correct
+			// operand data to populate, so we use description of the AssemblyResolution
+			// instead
+			operandData.setDescription(sol.description);
+
 			if (sol.isBackfill()) {
 				AssemblyResolvedPatterns combined =
 					fromRight.combine((AssemblyResolvedBackfill) sol);
@@ -147,6 +159,21 @@ public class AssemblyOperandState extends AbstractAssemblyState {
 					AssemblyResolution.error("Pattern/operand conflict", "Resolving " + terminal));
 				return Stream.of();
 			}
+
+			AssemblyResolvedPatterns solResolved = (AssemblyResolvedPatterns) sol;
+
+			// populate operand data node with mask, value, shift, and expression for normal
+			// operands this is similar to the code for backfill shifts for normal operands
+			// in OperandValueSolver
+			operandData.setMask(solResolved.ins.getMask());
+			operandData.setVal(solResolved.ins.getVals());
+			operandData.addByteShift(solResolved.ins.getOffset());
+			PatternExpression symExp = opSym.getDefiningExpression();
+			if (symExp == null) {
+				symExp = opSym.getDefiningSymbol().getPatternExpression();
+			}
+			operandData.setExpression(symExp);
+
 			AssemblyResolvedPatterns pats = (AssemblyResolvedPatterns) combined;
 			// Do not take constructor from right
 			return Stream.of(pats.withRight(fromRight).withConstructor(null));

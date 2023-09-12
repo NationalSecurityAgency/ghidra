@@ -39,6 +39,9 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	private boolean hashed = false;
 	private int hash;
+	
+	// operand data tree
+	protected AssemblyOperandData operandData = null;
 
 	@Override
 	public int hashCode() {
@@ -347,4 +350,22 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * Get this same resolution, pushing its right siblings down to its children
 	 */
 	public abstract AssemblyResolution parent(String description, int opCount);
+
+	public void setOperandData(AssemblyOperandData operandData) {
+		this.operandData = operandData;
+	}
+
+	public AssemblyOperandData getOperandData() {
+		return operandData;
+	}
+
+	// for debug
+	public void printOperandData() {
+		if (operandData != null) {
+			System.out.println(operandData);
+		}
+		for (AssemblyResolution ar : children) {
+			ar.printOperandData();
+		}
+	}
 }

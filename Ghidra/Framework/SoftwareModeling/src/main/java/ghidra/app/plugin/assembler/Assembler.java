@@ -19,11 +19,14 @@ import java.util.Collection;
 
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
+import ghidra.app.plugin.querylanguage.lexer.ast.InstructionNode;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * The primary interface for performing assembly in Ghidra.
@@ -110,6 +113,8 @@ public interface Assembler {
 	 * @return the results of parsing
 	 */
 	public Collection<AssemblyParseResult> parseLine(String line);
+	
+	public Collection<AssemblyParseResult> parseLine(InstructionNode node, TaskMonitor monitor);
 
 	/**
 	 * Resolve a given parse tree at the given address, assuming the given context
@@ -163,6 +168,9 @@ public interface Assembler {
 	 */
 	public AssemblyResolutionResults resolveLine(Address at, String line)
 			throws AssemblySyntaxException;
+	
+	public AssemblyResolutionResults resolveLine(Address at, InstructionNode line,
+			AssemblyPatternBlock ctx, TaskMonitor monitor) throws AssemblySyntaxException;
 
 	/**
 	 * Assemble a line instruction at the given address, assuming the given context.
