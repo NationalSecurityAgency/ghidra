@@ -82,4 +82,5 @@ integrationTest {
 	dependsOn { project(':Debugger-rmi-trace').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-gdb').assemblePyPackage }
 	dependsOn { project(':Debugger-agent-lldb').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-dbgeng').assemblePyPackage }
 }
