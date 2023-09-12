@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ghidradbg"
+version = "10.4"
+authors = [
+  { name="Ghidra Development Team" },
+]
+description = "Ghidra's Plugin for dbgeng"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "ghidratrace==10.4",
+    "pybag>=2.2.8"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/NationalSecurityAgency/ghidra"
+"Bug Tracker" = "https://github.com/NationalSecurityAgency/ghidra/issues"

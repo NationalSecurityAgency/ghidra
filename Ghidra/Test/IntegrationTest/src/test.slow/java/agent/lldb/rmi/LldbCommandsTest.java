@@ -137,7 +137,7 @@ public class LldbCommandsTest extends AbstractLldbTraceRmiTest {
 					ghidra_trace_connect %s
 					file bash
 					script ghidralldb.util.set_convenience_variable('ghidra-language','Toy:BE:64:default')
-					script ghidralldb.util.set_convenience_varaible('ghidra-compiler','default')
+					script ghidralldb.util.set_convenience_variable('ghidra-compiler','default')
 					ghidra_trace_start myToy
 					quit
 					"""

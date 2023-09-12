@@ -52,6 +52,12 @@ public class DummyProc implements AutoCloseable {
 				if (platformExe.exists() && platformExe.getFile(false).canExecute()) {
 					return platformExe.getAbsolutePath();
 				}
+				platformExe = new ResourceFile(modRoot,
+						"build/exe/" + cmd + "/" + Platform.CURRENT_PLATFORM.getDirectoryName() + "/" +
+							cmd + ".exe");
+				if (platformExe.exists() && platformExe.getFile(false).canExecute()) {
+					return platformExe.getAbsolutePath();
+				}
 			}
 		}
 		catch (Exception e) {

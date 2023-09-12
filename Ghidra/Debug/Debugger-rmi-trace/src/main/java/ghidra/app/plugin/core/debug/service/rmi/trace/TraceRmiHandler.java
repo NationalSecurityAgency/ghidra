@@ -249,7 +249,7 @@ public class TraceRmiHandler {
 	}
 
 	public boolean isClosed() {
-		return socket.isClosed();
+		return socket.isClosed() && closed.isDone();
 	}
 
 	public void waitClosed() throws InterruptedException, ExecutionException {
