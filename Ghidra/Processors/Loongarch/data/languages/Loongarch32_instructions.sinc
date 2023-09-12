@@ -58,7 +58,8 @@
 #0x002a0000	0xffff8000	u0:15	['imm0_15_s0']
 :break  imm0_15                is op15_31=0x54 & imm0_15 {
 	local code:2 = imm0_15;
-	break(code);
+	local addr:$(REGSIZE) = break(code);
+	goto [addr];
 }
 
 
