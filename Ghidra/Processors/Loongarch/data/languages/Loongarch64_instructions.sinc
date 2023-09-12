@@ -338,7 +338,7 @@
 	local val1:8 = *[ram]:8 RJsrc;
 	local val2:8 = RKsrc;
 	local test = (val1 s>= val2);
-	RD = sext(val1);
+	RD = val1;
 	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
@@ -349,7 +349,7 @@
 	local val1:8 = *[ram]:8 RJsrc;
 	local val2:8 = RKsrc;
 	local test = (val1 s<= val2);
-	RD = sext(val1);
+	RD = val1;
 	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
@@ -371,7 +371,7 @@
 	local val1:8 = *[ram]:8 RJsrc;
 	local val2:8 = RKsrc;
 	local test = (val1 >= val2);
-	RD = sext(val1);
+	RD = val1;
 	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
@@ -393,7 +393,7 @@
 	local val1:8 = *[ram]:8 RJsrc;
 	local val2:8 = RKsrc;
 	local test = (val1 <= val2);
-	RD = sext(val1);
+	RD = val1;
 	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
@@ -455,7 +455,7 @@
 	local val1:8 = *[ram]:8 RJsrc;
 	local val2:8 = RKsrc;
 	local test = (val1 s>= val2);
-	RD = sext(val1);
+	RD = val1;
 	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
@@ -467,7 +467,7 @@
 	local val1:8 = *[ram]:8 RJsrc;
 	local val2:8 = RKsrc;
 	local test = (val1 s<= val2);
-	RD = sext(val1);
+	RD = val1;
 	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
@@ -491,7 +491,7 @@
 	local val1:8 = *[ram]:8 RJsrc;
 	local val2:8 = RKsrc;
 	local test = (val1 >= val2);
-	RD = sext(val1);
+	RD = val1;
 	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 
@@ -515,7 +515,7 @@
 	local val1:8 = *[ram]:8 RJsrc;
 	local val2:8 = RKsrc;
 	local test = (val1 <= val2);
-	RD = sext(val1);
+	RD = val1;
 	*[ram]:8 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
 }
 

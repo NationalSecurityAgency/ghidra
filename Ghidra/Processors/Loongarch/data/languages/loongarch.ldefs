@@ -12,7 +12,7 @@
             id="Loongarch:LE:32:ilp32f">
     <description>Loongson 3 32-bit with 32-bit FP</description>
     <compiler name="gnu" spec="ilp32f.cspec" id="default"/>
-    <external_name tool="gdb" name="loongarch"/>
+    <external_name tool="gnu" name="Loongarch32"/>
   </language>
   
   <language processor="Loongarch"
@@ -26,7 +26,7 @@
             id="Loongarch:LE:32:ilp32d">
     <description>Loongson 3 32-bit with 64-bit FP</description>
     <compiler name="default" spec="ilp32d.cspec" id="default"/>
-    <external_name tool="gdb" name="loongarch"/>
+    <external_name tool="gnu" name="Loongarch32"/>
   </language>
   
   
@@ -41,7 +41,7 @@
             id="Loongarch:LE:64:lp64d">
     <description>Loongson 3 64-bit with 64-bit FP</description>
     <compiler name="default" spec="lp64d.cspec" id="default"/>
-    <external_name tool="gdb" name="loongarch"/>
+    <external_name tool="gnu" name="Loongarch64"/>
   </language>
   
     <language processor="Loongarch"
@@ -55,7 +55,7 @@
             id="Loongarch:LE:64:lp64f">
     <description>Loongson 3 64-bit with 64-bit FP</description>
     <compiler name="default" spec="lp64f.cspec" id="default"/>
-    <external_name tool="gdb" name="loongarch"/>
+    <external_name tool="gnu" name="Loongarch64"/>
   </language>
 
 </language_definitions>
