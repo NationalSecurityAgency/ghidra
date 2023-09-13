@@ -1,4 +1,5 @@
-# Vector
+# Vector Extension
+#  See https://github.com/riscv/riscv-v-spec/blob/master/v-spec.adoc
 
 # sew: "e8"    is vsew=0 {}
 # sew: "e16"   is vsew=1 {}
@@ -38,6 +39,8 @@
 # sumop=16 unit-stride fault-only-first
 # nfields imm is nf [ imm = nf + 1; ] { export *[const]:1 imm; }
 
+# Many instructions support two modes - masked via v0 or unmasked.  The reference
+# disassembler objdump renders these explicitly, so we do too.
 
 # vaadd.vv       31..26=0x09 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vaadd.vv vd, vs2, vs1, vm   # roundoff_signed(vs2[i] + vs1[i], 1)
@@ -61,7 +64,7 @@
 
 # vadc.vim       31..26=0x10 25=0 vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vadc.vim   vd, vs2, simm5, v0  # Vector-immediate
-:vadc.vim    vd, vs2, simm5, v0   is op2631=0x10 & op2525=0x0 & vs2 & simm5 & op1214=0x3 & v0 & vd & op0006=0x57  unimpl
+:vadc.vim    vd, vs2, simm5, v0   is op2631=0x10 & op2525=0x0 & vs2 & simm5 & op1214=0x3 & v0 & vd & op0006=0x57 unimpl
 
 # vadc.vvm       31..26=0x10 25=0 vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vadc.vvm   vd, vs2, vs1, v0  # Vector-vector
@@ -1628,16 +1631,18 @@
 
 # vmadc.vim      31..26=0x11 vm   vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vmadc.vim   vd, vs2, simm5, v0  # Vector-immediate
-:vmadc.vim    vd, vs2, simm5, v0   is op2631=0x11 & vm & vs2 & simm5 & op1214=0x3 & v0 & vd & op0006=0x57  unimpl
+:vmadc.vi     vd, vs2, simm5     is op2631=0x11 & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vmadc.vim    vd, vs2, simm5, v0 is op2631=0x11 & op2525=0 & vs2 & simm5 & op1214=0x3 & v0 & vd & op0006=0x57 unimpl
 
 # vmadc.vvm      31..26=0x11 vm   vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vmadc.vvm   vd, vs2, vs1, v0  # Vector-vector
-#:vmadc.vv    vd, vs2, vs1, v0   is op2631=0x11 & vm & vs2 & vs1 & op1214=0x0 & v0 & vd & op0006=0x57  unimpl
-:vmadc.vvm   vd, vs2, vs1, v0   is op2631=0x11 & vm & vs2 & vs1 & op1214=0x0 & v0 & vd & op0006=0x57  unimpl
+:vmadc.vv    vd, vs2, vs1      is op2631=0x11 & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vmadc.vvm   vd, vs2, vs1, v0  is op2631=0x11 & op2525=0 & vs2 & vs1 & op1214=0x0 & v0 & vd & op0006=0x57 unimpl
 
 # vmadc.vxm      31..26=0x11 vm   vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vmadc.vxm   vd, vs2, rs1, v0  # Vector-scalar
-:vmadc.vxm    vd, vs2, rs1, v0   is op2631=0x11 & vm & vs2 & rs1 & op1214=0x4 & v0 & vd & op0006=0x57  unimpl
+:vmadc.vx     vd, vs2, rs1     is op2631=0x11 & op2525=1 & vm & vs2 & rs1 & op1214=0x4      & vd & op0006=0x57  unimpl
+:vmadc.vxm    vd, vs2, rs1, v0 is op2631=0x11 & op2525=0 & vm & vs2 & rs1 & op1214=0x4 & v0 & vd & op0006=0x57  unimpl
 
 # vmadd.vv       31..26=0x29 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vmadd.vv vd, vs1, vs2, vm    # vd[i] = (vs1[i] * vd[i]) + vs2[i]
@@ -1784,13 +1789,13 @@
 
 # vmsbc.vvm      31..26=0x13 vm   vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vmsbc.vvm   vd, vs2, vs1, v0  # Vector-vector
-:vmsbc.vvm    vd, vs2, vs1, v0         is op2631=0x13 & op2525=1 & vs2 & vs1 & op1214=0x0 & v0 & vd & op0006=0x57 unimpl
-:vmsbc.vvm    vd, vs2, vs1, v0, "v0.t" is op2631=0x13 & op2525=0 & vs2 & vs1 & op1214=0x0 & v0 & vd & op0006=0x57 unimpl
+:vmsbc.vv     vd, vs2, vs1      is op2631=0x13 & op2525=1 & vs2 & vs1 & op1214=0x0      & vd & op0006=0x57 unimpl
+:vmsbc.vvm    vd, vs2, vs1, v0  is op2631=0x13 & op2525=0 & vs2 & vs1 & op1214=0x0 & v0 & vd & op0006=0x57 unimpl
 
 # vmsbc.vxm      31..26=0x13 vm   vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vmsbc.vxm   vd, vs2, rs1, v0  # Vector-scalar
-:vmsbc.vxm    vd, vs2, rs1, v0         is op2631=0x13 & op2525=1 & vs2 & rs1 & op1214=0x4 & v0 & vd & op0006=0x57 unimpl
-:vmsbc.vxm    vd, vs2, rs1, v0, "v0.t" is op2631=0x13 & op2525=0 & vs2 & rs1 & op1214=0x4 & v0 & vd & op0006=0x57 unimpl
+:vmsbc.vx     vd, vs2, rs1     is op2631=0x13 & op2525=1 & vs2 & rs1 & op1214=0x4      & vd & op0006=0x57 unimpl
+:vmsbc.vxm    vd, vs2, rs1, v0 is op2631=0x13 & op2525=0 & vs2 & rs1 & op1214=0x4 & v0 & vd & op0006=0x57 unimpl
 
 # vmsbf.m        31..26=0x14 vm vs2 19..15=0x01 14..12=0x2 vd 6..0=0x57
 # vmsbf.m vd, vs2, vm
@@ -2073,8 +2078,10 @@
 
 # vnsrl.wx       31..26=0x2c vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vnsrl.wx vd, vs2, rs1, vm   # vector-scalar
-:vnsrl.wx  vd, vs2, rs1         is op2631=0x2c & op2525=1 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
-:vnsrl.wx  vd, vs2, rs1, "v0.t" is op2631=0x2c & op2525=0 & vs2 & rs1 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vncvt.x.x.w  vd, vs2              is op2631=0x2c & op2525=1 & vs2 & op1519=0 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vncvt.x.x.w  vd, vs2, "v0.t"      is op2631=0x2c & op2525=0 & vs2 & op1519=0 & op1214=0x4 & vd & op0006=0x57 unimpl
+:vnsrl.wx     vd, vs2, rs1         is op2631=0x2c & op2525=1 & vs2 & rs1      & op1214=0x4 & vd & op0006=0x57 unimpl
+:vnsrl.wx     vd, vs2, rs1, "v0.t" is op2631=0x2c & op2525=0 & vs2 & rs1      & op1214=0x4 & vd & op0006=0x57 unimpl
 
 # vor.vi         31..26=0x0a vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vor.vi vd, vs2, simm5, vm    # vector-immediate
@@ -2553,8 +2560,8 @@
 
 # vsrl.vv        31..26=0x28 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vsrl.vv vd, vs2, vs1, vm   # Vector-vector
-:vsrl.vi  vd, vs2, uimm5         is op2631=0x28 & op2525=1 & vs2 & uimm5 & op1214=0x0 & vd & op0006=0x57 unimpl
-:vsrl.vi  vd, vs2, uimm5, "v0.t" is op2631=0x28 & op2525=0 & vs2 & uimm5 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vsrl.vv  vd, vs2, vs1         is op2631=0x28 & op2525=1 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
+:vsrl.vv  vd, vs2, vs1, "v0.t" is op2631=0x28 & op2525=0 & vs2 & vs1 & op1214=0x0 & vd & op0006=0x57 unimpl
 
 # vsrl.vx        31..26=0x28 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vsrl.vx vd, vs2, rs1, vm   # vector-scalar
@@ -3242,8 +3249,8 @@
 
 # vxor.vi        31..26=0x0b vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vxor.vi vd, vs2, simm5, vm    # vector-immediate
-:vxor.vi  vd, vs2                is op2631=0xb & op2525=1 & vs2 & sop1519=0x1f & op1214=0x3 & vd & op0006=0x57 unimpl
-:vxor.vi  vd, vs2, "v0.t"        is op2631=0xb & op2525=0 & vs2 & sop1519=0x1f & op1214=0x3 & vd & op0006=0x57 unimpl
+:vnot.v   vd, vs2                is op2631=0xb & op2525=1 & vs2 & sop1519=0x1f & op1214=0x3 & vd & op0006=0x57 unimpl
+:vnot.v   vd, vs2, "v0.t"        is op2631=0xb & op2525=0 & vs2 & sop1519=0x1f & op1214=0x3 & vd & op0006=0x57 unimpl
 :vxor.vi  vd, vs2, simm5         is op2631=0xb & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 :vxor.vi  vd, vs2, simm5, "v0.t" is op2631=0xb & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
 
@@ -3271,4 +3278,3 @@
 # vzext.vf8 vd, vs2, vm  # Zero-extend SEW/8 source to SEW destination
 :vzext.vf8  vd, vs2         is op2631=0x12 & op2525=1 & vs2 & op1519=0x2 & op1214=0x2 & vd & op0006=0x57 unimpl
 :vzext.vf8  vd, vs2, "v0.t" is op2631=0x12 & op2525=0 & vs2 & op1519=0x2 & op1214=0x2 & vd & op0006=0x57 unimpl
-
