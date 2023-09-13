@@ -577,4 +577,33 @@ public class DataTypeWriterTest extends AbstractGTest {
 		assertEquals(expected, actual);
 	}
 
+	@Test
+	public void testArrayPointerInStructure() throws IOException, CancelledException {
+		DataType dt = new IntegerDataType();
+		Array array = new ArrayDataType(dt, 300, dt.getLength());
+		Pointer ptr1 = PointerDataType.getPointer(array, null);
+		Pointer ptr2 = PointerDataType.getPointer(ptr1, null);
+
+		Structure struct = new StructureDataType("MyStruct", 0);
+		struct.setDescription("this is my structure");
+		struct.add(ptr1, "myPtr1", "this is my array pointer");
+		struct.add(ptr2, "myPtr2", "this is my array pointer pointer");
+
+		dtWriter.write(struct, TaskMonitor.DUMMY);
+
+		String actual = writer.getBuffer().toString();
+
+		String expected = """
+				typedef struct MyStruct MyStruct, *PMyStruct;
+
+				struct MyStruct { /* this is my structure */
+				    int (*myPtr1)[300]; /* this is my array pointer */
+				    int (**myPtr2)[300]; /* this is my array pointer pointer */
+				};
+
+				""";
+
+		assertEquals(expected, actual);
+	}
+
 }
