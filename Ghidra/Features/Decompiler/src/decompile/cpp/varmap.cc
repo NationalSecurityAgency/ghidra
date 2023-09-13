@@ -347,7 +347,7 @@ void ScopeLocal::annotateRawStackPtr(void)
 /// If the return value is passed back in a location whose address space holds \b this scope's variables,
 /// assume the return value is unmapped, unless there is a specific alias into the location.
 /// Mark the range as unmapped.
-/// \param is the sorted list of alias offsets into the space
+/// \param alias is the sorted list of alias offsets into the space
 void ScopeLocal::checkUnaliasedReturn(const vector<uintb> &alias)
 
 {

@@ -949,8 +949,15 @@ public:
   /// \return the maximum number of passes across all output parameters in \b this model
   int4 getMaxOutputDelay(void) const { return output->getMaxDelay(); }
 
-  virtual bool isMerged(void) const { return false; }	///< Is \b this a merged prototype model
-  virtual bool isUnknown(void) const { return false; }	///< Is \b this an unrecognized prototype model
+  /// \brief Is \b this a merged prototype model
+  ///
+  /// \return \b true if \b this is a merged form of multiple independent prototype models
+  virtual bool isMerged(void) const { return false; }
+
+  /// \brief If \b this an unrecognized prototype model
+  ///
+  /// \return \b true if \b this is a placeholder for an unrecognized prototype model name
+  virtual bool isUnknown(void) const { return false; }
   virtual void decode(Decoder &decoder);		///< Restore \b this model from a stream
   static uint4 lookupEffect(const vector<EffectRecord> &efflist,const Address &addr,int4 size);
   static int4 lookupRecord(const vector<EffectRecord> &efflist,int4 listSize,const Address &addr,int4 size);
