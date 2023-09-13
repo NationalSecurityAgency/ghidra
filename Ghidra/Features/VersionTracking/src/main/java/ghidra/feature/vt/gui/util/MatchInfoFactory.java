@@ -21,7 +21,6 @@ import java.util.Set;
 import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.plugin.AddressCorrelatorManager;
-import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 public class MatchInfoFactory {
@@ -32,11 +31,10 @@ public class MatchInfoFactory {
 	 */
 	private WeakValueHashMap<VTMatch, MatchInfo> weakMap = new WeakValueHashMap<>();
 
-	public synchronized MatchInfo getMatchInfo(VTController controller, VTMatch match,
-			AddressCorrelatorManager correlator) {
+	public synchronized MatchInfo getMatchInfo(VTMatch match, AddressCorrelatorManager correlator) {
 		MatchInfo matchInfo = weakMap.get(match);
 		if (matchInfo == null) {
-			matchInfo = new MatchInfo(controller, match, correlator);
+			matchInfo = new MatchInfo(match, correlator);
 			weakMap.put(match, matchInfo);
 		}
 		return matchInfo;
@@ -57,6 +55,7 @@ public class MatchInfoFactory {
 	/**
 	 * Clear the cached match info for the given association.   This will clear the cache for
 	 * multiple matches, if multiple matches exit for the given association.
+	 * @param association the association
 	 */
 	public synchronized void clearCacheForAssociation(VTAssociation association) {
 		Set<Entry<VTMatch, MatchInfo>> entrySet = weakMap.entrySet();

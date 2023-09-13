@@ -24,7 +24,6 @@ import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.wizard.ChooseAddressSetEditorPanel.AddressSetChoice;
 import ghidra.framework.data.DomainObjectAdapterDB;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
@@ -101,8 +100,6 @@ public class AddToSessionTask extends Task {
 			destinationAddressSet = excludeAcceptedMatches(destinationAddressSet, false);
 		}
 
-		ServiceProvider serviceProvider = controller.getTool();
-
 		int transactionID = startTransaction(session);
 		boolean completedSucessfully = false;
 		try {
@@ -113,8 +110,8 @@ public class AddToSessionTask extends Task {
 			for (int i = 0; i < correlatorFactories.size(); i++) {
 				VTProgramCorrelatorFactory factory = correlatorFactories.get(i);
 				VTProgramCorrelator correlator =
-					factory.createCorrelator(serviceProvider, sourceProgram, sourceAddressSet,
-						destinationProgram, destinationAddressSet, correlatorOptions.get(i));
+					factory.createCorrelator(sourceProgram, sourceAddressSet, destinationProgram,
+						destinationAddressSet, correlatorOptions.get(i));
 
 				VTMatchSet resultSet = correlator.correlate(session, monitor);
 				if (resultSet.getMatchCount() == 0) {
@@ -134,12 +131,14 @@ public class AddToSessionTask extends Task {
 		}
 		catch (CancelledException e) {
 			Throwable cause = e.getCause();		// CancelledException may hide more serious error
-			if (cause == null)
+			if (cause == null) {
 				Msg.showWarn(this, null, "Add to Session Cancelled",
 					"Correlation canceled by user.");
-			else
+			}
+			else {
 				Msg.showError(this, null, "Add to Session Cancelled - Unexpected Exception",
 					"Correlation cancelled due to exception: " + cause.getMessage(), e);
+			}
 		}
 		catch (Exception e) {
 			Msg.showError(this, null, "Add to Session Cancelled - Unexpected Exception",

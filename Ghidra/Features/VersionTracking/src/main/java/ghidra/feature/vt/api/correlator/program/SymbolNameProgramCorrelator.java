@@ -22,7 +22,6 @@ import ghidra.app.plugin.match.MatchSymbol.MatchedSymbol;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -36,12 +35,10 @@ public class SymbolNameProgramCorrelator extends VTAbstractProgramCorrelator {
 
 	private final boolean oneToOne;
 
-	public SymbolNameProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
-			AddressSetView sourceAddressSet, Program destinationProgram,
-			AddressSetView destinationAddressSet, ToolOptions options, String name,
-			boolean oneToOne) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
+	public SymbolNameProgramCorrelator(Program sourceProgram, AddressSetView sourceAddressSet,
+			Program destinationProgram, AddressSetView destinationAddressSet, ToolOptions options,
+			String name, boolean oneToOne) {
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 		this.name = name;
 		this.oneToOne = oneToOne;
 
@@ -97,7 +94,7 @@ public class SymbolNameProgramCorrelator extends VTAbstractProgramCorrelator {
 	}
 
 	/**
-	 * This class contains the escense of a symbol match which does not preserve 
+	 * This class contains the escense of a symbol match which does not preserve
 	 * the actual symbol but only its location and match-type (DATA or FUNCTION).
 	 * This class is used to aid the deduping of matches produced by a symbol
 	 * correlator.
@@ -125,8 +122,9 @@ public class SymbolNameProgramCorrelator extends VTAbstractProgramCorrelator {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
+			}
 			if (!(obj instanceof AddressMatch)) {
 				return false;
 			}

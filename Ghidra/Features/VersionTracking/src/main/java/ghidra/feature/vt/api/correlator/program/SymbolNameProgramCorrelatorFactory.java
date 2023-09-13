@@ -18,7 +18,6 @@ package ghidra.feature.vt.api.correlator.program;
 import ghidra.feature.vt.api.main.VTProgramCorrelator;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelatorFactory;
 import ghidra.feature.vt.api.util.VTOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 
@@ -43,11 +42,11 @@ public class SymbolNameProgramCorrelatorFactory extends VTAbstractProgramCorrela
 	}
 
 	@Override
-	protected VTProgramCorrelator doCreateCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
+	protected VTProgramCorrelator doCreateCorrelator(Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, VTOptions options) {
-		return new SymbolNameProgramCorrelator(serviceProvider, sourceProgram, sourceAddressSet,
-			destinationProgram, destinationAddressSet, options, EXACT_SYMBOL_MATCH, true);
+		return new SymbolNameProgramCorrelator(sourceProgram, sourceAddressSet, destinationProgram,
+			destinationAddressSet, options, EXACT_SYMBOL_MATCH, true);
 	}
 
 	@Override

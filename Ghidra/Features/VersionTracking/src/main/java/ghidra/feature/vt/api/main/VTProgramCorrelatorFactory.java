@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +57,6 @@ public interface VTProgramCorrelatorFactory extends ExtensionPoint {
 
 	/**
 	 * Returns a VTProgramCorrelator instance created specifically for the given parameters.
-	 * @param serviceProvider a service provider to access tool services.
 	 * @param sourceProgram the source program for this correlation.
 	 * @param sourceAddressSet the set of addresses in the source program to consider in this correlation.
 	 * @param destinationProgram the destination program for this correlation.
@@ -67,7 +65,29 @@ public interface VTProgramCorrelatorFactory extends ExtensionPoint {
 	 * @param options the options to use for this correlation.
 	 * @return a new VTProgramCorrelator instance created specifically for this set of given parameters.
 	 */
+	public VTProgramCorrelator createCorrelator(Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
+			AddressSetView destinationAddressSet, VTOptions options);
+
+	/**
+	 * Deprecated.  Use {@link #createCorrelator(Program, AddressSetView, Program, AddressSetView, VTOptions)}
+	 * instead.
+	 *
+	 *
+	 * @param serviceProvider a service provider to access tool services.
+	 * @param sourceProgram the source program for this correlation.
+	 * @param sourceAddressSet the set of addresses in the source program to consider in this correlation.
+	 * @param destinationProgram the destination program for this correlation.
+	 * @param destinationAddressSet the set of addresses in the destination program to consider in
+	 * this correlation.
+	 * @param options the options to use for this correlation.
+	 * @return a new VTProgramCorrelator instance created specifically for this set of given parameters.
+	 * @deprecated Use {@link #createCorrelator(Program, AddressSetView, Program, AddressSetView, VTOptions)}
+	 * instead.
+	 */
+	@Deprecated
 	public VTProgramCorrelator createCorrelator(ServiceProvider serviceProvider,
 			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, VTOptions options);
+
 }

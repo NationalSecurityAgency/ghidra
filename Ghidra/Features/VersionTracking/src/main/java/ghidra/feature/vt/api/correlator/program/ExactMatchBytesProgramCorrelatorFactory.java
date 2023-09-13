@@ -19,7 +19,6 @@ import ghidra.app.plugin.match.ExactBytesFunctionHasher;
 import ghidra.feature.vt.api.main.VTProgramCorrelator;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelatorFactory;
 import ghidra.feature.vt.api.util.VTOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 
@@ -38,10 +37,10 @@ public class ExactMatchBytesProgramCorrelatorFactory extends VTAbstractProgramCo
 	}
 
 	@Override
-	protected VTProgramCorrelator doCreateCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
+	protected VTProgramCorrelator doCreateCorrelator(Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, VTOptions options) {
-		return new FunctionMatchProgramCorrelator(serviceProvider, sourceProgram, sourceAddressSet,
+		return new FunctionMatchProgramCorrelator(sourceProgram, sourceAddressSet,
 			destinationProgram, destinationAddressSet, options, EXACT_MATCH, true,
 			ExactBytesFunctionHasher.INSTANCE);
 	}

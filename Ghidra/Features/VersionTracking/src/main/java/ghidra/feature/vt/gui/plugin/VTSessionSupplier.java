@@ -13,33 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.feature.vt.api.util;
+package ghidra.feature.vt.gui.plugin;
 
-import org.jdom.Element;
+import ghidra.feature.vt.api.main.VTSession;
 
-import ghidra.framework.options.ToolOptions;
-
-public class VTOptions extends ToolOptions {
-
-	private VTOptions(Element root) {
-		super(root);
-	}
-
-	public VTOptions(String name) {
-		super(name);
-	}
-
-	@Override
-	public ToolOptions copy() {
-		return new VTOptions(getXmlRoot(true));
-	}
-
-	/**
-	 * A method that allows subclasses to tell the world where their options contain acceptable
-	 * values
-	 * @return true if valid
-	 */
-	public boolean validate() {
-		return true;
-	}
+/**
+ * A simple interface that provides a session.
+ */
+public interface VTSessionSupplier {
+	public VTSession getSession();
 }

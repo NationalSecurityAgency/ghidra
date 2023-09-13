@@ -314,7 +314,7 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 
 	private VTMatchSet createMatchSet() {
 		VTProgramCorrelator correlator =
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram());
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram());
 		return db.createMatchSet(correlator);
 	}
 }
