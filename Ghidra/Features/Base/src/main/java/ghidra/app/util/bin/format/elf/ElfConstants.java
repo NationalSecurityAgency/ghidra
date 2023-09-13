@@ -393,7 +393,7 @@ public interface ElfConstants {
 	/** The Texas Instruments TMS320C55x DSP family */
 	public static final short EM_TI_C5500 = 142;
 	// 143 reserved
-	/** exas Instruments Programmable Realtime Unit */
+	/** Texas Instruments Programmable Realtime Unit */
 	public static final short EM_TI_PRU = 144;
 	// 145 - 159 reserved
 	/** STMicroelectronics 64bit VLIW Data Signal Processor */
