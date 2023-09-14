@@ -183,11 +183,26 @@ public class DisplayableEol {
 	}
 
 	private String[] getPreviewForNoReferences() {
+		String translatedStringValue = getPreviewForString();
+		if (translatedStringValue != null) {
+			return new String[] { translatedStringValue };
+		}
 		String undefinedPointerText = getUndefinedPointer(codeUnit);
 		if (undefinedPointerText != null) {
 			return new String[] { undefinedPointerText };
 		}
 		return new String[0];
+	}
+
+	private String getPreviewForString() {
+		if (codeUnit instanceof Data data && StringDataInstance.isString(data)) {
+			StringDataInstance sdi = StringDataInstance.getStringDataInstance(data);
+			if (sdi.hasTranslatedValue()) {
+				// show the opposite value
+				return sdi.getStringRepresentation(sdi.isShowTranslation());
+			}
+		}
+		return null;
 	}
 
 	private boolean isValidReference(Program program, Reference reference) {
