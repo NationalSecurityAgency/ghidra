@@ -46,6 +46,9 @@
 @include "riscv.priv.sinc"
 @include "riscv.rvc.sinc"
 @include "riscv.rvv.sinc"
+@include "riscv.zvbb.sinc"
+@include "riscv.zvkng.sinc"
+@include "riscv.zvksg.sinc"
 @include "riscv.zi.sinc"
 
 @include "riscv.custom.sinc"

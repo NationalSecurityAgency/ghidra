@@ -761,6 +761,8 @@
 
 # vfsgnjn.vv     31..26=0x09 vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfsgnjn.vv vd, vs2, vs1, vm   # Vector-vector
+#:vfneg.v     vd, vs2              is op2631=0x9 & op2525=0x1 & vs2 & op2024 & op1519=op2024 & op1214=0x1 & vd & op0006=0x57 unimpl
+#:vfneg.v     vd, vs2,      "v0.t" is op2631=0x9 & op2525=0x0 & vs2 & op2024 & op1519=op2024 & op1214=0x1 & vd & op0006=0x57 unimpl
 :vfsgnjn.vv  vd, vs2, vs1         is op2631=0x9 & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 unimpl
 :vfsgnjn.vv  vd, vs2, vs1, "v0.t" is op2631=0x9 & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 unimpl
 
@@ -3105,7 +3107,7 @@
 
 # vwadd.wx       31..26=0x35 vm vs2 rs1 14..12=0x6 vd 6..0=0x57
 # vwadd.wx  vd, vs2, rs1, vm  # vector-scalar
-:vwadd.wx   vd, vs2, rs1        is op2631=0x35 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
+:vwadd.wx   vd, vs2, rs1         is op2631=0x35 & op2525=1 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 :vwadd.wx   vd, vs2, rs1, "v0.t" is op2631=0x35 & op2525=0 & vs2 & rs1 & op1214=0x6 & vd & op0006=0x57 unimpl
 
 # vwaddu.vv      31..26=0x30 vm vs2 vs1 14..12=0x2 vd 6..0=0x57

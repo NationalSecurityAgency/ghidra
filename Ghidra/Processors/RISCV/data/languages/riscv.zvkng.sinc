@@ -1,0 +1,35 @@
+# Vector Crypto NIST Algorithms including GHASH
+
+# Vector AES final-round decryption
+:vaesdf.vv vs2, vd  is op2631=0x28 & op2525=1 & vs2 & op1519=0x01 & op1214=0x2 & vd & op0006=0x77 unimpl
+:vaesdf.vs vs2, vd  is op2631=0x29 & op2525=1 & vs2 & op1519=0x01 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector AES middle-round decryption (single round)
+:vaesdm.vv vd, vs2  is op2631=0x28 & op2525=1 & vs2 & op1519=0x00 & op1214=0x2 & vd & op0006=0x77 unimpl
+:vaesdm.vs vd, vs2  is op2631=0x29 & op2525=1 & vs2 & op1519=0x00 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector AES final-round encryption
+:vaesef.vv vd, vs2  is op2631=0x28 & op2525=1 & vs2 & op1519=0x03 & op1214=0x2 & vd & op0006=0x77 unimpl
+:vaesef.vs vd, vs2  is op2631=0x29 & op2525=1 & vs2 & op1519=0x03 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector AES-128 Forward KeySchedule generation (single round)
+:vaeskf1.vi vd, vs2, uimm5 is op2631=0x22 & op2525=1 & vs2 & uimm5 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector AES-256 Forward KeySchedule generation (single round)
+:vaeskf2.vi vd, vs2, uimm5 is op2631=0x2a & op2525=1 & vs2 & uimm5 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector AES round zero encryption/decryption
+:vaesz.vs vd, vs2 is op2631=0x29 & op2525=1 & vs2 & op1519=0x07 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector SHA-2 two rounds of compression, high and low parts
+:vsha2ch.vv vd, vs2, vs1 is op2631=0x2e & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 unimpl
+:vsha2cl.vv vd, vs2, vs1 is op2631=0x2f & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector SHA-2 message schedule (four rounds)
+:vsha2ms.vv vd, vs2, vs1 is op2631=0x2d & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector Add-Multiply over GHASH Galois-Field (A single "iteration" of the GHASHH algorithm)
+:vghsh.vv vd, vs2, vs1 is op2631=0x2c & op2525=1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector Multiply over GHASH Galois-Field (A GHASHH multiply is performed.)
+:vgmul.vv vd, vs2 is op2631=0x28 & op2525=1 & vs2 & op1519=0x11 & op1214=0x2 & vd & op0006=0x77 unimpl

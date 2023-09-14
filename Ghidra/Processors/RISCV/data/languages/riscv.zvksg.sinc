@@ -1,0 +1,16 @@
+# Vector Crypto ShangMi Algorithms excluding GHASH (see riscv.zvkng.sinc)
+
+# Vector SM3 Compression (Two rounds of SM3 compression are performed)
+:vsm3c.vi vd, vs2, uimm5 is op2631=0x2b & op2525=0x1 & vs2 & uimm5 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector SM3 Message Expansion (Eight rounds of SM3 message expansion)
+:vsm3me.vv vd, vs2, vs1 is op2631=0x20 & op2525=0x1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector SM4 KeyExpansion (Four rounds of the SM4 Key Expansion)
+:vsm4k.vi vd, vs2, uimm5 is op2631=0x21 & op2525=0x1 & vs2 & uimm5 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+# Vector SM4 Rounds (Four rounds of SM4 Encryption/Decryption)
+:vsm4r.vv vd, vs2 is op2631=0x28 & op2525=0x1 & vs2 & op1519=0x10 & op1214=0x2 & vd & op0006=0x77 unimpl
+:vsm4r.vs vd, vs2 is op2631=0x29 & op2525=0x1 & vs2 & op1519=0x10 & op1214=0x2 & vd & op0006=0x77 unimpl
+
+
