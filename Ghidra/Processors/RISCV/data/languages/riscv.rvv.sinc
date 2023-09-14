@@ -64,15 +64,15 @@
 
 # vadc.vim       31..26=0x10 25=0 vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vadc.vim   vd, vs2, simm5, v0  # Vector-immediate
-:vadc.vim    vd, vs2, simm5, v0   is op2631=0x10 & op2525=0x0 & vs2 & simm5 & op1214=0x3 & v0 & vd & op0006=0x57 unimpl
+:vadc.vim    vd, vs2, simm5, v0  is op2631=0x10 & op2525=0x0 & vs2 & simm5 & op1214=0x3 & v0 & vd & op0006=0x57 unimpl
 
 # vadc.vvm       31..26=0x10 25=0 vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vadc.vvm   vd, vs2, vs1, v0  # Vector-vector
-:vadc.vvm    vd, vs2, vs1, v0   is op2631=0x10 & op2525=0x0 & vs2 & vs1 & op1214=0x0 & v0 & vd & op0006=0x57  unimpl
+:vadc.vvm    vd, vs2, vs1, v0 is op2631=0x10 & op2525=0x0 & vs2 & vs1 & op1214=0x0 & v0 & vd & op0006=0x57 unimpl
 
 # vadc.vxm       31..26=0x10 25=0 vs2 rs1 14..12=0x4 vd 6..0=0x57
 # vadc.vxm   vd, vs2, rs1, v0  # Vector-scalar
-:vadc.vxm    vd, vs2, rs1, v0   is op2631=0x10 & op2525=0x0 & vs2 & rs1 & op1214=0x4 & v0 & vd & op0006=0x57  unimpl
+:vadc.vxm    vd, vs2, rs1, v0 is op2631=0x10 & op2525=0x0 & vs2 & rs1 & op1214=0x4 & v0 & vd & op0006=0x57 unimpl
 
 # vadd.vi        31..26=0x00 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vadd.vi vd, vs2, simm5, vm   # vector-immediate
@@ -761,8 +761,8 @@
 
 # vfsgnjn.vv     31..26=0x09 vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfsgnjn.vv vd, vs2, vs1, vm   # Vector-vector
-#:vfneg.v     vd, vs2              is op2631=0x9 & op2525=0x1 & vs2 & op2024 & op1519=op2024 & op1214=0x1 & vd & op0006=0x57 unimpl
-#:vfneg.v     vd, vs2,      "v0.t" is op2631=0x9 & op2525=0x0 & vs2 & op2024 & op1519=op2024 & op1214=0x1 & vd & op0006=0x57 unimpl
+#:vfneg.v     vd, vs2             is op2631=0x9 & op2525=0x1 & vs2 & vs1=vs2 & op1214=0x1 & vd & op0006=0x57 unimpl
+#:vfneg.v     vd, vs2, "v0.t"     is op2631=0x9 & op2525=0x0 & vs2 & vs1=vs2 & op1214=0x1 & vd & op0006=0x57 unimpl
 :vfsgnjn.vv  vd, vs2, vs1         is op2631=0x9 & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 unimpl
 :vfsgnjn.vv  vd, vs2, vs1, "v0.t" is op2631=0x9 & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 unimpl
 
@@ -773,6 +773,8 @@
 
 # vfsgnjx.vv     31..26=0x0a vm vs2 vs1 14..12=0x1 vd 6..0=0x57
 # vfsgnjx.vv vd, vs2, vs1, vm   # Vector-vector
+#:vfabs.v    vd, vs2              is op2631=0xa & op2525=0x1 & vs2 & vs1=vs2 & op1214=0x1 & vd & op0006=0x57 unimpl
+#:vfabs.v    vd, vs2, "v0.t"      is op2631=0xa & op2525=0x0 & vs2 & vs1=vs2 & op1214=0x1 & vd & op0006=0x57 unimpl
 :vfsgnjx.vv  vd, vs2, vs1         is op2631=0xa & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 unimpl
 :vfsgnjx.vv  vd, vs2, vs1, "v0.t" is op2631=0xa & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 unimpl
 
@@ -3253,8 +3255,8 @@
 # vxor.vi vd, vs2, simm5, vm    # vector-immediate
 :vnot.v   vd, vs2                is op2631=0xb & op2525=1 & vs2 & sop1519=0x1f & op1214=0x3 & vd & op0006=0x57 unimpl
 :vnot.v   vd, vs2, "v0.t"        is op2631=0xb & op2525=0 & vs2 & sop1519=0x1f & op1214=0x3 & vd & op0006=0x57 unimpl
-:vxor.vi  vd, vs2, simm5         is op2631=0xb & op2525=1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
-:vxor.vi  vd, vs2, simm5, "v0.t" is op2631=0xb & op2525=0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 unimpl
+:vxor.vi  vd, vs2, simm5         is op2631=0xb & op2525=1 & vs2 & simm5        & op1214=0x3 & vd & op0006=0x57 unimpl
+:vxor.vi  vd, vs2, simm5, "v0.t" is op2631=0xb & op2525=0 & vs2 & simm5        & op1214=0x3 & vd & op0006=0x57 unimpl
 
 # vxor.vv         31..26=0x0b vm vs2 vs1 14..12=0x0 vd 6..0=0x57
 # vxor.vv vd, vs2, vs1, vm    # Vector-vector
