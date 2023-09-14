@@ -21,15 +21,11 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.ClangVariableToken;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.plugin.core.hover.AbstractScalarOperandHover;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.AbstractIntegerDataType;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.util.ProgramLocation;
 
@@ -82,35 +78,10 @@ public class ScalarValueDecompilerHover extends AbstractScalarOperandHover
 		}
 
 		ClangToken token = ((ClangTextField) field).getToken(fieldLocation);
-		if (!(token instanceof ClangVariableToken)) {
+		Scalar scalar = token.getScalar();
+		if (scalar == null) {
 			return null;
 		}
-
-		Varnode vn = ((ClangVariableToken) token).getVarnode();
-		if (vn == null) {
-			return null;
-		}
-
-		long offset = vn.getOffset();
-		int sz = vn.getSize();
-		HighVariable high = vn.getHigh();
-		if (!(high instanceof HighConstant)) {
-			return null;
-		}
-
-		HighConstant constant = (HighConstant) high;
-		boolean isSigned = true;
-		DataType dt = constant.getDataType();
-		if (dt instanceof AbstractIntegerDataType) {
-			isSigned = ((AbstractIntegerDataType) dt).isSigned();
-		}
-
-		if (sz > 8) {
-			// our Scalar can currently only handle long values
-			return null;
-		}
-
-		Scalar scalar = new Scalar(sz * 8, offset, isSigned);
 		Address addr = token.getMinAddress();
 		String formatted = formatScalar(program, addr, scalar);
 		return createTooltipComponent(formatted);
