@@ -53,8 +53,16 @@ protected:
   uint4 addlflags;		///< Additional properties
   string name;			///< Symbol denoting this operation
   OpBehavior *behave;		///< Object for emulating the behavior of the op-code
-  virtual void setMetatypeIn(type_metatype val) {}	///< Set the data-type associated with inputs to this opcode
-  virtual void setMetatypeOut(type_metatype val) {}	///< Set the data-type associated with outputs of this opcode
+
+  /// \brief Set the data-type (as a meta-type) associated with inputs to this opcode
+  ///
+  /// \param val is the data-type of inputs
+  virtual void setMetatypeIn(type_metatype val) {}
+
+  /// \brief Set the data-type (as a meta-type) associated with outputs of this opcode
+  ///
+  /// \param val is the data-type of outputs
+  virtual void setMetatypeOut(type_metatype val) {}
   virtual void setSymbol(const string &nm) { name = nm; }	///< Set the display symbol associated with the op-code
 public:
   TypeOp(TypeFactory *t,OpCode opc,const string &n);	///< Constructor

@@ -213,10 +213,30 @@ public:
   virtual Datatype *getSubType(int8 off,int8 *newoff) const; ///< Recover component data-type one-level down
   virtual Datatype *nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const;
-  virtual int4 getHoleSize(int4 off) const { return 0; }	///< Get number of bytes at the given offset that are padding
-  virtual int4 numDepend(void) const { return 0; }	///< Return number of component sub-types
-  virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }	///< Return the i-th component sub-type
-  virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
+
+  /// \brief Get number of bytes at the given offset that are padding
+  ///
+  /// For the given offset into \b this data-type, determine if the byte at that offset is considered
+  /// padding, and if so, return the number of bytes in the padding. Otherwise, return 0.
+  /// \return the number of bytes of padding or 0
+  virtual int4 getHoleSize(int4 off) const { return 0; }
+
+  /// \brief Get the number of component sub-types making up \b this data-type
+  ///
+  /// \return the number of components
+  virtual int4 numDepend(void) const { return 0; }
+
+  /// \brief Get a specific component sub-type by index
+  ///
+  /// \param index is the index specifying which sub-type to return
+  /// \return the i-th component sub-type
+  virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }
+
+  /// \brief Print (part of) the name of \b this data-type as short prefix for a label
+  ///
+  /// This is used for building variable names to give some indication of the variable's underlying data-type
+  /// \param s is the stream write the name prefix to
+  virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; }
   virtual int4 compare(const Datatype &op,int4 level) const; ///< Order types for propagation
   virtual int4 compareDependency(const Datatype &op) const; ///< Compare for storage in tree structure
   virtual void encode(Encoder &encoder) const;	///< Encode the data-type to a stream

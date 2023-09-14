@@ -328,7 +328,9 @@ public:
   /// Inform the emitter that a printing group is ending.
   /// \param id is the id associated with the group (as returned by openGroup)
   virtual void closeGroup(int4 id) {}
-  virtual void clear(void) { parenlevel = 0; indentlevel=0; pendPrint=(PendPrint *)0; }	///< Reset the emitter to its initial state
+
+  /// \brief Reset the emitter to its initial state
+  virtual void clear(void) { parenlevel = 0; indentlevel=0; pendPrint=(PendPrint *)0; }
   virtual void setOutputStream(ostream *t)=0;			///< Set the output stream for the emitter
   virtual ostream *getOutputStream(void) const=0;		///< Get the current output stream
   virtual void spaces(int4 num,int4 bump=0);

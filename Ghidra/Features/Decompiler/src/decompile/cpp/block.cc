@@ -407,9 +407,15 @@ bool FlowBlock::restrictedByConditional(const FlowBlock *cond) const
 {
   if (sizeIn() == 1) return true;	// Its impossible for any path to come through sibling to this
   if (getImmedDom() != cond) return false;	// This is not dominated by conditional block at all
+  bool seenCond = false;
   for(int4 i=0;i<sizeIn();++i) {
     const FlowBlock *inBlock = getIn(i);
-    if (inBlock == cond) continue;	// The unique edge from cond to this
+    if (inBlock == cond) {
+      if (seenCond)
+	return false;			// Coming in from cond block on multiple direct edges
+      seenCond = true;
+      continue;
+    }
     while(inBlock != this) {
       if (inBlock == cond) return false;	// Must have come through sibling
       inBlock = inBlock->getImmedDom();

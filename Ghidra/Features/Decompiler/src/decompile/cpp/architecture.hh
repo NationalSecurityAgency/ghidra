@@ -239,7 +239,9 @@ public:
   void decodeFlowOverride(Decoder &decoder);		///< Set flow overrides from XML
   virtual ~Architecture(void);				///< Destructor
 
-  virtual string getDescription(void) const { return archid; }	///< Get a string describing \b this architecture
+  /// \brief Get a string describing \b this architecture
+  /// \return the description
+  virtual string getDescription(void) const { return archid; }
 
   /// \brief Print an error message to console
   ///
