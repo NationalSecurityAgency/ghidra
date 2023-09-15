@@ -368,6 +368,55 @@ bool PrintC::checkArrayDeref(const Varnode *vn) const
   return true;
 }
 
+/// Check that the output data-type is a pointer to an array and then that
+/// the second data-type is a pointer to the element type (of the array).
+/// If this holds and the input variable represents a symbol with an \e array data-type,
+/// return \b true.
+/// \return \b true if the CAST can be rendered as '&'
+bool PrintC::checkAddressOfCast(const PcodeOp *op) const
+
+{
+  Datatype *dt0 = op->getOut()->getHighTypeDefFacing();
+  const Varnode *vnin = op->getIn(0);
+  Datatype *dt1 = vnin->getHighTypeReadFacing(op);
+  if (dt0->getMetatype() != TYPE_PTR || dt1->getMetatype() != TYPE_PTR)
+    return false;
+  const Datatype *base0 = ((const TypePointer *)dt0)->getPtrTo();
+  const Datatype *base1 = ((const TypePointer *)dt1)->getPtrTo();
+  if (base0->getMetatype() != TYPE_ARRAY)
+    return false;
+  int4 arraySize = base0->getSize();
+  base0 = ((const TypeArray *)base0)->getBase();
+  while(base0->getTypedef() != (Datatype *)0)
+    base0 = base0->getTypedef();
+  while(base1->getTypedef() != (Datatype *)0)
+    base1 = base1->getTypedef();
+  if (base0 != base1)
+    return false;
+  Datatype *symbolType = (Datatype *)0;
+  if (vnin->getSymbolEntry() != (SymbolEntry *)0 && vnin->getHigh()->getSymbolOffset() == -1) {
+    symbolType = vnin->getSymbolEntry()->getSymbol()->getType();
+  }
+  else if (vnin->isWritten()) {
+    const PcodeOp *ptrsub = vnin->getDef();
+    if (ptrsub->code() == CPUI_PTRSUB) {
+      Datatype *rootType = ptrsub->getIn(0)->getHighTypeReadFacing(ptrsub);
+      if (rootType->getMetatype() == TYPE_PTR) {
+	rootType = ((TypePointer *)rootType)->getPtrTo();
+	int8 off = ptrsub->getIn(1)->getOffset();
+	symbolType = rootType->getSubType(off, &off);
+	if (off != 0)
+	  return false;
+      }
+    }
+  }
+  if (symbolType == (Datatype *)0)
+    return false;
+  if (symbolType->getMetatype() != TYPE_ARRAY || symbolType->getSize() != arraySize)
+    return false;
+  return true;
+}
+
 /// This is used for expression that require functional syntax, where the name of the
 /// function is the name of the operator. The inputs to the p-code op form the roots
 /// of the comma separated list of \e parameters within the syntax.
@@ -399,9 +448,17 @@ void PrintC::opFunc(const PcodeOp *op)
 void PrintC::opTypeCast(const PcodeOp *op)
 
 {
+  Datatype *dt = op->getOut()->getHighTypeDefFacing();
+  if (dt->isPointerToArray()) {
+    if (checkAddressOfCast(op)) {
+      pushOp(&addressof,op);
+      pushVn(op->getIn(0),op,mods);
+      return;
+    }
+  }
   if (!option_nocasts) {
     pushOp(&typecast,op);
-    pushType(op->getOut()->getHighTypeDefFacing());
+    pushType(dt);
   }
   pushVn(op->getIn(0),op,mods);
 }
@@ -798,13 +855,6 @@ void PrintC::opPtradd(const PcodeOp *op)
 {
   bool printval = isSet(print_load_value|print_store_value);
   uint4 m = mods & ~(print_load_value|print_store_value);
-  if (!printval) {
-    TypePointer *tp = (TypePointer *)op->getIn(0)->getHighTypeReadFacing(op);
-    if (tp->getMetatype() == TYPE_PTR) {
-      if (tp->getPtrTo()->getMetatype() == TYPE_ARRAY)
-	printval = true;
-    }
-  }
   if (printval)			// Use array notation if we need value
     pushOp(&subscript,op);
   else				// just a '+'
@@ -820,8 +870,15 @@ static bool isValueFlexible(const Varnode *vn)
 {
   if ((vn->isImplied())&&(vn->isWritten())) {
     const PcodeOp *def = vn->getDef();
-    if (def->code() == CPUI_PTRSUB) return true;
-    if (def->code() == CPUI_PTRADD) return true;
+    OpCode opc = def->code();
+    if (opc == CPUI_COPY) {
+      const Varnode *invn = def->getIn(0);
+      if (!invn->isImplied() || !invn->isWritten())
+	return false;
+      opc = invn->getDef()->code();
+    }
+    if (opc == CPUI_PTRSUB) return true;
+    if (opc == CPUI_PTRADD) return true;
   }
   return false;
 }
@@ -1020,12 +1077,11 @@ void PrintC::opPtrsub(const PcodeOp *op)
   // and this PTRSUB(*,0) represents changing
   // to treating it as a pointer to its element type
     if (!valueon) {
-      if (flex) {		// EMIT  ( )
-				// (*&struct->arrayfield)[i]
-				// becomes struct->arrayfield[i]
+      // Even though there is no valueon, the PTRSUB still acts as a dereference
+      if (flex) {		// EMIT ( )
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVn(in0,op,m);
+	pushVn(in0,op,m | print_load_value);	// Absorb dereference into in0's defining op
       }
       else {			// EMIT  *( )
 	pushOp(&dereference,op);
@@ -1035,11 +1091,12 @@ void PrintC::opPtrsub(const PcodeOp *op)
       }
     }
     else {
+      // We need to show two dereferences here: one for the valueon and one for the PTRSUB
       if (flex) {		// EMIT  ( )[0]
 	pushOp(&subscript,op);
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVn(in0,op,m);
+	pushVn(in0,op,m | print_load_value);		// Absorb one dereference into in0's defining op
 	push_integer(0,4,false,syntax,(Varnode *)0,op);
       }
       else {			// EMIT  (* )[0]

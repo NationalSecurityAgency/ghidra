@@ -899,6 +899,9 @@ void TypePointer::calcSubmeta(void)
   else if (ptrtoMeta == TYPE_UNION) {
     submeta = SUB_PTR_STRUCT;
   }
+  else if (ptrtoMeta == TYPE_ARRAY) {
+    flags |= pointer_to_array;
+  }
   if (ptrto->needsResolution() && ptrtoMeta != TYPE_PTR)
     flags |= needs_resolution;		// Inherit needs_resolution, but only if not a pointer
 }
