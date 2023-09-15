@@ -295,7 +295,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				.forgetValues((key, l) -> true);
 	protected final Map<CachedEmulator, Integer> busy = new LinkedHashMap<>();
 	protected final ListenerSet<EmulatorStateListener> stateListeners =
-		new ListenerSet<>(EmulatorStateListener.class);
+		new ListenerSet<>(EmulatorStateListener.class, true);
 
 	class BusyEmu implements AutoCloseable {
 		private final CachedEmulator ce;
@@ -314,7 +314,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				}
 			}
 			if (fire) {
-				stateListeners.fire.running(ce);
+				stateListeners.invoke().running(ce);
 			}
 		}
 
@@ -332,7 +332,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				}
 			}
 			if (fire) {
-				stateListeners.fire.stopped(ce);
+				stateListeners.invoke().stopped(ce);
 			}
 		}
 

@@ -110,7 +110,7 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 
 	@Override
 	public void terminate() throws IOException {
-		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
+		listeners.invoke().modelClosed(DebuggerModelClosedReason.NORMAL);
 		root.invalidateSubtree(root, "Dbgeng is terminating");
 		dbg.terminate();
 	}

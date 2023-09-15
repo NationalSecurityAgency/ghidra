@@ -141,14 +141,14 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	protected Set<DBTraceTimeViewport> viewports = new WeakHashCowSet<>();
 	protected ListenerSet<DBTraceDirectChangeListener> directListeners =
-		new ListenerSet<>(DBTraceDirectChangeListener.class);
+		new ListenerSet<>(DBTraceDirectChangeListener.class, true);
 	protected DBTraceVariableSnapProgramView programView;
 	protected Set<DBTraceVariableSnapProgramView> programViews = new WeakHashCowSet<>();
 	protected Set<TraceProgramView> programViewsView = Collections.unmodifiableSet(programViews);
 	protected Map<Long, DBTraceProgramView> fixedProgramViews = new WeakValueHashCowMap<>();
 	// NOTE: Can't pre-construct unmodifiableMap(fixedProgramViews), because values()' id changes
 	protected ListenerSet<TraceProgramViewListener> viewListeners =
-		new ListenerSet<>(TraceProgramViewListener.class);
+		new ListenerSet<>(TraceProgramViewListener.class, true);
 
 	public DBTrace(String name, CompilerSpec baseCompilerSpec, Object consumer)
 			throws IOException, LanguageNotFoundException {
@@ -591,7 +591,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		super.fireEvent(ev);
 		if (directListeners != null) {
 			// Some events fire during construction
-			directListeners.fire.changed(ev);
+			directListeners.invoke().changed(ev);
 		}
 	}
 
@@ -613,7 +613,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 				return new DBTraceProgramView(this, snap, baseCompilerSpec);
 			});
 		}
-		viewListeners.fire.viewCreated(view);
+		viewListeners.invoke().viewCreated(view);
 		return view;
 	}
 
@@ -625,7 +625,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			view = new DBTraceVariableSnapProgramView(this, snap, baseCompilerSpec);
 			programViews.add(view);
 		}
-		viewListeners.fire.viewCreated(view);
+		viewListeners.invoke().viewCreated(view);
 		return view;
 	}
 

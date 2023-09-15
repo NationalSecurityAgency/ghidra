@@ -34,7 +34,6 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 import utilities.util.ProxyUtilities;
 
@@ -60,8 +59,8 @@ public class DelegateGadpClientTargetObject
 			for (Map.Entry<K, MethodHandle> ent : that.handles.entrySet()) {
 				MethodHandle old = handles.put(ent.getKey(), ent.getValue());
 				if (old != null) {
-					throw new AssertionError("Conflict over handler for " + ent.getKey() +
-						": " + old + " and " + ent.getValue());
+					throw new AssertionError("Conflict over handler for " + ent.getKey() + ": " +
+						old + " and " + ent.getValue());
 				}
 			}
 		}
@@ -161,8 +160,8 @@ public class DelegateGadpClientTargetObject
 
 		Set<Class<? extends TargetObject>> allMixins = new HashSet<>(mixins);
 		allMixins.add(GadpClientTargetObject.class);
-		this.eventHandlers = EVENT_HANDLER_MAPS_BY_COMPOSITION.computeIfAbsent(allMixins,
-			GadpEventHandlerMap::new);
+		this.eventHandlers =
+			EVENT_HANDLER_MAPS_BY_COMPOSITION.computeIfAbsent(allMixins, GadpEventHandlerMap::new);
 	}
 
 	@Override
@@ -187,11 +186,14 @@ public class DelegateGadpClientTargetObject
 
 	@Override
 	public CompletableFuture<Void> resync(RefreshBehavior attributes, RefreshBehavior elements) {
-		return client.sendChecked(Gadp.ResyncRequest.newBuilder()
-				.setPath(GadpValueUtils.makePath(path))
-				.setAttributes(attributes.equals(RefreshBehavior.REFRESH_ALWAYS))
-				.setElements(elements.equals(RefreshBehavior.REFRESH_ALWAYS)),
-			Gadp.ResyncReply.getDefaultInstance()).thenApply(rep -> null);
+		return client
+				.sendChecked(
+					Gadp.ResyncRequest.newBuilder()
+							.setPath(GadpValueUtils.makePath(path))
+							.setAttributes(attributes.equals(RefreshBehavior.REFRESH_ALWAYS))
+							.setElements(elements.equals(RefreshBehavior.REFRESH_ALWAYS)),
+					Gadp.ResyncReply.getDefaultInstance())
+				.thenApply(rep -> null);
 	}
 
 	@Override
@@ -238,9 +240,11 @@ public class DelegateGadpClientTargetObject
 	public synchronized CompletableFuture<Void> invalidateCaches() {
 		assertValid();
 		doClearCaches();
-		return client.sendChecked(Gadp.CacheInvalidateRequest.newBuilder()
-				.setPath(GadpValueUtils.makePath(path)),
-			Gadp.CacheInvalidateReply.getDefaultInstance()).thenApply(rep -> null);
+		return client
+				.sendChecked(
+					Gadp.CacheInvalidateRequest.newBuilder().setPath(GadpValueUtils.makePath(path)),
+					Gadp.CacheInvalidateReply.getDefaultInstance())
+				.thenApply(rep -> null);
 	}
 
 	protected synchronized CachedMemory getMemoryCache(AddressSpace space) {
@@ -276,12 +280,7 @@ public class DelegateGadpClientTargetObject
 
 	protected synchronized ListenerSet<TargetBreakpointAction> getActions(boolean createIfAbsent) {
 		if (actions == null && createIfAbsent) {
-			actions = new ListenerSet<>(TargetBreakpointAction.class) {
-				// Want strong references on actions
-				protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
-					return new LinkedHashMap<>();
-				};
-			};
+			actions = new ListenerSet<>(TargetBreakpointAction.class, false);
 		}
 		return actions;
 	}

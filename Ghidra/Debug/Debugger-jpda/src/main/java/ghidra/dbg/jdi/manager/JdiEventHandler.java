@@ -41,7 +41,7 @@ public class JdiEventHandler implements Runnable {
 	protected final AsyncReference<Integer, JdiCause> state =
 		new AsyncReference<>(ThreadReference.THREAD_STATUS_NOT_STARTED);
 	public final ListenerSet<JdiEventsListener> listenersEvent =
-		new ListenerSet<>(JdiEventsListener.class);
+		new ListenerSet<>(JdiEventsListener.class, true);
 	protected final ExecutorService eventThread = Executors.newSingleThreadExecutor();
 
 	public JdiEventHandler() {
@@ -116,7 +116,7 @@ public class JdiEventHandler implements Runnable {
 				else if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
 					setCurrentThread(eventSet);
 					event(
-						() -> listenersEvent.fire.processStop(eventSet, JdiCause.Causes.UNCLAIMED),
+						() -> listenersEvent.invoke().processStop(eventSet, JdiCause.Causes.UNCLAIMED),
 						"processStopped");
 				}
 			}
@@ -214,7 +214,7 @@ public class JdiEventHandler implements Runnable {
 			/*
 			 * Inform jdb command line processor that jdb is being shutdown. JDK-8154144.
 			 */
-			event(() -> listenersEvent.fire.processShutdown(event, JdiCause.Causes.UNCLAIMED),
+			event(() -> listenersEvent.invoke().processShutdown(event, JdiCause.Causes.UNCLAIMED),
 				"processStopped");
 			return null; ///false;
 		}
@@ -301,7 +301,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processBreakpoint(BreakpointEvent evt) {
-		event(() -> listenersEvent.fire.breakpointHit(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().breakpointHit(evt, JdiCause.Causes.UNCLAIMED),
 			"breakpointHit");
 		return DebugStatus.BREAK;
 	}
@@ -314,7 +314,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processException(ExceptionEvent evt) {
-		event(() -> listenersEvent.fire.exceptionHit(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().exceptionHit(evt, JdiCause.Causes.UNCLAIMED),
 			"exceptionHit");
 		return DebugStatus.BREAK;
 	}
@@ -327,7 +327,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processMethodEntry(MethodEntryEvent evt) {
-		event(() -> listenersEvent.fire.methodEntry(evt, JdiCause.Causes.UNCLAIMED), "methodEntry");
+		event(() -> listenersEvent.invoke().methodEntry(evt, JdiCause.Causes.UNCLAIMED), "methodEntry");
 		return DebugStatus.GO;
 	}
 
@@ -339,7 +339,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processMethodExit(MethodExitEvent evt) {
-		event(() -> listenersEvent.fire.methodExit(evt, JdiCause.Causes.UNCLAIMED), "methodExit");
+		event(() -> listenersEvent.invoke().methodExit(evt, JdiCause.Causes.UNCLAIMED), "methodExit");
 		return DebugStatus.GO;
 	}
 
@@ -351,7 +351,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processClassPrepare(ClassPrepareEvent evt) {
-		event(() -> listenersEvent.fire.classPrepare(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().classPrepare(evt, JdiCause.Causes.UNCLAIMED),
 			"classPrepare");
 		/*
 		if (!Env.specList.resolve(cle)) {
@@ -372,7 +372,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processClassUnload(ClassUnloadEvent evt) {
-		event(() -> listenersEvent.fire.classUnload(evt, JdiCause.Causes.UNCLAIMED), "classUnload");
+		event(() -> listenersEvent.invoke().classUnload(evt, JdiCause.Causes.UNCLAIMED), "classUnload");
 		return DebugStatus.GO;
 	}
 
@@ -384,7 +384,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processMCEntered(MonitorContendedEnteredEvent evt) {
-		event(() -> listenersEvent.fire.monitorContendedEntered(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().monitorContendedEntered(evt, JdiCause.Causes.UNCLAIMED),
 			"monitorContendedEntered");
 		return DebugStatus.GO;
 	}
@@ -397,7 +397,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processMCEnter(MonitorContendedEnterEvent evt) {
-		event(() -> listenersEvent.fire.monitorContendedEnter(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().monitorContendedEnter(evt, JdiCause.Causes.UNCLAIMED),
 			"monitorContendedEnter");
 		return DebugStatus.GO;
 	}
@@ -410,7 +410,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processMonitorWaited(MonitorWaitedEvent evt) {
-		event(() -> listenersEvent.fire.monitorWaited(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().monitorWaited(evt, JdiCause.Causes.UNCLAIMED),
 			"monitorWaited");
 		return DebugStatus.GO;
 	}
@@ -423,7 +423,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processMonitorWait(MonitorWaitEvent evt) {
-		event(() -> listenersEvent.fire.monitorWait(evt, JdiCause.Causes.UNCLAIMED), "monitorWait");
+		event(() -> listenersEvent.invoke().monitorWait(evt, JdiCause.Causes.UNCLAIMED), "monitorWait");
 		return DebugStatus.GO;
 	}
 
@@ -436,7 +436,7 @@ public class JdiEventHandler implements Runnable {
 	 */
 	protected DebugStatus processStep(StepEvent evt) {
 		evt.request().disable();
-		event(() -> listenersEvent.fire.stepComplete(evt, JdiCause.Causes.UNCLAIMED), "step");
+		event(() -> listenersEvent.invoke().stepComplete(evt, JdiCause.Causes.UNCLAIMED), "step");
 		return DebugStatus.STEP_INTO;
 	}
 
@@ -448,7 +448,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processWatchpoint(WatchpointEvent evt) {
-		event(() -> listenersEvent.fire.watchpointHit(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().watchpointHit(evt, JdiCause.Causes.UNCLAIMED),
 			"watchpointHit");
 		return DebugStatus.BREAK;
 	}
@@ -461,7 +461,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processAccessWatchpoint(AccessWatchpointEvent evt) {
-		event(() -> listenersEvent.fire.accessWatchpointHit(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().accessWatchpointHit(evt, JdiCause.Causes.UNCLAIMED),
 			"accessWatchpointHit");
 		return DebugStatus.BREAK;
 	}
@@ -474,7 +474,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processWatchpointModification(ModificationWatchpointEvent evt) {
-		event(() -> listenersEvent.fire.watchpointModified(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().watchpointModified(evt, JdiCause.Causes.UNCLAIMED),
 			"watchpointModified");
 		return DebugStatus.GO;
 	}
@@ -487,7 +487,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processThreadDeath(ThreadDeathEvent evt) {
-		event(() -> listenersEvent.fire.threadExited(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().threadExited(evt, JdiCause.Causes.UNCLAIMED),
 			"threadExited");
 		JdiThreadInfo.removeThread(evt.thread());
 		return DebugStatus.GO;
@@ -502,7 +502,7 @@ public class JdiEventHandler implements Runnable {
 	 */
 	protected DebugStatus processThreadStart(ThreadStartEvent evt) {
 		JdiThreadInfo.addThread(evt.thread());
-		event(() -> listenersEvent.fire.threadStarted(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().threadStarted(evt, JdiCause.Causes.UNCLAIMED),
 			"threadStarted");
 		return DebugStatus.GO;
 	}
@@ -516,7 +516,7 @@ public class JdiEventHandler implements Runnable {
 	 */
 	protected DebugStatus processVMDeath(VMDeathEvent evt) {
 		shutdownMessageKey = "The application exited";
-		event(() -> listenersEvent.fire.vmDied(evt, JdiCause.Causes.UNCLAIMED), "vmDied");
+		event(() -> listenersEvent.invoke().vmDied(evt, JdiCause.Causes.UNCLAIMED), "vmDied");
 		return DebugStatus.BREAK;
 	}
 
@@ -529,7 +529,7 @@ public class JdiEventHandler implements Runnable {
 	 */
 	protected DebugStatus processVMDisconnect(VMDisconnectEvent evt) {
 		shutdownMessageKey = "The application has been disconnected";
-		event(() -> listenersEvent.fire.vmDisconnected(evt, JdiCause.Causes.UNCLAIMED),
+		event(() -> listenersEvent.invoke().vmDisconnected(evt, JdiCause.Causes.UNCLAIMED),
 			"vmDisconnected");
 		return DebugStatus.BREAK;
 	}
@@ -542,7 +542,7 @@ public class JdiEventHandler implements Runnable {
 	 * @return
 	 */
 	protected DebugStatus processVMStart(VMStartEvent evt) {
-		event(() -> listenersEvent.fire.vmStarted(evt, JdiCause.Causes.UNCLAIMED), "vmStarted");
+		event(() -> listenersEvent.invoke().vmStarted(evt, JdiCause.Causes.UNCLAIMED), "vmStarted");
 		return DebugStatus.BREAK;
 	}
 

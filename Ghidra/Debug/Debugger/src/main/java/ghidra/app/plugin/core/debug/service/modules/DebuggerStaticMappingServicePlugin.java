@@ -544,7 +544,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private final AsyncDebouncer<Void> changeDebouncer =
 		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
 	private final ListenerSet<DebuggerStaticMappingChangeListener> changeListeners =
-		new ListenerSet<>(DebuggerStaticMappingChangeListener.class);
+		new ListenerSet<>(DebuggerStaticMappingChangeListener.class, true);
 	private Set<Trace> affectedTraces = new HashSet<>();
 	private Set<Program> affectedPrograms = new HashSet<>();
 
@@ -576,7 +576,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			affectedTraces = new HashSet<>();
 			affectedPrograms = new HashSet<>();
 		}
-		changeListeners.fire.mappingsChanged(traces, programs);
+		changeListeners.invoke().mappingsChanged(traces, programs);
 	}
 
 	private void traceAffected(Trace trace) {

@@ -70,7 +70,7 @@ public class FridaManagerImpl implements FridaManager {
 	private final HandlerMap<FridaEvent<?>, Void, DebugStatus> handlerMap = new HandlerMap<>();
 	private final Map<Class<?>, DebugStatus> statusMap = new LinkedHashMap<>();
 	private final ListenerSet<FridaEventsListener> listenersEvent =
-		new ListenerSet<>(FridaEventsListener.class);
+		new ListenerSet<>(FridaEventsListener.class, true);
 
 	private FridaTarget currentTarget;
 	private FridaSession currentSession;
@@ -157,7 +157,7 @@ public class FridaManagerImpl implements FridaManager {
 			for (String tid : toRemove) {
 				removeThread(processId, tid);
 			}
-			getEventListeners().fire.processRemoved(id, cause);
+			getEventListeners().invoke().processRemoved(id, cause);
 		}
 	}
 
@@ -213,7 +213,7 @@ public class FridaManagerImpl implements FridaManager {
 			if (sessions.remove(id) == null) {
 				throw new IllegalArgumentException("There is no session with id " + id);
 			}
-			getEventListeners().fire.sessionRemoved(id, cause);
+			getEventListeners().invoke().sessionRemoved(id, cause);
 		}
 	}
 
@@ -672,8 +672,8 @@ public class FridaManagerImpl implements FridaManager {
 	protected DebugStatus processThreadCreated(FridaThreadCreatedEvent evt, Void v) {
 		FridaThread thread = evt.getInfo().thread;
 		currentThread = thread;
-		getEventListeners().fire.threadCreated(thread, FridaCause.Causes.UNCLAIMED);
-		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
+		getEventListeners().invoke().threadCreated(thread, FridaCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().threadSelected(thread, null, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -686,8 +686,8 @@ public class FridaManagerImpl implements FridaManager {
 	 */
 	protected DebugStatus processThreadReplaced(FridaThreadReplacedEvent evt, Void v) {
 		FridaThread thread = evt.getInfo().thread;
-		getEventListeners().fire.threadReplaced(thread, FridaCause.Causes.UNCLAIMED);
-		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
+		getEventListeners().invoke().threadReplaced(thread, FridaCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().threadSelected(thread, null, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -699,7 +699,7 @@ public class FridaManagerImpl implements FridaManager {
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processThreadExited(FridaThreadExitedEvent evt, Void v) {
-		getEventListeners().fire.threadExited(currentThread, currentProcess, evt.getCause());
+		getEventListeners().invoke().threadExited(currentThread, currentProcess, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -712,7 +712,7 @@ public class FridaManagerImpl implements FridaManager {
 	 */
 	protected DebugStatus processThreadSelected(FridaThreadSelectedEvent evt, Void v) {
 		currentThread = evt.getThread();
-		getEventListeners().fire.threadSelected(currentThread, evt.getFrame(), evt.getCause());
+		getEventListeners().invoke().threadSelected(currentThread, evt.getFrame(), evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -725,7 +725,7 @@ public class FridaManagerImpl implements FridaManager {
 	 */
 	protected DebugStatus processFrameSelected(FridaSelectedFrameChangedEvent evt, Void v) {
 		currentThread = evt.getThread();
-		getEventListeners().fire.threadSelected(currentThread, evt.getFrame(), evt.getCause());
+		getEventListeners().invoke().threadSelected(currentThread, evt.getFrame(), evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -739,8 +739,8 @@ public class FridaManagerImpl implements FridaManager {
 	protected DebugStatus processProcessCreated(FridaProcessCreatedEvent evt, Void v) {
 		FridaProcessInfo info = evt.getInfo();
 		FridaProcess proc = info.process;
-		getEventListeners().fire.processAdded(proc, FridaCause.Causes.UNCLAIMED);
-		getEventListeners().fire.processSelected(proc, evt.getCause());
+		getEventListeners().invoke().processAdded(proc, FridaCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().processSelected(proc, evt.getCause());
 
 		/*
 		FridaThread thread = proc.GetSelectedThread();
@@ -759,8 +759,8 @@ public class FridaManagerImpl implements FridaManager {
 	protected DebugStatus processProcessReplaced(FridaProcessReplacedEvent evt, Void v) {
 		FridaProcessInfo info = evt.getInfo();
 		FridaProcess proc = info.process;
-		getEventListeners().fire.processReplaced(proc, FridaCause.Causes.UNCLAIMED);
-		getEventListeners().fire.processSelected(proc, evt.getCause());
+		getEventListeners().invoke().processReplaced(proc, FridaCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().processSelected(proc, evt.getCause());
 
 		/*
 		FridaThread thread = proc.GetSelectedThread();
@@ -779,9 +779,9 @@ public class FridaManagerImpl implements FridaManager {
 	protected DebugStatus processProcessExited(FridaProcessExitedEvent evt, Void v) {
 		FridaThread thread = getCurrentThread();
 		FridaProcess process = getCurrentProcess();
-		getEventListeners().fire.threadExited(thread, process, evt.getCause());
-		getEventListeners().fire.processExited(process, evt.getCause());
-		getEventListeners().fire.processRemoved(process.getPID().toString(), evt.getCause());
+		getEventListeners().invoke().threadExited(thread, process, evt.getCause());
+		getEventListeners().invoke().processExited(process, evt.getCause());
+		getEventListeners().invoke().processRemoved(process.getPID().toString(), evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -794,7 +794,7 @@ public class FridaManagerImpl implements FridaManager {
 	 */
 	protected DebugStatus processProcessSelected(FridaProcessSelectedEvent evt, Void v) {
 		currentProcess = evt.getProcess();
-		getEventListeners().fire.processSelected(currentProcess, evt.getCause());
+		getEventListeners().invoke().processSelected(currentProcess, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -807,8 +807,8 @@ public class FridaManagerImpl implements FridaManager {
 	 */
 	protected DebugStatus processSessionCreated(FridaSessionCreatedEvent evt, Void v) {
 		FridaSessionInfo info = evt.getInfo();
-		getEventListeners().fire.sessionAdded(info.session, FridaCause.Causes.UNCLAIMED);
-		getEventListeners().fire.sessionSelected(info.session, evt.getCause());
+		getEventListeners().invoke().sessionAdded(info.session, FridaCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().sessionSelected(info.session, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -821,8 +821,8 @@ public class FridaManagerImpl implements FridaManager {
 	 */
 	protected DebugStatus processSessionReplaced(FridaSessionReplacedEvent evt, Void v) {
 		FridaSessionInfo info = evt.getInfo();
-		getEventListeners().fire.sessionReplaced(info.session, FridaCause.Causes.UNCLAIMED);
-		getEventListeners().fire.sessionSelected(info.session, evt.getCause());
+		getEventListeners().invoke().sessionReplaced(info.session, FridaCause.Causes.UNCLAIMED);
+		getEventListeners().invoke().sessionSelected(info.session, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
@@ -835,10 +835,10 @@ public class FridaManagerImpl implements FridaManager {
 	 */
 	protected DebugStatus processSessionExited(FridaSessionExitedEvent evt, Void v) {
 		removeSession(evt.sessionId, FridaCause.Causes.UNCLAIMED);
-		getEventListeners().fire.sessionRemoved(evt.sessionId, evt.getCause());
-		getEventListeners().fire.threadExited(currentThread, currentProcess, evt.getCause());
-		getEventListeners().fire.processExited(currentProcess, evt.getCause());
-		getEventListeners().fire.processRemoved(currentProcess.getPID().toString(),
+		getEventListeners().invoke().sessionRemoved(evt.sessionId, evt.getCause());
+		getEventListeners().invoke().threadExited(currentThread, currentProcess, evt.getCause());
+		getEventListeners().invoke().processExited(currentProcess, evt.getCause());
+		getEventListeners().invoke().processRemoved(currentProcess.getPID().toString(),
 			evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
@@ -855,7 +855,7 @@ public class FridaManagerImpl implements FridaManager {
 		long n = info.getNumberOfModules();
 		FridaProcess process = info.getProcess();
 		for (int i = 0; i < n; i++) {
-			getEventListeners().fire.moduleLoaded(process, info, i, evt.getCause());
+			getEventListeners().invoke().moduleLoaded(process, info, i, evt.getCause());
 		}
 		return statusMap.get(evt.getClass());
 	}
@@ -872,7 +872,7 @@ public class FridaManagerImpl implements FridaManager {
 		long n = info.getNumberOfModules();
 		FridaProcess process = info.getProcess();
 		for (int i = 0; i < n; i++) {
-			getEventListeners().fire.moduleReplaced(process, info, i, evt.getCause());
+			getEventListeners().invoke().moduleReplaced(process, info, i, evt.getCause());
 		}
 		return statusMap.get(evt.getClass());
 	}
@@ -889,7 +889,7 @@ public class FridaManagerImpl implements FridaManager {
 		long n = info.getNumberOfModules();
 		FridaProcess process = info.getProcess();
 		for (int i = 0; i < n; i++) {
-			getEventListeners().fire.moduleUnloaded(process, info, i, evt.getCause());
+			getEventListeners().invoke().moduleUnloaded(process, info, i, evt.getCause());
 		}
 		return statusMap.get(evt.getClass());
 	}
@@ -906,7 +906,7 @@ public class FridaManagerImpl implements FridaManager {
 		long n = info.getNumberOfRegions();
 		FridaProcess process = info.getProcess();
 		for (int i = 0; i < n; i++) {
-			getEventListeners().fire.regionAdded(process, info, i, evt.getCause());
+			getEventListeners().invoke().regionAdded(process, info, i, evt.getCause());
 		}
 		return statusMap.get(evt.getClass());
 	}
@@ -923,7 +923,7 @@ public class FridaManagerImpl implements FridaManager {
 		long n = info.getNumberOfRegions();
 		FridaProcess process = info.getProcess();
 		for (int i = 0; i < n; i++) {
-			getEventListeners().fire.regionReplaced(process, info, i, evt.getCause());
+			getEventListeners().invoke().regionReplaced(process, info, i, evt.getCause());
 		}
 		return statusMap.get(evt.getClass());
 	}
@@ -940,7 +940,7 @@ public class FridaManagerImpl implements FridaManager {
 		long n = info.getNumberOfRegions();
 		FridaProcess process = info.getProcess();
 		for (int i = 0; i < n; i++) {
-			getEventListeners().fire.regionRemoved(process, info, i, evt.getCause());
+			getEventListeners().invoke().regionRemoved(process, info, i, evt.getCause());
 		}
 		return statusMap.get(evt.getClass());
 	}
@@ -1000,13 +1000,13 @@ public class FridaManagerImpl implements FridaManager {
 	 */
 	protected DebugStatus processSessionSelected(FridaSessionSelectedEvent evt, Void v) {
 		FridaSession session = evt.getSession();
-		getEventListeners().fire.sessionSelected(session, evt.getCause());
+		getEventListeners().invoke().sessionSelected(session, evt.getCause());
 		return statusMap.get(evt.getClass());
 	}
 
 	protected void processConsoleOutput(FridaConsoleOutputEvent evt, Void v) {
 		if (evt.getOutput() != null) {
-			getEventListeners().fire.consoleOutput(evt.getOutput(), evt.getMask());
+			getEventListeners().invoke().consoleOutput(evt.getOutput(), evt.getMask());
 		}
 	}
 
@@ -1195,7 +1195,7 @@ public class FridaManagerImpl implements FridaManager {
 	public CompletableFuture<Void> console(String command) {
 		if (continuation != null) {
 			String prompt = command.equals("") ? FridaModelTargetInterpreter.FRIDA_PROMPT : ">>>";
-			getEventListeners().fire.promptChanged(prompt);
+			getEventListeners().invoke().promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);
 			return AsyncUtils.nil();

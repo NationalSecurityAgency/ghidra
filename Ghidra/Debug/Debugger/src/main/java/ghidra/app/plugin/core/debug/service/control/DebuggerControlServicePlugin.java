@@ -213,7 +213,7 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 	private final Map<Trace, ControlMode> currentModes = new HashMap<>();
 
 	private final ListenerSet<ControlModeChangeListener> listeners =
-		new ListenerSet<>(ControlModeChangeListener.class);
+		new ListenerSet<>(ControlModeChangeListener.class, true);
 
 	@Override
 	public ControlMode getCurrentMode(Trace trace) {
@@ -232,7 +232,7 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 			}
 		}
 		if (newMode != oldMode) {
-			listeners.fire.modeChanged(trace, newMode);
+			listeners.invoke().modeChanged(trace, newMode);
 			tool.contextChanged(null);
 		}
 	}
@@ -280,7 +280,7 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 			}
 		}
 		if (newMode != oldMode) {
-			listeners.fire.modeChanged(trace, newMode);
+			listeners.invoke().modeChanged(trace, newMode);
 			tool.contextChanged(null);
 		}
 	}

@@ -27,15 +27,8 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.trace.model.Trace;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo(
-	shortDescription = "Debugger targets manager service",
-	description = "Maintains a collection of published targets and notifies listeners of changes.",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.RELEASED,
-	servicesProvided = {
-		DebuggerTargetService.class,
-	})
+@PluginInfo(shortDescription = "Debugger targets manager service", description = "Maintains a collection of published targets and notifies listeners of changes.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, servicesProvided = {
+	DebuggerTargetService.class, })
 public class DebuggerTargetServicePlugin extends Plugin implements DebuggerTargetService {
 
 	public DebuggerTargetServicePlugin(PluginTool tool) {
@@ -44,7 +37,7 @@ public class DebuggerTargetServicePlugin extends Plugin implements DebuggerTarge
 
 	private final Map<Trace, Target> targets = new HashMap<>();
 	private final ListenerSet<TargetPublicationListener> listeners =
-		new ListenerSet<>(TargetPublicationListener.class);
+		new ListenerSet<>(TargetPublicationListener.class, true);
 
 	@Override
 	public void publishTarget(Target target) {
@@ -53,7 +46,7 @@ public class DebuggerTargetServicePlugin extends Plugin implements DebuggerTarge
 			notify = targets.put(target.getTrace(), target) != target;
 		}
 		if (notify) {
-			listeners.fire.targetPublished(target);
+			listeners.invoke().targetPublished(target);
 		}
 	}
 
@@ -64,7 +57,7 @@ public class DebuggerTargetServicePlugin extends Plugin implements DebuggerTarge
 			notify = targets.remove(target.getTrace()) == target;
 		}
 		if (notify) {
-			listeners.fire.targetWithdrawn(target);
+			listeners.invoke().targetWithdrawn(target);
 		}
 	}
 

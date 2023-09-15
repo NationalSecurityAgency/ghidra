@@ -124,7 +124,7 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 			getParentThread().getThread().writeRegisters(toWrite).handle(seq::next);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).then(seq -> {
-			manager.getEventListeners().fire.threadStateChanged(thread, thread.getState(),
+			manager.getEventListeners().invoke().threadStateChanged(thread, thread.getState(),
 				DbgCause.Causes.UNCLAIMED, DbgReason.Reasons.NONE);
 			broadcast().registersUpdated(getProxy(), values);
 			seq.exit();

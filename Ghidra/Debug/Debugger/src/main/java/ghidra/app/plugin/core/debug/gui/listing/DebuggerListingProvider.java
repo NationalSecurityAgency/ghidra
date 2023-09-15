@@ -217,7 +217,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			trackingLabel.setText("");
 			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
-			trackingSpecChangeListeners.fire.locationTrackingSpecChanged(spec);
+			trackingSpecChangeListeners.invoke().locationTrackingSpecChanged(spec);
 		}
 
 		@Override
@@ -291,7 +291,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected final ForListingReadsMemoryTrait readsMemTrait;
 
 	protected final ListenerSet<LocationTrackingSpecChangeListener> trackingSpecChangeListeners =
-		new ListenerSet<>(LocationTrackingSpecChangeListener.class);
+		new ListenerSet<>(LocationTrackingSpecChangeListener.class, true);
 
 	protected final DebuggerLocationLabel locationLabel = new DebuggerLocationLabel();
 	protected final JLabel trackingLabel = new JLabel();

@@ -174,12 +174,12 @@ public interface DbgModelTargetBreakpointSpec extends //
 
 	/**
 	 * Update the enabled field
-	 * 
+	 *
 	 * <p>
 	 * This does not actually toggle the breakpoint. It just updates the field and calls the proper
 	 * listeners. To actually toggle the breakpoint, use {@link #toggle(boolean)} instead, which if
 	 * effective, should eventually cause this method to be called.
-	 * 
+	 *
 	 * @param enabled true if enabled, false if disabled
 	 * @param reason a description of the cause (not really used, yet)
 	 */
@@ -207,8 +207,8 @@ public interface DbgModelTargetBreakpointSpec extends //
 	public default void breakpointHit() {
 		DbgModelTargetThread targetThread =
 			getParentProcess().getThreads().getTargetThread(getManager().getEventThread());
-		getActions().fire.breakpointHit((DbgModelTargetBreakpointSpec) getProxy(), targetThread,
-			null, this);
+		getActions().invoke()
+				.breakpointHit((DbgModelTargetBreakpointSpec) getProxy(), targetThread, null, this);
 	}
 
 }
