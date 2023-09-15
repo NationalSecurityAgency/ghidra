@@ -112,6 +112,11 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 		return originalSpace.isMemorySpace() && !originalSpace.isOverlaySpace();
 	}
 
+	protected boolean assignUniqueID(AddressSpace originalSpace) {
+		return originalSpace.getType() == AddressSpace.TYPE_RAM ||
+			originalSpace.getType() == AddressSpace.TYPE_OTHER;
+	}
+
 	/**
 	 * Create a new OverlayAddressSpace based upon the given overlay blockName and base AddressSpace
 	 * 
@@ -149,8 +154,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 		}
 
 		int unique = 0;
-		if (originalSpace.getType() == AddressSpace.TYPE_RAM ||
-			originalSpace.getType() == AddressSpace.TYPE_OTHER) {
+		if (assignUniqueID(originalSpace)) {
 			unique = getNextUniqueID();
 		}
 

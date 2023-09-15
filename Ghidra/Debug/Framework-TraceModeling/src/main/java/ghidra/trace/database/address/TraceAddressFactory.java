@@ -34,6 +34,12 @@ public class TraceAddressFactory extends ProgramAddressFactory {
 			!originalSpace.isOverlaySpace();
 	}
 
+	@Override
+	protected boolean assignUniqueID(AddressSpace originalSpace) {
+		return super.assignUniqueID(originalSpace) ||
+			originalSpace.getType() == AddressSpace.TYPE_REGISTER;
+	}
+
 	@Override // for peer access
 	protected OverlayAddressSpace addOverlayAddressSpace(String name, boolean preserveName,
 			AddressSpace originalSpace, long minOffset, long maxOffset) {
