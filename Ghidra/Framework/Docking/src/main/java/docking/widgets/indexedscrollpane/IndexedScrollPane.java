@@ -57,7 +57,7 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 	}
 
 	/**
-	 * Sets this scroll pane to never show scroll bars.  This is useful when you want a container
+	 * Sets this scroll pane to never show scroll bars. This is useful when you want a container
 	 * whose view is always as big as the component in this scroll pane.
 	 */
 	public void setNeverScroll(boolean b) {
@@ -65,6 +65,20 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		useViewSizeAsPreferredSize = b;
+	}
+
+	/**
+	 * @see JScrollPane#setVerticalScrollBarPolicy(int)
+	 */
+	public void setVerticalScrollBarPolicy(int policy) {
+		scrollPane.setVerticalScrollBarPolicy(policy);
+	}
+
+	/**
+	 * @see JScrollPane#setHorizontalScrollBarPolicy(int)
+	 */
+	public void setHorizontalScrollBarPolicy(int policy) {
+		scrollPane.setHorizontalScrollBarPolicy(policy);
 	}
 
 	private ViewToIndexMapper createIndexMapper() {
@@ -215,6 +229,7 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 			return false;
 		}
 
+		@Override
 		public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation,
 				int direction) {
 
@@ -296,8 +311,8 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 
 	/**
 	 * Sets whether the scroll wheel triggers scrolling <b>when over the scroll pane</b> of this
-	 * class.   When disabled, scrolling will still work when over the component inside of 
-	 * this class, but not when over the scroll bar.
+	 * class. When disabled, scrolling will still work when over the component inside of this class,
+	 * but not when over the scroll bar.
 	 * 
 	 * @param enabled true to enable
 	 */

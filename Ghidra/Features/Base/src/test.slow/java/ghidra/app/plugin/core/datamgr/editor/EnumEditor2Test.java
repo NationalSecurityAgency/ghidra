@@ -66,6 +66,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		Category cat = program.getListing()
 				.getDataTypeManager()
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+
 		Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -102,6 +103,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		Category cat = program.getListing()
 				.getDataTypeManager()
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+
 		Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -185,6 +187,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		Category cat = program.getListing()
 				.getDataTypeManager()
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+
 		Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -230,6 +233,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		Category cat = program.getListing()
 				.getDataTypeManager()
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+
 		Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -484,6 +488,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		Category cat = program.getListing()
 				.getDataTypeManager()
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+
 		Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -526,6 +531,48 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		assertFalse(getApplyAction().isEnabled());
 
+	}
+
+	@Test
+	public void testNameTrim() throws Exception {
+
+		Enum enummDt = editSampleEnum();
+
+		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
+		String newName = "   MyNewName  ";
+		runSwing(() -> {
+			JTextField nameField = getTextField(panel, "Name");
+			nameField.setText(newName);
+		});
+
+		DockingActionIf applyAction = getAction(plugin, "Editor: Apply Enum Changes");
+		assertTrue(applyAction.isEnabled());
+
+		performAction(applyAction);
+		waitForProgram(program);
+
+		assertEquals(newName.trim(), enummDt.getName());
+	}
+
+	@Test
+	public void testDescriptionTrim() throws Exception {
+
+		Enum enummDt = editSampleEnum();
+
+		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
+		String newDescription = "   My new description  ";
+		runSwing(() -> {
+			JTextField nameField = getTextField(panel, "Description");
+			nameField.setText(newDescription);
+		});
+
+		DockingActionIf applyAction = getAction(plugin, "Editor: Apply Enum Changes");
+		assertTrue(applyAction.isEnabled());
+
+		performAction(applyAction);
+		waitForProgram(program);
+
+		assertEquals(newDescription.trim(), enummDt.getDescription());
 	}
 
 	@Test
@@ -775,8 +822,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		return null;
 	}
 
-	private void addEntry(JTable table, EnumTableModel model, String name,
-			long value) throws Exception {
+	private void addEntry(JTable table, EnumTableModel model, String name, long value)
+			throws Exception {
 		runSwing(() -> {
 			int lastRow = model.getRowCount() - 1;
 			if (lastRow >= 0) {
@@ -868,6 +915,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		Category cat = program.getListing()
 				.getDataTypeManager()
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+
 		Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);

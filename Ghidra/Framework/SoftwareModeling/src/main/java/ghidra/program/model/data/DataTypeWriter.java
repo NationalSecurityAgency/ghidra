@@ -531,6 +531,12 @@ public class DataTypeWriter {
 				name += getArrayDimensions(array);
 				dataType = getArrayBaseType(array);
 			}
+			else if (dataType instanceof Pointer ptr &&
+				getPointerBaseDataType(ptr) instanceof Array array) {
+				name = "(%s%s)%s".formatted("*".repeat(getPointerDepth(ptr)), name,
+					getArrayDimensions(array));
+				dataType = getArrayBaseType(array);
+			}
 
 			DataType baseDataType = getBaseDataType(dataType);
 			if (baseDataType instanceof FunctionDefinition) {

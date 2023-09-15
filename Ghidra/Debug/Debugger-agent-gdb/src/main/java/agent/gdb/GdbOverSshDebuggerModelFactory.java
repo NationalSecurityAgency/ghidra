@@ -19,12 +19,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.model.impl.GdbModelImpl;
-import agent.gdb.pty.ssh.GhidraSshPtyFactory;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ShellUtils;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 import ghidra.program.model.listing.Program;
+import ghidra.pty.ssh.GhidraSshPtyFactory;
 
 @FactoryDescription(
 	brief = "gdb via SSH",

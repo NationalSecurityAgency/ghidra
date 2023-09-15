@@ -71,12 +71,13 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext {
 			--relIndex;
 		}
 		// look for hi20 relocation
-		while (relIndex < relocations.length && relocations[relIndex - 1].getOffset() == symValue) {
+		while (relIndex < relocations.length && relocations[relIndex].getOffset() == symValue) {
 			int type = relocations[relIndex].getType();
 			if ((type == RISCV_ElfRelocationConstants.R_RISCV_PCREL_HI20) ||
 				(type == RISCV_ElfRelocationConstants.R_RISCV_GOT_HI20)) {
 				return relocations[relIndex];
 			}
+			++relIndex;
 		}
 		return null;
 	}

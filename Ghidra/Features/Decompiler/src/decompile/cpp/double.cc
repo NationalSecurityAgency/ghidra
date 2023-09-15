@@ -285,7 +285,8 @@ bool SplitVarnode::findWholeSplitToPieces(void)
     }
     if (subhi->code() != CPUI_SUBPIECE) return false;
     if (subhi->getIn(1)->getOffset() != wholesize - hi->getSize()) return false;
-    whole = subhi->getIn(0);
+    Varnode *putativeWhole = subhi->getIn(0);
+    if (putativeWhole->getSize() != wholesize) return false;
     if (!lo->isWritten()) return false;
     PcodeOp *sublo = lo->getDef();
     if (sublo->code() == CPUI_COPY) { // Go thru one level of copy, if the piece is addrtied
@@ -294,14 +295,11 @@ bool SplitVarnode::findWholeSplitToPieces(void)
       sublo = otherlo->getDef();
     }
     if (sublo->code() != CPUI_SUBPIECE) return false;
-    Varnode *res = sublo->getIn(0);
-    if (whole == (Varnode*)0)
-      whole = res;
-    else if (whole != res)
+    if (putativeWhole != sublo->getIn(0))
       return false;		// Doesn't match between pieces
     if (sublo->getIn(1)->getOffset() != 0)
       return false;
-    if (whole == (Varnode*)0) return false;
+    whole = putativeWhole;
   }
 
   if (whole->isWritten()) {

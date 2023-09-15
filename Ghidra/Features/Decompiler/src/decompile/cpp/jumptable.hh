@@ -323,9 +323,19 @@ public:
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)=0;
 
   virtual JumpModel *clone(JumpTable *jt) const=0;	///< Clone \b this model
-  virtual void clear(void) {}				///< Clear any non-permanent aspects of the model
-  virtual void encode(Encoder &encoder) const {} 	///< Encode this model to a stream
-  virtual void decode(Decoder &decoder) {}		///< Decode \b this model from a stream
+
+  /// \brief Clear any non-permanent aspects of the model
+  virtual void clear(void) {}
+
+  /// \brief Encode \b this model to a stream
+  ///
+  /// \param encoder is the stream encoder
+  virtual void encode(Encoder &encoder) const {}
+
+  /// \brief Decode \b this model from a stream
+  ///
+  /// \param decoder is the stream decoder
+  virtual void decode(Decoder &decoder) {}
 };
 
 /// \brief A trivial jump-table model, where the BRANCHIND input Varnode is the switch variable

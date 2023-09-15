@@ -35,7 +35,7 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.AddressCorrelation;
 import ghidra.program.util.ProgramLocation;
 
-public interface VTController {
+public interface VTController extends VTSessionSupplier {
 
 	public static final String VERSION_TRACKING_OPTIONS_NAME = "Version Tracking";
 
@@ -43,8 +43,7 @@ public interface VTController {
 
 	public void removeListener(VTControllerListener listener);
 
-//	public VTSessionState getSessionState();
-
+	@Override
 	public VTSession getSession();
 
 	public void openVersionTrackingSession(DomainFile domainFile);
@@ -110,6 +109,7 @@ public interface VTController {
 	/**
 	 * Runs VT tasks, listening for destination program changes and updates undo/redo state
 	 * accordingly.
+	 * @param task the task
 	 */
 	public void runVTTask(VtTask task);
 

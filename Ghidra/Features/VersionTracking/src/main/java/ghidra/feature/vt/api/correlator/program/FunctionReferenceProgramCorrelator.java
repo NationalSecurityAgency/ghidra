@@ -17,7 +17,6 @@ package ghidra.feature.vt.api.correlator.program;
 
 import ghidra.feature.vt.api.main.VTAssociationType;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
@@ -29,7 +28,6 @@ public class FunctionReferenceProgramCorrelator extends VTAbstractReferenceProgr
 
 	/**
 	 * Function Reference Correlator class constructor.
-	 * @param serviceProvider The {@code ServiceProvider}.
 	 * @param sourceProgram The source {@code Program}.
 	 * @param sourceAddressSet The {@code AddressSetView} for the source program.
 	 * @param destinationProgram The destination {@code Program}.
@@ -37,12 +35,11 @@ public class FunctionReferenceProgramCorrelator extends VTAbstractReferenceProgr
 	 * @param correlatorName The correlator name string passed from the factory.
 	 * @param options {@code ToolOptions}
 	 */
-	public FunctionReferenceProgramCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram,
+	public FunctionReferenceProgramCorrelator(Program sourceProgram,
 			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, String correlatorName, ToolOptions options) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, correlatorName, options);
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet,
+			correlatorName, options);
 	}
 
 	@Override

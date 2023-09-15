@@ -134,7 +134,11 @@ public class VerticalLayoutTextField implements TextField {
 		StringBuilder buf = new StringBuilder();
 		int n = elements.size() - 1;
 		for (int i = 0; i < n; i++) {
-			buf.append(elements.get(i).getText()).append(delimiter);
+			String text = elements.get(i).getText();
+			buf.append(text);
+			if (!text.endsWith(delimiter)) { // prevent 2 spaces between merged lines
+				buf.append(delimiter);
+			}
 		}
 		buf.append(elements.get(n).getText());
 		return buf.toString();

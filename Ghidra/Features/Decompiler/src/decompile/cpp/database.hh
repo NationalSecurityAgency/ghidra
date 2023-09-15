@@ -709,7 +709,13 @@ public:
 
   virtual void encode(Encoder &encoder) const=0;	///< Encode \b this as a \<scope> element
   virtual void decode(Decoder &decoder)=0;		///< Decode \b this Scope from a \<scope> element
-  virtual void decodeWrappingAttributes(Decoder &decoder) {}	///< Restore attributes for \b this Scope from wrapping element
+
+  /// \brief Restore attributes for \b this from a parent element that is not a Scope
+  ///
+  /// Attributes are read from the (already opened) element, prior to reading reading the
+  /// \<scope> element specific to \b this Scope
+  /// \param decoder is the stream decoder
+  virtual void decodeWrappingAttributes(Decoder &decoder) {}
   virtual void printEntries(ostream &s) const=0;	///< Dump a description of all SymbolEntry objects to a stream
 
   /// \brief Get the number of Symbols in the given category

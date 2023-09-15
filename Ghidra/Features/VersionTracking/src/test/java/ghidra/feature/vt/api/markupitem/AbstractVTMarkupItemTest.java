@@ -17,8 +17,7 @@ package ghidra.feature.vt.api.markupitem;
 
 import static ghidra.feature.vt.db.VTTestUtils.*;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.test.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -361,7 +359,7 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 			testTransactionID = db.startTransaction("Test Match Set Setup");
 			VTMatchInfo matchInfo = createRandomMatch(sourceAddress, destinationAddress, db);
 			VTMatchSet matchSet = db.createMatchSet(
-				createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 			VTMatch addedMatch = matchSet.addMatch(matchInfo);
 
 			// Association markupItemManger expects all markups to be generated though it.

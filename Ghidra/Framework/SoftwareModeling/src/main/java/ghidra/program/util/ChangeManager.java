@@ -661,17 +661,22 @@ public interface ChangeManager {
 	 */
 	public final static int DOCR_FLOWOVERRIDE_CHANGED = 163;
 
+	/**
+	 * An instruction length override was changed for an instruction.
+	 */
+	public final static int DOCR_LENGTH_OVERRIDE_CHANGED = 164;
+
 	////////////////////////////////////////////////////////////////////////////
 
 	/**
 	 * A custom format for a data type was added.
 	 */
-	public final static int DOCR_CUSTOM_FORMAT_ADDED = 164;
+	public final static int DOCR_CUSTOM_FORMAT_ADDED = 165;
 
 	/**
 	 * A custom format for a data type was removed.
 	 */
-	public final static int DOCR_CUSTOM_FORMAT_REMOVED = 165;
+	public final static int DOCR_CUSTOM_FORMAT_REMOVED = 166;
 
 	////////////////////////////////////////////////////////////////////////////
 	//
@@ -682,17 +687,17 @@ public interface ChangeManager {
 	/**
 	 * An AddressSetPropertyMap was added.
 	 */
-	public final static int DOCR_ADDRESS_SET_PROPERTY_MAP_ADDED = 166;
+	public final static int DOCR_ADDRESS_SET_PROPERTY_MAP_ADDED = 167;
 
 	/**
 	 * An AddressSetPropertyMap was removed.
 	 */
-	public final static int DOCR_ADDRESS_SET_PROPERTY_MAP_REMOVED = 167;
+	public final static int DOCR_ADDRESS_SET_PROPERTY_MAP_REMOVED = 168;
 
 	/**
 	 * An AddressSetPropertyMap was changed.
 	 */
-	public final static int DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED = 168;
+	public final static int DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED = 169;
 
 	/**
 	 * An IntAddressSetPropertyMap was added.

@@ -25,6 +25,12 @@ define alignment=2;
 @define REGISTER_SPACE "mem"
 @endif
 
+# NOTE: DATASIZE other than 2 is not supported yet
+#       more changes to mem load/store are necessary
+@ifndef DATASIZE
+@define DATASIZE "2"
+@endif
+
 # mem space should really be the default, but the loading scripts will
 # prefer the code space as the default.  By being explicit for every
 # instruction, we can eliminate the ambiguity for at least the
@@ -34,7 +40,7 @@ define alignment=2;
 
 define space code type=ram_space size=$(PCBYTESIZE) wordsize=2 default;
 define space register type=register_space size=2;
-define space mem type=ram_space size=2 wordsize=1;
+define space mem type=ram_space size=$(DATASIZE) wordsize=1;
 
 # this is a byte address space that should be overlayed on top of the code space
 define space codebyte type=ram_space size=$(PCBYTESIZE) wordsize=1;
@@ -476,8 +482,8 @@ abs22dst: byteOffset  is (op4to8 & opbit0; next16) & abs22addr [ byteOffset = ((
 
 next16memPtrVal1: next16  is next16 { export *[mem]:1 next16; }
 
-@if PCBYTESIZE == "3"
-next24memPtrVal1: next24  is next16 [next24 = (RAMPD << 16) | next16;] { export *[mem]:1 next24; }
+@if DATASIZE == "3"
+next24constVal: next16  is next16 { export *[const]:$(DATASIZE) next16; }
 @endif
 
 @ifdef FUSION
@@ -874,26 +880,35 @@ LdPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
 	RdFull = *[mem]:1 tmp;
 }
 
+@ifndef AVTINY
 # ldd Rd,Y+q
 # ldd Rd,Z+q
 LddYZq: Rstq^"+"^q6 is phase=1 & Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
 :ldd RdFull,LddYZq is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=0 & opbit3 & LddYZq & RdFull {
   RdFull = *[mem]:1 LddYZq;
 }
+@endif
 
 # Rd,K
 :ldi RdHi,K8                     is phase=1 & ophi4=0xe & RdHi & K8 {
 	RdHi = K8;
 }
 
-@if PCBYTESIZE == "2"
+
+@ifdef AVTINY
+# lds Rd,k
+:lds RdHi,K7addr is phase=1 & ophi5=0x14 & RdHi & K7addr { 
+  RdHi = K7addr;
+}
+@elif DATASIZE == "2"
 # lds Rd,k
 :lds RdFull,next16memPtrVal1     is phase=1 & ophi7=0x48 & oplow4=0 & RdFull; next16memPtrVal1 {
 	RdFull = next16memPtrVal1;
 }
 @else
-:lds RdFull,next24memPtrVal1     is phase=1 & ophi7=0x48 & oplow4=0 & RdFull; next24memPtrVal1 {
-	RdFull = next24memPtrVal1;
+:lds RdFull,next24constVal     is phase=1 & ophi7=0x48 & oplow4=0 & RdFull; next24constVal {
+	local loc:$(DATASIZE) = (zext(RAMPD) << 16 | next24constVal);
+	RdFull = *[mem]:1 loc;
 }
 @endif
 
@@ -905,11 +920,6 @@ LddYZq: Rstq^"+"^q6 is phase=1 & Rstq & q6 { local ptr = Rstq + zext(q6); export
 }
 
 @endif
-# lds Rd,k   Seem to get some problems here... but 16-bit instruction isn't available on all atmega64.
-#  Furthermore, it will sometimes conflict with ldd Z+q for q=0x2_
-:lds RdHi,K7addr is phase=1 & ophi5=0x14 & RdHi & K7addr { 
-  RdHi = K7addr;
-}
 
 # lpm R0
 :lpm R0                          is phase=1 & ophi16=0x95c8 & R0 {
@@ -931,6 +941,7 @@ LpmPlus: Z^"+" is Z {}
   RdFull = *[codebyte]:$(PCBYTESIZE) ptr;
   Z = Z + 1;
 }
+
 # lsl  - just an assembly mnemonic for add
 :lsr RdFull                      is phase=1 & ophi7=0x4a & oplow4=0x6 & RdFull {
 	$(Cflag) = RdFull & 0x01;
@@ -1145,16 +1156,30 @@ StPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
 	*[mem]:1 tmp = RdFull;
 }
 
+@ifndef AVTINY
 # std Rd,Y+q
 # std Rd,Z+q
 StdYZq:  Rstq^"+"^q6  is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
 :std StdYZq, RdFull               is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=1 & RdFull & opbit3 & StdYZq {
 	*[mem]:1 StdYZq = RdFull;
 }
+@endif
 
+@ifdef AVTINY
+# see manual for computation of address for 16-bit STS
+:sts K7addr, RdHi      is phase=1 & ophi5=0x15 & RdHi & K7addr { 
+	K7addr = RdHi;
+}
+@elif DATASIZE == "2"
 :sts next16memPtrVal1,RdFull     is phase=1 & ophi7=0x49 & oplow4=0 & RdFull; next16memPtrVal1 {
 	next16memPtrVal1 = RdFull;
 }
+@else
+:sts next24constVal,RdFull     is phase=1 & ophi7=0x49 & oplow4=0 & RdFull; next24constVal {
+	local loc:3 = (zext(RAMPD) << 16) | next24constVal;
+	*[mem]:1 loc = RdFull;
+}
+@endif
 
 @ifdef FUSION
 # sts ; sts   emits backwards with respect to lds; lds
@@ -1163,10 +1188,7 @@ StdYZq:  Rstq^"+"^q6  is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
 }
 
 @endif
-# see manual for computation of address for 16-bit STS
-:sts K7addr, RdHi      is phase=1 & ophi5=0x15 & RdHi & K7addr { 
-	K7addr = RdHi;
-}
+
 :sub RdFull,RrFull               is phase=1 & ophi6=0x6 & RdFull & RrFull {
 	doSubtract(RdFull,RrFull,RdFull);
 }

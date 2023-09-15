@@ -108,10 +108,12 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		if (isTransient) {
 			setTransient();
 		}
+		else {
+			addToToolbar();
+		}
 
 		setTitle(TITLE);
 		setIcon(new GIcon("icon.plugin.datatypes.provider"));
-		addToToolbar();
 
 		navigationHistory.setAllowDuplicates(true);
 
@@ -486,8 +488,8 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		previewScrollPane = new JScrollPane(previewPane);
 
 		DockingWindowManager.getHelpService()
-			.registerHelp(previewScrollPane,
-				new HelpLocation("DataTypeManagerPlugin", "Preview_Window"));
+				.registerHelp(previewScrollPane,
+					new HelpLocation("DataTypeManagerPlugin", "Preview_Window"));
 	}
 
 	private DataType locateDataType(HyperlinkEvent event) {

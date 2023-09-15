@@ -52,7 +52,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 	private final static String GROUP_TITLE = "Format Code";
 	private final static String FIELD_GROUP_TITLE = "Post-comments Field";
 	public final static String ENABLE_WORD_WRAP_MSG =
-		FIELD_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
+		FIELD_GROUP_TITLE + Options.DELIMITER + FieldUtils.WORD_WRAP_OPTION_NAME;
 	public final static String ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG =
 		FIELD_GROUP_TITLE + Options.DELIMITER + "Always Show the Automatic Comment";
 
@@ -177,12 +177,20 @@ public class PostCommentFieldFactory extends FieldFactory {
 			}
 		}
 
-		if (instr.isFallThroughOverridden()) {
+		if (instr.isLengthOverridden() || instr.isFallThroughOverridden()) {
 			Address fallThrough = instr.getFallThrough();
-			String fallthroughComment = "-- Fallthrough Override: " +
-				(fallThrough != null ? fallThrough.toString() : "NO-FALLTHROUGH");
+			String fallthroughComment =
+				"-- Fallthrough" + (instr.isFallThroughOverridden() ? " Override" : "") + ": " +
+					(fallThrough != null ? fallThrough.toString() : "NO-FALLTHROUGH");
 			comments.addFirst(fallthroughComment);
 		}
+
+		if (instr.isLengthOverridden()) {
+			String lengthOverrideComment = "-- Length Override: " + instr.getLength() +
+				" (actual length is " + instr.getParsedLength() + ")";
+			comments.addFirst(lengthOverrideComment);
+		}
+
 		FlowOverride flowOverride = instr.getFlowOverride();
 		if (flowOverride != FlowOverride.NONE) {
 			String flowOverrideComment =
@@ -516,11 +524,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 
 	private void init(Options options) {
 		options.registerOption(ENABLE_WORD_WRAP_MSG, false, null,
-			"Enables word wrapping in the pre-comments field.  " +
-				"If word wrapping is on, user enter" + " new lines are ignored and the entire " +
-				"comment is displayed in paragraph form. " + " If word wrapping is off, comments" +
-				" are displayed in line format however the user entered " +
-				"them.  Lines that are too long for the field, are truncated.");
+			FieldUtils.WORD_WRAP_OPTION_DESCRIPTION);
 
 		options.registerOption(FLAG_FUNCTION_EXIT_OPTION, false, null,
 			"Toggle for whether a post comment should be displayed " +

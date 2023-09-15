@@ -159,12 +159,12 @@ protected:
   void emitSymbolScope(const Symbol *symbol);			///< Emit tokens resolving a symbol's scope
   virtual void pushTypeStart(const Datatype *ct,bool noident);	///< Push part of a data-type declaration onto the RPN stack, up to the identifier
   virtual void pushTypeEnd(const Datatype *ct);			///< Push the tail ends of a data-type declaration onto the RPN stack
-  void pushBoolConstant(uintb val,const TypeBase *ct,const Varnode *vn,
-			  const PcodeOp *op);
-  void pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,
-			  const PcodeOp *op);
-  void pushEnumConstant(uintb val,const TypeEnum *ct,const Varnode *vn,
-			  const PcodeOp *op);
+  void pushBoolConstant(uintb val,const TypeBase *ct,tagtype tag,const Varnode *vn,
+			const PcodeOp *op);
+  void pushCharConstant(uintb val,const Datatype *ct,tagtype tag,const Varnode *vn,
+			const PcodeOp *op);
+  void pushEnumConstant(uintb val,const TypeEnum *ct,tagtype tag,const Varnode *vn,
+			const PcodeOp *op);
   virtual bool pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *vn,
 				   const PcodeOp *op);
   bool pushPtrCodeConstant(uintb val,const TypePointer *ct,const Varnode *vn,
@@ -196,10 +196,10 @@ protected:
   bool printCharacterConstant(ostream &s,const Address &addr,Datatype *charType) const;
   int4 getHiddenThisSlot(const PcodeOp *op,FuncProto *fc);	///< Get position of "this" pointer needing to be hidden
   void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
-  virtual void pushConstant(uintb val,const Datatype *ct,
+  virtual void pushConstant(uintb val,const Datatype *ct,tagtype tag,
 			    const Varnode *vn,const PcodeOp *op);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
-			    const Varnode *vn,const PcodeOp *op);
+			  const Varnode *vn,const PcodeOp *op);
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op);
   virtual void pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op);
   virtual void pushUnnamedLocation(const Address &addr,
@@ -209,10 +209,10 @@ protected:
   virtual void pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				  const Varnode *vn,const PcodeOp *op);
   virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);
-  virtual void push_integer(uintb val,int4 sz,bool sign,
+  virtual void push_integer(uintb val,int4 sz,bool sign,tagtype tag,
 			    const Varnode *vn,
 			    const PcodeOp *op);
-  virtual void push_float(uintb val,int4 sz,const Varnode *vn,
+  virtual void push_float(uintb val,int4 sz,tagtype tag,const Varnode *vn,
 			  const PcodeOp *op);
   virtual void printUnicode(ostream &s,int4 onechar) const;
   virtual void pushType(const Datatype *ct);

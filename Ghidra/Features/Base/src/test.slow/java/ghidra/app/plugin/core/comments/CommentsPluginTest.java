@@ -262,8 +262,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(17, browser.getCurrentFieldLoction().getRow());
 		assertEquals(4, browser.getCurrentFieldLoction().getCol());
 
-		assertEquals(3, browser2.getCurrentFieldLoction().getRow());
-		assertEquals(46, browser2.getCurrentFieldLoction().getCol());
+		assertEquals(4, browser2.getCurrentFieldLoction().getRow());
+		assertEquals(4, browser2.getCurrentFieldLoction().getCol());
 	}
 
 	@Test

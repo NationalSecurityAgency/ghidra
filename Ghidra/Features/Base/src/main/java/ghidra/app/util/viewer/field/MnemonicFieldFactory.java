@@ -120,7 +120,8 @@ public class MnemonicFieldFactory extends FieldFactory {
 		}
 		else if (cu instanceof Instruction) {
 			Instruction instr = (Instruction) cu;
-			if (instr.getFlowOverride() != FlowOverride.NONE || instr.isFallThroughOverridden()) {
+			if (instr.getFlowOverride() != FlowOverride.NONE || instr.isFallThroughOverridden() ||
+				instr.isLengthOverridden()) {
 				c = MnemonicColors.OVERRIDE;
 			}
 		}

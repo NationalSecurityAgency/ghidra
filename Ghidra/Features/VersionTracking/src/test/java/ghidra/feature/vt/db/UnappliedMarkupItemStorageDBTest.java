@@ -235,8 +235,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 		unappliedMarkupItem.setDestinationAddress(destinationAddress);
 
 		VTAssociationDB association = (VTAssociationDB) match.getAssociation();
-		Collection<VTMarkupItem> markupItems =
-			association.getMarkupItems(TaskMonitor.DUMMY);
+		Collection<VTMarkupItem> markupItems = association.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals(1, markupItems.size());
 		VTMarkupItem foundItem = markupItems.iterator().next();
 		Object storage = getInstanceField("markupItemStorage", foundItem);
@@ -256,8 +255,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
 		VTAssociationDB association = (VTAssociationDB) match.getAssociation();
-		Collection<VTMarkupItem> markupItems =
-			association.getMarkupItems(TaskMonitor.DUMMY);
+		Collection<VTMarkupItem> markupItems = association.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals(1, markupItems.size());
 		VTMarkupItem foundItem = markupItems.iterator().next();
 		Object storage = getInstanceField("markupItemStorage", foundItem);
@@ -268,7 +266,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 	private VTMatch createMatchSetWithOneMatch() {
 		VTMatchInfo matchInfo = createRandomMatch(db);
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 		return matchSet.addMatch(matchInfo);
 	}
 

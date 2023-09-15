@@ -28,7 +28,6 @@ import generic.lsh.vector.VectorCompare;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -48,18 +47,15 @@ public class SimilarDataProgramCorrelator extends VTAbstractProgramCorrelator {
 	int featureID = 0;
 	int minDataLength;
 
-	public SimilarDataProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
-			AddressSetView sourceAddressSet, Program destinationProgram,
-			AddressSetView destinationAddressSet, ToolOptions options) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
+	public SimilarDataProgramCorrelator(Program sourceProgram, AddressSetView sourceAddressSet,
+			Program destinationProgram, AddressSetView destinationAddressSet, ToolOptions options) {
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 	}
 
 	@Override
 	protected void doCorrelate(VTMatchSet matchSet, TaskMonitor monitor) throws CancelledException {
-		minDataLength =
-			getOptions().getInt(SimilarDataProgramCorrelatorFactory.MIN_NAME_LENGTH,
-				SimilarDataProgramCorrelatorFactory.MIN_NAME_LENGTH_DEFAULT);
+		minDataLength = getOptions().getInt(SimilarDataProgramCorrelatorFactory.MIN_NAME_LENGTH,
+			SimilarDataProgramCorrelatorFactory.MIN_NAME_LENGTH_DEFAULT);
 		boolean skipHomogenousData =
 			getOptions().getBoolean(SimilarDataProgramCorrelatorFactory.SKIP_HOMOGENOUS_DATA,
 				SimilarDataProgramCorrelatorFactory.SKIP_HOMOGENOUS_DATA_DEFAULT);

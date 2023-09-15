@@ -781,7 +781,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 	private VTMatch createMatch(Address sourceAddress, Address destinationAddress,
 			boolean setAccepted) throws VTAssociationStatusException {
 		VTProgramCorrelator correlator =
-			VTTestUtils.createProgramCorrelator(null, sourceProgram, destinationProgram);
+			VTTestUtils.createProgramCorrelator(sourceProgram, destinationProgram);
 
 		String transactionName = "Blocked Test";
 		int startTransaction = session.startTransaction(transactionName);
@@ -826,7 +826,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 	private void runAutoVTCommand(double minReferenceCorrelatorScore,
 			double minReferenceCorrelatorConfidence) {
 
-		AutoVersionTrackingTask task = new AutoVersionTrackingTask(controller, session,
+		AutoVersionTrackingTask task = new AutoVersionTrackingTask(session, controller.getOptions(),
 			minReferenceCorrelatorScore, minReferenceCorrelatorConfidence);
 		TaskLauncher.launch(task);
 		waitForSession();

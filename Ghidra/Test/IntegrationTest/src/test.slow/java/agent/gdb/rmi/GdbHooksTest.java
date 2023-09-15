@@ -15,8 +15,7 @@
  */
 package agent.gdb.rmi;
 
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
@@ -24,7 +23,9 @@ import java.util.List;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.testutil.DummyProc;
@@ -37,6 +38,7 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.time.TraceSnapshot;
 
+@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class GdbHooksTest extends AbstractGdbTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 20000;
 	private static final long RETRY_MS = 500;

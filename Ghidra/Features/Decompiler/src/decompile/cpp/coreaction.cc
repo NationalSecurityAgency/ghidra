@@ -1023,6 +1023,28 @@ AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vec
   return resSpace;
 }
 
+/// \brief Check if we need to try to infer a constant pointer from the input of the given COPY
+///
+/// In general, we do want try, but there is a special case where the COPY feeds into a RETURN and
+/// the function does \e not return a pointer.  We also consider the \b infer_pointers boolean.
+/// \param op is the given COPY op
+/// \param data is the function
+/// \return \b true if we should try to infer
+bool ActionConstantPtr::checkCopy(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *vn = op->getOut();
+  PcodeOp *retOp = vn->loneDescend();
+  if (retOp != (PcodeOp *)0 && retOp->code() == CPUI_RETURN && data.getFuncProto().isOutputLocked()) {
+    type_metatype meta = data.getFuncProto().getOutput()->getType()->getMetatype();
+    if (meta != TYPE_PTR && meta != TYPE_UNKNOWN) {
+      return false;		// Do NOT infer, we know the constant can't be pointer
+    }
+    return true;		// Try to infer, regardless of infer_pointers config, because we KNOW it is a pointer
+  }
+  return data.getArch()->infer_pointers;
+}
+
 /// \brief Determine if given Varnode might be a pointer constant.
 ///
 /// If it is a pointer, return the symbol it points to, or NULL otherwise. If it is determined
@@ -1054,23 +1076,36 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     // Check if the constant is involved in a potential pointer expression
     // as the base
     switch(op->code()) {
-    case CPUI_RETURN:
     case CPUI_CALL:
     case CPUI_CALLIND:
-      // A constant parameter or return value could be a pointer
-      if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+    {
       if (slot==0)
+	return (SymbolEntry *)0;
+      // A constant parameter could be a pointer
+      FuncCallSpecs *fc = data.getCallSpecs(op);
+      if (fc != (FuncCallSpecs *)0 && fc->isInputLocked() && fc->numParams() > slot-1) {
+	type_metatype meta = fc->getParam(slot-1)->getType()->getMetatype();
+	if (meta != TYPE_PTR && meta != TYPE_UNKNOWN) {
+	  return (SymbolEntry *)0;	// Definitely not passing a pointer
+	}
+      }
+      else if (!glb->infer_pointers)
+	return (SymbolEntry *)0;
+      break;
+    }
+    case CPUI_COPY:
+      if (!checkCopy(op, data))
 	return (SymbolEntry *)0;
       break;
     case CPUI_PIECE:
       // Pointers get concatenated in structures
-    case CPUI_COPY:
     case CPUI_INT_EQUAL:
     case CPUI_INT_NOTEQUAL:
     case CPUI_INT_LESS:
     case CPUI_INT_LESSEQUAL:
       // A comparison with a constant could be a pointer
+      if (!glb->infer_pointers)
+	return (SymbolEntry *)0;
       break;
     case CPUI_INT_ADD:
       outvn = op->getOut();
@@ -2922,20 +2957,9 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
       Varnode *rootVn = PieceNode::findRoot(vn);
       if (vn == rootVn) return -1;
       if (rootVn->getDef()->isPartialRoot()) {
-	// Getting PIECEd into a structured thing.  Unless vn is a leaf, it should be implicit
-	if (def->code() != CPUI_PIECE) return -1;
-	if (vn->loneDescend() == (PcodeOp *)0) return -1;
-	Varnode *vn0 = def->getIn(0);
-	Varnode *vn1 = def->getIn(1);
-	Address addr = vn->getAddr();
-	if (!addr.getSpace()->isBigEndian())
-	  addr = addr + vn1->getSize();
-	if (addr != vn0->getAddr()) return -1;
-	addr = vn->getAddr();
-	if (addr.getSpace()->isBigEndian())
-	  addr = addr + vn0->getSize();
-	if (addr != vn1->getAddr()) return -1;
-	// If we reach here vn is a non-leaf in a CONCAT tree and should be implicit
+	// Varnode is getting PIECEd into a structure.  All such PIECE operations should be explicit.
+	// Internal PIECE operations will be hidden.
+	return -1;
       }
     }
     else {
@@ -2947,12 +2971,13 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
     // or a dynamic mapping causing the bit to be set. In either case, it should probably be explicit
     return -1;
   }
-  else if (vn->isProtoPartial() && def->code() != CPUI_PIECE) {
-    // Varnode is part of structure. Write to structure should be an explicit statement
+  else if (vn->isProtoPartial()) {
+    // Varnode is getting PIECEd into a structure.  All such PIECE operations should be explicit.
+    // Internal PIECE operations will be hidden.
     return -1;
   }
-  else if (def->code() == CPUI_PIECE && def->getIn(0)->isProtoPartial() && !vn->isProtoPartial()) {
-    // The base of PIECE operations building a structure
+  else if (def->code() == CPUI_PIECE && def->getIn(0)->isProtoPartial()) {
+    // The base of PIECE operations building a structure should be explicit.
     return -1;
   }
   if (vn->hasNoDescend()) return -1;	// Must have at least one descendant

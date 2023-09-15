@@ -21,7 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.graph.exporter.*;
@@ -35,12 +36,7 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() throws Exception {
-
 		graph = createGraph();
-	}
-
-	@After
-	public void tearDown() {
 	}
 
 	@Test
@@ -48,12 +44,7 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 		CsvEdgeListGraphExporter exporter = new CsvEdgeListGraphExporter();
 		List<String> lines = doExport(exporter, graph);
 
-		assertOutput(lines,
-			"A,B",
-			"B,C",
-			"B,D",
-			"C,E",
-			"D,E");
+		assertOutput(lines, "A,B", "B,C", "B,D", "C,E", "D,E");
 	}
 
 	@Test
@@ -61,29 +52,15 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 		CsvAdjacencyListGraphExporter exporter = new CsvAdjacencyListGraphExporter();
 		List<String> lines = doExport(exporter, graph);
 
-		assertOutput(lines,
-			"A,B",
-			"B,C,D",
-			"C,E",
-			"D,E",
-			"E",
-			"F");
+		assertOutput(lines, "A,B", "B,C,D", "C,E", "D,E", "E", "F");
 	}
 
 	@Test
 	public void testDIMACS() throws Exception {
 		DimacsGraphExporter exporter = new DimacsGraphExporter();
 		List<String> lines = doExport(exporter, graph);
-		assertOutput(lines,
-			"c",
-			"c SOURCE: Generated using the JGraphT library",
-			"c",
-			"p edge 6 5",
-			"e A B",
-			"e B C",
-			"e B D",
-			"e C E",
-			"e D E");
+		assertOutput(lines, "c", "c SOURCE: Generated using the JGraphT library", "c", "p edge 6 5",
+			"e A B", "e B C", "e B D", "e C E", "e D E");
 	}
 
 	@Test
@@ -91,20 +68,13 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 		DotGraphExporter exporter = new DotGraphExporter();
 		List<String> lines = doExport(exporter, graph);
 
-		assertOutput(lines,
-			"digraph Ghidra {",
-			"  \"A\" [ Type=\"X\" Inverted=\"true\" Name=\"A\" ];",
-			"  \"B\" [ Type=\"Y\" Name=\"B\" ];",
-			"  \"C\" [ Type=\"Y\" Name=\"C\" ];",
-			"  \"D\" [ Type=\"Y\" Name=\"D\" ];",
-			"  \"E\" [ Type=\"Z\" Name=\"E\" ];",
-			"  \"F\" [ Type=\"T\" Name=\"F\" ];",
-			"  \"A\" -> \"B\" [ EType=\"Fall\" ];",
-			"  \"B\" -> \"C\" [ EType=\"JMP\" ];",
-			"  \"B\" -> \"D\" [ EType=\"Fall\" ];",
-			"  \"C\" -> \"E\" [ EType=\"Fall\" ];",
-			"  \"D\" -> \"E\" [ EType=\"Call\" ];",
-			"}");
+		assertOutput(lines, "digraph Ghidra {",
+			"  \"A\" [ Type=\"X\" Inverted=\"true\" label=\"A\" ];",
+			"  \"B\" [ Type=\"Y\" label=\"B\" ];", "  \"C\" [ Type=\"Y\" label=\"C\" ];",
+			"  \"D\" [ Type=\"Y\" label=\"D\" ];", "  \"E\" [ Type=\"Z\" label=\"E\" ];",
+			"  \"F\" [ Type=\"T\" label=\"F\" ];", "  \"A\" -> \"B\" [ EType=\"Fall\" ];",
+			"  \"B\" -> \"C\" [ EType=\"JMP\" ];", "  \"B\" -> \"D\" [ EType=\"Fall\" ];",
+			"  \"C\" -> \"E\" [ EType=\"Fall\" ];", "  \"D\" -> \"E\" [ EType=\"Call\" ];", "}");
 
 	}
 
@@ -112,68 +82,16 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 	public void testGraphML() throws Exception {
 		GmlGraphExporter exporter = new GmlGraphExporter();
 		List<String> lines = doExport(exporter, graph);
-		assertOutput(lines,
-			"Creator \"JGraphT GML Exporter\"",
-			"Version 1",
-			"graph",
-			"[",
-			"	label \"\"",
-			"	directed 1",
-			"	node",
-			"	[",
-			"		id A",
-			"	]",
-			"	node",
-			"	[",
-			"		id B",
-			"	]",
-			"	node",
-			"	[",
-			"		id C",
-			"	]",
-			"	node",
-			"	[",
-			"		id D",
-			"	]",
-			"	node",
-			"	[",
-			"		id E",
-			"	]",
-			"	node",
-			"	[",
-			"		id F",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 1",
-			"		source A",
-			"		target B",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 2",
-			"		source B",
-			"		target C",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 3",
-			"		source B",
-			"		target D",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 4",
-			"		source C",
-			"		target E",
-			"	]",
-			"	edge",
-			"	[",
-			"		id 5",
-			"		source D",
-			"		target E",
-			"	]",
-			"]");
+		assertOutput(lines, "Creator \"JGraphT GML Exporter\"", "Version 1", "graph", "[",
+			"	label \"\"", "	directed 1", "	node", "	[", "		id A", "	]", "	node",
+			"	[", "		id B", "	]", "	node", "	[", "		id C", "	]", "	node",
+			"	[", "		id D", "	]", "	node", "	[", "		id E", "	]", "	node",
+			"	[", "		id F", "	]", "	edge", "	[", "		id 1", "		source A",
+			"		target B", "	]", "	edge", "	[", "		id 2", "		source B",
+			"		target C", "	]", "	edge", "	[", "		id 3", "		source B",
+			"		target D", "	]", "	edge", "	[", "		id 4", "		source C",
+			"		target E", "	]", "	edge", "	[", "		id 5", "		source D",
+			"		target E", "	]", "]");
 	}
 
 	@Test
@@ -181,47 +99,35 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 		GraphMlGraphExporter exporter = new GraphMlGraphExporter();
 		List<String> lines = doExport(exporter, graph);
 		assertOutput(lines,
-			"<?xml version=\"1.0\" encoding=\"UTF-8\"?><graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">", 
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?><graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
 			"    <key id=\"key11\" for=\"node\" attr.name=\"Type\" attr.type=\"string\"/>",
-			"    <key id=\"key1\" for=\"node\" attr.name=\"Inverted\" attr.type=\"string\"/>", 
+			"    <key id=\"key1\" for=\"node\" attr.name=\"Inverted\" attr.type=\"string\"/>",
 			"    <key id=\"key12\" for=\"node\" attr.name=\"Name\" attr.type=\"string\"/>",
 			"    <key id=\"key17\" for=\"edge\" attr.name=\"EType\" attr.type=\"string\"/>",
-			"    <graph edgedefault=\"directed\">", 
-			"        <node id=\"A\">", 
+			"    <graph edgedefault=\"directed\">", "        <node id=\"A\">",
 			"            <data key=\"key11\">X</data>",
-			"            <data key=\"key1\">true</data>", 
-			"            <data key=\"key12\">A</data>",
-			"        </node>", 
-			"        <node id=\"B\">", 
-			"            <data key=\"key11\">Y</data>", "            <data key=\"key12\">B</data>",
-			"        </node>", 
-			"        <node id=\"C\">", 
-			"            <data key=\"key11\">Y</data>", "            <data key=\"key12\">C</data>",
-			"        </node>", 
-			"        <node id=\"D\">", 
-			"            <data key=\"key11\">Y</data>", "            <data key=\"key12\">D</data>",
-			"        </node>", 
-			"        <node id=\"E\">", 
-			"            <data key=\"key11\">Z</data>", "            <data key=\"key12\">E</data>",
-			"        </node>", "        <node id=\"F\">",
-			"            <data key=\"key11\">T</data>", "            <data key=\"key12\">F</data>",
-			"        </node>", 
-			"        <edge id=\"1\" source=\"A\" target=\"B\">", 
-			"            <data key=\"key17\">Fall</data>",
-			"        </edge>", 
-			"        <edge id=\"2\" source=\"B\" target=\"C\">", 
-			"            <data key=\"key17\">JMP</data>",
-			"        </edge>", 
-			"        <edge id=\"3\" source=\"B\" target=\"D\">", 
-			"            <data key=\"key17\">Fall</data>",
-			"        </edge>", 
-			"        <edge id=\"4\" source=\"C\" target=\"E\">", 
-			"            <data key=\"key17\">Fall</data>",
-			"        </edge>", 
-			"        <edge id=\"5\" source=\"D\" target=\"E\">", 
-			"            <data key=\"key17\">Call</data>",
-			"        </edge>", 
-			"    </graph>", 
+			"            <data key=\"key1\">true</data>",
+			"            <data key=\"key12\">A</data>", "        </node>",
+			"        <node id=\"B\">", "            <data key=\"key11\">Y</data>",
+			"            <data key=\"key12\">B</data>", "        </node>",
+			"        <node id=\"C\">", "            <data key=\"key11\">Y</data>",
+			"            <data key=\"key12\">C</data>", "        </node>",
+			"        <node id=\"D\">", "            <data key=\"key11\">Y</data>",
+			"            <data key=\"key12\">D</data>", "        </node>",
+			"        <node id=\"E\">", "            <data key=\"key11\">Z</data>",
+			"            <data key=\"key12\">E</data>", "        </node>",
+			"        <node id=\"F\">", "            <data key=\"key11\">T</data>",
+			"            <data key=\"key12\">F</data>", "        </node>",
+			"        <edge id=\"1\" source=\"A\" target=\"B\">",
+			"            <data key=\"key17\">Fall</data>", "        </edge>",
+			"        <edge id=\"2\" source=\"B\" target=\"C\">",
+			"            <data key=\"key17\">JMP</data>", "        </edge>",
+			"        <edge id=\"3\" source=\"B\" target=\"D\">",
+			"            <data key=\"key17\">Fall</data>", "        </edge>",
+			"        <edge id=\"4\" source=\"C\" target=\"E\">",
+			"            <data key=\"key17\">Fall</data>", "        </edge>",
+			"        <edge id=\"5\" source=\"D\" target=\"E\">",
+			"            <data key=\"key17\">Call</data>", "        </edge>", "    </graph>",
 			"</graphml>");
 
 	}
@@ -250,30 +156,16 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 	public void testMATRIX() throws Exception {
 		MatrixGraphExporter exporter = new MatrixGraphExporter();
 		List<String> lines = doExport(exporter, graph);
-		assertOutput(lines,
-			"A B 1",
-			"B C 1",
-			"B D 1",
-			"C E 1",
-			"D E 1");
+		assertOutput(lines, "A B 1", "B C 1", "B D 1", "C E 1", "D E 1");
 	}
 
 	@Test
 	public void testVISIO() throws Exception {
 		VisioGraphExporter exporter = new VisioGraphExporter();
 		List<String> lines = doExport(exporter, graph);
-		assertOutput(lines,
-			"Shape,A,,A",
-			"Shape,B,,B",
-			"Shape,C,,C",
-			"Shape,D,,D",
-			"Shape,E,,E",
-			"Shape,F,,F",
-			"Link,A-->B,,,A,B",
-			"Link,B-->C,,,B,C",
-			"Link,B-->D,,,B,D",
-			"Link,C-->E,,,C,E",
-			"Link,D-->E,,,D,E");
+		assertOutput(lines, "Shape,A,,A", "Shape,B,,B", "Shape,C,,C", "Shape,D,,D", "Shape,E,,E",
+			"Shape,F,,F", "Link,A-->B,,,A,B", "Link,B-->C,,,B,C", "Link,B-->D,,,B,D",
+			"Link,C-->E,,,C,E", "Link,D-->E,,,D,E");
 	}
 
 	private AttributedGraph createGraph() {
@@ -285,7 +177,7 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 		AttributedVertex vE = g.addVertex("E");
 		AttributedVertex vF = g.addVertex("F");
 
-		//		A			
+		//		A
 		//		|
 		//	    B
 		//     / \
@@ -329,12 +221,10 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 			for (int i = 0; i < expected.length; i++) {
 				if (i >= actual.size()) {
 					fail(testName.getMethodName() + ": output line " + (i + 1) + ": expected :\"" +
-						expected[i] +
-						"\", got: EOF");
+						expected[i] + "\", got: EOF");
 				}
 				assertEquals(testName.getMethodName() + ": output line " + (i + 1) + ": ",
-					expected[i],
-					actual.get(i));
+					expected[i], actual.get(i));
 			}
 		}
 		catch (Throwable e) {

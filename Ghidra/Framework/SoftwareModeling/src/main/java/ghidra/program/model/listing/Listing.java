@@ -602,17 +602,22 @@ public interface Listing {
 	 * changes will result in a <code>ContextChangeException</code>
 	 *
 	 * @param addr the address at which to create an instruction
-	 * @param prototype the InstructionPrototype the describes the type of
-	 *            instruction to create.
-	 * @param memBuf buffer that provides the bytes that make up the
-	 *            instruction.
+	 * @param prototype the InstructionPrototype that describes the type of instruction to create.
+	 * @param memBuf buffer that provides the bytes that make up the instruction.
 	 * @param context the processor context at this location.
-	 * @return the newly created instruction.
-	 * @exception CodeUnitInsertionException thrown if the new Instruction would
-	 *                overlap and existing Instruction or defined data.
+	 * @param length instruction byte-length (must be in the range 0..prototype.getLength()).
+	 * If smaller than the prototype length it must have a value no greater than 7, otherwise
+	 * an error will be thrown.  A value of 0 or greater-than-or-equal the prototype length
+	 * will be ignored and not impose and override length.  The length value must be a multiple 
+	 * of the {@link Language#getInstructionAlignment() instruction alignment} .
+	 * @return the newly created instruction.  
+	 * @throws CodeUnitInsertionException thrown if the new Instruction would overlap and 
+	 * existing {@link CodeUnit} or the specified {@code length} is unsupported.
+	 * @throws IllegalArgumentException if a negative {@code length} is specified.
 	 */
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
-			MemBuffer memBuf, ProcessorContextView context) throws CodeUnitInsertionException;
+			MemBuffer memBuf, ProcessorContextView context, int length)
+			throws CodeUnitInsertionException;
 
 	/**
 	 * Creates a complete set of instructions. A preliminary pass will be made
@@ -659,8 +664,7 @@ public interface Listing {
 	 * @exception CodeUnitInsertionException thrown if the new Instruction would
 	 *                overlap and existing Instruction or defined data.
 	 */
-	public Data createData(Address addr, DataType dataType)
-			throws CodeUnitInsertionException;
+	public Data createData(Address addr, DataType dataType) throws CodeUnitInsertionException;
 
 	/**
 	 * Clears any code units in the given range returning everything to "db"s,

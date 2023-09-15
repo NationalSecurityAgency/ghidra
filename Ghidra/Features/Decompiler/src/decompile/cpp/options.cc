@@ -964,6 +964,13 @@ uint4 OptionSplitDatatypes::getOptionBit(const string &val)
   throw LowlevelError("Unknown data-type split option: "+val);
 }
 
+/// \class OptionSplitDatatypes
+/// \brief Control which data-type assignments are split into multiple COPY/LOAD/STORE operations
+///
+/// Any combination of the three options can be given:
+///   - "struct"  = Divide structure data-types into separate field assignments
+///   - "array"   = Divide array data-types into separate element assignments
+///   - "pointer" = Divide assignments, via LOAD/STORE, through pointers
 string OptionSplitDatatypes::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
 
 {
@@ -987,6 +994,14 @@ string OptionSplitDatatypes::apply(Architecture *glb,const string &p1,const stri
   return "Split data-type configuration set";
 }
 
+/// \class OptionNanIgnore
+/// \brief Which Not a Number (NaN) operations should be ignored
+///
+/// The option controls which p-code NaN operations are replaced with a \b false constant, assuming
+/// the input is a valid floating-point value.
+///   - "none"  = No operations are replaced
+///   - "compare" = Replace NaN operations associated with floating-poing comparisons
+///   - "all" = Replace all NaN operations
 string OptionNanIgnore::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
 
 {

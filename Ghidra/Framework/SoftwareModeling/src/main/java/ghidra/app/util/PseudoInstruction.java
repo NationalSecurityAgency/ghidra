@@ -147,6 +147,18 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	}
 
 	@Override
+	public int getParsedLength() {
+		// length-override is not supported
+		return getLength();
+	}
+
+	@Override
+	public byte[] getParsedBytes() throws MemoryAccessException {
+		// length-override is not supported
+		return getBytes();
+	}
+
+	@Override
 	public Register getBaseContextRegister() {
 		return procContext.getBaseContextRegister();
 	}
@@ -503,6 +515,16 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 	@Override
 	public void setFlowOverride(FlowOverride flowOverride) {
 		this.flowOverride = flowOverride != null ? flowOverride : FlowOverride.NONE;
+	}
+
+	@Override
+	public void setLengthOverride(int length) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isLengthOverridden() {
+		return false;
 	}
 
 	@Override

@@ -59,6 +59,10 @@ public abstract class TypeProgramInterface implements TPI {
 
 	protected int versionNumber = 0;
 
+	private record OffLen(int offset, int length) {}; // record type for quick random access
+
+	private List<OffLen> offLenRecords;
+
 	//==============================================================================================
 	// API
 	//==============================================================================================
@@ -68,8 +72,7 @@ public abstract class TypeProgramInterface implements TPI {
 	 * @param recordCategory the RecordCategory of these records
 	 * @param streamNumber the stream number that contains the {@link TypeProgramInterface} data
 	 */
-	public TypeProgramInterface(AbstractPdb pdb, RecordCategory recordCategory,
-			int streamNumber) {
+	public TypeProgramInterface(AbstractPdb pdb, RecordCategory recordCategory, int streamNumber) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.recordCategory = recordCategory;
@@ -142,6 +145,40 @@ public abstract class TypeProgramInterface implements TPI {
 		return typeList.get(recordNumber - typeIndexMin);
 	}
 
+	@Override
+	public AbstractMsType getRandomAccessRecord(int recordNumber) {
+		if (recordNumber < 0 || recordNumber - typeIndexMin > typeList.size()) {
+			// This should not happen, but we have seen it and cannot yet explain it.
+			// So, for now, we are creating and returning a new BadMsType.
+			PdbLog.logBadTypeRecordIndex(this, recordNumber);
+			BadMsType type = new BadMsType(pdb, 0);
+			type.setRecordNumber(RecordNumber.make(recordCategory, recordNumber));
+			return type;
+		}
+		if (recordNumber < typeIndexMin) {
+			PrimitiveMsType primitive = primitiveTypesByRecordNumber.get(recordNumber);
+			if (primitive == null) {
+				primitive = new PrimitiveMsType(pdb, recordNumber);
+				primitiveTypesByRecordNumber.put(recordNumber, primitive);
+			}
+			return primitive;
+		}
+
+		RecordNumber rn = RecordNumber.make(recordCategory, recordNumber);
+		OffLen offLen = offLenRecords.get(recordNumber - typeIndexMin);
+
+		try {
+			PdbByteReader recordReader =
+				pdb.getReaderForStreamNumber(streamNumber, offLen.offset(), offLen.length());
+			return TypeParser.parseRecord(pdb, recordReader, rn);
+		}
+		catch (PdbException | IOException | CancelledException e) {
+			BadMsType badType = new BadMsType(pdb, 0);
+			badType.setRecordNumber(RecordNumber.make(recordCategory, recordNumber));
+			return badType;
+		}
+	}
+
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
@@ -165,7 +202,9 @@ public abstract class TypeProgramInterface implements TPI {
 		// Commented out, but this is currently where we might put this method.  See the note
 		//  placed within the method (deserializeHashStreams()) for more information about why
 		//  we have this commented out.
-		//hash.deserializeHashStreams(monitor);
+		//hash.deserializeHashStreams(pdb.getMonitor());
+
+		createOffLenRecords(reader);
 
 		deserializeTypeRecords(reader);
 
@@ -254,6 +293,20 @@ public abstract class TypeProgramInterface implements TPI {
 	//==============================================================================================
 	// Internal Data Methods
 	//==============================================================================================
+	private void createOffLenRecords(PdbByteReader reader) throws PdbException, CancelledException {
+		int savedIndex = reader.getIndex();
+		offLenRecords = new ArrayList<>();
+		while (reader.hasMore()) {
+			pdb.checkCancelled();
+			int recordLength = reader.parseUnsignedShortVal();
+			// reading offset after parsing length so we have correct offset to read from later
+			int offset = reader.getIndex();
+			reader.skip(recordLength);
+			offLenRecords.add(new OffLen(offset, recordLength));
+		}
+		reader.setIndex(savedIndex); // restore reader to original state
+	}
+
 	/**
 	 * Deserializes the Type Records of this class
 	 * @param reader {@link PdbByteReader} from which to deserialize the data
@@ -418,8 +471,7 @@ public abstract class TypeProgramInterface implements TPI {
 			if (hashStreamNumberAuxiliary == 0xffff) {
 				return;
 			}
-			PdbByteReader readerAuxiliary =
-				pdb.getReaderForStreamNumber(hashStreamNumberAuxiliary);
+			PdbByteReader readerAuxiliary = pdb.getReaderForStreamNumber(hashStreamNumberAuxiliary);
 			//readerAuxiliary.dump();
 		}
 

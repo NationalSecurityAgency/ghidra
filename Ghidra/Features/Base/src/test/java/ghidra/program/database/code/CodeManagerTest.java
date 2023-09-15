@@ -1063,7 +1063,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		MemBuffer buf = new DumbMemBufferImpl(mem, atAddr);
 		ProcessorContext context = new ProgramProcessorContext(program.getProgramContext(), atAddr);
 		InstructionPrototype proto = program.getLanguage().parse(buf, context, false);
-		listing.createInstruction(atAddr, proto, buf, context);
+		listing.createInstruction(atAddr, proto, buf, context, 0);
 
 	}
 }

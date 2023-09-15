@@ -2297,7 +2297,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	void checkRangeForInstructions(Address start, Address end) throws MemoryAccessException {
 		CodeManager codeManager = program.getCodeManager();
-		Instruction instr = codeManager.getInstructionContaining(start);
+		Instruction instr = codeManager.getInstructionContaining(start, true);
 		if (instr != null) {
 			throw new MemoryAccessException(
 				"Memory change conflicts with instruction at " + instr.getMinAddress());

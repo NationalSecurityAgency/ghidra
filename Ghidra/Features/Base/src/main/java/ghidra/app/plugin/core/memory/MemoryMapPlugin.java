@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.memory;
 
-import java.awt.Cursor;
-
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -50,9 +48,6 @@ import ghidra.program.util.ProgramLocation;
 )
 //@formatter:on
 public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListener {
-
-	final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
-	final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
 
 	private MemoryMapProvider provider;
 	private GoToService goToService;

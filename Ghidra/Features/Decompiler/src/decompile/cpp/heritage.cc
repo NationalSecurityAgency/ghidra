@@ -1238,7 +1238,7 @@ void Heritage::guardOutputOverlap(PcodeOp *callOp,const Address &addr,int4 size,
 ///
 /// \param fc is the call site potentially returning a value
 /// \param addr is the starting address of the range
-/// \param addr is the starting address of the range relative to the callee
+/// \param transAddr is the starting address of the range relative to the callee
 /// \param size is the size of the range in bytes
 /// \param write is the set of new written Varnodes
 /// \return \b true if the INDIRECTs were created

@@ -5313,6 +5313,7 @@ Varnode *RuleSLess2Zero::getHiBit(PcodeOp *op)
 ///  - `-1 s< (V & 0xf000)  =>  -1 s< V
 ///  - `CONCAT(V,W) s< 0    =>  V s< 0`
 ///  - `-1 s< CONCAT(V,W)   =>  -1 s> V`
+///  - `-1 s< (bool << #8*sz-1)   => !bool`
 ///
 /// There is a second set of forms where one side of the comparison is
 /// built out of a high and low piece, where the high piece determines the
@@ -5407,6 +5408,19 @@ int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
 	  return 0;
 	data.opSetInput(op, avn, 1);
 	data.opSetInput(op, data.newConstant(avn->getSize(),calc_mask(avn->getSize())), 0);
+	return 1;
+      }
+      else if (feedOpCode == CPUI_INT_LEFT) {
+	coeff = feedOp->getIn(1);
+	if (!coeff->isConstant() || coeff->getOffset() != lvn->getSize() * 8 - 1)
+	  return 0;
+	avn = feedOp->getIn(0);
+	if (!avn->isWritten() || !avn->getDef()->isBoolOutput())
+	  return 0;
+	// We have -1 s< (bool << #8*sz-1)
+	data.opSetOpcode(op, CPUI_BOOL_NEGATE);
+	data.opRemoveInput(op, 1);
+	data.opSetInput(op, avn, 0);
 	return 1;
       }
     }

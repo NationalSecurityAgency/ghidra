@@ -29,7 +29,6 @@ import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import utility.function.TerminatingConsumer; 
 
 /**
@@ -151,14 +150,26 @@ public class ProgramMemoryUtil {
 	 */
 	private static void copyByteRange(Memory toMem, Memory fromMem, AddressRange range)
 			throws MemoryAccessException {
+
+// TODO: Addresses from one program cannot be used with another program (e.g., overlays)
+// TODO: Should be using AddressTranslator
+// TODO: Method relies too heavily on caller limiting range to valid initialized memory in both programs
+
 		// Copy the bytes for this range
 		int length = 0;
 		Address writeAddress = range.getMinAddress();
 		for (long len = range.getLength(); len > 0; len -= length) {
 			length = (int) Math.min(len, Integer.MAX_VALUE);
-			byte[] bytes = new byte[length];
-			fromMem.getBytes(writeAddress, bytes);
-			toMem.setBytes(writeAddress, bytes);
+			byte[] srcBytes = new byte[length];
+
+			// NOTE: problems will arise if srcLen != length
+			int srcLen = fromMem.getBytes(writeAddress, srcBytes);
+			byte[] destBytes = new byte[srcLen];
+			if (toMem.getBytes(writeAddress, destBytes) != srcLen ||
+				!Arrays.equals(destBytes, 0, srcLen, srcBytes, 0, srcLen)) {
+				// only copy bytes if they differ
+				toMem.setBytes(writeAddress, srcBytes, 0, srcLen);
+			}
 			if (len > length) {
 				writeAddress = writeAddress.add(length);
 			}
