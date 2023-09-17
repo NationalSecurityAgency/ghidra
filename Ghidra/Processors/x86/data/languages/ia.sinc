@@ -1091,12 +1091,14 @@ xrelease: 	is epsilon { }
 
 #XCHG with a memory destination asserts a LOCK signal whether or not there is a LOCK prefix (f0) 
 #"alwaysLock" constructor will place "LOCK" in the disassembly if the prefix occurs 
-alwaysLock:  ".LOCK"	is lockprefx=1 { LOCK(); }
-alwaysLock:        	    is epsilon { LOCK(); }
+alwaysLock:  ".LOCK"	is lockprefx=1 { }
+alwaysLock:        	    is epsilon { }
 
 #check for LOCK prefix and the optional XACQUIRE/XRELEASE
 lockx: xacq_xrel_prefx^".LOCK"	is lockprefx=1 & xacq_xrel_prefx { build xacq_xrel_prefx; LOCK(); }
 lockx: 		                    is epsilon { }
+lockx_: xacq_xrel_prefx^".LOCK"	is lockprefx=1 & xacq_xrel_prefx { build xacq_xrel_prefx; }
+lockx_:				is epsilon { }
 
 #"unlock" constructor is used to pair every LOCK pcodeop with a matching UNLOCK pcodeop
 unlock:		is lockprefx=1 { UNLOCK(); }
