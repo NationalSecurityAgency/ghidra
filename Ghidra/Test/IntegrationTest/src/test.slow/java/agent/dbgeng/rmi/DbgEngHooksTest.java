@@ -28,9 +28,7 @@ import java.util.Objects;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteMethod;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
-import ghidra.dbg.testutil.DummyProc;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.program.model.address.AddressSpace;
@@ -39,7 +37,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 
 public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
@@ -287,12 +284,12 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	@Test
 	public void testOnBreakpointCreated() throws Exception {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
+			txPut(conn, "breakpoints");
 			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
 			conn.execute("dbg = util.get_debugger()");
 			conn.execute("pc = dbg.reg.get_pc()");
 			conn.execute("dbg.bp(expr=pc)");
-			conn.execute("dbg.stepi()");
 
 			waitForPass(() -> {
 				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
@@ -305,12 +302,12 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	@Test
 	public void testOnBreakpointModified() throws Exception {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
+			txPut(conn, "breakpoints");
 			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
 			conn.execute("dbg = util.get_debugger()");
 			conn.execute("pc = dbg.reg.get_pc()");
 			conn.execute("dbg.bp(expr=pc)");
-			conn.execute("dbg.stepi()");
 
 			TraceObject brk = waitForPass(() -> {
 				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
@@ -334,12 +331,12 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	@Test
 	public void testOnBreakpointDeleted() throws Exception {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
+			txPut(conn, "breakpoints");
 			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
 			conn.execute("dbg = util.get_debugger()");
 			conn.execute("pc = dbg.reg.get_pc()");
 			conn.execute("dbg.bp(expr=pc)");
-			conn.execute("dbg.stepi()");
 
 			TraceObject brk = waitForPass(() -> {
 				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
