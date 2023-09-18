@@ -15,14 +15,17 @@
  */
 package agent.dbgeng.manager.cmd;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-
-import agent.dbgeng.dbgeng.*;
-import agent.dbgeng.dbgeng.DebugClient.*;
-import agent.dbgeng.manager.*;
+import agent.dbgeng.dbgeng.DebugClient;
+import agent.dbgeng.dbgeng.DebugClient.DebugCreateFlags;
+import agent.dbgeng.dbgeng.DebugClient.DebugEngCreateFlags;
+import agent.dbgeng.dbgeng.DebugClient.DebugVerifierFlags;
+import agent.dbgeng.dbgeng.DebugProcessInfo;
+import agent.dbgeng.dbgeng.DebugSystemObjects;
+import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.DebugThreadInfo;
+import agent.dbgeng.manager.DbgEvent;
+import agent.dbgeng.manager.DbgProcess;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
 import agent.dbgeng.manager.evt.DbgProcessCreatedEvent;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
@@ -35,14 +38,14 @@ public class DbgLaunchProcessCommand extends AbstractDbgCommand<DbgThread> {
 
 	private DbgProcessCreatedEvent created = null;
 	private boolean completed = false;
-	private List<String> args;
+	private String args;
 	private String initialDirectory;
 	private String environment;
 	private BitmaskSet<DebugCreateFlags> createFlags;
 	private BitmaskSet<DebugEngCreateFlags> engCreateFlags;
 	private BitmaskSet<DebugVerifierFlags> verifierFlags;
 
-	public DbgLaunchProcessCommand(DbgManagerImpl manager, List<String> args,
+	public DbgLaunchProcessCommand(DbgManagerImpl manager, String args,
 			String initialDirectory, String environment,
 			BitmaskSet<DebugCreateFlags> createFlags,
 			BitmaskSet<DebugEngCreateFlags> engCreateFlags,
@@ -81,11 +84,6 @@ public class DbgLaunchProcessCommand extends AbstractDbgCommand<DbgThread> {
 		DebugClient dbgeng = manager.getClient();
 		//DebugControl control = dbgeng.getControl();
 
-		List<String> newArgs = new ArrayList<>();
-		for (String arg : args) {
-			newArgs.add(fixPath(arg));
-		}
-
 		initialDirectory = fixPath(initialDirectory);
 		environment = fixPath(environment);
 		// NB: The intent here is to enable multi-line input via a single dialog field
@@ -93,7 +91,7 @@ public class DbgLaunchProcessCommand extends AbstractDbgCommand<DbgThread> {
 			environment = environment.replace("\\0", "\0");
 		}
 
-		dbgeng.createProcess(dbgeng.getLocalServer(), StringUtils.join(newArgs, " "),
+		dbgeng.createProcess(dbgeng.getLocalServer(), args,
 			initialDirectory, environment, createFlags, engCreateFlags, verifierFlags);
 		manager.waitForEventEx();
 	}
