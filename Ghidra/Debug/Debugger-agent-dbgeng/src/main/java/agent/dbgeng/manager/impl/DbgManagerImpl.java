@@ -148,8 +148,6 @@ import ghidra.async.AsyncReference;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.comm.util.BitmaskSet;
-import ghidra.dbg.target.TargetLauncher.CmdLineParser;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.lifecycle.Internal;
@@ -1415,20 +1413,8 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	@Override
-	public CompletableFuture<?> launch(List<String> args) {
-		BitmaskSet<DebugCreateFlags> cf = BitmaskSet.of(DebugCreateFlags.DEBUG_PROCESS);
-		BitmaskSet<DebugEngCreateFlags> ef =
-			BitmaskSet.of(DebugEngCreateFlags.DEBUG_ECREATE_PROCESS_DEFAULT);
-		BitmaskSet<DebugVerifierFlags> vf =
-			BitmaskSet.of(DebugVerifierFlags.DEBUG_VERIFIER_DEFAULT);
-		return execute(new DbgLaunchProcessCommand(this, args,
-			null, null, cf, ef, vf));
-	}
-
-	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> map) {
-		List<String> args =
-			CmdLineParser.tokenize(TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS.get(map));
+		String args = (String) map.get("args");
 		String initDir = (String) map.get("dir");
 		String env = (String) map.get("env");
 
