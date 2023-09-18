@@ -2200,56 +2200,75 @@ define pcodeop clzero;
 @ifdef IA64
 :CMP RAX,simm32      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x3d; RAX & simm32            { subflags(  RAX,simm32); local tmp =   RAX -  simm32; resultflags(tmp); }
 @endif
-:CMP spec_rm8,imm8       is vexMode=0 & (byte=0x80 | byte=0x82); spec_rm8 & reg_opcode=7 ...; imm8        { subflags(  spec_rm8,imm8 ); local tmp =   spec_rm8 -   imm8; resultflags(tmp); }
-:CMP spec_rm16,imm16     is vexMode=0 & opsize=0 & byte=0x81; spec_rm16 & reg_opcode=7 ...; imm16 { subflags( spec_rm16,imm16); local tmp =  spec_rm16 -  imm16; resultflags(tmp); }
-:CMP spec_rm32,imm32     is vexMode=0 & opsize=1 & byte=0x81; spec_rm32 & reg_opcode=7 ...; imm32 { subflags( spec_rm32,imm32); local tmp =  spec_rm32 -  imm32; resultflags(tmp); }
+:CMP spec_rm8,imm8       is vexMode=0 & (byte=0x80 | byte=0x82); spec_rm8 & reg_opcode=7 ...; imm8        { local temp:1 = spec_rm8; subflags(temp,imm8 ); local diff = temp - imm8; resultflags(diff); }
+:CMP spec_rm16,imm16     is vexMode=0 & opsize=0 & byte=0x81; spec_rm16 & reg_opcode=7 ...; imm16 { local temp:2 = spec_rm16; subflags(temp,imm16); local diff = temp - imm16; resultflags(diff); }
+:CMP spec_rm32,imm32     is vexMode=0 & opsize=1 & byte=0x81; spec_rm32 & reg_opcode=7 ...; imm32 { local temp:4 = spec_rm32; subflags(temp,imm32); local diff = temp - imm32; resultflags(diff); }
 @ifdef IA64
-:CMP spec_rm64,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=7 ...; simm32 { subflags( spec_rm64,simm32); local tmp =  spec_rm64 -  simm32; resultflags(tmp); }
+:CMP spec_rm64,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x81; spec_rm64 & reg_opcode=7 ...; simm32 { local temp:8 = spec_rm64; subflags(temp,simm32); local diff = temp - simm32; resultflags(diff); }
 @endif
-:CMP spec_rm16,simm8_16		is vexMode=0 & opsize=0 & byte=0x83; spec_rm16 & reg_opcode=7 ...; simm8_16	{ subflags( spec_rm16,simm8_16); local tmp =   spec_rm16 - simm8_16; resultflags(tmp); }
-:CMP spec_rm32,simm8_32		is vexMode=0 & opsize=1 & byte=0x83; spec_rm32 & reg_opcode=7 ...; simm8_32	{ subflags( spec_rm32,simm8_32); local tmp =   spec_rm32 - simm8_32; resultflags(tmp); }
+:CMP spec_rm16,simm8_16		is vexMode=0 & opsize=0 & byte=0x83; spec_rm16 & reg_opcode=7 ...; simm8_16	{ local temp:2 = spec_rm16; subflags(temp,simm8_16); local diff = temp - simm8_16; resultflags(diff); }
+:CMP spec_rm32,simm8_32		is vexMode=0 & opsize=1 & byte=0x83; spec_rm32 & reg_opcode=7 ...; simm8_32	{ local temp:4 = spec_rm32; subflags(temp,simm8_32); local diff = temp - simm8_32; resultflags(diff); }
 @ifdef IA64
-:CMP spec_rm64,simm8_64		is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x83; spec_rm64 & reg_opcode=7 ...; simm8_64	{ subflags( spec_rm64,simm8_64); local tmp =   spec_rm64 - simm8_64; resultflags(tmp); }
+:CMP spec_rm64,simm8_64		is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x83; spec_rm64 & reg_opcode=7 ...; simm8_64	{ local temp:8 = spec_rm64; subflags(temp,simm8_64); local diff = temp - simm8_64; resultflags(diff); }
 @endif
-:CMP rm8,Reg8       is vexMode=0 & byte=0x38; rm8 & Reg8 ...                { subflags(  rm8,Reg8 ); local tmp =   rm8 -   Reg8; resultflags(tmp); }
-:CMP rm16,Reg16     is vexMode=0 & opsize=0 & byte=0x39; rm16 & Reg16 ...       { subflags( rm16,Reg16); local tmp =  rm16 -  Reg16; resultflags(tmp); }
-:CMP rm32,Reg32     is vexMode=0 & opsize=1 & byte=0x39; rm32 & Reg32 ...       { subflags( rm32, Reg32 ); local tmp =  rm32 -  Reg32; resultflags(tmp); }
+:CMP rm8,Reg8       is vexMode=0 & byte=0x38; rm8 & Reg8 ...                { local temp:1 = rm8; subflags(temp,Reg8); local diff = temp - Reg8; resultflags(diff); }
+:CMP rm16,Reg16     is vexMode=0 & opsize=0 & byte=0x39; rm16 & Reg16 ...       { local temp:2 = rm16; subflags(temp,Reg16); local diff = temp - Reg16; resultflags(diff); }
+:CMP rm32,Reg32     is vexMode=0 & opsize=1 & byte=0x39; rm32 & Reg32 ...       { local temp:4 = rm32; subflags(temp,Reg32 ); local diff = temp - Reg32; resultflags(diff); }
 @ifdef IA64
-:CMP rm64,Reg64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x39; rm64 & Reg64 ...       { subflags( rm64,Reg64); local tmp =  rm64 -  Reg64; resultflags(tmp); }
+:CMP rm64,Reg64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x39; rm64 & Reg64 ...       { local temp:8 = rm64; subflags(temp,Reg64); local diff = temp - Reg64; resultflags(diff); }
 @endif
-:CMP Reg8,rm8       is vexMode=0 & byte=0x3a; rm8 & Reg8 ...                            { subflags( Reg8,rm8  ); local tmp =  Reg8 -    rm8; resultflags(tmp); } 
-:CMP Reg16,rm16     is vexMode=0 & opsize=0 & byte=0x3b; rm16 & Reg16 ...       { subflags(Reg16,rm16 ); local tmp = Reg16 -   rm16; resultflags(tmp); }
-:CMP Reg32,Rmr32     is vexMode=0 & opsize=1 & byte=0x3b; Reg32 & mod=3 & Rmr32       { subflags(Reg32,Rmr32 ); local tmp = Reg32 -   Rmr32; resultflags(tmp); }
-:CMP Reg32,m32     is vexMode=0 & opsize=1 & byte=0x3b; Reg32 ... & m32      {subflags(Reg32,m32 ); local tmp = Reg32 -   m32; resultflags(tmp); }
+:CMP Reg8,rm8       is vexMode=0 & byte=0x3a; rm8 & Reg8 ...                            { local temp:1 = rm8; subflags(Reg8,temp); local diff = Reg8 - temp; resultflags(diff); } 
+:CMP Reg16,rm16     is vexMode=0 & opsize=0 & byte=0x3b; rm16 & Reg16 ...       { local temp:2 = rm16; subflags(Reg16,temp); local diff = Reg16 - temp; resultflags(diff); }
+:CMP Reg32,Rmr32     is vexMode=0 & opsize=1 & byte=0x3b; Reg32 & mod=3 & Rmr32       { local temp:4 = Rmr32; subflags(Reg32,temp); local diff = Reg32 - temp; resultflags(diff); }
+:CMP Reg32,m32     is vexMode=0 & opsize=1 & byte=0x3b; Reg32 ... & m32      {local temp:4 = m32; subflags(Reg32, temp); local diff = Reg32 - temp; resultflags(diff); }
 @ifdef IA64
-:CMP Reg64,rm64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x3b; rm64 & Reg64 ...       { subflags(Reg64,rm64 ); local tmp = Reg64 -   rm64; resultflags(tmp); }
+:CMP Reg64,rm64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x3b; rm64 & Reg64 ...       { local temp:8 = rm64; subflags(Reg64,temp); local diff = Reg64 - temp; resultflags(diff); }
 @endif
 
-:CMPSB^repe^repetail eseDI1,dseSI1  is vexMode=0 & repe & repetail & byte=0xa6 & dseSI1 & eseDI1        { build repe; build eseDI1; build dseSI1; subflags(dseSI1,eseDI1); local diff=dseSI1-eseDI1; resultflags(diff); build repetail; }
-:CMPSW^repe^repetail eseDI2,dseSI2  is vexMode=0 & repe & repetail & opsize=0 & byte=0xa7 & dseSI2 & eseDI2 { build repe; build eseDI2; build dseSI2; subflags(dseSI2,eseDI2); local diff=dseSI2-eseDI2; resultflags(diff); build repetail; }
-:CMPSD^repe^repetail eseDI4,dseSI4  is vexMode=0 & repe & repetail & opsize=1 & byte=0xa7 & dseSI4 & eseDI4 { build repe; build eseDI4; build dseSI4; subflags(dseSI4,eseDI4); local diff=dseSI4-eseDI4; resultflags(diff); build repetail; }
+:CMPSB^repe^repetail eseDI1,dseSI1  is vexMode=0 & repe & repetail & byte=0xa6 & dseSI1 & eseDI1        { build repe; build eseDI1; build dseSI1; local temp_DI1:1 = eseDI1; local temp_SI1:1 = dseSI1;  subflags(temp_SI1,temp_DI1); local diff=temp_SI1 - temp_DI1; resultflags(diff); build repetail; }
+:CMPSW^repe^repetail eseDI2,dseSI2  is vexMode=0 & repe & repetail & opsize=0 & byte=0xa7 & dseSI2 & eseDI2 { build repe; build eseDI2; build dseSI2; local temp_DI2:2 = eseDI2; local temp_SI2:2 = dseSI2; subflags(temp_SI2,temp_DI2); local diff=temp_SI2 - temp_DI2; resultflags(diff); build repetail; }
+:CMPSD^repe^repetail eseDI4,dseSI4  is vexMode=0 & repe & repetail & opsize=1 & byte=0xa7 & dseSI4 & eseDI4 { build repe; build eseDI4; build dseSI4; local temp_DI4:4 = eseDI4; local temp_SI4:4 = dseSI4; subflags(temp_SI4,temp_DI4); local diff=temp_SI4 - temp_DI4; resultflags(diff); build repetail; }
 @ifdef IA64
-:CMPSD^repe^repetail eseDI8,dseSI8  is $(LONGMODE_ON) & vexMode=0 & repe & repetail & opsize=2 & byte=0xa7 & dseSI8 & eseDI8 { build repe; build eseDI8; build dseSI8; subflags(dseSI8,eseDI8); local diff=dseSI8-eseDI8; resultflags(diff); build repetail; }
+:CMPSD^repe^repetail eseDI8,dseSI8  is $(LONGMODE_ON) & vexMode=0 & repe & repetail & opsize=2 & byte=0xa7 & dseSI8 & eseDI8 { build repe; build eseDI8; build dseSI8; local temp_DI8:8 = eseDI8; local temp_SI8:8 = dseSI8; subflags(temp_SI8,temp_DI8); local diff=temp_SI8-temp_DI8; resultflags(diff); build repetail; }
 @endif
 
 # See 'lockable.sinc' for memory destination, lockable variants
-:CMPXCHG Rmr8,Reg8  is vexMode=0 & byte=0xf; byte=0xb0; mod=3 & Rmr8 & Reg8           { subflags(AL,Rmr8); local tmp=AL-Rmr8; resultflags(tmp);
-                                          local diff = Rmr8^Reg8; Rmr8 = Rmr8 ^ (ZF*diff);
-                                          diff = AL ^ Rmr8; AL = AL ^ ((ZF==0)*diff); }
-:CMPXCHG Rmr16,Reg16    is vexMode=0 & opsize=0 & byte=0xf; byte=0xb1; mod=3 & Rmr16 & Reg16  { subflags(AX,Rmr16); local tmp=AX-Rmr16; resultflags(tmp);
-                                          local diff = Rmr16^Reg16; Rmr16 = Rmr16 ^ (zext(ZF) * diff);
-                                          diff = AX ^ Rmr16; AX = AX ^ (zext(ZF==0) * diff); }
+:CMPXCHG Rmr8,Reg8  is vexMode=0 & byte=0xf; byte=0xb0; mod=3 & Rmr8 & Reg8           
+{ 
+    local dest = Rmr8;
+    subflags(AL,dest); 
+    local diff = AL-dest; 
+    resultflags(diff);
+    if (ZF) goto <equal>;
+    AL = dest;
+    goto inst_next;
+<equal>
+    Rmr8 = Reg8;
+ }
+:CMPXCHG Rmr16,Reg16    is vexMode=0 & opsize=0 & byte=0xf; byte=0xb1; mod=3 & Rmr16 & Reg16  
+{ 
+    local dest = Rmr16;
+    subflags(AX,dest); 
+    local diff = AX-dest; 
+    resultflags(diff);
+    if (ZF) goto <equal>;
+    AX = dest;
+    goto inst_next;
+<equal>
+    Rmr16 = Reg16;
+ }
 :CMPXCHG Rmr32,Reg32    is vexMode=0 & opsize=1 & byte=0xf; byte=0xb1; mod=3 & Rmr32 & Reg32 & check_EAX_dest & check_Rmr32_dest
 {
 	#this instruction writes to either EAX or Rmr32
 	#in 64-bit mode, a 32-bit register that is written to 
 	#(and only the register that is written to) 
 	#must be zero-extended to 64 bits
-	subflags(EAX,Rmr32);
-	local tmp=EAX-Rmr32;
-	resultflags(tmp);  
-    if (ZF==1) goto <equal>;
-    EAX = Rmr32;
+    local dest = Rmr32;
+    subflags(EAX,dest); 
+    local diff = EAX-dest; 
+    resultflags(diff);
+    if (ZF) goto <equal>;
+    EAX = dest;
     build check_EAX_dest;
     goto inst_next;
 <equal>
@@ -2257,9 +2276,18 @@ define pcodeop clzero;
     build check_Rmr32_dest;
 }
 @ifdef IA64
-:CMPXCHG Rmr64,Reg64    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb1; mod=3 & Rmr64 & Reg64  { subflags(RAX,Rmr64); local tmp=RAX-Rmr64; resultflags(tmp);
-                                          local diff = Rmr64^Reg64; Rmr64 = Rmr64 ^ (zext(ZF) * diff);
-                                          diff = RAX ^ Rmr64; RAX = RAX ^ (zext(ZF==0) * diff); }
+:CMPXCHG Rmr64,Reg64    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb1; mod=3 & Rmr64 & Reg64  
+{ 
+    local dest = Rmr64;
+    subflags(RAX,dest); 
+    local diff = RAX-dest; 
+    resultflags(diff);
+    if (ZF) goto <equal>;
+    RAX = dest;
+    goto inst_next;
+<equal>
+    Rmr64 = Reg64;
+} 
 @endif
 
 # CMPXCHG8B See 'lockable.sinc' for memory destination, lockable variants
@@ -8431,9 +8459,10 @@ define pcodeop pmovzxdq;
 :PMOVZXDQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x35; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = pmovzxdq(XmmReg1, XmmReg2); }
 
 :PTEST XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x17; XmmReg ... & m128 {
-    local tmp = m128 & XmmReg;
+    local temp_m128:16 = m128;
+    local tmp = temp_m128 & XmmReg;
     ZF = tmp == 0;
-    local tmp2 = m128 & ~XmmReg;
+    local tmp2 = temp_m128 & ~XmmReg;
     CF = tmp2 == 0;
     AF = 0;
     OF = 0;
@@ -8454,8 +8483,9 @@ define pcodeop pmovzxdq;
 
 :PCMPEQQ XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x29; XmmReg ... & m128 
 { 
-	XmmReg[0,64] = zext(XmmReg[0,64] == m128[0,64]) * 0xffffffffffffffff:8;
-	XmmReg[64,64] = zext(XmmReg[64,64] == m128[64,64]) * 0xffffffffffffffff:8;
+	local temp_m128:16 = m128;
+	XmmReg[0,64] = zext(XmmReg[0,64] == temp_m128[0,64]) * 0xffffffffffffffff:8;
+	XmmReg[64,64] = zext(XmmReg[64,64] == temp_m128[64,64]) * 0xffffffffffffffff:8;
 }
 :PCMPEQQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x29; xmmmod=3 & XmmReg1 & XmmReg2 
 { 
