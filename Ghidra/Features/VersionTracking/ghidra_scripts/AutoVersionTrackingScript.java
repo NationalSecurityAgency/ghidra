@@ -23,6 +23,7 @@ import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.gui.actions.AutoVersionTrackingTask;
 import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -68,6 +69,9 @@ public class AutoVersionTrackingScript extends GhidraScript {
 			return;
 		}
 
+		boolean autoCreateImpliedMatches = askYesNo("Implied Matches?",
+			"Would you like the script to figure out implied matches from any matches it creates?");
+
 		// Need to end the script transaction or it interferes with vt things that need locks
 		end(true);
 
@@ -76,11 +80,31 @@ public class AutoVersionTrackingScript extends GhidraScript {
 
 		folder.createFile(name, session, monitor);
 
+		ToolOptions options = getOptions();
+
+		boolean originalImpliedMatchSetting =
+			options.getBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
+
+		options.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, autoCreateImpliedMatches);
+
 		AutoVersionTrackingTask autoVtTask =
-			new AutoVersionTrackingTask(session, getOptions(), 1.0, 10.0);
+			new AutoVersionTrackingTask(session, options, 0.95, 10.0);
+
 
 		TaskLauncher.launch(autoVtTask);
+
+
+		// if not running headless user can decide whether to save or not
+		// if running headless - must save here or nothing that was done in this script will be
+		// accessible later.
+		if (isRunningHeadless()) {
+			session.save();
+		}
+		options.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, originalImpliedMatchSetting);
+
+		println(autoVtTask.getStatusMsg());
 	}
+
 
 	private ToolOptions getOptions() {
 		ToolOptions vtOptions = new VTOptions("Dummy");

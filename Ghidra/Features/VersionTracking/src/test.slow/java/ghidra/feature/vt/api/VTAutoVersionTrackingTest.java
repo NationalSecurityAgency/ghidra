@@ -15,27 +15,48 @@
  */
 package ghidra.feature.vt.api;
 
-import static ghidra.feature.vt.db.VTTestUtils.*;
-import static org.junit.Assert.*;
+import static ghidra.feature.vt.db.VTTestUtils.addr;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.api.main.VTAssociationStatus;
+import ghidra.feature.vt.api.main.VTAssociationType;
+import ghidra.feature.vt.api.main.VTMatch;
+import ghidra.feature.vt.api.main.VTMatchInfo;
+import ghidra.feature.vt.api.main.VTMatchSet;
+import ghidra.feature.vt.api.main.VTProgramCorrelator;
+import ghidra.feature.vt.api.main.VTScore;
+import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.feature.vt.db.VTTestUtils;
 import ghidra.feature.vt.gui.VTTestEnv;
 import ghidra.feature.vt.gui.actions.AutoVersionTrackingTask;
 import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.Options;
+import ghidra.framework.options.ToolOptions;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CodeUnitIterator;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -776,6 +797,50 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 			assertEquals(destListing.getComment(CodeUnit.EOL_COMMENT, addr),
 				"Test Comment " + numComments++);
 		}
+	}
+
+	/*
+	 * This tests auto version tracking with auto implied matches option set
+	 */
+	@Test
+	public void testRunAutoVT_impliedMatches() throws Exception {
+
+		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
+		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+
+		session = env.createSession(sourceProgram, destinationProgram);
+
+		env.showTool();
+		controller = env.getVTController();
+		ToolOptions options = controller.getOptions();
+		options.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, true);
+
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		runAutoVTCommand(0.999999999, 10.0);
+
+		assertTrue(session.getImpliedMatchSet().getMatchCount() > 0);
+	}
+
+	/*
+	 * This tests auto version tracking with auto implied matches option not set
+	 */
+	@Test
+	public void testRunAutoVT_noImpliedMatches() throws Exception {
+
+		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
+		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+
+		session = env.createSession(sourceProgram, destinationProgram);
+
+		env.showTool();
+		controller = env.getVTController();
+		ToolOptions options = controller.getOptions();
+		options.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
+
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		runAutoVTCommand(0.999999999, 10.0);
+
+		assertTrue(session.getImpliedMatchSet().getMatchCount() == 0);
 	}
 
 	private VTMatch createMatch(Address sourceAddress, Address destinationAddress,
