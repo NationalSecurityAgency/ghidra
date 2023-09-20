@@ -513,9 +513,13 @@ public class ExtensionUtils {
 		}
 
 		if (file.isDirectory() && file.canRead()) {
-			File[] files = file.listFiles(f -> f.getName().equals(PROPERTIES_FILE_NAME));
-			if (files != null && files.length == 1) {
-				return tryToLoadExtensionFromProperties(files[0]);
+			File propertyFile = new File(file, PROPERTIES_FILE_NAME);
+			if (propertyFile.isFile()) {
+				if (new File(file, "build.gradle").isFile()) {
+					log.error("Extension source directories are not valid extensions");
+					return null;
+				}
+				return tryToLoadExtensionFromProperties(propertyFile);
 			}
 		}
 
