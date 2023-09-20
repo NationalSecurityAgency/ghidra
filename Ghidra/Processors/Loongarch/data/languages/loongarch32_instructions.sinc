@@ -667,8 +667,8 @@
 
 # alias of jirl zero, rj, 0
 :jr RJsrc                      is op26_31=0x13 & rD=0x0 & RJsrc & simm10_16=0 {
-	local retAddr = RJsrc;
-	goto [retAddr];
+	pc = RJsrc;
+	goto [pc];
 }
 
 

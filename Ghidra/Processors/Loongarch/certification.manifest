@@ -1,7 +1,5 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
-data/languages/Loongarch32_instructions.sinc||GHIDRA||||END|
-data/languages/Loongarch64_instructions.sinc||GHIDRA||||END|
 data/languages/ilp32d.cspec||GHIDRA||||END|
 data/languages/ilp32f.cspec||GHIDRA||||END|
 data/languages/lasx.sinc||GHIDRA||||END|
@@ -11,9 +9,11 @@ data/languages/loongarch.opinion||GHIDRA||||END|
 data/languages/loongarch32.pspec||GHIDRA||||END|
 data/languages/loongarch32_f32.slaspec||GHIDRA||||END|
 data/languages/loongarch32_f64.slaspec||GHIDRA||||END|
+data/languages/loongarch32_instructions.sinc||GHIDRA||||END|
 data/languages/loongarch64.pspec||GHIDRA||||END|
 data/languages/loongarch64_f32.slaspec||GHIDRA||||END|
 data/languages/loongarch64_f64.slaspec||GHIDRA||||END|
+data/languages/loongarch64_instructions.sinc||GHIDRA||||END|
 data/languages/loongarch_double.sinc||GHIDRA||||END|
 data/languages/loongarch_float.sinc||GHIDRA||||END|
 data/languages/loongarch_main.sinc||GHIDRA||||END|

@@ -2,7 +2,7 @@
 @define FREGSIZE 8
 @define ADDRSIZE 4
 @include "loongarch_main.sinc"
-@include "Loongarch32_instructions.sinc"
+@include "loongarch32_instructions.sinc"
 @include "loongarch_float.sinc"
 @include "loongarch_double.sinc"
 
