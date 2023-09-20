@@ -113,6 +113,10 @@ class TaskRunner {
 
 	private void showTaskDialog(WrappingTaskMonitor monitor) {
 
+		if (SystemUtilities.isInHeadlessMode()) {
+			return;
+		}
+
 		Swing.runIfSwingOrRunLater(() -> {
 			taskDialog = buildTaskDialog();
 			monitor.setDelegate(taskDialog); // initialize the dialog to the current monitor state 
