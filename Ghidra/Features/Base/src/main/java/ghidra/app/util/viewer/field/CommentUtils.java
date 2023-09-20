@@ -31,8 +31,6 @@ import generic.theme.Gui;
 import ghidra.program.model.listing.Program;
 import ghidra.util.StringUtilities;
 import ghidra.util.WordLocation;
-import ghidra.util.bean.field.AnnotatedTextFieldElement;
-import ghidra.util.exception.AssertException;
 
 public class CommentUtils {
 
@@ -75,21 +73,10 @@ public class CommentUtils {
 		};
 
 		StringBuilder buffy = new StringBuilder();
-		List<Object> parts =
+		List<CommentPart> parts =
 			doParseTextIntoTextAndAnnotations(rawCommentText, symbolFixer, program, prototype);
-		for (Object part : parts) {
-
-			if (part instanceof String) {
-				String s = (String) part;
-				buffy.append(s);
-			}
-			else if (part instanceof Annotation) {
-				Annotation a = (Annotation) part;
-				buffy.append(a.getAnnotationText());
-			}
-			else {
-				throw new AssertException("Unhandled annotation piece: " + part);
-			}
+		for (CommentPart part : parts) {
+			buffy.append(part.getRawText());
 		}
 		return buffy.toString();
 	}
@@ -136,7 +123,7 @@ public class CommentUtils {
 		Function<Annotation, Annotation> noFixing = Function.identity();
 		return doParseTextForAnnotations(text, noFixing, program, prototypeString, row);
 	}
-	
+
 	/**
 	 * Sanitizes the given text, removing or replacing illegal characters.
 	 * <p>
@@ -175,25 +162,12 @@ public class CommentUtils {
 		text = StringUtilities.convertTabsToSpaces(text);
 
 		int column = 0;
-		List<Object> parts =
+		List<CommentPart> parts =
 			doParseTextIntoTextAndAnnotations(text, fixerUpper, program, prototype);
 		List<FieldElement> fields = new ArrayList<>();
-		for (Object part : parts) {
-
-			if (part instanceof String) {
-				String s = (String) part;
-				AttributedString as = prototype.deriveAttributedString(s);
-				fields.add(new TextFieldElement(as, row, column));
-				column += s.length();
-			}
-			else if (part instanceof Annotation) {
-				Annotation a = (Annotation) part;
-				fields.add(new AnnotatedTextFieldElement(a, row, column));
-				column += a.getAnnotationText().length();
-			}
-			else {
-				throw new AssertException("Unhandled annotation piece: " + part);
-			}
+		for (CommentPart part : parts) {
+			fields.add(part.createElement(row, column));
+			column += part.getDisplayText().length();
 		}
 
 		return new CompositeFieldElement(fields.toArray(new FieldElement[fields.size()]));
@@ -204,21 +178,20 @@ public class CommentUtils {
 	 * an Annotation
 	 * 
 	 * @param text the text to parse
-	 * @param fixerUpper a function that is given a chance to convert an Annotation into a new
-	 *        one
+	 * @param fixerUpper a function that is given a chance to convert an Annotation into a new one
 	 * @param program the program
 	 * @param prototype the prototype string that contains decoration attributes
 	 * @return a list that contains a mixture String or an Annotation entries
 	 */
-	private static List<Object> doParseTextIntoTextAndAnnotations(String text,
+	private static List<CommentPart> doParseTextIntoTextAndAnnotations(String text,
 			Function<Annotation, Annotation> fixerUpper, Program program,
 			AttributedString prototype) {
 
-		List<Object> results = new ArrayList<>();
+		List<CommentPart> results = new ArrayList<>();
 
 		List<WordLocation> annotations = getCommentAnnotations(text);
 		if (annotations.isEmpty()) {
-			results.add(text);
+			results.add(new StringCommentPart(text, prototype));
 			return results;
 		}
 
@@ -230,19 +203,20 @@ public class CommentUtils {
 			if (offset != start) {
 				// text between annotations
 				String preceeding = text.substring(offset, start);
-				results.add(preceeding);
+				results.add(new StringCommentPart(preceeding, prototype));
 			}
 
 			String annotationText = word.getWord();
 			Annotation annotation = new Annotation(annotationText, prototype, program);
 			annotation = fixerUpper.apply(annotation);
-			results.add(annotation);
+			results.add(new AnnotationCommentPart(annotationText, annotation));
 
 			offset = start + annotationText.length();
 		}
 
 		if (offset != text.length()) { // trailing text
-			results.add(text.substring(offset));
+			String trailing = text.substring(offset);
+			results.add(new StringCommentPart(trailing, prototype));
 		}
 
 		return results;
@@ -299,26 +273,30 @@ public class CommentUtils {
 	 */
 	private static int findAnnotationEnd(String comment, int start) {
 
-		boolean startQuote = false;
-		int count = 0;
+		boolean escaped = false;
+		boolean inQuote = false;
 		for (int i = start; i < comment.length(); i++) {
-			char prev = i == 0 ? '\0' : comment.charAt(i - 1);
-			if (prev == '\\') {
-				continue; // escaped
+
+			boolean wasEscaped = escaped;
+			escaped = false;
+			char prev = '\0';
+			if (i != 0 && !wasEscaped) {
+				prev = comment.charAt(i - 1);
 			}
 
 			char c = comment.charAt(i);
+			if (prev == '\\') {
+				if (Annotation.ESCAPABLE_CHARS.indexOf(c) != -1) {
+					escaped = true;
+					continue;
+				}
+			}
+
 			if (c == '"') {
-				if (startQuote) {
-					--count;
-				}
-				else {
-					++count;
-				}
-				startQuote = !startQuote;
+				inQuote = !inQuote;
 			}
 			else if (c == '}') {
-				if (count == 0) {
+				if (!inQuote) {
 					return i + 1;
 				}
 			}
