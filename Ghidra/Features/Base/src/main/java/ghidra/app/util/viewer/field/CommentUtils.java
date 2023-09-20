@@ -191,8 +191,7 @@ public class CommentUtils {
 
 		List<WordLocation> annotations = getCommentAnnotations(text);
 		if (annotations.isEmpty()) {
-			String updatedText = removeEscapeChars(text);
-			results.add(new StringCommentPart(text, updatedText, prototype));
+			results.add(new StringCommentPart(text, prototype));
 			return results;
 		}
 
@@ -204,23 +203,20 @@ public class CommentUtils {
 			if (offset != start) {
 				// text between annotations
 				String preceeding = text.substring(offset, start);
-				String updatedText = removeEscapeChars(preceeding);
-				results.add(new StringCommentPart(preceeding, updatedText, prototype));
+				results.add(new StringCommentPart(preceeding, prototype));
 			}
 
 			String annotationText = word.getWord();
-			String updatedText = removeEscapeChars(annotationText);
-			Annotation annotation = new Annotation(updatedText, prototype, program);
+			Annotation annotation = new Annotation(annotationText, prototype, program);
 			annotation = fixerUpper.apply(annotation);
-			results.add(new AnnotationCommentPart(updatedText, annotation));
+			results.add(new AnnotationCommentPart(annotationText, annotation));
 
 			offset = start + annotationText.length();
 		}
 
 		if (offset != text.length()) { // trailing text
 			String trailing = text.substring(offset);
-			String updatedText = removeEscapeChars(trailing);
-			results.add(new StringCommentPart(trailing, updatedText, prototype));
+			results.add(new StringCommentPart(trailing, prototype));
 		}
 
 		return results;
@@ -269,23 +265,6 @@ public class CommentUtils {
 		//@formatter:on
 	}
 
-	// remove any backslashes that escape special annotation characters, like '{' and '}'
-	private static String removeEscapeChars(String text) {
-		StringBuilder buffy = new StringBuilder();
-		for (int i = 0; i < text.length(); i++) {
-			char c = text.charAt(i);
-			if (c == '\\') {
-				char next = i == text.length() ? '\0' : text.charAt(i + 1);
-				if (next == '{' || next == '}') {
-					continue;
-				}
-			}
-			buffy.append(c);
-		}
-
-		return buffy.toString();
-	}
-
 	/*
 	 * Starts at the given index and looks for the end an annotation, ignoring quoted text 
 	 * and escaped characters along the way.   The value returned is the index after the last 
@@ -294,26 +273,30 @@ public class CommentUtils {
 	 */
 	private static int findAnnotationEnd(String comment, int start) {
 
-		boolean startQuote = false;
-		int count = 0;
+		boolean escaped = false;
+		boolean inQuote = false;
 		for (int i = start; i < comment.length(); i++) {
-			char prev = i == 0 ? '\0' : comment.charAt(i - 1);
-			if (prev == '\\') {
-				continue; // escaped
+
+			boolean wasEscaped = escaped;
+			escaped = false;
+			char prev = '\0';
+			if (i != 0 && !wasEscaped) {
+				prev = comment.charAt(i - 1);
 			}
 
 			char c = comment.charAt(i);
+			if (prev == '\\') {
+				if (Annotation.ESCAPABLE_CHARS.indexOf(c) != -1) {
+					escaped = true;
+					continue;
+				}
+			}
+
 			if (c == '"') {
-				if (startQuote) {
-					--count;
-				}
-				else {
-					++count;
-				}
-				startQuote = !startQuote;
+				inQuote = !inQuote;
 			}
 			else if (c == '}') {
-				if (count == 0) {
+				if (!inQuote) {
 					return i + 1;
 				}
 			}

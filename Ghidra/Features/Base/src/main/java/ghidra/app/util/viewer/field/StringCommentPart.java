@@ -20,21 +20,15 @@ import docking.widgets.fieldpanel.field.*;
 public class StringCommentPart extends CommentPart {
 
 	private AttributedString prototype;
-	private String rawText;
 
-	StringCommentPart(String rawText, AttributedString prototype) {
-		this(rawText, rawText, prototype);
-	}
-
-	StringCommentPart(String rawText, String displayText, AttributedString prototype) {
-		super(displayText);
-		this.rawText = rawText;
+	StringCommentPart(String text, AttributedString prototype) {
+		super(text);
 		this.prototype = prototype;
 	}
 
 	@Override
 	String getRawText() {
-		return rawText;
+		return getDisplayText();
 	}
 
 	@Override
@@ -45,6 +39,6 @@ public class StringCommentPart extends CommentPart {
 
 	@Override
 	public String toString() {
-		return rawText;
+		return getDisplayText();
 	}
 }
