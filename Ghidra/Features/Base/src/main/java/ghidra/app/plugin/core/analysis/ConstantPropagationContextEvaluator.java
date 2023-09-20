@@ -94,7 +94,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	}
 
 	/**
-	 * Set mimimum speculative memory offset for references
+	 * Set minimum speculative memory offset for references
 	 * 
 	 * @param minSpeculativeRefAddress minimum address offset
 	 * @return this
