@@ -25,8 +25,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.stream.*;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -35,16 +34,16 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import com.google.protobuf.ByteString;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
-import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteMethod.Action;
-import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteMethod.RecordRemoteMethod;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.debug.api.tracermi.*;
+import ghidra.debug.api.tracermi.RemoteMethod.Action;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.AutoService.Wiring;
@@ -69,7 +68,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.task.TaskMonitor;
 
-public class TraceRmiHandler {
+public class TraceRmiHandler implements TraceRmiConnection {
 	public static final String VERSION = "10.4";
 
 	protected static class VersionMismatchError extends TraceRmiError {
@@ -139,6 +138,7 @@ public class TraceRmiHandler {
 	protected static class OpenTraceMap {
 		private final Map<DoId, OpenTrace> byId = new HashMap<>();
 		private final Map<Trace, OpenTrace> byTrace = new HashMap<>();
+		private final CompletableFuture<OpenTrace> first = new CompletableFuture<>();
 
 		public synchronized boolean isEmpty() {
 			return byId.isEmpty();
@@ -168,6 +168,11 @@ public class TraceRmiHandler {
 		public synchronized void put(OpenTrace openTrace) {
 			byId.put(openTrace.doId, openTrace);
 			byTrace.put(openTrace.trace, openTrace);
+			first.complete(openTrace);
+		}
+
+		public CompletableFuture<OpenTrace> getFirstAsync() {
+			return first;
 		}
 	}
 
@@ -181,9 +186,9 @@ public class TraceRmiHandler {
 	private final OpenTraceMap openTraces = new OpenTraceMap();
 	private final Map<Tid, OpenTx> openTxes = new HashMap<>();
 
-	private final RemoteMethodRegistry methodRegistry = new RemoteMethodRegistry();
+	private final DefaultRemoteMethodRegistry methodRegistry = new DefaultRemoteMethodRegistry();
 	// The remote must service requests and reply in the order received.
-	private final Deque<RemoteAsyncResult> xReqQueue = new ArrayDeque<>();
+	private final Deque<DefaultRemoteAsyncResult> xReqQueue = new ArrayDeque<>();
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
@@ -201,6 +206,7 @@ public class TraceRmiHandler {
 	 */
 	public TraceRmiHandler(TraceRmiPlugin plugin, Socket socket) throws IOException {
 		this.plugin = plugin;
+		plugin.addHandler(this);
 		this.socket = socket;
 		this.in = socket.getInputStream();
 		this.out = socket.getOutputStream();
@@ -211,17 +217,18 @@ public class TraceRmiHandler {
 	}
 
 	protected void flushXReqQueue(Throwable exc) {
-		List<RemoteAsyncResult> copy;
+		List<DefaultRemoteAsyncResult> copy;
 		synchronized (xReqQueue) {
 			copy = List.copyOf(xReqQueue);
 			xReqQueue.clear();
 		}
-		for (RemoteAsyncResult result : copy) {
+		for (DefaultRemoteAsyncResult result : copy) {
 			result.completeExceptionally(exc);
 		}
 	}
 
 	public void dispose() throws IOException {
+		plugin.removeHandler(this);
 		flushXReqQueue(new TraceRmiError("Socket closed"));
 		socket.close();
 		while (!openTxes.isEmpty()) {
@@ -248,12 +255,24 @@ public class TraceRmiHandler {
 		closed.complete(null);
 	}
 
+	@Override
+	public void close() throws IOException {
+		dispose();
+	}
+
+	@Override
 	public boolean isClosed() {
 		return socket.isClosed() && closed.isDone();
 	}
 
-	public void waitClosed() throws InterruptedException, ExecutionException {
-		closed.get();
+	@Override
+	public void waitClosed() {
+		try {
+			closed.get();
+		}
+		catch (InterruptedException | ExecutionException e) {
+			throw new TraceRmiError(e);
+		}
 	}
 
 	protected DomainFolder getOrCreateNewTracesFolder()
@@ -442,8 +461,9 @@ public class TraceRmiHandler {
 					req.getRequestActivate().getObject().getPath().getPath());
 				case REQUEST_END_TX -> "endTx(%d)".formatted(
 					req.getRequestEndTx().getTxid().getId());
-				case REQUEST_START_TX -> "startTx(%d)".formatted(
-					req.getRequestStartTx().getTxid().getId());
+				case REQUEST_START_TX -> "startTx(%d,%s)".formatted(
+					req.getRequestStartTx().getTxid().getId(),
+					req.getRequestStartTx().getDescription());
 				default -> null;
 			};
 		}
@@ -728,7 +748,12 @@ public class TraceRmiHandler {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		TraceObject object = open.getObject(req.getObject(), true);
 		DebuggerCoordinates coords = traceManager.getCurrent();
-		coords = coords.object(object);
+		if (coords.getTrace() == object.getTrace()) {
+			coords = coords.object(object);
+		}
+		else {
+			coords = DebuggerCoordinates.NOWHERE.object(object);
+		}
 		if (open.lastSnapshot != null) {
 			coords = coords.snap(open.lastSnapshot.getKey());
 		}
@@ -738,7 +763,7 @@ public class TraceRmiHandler {
 		}
 		else {
 			Trace currentTrace = traceManager.getCurrentTrace();
-			if (currentTrace == null || currentTrace == open.trace) {
+			if (currentTrace == null || openTraces.getByTrace(currentTrace) != null) {
 				traceManager.activate(coords);
 			}
 		}
@@ -939,8 +964,7 @@ public class TraceRmiHandler {
 			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(), new Action(m.getAction()),
 				m.getDescription(), m.getParametersList()
 						.stream()
-						.collect(Collectors.toMap(MethodParameter::getName,
-							TraceRmiHandler::makeParameter)),
+						.collect(Collectors.toMap(MethodParameter::getName, this::makeParameter)),
 				new SchemaName(m.getReturnType().getName()));
 			methodRegistry.add(rm);
 		}
@@ -978,8 +1002,8 @@ public class TraceRmiHandler {
 		return ReplyPutRegisterValue.getDefaultInstance();
 	}
 
-	protected static RemoteParameter makeParameter(MethodParameter mp) {
-		return new RemoteParameter(mp.getName(), new SchemaName(mp.getType().getName()),
+	protected RecordRemoteParameter makeParameter(MethodParameter mp) {
+		return new RecordRemoteParameter(this, mp.getName(), new SchemaName(mp.getType().getName()),
 			mp.getRequired(), ot -> ot.toValue(mp.getDefaultValue()), mp.getDisplay(),
 			mp.getDescription());
 	}
@@ -1084,7 +1108,7 @@ public class TraceRmiHandler {
 
 	protected RootMessage.Builder handleXInvokeMethod(XReplyInvokeMethod xrep) {
 		String error = xrep.getError();
-		RemoteAsyncResult result;
+		DefaultRemoteAsyncResult result;
 		synchronized (xReqQueue) {
 			result = xReqQueue.poll();
 		}
@@ -1102,11 +1126,13 @@ public class TraceRmiHandler {
 		return null;
 	}
 
+	@Override
 	public SocketAddress getRemoteAddress() {
 		return socket.getRemoteSocketAddress();
 	}
 
-	public RemoteMethodRegistry getMethods() {
+	@Override
+	public DefaultRemoteMethodRegistry getMethods() {
 		return methodRegistry;
 	}
 
@@ -1121,20 +1147,20 @@ public class TraceRmiHandler {
 		return open;
 	}
 
-	protected RemoteAsyncResult invoke(OpenTrace open, String methodName,
+	protected DefaultRemoteAsyncResult invoke(OpenTrace open, String methodName,
 			Map<String, Object> arguments) {
 		RootMessage.Builder req = RootMessage.newBuilder();
 		XRequestInvokeMethod.Builder invoke = XRequestInvokeMethod.newBuilder()
 				.setName(methodName)
 				.addAllArguments(
 					arguments.entrySet().stream().map(TraceRmiHandler::makeArgument).toList());
-		RemoteAsyncResult result;
+		DefaultRemoteAsyncResult result;
 		if (open != null) {
-			result = new RemoteAsyncResult(open);
+			result = new DefaultRemoteAsyncResult(open);
 			invoke.setOid(open.doId.toDomObjId());
 		}
 		else {
-			result = new RemoteAsyncResult();
+			result = new DefaultRemoteAsyncResult();
 		}
 		req.setXrequestInvokeMethod(invoke);
 		synchronized (xReqQueue) {
@@ -1151,6 +1177,7 @@ public class TraceRmiHandler {
 		}
 	}
 
+	@Override
 	@Internal
 	public long getLastSnapshot(Trace trace) {
 		TraceSnapshot lastSnapshot = openTraces.getByTrace(trace).lastSnapshot;
@@ -1158,5 +1185,15 @@ public class TraceRmiHandler {
 			return 0;
 		}
 		return lastSnapshot.getKey();
+	}
+
+	@Override
+	public Trace waitForTrace(long timeoutMillis) throws TimeoutException {
+		try {
+			return openTraces.getFirstAsync().get(timeoutMillis, TimeUnit.MILLISECONDS).trace;
+		}
+		catch (InterruptedException | ExecutionException e) {
+			throw new TraceRmiError(e);
+		}
 	}
 }

@@ -19,6 +19,8 @@ import java.util.Set;
 
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerMappingOffer;
+import ghidra.debug.api.model.DebuggerMappingOpinion;
 
 public class ObjectBasedDebuggerMappingOpinion implements DebuggerMappingOpinion {
 

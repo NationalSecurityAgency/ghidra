@@ -21,9 +21,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.app.plugin.core.debug.service.emulation.*;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
+import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
 import ghidra.pcode.emu.PcodeThread;
@@ -649,7 +650,7 @@ public class ModelingScript extends GhidraScript {
 	}
 
 	public static class BytesExprDebuggerPcodeEmulatorFactory
-			implements DebuggerPcodeEmulatorFactory {
+			extends AbstractDebuggerPcodeEmulatorFactory {
 
 		@Override
 		public String getTitle() {

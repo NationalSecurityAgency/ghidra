@@ -17,41 +17,43 @@ package ghidra.app.plugin.core.debug.workflow;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.service.workflow.DebuggerWorkflowServicePlugin;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerInterpreterService;
+import ghidra.app.services.DebuggerWorkflowFrontEndService;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetInterpreter;
+import ghidra.debug.api.workflow.DebuggerBot;
+import ghidra.debug.api.workflow.DebuggerBotInfo;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.PluginToolUtils;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 
-@DebuggerBotInfo( //
-		description = "Show debugger interpreters", //
-		details = "Listens for new debuggers supporting the interpreter interface," +
-			" and when found, displays that interpeter.", //
-		help = @HelpInfo(anchor = "show_interpreter"), //
-		enabledByDefault = true //
-)
+@DebuggerBotInfo(
+	description = "Show debugger interpreters",
+	details = """
+			Listens for new debuggers supporting the interpreter interface, and when found,
+			displays that interpeter.""",
+	help = @HelpInfo(anchor = "show_interpreter"),
+	enabledByDefault = true)
 public class ShowInterpreterDebuggerBot implements DebuggerBot {
-	private DebuggerWorkflowServicePlugin plugin;
+	private DebuggerWorkflowFrontEndService service;
 
 	@Override
-	public void enable(DebuggerWorkflowServicePlugin wp) {
-		this.plugin = wp;
+	public void enable(DebuggerWorkflowFrontEndService service) {
+		this.service = service;
 
 		// Do not retroactively display interpreters
 	}
 
 	@Override
 	public boolean isEnabled() {
-		return plugin != null;
+		return service != null;
 	}
 
 	@Override
 	public void disable() {
-		plugin = null;
+		service = null;
 	}
 
 	@Override
@@ -64,14 +66,14 @@ public class ShowInterpreterDebuggerBot implements DebuggerBot {
 			if (interpreter == null) {
 				return;
 			}
-			DebuggerInterpreterService service =
-				PluginToolUtils.getServiceFromRunningCompatibleTool(plugin.getTool(),
+			DebuggerInterpreterService interpreterService =
+				PluginToolUtils.getServiceFromRunningCompatibleTool(service.getTool(),
 					DebuggerInterpreterService.class);
-			if (service == null) {
+			if (interpreterService == null) {
 				return;
 			}
 			Swing.runIfSwingOrRunLater(() -> {
-				service.showConsole(interpreter);
+				interpreterService.showConsole(interpreter);
 			});
 		}).exceptionally(ex -> {
 			Msg.error(this, "Error displaying debugger interpreter for " + model, ex);

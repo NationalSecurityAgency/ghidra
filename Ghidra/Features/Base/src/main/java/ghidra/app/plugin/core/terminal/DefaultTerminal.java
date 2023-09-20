@@ -41,6 +41,11 @@ public class DefaultTerminal implements Terminal {
 	}
 
 	@Override
+	public void terminated() {
+		provider.terminated();
+	}
+
+	@Override
 	public void addTerminalListener(TerminalListener listener) {
 		provider.addTerminalListener(listener);
 	}
@@ -53,6 +58,16 @@ public class DefaultTerminal implements Terminal {
 	@Override
 	public void injectDisplayOutput(ByteBuffer bb) {
 		provider.processInput(bb);
+	}
+
+	@Override
+	public void setSubTitle(String title) {
+		Swing.runIfSwingOrRunLater(() -> provider.setSubTitle(title));
+	}
+
+	@Override
+	public String getSubTitle() {
+		return provider.getSubTitle();
 	}
 
 	@Override
@@ -113,5 +128,10 @@ public class DefaultTerminal implements Terminal {
 	@Override
 	public int getCursorRow() {
 		return provider.getCursorRow();
+	}
+
+	@Override
+	public void setTerminateAction(Runnable action) {
+		Swing.runIfSwingOrRunLater(() -> provider.setTerminateAction(action));
 	}
 }

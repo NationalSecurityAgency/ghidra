@@ -19,24 +19,24 @@ import java.util.Set;
 
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.services.DebuggerBot;
-import ghidra.app.services.DebuggerWorkflowService;
+import ghidra.app.services.DebuggerWorkflowToolService;
+import ghidra.debug.api.workflow.DebuggerBot;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.*;
 
-@PluginInfo( //
-		shortDescription = "Debugger workflow service (proxy to front-end)", //
-		description = "Manage automatic debugging actions and analysis", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		servicesProvided = { //
-			DebuggerWorkflowService.class, //
-		} //
-)
-public class DebuggerWorkflowServiceProxyPlugin extends Plugin implements DebuggerWorkflowService {
+@PluginInfo(
+	shortDescription = "Debugger workflow service (proxy to front-end)",
+	description = "Manage automatic debugging actions and analysis",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	servicesProvided = {
+		DebuggerWorkflowToolService.class,
+	})
+public class DebuggerWorkflowServiceProxyPlugin extends Plugin
+		implements DebuggerWorkflowToolService {
 
 	protected static DebuggerWorkflowServicePlugin getOrCreateFrontEndDelegate() {
 		FrontEndTool frontEnd = AppInfo.getFrontEndTool();

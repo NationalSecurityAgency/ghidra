@@ -31,6 +31,7 @@ import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.debug.api.workflow.DebuggerBot;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.options.*;
@@ -44,18 +45,18 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 
-@PluginInfo( //
-		shortDescription = "Debugger workflow service", //
-		description = "Manage automatic debugging actions and analysis", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		servicesProvided = { //
-			DebuggerWorkflowService.class, //
-		} //
-)
+@PluginInfo(
+	shortDescription = "Debugger workflow service",
+	description = "Manage automatic debugging actions and analysis",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	servicesProvided = {
+		DebuggerWorkflowFrontEndService.class,
+	})
 public class DebuggerWorkflowServicePlugin extends Plugin
-		implements DebuggerWorkflowService, ApplicationLevelOnlyPlugin, OptionsChangeListener {
+		implements DebuggerWorkflowFrontEndService, ApplicationLevelOnlyPlugin,
+		OptionsChangeListener {
 
 	protected class ForBotsModelsChangeListener
 			implements CollectionChangeListener<DebuggerObjectModel> {
@@ -290,6 +291,7 @@ public class DebuggerWorkflowServicePlugin extends Plugin
 		}
 	}
 
+	@Override
 	public Collection<PluginTool> getProxyingPluginTools() {
 		synchronized (trackStuffListenersByTool) {
 			return List.copyOf(trackStuffListenersByTool.keySet());

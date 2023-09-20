@@ -278,3 +278,10 @@ I wouldn't expect the user to manage multiple transaction objects.
 The recommendation is that the CLI can have at most one active transaction.
 For the user to open a second transaction may be considered an error.
 Take care as you're coding (and likely re-using command logic) that you don't accidentally take or otherwise conflict with the CLI's transaction manager when processing an event.
+
+
+
+# Regarding launcher shell scripts:
+
+Need to document all the @metadata stuff
+In particular, "Image" is a special parameter that will get the program executable by default.

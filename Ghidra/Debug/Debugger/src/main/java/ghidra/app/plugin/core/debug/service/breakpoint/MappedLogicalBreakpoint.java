@@ -19,8 +19,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.services.DebuggerModelService;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.SleighUtils;

@@ -17,8 +17,11 @@ package ghidra.app.plugin.core.debug.workflow;
 
 import java.util.*;
 
-import ghidra.app.services.*;
-import ghidra.app.services.SectionMapProposal.SectionMapEntry;
+import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.modules.MapProposal;
+import ghidra.debug.api.modules.SectionMapProposal;
+import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
+import ghidra.debug.api.workflow.DebuggerBotInfo;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -28,12 +31,11 @@ import ghidra.trace.util.TraceChangeType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@DebuggerBotInfo( //
-	description = "Map sections to open programs", //
-	details = "Monitors open traces and programs, attempting to map sections by \"best\" match.", //
-	help = @HelpInfo(anchor = "map_sections"), //
-	enabledByDefault = false //
-)
+@DebuggerBotInfo(
+	description = "Map sections to open programs",
+	details = "Monitors open traces and programs, attempting to map sections by \"best\" match.",
+	help = @HelpInfo(anchor = "map_sections"),
+	enabledByDefault = false)
 public class MapSectionsDebuggerBot extends AbstractMapDebuggerBot {
 
 	@Override

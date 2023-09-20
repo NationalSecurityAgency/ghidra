@@ -15,55 +15,30 @@
  */
 package agent.dbgeng.rmi;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.SocketTimeoutException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.io.*;
+import java.net.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteAsyncResult;
-import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteMethod;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiAcceptor;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
 import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.services.TraceRmiService;
 import ghidra.dbg.testutil.DummyProc;
-import ghidra.framework.Application;
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.TestApplicationUtils;
+import ghidra.debug.api.tracermi.*;
+import ghidra.framework.*;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginsConfiguration;
-import ghidra.framework.plugintool.util.PluginDescription;
-import ghidra.framework.plugintool.util.PluginException;
-import ghidra.framework.plugintool.util.PluginPackage;
+import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.trace.model.Lifespan;
@@ -174,10 +149,10 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		// If commands come from file, Python will quit after EOF.
 		Msg.info(this, "outFile: " + outFile);
 		Msg.info(this, "errFile: " + errFile);
-		
+
 		//pb.inheritIO();
 		pb.redirectInput(ProcessBuilder.Redirect.PIPE);
-	    pb.redirectOutput(outFile.toFile());
+		pb.redirectOutput(outFile.toFile());
 		pb.redirectError(errFile.toFile());
 		Process pyproc = pb.start();
 		OutputStream stdin = pyproc.getOutputStream();
@@ -195,7 +170,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 				}
 				Msg.info(this, "Python exited with code " + pyproc.exitValue());
 				return new PythonResult(false, pyproc.exitValue(), Files.readString(outFile),
-						Files.readString(errFile));
+					Files.readString(errFile));
 			}
 			catch (Exception e) {
 				return ExceptionUtils.rethrow(e);
@@ -230,10 +205,10 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		return result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).handle();
 	}
 
-	protected record PythonAndHandler(ExecInPython exec, TraceRmiHandler handler)
+	protected record PythonAndConnection(ExecInPython exec, TraceRmiConnection connection)
 			implements AutoCloseable {
 		protected RemoteMethod getMethod(String name) {
-			return Objects.requireNonNull(handler.getMethods().get(name));
+			return Objects.requireNonNull(connection.getMethods().get(name));
 		}
 
 		public void execute(String cmd) {
@@ -258,7 +233,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			try {
 				PythonResult r = exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				r.handle();
-				waitForPass(() -> assertTrue(handler.isClosed()));
+				waitForPass(() -> assertTrue(connection.isClosed()));
 			}
 			finally {
 				exec.python.destroyForcibly();
@@ -266,15 +241,15 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		}
 	}
 
-	protected PythonAndHandler startAndConnectPython(Function<String, String> scriptSupplier)
+	protected PythonAndConnection startAndConnectPython(Function<String, String> scriptSupplier)
 			throws Exception {
 		TraceRmiAcceptor acceptor = traceRmi.acceptOne(null);
 		ExecInPython exec =
 			execInPython(scriptSupplier.apply(sockToStringForPython(acceptor.getAddress())));
 		acceptor.setTimeout(CONNECT_TIMEOUT_MS);
 		try {
-			TraceRmiHandler handler = acceptor.accept();
-			return new PythonAndHandler(exec, handler);
+			TraceRmiConnection connection = acceptor.accept();
+			return new PythonAndConnection(exec, connection);
 		}
 		catch (SocketTimeoutException e) {
 			exec.python.destroyForcibly();
@@ -283,7 +258,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		}
 	}
 
-	protected PythonAndHandler startAndConnectPython() throws Exception {
+	protected PythonAndConnection startAndConnectPython() throws Exception {
 		return startAndConnectPython(addr -> """
 				%s
 				ghidra_trace_connect('%s')
@@ -293,10 +268,10 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	@SuppressWarnings("resource")
 	protected String runThrowError(Function<String, String> scriptSupplier)
 			throws Exception {
-		PythonAndHandler conn = startAndConnectPython(scriptSupplier);
+		PythonAndConnection conn = startAndConnectPython(scriptSupplier);
 		PythonResult r = conn.exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		String stdout = r.handle();
-		waitForPass(() -> assertTrue(conn.handler.isClosed()));
+		waitForPass(() -> assertTrue(conn.connection.isClosed()));
 		return stdout;
 	}
 

@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 import generic.ULongSpan.ULongSpanSet;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerDataAccess;
+import ghidra.debug.api.emulation.PcodeDebuggerDataAccess;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.AccessPcodeExecutionException;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece;

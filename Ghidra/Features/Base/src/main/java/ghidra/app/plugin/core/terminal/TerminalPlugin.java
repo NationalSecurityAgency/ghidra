@@ -52,8 +52,22 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 		clipboardService = tool.getService(ClipboardService.class);
 	}
 
+	@Override
+	public void cleanTerminated() {
+		Swing.runIfSwingOrRunLater(this::doCleanTerminated);
+	}
+
+	protected void doCleanTerminated() {
+		for (TerminalProvider provider : List.copyOf(providers)) {
+			if (provider.isTerminated()) {
+				provider.removeFromTool();
+			}
+		}
+	}
+
 	public TerminalProvider createProvider(Charset charset, VtOutput outputCb) {
 		return Swing.runNow(() -> {
+			cleanTerminated();
 			TerminalProvider provider = new TerminalProvider(this, charset);
 			provider.setOutputCallback(outputCb);
 			provider.addToTool();

@@ -22,10 +22,10 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.async.AsyncFence;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.eval.AbstractVarnodeEvaluator;
 import ghidra.pcode.eval.ArithmeticVarnodeEvaluator;

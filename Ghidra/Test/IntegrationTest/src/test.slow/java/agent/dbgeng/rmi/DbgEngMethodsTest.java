@@ -24,12 +24,11 @@ import java.util.*;
 import org.junit.Test;
 
 import generic.Unique;
-import ghidra.app.plugin.core.debug.service.rmi.trace.RemoteMethod;
-import ghidra.app.plugin.core.debug.service.rmi.trace.ValueDecoder;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.dbg.testutil.DummyProc;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
+import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -46,7 +45,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testEvaluate() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			RemoteMethod evaluate = conn.getMethod("evaluate");
 			assertEquals("11",
 				evaluate.invoke(Map.of("expr", "3+4*2")));
@@ -55,10 +54,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testExecuteCapture() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			RemoteMethod execute = conn.getMethod("execute");
-			assertEquals(false,
-				execute.parameters().get("to_string").defaultValue().get(ValueDecoder.DEFAULT));
+			assertEquals(false, execute.parameters().get("to_string").getDefaultValue());
 			assertEquals("11\n",
 				execute.invoke(Map.of("cmd", "print(3+4*2)", "to_string", true)));
 		}
@@ -66,7 +64,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testExecute() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			conn.execute("ghidra_trace_kill()");
 		}
@@ -77,7 +75,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshAvailable() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, null);
 			txCreate(conn, "Available");
 
@@ -100,7 +98,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshBreakpoints() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -113,7 +111,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				conn.execute("dbg.bp(expr=pc)");
 				conn.execute("dbg.ba(expr=pc+4)");
 				txPut(conn, "breakpoints");
-				TraceObject breakpoints = Objects.requireNonNull(tb.objAny("Processes[].Breakpoints"));
+				TraceObject breakpoints =
+					Objects.requireNonNull(tb.objAny("Processes[].Breakpoints"));
 				refreshBreakpoints.invoke(Map.of("node", breakpoints));
 
 				List<TraceObjectValue> procBreakLocVals = tb.trace.getObjectManager()
@@ -138,7 +137,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshBreakpoints2() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "all");
 
@@ -186,7 +185,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshProcesses() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, null);
 			txCreate(conn, "Processes");
 			txCreate(conn, "Processes[1]");
@@ -210,7 +209,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshEnvironment() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			String path = "Processes[].Environment";
 			start(conn, "notepad.exe");
 			txPut(conn, "all");
@@ -233,7 +232,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshThreads() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			String path = "Processes[].Threads";
 			start(conn, "notepad.exe");
 			txCreate(conn, path);
@@ -254,7 +253,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshStack() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			String path = "Processes[].Threads[].Stack";
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
@@ -280,7 +279,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshRegisters() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			String path = "Processes[].Threads[].Registers";
 			start(conn, "notepad.exe");
 			conn.execute("ghidra_trace_txstart('Tx')");
@@ -309,7 +308,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshMappings() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			String path = "Processes[].Memory";
 			start(conn, "notepad.exe");
 			txCreate(conn, path);
@@ -331,7 +330,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRefreshModules() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			String path = "Processes[].Modules";
 			start(conn, "notepad.exe");
 			txCreate(conn, path);
@@ -354,7 +353,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testActivateThread() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -384,7 +383,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testRemoveProcess() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "netstat.exe");
 			txPut(conn, "processes");
 
@@ -404,7 +403,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 	@Test
 	public void testAttachObj() throws Exception {
 		try (DummyProc dproc = DummyProc.run("notepad.exe")) {
-			try (PythonAndHandler conn = startAndConnectPython()) {
+			try (PythonAndConnection conn = startAndConnectPython()) {
 				start(conn, null);
 				txPut(conn, "available");
 
@@ -425,14 +424,15 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 	@Test
 	public void testAttachPid() throws Exception {
 		try (DummyProc dproc = DummyProc.run("notepad.exe")) {
-			try (PythonAndHandler conn = startAndConnectPython()) {
+			try (PythonAndConnection conn = startAndConnectPython()) {
 				start(conn, null);
 				txPut(conn, "available");
 
 				RemoteMethod attachPid = conn.getMethod("attach_pid");
 				try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/noname")) {
 					tb = new ToyDBTraceBuilder((Trace) mdo.get());
-					Objects.requireNonNull(tb.objAny("Available["+dproc.pid+"]", Lifespan.at(0)));
+					Objects.requireNonNull(
+						tb.objAny("Available[" + dproc.pid + "]", Lifespan.at(0)));
 					attachPid.invoke(Map.of("pid", dproc.pid));
 
 					String out = conn.executeCapture("list(util.process_list())");
@@ -444,7 +444,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testDetach() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "netstat.exe");
 			txPut(conn, "processes");
 
@@ -463,7 +463,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testLaunchEntry() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, null);
 			txPut(conn, "processes");
 
@@ -472,7 +472,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				launch.invoke(Map.ofEntries(
-				    Map.entry("file", "notepad.exe")));
+					Map.entry("file", "notepad.exe")));
 
 				String out = conn.executeCapture("list(util.process_list())");
 				assertThat(out, containsString("notepad.exe"));
@@ -482,7 +482,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test //Can't do this test because create(xxx, initial_break=False) doesn't return
 	public void testLaunch() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, null);
 			txPut(conn, "processes");
 
@@ -502,9 +502,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 		}
 	}
 
-	@Test 
+	@Test
 	public void testKill() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -524,7 +524,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testStepInto() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -547,7 +547,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				// lab1:
 				//    addr1
 				String[] split = disCall.split("\\s+");  // get target
-  				long pcCallee = Long.decode(split[split.length-1]);
+				long pcCallee = Long.decode(split[split.length - 1]);
 
 				step_into.invoke(Map.of("thread", thread));
 				long pc = getAddressAtOffset(conn, 0);
@@ -558,7 +558,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testStepOver() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -576,7 +576,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 				String disCall = getInst(conn);
 				String[] split = disCall.split("\\s+");  // get target
-  				long pcCallee = Long.decode(split[split.length-1]);
+				long pcCallee = Long.decode(split[split.length - 1]);
 
 				step_over.invoke(Map.of("thread", thread));
 				long pc = getAddressAtOffset(conn, 0);
@@ -585,9 +585,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 		}
 	}
 
-	@Test 
+	@Test
 	public void testStepTo() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 
 			RemoteMethod step_into = conn.getMethod("step_into");
@@ -601,7 +601,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 					step_into.invoke(Map.of("thread", thread));
 				}
 				step_into.invoke(Map.of("thread", thread));
-				
+
 				int sz = Integer.parseInt(getInstSizeAtOffset(conn, 0));
 				for (int i = 0; i < 4; i++) {
 					sz += Integer.parseInt(getInstSizeAtOffset(conn, sz));
@@ -609,9 +609,10 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 				long pcNext = getAddressAtOffset(conn, sz);
 
-				boolean success = (boolean) step_to.invoke(Map.of("thread", thread, "address", tb.addr(pcNext), "max", 10));
+				boolean success = (boolean) step_to
+						.invoke(Map.of("thread", thread, "address", tb.addr(pcNext), "max", 10));
 				assertTrue(success);
-				
+
 				long pc = getAddressAtOffset(conn, 0);
 				assertEquals(pcNext, pc);
 			}
@@ -620,7 +621,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testStepOut() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -650,7 +651,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakAddress() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -659,8 +660,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
-				
-				long address = getAddressAtOffset(conn, 0);				
+
+				long address = getAddressAtOffset(conn, 0);
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
 				String out = conn.executeCapture("list(util.get_breakpoints())");
@@ -671,7 +672,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakExpression() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -688,9 +689,9 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 		}
 	}
 
-	@Test  
+	@Test
 	public void testBreakHardwareAddress() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -699,8 +700,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
-				
-				long address = getAddressAtOffset(conn, 0);				
+
+				long address = getAddressAtOffset(conn, 0);
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
 				String out = conn.executeCapture("list(util.get_breakpoints())");
@@ -711,7 +712,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakHardwareExpression() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -730,7 +731,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakReadRange() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -740,7 +741,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				waitStopped();
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
-				long address = getAddressAtOffset(conn, 0);				
+				long address = getAddressAtOffset(conn, 0);
 				AddressRange range = tb.range(address, address + 3); // length 4
 				breakRange.invoke(Map.of("process", proc, "range", range));
 
@@ -754,7 +755,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakReadExpression() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -763,10 +764,10 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				breakExpression.invoke(Map.of("expression", "ntdll!LdrInitShimEngineDynamic"));
-				long address = getAddressAtOffset(conn, 0);				
+				long address = getAddressAtOffset(conn, 0);
 
 				String out = conn.executeCapture("list(util.get_breakpoints())");
-				assertThat(out, containsString(Long.toHexString(address>>24)));
+				assertThat(out, containsString(Long.toHexString(address >> 24)));
 				assertThat(out, containsString("sz=1"));
 				assertThat(out, containsString("type=r"));
 			}
@@ -775,7 +776,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakWriteRange() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -785,7 +786,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				waitStopped();
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
-				long address = getAddressAtOffset(conn, 0);				
+				long address = getAddressAtOffset(conn, 0);
 				AddressRange range = tb.range(address, address + 3); // length 4
 				breakRange.invoke(Map.of("process", proc, "range", range));
 
@@ -799,7 +800,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakWriteExpression() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -808,10 +809,10 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				breakExpression.invoke(Map.of("expression", "ntdll!LdrInitShimEngineDynamic"));
-				long address = getAddressAtOffset(conn, 0);				
+				long address = getAddressAtOffset(conn, 0);
 
 				String out = conn.executeCapture("list(util.get_breakpoints())");
-				assertThat(out, containsString(Long.toHexString(address>>24)));
+				assertThat(out, containsString(Long.toHexString(address >> 24)));
 				assertThat(out, containsString("sz=1"));
 				assertThat(out, containsString("type=w"));
 			}
@@ -820,7 +821,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakAccessRange() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -830,7 +831,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				waitStopped();
 
 				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
-				long address = getAddressAtOffset(conn, 0);				
+				long address = getAddressAtOffset(conn, 0);
 				AddressRange range = tb.range(address, address + 3); // length 4
 				breakRange.invoke(Map.of("process", proc, "range", range));
 
@@ -844,7 +845,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testBreakAccessExpression() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -853,10 +854,10 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
 				breakExpression.invoke(Map.of("expression", "ntdll!LdrInitShimEngineDynamic"));
-				long address = getAddressAtOffset(conn, 0);				
+				long address = getAddressAtOffset(conn, 0);
 
 				String out = conn.executeCapture("list(util.get_breakpoints())");
-				assertThat(out, containsString(Long.toHexString(address>>24)));
+				assertThat(out, containsString(Long.toHexString(address >> 24)));
 				assertThat(out, containsString("sz=1"));
 				assertThat(out, containsString("type=rw"));
 			}
@@ -865,7 +866,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testToggleBreakpoint() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -874,7 +875,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 
-				long address = getAddressAtOffset(conn, 0);				
+				long address = getAddressAtOffset(conn, 0);
 				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
@@ -891,7 +892,7 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 
 	@Test
 	public void testDeleteBreakpoint() throws Exception {
-		try (PythonAndHandler conn = startAndConnectPython()) {
+		try (PythonAndConnection conn = startAndConnectPython()) {
 			start(conn, "notepad.exe");
 			txPut(conn, "processes");
 
@@ -899,8 +900,8 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 			RemoteMethod deleteBreakpoint = conn.getMethod("delete_breakpoint");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
-			
-				long address = getAddressAtOffset(conn, 0);				
+
+				long address = getAddressAtOffset(conn, 0);
 				TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]"));
 				breakAddress.invoke(Map.of("process", proc, "address", tb.addr(address)));
 
@@ -915,42 +916,43 @@ public class DbgEngMethodsTest extends AbstractDbgEngTraceRmiTest {
 		}
 	}
 
-	private void start(PythonAndHandler conn, String obj) {
+	private void start(PythonAndConnection conn, String obj) {
 		conn.execute("from ghidradbg.commands import *");
 		if (obj != null)
-			conn.execute("ghidra_trace_create('"+obj+"')");
-		else 
-			conn.execute("ghidra_trace_create()");	}
+			conn.execute("ghidra_trace_create('" + obj + "')");
+		else
+			conn.execute("ghidra_trace_create()");
+	}
 
-	private void txPut(PythonAndHandler conn, String obj) {
+	private void txPut(PythonAndConnection conn, String obj) {
 		conn.execute("ghidra_trace_txstart('Tx')");
 		conn.execute("ghidra_trace_put_" + obj + "()");
 		conn.execute("ghidra_trace_txcommit()");
 	}
 
-	private void txCreate(PythonAndHandler conn, String path) {
+	private void txCreate(PythonAndConnection conn, String path) {
 		conn.execute("ghidra_trace_txstart('Fake')");
 		conn.execute("ghidra_trace_create_obj('%s')".formatted(path));
 		conn.execute("ghidra_trace_txcommit()");
 	}
 
-	private String getInst(PythonAndHandler conn) {
+	private String getInst(PythonAndConnection conn) {
 		return getInstAtOffset(conn, 0);
 	}
 
-	private String getInstAtOffset(PythonAndHandler conn, int offset) {
-		String inst = "util.get_inst(util.get_debugger().reg.get_pc()+"+offset+")";
+	private String getInstAtOffset(PythonAndConnection conn, int offset) {
+		String inst = "util.get_inst(util.get_debugger().reg.get_pc()+" + offset + ")";
 		String ret = conn.executeCapture(inst);
-		return ret.substring(1, ret.length()-1);    // remove <>
+		return ret.substring(1, ret.length() - 1);    // remove <>
 	}
 
-	private String getInstSizeAtOffset(PythonAndHandler conn, int offset) {
-		String instSize = "util.get_inst_sz(util.get_debugger().reg.get_pc()+"+offset+")";
+	private String getInstSizeAtOffset(PythonAndConnection conn, int offset) {
+		String instSize = "util.get_inst_sz(util.get_debugger().reg.get_pc()+" + offset + ")";
 		return conn.executeCapture(instSize);
 	}
 
-	private long getAddressAtOffset(PythonAndHandler conn, int offset) {
-		String inst = "util.get_inst(util.get_debugger().reg.get_pc()+"+offset+")";
+	private long getAddressAtOffset(PythonAndConnection conn, int offset) {
+		String inst = "util.get_inst(util.get_debugger().reg.get_pc()+" + offset + ")";
 		String ret = conn.executeCapture(inst);
 		String[] split = ret.split("\\s+");  // get target
 		return Long.decode(split[1]);

@@ -37,6 +37,7 @@ import ghidra.dbg.AnnotatedDebuggerAttributeListener;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
+import ghidra.debug.api.interpreter.DebuggerInterpreterConnection;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 

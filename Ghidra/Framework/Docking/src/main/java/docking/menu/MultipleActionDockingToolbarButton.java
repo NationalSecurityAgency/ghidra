@@ -132,7 +132,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 		return new Rectangle(leftIconWidth, 0, rightButtonWidth, height);
 	}
 
-	private ActionContext getActionContext() {
+	protected ActionContext getActionContext() {
 		ComponentProvider provider = getComponentProvider();
 		ActionContext context = provider == null ? null : provider.getActionContext(null);
 		final ActionContext actionContext = context == null ? new DefaultActionContext() : context;
@@ -152,7 +152,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 	 * 
 	 * @return the popup menu that was shown
 	 */
-	JPopupMenu showPopup() {
+	protected JPopupMenu showPopup() {
 
 		if (popupIsShowing()) {
 			popupMenu.setVisible(false);
@@ -174,6 +174,16 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 		if (elapsedTime < 500) { // somewhat arbitrary time window
 			return null;
 		}
+
+		JPopupMenu menu = doCreateMenu();
+
+		menu.addPopupMenuListener(popupListener);
+		Point p = getPopupPoint();
+		menu.show(this, p.x, p.y);
+		return menu;
+	}
+
+	protected JPopupMenu doCreateMenu() {
 
 		JPopupMenu menu = new JPopupMenu();
 		List<DockingActionIf> actionList = multipleAction.getActionList(getActionContext());
@@ -203,10 +213,6 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 
 			menu.add(item);
 		}
-
-		menu.addPopupMenuListener(popupListener);
-		Point p = getPopupPoint();
-		menu.show(this, p.x, p.y);
 		return menu;
 	}
 

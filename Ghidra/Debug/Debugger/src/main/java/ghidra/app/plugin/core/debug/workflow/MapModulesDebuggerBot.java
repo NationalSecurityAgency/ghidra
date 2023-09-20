@@ -17,8 +17,11 @@ package ghidra.app.plugin.core.debug.workflow;
 
 import java.util.*;
 
-import ghidra.app.services.*;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.modules.MapProposal;
+import ghidra.debug.api.modules.ModuleMapProposal;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.workflow.DebuggerBotInfo;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -29,12 +32,11 @@ import ghidra.trace.util.TraceChangeType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@DebuggerBotInfo( //
-	description = "Map modules to open programs", //
-	details = "Monitors open traces and programs, attempting to map modules by \"best\" match.", //
-	help = @HelpInfo(anchor = "map_modules"), //
-	enabledByDefault = true //
-)
+@DebuggerBotInfo(
+	description = "Map modules to open programs",
+	details = "Monitors open traces and programs, attempting to map modules by \"best\" match.",
+	help = @HelpInfo(anchor = "map_modules"),
+	enabledByDefault = true)
 public class MapModulesDebuggerBot extends AbstractMapDebuggerBot {
 
 	@Override

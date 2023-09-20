@@ -25,12 +25,13 @@ import javax.swing.event.ListSelectionEvent;
 
 import docking.action.DockingAction;
 import docking.widgets.HorizontalTabPanel;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.*;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginEventListener;

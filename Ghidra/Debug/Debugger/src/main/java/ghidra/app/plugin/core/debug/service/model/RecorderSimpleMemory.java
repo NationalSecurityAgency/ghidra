@@ -21,9 +21,9 @@ import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.AbstractRecorderMemory;
 import ghidra.dbg.target.*;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
 import ghidra.program.model.address.*;
 
 public class RecorderSimpleMemory implements AbstractRecorderMemory {

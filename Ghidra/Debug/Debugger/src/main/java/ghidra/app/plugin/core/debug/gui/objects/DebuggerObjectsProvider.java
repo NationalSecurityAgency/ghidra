@@ -43,13 +43,11 @@ import docking.widgets.table.DefaultEnumeratedColumnTableModel;
 import docking.widgets.tree.GTree;
 import generic.jar.ResourceFile;
 import generic.theme.GColor;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.objects.actions.*;
 import ghidra.app.plugin.core.debug.gui.objects.components.*;
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.script.*;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
@@ -65,6 +63,9 @@ import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.Project;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
@@ -1684,7 +1685,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		TargetObject result = null;
 		try {
 			result = DebugModelConventions.findSuitable(TargetExecutionStateful.class, object)
-				.get(100, TimeUnit.MILLISECONDS);
+					.get(100, TimeUnit.MILLISECONDS);
 		}
 		catch (Exception e) {
 			// IGNORE

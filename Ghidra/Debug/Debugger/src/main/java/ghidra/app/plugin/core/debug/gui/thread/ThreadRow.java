@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.debug.gui.thread;
 
 import db.Transaction;
 import ghidra.app.services.DebuggerModelService;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;

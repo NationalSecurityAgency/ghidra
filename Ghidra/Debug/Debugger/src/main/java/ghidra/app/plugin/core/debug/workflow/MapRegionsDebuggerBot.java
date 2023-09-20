@@ -17,8 +17,11 @@ package ghidra.app.plugin.core.debug.workflow;
 
 import java.util.*;
 
-import ghidra.app.services.*;
-import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.modules.MapProposal;
+import ghidra.debug.api.modules.RegionMapProposal;
+import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
+import ghidra.debug.api.workflow.DebuggerBotInfo;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
@@ -28,12 +31,11 @@ import ghidra.trace.util.TraceChangeType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@DebuggerBotInfo( //
-	description = "Map regions to open programs", //
-	details = "Monitors open traces and programs, attempting to map regions by \"best\" match.", //
-	help = @HelpInfo(anchor = "map_regions"), //
-	enabledByDefault = false //
-)
+@DebuggerBotInfo(
+	description = "Map regions to open programs",
+	details = "Monitors open traces and programs, attempting to map regions by \"best\" match.",
+	help = @HelpInfo(anchor = "map_regions"),
+	enabledByDefault = false)
 public class MapRegionsDebuggerBot extends AbstractMapDebuggerBot {
 
 	@Override

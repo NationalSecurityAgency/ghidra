@@ -22,7 +22,6 @@ import javax.swing.event.ListSelectionListener;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.model.*;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
@@ -33,6 +32,7 @@ import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathMatcher;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;

@@ -29,6 +29,8 @@ import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerService
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.Memory;

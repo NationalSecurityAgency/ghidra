@@ -19,13 +19,13 @@ import java.util.*;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.app.plugin.core.debug.gui.watch.WatchRow;
 import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DebuggerWatchesService;
 import ghidra.app.tablechooser.*;
+import ghidra.debug.api.watch.WatchRow;
 import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.docking.settings.*;
 import ghidra.pcode.emu.BytesPcodeThread;

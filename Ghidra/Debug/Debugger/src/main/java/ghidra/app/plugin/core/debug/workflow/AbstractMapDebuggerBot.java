@@ -23,6 +23,7 @@ import ghidra.app.plugin.core.debug.service.workflow.*;
 import ghidra.app.services.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.workflow.DebuggerBot;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
@@ -49,7 +50,7 @@ public abstract class AbstractMapDebuggerBot implements DebuggerBot {
 
 	protected abstract Collection<TraceChangeType<?, ?>> getChangeTypes();
 
-	private DebuggerWorkflowServicePlugin plugin;
+	private DebuggerWorkflowFrontEndService service;
 
 	private final MultiToolTraceListenerManager<ForChangesTraceListener> listeners =
 		new MultiToolTraceListenerManager<>(ForChangesTraceListener::new);
@@ -63,11 +64,11 @@ public abstract class AbstractMapDebuggerBot implements DebuggerBot {
 	}
 
 	@Override
-	public void enable(DebuggerWorkflowServicePlugin wp) {
-		this.plugin = wp;
+	public void enable(DebuggerWorkflowFrontEndService service) {
+		this.service = service;
 
-		listeners.enable(wp);
-		for (PluginTool t : plugin.getProxyingPluginTools()) {
+		listeners.enable(service);
+		for (PluginTool t : service.getProxyingPluginTools()) {
 			DebuggerTraceManagerService traceManager =
 				t.getService(DebuggerTraceManagerService.class);
 			if (traceManager == null) {
@@ -79,14 +80,14 @@ public abstract class AbstractMapDebuggerBot implements DebuggerBot {
 
 	@Override
 	public void disable() {
-		plugin = null;
+		service = null;
 
 		listeners.disable();
 	}
 
 	@Override
 	public boolean isEnabled() {
-		return plugin != null;
+		return service != null;
 	}
 
 	@Override
@@ -132,7 +133,7 @@ public abstract class AbstractMapDebuggerBot implements DebuggerBot {
 
 		Map<Trace, Pair<PluginTool, Set<Program>>> toAnalyze = new HashMap<>();
 		for (Trace trace : traces) {
-			for (PluginTool tool : plugin.getProxyingPluginTools()) {
+			for (PluginTool tool : service.getProxyingPluginTools()) {
 				DebuggerTraceManagerService traceManager =
 					tool.getService(DebuggerTraceManagerService.class);
 				if (traceManager == null) {

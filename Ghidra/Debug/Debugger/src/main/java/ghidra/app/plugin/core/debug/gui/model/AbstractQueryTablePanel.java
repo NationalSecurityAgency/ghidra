@@ -26,7 +26,7 @@ import javax.swing.event.ListSelectionListener;
 
 import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;

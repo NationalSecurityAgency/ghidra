@@ -49,9 +49,9 @@ import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.program.database.ProgramContentHandler;
@@ -274,37 +274,6 @@ public interface DebuggerResources {
 	Color COLOR_VALUE_CHANGED = new GColor("color.debugger.plugin.resources.value.changed");
 	Color COLOR_VALUE_CHANGED_SEL =
 		new GColor("color.debugger.plugin.resources.value.changed.selected");
-
-	String NAME_BREAKPOINT_MARKER_ENABLED = "Enabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_DISABLED = "Disabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_MIXED = "Mixed Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INEFF_EN = "Ineffective Enabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INEFF_DIS = "Ineffective Disabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INEFF_MIX = "Ineffective Mixed Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INCON_EN = "Inconsistent Enabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INCON_DIS = "Inconsistent Disabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INCON_MIX = "Inconsistent Mixed Breakpoint";
-
-	Icon ICON_BREAKPOINT_OVERLAY_INCONSISTENT =
-		new GIcon("icon.debugger.breakpoint.overlay.inconsistent");
-	Icon ICON_BREAKPOINT_MARKER_ENABLED = new GIcon("icon.debugger.breakpoint.marker.enabled");
-	Icon ICON_BREAKPOINT_MARKER_DISABLED = new GIcon("icon.debugger.breakpoint.marker.disabled");
-	Icon ICON_BREAKPOINT_MARKER_MIXED =
-		new GIcon("icon.debugger.breakpoint.marker.mixed");
-
-	Icon ICON_BREAKPOINT_MARKER_INEFF_EN =
-		new GIcon("icon.debugger.breakpoint.marker.ineffective.enabled");
-	Icon ICON_BREAKPOINT_MARKER_INEFF_DIS =
-		new GIcon("icon.debugger.breakpoint.marker.ineffective.disabled");
-	Icon ICON_BREAKPOINT_MARKER_INEFF_MIX =
-		new GIcon("icon.debugger.breakpoint.marker.ineffective.mixed");
-
-	Icon ICON_BREAKPOINT_MARKER_INCON_EN =
-		new MultiIcon(ICON_BREAKPOINT_MARKER_ENABLED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
-	Icon ICON_BREAKPOINT_MARKER_INCON_DIS =
-		new MultiIcon(ICON_BREAKPOINT_MARKER_DISABLED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
-	Icon ICON_BREAKPOINT_MARKER_INCON_MIX =
-		new MultiIcon(ICON_BREAKPOINT_MARKER_MIXED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
 
 	Icon ICON_UNIQUE_REF_READ = new GIcon("icon.debugger.unique.ref.read"); // TODO
 	Icon ICON_UNIQUE_REF_WRITE = new GIcon("icon.debugger.unique.ref.write"); // TODO
@@ -1144,19 +1113,6 @@ public interface DebuggerResources {
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	abstract class AbstractToggleBreakpointAction extends DockingAction {
-		public static final String NAME = "Toggle Breakpoint";
-		// TODO: A "toggle breakpoint" icon
-		public static final Icon ICON = ICON_BREAKPOINT_MARKER_MIXED;
-		public static final String HELP_ANCHOR = "toggle_breakpoint";
-
-		public AbstractToggleBreakpointAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Set, enable, or disable a breakpoint");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
 

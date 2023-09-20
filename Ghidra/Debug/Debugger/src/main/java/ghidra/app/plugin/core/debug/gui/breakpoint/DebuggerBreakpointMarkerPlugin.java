@@ -42,10 +42,14 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.app.util.viewer.listingpanel.MarkerClickedListener;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
@@ -62,6 +66,7 @@ import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
 @PluginInfo(
@@ -385,10 +390,10 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			// Prevent default bookmark icons from obscuring breakpoints
 			if (!(program instanceof TraceProgramView)) {
 				BookmarkManager manager = program.getBookmarkManager();
-				manager.defineType(LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE,
+				manager.defineType(LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
 					DebuggerResources.ICON_BLANK, COLOR_BREAKPOINT_ENABLED_MARKER,
 					MarkerService.BREAKPOINT_PRIORITY - 1);
-				manager.defineType(LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE,
+				manager.defineType(LogicalBreakpoint.DISABLED_BOOKMARK_TYPE,
 					DebuggerResources.ICON_BLANK, COLOR_BREAKPOINT_DISABLED_MARKER,
 					MarkerService.BREAKPOINT_PRIORITY - 1);
 			}
@@ -517,6 +522,19 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 		Set<LogicalBreakpoint> col = collectBreakpoints(locs);
 		return breakpointService.computeState(col, locs.get(0));
+	}
+
+	public abstract class AbstractToggleBreakpointAction extends DockingAction {
+		public static final String NAME = "Toggle Breakpoint";
+		// TODO: A "toggle breakpoint" icon
+		public static final Icon ICON = LogicalBreakpoint.ICON_MARKER_MIXED;
+		public static final String HELP_ANCHOR = "toggle_breakpoint";
+
+		public AbstractToggleBreakpointAction(Plugin owner) {
+			super(NAME, owner.getName());
+			setDescription("Set, enable, or disable a breakpoint");
+			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		}
 	}
 
 	protected class ToggleBreakpointAction extends AbstractToggleBreakpointAction {

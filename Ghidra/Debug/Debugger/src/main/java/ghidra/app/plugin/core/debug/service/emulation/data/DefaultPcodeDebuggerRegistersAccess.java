@@ -19,7 +19,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.emulation.PcodeDebuggerRegistersAccess;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceRegistersAccess;
 import ghidra.program.model.address.*;

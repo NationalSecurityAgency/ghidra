@@ -20,6 +20,8 @@ import java.util.Set;
 
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
+import ghidra.debug.api.platform.DisassemblyResult;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;

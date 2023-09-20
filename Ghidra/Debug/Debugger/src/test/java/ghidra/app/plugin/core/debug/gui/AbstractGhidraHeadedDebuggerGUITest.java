@@ -51,7 +51,8 @@ import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectPropertyColumn;
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.plugin.core.debug.service.model.*;
+import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceInternal;
+import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -59,6 +60,8 @@ import ghidra.dbg.model.AbstractTestTargetRegisterBank;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
 import ghidra.dbg.target.*;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.model.*;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -223,7 +226,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	public static Language getToyBE64Language() {
 		try {
 			return DefaultLanguageService.getLanguageService()
-				.getLanguage(new LanguageID(LANGID_TOYBE64));
+					.getLanguage(new LanguageID(LANGID_TOYBE64));
 		}
 		catch (LanguageNotFoundException e) {
 			throw new AssertionError("Why is the Toy language missing?", e);
@@ -677,8 +680,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	protected void intoProject(DomainObject obj) {
 		waitForDomainObject(obj);
 		DomainFolder rootFolder = tool.getProject()
-			.getProjectData()
-			.getRootFolder();
+				.getProjectData()
+				.getRootFolder();
 		waitForCondition(() -> {
 			try {
 				rootFolder.createFile(obj.getName(), obj, monitor);
@@ -725,9 +728,9 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 			throws Exception {
 		return new TestDebuggerTargetTraceMapper(target) {
 			@Override
-			public TraceRecorder startRecording(DebuggerModelServicePlugin service, Trace trace) {
+			public TraceRecorder startRecording(PluginTool tool, Trace trace) {
 				useTrace(trace);
-				return super.startRecording(service, trace);
+				return super.startRecording(tool, trace);
 			}
 		};
 	}
@@ -819,8 +822,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 			// get() is not my favorite, but it'll do for testing
 			// can't remove listener until observedTraceChange has completed.
 			bank.writeRegistersNamed(values)
-				.thenCompose(__ -> observedTraceChange)
-				.get(timeoutMillis, TimeUnit.MILLISECONDS);
+					.thenCompose(__ -> observedTraceChange)
+					.get(timeoutMillis, TimeUnit.MILLISECONDS);
 		}
 		finally {
 			trace.removeListener(listener);
@@ -836,8 +839,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	protected DomainFile unpack(File pack) throws Exception {
 		return tool.getProject()
-			.getProjectData()
-			.getRootFolder()
-			.createFile("Restored", pack, monitor);
+				.getProjectData()
+				.getRootFolder()
+				.createFile("Restored", pack, monitor);
 	}
 }

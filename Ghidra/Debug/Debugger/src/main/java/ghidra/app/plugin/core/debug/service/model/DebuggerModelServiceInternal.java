@@ -19,11 +19,12 @@ import java.io.IOException;
 import java.util.Collection;
 
 import ghidra.app.plugin.core.debug.event.*;
-import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerTargetTraceMapper;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Swing;

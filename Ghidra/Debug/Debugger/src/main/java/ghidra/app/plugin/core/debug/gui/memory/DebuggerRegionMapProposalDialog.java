@@ -27,7 +27,7 @@ import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;

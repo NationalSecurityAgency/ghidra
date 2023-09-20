@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.Set;
@@ -27,12 +27,12 @@ import org.junit.experimental.categories.Category;
 import db.Transaction;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerTargetTraceMapper;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
@@ -104,10 +104,9 @@ public class DebuggerRegistersProviderGuestTest extends DebuggerRegistersProvide
 		return new ObjectBasedDebuggerTargetTraceMapper(target,
 			new LanguageID("DATA:BE:64:default"), new CompilerSpecID("pointer64"), Set.of()) {
 			@Override
-			public TraceRecorder startRecording(DebuggerModelServicePlugin service,
-					Trace trace) {
+			public TraceRecorder startRecording(PluginTool tool, Trace trace) {
 				useTrace(trace);
-				return super.startRecording(service, trace);
+				return super.startRecording(tool, trace);
 			}
 		};
 	}

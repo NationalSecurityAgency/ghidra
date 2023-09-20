@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.stack;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;

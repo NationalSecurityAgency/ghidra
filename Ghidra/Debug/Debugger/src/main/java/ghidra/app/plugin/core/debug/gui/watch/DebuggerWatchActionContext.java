@@ -20,12 +20,13 @@ import java.util.Collection;
 import java.util.Set;
 
 import docking.DefaultActionContext;
+import ghidra.debug.api.watch.WatchRow;
 
 public class DebuggerWatchActionContext extends DefaultActionContext {
 	private final Set<WatchRow> sel;
 
 	public DebuggerWatchActionContext(DebuggerWatchesProvider provider,
-			Collection<WatchRow> sel, Component sourceComponent) {
+			Collection<? extends WatchRow> sel, Component sourceComponent) {
 		super(provider, sel, sourceComponent);
 		this.sel = Set.copyOf(sel);
 	}

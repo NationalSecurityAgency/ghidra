@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.Objects;
 
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
 import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.TraceRmiService;
@@ -36,10 +34,9 @@ public class ConnectTraceRmiScript extends GhidraScript {
 	@Override
 	protected void run() throws Exception {
 		TraceRmiService service = getService();
-		TraceRmiHandler handler = service.connect(
-			new InetSocketAddress(askString("Trace RMI", "hostname", "localhost"), askInt("Trace RMI", "port")));
+		service.connect(new InetSocketAddress(askString("Trace RMI", "hostname", "localhost"),
+			askInt("Trace RMI", "port")));
 		println("Connected");
-		handler.start();
 
 //		if (askYesNo("Execute?", "Execute 'echo test'?")) {
 //			handler.getMethods().get("execute").invoke(Map.of("cmd", "script print('test')"));

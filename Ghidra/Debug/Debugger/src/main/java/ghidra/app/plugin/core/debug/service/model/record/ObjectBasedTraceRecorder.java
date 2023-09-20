@@ -22,11 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
+import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.PermanentTransactionExecutor;
-import ghidra.app.services.TraceRecorder;
-import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.AnnotatedDebuggerAttributeListener;
@@ -38,6 +35,8 @@ import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -270,8 +269,8 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	public ObjectBasedTraceRecorder(DebuggerModelServicePlugin service, Trace trace,
-			TargetObject target, ObjectBasedDebuggerTargetTraceMapper mapper) {
+	public ObjectBasedTraceRecorder(PluginTool tool, Trace trace, TargetObject target,
+			ObjectBasedDebuggerTargetTraceMapper mapper) {
 		trace.addConsumer(this);
 		this.trace = trace;
 		this.target = target;

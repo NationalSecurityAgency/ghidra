@@ -20,7 +20,7 @@ import java.awt.Component;
 import javax.swing.SwingConstants;
 
 import docking.widgets.table.GTableCellRenderingData;
-import ghidra.app.services.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 

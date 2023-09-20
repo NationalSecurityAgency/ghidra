@@ -39,9 +39,13 @@ import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
@@ -102,8 +106,8 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
 			program.getBookmarkManager()
-					.setBookmark(addr(program, 0x00400123),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1", "");
+					.setBookmark(addr(program, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
+						"SW_EXECUTE;1", "");
 		}
 	}
 
