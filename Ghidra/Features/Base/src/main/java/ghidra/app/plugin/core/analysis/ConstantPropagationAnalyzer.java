@@ -494,7 +494,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor)
 				.setTrustWritableMemory(trustWriteMemOption)
-			    .setMinpeculativeOffset(minSpeculativeRefAddress)
+			    .setMinSpeculativeOffset(minSpeculativeRefAddress)
 			    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
 			    .setMinStoreLoadOffset(minStoreLoadRefAddress)
 			    .setCreateComplexDataFromPointers(createComplexDataFromPointers);

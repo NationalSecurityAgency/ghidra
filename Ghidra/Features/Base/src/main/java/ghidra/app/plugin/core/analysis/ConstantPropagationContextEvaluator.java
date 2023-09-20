@@ -99,7 +99,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	 * @param minSpeculativeRefAddress minimum address offset
 	 * @return this
 	 */
-	public ConstantPropagationContextEvaluator setMinpeculativeOffset(long minSpeculativeRefAddress) {
+	public ConstantPropagationContextEvaluator setMinSpeculativeOffset(long minSpeculativeRefAddress) {
 		minSpeculativeOffset = minSpeculativeRefAddress;
 		return this;
 	}
