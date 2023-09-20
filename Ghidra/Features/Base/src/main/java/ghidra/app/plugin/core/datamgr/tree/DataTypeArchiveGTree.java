@@ -120,6 +120,13 @@ public class DataTypeArchiveGTree extends GTree {
 	}
 
 	@Override
+	protected boolean supportsPopupActions() {
+		// The base tree adds collapse/ expand actions, which we already provide, so signal that we
+		// do not want those actions.
+		return false;
+	}
+
+	@Override
 	public void dispose() {
 		((ArchiveRootNode) getModelRoot()).dispose();
 		PluginTool tool = plugin.getTool();

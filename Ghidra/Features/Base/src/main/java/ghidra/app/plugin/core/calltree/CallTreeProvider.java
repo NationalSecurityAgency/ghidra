@@ -351,7 +351,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			}
 		};
 		goToSourceAction
-			.setPopupMenuData(new MenuData(new String[] { "Go To Call Source" }, goToMenu));
+				.setPopupMenuData(new MenuData(new String[] { "Go To Call Source" }, goToMenu));
 		goToSourceAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Context_Action_Goto_Source"));
 		tool.addLocalAction(this, goToSourceAction);
@@ -365,16 +365,15 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				doUpdate();
 			}
 		};
-		filterDuplicates
-			.setToolBarData(new ToolBarData(new GIcon("icon.plugin.calltree.filter.duplicates"),
-				filterOptionsToolbarGroup, "1"));
+		filterDuplicates.setToolBarData(new ToolBarData(
+			new GIcon("icon.plugin.calltree.filter.duplicates"), filterOptionsToolbarGroup, "1"));
 		filterDuplicates.setSelected(true);
 		filterDuplicates
-			.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter"));
+				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter"));
 		tool.addLocalAction(this, filterDuplicates);
 
 		//
-		// recurse depth		
+		// recurse depth
 		//
 		recurseDepthAction = new DockingAction("Recurse Depth", plugin.getName()) {
 			@Override
@@ -394,7 +393,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				"<br> will go.  Example operations include <b>Expand All</b> and filtering");
 		recurseIcon = new NumberIcon(recurseDepth.get());
 		recurseDepthAction
-			.setToolBarData(new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "2"));
+				.setToolBarData(new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "2"));
 		recurseDepthAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Action_Recurse_Depth"));
 
@@ -402,7 +401,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 		//
 		// navigate outgoing nodes on selection
-		//	
+		//
 		navigationOutgoingAction =
 			new ToggleDockingAction("Navigate Outgoing Nodes", plugin.getName()) {
 
@@ -415,11 +414,11 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		navigationOutgoingAction.setToolBarData(new ToolBarData(
 			Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON, navigationOptionsToolbarGroup, "1"));
 		navigationOutgoingAction
-			.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Navigation"));
+				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Navigation"));
 		tool.addLocalAction(this, navigationOutgoingAction);
 
 		//
-		// navigate incoming nodes on selection	
+		// navigate incoming nodes on selection
 		//
 		navigateIncomingToggleAction =
 			new ToggleDockingAction("Navigation Incoming Location Changes", plugin.getName()) {
@@ -438,8 +437,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				}
 			};
 
-		// note: the default state is to follow navigation events for the primary provider; 
-		//       non-primary providers will function like snapshots of the function with 
+		// note: the default state is to follow navigation events for the primary provider;
+		//       non-primary providers will function like snapshots of the function with
 		//       which they were activated.
 		navigateIncomingToggleAction.setSelected(isPrimary);
 		navigateIncomingToggleAction.setToolBarData(new ToolBarData(
@@ -596,7 +595,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		refreshAction.setDescription("<html>Push at any time to refresh the current trees.<br>" +
 			"This is highlighted when the data <i>may</i> be stale.<br>");
 		refreshAction
-			.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Refresh"));
+				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Refresh"));
 		tool.addLocalAction(this, refreshAction);
 
 		//
@@ -703,7 +702,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			return;
 		}
 
-		// no goto service...navigate the old fashioned way (this doesn't have history)		
+		// no goto service...navigate the old fashioned way (this doesn't have history)
 		plugin.firePluginEvent(new ProgramLocationPluginEvent(getName(), location, currentProgram));
 		isFiringNavigationEvent = false;
 	}
@@ -812,7 +811,14 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private GTree createTree() {
-		GTree tree = new GTree(new EmptyRootNode());
+		GTree tree = new GTree(new EmptyRootNode()) {
+			@Override
+			protected boolean supportsPopupActions() {
+				// The base tree adds collapse/ expand actions, which we already provide, so signal
+				// that we do not want those actions.
+				return false;
+			}
+		};
 		tree.setPaintHandlesForLeafNodes(false);
 //		tree.setFilterVisible(false);
 		return tree;
@@ -1128,7 +1134,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				return;
 			}
 
-			// first, if the given node represents the function we have, then we don't need to 
+			// first, if the given node represents the function we have, then we don't need to
 			// go any further
 			if (function.equals(node.getRemoteFunction())) {
 				GTreeNode parent = node.getParent();
@@ -1153,7 +1159,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-// TODO if we ever want specific staleness detection	
+// TODO if we ever want specific staleness detection
 //	private CallNode findNode(CallNode node, Function newFunction) {
 //		Function function = node.getContainingFunction();
 //		if (function == null) {
