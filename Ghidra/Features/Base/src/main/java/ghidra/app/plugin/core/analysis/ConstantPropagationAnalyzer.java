@@ -479,7 +479,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Actually use the setup evauluator to flow the constants
+	 * Actually use the setup evaluator to flow the constants
 	 * 
 	 * @param flowStart - address to start flowing at
 	 * @param flowSet - address set to restrict constant flowing to
@@ -494,7 +494,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(monitor)
 				.setTrustWritableMemory(trustWriteMemOption)
-			    .setMinpeculativeOffset(minSpeculativeRefAddress)
+			    .setMinSpeculativeOffset(minSpeculativeRefAddress)
 			    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
 			    .setMinStoreLoadOffset(minStoreLoadRefAddress)
 			    .setCreateComplexDataFromPointers(createComplexDataFromPointers);
