@@ -1022,7 +1022,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param fsRef A {@link FileSystemRef}
 	 * @param fsPath A {@link Path} relative to the root of the file system, or null for the root
 	 */
-	private record FileSystemSearchPath(FileSystemRef fsRef, Path fsPath) {}
+	protected record FileSystemSearchPath(FileSystemRef fsRef, Path fsPath) {}
 
 	/**
 	 * Gets a {@link List} of priority-ordered custom {@link FileSystemSearchPath}s used to search 
