@@ -1266,7 +1266,7 @@ Datatype *TypeOpIntSub::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
 TypeOpIntCarry::TypeOpIntCarry(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_CARRY,"CARRY",TYPE_BOOL,TYPE_UINT)
 {
-  opflags = PcodeOp::binary;
+  opflags = PcodeOp::binary | PcodeOp::commutative;
   addlflags = arithmetic_op;
   behave = new OpBehaviorIntCarry();
 }
@@ -1282,7 +1282,7 @@ string TypeOpIntCarry::getOperatorName(const PcodeOp *op) const
 TypeOpIntScarry::TypeOpIntScarry(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_SCARRY,"SCARRY",TYPE_BOOL,TYPE_INT)
 {
-  opflags = PcodeOp::binary;
+  opflags = PcodeOp::binary | PcodeOp::commutative;
   behave = new OpBehaviorIntScarry();
 }
 
