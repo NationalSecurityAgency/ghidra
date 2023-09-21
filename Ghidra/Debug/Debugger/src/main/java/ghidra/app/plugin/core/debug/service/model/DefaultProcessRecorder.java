@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.debug.service.model;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.trace.model.Trace;

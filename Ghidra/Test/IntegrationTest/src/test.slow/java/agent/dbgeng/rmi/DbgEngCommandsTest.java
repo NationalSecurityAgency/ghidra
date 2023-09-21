@@ -15,28 +15,12 @@
  */
 package agent.dbgeng.rmi;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,30 +29,20 @@ import java.util.stream.IntStream;
 import org.junit.Test;
 
 import generic.Unique;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiAcceptor;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.dbg.util.PathPredicates;
+import ghidra.debug.api.tracermi.TraceRmiAcceptor;
+import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.model.DomainFile;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
-import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.target.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
@@ -80,9 +54,9 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 		TraceRmiAcceptor acceptor = traceRmi.acceptOne(null);
 		Msg.info(this,
 			"Use: ghidra_trace_connect(" + sockToStringForPython(acceptor.getAddress()) + ")");
-		TraceRmiHandler handler = acceptor.accept();
-		Msg.info(this, "Connected: " + sockToStringForPython(handler.getRemoteAddress()));
-		handler.waitClosed();
+		TraceRmiConnection connection = acceptor.accept();
+		Msg.info(this, "Connected: " + sockToStringForPython(connection.getRemoteAddress()));
+		connection.waitClosed();
 		Msg.info(this, "Closed");
 	}
 
@@ -186,7 +160,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_stop()
 				quit()
 				""".formatted(PREAMBLE, addr));
-		DomainFile dfBash = env.getProject().getProjectData().getFile("/New Traces/pydbg/notepad.exe");
+		DomainFile dfBash =
+			env.getProject().getProjectData().getFile("/New Traces/pydbg/notepad.exe");
 		assertNotNull(dfBash);
 		// TODO: Given the 'quit' command, I'm not sure this assertion is checking anything.
 		assertFalse(dfBash.isOpen());
@@ -222,18 +197,18 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			extractOutSection(out, "---Import---"));
 		assertEquals("""
 				Connected to Ghidra at %s
-				
+
 				No trace""".formatted(refAddr.get()),
-			extractOutSection(out, "---Connect---").replaceAll("\r", "").substring(0,48));
+			extractOutSection(out, "---Connect---").replaceAll("\r", "").substring(0, 48));
 		String expected = """
 				Connected to Ghidra at %s
-				
+
 				Trace active""".formatted(refAddr.get());
 		String actual = extractOutSection(out, "---Start---").replaceAll("\r", "");
-		assertEquals(expected, actual.substring(0,expected.length()));
+		assertEquals(expected, actual.substring(0, expected.length()));
 		assertEquals("""
 				Connected to Ghidra at %s
-				
+
 				No trace""".formatted(refAddr.get()),
 			extractOutSection(out, "---Stop---").replaceAll("\r", ""));
 		assertEquals("""
@@ -245,7 +220,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 	public void testLcsp() throws Exception {
 		// TODO: This test assumes x86-64 on test system
 		String out = runThrowError(
-			        """
+			"""
 					%s
 					print('---Import---')
 					ghidra_trace_info_lcsp()
@@ -263,19 +238,20 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					""".formatted(PREAMBLE));
 
 		assertTrue(
-				extractOutSection(out, "---File---").replaceAll("\r", "").contains(
-				"""
-				Selected Ghidra language: x86:LE:64:default
-				
-				Selected Ghidra compiler: windows"""));
+			extractOutSection(out, "---File---").replaceAll("\r", "")
+					.contains(
+						"""
+								Selected Ghidra language: x86:LE:64:default
+
+								Selected Ghidra compiler: windows"""));
 		assertEquals("""
 				Selected Ghidra language: Toy:BE:64:default
-				
+
 				Selected Ghidra compiler: default""",
 			extractOutSection(out, "---Language---").replaceAll("\r", ""));
 		assertEquals("""
 				Selected Ghidra language: Toy:BE:64:default
-				
+
 				Selected Ghidra compiler: posStack""",
 			extractOutSection(out, "---Compiler---").replaceAll("\r", ""));
 	}
@@ -475,8 +451,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			 * code.definedData() // .create(Lifespan.nowOn(0), tb.reg("st0"),
 			 * Float10DataType.dataType); // } // assertEquals("1.5",
 			 * st0.getDefaultValueRepresentation());
-			 */		
-			}
+			 */
+		}
 	}
 
 	@Test
@@ -526,8 +502,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			 * code.definedData() // .create(Lifespan.nowOn(0), tb.reg("st0"),
 			 * Float10DataType.dataType); // } // assertEquals("0.0",
 			 * st0.getDefaultValueRepresentation());
-			 */		
-			}
+			 */
+		}
 	}
 
 	@Test
@@ -814,7 +790,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			assertNotNull(object);
 			String expected = "1\tTest.Objects[1]";
 			String actual = extractOutSection(out, "---GetObject---");
-			assertEquals(expected, actual.substring(0,expected.length()));
+			assertEquals(expected, actual.substring(0, expected.length()));
 		}
 	}
 
@@ -875,12 +851,14 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					Test.Objects[1] vshortarr [0,+inf) [1, 2, 3]       SHORT_ARR
 					Test.Objects[1] vstring   [0,+inf) 'Hello'         STRING
 					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS"""
-			        .replaceAll(" ", "")
+					.replaceAll(" ", "")
 					.replaceAll("\n", "");
-			String actual = extractOutSection(out, "---GetValues---").replaceAll(" ", "").replaceAll("\r", "").replaceAll("\n", "");
+			String actual = extractOutSection(out, "---GetValues---").replaceAll(" ", "")
+					.replaceAll("\r", "")
+					.replaceAll("\n", "");
 			assertEquals(
 				expected,
-				actual.substring(0,expected.length()));
+				actual.substring(0, expected.length()));
 		}
 	}
 
@@ -905,7 +883,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			String expected = """
 					Parent          Key   Span     Value        Type
-					
+
 					Test.Objects[1] vaddr [0,+inf) ram:deadbeef ADDRESS""";
 			String actual = extractOutSection(out, "---GetValues---").replaceAll("\r", "");
 			assertEquals(expected, actual.substring(0, expected.length()));
@@ -957,7 +935,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				total += cu.getLength();
 			}
 			String extract = extractOutSection(out, "---Disassemble---");
-			String [] split = extract.split("\r\n");
+			String[] split = extract.split("\r\n");
 			assertEquals("Disassembled %d bytes".formatted(total),
 				split[0]);
 		}
@@ -1208,14 +1186,14 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				quit()
 				""".formatted(PREAMBLE, addr));
 	}
-	
+
 	@Test
 	public void testMinimal2() throws Exception {
 		Function<String, String> scriptSupplier = addr -> """
 				%s
 				ghidra_trace_connect('%s')
 				""".formatted(PREAMBLE, addr);
-		try (PythonAndHandler conn = startAndConnectPython(scriptSupplier)) {
+		try (PythonAndConnection conn = startAndConnectPython(scriptSupplier)) {
 			conn.execute("print('FINISHED')");
 			conn.close();
 		}

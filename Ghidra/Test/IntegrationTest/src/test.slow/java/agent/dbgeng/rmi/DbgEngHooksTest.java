@@ -16,10 +16,7 @@
 package agent.dbgeng.rmi;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -43,7 +40,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	private static final long RUN_TIMEOUT_MS = 20000;
 	private static final long RETRY_MS = 500;
 
-	record PythonAndTrace(PythonAndHandler conn, ManagedDomainObject mdo) implements AutoCloseable {
+	record PythonAndTrace(PythonAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
 		}
@@ -61,20 +58,20 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 
 	@SuppressWarnings("resource")
 	protected PythonAndTrace startAndSyncPython(String exec) throws Exception {
-		PythonAndHandler conn = startAndConnectPython();
+		PythonAndConnection conn = startAndConnectPython();
 		try {
 			ManagedDomainObject mdo;
 			conn.execute("from ghidradbg.commands import *");
 			conn.execute(
 				"util.set_convenience_variable('ghidra-language', 'x86:LE:64:default')");
-            if (exec != null) {
-			    start(conn, exec);
-		        mdo = waitDomainObject("/New Traces/pydbg/"+exec);
-            }
-            else {
-			    conn.execute("ghidra_trace_start()");
-			    mdo = waitDomainObject("/New Traces/pydbg/noname");
-            }
+			if (exec != null) {
+				start(conn, exec);
+				mdo = waitDomainObject("/New Traces/pydbg/" + exec);
+			}
+			else {
+				conn.execute("ghidra_trace_start()");
+				mdo = waitDomainObject("/New Traces/pydbg/noname");
+			}
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			return new PythonAndTrace(conn, mdo);
 		}
@@ -85,7 +82,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	}
 
 	protected long lastSnap(PythonAndTrace conn) {
-		return conn.conn.handler().getLastSnapshot(tb.trace);
+		return conn.conn.connection().getLastSnapshot(tb.trace);
 	}
 
 	@Test  // The 10s wait makes this a pretty expensive test
@@ -107,7 +104,8 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 
 			conn.execute("dbg().go(10)");
 
-			waitForPass(() -> assertTrue(tb.objValues(lastSnap(conn), "Processes[].Threads[]").size() > 4),
+			waitForPass(
+				() -> assertTrue(tb.objValues(lastSnap(conn), "Processes[].Threads[]").size() > 4),
 				RUN_TIMEOUT_MS, RETRY_MS);
 		}
 	}
@@ -200,8 +198,8 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			conn.execute("ghidra_trace_txstart('Tx')");
 			conn.execute("ghidra_trace_putmem('$pc 10')");
 			conn.execute("ghidra_trace_txcommit()");
-			long address = getAddressAtOffset(conn, 0);				
-			conn.execute("util.get_debugger().write("+address+", b'\\x7f')");
+			long address = getAddressAtOffset(conn, 0);
+			conn.execute("util.get_debugger().write(" + address + ", b'\\x7f')");
 
 			waitForPass(() -> {
 				ByteBuffer buf = ByteBuffer.allocate(10);
@@ -319,7 +317,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			conn.execute("dbg.stepi()");
 			assertEquals(false, tb.objValue(brk, lastSnap(conn), "Enabled"));
 
-            /* Not currently enabled
+			/* Not currently enabled
 			assertEquals("", tb.objValue(brk, lastSnap(conn), "Command"));
 			conn.execute("dbg.bp(expr=pc, windbgcmd='bl')");
 			conn.execute("dbg.stepi()");
@@ -353,23 +351,23 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 		}
 	}
 
-	private void start(PythonAndHandler conn, String obj) {
+	private void start(PythonAndConnection conn, String obj) {
 		conn.execute("from ghidradbg.commands import *");
 		if (obj != null)
-			conn.execute("ghidra_trace_create('"+obj+"')");
-		else 
-			conn.execute("ghidra_trace_create()");	
+			conn.execute("ghidra_trace_create('" + obj + "')");
+		else
+			conn.execute("ghidra_trace_create()");
 		conn.execute("ghidra_trace_sync_enable()");
 	}
 
 	private void txPut(PythonAndTrace conn, String obj) {
 		conn.execute("ghidra_trace_txstart('Tx" + obj + "')");
-		conn.execute("ghidra_trace_put_" + obj +"()");
+		conn.execute("ghidra_trace_put_" + obj + "()");
 		conn.execute("ghidra_trace_txcommit()");
 	}
 
 	private long getAddressAtOffset(PythonAndTrace conn, int offset) {
-		String inst = "util.get_inst(util.get_debugger().reg.get_pc()+"+offset+")";
+		String inst = "util.get_inst(util.get_debugger().reg.get_pc()+" + offset + ")";
 		String ret = conn.executeCapture(inst);
 		String[] split = ret.split("\\s+");  // get target
 		return Long.decode(split[1]);

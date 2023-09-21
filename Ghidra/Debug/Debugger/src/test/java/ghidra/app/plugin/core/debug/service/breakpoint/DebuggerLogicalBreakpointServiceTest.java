@@ -29,12 +29,18 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.async.AsyncReference;
 import ghidra.dbg.model.TestTargetMemoryRegion;
 import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
@@ -342,22 +348,22 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	protected void addProgramBreakpoints(Program p) throws Throwable {
 		try (Transaction tx = p.openTransaction("Create bookmarks")) {
 			enBm = p.getBookmarkManager()
-					.setBookmark(addr(p, 0x00400123),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1", "");
+					.setBookmark(addr(p, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
+						"SW_EXECUTE;1", "");
 			disBm = p.getBookmarkManager()
-					.setBookmark(addr(p, 0x00400321),
-						LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE, "SW_EXECUTE;1", "");
+					.setBookmark(addr(p, 0x00400321), LogicalBreakpoint.DISABLED_BOOKMARK_TYPE,
+						"SW_EXECUTE;1", "");
 		}
 	}
 
 	protected void refetchProgramBreakpoints(Program p) throws Throwable {
 		// After a redo
 		enBm = p.getBookmarkManager()
-				.getBookmark(addr(p, 0x00400123),
-					LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1");
+				.getBookmark(addr(p, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
+					"SW_EXECUTE;1");
 		disBm = p.getBookmarkManager()
-				.getBookmark(addr(p, 0x00400321),
-					LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE, "SW_EXECUTE;1");
+				.getBookmark(addr(p, 0x00400321), LogicalBreakpoint.DISABLED_BOOKMARK_TYPE,
+					"SW_EXECUTE;1");
 	}
 
 	protected void removeProgramBreakpoints(Program p) throws Throwable {
@@ -1550,9 +1556,8 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	protected void addEnabledProgramBreakpointWithSleigh(Program p) {
 		try (Transaction tid = p.openTransaction("Create bookmark bp with sleigh")) {
 			enBm = p.getBookmarkManager()
-					.setBookmark(addr(p, 0x00400123),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1",
-						"{sleigh: 'r0=0xbeef;'}");
+					.setBookmark(addr(p, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
+						"SW_EXECUTE;1", "{sleigh: 'r0=0xbeef;'}");
 		}
 	}
 

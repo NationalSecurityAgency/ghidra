@@ -24,28 +24,27 @@ import agent.frida.manager.FridaThread;
 import agent.frida.manager.evt.FridaStateChangedEvent;
 import agent.frida.manager.evt.FridaThreadSelectedEvent;
 import agent.frida.manager.impl.FridaManagerImpl;
-import ghidra.app.plugin.core.debug.service.workflow.DebuggerWorkflowServicePlugin;
-import ghidra.app.services.DebuggerBot;
-import ghidra.app.services.DebuggerBotInfo;
+import ghidra.app.services.DebuggerWorkflowFrontEndService;
 import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
+import ghidra.debug.api.workflow.DebuggerBot;
+import ghidra.debug.api.workflow.DebuggerBotInfo;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.util.datastruct.PrivatelyQueuedListener;
 
-@DebuggerBotInfo( //
-	description = "Link debugger to Frida", //
-	details = "Listens for debuggers to add state to Frida.", //
-	help = @HelpInfo(anchor = "link_frida"), //
-	enabledByDefault = true //
-)
+@DebuggerBotInfo(
+	description = "Link debugger to Frida",
+	details = "Listens for debuggers to add state to Frida.",
+	help = @HelpInfo(anchor = "link_frida"),
+	enabledByDefault = true)
 public class FridaDebuggerBot implements DebuggerBot {
-	private DebuggerWorkflowServicePlugin plugin;
+	private DebuggerWorkflowFrontEndService service;
 
 	private FridaObjectListener listener = new FridaObjectListener();
 	private List<DebuggerObjectModel> models = new ArrayList<>();
@@ -53,18 +52,18 @@ public class FridaDebuggerBot implements DebuggerBot {
 	private FridaManagerImpl manager;
 
 	@Override
-	public void enable(DebuggerWorkflowServicePlugin wp) {
-		this.plugin = wp;
+	public void enable(DebuggerWorkflowFrontEndService service) {
+		this.service = service;
 	}
 
 	@Override
 	public boolean isEnabled() {
-		return plugin != null;
+		return service != null;
 	}
 
 	@Override
 	public void disable() {
-		plugin = null;
+		service = null;
 	}
 
 	@Override
@@ -73,8 +72,9 @@ public class FridaDebuggerBot implements DebuggerBot {
 		if (model instanceof FridaModelImpl) {
 			primary = (FridaModelImpl) model;
 			manager = primary.getManager();
-		} else {
-			model.addModelListener(getListener(), true);			
+		}
+		else {
+			model.addModelListener(getListener(), true);
 		}
 	}
 
@@ -84,15 +84,16 @@ public class FridaDebuggerBot implements DebuggerBot {
 		if (model instanceof FridaModelImpl) {
 			primary = null;
 			manager = null;
-		} else {
-			model.removeModelListener(getListener());			
+		}
+		else {
+			model.removeModelListener(getListener());
 		}
 	}
-	
+
 	public DebuggerModelListener getListener() {
 		return listener.queue.in;
 	}
-	
+
 	private Object findMatchingObject(TargetObject object) {
 		if (object instanceof TargetProcess) {
 			String id = Long.toHexString(((TargetProcess) object).getPid());
@@ -109,7 +110,7 @@ public class FridaDebuggerBot implements DebuggerBot {
 		}
 		return null;
 	}
-	
+
 	class FridaObjectListener extends AnnotatedDebuggerAttributeListener {
 		protected final DebuggerCallbackReorderer reorderer = new DebuggerCallbackReorderer(this);
 		protected final PrivatelyQueuedListener<DebuggerModelListener> queue =
@@ -158,7 +159,7 @@ public class FridaDebuggerBot implements DebuggerBot {
 					if (localObject != null) {
 						FridaThreadInfo info = new FridaThreadInfo((FridaThread) localObject);
 						manager.processEvent(new FridaThreadSelectedEvent(info));
-					}				
+					}
 				}
 			}
 		}

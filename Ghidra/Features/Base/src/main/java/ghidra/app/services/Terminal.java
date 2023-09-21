@@ -61,6 +61,23 @@ public interface Terminal extends AutoCloseable {
 	}
 
 	/**
+	 * Set the pane's sub title
+	 * 
+	 * <p>
+	 * The application may also set this sub title using an escape sequence.
+	 * 
+	 * @param title the new sub title
+	 */
+	void setSubTitle(String title);
+
+	/**
+	 * Get the pane's current sub title
+	 * 
+	 * @return the sub title
+	 */
+	String getSubTitle();
+
+	/**
 	 * Set the terminal size to the given dimensions, and do <em>not</em> resize it to the window.
 	 * 
 	 * @param cols the number of columns
@@ -170,4 +187,20 @@ public interface Terminal extends AutoCloseable {
 
 	@Override
 	void close();
+
+	/**
+	 * Notify the terminal that its session has terminated
+	 * 
+	 * <p>
+	 * The title and sub title are adjust and all listeners are removed. If/when the terminal is
+	 * closed, it is permanently removed from the tool.
+	 */
+	void terminated();
+
+	/**
+	 * Allow the user to terminate the session forcefully
+	 * 
+	 * @param action the action to terminate the session, or null to remove the action
+	 */
+	void setTerminateAction(Runnable action);
 }

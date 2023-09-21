@@ -17,10 +17,9 @@ package ghidra.app.plugin.core.debug.mapping;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.debug.register.RegisterTypeInfo;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.TargetRegisterContainer;
-import ghidra.program.model.data.PointerDataType;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
 import ghidra.program.model.lang.*;
 
 public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
@@ -33,20 +32,12 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 	protected final Map<String, Register> filtLanguageRegs = new LinkedHashMap<>();
 	protected final Map<String, TargetRegister> targetRegs = new HashMap<>();
 
-	protected final RegisterTypeInfo instrCtrTypeInfo;
-	protected final RegisterTypeInfo stackPtrTypeInfo;
-
 	public DefaultDebuggerRegisterMapper(CompilerSpec cSpec,
 			TargetRegisterContainer targetRegContainer, boolean caseSensitive) {
 		this.language = cSpec.getLanguage();
 		this.cspec = cSpec;
 		//this.targetRegContainer = targetRegContainer;
 		this.caseSensitive = caseSensitive;
-
-		this.instrCtrTypeInfo = new RegisterTypeInfo(PointerDataType.dataType,
-			PointerDataType.dataType.getDefaultSettings(), language.getDefaultSpace());
-		this.stackPtrTypeInfo = new RegisterTypeInfo(PointerDataType.dataType,
-			PointerDataType.dataType.getDefaultSettings(), cSpec.getStackSpace());
 
 		collectFilteredLanguageRegs();
 	}
@@ -145,17 +136,6 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 	@Override
 	public synchronized Register targetToTrace(TargetRegister tReg) {
 		return languageRegs.get(normalizeName(tReg.getIndex()));
-	}
-
-	@Override
-	public RegisterTypeInfo getDefaultTypeInfo(Register register) {
-		if (register == language.getProgramCounter()) {
-			return instrCtrTypeInfo;
-		}
-		if (register == cspec.getStackPointer()) {
-			return stackPtrTypeInfo;
-		}
-		return null;
 	}
 
 	@Override

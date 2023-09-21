@@ -31,6 +31,7 @@ import ghidra.app.plugin.core.debug.gui.breakpoint.AbstractDebuggerSleighInputDi
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.action.GoToInput;
 import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.*;

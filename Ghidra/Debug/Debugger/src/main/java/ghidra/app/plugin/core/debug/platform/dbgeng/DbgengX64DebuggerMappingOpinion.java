@@ -20,6 +20,7 @@ import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.dbg.target.*;
+import ghidra.debug.api.model.*;
 import ghidra.program.model.lang.*;
 
 public class DbgengX64DebuggerMappingOpinion implements DebuggerMappingOpinion {

@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.service.modules;
 import java.util.*;
 
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.ModuleMapProposal;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.ModuleMapProposal;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;

@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.mapping;
 
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.util.MathUtilities;

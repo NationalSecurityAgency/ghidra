@@ -18,6 +18,7 @@ package ghidra.pty.linux;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Memory;
 
 /**
@@ -69,7 +70,16 @@ public class FdInputStream extends InputStream {
 			return 0;
 		}
 		Memory buf = new Memory(len);
-		int ret = LIB_POSIX.read(fd, buf, len);
+		int ret;
+		try {
+			ret = LIB_POSIX.read(fd, buf, len);
+		}
+		catch (LastErrorException e) {
+			if (e.getErrorCode() == 5) {
+				throw new IOException(e);
+			}
+			throw e;
+		}
 		buf.read(0, b, off, ret);
 		return ret;
 	}

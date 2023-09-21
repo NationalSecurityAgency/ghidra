@@ -116,4 +116,12 @@ public interface TerminalService {
 	 * @return the terminal
 	 */
 	Terminal createWithStreams(Charset charset, InputStream in, OutputStream out);
+
+	/**
+	 * Remove all terminals whose sessions have terminated from the tool
+	 * 
+	 * <p>
+	 * This is done automatically when creating any new terminal.
+	 */
+	void cleanTerminated();
 }

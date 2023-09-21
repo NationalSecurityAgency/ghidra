@@ -27,6 +27,8 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Pointer;
 import ghidra.program.model.lang.*;

@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.debug.service.modules;
 import java.util.Collection;
 
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.util.exception.CancelledException;

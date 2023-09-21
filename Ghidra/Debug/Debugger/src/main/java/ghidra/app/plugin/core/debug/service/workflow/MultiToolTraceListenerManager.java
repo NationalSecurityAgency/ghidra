@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.app.services.DebuggerWorkflowFrontEndService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
 
@@ -30,8 +31,8 @@ public class MultiToolTraceListenerManager<L extends AbstractMultiToolTraceListe
 		this.listenerFactory = listenerFactory;
 	}
 
-	public synchronized void enable(DebuggerWorkflowServicePlugin wp) {
-		for (PluginTool tool : wp.getProxyingPluginTools()) {
+	public synchronized void enable(DebuggerWorkflowFrontEndService service) {
+		for (PluginTool tool : service.getProxyingPluginTools()) {
 			DebuggerTraceManagerService traceManager =
 				tool.getService(DebuggerTraceManagerService.class);
 			if (traceManager == null) {

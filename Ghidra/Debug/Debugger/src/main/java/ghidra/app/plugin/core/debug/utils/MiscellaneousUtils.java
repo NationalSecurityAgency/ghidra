@@ -22,7 +22,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.function.Function;
 
-import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
+import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.framework.options.*;
 import ghidra.program.model.address.AddressRange;
 import ghidra.util.MathUtilities;

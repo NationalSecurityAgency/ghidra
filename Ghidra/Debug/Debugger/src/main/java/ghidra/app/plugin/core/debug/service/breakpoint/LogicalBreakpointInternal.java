@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.trace.model.Trace;

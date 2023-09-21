@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.event;
 
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.plugintool.PluginEvent;
 
 public class TraceRecorderAdvancedPluginEvent extends PluginEvent {

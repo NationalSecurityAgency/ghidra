@@ -24,7 +24,9 @@ import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingService
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.MapProposal;
+import ghidra.debug.api.modules.ModuleMapProposal;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;

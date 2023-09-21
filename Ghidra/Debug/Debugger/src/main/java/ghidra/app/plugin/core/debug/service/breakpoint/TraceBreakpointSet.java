@@ -20,9 +20,11 @@ import java.util.stream.Collectors;
 
 import db.Transaction;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.TraceMode;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.TraceMode;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;

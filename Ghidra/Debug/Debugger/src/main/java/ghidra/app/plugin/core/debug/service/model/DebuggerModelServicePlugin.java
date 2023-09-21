@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -36,8 +36,6 @@ import docking.action.DockingAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
-import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOpinion;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
@@ -45,6 +43,8 @@ import ghidra.async.AsyncFence;
 import ghidra.dbg.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.options.SaveState;
@@ -62,7 +62,6 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-//@formatter:off
 @PluginInfo(
 	shortDescription = "Debugger models manager service",
 	description = "Manage debug sessions, connections, and trace recording",
@@ -73,7 +72,6 @@ import ghidra.util.datastruct.ListenerSet;
 	servicesProvided = {
 		DebuggerModelService.class
 	})
-//@formatter:on
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, ApplicationLevelOnlyPlugin {
 
@@ -487,7 +485,7 @@ public class DebuggerModelServicePlugin extends Plugin
 			throws IOException {
 		String traceName = nameTrace(target);
 		Trace trace = new DBTrace(traceName, mapper.getTraceCompilerSpec(), this);
-		TraceRecorder recorder = mapper.startRecording(this, trace);
+		TraceRecorder recorder = mapper.startRecording(tool, trace);
 		trace.release(this); // The recorder now owns it (on behalf of the service)
 		return recorder;
 	}
@@ -672,4 +670,6 @@ public class DebuggerModelServicePlugin extends Plugin
 	public CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory) {
 		return doShowConnectDialog(tool, factory, null);
 	}
+	
+	
 }

@@ -23,6 +23,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.Icon;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import db.Transaction;
@@ -36,11 +38,9 @@ import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DebugProgramAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
-import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.PromptMode;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.*;
 import ghidra.async.AsyncUtils;
@@ -48,6 +48,9 @@ import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetThread;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.*;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer.PromptMode;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.plugintool.*;
@@ -96,6 +99,11 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			@Override
 			public String getConfigName() {
 				return "DUMMY";
+			}
+
+			@Override
+			public Icon getIcon() {
+				return DebuggerResources.ICON_DEBUGGER;
 			}
 
 			@Override
@@ -466,14 +474,12 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent evt = (ProgramActivatedPluginEvent) event;
+		if (event instanceof ProgramActivatedPluginEvent evt) {
 			currentProgram = evt.getActiveProgram();
 			currentProgramPath = getProgramPath(currentProgram);
 			updateActionDebugProgram();
 		}
-		if (event instanceof ProgramClosedPluginEvent) {
-			ProgramClosedPluginEvent evt = (ProgramClosedPluginEvent) event;
+		if (event instanceof ProgramClosedPluginEvent evt) {
 			if (currentProgram == evt.getProgram()) {
 				currentProgram = null;
 				currentProgramPath = null;

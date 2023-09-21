@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.emulation.*;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.trace.data.AbstractPcodeTraceAccess;
 import ghidra.trace.model.guest.TracePlatform;

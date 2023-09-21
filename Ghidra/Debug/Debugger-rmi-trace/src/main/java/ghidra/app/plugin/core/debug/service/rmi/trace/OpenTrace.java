@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.service.rmi.trace;
 
 import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler.*;
+import ghidra.debug.api.tracermi.TraceRmiError;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.rmi.trace.TraceRmi.*;

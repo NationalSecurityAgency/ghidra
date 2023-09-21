@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 import docking.DefaultActionContext;
-import ghidra.app.services.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 
 public class DebuggerLogicalBreakpointsActionContext extends DefaultActionContext {
 	private final Collection<LogicalBreakpointRow> selection;

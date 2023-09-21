@@ -25,9 +25,9 @@
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.LaunchResult;
 import ghidra.app.script.GhidraScript;
-import ghidra.app.services.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer.LaunchResult;
 import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;

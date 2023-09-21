@@ -29,10 +29,11 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.rmi.trace.*;
+import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.services.TraceRmiService;
 import ghidra.dbg.testutil.DummyProc;
+import ghidra.debug.api.tracermi.*;
 import ghidra.framework.*;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.DomainFile;
@@ -210,10 +211,10 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		return result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).handle();
 	}
 
-	protected record PythonAndHandler(ExecInPython exec, TraceRmiHandler handler)
+	protected record PythonAndConnection(ExecInPython exec, TraceRmiConnection connection)
 			implements AutoCloseable {
 		protected RemoteMethod getMethod(String name) {
-			return Objects.requireNonNull(handler.getMethods().get(name));
+			return Objects.requireNonNull(connection.getMethods().get(name));
 		}
 
 		public void execute(String cmd) {
@@ -238,7 +239,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			try {
 				PythonResult r = exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				r.handle();
-				waitForPass(() -> assertTrue(handler.isClosed()));
+				waitForPass(() -> assertTrue(connection.isClosed()));
 			}
 			finally {
 				exec.python.destroyForcibly();
@@ -246,15 +247,15 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		}
 	}
 
-	protected PythonAndHandler startAndConnectPython(Function<String, String> scriptSupplier)
+	protected PythonAndConnection startAndConnectPython(Function<String, String> scriptSupplier)
 			throws Exception {
 		TraceRmiAcceptor acceptor = traceRmi.acceptOne(null);
 		ExecInPython exec =
 			execInPython(scriptSupplier.apply(sockToStringForPython(acceptor.getAddress())));
 		acceptor.setTimeout(CONNECT_TIMEOUT_MS);
 		try {
-			TraceRmiHandler handler = acceptor.accept();
-			return new PythonAndHandler(exec, handler);
+			TraceRmiConnection connection = acceptor.accept();
+			return new PythonAndConnection(exec, connection);
 		}
 		catch (SocketTimeoutException e) {
 			exec.python.destroyForcibly();
@@ -263,7 +264,7 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		}
 	}
 
-	protected PythonAndHandler startAndConnectPython() throws Exception {
+	protected PythonAndConnection startAndConnectPython() throws Exception {
 		return startAndConnectPython(addr -> """
 				%s
 				ghidra_trace_connect('%s')
@@ -273,10 +274,10 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	@SuppressWarnings("resource")
 	protected String runThrowError(Function<String, String> scriptSupplier)
 			throws Exception {
-		PythonAndHandler conn = startAndConnectPython(scriptSupplier);
+		PythonAndConnection conn = startAndConnectPython(scriptSupplier);
 		PythonResult r = conn.exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		String stdout = r.handle();
-		waitForPass(() -> assertTrue(conn.handler.isClosed()));
+		waitForPass(() -> assertTrue(conn.connection.isClosed()));
 		return stdout;
 	}
 

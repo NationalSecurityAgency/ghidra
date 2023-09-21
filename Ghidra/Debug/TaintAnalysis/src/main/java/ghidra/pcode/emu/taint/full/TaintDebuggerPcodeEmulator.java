@@ -16,6 +16,7 @@
 package ghidra.pcode.emu.taint.full;
 
 import ghidra.app.plugin.core.debug.service.emulation.data.*;
+import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 import ghidra.pcode.emu.taint.TaintPartsFactory;
 import ghidra.pcode.emu.taint.plain.TaintPcodeEmulator;
 import ghidra.pcode.exec.debug.auxiliary.AuxDebuggerEmulatorPartsFactory;

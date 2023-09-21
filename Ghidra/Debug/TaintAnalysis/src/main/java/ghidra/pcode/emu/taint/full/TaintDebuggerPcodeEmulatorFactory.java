@@ -15,9 +15,9 @@
  */
 package ghidra.pcode.emu.taint.full;
 
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeEmulatorFactory;
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
+import ghidra.app.plugin.core.debug.service.emulation.AbstractDebuggerPcodeEmulatorFactory;
+import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 
 /**
  * An emulator factory for making the {@link TaintDebuggerPcodeEmulator} discoverable to the UI
@@ -26,7 +26,7 @@ import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
  * This is the final class to create a full Debugger-integrated emulator. This class is what makes
  * it appear in the menu of possible emulators the user may configure.
  */
-public class TaintDebuggerPcodeEmulatorFactory implements DebuggerPcodeEmulatorFactory {
+public class TaintDebuggerPcodeEmulatorFactory extends AbstractDebuggerPcodeEmulatorFactory {
 
 	@Override
 	public String getTitle() {

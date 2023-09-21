@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.terminal.TerminalPanel.FindOptions;
 import ghidra.app.plugin.core.terminal.vt.VtOutput;
 import ghidra.app.services.ClipboardService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.util.Swing;
 
 /**
  * A window holding a VT100 terminal emulator.
@@ -156,6 +157,9 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	protected DockingAction actionFind;
 	protected DockingAction actionFindNext;
 	protected DockingAction actionFindPrevious;
+	protected DockingAction actionTerminate;
+
+	private boolean terminated = false;
 
 	public TerminalProvider(TerminalPlugin plugin, Charset charset) {
 		super(plugin.getTool(), "Terminal", plugin.getName());
@@ -168,6 +172,7 @@ public class TerminalProvider extends ComponentProviderAdapter {
 			}
 		});
 		createActions();
+		setWindowMenuGroup("Terminals");
 	}
 
 	@Override
@@ -209,20 +214,23 @@ public class TerminalProvider extends ComponentProviderAdapter {
 	protected void createActions() {
 		actionFind = new ActionBuilder("Find", plugin.getName())
 				.menuIcon(new GIcon("icon.search"))
-				.menuPath(new String[] { "Find" })
+				.menuPath("Find")
+				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_F,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.onAction(this::activatedFind)
 				.buildAndInstallLocal(this);
 		actionFindNext = new ActionBuilder("Find Next", plugin.getName())
-				.menuPath(new String[] { "Find Next" })
+				.menuPath("Find Next")
+				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_H,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.enabledWhen(this::isEnabledFindStep)
 				.onAction(this::activatedFindNext)
 				.buildAndInstallLocal(this);
 		actionFindPrevious = new ActionBuilder("Find Previous", plugin.getName())
-				.menuPath(new String[] { "Find Previous" })
+				.menuPath("Find Previous")
+				.menuGroup("Find")
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_G,
 					InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK))
 				.enabledWhen(this::isEnabledFindStep)
@@ -336,5 +344,52 @@ public class TerminalProvider extends ComponentProviderAdapter {
 
 	public int getCursorRow() {
 		return panel.getCursorRow();
+	}
+
+	/**
+	 * Notify the provider that the terminal's session has terminated
+	 * 
+	 * <p>
+	 * The title and sub title are adjusted and all terminal listeners are removed. If/when the
+	 * window is closed, it is removed from the tool.
+	 */
+	public void terminated() {
+		Swing.runIfSwingOrRunLater(() -> {
+			terminated = true;
+			removeLocalAction(actionTerminate);
+			panel.terminalListeners.clear();
+			setTitle("[Terminal]");
+			setSubTitle("Terminated");
+			if (!isVisible()) {
+				removeFromTool();
+			}
+		});
+	}
+
+	public boolean isTerminated() {
+		return terminated;
+	}
+
+	public void setTerminateAction(Runnable action) {
+		if (actionTerminate != null) {
+			removeLocalAction(actionTerminate);
+		}
+		if (action != null) {
+			actionTerminate = new ActionBuilder("Terminate", plugin.getName())
+					.menuIcon(new GIcon("icon.plugin.terminal.terminate"))
+					.menuPath("Terminate")
+					.menuGroup("Terminate")
+					.enabledWhen(ctx -> true)
+					.onAction(ctx -> action.run())
+					.buildAndInstallLocal(this);
+		}
+	}
+
+	@Override
+	public void closeComponent() {
+		super.closeComponent();
+		if (terminated) {
+			removeFromTool();
+		}
 	}
 }

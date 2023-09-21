@@ -19,12 +19,12 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.service.emulation.*;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
