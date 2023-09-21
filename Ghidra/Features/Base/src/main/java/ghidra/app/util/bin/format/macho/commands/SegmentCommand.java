@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +28,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.ProgramModule;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -301,5 +303,79 @@ public class SegmentCommand extends LoadCommand {
 	@Override
 	public String toString() {
 		return getSegmentName();
+	}
+
+	/**
+	 * Creates a new segment command byte array
+	 * 
+	 * @param magic The magic
+	 * @param name The name of the segment (must be less than or equal to 16 bytes)
+	 * @param vmAddr The address of the start of the segment
+	 * @param vmSize The size of the segment in memory
+	 * @param fileOffset The file offset of the start of the segment
+	 * @param fileSize The size of the segment on disk
+	 * @param maxProt The maximum protections of the segment
+	 * @param initProt The initial protection of the segment
+	 * @param numSections The number of sections in the segment
+	 * @param flags The segment flags
+	 * @return The new segment in byte array form
+	 * @throws MachException if an invalid magic value was passed in (see {@link MachConstants}), or
+	 *   if the desired segment name exceeds 16 bytes
+	 */
+	public static byte[] create(int magic, String name, long vmAddr, long vmSize, long fileOffset,
+			long fileSize, int maxProt, int initProt, int numSections, int flags)
+			throws MachException {
+
+		if (name.length() > 16) {
+			throw new MachException("Segment name cannot exceed 16 bytes: " + name);
+		}
+
+		DataConverter conv = DataConverter.getInstance(magic == MachConstants.MH_MAGIC);
+		boolean is64bit = magic == MachConstants.MH_CIGAM_64 || magic == MachConstants.MH_MAGIC_64;
+
+		// Segment Command
+		byte[] bytes = new byte[size(magic)];
+		conv.putInt(bytes, 0x00,
+			is64bit ? LoadCommandTypes.LC_SEGMENT_64 : LoadCommandTypes.LC_SEGMENT);
+		conv.putInt(bytes, 0x04, bytes.length);
+		byte[] nameBytes = name.getBytes(StandardCharsets.US_ASCII);
+		System.arraycopy(nameBytes, 0, bytes, 0x8, nameBytes.length);
+		if (is64bit) {
+			conv.putLong(bytes, 0x18, vmAddr);
+			conv.putLong(bytes, 0x20, vmSize);
+			conv.putLong(bytes, 0x28, fileOffset);
+			conv.putLong(bytes, 0x30, fileSize);
+			conv.putInt(bytes, 0x38, maxProt);
+			conv.putInt(bytes, 0x3c, initProt);
+			conv.putInt(bytes, 0x40, numSections);
+			conv.putInt(bytes, 0x44, flags);
+		}
+		else {
+			conv.putInt(bytes, 0x18, (int) vmAddr);
+			conv.putInt(bytes, 0x1c, (int) vmSize);
+			conv.putInt(bytes, 0x20, (int) fileOffset);
+			conv.putInt(bytes, 0x24, (int) fileSize);
+			conv.putInt(bytes, 0x28, maxProt);
+			conv.putInt(bytes, 0x2c, initProt);
+			conv.putInt(bytes, 0x30, numSections);
+			conv.putInt(bytes, 0x34, flags);
+		}
+
+		return bytes;
+	}
+
+	/**
+	 * Gets the size a segment command would be for the given magic
+	 * 
+	 * @param magic The magic
+	 * @return The size in bytes a segment command would be for the given magic
+	 * @throws MachException if an invalid magic value was passed in (see {@link MachConstants})
+	 */
+	public static int size(int magic) throws MachException {
+		if (!MachConstants.isMagic(magic)) {
+			throw new MachException("Invalid magic: 0x%x".formatted(magic));
+		}
+		boolean is64bit = magic == MachConstants.MH_CIGAM_64 || magic == MachConstants.MH_MAGIC_64;
+		return is64bit ? 0x48 : 0x38;
 	}
 }
