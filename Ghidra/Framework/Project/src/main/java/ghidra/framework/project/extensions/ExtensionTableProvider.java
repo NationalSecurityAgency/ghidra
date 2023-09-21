@@ -170,11 +170,9 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 			// A sanity check for users that try to install an extension from a source folder
 			// instead of a fully built extension.
 			if (new File(file, "build.gradle").isFile()) {
-				Msg.showWarn(this, null, "Invalid Extension", "The selected extension folder " +
+				Msg.showWarn(this, null, "Invalid Extension", "The selected extension " +
 					"contains a 'build.gradle' file.\nGhidra does not support installing " +
-					"extensions in source form.\nPlease build the extension and install its zip " +
-					"file.");
-				didInstall = false;
+					"extensions in source form.\nPlease build the extension and try again.");
 				continue;
 			}
 
