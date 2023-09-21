@@ -156,7 +156,8 @@ protected:
     type_incomplete = 0x400,	///< Set if \b this (recursive) data-type has not been fully defined yet
     needs_resolution = 0x800,	///< Datatype (union, pointer to union) needs resolution before propagation
     force_format = 0x7000,	///< 3-bits encoding display format, 0=none, 1=hex, 2=dec, 3=oct, 4=bin, 5=char
-    truncate_bigendian = 0x8000	///< Pointer can be truncated and is big endian
+    truncate_bigendian = 0x8000,	///< Pointer can be truncated and is big endian
+    pointer_to_array = 0x10000	///< Data-type is a pointer to an array
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
@@ -193,6 +194,7 @@ public:
   bool isVariableLength(void) const { return ((flags&variable_length)!=0); }	///< Is \b this a variable length structure
   bool hasSameVariableBase(const Datatype *ct) const;		///< Are these the same variable length data-type
   bool isOpaqueString(void) const { return ((flags&opaque_string)!=0); }	///< Is \b this an opaquely encoded string
+  bool isPointerToArray(void) const { return ((flags&pointer_to_array)!=0); }	///< Is \b this a pointer to an array
   bool isPointerRel(void) const { return ((flags & is_ptrrel)!=0); }	///< Is \b this a TypePointerRel
   bool isFormalPointerRel(void) const { return (flags & (is_ptrrel | has_stripped))==is_ptrrel; }	///< Is \b this a non-ephemeral TypePointerRel
   bool hasStripped(void) const { return (flags & has_stripped)!=0; }	///< Return \b true if \b this has a stripped form
