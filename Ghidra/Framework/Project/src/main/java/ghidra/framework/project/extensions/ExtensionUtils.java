@@ -54,9 +54,9 @@ import utility.application.ApplicationLayout;
  * </ul>
  * 
  * <p>
- * Extensions may be installed/uninstalled by users at runtime, using the 
- * {@link ExtensionTableProvider}. Installation consists of unzipping the extension archive to an 
- * installation folder, currently <code>{ghidra user settings dir}/Extensions</code>. To uninstall, 
+ * Extensions may be installed/uninstalled by users at runtime, using the
+ * {@link ExtensionTableProvider}. Installation consists of unzipping the extension archive to an
+ * installation folder, currently <code>{ghidra user settings dir}/Extensions</code>. To uninstall,
  * the unpacked folder is simply removed.
  */
 public class ExtensionUtils {
@@ -71,7 +71,7 @@ public class ExtensionUtils {
 	private static final Logger log = LogManager.getLogger(ExtensionUtils.class);
 
 	/**
-	 * Performs extension maintenance.  This should be called at startup, before any plugins or 
+	 * Performs extension maintenance.  This should be called at startup, before any plugins or
 	 * extension points are loaded.
 	 */
 	public static void initializeExtensions() {
@@ -87,7 +87,7 @@ public class ExtensionUtils {
 
 	/**
 	 * Gets all known extensions that have not been marked for removal.
-	 *  
+	 * 
 	 * @return set of installed extensions
 	 */
 	public static Set<ExtensionDetails> getActiveInstalledExtensions() {
@@ -148,8 +148,8 @@ public class ExtensionUtils {
 
 	/**
 	 * Returns all archive extensions. These are all the extensions found in
-	 * {@link ApplicationLayout#getExtensionArchiveDir}.   This are added to an installation as 
-	 * part of the build processes.  
+	 * {@link ApplicationLayout#getExtensionArchiveDir}.   This are added to an installation as
+	 * part of the build processes.
 	 * <p>
 	 * Archived extensions may be zip files and directories.
 	 * 
@@ -221,7 +221,7 @@ public class ExtensionUtils {
 	}
 
 	/**
-	 * Installs the given extension file. This can be either an archive (zip) or a directory that 
+	 * Installs the given extension file. This can be either an archive (zip) or a directory that
 	 * contains an extension.properties file.
 	 * 
 	 * @param file the extension to install
@@ -513,9 +513,9 @@ public class ExtensionUtils {
 		}
 
 		if (file.isDirectory() && file.canRead()) {
-			File[] files = file.listFiles(f -> f.getName().equals(PROPERTIES_FILE_NAME));
-			if (files != null && files.length == 1) {
-				return tryToLoadExtensionFromProperties(files[0]);
+			File propertyFile = new File(file, PROPERTIES_FILE_NAME);
+			if (propertyFile.isFile()) {
+				return tryToLoadExtensionFromProperties(propertyFile);
 			}
 		}
 
@@ -576,7 +576,7 @@ public class ExtensionUtils {
 	 * Searching the child directories of a directory allows clients to pick an extension parent
 	 * directory that contains multiple extension directories.
 	 * 
-	 * @param installDir the directory that contains extension subdirectories 
+	 * @param installDir the directory that contains extension subdirectories
 	 * @return list of extension.properties files
 	 */
 	private static List<File> findExtensionPropertyFiles(File installDir) {
@@ -597,7 +597,7 @@ public class ExtensionUtils {
 	}
 
 	/**
-	 * Returns an extension.properties or extension.properties.uninstalled file if the given 
+	 * Returns an extension.properties or extension.properties.uninstalled file if the given
 	 * directory contains one.
 	 * 
 	 * @param dir the directory to search
