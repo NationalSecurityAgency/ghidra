@@ -1087,6 +1087,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			List<RecoveredClass> classHierarchyFromRTTI = getClassHierarchyFromRTTI(recoveredClass);
 
+			if (classHierarchyFromRTTI.size() == 0) {
+				throw new IllegalArgumentException("Unexpected empty class hierarchy for " +
+					recoveredClass.getClassNamespace().getName(true));
+			}
+
 			if (classHierarchyFromRTTI.size() > 0) {
 				recoveredClass.setClassHierarchy(classHierarchyFromRTTI);
 
@@ -1120,11 +1125,24 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			if (recoveredClass.hasMultipleInheritance()) {
 
 				List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
+
+				if (classHierarchy.size() <= 1) {
+					throw new IllegalArgumentException(
+						"Class hierarchy for class should be more than 1 since it has multiple inheritance" +
+							recoveredClass.getClassNamespace().getName(true));
+				}
 				int index = 1;
 				while (index < classHierarchy.size()) {
 					monitor.checkCancelled();
 					RecoveredClass parentClass = classHierarchy.get(index);
 					List<RecoveredClass> parentClassHierarchy = parentClass.getClassHierarchy();
+					if (parentClassHierarchy.size() < 1) {
+						// shouldn't get here since the first loop should have removed all classes
+						// with incorrect class hierarchy
+						throw new IllegalArgumentException(
+							"Parent class has empty class hierarchy " +
+								parentClass.getClassNamespace().getName(true));
+					}
 					recoveredClass.addClassHierarchyMapping(parentClass, parentClassHierarchy);
 					updateClassWithParent(parentClass, recoveredClass);
 					index += parentClassHierarchy.size();
@@ -1190,17 +1208,24 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					extendedFlatAPI.getSingleReferencedAddress(pointerAddress);
 
 				if (baseClassDescriptorAddress == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException(
+						"Missing expected pointer at " + pointerAddress.toString());
+					//return classHierarchy;
 				}
 
 				Symbol primarySymbol = symbolTable.getPrimarySymbol(baseClassDescriptorAddress);
 				if (primarySymbol == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException(
+						"Missing expected BaseClassDescriptor symbol at " +
+							baseClassDescriptorAddress.toString());
+					//return classHierarchy;
 				}
 
 				Namespace pointedToNamespace = primarySymbol.getParentNamespace();
 				if (pointedToNamespace == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException("Missing expected class namesapce at " +
+						baseClassDescriptorAddress.toString());
+					//return classHierarchy;
 				}
 
 				// if the namespace isn't in the map then it is a class 
@@ -1221,7 +1246,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 		}
 		else if (symbols.size() > 1) {
-			//TODO: throw exception?
+			throw new IllegalArgumentException("More than one Base Class Array for " +
+				recoveredClass.getClassNamespace().getName(true));
 		}
 		return classHierarchy;
 	}
