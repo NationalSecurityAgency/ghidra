@@ -238,7 +238,6 @@ public class FindDialog extends ReusableDialogComponentProvider {
 
 		MutableComboBoxModel<String> model = (MutableComboBoxModel<String>) comboBox.getModel();
 		model.insertElementAt(text, 0);
-		model.setSelectedItem(text);
 
 		int size = model.getSize();
 		for (int i = 1; i < size; i++) {
@@ -249,5 +248,7 @@ public class FindDialog extends ReusableDialogComponentProvider {
 			}
 		}
 
+		// do this last since removing items may change the selected item
+		model.setSelectedItem(text);
 	}
 }
