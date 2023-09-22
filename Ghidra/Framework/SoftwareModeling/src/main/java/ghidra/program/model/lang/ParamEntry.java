@@ -342,10 +342,11 @@ public class ParamEntry {
 	 * there are not enough slots left
 	 * @param slotnum	number of slots already assigned
 	 * @param sz        number of bytes to being assigned
+	 * @param typeAlign required byte alignment for the parameter
 	 * @param res       the final storage address
 	 * @return          slotnum plus the number of slots used
 	 */
-	public int getAddrBySlot(int slotnum, int sz, VarnodeData res) {
+	public int getAddrBySlot(int slotnum, int sz, int typeAlign, VarnodeData res) {
 		res.space = null;		// Start with an invalid result
 		int spaceused;
 		if (sz < minsize) {
@@ -366,6 +367,12 @@ public class ParamEntry {
 			}
 		}
 		else {
+			if (typeAlign > alignment) {
+				int tmp = (slotnum * alignment) % typeAlign;
+				if (tmp != 0) {
+					slotnum += (typeAlign - tmp) / alignment;	// Waste slots to achieve typeAlign
+				}
+			}
 			int slotsused = sz / alignment;	// How many slots does a -sz- byte object need
 			if ((sz % alignment) != 0) {
 				slotsused += 1;

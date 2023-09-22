@@ -22,6 +22,6 @@
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Offset array #1" min="1" max="1">return mStack.*array\[param_1 \+ -2\]</stringmatch>
+<stringmatch name="Offset array #1" min="1" max="1">return mStack.*array\[param_1 \+ -1\]</stringmatch>
 <stringmatch name="Offset array #2" min="0" max="0">firstfield</stringmatch>
 </decompilertest>

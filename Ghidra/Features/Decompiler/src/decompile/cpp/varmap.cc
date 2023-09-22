@@ -34,22 +34,22 @@ bool RangeHint::reconcile(const RangeHint *b) const
 
 {
   const RangeHint *a = this;
-  if (a->type->getSize() < b->type->getSize()) {
+  if (a->type->getAlignSize() < b->type->getAlignSize()) {
     const RangeHint *tmp = b;
     b = a;			// Make sure b is smallest
     a = tmp;
   }
-  int8 mod = (b->sstart - a->sstart) % a->type->getSize();
+  int8 mod = (b->sstart - a->sstart) % a->type->getAlignSize();
   if (mod < 0)
-    mod += a->type->getSize();
+    mod += a->type->getAlignSize();
 
   Datatype *sub = a->type;
-  while((sub!=(Datatype *)0)&&(sub->getSize() > b->type->getSize()))
+  while((sub!=(Datatype *)0)&&(sub->getAlignSize() > b->type->getAlignSize()))
     sub = sub->getSubType(mod,&mod);
 
   if (sub == (Datatype *)0) return false;
   if (mod != 0) return false;
-  if (sub->getSize() == b->type->getSize()) return true;
+  if (sub->getAlignSize() == b->type->getAlignSize()) return true;
   if ((b->flags & Varnode::typelock)!=0) return false;
   // If we reach here, component sizes do not match
   // Check for data-types we want to protect more
@@ -130,7 +130,7 @@ bool RangeHint::attemptJoin(RangeHint *b)
   if (highind < 0) return false;
   if (b->rangeType == endpoint) return false;			// Don't merge with bounding range
   Datatype *settype = type;					// Assume we will keep this data-type
-  if (settype->getSize() != b->type->getSize()) return false;
+  if (settype->getAlignSize() != b->type->getAlignSize()) return false;
   if (settype != b->type) {
     Datatype *aTestType = type;
     Datatype *bTestType = b->type;
@@ -155,8 +155,8 @@ bool RangeHint::attemptJoin(RangeHint *b)
   if ((b->flags & Varnode::typelock)!=0) return false;
   if (flags != b->flags) return false;
   intb diffsz = b->sstart - sstart;
-  if ((diffsz % settype->getSize()) != 0) return false;
-  diffsz /= settype->getSize();
+  if ((diffsz % settype->getAlignSize()) != 0) return false;
+  diffsz /= settype->getAlignSize();
   if (diffsz > highind) return false;
   type = settype;
   absorb(b);
@@ -170,11 +170,11 @@ bool RangeHint::attemptJoin(RangeHint *b)
 void RangeHint::absorb(RangeHint *b)
 
 {
-  if (b->rangeType == open && type->getSize() == b->type->getSize()) {
+  if (b->rangeType == open && type->getAlignSize() == b->type->getAlignSize()) {
     rangeType = open;
     if (0 <= b->highind) { // If b has array indexing
       intb diffsz = b->sstart - sstart;
-      diffsz /= type->getSize();
+      diffsz /= type->getAlignSize();
       int4 trialhi = b->highind + diffsz;
       if (highind < trialhi)
 	highind = trialhi;
@@ -554,7 +554,7 @@ void ScopeLocal::createEntry(const RangeHint &a)
   Address addr(space,a.start);
   Address usepoint;
   Datatype *ct = glb->types->concretize(a.type);
-  int4 num = a.size/ct->getSize();
+  int4 num = a.size/ct->getAlignSize();
   if (num>1)
     ct = glb->types->getTypeArray(num,ct);
 
@@ -919,7 +919,7 @@ void MapState::addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFacto
     // we pretend we have an array of LOAD's size
     step = outSize;
   }
-  if (ct->getSize() != step) {	// Make sure data-type matches our step size
+  if (ct->getAlignSize() != step) {	// Make sure data-type matches our step size
     if (step > 8)
       return;		// Don't manufacture primitives bigger than 8-bytes
     ct = typeFactory->getBase(step, TYPE_UNKNOWN);

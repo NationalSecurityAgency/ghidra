@@ -1042,7 +1042,7 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
     sublist.emplace_back(0,-1,decl->getIdentifier(),decl->buildType(glb));
   }
 
-  TypeStruct::assignFieldOffsets(sublist,glb->types->getStructAlign());
+  TypeStruct::assignFieldOffsets(sublist);
   if (!glb->types->setFields(sublist,res,-1,0)) {
     setError("Bad structure definition");
     glb->types->destroyType(res);
