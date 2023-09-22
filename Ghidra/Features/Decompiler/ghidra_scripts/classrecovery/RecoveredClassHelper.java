@@ -3466,6 +3466,11 @@ public class RecoveredClassHelper {
 			monitor.checkCancelled();
 			Function constructorFunction = constructorsIterator.next();
 
+			// cannot edit external functions
+			if (constructorFunction.isExternal()) {
+				continue;
+			}
+
 			if (nameVfunctions) {
 				createNewSymbolAtFunction(constructorFunction, className, classNamespace, true,
 					true);
@@ -3552,6 +3557,11 @@ public class RecoveredClassHelper {
 		while (destructorIterator.hasNext()) {
 			monitor.checkCancelled();
 			Function destructorFunction = destructorIterator.next();
+
+			// cannot edit external functions
+			if (destructorFunction.isExternal()) {
+				continue;
+			}
 			String destructorName = "~" + className;
 
 			if (nameVfunctions) {
@@ -3579,6 +3589,11 @@ public class RecoveredClassHelper {
 		while (destructorIterator.hasNext()) {
 			monitor.checkCancelled();
 			Function destructorFunction = destructorIterator.next();
+
+			// cannot edit external functions
+			if (destructorFunction.isExternal()) {
+				continue;
+			}
 			String destructorName = "~" + className;
 
 			createNewSymbolAtFunction(destructorFunction, destructorName, classNamespace, false,
@@ -3598,7 +3613,9 @@ public class RecoveredClassHelper {
 		Namespace classNamespace = recoveredClass.getClassNamespace();
 
 		Function vbaseDestructorFunction = recoveredClass.getVBaseDestructor();
-		if (vbaseDestructorFunction != null) {
+
+		// only edit non-external functions
+		if (vbaseDestructorFunction != null && !vbaseDestructorFunction.isExternal()) {
 			String destructorName = VBASE_DESTRUCTOR_LABEL;
 
 			if (nameVfunctions) {
@@ -3730,6 +3747,10 @@ public class RecoveredClassHelper {
 			boolean setPrimary, boolean removeBadFID) throws DuplicateNameException,
 			InvalidInputException, CircularDependencyException, CancelledException {
 
+		// skip if external function
+		if (function.isExternal()) {
+			return;
+		}
 		// check for bad FID or FID that needs fix up and remove those bad symbols
 		if (removeBadFID) {
 			removeBadFIDSymbols(namespace, name, function);
@@ -5195,6 +5216,11 @@ public class RecoveredClassHelper {
 		while (unknownsIterator.hasNext()) {
 			monitor.checkCancelled();
 			Function indeterminateFunction = unknownsIterator.next();
+
+			// cannot edit external functions
+			if (indeterminateFunction.isExternal()) {
+				continue;
+			}
 
 			if (nameVfunctions) {
 				createNewSymbolAtFunction(indeterminateFunction,
