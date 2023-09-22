@@ -35,15 +35,16 @@ import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.ClangFuncNameToken;
+import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.util.ByteCopier;
 import ghidra.app.util.ClipboardType;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
+import ghidra.program.model.listing.Program;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.task.TaskMonitor;
 
 public class DecompilerClipboardProvider extends ByteCopier
@@ -64,6 +65,20 @@ public class DecompilerClipboardProvider extends ByteCopier
 	private boolean copyFromSelectionEnabled;
 	private Set<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 	private int spaceCharWidthInPixels = 7;
+
+	void setLocation(ProgramLocation location) {
+		currentLocation = location;
+	}
+
+	void setSelection(ProgramSelection selection) {
+		currentSelection = selection;
+	}
+
+	void setProgram(Program p) {
+		currentProgram = p;
+		currentLocation = null;
+		currentSelection = null;
+	}
 
 	public DecompilerClipboardProvider(DecompilePlugin plugin, DecompilerProvider provider) {
 		this.provider = provider;
@@ -97,22 +112,17 @@ public class DecompilerClipboardProvider extends ByteCopier
 	}
 
 	private String getCursorText() {
+		if (currentProgram == null) {
+			return null; // disposed
+		}
+
 		DecompilerPanel panel = provider.getDecompilerPanel();
 		ClangToken token = panel.getTokenAtCursor();
 		if (token == null) {
 			return null;
 		}
 
-		if (token instanceof ClangLabelToken) {
-			Address a = token.getMinAddress();
-			SymbolTable st = currentProgram.getSymbolTable();
-			Symbol[] symbols = st.getSymbols(a);
-			if (symbols.length > 0) {
-				Symbol s = symbols[0];
-				return s.getName();
-			}
-		}
-		else if (token instanceof ClangFuncNameToken functionToken) {
+		if (token instanceof ClangFuncNameToken functionToken) {
 			Function function = DecompilerUtils.getFunction(currentProgram, functionToken);
 			if (function != null) {
 				return function.getName();
