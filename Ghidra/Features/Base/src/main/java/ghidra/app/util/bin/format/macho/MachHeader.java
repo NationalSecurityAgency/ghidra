@@ -23,6 +23,7 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.program.model.data.*;
+import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -380,6 +381,44 @@ public class MachHeader implements StructConverter {
 	@Override
 	public String toString() {
 		return getDescription();
+	}
+
+	/**
+	 * Creates a new Mach Header byte array
+	 * 
+	 * @param magic The magic
+	 * @param cpuType The cpu type
+	 * @param cpuSubType The cpu subtype
+	 * @param fileType The file type
+	 * @param nCmds The number of commands
+	 * @param sizeOfCmds The size of the commands
+	 * @param flags The flags
+	 * @param reserved A reserved value (ignored for 32-bit magic)
+	 * @return The new header in byte array form
+	 * @throws MachException if an invalid magic value was passed in (see {@link MachConstants})
+	 */
+	public static byte[] create(int magic, int cpuType, int cpuSubType, int fileType, int nCmds,
+			int sizeOfCmds, int flags, int reserved) throws MachException {
+		if (!MachConstants.isMagic(magic)) {
+			throw new MachException("Invalid magic: 0x%x".formatted(magic));
+		}
+
+		DataConverter conv = DataConverter.getInstance(magic == MachConstants.MH_MAGIC);
+		boolean is64bit = magic == MachConstants.MH_CIGAM_64 || magic == MachConstants.MH_MAGIC_64;
+
+		byte[] bytes = new byte[is64bit ? 0x20 : 0x1c];
+		conv.putInt(bytes, 0x00, magic);
+		conv.putInt(bytes, 0x04, cpuType);
+		conv.putInt(bytes, 0x08, cpuSubType);
+		conv.putInt(bytes, 0x0c, fileType);
+		conv.putInt(bytes, 0x10, nCmds);
+		conv.putInt(bytes, 0x14, sizeOfCmds);
+		conv.putInt(bytes, 0x18, flags);
+		if (is64bit) {
+			conv.putInt(bytes, 0x1c, reserved);
+		}
+
+		return bytes;
 	}
 
 	private static int readMagic(ByteProvider provider, long machHeaderStartIndexInProvider)
