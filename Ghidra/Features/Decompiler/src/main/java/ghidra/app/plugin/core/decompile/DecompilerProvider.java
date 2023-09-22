@@ -399,6 +399,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		if (program != null) {
 			program.removeListener(this);
 		}
+
 		program = newProgram;
 		currentLocation = null;
 		currentSelection = null;
@@ -408,6 +409,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
 			decompilerOptions.grabFromToolAndProgram(fieldOptions, opt, program);
 		}
+
+		clipboardProvider.setProgram(program);
 	}
 
 	@Override
@@ -417,6 +420,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			contextChanged();
 			controller.setSelection(selection);
 		}
+
+		clipboardProvider.setSelection(selection);
 	}
 
 	@Override
@@ -440,6 +445,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	void setLocation(ProgramLocation loc, ViewerPosition viewerPosition) {
 		Address currentAddress = currentLocation != null ? currentLocation.getAddress() : null;
 		currentLocation = loc;
+		clipboardProvider.setLocation(currentLocation);
 		Address newAddress = currentLocation != null ? currentLocation.getAddress() : null;
 		if (viewerPosition == null) {
 			viewerPosition = pendingViewerPosition;
