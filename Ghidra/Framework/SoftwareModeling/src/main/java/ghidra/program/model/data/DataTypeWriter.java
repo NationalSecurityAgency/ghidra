@@ -520,22 +520,31 @@ public class DataTypeWriter {
 		}
 
 		if (componentString == null) {
-
 			if (dataType instanceof BitFieldDataType) {
 				BitFieldDataType bfDt = (BitFieldDataType) dataType;
 				name += ":" + bfDt.getDeclaredBitSize();
 				dataType = bfDt.getBaseDataType();
 			}
-			else if (dataType instanceof Array) {
-				Array array = (Array) dataType;
-				name += getArrayDimensions(array);
-				dataType = getArrayBaseType(array);
-			}
-			else if (dataType instanceof Pointer ptr &&
-				getPointerBaseDataType(ptr) instanceof Array array) {
-				name = "(%s%s)%s".formatted("*".repeat(getPointerDepth(ptr)), name,
-					getArrayDimensions(array));
-				dataType = getArrayBaseType(array);
+
+			while (true) {
+				if (dataType instanceof Array array) {
+					name += "[" + array.getNumElements() + "]";
+					dataType = array.getDataType();
+				}
+				else if (dataType instanceof Pointer pointer) {
+					DataType elem = pointer.getDataType();
+					if (elem == null) {
+						break;
+					}
+					name = "*" + name;
+					dataType = elem;
+					if (dataType instanceof Array) {
+						name = "(" + name + ")";
+					}
+				}
+				else {
+					break;
+				}
 			}
 
 			DataType baseDataType = getBaseDataType(dataType);

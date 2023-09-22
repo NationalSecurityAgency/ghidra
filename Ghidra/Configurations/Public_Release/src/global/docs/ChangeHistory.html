@@ -36,7 +36,7 @@
 </blockquote>
 <blockquote><p><u><B>Bugs</B></u></p>
 <ul>
-    <li><I>Analysis</I>. Fixed x86 <span class="gcode">CALL &lt;nextaddr&gt;; POP EBX</span> position independent code  issue that was replacing the branch with a data reference which caused bad code flow. (GP-3687)</li>
+    <li><I>Analysis</I>. Fixed x86 <span class="gcode">CALL &lt;nextaddr&gt;; POP EBX</span> position-independent code issue that was replacing the branch with a data reference which caused bad code flow. (GP-3687)</li>
     <li><I>Data Types</I>. Corrected issue related to setting architecture immediately after data type archive creation where data types were added.  The architecture setting failed to be retained and the existing data types failed to be adjusted. (GP-3727)</li>
     <li><I>Debugger</I>. Fixed issue with default launcher command line when binary name contains spaces. (GP-3553, Issue #5460)</li>
     <li><I>Debugger:Agents</I>. Removed <span class="gcode">MODULE_[UN]LOADED</span> events (these duplicate <span class="gcode">elementsChanged</span> on the Modules node).  Fixed <span class="gcode">NullPointerException</span> log messages from library-load events in GDB connector. (GP-3666)</li>
@@ -50,16 +50,16 @@
     <li><I>Debugger:Modules</I>. Fixed issue using Debugger with programs in a shared project. (GP-3664, Issue #5585)</li>
     <li><I>Debugger:Watches</I>. Fixed bug where watches cannot be assigned a type without an active trace. (GP-3718)</li>
     <li><I>Decompiler</I>. Fixed a bug preventing the Decompiler from simplifying double-precision shifts. (GP-3688, Issue #5473)</li>
-    <li><I>Decompiler</I>. The Decompiler no longer tries to infer a symbol reference for a constant, if a function signature indicates the constant is not a pointer. (GP-3735)</li>
+    <li><I>Decompiler</I>. The Decompiler no longer tries to infer a symbol reference for a constant if a function signature indicates the constant is not a pointer. (GP-3735)</li>
     <li><I>Emulator</I>. Fixed another context flow issue in the Emulator's decoder. (GP-3716)</li>
     <li><I>GUI</I>. Fixed the Flat Dark Theme color of the Version Tracking Matches table's filter field. (GP-3550, Issue #5560)</li>
     <li><I>GUI</I>. Fixed general Structure Editor bugs when using <span class="gcode">Tab</span> to navigate while editing. (GP-3647, Issue #5566)</li>
     <li><I>GUI</I>. Fixed broken table navigation in the Function Tags dialog. (GP-3683, Issue #5613)</li>
     <li><I>GUI</I>. Fixed incorrect rendering of delimiter fields in table filter options. (GP-3684, Issue #5614)</li>
-    <li><I>GUI</I>. Fixed an exception in the Function Call Graph when using the 'Start Fully Zoomed In' mode. (GP-3768)</li>
+    <li><I>GUI</I>. Fixed an exception in the Function Call Graph when using the <span class="gtitle">Start Fully Zoomed In</span> mode. (GP-3768)</li>
     <li><I>Headless</I>. Fixed several OSGi-related exceptions that could be thrown when running many instances of <span class="gcode">analyzeHeadless</span> in parallel. (GP-3653)</li>
     <li><I>Languages</I>. Fixed ARM <span class="gcode">vcvt</span> instruction semantics. (GP-3729)</li>
-    <li><I>Languages</I>. Removed <span class="gcode">LDS/STS</span> instructions from AVR8 in preparation for AVRtiny support (GP-3746, Issue #5231)</li>
+    <li><I>Languages</I>. Removed <span class="gcode">LDS/STS</span> instructions from AVR8 in preparation for AVRtiny support. (GP-3746, Issue #5231)</li>
     <li><I>Processors</I>. Fixed issue with 6809 <span class="gcode">pshu</span> sometimes pushing to the <span class="gcode">S</span> register. (GP-3556, Issue #5467)</li>
     <li><I>Processors</I>. Fixed regression in 6x09 compare instructions. (GP-3642)</li>
     <li><I>Processors</I>. Fixed instruction operand parsing for AARCH64 <span class="gcode">fcadd</span> and <span class="gcode">fcmla</span> instructions. (GP-3652, Issue #5428)</li>

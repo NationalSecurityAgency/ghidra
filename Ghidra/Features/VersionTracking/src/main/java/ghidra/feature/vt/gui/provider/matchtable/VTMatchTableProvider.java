@@ -229,6 +229,10 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	private VTMatchTableModel createTableModel() {
 		matchesTableModel = new VTMatchTableModel(controller);
 		matchesTableModel.addTableModelListener(e -> {
+			if (matchesTable == null) {
+				return; // we've been disposed
+			}
+			
 			int filteredCount = matchesTableModel.getRowCount();
 			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 

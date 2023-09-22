@@ -64,8 +64,8 @@ class ProcessState(object):
         if thread is not None:
             if first or thread not in self.visited:
                 commands.putreg()
-                commands.putmem("$pc", "1", from_tty=False)
-                commands.putmem("$sp", "1", from_tty=False)
+                commands.putmem("$pc", "1", display_result=False)
+                commands.putmem("$sp", "1", display_result=False)
                 commands.put_frames()
                 self.visited.add(thread)
             frame = util.selected_frame()

@@ -148,7 +148,7 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 		};
 		
 	    eval.setTrustWritableMemory(trustWriteMemOption)
-		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMinSpeculativeOffset(minSpeculativeRefAddress)
 		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
 		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
 		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);

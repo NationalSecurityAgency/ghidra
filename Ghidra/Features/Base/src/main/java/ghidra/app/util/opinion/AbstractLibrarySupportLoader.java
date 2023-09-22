@@ -475,6 +475,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			createUnprocessedQueue(libraryNameList, getLibraryLoadDepth(options));
 		boolean loadLocalLibraries = isLoadLocalLibraries(options);
 		boolean loadSystemLibraries = isLoadSystemLibraries(options);
+		List<FileSystemSearchPath> customSearchPaths =
+			getCustomLibrarySearchPaths(provider, options, log, monitor);
 		List<FileSystemSearchPath> localSearchPaths =
 			getLocalLibrarySearchPaths(provider, options, log, monitor);
 		List<FileSystemSearchPath> systemSearchPaths =
@@ -509,25 +511,34 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					// options turned off (if shouldSearchAllPaths() is overridden to return true).
 					// In this case, we still want to process those libraries, but we 
 					// do not want to save them, so they can be released.
-					boolean loadedLocal = false;
-					if (!localSearchPaths.isEmpty()) {
-						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
-							libraryName, provider, localSearchPaths, libraryDestFolderPath,
-							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);
+					boolean loaded = false;
+					if (!customSearchPaths.isEmpty()) {
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, customSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
+						if (loadedLibrary != null) {
+							loadedPrograms.add(loadedLibrary);
+							loaded = true;
+						}
+					}
+					if (!loaded && !localSearchPaths.isEmpty()) {
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, localSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
 							if (loadLocalLibraries) {
 								loadedPrograms.add(loadedLibrary);
-								loadedLocal = true;
+								loaded = true;
 							}
 							else {
 								loadedLibrary.release(consumer);
 							}
 						}
 					}
-					if (!loadedLocal && !systemSearchPaths.isEmpty()) {
-						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
-							libraryName, provider, systemSearchPaths, libraryDestFolderPath,
-							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);
+					if (!loaded && !systemSearchPaths.isEmpty()) {
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, systemSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
 							if (loadSystemLibraries) {
 								loadedPrograms.add(loadedLibrary);
@@ -1011,7 +1022,24 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param fsRef A {@link FileSystemRef}
 	 * @param fsPath A {@link Path} relative to the root of the file system, or null for the root
 	 */
-	private record FileSystemSearchPath(FileSystemRef fsRef, Path fsPath) {}
+	protected record FileSystemSearchPath(FileSystemRef fsRef, Path fsPath) {}
+
+	/**
+	 * Gets a {@link List} of priority-ordered custom {@link FileSystemSearchPath}s used to search 
+	 * for libraries.  The default implementation of this method returns an empty {@link List}.
+	 * Subclasses can override it as needed.
+	 * 
+	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param options The options
+	 * @param log The log
+	 * @param monitor A cancelable task monitor
+	 * @return A {@link List} of priority-ordered custom {@link FileSystemSearchPath}s used to
+	 *   search for libraries
+	 */
+	protected List<FileSystemSearchPath> getCustomLibrarySearchPaths(ByteProvider provider,
+			List<Option> options, MessageLog log, TaskMonitor monitor) {
+		return List.of();
+	}
 
 	/**
 	 * Gets a {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to search 
@@ -1021,7 +1049,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param options The options
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
-	 * @return A {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to s
+	 * @return A {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to
 	 *   search for libraries
 	 */
 	private List<FileSystemSearchPath> getLocalLibrarySearchPaths(ByteProvider provider,

@@ -212,6 +212,9 @@ implements IWorkbenchPreferencePage {
 		catch (IOException e) {
 			throw new IOException("Not a valid Ghidra installation.");			
 		}
+		if (new File(ghidraInstallDir, "certification.local.manifest").isFile()) {
+			throw new IOException("Ghidra source repositories are not supported.");
+		}
 		ApplicationProperties applicationProperties = layout.getApplicationProperties();
 		ApplicationVersion version;
 		try {
