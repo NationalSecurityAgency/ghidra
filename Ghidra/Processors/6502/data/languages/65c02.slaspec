@@ -1,4 +1,6 @@
-@include "6502.slaspec"
+@define 6502_VERSION "CMOS"
+
+@include "6502.sinc"
 
 define token bitopbyte (8)
     bitop           = (0,7)
