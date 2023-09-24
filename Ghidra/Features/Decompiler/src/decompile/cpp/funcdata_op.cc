@@ -808,6 +808,10 @@ void Funcdata::truncatedFlow(const Funcdata *fd,const FlowInfo *flow)
 bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
 
 {
+  // checks that the function has not already been inlined
+  if (!flow.testAlreadyInlined(inlinefd, callop))
+    return false;
+
   inlinefd->getArch()->clearAnalysis(inlinefd);
   FlowInfo inlineflow(*inlinefd,inlinefd->obank,inlinefd->bblocks,inlinefd->qlst);
   inlinefd->obank.setUniqId( obank.getUniqId() );
