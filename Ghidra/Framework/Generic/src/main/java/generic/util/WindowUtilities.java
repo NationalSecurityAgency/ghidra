@@ -23,7 +23,7 @@ import java.util.Objects;
 
 import javax.swing.SwingUtilities;
 
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 
 /**
  * A collection of window related utility methods
@@ -455,7 +455,7 @@ public class WindowUtilities {
 		// WindowListener.windowActivated() callback.  During this callback, it is possible that
 		// the focus owner is not correct, as it will be changed to the window under activation.
 		// If we invoke later, the the call will happen when focus has been transitioned.
-		SystemUtilities.runSwingLater(() -> doBringModalestDialogToFront(activeWindow));
+		Swing.runLater(() -> doBringModalestDialogToFront(activeWindow));
 	}
 
 	private static void doBringModalestDialogToFront(Window activeWindow) {
@@ -464,7 +464,7 @@ public class WindowUtilities {
 			return;
 		}
 
-		SystemUtilities.runSwingLater(() -> modalestDialog.toFront());
+		Swing.runLater(modalestDialog::toFront);
 	}
 
 	/** Class that knows the screen bounds, insets and bounds without the insets */
@@ -481,14 +481,6 @@ public class WindowUtilities {
 			int width = fullBounds.width - Math.abs(insets.left + insets.right);
 			int height = fullBounds.height - Math.abs(insets.top + insets.bottom);
 			this.usableBounds = new Rectangle(x, y, width, height);
-		}
-
-		/**
-		 * Gets the full size of this bounds object, including the insets
-		 * @return the full size of this bounds object, including the insets
-		 */
-		Rectangle getFullBounds() {
-			return fullBounds;
 		}
 
 		/**
