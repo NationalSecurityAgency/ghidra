@@ -285,10 +285,15 @@ protected:
   /// \brief Build the data-type factory/container
   ///
   /// Build the TypeFactory object specific to \b this Architecture and
-  /// prepopulate it with the \e core types. Core types may be pulled
-  /// from the configuration information, or default core types are used.
+  /// prepopulate it with the \e core types.
   /// \param store contains possible configuration information
   virtual void buildTypegrp(DocumentStorage &store)=0;
+
+  /// \brief Add core primitive data-types
+  ///
+  /// Core types may be pulled from the configuration information, or default core types are used.
+  /// \param store contains possible configuration information
+  virtual void buildCoreTypes(DocumentStorage &store)=0;
 
   /// \brief Build the comment database
   ///

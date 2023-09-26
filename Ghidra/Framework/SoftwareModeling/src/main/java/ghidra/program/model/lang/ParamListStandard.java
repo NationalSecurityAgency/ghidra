@@ -98,7 +98,8 @@ public class ParamListStandard implements ParamList {
 			}
 
 			VarnodeData res = new VarnodeData();
-			status[grp] = element.getAddrBySlot(status[grp], tp.getLength(), res);
+			status[grp] =
+				element.getAddrBySlot(status[grp], tp.getAlignedLength(), tp.getAlignment(), res);
 			if (res.space == null) {
 				continue;	// -tp- does not fit in this entry
 			}

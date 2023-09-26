@@ -163,37 +163,109 @@ public:
   FlowBlock *getCopyMap(void) const { return copymap; }		///< Get the mapped FlowBlock
   const FlowBlock *getParent(void) const { return (const FlowBlock *) parent; }	///< Get the parent FlowBlock of \b this
   uint4 getFlags(void) const { return flags; }			///< Get the block_flags properties
-  virtual Address getStart(void) const { return Address(); }	///< Get the starting address of code in \b this FlowBlock
-  virtual Address getStop(void) const { return Address(); }	///< Get the ending address of code in \b this FlowBlock
-  virtual block_type getType(void) const { return t_plain; }	///< Get the FlowBlock type of \b this
-  virtual FlowBlock *subBlock(int4 i) const { return (FlowBlock *)0; }	///< Get the i-th component block
-  virtual void markUnstructured(void) {}			///< Mark target blocks of any unstructured edges
+
+  /// \brief Get the starting address of code in \b this FlowBlock
+  ///
+  /// If \b this is a basic block, the first address of (the original) instructions in the block
+  /// is returned.  Otherwise, an \e invalid address is returned.
+  /// \return the starting address or an \e invalid address
+  virtual Address getStart(void) const { return Address(); }
+
+  /// \brief Get the ending address of code in \b this FlowBlock
+  ///
+  /// If \b this is a basic block, the last address of (the original) instructions in the block
+  /// is returned.  Otherwise, an \e invalid address is returned.
+  /// \return the starting address or an \e invalid address
+  virtual Address getStop(void) const { return Address(); }
+
+  /// \brief Get the FlowBlock type of \b this
+  ///
+  /// \return one of the enumerated block types
+  virtual block_type getType(void) const { return t_plain; }
+
+  /// \brief Get the i-th component block
+  ///
+  /// \param i is the index of the component block
+  /// \return the specified component block
+  virtual FlowBlock *subBlock(int4 i) const { return (FlowBlock *)0; }
+
+  /// \brief Mark target blocks of any unstructured edges
+  virtual void markUnstructured(void) {}
+
   virtual void markLabelBumpUp(bool bump);	///< Let hierarchical blocks steal labels of their (first) components
-  virtual void scopeBreak(int4 curexit,int4 curloopexit) {}	///< Mark unstructured edges that should be \e breaks
+
+  /// \brief Mark unstructured edges that should be \e breaks
+  ///
+  /// \param curexit is the index of the (fall-thru) exit block for \b this block, or -1 for no fall-thru
+  /// \param curloopexit is the index of the exit block of the containing loop, or -1 for no containing loop
+  virtual void scopeBreak(int4 curexit,int4 curloopexit) {}
+
   virtual void printHeader(ostream &s) const;		///< Print a simple description of \b this to stream
   virtual void printTree(ostream &s,int4 level) const;	///< Print tree structure of any blocks owned by \b this
-  virtual void printRaw(ostream &s) const {}		///< Print raw instructions contained in \b this FlowBlock
+
+  /// \brief Print raw instructions contained in \b this FlowBlock
+  ///
+  /// A text representation of the control-flow and instructions contained in \b this block is
+  /// emitted to the given stream.
+  /// \param s is the given stream to write to
+  virtual void printRaw(ostream &s) const {}
+
   virtual void emit(PrintLanguage *lng) const;	///<Emit the instructions in \b this FlowBlock as structured code
-  virtual const FlowBlock *getExitLeaf(void) const { return (const FlowBlock *)0; }	///< Get the FlowBlock to which \b this block exits
-  virtual PcodeOp *firstOp(void) const { return (PcodeOp *)0; }		///< Get the first PcodeOp executed by \b this FlowBlock
-  virtual PcodeOp *lastOp(void) const { return (PcodeOp *)0; }		///< Get the last PcodeOp executed by \b this FlowBlock
+
+  /// \brief Get the leaf block from which \b this block exits
+  ///
+  /// This will be the only basic block with (structured) edges out of \b this block.
+  /// \return the specific exiting block or null if there isn't a unique block
+  virtual const FlowBlock *getExitLeaf(void) const { return (const FlowBlock *)0; }
+
+  /// \brief Get the first PcodeOp executed by \b this FlowBlock
+  ///
+  /// If there are no PcodeOps in the block, null is returned.
+  /// \return the first PcodeOp or null
+  virtual PcodeOp *firstOp(void) const { return (PcodeOp *)0; }
+
+  /// \brief Get the last PcodeOp executed by \b this FlowBlock
+  ///
+  /// If \b this has a unique last PcodeOp, it is returned.
+  /// \return the last PcodeOp or null
+  virtual PcodeOp *lastOp(void) const { return (PcodeOp *)0; }
+
   virtual bool negateCondition(bool toporbottom);	///< Flip the condition computed by \b this
   virtual bool preferComplement(Funcdata &data);	///< Rearrange \b this hierarchy to simplify boolean expressions
   virtual FlowBlock *getSplitPoint(void);		///< Get the leaf splitting block
   virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
   virtual void flipInPlaceExecute(void);
-  virtual bool isComplex(void) const { return true; }	///< Is \b this too complex to be a condition (BlockCondition)
+
+  /// \brief Is \b this too complex to be a condition (BlockCondition)
+  ///
+  /// \return \b false if the whole block can be emitted as a conditional clause
+  virtual bool isComplex(void) const { return true; }
+
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
-  virtual void finalTransform(Funcdata &data) {}	///< Do any structure driven final transforms
-  virtual void finalizePrinting(Funcdata &data) const {}	///< Make any final configurations necessary to print the block
+
+  /// \brief Do any structure driven final transforms
+  ///
+  /// \param data is the function to transform
+  virtual void finalTransform(Funcdata &data) {}
+
+  /// \brief Make any final configurations necessary to emit the block
+  ///
+  /// \param data is the function to finalize
+  virtual void finalizePrinting(Funcdata &data) const {}
+
   virtual void encodeHeader(Encoder &encoder) const;	///< Encode basic information as attributes
   virtual void decodeHeader(Decoder &decoder);		///< Decode basic information from element attributes
-  virtual void encodeBody(Encoder &encoder) const {}	///< Encode detail about components to a stream
+
+  /// \brief Encode detail about \b this block and its components to a stream
+  ///
+  /// \param encoder is the stream encoder
+  virtual void encodeBody(Encoder &encoder) const {}
 
   /// \brief Restore details about \b this FlowBlock from an element stream
   ///
   /// \param decoder is the stream decoder
   virtual void decodeBody(Decoder &decoder) {}
+
   void encodeEdges(Encoder &encoder) const;		///< Encode edge information to a stream
   void decodeEdges(Decoder &decoder,BlockMap &resolver);
   void encode(Encoder &encoder) const;			///< Encode \b this to a stream

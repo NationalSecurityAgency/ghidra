@@ -1151,7 +1151,7 @@ Datatype *TypeOpIntAdd::propagateAddIn2Out(Datatype *alttype,TypeFactory *typegr
 {
   TypePointer *pointer = (TypePointer *)alttype;
   uintb offset;
-  int4 command = propagateAddPointer(offset,op,inslot,pointer->getPtrTo()->getSize());
+  int4 command = propagateAddPointer(offset,op,inslot,pointer->getPtrTo()->getAlignSize());
   if (command == 2) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
   TypePointer *parent = (TypePointer *)0;
   int8 parentOff;
