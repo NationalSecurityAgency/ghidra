@@ -306,6 +306,28 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertTrue(controlPlugin.actionEmulateResume.isEnabled());
 	}
 
+	/**
+	 * Tests the UI so it does not error when the user presses resume
+	 * after already stepped into a pcode instruction.
+	 */	
+	@Test
+	public void testEmulateResumeActionAfterPcodeStep() throws Throwable {
+		TraceThread thread = createToyLoopTrace();
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+
+		traceManager.activateThread(thread);
+		traceManager.activateTime(TraceSchedule.parse("0:.t0-2"));
+		waitForSwing();
+		
+		performEnabledAction(null, controlPlugin.actionEmulateResume, true);
+		waitForPass(() -> assertFalse(controlPlugin.actionEmulateResume.isEnabled()));
+
+		CachedEmulator ce = Unique.assertOne(emulationService.getBusyEmulators());
+		ce.emulator().setSuspended(true);
+		waitForTasks();
+		assertTrue(controlPlugin.actionEmulateResume.isEnabled());
+	}
+
 	@Test
 	public void testEmulateInterruptAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
