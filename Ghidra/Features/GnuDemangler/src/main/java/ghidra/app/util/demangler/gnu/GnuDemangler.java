@@ -112,7 +112,8 @@ public class GnuDemangler implements Demangler {
 			}
 
 			boolean onlyKnownPatterns = options.demangleOnlyKnownPatterns();
-			DemangledObject demangledObject = parse(mangled, process, demangled, onlyKnownPatterns);
+			DemangledObject demangledObject =
+				parse(originalMangled, process, demangled, onlyKnownPatterns);
 			if (demangledObject == null) {
 				return demangledObject;
 			}
