@@ -141,7 +141,12 @@
             "starts with" (^) or "ends with" ($) regular expression character syntax. For example,
             the regular expression "bob" will match "bobby", "hey bobby", and "bob", but the
             regular expression "^bob" will match "bobby" and "bob", and "^bob$" will only match
-            "bob".</TD>
+            "bob".  The <B>Case Sensitive</B> check box is disabled for regular expressions, and
+            the default matching mode is exact case matching.  Case insensitive matching can be
+            enabled by including the "(?i)" embedded flag at the beginning of your filter.  For
+            example, the regular expression "(?i)bob" will match items with "Bob", "bob", and
+            "BOB".
+            </TD>
           </TR>
         </TABLE>
       </BLOCKQUOTE>

@@ -353,7 +353,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 	*:2(sd4HPlusRxAddr) = RZ_VLE:2;	
 }
 
-:sthu S,d8PlusRaAddress			is $(ISVLE) & OP=6 & XOP_8_VLE=5 & S & A & d8PlusRaAddress
+:e_sthu S,d8PlusRaAddress			is $(ISVLE) & OP=6 & XOP_8_VLE=5 & S & A & d8PlusRaAddress
 {
 	ea:$(REGISTER_SIZE) = d8PlusRaAddress;
 	*:2(ea) = S:2;

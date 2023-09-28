@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.instructionsearch;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Container;
 import java.awt.Window;
@@ -66,7 +65,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	private GhidraTable instructionTable;
 	private GTable previewTable;
 
-	/**
+	/*
 	 * Test setup.  Each test will start with a simple program having a selection
 	 * encompassing the entire range.
 	 */
@@ -98,7 +97,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		env.dispose();
 	}
 
-	/**
+	/*
 	 * This builds a small program based on a section of WinHelloCpp.exe.  The specific
 	 * section disassembles as follows:
 	 * 
@@ -112,7 +111,6 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	 *	    004065ef 83 c4 0c        ADD        ESP,nope
 	 *	    004065f2 89 45 fc        MOV        [EBP + local_8],EAX
 	 *	
-	 * @throws Exception
 	 */
 	private Program buildProgram() throws Exception {
 
@@ -480,11 +478,10 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		assertResultsTableRowCount(1);
 	}
 
-	/**
+	/*
 	 * Tests that we can perform a search over the entire memory space and return multiple
 	 * results. To do this we're going to have to select the "PUSH EDI" instruction and mask
 	 * out the operand, which should yield 2 matches.
-	 * @throws Exception 
 	 */
 	@Test
 	public void testSearchEntireProgramMultipleResults() throws Exception {
@@ -821,12 +818,11 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 	}
 
-	/**
+	/*
 	 * Loads the instructions in the given range into the instruction table.
 	 * 
 	 * @param addr1 address in the form "0x01234567"
-	 * @param addr2 address in the form "0x01234567"
-	 * @throws Exception 
+	 * @param addr2 address in the form "0x01234567" 
 	 */
 	private void loadSelection(String addr1, String addr2) throws Exception {
 

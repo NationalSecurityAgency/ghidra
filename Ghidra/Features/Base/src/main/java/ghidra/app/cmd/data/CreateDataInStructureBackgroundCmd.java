@@ -30,6 +30,9 @@ import ghidra.util.task.TaskMonitor;
  */
 public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 
+	// TODO: Not sure any of this will work for a packed structure which does not support
+	// offset-based component manipulation (see GP-3740)
+
 	private Address addr;
 	private int length;
 	private int[] startPath;
@@ -98,7 +101,7 @@ public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 
 		DataType existingDT = startData.getDataType();
 		int startIndex = startData.getComponentIndex();
-		Data lastComp = parent.getComponentAt(
+		Data lastComp = parent.getComponentContaining(
 			(int) (startData.getMinAddress().subtract(parent.getMinAddress()) + length - 1));
 		int endIndex = lastComp.getComponentIndex();
 
@@ -133,7 +136,7 @@ public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 //			        MemBuffer memBuf = new ProgramStructureProviderContext(program,addr, 
 //    	    	    					struct, struct.getComponent(index).getOffset());
 					DataTypeInstance dti =
-						DataTypeInstance.getDataTypeInstance(newDataType, length, true);
+						DataTypeInstance.getDataTypeInstance(newDataType, length, false);
 					if (dti == null || dti.getLength() > length) {
 						break;
 					}

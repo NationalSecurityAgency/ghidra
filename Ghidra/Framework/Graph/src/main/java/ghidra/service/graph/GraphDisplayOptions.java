@@ -24,6 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.Tool;
+import docking.options.OptionsService;
 import docking.options.editor.*;
 import generic.theme.GColor;
 import generic.theme.Gui;
@@ -37,8 +38,6 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
  * and edge type and shapes for vertex types.
  */
 public class GraphDisplayOptions implements OptionsChangeListener {
-
-	public static final GraphDisplayOptions DEFAULT = new GraphDisplayOptions(new EmptyGraphType());
 
 	private static final String FONT = "Font";
 	private static final String LABEL_POSITION = "Label Position";
@@ -96,7 +95,14 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	 * @param graphType The {@link GraphType} for which to define display options
 	 */
 	public GraphDisplayOptions(GraphType graphType) {
-		this(graphType, null);
+		this.graphType = graphType;
+		rootOptionsName = graphType.getOptionsName();
+		List<String> edgeTypes = graphType.getEdgeTypes();
+		if (!edgeTypes.isEmpty()) {
+			favoredEdgeType = edgeTypes.iterator().next();
+		}
+		initializeEdgePriorities();
+		initializeDefaults();
 	}
 
 	/**
@@ -106,15 +112,9 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	 * @param graphType The {@link GraphType} for which to define display options
 	 * @param tool the tool from which to initialize from {@link ToolOptions}
 	 */
-	public GraphDisplayOptions(GraphType graphType, Tool tool) {
-		this.graphType = graphType;
-		rootOptionsName = graphType.getOptionsName();
-		List<String> edgeTypes = graphType.getEdgeTypes();
-		if (!edgeTypes.isEmpty()) {
-			favoredEdgeType = edgeTypes.iterator().next();
-		}
-		initializeEdgePriorities();
-		initializeDefaults();
+	protected GraphDisplayOptions(GraphType graphType, Tool tool, HelpLocation help) {
+		this(graphType);
+		registerOptions(tool, help);
 		initializeFromOptions(tool);
 	}
 
@@ -683,16 +683,60 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	 * constructed. Otherwise, if the tool exits and this hasn't been called, any saved option
 	 * values will be lost.
 	 * <P>
-	 * @param toolOptions the {@link ToolOptions} to register these options with
+	 * @param tool The tool to use to register options
 	 * @param help the help location to be used by the {@link OptionsDialog} for display/editing
 	 * these options
 	 */
-	public void registerOptions(ToolOptions toolOptions, HelpLocation help) {
+	protected void registerOptions(Tool tool, HelpLocation help) {
+		ToolOptions toolOptions = tool.getOptions("Graph");
+		registerOptions(toolOptions, help);
+	}
+
+	protected void registerOptions(ToolOptions toolOptions, HelpLocation help) {
 		Options rootOptions = toolOptions.getOptions(graphType.getOptionsName());
 		registerVertexColorOptions(rootOptions, help);
 		registerVertexShapeOptions(rootOptions, help);
 		registerEdgeColorOptions(rootOptions, help);
 		registerMiscellaneousOptions(rootOptions, help);
+	}
+
+	/**
+	 * Pop up a dialog for editing these graph display options. If the options
+	 * are registered with tool options, show the tool options with the appropriate
+	 * graph options selected. Otherwise, show an editor for locally editing these
+	 * options.
+	 * @param tool the tool 
+	 * @param help the help location to use if the options are edited locally
+	 */
+	public void displayEditor(Tool tool, HelpLocation help) {
+		String startingPath = rootOptionsName + ".Vertex Colors";
+
+		// if the options are registered in the tool, just show the
+		// corresponding tool options
+
+		if (isRegisteredWithTool()) {
+			OptionsService service = tool.getService(OptionsService.class);
+			if (service != null) {
+				service.showOptionsDialog("Graph." + startingPath, "");
+				return;
+			}
+		}
+
+		// Otherwise, create a new empty options, register the graph options into the
+		// those options and use our options editor on those options to allow the 
+		// user to change these graph display options.
+
+		ToolOptions transientOptions = new ToolOptions("Graph");
+		registerOptions(transientOptions, help);
+		transientOptions.addOptionsChangeListener(this);
+		Options[] optionsArray = new Options[] { transientOptions };
+		String dialogTitle = "Graph Instance Settings (Not Saved in Tool Options)";
+		OptionsDialog dialog = new OptionsDialog(dialogTitle, "Graph", optionsArray, null);
+		// we have one less level for these transient tool options, so no need to prepend "graph."
+		dialog.displayCategory(startingPath, "");
+		tool.showDialog(dialog);
+		dialog.dispose();
+
 	}
 
 	/**
@@ -830,9 +874,8 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 		for (String vertexType : graphType.getVertexTypes()) {
 			if (vertexRegistrations.containsKey(vertexType)) {
-				options.registerThemeColorBinding(vertexType,
-					vertexRegistrations.get(vertexType), help,
-					"Choose the color for this vertex type");
+				options.registerThemeColorBinding(vertexType, vertexRegistrations.get(vertexType),
+					help, "Choose the color for this vertex type");
 			}
 		}
 		List<String> list = new ArrayList<>(graphType.getVertexTypes());
@@ -861,9 +904,8 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 		for (String edgeType : graphType.getEdgeTypes()) {
 			if (edgeRegistrations.containsKey(edgeType)) {
-				options.registerThemeColorBinding(edgeType,
-					edgeRegistrations.get(edgeType),
-					help, "Choose the color for this edge type");
+				options.registerThemeColorBinding(edgeType, edgeRegistrations.get(edgeType), help,
+					"Choose the color for this edge type");
 			}
 		}
 		List<String> list = new ArrayList<>(graphType.getEdgeTypes());
@@ -884,29 +926,29 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		if (defaultRegistrations.containsKey(VERTEX_SELECTION_COLOR)) {
 			optionNamesInDisplayOrder.add(VERTEX_SELECTION_COLOR);
 			options.registerThemeColorBinding(VERTEX_SELECTION_COLOR,
-				defaultRegistrations.get(VERTEX_SELECTION_COLOR),
-				help, "Color for highlighting selected vertices");
+				defaultRegistrations.get(VERTEX_SELECTION_COLOR), help,
+				"Color for highlighting selected vertices");
 		}
 
 		if (defaultRegistrations.containsKey(EDGE_SELECTION_COLOR)) {
 			optionNamesInDisplayOrder.add(EDGE_SELECTION_COLOR);
 			options.registerThemeColorBinding(EDGE_SELECTION_COLOR,
-				defaultRegistrations.get(EDGE_SELECTION_COLOR),
-				help, "Color for highlighting selected edge");
+				defaultRegistrations.get(EDGE_SELECTION_COLOR), help,
+				"Color for highlighting selected edge");
 		}
 
 		if (defaultRegistrations.containsKey(DEFAULT_VERTEX_COLOR)) {
 			optionNamesInDisplayOrder.add(DEFAULT_VERTEX_COLOR);
 			options.registerThemeColorBinding(DEFAULT_VERTEX_COLOR,
-				defaultRegistrations.get(DEFAULT_VERTEX_COLOR),
-				help, "Color for vertices that have no vertex type defined");
+				defaultRegistrations.get(DEFAULT_VERTEX_COLOR), help,
+				"Color for vertices that have no vertex type defined");
 		}
 
 		if (defaultRegistrations.containsKey(DEFAULT_EDGE_COLOR)) {
 			optionNamesInDisplayOrder.add(DEFAULT_EDGE_COLOR);
 			options.registerThemeColorBinding(DEFAULT_EDGE_COLOR,
-				defaultRegistrations.get(DEFAULT_EDGE_COLOR),
-				help, "Color for edge that have no edge type defined");
+				defaultRegistrations.get(DEFAULT_EDGE_COLOR), help,
+				"Color for edge that have no edge type defined");
 		}
 
 		optionNamesInDisplayOrder.add(DEFAULT_VERTEX_SHAPE);

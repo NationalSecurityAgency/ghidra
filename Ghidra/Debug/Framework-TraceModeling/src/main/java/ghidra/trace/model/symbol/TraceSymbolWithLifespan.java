@@ -17,12 +17,35 @@ package ghidra.trace.model.symbol;
 
 import ghidra.trace.model.Lifespan;
 
+/**
+ * A trace symbol having a lifespan.
+ */
 public interface TraceSymbolWithLifespan extends TraceSymbol {
+	/**
+	 * Get the lifespan of the symbol
+	 * 
+	 * @return the lifespan
+	 */
 	Lifespan getLifespan();
 
+	/**
+	 * Get the minimum snapshot key in the lifespan
+	 * 
+	 * @return the minimum snapshot key
+	 */
 	long getStartSnap();
 
+	/**
+	 * Set the maximum snapshot key in the lifespan
+	 * 
+	 * @param snap the new maximum snapshot key
+	 */
 	void setEndSnap(long snap);
 
+	/**
+	 * Get the maximum snapshot key in the lifespan
+	 * 
+	 * @return the maximum snapshot key
+	 */
 	long getEndSnap();
 }

@@ -21,7 +21,6 @@ import java.net.*;
 import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import javax.help.HelpSet;
 import javax.help.HelpSetException;
@@ -32,15 +31,27 @@ import help.validator.model.GhidraTOCFile;
 
 public class JarHelpModuleLocation extends HelpModuleLocation {
 
-	/*
-	 * format of 'helpDir': 
-	 * 	jar:file:///.../ghidra-prep/Ghidra/Features/Base/build/libs/Base.jar!/help
-	 */
-	private static final Pattern JAR_FILENAME_PATTERN = Pattern.compile(".*/(\\w*)\\.jar!/.*");
-
-	private static Map<String, String> env = new HashMap<String, String>();
+	private static Map<String, String> env = new HashMap<>();
 	static {
 		env.put("create", "false");
+	}
+
+	public static JarHelpModuleLocation fromFile(File jar) {
+		FileSystem fs = getOrCreateJarFS(jar);
+		Path helpRootPath = fs.getPath("/help");
+		if (!Files.exists(helpRootPath)) {
+			return null;
+		}
+
+		Path topicsPath = helpRootPath.resolve("topics");
+
+		if (!Files.exists(topicsPath)) {
+			// all help locations must have a topics directory; we can get here if the jar contains
+			// a package with the name 'help'
+			return null;
+		}
+
+		return new JarHelpModuleLocation(jar, helpRootPath);
 	}
 
 	private static FileSystem getOrCreateJarFS(File jar) {
@@ -64,8 +75,8 @@ public class JarHelpModuleLocation extends HelpModuleLocation {
 		}
 	}
 
-	public JarHelpModuleLocation(File file) {
-		super(getOrCreateJarFS(file).getPath("/help"));
+	private JarHelpModuleLocation(File jar, Path path) {
+		super(path);
 	}
 
 	@Override
@@ -101,9 +112,11 @@ public class JarHelpModuleLocation extends HelpModuleLocation {
 	}
 
 	private String getModuleName(File jarFile) {
-
 		String name = jarFile.getName();
-		int dotIndex = name.indexOf('.');
+		int dotIndex = name.indexOf("-help.jar"); // dev mode
+		if (dotIndex == -1) {
+			dotIndex = name.indexOf(".jar"); // production mode
+		}
 		return name.substring(0, dotIndex);
 	}
 

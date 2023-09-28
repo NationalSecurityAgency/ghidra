@@ -15,12 +15,11 @@
  */
 package docking.action;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import javax.swing.*;
 
@@ -85,8 +84,10 @@ public abstract class DockingAction implements DockingActionIf {
 	private Predicate<ActionContext> validContextPredicate;
 	private boolean shouldAddToAllWindows = false;
 	private Class<? extends ActionContext> addToWindowWhenContextClass = null;
+	private Class<? extends ActionContext> contextClass = ActionContext.class;
 
-	private boolean supportsDefaultToolContext;
+	// by default, actions only work on the active provider
+	private boolean supportsDefaultContext = false;
 
 	public DockingAction(String name, String owner) {
 		this.name = name;
@@ -270,16 +271,6 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	@Override
-	public void setSupportsDefaultToolContext(boolean newValue) {
-		supportsDefaultToolContext = newValue;
-	}
-
-	@Override
-	public boolean supportsDefaultToolContext() {
-		return supportsDefaultToolContext;
-	}
-
-	@Override
 	public final JButton createButton() {
 		JButton button = doCreateButton();
 		button.setName(getName());
@@ -393,6 +384,23 @@ public abstract class DockingAction implements DockingActionIf {
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
 	}
 
+	@Override
+	public Class<? extends ActionContext> getContextClass() {
+		return contextClass;
+	}
+
+	@Override
+	public boolean supportsDefaultContext() {
+		return supportsDefaultContext;
+	}
+
+	@Override
+	public void setContextClass(Class<? extends ActionContext> type,
+			boolean supportsDefaultContext) {
+		this.contextClass = type;
+		this.supportsDefaultContext = supportsDefaultContext;
+		validContextPredicate = ac -> contextClass.isInstance(ac);
+	}
 //==================================================================================================
 // Non interface methods
 //==================================================================================================
@@ -656,13 +664,13 @@ public abstract class DockingAction implements DockingActionIf {
 	 * If this is set, the the action will only be added to windows that have providers
 	 * that can produce an ActionContext that is appropriate for this action.
 	 * <P>
-	 * @param contextClass the ActionContext class required to be producible by a
+	 * @param addToWindowContextClass the ActionContext class required to be producible by a
 	 * provider that is hosted in that window before this action is added to that
 	 * window.
 	 *
 	 */
-	public void addToWindowWhen(Class<? extends ActionContext> contextClass) {
-		addToWindowWhenContextClass = contextClass;
+	public void addToWindowWhen(Class<? extends ActionContext> addToWindowContextClass) {
+		addToWindowWhenContextClass = addToWindowContextClass;
 	}
 
 	/**

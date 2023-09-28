@@ -17,18 +17,10 @@ package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
-import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
-import ghidra.util.exception.InvalidInputException;
 
 @StructureMapping(structureName = "runtime._func")
 public class GoFuncData implements StructureMarkup<GoFuncData> {
@@ -38,27 +30,51 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	@ContextField
 	private StructureContext<GoFuncData> context;
 
-	@FieldMapping
+	@FieldMapping(optional = true, fieldName = { "entryoff", "entryOff" })
 	@EOLComment("description")
 	@MarkupReference("funcAddress")
-	private long entryoff;
+	private long entryoff;	// valid in >=1.18, relative offset of function
 
-	@FieldMapping
+	@FieldMapping(optional = true)
+	@EOLComment("description")
+	@MarkupReference("funcAddress")
+	private long entry;	// valid in <=1.17, location of function
+
+	@FieldMapping(fieldName = { "nameoff", "nameOff" })
 	@MarkupReference("nameAddress")
 	private long nameoff;
 
+	private Address funcAddress;	// set when entryoff or entry are set
+
+	public void setEntryoff(long entryoff) {
+		this.entryoff = entryoff;
+
+		GoModuledata moduledata = getModuledata();
+		this.funcAddress = moduledata != null ? moduledata.getText().add(entryoff) : null;
+	}
+
+	public void setEntry(long entry) {
+		this.entry = entry;
+		this.funcAddress = context.getDataTypeMapper().getCodeAddress(entry);
+	}
+
 	public Address getFuncAddress() {
-		return getModuledata().getText().add(entryoff);
+		return funcAddress;
 	}
 
 	public Address getNameAddress() {
-		return getModuledata().getFuncnametab().getArrayAddress().add(nameoff);
+		GoModuledata moduledata = getModuledata();
+		return moduledata != null
+				? moduledata.getFuncnametab().getArrayAddress().add(nameoff)
+				: null;
 	}
 
 	public String getName() throws IOException {
-		BinaryReader reader =
-			programContext.getReader(getModuledata().getFuncnametab().getArrayOffset() + nameoff);
-		return reader.readNextUtf8String();
+		GoModuledata moduledata = getModuledata();
+		return moduledata != null
+				? programContext.getReader(moduledata.getFuncnametab().getArrayOffset() + nameoff)
+						.readNextUtf8String()
+				: null;
 	}
 
 	public String getDescription() throws IOException {
@@ -84,33 +100,10 @@ public class GoFuncData implements StructureMarkup<GoFuncData> {
 	}
 
 	@Override
-	public void additionalMarkup() throws IOException {
+	public void additionalMarkup(MarkupSession session) throws IOException {
 		Address addr = getFuncAddress();
 		String name = SymbolUtilities.replaceInvalidChars(getName(), true);
-		Program program = programContext.getProgram();
-
-		Function function = program.getListing().getFunctionAt(addr);
-		if (function == null) {
-			try {
-				if (!program.getMemory()
-						.getLoadedAndInitializedAddressSet()
-						.contains(addr)) {
-					Msg.warn(this,
-						"Unable to create function not contained within loaded memory: %s@%s"
-								.formatted(name, addr));
-					return;
-				}
-				function = program.getFunctionManager()
-						.createFunction(name, addr, new AddressSet(addr), SourceType.IMPORTED);
-			}
-			catch (OverlappingFunctionException | InvalidInputException e) {
-				Msg.error(this, e);
-			}
-		}
-		else {
-			// TODO: this does nothing.  re-evalulate this logic
-			programContext.labelAddress(addr, name);
-		}
+		session.createFunctionIfMissing(name, addr);
 	}
 
 }

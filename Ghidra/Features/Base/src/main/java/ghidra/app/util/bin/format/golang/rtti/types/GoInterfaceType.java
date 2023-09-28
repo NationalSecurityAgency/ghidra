@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
@@ -57,9 +56,9 @@ public class GoInterfaceType extends GoType {
 	}
 
 	@Override
-	public void additionalMarkup() throws IOException {
-		mhdr.markupArray(null, GoIMethod.class, false);
-		mhdr.markupArrayElements(GoIMethod.class);
+	public void additionalMarkup(MarkupSession session) throws IOException {
+		mhdr.markupArray(null, GoIMethod.class, false, session);
+		mhdr.markupArrayElements(GoIMethod.class, session);
 	}
 
 	@Override

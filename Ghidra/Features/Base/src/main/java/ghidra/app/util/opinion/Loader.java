@@ -207,9 +207,27 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * 
 	 * @return True if this {@link Loader} supports loading into an existing {@link Program}; 
 	 *   otherwise, false.
+	 * @deprecated use {@link #supportsLoadIntoProgram(Program)} instead so you can restrict what
+	 *   types of {@link Program}s can get loaded into other types of {@link Program}s
 	 */
+	@Deprecated(since = "10.4")
 	public default boolean supportsLoadIntoProgram() {
 		return false;
+	}
+
+	/**
+	 * Checks to see if this {@link Loader} supports loading into the given {@link Program}.
+	 * <p>
+	 * The default behavior of this method is to return false.
+	 * 
+	 * @param program The {@link Program} to load into
+	 * @return True if this {@link Loader} supports loading into the given {@link Program}; 
+	 *   otherwise, false.
+	 */
+	public default boolean supportsLoadIntoProgram(Program program) {
+		// We don't want to change the behavior of older implementations. They should update their
+		// deprecated method usage and put in proper Program-specific checks
+		return supportsLoadIntoProgram();
 	}
 
 	/**

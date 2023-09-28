@@ -20,6 +20,7 @@ import java.awt.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+import docking.options.OptionsService;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.GhidraOptions;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -27,7 +28,6 @@ import ghidra.app.util.viewer.options.ScreenElement;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;

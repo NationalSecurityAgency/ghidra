@@ -22,9 +22,10 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
+import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
-import ghidra.app.util.NamespaceUtils;
-import ghidra.app.util.SymbolPath;
+import ghidra.app.util.*;
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
@@ -37,7 +38,9 @@ import ghidra.framework.options.Options;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
 import ghidra.graph.jung.JungDirectedGraph;
+import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -143,6 +146,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	private PdbCategories categoryUtils;
 	private PdbPrimitiveTypeApplicator pdbPrimitiveTypeApplicator;
 	private TypeApplierFactory typeApplierParser;
+	private ComplexTypeMapper complexTypeMapper;
 	private ComplexTypeApplierMapper complexApplierMapper;
 	private JungDirectedGraph<MsTypeApplier, GEdge<MsTypeApplier>> applierDependencyGraph;
 	/**
@@ -162,6 +166,11 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	// Investigations into source/line info
 	private Map<String, Set<RecordNumber>> recordNumbersByFileName;
 	private Map<Integer, Set<RecordNumber>> recordNumbersByModuleNumber;
+
+	//==============================================================================================
+	// Addresses of locations of functions for disassembly/function-creation.
+	AddressSet disassembleAddresses;
+	List<DeferrableFunctionSymbolApplier> deferredFunctionWorkAppliers;
 
 	//==============================================================================================
 	public DefaultPdbApplicator(AbstractPdb pdb) {
@@ -213,6 +222,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 
 		if (program != null) {
+			doDeferredProgramProcessing();
+			// Mark PDB analysis as complete.
 			Options options = program.getOptions(Program.PROGRAM_INFO);
 			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 		}
@@ -222,6 +233,57 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		pdbApplicatorMetrics.logReport();
 
 		Msg.info(this, "PDB Terminated Normally");
+	}
+
+	//==============================================================================================
+	private void doDeferredProgramProcessing() throws CancelledException {
+		disassembleFunctions();
+		doDeferredFunctionProcessing();
+	}
+
+	//==============================================================================================
+	/**
+	 * Set the context for each function, disassemble them, and then do fix-ups
+	 */
+	private void disassembleFunctions() throws CancelledException {
+
+		Listing listing = program.getListing();
+		DisassemblerContextImpl seedContext =
+			new DisassemblerContextImpl(program.getProgramContext());
+		AddressSet revisedSet = new AddressSet();
+		for (Address address : disassembleAddresses.getAddresses(true)) {
+			cancelOnlyWrappingMonitor.checkCancelled();
+			address = PseudoDisassembler.setTargetContextForDisassembly(seedContext, address);
+			Function myFunction = listing.getFunctionAt(address);
+			// If no function or not a full function, add it to set for disassembly.
+			if (myFunction == null || myFunction.getBody().getNumAddresses() <= 1) {
+				revisedSet.add(address);
+			}
+		}
+		// Do disassembly and ensure functions are created appropriately.
+		DisassembleCommand cmd = new DisassembleCommand(revisedSet, null, true);
+		cmd.setSeedContext(seedContext);
+		cmd.applyTo(program, cancelOnlyWrappingMonitor);
+
+		for (Address address : revisedSet.getAddresses(true)) {
+			cancelOnlyWrappingMonitor.checkCancelled();
+			Function function = listing.getFunctionAt(address);
+			if (function != null) {
+				CreateFunctionCmd.fixupFunctionBody(program, function, cancelOnlyWrappingMonitor);
+			}
+		}
+	}
+
+	//==============================================================================================
+	/**
+	 * Do work, such as create parameters or local variables and scopes
+	 * @throws CancelledException upon user cancellation
+	 */
+	private void doDeferredFunctionProcessing() throws CancelledException {
+		for (DeferrableFunctionSymbolApplier applier : deferredFunctionWorkAppliers) {
+			cancelOnlyWrappingMonitor.checkCancelled();
+			applier.doDeferredProcessing();
+		}
 	}
 
 	//==============================================================================================
@@ -239,7 +301,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 //		PdbResearch.studyCompositeFwdRefDef(pdb, monitor);
 //		PdbResearch.study1(pdb, monitor);
 
-		complexApplierMapper.mapAppliers(monitor);
+//		complexApplierMapper.mapAppliers(monitor);
+
+		complexTypeMapper.mapTypes(this);
+		complexApplierMapper.mapAppliers(complexTypeMapper, monitor);
 
 		processSequentially();
 
@@ -352,6 +417,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		categoryUtils = setPdbCatogoryUtils(pdb.getFilename());
 		pdbPrimitiveTypeApplicator = new PdbPrimitiveTypeApplicator(dataTypeManager);
 		typeApplierParser = new TypeApplierFactory(this);
+		complexTypeMapper = new ComplexTypeMapper();
 		complexApplierMapper = new ComplexTypeApplierMapper(this);
 		applierDependencyGraph = new JungDirectedGraph<>();
 		isClassByNamespace = new TreeMap<>();
@@ -359,6 +425,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		symbolApplierParser = new SymbolApplierFactory(this);
 
 		if (program != null) {
+			disassembleAddresses = new AddressSet();
+			deferredFunctionWorkAppliers = new ArrayList<>();
 			// Currently, this must happen after symbolGroups are created.
 			PdbVbtManager pdbVbtManager = new PdbVbtManager(this);
 			//pdbVbtManager.CreateVirtualBaseTables(); // Depends on symbolGroups
@@ -849,6 +917,42 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
+	//==============================================================================================
+	Function getExistingOrCreateOneByteFunction(Address address) {
+		if (program == null) {
+			return null;
+		}
+
+		// Get normalized address for function creation
+		Address normalizedAddress =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, address);
+
+		// Does function already exist?
+		Function myFunction = program.getListing().getFunctionAt(normalizedAddress);
+		if (myFunction != null) {
+			return myFunction;
+		}
+
+		CreateFunctionCmd funCmd = new CreateFunctionCmd(null, normalizedAddress,
+			new AddressSet(normalizedAddress, normalizedAddress),
+			SourceType.DEFAULT);
+		if (!funCmd.applyTo(program, cancelOnlyWrappingMonitor)) {
+			appendLogMsg("Failed to apply function at address " + address.toString() +
+				"; attempting to use possible existing function");
+			return program.getListing().getFunctionAt(normalizedAddress);
+		}
+		myFunction = funCmd.getFunction();
+
+		return myFunction;
+	}
+
+	//==============================================================================================
+	void scheduleDeferredFunctionWork(DeferrableFunctionSymbolApplier applier) {
+		// Not using normalized address is OK, as we should have already set the context and
+		//  used the normalized address when creating the one-byte function
+		disassembleAddresses.add(applier.getAddress());
+		deferredFunctionWorkAppliers.add(applier);
+	}
 
 	//==============================================================================================
 	// SymbolGroup-related methods.

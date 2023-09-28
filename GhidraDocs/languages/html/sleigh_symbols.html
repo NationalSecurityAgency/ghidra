@@ -1,24 +1,24 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>5. Introduction to Symbols</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>5.Â Introduction to Symbols</title>
 <link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="up" href="sleigh.html" title="SLEIGH">
-<link rel="prev" href="sleigh_definitions.html" title="4. Basic Definitions">
-<link rel="next" href="sleigh_tokens.html" title="6. Tokens and Fields">
+<link rel="prev" href="sleigh_definitions.html" title="4.Â Basic Definitions">
+<link rel="next" href="sleigh_tokens.html" title="6.Â Tokens and Fields">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="navheader">
 <table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">5. Introduction to Symbols</th></tr>
+<tr><th colspan="3" align="center">5.Â Introduction to Symbols</th></tr>
 <tr>
 <td width="20%" align="left">
-<a accesskey="p" href="sleigh_definitions.html">Prev</a> </td>
-<th width="60%" align="center"> </th>
-<td width="20%" align="right"> <a accesskey="n" href="sleigh_tokens.html">Next</a>
+<a accesskey="p" href="sleigh_definitions.html">Prev</a>Â </td>
+<th width="60%" align="center">Â </th>
+<td width="20%" align="right">Â <a accesskey="n" href="sleigh_tokens.html">Next</a>
 </td>
 </tr>
 </table>
@@ -26,7 +26,7 @@
 </div>
 <div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="sleigh_symbols"></a>5. Introduction to Symbols</h2></div></div></div>
+<a name="sleigh_symbols"></a>5.Â Introduction to Symbols</h2></div></div></div>
 <p>
 After the definition section, we are prepared to start writing the
 body of the specification. This part of the specification shows how
@@ -61,7 +61,7 @@ Formally a <span class="emphasis"><em>Specific Symbol</em></span> is defined as 
 <p>
 The named registers that we defined earlier are the simplest examples
 of specific symbols (see
-<a class="xref" href="sleigh_definitions.html#sleigh_naming_registers" title="4.4. Naming Registers">Section 4.4, &#8220;Naming Registers&#8221;</a>). The symbol identifier
+<a class="xref" href="sleigh_definitions.html#sleigh_naming_registers" title="4.4.Â Naming Registers">SectionÂ 4.4, â€œNaming Registersâ€</a>). The symbol identifier
 itself is the string that will get printed in disassembly and the
 varnode associated with the symbol is the one constructed by the
 define statement.
@@ -79,7 +79,7 @@ instructions to specific symbols.
 <p>
 The set of instruction encodings that map to a single specific symbol
 is called an <span class="emphasis"><em>instruction pattern</em></span> and is described
-more fully in <a class="xref" href="sleigh_constructors.html#sleigh_bit_pattern" title="7.4. The Bit Pattern Section">Section 7.4, &#8220;The Bit Pattern Section&#8221;</a>. In most cases, this
+more fully in <a class="xref" href="sleigh_constructors.html#sleigh_bit_pattern" title="7.4.Â The Bit Pattern Section">SectionÂ 7.4, â€œThe Bit Pattern Sectionâ€</a>. In most cases, this
 can be thought of as a mask on the bits of the instruction and a value
 that the remaining unmasked bits must match. At any rate, the family
 symbol identifier, when taken out of context, represents the entire
@@ -98,14 +98,14 @@ that simulate the instruction.
 <p>
 The symbol responsible for combining smaller family symbols is called
 a <span class="emphasis"><em>table</em></span>, which is fully described in
-<a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8. Tables">Section 7.8, &#8220;Tables&#8221;</a>. Any <span class="emphasis"><em>table</em></span> symbol
+<a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8.Â Tables">SectionÂ 7.8, â€œTablesâ€</a>. Any <span class="emphasis"><em>table</em></span> symbol
 can be used in the definition of other <span class="emphasis"><em>table</em></span>
 symbols until the root symbol is fully described. The root symbol has
 the predefined identifier <span class="emphasis"><em>instruction</em></span>.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_notes_namespaces"></a>5.1. Notes on Namespaces</h3></div></div></div>
+<a name="sleigh_notes_namespaces"></a>5.1.Â Notes on Namespaces</h3></div></div></div>
 <p>
 Almost all identifiers live in the same global "scope". The global scope includes
 </p>
@@ -126,15 +126,15 @@ Almost all identifiers live in the same global "scope". The global scope include
   Names of registers
   </li>
 <li class="listitem" style="list-style-type: disc">
-  Names of macros (see <a class="xref" href="sleigh_constructors.html#sleigh_macros" title="7.9. P-code Macros">Section 7.9, &#8220;P-code Macros&#8221;</a>)
+  Names of macros (see <a class="xref" href="sleigh_constructors.html#sleigh_macros" title="7.9.Â P-code Macros">SectionÂ 7.9, â€œP-code Macrosâ€</a>)
   </li>
 <li class="listitem" style="list-style-type: disc">
-  Names of tables (see <a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8. Tables">Section 7.8, &#8220;Tables&#8221;</a>)
+  Names of tables (see <a class="xref" href="sleigh_constructors.html#sleigh_tables" title="7.8.Â Tables">SectionÂ 7.8, â€œTablesâ€</a>)
   </li>
 </ul></div></div>
 <p>
 All of the names in this scope must be unique. Each
-individual <span class="emphasis"><em>constructor</em></span> (defined in <a class="xref" href="sleigh_constructors.html" title="7. Constructors">Section 7, &#8220;Constructors&#8221;</a>)
+individual <span class="emphasis"><em>constructor</em></span> (defined in <a class="xref" href="sleigh_constructors.html" title="7.Â Constructors">SectionÂ 7, â€œConstructorsâ€</a>)
 defines a local scope for operand names. As with most languages, a
 local symbol with the same name as a global
 symbol <span class="emphasis"><em>hides</em></span> the global symbol while that scope
@@ -143,13 +143,13 @@ is in effect.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_predefined_symbols"></a>5.2. Predefined Symbols</h3></div></div></div>
+<a name="sleigh_predefined_symbols"></a>5.2.Â Predefined Symbols</h3></div></div></div>
 <p>
 We list all of the symbols that are predefined by SLEIGH.
 </p>
 <div class="informalexample">
 <div class="table">
-<a name="predefine.htmltable"></a><p class="title"><b>Table 2. Predefined Symbols</b></p>
+<a name="predefine.htmltable"></a><p class="title"><b>TableÂ 2.Â Predefined Symbols</b></p>
 <div class="table-contents"><table xml:id="predefine.htmltable" width="80%" frame="box" rules="all">
 <col width="30%">
 <col width="70%">
@@ -213,15 +213,15 @@ is the root instruction table.
 <table width="100%" summary="Navigation footer">
 <tr>
 <td width="40%" align="left">
-<a accesskey="p" href="sleigh_definitions.html">Prev</a> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right"> <a accesskey="n" href="sleigh_tokens.html">Next</a>
+<a accesskey="p" href="sleigh_definitions.html">Prev</a>Â </td>
+<td width="20%" align="center">Â </td>
+<td width="40%" align="right">Â <a accesskey="n" href="sleigh_tokens.html">Next</a>
 </td>
 </tr>
 <tr>
-<td width="40%" align="left" valign="top">4. Basic Definitions </td>
+<td width="40%" align="left" valign="top">4.Â Basic DefinitionsÂ </td>
 <td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
-<td width="40%" align="right" valign="top"> 6. Tokens and Fields</td>
+<td width="40%" align="right" valign="top">Â 6.Â Tokens and Fields</td>
 </tr>
 </table>
 </div>

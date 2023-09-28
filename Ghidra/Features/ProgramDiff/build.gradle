@@ -25,6 +25,4 @@ eclipse.project.name = 'Features ProgramDiff'
 
 dependencies {
 	api project(":Base")
-    helpPath project(path: ":Base", configuration: 'helpPath')
-	
 }

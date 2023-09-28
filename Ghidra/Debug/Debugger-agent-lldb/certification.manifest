@@ -5,7 +5,9 @@
 .project||NONE||reviewed||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-data/InstructionsForBuildingLLDBInterface.txt||GHIDRA||||END|
 src/llvm-project/lldb/bindings/java/java-typemaps.swig||Apache License 2.0 with LLVM Exceptions||||END|
 src/llvm-project/lldb/bindings/java/java.swig||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm-project/lldb/build_script||GHIDRA||||END|
+src/main/py/LICENSE||GHIDRA||||END|
+src/main/py/README.md||GHIDRA||||END|
+src/main/py/pyproject.toml||GHIDRA||||END|
+src/main/py/src/ghidralldb/schema.xml||GHIDRA||||END|

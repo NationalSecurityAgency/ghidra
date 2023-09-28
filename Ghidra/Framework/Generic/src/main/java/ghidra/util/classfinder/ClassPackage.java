@@ -88,7 +88,7 @@ class ClassPackage extends ClassLocation {
 	}
 
 	@Override
-	void getClasses(Set<Class<?>> set, TaskMonitor monitor) throws CancelledException {
+	protected void getClasses(Set<Class<?>> set, TaskMonitor monitor) throws CancelledException {
 
 		checkForDuplicates(set);
 
@@ -119,5 +119,10 @@ class ClassPackage extends ClassLocation {
 			results.add(name);
 		}
 		return results;
+	}
+
+	@Override
+	public String toString() {
+		return packageDir.toString();
 	}
 }

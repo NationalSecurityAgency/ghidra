@@ -15,7 +15,7 @@
  */
 package docking.theme.gui;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import generic.theme.ThemeValue;
 
 /**
@@ -23,7 +23,7 @@ import generic.theme.ThemeValue;
  *
  * @param <T> the resource type (Color, Font, or Icon)
  */
-public class ThemeTableContext<T> extends ActionContext {
+public class ThemeTableContext<T> extends DefaultActionContext {
 
 	private ThemeValue<T> currentValue;
 	private ThemeValue<T> themeValue;

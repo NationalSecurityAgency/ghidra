@@ -906,8 +906,7 @@ public class ProgramDiffDetails {
 			ordinal + " " + fieldName + " " + actualDt.getMnemonic(actualDt.getDefaultSettings()) +
 			"  " + getCategoryName(actualDt) + " " + "DataTypeSize=" +
 			(actualDt.isZeroLength() ? 0 : actualDt.getLength()) + " " + "ComponentSize=" +
-			dtc.getLength() + " " + ((comment != null) ? comment : "") +
-			" " + newLine);
+			dtc.getLength() + " " + ((comment != null) ? comment : "") + " " + newLine);
 		return actualDt;
 	}
 
@@ -958,8 +957,7 @@ public class ProgramDiffDetails {
 							fieldName = "field" + offset;
 						}
 						buf.append(newIndent + min.add(offset) + " " + dtc.getFieldName() + " " +
-							dtc.getDataType().getName() + " " + "length=" +
-							dtc.getLength() + " " +
+							dtc.getDataType().getName() + " " + "length=" + dtc.getLength() + " " +
 							((comment != null) ? comment : "") + " " + newLine);
 					}
 				}
@@ -987,6 +985,7 @@ public class ProgramDiffDetails {
 			boolean removedFallThrough =
 				inst.isFallThroughOverridden() && (inst.getFallThrough() == null);
 			boolean hasFlowOverride = inst.getFlowOverride() != FlowOverride.NONE;
+			boolean hasLengthOverride = inst.isLengthOverridden();
 			cuRep = cu.toString();
 			if (removedFallThrough) {
 				cuRep += newLine + indent + getSpaces(addrRangeStr.length()) + "    " +
@@ -1010,6 +1009,11 @@ public class ProgramDiffDetails {
 			if (hasFlowOverride) {
 				cuRep += newLine + indent + getSpaces(addrRangeStr.length()) + "    " +
 					"Flow Override: " + inst.getFlowOverride();
+			}
+			if (hasLengthOverride) {
+				cuRep += newLine + indent + getSpaces(addrRangeStr.length()) + "    " +
+					"Length Override: " + inst.getLength() + " (actual length is " +
+					inst.getParsedLength() + ")";
 			}
 			cuRep += newLine + indent + getSpaces(addrRangeStr.length()) + "    " +
 				"Instruction Prototype hash = " +
@@ -1463,8 +1467,8 @@ public class ProgramDiffDetails {
 	private boolean addSpecificCommentDetails(int commentType, String commentName) {
 		boolean hasCommentDiff = false;
 		try {
-			for (Address p1Address = minP1Address; p1Address.compareTo(
-				maxP1Address) <= 0; p1Address = p1Address.add(1L)) {
+			for (Address p1Address = minP1Address; p1Address
+					.compareTo(maxP1Address) <= 0; p1Address = p1Address.add(1L)) {
 				Address p2Address = SimpleDiffUtility.getCompatibleAddress(p1, p1Address, p2);
 				String noComment = "No " + commentName + ".";
 				String cmt1 = l1.getComment(commentType, p1Address);
@@ -2169,8 +2173,7 @@ public class ProgramDiffDetails {
 					// Handle case where the class for a Saveable property is missing (unsupported).
 					if (cu.getProgram()
 							.getListing()
-							.getPropertyMap(
-								propertyName) instanceof UnsupportedMapDB) {
+							.getPropertyMap(propertyName) instanceof UnsupportedMapDB) {
 						buf.append(
 							indent2 + propertyName + " is an unsupported property." + newLine);
 						continue;
@@ -2241,8 +2244,8 @@ public class ProgramDiffDetails {
 		BookmarkManager bmm1 = p1.getBookmarkManager();
 		BookmarkManager bmm2 = p2.getBookmarkManager();
 		try {
-			for (Address p1Address = minP1Address; p1Address.compareTo(
-				maxP1Address) <= 0; p1Address = p1Address.add(1)) {
+			for (Address p1Address = minP1Address; p1Address
+					.compareTo(maxP1Address) <= 0; p1Address = p1Address.add(1)) {
 				Address p2Address = SimpleDiffUtility.getCompatibleAddress(p1, p1Address, p2);
 				Bookmark[] marks1 = bmm1.getBookmarks(p1Address);
 				Arrays.sort(marks1, BOOKMARK_COMPARATOR);
@@ -2341,7 +2344,7 @@ public class ProgramDiffDetails {
 
 	private boolean isSameInstruction(Instruction i1, Instruction i2) {
 		boolean samePrototypes = i1.getPrototype().equals(i2.getPrototype());
-		boolean sameInstructionLength = i1.getLength() == i2.getLength();
+		boolean sameInstructionLength = i1.getLength() == i2.getLength(); // factors length override
 		boolean sameFallthrough = ProgramDiff.isSameFallthrough(p1, i1, p2, i2);
 		boolean sameFlowOverride = i1.getFlowOverride() == i2.getFlowOverride();
 		return samePrototypes && sameInstructionLength && sameFallthrough && sameFlowOverride;

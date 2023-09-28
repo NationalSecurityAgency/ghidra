@@ -94,8 +94,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 
 	private ElfCompressedSectionHeader compressedHeader;
 
-	public ElfSectionHeader(BinaryReader reader, ElfHeader header)
-			throws IOException {
+	public ElfSectionHeader(BinaryReader reader, ElfHeader header) throws IOException {
 		this.reader = reader;
 		this.header = header;
 
@@ -237,9 +236,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 	 * @return the section address alignment constraints
 	 */
 	public long getAddressAlignment() {
-		return compressedHeader == null
-				? sh_addralign
-				: compressedHeader.getCh_addralign();
+		return compressedHeader == null ? sh_addralign : compressedHeader.getCh_addralign();
 	}
 
 	/**
@@ -297,7 +294,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 	}
 
 	private boolean isSupportedCompressionType(int compressionType) {
-		return switch ( compressionType ) {
+		return switch (compressionType) {
 			case ElfCompressedSectionHeader.ELFCOMPRESS_ZLIB -> true;
 			default -> false;
 		};
@@ -367,7 +364,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 					long stringTableOffset = sections[e_shstrndx].getOffset();
 					long offset = stringTableOffset + sh_name;
 					if (offset < reader.length()) {
-						name = reader.readAsciiString(stringTableOffset + sh_name);
+						name = reader.readUtf8String(stringTableOffset + sh_name);
 						if ("".equals(name)) {
 							name = null;
 						}
@@ -447,9 +444,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 	 * @return logical size of this section, see {@link #getSize()}
 	 */
 	public long getLogicalSize() {
-		return compressedHeader == null
-				? sh_size
-				: compressedHeader.getCh_size();
+		return compressedHeader == null ? sh_size : compressedHeader.getCh_size();
 	}
 
 	@Override
@@ -461,8 +456,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 	@Override
 	public InputStream getFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, Address start,
 			long dataLength, BiConsumer<String, Throwable> errorConsumer) throws IOException {
-		InputStream is = isCompressed()
-				? getDecompressedDataStream(dataLength, errorConsumer)
+		InputStream is = isCompressed() ? getDecompressedDataStream(dataLength, errorConsumer)
 				: getRawInputStream();
 		return header.getLoadAdapter()
 				.getFilteredLoadInputStream(elfLoadHelper, this, start, dataLength, is);
@@ -573,7 +567,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 		}
 		this.sh_addr = header.unadjustAddressForPrelink(addr);
 	}
-	
+
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */

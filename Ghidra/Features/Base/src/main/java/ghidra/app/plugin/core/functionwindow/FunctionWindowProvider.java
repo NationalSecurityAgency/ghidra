@@ -25,8 +25,8 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import generic.theme.GIcon;
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
@@ -77,7 +77,7 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, functionTable);
+		return new DefaultActionContext(this, functionTable);
 	}
 
 	@Override
@@ -120,11 +120,7 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		functionTable = threadedTablePanel.getTable();
 		functionTable.setName("FunctionTable");
 
-		GoToService goToService = tool.getService(GoToService.class);
-		if (goToService != null) {
-			functionTable.installNavigation(goToService, goToService.getDefaultNavigatable());
-		}
-
+		functionTable.installNavigation(tool);
 		functionTable.setAutoLookupColumn(FunctionTableModel.NAME_COL);
 		functionTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		functionTable.setPreferredScrollableViewportSize(new Dimension(350, 150));

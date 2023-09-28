@@ -33,6 +33,7 @@ zipExtensions {
 		exclude 'certification.manifest'
 		exclude "*.project"
 		exclude "*.classpath"
+		exclude "*.pydevproject"
 		exclude '.settings/**'
 		exclude 'bin/**'
 		

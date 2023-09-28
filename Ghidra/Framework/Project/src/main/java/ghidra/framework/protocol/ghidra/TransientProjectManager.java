@@ -71,8 +71,9 @@ public class TransientProjectManager {
 	}
 
 	private TransientProjectManager() {
-		Runtime.getRuntime().addShutdownHook(
-			new Thread((Runnable) () -> dispose(), "TransientProjectManager Shutdown Hook"));
+		Runtime.getRuntime()
+				.addShutdownHook(new Thread((Runnable) () -> dispose(),
+					"TransientProjectManager Shutdown Hook"));
 	}
 
 	/**
@@ -80,8 +81,6 @@ public class TransientProjectManager {
 	 * connections. WARNING: This method intended for testing only.
 	 */
 	public synchronized void dispose() {
-		// TODO: server handles may be shared with non-transient projects
-
 		TransientProjectData[] projectDataArray =
 			repositoryMap.values().toArray(new TransientProjectData[repositoryMap.size()]);
 		for (TransientProjectData projectData : projectDataArray) {

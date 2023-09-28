@@ -17,11 +17,10 @@ package docking;
 
 import java.awt.event.ActionEvent;
 
-import javax.swing.SwingUtilities;
-
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
 import docking.menu.MenuHandler;
+import ghidra.util.Swing;
 
 public class MenuBarMenuHandler extends MenuHandler {
 
@@ -46,15 +45,12 @@ public class MenuBarMenuHandler extends MenuHandler {
 
 		DockingWindowManager.clearMouseOverHelp();
 
-		ActionContext context = windowManager.getActionContext(action);
-		if (context == null) {
-			return;  // nothing to do
-		}
+		ActionContext context = windowManager.createActionContext(action);
 
 		context.setSourceObject(event.getSource());
 
 		// this gives the UI some time to repaint before executing the action
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			windowManager.setStatusText("");
 			if (action.isValidContext(context) && action.isEnabledForContext(context)) {
 				if (action instanceof ToggleDockingActionIf) {

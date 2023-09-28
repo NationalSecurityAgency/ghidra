@@ -26,6 +26,7 @@ import javax.swing.plaf.UIResource;
 import com.google.common.base.Predicate;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.button.GButton;
@@ -757,7 +758,7 @@ public class BitFieldEditorPanel extends JPanel {
 		return null;
 	}
 
-	class BitFieldEditorContext extends ActionContext {
+	class BitFieldEditorContext extends DefaultActionContext {
 
 		private int selectedBitOffset;
 		private DataTypeComponent selectedDtc;

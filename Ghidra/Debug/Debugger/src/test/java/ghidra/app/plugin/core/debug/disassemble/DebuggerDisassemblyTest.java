@@ -33,8 +33,7 @@ import generic.Unique;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.core.assembler.AssemblerPluginTestHelper;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
+import ghidra.app.plugin.core.debug.gui.listing.*;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.plugin.core.debug.service.workflow.DebuggerWorkflowServiceProxyPlugin;
@@ -55,13 +54,13 @@ import ghidra.trace.database.listing.DBTraceInstruction;
 import ghidra.trace.database.listing.DBTraceInstructionsMemoryView;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.database.program.DBTraceVariableSnapProgramView;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
@@ -143,6 +142,13 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 				.collect(Collectors.toSet());
 		assertEquals(1, disBot.size());
 		workflowService.enableBots(disBot);
+	}
+
+	protected DebuggerListingActionContext createActionContext(Address start, int len) {
+		TraceProgramView view = tb.trace.getProgramView();
+		ProgramSelection sel = new ProgramSelection(start, start.addWrap(len - 1));
+		return new DebuggerListingActionContext(listingProvider, new ProgramLocation(view, start),
+			sel, null);
 	}
 
 	protected TraceObjectThread createPolyglotTrace(String arch, long offset,
@@ -236,10 +242,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
 		waitForTasks();
 
@@ -271,10 +274,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
 		waitForTasks();
 
@@ -297,10 +297,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
 		waitForTasks();
 
@@ -324,10 +321,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
 		waitForTasks();
 
@@ -339,10 +333,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 
 	protected void performFixedDisassembleAction(Address start,
 			Predicate<DockingActionIf> actionPred) {
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(3)), null);
+		ListingActionContext actionContext = createActionContext(start, 4);
 		DockingActionIf action =
 			runSwing(() -> Unique.assertOne(disassemblerPlugin.getPopupActions(tool, actionContext)
 					.stream()
@@ -419,11 +410,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		}
 		waitForDomainObject(tb.trace);
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
-
+		ListingActionContext actionContext = createActionContext(start, 2);
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
 		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
 			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
@@ -455,11 +442,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		}
 		waitForDomainObject(tb.trace);
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
-
+		ListingActionContext actionContext = createActionContext(start, 2);
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
 		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
 			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
@@ -489,11 +472,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		}
 		waitForDomainObject(tb.trace);
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
-
+		ListingActionContext actionContext = createActionContext(start, 2);
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
 		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
 			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
@@ -528,11 +507,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		}
 		waitForDomainObject(tb.trace);
 
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
-
+		ListingActionContext actionContext = createActionContext(start, 2);
 		assertTrue(disassemblerPlugin.actionPatchInstruction.isEnabledForContext(actionContext));
 		DebuggerDisassemblerPluginTestHelper helper = new DebuggerDisassemblerPluginTestHelper(
 			disassemblerPlugin, listingProvider, tb.trace.getProgramView());
@@ -544,10 +519,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 
 	protected Instruction performFixedAssembleAction(Address start,
 			Predicate<FixedPlatformTracePatchInstructionAction> actionPred, String assembly) {
-		DBTraceVariableSnapProgramView view = tb.trace.getProgramView();
-		ListingActionContext actionContext = new ListingActionContext(listingProvider,
-			listingProvider, view, new ProgramLocation(view, start),
-			new ProgramSelection(start, start.addWrap(1)), null);
+		ListingActionContext actionContext = createActionContext(start, 2);
 		FixedPlatformTracePatchInstructionAction action =
 			runSwing(() -> Unique.assertOne(disassemblerPlugin.getPopupActions(tool, actionContext)
 					.stream()

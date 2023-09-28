@@ -19,11 +19,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import docking.options.OptionsService;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.DecompileOptions.NamespaceStrategy;
 import ghidra.app.plugin.core.decompile.AbstractDecompilerTest;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.util.OptionsService;
 
 public class DecompilerClang2Test extends AbstractDecompilerTest {
 

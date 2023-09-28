@@ -20,7 +20,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import generic.jar.ResourceFile;
 import ghidra.framework.Application;
+import ghidra.framework.Platform;
 import ghidra.util.Msg;
 
 public class DummyProc implements AutoCloseable {
@@ -28,15 +30,41 @@ public class DummyProc implements AutoCloseable {
 	public final long pid;
 
 	public static String which(String cmd) {
+		// Try the os/<platform>/ directory
 		try {
 			return Application.getOSFile(cmd).getAbsolutePath();
 		}
 		catch (Exception e) {
-			// fallback to system
+			// probably Application is not initialized
+			// just try next strategy
 		}
+
+		// Try the build/exe/<cmd>/ and build/exe/<cmd>/<platform>/ directory
+		try {
+			for (ResourceFile modRoot : Application.getModuleRootDirectories()) {
+				ResourceFile exe = new ResourceFile(modRoot, "build/exe/" + cmd + "/" + cmd);
+				if (exe.exists() && exe.getFile(false).canExecute()) {
+					return exe.getAbsolutePath();
+				}
+				ResourceFile platformExe = new ResourceFile(modRoot,
+					"build/exe/" + cmd + "/" + Platform.CURRENT_PLATFORM.getDirectoryName() + "/" +
+						cmd);
+				if (platformExe.exists() && platformExe.getFile(false).canExecute()) {
+					return platformExe.getAbsolutePath();
+				}
+			}
+		}
+		catch (Exception e) {
+			// probably Application is not initialized
+			// just try next strategy
+		}
+
+		// Try the current directory
 		if (new File(cmd).canExecute()) {
 			return cmd;
 		}
+
+		// Try the system PATH
 		String line;
 		try {
 			boolean isWindows = System.getProperty("os.name").toLowerCase().contains("windows");

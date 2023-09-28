@@ -39,30 +39,17 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// delete category in My program; no change in latest program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Make no changes in Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-				try {
-					c.removeCategory("Category3", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				c.removeCategory("Category3", TaskMonitor.DUMMY);
 			}
 		});
 
@@ -81,40 +68,18 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// delete category in My program; no change in latest program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-				try {
-					c.removeCategory("Category3", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				c.removeCategory("Category3", TaskMonitor.DUMMY);
 			}
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-				try {
-					c.removeCategory("Category3", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				c.removeCategory("Category3", TaskMonitor.DUMMY);
 			}
 		});
 
@@ -131,45 +96,25 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// delete Category4 in Latest; in My program rename Category4 to "MyCategory4"
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-				try {
-					c.removeCategory("Category4", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				c.removeCategory("Category4", TaskMonitor.DUMMY);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					c.setName("My Category4");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got DuplicateNameException: " + e);
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException: " + e);
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -187,18 +132,13 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// in Latest rename Category4 to "MyCategory4; delete Category4 in My program;
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+	
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					c.setName("My Category4");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got DuplicateNameException: " + e);
@@ -206,27 +146,13 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException: " + e);
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-				try {
-					c.removeCategory("Category4", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				c.removeCategory("Category4", TaskMonitor.DUMMY);
 			}
 		});
 		// choose my latest change
@@ -244,18 +170,12 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// in Latest rename Category4 to "MyCategory4; delete Category4 in My program;
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					c.setName("My Category4");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got DuplicateNameException: " + e);
@@ -263,27 +183,13 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException: " + e);
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-				try {
-					c.removeCategory("Category4", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
+				c.removeCategory("Category4", TaskMonitor.DUMMY);
 			}
 		});
 		// choose ORIGINAL
@@ -301,47 +207,27 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// delete category in Latest program; move same category in My Program 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// delete MISC 
-				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
-				try {
-					root.removeCategory("MISC", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
+				root.removeCategory("MISC", TaskMonitor.DUMMY);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move MISC to /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -360,48 +246,28 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// move category in Latest program; delete same category in My Program 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move MISC to /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// delete MISC 
-				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
-				try {
-					root.removeCategory("MISC", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
+				root.removeCategory("MISC", TaskMonitor.DUMMY);
 			}
 		});
 		// choose my program change
@@ -419,48 +285,27 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// move category in Latest program; delete same category in My Program 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// move MISC to /Category1/Category2/Category3
-				int transactionID = program.startTransaction("test");
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// delete MISC 
-				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
-				try {
-					root.removeCategory("MISC", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
+				root.removeCategory("MISC", TaskMonitor.DUMMY);
 			}
 		});
 		// choose ORIGinal 
@@ -478,19 +323,14 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// rename category in Latest program; delete parent category in My Program 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// rename /Category1/Category2/Category3 to "Other Category 3"
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					c.setName("Other Category 3");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -498,29 +338,14 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// delete /Category1/Category2 
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1"));
-				try {
 					c.removeCategory("Category2", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
 			}
 		});
 		// choose My program 
@@ -537,20 +362,15 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// rename category in Latest program; delete parent category in My Program 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// rename /Category1/Category2/Category3 to "Other Category 3"
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					c.setName("Other Category 3");
 					c.createCategory("Test");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -558,29 +378,14 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// delete /Category1/Category2 
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1"));
-				try {
-					c.removeCategory("Category2", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
+				c.removeCategory("Category2", TaskMonitor.DUMMY);
 			}
 		});
 		// choose original program 
@@ -601,20 +406,15 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// rename category in Latest program; delete parent category in My Program 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// rename /Category1/Category2/Category3 to "Other Category 3"
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					c.setName("Other Category 3");
 					c.createCategory("Test");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -622,29 +422,14 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// delete /Category1/Category2 
-				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
-				try {
-					root.removeCategory("Category1", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
+				root.removeCategory("Category1", TaskMonitor.DUMMY);
 			}
 		});
 		// choose original program 
@@ -665,19 +450,14 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// rename category in Latest program; delete parent category in My Program 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// rename /Category1/Category2/Category3 to "Other Category 3"
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					c.setName("Other Category 3");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
@@ -685,29 +465,14 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name exception!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				// delete /Category1/Category2 
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1"));
-				try {
-					c.removeCategory("Category2", TaskMonitor.DUMMY);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
-
+				c.removeCategory("Category2", TaskMonitor.DUMMY);
 			}
 		});
 		// choose My program 
@@ -730,14 +495,10 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// move Category1/Category2/My Category3 to /MISC
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+		
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				DataTypeManager dtm = program.getDataTypeManager();
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
@@ -745,7 +506,6 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 					root.moveCategory(c, TaskMonitor.DUMMY);
 					c = root.getCategory(c.getName());
 					c.setName("Other Category3");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception! " + e.getMessage());
@@ -753,35 +513,23 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					c.setName("My Category3");
 					miscCat.moveCategory(c, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception! " + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -809,14 +557,10 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// move Category1/Category2/My Category3 to /MISC
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				DataTypeManager dtm = program.getDataTypeManager();
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
@@ -824,7 +568,6 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 					root.moveCategory(c, TaskMonitor.DUMMY);
 					c = root.getCategory(c.getName());
 					c.setName("Other Category3");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception! " + e.getMessage());
@@ -832,35 +575,23 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category miscCat =
 					program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					c.setName("My Category3");
 					miscCat.moveCategory(c, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception! " + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -886,18 +617,13 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		//My program : move Category1/Category2/Category3 to Root; 
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					c.setName("My Category3");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception! " + e.getMessage());
@@ -905,31 +631,19 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				DataTypeManager dtm = program.getDataTypeManager();
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					root.moveCategory(c, TaskMonitor.DUMMY);
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -954,19 +668,13 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// in My program, create "AnotherCategory" in
 		// /Category1/Category2/Category5
 		mtf.initialize("notepad2", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				Category c = program.getDataTypeManager().getCategory(
 					new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c.setName("My Category5");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception! " + e.getMessage());
@@ -974,19 +682,11 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c = c.createCategory("AnotherCategory");
@@ -994,16 +694,12 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 					// move data type to new category
 					DataType foo = dtm.getDataType(new CategoryPath("/MISC"), "Foo");
 					c.moveDataType(foo, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
 				}
 				catch (DataTypeDependencyException e) {
 					Assert.fail("Got Data Dependency Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -1029,50 +725,33 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// in my program, rename /Category1/Category2/Category5 to
 		// /Category1/Category2/My Category5
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c = c.createCategory("AnotherCategory");
 					c.createCategory("Subcategory");
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				Category c = program.getDataTypeManager().getCategory(
 					new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c.setName("My Category5");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception! " + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -1095,46 +774,30 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// In Latest, add "AnotherCategory to /Category1/Category2/Category5; 
 		// in my program, add a category to /MISC
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c = c.createCategory("AnotherCategory");
 					c.createCategory("Subcategory");
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				Category c = program.getDataTypeManager().getCategory(new CategoryPath("/MISC"));
 				try {
 					c = c.createCategory("MyCategory");
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -1157,53 +820,35 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// In Latest, add "AnotherCategory to /Category1/Category2/Category5; 
 		// in my program, add a category to /MISC
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c = c.createCategory("AnotherCategory");
 					c = c.createCategory("Subcategory");
 					c.addDataType(new ByteDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				DataTypeManager dtm = program.getDataTypeManager();
 				Category c = dtm.getCategory(new CategoryPath("/MISC"));
 				try {
 					c = c.createCategory("MyCategory");
 					c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 					c.setName("My Category 5");
-					commit = true;
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail("Got Duplicate name exception! " + e.getMessage());
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got Invalid Name Exception! " + e.getMessage());
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});
@@ -1227,37 +872,24 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 		// to category in My
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
 					c = c.createCategory("AnotherCategory");
 					c = c.createCategory("Subcategory");
 					c.addDataType(new ByteDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
 				}
-				finally {
-					program.endTransaction(transactionID, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				boolean commit = false;
 				// change the name
-				int transactionID = program.startTransaction("test");
 				DataTypeManager dtm = program.getDataTypeManager();
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 				try {
@@ -1267,13 +899,9 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 					foo.add(new ByteDataType());
 					foo.add(dtm.getDataType(new CategoryPath("/MISC"), "Bar"));
 					c.addDataType(foo, DataTypeConflictHandler.DEFAULT_HANDLER);
-					commit = true;
 				}
 				catch (InvalidNameException e) {
 					Assert.fail("Got InvalidNameException!");
-				}
-				finally {
-					program.endTransaction(transactionID, commit);
 				}
 			}
 		});

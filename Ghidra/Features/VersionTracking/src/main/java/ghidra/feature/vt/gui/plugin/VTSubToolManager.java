@@ -336,8 +336,8 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 		saveSubordinateToolConfig(sourceTool);
 		saveSubordinateToolConfig(destinationTool);
 		pluginList.clear();
-		sourceTool.exit();
-		destinationTool.exit();
+		PluginToolAccessUtils.dispose(sourceTool);
+		PluginToolAccessUtils.dispose(destinationTool);
 		sourceTool = null;
 		destinationTool = null;
 	}

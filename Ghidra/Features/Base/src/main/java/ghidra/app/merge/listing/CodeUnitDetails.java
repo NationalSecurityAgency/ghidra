@@ -68,28 +68,31 @@ public abstract class CodeUnitDetails {
 			boolean removedFallThrough =
 				inst.isFallThroughOverridden() && (inst.getFallThrough() == null);
 			boolean hasFlowOverride = inst.getFlowOverride() != FlowOverride.NONE;
+			boolean hasLengthOverride = inst.isLengthOverridden();
 			cuRep = cu.toString();
 			if (removedFallThrough) {
-				cuRep +=
-					NEW_LINE + indent + getSpaces(addrRangeStr.length()) + "    " +
-						"Removed FallThrough";
+				cuRep += NEW_LINE + indent + getSpaces(addrRangeStr.length()) + "    " +
+					"Removed FallThrough";
 			}
 			else if (inst.isFallThroughOverridden()) {
 				Reference[] refs = cu.getReferencesFrom();
 				// Show the fallthrough override.
-				for (int i = 0; i < refs.length; i++) {
-					if (refs[i].getReferenceType().isFallthrough()) {
-						cuRep +=
-							NEW_LINE + indent + getSpaces(addrRangeStr.length()) + "    " +
-								"FallThrough Override: " +
-								DiffUtility.getUserToAddressString(inst.getProgram(), refs[i]);
+				for (Reference ref : refs) {
+					if (ref.getReferenceType().isFallthrough()) {
+						cuRep += NEW_LINE + indent + getSpaces(addrRangeStr.length()) + "    " +
+							"FallThrough Override: " +
+							DiffUtility.getUserToAddressString(inst.getProgram(), ref);
 					}
 				}
 			}
 			if (hasFlowOverride) {
-				cuRep +=
-					NEW_LINE + indent + getSpaces(addrRangeStr.length()) + "    " +
-						"Flow Override: " + inst.getFlowOverride();
+				cuRep += NEW_LINE + indent + getSpaces(addrRangeStr.length()) + "    " +
+					"Flow Override: " + inst.getFlowOverride();
+			}
+			if (hasLengthOverride) {
+				cuRep += NEW_LINE + indent + getSpaces(addrRangeStr.length()) + "    " +
+					"Length Override: " + inst.getLength() + " (actual length is " +
+					inst.getParsedLength() + ")";
 			}
 			// Commented the following out, since we may want the hash code in the future.
 //			cuRep +=
@@ -146,15 +149,15 @@ public abstract class CodeUnitDetails {
 			return indent + "None";
 		}
 		StringBuffer buf = new StringBuffer();
-		for (int i = 0; i < refs.length; i++) {
-			if (refs[i].isExternalReference()) {
-				buf.append(indent + "External Reference " + getRefInfo(pgm, refs[i]) + NEW_LINE);
+		for (Reference ref : refs) {
+			if (ref.isExternalReference()) {
+				buf.append(indent + "External Reference " + getRefInfo(pgm, ref) + NEW_LINE);
 			}
-			else if (refs[i].isStackReference()) {
-				buf.append(indent + "Stack Reference " + getRefInfo(pgm, refs[i]) + NEW_LINE);
+			else if (ref.isStackReference()) {
+				buf.append(indent + "Stack Reference " + getRefInfo(pgm, ref) + NEW_LINE);
 			}
 			else {
-				buf.append(indent + "Reference " + getRefInfo(pgm, refs[i]) + NEW_LINE);
+				buf.append(indent + "Reference " + getRefInfo(pgm, ref) + NEW_LINE);
 			}
 		}
 		return buf.toString();

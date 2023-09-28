@@ -194,10 +194,10 @@ public class DiffUtility extends SimpleDiffUtility {
 		}
 		else if (namespace instanceof GhidraClass) {
 			return otherProgram.getSymbolTable()
-				.createClass(otherParentNamespace, namespace.getName(), source);
+					.createClass(otherParentNamespace, namespace.getName(), source);
 		}
 		return otherProgram.getSymbolTable()
-			.createNameSpace(otherParentNamespace, namespace.getName(), source);
+				.createNameSpace(otherParentNamespace, namespace.getName(), source);
 	}
 
 //	/**
@@ -330,10 +330,10 @@ public class DiffUtility extends SimpleDiffUtility {
 				return null;
 			}
 			return otherProgram.getReferenceManager()
-				.getReference(fromAddr, toAddr, ref.getOperandIndex());
+					.getReference(fromAddr, toAddr, ref.getOperandIndex());
 		}
 		Reference otherRef = otherProgram.getReferenceManager()
-			.getPrimaryReferenceFrom(fromAddr, ref.getOperandIndex());
+				.getPrimaryReferenceFrom(fromAddr, ref.getOperandIndex());
 		if (otherRef != null && ref.getToAddress().hasSameAddressSpace(otherRef.getToAddress())) {
 			return otherRef;
 		}
@@ -358,10 +358,10 @@ public class DiffUtility extends SimpleDiffUtility {
 				return null;
 			}
 			return program.getReferenceManager()
-				.getReference(fromAddr1, toAddr1, p2Ref.getOperandIndex());
+					.getReference(fromAddr1, toAddr1, p2Ref.getOperandIndex());
 		}
 		Reference p1Ref = program.getReferenceManager()
-			.getPrimaryReferenceFrom(fromAddr1, p2Ref.getOperandIndex());
+				.getPrimaryReferenceFrom(fromAddr1, p2Ref.getOperandIndex());
 		if (p1Ref != null && p1Ref.getToAddress().hasSameAddressSpace(p2Ref.getToAddress())) {
 			return p1Ref;
 		}
@@ -386,8 +386,8 @@ public class DiffUtility extends SimpleDiffUtility {
 		}
 		// FIXME Should this be passing the Namespace?
 		return otherProgram.getExternalManager()
-			.addExtLocation(extLoc.getLibraryName(), extLoc.getLabel(), otherAddr,
-				extLoc.getSource());
+				.addExtLocation(extLoc.getLibraryName(), extLoc.getLabel(), otherAddr,
+					extLoc.getSource());
 	}
 
 	/**
@@ -571,21 +571,38 @@ public class DiffUtility extends SimpleDiffUtility {
 			Address rangeMin = range.getMinAddress();
 			Address rangeMax = range.getMaxAddress();
 			CodeUnit minCu = listing.getCodeUnitContaining(rangeMin);
+			// NOTE: minCu does not consider prior code unit which may share bytes due to
+			// possible instruction length-override.  Max address of code unit will factor-in
+			// full length of instruction prototype.
 			if (minCu != null) {
 				Address minCuMinAddr = minCu.getMinAddress();
 				if (minCuMinAddr.compareTo(rangeMin) != 0) {
-					addrs.addRange(minCuMinAddr, minCu.getMaxAddress());
+					addrs.addRange(minCuMinAddr, getMaxAddress(minCu));
 				}
 			}
 			CodeUnit maxCu = listing.getCodeUnitContaining(rangeMax);
 			if (maxCu != null) {
-				Address maxCuMaxAddr = maxCu.getMaxAddress();
+				Address maxCuMaxAddr = getMaxAddress(maxCu);
 				if (maxCuMaxAddr.compareTo(rangeMax) != 0) {
 					addrs.addRange(maxCu.getMinAddress(), maxCuMaxAddr);
 				}
 			}
 		}
 		return addrs;
+	}
+
+	/**
+	 * Get the code unit max address.  Instruction max address will be based upon prototype 
+	 * length which may be longer than code unit length if length-override is in effect.
+	 * @param cu code unit
+	 * @return effective code unit length
+	 */
+	private static Address getMaxAddress(CodeUnit cu) {
+		if (cu instanceof Instruction inst && inst.isLengthOverridden()) {
+			// factor in prototype length when length-override applies
+			return cu.getMinAddress().add(inst.getParsedLength() - 1);
+		}
+		return cu.getMaxAddress();
 	}
 
 	/**

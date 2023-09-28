@@ -19,14 +19,14 @@ import java.util.function.Function;
 
 import javax.swing.tree.TreePath;
 
-import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.DefaultActionContext;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.dbg.DebuggerObjectModel;
 
-public class DebuggerModelActionContext extends ActionContext {
+public class DebuggerModelActionContext extends DefaultActionContext {
 	private final TreePath path;
 
 	DebuggerModelActionContext(ComponentProvider provider, TreePath path, GTree tree) {

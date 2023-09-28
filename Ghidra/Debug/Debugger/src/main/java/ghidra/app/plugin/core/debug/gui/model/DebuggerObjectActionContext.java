@@ -19,11 +19,11 @@ import java.awt.Component;
 import java.util.Collection;
 import java.util.List;
 
-import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.DefaultActionContext;
 import ghidra.trace.model.target.TraceObjectValue;
 
-public class DebuggerObjectActionContext extends ActionContext {
+public class DebuggerObjectActionContext extends DefaultActionContext {
 	private final List<TraceObjectValue> objectValues;
 
 	public DebuggerObjectActionContext(Collection<TraceObjectValue> objectValues,

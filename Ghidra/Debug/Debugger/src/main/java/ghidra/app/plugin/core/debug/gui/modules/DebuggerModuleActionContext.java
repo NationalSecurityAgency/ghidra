@@ -18,10 +18,10 @@ package ghidra.app.plugin.core.debug.gui.modules;
 import java.util.Collection;
 import java.util.Set;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.widgets.table.GTable;
 
-public class DebuggerModuleActionContext extends ActionContext {
+public class DebuggerModuleActionContext extends DefaultActionContext {
 	private final Set<ModuleRow> selectedModules;
 
 	public DebuggerModuleActionContext(DebuggerModulesProvider provider,

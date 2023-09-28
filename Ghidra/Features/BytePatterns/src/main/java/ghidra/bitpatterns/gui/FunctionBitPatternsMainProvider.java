@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
@@ -488,7 +489,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 		return super.getActionContext(event);
 	}
 
-	class EvaluateContext extends ActionContext {
+	class EvaluateContext extends DefaultActionContext {
 		List<PatternInfoRowObject> selectedRows;
 
 		public EvaluateContext(List<PatternInfoRowObject> selectedRowObjects) {
@@ -510,7 +511,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 		}
 	}
 
-	class ByteSequenceContext extends ActionContext {
+	class ByteSequenceContext extends DefaultActionContext {
 		ByteSequencePanelBuilder builder;
 		List<ByteSequenceRowObject> selectedRows;
 
@@ -532,7 +533,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 		}
 	}
 
-	class InstructionTreeContext extends ActionContext {
+	class InstructionTreeContext extends DefaultActionContext {
 		private FunctionBitPatternsGTree tree;
 		private TreePath path;
 

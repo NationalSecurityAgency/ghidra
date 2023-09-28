@@ -44,6 +44,7 @@ import ghidra.launch.JavaConfig;
 import ghidradev.ghidraprojectcreator.utils.GhidraProjectUtils;
 import ghidradev.ghidraprojectcreator.wizards.pages.ChooseGhidraModuleProjectWizardPage;
 import ghidradev.ghidraprojectcreator.wizards.pages.ConfigureGradleWizardPage;
+import utilities.util.FileUtilities;
 
 /**
  * Wizard for exporting a Ghidra module project to a releasable extension zip bundle.  
@@ -151,6 +152,11 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 
 			monitor.worked(1);
 
+			// Delete the build directory...we don't want Ghidra finding/using it in the module
+			File buildDir = new File(workingDir, "build");
+			FileUtilities.deleteDir(buildDir);
+
+			// Refresh the project to make the new items visible
 			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 			monitor.worked(1);
 

@@ -30,49 +30,49 @@ import ghidra.dbg.util.ShellUtils;
 public enum GdbLinuxSpecimen implements DebuggerTestSpecimen, DebuggerModelTestUtils {
 	SLEEP {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expTraceableSleep");
 		}
 	},
 	FORK_EXIT {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expFork");
 		}
 	},
 
 	CLONE_EXIT {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expCloneExit");
 		}
 	},
 	PRINT {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expPrint");
 		}
 	},
 	REGISTERS {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expRegisters");
 		}
 	},
 	SPIN_STRIPPED {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expSpin.stripped");
 		}
 	},
 	STACK {
 		@Override
-		String getCommandLine() {
+		public String getCommandLine() {
 			return DummyProc.which("expStack");
 		}
 	};
 
-	abstract String getCommandLine();
+	public abstract String getCommandLine();
 
 	@Override
 	public DummyProc runDummy() throws Throwable {

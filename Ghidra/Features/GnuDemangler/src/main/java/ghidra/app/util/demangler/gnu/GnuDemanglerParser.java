@@ -99,7 +99,7 @@ public class GnuDemanglerParser {
 	 *
 	 * Pattern: <space>[optional const with optional '[',']', number, '*', '&' <space>]
 	 * 			(*|&)[optional spaces]brackets with optional characters inside
-	 * 
+	 *
 	 * Parts:
 	 * 				-optional const text (e.g., const[8])   (non-capture group)
 	 * 				-followed by '()' that contain a '&' or a '*' (capture group 1)
@@ -118,8 +118,7 @@ public class GnuDemanglerParser {
 	 *
 	 */
 	private static final Pattern ARRAY_POINTER_REFERENCE_PATTERN =
-		Pattern.compile(
-			"\\s(?:const[\\[\\]\\d\\*&]{0,4}\\s)*\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
+		Pattern.compile("\\s(?:const[\\[\\]\\d\\*&]{0,4}\\s)*\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
 
 	/*
 	 * Sample:  bob(short (&)[7])
@@ -245,9 +244,9 @@ public class GnuDemanglerParser {
 	 * 			-'for' or 'to' (capture group 3)  |  (capture group 1)
 	 * 			-a space                         -+
 	 * 			-optional text (capture group 4)
-	 * 
+	 *
 	 * Note:    capture group 1 is the combination of groups 2 and 3 with trailing space
-	 * 
+	 *
 	 * Examples:
 	 *		construction vtable for
 	 *		vtable for
@@ -313,7 +312,7 @@ public class GnuDemanglerParser {
 
 	/**
 	 * Pattern to catch literal strings of the form:
-	 * 
+	 *
 	 * 		-1l
 	 * 		2l
 	 * 		0u
@@ -836,16 +835,15 @@ public class GnuDemanglerParser {
 					if (hasPointerParens) {
 						Demangled namespace = dt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunctionPointer(datatype);
-						int firstParenEnd = datatype.indexOf(')', i + 1);
-						int secondParenEnd = datatype.indexOf(')', firstParenEnd + 1);
-						if (secondParenEnd == -1) {
+						int paramParenEnd = datatype.lastIndexOf(')');
+						if (paramParenEnd == -1) {
 							throw new DemanglerParseException(
 								"Did not find ending to closure: " + datatype);
 						}
 
 						dfp.getReturnType().setNamespace(namespace);
 						dt = dfp;
-						i = secondParenEnd + 1; // two sets of parens (normal case)
+						i = paramParenEnd + 1; // two sets of parens (normal case)
 					}
 					else {
 
@@ -870,7 +868,7 @@ public class GnuDemanglerParser {
 			}
 			else if (ch == '&') {
 				if (!dt.isReference()) {
-					dt.setReference();
+					dt.setLValueReference();
 				}
 				else {
 					dt.setRValueReference();
@@ -970,8 +968,8 @@ public class GnuDemanglerParser {
 
 		Demangled namespace = dt.getNamespace();
 		String name = leading;
-		DemangledDataType newDt = parseArrayPointerOrReference(datatype, name, lambdaString,
-			matcher);
+		DemangledDataType newDt =
+			parseArrayPointerOrReference(datatype, name, lambdaString, matcher);
 		newDt.setNamespace(namespace);
 		return newDt;
 	}
@@ -993,8 +991,8 @@ public class GnuDemanglerParser {
 
 		Demangled namespace = dt.getNamespace();
 		String name = leading;
-		DemangledDataType newDt = parseArrayPointerOrReference(datatype, name, templatedString,
-			matcher);
+		DemangledDataType newDt =
+			parseArrayPointerOrReference(datatype, name, templatedString, matcher);
 		newDt.setNamespace(namespace);
 		return newDt;
 	}
@@ -1286,7 +1284,7 @@ public class GnuDemanglerParser {
 			dt.incrementPointerLevels();
 		}
 		else if (type.equals("&")) {
-			dt.setReference();
+			dt.setLValueReference();
 		}
 		else {
 			throw new DemanglerParseException("Unexpected charater inside of parens: " + type);

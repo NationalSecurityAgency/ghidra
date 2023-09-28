@@ -15,14 +15,12 @@
  */
 package ghidra.app.util.bin.format.macho.commands;
 
-import static ghidra.app.util.bin.format.macho.commands.DyldInfoCommandConstants.EXPORT_SYMBOL_FLAGS_REEXPORT;
-import static ghidra.app.util.bin.format.macho.commands.DyldInfoCommandConstants.EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER;
+import static ghidra.app.util.bin.format.macho.commands.DyldInfoCommandConstants.*;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.LEB128;
@@ -37,7 +35,10 @@ public class ExportTrie {
 	
 	private BinaryReader reader;
 	private long base;
+
 	private List<ExportEntry> exports;
+	private List<Long> ulebOffsets;
+	private List<Long> stringOffsets;
 	
 	/**
 	 * Creates an empty {@link ExportTrie}.  This is useful for export trie load commands that are
@@ -45,6 +46,8 @@ public class ExportTrie {
 	 */
 	public ExportTrie() {
 		this.exports = new ArrayList<>();
+		this.ulebOffsets = new ArrayList<>();
+		this.stringOffsets = new ArrayList<>();
 	}
 
 	/**
@@ -107,20 +110,25 @@ public class ExportTrie {
 	private LinkedList<Node> parseNode(String name, int offset) throws IOException {
 		LinkedList<Node> children = new LinkedList<>();
 		reader.setPointerIndex(base + offset);
+		ulebOffsets.add(reader.getPointerIndex() - base);
 		int terminalSize = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		long childrenIndex = reader.getPointerIndex() + terminalSize;
 		if (terminalSize != 0) {
+			ulebOffsets.add(reader.getPointerIndex() - base);
 			long flags = reader.readNext(LEB128::unsigned);
 			long address = 0;
 			long other = 0;
 			String importName = null;
 			if ((flags & EXPORT_SYMBOL_FLAGS_REEXPORT) != 0) {
+				ulebOffsets.add(reader.getPointerIndex() - base);
 				other = reader.readNext(LEB128::unsigned); // dylib ordinal
 				importName = reader.readNextAsciiString();
 			}
 			else {
+				ulebOffsets.add(reader.getPointerIndex() - base);
 				address = reader.readNext(LEB128::unsigned);
 				if ((flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER) != 0) {
+					ulebOffsets.add(reader.getPointerIndex() - base);
 					other = reader.readNext(LEB128::unsigned);
 				}
 			}
@@ -128,9 +136,12 @@ public class ExportTrie {
 			exports.add(export);
 		}
 		reader.setPointerIndex(childrenIndex);
+		ulebOffsets.add(reader.getPointerIndex() - base);
 		int numChildren = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < numChildren; i++) {
+			stringOffsets.add(reader.getPointerIndex() - base);
 			String childName = reader.readNextAsciiString();
+			ulebOffsets.add(reader.getPointerIndex() - base);
 			int childOffset = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 			children.add(new Node(childName, childOffset));
 		}
@@ -138,78 +149,17 @@ public class ExportTrie {
 	}
 	
 	/**
-	 * A export trie entry
+	 * Creates a new {@link ExportEntry}
+	 * 
+	 * @param name The export name
+	 * @param address The export address
+	 * @param flags The export flags
+	 * @param other The export "other" info
+	 * @param importName The export import name (could be null if not a re-export)
 	 */
-	public static class ExportEntry {
-		
-		private String name;
-		private long address;
-		private long flags;
-		private long other;
-		private String importName;
-		
-		/**
-		 * Creates a new {@link ExportEntry}
-		 * 
-		 * @param name The export name
-		 * @param address The export address
-		 * @param flags The export flags
-		 * @param other The export "other" info
-		 * @param importName The export import name (could be null if not a re-export)
-		 */
-		public ExportEntry(String name, long address, long flags, long other, String importName) {
-			this.name = name;
-			this.address = address;
-			this.flags = flags;
-			this.other = other;
-			this.importName = importName;
-		}
-		
-		/**
-		 * Gets the export name
-		 * 
-		 * @return The export name
-		 */
-		public String getName() {
-			return name;
-		}
-		
-		/**
-		 * Gets the export address, which is is an image base offset (from the Mach-O header)
-		 * 
-		 * @return The export address
-		 */
-		public long getAddress() {
-			return address;
-		}
-		
-		/**
-		 * Gets the export flags
-		 * 
-		 * @return The export flags
-		 */
-		public long getFlags() {
-			return flags;
-		}
-		
-		/**
-		 * Gets the export "other" info
-		 * 
-		 * @return The export "other" info
-		 */
-		public long getOther() {
-			return other;
-		}
-		
-		/**
-		 * Gets the export import name
-		 * 
-		 * @return The export import name (could be null if not a re-export)
-		 */
-		public String getImportName() {
-			return importName;
-		}
-		
+	public record ExportEntry(String name, long address, long flags, long other,
+			String importName) {
+
 		/**
 		 * Check to see if the export is a "re-export"
 		 * 
@@ -227,17 +177,24 @@ public class ExportTrie {
 	}
 	
 	/**
+	 * {@return ULEB128 offsets from the start of the export trie}
+	 */
+	public List<Long> getUlebOffsets() {
+		return ulebOffsets;
+	}
+
+	/**
+	 * {@return String offsets from the start of the export trie}
+	 */
+	public List<Long> getStringOffsets() {
+		return stringOffsets;
+	}
+
+	/**
 	 * A trie node
 	 */
-	private static class Node {
-		String name;
-		int offset;
-				
-		Node(String name, int offset) {
-			this.name = name;
-			this.offset = offset;
-		}
-		
+	private record Node(String name, int offset) {
+
 		@Override
 		public String toString() {
 			return String.format("%s, 0x%x", name, offset);

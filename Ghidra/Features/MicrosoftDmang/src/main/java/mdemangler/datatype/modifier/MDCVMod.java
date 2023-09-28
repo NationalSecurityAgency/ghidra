@@ -25,12 +25,6 @@ import mdemangler.naming.MDQualification;
  * type within a Microsoft mangled symbol.
  */
 public class MDCVMod extends MDParsableItem {
-	public static final char SPACE = ' ';
-
-	public static final char POINTER_CHAR = '*';
-	public static final char REFERENCE_CHAR = '&';
-	public static final char CARROT_CHAR = '^';
-	public static final char PERCENT_CHAR = '%';
 	// private static final String FUNCTIONPOINTER = "*"; // TODO: eliminate
 	// with
 	// // old code
@@ -38,10 +32,10 @@ public class MDCVMod extends MDParsableItem {
 	// with
 	// // old code
 	private static final String POINTER = "*";
-	private static final String REFERENCE = "&";
-	private static final String CARROT = "^";
+	private static final String AMPERSAND = "&";
+	private static final String CARET = "^";
 	private static final String PERCENT = "%";
-	private static final String REFREF = "&&";
+	private static final String DOUBLE_AMPERSAND = "&&";
 
 	private final static String PTR64 = " __ptr64";
 	private static final String UNALIGNED = "__unaligned ";
@@ -132,8 +126,8 @@ public class MDCVMod extends MDParsableItem {
 		plain,
 		pointer,
 		reference,
-		refref,
-		carrot, // TODO: eliminate with old code
+		rightreference,
+		caret, // TODO: eliminate with old code
 		percent, // TODO: eliminate with old code
 		functionpointer, // TODO: eliminate with old code
 		functionreference, // TODO: eliminate with old code
@@ -156,12 +150,12 @@ public class MDCVMod extends MDParsableItem {
 		modType = CvModifierType.reference;
 	}
 
-	public void setRefRefTemplateParameter() {
-		modType = CvModifierType.refref;
+	public void setRightReferenceTemplateParameter() {
+		modType = CvModifierType.rightreference;
 	}
 
-	// public void setCarrotType() {
-	// modType = cvModifierType.carrot;
+	// public void setCaretType() {
+	// modType = cvModifierType.caret;
 	// }
 	//
 	// public void setPercentType() {
@@ -466,7 +460,7 @@ public class MDCVMod extends MDParsableItem {
 				dmang.increment();
 				setGC();
 				// if (isPointerType()) {
-				// setCarrotType();
+				// setCaretType();
 				// }
 				// else if (isReferenceType()) {
 				// setPercentType();
@@ -476,7 +470,7 @@ public class MDCVMod extends MDParsableItem {
 				dmang.increment();
 				// if ((modType == cvModifierType.pointer) ||
 				// (modType == cvModifierType.functionpointer) ||
-				// (modType == cvModifierType.carrot) ||
+				// (modType == cvModifierType.caret) ||
 				// (modType == cvModifierType.percent) ||
 				// (modType == cvModifierType.reference) ||
 				// (modType == cvModifierType.functionreference)) {
@@ -814,7 +808,7 @@ public class MDCVMod extends MDParsableItem {
 					annotation = PERCENT;
 				}
 				else if (isGC()) {
-					annotation = CARROT;
+					annotation = CARET;
 				}
 				else {
 					annotation = POINTER;
@@ -828,10 +822,10 @@ public class MDCVMod extends MDParsableItem {
 					annotation = PERCENT;
 				}
 				else {
-					annotation = REFERENCE;
+					annotation = AMPERSAND;
 				}
 				break;
-			case refref:
+			case rightreference:
 				if (isCLIProperty()) { // highest precedence, even if isGC is set.
 					annotation = PERCENT;
 				}
@@ -839,7 +833,7 @@ public class MDCVMod extends MDParsableItem {
 					annotation = PERCENT;
 				}
 				else {
-					annotation = REFREF;
+					annotation = DOUBLE_AMPERSAND;
 				}
 				break;
 			case array:
@@ -875,7 +869,7 @@ public class MDCVMod extends MDParsableItem {
 		// annotation = PERCENT;
 		// }
 		// else if (isGC()) {
-		// annotation = CARROT;
+		// annotation = CARET;
 		// }
 		// else {
 		// annotation = POINTER;
@@ -953,7 +947,7 @@ public class MDCVMod extends MDParsableItem {
 	// annotation = PERCENT;
 	// }
 	// else if (isGC()) {
-	// annotation = CARROT;
+	// annotation = CARET;
 	// }
 	// else {
 	// annotation = POINTER;

@@ -26,10 +26,9 @@ import ghidra.program.util.ProgramSelection;
 /**
  * A service providing access to the main listing panel
  */
-@ServiceInfo( //
-	defaultProvider = DebuggerListingPlugin.class, //
-	description = "Replacement CodeViewerService for Debugger" //
-)
+@ServiceInfo(
+	defaultProvider = DebuggerListingPlugin.class,
+	description = "Replacement CodeViewerService for Debugger")
 public interface DebuggerListingService extends CodeViewerService {
 
 	/**

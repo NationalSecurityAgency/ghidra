@@ -333,6 +333,54 @@ void Cover::intersectList(vector<int4> &listout,const Cover &op2,int4 level) con
   }
 }
 
+/// If any PcodeOp in the set falls inside \b this Cover, a secondary test that the PcodeOp
+/// affects the representative Varnode is performed. If the test returns \b true, this is considered
+/// a full intersection and this method returns \b true.  Otherwise it returns \b false.
+/// \param opSet is the given set of PcodeOps
+/// \param rep is the representative Varnode to use for secondary testing
+/// \return \b true is there is an intersection with \b this
+bool Cover::intersect(const PcodeOpSet &opSet,Varnode *rep) const
+
+{
+  if (opSet.opList.empty()) return false;
+  int4 setBlock = 0;
+  int4 opIndex = opSet.blockStart[setBlock];
+  int4 setIndex = opSet.opList[opIndex]->getParent()->getIndex();
+  map<int4,CoverBlock>::const_iterator coverIter = cover.lower_bound(opSet.opList[0]->getParent()->getIndex());
+  while(coverIter != cover.end()) {
+    int4 coverIndex = (*coverIter).first;
+    if (coverIndex < setIndex) {
+      ++coverIter;
+    }
+    else if (coverIndex > setIndex) {
+      setBlock += 1;
+      if (setBlock >= opSet.blockStart.size()) break;
+      opIndex = opSet.blockStart[setBlock];
+      setIndex = opSet.opList[opIndex]->getParent()->getIndex();
+    }
+    else {
+      const CoverBlock &coverBlock( (*coverIter).second );
+      ++coverIter;
+      int4 opMax = opSet.opList.size();
+      setBlock += 1;
+      if (setBlock < opSet.blockStart.size())
+	opMax = opSet.blockStart[setBlock];
+      do {
+	PcodeOp *op = opSet.opList[opIndex];
+	if (coverBlock.contain(op)) {		// Does range contain the call?
+	  if (coverBlock.boundary(op) == 0) {	// Is the call on the boundary
+	    if (opSet.affectsTest(op, rep))	// Do secondary testing
+	      return true;
+	  }
+	}
+	opIndex += 1;
+      } while(opIndex < opMax);
+      if (setBlock >= opSet.blockStart.size()) break;
+    }
+  }
+  return false;
+}
+
 /// Looking only at the given block, Return
 ///   - 0 if there is no intersection
 ///   - 1 if the only intersection is on a boundary point
@@ -563,6 +611,33 @@ void Cover::print(ostream &s) const
     (*iter).second.print(s);
     s << endl;
   }
+}
+
+void PcodeOpSet::finalize(void)
+
+{
+  sort(opList.begin(),opList.end(),compareByBlock);
+  int4 blockNum = -1;
+  for(int4 i=0;i<opList.size();++i) {
+    int4 newBlockNum = opList[i]->getParent()->getIndex();
+    if (newBlockNum > blockNum) {
+      blockStart.push_back(i);
+      blockNum = newBlockNum;
+    }
+  }
+  is_pop = true;
+}
+
+/// Compare first by index of the containing basic blocks, then by SeqNum ordering (within the block)
+/// \param a is the first PcodeOp to compare
+/// \param b is the second PcodeOp to compare
+/// \return \b true if the first PcodeOp should be ordered before the second
+bool PcodeOpSet::compareByBlock(const PcodeOp *a,const PcodeOp *b)
+
+{
+  if (a->getParent() != b->getParent())
+    return (a->getParent()->getIndex() < b->getParent()->getIndex());
+  return a->getSeqNum().getOrder() < b->getSeqNum().getOrder();
 }
 
 } // End namespace ghidra

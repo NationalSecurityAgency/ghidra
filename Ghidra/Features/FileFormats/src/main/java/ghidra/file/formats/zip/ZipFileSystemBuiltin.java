@@ -15,13 +15,11 @@
  */
 package ghidra.file.formats.zip;
 
-import java.util.Enumeration;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-
 import java.io.*;
 import java.sql.Date;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.formats.gfilesystem.*;
@@ -48,24 +46,13 @@ import ghidra.util.task.TaskMonitor;
  * and {@link GFileSystem#getDescription()} to operate in the default manner.
  */
 @FileSystemInfo(type = "zip", description = "ZIP", factory = ZipFileSystemFactory.class, priority = FileSystemInfo.PRIORITY_HIGH)
-public class ZipFileSystemBuiltin implements GFileSystem {
+public class ZipFileSystemBuiltin extends AbstractFileSystem<ZipEntry> {
 	static final String TEMPFILE_PREFIX = "ghidra_tmp_zipfile";
 
-	private FileSystemIndexHelper<ZipEntry> fsIndexHelper;
-	private FSRLRoot fsFSRL;
 	private ZipFile zipFile;
-	private FileSystemRefManager refManager = new FileSystemRefManager(this);
-	private FileSystemService fsService;
 
 	public ZipFileSystemBuiltin(FSRLRoot fsFSRL, FileSystemService fsService) {
-		this.fsFSRL = fsFSRL;
-		this.fsService = fsService;
-		this.fsIndexHelper = new FileSystemIndexHelper<>(this, fsFSRL);
-	}
-
-	@Override
-	public String getName() {
-		return fsFSRL.getContainer().getName();
+		super(fsFSRL, fsService);
 	}
 
 	@Override
@@ -75,22 +62,12 @@ public class ZipFileSystemBuiltin implements GFileSystem {
 			zipFile.close();
 			zipFile = null;
 		}
-		fsIndexHelper.clear();
+		fsIndex.clear();
 	}
 
 	@Override
 	public boolean isClosed() {
 		return zipFile == null;
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsFSRL;
-	}
-
-	@Override
-	public int getFileCount() {
-		return fsIndexHelper.getFileCount();
 	}
 
 	public void mount(File f, boolean deleteFileWhenDone, TaskMonitor monitor)
@@ -109,14 +86,14 @@ public class ZipFileSystemBuiltin implements GFileSystem {
 		while (entries.hasMoreElements()) {
 			monitor.checkCancelled();
 			ZipEntry currentEntry = entries.nextElement();
-			fsIndexHelper.storeFile(currentEntry.getName(), -1, currentEntry.isDirectory(),
+			fsIndex.storeFile(currentEntry.getName(), -1, currentEntry.isDirectory(),
 				currentEntry.getSize(), currentEntry);
 		}
 	}
 
 	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
-		ZipEntry zipEntry = fsIndexHelper.getMetadata(file);
+		ZipEntry zipEntry = fsIndex.getMetadata(file);
 		if (zipEntry == null) {
 			return null;
 		}
@@ -138,21 +115,16 @@ public class ZipFileSystemBuiltin implements GFileSystem {
 	}
 
 	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsIndexHelper.lookup(path);
-	}
-
-	@Override
 	public InputStream getInputStream(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		ZipEntry zipEntry = fsIndexHelper.getMetadata(file);
+		ZipEntry zipEntry = fsIndex.getMetadata(file);
 		return (zipEntry != null) ? zipFile.getInputStream(zipEntry) : null;
 	}
 
 	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		ZipEntry zipEntry = fsIndexHelper.getMetadata(file);
+		ZipEntry zipEntry = fsIndex.getMetadata(file);
 		if (zipEntry == null) {
 			return null;
 		}
@@ -163,15 +135,5 @@ public class ZipFileSystemBuiltin implements GFileSystem {
 			zipEntry.getSize(),
 			() -> zipFile.getInputStream(zipEntry),
 			monitor);
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsIndexHelper.getListing(directory);
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
 	}
 }

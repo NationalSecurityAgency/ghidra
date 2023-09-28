@@ -20,6 +20,7 @@ apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 
 apply from: "$rootProject.projectDir/gradle/debugger/hasExecutableJar.gradle"
+apply from: "$rootProject.projectDir/gradle/debugger/hasPythonPackage.gradle"
 
 apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-gdb'

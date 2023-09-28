@@ -25,6 +25,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.checkbox.GCheckBox;
@@ -63,16 +65,16 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 
 	private boolean enterMode = false;
 	private JCheckBox enterBox = new GCheckBox("Enter accepts comment", enterMode);
-	{
-		enterBox.addChangeListener(e -> {
-			enterMode = enterBox.isSelected();
-			plugin.updateOptions();
-		});
-	}
 	private JPopupMenu popup = new JPopupMenu();
 
 	CommentsDialog(CommentsPlugin plugin) {
 		super("Set Comments");
+
+		enterBox.addChangeListener(e -> {
+			enterMode = enterBox.isSelected();
+			plugin.updateOptions();
+		});
+
 		setHelpLocation(new HelpLocation(plugin.getName(), "Comments"));
 		addWorkPanel(createPanel());
 
@@ -151,13 +153,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		}
 	}
 
-	/////////////////////////////////////////////
-	// *** GhidraDialog "callback" methods ***
-	/////////////////////////////////////////////
-
-	/**
-	 * Callback for the cancel button.
-	 */
 	@Override
 	protected void cancelCallback() {
 
@@ -198,9 +193,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		close();
 	}
 
-	/**
-	 * Callback for the OK button.
-	 */
 	@Override
 	protected void okCallback() {
 		if (wasChanged) {
@@ -217,9 +209,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		}
 	}
 
-	/**
-	 * Callback for the Apply button.
-	 */
 	@Override
 	protected void applyCallback() {
 		preComment = preField.getText();
@@ -235,10 +224,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		setApplyEnabled(false);
 	}
 
-	////////////////////////////////////////////////////////////////////
-	// ** private methods **
-	////////////////////////////////////////////////////////////////////
-
 	private AnnotationAdapterWrapper[] getAnnotationAdapterWrappers() {
 		List<AnnotatedStringHandler> annotations = Annotation.getAnnotatedStringHandlers();
 		int count = annotations.size();
@@ -249,9 +234,6 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		return retVal;
 	}
 
-	/**
-	 * Create the panel for the dialog.
-	 */
 	private JPanel createPanel() {
 
 		JPanel panel = new JPanel(new BorderLayout());
@@ -266,12 +248,16 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		GComboBox<AnnotationAdapterWrapper> annotationsComboBox = new GComboBox<>(annotations);
 		JButton addAnnotationButton = new JButton("Add Annotation");
 		addAnnotationButton.addActionListener(e -> {
-			JTextArea currentTextArea = getSelectedTextArea();
+			JTextArea textArea = getSelectedTextArea();
 			AnnotationAdapterWrapper aaw =
 				(AnnotationAdapterWrapper) annotationsComboBox.getSelectedItem();
-			currentTextArea.insert(aaw.getPrototypeString(),
-				currentTextArea.getCaretPosition());
-			currentTextArea.setCaretPosition(currentTextArea.getCaretPosition() - 1);
+			String selectedText = textArea.getSelectedText();
+			if (!StringUtils.isBlank(selectedText)) {
+				textArea.replaceSelection(aaw.getPrototypeString(selectedText));
+			}
+			else {
+				insertAnnotation(textArea, aaw);
+			}
 		});
 		JPanel annoPanel = new JPanel();
 		annoPanel.add(addAnnotationButton);
@@ -359,9 +345,7 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 			JTextArea currentTextArea = getSelectedTextArea();
 			for (AnnotationAdapterWrapper annotation : annotations) {
 				if (annotation.toString().equals(e.getActionCommand())) {
-					currentTextArea.insert(annotation.getPrototypeString(),
-						currentTextArea.getCaretPosition());
-					currentTextArea.setCaretPosition(currentTextArea.getCaretPosition() - 1);
+					insertAnnotation(currentTextArea, annotation);
 				}
 			}
 		};
@@ -381,6 +365,11 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		repeatableField.addMouseListener(new PopupListener());
 
 		return panel;
+	}
+
+	private void insertAnnotation(JTextArea textArea, AnnotationAdapterWrapper annotation) {
+		textArea.insert(annotation.getPrototypeString(), textArea.getCaretPosition());
+		textArea.setCaretPosition(textArea.getCaretPosition() - 1);
 	}
 
 	private void installUndoRedo(JTextComponent textComponent) {
@@ -525,6 +514,10 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 
 		public String getPrototypeString() {
 			return handler.getPrototypeString();
+		}
+
+		public String getPrototypeString(String contained) {
+			return handler.getPrototypeString(contained);
 		}
 	}
 }

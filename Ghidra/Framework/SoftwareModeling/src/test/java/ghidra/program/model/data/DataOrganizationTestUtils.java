@@ -17,7 +17,7 @@ package ghidra.program.model.data;
 
 /**
  * <code>DataOrganizationTestUtils</code> provides various methods for modifying
- * a DataOrganization to reflect a specific processor/compiler spec.  This can be used 
+ * a DataOrganization to reflect a specific processor/compiler spec.  This can be used
  * when only the DataOrganization is needed and not the Language/CompilerSpec.
  */
 public class DataOrganizationTestUtils {
@@ -58,6 +58,37 @@ public class DataOrganizationTestUtils {
 	}
 
 	/**
+	 * Initialize data organization to reflect x86gcc.cspec specification
+	 * @param dataOrg data organization
+	 */
+	public static void initDataOrganizationGcc32BitX86(DataOrganizationImpl dataOrg) {
+
+		dataOrg.setBigEndian(false);
+
+		dataOrg.setAbsoluteMaxAlignment(0);
+		dataOrg.setMachineAlignment(2);
+		dataOrg.setDefaultAlignment(1);
+		dataOrg.setDefaultPointerAlignment(4);
+		dataOrg.setPointerSize(4);
+		dataOrg.setWideCharSize(4);
+		dataOrg.setShortSize(2);
+		dataOrg.setIntegerSize(4);
+		dataOrg.setLongSize(4);
+		dataOrg.setLongLongSize(8);
+		dataOrg.setFloatSize(4);
+		dataOrg.setDoubleSize(8);
+		dataOrg.setLongDoubleSize(16);
+		dataOrg.setSizeAlignment(1, 1);
+		dataOrg.setSizeAlignment(2, 2);
+		dataOrg.setSizeAlignment(4, 4);
+		dataOrg.setSizeAlignment(8, 4);
+		dataOrg.setSizeAlignment(16, 16);
+
+		BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl(); // use defaults
+		dataOrg.setBitFieldPacking(bitFieldPacking);
+	}
+
+	/**
 	 * Initialize data organization to reflect x86-64-gcc.cspec specification
 	 * @param dataOrg data organization
 	 */
@@ -82,6 +113,7 @@ public class DataOrganizationTestUtils {
 		dataOrg.setSizeAlignment(2, 2);
 		dataOrg.setSizeAlignment(4, 4);
 		dataOrg.setSizeAlignment(8, 8);
+		dataOrg.setSizeAlignment(16, 16);
 
 		BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl(); // use defaults
 		dataOrg.setBitFieldPacking(bitFieldPacking);

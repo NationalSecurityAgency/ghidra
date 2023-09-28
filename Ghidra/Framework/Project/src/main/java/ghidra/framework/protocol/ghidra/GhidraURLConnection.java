@@ -19,7 +19,7 @@ import java.io.*;
 import java.net.*;
 
 import ghidra.framework.client.*;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.ProjectData;
 import ghidra.util.exception.AssertException;
 
@@ -69,38 +69,6 @@ public class GhidraURLConnection extends URLConnection {
 		}
 	}
 
-	// TODO: consider implementing request and response headers
-
-//	/**
-//	 * Ghidra Status-Code 200: OK.
-//	 */
-//	public static final int GHIDRA_OK = 200;
-//
-//	/**
-//	 * Ghidra Status-Code 401: Unauthorized.
-//	 * This response code includes a variety of connection errors
-//	 * which are reported/logged by the Ghidra Server support code.
-//	 */
-//	public static final int GHIDRA_UNAUTHORIZED = 401;
-//
-//	/**
-//	 * Ghidra Status-Code 404: Not Found.
-//	 */
-//	public static final int GHIDRA_NOT_FOUND = 404;
-//
-//	/**
-//	 * Ghidra Status-Code 423: Locked
-//	 * Caused by attempt to open local project data with write-access when project is
-//	 * already opened and locked.
-//	 */
-//	public static final int GHIDRA_LOCKED = 423;
-//
-//	/**
-//	 * Ghidra Status-Code 503: Unavailable
-//	 * Caused by other connection failure
-//	 */
-//	public static final int GHIDRA_UNAVAILABLE = 503;
-
 	/**
 	 * Ghidra content type - domain folder/file wrapped within GhidraURLWrappedContent object.
 	 * @see GhidraURLWrappedContent
@@ -117,7 +85,7 @@ public class GhidraURLConnection extends URLConnection {
 
 	private GhidraProtocolConnector protocolConnector;
 
-	private ProjectFileManager projectData;
+	private DefaultProjectData projectData;
 	private Object refObject;
 
 	private boolean readOnly = true;
@@ -270,12 +238,17 @@ public class GhidraURLConnection extends URLConnection {
 	}
 
 	/**
-	 * If URL connects and corresponds to a valid repository, this method
+	 * If URL connects and corresponds to a valid repository or local project, this method
 	 * may be used to obtain the associated ProjectData object.  The caller is
-	 * responsible for closing the returned project data when no longer in-use,
-	 * failure to do so may prevent release of repository handle to server.
-	 * Only a single call to this method is permitted.
-	 * @return transient project data or null if unavailable
+	 * responsible for properly {@link ProjectData#close() closing} the returned project data 
+	 * instance when no longer in-use, failure to do so may prevent release of repository handle 
+	 * to server until process exits.  It is important that {@link ProjectData#close()} is
+	 * invoked once, and only once, per call to this method to ensure project "use" tracking 
+	 * is properly maintained.  Improperly invoking the close method on a shared transient 
+	 * {@link ProjectData} instance may cause the underlying storage to be prematurely
+	 * disposed. 
+	 * 
+	 * @return project data which corresponds to this connection or null if unavailable
 	 * @throws IOException if an IO error occurs
 	 */
 	public ProjectData getProjectData() throws IOException {

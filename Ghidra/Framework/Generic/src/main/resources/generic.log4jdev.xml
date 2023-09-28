@@ -44,6 +44,7 @@
 		<logger name="ghidra.framework" level="DEBUG"/>
 		<logger name="ghidra.graph" level="DEBUG" />
 		
+		
 		<!-- 
 			Turn off debug for specific project classes.
 			Leave ghidra.framework.project at DEBUG for tests; specific classes are higher to
@@ -52,14 +53,16 @@
 		<logger name="ghidra.framework.project" level="DEBUG"/>
 		<logger name="ghidra.framework.project.DefaultProject" level="WARN"/>
 		<logger name="ghidra.framework.project.DefaultProjectManager" level="INFO"/>
-		
+				
 		<logger name="functioncalls" level="DEBUG" />
 		<logger name="generic.random" level="WARN"/>
 		<logger name="ghidra.app.plugin.core.progmgr.ProgramManagerPlugin" level="WARN"/>
 		<logger name="ghidra.net" level="WARN"/>		
-		<logger name="ghidra.app.plugin.core.misc.RecoverySnapshotMgrPlugin" level="INFO"/>
+		<logger name="ghidra.app.plugin.core.misc.RecoverySnapshotMgrPlugin" level="INFO"/>		
+		<logger name="ghidra.framework.project.extensions" level="DEBUG" />
 		<logger name="ghidra.framework.store.local" level="INFO"/>				
-		<logger name="ghidra.pcodeCPort.slgh_compile" level="INFO"/>		
+		<logger name="ghidra.pcodeCPort.slgh_compile" level="INFO"/>	
+		<logger name="ghidra.plugins" level="INFO"/>			
 		<logger name="ghidra.program.database" level="DEBUG" />
 		<logger name="ghidra.program.model.lang.xml" level="DEBUG"/>		
 		<logger name="ghidra.app.plugin.assembler" level="DEBUG" />		
@@ -73,11 +76,11 @@
 		<logger name="ghidra.app.util.opinion" level="DEBUG" />
 		<logger name="ghidra.util.classfinder" level="DEBUG" />			
 		<logger name="ghidra.util.task" level="DEBUG" />		
-		<logger name="org.jungrapht.visualization" level="WARN" />
-		<logger name="org.jungrapht.visualization.DefaultVisualizationServer" level="DEBUG" />
+		<logger name="org.jungrapht.visualization" level="WARN" /> 
+		<logger name="org.jungrapht.visualization.DefaultVisualizationServer" level="DEBUG" /> 
 
 		<Root level="ALL">
-			<AppenderRef ref="console" level="DEBUG"/>
+			<AppenderRef ref="console" level="DEBUG"/> 
 			<AppenderRef ref="detail" level="DEBUG"/> 
 			<AppenderRef ref="script" level="DEBUG"/> 
 			<AppenderRef ref="logPanel" level="INFO"/> 

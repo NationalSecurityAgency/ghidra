@@ -109,7 +109,7 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 	}
 
 	void setGoToService(GoToService goToService) {
-		bookmarkTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		bookmarkTable.installNavigation(tool);
 	}
 
 	private JPanel createFilterFieldPanel() {

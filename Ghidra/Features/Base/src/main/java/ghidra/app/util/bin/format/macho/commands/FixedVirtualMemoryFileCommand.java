@@ -72,32 +72,19 @@ public class FixedVirtualMemoryFileCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
-		if (isBinary) {
-			try {
-				createFragment(api, baseAddress, parentModule);
-			}
-			catch (Exception e) {
-				log.appendException(e);
-			}
+		try {
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
+
 			Address addr = baseAddress.getNewAddress(getStartIndex());
-			try {
-				api.createData(addr, toDataType());
-			}
-			catch (Exception e) {
-				log.appendMsg("Unable to create " + getCommandName() + " - " + e.getMessage());
-			}
-			try {
-				int strLen = getCommandSize() - name.getOffset();
-				Address strAddr = addr.add(name.getOffset());
-				api.createAsciiString(strAddr, strLen);
-			}
-			catch (Exception e) {
-				log.appendMsg("Unable to create load command string for " + getCommandName() +
-					" - " + e.getMessage());
-			}
+			int strLen = getCommandSize() - name.getOffset();
+			Address strAddr = addr.add(name.getOffset());
+			api.createAsciiString(strAddr, strLen);
+		}
+		catch (Exception e) {
+			log.appendMsg("Unable to create " + getCommandName());
+
 		}
 	}
 }

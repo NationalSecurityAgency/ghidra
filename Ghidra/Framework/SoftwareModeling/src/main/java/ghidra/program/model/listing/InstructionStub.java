@@ -147,17 +147,22 @@ public class InstructionStub implements Instruction {
 	}
 
 	@Override
-	public boolean isSuccessor(CodeUnit codeUnit) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public int getLength() {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
+	public int getParsedLength() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public byte[] getBytes() throws MemoryAccessException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public byte[] getParsedBytes() throws MemoryAccessException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -455,6 +460,16 @@ public class InstructionStub implements Instruction {
 
 	@Override
 	public FlowOverride getFlowOverride() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void setLengthOverride(int length) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isLengthOverridden() {
 		throw new UnsupportedOperationException();
 	}
 

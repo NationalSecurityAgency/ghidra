@@ -82,7 +82,7 @@ public class DelegateGadpClientTargetObject
 				}
 				if (!Arrays.equals(paramClasses, method.getParameterTypes())) {
 					throw new AssertionError("@" + annotationType.getSimpleName() +
-						" methods must have typed parameters: " + paramClasses);
+						" methods must have typed parameters: " + Arrays.toString(paramClasses));
 				}
 				MethodHandle handle;
 				try {

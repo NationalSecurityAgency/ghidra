@@ -109,8 +109,9 @@ public class LoadCommandFactory {
 			case LC_RPATH:
 				return new RunPathCommand(reader);
 			case LC_CODE_SIGNATURE:
+				return new CodeSignatureCommand(reader,
+					getLinkerLoadCommandReader(reader, header, splitDyldCache));
 			case LC_SEGMENT_SPLIT_INFO:
-			case LC_DATA_IN_CODE:
 			case LC_OPTIMIZATION_HINT:
 			case LC_DYLIB_CODE_SIGN_DRS:
 				return new LinkEditDataCommand(reader,
@@ -134,6 +135,9 @@ public class LoadCommandFactory {
 					getLinkerLoadCommandReader(reader, header, splitDyldCache));
 			case LC_MAIN:
 				return new EntryPointCommand(reader);
+			case LC_DATA_IN_CODE:
+				return new DataInCodeCommand(reader,
+					getLinkerLoadCommandReader(reader, header, splitDyldCache));
 			case LC_SOURCE_VERSION:
 				return new SourceVersionCommand(reader);
 			case LC_LAZY_LOAD_DYLIB:

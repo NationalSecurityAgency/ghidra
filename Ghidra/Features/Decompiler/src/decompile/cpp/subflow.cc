@@ -1839,7 +1839,7 @@ Datatype *SplitDatatype::getComponent(Datatype *ct,int4 offset,bool &isHole)
 {
   isHole = false;
   Datatype *curType = ct;
-  uintb curOff = offset;
+  int8 curOff = offset;
   do {
     curType = curType->getSubType(curOff,&curOff);
     if (curType == (Datatype *)0) {
@@ -2234,19 +2234,17 @@ void SplitDatatype::buildPointers(Varnode *rootVn,TypePointer *ptrType,int4 base
   Datatype *baseType = ptrType->getPtrTo();
   for(int4 i=0;i<dataTypePieces.size();++i) {
     Datatype *matchType = isInput ? dataTypePieces[i].inType : dataTypePieces[i].outType;
-    int4 byteOffset = baseOffset + dataTypePieces[i].offset;
+    int8 curOff = baseOffset + dataTypePieces[i].offset;
     Datatype *tmpType = baseType;
-    uintb curOff = byteOffset;
     Varnode *inPtr = rootVn;
     do {
-      uintb newOff;
+      int8 newOff;
       PcodeOp *newOp;
       Datatype *newType;
-      if (curOff >= tmpType->getSize()) {	// An offset bigger than current data-type indicates an array
+      if (curOff < 0 || curOff >= tmpType->getSize()) {	// An offset not within the data-type indicates an array
 	newType = tmpType;			// The new data-type will be the same as current data-type
-	intb sNewOff = (intb)curOff % tmpType->getSize();	// But new offset will be old offset modulo data-type size
-	newOff = (sNewOff < 0) ? (sNewOff + tmpType->getSize()) : sNewOff;
-
+	newOff = curOff % tmpType->getSize();	// But new offset will be old offset modulo data-type size
+	newOff = (newOff < 0) ? (newOff + tmpType->getSize()) : newOff;
       }
       else {
 	newType = tmpType->getSubType(curOff, &newOff);
@@ -2257,7 +2255,7 @@ void SplitDatatype::buildPointers(Varnode *rootVn,TypePointer *ptrType,int4 base
 	}
       }
       if (tmpType == newType || tmpType->getMetatype() == TYPE_ARRAY) {
-	int4 finalOffset = (int4)curOff - (int4)newOff;
+	int8 finalOffset = curOff - newOff;
 	int4 sz = newType->getSize();		// Element size in bytes
 	finalOffset = finalOffset / sz;		// Number of elements
 	sz = AddrSpace::byteToAddressInt(sz, ptrType->getWordSize());
@@ -2271,7 +2269,7 @@ void SplitDatatype::buildPointers(Varnode *rootVn,TypePointer *ptrType,int4 base
 	indexVn->updateType(indexType, false, false);
       }
       else {
-	int4 finalOffset = AddrSpace::byteToAddressInt((int4)curOff - (int4)newOff,ptrType->getWordSize());
+	int8 finalOffset = AddrSpace::byteToAddressInt(curOff - newOff,ptrType->getWordSize());
 	newOp = data.newOp(2,followOp->getAddr());
 	data.opSetOpcode(newOp, CPUI_PTRSUB);
 	data.opSetInput(newOp, inPtr, 0);

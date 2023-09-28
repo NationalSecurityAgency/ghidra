@@ -59,17 +59,14 @@ public class DynamicLinkerCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
 			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
 		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address address = baseAddress.getNewAddress(getStartIndex());
-				api.createData(address, toDataType());
-				int length = getCommandSize() - name.getOffset();
-				api.createAsciiString(address.add(name.getOffset()), length);
-			}
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
+
+			Address address = baseAddress.getNewAddress(getStartIndex());
+			int length = getCommandSize() - name.getOffset();
+			api.createAsciiString(address.add(name.getOffset()), length);
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create " + getCommandName());

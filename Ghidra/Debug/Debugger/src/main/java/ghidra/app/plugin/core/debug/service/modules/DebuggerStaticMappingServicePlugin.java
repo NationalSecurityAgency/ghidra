@@ -970,7 +970,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		Set<Program> result = new HashSet<>();
 		for (URL url : urls) {
 			try {
-				Program program = ProgramURLUtils.openHackedUpGhidraURL(programManager,
+				Program program = ProgramURLUtils.openDomainFileFromOpenProject(programManager,
 					tool.getProject(), url, ProgramManager.OPEN_VISIBLE);
 				if (program == null) {
 					failures.add(new FileNotFoundException(url.toString()));

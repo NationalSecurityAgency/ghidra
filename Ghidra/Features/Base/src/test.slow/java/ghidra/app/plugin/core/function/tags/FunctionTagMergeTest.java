@@ -210,36 +210,18 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagComment(program, TAG_NAME_A, "comment C");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagComment(program, TAG_NAME_A, "comment C");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					editTagComment(program, TAG_NAME_A, "comment B");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagComment(program, TAG_NAME_A, "comment B");
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "comment A");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "comment A");
 			}
 		});
 
@@ -302,36 +284,18 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					deleteTag(program, TAG_NAME_A);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				deleteTag(program, TAG_NAME_A);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					deleteTag(program, TAG_NAME_A);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				deleteTag(program, TAG_NAME_A);
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
 			}
 		});
 
@@ -356,37 +320,19 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					addTagToFunction(TAG_NAME_A, program, "100299e");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				addTagToFunction(TAG_NAME_A, program, "100299e");
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-					addTagToFunction(TAG_NAME_A, program, "100194b");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
+				addTagToFunction(TAG_NAME_A, program, "100194b");
 			}
 		});
 
@@ -418,37 +364,19 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					addTagToFunction(TAG_NAME_A, program, "100194b");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				addTagToFunction(TAG_NAME_A, program, "100194b");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					addTagToFunction(TAG_NAME_B, program, "100299e");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				addTagToFunction(TAG_NAME_B, program, "100299e");
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-					tagManager.createFunctionTag(TAG_NAME_B, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
+				tagManager.createFunctionTag(TAG_NAME_B, "");
 			}
 		});
 
@@ -477,37 +405,19 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					addTagToFunction(TAG_NAME_A, program, "100194b");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				addTagToFunction(TAG_NAME_A, program, "100194b");
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					addTagToFunction(TAG_NAME_B, program, "100194b");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				addTagToFunction(TAG_NAME_B, program, "100194b");
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-					tagManager.createFunctionTag(TAG_NAME_B, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
+				tagManager.createFunctionTag(TAG_NAME_B, "");
 			}
 		});
 
@@ -540,40 +450,21 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
-					editTagName(program, TAG_NAME_B, TAG_NAME_B_LATEST);
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
+				editTagName(program, TAG_NAME_B, TAG_NAME_B_LATEST);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
-					editTagName(program, TAG_NAME_B, TAG_NAME_B_MY);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
+				editTagName(program, TAG_NAME_B, TAG_NAME_B_MY);
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-					tagManager.createFunctionTag(TAG_NAME_B, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
+				tagManager.createFunctionTag(TAG_NAME_B, "");
 			}
 		});
 
@@ -608,40 +499,22 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
-					deleteTag(program, TAG_NAME_B);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
+				deleteTag(program, TAG_NAME_B);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
-					addTagToFunction(TAG_NAME_B, program, "100194b");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
+				addTagToFunction(TAG_NAME_B, program, "100194b");
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-					tagManager.createFunctionTag(TAG_NAME_B, "");
-					tagManager.createFunctionTag(TAG_NAME_C, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
+				tagManager.createFunctionTag(TAG_NAME_B, "");
+				tagManager.createFunctionTag(TAG_NAME_C, "");
 			}
 		});
 
@@ -671,42 +544,24 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
-					editTagName(program, TAG_NAME_B, TAG_NAME_B_LATEST);
-					editTagName(program, TAG_NAME_C, TAG_NAME_C_LATEST);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
+				editTagName(program, TAG_NAME_B, TAG_NAME_B_LATEST);
+				editTagName(program, TAG_NAME_C, TAG_NAME_C_LATEST);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
-					editTagName(program, TAG_NAME_B, TAG_NAME_B_MY);
-					editTagName(program, TAG_NAME_C, TAG_NAME_C_MY);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
+				editTagName(program, TAG_NAME_B, TAG_NAME_B_MY);
+				editTagName(program, TAG_NAME_C, TAG_NAME_C_MY);
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-					tagManager.createFunctionTag(TAG_NAME_B, "");
-					tagManager.createFunctionTag(TAG_NAME_C, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
+				tagManager.createFunctionTag(TAG_NAME_B, "");
+				tagManager.createFunctionTag(TAG_NAME_C, "");
 			}
 		});
 
@@ -738,42 +593,24 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					deleteTag(program, TAG_NAME_A);
-					deleteTag(program, TAG_NAME_B);
-					deleteTag(program, TAG_NAME_C);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				deleteTag(program, TAG_NAME_A);
+				deleteTag(program, TAG_NAME_B);
+				deleteTag(program, TAG_NAME_C);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					addTagToFunction(TAG_NAME_A, program, "100194b");
-					addTagToFunction(TAG_NAME_B, program, "100194b");
-					addTagToFunction(TAG_NAME_C, program, "100194b");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				addTagToFunction(TAG_NAME_A, program, "100194b");
+				addTagToFunction(TAG_NAME_B, program, "100194b");
+				addTagToFunction(TAG_NAME_C, program, "100194b");
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-					tagManager.createFunctionTag(TAG_NAME_B, "");
-					tagManager.createFunctionTag(TAG_NAME_C, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
+				tagManager.createFunctionTag(TAG_NAME_B, "");
+				tagManager.createFunctionTag(TAG_NAME_C, "");
 			}
 		});
 
@@ -808,36 +645,18 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
 			}
 		});
 
@@ -865,36 +684,18 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_MY);
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
 			}
 		});
 
@@ -927,36 +728,18 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					deleteTag(program, TAG_NAME_A);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				deleteTag(program, TAG_NAME_A);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					addTagToFunction(TAG_NAME_A, program, "100194b");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				addTagToFunction(TAG_NAME_A, program, "100194b");
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
 			}
 		});
 
@@ -990,36 +773,18 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					deleteTag(program, TAG_NAME_A);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				deleteTag(program, TAG_NAME_A);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					addTagToFunction(TAG_NAME_A, program, "100299e");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				addTagToFunction(TAG_NAME_A, program, "100299e");
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
 			}
 		});
 
@@ -1047,36 +812,18 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					deleteTag(program, TAG_NAME_A);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				deleteTag(program, TAG_NAME_A);
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
 			}
 		});
 
@@ -1104,36 +851,18 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 			@Override
 			public void modifyLatest(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("latest");
-				try {
-					editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				editTagName(program, TAG_NAME_A, TAG_NAME_A_LATEST);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("my");
-				try {
-					deleteTag(program, TAG_NAME_A);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				deleteTag(program, TAG_NAME_A);
 			}
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int transactionID = program.startTransaction("original");
-				try {
-					FunctionTagManager tagManager = getTagManager(program);
-					tagManager.createFunctionTag(TAG_NAME_A, "");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
+				FunctionTagManager tagManager = getTagManager(program);
+				tagManager.createFunctionTag(TAG_NAME_A, "");
 			}
 		});
 

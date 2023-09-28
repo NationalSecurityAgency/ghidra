@@ -106,8 +106,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
@@ -117,21 +115,14 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					refMgr.addExternalReference(addr(program, "0x1001504"), "advapi32.dll",
 						"oranges", addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
 						RefType.DATA);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
@@ -141,14 +132,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					refMgr.addExternalReference(addr(program, "0x1001504"), "advapi32.dll",
 						"oranges", addr(program, "0x01234567"), SourceType.USER_DEFINED, 0,
 						RefType.DATA);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -174,8 +160,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
@@ -184,21 +168,14 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x1006674"), "advapi32.dll",
 						"oranges", null, SourceType.USER_DEFINED, 0, RefType.DATA);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ReferenceManager refMgr = program.getReferenceManager();
 					Reference[] refs;
@@ -207,14 +184,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					assertEquals(0, refs.length);
 					refMgr.addExternalReference(addr(program, "0x1006674"), "advapi32.dll",
 						"apples", null, SourceType.USER_DEFINED, 0, RefType.DATA);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -307,8 +279,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -319,20 +289,14 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -343,13 +307,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -376,8 +336,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -388,20 +346,14 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -412,13 +364,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -446,8 +394,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -458,13 +404,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -502,8 +444,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -514,13 +454,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -548,8 +484,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -560,14 +494,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -576,8 +505,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -588,13 +515,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -626,8 +549,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -638,14 +559,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -654,8 +570,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, "0100199b"),
@@ -666,13 +580,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, "0100199b"));
@@ -705,8 +615,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -717,21 +625,15 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -741,20 +643,14 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					assertNotNull(thunkFunction);
 					assertNotNull(referredToFunction);
 					thunkFunction.setThunkedFunction(referredToFunction);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -764,13 +660,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					assertNotNull(thunkFunction);
 					assertNotNull(referredToFunction);
 					thunkFunction.setThunkedFunction(referredToFunction);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -797,8 +689,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -809,21 +699,15 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -833,13 +717,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -871,8 +751,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body =
@@ -883,13 +761,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
@@ -901,8 +775,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					FunctionManager functionManager = program.getFunctionManager();
 					Function thunkFunction =
@@ -912,13 +784,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
 						addr(program, THUNK_A_ALTERNATE_END));
 					thunkFunction.setBody(body);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -945,8 +813,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -957,13 +823,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk function in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -972,8 +834,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					AddressSet body = new AddressSet(addr(program, THUNK_A_ENTRY),
@@ -984,13 +844,9 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create non-thunk function in Private program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 				Function function =
 					program.getFunctionManager().getFunctionAt(addr(program, THUNK_A_ENTRY));
@@ -1022,8 +878,6 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Change the Latest program which will also be used for Result program.
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					// Create a thunk to the function with no params.
 					ExternalLocation extFun1 = program.getExternalManager().addExtFunction(
@@ -1036,21 +890,15 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					ExternalLocation extFunx = program.getExternalManager().addExtFunction(
 						"EXT_LIB", "EXT_FUNX", null, SourceType.IMPORTED);
@@ -1066,15 +914,10 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 					if (!created) {
 						Assert.fail("Couldn't create thunk in Latest program.");
 					}
-
-					commit = true;
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

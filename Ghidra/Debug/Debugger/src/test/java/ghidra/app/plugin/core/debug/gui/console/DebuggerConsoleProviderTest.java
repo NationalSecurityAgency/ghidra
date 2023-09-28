@@ -15,12 +15,12 @@
  */
 package ghidra.app.plugin.core.debug.gui.console;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -36,25 +36,25 @@ public class DebuggerConsoleProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		consoleProvider = waitForComponentProvider(DebuggerConsoleProvider.class);
 	}
 
-	public static class TestConsoleActionContext extends ActionContext {
+	public static class TestConsoleActionContext extends DefaultActionContext {
 
 	}
 
 	@Test
 	public void testActions() throws Exception {
 		consolePlugin.addResolutionAction(new ActionBuilder("Add", name.getMethodName())
-				.toolBarIcon(DebuggerResources.ICON_ADD)
-				.description("Add")
-				.withContext(TestConsoleActionContext.class)
-				.onAction(ctx -> Msg.info(this, "Add clicked"))
-				.build());
+			.toolBarIcon(DebuggerResources.ICON_ADD)
+			.description("Add")
+			.withContext(TestConsoleActionContext.class)
+			.onAction(ctx -> Msg.info(this, "Add clicked"))
+			.build());
 		consolePlugin.addResolutionAction(new ActionBuilder("Delete", name.getMethodName())
-				.popupMenuIcon(DebuggerResources.ICON_DELETE)
-				.popupMenuPath("Delete")
-				.description("Delete")
-				.withContext(TestConsoleActionContext.class)
-				.onAction(ctx -> Msg.info(this, "Delete clicked"))
-				.build());
+			.popupMenuIcon(DebuggerResources.ICON_DELETE)
+			.popupMenuPath("Delete")
+			.description("Delete")
+			.withContext(TestConsoleActionContext.class)
+			.onAction(ctx -> Msg.info(this, "Delete clicked"))
+			.build());
 
 		consolePlugin.log(DebuggerResources.ICON_DEBUGGER, "<html><b>Test message</b></html>",
 			new TestConsoleActionContext());

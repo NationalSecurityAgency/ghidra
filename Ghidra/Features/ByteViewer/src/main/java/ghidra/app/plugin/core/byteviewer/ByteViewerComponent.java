@@ -70,7 +70,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param vpanel the byte viewer panel that this component lives in
 	 * @param layoutModel the layout model for this component
 	 * @param model data format model that knows how the data should be displayed
@@ -79,7 +79,8 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	 */
 	protected ByteViewerComponent(ByteViewerPanel vpanel, ByteViewerLayoutModel layoutModel,
 			DataFormatModel model, int bytesPerLine, FontMetrics fm) {
-		super(layoutModel);
+		super(layoutModel, "Byte Viewer");
+		setFieldDescriptionProvider((l, f) -> getFieldDescription(l, f));
 
 		this.panel = vpanel;
 		this.model = model;
@@ -92,6 +93,20 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 		// specialized line coloring
 		setBackgroundColorModel(new ByteViewerBackgroundColorModel());
+	}
+
+	private String getFieldDescription(FieldLocation fieldLoc, Field field) {
+		if (field == null) {
+			return null;
+		}
+		ByteBlockInfo info = indexMap.getBlockInfo(fieldLoc.getIndex(), fieldLoc.getFieldNum());
+		if (info != null) {
+			String modelName = model.getName();
+			return modelName + " format at " +
+				info.getBlock().getLocationRepresentation(info.getOffset()) + ", value = " +
+				field.getText();
+		}
+		return null;
 	}
 
 	@Override
@@ -353,7 +368,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color for the component that has focus.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setCurrentCursorColor(Color c) {
@@ -363,7 +378,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the background color for the line containing the cursor.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setCurrentCursorLineColor(Color c) {
@@ -372,7 +387,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color for showing gaps in indexes.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setSeparatorColor(Color c) {
@@ -422,7 +437,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the new group size
-	 * 
+	 *
 	 * @param groupSize the group size
 	 * @throws UnsupportedOperationException if model for this view does not support groups
 	 */
@@ -468,8 +483,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			else {
 				++endFieldOffset;
 			}
-			fsel.addRange(
-				new FieldLocation(startLoc.getIndex(), startLoc.getFieldNum(), 0, 0),
+			fsel.addRange(new FieldLocation(startLoc.getIndex(), startLoc.getFieldNum(), 0, 0),
 				new FieldLocation(endIndex, endFieldOffset, 0, 0));
 		}
 		return fsel;
@@ -486,7 +500,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the cursor location; called in response to a location change event
-	 * 
+	 *
 	 * @param block the block
 	 * @param index the index
 	 * @param characterOffset the offset into the UI field
@@ -646,7 +660,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the edit mode according to the given param if the model for this view supports editing.
-	 * 
+	 *
 	 * @param editMode true means to enable editing, and change the cursor color.
 	 */
 	void setEditMode(boolean editMode) {
@@ -724,7 +738,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (e.getButton() == MouseEvent.BUTTON3) {
-					// hack to make sure that a right-clicked component becomes the active 
+					// hack to make sure that a right-clicked component becomes the active
 					// component
 					panel.setCurrentView(ByteViewerComponent.this);
 				}
@@ -844,7 +858,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	}
 
 	/**
-	 * Translates a screen/view selection into a byte block model selection 
+	 * Translates a screen/view selection into a byte block model selection
 	 * @param fieldSelection a {@link FieldPanel} selection
 	 * @return a {@link ByteBlockSelection}
 	 */

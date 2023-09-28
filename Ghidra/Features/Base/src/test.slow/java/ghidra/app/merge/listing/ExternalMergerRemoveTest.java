@@ -77,26 +77,17 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", null, SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeExternalLabel(program, "Modify Latest Program", "user32.dll", "Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes
@@ -118,26 +109,17 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", null, SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeExternalLabel(program, "Modify My Program", "user32.dll", "Blue");
@@ -159,26 +141,17 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", null, SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeExternalLabel(program, "Modify Latest Program", "user32.dll", "Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeExternalLabel(program, "Modify My Program", "user32.dll", "Blue");
@@ -200,27 +173,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeDataTypeFromExternalLabel(program, "Modify Latest Program", "user32.dll",
 					"Blue", "77db1020");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes
@@ -247,26 +211,17 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeDataTypeFromExternalLabel(program, "Modify My Program", "user32.dll", "Blue",
@@ -294,27 +249,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeDataTypeFromExternalLabel(program, "Modify Latest Program", "user32.dll",
 					"Blue", "77db1020");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeDataTypeFromExternalLabel(program, "Modify My Program", "user32.dll", "Blue",
@@ -343,27 +289,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeAddressFromExternalLabel(program, "Modify Latest Program", "user32.dll",
 					"Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes
@@ -391,26 +328,17 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeAddressFromExternalLabel(program, "Modify My Program", "user32.dll", "Blue");
@@ -438,27 +366,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeAddressFromExternalLabel(program, "Modify Latest Program", "user32.dll",
 					"Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeAddressFromExternalLabel(program, "Modify My Program", "user32.dll", "Blue");
@@ -487,27 +406,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalFunction(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeExternalFunctionLocation(program, "Modify Latest Program", "user32.dll",
 					"Blue", "77db1020");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes
@@ -532,26 +442,17 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalFunction(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeExternalFunctionLocation(program, "Modify My Program", "user32.dll", "Blue",
@@ -584,27 +485,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalFunction(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeExternalFunctionLocation(program, "Modify Latest Program", "user32.dll",
 					"Blue", "77db1020");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeExternalFunctionLocation(program, "Modify My Program", "user32.dll", "Blue",
@@ -631,45 +523,30 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeDataTypeFromExternalLabel(program, "Modify Latest Program", "user32.dll",
 					"Blue", "77db1020");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// change DataType
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
 						externalManager.getUniqueExternalLocation("user32.dll", "Blue");
 					assertNotNull(externalLocation);
 					externalLocation.setDataType(new FloatDataType());// Change data type; not its size.
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -704,45 +581,30 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeDataTypeFromExternalLabel(program, "Modify Latest Program", "user32.dll",
 					"Blue", "77db1020");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// change DataType
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
 						externalManager.getUniqueExternalLocation("user32.dll", "Blue");
 					assertNotNull(externalLocation);
 					externalLocation.setDataType(new FloatDataType());// Change data type; not its size.
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -778,36 +640,24 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change DataType
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
 						externalManager.getUniqueExternalLocation("user32.dll", "Blue");
 					assertNotNull(externalLocation);
 					externalLocation.setDataType(new FloatDataType());// Change data type; not its size.
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -820,9 +670,6 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 				assertTrue(dataType.isEquivalent(new FloatDataType()));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeDataTypeFromExternalLabel(program, "Modify Latest Program", "user32.dll",
@@ -852,36 +699,24 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change DataType
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
 						externalManager.getUniqueExternalLocation("user32.dll", "Blue");
 					assertNotNull(externalLocation);
 					externalLocation.setDataType(new FloatDataType());// Change data type; not its size.
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -894,9 +729,6 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 				assertTrue(dataType.isEquivalent(new FloatDataType()));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeDataTypeFromExternalLabel(program, "Modify Latest Program", "user32.dll",
@@ -925,23 +757,15 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change DataType
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -949,13 +773,9 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 					assertNotNull(externalLocation);
 					externalLocation.setLocation("Red", externalLocation.getAddress(),
 						externalLocation.getSource());
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -968,9 +788,6 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 				assertTrue(dataType.isEquivalent(new DWordDataType()));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeExternalLabel(program, "Modify Latest Program", "user32.dll", "Blue");
@@ -1001,23 +818,15 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// change DataType
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1025,13 +834,9 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 					assertNotNull(externalLocation);
 					externalLocation.setLocation("Red", externalLocation.getAddress(),
 						externalLocation.getSource());
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -1044,9 +849,6 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 				assertTrue(dataType.isEquivalent(new DWordDataType()));
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeExternalLabel(program, "Modify Latest Program", "user32.dll", "Blue");
@@ -1071,31 +873,20 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeExternalLabel(program, "Modify Latest Program", "user32.dll", "Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// change DataType
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1103,13 +894,9 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 					assertNotNull(externalLocation);
 					externalLocation.setLocation("Red", externalLocation.getAddress(),
 						externalLocation.getSource());
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -1141,31 +928,20 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeExternalLabel(program, "Modify Latest Program", "user32.dll", "Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// change DataType
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1173,13 +949,9 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 					assertNotNull(externalLocation);
 					externalLocation.setLocation("Red", externalLocation.getAddress(),
 						externalLocation.getSource());
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -1217,31 +989,20 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalFunction(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				changeExternalFunctionIntoExternalLabel(program,
 					new String[] { "user32.dll", "Blue" });
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1250,13 +1011,9 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 					Function function = externalLocation.getFunction();
 					assertNotNull(function);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -1289,47 +1046,30 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalFunction(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				changeExternalFunctionIntoExternalLabel(program,
 					new String[] { "user32.dll", "Blue" });
 
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Function externalLocation =
 						createExternalFunction(program, new String[] { "user32.dll", "Red" },
 							addr(program, "77db1450"), null, SourceType.USER_DEFINED);
 					assertNotNull(externalLocation);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1338,13 +1078,9 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 					Function function = externalLocation.getFunction();
 					assertNotNull(function);
 					function.setReturnType(new FloatDataType(), SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -1379,22 +1115,14 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalFunction(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1404,13 +1132,9 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 					assertNotNull(function);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
 					function.addParameter(parameter1, SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -1425,9 +1149,6 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 				checkParameterDataType(parameter, new DWordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				changeExternalFunctionIntoExternalLabel(program,
@@ -1457,22 +1178,14 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalFunction(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				ExternalManager externalManager = program.getExternalManager();
 				try {
 					ExternalLocation externalLocation =
@@ -1482,13 +1195,9 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 					assertNotNull(function);
 					Parameter parameter1 = new ParameterImpl("P1", new DWordDataType(), program);
 					function.addParameter(parameter1, SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 
 				assertTrue(externalManager.contains("user32.dll"));
@@ -1503,9 +1212,6 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 				checkParameterDataType(parameter, new DWordDataType());
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				changeExternalFunctionIntoExternalLabel(program,
@@ -1533,27 +1239,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeAddressFromExternalLabel(program, "Modify Latest Program", "user32.dll",
 					"Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				changeMemAddressForExternalLabel(program, "Modify My Program", "user32.dll", "Blue",
@@ -1584,27 +1281,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				removeAddressFromExternalLabel(program, "Modify Latest Program", "user32.dll",
 					"Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				changeMemAddressForExternalLabel(program, "Modify My Program", "user32.dll", "Blue",
@@ -1635,27 +1323,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				changeMemAddressForExternalLabel(program, "Modify My Program", "user32.dll", "Blue",
 					"77db1130");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeAddressFromExternalLabel(program, "Modify Latest Program", "user32.dll",
@@ -1686,27 +1365,18 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 
 		mtf.initialize("NotepadMergeListingTest", new OriginalProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				createExternalLabel(program, "Modify Original Program", "user32.dll", "Blue",
 					"77db1020", new DWordDataType(), SourceType.USER_DEFINED);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				changeMemAddressForExternalLabel(program, "Modify My Program", "user32.dll", "Blue",
 					"77db1130");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				removeAddressFromExternalLabel(program, "Modify Latest Program", "user32.dll",

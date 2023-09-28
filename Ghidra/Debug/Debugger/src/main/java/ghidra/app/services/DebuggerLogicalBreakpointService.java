@@ -181,8 +181,7 @@ public interface DebuggerLogicalBreakpointService {
 			BiFunction<? super Program, ? super Address, ? extends T> progFunc,
 			BiFunction<? super Trace, ? super Address, ? extends T> traceFunc) {
 		Program progOrView = loc.getProgram();
-		if (progOrView instanceof TraceProgramView) {
-			TraceProgramView view = (TraceProgramView) progOrView;
+		if (progOrView instanceof TraceProgramView view) {
 			return traceFunc.apply(view.getTrace(), addressFromLocation(loc));
 		}
 		return progFunc.apply(progOrView, addressFromLocation(loc));

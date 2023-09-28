@@ -81,9 +81,11 @@ public class ElfDefaultGotPltMarkup {
 		for (MemoryBlock gotBlock : blocks) {
 			monitor.checkCancelled();
 
-			if (!gotBlock.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
+			if (!gotBlock.getName().startsWith(ElfSectionHeaderConstants.dot_got) ||
+				!gotBlock.isInitialized()) {
 				continue;
 			}
+
 			// Assume the .got section is read_only.  This is not true, but it helps with analysis
 			gotBlock.setWrite(false);
 
@@ -399,9 +401,10 @@ public class ElfDefaultGotPltMarkup {
 		boolean imageBaseAlreadySet = elf.isPreLinked();
 
 		try {
+			int pointerSize = program.getDataTypeManager().getDataOrganization().getPointerSize();
 			Address newImageBase = null;
 			Address nextGotAddr = gotStart;
-			while (nextGotAddr.compareTo(gotEnd) <= 0) {
+			while (gotEnd.subtract(nextGotAddr) >= pointerSize) {
 
 				data = createPointer(nextGotAddr, true);
 				if (data == null) {
@@ -450,7 +453,8 @@ public class ElfDefaultGotPltMarkup {
 
 		MemoryBlock pltBlock = memory.getBlock(ElfSectionHeaderConstants.dot_plt);
 		// TODO: This is a band-aid since there are many PLT implementations and this assumes only one.
-		if (pltBlock == null || !pltBlock.isExecute() || pltBlock.getSize() <= assumedPltHeadSize) {
+		if (pltBlock == null || !pltBlock.isExecute() || !pltBlock.isInitialized() ||
+			pltBlock.getSize() <= assumedPltHeadSize) {
 			return;
 		}
 

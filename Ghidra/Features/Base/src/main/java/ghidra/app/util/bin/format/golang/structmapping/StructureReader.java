@@ -21,7 +21,7 @@ import java.io.IOException;
  * Interface used by structure mapped classes that need to manually deserialize themselves from
  * the raw data, required when the structure contains variable length fields. 
  * 
- * @param <T>
+ * @param <T> structure mapped type
  */
 public interface StructureReader<T> {
 	/**

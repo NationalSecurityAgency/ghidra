@@ -763,8 +763,8 @@ void PrintC::opSubpiece(const PcodeOp *op)
     const Varnode *vn = op->getIn(0);
     Datatype *ct = vn->getHighTypeReadFacing(op);
     if (ct->isPieceStructured()) {
-      int4 offset;
-      int4 byteOff = TypeOpSubpiece::computeByteOffsetForComposite(op);
+      int8 offset;
+      int8 byteOff = TypeOpSubpiece::computeByteOffsetForComposite(op);
       const TypeField *field = ct->findTruncation(byteOff,op->getOut()->getSize(),op,1,offset);	// Use artificial slot
       if (field != (const TypeField*)0 && offset == 0) {		// A formal structure field
 	pushOp(&object_member,op);
@@ -873,7 +873,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
   flex = isValueFlexible(in0);
 
   if (ct->getMetatype() == TYPE_STRUCT || ct->getMetatype() == TYPE_UNION) {
-    uintb suboff = in1const;	// How far into container
+    int8 suboff = (int4)in1const;	// How far into container
     if (ptrel != (TypePointerRel *)0) {
       suboff += ptrel->getPointerOffset();
       suboff &= calc_mask(ptype->getSize());
@@ -887,11 +887,11 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	return;
       }
     }
-    suboff = AddrSpace::addressToByte(suboff,ptype->getWordSize());
+    suboff = AddrSpace::addressToByteInt(suboff,ptype->getWordSize());
     string fieldname;
     Datatype *fieldtype;
     int4 fieldid;
-    int4 newoff;
+    int8 newoff;
     if (ct->getMetatype() == TYPE_UNION) {
       if (suboff != 0)
 	throw LowlevelError("PTRSUB accesses union with non-zero offset");
@@ -905,9 +905,9 @@ void PrintC::opPtrsub(const PcodeOp *op)
       fieldtype = fld->type;
     }
     else {	// TYPE_STRUCT
-      const TypeField *fld = ct->findTruncation((int4)suboff,0,op,0,newoff);
+      const TypeField *fld = ct->findTruncation(suboff,0,op,0,newoff);
       if (fld == (const TypeField*)0) {
-	if (ct->getSize() <= suboff) {
+	if (ct->getSize() <= suboff || suboff < 0) {
 	  clear();
 	  throw LowlevelError("PTRSUB out of bounds into struct");
 	}
@@ -1873,6 +1873,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
   //                       globalstruct.(arrayfield[0])
   vector<PartialSymbolEntry> stack;
   Datatype *finalcast = (Datatype *)0;
+  int8 newoff;
   
   Datatype *ct = sym->getType();
 
@@ -1889,8 +1890,9 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 	  break;	// Turns out we don't resolve to the field
       }
       const TypeField *field;
-      field = ct->findTruncation(off,sz,op,inslot,off);
+      field = ct->findTruncation(off,sz,op,inslot,newoff);
       if (field != (const TypeField *)0) {
+	off = newoff;
 	stack.emplace_back();
 	PartialSymbolEntry &entry( stack.back() );
 	entry.token = &object_member;
@@ -1920,8 +1922,9 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     }
     else if (ct->getMetatype() == TYPE_UNION) {
       const TypeField *field;
-      field = ct->findTruncation(off,sz,op,inslot,off);
+      field = ct->findTruncation(off,sz,op,inslot,newoff);
       if (field != (const TypeField*)0) {
+	off = newoff;
 	stack.emplace_back();
 	PartialSymbolEntry &entry(stack.back());
 	entry.token = &object_member;

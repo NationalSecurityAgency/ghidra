@@ -109,7 +109,8 @@ public class MachoBinaryAnalysisCommand extends FlatProgramAPI
 
 			List<LoadCommand> commands = header.getLoadCommands();
 			for (LoadCommand command : commands) {
-				command.markup(header, this, getAddress(program), true, module, monitor, messages);
+				command.markupRawBinary(header, this, getAddress(program), module, monitor,
+					messages);
 				commandAddress = commandAddress.add(command.getCommandSize());
 				if (command instanceof UnsupportedLoadCommand) {
 					bookmarkManager.setBookmark(machAddress.add(command.getStartIndex()),

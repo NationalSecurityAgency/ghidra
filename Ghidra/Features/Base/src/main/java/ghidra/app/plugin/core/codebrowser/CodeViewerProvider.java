@@ -38,6 +38,7 @@ import docking.widgets.fieldpanel.HoverHandler;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GIcon;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.actions.*;
@@ -177,13 +178,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	/**
-	 * @return true if this listing is backed by a dynamic data source (e.g., debugger)
-	 */
-	public boolean isDynamicListing() {
-		return false;
-	}
-
-	/**
 	 * TODO: Remove or rename this to something that accommodates redirecting writes, e.g., to a
 	 * debug target process, particularly for assembly, which may involve code unit modification
 	 * after a successful write, reported asynchronously :/ .
@@ -266,6 +260,10 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		return decorationPanel;
 	}
 
+	protected ListingActionContext newListingActionContext() {
+		return new CodeViewerActionContext(this);
+	}
+
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		if (program == null) {
@@ -273,7 +271,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		}
 
 		if (event == null) {
-			return new CodeViewerActionContext(this);
+			return newListingActionContext();
 		}
 
 		Object source = event.getSource();
@@ -283,7 +281,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			if (programLocation == null) {
 				return null;
 			}
-			return new CodeViewerActionContext(this);
+			return newListingActionContext();
 		}
 
 		FieldHeader headerPanel = listingPanel.getFieldHeader();

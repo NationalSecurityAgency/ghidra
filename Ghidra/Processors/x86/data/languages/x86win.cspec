@@ -19,7 +19,7 @@
 		<entry size="1" alignment="1" />
 		<entry size="2" alignment="2" />
 		<entry size="4" alignment="4" />
-		<entry size="8" alignment="4" />
+		<entry size="8" alignment="8" />
 	</size_alignment_map>
 	<bitfield_packing>
      	<use_MS_convention value="true"/>
@@ -377,4 +377,12 @@
   </pcode>
 </callfixup>
 
+<callfixup name="__RTC_CheckEsp">
+  <target name="__RTC_CheckEsp"/>
+  <pcode>
+   <body><![CDATA[
+      temp:4 = 0;
+   ]]></body>
+  </pcode>
+</callfixup>
 </compiler_spec>

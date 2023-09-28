@@ -34,8 +34,7 @@ import javax.swing.tree.TreePath;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.lang3.StringUtils;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
@@ -707,7 +706,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		plugin.fireObjectUpdated(object);
 	}
 
-	class ObjectActionContext extends ActionContext {
+	class ObjectActionContext extends DefaultActionContext {
 
 		private DebuggerObjectsProvider provider;
 
@@ -1685,7 +1684,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		TargetObject result = null;
 		try {
 			result = DebugModelConventions.findSuitable(TargetExecutionStateful.class, object)
-					.get(100, TimeUnit.MILLISECONDS);
+				.get(100, TimeUnit.MILLISECONDS);
 		}
 		catch (Exception e) {
 			// IGNORE

@@ -34,7 +34,8 @@ public @interface PlateComment {
 	 * Name of a "getter" method that's return value will be converted to a string and used
 	 * as the comment
 	 * 
-	 * @return
+	 * @return name of a 'getter' method that will return the string to use for the comment, or
+	 * if unset, the containing object's "toString()" method
 	 */
 	String value() default "";
 }

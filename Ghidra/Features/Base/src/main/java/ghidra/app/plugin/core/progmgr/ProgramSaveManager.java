@@ -81,15 +81,12 @@ class ProgramSaveManager {
 		return false;
 	}
 
-	boolean canCloseAll() {
+	boolean saveAll() {
 		Program[] programs = programMgr.getAllOpenPrograms();
 		List<Program> saveList = new ArrayList<>();
 		List<Program> lockList = new ArrayList<>();
 		try {
 			for (Program program : programs) {
-//				if (programs[i].isTemporary()) {
-//					continue;
-//				}
 				if (isOnlyToolConsumer(program)) {
 					if (!acquireSaveLock(program, "Close")) {
 						return false;
@@ -307,7 +304,7 @@ class ProgramSaveManager {
 //		String title = "Save "+currentProgram.getName();
 //		String closeItem = closingProgram ? "program" : "tool";
 //		String filename = currentProgram.getDomainFile().getPathname();
-//		StringBuffer buf = new StringBuffer(); 
+//		StringBuffer buf = new StringBuffer();
 //		buf.append("The program ("+filename+") is currently being modified by the\n");
 //		buf.append("the following actions:\n \n");
 //		ProgramDB program = (ProgramDB)currentProgram;
@@ -327,16 +324,16 @@ class ProgramSaveManager {
 //		buf.append("Do you want to abort the actions and continue to close the ");
 //		buf.append(closeItem);
 //		buf.append("?");
-//			
+//
 //		int result = OptionDialog.showOptionDialog(tool.getToolFrame(),title , buf.toString(),
 //				"Abort Actions", OptionDialog.WARNING_MESSAGE);
-//			
+//
 //		return result == OptionDialog.OPTION_ONE;
 //	}
 //	private boolean checkForSave(Program currentProgram) {
 //		DomainFile df = currentProgram.getDomainFile();
-//		
-//		String filename = df.getName();            
+//
+//		String filename = df.getName();
 //
 //		if (!df.isInProject()) {
 //			return  OptionDialog.showOptionDialog(tool.getToolFrame(),
@@ -346,7 +343,7 @@ class ProgramSaveManager {
 //					   "If you continue, your changes will be lost!",
 //					   "Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
 //		}
-//		
+//
 //		if (df.isReadOnly()) {
 //			return OptionDialog.showOptionDialog(tool.getToolFrame(),
 //					   "Program Changed",
@@ -354,9 +351,9 @@ class ProgramSaveManager {
 //					   " has been changed.  \n"+
 //					   "If you continue, your changes will be lost!",
 //					   "Continue", OptionDialog.QUESTION_MESSAGE) != OptionDialog.CANCEL_OPTION;
-//		
+//
 //		}
-//		
+//
 //
 //		int result = OptionDialog.showOptionDialog(tool.getToolFrame(),
 //				   "Save Program?",
@@ -364,7 +361,7 @@ class ProgramSaveManager {
 //				   " has changed. Do you want to save it?",
 //				   "&Save", "Do&n't Save",
 //				   OptionDialog.QUESTION_MESSAGE);
-//				 
+//
 //		if (result == OptionDialog.CANCEL_OPTION) {
 //			return false;
 //		}
@@ -526,7 +523,7 @@ class ProgramSaveManager {
 		 * @param folder new parent folder
 		 * @param newName name for domain object
 		 * @param doOverwrite true means the given name already exists and the user
-		 * wants to overwrite that existing file; false means a new file will 
+		 * wants to overwrite that existing file; false means a new file will
 		 * get created
 		 */
 		SaveAsTask(DomainObject obj, DomainFolder folder, String newName, boolean doOverwrite) {

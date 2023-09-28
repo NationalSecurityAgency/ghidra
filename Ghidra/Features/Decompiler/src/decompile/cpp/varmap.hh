@@ -218,6 +218,7 @@ class ScopeLocal : public ScopeInternal {
   void addRecommendName(Symbol *sym);	///< Convert the given symbol to a name recommendation
   void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
   void annotateRawStackPtr(void);	///< Generate placeholder PTRSUB off of stack pointer
+  void checkUnaliasedReturn(const vector<uintb> &alias);	///< Determine if return storage is mapped
 public:
   ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
   virtual ~ScopeLocal(void) {}	///< Destructor

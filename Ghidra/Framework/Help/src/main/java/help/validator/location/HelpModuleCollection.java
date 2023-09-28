@@ -20,15 +20,16 @@ import java.net.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.help.HelpSet;
 import javax.help.Map.ID;
 import javax.help.TOCView;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import help.CustomTOCView.CustomTreeItemDecorator;
 import help.HelpBuildUtils;
 import help.TOCItemProvider;
-import help.CustomTOCView.CustomTreeItemDecorator;
 import help.validator.model.*;
 
 /**
@@ -98,7 +99,10 @@ public class HelpModuleCollection implements TOCItemProvider {
 	}
 
 	private HelpModuleCollection(Collection<HelpModuleLocation> locations) {
-		helpLocations = new LinkedHashSet<>(locations);
+
+		helpLocations = locations.stream()
+				.filter(l -> l != null)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 
 		loadTOCs();
 

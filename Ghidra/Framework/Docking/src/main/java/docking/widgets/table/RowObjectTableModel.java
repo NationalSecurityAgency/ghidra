@@ -31,8 +31,8 @@ public interface RowObjectTableModel<T> extends TableModel {
 	public static TableModel unwrap(TableModel m) {
 
 		TableModel model = m;
-		while (model instanceof TableModelWrapper) {
-			model = ((TableModelWrapper<?>) model).getWrappedModel();
+		while (model instanceof WrappingTableModel) {
+			model = ((WrappingTableModel) model).getWrappedModel();
 		}
 		return model;
 	}

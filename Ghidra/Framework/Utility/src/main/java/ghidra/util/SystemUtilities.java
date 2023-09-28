@@ -91,7 +91,7 @@ public class SystemUtilities {
 		if (url.getPath().contains("/build/libs")) {
 			return true; // Source repository Gradle JavaExec task mode
 		}
-		return switch(url.getProtocol()) {
+		return switch (url.getProtocol()) {
 			case "file" -> true; // Eclipse run config mode (class files)
 			case "jar" -> false; // Release mode (jar files)
 			case "bundleresource" -> false; // GhidraDev Utility.jar access mode
@@ -100,25 +100,41 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Get the user that is running the ghidra application
+	 * Clean the specified user name to eliminate any spaces or leading domain name 
+	 * which may be present (e.g., "MyDomain\John Doe" becomes "JohnDoe").
+	 * @param name user name string to be cleaned-up
+	 * @return the clean user name
+	 */
+	public static String getCleanUserName(String name) {
+		String uname = name;
+		// Remove the spaces since some operating systems allow
+		// spaces and some do not, Java's File class doesn't
+		StringBuilder nameBuf = new StringBuilder();
+		if (uname.indexOf(" ") >= 0) {
+			StringTokenizer tokens = new StringTokenizer(uname, " ", false);
+			while (tokens.hasMoreTokens()) {
+				nameBuf.append(tokens.nextToken());
+			}
+			uname = nameBuf.toString();
+		}
+
+		// Remove leading Domain Name if present
+		int slashIndex = uname.lastIndexOf('\\');
+		if (slashIndex >= 0) {
+			uname = uname.substring(slashIndex + 1);
+		}
+		return uname;
+	}
+
+	/**
+	 * Get the user that is running the application.  This name may be modified to 
+	 * eliminate any spaces or leading domain name which may be present in Java's 
+	 * {@code user.name} system property (see {@link #getCleanUserName(String)}).
 	 * @return the user name
 	 */
 	public static String getUserName() {
 		if (userName == null) {
-			String uname = System.getProperty("user.name");
-
-			// remove the spaces since some operating systems allow
-			// spaces and some do not, Java's File class doesn't
-			if (uname.indexOf(" ") >= 0) {
-				userName = "";
-				StringTokenizer tokens = new StringTokenizer(uname, " ", false);
-				while (tokens.hasMoreTokens()) {
-					userName += tokens.nextToken();
-				}
-			}
-			else {
-				userName = uname;
-			}
+			userName = getCleanUserName(System.getProperty("user.name"));
 		}
 		return userName;
 	}

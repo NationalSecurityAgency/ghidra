@@ -572,7 +572,7 @@ abstract class CompositeViewerModel extends AbstractTableModel
 			DataType dt = dtc.getDataType();
 			int dtLen = dt.getLength();
 			return DataTypeInstance.getDataTypeInstance(dt, (dtLen > 0) ? dtLen : dtc.getLength(),
-				true);
+				usesAlignedLengthComponents());
 		}
 		else if (columnIndex == getNameColumn()) {
 			value = dtc.getFieldName();
@@ -1344,6 +1344,14 @@ abstract class CompositeViewerModel extends AbstractTableModel
 
 	protected long getCompositeID() {
 		return originalCompositeId;
+	}
+
+	/**
+	 * Determine if {@link DataType#getAlignedLength() aligned-length} components should be used. 
+	 * @return true if aligned-length components should be used, else false
+	 */
+	protected boolean usesAlignedLengthComponents() {
+		return viewComposite.isPackingEnabled();
 	}
 
 	@Override

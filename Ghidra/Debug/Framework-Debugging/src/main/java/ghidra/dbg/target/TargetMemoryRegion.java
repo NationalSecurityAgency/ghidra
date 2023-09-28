@@ -53,7 +53,6 @@ public interface TargetMemoryRegion extends TargetObject {
 	 * @return true if write is permitted
 	 */
 	@TargetAttributeType(name = WRITABLE_ATTRIBUTE_NAME, required = true, hidden = true)
-
 	public default boolean isWritable() {
 		return getTypedAttributeNowByName(WRITABLE_ATTRIBUTE_NAME, Boolean.class, false);
 	}
@@ -64,7 +63,6 @@ public interface TargetMemoryRegion extends TargetObject {
 	 * @return true if execute is permitted
 	 */
 	@TargetAttributeType(name = EXECUTABLE_ATTRIBUTE_NAME, required = true, hidden = true)
-
 	public default boolean isExecutable() {
 		return getTypedAttributeNowByName(EXECUTABLE_ATTRIBUTE_NAME, Boolean.class, false);
 	}

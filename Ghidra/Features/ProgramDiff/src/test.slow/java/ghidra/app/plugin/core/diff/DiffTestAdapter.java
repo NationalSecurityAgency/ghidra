@@ -720,11 +720,11 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	void launchDiffByAction() {
-		setToggleActionSelected(openClosePgm2, new ActionContext(), true, false);
+		setToggleActionSelected(openClosePgm2, new DefaultActionContext(), true, false);
 	}
 
 	void closeDiffByAction() {
-		setToggleActionSelected(openClosePgm2, new ActionContext(), false, false);
+		setToggleActionSelected(openClosePgm2, new DefaultActionContext(), false, false);
 	}
 
 	void invokeAndWait(DockingActionIf action) {

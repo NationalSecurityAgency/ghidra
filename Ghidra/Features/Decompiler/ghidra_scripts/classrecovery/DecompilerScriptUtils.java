@@ -15,12 +15,12 @@
  */
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
 package classrecovery;
+import docking.options.OptionsService;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.decompiler.DecompileOptions;
 import ghidra.app.decompiler.DecompileResults;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.ParameterDefinition;
@@ -59,13 +59,22 @@ public class DecompilerScriptUtils {
 
 		DecompileOptions options;
 		options = new DecompileOptions();
-		OptionsService service = tool.getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
-		}
-		decompInterface.setOptions(options);
 
+		if (tool == null) {
+			options.grabFromProgram(program);
+		}
+		else {
+			OptionsService service = tool.getService(OptionsService.class);
+			if (service != null) {
+				ToolOptions opt = service.getOptions("Decompiler");
+				options.grabFromToolAndProgram(null, opt, program);
+			}
+			else {
+				options.grabFromProgram(program);
+			}
+		}
+
+		decompInterface.setOptions(options);
 		decompInterface.toggleCCode(true);
 		decompInterface.toggleSyntaxTree(true);
 		decompInterface.setSimplificationStyle("decompile");

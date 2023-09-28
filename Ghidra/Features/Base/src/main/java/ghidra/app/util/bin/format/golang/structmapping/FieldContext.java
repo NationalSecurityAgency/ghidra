@@ -18,15 +18,18 @@ package ghidra.app.util.bin.format.golang.structmapping;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.symbol.*;
 
 /**
- * Context of an individual field that is being deserialized
+ * Context of an individual field that is being deserialized, or being markedup.
  * 
  * @param <T> the class that contains this field
+ * @param structureContext {@link StructureContext} that contains this field 
+ * @param fieldInfo {@link FieldMappingInfo} immutable information about this field
+ * @param dtc {@link DataTypeComponent} that this field maps to
+ * @param reader {@link BinaryReader} to use when reading data, may be null if this context is
+ * for markup operations instead of deserialization
  */
 public record FieldContext<T> (
 		StructureContext<T> structureContext,
@@ -34,31 +37,32 @@ public record FieldContext<T> (
 		DataTypeComponent dtc,
 		BinaryReader reader) {
 
+	/**
+	 * Returns the structure instance that contains this field.
+	 * 
+	 * @return structure instance that contains this field
+	 */
 	public T getStructureInstance() {
 		return structureContext.getStructureInstance();
 	}
 
-	public DataTypeMapper getDataTypeMapper() {
-		return structureContext().getDataTypeMapper();
-	}
-
-	public void appendComment(int commentType, String prefix, String comment, String sep)
-			throws IOException {
-		DWARFUtil.appendComment(structureContext.getProgram(), getAddress(), commentType, prefix,
-			comment, sep);
-	}
-
-	public void addReference(Address refDest) throws IOException {
-		ReferenceManager refMgr = structureContext.getProgram().getReferenceManager();
-
-		Address fieldAddr = getAddress();
-		refMgr.addMemoryReference(fieldAddr, refDest, RefType.DATA, SourceType.IMPORTED, 0);
-	}
-
+	/**
+	 * Returns the address of this structure field.
+	 * 
+	 * @return the address of this field
+	 */
 	public Address getAddress() {
 		return structureContext.getStructureAddress().add(dtc.getOffset());
 	}
 
+	/**
+	 * Returns the value of this java field.
+	 * 
+	 * @param <R> result type
+	 * @param expectedType class of expected result type
+	 * @return value of this java field, as type R
+	 * @throws IOException if error getting or converting value
+	 */
 	public <R> R getValue(Class<R> expectedType) throws IOException {
 		return fieldInfo.getValue(structureContext.getStructureInstance(), expectedType);
 	}

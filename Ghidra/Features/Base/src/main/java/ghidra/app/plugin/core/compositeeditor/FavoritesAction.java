@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.compositeeditor;
 
 import docking.ActionContext;
+import docking.action.MenuData;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.UsrException;
 
@@ -35,10 +36,14 @@ public class FavoritesAction extends CompositeEditorTableAction {
 	 * @param dt the favorite data type
 	 */
 	public FavoritesAction(CompositeEditorProvider provider, DataType dt) {
-		super(provider, dt.getDisplayName(), GROUP_NAME,
-			new String[] { "Favorite", dt.getDisplayName() },
-			new String[] { "Favorite", dt.getDisplayName() }, null);
+		super(provider, dt.getDisplayName());
 		this.dataType = dt;
+
+		setMenuBarData(
+			new MenuData(new String[] { "Favorite", dt.getDisplayName() }, null, GROUP_NAME));
+		setPopupMenuData(
+			new MenuData(new String[] { "Favorite", dt.getDisplayName() }, null, GROUP_NAME));
+
 		getPopupMenuData().setParentMenuGroup(GROUP_NAME);
 		adjustEnablement();
 	}

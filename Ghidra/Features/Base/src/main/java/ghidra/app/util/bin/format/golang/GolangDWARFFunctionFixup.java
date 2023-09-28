@@ -53,6 +53,13 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 	public static final CategoryPath GOLANG_API_EXPORT =
 		new CategoryPath(CategoryPath.ROOT, "GolangAPIExport");
 
+	/**
+	 * Returns true if the specified {@link DWARFFunction} wrapper refers to a function in a golang
+	 * compile unit.
+	 * 
+	 * @param dfunc {@link DWARFFunction}
+	 * @return boolean true or false
+	 */
 	public static boolean isGolangFunction(DWARFFunction dfunc) {
 		DIEAggregate diea = dfunc.diea;
 		int cuLang = diea.getCompilationUnit().getCompileUnit().getLanguage();

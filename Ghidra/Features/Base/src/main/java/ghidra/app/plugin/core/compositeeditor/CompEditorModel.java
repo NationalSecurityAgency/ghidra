@@ -663,7 +663,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @throws UsrException if add fails
 	 */
 	public DataTypeComponent replace(int rowIndex, DataType dt) throws UsrException {
-		DataTypeInstance dti = DataTypeHelper.getFixedLength(this, rowIndex, dt);
+		DataTypeInstance dti =
+			DataTypeHelper.getFixedLength(this, rowIndex, dt, usesAlignedLengthComponents());
 		if (dti == null) {
 			return null; // User cancelled from size dialog.
 		}
@@ -1254,8 +1255,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public boolean setComponentName(int rowIndex, String name)
-			throws InvalidNameException {
+	public boolean setComponentName(int rowIndex, String name) throws InvalidNameException {
 
 		String oldName = getComponent(rowIndex).getFieldName();
 		if (Objects.equals(oldName, name)) {

@@ -156,6 +156,16 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	@Override
+	public AddressRange getAddressRange() {
+		try {
+			return new AddressRangeImpl(startAddress, length);
+		}
+		catch (AddressOverflowException e) {
+			throw new RuntimeException(e); // unexpected
+		}
+	}
+
+	@Override
 	public String getName() {
 		String name = record.getString(MemoryMapDBAdapter.NAME_COL);
 		if (name == null) {

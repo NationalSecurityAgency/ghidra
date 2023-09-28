@@ -58,7 +58,7 @@ public class ProgramProviderContext implements DataTypeProviderContext {
 
 		DataType dt = data.getDataType();
 		int length = DataTypeComponentImpl.getPreferredComponentLength(dt,
-			Math.max(data.getLength(), dt.getAlignedLength()));
+			Math.max(data.getLength(), dt.getLength()));
 		String label = null;
 		Symbol symbol = data.getPrimarySymbol();
 		if (symbol != null && !symbol.isDynamic()) {

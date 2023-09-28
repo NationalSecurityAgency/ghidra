@@ -34,10 +34,11 @@ import ghidra.util.exception.*;
 /**
  * Manages program and archive data type editors.
  */
-public class DataTypeEditorManager
-		implements EditorListener, StructureEditorOptionManager, UnionEditorOptionManager {
+public class DataTypeEditorManager implements EditorListener {
 
-	private ArrayList<EditorProvider> editorList;
+	public static final String EDIT_ACTION_PREFIX = "Editor: ";
+
+	private List<EditorProvider> editorList;
 	private EditorOptionManager editorOptionMgr; // manages editor tool options
 	private DataTypeManagerPlugin plugin;
 
@@ -133,6 +134,7 @@ public class DataTypeEditorManager
 
 	private void installEditorActions() {
 
+		// composite editor actions
 		registerAction(ApplyAction.ACTION_NAME);
 		registerAction(InsertUndefinedAction.ACTION_NAME);
 		registerAction(MoveUpAction.ACTION_NAME);
@@ -152,6 +154,12 @@ public class DataTypeEditorManager
 		registerAction(ShowComponentPathAction.ACTION_NAME);
 		registerAction(AddBitFieldAction.ACTION_NAME);
 		registerAction(EditBitFieldAction.ACTION_NAME);
+		registerAction(ShowDataTypeInTreeAction.ACTION_NAME);
+
+		// enum editor actions
+		registerAction(EnumEditorProvider.ACTION_NAME_ADD);
+		registerAction(EnumEditorProvider.ACTION_NAME_APPLY);
+		registerAction(EnumEditorProvider.ACTION_NAME_DELETE);
 	}
 
 	private void registerAction(String name) {
@@ -356,11 +364,11 @@ public class DataTypeEditorManager
 			DataTypeManager programDataTypeManager = domainObject.getDataTypeManager();
 			if (dataTypeManager == programDataTypeManager) {
 				/*
-
+				
 				 It is not clear why this check was added.  It seem reasonable to always let the
 				 editor know about the event.  With this code enabled, editors with new, unsaved
 				 types will be closed.
-
+				
 					DataTypePath dtPath = editor.getDtPath();
 					CategoryPath categoryPath = dtPath.getCategoryPath();
 					String name = dtPath.getDataTypeName();
@@ -451,18 +459,10 @@ public class DataTypeEditorManager
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.core.compositeeditor.StructureEditorOptionManager#showStructureCompOffsetInHex()
-	 */
-	@Override
 	public boolean showStructureNumbersInHex() {
 		return editorOptionMgr.showStructureNumbersInHex();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.core.compositeeditor.UnionEditorOptionManager#showUnionCompLengthInHex()
-	 */
-	@Override
 	public boolean showUnionNumbersInHex() {
 		return editorOptionMgr.showUnionNumbersInHex();
 	}
@@ -617,7 +617,7 @@ public class DataTypeEditorManager
 			// can't rely on functionDefinition which may be null for new definition
 			DataTypeManager dtMgr = getDataTypeManager();
 			if (dtMgr instanceof CompositeViewerDataTypeManager) {
-				dtMgr = ((CompositeViewerDataTypeManager)dtMgr).getOriginalDataTypeManager();
+				dtMgr = ((CompositeViewerDataTypeManager) dtMgr).getOriginalDataTypeManager();
 			}
 			ArrayList<String> list = new ArrayList<>();
 			list.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
@@ -686,7 +686,7 @@ public class DataTypeEditorManager
 						Msg.error(this, "Unexpected Exception", e);
 					}
 					finally {
-						manager.endTransaction(id, true);	
+						manager.endTransaction(id, true);
 					}
 				}
 			}
@@ -706,7 +706,7 @@ public class DataTypeEditorManager
 		private String name;
 
 		DtSharedActionPlaceholder(String name) {
-			this.name = CompositeEditorTableAction.EDIT_ACTION_PREFIX + name;
+			this.name = EDIT_ACTION_PREFIX + name;
 		}
 
 		@Override

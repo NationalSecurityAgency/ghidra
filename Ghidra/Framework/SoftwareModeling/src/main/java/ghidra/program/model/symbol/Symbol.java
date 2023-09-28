@@ -22,7 +22,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Interface for a symbol, which associates a string value with
@@ -110,7 +109,7 @@ public interface Symbol {
 
 	/**
 	 * Returns all memory references to the address of this symbol.  If you do not have a
-	 * {@link TaskMonitor} instance, then you can pass {@link TaskMonitorAdapter#DUMMY_MONITOR} or
+	 * {@link TaskMonitor} instance, then you can pass {@link TaskMonitor#DUMMY} or
 	 * <code>null</code>.
 	 *
 	 * @return all memory references to the address of this symbol.

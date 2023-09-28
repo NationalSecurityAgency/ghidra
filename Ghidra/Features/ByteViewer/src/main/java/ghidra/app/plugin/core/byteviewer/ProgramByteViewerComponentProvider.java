@@ -132,14 +132,14 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return getByteViewerActionContext();
-	}
-
-	ByteViewerActionContext getByteViewerActionContext() {
 		ByteBlockInfo info = panel.getCursorLocation();
 		if (info == null) {
 			return null;
 		}
+		return newByteViewerActionContext();
+	}
+
+	protected ByteViewerActionContext newByteViewerActionContext() {
 		return new ByteViewerActionContext(this);
 	}
 

@@ -95,7 +95,7 @@ public class Pagedump extends DumpFile {
 
 	Map<Integer, Long> pfnToVA = new HashMap<>();
 	//Map<Integer, Long> pfnToVAL = new HashMap<>();
-	Map<Long, Integer> VA2fileOffset = new HashMap<>();
+	Map<Long, Long> VA2fileOffset = new HashMap<>();
 
 	protected long cr3;
 	private boolean createBlocks = true;
@@ -129,7 +129,7 @@ public class Pagedump extends DumpFile {
 		isPAE = header.getPaeEnabled() != 0;
 
 		long hdrLen = header.toDataType().getLength();
-		addInteriorAddressObject("DumpHeader", 0, 0L, hdrLen);
+		addInteriorAddressObject("DumpHeader", 0L, 0L, hdrLen);
 		data.add(new DumpData(0, header.toDataType()));
 
 		PhysicalMemoryDescriptor pmd = header.getPhysicalMemoryBlockBuffer();

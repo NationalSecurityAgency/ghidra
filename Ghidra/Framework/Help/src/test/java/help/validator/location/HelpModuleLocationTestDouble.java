@@ -17,8 +17,6 @@ package help.validator.location;
 
 import java.nio.file.Path;
 
-import help.validator.location.HelpModuleLocation;
-
 public abstract class HelpModuleLocationTestDouble extends HelpModuleLocation {
 
 	// this class exists to open up the package-level constructor

@@ -31,7 +31,6 @@ import ghidra.app.events.TreeSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.*;
-import ghidra.app.util.PluginConstants;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
@@ -71,6 +70,7 @@ import resources.Icons;
 public class ProgramTreePlugin extends ProgramPlugin
 		implements ProgramTreeService, OptionsChangeListener {
 
+	private static final String DEFAULT_TREE_NAME = "Program Tree";
 	private static final String PROGRAM_TREE_OPTION_NAME = "Program Tree";
 	private static final String REPLACE_VIEW_OPTION_NAME = "Replace View on Double-click";
 	private static final String REPLACE_VIEW_OPTION_DESCRIPTION = "When toggled on, a " +
@@ -120,7 +120,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 		createActions();
 
 		// show default provider
-		defaultProvider = addTreeView(PluginConstants.DEFAULT_TREE_NAME);
+		defaultProvider = addTreeView(DEFAULT_TREE_NAME);
 
 		initOptions(tool.getOptions(PROGRAM_TREE_OPTION_NAME));
 
@@ -546,7 +546,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 			providerMap.put(newName, treeViewProvider);
 
 			if (defaultProvider == treeViewProvider) {
-				defaultProvider = new TreeViewProvider(PluginConstants.DEFAULT_TREE_NAME, this);
+				defaultProvider = new TreeViewProvider(DEFAULT_TREE_NAME, this);
 			}
 			else {
 				reloadTree(treeViewProvider.getProgramDnDTree(), false);
@@ -757,7 +757,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	 * @return boolean
 	 */
 	private boolean treeExists(String treeName) {
-		if (currentProgram == null && treeName.equals(PluginConstants.DEFAULT_TREE_NAME)) {
+		if (currentProgram == null && treeName.equals(DEFAULT_TREE_NAME)) {
 			return true;
 		}
 		else if (currentProgram == null) {
@@ -807,7 +807,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	 * Add the default provider that shows an "empty" program root.
 	 */
 	private void addDefaultProvider() {
-		providerMap.put(PluginConstants.DEFAULT_TREE_NAME, defaultProvider);
+		providerMap.put(DEFAULT_TREE_NAME, defaultProvider);
 		registerServiceProvided(ViewProviderService.class, defaultProvider);
 	}
 
@@ -850,7 +850,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	private void createDefaultTreeView() {
 		Listing listing = currentProgram.getListing();
 
-		String baseName = PluginConstants.DEFAULT_TREE_NAME;
+		String baseName = DEFAULT_TREE_NAME;
 		int index = 1;
 		String viewName = baseName;
 		boolean done = false;

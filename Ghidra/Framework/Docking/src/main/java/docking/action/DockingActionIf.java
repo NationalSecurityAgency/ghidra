@@ -22,20 +22,21 @@ import java.util.Set;
 import javax.swing.*;
 
 import docking.ActionContext;
+import docking.DockingWindowManager;
 import help.HelpDescriptor;
 
 /**
  * The base interface for clients that wish to create commands to be registered with a tool.
- * 
- * <p>An action may appear in a primary menu, a popup menu or a toolbar.   Further, an action 
+ * <P>
+ * An action may appear in a primary menu, a popup menu or a toolbar.   Further, an action 
  * may have a key binding assigned.
- * 
- * <p>The particular support for key bindings is defined by {@link KeyBindingType}.   Almost all
+ * <P>
+ * The particular support for key bindings is defined by {@link KeyBindingType}.   Almost all
  * client actions will use the default setting of {@link KeyBindingType#INDIVIDUAL}.   To control
  * the level of key binding support, you can pass the desired {@link KeyBindingType} to the
  * base implementation of this interface.
- * 
- * <p>ActionContext is a key concept for tool actions so that they can be context sensitive if 
+ * <P>
+ * {@link ActionContext} is a key concept for tool actions so that they can be context sensitive if 
  * appropriate. The context provides a 
  * consistent way for plugins and components to share tool state with actions. Actions can then
  * use that context to make decisions, such as if they should be enabled or added to a popup menu.
@@ -43,16 +44,21 @@ import help.HelpDescriptor;
  * action context from a table element may provide the row in a table component that is selected and
  * then a "delete table row" action can use that information to be enabled when a table selection 
  * exists and then delete that row if the action is invoked.
- * 
- * <p> To make the overall action experience more convenient for the user, action processing
- * supports the concept of a "default tool context".  This allows actions to work on a more global
- * level than just the component that is focused.  The idea is that if an action is not valid for
- * the current focused context (and it has be declared to work this way using 
- * the {@link #setSupportsDefaultToolContext(boolean)}), then it can be validated against the default 
- * tool context.  The "default tool context" is defined to be the action context of the tool's 
- * primary component.  This is primarily intended for tool-level actions which are the ones that appear
- * in the tool's main menu bar or toolbar.  This allows the tool actions to mostly work on the
- * tool's main component context regardless of what has focus, and yet still work on the  
+ * <P>
+ * Actions can optionally operate on a default context if the current active context is invalid
+ * for that action. This allows actions to work on a more global
+ * level than just the component that is focused (and yet give preference to the active context.)
+ * The idea is that if an action is not valid for the current focused context (and it has been
+ * configured to support default context using {@link #setContextClass(Class, boolean)}), then it
+ * can be validated against a default action context for its specific action context type.  
+ * The source for the default context depends on the context type. Default context providers are
+ * registered on the tool for each specific ActionContext type. 
+ * See {@link DockingWindowManager#registerDefaultContextProvider(Class, ActionContextProvider)} for
+ * more details.
+ * <P>
+ * The use of default context is primarily intended for tool-level actions which are the ones 
+ * that appear in the tool's main menu bar or toolbar.  This allows the tool actions to mostly
+ * work on the tool's main component context regardless of what has focus, and yet still work on the  
  * focused component if appropriate (such as a snapshot of the main component).  
  */
 public interface DockingActionIf extends HelpDescriptor {
@@ -116,26 +122,6 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @param newValue  true to enable the action, false to disable it
 	 */
 	public void setEnabled(boolean newValue);
-
-	/**
-	 * Sets whether or not this action should be activated using the default tool context if the
-	 * current focused provider's context is not valid for this action.  Typically, this should
-	 * be set on actions that are mostly independent of which component has focus such as those
-	 * on the tool's main toolbar.   
-	 * 
-	 * @param newValue if true, the action will be activated using the default tool context if the
-	 * local context is not valid for this action.  If false, the action will only ever be
-	 * activated using the focused context.
-	 */
-	public void setSupportsDefaultToolContext(boolean newValue);
-
-	/**
-	 * Returns true if this action can be activated using the default tool context if the focused
-	 * context is invalid for this action. See {@link #setSupportsDefaultToolContext(boolean)}
-	 * @return true if this action can be activated using the default tool context if the local
-	 * context is invalid for this action.
-	 */
-	public boolean supportsDefaultToolContext();
 
 	/**
 	 * Returns true if the action is enabled.
@@ -346,4 +332,34 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * Called when the action's owner is removed from the tool
 	 */
 	public void dispose();
+
+	/**
+	 * Returns the class of a specific action context that this action requires for it to
+	 * operate. See {@link ActionContext} for details on the action context system.
+	 * @return the class of a specific action context that this action requires for it to
+	 * operate
+	 */
+	public Class<? extends ActionContext> getContextClass();
+
+	/**
+	 * Returns true if this action also supports operating on a default context
+	 * other then the active (focused) provider's context. See the class header for more
+	 * details.
+	 * @return true if this action also supports operating on a default context other then
+	 * the active (focused) provider's context.
+	 */
+	public boolean supportsDefaultContext();
+
+	/**
+	 * Sets the specific action context class that this action works on and if the action
+	 * supports default context. See {@link ActionContext} for details on how the action 
+	 * context system works.
+	 * 
+	 * @param type the {@link ActionContext} class that this action works on.
+	 * @param supportsDefaultContext if true, then this action also support operating on a 
+	 * default context other than the active (focused) provider's context.
+	 */
+	public void setContextClass(Class<? extends ActionContext> type,
+			boolean supportsDefaultContext);
+
 }

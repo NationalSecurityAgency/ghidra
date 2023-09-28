@@ -25,7 +25,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a relocation_info and scattered_relocation_info structure.
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/reloc.h.auto.html">mach-o/reloc.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/reloc.h">EXTERNAL_HEADERS/mach-o/reloc.h</a> 
  */
 public class RelocationInfo implements StructConverter {
 

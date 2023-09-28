@@ -150,6 +150,18 @@ public class MultiRowLayout implements Layout {
 	}
 
 	@Override
+	public int getFieldIndex(int x, int y) {
+		int offset = 0;
+		for (int i = 0; i < layouts.length; i++) {
+			if (layouts[i].contains(y - offset)) {
+				return layouts[i].getFieldIndex(x, y - offset) + offsets[i];
+			}
+			offset += layouts[i].getHeight();
+		}
+		return layouts[0].getFieldIndex(x, y);
+	}
+
+	@Override
 	public Rectangle getCursorRect(int fieldNum, int row, int col) {
 		int offset = 0;
 		for (int i = 0; i < layouts.length; i++) {

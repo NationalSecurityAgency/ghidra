@@ -27,7 +27,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.Test;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.DialogComponentProvider;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.fieldpanel.LayoutModel;
@@ -305,7 +305,7 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		runSwing(() -> {
 			openClosePgm2.setSelected(true);
-			openClosePgm2.actionPerformed(new ActionContext());
+			openClosePgm2.actionPerformed(new DefaultActionContext());
 		}, false);
 		waitForSwing();
 

@@ -17,14 +17,37 @@ package ghidra.trace.model.symbol;
 
 import java.util.Collection;
 
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A trace symbol.
+ *
+ * <p>
+ * This is essentially the equivalent concept of {@link Symbol} from a {@link Program}. One
+ * important distinction is that in the trace implementation, the symbol and the object it describes
+ * are the same. For example, in a {@link Program}, a {@link Namespace} and its symbol are two
+ * different things. To get the namespace, you would invoke {@link Symbol#getObject()}. That is
+ * unnecessary, though permissible, with a trace, because {@link TraceNamespaceSymbol} extends from
+ * both {@link Namespace} and {@link Symbol}.
+ */
 public interface TraceSymbol extends Symbol {
+	/**
+	 * Get the trace to which this symbol belongs.
+	 * 
+	 * @return the trace
+	 */
 	Trace getTrace();
 
+	/**
+	 * If in register space, get the thread associated with this symbol.
+	 * 
+	 * @return the thread
+	 */
 	TraceThread getThread();
 
 	@Override
@@ -42,6 +65,11 @@ public interface TraceSymbol extends Symbol {
 	@Override
 	TraceReference[] getReferences(TaskMonitor monitor);
 
+	/**
+	 * Get all memory references to the address of this symbol.
+	 * 
+	 * @return the references
+	 */
 	Collection<? extends TraceReference> getReferenceCollection();
 
 	/**

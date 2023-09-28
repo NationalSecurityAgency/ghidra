@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.structmapping;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.lang.reflect.*;
+import java.util.*;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.CodeUnit;
@@ -33,11 +32,28 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public class StructureMappingInfo<T> {
 
+	/**
+	 * Returns the name of the structure data type that will define the binary layout 
+	 * of the mapped fields in the target class.
+	 * 
+	 * @param targetClass structure mapped class
+	 * @return the structure name
+	 */
 	public static String getStructureDataTypeNameForClass(Class<?> targetClass) {
 		StructureMapping sma = targetClass.getAnnotation(StructureMapping.class);
 		return sma != null ? sma.structureName() : null;
 	}
 
+	/**
+	 * Returns the mapping info for a class, using annotations found in that class.
+	 * 
+	 * @param <T> structure mapped class
+	 * @param targetClass structure mapped class
+	 * @param structDataType Ghidra {@link DataType} that defines the binary layout of the mapped
+	 * fields of the class, or null if this is a self-reading {@link StructureReader} class  
+	 * @return new {@link StructureMappingInfo} for the specified class
+	 * @throws IllegalArgumentException if targetClass isn't tagged as a structure mapped class
+	 */
 	public static <T> StructureMappingInfo<T> fromClass(Class<T> targetClass,
 			Structure structDataType) {
 		StructureMapping sma = targetClass.getAnnotation(StructureMapping.class);
@@ -59,7 +75,7 @@ public class StructureMappingInfo<T> {
 	private final List<FieldOutputInfo<T>> outputFields = new ArrayList<>();
 	private final List<StructureMarkupFunction<T>> markupFuncs = new ArrayList<>();
 	private final List<Field> contextFields = new ArrayList<>();
-	private final List<Method> afterMethods = new ArrayList<>();
+	private final List<Method> afterMethods;
 	private final boolean useFieldMappingInfo;
 	private Field structureContextField;
 
@@ -77,17 +93,13 @@ public class StructureMappingInfo<T> {
 		Collections.sort(outputFields,
 			(foi1, foi2) -> Integer.compare(foi1.getOrdinal(), foi2.getOrdinal()));
 
-		ReflectionHelper.getMarkedMethods(targetClass, AfterStructureRead.class, afterMethods,
-			true);
+		afterMethods =
+			ReflectionHelper.getMarkedMethods(targetClass, AfterStructureRead.class, null, true);
 
-		List<Method> markupGetters = new ArrayList<>();
-		ReflectionHelper.getMarkedMethods(targetClass, Markup.class, markupGetters, true);
+		List<Method> markupGetters =
+			ReflectionHelper.getMarkedMethods(targetClass, Markup.class, null, true);
 		for (Method markupGetterMethod : markupGetters) {
-			markupFuncs.add(context -> {
-				T obj = context.getStructureInstance();
-				Object val = ReflectionHelper.callGetter(markupGetterMethod, obj);
-				context.getDataTypeMapper().markup(val, false);
-			});
+			markupFuncs.add(createMarkupFuncFromGetter(markupGetterMethod));
 		}
 
 		for (PlateComment pca : ReflectionHelper.getAnnotations(targetClass, PlateComment.class,
@@ -131,6 +143,13 @@ public class StructureMappingInfo<T> {
 		return afterMethods;
 	}
 
+	/**
+	 * Deserializes a structure mapped instance by assigning values to its 
+	 * {@link FieldMapping &#64;FieldMapping mapped} java fields.
+	 * 
+	 * @param context {@link StructureContext}
+	 * @throws IOException if error reading the structure
+	 */
 	public void readStructure(StructureContext<T> context) throws IOException {
 		T newInstance = context.getStructureInstance();
 		if (newInstance instanceof StructureReader<?> selfReader) {
@@ -144,7 +163,7 @@ public class StructureMappingInfo<T> {
 					throw new IOException("Missing read info for field: " + fieldInfo.getField());
 				}
 				Object value = readFunc.get(fieldReadContext);
-				assignField(fieldReadContext, value);
+				fieldInfo.assignField(fieldReadContext, value);
 			}
 			context.reader.setPointerIndex(context.getStructureEnd());
 		}
@@ -154,6 +173,15 @@ public class StructureMappingInfo<T> {
 		return markupFuncs;
 	}
 
+	/**
+	 * Creates a new customized {@link Structure structure data type} for a variable length
+	 * structure mapped class.
+	 * 
+	 * @param context {@link StructureContext} of a variable length structure mapped instance
+	 * @return new {@link Structure structure data type} with a name that encodes the size 
+	 * information of the variable length fields
+	 * @throws IOException if error creating the Ghidra data type
+	 */
 	public Structure createStructureDataType(StructureContext<T> context) throws IOException {
 		// used to create a structure that has variable length fields
 
@@ -185,19 +213,32 @@ public class StructureMappingInfo<T> {
 		return newStruct;
 	}
 
+	/**
+	 * Reaches into a structure mapped instance and extracts its StructureContext field value.
+	 * 
+	 * @param structureInstance instance to query
+	 * @return {@link StructureContext}, or null if error extracting value
+	 */
 	@SuppressWarnings("unchecked")
-	public StructureContext<T> recoverStructureContext(T structureInstance) throws IOException {
-		return structureContextField != null
-				? ReflectionHelper.getFieldValue(structureInstance, structureContextField,
-					StructureContext.class)
-				: null;
+	public StructureContext<T> recoverStructureContext(T structureInstance) {
+		try {
+			if (structureContextField != null) {
+				return ReflectionHelper.getFieldValue(structureInstance, structureContextField,
+					StructureContext.class);
+			}
+		}
+		catch (IOException e) {
+			// ignore, drop thru return null
+		}
+		return null;
 	}
 
 	/**
 	 * Initializes any {@link ContextField} fields in a new structure instance.
 	 * 
-	 * @param context
-	 * @throws IOException
+	 * @param context {@link StructureContext}
+	 * @throws IOException if error assigning values to context fields in the structure mapped
+	 * instance
 	 */
 	public void assignContextFieldValues(StructureContext<T> context) throws IOException {
 		Class<?> dataTypeMapperType = context.getDataTypeMapper().getClass();
@@ -230,14 +271,6 @@ public class StructureMappingInfo<T> {
 		return null;
 	}
 
-	private void assignField(FieldContext<T> readContext, Object value)
-			throws IOException {
-		Field field = readContext.fieldInfo().getField();
-		T structureInstance = readContext.getStructureInstance();
-
-		ReflectionHelper.assignField(field, structureInstance, value);
-	}
-
 	private void readFieldInfo(Class<?> clazz) {
 		Class<?> superclass = clazz.getSuperclass();
 		if (superclass != null) {
@@ -250,6 +283,10 @@ public class StructureMappingInfo<T> {
 			FieldOutput foa = field.getAnnotation(FieldOutput.class);
 			if (fma != null || foa != null) {
 				FieldMappingInfo<T> fmi = readFieldMappingInfo(field, fma);
+				if (fmi == null) {
+					// was marked optional field, just skip
+					continue;
+				}
 				field.setAccessible(true);
 				fields.add(fmi);
 
@@ -273,27 +310,48 @@ public class StructureMappingInfo<T> {
 	}
 
 	private FieldMappingInfo<T> readFieldMappingInfo(Field field, FieldMapping fma) {
-		String fieldName = fma != null && !fma.fieldName().isBlank()
-				? fma.fieldName()
-				: field.getName();
-		DataTypeComponent dtc = getField(fieldName);
+		String[] fieldNames = getFieldNamesToSearchFor(field, fma);
+		DataTypeComponent dtc = getFirstMatchingField(fieldNames);
 		if (useFieldMappingInfo && dtc == null) {
+			if (fma.optional()) {
+				return null;
+			}
 			throw new IllegalArgumentException("Missing structure field: %s in %s"
-					.formatted(fieldName, targetClass.getSimpleName()));
+					.formatted(Arrays.toString(fieldNames), targetClass.getSimpleName()));
 		}
 
 		Signedness signedness = fma != null ? fma.signedness() : Signedness.Unspecified;
 		int length = fma != null ? fma.length() : -1;
 		FieldMappingInfo<T> fmi = useFieldMappingInfo
 				? FieldMappingInfo.createEarlyBinding(field, dtc, signedness, length)
-				: FieldMappingInfo.createLateBinding(field, fieldName, signedness, length);
+				: FieldMappingInfo.createLateBinding(field, fieldNames[0], signedness, length);
 
-		fmi.setReadFuncClass(fma != null ? fma.readFunc() : FieldReadFunction.class);
+		Class<? extends FieldReadFunction> fieldReadFuncClass =
+			fma != null ? fma.readFunc() : FieldReadFunction.class;
+		String setterNameOverride = fma != null ? fma.setter() : null;
+		fmi.setFieldValueDeserializationInfo(fieldReadFuncClass, targetClass, setterNameOverride);
 		fmi.addMarkupNestedFuncs();
 		fmi.addCommentMarkupFuncs();
 		fmi.addMarkupReferenceFunc();
 
 		return fmi;
+	}
+
+	private String[] getFieldNamesToSearchFor(Field field, FieldMapping fma) {
+		String[] fmaFieldNames = fma != null ? fma.fieldName() : null;
+		return fmaFieldNames != null && fmaFieldNames.length != 0 && !fmaFieldNames[0].isBlank()
+				? fmaFieldNames
+				: new String[] { field.getName() };
+	}
+
+	private DataTypeComponent getFirstMatchingField(String[] fieldNames) {
+		for (String fieldName : fieldNames) {
+			DataTypeComponent dtc = getField(fieldName);
+			if (dtc != null) {
+				return dtc;
+			}
+		}
+		return null;
 	}
 
 	private FieldOutputInfo<T> readFieldOutputInfo(FieldMappingInfo<T> fmi, FieldOutput foa) {
@@ -321,13 +379,21 @@ public class StructureMappingInfo<T> {
 	private void addPlateCommentMarkupFuncs(PlateComment pca) {
 		Method commentGetter =
 			ReflectionHelper.getCommentMethod(targetClass, pca.value(), "toString");
-		markupFuncs.add(context -> {
+		markupFuncs.add((context, session) -> {
 			T obj = context.getStructureInstance();
 			Object val = ReflectionHelper.callGetter(commentGetter, obj);
 			if (val != null) {
-				context.appendComment(CodeUnit.PLATE_COMMENT, null, val.toString(), "\n");
+				session.appendComment(context, CodeUnit.PLATE_COMMENT, null, val.toString(), "\n");
 			}
 		});
+	}
+
+	private StructureMarkupFunction<T> createMarkupFuncFromGetter(Method markupGetterMethod) {
+		return (context, session) -> {
+			T obj = context.getStructureInstance();
+			Object val = ReflectionHelper.callGetter(markupGetterMethod, obj);
+			session.markup(val, false);
+		};
 	}
 
 	private static int getStructLength(Structure struct) {

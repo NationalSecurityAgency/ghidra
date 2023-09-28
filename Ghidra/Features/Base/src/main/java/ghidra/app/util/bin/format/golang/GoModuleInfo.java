@@ -15,12 +15,16 @@
  */
 package ghidra.app.util.bin.format.golang;
 
-import java.util.*;
-
 import java.io.IOException;
+import java.util.*;
 
 /**
  * Represents information about a single golang module dependency.
+ * 
+ * @param path module path 
+ * @param version module version
+ * @param sum checksum
+ * @param replace replacement module info  (may be null)
  */
 public record GoModuleInfo(String path, String version, String sum, GoModuleInfo replace) {
 
@@ -28,7 +32,8 @@ public record GoModuleInfo(String path, String version, String sum, GoModuleInfo
 	 * Parses a GoModuleInfo from a formatted string "path[tab]version[tab]checksum".
 	 * 
 	 * @param s string to parse
-	 * @param replace GoModuleInfo that is the replacement for this module
+	 * @param replace GoModuleInfo that is the replacement for this module, or null if no 
+	 * replacement specified
 	 * @return new GoModuleInfo instance, never null
 	 * @throws IOException if error parsing string
 	 */

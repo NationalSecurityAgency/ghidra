@@ -531,7 +531,7 @@ public class ComponentPlaceholder {
 
 		ActionContext actionContext = componentProvider.getActionContext(null);
 		if (actionContext == null) {
-			actionContext = new ActionContext(componentProvider, null);
+			actionContext = new DefaultActionContext(componentProvider, null);
 		}
 		for (DockingActionIf action : actions) {
 			action.setEnabled(

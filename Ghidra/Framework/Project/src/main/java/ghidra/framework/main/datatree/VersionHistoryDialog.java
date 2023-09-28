@@ -20,8 +20,7 @@ import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.List;
 
-import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.*;
 import docking.action.DockingActionIf;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.main.AppInfo;
@@ -145,7 +144,7 @@ public class VersionHistoryDialog extends DialogComponentProvider implements Pro
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		ActionContext actionContext = new ActionContext(null, this, versionPanel.getTable());
+		ActionContext actionContext = new DefaultActionContext(null, this, versionPanel.getTable());
 		actionContext.setMouseEvent(event);
 		return actionContext;
 	}

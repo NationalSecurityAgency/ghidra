@@ -24,6 +24,7 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
 import ghidra.framework.options.Options;
@@ -75,17 +76,19 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected boolean shouldLoadLibrary(String libName, File libFile,
-			ByteProvider provider, LoadSpec loadSpec, MessageLog log) throws IOException {
+	protected boolean shouldLoadLibrary(String libName, FSRL libFsrl, ByteProvider provider,
+			LoadSpec loadSpec, MessageLog log) throws IOException {
 
-		if (!super.shouldLoadLibrary(libName, libFile, provider, loadSpec, log)) {
+		if (!super.shouldLoadLibrary(libName, libFsrl, provider, loadSpec, log)) {
 			return false;
 		}
 
 		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
+		File localLibFile = getLocalFile(libFsrl);
 
-		if (!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(libFile, size) &&
-			LibraryLookupTable.libraryLookupTableFileExists(libName, size)) {
+		if (localLibFile == null ||
+			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size) &&
+				LibraryLookupTable.libraryLookupTableFileExists(libName, size)) {
 			log.appendMsg("WARNING! Using existing exports file for " + libName +
 				" which may not be an exact match");
 		}
@@ -94,24 +97,44 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected void processLibrary(Program lib, String libName, File libFile,
-			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	protected void processLibrary(Program lib, String libName, FSRL libFsrl, ByteProvider provider,
+			LoadSpec loadSpec, List<Option> options, MessageLog log, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
+		File localLibFile = getLocalFile(libFsrl);
 
 		// Create exports file
-		if (!LibraryLookupTable.libraryLookupTableFileExists(libName, size) ||
-			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(libFile, size)) {
+		if (localLibFile == null ||
+			!LibraryLookupTable.libraryLookupTableFileExists(libName, size) ||
+			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size)) {
 			try {
 				// Need to write correct library exports file (LibrarySymbolTable)
 				// for use with related imports
 				LibraryLookupTable.createFile(lib, true, monitor);
 			}
 			catch (IOException e) {
-				log.appendMsg("Unable to create exports file for " + libFile);
-				Msg.error(this, "Unable to create exports file for " + libFile, e);
+				log.appendMsg("Unable to create exports file for " + libFsrl);
+				Msg.error(this, "Unable to create exports file for " + libFsrl, e);
 			}
 		}
+	}
+
+	/**
+	 * If the given {@link FSRL} is from a {@link LocalFileSystem}, its corresponding local
+	 * {@link File} is returned
+	 * 
+	 * @param fsrl A {@link FSRL}
+	 * @return The given {@link FSRL}'s corresponding local {@link File}, or null if it doesn't 
+	 *   have one
+	 */
+	private File getLocalFile(FSRL fsrl) {
+		try {
+			return FileSystemService.getInstance().getLocalFS().getLocalFile(fsrl);
+		}
+		catch (IOException e) {
+			// fall thru
+		}
+		return null;
 	}
 
 	@Override

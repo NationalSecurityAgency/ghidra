@@ -26,6 +26,7 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
@@ -100,7 +101,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testEnablement() throws Exception {
 		ActionContext actionContext = cb.getProvider().getActionContext(null);
 		assertNull(actionContext);
-		actionContext = new ActionContext();
+		actionContext = new DefaultActionContext();
 		assertFalse(createFunction.isEnabledForContext(actionContext));
 		assertFalse(createThunk.isEnabledForContext(actionContext));
 		assertFalse(editThunk.isEnabledForContext(actionContext));
@@ -176,7 +177,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		closeProgram();
 		actionContext = cb.getProvider().getActionContext(null);
 		assertNull(actionContext);
-		actionContext = new ActionContext();
+		actionContext = new DefaultActionContext();
 		assertFalse(createFunction.isEnabledForContext(actionContext));
 		assertFalse(deleteFunction.isEnabledForContext(actionContext));
 		assertFalse(editThunk.isEnabledForContext(actionContext));
@@ -885,8 +886,8 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Variable[] vars = function.getLocalVariables(VariableFilter.STACK_VARIABLE_FILTER);
 		tx(program, () -> {
 			DataType byteDT = program.getDataTypeManager()
-					.addDataType(new ByteDataType(),
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+				.addDataType(new ByteDataType(),
+					DataTypeConflictHandler.DEFAULT_HANDLER);
 			vars[1].setDataType(byteDT, SourceType.ANALYSIS);
 		});
 

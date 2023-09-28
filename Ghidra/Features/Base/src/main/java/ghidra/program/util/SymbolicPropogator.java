@@ -20,8 +20,8 @@ import java.util.*;
 
 import org.apache.commons.collections4.map.LRUMap;
 
-import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.pcode.opbehavior.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -32,7 +32,6 @@ import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.BigEndianDataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
@@ -670,7 +669,8 @@ public class SymbolicPropogator {
 			else {
 				int instrByteHashCode = -1;
 				try {
-					instrByteHashCode = Arrays.hashCode(instr.getBytes());
+					byte[] bytes = instr.getParsedBytes();
+					instrByteHashCode = Arrays.hashCode(bytes);
 				}
 				catch (MemoryAccessException e) {
 					// this should NEVER happen, should always be able to get the bytes...
@@ -2620,7 +2620,8 @@ public class SymbolicPropogator {
 			Instruction targetInstr = getInstructionContaining(target);
 			if (targetInstr != null) {
 				// if not at the top of an instruction, don't do it
-				if (!targetInstr.getMinAddress().equals(target)) {
+				Address disassemblyAddress = PseudoDisassembler.getNormalizedDisassemblyAddress(program, target);
+				if (!targetInstr.getMinAddress().equals(disassemblyAddress)) {
 					return false;
 				}
 				if (targetInstr.isInDelaySlot()) {
@@ -2629,7 +2630,7 @@ public class SymbolicPropogator {
 
 				// if not at the top of an instruction flow, don't do it
 				Function func = program.getFunctionManager().getFunctionContaining(target);
-				if (func != null && !func.getEntryPoint().equals(target)) {
+				if (func != null && !func.getEntryPoint().equals(disassemblyAddress)) {
 					return false;
 				}
 			}

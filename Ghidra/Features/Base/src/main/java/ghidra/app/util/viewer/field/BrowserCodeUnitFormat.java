@@ -17,10 +17,10 @@ package ghidra.app.util.viewer.field;
 
 import javax.swing.event.ChangeListener;
 
+import docking.options.OptionsService;
 import ghidra.GhidraOptions;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.listing.CodeUnitFormat;
 
 /**

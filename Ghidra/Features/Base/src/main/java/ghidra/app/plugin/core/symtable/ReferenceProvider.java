@@ -56,7 +56,7 @@ class ReferenceProvider extends ComponentProviderAdapter {
 		referenceKeyModel =
 			new SymbolReferenceModel(plugin.getBlockModelService(), plugin.getTool());
 		referencePanel =
-			new ReferencePanel(this, referenceKeyModel, renderer, plugin.getGoToService());
+			new ReferencePanel(this, referenceKeyModel, renderer);
 
 		addToTool();
 	}

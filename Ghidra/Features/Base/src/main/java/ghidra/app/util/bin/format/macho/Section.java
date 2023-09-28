@@ -29,7 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a section and section_64 structure.
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/loader.h">EXTERNAL_HEADERS/mach-o/loader.h</a> 
  */
 public class Section implements StructConverter {
 
@@ -146,6 +146,8 @@ public class Section implements StructConverter {
 
 	/**
 	 * Returns an input stream to underlying bytes of this section.
+	 * 
+	 * @param header The Mach-O header
 	 * @return an input stream to underlying bytes of this section
 	 * @throws IOException if an i/o error occurs.
 	 */
@@ -218,6 +220,17 @@ public class Section implements StructConverter {
 
 	public int getReserved3() {
 		return reserved3;
+	}
+
+	/**
+	 * Returns true if the section contains the given address
+	 * 
+	 * @param address The address to check
+	 * @return True if the section contains the given address; otherwise, false
+	 */
+	public boolean contains(long address) {
+		return Long.compareUnsigned(address, addr) >= 0 &&
+			Long.compareUnsigned(address, addr + size) < 0;
 	}
 
 	@Override

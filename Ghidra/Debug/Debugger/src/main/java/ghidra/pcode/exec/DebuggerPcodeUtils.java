@@ -102,9 +102,9 @@ public enum DebuggerPcodeUtils {
 				 * TODO: This may break things that check for the absence of a symbol
 				 * 
 				 * I don't think it'll affect expressions, but it could later affect user Sleigh
-				 * libraries than an expression might like to use. The better approach would be
-				 * to incorporate a better error message into the Sleigh compiler, but it won't
-				 * always know the use case for a clear message.
+				 * libraries than an expression might like to use. The better approach would be to
+				 * incorporate a better error message into the Sleigh compiler, but it won't always
+				 * know the use case for a clear message.
 				 */
 				throw new SleighException("Unknown register or label: '" + nm + "'");
 			}
@@ -114,9 +114,7 @@ public enum DebuggerPcodeUtils {
 		protected SleighSymbol findUserSymbol(String nm) {
 			Trace trace = coordinates.getTrace();
 			long snap = coordinates.getSnap();
-			for (TraceSymbol symbol : trace.getSymbolManager()
-					.labelsAndFunctions()
-					.getNamed(nm)) {
+			for (TraceSymbol symbol : trace.getSymbolManager().labels().getNamed(nm)) {
 				if (symbol instanceof TraceSymbolWithLifespan lifeSym &&
 					!lifeSym.getLifespan().contains(snap)) {
 					continue;

@@ -49,7 +49,7 @@ public class SingleFileSystemIndexHelper {
 		// used as the owner of the new GFileImpl instances.
 		this.rootDir = GFileImpl.fromFSRL(fs, null, fsFSRL.withPath("/"), true, -1);
 		this.payloadFile = GFileImpl.fromFSRL(fs, rootDir,
-			rootDir.getFSRL().withPath(payloadFilename).withMD5(payloadMD5), false, length);
+			rootDir.getFSRL().appendPath(payloadFilename).withMD5(payloadMD5), false, length);
 	}
 
 	/**
@@ -126,28 +126,43 @@ public class SingleFileSystemIndexHelper {
 		if (isClosed()) {
 			throw new IOException("Invalid state, index already closed");
 		}
-		if (directory == null || rootDir.equals(directory)) {
-			return Arrays.asList(payloadFile);
-		}
-		return Collections.emptyList();
+		return directory == null || rootDir.equals(directory) ? List.of(payloadFile) : List.of();
 	}
 
 	/**
 	 * Mirror's {@link GFileSystem#lookup(String)} interface.
-	 *
+	 * 
 	 * @param path path and filename of a file to find (either "/" for root or the payload file's
 	 * path).
+	 * @return {@link GFile} instance or null if requested path is not the same as the payload file.
+	 */
+	public GFile lookup(String path) {
+		return lookup(null, path, null);
+	}
+
+	/**
+	 * Mirror's {@link GFileSystem#lookup(String)} interface.
+	 * 
+	 * @param baseDir starting directory 
+	 * @param path path and filename of a file to find (either "/" for root or the payload file's
+	 * path).
+	 * @param nameComp optional {@link Comparator} that compares file names.  Suggested values are 
+	 * {@code String::compareTo} or {@code String::compareToIgnoreCase} or {@code null}.
 	 * @return {@link GFile} instance or null if requested path is not the same as
 	 * the payload file.
 	 */
-	public GFile lookup(String path) {
+	public GFile lookup(GFile baseDir, String path, Comparator<String> nameComp) {
+		if (baseDir != null && !baseDir.equals(rootDir)) {
+			return null;
+		}
 		if (path == null || path.equals("/")) {
 			return rootDir;
 		}
-		else if (path.equals(payloadFile.getFSRL().getPath())) {
-			return payloadFile;
-		}
-		return null;
+		nameComp = Objects.requireNonNullElse(nameComp, String::compareTo);
+		// compare the FSRL path ("/payloadname") as well just the payloadname (to be compatible
+		// with existing data that have malformed fsrls without a leading slash in the path) 
+		return nameComp.compare(path, payloadFile.getFSRL().getPath()) == 0 ||
+			nameComp.compare(path, payloadFile.getFSRL().getName()) == 0 ? payloadFile : null;
 	}
 
 	@Override

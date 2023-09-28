@@ -207,6 +207,7 @@ public:
   void clearMark(void) const { flags &= ~Varnode::mark; }	///< Clear the mark on this variable
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); }	///< Return \b true if \b this is marked
   bool isUnmerged(void) const { return ((highflags&unmerged)!=0); }	///< Return \b true if \b this has merge problems
+  bool isSameGroup(const HighVariable *op2) const;	///< Is \b this part of the same VariableGroup as \b op2
 
   /// \brief Determine if \b this HighVariable has an associated cover.
   ///
@@ -253,12 +254,15 @@ public:
 /// and still keeping the cached tests accurate, by calling the updateHigh() method.  If two HighVariables
 /// to be merged, the cached tests can be updated by calling moveIntersectTest() before merging.
 class HighIntersectTest {
+  PcodeOpSet &affectingOps;		///< PcodeOps that may indirectly affect the intersection test
   map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
   static void gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,vector<Varnode *> &res);
   static bool testBlockIntersection(HighVariable *a,int4 blk,const Cover &cover,int4 relOff,const vector<Varnode *> &blist);
   bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
+  bool testUntiedCallIntersection(HighVariable *tied,HighVariable *untied);
 public:
+  HighIntersectTest(PcodeOpSet &cCover) : affectingOps(cCover) {}
   void moveIntersectTests(HighVariable *high1,HighVariable *high2);
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   bool intersection(HighVariable *a,HighVariable *b);
@@ -292,6 +296,17 @@ inline const Cover &HighVariable::getCover(void) const
   if (piece == (VariablePiece *)0)
     return internalCover;
   return piece->getCover();
+}
+
+/// Test if the two HighVariables should be pieces of the same symbol.
+/// \param op2 is the other HighVariable to compare with \b this
+/// \return \b true if they share the same underlying VariableGroup
+inline bool HighVariable::isSameGroup(const HighVariable *op2) const
+
+{
+  if (piece == (VariablePiece *)0 || op2->piece == (VariablePiece *)0)
+    return false;
+  return piece->getGroup() == op2->piece->getGroup();
 }
 
 } // End namespace ghidra

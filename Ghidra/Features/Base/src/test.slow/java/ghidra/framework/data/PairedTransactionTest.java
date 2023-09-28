@@ -29,18 +29,14 @@ import ghidra.framework.store.LockException;
 
 public class PairedTransactionTest extends AbstractGuiTest {
 
-	DummyDomainObject obj1;
-	DummyDomainObject obj2;
+	private DummyDomainObject obj1;
+	private DummyDomainObject obj2;
 
-	MyListener obj1Listener;
-	MyListener obj2Listener;
+	private MyListener obj1Listener;
+	private MyListener obj2Listener;
 
-	Options propertyList1;
-	Options propertyList2;
-
-	public PairedTransactionTest() {
-		super();
-	}
+	private Options propertyList1;
+	private Options propertyList2;
 
 	@Before
 	public void setUp() throws Exception {
@@ -443,7 +439,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		assertTrue(Arrays.equals(new String[] {}, events2));
 
 		assertEquals("", obj1.getUndoName());
-		assertEquals("obj2: Test2", obj2.getUndoName());
+		assertEquals("Test2", obj2.getUndoName());
 		assertEquals("", obj1.getRedoName());
 		assertEquals("", obj2.getRedoName());
 

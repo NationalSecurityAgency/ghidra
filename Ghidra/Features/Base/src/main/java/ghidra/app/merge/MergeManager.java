@@ -26,8 +26,7 @@ import generic.util.WindowUtilities;
 import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.UndoableDomainObject;
-import ghidra.framework.plugintool.ModalPluginTool;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.listing.DomainObjectChangeSet;
 import ghidra.util.*;
@@ -502,7 +501,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 				if (mergePlugin != null) {
 					mergePlugin.dispose();
 				}
-				mergeTool.exit(); // cleanup!
+				PluginToolAccessUtils.dispose(mergeTool); // cleanup!
 				mergeTool = null;
 			});
 		}

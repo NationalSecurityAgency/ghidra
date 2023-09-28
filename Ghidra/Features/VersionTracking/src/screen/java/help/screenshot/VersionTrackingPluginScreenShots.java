@@ -743,7 +743,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		ToggleDockingAction action =
 			(ToggleDockingAction) getLocalAction(provider, "Toggle Dual Listing Visibility");
 		assertNotNull(action);
-		setToggleActionSelected(action, new ActionContext(), false);
+		setToggleActionSelected(action, new DefaultActionContext(), false);
 		waitForSwing();
 		waitForCondition(() -> !dualListingIsVisible(provider));
 	}
@@ -778,7 +778,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		ToggleDockingAction action =
 			(ToggleDockingAction) getLocalAction(provider, "Dual Listing Toggle Orientation");
 		assertNotNull(action);
-		setToggleActionSelected(action, new ActionContext(), vertical);
+		setToggleActionSelected(action, new DefaultActionContext(), vertical);
 		waitForSwing();
 		return action;
 	}
@@ -792,7 +792,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		ToggleDockingAction action =
 			(ToggleDockingAction) getLocalAction(provider, "Dual Listing Toggle Header");
 		assertNotNull(action);
-		setToggleActionSelected(action, new ActionContext(), showing);
+		setToggleActionSelected(action, new DefaultActionContext(), showing);
 		waitForSwing();
 		return action;
 	}

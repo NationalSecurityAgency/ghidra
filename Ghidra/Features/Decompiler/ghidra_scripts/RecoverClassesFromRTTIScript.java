@@ -54,10 +54,18 @@
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import classrecovery.*;
+import classrecovery.DecompilerScriptUtils;
+import classrecovery.RTTIClassRecoverer;
+import classrecovery.RTTIGccClassRecoverer;
+import classrecovery.RTTIWindowsClassRecoverer;
+import classrecovery.RecoveredClass;
+import classrecovery.RecoveredClassHelper;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -75,13 +83,30 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.GhidraProgramUtilities;
-import ghidra.service.graph.*;
+import ghidra.service.graph.AttributedEdge;
+import ghidra.service.graph.AttributedGraph;
+import ghidra.service.graph.AttributedVertex;
+import ghidra.service.graph.GraphDisplay;
+import ghidra.service.graph.GraphDisplayOptions;
+import ghidra.service.graph.GraphDisplayOptionsBuilder;
+import ghidra.service.graph.GraphDisplayProvider;
+import ghidra.service.graph.GraphType;
+import ghidra.service.graph.GraphTypeBuilder;
+import ghidra.service.graph.VertexShape;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.TaskMonitor;
@@ -196,22 +221,38 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		else if (isPE() && isGcc()){
 		
 			println("Program is a gcc compiled PE.");
-			boolean runGcc = askYesNo("Gcc Class Recovery Still Under Development",
-					"I understand that Gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
-				if (!runGcc) {
-					return;
-				}
-				//run fixup old elf relocations script
-				runScript("FixElfExternalOffsetDataRelocationScript.java");
-				recoverClassesFromRTTI =
-						new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
-							BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-							nameVfunctions, hasDebugSymbols, monitor);
+
+			boolean runGcc;
+			if (isRunningHeadless()) {
+				runGcc = true;
+			}
+			else {
+				runGcc = askYesNo("Gcc Class Recovery Still Under Development",
+					"I understand that Gcc class recovery is still under development and my " +
+						"results will be incomplete but want to run this anyway.");
+			}
+			if (!runGcc) {
+				return;
+			}
+			//run fixup old elf relocations script
+			runScript("FixElfExternalOffsetDataRelocationScript.java");
+			recoverClassesFromRTTI =
+				new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
+					BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
+					nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
-			boolean runGcc= askYesNo("Gcc Class Recovery Still Under Development",
+
+			boolean runGcc;
+
+			if (isRunningHeadless()) {
+				runGcc = true;
+			}
+			else {
+				runGcc = askYesNo("Gcc Class Recovery Still Under Development",
 				"I understand that Gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
-	
+			}
+
 			if (!runGcc) {
 				return;
 			}

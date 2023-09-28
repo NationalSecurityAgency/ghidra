@@ -53,7 +53,7 @@ public class MarkAndSelectionAction extends ToggleDockingAction {
 			new ToolBarData(unarmedIcon, ToolConstants.TOOLBAR_GROUP_THREE, "Z"));
 
 		setHelpLocation((new HelpLocation(HelpTopics.SELECTION, "Mark_And_Select")));
-		setSupportsDefaultToolContext(true);
+		setContextClass(NavigatableActionContext.class, true);
 		addToWindowWhen(NavigatableActionContext.class);
 
 	}

@@ -17,6 +17,9 @@
 // data and and then save the session.
 //@category Examples.Version Tracking
 
+import java.util.Collection;
+import java.util.List;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.feature.vt.api.correlator.program.*;
 import ghidra.feature.vt.api.db.VTSessionDB;
@@ -31,17 +34,35 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 
-import java.util.Collection;
-import java.util.List;
-
 public class CreateAppliedExactMatchingSessionScript extends GhidraScript {
+
+	private Program sourceProgram;
+	private Program destinationProgram;
+
+	@Override
+	public void cleanup(boolean success) {
+		if (sourceProgram != null) {
+			sourceProgram.release(this);
+		}
+		if (destinationProgram != null) {
+			destinationProgram.release(this);
+		}
+		super.cleanup(success);
+	}
+
 	@Override
 	public void run() throws Exception {
 		DomainFolder folder =
 			askProjectFolder("Please choose a folder for the session domain object");
 		String name = askString("Please enter a Version Tracking session name", "Session Name");
-		Program sourceProgram = askProgram("Please select the source (existing annotated) program");
-		Program destinationProgram = askProgram("Please select the destination (new) program");
+		sourceProgram = askProgram("Please select the source (existing annotated) program");
+		if (sourceProgram == null) {
+			return;
+		}
+		destinationProgram = askProgram("Please select the destination (new) program");
+		if (destinationProgram == null) {
+			return;
+		}
 
 		VTSession session =
 			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
@@ -58,7 +79,8 @@ public class CreateAppliedExactMatchingSessionScript extends GhidraScript {
 
 			// should we have convenience methods in VTCorrelator that don't
 			// take address sets, thus implying the entire address space should be used?
-			AddressSetView sourceAddressSet = sourceProgram.getMemory().getLoadedAndInitializedAddressSet();
+			AddressSetView sourceAddressSet =
+				sourceProgram.getMemory().getLoadedAndInitializedAddressSet();
 			AddressSetView destinationAddressSet =
 				destinationProgram.getMemory().getLoadedAndInitializedAddressSet();
 
@@ -91,17 +113,16 @@ public class CreateAppliedExactMatchingSessionScript extends GhidraScript {
 	private void correlateAndPossiblyApply(Program sourceProgram, Program destinationProgram,
 			VTSession session, PluginTool serviceProvider, VTAssociationManager manager,
 			AddressSetView sourceAddressSet, AddressSetView destinationAddressSet,
-			VTProgramCorrelatorFactory factory) throws CancelledException,
-			VTAssociationStatusException {
+			VTProgramCorrelatorFactory factory)
+			throws CancelledException, VTAssociationStatusException {
 
 		AddressSetView restrictedSourceAddresses =
 			excludeAcceptedMatches(session, sourceAddressSet, true);
 		AddressSetView restrictedDestinationAddresses =
 			excludeAcceptedMatches(session, destinationAddressSet, false);
 		VTOptions options = factory.createDefaultOptions();
-		VTProgramCorrelator correlator =
-			factory.createCorrelator(serviceProvider, sourceProgram, restrictedSourceAddresses,
-				destinationProgram, restrictedDestinationAddresses, options);
+		VTProgramCorrelator correlator = factory.createCorrelator(serviceProvider, sourceProgram,
+			restrictedSourceAddresses, destinationProgram, restrictedDestinationAddresses, options);
 
 		VTMatchSet results = correlator.correlate(session, monitor);
 		applyMatches(manager, results.getMatches());

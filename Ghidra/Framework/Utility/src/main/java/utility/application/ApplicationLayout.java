@@ -109,7 +109,15 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns the directory where archived application Extensions are stored.
+	 * Returns the directory where archived application Extensions are stored.  This directory may
+	 * contain both zip files and subdirectories.   This directory is only used inside of an
+	 * installation; development mode does not use this directory.   This directory is used to ship 
+	 * pre-built Ghidra extensions as part of a distribution.
+	 * <P>
+	 * This should be at the following location:<br>
+	 * <ul>
+	 * <li><code>{install dir}/Extensions/Ghidra</code></li>
+	 * </ul>
 	 *
 	 * @return the application Extensions archive directory.  Could be null if the
 	 *   {@link ApplicationLayout} does not support application Extensions.
@@ -120,7 +128,13 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns an {@link List ordered list} of the application Extensions installation directories.
+	 * Returns a prioritized {@link List ordered list} of the application Extensions installation 
+	 * directories.   Typically, the values may be any of the following locations:<br>
+	 * <ul>
+	 * <li><code>[user settings dir]/Extensions</code></li>
+	 * <li><code>[application install dir]/Ghidra/Extensions</code> (Release Mode)</li>
+	 * <li><code>ghidra/Ghidra/Extensions</code> (Development Mode)</li>
+	 * </ul>
 	 *
 	 * @return an {@link List ordered list} of the application Extensions installation directories.
 	 *   Could be empty if the {@link ApplicationLayout} does not support application Extensions.

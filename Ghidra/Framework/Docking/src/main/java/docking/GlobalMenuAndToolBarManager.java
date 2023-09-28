@@ -175,7 +175,9 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 		WindowNode focusedWindowNode = getFocusedWindowNode();
 		Set<DockingActionIf> focusedWindowActions = getWindowActions(focusedWindowNode);
 
-		ActionContext globalContext = windowManager.getDefaultToolContext();
+		Map<Class<? extends ActionContext>, ActionContext> defaultContextMap =
+			windowManager.getDefaultActionContextMap();
+
 		for (WindowNode windowNode : windowToActionManagerMap.keySet()) {
 			if (windowNode == focusedWindowNode) {
 				continue; // the focused window will be called after this loop later
@@ -183,14 +185,14 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 
 			WindowActionManager actionManager = windowToActionManagerMap.get(windowNode);
 			ActionContext localContext = getContext(windowNode);
-			actionManager.contextChanged(globalContext, localContext, focusedWindowActions);
+			actionManager.contextChanged(defaultContextMap, localContext, focusedWindowActions);
 		}
 
 		// now update the focused window's actions
 		WindowActionManager actionManager = windowToActionManagerMap.get(focusedWindowNode);
 		ActionContext focusedContext = getContext(focusedWindowNode);
 		if (actionManager != null) {
-			actionManager.contextChanged(globalContext, focusedContext, Collections.emptySet());
+			actionManager.contextChanged(defaultContextMap, focusedContext, Collections.emptySet());
 		}
 
 		// update the docking window manager ; no focused context when no window is focused
@@ -213,7 +215,7 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 			}
 		}
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}

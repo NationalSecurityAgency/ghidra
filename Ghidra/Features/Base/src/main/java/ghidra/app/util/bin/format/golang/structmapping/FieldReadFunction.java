@@ -17,8 +17,22 @@ package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
 
+/**
+ * Functional interface to read a structure field's value.
+ * <p>
+ * @see #get(FieldContext)
+ * 
+ * @param <T> type of structure mapped class that contains this field
+ */
 @FunctionalInterface
 public interface FieldReadFunction<T> {
+	/**
+	 * Deserializes and returns a field's value.
+	 *  
+	 * @param context context for this field
+	 * @return value of the field
+	 * @throws IOException if error reading
+	 */
 	Object get(FieldContext<T> context) throws IOException;
 
 }

@@ -119,7 +119,7 @@ public class SemisparseByteArray {
 	 * 
 	 * <p>
 	 * Copies {@code length} bytes of data from the semisparse array starting at index {@code loc}
-	 * into {@code data} starting at index {@code} offset. All initialized portions within the
+	 * into {@code data} starting at index {@code offset}. All initialized portions within the
 	 * requested region are copied. The uninitialized portions may be treated as zeroes or not
 	 * copied at all. Typically, the destination array has been initialized to zero by the caller,
 	 * such that all uninitialized portions are zero. To avoid fetching uninitialized data, use
@@ -242,7 +242,10 @@ public class SemisparseByteArray {
 	 */
 	public synchronized void putData(final long loc, final byte[] data, final int offset,
 			final int length) {
-		if (length == 0) {
+		if (length < 0) {
+			throw new IllegalArgumentException("length: " + length);
+		}
+		else if (length == 0) {
 			return;
 		}
 		defined.add(ULongSpan.extent(loc, length));

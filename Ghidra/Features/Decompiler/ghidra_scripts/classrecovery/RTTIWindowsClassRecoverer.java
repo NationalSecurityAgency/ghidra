@@ -16,7 +16,14 @@
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.
 package classrecovery;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 
 import ghidra.app.plugin.core.decompile.actions.FillOutStructureCmd;
 import ghidra.app.plugin.core.decompile.actions.FillOutStructureCmd.OffsetPcodeOpPair;
@@ -24,17 +31,41 @@ import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.opinion.PeLoader.CompilerOpinion.CompilerEnum;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.flatapi.FlatProgramAPI;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.Category;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeConflictHandler;
+import ghidra.program.model.data.IntegerDataType;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.listing.CircularDependencyException;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.FlowOverride;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighVariable;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
@@ -1056,6 +1087,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			List<RecoveredClass> classHierarchyFromRTTI = getClassHierarchyFromRTTI(recoveredClass);
 
+			if (classHierarchyFromRTTI.size() == 0) {
+				throw new IllegalArgumentException("Unexpected empty class hierarchy for " +
+					recoveredClass.getClassNamespace().getName(true));
+			}
+
 			if (classHierarchyFromRTTI.size() > 0) {
 				recoveredClass.setClassHierarchy(classHierarchyFromRTTI);
 
@@ -1089,11 +1125,24 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			if (recoveredClass.hasMultipleInheritance()) {
 
 				List<RecoveredClass> classHierarchy = recoveredClass.getClassHierarchy();
+
+				if (classHierarchy.size() <= 1) {
+					throw new IllegalArgumentException(
+						"Class hierarchy for class should be more than 1 since it has multiple inheritance" +
+							recoveredClass.getClassNamespace().getName(true));
+				}
 				int index = 1;
 				while (index < classHierarchy.size()) {
 					monitor.checkCancelled();
 					RecoveredClass parentClass = classHierarchy.get(index);
 					List<RecoveredClass> parentClassHierarchy = parentClass.getClassHierarchy();
+					if (parentClassHierarchy.size() < 1) {
+						// shouldn't get here since the first loop should have removed all classes
+						// with incorrect class hierarchy
+						throw new IllegalArgumentException(
+							"Parent class has empty class hierarchy " +
+								parentClass.getClassNamespace().getName(true));
+					}
 					recoveredClass.addClassHierarchyMapping(parentClass, parentClassHierarchy);
 					updateClassWithParent(parentClass, recoveredClass);
 					index += parentClassHierarchy.size();
@@ -1159,17 +1208,24 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					extendedFlatAPI.getSingleReferencedAddress(pointerAddress);
 
 				if (baseClassDescriptorAddress == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException(
+						"Missing expected pointer at " + pointerAddress.toString());
+					//return classHierarchy;
 				}
 
 				Symbol primarySymbol = symbolTable.getPrimarySymbol(baseClassDescriptorAddress);
 				if (primarySymbol == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException(
+						"Missing expected BaseClassDescriptor symbol at " +
+							baseClassDescriptorAddress.toString());
+					//return classHierarchy;
 				}
 
 				Namespace pointedToNamespace = primarySymbol.getParentNamespace();
 				if (pointedToNamespace == null) {
-					return classHierarchy;
+					throw new IllegalArgumentException("Missing expected class namesapce at " +
+						baseClassDescriptorAddress.toString());
+					//return classHierarchy;
 				}
 
 				// if the namespace isn't in the map then it is a class 
@@ -1190,7 +1246,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 		}
 		else if (symbols.size() > 1) {
-			//TODO: throw exception?
+			throw new IllegalArgumentException("More than one Base Class Array for " +
+				recoveredClass.getClassNamespace().getName(true));
 		}
 		return classHierarchy;
 	}
@@ -2180,7 +2237,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			throws CancelledException, Exception {
 
 		if (!recoveredClass.hasVftable()) {
-			createClassStructureUsingRTTI(recoveredClass, null);
+			Structure classStruct = createClassStructureUsingRTTI(recoveredClass, null);
+
+			if (classStruct != null) {
+				updateClassFunctionsNotUsingNewClassStructure(recoveredClass, classStruct);
+			}
 			// return in this case because if there is no vftable for a class the script cannot
 			// identify any member functions so there is no need to process the rest of this method
 			return;
@@ -2225,6 +2286,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// when the vfunctions are put in the class
 		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes,
 			classStruct);
+
+		if (classStruct != null) {
+			updateClassFunctionsNotUsingNewClassStructure(recoveredClass, classStruct);
+		}
 
 	}
 

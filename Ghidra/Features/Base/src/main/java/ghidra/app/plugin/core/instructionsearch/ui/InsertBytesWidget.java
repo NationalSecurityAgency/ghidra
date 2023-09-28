@@ -326,8 +326,9 @@ public class InsertBytesWidget extends ReusableDialogComponentProvider implement
 	private List<OperandMetadata> createOperandMetadata(PseudoInstruction instruction)
 			throws MemoryAccessException {
 
-		List<OperandMetadata> operands = new ArrayList<>();
+		byte[] bytes = instruction.getParsedBytes();
 
+		List<OperandMetadata> operands = new ArrayList<>();
 		for (int i = 0; i < instruction.getNumOperands(); i++) {
 			OperandMetadata operandMD = new OperandMetadata();
 			operandMD.setOpType(instruction.getOperandType(i));
@@ -337,8 +338,9 @@ public class InsertBytesWidget extends ReusableDialogComponentProvider implement
 			// prototype object in the pseudo instruction. For the value string we have to do
 			// a bit of calculating: we know the entire instruction byte string and we know
 			// this operand mask, so AND them together and we get the operand bytes.
-			byte[] mask = instruction.getPrototype().getOperandValueMask(i).getBytes();
-			byte[] value = InstructionSearchUtils.byteArrayAnd(mask, instruction.getBytes());
+			InstructionPrototype prototype = instruction.getPrototype();
+			byte[] mask = prototype.getOperandValueMask(i).getBytes();
+			byte[] value = InstructionSearchUtils.byteArrayAnd(mask, bytes);
 			MaskContainer maskContainer = new MaskContainer(mask, value);
 
 			operandMD.setMaskContainer(maskContainer);
@@ -362,8 +364,10 @@ public class InsertBytesWidget extends ReusableDialogComponentProvider implement
 		// The mask array we can get directly from the prototype. For the value array we 
 		// have to figure out which bits pertain to operands and just zero them out, so we're
 		// just left with the instruction (mnemonic) bits.
-		byte[] mask = instruction.getPrototype().getInstructionMask().getBytes();
-		byte[] value = clearOperandBits(mask, instruction.getBytes());
+		InstructionPrototype prototype = instruction.getPrototype();
+		byte[] mask = prototype.getInstructionMask().getBytes();
+		byte[] value = instruction.getParsedBytes();
+		value = clearOperandBits(mask, value);
 		MaskContainer mnemonicMask = new MaskContainer(mask, value);
 
 		InstructionMetadata instructionMD = new InstructionMetadata(mnemonicMask);
