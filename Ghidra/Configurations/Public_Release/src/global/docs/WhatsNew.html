@@ -78,10 +78,13 @@
 	
 	<P>Support for the Mach-O binary file format has received many updates, including more complete markup of load command data and Swift type metadata.
 	Support has also been added for threaded binding (<span class="gcode">BIND_OPCODE_THREADED</span>).  Libraries extracted from the <span class="gcode">dyld_shared_cache</span>
-	GFileSystem now contain a packed down <span class="gcode">__LINKEDIT</span> segment, significantly reducing the size of the resulting binary.  Additionally, 
-	local symbols are included in the exported libraries which are visible where only <span class="gcode">&lt;redacted&gt;</span> symbols were previously present.  
-	Finally, libraries can now be loaded from both local directories as well as GFileSystems for all file formats and filesystems. This enables loading libraries directly 
-	from within <span class="gcode">dyld_shared_cache</span> file without the need to export them first to disk.</P>
+	GFileSystem now contain a packed down <span class="gcode">__LINKEDIT</span> segment, significantly reducing the size of the resulting binary.</P>
+	
+	<P>Local symbols within <span class="gcode">dyld_shared_cache</span> extracted libraries are now included in place of <span class="gcode">&lt;redacted&gt;</span> symbols.</P>
+	  
+	<P>In addition to searching local filesystem directories, library dependencies can now be loaded from the top-level of any GFileSystem-supported container file.  This is allowed for all Import file 
+	formats that support the loading of library dependencies. For example, this enables loading library dependencies directly from within a <span class="gcode">dyld_shared_cache</span> file without the 
+	need to export them first to the local filesystem.</P>
 	
 	<H2>Accessibility Improvements</H2>
 	
