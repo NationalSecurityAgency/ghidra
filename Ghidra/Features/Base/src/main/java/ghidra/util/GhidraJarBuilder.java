@@ -26,7 +26,7 @@ import generic.jar.*;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.*;
-import ghidra.framework.plugintool.dialog.ExtensionUtils;
+import ghidra.framework.project.extensions.ExtensionUtils;
 import ghidra.util.classfinder.ClassFinder;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;

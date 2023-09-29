@@ -35,6 +35,7 @@ import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.PluginToolAccessUtils;
 import ghidra.framework.store.LockException;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
@@ -123,7 +124,7 @@ class FileActionManager {
 		closeProjectAction = new DockingAction("Close Project", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				closeProject(false); //not exiting
+				closeProject(false); // not exiting
 			}
 		};
 		closeProjectAction.setEnabled(false);
@@ -187,7 +188,7 @@ class FileActionManager {
 			// if all is well and we already have an active project, close it
 			Project activeProject = plugin.getActiveProject();
 			if (activeProject != null) {
-				if (!closeProject(false)) { // false -->not exiting
+				if (!closeProject(false)) { // false --> not exiting
 					return; // user canceled
 				}
 			}
@@ -428,7 +429,7 @@ class FileActionManager {
 		// check for any changes since last saved
 		PluginTool[] runningTools = activeProject.getToolManager().getRunningTools();
 		for (PluginTool runningTool : runningTools) {
-			if (!runningTool.canClose(isExiting)) {
+			if (!PluginToolAccessUtils.canClose(runningTool)) {
 				return false;
 			}
 		}

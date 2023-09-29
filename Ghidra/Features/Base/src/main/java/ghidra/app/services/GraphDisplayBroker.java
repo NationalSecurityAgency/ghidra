@@ -26,10 +26,10 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Ghidra service interface for managing and directing graph output.  It purpose is to discover
- * available graphing display providers and (if more than one) allow the user to select the currently
- * active graph consumer.  Clients that generate graphs don't have to worry about how to display them
- * or export graphs. They simply send their graphs to the broker and register for graph events if
- * they want interactive support.
+ * available graphing display providers and (if more than one) allow the user to select the
+ * currently active graph consumer.  Clients that generate graphs don't have to worry about how to
+ * display them or export graphs. They simply send their graphs to the broker and register for graph
+ * events if they want interactive support.
  */
 @ServiceInfo(defaultProvider = GraphDisplayBrokerPlugin.class, description = "Get a Graph Display")
 public interface GraphDisplayBroker {
@@ -56,7 +56,7 @@ public interface GraphDisplayBroker {
 	/**
 	 * A convenience method for getting a {@link GraphDisplay} from the currently active provider.
 	 * This method is intended to be used to display a new graph.
-	 * 
+	 *
 	 * @param reuseGraph if true, the provider will attempt to re-use a current graph display
 	 * @param monitor the {@link TaskMonitor} that can be used to cancel the operation
 	 * @return a {@link GraphDisplay} object to sends graphs to be displayed or exported.
@@ -87,7 +87,7 @@ public interface GraphDisplayBroker {
 	/**
 	 * Returns the {@link AttributedGraphExporter} with the given name or null in no exporter with
 	 * that name is known
-	 * 
+	 *
 	 * @param name the name of the exporter to retrieve
 	 * @return  the {@link AttributedGraphExporter} with the given name or null if no exporter with
 	 * that name is known

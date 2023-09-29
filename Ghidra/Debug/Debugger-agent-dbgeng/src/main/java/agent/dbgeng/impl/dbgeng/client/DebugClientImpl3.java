@@ -42,11 +42,11 @@ public class DebugClientImpl3 extends DebugClientImpl2 {
 			BitmaskSet<DebugVerifierFlags> unusedVerifierFlags) {
 		ULONGLONG ullServer = new ULONGLONG(si.id);
 		ULONG ulFlags = new ULONG(createFlags.getBitmask());
-		if (unusedInitialDirectory != null) {
+		if (unusedInitialDirectory != null && unusedInitialDirectory.length() > 0) {
 			throw new UnsupportedOperationException(
 				"IDebugClient3 does not support 'initial directory'");
 		}
-		if (unusedEnvironment != null) {
+		if (unusedEnvironment != null && unusedEnvironment.length() > 0) {
 			throw new UnsupportedOperationException("IDebugClient3 does not support 'environment'");
 		}
 		COMUtils.checkRC(jnaClient.CreateProcessWide(ullServer, new WString(commandLine), ulFlags));

@@ -30,5 +30,6 @@ void* work(void* param) {
 
 int main() {
     pthread_create(&thread, NULL, work, (void*)1);
+    sleep(1); // Not ideal, but some assurance that we break with two threads
     return (int)work(NULL);
 }

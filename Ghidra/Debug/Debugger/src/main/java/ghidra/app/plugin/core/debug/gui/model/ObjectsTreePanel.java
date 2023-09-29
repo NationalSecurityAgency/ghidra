@@ -306,7 +306,9 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		AbstractNode node = getNode(object.getCanonicalPath());
-		tree.addSelectionPath(node.getTreePath());
+		if (node != null) {
+			tree.addSelectionPath(node.getTreePath());
+		}
 	}
 
 	public void selectCurrent() {

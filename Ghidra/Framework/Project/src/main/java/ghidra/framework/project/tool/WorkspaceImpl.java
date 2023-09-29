@@ -15,13 +15,16 @@
  */
 package ghidra.framework.project.tool;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.jdom.Element;
 
 import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.model.Workspace;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.PluginToolAccessUtils;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -31,11 +34,10 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  */
 class WorkspaceImpl implements Workspace {
-	private final static int TYPICAL_NUM_RUNNING_TOOLS = 5;
 
 	private String name;
 	private ToolManagerImpl toolManager;
-	private Set<PluginTool> runningTools = new HashSet<PluginTool>(TYPICAL_NUM_RUNNING_TOOLS);
+	private Set<PluginTool> runningTools = new CopyOnWriteArraySet<>();
 	private boolean isActive;
 
 	WorkspaceImpl(String name, ToolManagerImpl toolManager) {
@@ -77,14 +79,9 @@ class WorkspaceImpl implements Workspace {
 		PluginTool tool = toolManager.getTool(this, template);
 		if (tool != null) {
 			tool.setVisible(true);
-
-			if (tool instanceof GhidraTool) {
-				GhidraTool gTool = (GhidraTool) tool;
-				gTool.checkForNewExtensions();
-			}
 			runningTools.add(tool);
 
-			// alert the tool manager that we changed
+			// alert the tool manager that we have changed
 			toolManager.setWorkspaceChanged(this);
 			toolManager.fireToolAddedEvent(this, tool);
 		}
@@ -159,6 +156,7 @@ class WorkspaceImpl implements Workspace {
 		String defaultTool = System.getProperty("ghidra.defaulttool");
 		if (defaultTool != null && !defaultTool.equals("")) {
 			PluginTool tool = toolManager.getTool(defaultTool);
+			tool.setVisible(isActive);
 			runningTools.add(tool);
 			toolManager.fireToolAddedEvent(this, tool);
 			return;
@@ -173,27 +171,23 @@ class WorkspaceImpl implements Workspace {
 			}
 
 			PluginTool tool = toolManager.getTool(toolName);
-			if (tool != null) {
-				tool.setVisible(isActive);
-
-				if (tool instanceof GhidraTool) {
-					GhidraTool gTool = (GhidraTool) tool;
-					gTool.checkForNewExtensions();
-				}
-
-				boolean hadChanges = tool.hasConfigChanged();
-				tool.restoreWindowingDataFromXml(element);
-
-				Element toolDataElem = element.getChild("DATA_STATE");
-				tool.restoreDataStateFromXml(toolDataElem);
-				if (hadChanges) {
-					// restore the dirty state, which is cleared by the restoreDataState call
-					tool.setConfigChanged(true);
-				}
-
-				runningTools.add(tool);
-				toolManager.fireToolAddedEvent(this, tool);
+			if (tool == null) {
+				continue;
 			}
+
+			tool.setVisible(isActive);
+			boolean hadChanges = tool.hasConfigChanged();
+			tool.restoreWindowingDataFromXml(element);
+
+			Element toolDataElem = element.getChild("DATA_STATE");
+			tool.restoreDataStateFromXml(toolDataElem);
+			if (hadChanges) {
+				// restore the dirty state, which is cleared by the restoreDataState call
+				tool.setConfigChanged(true);
+			}
+
+			runningTools.add(tool);
+			toolManager.fireToolAddedEvent(this, tool);
 		}
 	}
 
@@ -223,14 +217,9 @@ class WorkspaceImpl implements Workspace {
 	 * Close all running tools; called from the close() method in
 	 * ToolManagerImpl which is called from the Project's close()
 	 */
-	void close() {
+	void dispose() {
 		for (PluginTool tool : runningTools) {
-			try {
-				tool.exit();
-			}
-			finally {
-				toolManager.toolRemoved(this, tool);
-			}
+			PluginToolAccessUtils.dispose(tool);
 		}
 		runningTools.clear();
 	}

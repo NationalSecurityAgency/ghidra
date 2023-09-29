@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.bin.format.golang.rtti;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.rtti.types.GoInterfaceType;
 import ghidra.app.util.bin.format.golang.rtti.types.GoType;
@@ -80,7 +79,7 @@ public class GoItab implements StructureMarkup<GoItab> {
 	}
 
 	@Override
-	public void additionalMarkup() throws IOException {
+	public void additionalMarkup(MarkupSession session) throws IOException {
 		GoSlice funSlice = getFunSlice();
 		List<Address> funcAddrs = Arrays.stream(funSlice.readUIntList(programContext.getPtrSize()))
 				.mapToObj(offset -> programContext.getCodeAddress(offset))
@@ -88,12 +87,12 @@ public class GoItab implements StructureMarkup<GoItab> {
 		// this adds references from the elements of the artificial slice.  However, the reference
 		// from element[0] of the real "fun" array won't show anything in the UI even though
 		// there is a outbound reference there.
-		funSlice.markupElementReferences(programContext.getPtrSize(), funcAddrs);
+		funSlice.markupElementReferences(programContext.getPtrSize(), funcAddrs, session);
 
 		GoSlice extraFunSlice =
 			funSlice.getSubSlice(1, funSlice.getLen() - 1, programContext.getPtrSize());
 		extraFunSlice.markupArray(getStructureName() + "_extra_itab_functions", (DataType) null,
-			true);
+			true, session);
 	}
 
 	@Override

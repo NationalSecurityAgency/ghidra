@@ -46,16 +46,13 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
-	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
-	 *   fixups; otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	protected MachoPrelinkProgramBuilder(Program program, ByteProvider provider,
-			FileBytes fileBytes, boolean shouldAddChainedFixupsRelocations, MessageLog log,
-			TaskMonitor monitor) throws Exception {
-		super(program, provider, fileBytes, shouldAddChainedFixupsRelocations, log, monitor);
+			FileBytes fileBytes, MessageLog log, TaskMonitor monitor) throws Exception {
+		super(program, provider, fileBytes, log, monitor);
 	}
 
 	/**
@@ -64,17 +61,14 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
-	 * @param addChainedFixupsRelocations True if relocations should be added for chained fixups;
-	 *   otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			boolean addChainedFixupsRelocations, MessageLog log, TaskMonitor monitor)
-			throws Exception {
+			MessageLog log, TaskMonitor monitor) throws Exception {
 		MachoPrelinkProgramBuilder machoPrelinkProgramBuilder = new MachoPrelinkProgramBuilder(
-			program, provider, fileBytes, addChainedFixupsRelocations, log, monitor);
+			program, provider, fileBytes, log, monitor);
 		machoPrelinkProgramBuilder.build();
 	}
 
@@ -110,7 +104,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		}
 
 		// Do things that needed to wait until after the inner Mach-O's are processed
-		super.markupChainedFixups(chainedFixups);
+		super.markupChainedFixups(machoHeader, chainedFixups);
 	}
 
 	/**
@@ -185,7 +179,8 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 	}
 
 	@Override
-	protected void markupChainedFixups(List<Address> fixups) throws CancelledException {
+	protected void markupChainedFixups(MachHeader header, List<Address> fixups)
+			throws CancelledException {
 		// Just save the list.  
 		// We need to delay doing the markup until after we process all the inner Mach-O's.
 		this.chainedFixups = fixups;

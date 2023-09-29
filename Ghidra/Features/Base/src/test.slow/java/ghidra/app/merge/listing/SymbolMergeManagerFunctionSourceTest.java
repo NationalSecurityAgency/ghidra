@@ -15,7 +15,7 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -61,45 +61,27 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x0100219c");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
 					f.setName("printf", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x0100219c");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
 					f.setName("printf", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -126,13 +108,8 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x0100219c");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
@@ -140,23 +117,14 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 					entry = addr(program, "0x0100415a");
 					f = program.getFunctionManager().getFunctionAt(entry);
 					f.setName("Fred", SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x0100219c");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
@@ -164,13 +132,9 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 					entry = addr(program, "0x0100415a");
 					f = program.getFunctionManager().getFunctionAt(entry);
 					f.setName("Barney", SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -209,45 +173,27 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01006420");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
 					f.getSymbol().setSource(SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01006420");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
 					f.getSymbol().setSource(SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -274,45 +220,27 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01006420");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
 					f.getSymbol().setSource(SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01006420");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
 					f.getSymbol().setSource(SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -339,30 +267,18 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01006420");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
 					f.getSymbol().setSource(SourceType.ANALYSIS);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes for My program.
@@ -391,32 +307,20 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes for Latest program.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01006420");
 					Function f = program.getFunctionManager().getFunctionAt(entry);
 					f.getSymbol().setSource(SourceType.IMPORTED);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -443,47 +347,29 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01002239");
 					CreateFunctionCmd cmd =
 						new CreateFunctionCmd("FunctionOne", entry, null, SourceType.ANALYSIS);
 					cmd.applyTo(program);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01002239");
 					CreateFunctionCmd cmd =
 						new CreateFunctionCmd("FunctionOne", entry, null, SourceType.ANALYSIS);
 					cmd.applyTo(program);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -510,13 +396,8 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01002239");
 					CreateFunctionCmd cmd =
@@ -526,24 +407,14 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 					entry = addr(program, "0x010033f6");
 					cmd = new CreateFunctionCmd("Barney", entry, null, SourceType.IMPORTED);
 					cmd.applyTo(program);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x01002239");
 					CreateFunctionCmd cmd =
@@ -553,14 +424,9 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 					entry = addr(program, "0x010033f6");
 					cmd = new CreateFunctionCmd("Barney", entry, null, SourceType.ANALYSIS);
 					cmd.applyTo(program);
-
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -597,47 +463,29 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x010063b4");
 					CreateFunctionCmd cmd =
 						new CreateFunctionCmd("FUNCTION63b4", entry, null, SourceType.ANALYSIS);
 					cmd.applyTo(program);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x010063b4");
 					CreateFunctionCmd cmd =
 						new CreateFunctionCmd("FUNCTION63b4", entry, null, SourceType.ANALYSIS);
 					cmd.applyTo(program);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -664,47 +512,29 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x010063b4");
 					CreateFunctionCmd cmd =
 						new CreateFunctionCmd("FUNCTION63b4", entry, null, SourceType.IMPORTED);
 					cmd.applyTo(program);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x010063b4");
 					CreateFunctionCmd cmd =
 						new CreateFunctionCmd("FUNCTION63b4", entry, null, SourceType.ANALYSIS);
 					cmd.applyTo(program);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -731,31 +561,19 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x010063b4");
 					CreateFunctionCmd cmd =
 						new CreateFunctionCmd("FUNCTION63b4", entry, null, SourceType.ANALYSIS);
 					cmd.applyTo(program);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes to My program.
@@ -784,33 +602,21 @@ public class SymbolMergeManagerFunctionSourceTest extends AbstractListingMergeMa
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes to Latest program.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address entry = addr(program, "0x010063b4");
 					CreateFunctionCmd cmd =
 						new CreateFunctionCmd("FUNCTION63b4", entry, null, SourceType.IMPORTED);
 					cmd.applyTo(program);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

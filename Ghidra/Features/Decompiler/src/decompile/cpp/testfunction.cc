@@ -21,13 +21,25 @@ void FunctionTestProperty::startTest(void) const
 
 {
   count = 0;
+  patnum = 0;
 }
 
 void FunctionTestProperty::processLine(const string &line) const
 
 {
-  if (std::regex_search(line,pattern))
-    count += 1;
+  if (std::regex_search(line,pattern[patnum])) {
+    patnum += 1;
+    if (patnum >= pattern.size()) {
+      count += 1;		// Full pattern has matched.  Count it.
+      patnum = 0;
+    }
+  }
+  else if (patnum > 0) {
+    patnum = 0;		// Abort current multi-line match, restart trying to match first line
+    if (std::regex_search(line,pattern[patnum])) {
+      patnum += 1;
+    }
+  }
 }
 
 bool FunctionTestProperty::endTest(void) const
@@ -44,7 +56,24 @@ void FunctionTestProperty::restoreXml(const Element *el)
   s1 >> minimumMatch;
   istringstream s2(el->getAttributeValue("max"));
   s2 >> maximumMatch;
-  pattern = std::regex(el->getContent());
+  string::size_type pos = 0;
+  const string &line(el->getContent());
+  do {
+    while(pos < line.size() && (line[pos] == ' ' || line[pos] == '\t'))	// Remove whitespace at front of pattern
+      pos += 1;
+    if (pos >= line.size())
+      break;
+   string::size_type nextpos = line.find('\n',pos);	// A newline in the pattern indicates a multi-line regex
+   string::size_type n;
+   if (nextpos == string::npos)
+     n = string::npos;			// If no (additional) newlines, take all remaining chars
+   else {
+     n = nextpos - pos;			// Create a line regex upto newline char
+     nextpos += 1;			// Skip newline when creating next line regex
+   }
+   pattern.emplace_back(line.substr(pos, n));	// Add a regex to list of lines to match
+   pos = nextpos;
+  } while(pos != string::npos);
 }
 
 void ConsoleCommands::readLine(string &line)

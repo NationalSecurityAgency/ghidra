@@ -442,7 +442,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return the new context
 	 */
 	protected ActionContext createContext() {
-		return new ActionContext(this);
+		return new DefaultActionContext(this);
 	}
 
 	/**
@@ -453,7 +453,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return the new context
 	 */
 	protected ActionContext createContext(Object contextObject) {
-		return new ActionContext(this).setContextObject(contextObject);
+		return new DefaultActionContext(this).setContextObject(contextObject);
 	}
 
 	/**
@@ -465,7 +465,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return the new context
 	 */
 	protected ActionContext createContext(Component sourceComponent, Object contextObject) {
-		return new ActionContext(this, sourceComponent).setContextObject(contextObject);
+		return new DefaultActionContext(this, sourceComponent).setContextObject(contextObject);
 	}
 
 	/**
@@ -825,6 +825,18 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			size = Math.max(size - 1, 3);
 		}
 		ThemeManager.getInstance().setFont(registeredFontId, font.deriveFont((float) size));
+	}
+
+	/**
+	 * Tells the provider to reset the font size for this provider.
+	 * <p>
+	 * See {@link #adjustFontSize(boolean)}
+	 */
+	public void resetFontSize() {
+		if (registeredFontId == null) {
+			return;
+		}
+		ThemeManager.getInstance().restoreFont(registeredFontId);
 	}
 
 	/**

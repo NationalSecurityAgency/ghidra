@@ -21,8 +21,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.OffsetReference;
 import ghidra.util.NamingUtilities;
 
@@ -85,6 +84,12 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * @return end address of the block
 	 */
 	public Address getEnd();
+
+	/**
+	 * Get the address range that corresponds to this block.
+	 * @return block address range
+	 */
+	public AddressRange getAddressRange();
 
 	/**
 	 * Get the number of bytes in this block.

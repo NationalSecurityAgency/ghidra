@@ -100,7 +100,7 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 	public static <R> boolean hasFilterableColumns(JTable table,
 			RowObjectFilterModel<R> model) {
 		return !ColumnFilterDialogModel.getAllColumnFilterData(model, table.getColumnModel())
-				.isEmpty();
+			.isEmpty();
 	}
 
 	private void addClearFilterButton() {
@@ -414,7 +414,7 @@ public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 		setOkEnabled(isValid);
 		setApplyEnabled(isValid);
 
-		ActionContext context = new ActionContext();
+		ActionContext context = new DefaultActionContext();
 
 		for (DockingActionIf action : getActions()) {
 			action.setEnabled(action.isEnabledForContext(context));

@@ -39,8 +39,11 @@ public class GoStructField {
 	@MarkupReference("type")
 	private long typ;	// direct ptr to GoType
 
-	@FieldMapping(fieldName = "offsetAnon" /* TODO or "anon" */)
-	private long offset;	// offset >> 1 == actual offset, bit 0 = embedded
+	@FieldMapping(optional = true) //<=1.18
+	private long offsetAnon;	// offsetAnon >> 1 == actual offset, bit 0 = embedded flag
+
+	@FieldMapping(optional = true) //>=1.19 
+	private long offset;
 
 	@Markup
 	public GoName getName() throws IOException {
@@ -54,13 +57,18 @@ public class GoStructField {
 		return programContext.getGoType(typ);
 	}
 
-	public long getOffset() {
-		return offset >> 1;
+	public void setOffsetAnon(long offsetAnon) {
+		this.offsetAnon = offsetAnon;
+		this.offset = offsetAnon >> 1;
 	}
 
-	public boolean isEmbedded() {
-		return (offset & 0x1) != 0;
+	public long getOffset() {
+		return offset;
 	}
+
+//	public boolean isEmbedded() {
+//		return (offsetAnon & 0x1) != 0;
+//	}
 
 	public String getNameString() throws IOException {
 		GoName n = getName();

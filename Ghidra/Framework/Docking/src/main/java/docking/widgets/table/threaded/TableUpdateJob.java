@@ -522,11 +522,16 @@ public class TableUpdateJob<T> {
 
 		Comparator<T> comparator = newSortContext.getComparator();
 		Comparator<T> monitoredComparator = new MonitoredComparator<>(comparator, monitor, size);
+
+		// copy the data. If the sort is cancelled, the data could be corrupted
+		List<T> copy = new ArrayList<>(data);
 		try {
 			Collections.sort(data, monitoredComparator);
 		}
 		catch (SortCancelledException e) {
-			// do nothing, the old data will remain
+			// restore copy as data could be corrupted
+			data.clear();
+			data.addAll(copy);
 		}
 		catch (Exception e) {
 			// We added this to catch an issue if the sort comparators violate the contract of
@@ -534,6 +539,9 @@ public class TableUpdateJob<T> {
 			// throw the exception.  This will allow the currently loaded data to be used, albeit
 			// unsorted.
 			Msg.error(this, "Unable to finish table sorting", e);
+			// restore copy as data could be corrupted
+			data.clear();
+			data.addAll(copy);
 		}
 
 		monitor.setMessage("Done sorting");

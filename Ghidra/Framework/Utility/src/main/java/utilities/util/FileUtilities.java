@@ -850,7 +850,7 @@ public final class FileUtilities {
 	 *
 	 * @param potentialParentFile The file that may be the parent
 	 * @param otherFile The file that may be the child
-	 * @return boolean true if otherFile's path is within potentialParentFile's path.
+	 * @return boolean true if otherFile's path is within potentialParentFile's path
 	 */
 	public static boolean isPathContainedWithin(File potentialParentFile, File otherFile) {
 		try {
@@ -869,6 +869,20 @@ public final class FileUtilities {
 		catch (IOException e) {
 			return false;
 		}
+	}
+
+	/**
+	 * Returns true if any of the given <code>potentialParents</code> is the parent path of or has
+	 * the same path as the given <code>otherFile</code>.
+	 *
+	 * @param potentialParents The files that may be the parent
+	 * @param otherFile The file that may be the child
+	 * @return boolean true if otherFile's path is within any of the potentialParents' paths 
+	 */
+	public static boolean isPathContainedWithin(Collection<ResourceFile> potentialParents,
+			ResourceFile otherFile) {
+
+		return potentialParents.stream().anyMatch(parent -> parent.containsPath(otherFile));
 	}
 
 	/**
@@ -1250,14 +1264,56 @@ public final class FileUtilities {
 	 * @param consumer the consumer of each child in the given directory
 	 * @throws IOException if there is any problem reading the directory contents
 	 */
-	public static void forEachFile(Path path, Consumer<Stream<Path>> consumer) throws IOException {
-
+	public static void forEachFile(Path path, Consumer<Path> consumer) throws IOException {
 		if (!Files.isDirectory(path)) {
 			return;
 		}
 
 		try (Stream<Path> pathStream = Files.list(path)) {
-			consumer.accept(pathStream);
+			pathStream.forEach(consumer);
 		}
 	}
+
+	/**
+	 * A convenience method to list the contents of the given directory path and pass each to the
+	 * given consumer.  If the given path does not represent a directory, nothing will happen.
+	 * 
+	 * @param resourceFile the directory
+	 * @param consumer the consumer of each child in the given directory
+	 */
+	public static void forEachFile(File resourceFile, Consumer<File> consumer) {
+		if (!resourceFile.isDirectory()) {
+			return;
+		}
+
+		File[] files = resourceFile.listFiles();
+		if (files == null) {
+			return;
+		}
+		for (File child : files) {
+			consumer.accept(child);
+		}
+	}
+
+	/**
+	 * A convenience method to list the contents of the given directory path and pass each to the
+	 * given consumer.  If the given path does not represent a directory, nothing will happen.
+	 * 
+	 * @param resourceFile the directory
+	 * @param consumer the consumer of each child in the given directory
+	 */
+	public static void forEachFile(ResourceFile resourceFile, Consumer<ResourceFile> consumer) {
+		if (!resourceFile.isDirectory()) {
+			return;
+		}
+
+		ResourceFile[] files = resourceFile.listFiles();
+		if (files == null) {
+			return;
+		}
+		for (ResourceFile child : files) {
+			consumer.accept(child);
+		}
+	}
+
 }

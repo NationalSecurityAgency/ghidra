@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.widgets.table.GTable;
 
-public class DebuggerRegisterActionContext extends ActionContext {
+public class DebuggerRegisterActionContext extends DefaultActionContext {
 	private final RegisterRow selected;
 
 	public DebuggerRegisterActionContext(DebuggerRegistersProvider provider, RegisterRow selected,

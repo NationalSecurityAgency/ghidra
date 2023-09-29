@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,31 +20,28 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 
 /**
- * An interface for translating table rows and columns
- * into program locations and selections.
+ * An interface for translating table rows and columns into program locations and selections.
  */
 public interface ProgramTableModel {
-    /**
-     * Returns a program location corresponding the given row and column.
-     * Motivation:
-     * Given a table that has a column that contains addresses.
-     * If the user clicks on this column, then it would be nice 
-     * to have the CodeBrowser navigate to this address.
-     * @param row    the row
-     * @param column the column
-     * @return a program location corresponding the given row and column
-     */
-	public ProgramLocation getProgramLocation(int row, int column);
+	/**
+	 * Returns a program location corresponding the given row and column.
+	 * <p>
+	 * Motivation: Given a table that has a column that contains addresses. If the user clicks on
+	 * this column, then it would be nice to have the CodeBrowser navigate to this address.
+	 * @param modelRow the row
+	 * @param modelColumn the column in the model's index
+	 * @return a program location corresponding the given row and column
+	 */
+	public ProgramLocation getProgramLocation(int modelRow, int modelColumn);
 
 	/**
-	 * Returns a program selection corresponding to the 
-	 * specified row index array. This array will contain
-	 * the currently selected rows.
-	 * @param rows the currently selected rows.
+	 * Returns a program selection corresponding to the specified row index array. This array will
+	 * contain the currently selected rows.
+	 * @param modelRows the currently selected rows.
 	 * @return a program selection
 	 */
-	public ProgramSelection getProgramSelection(int[] rows);
-	
+	public ProgramSelection getProgramSelection(int[] modelRows);
+
 	/**
 	 * Returns the program associated with this ProgramTableModel.
 	 * @return the program associated with this ProgramTableModel.

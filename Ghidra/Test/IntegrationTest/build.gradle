@@ -62,6 +62,11 @@ dependencies {
 	testImplementation project(path: ':FunctionGraph', configuration: 'testArtifacts')	
 	testImplementation project(path: ':PDB', configuration: 'testArtifacts')
 	testImplementation project(path: ':GnuDemangler', configuration: 'testArtifacts')
+
+	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
 }
 
 // For Java 9, we must explicitly export references to the internal classes we are using.
@@ -72,3 +77,9 @@ ext.addExports([
 	'java.desktop/sun.swing=ALL-UNNAMED',
 	'java.desktop/sun.java2d=ALL-UNNAMED'
 ])
+
+integrationTest {
+	dependsOn { project(':Debugger-rmi-trace').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-gdb').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-lldb').assemblePyPackage }
+}

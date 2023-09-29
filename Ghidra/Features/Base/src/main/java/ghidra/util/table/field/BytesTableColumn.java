@@ -26,8 +26,7 @@ import ghidra.docking.settings.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.EndianSettingsDefinition;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.BytesFieldLocation;
 import ghidra.program.util.ProgramLocation;
@@ -50,100 +49,98 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 	private static SettingsDefinition[] SETTINGS_DEFS =
 		{ BYTE_COUNT, MEMORY_OFFSET, ENDIANESS, FORMAT };
 
-	private final GColumnRenderer<Byte[]> monospacedRenderer =
-		new AbstractGColumnRenderer<>() {
-			@Override
-			protected void configureFont(JTable table, TableModel model, int column) {
-				setFont(getFixedWidthFont());
+	private final GColumnRenderer<Byte[]> monospacedRenderer = new AbstractGColumnRenderer<>() {
+		@Override
+		protected void configureFont(JTable table, TableModel model, int column) {
+			setFont(getFixedWidthFont());
+		}
+
+		private String formatBytes(Byte[] bytes, Settings settings) {
+			boolean bigEndian = (ENDIANESS.getChoice(settings) != EndianSettingsDefinition.LITTLE);
+
+			int startIx = 0;
+			int endIx = bytes.length;
+			int inc = 1;
+			if (!bigEndian) {
+				startIx = bytes.length - 1;
+				endIx = -1;
+				inc = -1;
 			}
 
-			private String formatBytes(Byte[] bytes, Settings settings) {
-				boolean bigEndian =
-					(ENDIANESS.getChoice(settings) != EndianSettingsDefinition.LITTLE);
+			int format = FORMAT.getChoice(settings);
+			if (format == FormatSettingsDefinition.CHAR) {
+				return bytesToString(bytes);
+			}
 
-				int startIx = 0;
-				int endIx = bytes.length;
-				int inc = 1;
-				if (!bigEndian) {
-					startIx = bytes.length - 1;
-					endIx = -1;
-					inc = -1;
+			StringBuilder buffer = new StringBuilder();
+			for (int i = startIx; i != endIx; i += inc) {
+				if (buffer.length() != 0) {
+					buffer.append(' ');
 				}
+				buffer.append(getByteString(bytes[i], format));
+			}
+			return buffer.toString();
+		}
 
-				int format = FORMAT.getChoice(settings);
-				if (format == FormatSettingsDefinition.CHAR) {
-					return bytesToString(bytes);
+		private String bytesToString(Byte[] bytes) {
+			StringBuilder buf = new StringBuilder();
+			for (byte b : bytes) {
+				char c = (char) (b & 0xff);
+				if (c > 32 && c < 128) {
+					buf.append((char) (b & 0xff));
 				}
-
-				StringBuilder buffer = new StringBuilder();
-				for (int i = startIx; i != endIx; i += inc) {
-					if (buffer.length() != 0) {
-						buffer.append(' ');
-					}
-					buffer.append(getByteString(bytes[i], format));
+				else {
+					buf.append('.');
 				}
-				return buffer.toString();
 			}
+			return buf.toString();
+		}
 
-			private String bytesToString(Byte[] bytes) {
-				StringBuilder buf = new StringBuilder();
-				for (byte b : bytes) {
-					char c = (char) (b & 0xff);
-					if (c > 32 && c < 128) {
-						buf.append((char) (b & 0xff));
-					}
-					else {
-						buf.append('.');
-					}
-				}
-				return buf.toString();
+		private String getByteString(Byte b, int format) {
+
+			String val;
+			switch (format) {
+				case FormatSettingsDefinition.DECIMAL:
+					val = Integer.toString(b);
+					break;
+				case FormatSettingsDefinition.BINARY:
+					val = Integer.toBinaryString(b & 0x0ff);
+					val = StringFormat.padIt(val, 8, (char) 0, true);
+					break;
+				case FormatSettingsDefinition.OCTAL:
+					val = Integer.toOctalString(b & 0x0ff);
+					val = StringFormat.padIt(val, 3, (char) 0, true);
+					break;
+				default:
+				case FormatSettingsDefinition.HEX:
+					val = Integer.toHexString(b & 0x0ff).toUpperCase();
+					val = StringFormat.padIt(val, 2, (char) 0, true);
+					break;
 			}
+			return val;
+		}
 
-			private String getByteString(Byte b, int format) {
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-				String val;
-				switch (format) {
-					case FormatSettingsDefinition.DECIMAL:
-						val = Integer.toString(b);
-						break;
-					case FormatSettingsDefinition.BINARY:
-						val = Integer.toBinaryString(b & 0x0ff);
-						val = StringFormat.padIt(val, 8, (char) 0, true);
-						break;
-					case FormatSettingsDefinition.OCTAL:
-						val = Integer.toOctalString(b & 0x0ff);
-						val = StringFormat.padIt(val, 3, (char) 0, true);
-						break;
-					default:
-					case FormatSettingsDefinition.HEX:
-						val = Integer.toHexString(b & 0x0ff).toUpperCase();
-						val = StringFormat.padIt(val, 2, (char) 0, true);
-						break;
-				}
-				return val;
-			}
+			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
 
-			@Override
-			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			Object value = data.getValue();
+			Settings settings = data.getColumnSettings();
 
-				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+			Byte[] bytes = (Byte[]) value;
 
-				Object value = data.getValue();
-				Settings settings = data.getColumnSettings();
+			setText(formatBytes(bytes, settings));
 
-				Byte[] bytes = (Byte[]) value;
+			return label;
+		}
 
-				setText(formatBytes(bytes, settings));
-
-				return label;
-			}
-
-			@Override
-			public String getFilterString(Byte[] t, Settings settings) {
-				String formatted = formatBytes(t, settings);
-				return formatted;
-			}
-		};
+		@Override
+		public String getFilterString(Byte[] t, Settings settings) {
+			String formatted = formatBytes(t, settings);
+			return formatted;
+		}
+	};
 
 	/**
 	 * Default Constructor
@@ -194,7 +191,12 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 					if (cu == null) { // can happen for 'SpecialAddress'es
 						return new Byte[0];
 					}
-					bytes = cu.getBytes();
+					if (cu instanceof Instruction instr) {
+						bytes = instr.getParsedBytes();
+					}
+					else {
+						bytes = cu.getBytes();
+					}
 				}
 			}
 

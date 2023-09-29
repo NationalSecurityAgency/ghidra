@@ -42,7 +42,6 @@ import ghidra.program.util.ProgramSelection;
  */
 @ServiceInfo(defaultProvider = CodeBrowserPlugin.class)
 public interface CodeViewerService {
-
 	/**
 	 * Add a provider that shows an overview of the program.
 	 * @param overviewProvider provider to add

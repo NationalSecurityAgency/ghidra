@@ -18,7 +18,6 @@ package ghidra.file.formats.cpio;
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
 import java.io.*;
-import java.util.List;
 
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
@@ -29,37 +28,28 @@ import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import utilities.util.FileUtilities;
 
 @FileSystemInfo(type = "cpio", description = "CPIO", factory = CpioFileSystemFactory.class)
-public class CpioFileSystem implements GFileSystem {
-	private FileSystemService fsService;
-	private FSRLRoot fsFSRL;
-	private FileSystemIndexHelper<CpioArchiveEntry> fsIndex;
-	private FileSystemRefManager fsRefManager = new FileSystemRefManager(this);
+public class CpioFileSystem extends AbstractFileSystem<CpioArchiveEntry> {
 	private ByteProvider provider;
 
-
 	public CpioFileSystem(FSRLRoot fsFSRL, ByteProvider provider, FileSystemService fsService,
-			TaskMonitor monitor)
-			throws IOException {
+			TaskMonitor monitor) throws IOException {
+		super(fsFSRL, fsService);
+
 		monitor.setMessage("Opening CPIO...");
-		this.fsService = fsService;
-		this.fsFSRL = fsFSRL;
 		this.provider = provider;
-		this.fsIndex = new FileSystemIndexHelper<>(this, fsFSRL);
 
 		try (CpioArchiveInputStream cpioInputStream =
 			new CpioArchiveInputStream(provider.getInputStream(0))) {
 			CpioArchiveEntry entry;
 			int fileNum = 0;
 			while ((entry = cpioInputStream.getNextCPIOEntry()) != null) {
-				FileUtilities.copyStreamToStream(cpioInputStream, OutputStream.nullOutputStream(),
-					monitor);
+				FSUtilities.streamCopy(cpioInputStream, OutputStream.nullOutputStream(), monitor);
 
 				monitor.setMessage(entry.getName());
-				fsIndex.storeFile(entry.getName(), fileNum++, entry.isDirectory(),
-					entry.getSize(), entry);
+				fsIndex.storeFile(entry.getName(), fileNum++, entry.isDirectory(), entry.getSize(),
+					entry);
 			}
 		}
 		catch (EOFException e) {
@@ -75,7 +65,7 @@ public class CpioFileSystem implements GFileSystem {
 
 	@Override
 	public void close() throws IOException {
-		fsRefManager.onClose();
+		refManager.onClose();
 		fsIndex.clear();
 		if (provider != null) {
 			provider.close();
@@ -84,33 +74,8 @@ public class CpioFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public FSRLRoot getFSRL() {
-		return fsFSRL;
-	}
-
-	@Override
-	public String getName() {
-		return fsFSRL.getContainer().getName();
-	}
-
-	@Override
 	public boolean isClosed() {
 		return provider == null;
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return fsRefManager;
-	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsIndex.getListing(directory);
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsIndex.lookup(path);
 	}
 
 	@Override

@@ -94,7 +94,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 				new ProgramProcessorContext(program.getProgramContext(), atAddress);
 			InstructionPrototype proto = program.getLanguage().parse(buf, context, false);
 			Instruction createdInstruction =
-				listing.createInstruction(atAddress, proto, buf, context);
+				listing.createInstruction(atAddress, proto, buf, context, 0);
 			commit = true;
 			return createdInstruction;
 		}
@@ -108,8 +108,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * This is a generic method for testing merge conflicts for equates on data. It sets the bytes 
-	 * to those indicated beginning at the indicated address and then creates Data using the 
+	 * This is a generic method for testing merge conflicts for equates on data. It sets the bytes
+	 * to those indicated beginning at the indicated address and then creates Data using the
 	 * specified data type at that address. It then creates a conflicting equate name and
 	 * chooses the Latest or My change based on the boolean flag, chooseMy.
 	 * @param address the address where the data is created
@@ -126,65 +126,41 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 			@Override
 			public void modifyOriginal(ProgramDB program) {
-				int txId = program.startTransaction("Setup Original Program");
-				boolean commit = false;
+				Listing listing = program.getListing();
+				Address addr = addr(program, address);
 				try {
-					Listing listing = program.getListing();
-					Address addr = addr(program, address);
-					try {
-						program.getMemory().setBytes(addr, bytes);
-						listing.createData(addr, dt);
-					}
-					catch (CodeUnitInsertionException | MemoryAccessException e) {
-						Assert.fail(e.getMessage());
-					}
-					Data data = listing.getDataAt(addr);
-					Assert.assertTrue(data != null);
-					Assert.assertTrue(dt.isEquivalent(data.getDataType()));
-					commit = true;
+					program.getMemory().setBytes(addr, bytes);
+					listing.createData(addr, dt);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (CodeUnitInsertionException | MemoryAccessException e) {
+					Assert.fail(e.getMessage());
 				}
+				Data data = listing.getDataAt(addr);
+				Assert.assertTrue(data != null);
+				Assert.assertTrue(dt.isEquivalent(data.getDataType()));
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, address);
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, address);
-					try {
-						equateTab.createEquate("FOO", expectedValue).addReference(addr, 0);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("FOO", expectedValue).addReference(addr, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
+				EquateTable equateTab = program.getEquateTable();
+				Address addr = addr(program, address);
 				try {
-					EquateTable equateTab = program.getEquateTable();
-					Address addr = addr(program, address);
-					try {
-						equateTab.createEquate("BAR", expectedValue).addReference(addr, 0);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						Assert.fail(e.getMessage());
-					}
-					commit = true;
+					equateTab.createEquate("BAR", expectedValue).addReference(addr, 0);
 				}
-				finally {
-					program.endTransaction(txId, commit);
+				catch (DuplicateNameException | InvalidInputException e) {
+					Assert.fail(e.getMessage());
 				}
 			}
 		});
@@ -385,7 +361,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 			assertNotNull(newFunction);
 
 			if (newFunction.isThunk()) {
-				// TODO For thunk functions need to call thunk analyzer here before 
+				// TODO For thunk functions need to call thunk analyzer here before
 				// stack analysis occurs
 			}
 			FunctionStackAnalysisCmd analyzeCmd = new FunctionStackAnalysisCmd(addr, true);
@@ -423,7 +399,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		originalProgram = mtf.getOriginalProgram();
 		myProgram = mtf.getPrivateProgram();// my program
 		resultProgram = mtf.getResultProgram();// destination program
-		latestProgram = mtf.getLatestProgram();// latest version (results and latest start out the same);		
+		latestProgram = mtf.getLatestProgram();// latest version (results and latest start out the same);
 		resultAddressFactory = resultProgram.getAddressFactory();
 
 		ProgramChangeSet resultChangeSet = mtf.getResultChangeSet();
@@ -473,7 +449,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 			fail("Interrupted waiting for merge to start");
 		}
 
-		// now wait for the merge tool to appear or for the entire merge process to have 
+		// now wait for the merge tool to appear or for the entire merge process to have
 		// ended
 		waitForCondition(() -> {
 			mergeTool = mergeMgr.getMergeTool();
@@ -689,8 +665,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on a primary symbol conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on a primary symbol conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's primary symbol is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -841,7 +817,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -859,7 +835,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -920,7 +896,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -938,7 +914,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -949,7 +925,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	 * <li>KEEP_ORIGINAL</li>
 	 * <li>CANCELED</li>
 	 * </ul>
-	 * @param useForAll true indicates that this should select the checkbox for 
+	 * @param useForAll true indicates that this should select the checkbox for
 	 * "Use For All" of this type of comment.
 	 * @throws Exception if panel not available as expected
 	 */
@@ -959,6 +935,12 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 		ListingMergePanel comp = getMergePanel();
 		assertNotNull(comp);
 		Window window = SwingUtilities.getWindowAncestor(comp);
+		if (window == null) {
+			Msg.debug(this, "Unable to find merge window");
+			printOpenWindows();
+		}
+		assertNotNull("Unable to find conflict panel window", window);
+
 		ConflictInfoPanel infoComp = findComponent(comp, ConflictInfoPanel.class);
 		assertNotNull(infoComp);
 
@@ -1013,7 +995,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1030,7 +1012,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1093,7 +1075,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1109,7 +1091,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1126,7 +1108,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1147,7 +1129,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param addr indicates the address in conflict.
@@ -1195,7 +1177,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	/**
 	 * Verifies the address matches the one i the conflict information panel.
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param addr the expected address of the conflict
@@ -1207,7 +1189,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	 * <li>KEEP_MY</li>
 	 * <li>CANCEL</li>
 	 * </ul>
-	 * @param useForAll true indicates thatthis should select the checkbox for 
+	 * @param useForAll true indicates thatthis should select the checkbox for
 	 * "Use for all conflicts of this property type".
 	 * @throws Exception if panel not available as expected
 	 */
@@ -1228,7 +1210,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	/**
 	 * Verifies the address matches the one i the conflict information panel.
-	 * Makes a user choice as indicated by option. This is equivalent to the user 
+	 * Makes a user choice as indicated by option. This is equivalent to the user
 	 * clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param addr the expected address of the conflict
@@ -1280,8 +1262,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on a primary symbol conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on a primary symbol conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's primary symbol is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1334,8 +1316,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on a primary symbol conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on a primary symbol conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's primary symbol is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1388,8 +1370,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on the named global symbol conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on the named global symbol conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's primary symbol is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1461,8 +1443,8 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice on the named type of conflict as indicated by option. 
-	 * This is equivalent to the user clicking a mouse on a radio button 
+	 * Makes a user choice on the named type of conflict as indicated by option.
+	 * This is equivalent to the user clicking a mouse on a radio button
 	 * indicating which version's option is desired.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param option indicates the button to choose.
@@ -1575,7 +1557,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 	}
 
 	/**
-	 * Makes a user choice for a symbol conflict as indicated by option. This is equivalent to 
+	 * Makes a user choice for a symbol conflict as indicated by option. This is equivalent to
 	 * the user clicking a mouse on a radio button indicating which program version to choose.
 	 * It can also be used to press the Cancel button on the merge.
 	 * @param addr indicates the address in conflict.
@@ -1596,9 +1578,9 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 	/**
 	 * This gets an array containing the bytes indicated by the string.
-	 * It takes a string of the form "a5 32 b9", where each byte is two hex digits separated 
+	 * It takes a string of the form "a5 32 b9", where each byte is two hex digits separated
 	 * by a space.
-	 * @param hexBytesAsString is a string indicating the hexadecimal representation of the 
+	 * @param hexBytesAsString is a string indicating the hexadecimal representation of the
 	 * bytes to put in the array.
 	 * @return the array of bytes
 	 * @throws a NumberFormatException if the string can't be parsed into an array of bytes.
@@ -1630,91 +1612,45 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001979 =
-						new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
-					createFunction(program, "0x1001979", "FUN_01001979", body1001979);
+				AddressSet body1001979 =
+					new AddressSet(addr(program, "0x1001979"), addr(program, "0x100199a"));
+				createFunction(program, "0x1001979", "FUN_01001979", body1001979);
 
-					AddressSet body10029a1 =
-						new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
-					createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029a1 =
+					new AddressSet(addr(program, "0x10029a1"), addr(program, "0x10029ca"));
+				createFunction(program, "0x10029a1", "FUN_010029a1", body10029a1);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					AddressSet body1001984 =
-						new AddressSet(addr(program, "0x1001984"), addr(program, "0x100198a"));
-					createFunction(program, "0x1001984", "FUN_01001984", body1001984);
+				AddressSet body1001984 =
+					new AddressSet(addr(program, "0x1001984"), addr(program, "0x100198a"));
+				createFunction(program, "0x1001984", "FUN_01001984", body1001984);
 
-					AddressSet body10029bc =
-						new AddressSet(addr(program, "0x10029bc"), addr(program, "0x10029d3"));
-					createFunction(program, "0x10029bc", "FUN_010029bc", body10029bc);
-
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				AddressSet body10029bc =
+					new AddressSet(addr(program, "0x10029bc"), addr(program, "0x10029d3"));
+				createFunction(program, "0x10029bc", "FUN_010029bc", body10029bc);
 			}
 		});
 	}
 
 	protected void setupRemoveConflictUseForAll() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+			
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
-				try {
-					removeFunction(program, "0x10031ee");
-					removeFunction(program, "0x1003bed");
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				removeFunction(program, "0x10031ee");
+				removeFunction(program, "0x1003bed");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) throws Exception {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
-				try {
-					Function func = getFunction(program, "0x10031ee");
-					func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
-					func = getFunction(program, "0x1003bed");
-					func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
-					commit = true;
-				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
+				Function func = getFunction(program, "0x10031ee");
+				func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
+				func = getFunction(program, "0x1003bed");
+				func.setReturnType(new ByteDataType(), SourceType.ANALYSIS);
 			}
 		});
 	}

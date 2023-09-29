@@ -88,8 +88,8 @@ public class WindowActionManager {
 		toolBarMgr.dispose();
 	}
 
-	void contextChanged(ActionContext globalContext, ActionContext localContext,
-			Set<DockingActionIf> excluded) {
+	void contextChanged(Map<Class<? extends ActionContext>, ActionContext> defaultContextMap,
+			ActionContext localContext, Set<DockingActionIf> excluded) {
 
 		if (!node.isVisible() || disposed) {
 			return;
@@ -104,11 +104,11 @@ public class WindowActionManager {
 			}
 
 			DockingActionIf proxyAction = actionToProxyMap.get(action);
-			if (proxyAction.isValidContext(localContext)) {
-				proxyAction.setEnabled(proxyAction.isEnabledForContext(localContext));
-			}
-			else if (isValidDefaultToolContext(proxyAction, globalContext)) {
-				proxyAction.setEnabled(proxyAction.isEnabledForContext(globalContext));
+			ActionContext context =
+				getContextForAction(action, localContext, defaultContextMap);
+
+			if (context != null) {
+				proxyAction.setEnabled(proxyAction.isEnabledForContext(context));
 			}
 			else {
 				proxyAction.setEnabled(false);
@@ -116,9 +116,19 @@ public class WindowActionManager {
 		}
 	}
 
-	private boolean isValidDefaultToolContext(DockingActionIf action, ActionContext toolContext) {
-		return action.supportsDefaultToolContext() &&
-			action.isValidContext(toolContext);
+	private ActionContext getContextForAction(DockingActionIf action, ActionContext localContext,
+			Map<Class<? extends ActionContext>, ActionContext> defaultContextMap) {
+
+		if (action.isValidContext(localContext)) {
+			return localContext;
+		}
+		if (action.supportsDefaultContext()) {
+			ActionContext context = defaultContextMap.get(action.getContextClass());
+			if (context != null && action.isValidContext(context)) {
+				return context;
+			}
+		}
+		return null;
 	}
 
 	/**

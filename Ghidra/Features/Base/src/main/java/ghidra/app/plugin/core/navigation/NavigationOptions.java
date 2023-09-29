@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.navigation;
 
+import docking.options.OptionsService;
 import ghidra.GhidraOptions;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.util.HelpLocation;
 
 public class NavigationOptions implements OptionsChangeListener {

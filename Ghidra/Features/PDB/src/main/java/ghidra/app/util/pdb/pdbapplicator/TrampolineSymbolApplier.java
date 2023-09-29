@@ -15,14 +15,11 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.cmd.disassemble.DisassembleCommand;
-import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.TrampolineMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Function;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -30,9 +27,11 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link TrampolineMsSymbol} symbols.
  */
-public class TrampolineSymbolApplier extends MsSymbolApplier {
+public class TrampolineSymbolApplier extends MsSymbolApplier
+		implements DeferrableFunctionSymbolApplier {
 
 	private TrampolineMsSymbol symbol;
+	private Address address;
 
 	/**
 	 * Constructor
@@ -47,6 +46,7 @@ public class TrampolineSymbolApplier extends MsSymbolApplier {
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
 		symbol = (TrampolineMsSymbol) abstractSymbol;
+		address = applicator.getAddress(symbol);
 	}
 
 	@Override
@@ -57,21 +57,22 @@ public class TrampolineSymbolApplier extends MsSymbolApplier {
 	@Override
 	void apply() throws CancelledException, PdbException {
 		// We know the size of this trampoline, so use it to restrict the disassembly.
-		Address symbolAddress = applicator.getAddress(symbol);
 		Address targetAddress =
 			applicator.getAddress(symbol.getSegmentTarget(), symbol.getOffsetTarget());
 
 		Function target = null;
 		Function thunk = null;
 		if (!applicator.isInvalidAddress(targetAddress, "thunk target")) {
-			target = createNewFunction(targetAddress, 1);
+			target = applicator.getExistingOrCreateOneByteFunction(targetAddress);
 		}
-		if (!applicator.isInvalidAddress(symbolAddress, "thunk symbol")) {
-			thunk = createNewFunction(symbolAddress, symbol.getSizeOfThunk());
+		if (!applicator.isInvalidAddress(address, "thunk symbol")) {
+			thunk = applicator.getExistingOrCreateOneByteFunction(address);
 		}
 		if (target != null && thunk != null) {
 			thunk.setThunkedFunction(target);
 		}
+		applicator.scheduleDeferredFunctionWork(this);
+
 //		int thunkModule = findModuleNumberBySectionOffsetContribution(symbol.getSectionThunk(),
 //			symbol.getOffsetThunk());
 //		int targetModule = findModuleNumberBySectionOffsetContribution(symbol.getSectionTarget(),
@@ -79,31 +80,14 @@ public class TrampolineSymbolApplier extends MsSymbolApplier {
 
 	}
 
-	// TODO? If we wanted to be able to apply this symbol to a different address, we should 
+	@Override
+	public Address getAddress() {
+		return address;
+	}
+
+	// TODO? If we wanted to be able to apply this symbol to a different address, we should
 	//  review code in FunctionSymbolApplier.  Note, however, that there are two addresses
 	//  that need to be dealt with here, and each could have a different address with a different
 	//  delta from the specified address.
-
-	private Function createNewFunction(Address startAddress, long size) {
-
-		AddressSet addressSet = new AddressSet(startAddress, startAddress.add(size));
-
-		if (applicator.getProgram().getListing().getInstructionAt(startAddress) == null) {
-			DisassembleCommand cmd = new DisassembleCommand(addressSet, null, true); // TODO: false?
-			cmd.applyTo(applicator.getProgram(), applicator.getCancelOnlyWrappingMonitor());
-		}
-
-		// Only create function if it does not already exist.
-		Function function = applicator.getProgram().getListing().getFunctionAt(startAddress);
-		if (function != null) {
-			return function;
-		}
-		CreateFunctionCmd funCmd = new CreateFunctionCmd(startAddress);
-		if (!funCmd.applyTo(applicator.getProgram(), applicator.getCancelOnlyWrappingMonitor())) {
-			applicator.appendLogMsg("Failed to apply function at address " +
-				startAddress.toString() + "; attempting to use possible existing function");
-		}
-		return funCmd.getFunction();
-	}
 
 }

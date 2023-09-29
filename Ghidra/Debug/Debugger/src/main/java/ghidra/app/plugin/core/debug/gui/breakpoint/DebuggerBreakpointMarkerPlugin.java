@@ -244,8 +244,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			return null;
 		}
 		Program progOrView = locs.get(0).getProgram();
-		if (progOrView instanceof TraceProgramView) {
-			TraceProgramView view = (TraceProgramView) progOrView;
+		if (progOrView instanceof TraceProgramView view) {
 			return view.getTrace();
 		}
 		return null;
@@ -498,8 +497,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	protected static State computeState(LogicalBreakpoint breakpoint, Program programOrView) {
-		if (programOrView instanceof TraceProgramView) {
-			TraceProgramView view = (TraceProgramView) programOrView;
+		if (programOrView instanceof TraceProgramView view) {
 			return breakpoint.computeStateForTrace(view.getTrace());
 		}
 		// Program view should consider all trace placements
@@ -975,8 +973,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			for (Map.Entry<Program, BreakpointMarkerSets> pEnt : markersByProgram.entrySet()) {
 				Program program = pEnt.getKey();
 				BreakpointMarkerSets marks = pEnt.getValue();
-				if (program instanceof TraceProgramView) {
-					TraceProgramView view = (TraceProgramView) program;
+				if (program instanceof TraceProgramView view) {
 					Trace trace = view.getTrace();
 					doMarks(marks, breakpointService.getBreakpoints(trace),
 						lb -> lb.computeStateForTrace(trace));
@@ -1071,10 +1068,9 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			}
 			for (Map.Entry<Program, BreakpointMarkerSets> ent : copyOfMarkers.entrySet()) {
 				Program program = ent.getKey();
-				if (!(program instanceof TraceProgramView)) {
+				if (!(program instanceof TraceProgramView view)) {
 					continue;
 				}
-				TraceProgramView view = (TraceProgramView) program;
 				if (view.getTrace() != trace) {
 					continue;
 				}

@@ -28,7 +28,6 @@ import org.junit.*;
 
 import generic.test.AbstractGTest;
 import generic.test.AbstractGuiTest;
-import ghidra.framework.LoggingInitialization;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -40,7 +39,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 	// something reasonable: too large makes the test slower; too small, then the test can timeout
 	private static final int RUN_TIME_MILLIS_JOB_THREAD_MAX = 1000;
 
-	// keep this relatively low, since non-shortcut-able jobs run to completion	
+	// keep this relatively low, since non-shortcut-able jobs run to completion
 	private static final int RUN_TIME_MILLIS_NON_SHORTCUTTABLE = 1000;
 
 	private static final int RUN_TIME_MILLIS_FOR_JOB_TO_GET_STARTED = DEFAULT_WAIT_TIMEOUT;
@@ -57,20 +56,14 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 
 		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, "false");
 
-		LoggingInitialization.initializeLoggingSystem();
 		logger = LogManager.getLogger(GraphJobRunner.class);
 
-		// enable tracing for debugging (note: this still requires the active log4j file 
-		// to have the 'console' appender set to 'TRACE'
-//		Configurator.setLevel(logger.getName(), org.apache.logging.log4j.Level.TRACE);
-//
-//		Logger myLogger = LogManager.getLogger(VisualGraphJobRunnerTest.class);
-//		Configurator.setLevel(myLogger.getName(), org.apache.logging.log4j.Level.TRACE);
+		// use this to see the tracing output
+		// setLogLevel("ghidra.graph.job", Level.TRACE);
 	}
 
 	@After
 	public void tearDown() {
-
 		for (JobExecutionThread t : jobThreads) {
 			t.killThread();
 		}
@@ -78,6 +71,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 
 	@Test
 	public void testRunJob() {
+
 		BasicJob basicJob = new BasicJob();
 		schedule(basicJob);
 		waitForJobToStart(basicJob);
@@ -102,7 +96,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 	@Test
 	public void testRunJobShortCutsRunningJob() {
 		//
-		// Test that running a new job will shortcut any currently running job that is 
+		// Test that running a new job will shortcut any currently running job that is
 		// shortcut-able
 		//
 
@@ -125,7 +119,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 	@Test
 	public void testRunJobDoesNotShortCutJobsThatCannotBeShortcut() {
 		//
-		// Test that running a new job will not shortcut any currently running job that is 
+		// Test that running a new job will not shortcut any currently running job that is
 		// not shortcut-able
 		//
 
@@ -146,7 +140,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 
 	@Test
 	public void testRunJobShortCutsQueuedJobsButLastOne() {
-		// 
+		//
 		// Test that we can add many jobs and that they all will be shortcut except for the last
 		// one, which will be executed.
 		//
@@ -177,7 +171,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 
 	@Test
 	public void testSchedule_ShortCutsQueuedJobs_ButNotThoseThatCannotBeShortcutOrThoseThatFollow() {
-		// 
+		//
 		// Test that we can add many jobs, with some in the middle that are not shortcut-able.
 		// We expect those before that element to be shortcut.  Those after that element should
 		// be run.
@@ -399,7 +393,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 		jobRunner.schedule(pending2);
 
 		//
-		// At this point, the latch job is waiting for us to signal a finish.  We will not 
+		// At this point, the latch job is waiting for us to signal a finish.  We will not
 		// call finish, but instead, dispose the queue.
 		//
 		jobRunner.dispose();
@@ -431,7 +425,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void schedule(GraphJob job) {
 		jobRunner.schedule(job);
@@ -461,7 +455,17 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 			}
 		}
 
-		logger.trace("\n\n\t@Test - done waiting\n\n");
+		// The job may already be finished while the thread is busy cleaning up.  We need to wait
+		// for the thread to be finished as well.
+		waitForJobThreads();
+
+		logger.trace("\n\n\t@Test - done waiting - is busy?: " + jobRunner.isBusy() + "\n\n");
+	}
+
+	private void waitForJobThreads() {
+		for (JobExecutionThread t : jobThreads) {
+			waitFor(() -> t.isFinished);
+		}
 	}
 
 	private void assertFinishedAndShortcut(AbstractTestGraphJob... jobs) {
@@ -796,7 +800,6 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 	private class NonShortcuttableJob extends TimeBasedJob {
 
 		NonShortcuttableJob() {
-			super();
 		}
 
 		NonShortcuttableJob(long runtime) {
@@ -814,7 +817,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 		}
 	}
 
-	// A job that will block until told to proceed, which allows this test to manipulate how 
+	// A job that will block until told to proceed, which allows this test to manipulate how
 	// the job runner queue get managed; this job will actually block the job queue
 	private class NonShortcuttableLatchJob extends AbstractTestGraphJob {
 
@@ -857,7 +860,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 		}
 	}
 
-	// A job that will block until told to proceed, which allows this test to manipulate how 
+	// A job that will block until told to proceed, which allows this test to manipulate how
 	// the job runner queue get managed; this job will actually block the job queue
 	private class ShortcuttableLatchJob extends AbstractTestGraphJob {
 
@@ -865,7 +868,7 @@ public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 
 		@Override
 		public boolean canShortcut() {
-			// this class needs to be shortcut-able so that the job runner being tested 
+			// this class needs to be shortcut-able so that the job runner being tested
 			// will attempt to shortcut it
 			return true;
 		}

@@ -33,8 +33,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractNewListingAction;
-import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
-import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -79,7 +78,6 @@ import utilities.util.SuppressableCallback.Suppression;
 		DebuggerStaticMappingService.class, // For static listing sync. TODO: Optional?
 		DebuggerEmulationService.class, // TODO: Optional?
 		ProgramManager.class, // For static listing sync
-		//GoToService.class, // For static listing sync
 		ClipboardService.class,
 		MarkerService.class // TODO: Make optional?
 	},
@@ -118,8 +116,6 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	protected NewListingAction actionNewListing;
 
-	//@AutoServiceConsumed
-	//private GoToService goToService;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
 	// NOTE: This plugin doesn't extend AbstractDebuggerPlugin
@@ -137,6 +133,16 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 
 		createActions();
+
+		tool.registerDefaultContextProvider(DebuggerProgramLocationActionContext.class,
+			connectedProvider);
+	}
+
+	@Override
+	protected void dispose() {
+		tool.unregisterDefaultContextProvider(DebuggerProgramLocationActionContext.class,
+			connectedProvider);
+		super.dispose();
 	}
 
 	@Override

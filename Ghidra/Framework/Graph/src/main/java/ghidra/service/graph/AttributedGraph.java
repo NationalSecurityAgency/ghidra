@@ -26,11 +26,11 @@ import org.jgrapht.graph.DefaultGraphType;
  * Basic graph implementation for a directed graph whose vertices and edges support attributes.
  * <P>
  * The graph can be configured as to how to handle multiple edges with the same source and destination
- * vertices. One option is to simply allow multiple edges.  The second option is to collapse 
+ * vertices. One option is to simply allow multiple edges.  The second option is to collapse
  * duplicate edges such that there is only ever one edge with the same
  * source and destination.  In this case, each additional duplicate edge added will cause the
  * edge to have a "Weight" attribute that will be the total number of edges that were added
- * to the same source/destination vertex pair. 
+ * to the same source/destination vertex pair.
  */
 public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, AttributedEdge> {
 	public static final String WEIGHT = "Weight";
@@ -46,7 +46,7 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 
 	/**
 	 * Create a new empty AttributedGraph that automatically collapses duplicate edges
-	 * 
+	 *
 	 * @param name the name of the graph
 	 * @param type the {@link GraphType} which defines valid vertex and edge types.
 	 */
@@ -56,7 +56,7 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 
 	/**
 	 * Create a new empty AttributedGraph that automatically collapses duplicate edges
-	 * 
+	 *
 	 * @param name the name of the graph
 	 * @param type the {@link GraphType} which defines valid vertex and edge types.
 	 * @param description a description of the graph
@@ -111,7 +111,7 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 	 * Adds a new vertex with the given id.  The vertex's name will be the same as the id.
 	 * If a vertex already exists with that id,
 	 * then that vertex will be returned.
-	 * 
+	 *
 	 * @param id the unique vertex id that the graph should have a vertex for.
 	 * @return either an existing vertex with that id, or a newly added vertex with that id
 	 */
@@ -122,18 +122,18 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 	/**
 	 * Adds a new vertex with the given id and name.  If a vertex already exists with that id,
 	 * then that vertex will be returned, but with its name changed to the given name.
-	 * 
+	 *
 	 * @param id the unique vertex id that the graph should have a vertex for.
-	 * @param name the name to associate with this vertex
+	 * @param vertexName the name to associate with this vertex
 	 * @return either an existing vertex with that id, or a newly added vertex with that id
 	 */
-	public AttributedVertex addVertex(String id, String name) {
+	public AttributedVertex addVertex(String id, String vertexName) {
 		if (vertexMap.containsKey(id)) {
 			AttributedVertex vertex = vertexMap.get(id);
-			vertex.setName(name);
+			vertex.setName(vertexName);
 			return vertex;
 		}
-		AttributedVertex newVertex = new AttributedVertex(id, name);
+		AttributedVertex newVertex = new AttributedVertex(id, vertexName);
 		addVertex(newVertex);
 		return newVertex;
 	}
@@ -159,7 +159,7 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 	 * target vertices. If the graph is set to collapse duplicate edges and an edge for that
 	 * source and target exists, then the existing edge will be return with its "Weight" attribute
 	 * set to the total number of edges that have been added between the source and target vertices.
-	 * 
+	 *
 	 * @param source the source vertex of the directed edge to be created.
 	 * @param target the target vertex of the directed edge to be created.
 	 * @param edgeId the id to use for the new edge.  Note: if this is a duplicate and edges
@@ -178,7 +178,7 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 	 * collapse duplicate edges and an edge for that
 	 * source and target exists, then the existing edge will be return with its "Weight" attribute
 	 * set to the total number of edges that have been added between the source and target vertices.
-	 * 
+	 *
 	 * @param source the source vertex of the directed edge to be created.
 	 * @param target the target vertex of the directed edge to be created.
 	 * @param edge the BasicEdge object to use for the new edge.  Note: if this is a duplicate and
@@ -205,7 +205,7 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 	 * target vertices. If the graph is set to collapse duplicate edges and an edge for that
 	 * source and target exists, then the existing edge will be return with its "Weight" attribute
 	 * set to the total number of edges that have been added between the source and target vertices.
-	 * 
+	 *
 	 * @param source the source vertex of the directed edge to be created.
 	 * @param target the target vertex of the directed edge to be created.
 	 * @return a new edge between the source and target if it is the first one or the graph is

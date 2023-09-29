@@ -97,12 +97,12 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 	public void modelDataChanged(ListingPanel listingPanel) {
 		this.addressIndexMap = listingPanel.getAddressIndexMap();
 		Program program = listingPanel.getProgram();
-		if (!(program instanceof TraceProgramView)) {
+		if (!(program instanceof TraceProgramView view)) {
 			this.view = null;
 			this.memory = null;
 			return;
 		}
-		this.view = (TraceProgramView) program;
+		this.view = view;
 		this.memory = view.getTrace().getMemoryManager();
 	}
 }

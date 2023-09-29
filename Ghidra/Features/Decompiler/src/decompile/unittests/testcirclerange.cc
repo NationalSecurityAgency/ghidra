@@ -66,10 +66,12 @@ class CircleRangeTest {
   int4 bytes;
   bool getStartStopStep(uintb &start,uintb &stop,int4 &step);
 public:
+  CircleRangeTest(int4 b) { bytes = b; mask = calc_mask(b); }
   CircleRangeTest(const CircleRange &range);
   void set_intersect(CircleRangeTest &op2);
   void set_union(CircleRangeTest &op2);
   void pushUnary(OpCode opcode,int4 outsize);
+  void pushBinary(OpCode opcode,int4 outsize,CircleRangeTest &in1,CircleRangeTest &in2);
   void pullbackUnary(OpCode opcode,int4 insize);
   void pullbackBinary(OpCode opcode,int4 slot,uintb val);
   bool testEqual(bool valid,const CircleRange &range);
@@ -78,6 +80,8 @@ public:
   static bool testPullbackUnary(uintb start,uintb stop,int4 step,int4 bytes,OpCode opcode,int4 insize);
   static bool testPullbackBinary(uintb start,uintb stop,int4 step,int4 bytes,OpCode opcode,int4 slot,uintb val);
   static bool testPushUnary(uintb start,uintb stop,int4 step,int4 bytes,OpCode opcode,int4 outsize);
+  static bool testPushBinary(uintb start1,uintb stop1,int4 step1,uintb start2,uintb stop2,int4 step2,
+			     int4 bytes,OpCode opcode,int4 outsize);
 };
 
 bool CircleRangeTest::testPullbackUnary(uintb start,uintb stop,int4 step,int4 bytes,OpCode opcode,int4 insize)
@@ -109,6 +113,20 @@ bool CircleRangeTest::testPushUnary(uintb start,uintb stop,int4 step,int4 bytes,
   bool valid = res.pushForwardUnary(opcode, range, bytes, outsize);
   testrange.pushUnary(opcode,outsize);
   return testrange.testEqual(valid,res);
+}
+
+bool CircleRangeTest::testPushBinary(uintb start1,uintb stop1,int4 step1,uintb start2,uintb stop2,int4 step2,
+				     int4 bytes,OpCode opcode,int4 outsize)
+{
+  CircleRange range1(start1,stop1,bytes,step1);
+  CircleRange range2(start2,stop2,bytes,step2);
+  CircleRangeTest testrange1(range1);
+  CircleRangeTest testrange2(range2);
+  CircleRange res;
+  bool valid = res.pushForwardBinary(opcode, range1, range2, bytes, outsize, 32);
+  CircleRangeTest testres(outsize);
+  testres.pushBinary(opcode, outsize, testrange1, testrange2);
+  return testres.testEqual(valid,res);
 }
 
 bool CircleRangeTest::testIntersect(uintb start1,uintb stop1,uintb start2,uintb stop2,int4 step,int4 bytes)
@@ -217,6 +235,23 @@ void CircleRangeTest::pushUnary(OpCode opcode,int4 outsize)
   }
 }
 
+void CircleRangeTest::pushBinary(OpCode opcode,int4 outsize,CircleRangeTest &in1,CircleRangeTest &in2)
+
+{
+  CircleRangeTestEnvironment::build();
+  OpBehavior *behave = glb->inst[opcode]->getBehavior();
+  elements.clear();
+  for(int4 i=0;i<in1.elements.size();++i) {
+    for(int4 j=0;j<in2.elements.size();++j) {
+      elements.push_back(behave->evaluateBinary(outsize, in1.bytes, in1.elements[i], in2.elements[j]));
+    }
+  }
+  if (outsize != bytes) {
+    bytes = outsize;
+    mask = calc_mask(outsize);
+  }
+}
+
 void CircleRangeTest::pullbackUnary(OpCode opcode,int4 insize)
 
 {
@@ -263,12 +298,37 @@ bool CircleRangeTest::getStartStopStep(uintb &start,uintb &stop,int4 &step)
     return true;
   }
   sort(elements.begin(),elements.end());
-  int4 bigpos = -1;
-  uintb biggest1 = 0;
-  uintb biggest2 = 0;
+  vector<uintb> dedup;
+  uintb lastel = elements[0];
+  dedup.push_back(lastel);
+  for(int4 i=1;i<elements.size();++i) {	// Dedeuplicate the values
+    uintb curel = elements[i];
+    if (curel == lastel) continue;
+    dedup.push_back(curel);
+    lastel = curel;
+  }
+  elements.swap(dedup);
 
   if (elements.back() > mask) return false;
 
+  if (elements.size() == 1) {
+    start = elements[0];
+    stop = (start + 1) & mask;
+    step = 1;
+    return true;
+  }
+  if (elements.size() == 2) {
+    uintb diff = (elements[0] - elements[1]) & mask;
+    if (diff == 1 || diff == 2 || diff == 4 || diff == 8) {
+      start = elements[1];
+      stop = (start + diff + diff) & mask;
+      step = diff;
+      return true;
+    }
+  }
+  int4 bigpos = -1;
+  uintb biggest1 = 0;
+  uintb biggest2 = 0;
   for(int4 i=1;i<elements.size();++i) {
     uintb diff = elements[i] - elements[i-1];
     if (diff >= biggest1) {
@@ -795,6 +855,74 @@ TEST(circlerange_pushsext6) {
 
 TEST(circlerange_pushsext7) {
   ASSERT(CircleRangeTest::testPushUnary(0,0,4,1, CPUI_INT_SEXT, 2));
+}
+
+TEST(circlerange_pushadd1) {
+  ASSERT(CircleRangeTest::testPushBinary(10, 15, 1, 30, 35, 1, 1, CPUI_INT_ADD, 1));
+}
+
+TEST(circlerange_pushadd2) {
+  ASSERT(CircleRangeTest::testPushBinary(1,10,1,0xfffffffe,5,1,4,CPUI_INT_ADD, 4));
+}
+
+TEST(circlerange_pushadd3) {
+  ASSERT(CircleRangeTest::testPushBinary(0,20,4,0xfff0,6,2,2,CPUI_INT_ADD,2));
+}
+
+TEST(circlerange_pushadd4) {
+  ASSERT(CircleRangeTest::testPushBinary(1,250,1,20,30,1,1,CPUI_INT_ADD,1));
+}
+
+TEST(circlerange_pushmult1) {
+  ASSERT(CircleRangeTest::testPushBinary(0x1000,0x1010,1,2,3,1,4,CPUI_INT_MULT,4));
+}
+
+TEST(circlerange_pushmult2) {
+  ASSERT(CircleRangeTest::testPushBinary(0xfffc,8,2,4,5,1,2,CPUI_INT_MULT,2));
+}
+
+TEST(circlerange_pushmult3) {
+  ASSERT(CircleRangeTest::testPushBinary(5,133,1,2,3,1,1,CPUI_INT_MULT,1));
+}
+
+TEST(circlerange_pushleft1) {
+  ASSERT(CircleRangeTest::testPushBinary(1,5,1,1,2,1,4,CPUI_INT_LEFT,4));
+}
+
+TEST(circlerange_pushleft2) {
+  ASSERT(CircleRangeTest::testPushBinary(8,72,4,2,3,1,1,CPUI_INT_LEFT,1));
+}
+
+TEST(circlerange_pushsubpiece1) {
+  ASSERT(CircleRangeTest::testPushBinary(0xfffe,0x10005,1,0,1,1,4,CPUI_SUBPIECE,1));
+}
+
+TEST(circlerange_pushsubpiece2) {
+  ASSERT(CircleRangeTest::testPushBinary(0xfffe,0x10005,1,1,2,1,4,CPUI_SUBPIECE,1));
+}
+
+TEST(circlerange_pushsubpiece3) {
+  ASSERT(CircleRangeTest::testPushBinary(0x10f0,0x1200,1,0,1,1,4,CPUI_SUBPIECE,1));
+}
+
+TEST(circlerange_pushright1) {
+  ASSERT(CircleRangeTest::testPushBinary(0x30a6,0x30c0,2,4,5,1,2,CPUI_INT_RIGHT,2));
+}
+
+TEST(circlerange_pushright2) {
+  ASSERT(CircleRangeTest::testPushBinary(0xfe00,0xffc0,0x20,9,10,1,2,CPUI_INT_RIGHT,2));
+}
+
+TEST(circlerange_pushright3) {
+  ASSERT(CircleRangeTest::testPushBinary(7,10,1,4,5,1,4,CPUI_INT_RIGHT,4));
+}
+
+TEST(circlerange_pushsright1) {
+  ASSERT(CircleRangeTest::testPushBinary(0x3000,0x3064,4,3,4,1,2,CPUI_INT_SRIGHT,2));
+}
+
+TEST(circlerange_pushsright2) {
+  ASSERT(CircleRangeTest::testPushBinary(0xfff0,0x24,4,3,4,1,2,CPUI_INT_SRIGHT,2));
 }
 
 } // End namespace ghidra

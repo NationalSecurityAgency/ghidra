@@ -18,12 +18,9 @@ package ghidra.app.util.bin.format.golang.structmapping;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.data.Structure;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
 
 /**
  * Information about an instance of a structure that has been read from the memory of a 
@@ -53,6 +50,13 @@ public class StructureContext<T> {
 	protected T structureInstance;
 	protected Structure structureDataType;
 
+	/**
+	 * Creates an instance of a {@link StructureContext}.
+	 * 
+	 * @param dataTypeMapper mapping context for the program
+	 * @param mappingInfo mapping information about this structure
+	 * @param reader {@link BinaryReader} positioned at the start of the structure to be read
+	 */
 	public StructureContext(DataTypeMapper dataTypeMapper, StructureMappingInfo<T> mappingInfo,
 			BinaryReader reader) {
 		this.dataTypeMapper = dataTypeMapper;
@@ -62,6 +66,13 @@ public class StructureContext<T> {
 		this.structureDataType = mappingInfo.getStructureDataType();
 	}
 
+	/**
+	 * Creates a new instance of the structure by deserializing the structure's marked
+	 * fields into java fields.
+	 *   
+	 * @return new instance of structure
+	 * @throws IOException if error reading
+	 */
 	public T readNewInstance() throws IOException {
 		structureInstance = mappingInfo.getInstanceCreator().get(this);
 
@@ -79,7 +90,7 @@ public class StructureContext<T> {
 	/**
 	 * Returns the {@link StructureMappingInfo} for this structure's class.
 	 * 
-	 * @return
+	 * @return {@link StructureMappingInfo} for this structure's class
 	 */
 	public StructureMappingInfo<T> getMappingInfo() {
 		return mappingInfo;
@@ -91,14 +102,10 @@ public class StructureContext<T> {
 	 * a {@link ContextField} tag on a field in your class that specifies the correct 
 	 * DataTypeMapper type.
 	 *  
-	 * @return
+	 * @return the program mapping context that control's this structure instance
 	 */
 	public DataTypeMapper getDataTypeMapper() {
 		return dataTypeMapper;
-	}
-
-	public Program getProgram() {
-		return dataTypeMapper.program;
 	}
 
 	/**
@@ -113,8 +120,9 @@ public class StructureContext<T> {
 	/**
 	 * Returns the address of an offset from the start of this structure instance.
 	 * 
-	 * @param fieldOffset
-	 * @return
+	 * @param fieldOffset number of bytes from the beginning of this structure where a field (or
+	 * other location of interest) starts
+	 * @return {@link Address} of specified offset
 	 */
 	public Address getFieldAddress(long fieldOffset) {
 		return getStructureAddress().add(fieldOffset);
@@ -123,8 +131,9 @@ public class StructureContext<T> {
 	/**
 	 * Returns the stream location of an offset from the start of this structure instance.
 	 * 
-	 * @param fieldOffset
-	 * @return
+	 * @param fieldOffset number of bytes from the beginning of this structure where a field (or
+	 * other location of interest) starts
+	 * @return absolute offset / position in the program / BinaryReader stream
 	 */
 	public long getFieldLocation(long fieldOffset) {
 		return structureStart + fieldOffset;
@@ -133,7 +142,7 @@ public class StructureContext<T> {
 	/**
 	 * Returns the stream location of this structure instance.
 	 * 
-	 * @return
+	 * @return absolute offset / position in the program / BinaryReader stream of this structure
 	 */
 	public long getStructureStart() {
 		return structureStart;
@@ -142,7 +151,8 @@ public class StructureContext<T> {
 	/**
 	 * Returns the stream location of the end of this structure instance.
 	 * 
-	 * @return
+	 * @return absolute offset / position in the program / BinaryReader stream of the byte after
+	 * this structure
 	 */
 	public long getStructureEnd() {
 		return structureStart + getStructureLength();
@@ -151,7 +161,8 @@ public class StructureContext<T> {
 	/**
 	 * Returns the length of this structure instance.
 	 * 
-	 * @return
+	 * @return length of this structure, or 0 if this structure is a variable length structure
+	 * that does not have a fixed length 
 	 */
 	public int getStructureLength() {
 		return structureDataType != null
@@ -159,10 +170,20 @@ public class StructureContext<T> {
 				: 0;
 	}
 
+	/**
+	 * Returns a reference to the object instance that was deserialized.
+	 * 
+	 * @return reference to deserialized structure mapped object
+	 */
 	public T getStructureInstance() {
 		return structureInstance;
 	}
 
+	/**
+	 * Returns the {@link BinaryReader} that is used to deserialize this structure.
+	 * 
+	 * @return {@link BinaryReader} that is used to deserialize this structure
+	 */
 	public BinaryReader getReader() {
 		return reader;
 	}
@@ -171,14 +192,23 @@ public class StructureContext<T> {
 	 * Returns an independent {@link BinaryReader} that is positioned at the start of the
 	 * specified field.
 	 * 
-	 * @param fieldOffset
-	 * @return
+	 * @param fieldOffset number of bytes from the beginning of this structure where a field (or
+	 * other location of interest) starts
+	 * @return new {@link BinaryReader} positioned at the specified relative offset
 	 */
 	public BinaryReader getFieldReader(long fieldOffset) {
 		return reader.clone(structureStart + fieldOffset);
 	}
 
 
+	/**
+	 * Creates a new {@link FieldContext} for a specific field.
+	 * 
+	 * @param fmi {@link FieldMappingInfo field} of interest 
+	 * @param includeReader boolean flag, if true create a BinaryReader for the field, if false no
+	 * BinaryReader will be created
+	 * @return new {@link FieldContext}
+	 */
 	public FieldContext<T> createFieldContext(FieldMappingInfo<T> fmi, boolean includeReader) {
 		DataTypeComponent dtc = fmi.getDtc(structureDataType);
 		BinaryReader fieldReader = includeReader ? getFieldReader(dtc.getOffset()) : null;
@@ -187,87 +217,14 @@ public class StructureContext<T> {
 	}
 
 	/**
-	 * Places a comment at the start of this structure, appending to any previous values 
-	 * already there.
+	 * Returns the Ghidra {@link Structure structure data type} that represents this object.
+	 * <p>
+	 * If this is an instance of a variable length structure mapped class, a custom structure data
+	 * type will be minted that exactly matches this instance's variable length fields.
 	 * 
-	 * @param commentType
-	 * @param prefix
-	 * @param comment
-	 * @param sep
-	 * @throws IOException
+	 * @return Ghidra {@link Structure structure data type} that represents this object
+	 * @throws IOException if error constructing new struct data type
 	 */
-	public void appendComment(int commentType, String prefix, String comment, String sep)
-			throws IOException {
-		DWARFUtil.appendComment(dataTypeMapper.getProgram(), getStructureAddress(), commentType,
-			prefix, comment, sep);
-	}
-
-	public boolean isAlreadyMarkedup() {
-		Address addr = getStructureAddress();
-		Data data = getProgram().getListing().getDataContaining(addr);
-		if (data != null && data.getBaseDataType() instanceof Structure) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * @param nested if true, it is assumed that the Ghidra data types have already been
-	 * placed and only markup needs to be performed.
-	 * 
-	 * @throws IOException
-	 */
-	public void markupStructure(boolean nested) throws IOException {
-		Address addr = getStructureAddress();
-		if (!nested && !dataTypeMapper.markedupStructs.add(addr)) {
-			return;
-		}
-
-		if (!nested) {
-			try {
-				Structure structDT = getStructureDataType();
-				dataTypeMapper.markupAddress(addr, structDT);
-			}
-			catch (IOException e) {
-				throw new IOException("Markup failed for structure %s at %s"
-						.formatted(mappingInfo.getDescription(), getStructureAddress()),
-					e);
-			}
-
-			if (structureInstance instanceof StructureMarkup<?> sm) {
-				String structureLabel = sm.getStructureLabel();
-				if (structureLabel != null) {
-					dataTypeMapper.labelAddress(addr, structureLabel);
-				}
-			}
-		}
-
-		markupFields();
-
-		if (structureInstance instanceof StructureMarkup<?> sm) {
-			sm.additionalMarkup();
-		}
-
-	}
-
-	public void markupFields() throws IOException {
-		for (FieldMappingInfo<T> fmi : mappingInfo.getFields()) {
-			for (FieldMarkupFunction<T> func : fmi.getMarkupFuncs()) {
-				func.markupField(createFieldContext(fmi, false));
-			}
-		}
-		if (structureInstance instanceof StructureMarkup<?> sm) {
-			for (Object externalInstance : sm.getExternalInstancesToMarkup()) {
-				dataTypeMapper.markup(externalInstance, false);
-			}
-		}
-
-		for (StructureMarkupFunction<T> markupFunc : mappingInfo.getMarkupFuncs()) {
-			markupFunc.markupStructure(this);
-		}
-
-	}
-
 	public Structure getStructureDataType() throws IOException {
 		if (structureDataType == null) {
 			// if this is a variable length struct, a new custom struct datatype needs to be created

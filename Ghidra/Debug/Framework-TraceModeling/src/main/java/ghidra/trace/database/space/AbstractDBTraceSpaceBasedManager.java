@@ -95,6 +95,10 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 			return space.isRegisterSpace();
 		}
 
+		private boolean isOverlaySpace() {
+			return space.isOverlaySpace();
+		}
+
 		private Frame frame() {
 			return new Frame(thread, entry.frameLevel);
 		}
@@ -145,7 +149,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		Map<Frame, TabledSpace> newRegSpaces = new HashMap<>();
 		Map<AddressSpace, TabledSpace> newMemSpaces = new HashMap<>();
 		for (TabledSpace ts : getTabledSpaces()) {
-			if (ts.isRegisterSpace()) {
+			if (ts.isRegisterSpace() && !ts.isOverlaySpace()) {
 				newRegSpaces.put(ts.frame(), ts);
 			}
 			else {

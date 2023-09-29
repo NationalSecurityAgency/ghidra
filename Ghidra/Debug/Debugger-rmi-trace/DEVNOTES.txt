@@ -1,0 +1,280 @@
+This is just a scratchpad of notes for development.
+After developer documentation is authored, this file should be deleted.
+
+Terminology can be a bit weird regarding client vs server.
+Instead, I prefer to use "front end" and "back end".
+Ghidra is always the front end, as it provides the UI.
+The actual debugger is always the "back end" is it provides the actual instrumentation and access to the target.
+wrt/ TCP, the connection can go either way, but once established, Ghidra still plays the front end role.
+
+Client/Server otherwise depends on context.
+For the trace-recording channel, the back-end is the client, and the front-end (Ghidra) is the server.
+The back-end invokes remote methods on the DBTrace, and those cause DomainObjectChange events, updating the UI.
+The front-end replies with minimal information.
+	(More on this and sync/async/batching later)
+
+For the command channel, the front-end (Ghidra) is the client, and the back-end is the server.
+The user presses a button, which invokes a remote method on the back-end.
+Often, that method and/or its effects on the target and back-end result in it updating the trace, and the loop is complete.
+Again, the back-end replies with minimal information.
+	One notable exception is the `execute` method, which can optionally return captured console output.
+	In general, methods should only respond with actual information that doesn't belong in the trace.
+	While I've not yet needed this, I suppose another exception could be for methods that want to return the path to an object, to clarify association of cause and effect.
+
+Regarding sync/async and batching:
+One of the goals of TraceRmi was to simplify the trace-recording process.
+It does this in three ways:
+
+1. Providing direct control to write the Trace database.
+   The ObjectModel approach was more descriptive.
+   It would announce the existence of things, and a recorder at the front end would decide (applying some arcane rules) what to record and display.
+   Almost every new model required some adjustment to the recorder.
+   
+2. Changing to a synchronous RMI scheme.
+   The decision to use an asynchronous scheme was to avoid accidental lock-ups of the Swing thread.
+   In practice, it just poisoned every API that depended on it, and we still got Swing lock-ups.
+   And worse, they were harder to diagnose, because the stack traces were obscured.
+   And still worse, execution order and threading was difficult to predict.
+
+   We've only been somewhat successful in changing to a fully synchronous scheme, but even then, we've (attempted to) mitigate each of the above complaints.
+   On the front-end, the internals still use CompletableFuture, but we're more apt to use .get(), which keeps the stack together on the thread waiting for the result.
+   In essence, there's little difference in blocking on .get() vs blocking on .recv().
+   The reason we need a dedicated background thread to receive is to sort out the two channels.
+   The recommended public API method is RemoteMethod.invoke(), which uses .get() internally, so this is mostly transparent, except when debugging the front end.
+   There is still an .invokeAsync(), if desired, giving better control of timeouts, which is actually a feature we would not have using a purely synchronous .recv() (at least not without implementing non-blocking IO)
+   To mitigate Swing lock-ups the .get() methods are overridden to explicitly check for the Swing thread.
+
+   On the back end, the internals work similarly to the front end.
+   We use a Future to handle waiting for the result, and the implementation of each trace modification method will immediately invoke .result().
+   Unfortunately, this does slow things down far too much, since every miniscule operation requires a round trip.
+   We mitigate this by implementing a `batch` context manager.
+   Inside this context, most of the trace modification methods will now return the Future.
+   However, a reference to each such future is stored off in the context.
+   When the context is exited, all the Futures' results are waited on.
+   This maintains a mostly synchronous behavior, while alleviating the repeated round-trip costs.
+
+3. Simplifying the back end implementation, and providing it in Python.
+   It turns out no debugger we've encountered up to this point provides Java language bindings out of the box.
+   The closest we've seen is LLDB, which has specified their interfaces using SWIG, which lent itself to exporting Java bindings.
+   And that was lucky, too, because accessing C++ virtual functions from JNA is fraught with peril.
+   For gdb, we've been using a pseudo-terminal or ssh connection to its Machine Interface, which aside from the piping delays, has been pretty nice.
+   It's not been great on Windows, though -- their ConPTY stuff has some ANSI oddities, the handling of which has slowed our performance.
+   For dbgeng/dbgmodel, we've been fortunate that they follow COM+, which is fairly well understood by JNA.
+   Nevertheless, all of these have required us to hack some kind of native bindings in Java.
+   This introduces risks of crashing the JVM, and in some cases can cause interesting conflicts, e.g., the JVM and dbgeng may try to handle the same signals differently.
+   dbgeng also only allows a single session.
+   If the user connects twice to it using IN-VM (this is easy to do by accident), then the two connections are aliases of the same dbgeng session.
+
+   Both gdb and lldb offer Python bindings, so it is an obvious choice for back end implementations.
+   We are already using protobuf, so we keep it, but developed a new protocol specification.
+   The trace modification methods are prescribed by Ghidra, so each is implemented specifically in the trace client.
+   The back end remote methods are described entirely by the back end.
+   They are enumerated during connection negotiation; otherwise, there is only one generic "Invoke" message.
+
+
+Because we're more tightly integrated with the debugger, there may be some interesting caveats.
+
+Pay careful attention to synchronization and session tear down.
+At one point, I was using gdb's post_event as a Python Executor.
+A separate thread handled the method invocation requests, scheduled it on the executor, waited for the result, and then responded.
+This worked until the front end invoked `execute("quit")`.
+I was expecting gdb to just quit, and the front end would expect the connection to die.
+However, this never happened.
+Instead, during execution of the `quit`, gdb wanted to clean up the Python interpreter.
+Part of that was gracefully cleaning up all the Python threads, one of which was blocking indefinitely on execution of the `quit`.
+Thus, the two threads were waiting on each other, and gdb locked up.
+
+Depending on the debugger, the Python API may be more or less mature, and there could be much variation among versions we'd like to support.
+For retrieving information, we at least have console capture as a fallback; however, there's not always a reliable way to detect certain events without a direct callback.
+At worst, we can always hook something like `prompt`, but if we do, we must be quick in our checks.
+Dealing with multiple versions, there's at least two ways:
+1. Probe for the feature.
+   This is one case where Python's dynamic nature helps out.
+   Use `hasattr` to check for the existence of various features and choose accordingly.
+2. Check the version string.
+   Assuming version information can be consistently and reliably retrieved across all the supported versions, parse it first thing.
+   If the implementation of a feature various across versions, the appropriate one can be selected.
+   This may not work well for users of development branches, or are otherwise off the standard releases of their debuggers.
+
+This is probably well understood by the Python community, but I'll overstate it here:
+If you've written something, but you haven't unit tested it yet, then you haven't really written it.
+This may be mitigated by some static analysis tools and type annotations, but I didn't use them.
+In fact, you might even say I abused type annotations for remote method specifications.
+
+For gdb, I did all of my unit testing using JUnit as the front end in Java.
+This is perhaps not ideal, since this is inherently an integration test; nevertheless, it does allow me to test each intended feature of the back end separately.
+
+
+# Package installation
+
+I don't know what the community preference will be here, but now that we're playing in the Python ecosystem, we have to figure out how to play nicely.
+Granted, some of this depends on how nicely the debugger plays in the Python ecosystem.
+My current thought is distribute our stuff as Python packages, and let the user figure it out.
+We'll still want to figure out the best way, if possible, to make things work out of the box.
+Nevertheless, a `pip install` command may not be *that* offensive for a set-up step.
+
+That said, for unit testing, I've had to incorporate package installation as a @BeforeClass method.
+There's probably a better way, and that way may also help with out-of-the-box support.
+Something like setting PYTHON_PATH before invoking the debugger?
+There's still the issue of installing protobuf, though.
+And the version we use is not the latest, which may put users who already have protobuf in dependency hell.
+We use version 3.20, while the latest is 4.something.
+According to protobuf docs, major versions are not guaranteed backward compatible.
+To upgrade, we'd also have to upgrade the Java side.
+
+# Protobuf headaches
+
+Protobufs in Java have these nifty `writeDelimitedTo` and `parseDelimitedFrom` methods.
+There's no equivalent for Python :(
+That said, according to a stackoverflow post (which I've lost track of, but it's easily confirmed by examining protobufs Java source), you can hand-spin this by prepending a varint giving each message's length.
+If only the varint codec were part of protobuf's public Python API....
+They're pretty easily accessed in Python by importing the `internal` package, but that's probably not a good idea.
+Also, (as I had been doing that), it's easy to goof up receiving just variable-length int and keeping the encoded message in tact for parsing.
+I instead just use a fixed 32-bit int now.
+
+# How-To?
+
+For now, I'd say just the the gdb implementation as a template / guide.
+Just beware, the whole thing is a bit unstable, so the code may change, but still, I don't expect it to change so drastically that integration work would be scrapped.
+
+If you're writing Python, create a Python package following the template for gdb's.
+I'd like the version numbers to match Ghidra's, though this may need discussion.
+Currently, only Python 3 is supported.
+I expect older versions of gdb may not support Py3, so we may need some backporting.
+That said, if your distro's package for whatever debugger is compiled for Py2, you may need to build from source, assuming it supports Py3 at all.
+I recommend mirroring the file layout:
+
+__init__.py:
+    Python package marker, but also initialization.
+    For gdb, this file gets executed when the user types `python import ghidragdb`.
+    Thus, that's how they load the extension.
+arch.py:
+    Utilities for mapping architecture-specific things between back and front ends.
+    Technically, you should just be able to use the "DATA" processor for your trace, things will generally work better if you can map.
+commands.py:
+    These are commands we add to the debugger's CLI.
+    For gdb, we use classes that extend `gdb.Command`, which allows the user to access them whether or not connected to Ghidra.
+    For now, this is the recommendation, as I expect it'll allow users to "hack" on it more easily, either to customize or to retrieve diagnostics, etc.
+    Notice that I use gdb's expression evaluator wherever that can enhance the command's usability, e.g., `ghidra trace putval`
+hooks.py:
+    These are event callbacks from the debugger as well as whatever plumbing in necessary to actually install them.
+    That "plumbing" may vary, since the debugger may not directly support the callback you're hoping for.
+    In gdb, there are at least 3 flavors:
+    1. A directly-supported callback, i.e., in `gdb.events`
+    2. A breakpoint callback, which also breaks down into two sub-flavors:
+       * Internal breakpoint called back via `gdb.Breakpoint.stop`
+       * Normal breakpoint whose commands invoke a CLI command
+    3. A hooked command to invoke a CLI command, e.g., `define hook-inferior`
+method.py:
+    These are remote methods available to the front end.
+    See the `MethodRegistry` object in the Python implementation, or the `RemoteMethod` interface in the Java implementation.
+parameters.py:
+    These are for gdb parameters, which may not map to anything in your debugger, so adjust as necessary.
+    They're preferred to custom commands whose only purpose is to access a variable.
+schema.xml:
+    This is exactly what you think it is.
+    It is recommended you copy this directly from the ObjectModel-based implementation and make adjustments as needed.
+    See `commands.start_trace` to see how to load this file from your Python package.
+util.py:
+    Just utilities and such.
+    For the gdb connector, this is where I put my version-specific implementations, e.g., to retrieve the memory map and module list.
+
+For testing, similarly copy the JUnit tests (they're in the IntegrationTests project) into a separate properly named package.
+I don't intend to factor out test cases, except for a few utilities.
+The only real service that did in the past was to remind you what cases you ought to test.
+Prescribing exactly *how* to test those and the scenarios, I think, was a mistake.
+If I provide a base test class, it might just be to name some methods that all fail by default.
+Then, as a tester, the failures would remind you to override each method with the actual test code.
+
+
+For manual testing, I've used two methods
+1. See `GdbCommandsTest#testManual`.
+   Uncomment it to have JUnit start a trace-rmi front-end listener.
+   You can then manually connect from inside your debugger and send/diagnose commands one at a time.
+   Typically, I'd use the script from another test that was giving me trouble.
+2. Start the full Ghidra Debugger and use a script to connect.
+   At the moment, there's little UI integration beyond what is already offered by viewing a populated trace.
+   Use either ConnectTraceRmiScript or ListenTraceRmiScript and follow the prompts / console.
+   The handler will activate the trace when commanded, and it will follow the latest snapshot.
+
+
+# User installation instructions:
+
+The intent is to provide .whl or whatever Python packages as part of the Ghidra distribution.
+A user should be able to install them using `pip3 install ...`, however:
+We've recently encountered issues where the version of Python that gdb is linked to may not be the same version of Python the user gets when the type `python`, `python3` or `pip3`.
+To manually check for this version, a user must type, starting in their shell:
+
+```bash
+gdb
+python-interactive
+import sys
+print(sys.version)
+```
+
+Suppose they get `3.8.10`.
+They'd then take the major and minor numbers to invoke `python3.8` directly:
+
+```bash
+python3.8 -m pip install ...
+```
+
+A fancy way to just have gdb print the python command for you is:
+
+```bash
+gdb --batch -ex 'python import sys' -ex 'python print(f"python{sys.version_info.major}.{sys.version_info.minor}")'
+```
+
+Regarding method registry, the executor has to be truly asynchronous.
+You cannot just invoke the method synchronously and return a completed future.
+If you do, you'll hang the message receiver thread, which may need to be free if the invoked method interacts with the trace.
+
+We've currently adopted a method-naming convention that aims for a somewhat consistent API across back-end plugins.
+In general, the method name should match the action name exactly, e.g., the method corresponding the Ghidra's `resume` action should be defined as:
+
+   @REGISTRY.method
+   def resume(...):
+       ...
+
+Not:
+
+   @REGISTRY.method(name='continue', action='resume')
+   def _continue(...):
+      ...
+
+Even though the back-end's command set and/or API may call it "continue."
+If you would like to provide a hint to the user regarding the actual back-end command, do so in the method's docstring:
+
+   @REGISTRY.method
+   def resume(...):
+       """Continue execution of the current target (continue)."""
+       ...
+
+There are exceptions:
+
+1. When there is not a one-to-one mapping from the method to an action.
+   This is usually the case for delete, toggle, refresh, etc.
+   For these, use the action as the prefix, and then some suffix, usually describing the type of object affected, e.g., delete_breakpoint.
+2. When using an "_ext" class of action, e.g., step_ext or break_ext.
+   There is almost certainly not a one-to-one method for such an action.
+   The naming convention is the same as 1, but omitting the "_ext", e.g., step_advance or break_event
+   Even if you only have one method that maps to step_ext, the method should *never* be called step_ext.
+3. There is no corresponding action at all.
+   In this case, call it what you want, but strive for consistency among related methods in this category for your back-end.
+   Act as though there could one day be a Ghidra action that you'd like to map them to.
+
+There may be some naming you find annoying, e.g., "resume" (not "continue") or "launch" (not "start")
+We also do not use the term "watchpoint." We instead say "write breakpoint."
+Thus, the method for placing one is named `break_write_whatever`, not `watch_whatever`.
+
+
+# Regarding transactions:
+
+At the moment, I've defined two modes for transaction management on the client side.
+The server side couldn't care less. A transactions is a transaction.
+For hooks, i.e., things driven by events on the back end, use the client's transaction manager directly.
+For commands, i.e., things driven by the user via the CLI, things are a little dicey.
+I wouldn't expect the user to manage multiple transaction objects.
+The recommendation is that the CLI can have at most one active transaction.
+For the user to open a second transaction may be considered an error.
+Take care as you're coding (and likely re-using command logic) that you don't accidentally take or otherwise conflict with the CLI's transaction manager when processing an event.

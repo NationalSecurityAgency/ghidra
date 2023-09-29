@@ -23,7 +23,6 @@ import javax.swing.*;
 import javax.swing.table.JTableHeader;
 
 import docking.ActionContext;
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -126,8 +125,7 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 			setSubTitle(buffy.toString());
 		});
 
-		GoToService goToService = tool.getService(GoToService.class);
-		commentTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		commentTable.installNavigation(tool);
 
 		JTableHeader commentHeader = commentTable.getTableHeader();
 		commentHeader.setUpdateTableInRealTime(true);

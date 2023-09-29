@@ -113,18 +113,10 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		return new ProgramActionContext(this, program);
 	}
 
-	/**
-	 * Gets the function name for the function stack frame being edited. 
-	 * @return the name
-	 */
 	String getStackName() {
 		return stackModel.getEditorStack().getDisplayName();
 	}
 
-	/**
-	 * Gets the function for the function stack frame being edited. 
-	 * @return the function
-	 */
 	Function getFunction() {
 		StackFrameDataType editorStack = stackModel.getEditorStack();
 		if (editorStack == null) {
@@ -138,9 +130,6 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		return getDtPath().equals(functionPath);
 	}
 
-	/**
-	 * Gets the program associated with the stack frame being edited.
-	 */
 	protected Program getProgram() {
 		return program;
 	}

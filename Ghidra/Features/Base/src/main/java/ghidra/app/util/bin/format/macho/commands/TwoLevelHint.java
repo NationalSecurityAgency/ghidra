@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a twolevel_hint structure.
  * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/loader.h">EXTERNAL_HEADERS/mach-o/loader.h</a> 
  */
 public class TwoLevelHint implements StructConverter {
 	public final static int SIZEOF = 4;

@@ -20,10 +20,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.JButton;
-import javax.swing.SwingUtilities;
 
-import docking.*;
+import docking.ActionContext;
+import docking.DockingWindowManager;
 import docking.action.*;
+import ghidra.util.Swing;
 
 /**
  * Class to manager toolbar buttons.
@@ -113,13 +114,13 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		DockingWindowManager.clearMouseOverHelp();
-		ActionContext context = getActionContext();
+		ActionContext context = getWindowManager().createActionContext(toolBarAction);
 
 		context.setSourceObject(event.getSource());
 		context.setEventClickModifiers(event.getModifiers());
 
 		// this gives the UI some time to repaint before executing the action
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			if (toolBarAction.isValidContext(context) &&
 				toolBarAction.isEnabledForContext(context)) {
 				if (toolBarAction instanceof ToggleDockingActionIf) {
@@ -131,29 +132,16 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		});
 	}
 
-	private ActionContext getActionContext() {
+	private DockingWindowManager getWindowManager() {
 		if (windowManager != null) {
-			return windowManager.getActionContext(toolBarAction);
+			return windowManager;
 		}
-
-		ComponentProvider provider = getComponentProvider();
-		ActionContext context = provider == null ? null : provider.getActionContext(null);
-		final ActionContext actionContext =
-			context == null ? new ActionContext(provider, null) : context;
-		return actionContext;
+		return DockingWindowManager.getActiveInstance();
 	}
 
 	@Override
 	public String toString() {
 		return toolBarAction.getName();
-	}
-
-	private ComponentProvider getComponentProvider() {
-		DockingWindowManager manager = windowManager;
-		if (manager == null) {
-			manager = DockingWindowManager.getActiveInstance();
-		}
-		return manager.getActiveComponentProvider();
 	}
 
 	@Override

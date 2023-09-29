@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 
 /**
  * MemoryBlockStub can be extended for use by tests. It throws an UnsupportedOperationException for
@@ -68,6 +68,11 @@ public class MemoryBlockStub implements MemoryBlock {
 	@Override
 	public Address getEnd() {
 		return end;
+	}
+
+	@Override
+	public AddressRange getAddressRange() {
+		return new AddressRangeImpl(start, end);
 	}
 
 	@Override

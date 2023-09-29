@@ -31,13 +31,13 @@ public class TableUtils {
 	/**
 	 * Uses the given row-based table model, row object and column index to determine what the
 	 * String value should be for that cell.
-	 * 
+	 *
 	 * <P>This is used to provide a means for filtering on the text that is displayed to the user.
-	 * 
+	 *
 	 * @param <ROW_OBJECT> The model's row object type
 	 * @param model the model
 	 * @param rowObject the row object for the row being queried
-	 * @param column the column index <b>in the table model</b> 
+	 * @param column the column index <b>in the table model</b>
 	 * @return the string value; null if no value can be fabricated
 	 */
 	public static <ROW_OBJECT> String getTableCellStringValue(RowObjectTableModel<ROW_OBJECT> model,
@@ -56,7 +56,7 @@ public class TableUtils {
 		 		2) See if the value is an instance of DisplayStringProvider, which describes how
 		 		   it should be rendered
 		 		3) See if it is a label (this is uncommon)
-		 		4) Rely on the toString(); this works as intended for Strings.  This is the 
+		 		4) Rely on the toString(); this works as intended for Strings.  This is the
 		 		   default way that built-in table cell renderers will generate display text
 		 */
 
@@ -66,7 +66,7 @@ public class TableUtils {
 			return renderedString;
 		}
 
-		// 2) special plug-in point where clients can specify a value object that can return 
+		// 2) special plug-in point where clients can specify a value object that can return
 		// its display string
 		if (value instanceof DisplayStringProvider) {
 			return ((DisplayStringProvider) value).toString();
@@ -91,6 +91,7 @@ public class TableUtils {
 			return null;
 		}
 
+		@SuppressWarnings("unchecked")
 		DynamicColumnTableModel<ROW_OBJECT> columnBasedModel =
 			(DynamicColumnTableModel<ROW_OBJECT>) unwrappedModel;
 		GColumnRenderer<Object> renderer = getColumnRenderer(columnBasedModel, columnIndex);
@@ -123,14 +124,14 @@ public class TableUtils {
 	 * of the given table is not a {@link SortedTableModel}, then this method will do nothing.
 	 * <p>
 	 * If the given column index is not sortable, then this method will not change the state of
-	 * the model.  Otherwise, the sorted model will be sorted on the given column index.  The 
+	 * the model.  Otherwise, the sorted model will be sorted on the given column index.  The
 	 * results of calling this method depend upon the current sorted state of the given column:
 	 * <ol>
-	 * <li>if the column is not yet the sorted column, then the column is made the sorted 
+	 * <li>if the column is not yet the sorted column, then the column is made the sorted
 	 * column, if sortable, <b>and any other sorted columns will be made unsorted</b>, or</li>
 	 * <li>if the column is the sorted column and the direction will simply be toggled.</li>
-	 * </ol> 
-	 * 
+	 * </ol>
+	 *
 	 * @param table The table whose model shall be sorted.
 	 * @param columnIndex The column index upon which to sort.
 	 */
@@ -169,10 +170,10 @@ public class TableUtils {
 	 * of the given table is not a {@link SortedTableModel}, then this method will do nothing.
 	 * <p>
 	 * If the given column index is not sortable, then this method will not change the state of
-	 * the model. The results of calling this method depend upon the current sorted state 
+	 * the model. The results of calling this method depend upon the current sorted state
 	 * of the given column:
 	 * <ol>
-	 *   <li>if the column is not yet sorted, then the column is made sorted, if sortable, 
+	 *   <li>if the column is not yet sorted, then the column is made sorted, if sortable,
 	 *   <b>and any other sorted columns will not be changed</b>, or</li>
 	 *   <li>if the column is sorted, then:
 	 *     <ol>
@@ -180,8 +181,8 @@ public class TableUtils {
 	 *      <li>if there are no other sorted columns, then no action will be taken</li>
 	 *     </ol>
 	 *   </li>
-	 * </ol> 
-	 * 
+	 * </ol>
+	 *
 	 * @param table The table whose model shall be sorted.
 	 * @param columnIndex The column index upon which to sort.
 	 */
@@ -205,9 +206,9 @@ public class TableUtils {
 
 		if (editor.isColumnSorted(modelColumnIndex)) {
 
-			/*			 
+			/*
 			 	Note: this code allows us to disable the 'unsorting' of a table via the UI
-			 
+
 				// remove it.  If there is only one, don't remove the last one
 				if (editor.getSortedColumnCount() == 1) {
 					Toolkit.getDefaultToolkit().beep();

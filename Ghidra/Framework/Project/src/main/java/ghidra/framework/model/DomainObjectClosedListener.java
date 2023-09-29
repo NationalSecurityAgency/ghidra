@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,5 +19,10 @@ package ghidra.framework.model;
  * An interface that allows for a callback when a {@link DomainObject} is closed.
  */
 public interface DomainObjectClosedListener {
-	public void domainObjectClosed();
+
+	/**
+	 * Callback indicating that the specified {@link DomainObject} has been closed.
+	 * @param dobj domain object
+	 */
+	public void domainObjectClosed(DomainObject dobj);
 }

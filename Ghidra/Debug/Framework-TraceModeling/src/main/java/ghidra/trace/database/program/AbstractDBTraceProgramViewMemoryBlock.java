@@ -133,7 +133,8 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 		return program.trace.getMemoryManager().getMemorySpace(getAddressSpace(), false);
 	}
 
-	protected AddressRange getAddressRange() {
+	@Override
+	public AddressRange getAddressRange() {
 		return new AddressRangeImpl(getStart(), getEnd());
 	}
 

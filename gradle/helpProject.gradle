@@ -18,54 +18,216 @@
 	have content for the Ghidra help system. A gradle project can include help support by adding
 	the following to its build.gradle file.
 	
-		apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
-		
-	Clients can register dependencies on other help modules by using the 
-	'helpPath' configuration, like so:
+		apply from: "$rootProject.projectDir/gradle/helpProject.gradle"		
 	
-		helpPath project(path: ":Base", configuration: 'helpPath')
+	
+	Note: This code is copied into buildExtension.gradle.   All changes to this file should
+		  be made to that file.
+	
+	
+	Help Build System Notes	
+		This file contains custom glue coded needed to adapt the structure of Ghidra's help to the
+		Gradle build system.  'Building help' is defined as validating help content, generating 
+		all necessary help files used by the Java Help system, and then placing the help and 
+		generated content in a place to be consumed by Ghidra, which differs for development mode
+		and production mode.    Validating the help content consists of ensuring: hyperlinks point
+		to valid destinations and image references point to existing images.  (This is done to find
+		broken help links at build time.)
 		
-	This example will put into the 'helpPath' configuration the project path of 
-	'Base', using the value of it's 'helpPath' configuration.  This brings us to the next
-	point--'helpPath' gets updated when the jar file is built to include the path of 
-	the generated jar file.  This allows future clients of a given help module to get 
-	the jar file path of that help module's output.
+		
+		This file supports building help to work in development mode using
+		Eclipse as well as when performing a build of Ghidra.  Generated help content is written to: 
+			'build/help/main/help/'
+		
+		Developent Mode
+			The Eclipse projects are setup so that 'build/help/main' is part of the classpath.  This
+			triggers Eclipse to copy help resources to the respective project's 'bin' directory, 
+			which makes the help content available at runtime in Eclipse.  In this setup no jar 
+			files are used at runtime.
+			
+		Production Mode
+			In production mode the contents of 'build/help/main' are added to the final output of
+			the Gradle 'jar' task, which will be <Module>.jar.
+			
+		Gradle Building
+			During the help build process we place the contents of 'build/help/main' inside of an
+			artifact named <Module>-help.jar. This allows us to depend on these artifacts from the
+			projects we depend upon.  Specifically, the 'buildHelpFiles' task depends upon the
+			<Module>-help.jar artifact from all dependent Modules.
+			
+			To get Gradle's incremental building to work correctly, the following list of inputs 
+			is declared for validating and building the help content:			
+				1) Java files in the Help module used to build help - the help building code
+				2) all dependency data/*.theme.properties - for images used by help via theme IDs
+				3) all dependency src/main/help folder - for help content 
+				4) all dependency src/main/resources - for images used by help
+				5) This module's equivalent inputs for 2-3 
+		
+			In order to correctly find these inputs, we use the main runtime classpath to find 
+			Ghidra Modules.  These modules are then scanned to find these inputs for each module.
+			The final collection of all these items for all dependent Modules is added to the set
+			of task inputs for building help.  Thus, when any of the input above change, the help is 
+			considered out-of-date and will be rebuilt.
+			
+			The help build code is called via a JavaExec call.  This call will pass arguments to the
+			process for any dependent Module's help.  This dependent help will be inside of the 
+			<Module>-help.jar artifact described above.   This file contains code to locate those
+			artifacts so they can be passed into the help build java process.
 	
  *****************************************************************************************/
+ 
 // The help modules must be configured first so that we can reference its runtime classpath
-
 configurations {
-	// The Help Build System takes optional paths to resolve dependencies.  Build files
-	// that use this 'script plugin' may put project paths into this variable. 
-	helpPath
-}
 
-artifacts {
-	// The helpPath is updated to include the jar file output of the help build.
-	helpPath jar
-}
-
-sourceSets {
-	helpIndex {
-		java {
-		}
-	}
-	main {
-		resources {
-			srcDir 'src/main/help'
-			srcDir 'build/help/main'
-		}
-	}
+	// This represents the Help module jar file.  This is required for building help.
+	helpModule
+	
+	// This is used by the indexHelp task to configure the jar file dependency
+	helpIndex
 }
 
 dependencies {
-	helpIndexImplementation "javax.help:javahelp:2.0.05"
-	helpIndexImplementation project(':Help')
+
+	helpIndex "javax.help:javahelp:2.0.05"
+	
+	// signal that we depend on the Help.jar for our Java build files
+	helpModule project(':Help')
 }
 
-// Task for calling the java help indexer, which creates a searchable index of the 
-// help contents.
-task indexHelp(type: JavaExec) {	
+sourceSets {
+
+	// register help resources to be considered inputs to this project; when these resources change,
+	// this project will be considered out-of-date
+	main {
+		resources {
+			srcDir 'src/main/help'   // help .html files to be copied to the jar
+			srcDir 'build/help/main' // generated help items (from the indexer); copied to the jar
+		}
+	}
+}
+
+/*****************************************************************************************
+ Utility Methods
+*****************************************************************************************/
+
+// Turns the given file into a 'normalized' path using the Java Path API
+def normalize(File file) {
+	def path = null;
+	try {
+		path = java.nio.file.Paths.get(file.getAbsolutePath());
+	}
+	catch (Exception e) { // InvalidPathException
+		// we have seen odd strings being placed into the classpath--ignore them
+		return cpPath;
+	}	
+	
+	def normalizedPath = path.normalize();
+	def absolutePath = normalizedPath.toAbsolutePath();
+	return absolutePath.toString();
+}
+
+// Returns the Ghidra module directory for the given file if it is a Ghidra jar file
+def getModulePathFromJar(File file) {
+
+	String path = normalize(file)
+	String forwardSlashedPath = path.replaceAll("\\\\", "/")
+	def jarPattern = ~'.*/(.*)/(?:lib|build/libs)/(.+).jar'
+	def matcher = jarPattern.matcher(forwardSlashedPath)
+	if (!matcher.matches()) {
+		return null
+	}
+	
+	def moduleName = matcher.group(1);
+	def index = forwardSlashedPath.indexOf(moduleName) + moduleName.length()
+	return forwardSlashedPath.substring(0, index)
+}
+
+// Parses the classpath looking for all Module jar file paths, using those to locate the module 
+// that contains that jar file.
+// Note: In development mode, the <Module>.jar file on the classpath may not actually yet be built.
+//       In that case, we can still use that path to locate the module.
+def getMyModules(Collection<File> fullClasspath) {
+	return fullClasspath.collect(file -> getModulePathFromJar(file))
+						.findAll(path -> path != null)
+						.collect(path -> new File(path))
+}
+
+// This method contains logic for calculating help inputs based on the classpath of the project
+// The work is cached, as the inputs may be requested multiple times during a build
+ext.helpInputsCache = null
+def getHelpInputs(Collection<File> fullClasspath) {
+	
+	if (ext.helpInputsCache != null) {
+		return ext.helpInputsCache
+	}
+	
+	def results = new HashSet<File>()
+	Collection<File> modules = getMyModules(fullClasspath)
+	modules.each { m -> 
+		getHelpInputsFromModule(m.getAbsolutePath(), results)
+	}
+	
+	// the classpath above does not include my module's contents, so add that manually
+	def modulePath = file('.').getAbsolutePath()
+	getHelpInputsFromModule(modulePath, results)
+	
+	ext.helpInputsCache = results.findAll(File::exists)	
+	return ext.helpInputsCache
+}
+
+def getHelpInputsFromModule(String moduleDirPath, Set<File> results) {
+	
+	// add all desired directories now and filter later those that do not exist	
+	File moduleDir = new File(moduleDirPath) 
+	results.add(new File(moduleDir, 'src/main/resources')) // images		
+	results.add(new File(moduleDir, 'src/main/help'))      // html files
+			
+	File dataDir = new File(moduleDir, 'data')             // theme properties files
+	if (dataDir.exists()) {
+		FileCollection themeFiles = fileTree(dataDir) {
+			include '**/*.theme.properties'
+		}			
+		results.addAll(themeFiles.getFiles())
+	}	
+}
+
+def getModuleResourcesDirs(Collection<File> fullClasspath) {
+	def modules = getMyModules(fullClasspath)
+	return modules.collect(m -> new File(m, 'src/main/resources'))
+				  .findAll(dir -> dir.exists())
+}
+
+// Locatates 'buildHelp' tasks in projects that this project depends on.  The output of the tasks
+// is the module's help jar, which is only used to build help and not in the final release.  The
+// jar file names follow this format: <Module>-help.jar.
+def getDependentProjectHelpTasks(Collection<File> fullClasspath) {
+
+	def myModules = getMyModules(fullClasspath)
+	def myProjects = filterProjectsBy(myModules)
+	return myProjects.collect(p -> p.tasks.findByPath('buildHelp'))
+					 .findAll(t -> t != null)
+}
+
+// Only projects matching the given collection of modules are returned
+def filterProjectsBy(Collection<File> modules) {
+	return modules.collect(m -> m.getName())
+				  .collect(name -> rootProject.findProject(name))
+				  .findAll(p -> p != null)
+}
+
+/*****************************************************************************************
+ Tasks
+*****************************************************************************************/
+
+tasks.register('cleanHelp') {
+	File helpOutput = file('build/help/main/help')
+	doFirst {
+		delete helpOutput
+	}
+}
+
+// Task for calling the java help indexer, which creates a searchable index of the help contents
+tasks.register('indexHelp', JavaExec) {
 
 	group "private"
 	description "indexes the helps files for this module.  [gradle/helpProject.gradle]"
@@ -73,44 +235,42 @@ task indexHelp(type: JavaExec) {
 	File helpRootDir = file('src/main/help/help')		
 	File outputFile = file("build/help/main/help/${project.name}_JavaHelpSearch")	
 
-	dependsOn configurations.helpPath
-	dependsOn configurations.runtimeClasspath
-
 	inputs.dir helpRootDir
 	outputs.dir outputFile
 	
-	classpath = sourceSets.helpIndex.runtimeClasspath
+	classpath = configurations.helpIndex
 	
 	mainClass = 'com.sun.java.help.search.Indexer'
 
-	// tell the indexer where send its output	
-	args '-db', outputFile.absolutePath
-
-	// The index has a config file parameter.  The only thing we use in the config file
-	// is a root directory path that should be stripped off all the help references to
-	// make them relative instead of absolute	
-	File configFile = file('build/helpconfig')	
-
-	// gather up all the help files into a file collection
-	FileTree helpFiles = fileTree('src/main/help') {
-		include '**/*.htm'
-		include '**/*.html'
-	}
-		
-	// pass the config file we created as an argument to the indexer
-	args '-c',"$configFile"	
-
-
 	doFirst {
+	
+		// gather up all the help files into a file collection
+		FileTree helpFiles = fileTree('src/main/help') {
+			include '**/*.htm'
+			include '**/*.html'
+		}
 	
 		if (helpFiles.isEmpty()) {
 			// must have help to index
 			throw new GradleException("No help files found")
 		}
 	
+		// The index tool has a config file parameter, which allows you to pass arguments via a file
+		// instead of the command line.  This is useful when dealing with file paths.  The only 
+		// thing we use in the config file is a root directory path that should be stripped off all 
+		// the help references to make them relative instead of absolute.  We generate this config
+		// file below.
+		File configFile = file('build/helpconfig')	
+		
 		// create the config file when the task runs and not during configuration.
 		configFile.parentFile.mkdirs();
 		configFile.write "IndexRemove ${helpRootDir.absolutePath}" + File.separator + "\n"
+	
+		// pass the config file we created as an argument to the indexer
+		args '-c',"$configFile"	
+
+		// tell the indexer where send its output	
+		args '-db', outputFile.absolutePath			
 		
 		// for each help file that was found, add it as an argument to the indexer
 		helpFiles.each { File file ->
@@ -119,31 +279,49 @@ task indexHelp(type: JavaExec) {
 	}
 }
 
-task cleanHelp {
-	File helpOutput = file('build/help/main/help')
-	doFirst {
-		delete helpOutput
-	}
-}
 
 // Task for building Ghidra help files 
 // 		- depends on the output from the help indexer
-task buildHelp(type: JavaExec, dependsOn: indexHelp) {
-	group rootProject.GHIDRA_GROUP
-	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"	
+//      - validates help
+//      - the files generated will be placed in a diretory usable during development mode and will
+//        eventually be placed in:
+//				- the <Module>.jar file in production mode, or
+//				- the <Module>-help.jar file in development mode
+tasks.register('buildHelpFiles', JavaExec) { 
 
-	outputs.upToDateWhen {false} // TODO remove this. we should be able to get the inputs right
-								// the issue is if docs get changed in a dependant module,
-								// this modules needs to know to rebuild
+	group "private"	
+
+	dependsOn 'indexHelp'
+
+	// Depend on all <Module>-help.jar files for our dependency modules.  These jar files must be
+	// built before we run, since the files will be passed to the help builder.  Use a closure to 
+	// ensure that the classpath is ready when needed.
+	dependsOn({
+		getDependentProjectHelpTasks(sourceSets.main.runtimeClasspath.files)
+	})		
 
 	File helpRootDir = file('src/main/help/help')	
 	File outputDir = file('build/help/main/help')
 
-	inputs.dir file('src/main/help');
-	File resourcesDir = file('src/main/resources')
-	if (resourcesDir.exists()) {
-		inputs.dir resourcesDir
-	}
+	// 
+	// Inputs (used for incremental building):
+	//  1) Java files in the Help module used to build help 
+	//  2) all dependency data/**/*.theme.properties - for images used by help via theme IDs
+	//  3) all dependency src/main/help folder - for help content 
+	// 	4) all dependency src/main/resources - for images used by help
+	//  5) This module's equivalent inputs for 2-3 
+	//
+
+	// 1) Java files in the Help module used to build help
+	inputs.files(configurations.helpModule)  
+	
+	// 2-5) from above
+	inputs.files({
+		// Note: this must be done lazily in a closure since the classpath is not ready at 
+		// configuration time.		
+		return getHelpInputs(sourceSets.main.runtimeClasspath.files)
+	})
+
 	outputs.dir outputDir
 
 	mainClass = 'help.GHelpBuilder'
@@ -157,52 +335,93 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 
 	doFirst {		
 	
-		// this module's runtime classpath (contains jhall.jar)
-		classpath project(':Help').sourceSets.main.runtimeClasspath
-		
-		// include the classpath for the project using this Help gradle script plugin    
-    	classpath += project.sourceSets.main.runtimeClasspath	
-		// since this runs BEFORE resources are copied, include the resources source dir in
-		// the classpath so the help validator can find them
-		classpath += files('src/main/resources')
+		//
+		// The classpath needs to include items used by internal Java code to validate help 
+		// resources:
+		// 1) The jar path of each dependent Module.  The jar file will be on the 'main' runtime 
+		//    classpath, but may not yet exist.  Regardless, the Java code will use the path to 
+		//    locate the module for that path.
+		// 2) Each module's 'src/main/resources' dir (this is needed when the jar files from 1
+		//    above have not been built)
+		// 3) This module's 'src/main/resources' dir
+		//  
 	
-		configurations.helpPath.each { 
-			args "-hp"
-			args "${it.absolutePath}"
-		}
+		// Each java project and its dependencies are needed to locate each Ghidra module.  Each
+		// module is scanned to find the theme properties files in the 'data' directories.
+    	classpath += sourceSets.main.runtimeClasspath
+    	
+    	classpath += files(getModuleResourcesDirs(sourceSets.main.runtimeClasspath.files))
+    	
+    	classpath += files('src/main/resources')
+    	
+
+		// To build help, the validator needs any other help content that this module may reference.
+		// Add each of these dependencies as an argument to the validator.		
+		// The dependency file is the <Module>-help.jar file from the 'buildHelp' tasks upon which
+		// we depend.
+		def buildHelpTasks = getDependentProjectHelpTasks(sourceSets.main.runtimeClasspath.files)		
+		buildHelpTasks.each {
+		
+			def jarFiles = it.outputs.files
+			jarFiles.each { helpJar ->					
+				args "-hp"
+				args "${helpJar.absolutePath}"
+			}
+		}		
 		
 		// The help dir to process.  This needs to be the last argument to the process, 
 		// thus, this is why it is inside of this block
 		args "${helpRootDir.absolutePath}"	
+				
+		// Sigal that any System.out messages from this Java process should be logged at INFO level.
+		// To see this output, run gradle with the '-i' option to show INFO messages.
+		logging.captureStandardOutput LogLevel.INFO			
 	}
 
 }
 
+/*
+ * This task creates a jar file that is used by dependent modules only at build time.  The name of
+ * this jar is <Module>-help.jar.  This is in contrast to each module's jar which itself contains
+ * all help needed in production.  The module's jar filename is <Module>.jar.
+ */
+tasks.register('buildHelp', Jar) {
+
+	group rootProject.GHIDRA_GROUP
+	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"
+
+	dependsOn tasks.named('buildHelpFiles')
+    duplicatesStrategy 'exclude'
+    
+	from "build/help/main"		// include the generated help and index files from 
+	from "src/main/help"		// include the help source files
+
+	destinationDirectory = file("build/libs")
+	archiveBaseName = project.name + '-help'
+}	
+
 
 // Task for finding unused images that are not referenced from Ghidra help files 
-task findUnusedHelp(type: JavaExec) {
-	group rootProject.GHIDRA_GROUP
+tasks.register('findUnusedHelp', JavaExec) {
+
+	group "private"
 	description "      Finds unused help images for this module.  [gradle/helpProject.gradle]\n"	
 
 	File helpRootDir = file('src/main/help/help')	
-	File outputDir = file('build/help/main/help')
-
-	dependsOn configurations.helpPath
-
 	inputs.dir helpRootDir
+	inputs.files(configurations.helpModule)
 
 	mainClass = 'help.validator.UnusedHelpImageFileFinder'
 
 	// args '-debug' // print debug info
 
 	doFirst {		
-		classpath project(':Help').sourceSets.main.runtimeClasspath		
+		classpath sourceSets.main.runtimeClasspath
 	
 		// the current help dir to process
 		args "-hp"
 		args "${helpRootDir.absolutePath}"	
 	}
-
 }
 
 
@@ -210,7 +429,7 @@ task findUnusedHelp(type: JavaExec) {
 // include the help into the module's jar
 jar {
     duplicatesStrategy 'exclude'
-	from "build/help/main"		// include the generated help index files
+	from "build/help/main"		// include the generated help and index files
 	from "src/main/help"		// include the help source files
 }
 
@@ -222,3 +441,4 @@ jar.dependsOn buildHelp
 // make sure generated help directories exist during prepdev so that the directories are created and 
 // eclipse doesn't complain about missing src directories.
 rootProject.prepDev.dependsOn buildHelp
+

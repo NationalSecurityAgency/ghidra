@@ -18,10 +18,10 @@ package ghidra.app.plugin.core.debug.gui.memory;
 import java.util.Collection;
 import java.util.Set;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.widgets.table.GTable;
 
-public class DebuggerRegionActionContext extends ActionContext {
+public class DebuggerRegionActionContext extends DefaultActionContext {
 	private final Set<RegionRow> selectedRegions;
 
 	public DebuggerRegionActionContext(DebuggerRegionsProvider provider,

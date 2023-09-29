@@ -92,8 +92,11 @@ public class UnusedHelpImageFileFinder {
 		}
 
 		SortedSet<Path> set =
-			new TreeSet<>((f1, f2) -> f1.toUri().toString().toLowerCase().compareTo(
-				f2.toUri().toString().toLowerCase()));
+			new TreeSet<>((f1, f2) -> f1.toUri()
+					.toString()
+					.toLowerCase()
+					.compareTo(
+						f2.toUri().toString().toLowerCase()));
 		for (Path file : imageFiles) {
 			IMG img = fileToIMGMap.get(file);
 			if (img == null && !isExcludedImageFile(file)) {
@@ -173,7 +176,10 @@ public class UnusedHelpImageFileFinder {
 			}
 
 			// Create the help directory
-			helpCollections.add(HelpBuildUtils.toLocation(helpDirectoryFile));
+			HelpModuleLocation location = HelpBuildUtils.toLocation(helpDirectoryFile);
+			if (location != null) {
+				helpCollections.add(location);
+			}
 		}
 
 		return helpCollections;

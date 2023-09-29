@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.pe.cli.blobs;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.pe.cli.streams.CliStreamMetadata;
@@ -55,6 +56,6 @@ public class CliSigAssemblyRef extends CliAbstractSig {
 
 	@Override
 	public String getRepresentationCommon(CliStreamMetadata stream, boolean isShort) {
-		return content.toString();
+		return Arrays.toString(content);
 	}
 }

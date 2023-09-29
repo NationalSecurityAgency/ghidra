@@ -58,8 +58,7 @@ class SymbolProvider extends ComponentProviderAdapter {
 		renderer = new SymbolRenderer();
 
 		symbolKeyModel = new SymbolTableModel(this, plugin.getTool());
-		symbolPanel = new SymbolPanel(this, symbolKeyModel, renderer, plugin.getTool(),
-			plugin.getGoToService());
+		symbolPanel = new SymbolPanel(this, symbolKeyModel, renderer, plugin.getTool());
 
 		addToTool();
 	}

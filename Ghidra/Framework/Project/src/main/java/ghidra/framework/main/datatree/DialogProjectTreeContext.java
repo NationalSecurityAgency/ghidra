@@ -20,7 +20,7 @@ import java.util.List;
 
 import javax.swing.tree.TreePath;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.model.*;
@@ -28,7 +28,7 @@ import ghidra.framework.model.*;
 /**
  * Context specific to the DataTreeDialog.
  */
-public class DialogProjectTreeContext extends ActionContext implements ProjectTreeContext {
+public class DialogProjectTreeContext extends DefaultActionContext implements ProjectTreeContext {
 
 	private TreePath[] selectionPaths;
 	private DataTree tree;

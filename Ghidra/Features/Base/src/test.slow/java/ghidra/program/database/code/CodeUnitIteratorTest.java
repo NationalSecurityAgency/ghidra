@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.bookmark.BookmarkPlugin;
 import ghidra.app.plugin.core.clear.ClearPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -1678,6 +1679,59 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(10, cnt);
 	}
 
+	@Test
+	public void testGetCodeUnitsSetWithOverride() throws Exception {
+
+		// set length-override on 0x3f4
+		try (Transaction tx = program.openTransaction("Set Length Override")) {
+			program.getListing().getInstructionAt(addr(0x3f4)).setLengthOverride(1);
+		}
+
+		AddressSet set = new AddressSet();
+		set.addRange(addr(0x3f0), addr(0x3f9));
+
+		CodeUnitIterator it = listing.getCodeUnits(set, true);
+
+		CodeUnit cu = it.next();
+		assertEquals(addr(0x3f1), cu.getMinAddress());
+		assertTrue(cu instanceof Data);
+		assertFalse(((Data) cu).isDefined());
+
+		cu = it.next();
+		assertEquals(addr(0x3f2), cu.getMinAddress());
+		assertTrue(cu instanceof Instruction);
+		assertEquals(2, cu.getLength());
+
+		cu = it.next();
+		assertEquals(addr(0x3f4), cu.getMinAddress());
+		assertTrue(cu instanceof Instruction);
+		assertEquals(1, cu.getLength()); // length overriden
+		assertEquals("imm r0,#0x0", cu.toString());
+
+		cu = it.next();
+		assertEquals(addr(0x3f5), cu.getMinAddress());
+		assertTrue(cu instanceof Data);
+		assertFalse(((Data) cu).isDefined());
+
+		cu = it.next();
+		assertEquals(addr(0x3f6), cu.getMinAddress());
+		assertTrue(cu instanceof Instruction);
+		assertEquals(2, cu.getLength());
+
+		cu = it.next();
+		assertEquals(addr(0x3f8), cu.getMinAddress());
+		assertTrue(cu instanceof Data);
+		assertFalse(((Data) cu).isDefined());
+
+		cu = it.next();
+		assertEquals(addr(0x3f9), cu.getMinAddress());
+		assertTrue(cu instanceof Data);
+		assertFalse(((Data) cu).isDefined());
+
+		assertFalse(it.hasNext());
+		assertNull(it.next());
+	}
+
 	private Address addr(long l) {
 		return space.getAddress(l);
 	}
@@ -1704,7 +1758,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		ProcessorContext context = new ProgramProcessorContext(program.getProgramContext(), atAddr);
 		InstructionPrototype proto = program.getLanguage().parse(buf, context, false);
 
-		listing.createInstruction(atAddr, proto, buf, context);
+		listing.createInstruction(atAddr, proto, buf, context, 0);
 	}
 
 	private void startTransaction() {

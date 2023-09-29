@@ -16,7 +16,7 @@
 package ghidra.app.util.viewer.field;
 
 import ghidra.framework.options.CustomOption;
-import ghidra.framework.options.SaveState;
+import ghidra.framework.options.GProperties;
 
 /**
  * An option class that allows the user to edit a related group of options pertaining to
@@ -120,23 +120,23 @@ public class NamespaceWrappedOption implements CustomOption {
 // Persistence
 //==================================================================================================
 	@Override
-	public void readState(SaveState saveState) {
-		showLocalNamespace = saveState.getBoolean(SHOW_LOCAL_NAMESPACE, showLocalNamespace);
+	public void readState(GProperties properties) {
+		showLocalNamespace = properties.getBoolean(SHOW_LOCAL_NAMESPACE, showLocalNamespace);
 		showNonLocalNamespace =
-			saveState.getBoolean(SHOW_NON_LOCAL_NAMESPACE, showNonLocalNamespace);
+			properties.getBoolean(SHOW_NON_LOCAL_NAMESPACE, showNonLocalNamespace);
 		useLocalPrefixOverride =
-			saveState.getBoolean(USE_LOCAL_PREFIX_OVERRIDE, useLocalPrefixOverride);
-		localPrefixText = saveState.getString(LOCAL_PREFIX, localPrefixText);
+			properties.getBoolean(USE_LOCAL_PREFIX_OVERRIDE, useLocalPrefixOverride);
+		localPrefixText = properties.getString(LOCAL_PREFIX, localPrefixText);
 		showLibraryInNamespace =
-			saveState.getBoolean(SHOW_LIBRARY_IN_NAMESPACE, DEFAULT_SHOW_LIBRARY_IN_NAMESPACE);
+			properties.getBoolean(SHOW_LIBRARY_IN_NAMESPACE, DEFAULT_SHOW_LIBRARY_IN_NAMESPACE);
 	}
 
 	@Override
-	public void writeState(SaveState saveState) {
-		saveState.putBoolean(SHOW_LOCAL_NAMESPACE, showLocalNamespace);
-		saveState.putBoolean(SHOW_NON_LOCAL_NAMESPACE, showNonLocalNamespace);
-		saveState.putBoolean(USE_LOCAL_PREFIX_OVERRIDE, useLocalPrefixOverride);
-		saveState.putString(LOCAL_PREFIX, localPrefixText);
-		saveState.putBoolean(SHOW_LIBRARY_IN_NAMESPACE, showLibraryInNamespace);
+	public void writeState(GProperties properties) {
+		properties.putBoolean(SHOW_LOCAL_NAMESPACE, showLocalNamespace);
+		properties.putBoolean(SHOW_NON_LOCAL_NAMESPACE, showNonLocalNamespace);
+		properties.putBoolean(USE_LOCAL_PREFIX_OVERRIDE, useLocalPrefixOverride);
+		properties.putString(LOCAL_PREFIX, localPrefixText);
+		properties.putBoolean(SHOW_LIBRARY_IN_NAMESPACE, showLibraryInNamespace);
 	}
 }

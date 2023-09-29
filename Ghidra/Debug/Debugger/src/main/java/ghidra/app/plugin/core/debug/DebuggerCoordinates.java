@@ -23,7 +23,7 @@ import org.jdom.Element;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetObject;
-import ghidra.framework.data.ProjectFileManager;
+import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
@@ -569,7 +569,10 @@ public class DebuggerCoordinates {
 	}
 
 	public TraceProgramView getView() {
-		return view;
+		if (trace == null) {
+			return view; // probably null
+		}
+		return view == null ? trace.getProgramView() : view;
 	}
 
 	public long getSnap() {
@@ -661,7 +664,7 @@ public class DebuggerCoordinates {
 		if (projData == null) {
 			try {
 				// FIXME! orphaned instance - transient in nature
-				projData = new ProjectFileManager(projLoc, false, false);
+				projData = new DefaultProjectData(projLoc, false, false);
 			}
 			catch (NotOwnerException e) {
 				Msg.showError(DebuggerCoordinates.class, tool.getToolFrame(), "Trace Open Failed",

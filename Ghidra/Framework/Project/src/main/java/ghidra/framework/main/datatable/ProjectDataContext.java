@@ -19,15 +19,15 @@ import java.awt.Component;
 import java.util.Collections;
 import java.util.List;
 
-import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.DefaultActionContext;
 import ghidra.framework.model.*;
 
 /**
  * A context that understands files that live in a {@link Project}.  Most of the clients of
  * this context will use its notion of selected {@link DomainFile}s and folders.
  */
-public class ProjectDataContext extends ActionContext implements DomainFileContext {
+public class ProjectDataContext extends DefaultActionContext implements DomainFileContext {
 
 	private List<DomainFolder> selectedFolders;
 	private List<DomainFile> selectedFiles;

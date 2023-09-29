@@ -18,7 +18,6 @@ package ghidra.file.formats.tar;
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -38,23 +37,9 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  */
 @FileSystemInfo(type = "tar", description = "TAR", priority = FileSystemInfo.PRIORITY_HIGH, factory = TarFileSystemFactory.class)
-public class TarFileSystem implements GFileSystem {
+public class TarFileSystem extends AbstractFileSystem<TarMetadata> {
 
-	private static class TarMetadata {
-		TarArchiveEntry tarArchiveEntry;
-		int fileNum;
-
-		TarMetadata(TarArchiveEntry tae, int fileNum) {
-			this.tarArchiveEntry = tae;
-			this.fileNum = fileNum;
-		}
-	}
-
-	private FSRLRoot fsrl;
-	private FileSystemService fsService;
 	private ByteProvider provider;
-	private FileSystemIndexHelper<TarMetadata> fsih;
-	private FileSystemRefManager refManager = new FileSystemRefManager(this);
 	private int fileCount;
 
 	/**
@@ -65,10 +50,9 @@ public class TarFileSystem implements GFileSystem {
 	 * @param fsService reference to the {@link FileSystemService}.
 	 */
 	public TarFileSystem(FSRLRoot fsrl, ByteProvider provider, FileSystemService fsService) {
-		this.fsrl = fsrl;
-		this.fsih = new FileSystemIndexHelper<>(this, fsrl);
+		super(fsrl, fsService);
+
 		this.provider = provider;
-		this.fsService = fsService;
 	}
 
 	ByteProvider getProvider() {
@@ -84,16 +68,17 @@ public class TarFileSystem implements GFileSystem {
 				monitor.checkCancelled();
 
 				int fileNum = fileCount++;
-				GFile newFile = fsih.storeFile(tarEntry.getName(), fileCount,
+				GFile newFile = fsIndex.storeFile(tarEntry.getName(), fileCount,
 					tarEntry.isDirectory(), tarEntry.getSize(), new TarMetadata(tarEntry, fileNum));
 
 				if (tarEntry.getSize() < FileCache.MAX_INMEM_FILESIZE) {
 					// because tar files are sequential access, we cache smaller files if they
 					// will fit in a in-memory ByteProvider
 					try (ByteProvider bp =
-						fsService.getDerivedByteProvider(fsrl.getContainer(), newFile.getFSRL(),
+						fsService.getDerivedByteProvider(fsFSRL.getContainer(), newFile.getFSRL(),
 							newFile.getPath(), tarEntry.getSize(), () -> tarInput, monitor)) {
-						fsih.updateFSRL(newFile, newFile.getFSRL().withMD5(bp.getFSRL().getMD5()));
+						fsIndex.updateFSRL(newFile,
+							newFile.getFSRL().withMD5(bp.getFSRL().getMD5()));
 					}
 				}
 			}
@@ -101,14 +86,9 @@ public class TarFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public String getName() {
-		return fsrl.getContainer().getName();
-	}
-
-	@Override
 	public void close() throws IOException {
 		refManager.onClose();
-		fsih.clear();
+		fsIndex.clear();
 		if (provider != null) {
 			provider.close();
 			provider = null;
@@ -121,18 +101,8 @@ public class TarFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public FSRLRoot getFSRL() {
-		return fsrl;
-	}
-
-	@Override
-	public int getFileCount() {
-		return fileCount;
-	}
-
-	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
-		TarMetadata tmd = fsih.getMetadata(file);
+		TarMetadata tmd = fsIndex.getMetadata(file);
 		if (tmd == null) {
 			return null;
 		}
@@ -163,15 +133,10 @@ public class TarFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsih.lookup(path);
-	}
-
-	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		TarMetadata tmd = fsih.getMetadata(file);
+		TarMetadata tmd = fsIndex.getMetadata(file);
 		if (tmd == null) {
 			throw new IOException("Unknown file " + file);
 		}
@@ -197,14 +162,5 @@ public class TarFileSystem implements GFileSystem {
 
 		return fileBP;
 	}
-
-	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsih.getListing(directory);
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
-	}
 }
+

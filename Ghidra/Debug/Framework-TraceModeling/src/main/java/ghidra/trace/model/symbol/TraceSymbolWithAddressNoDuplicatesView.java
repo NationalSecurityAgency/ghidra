@@ -15,6 +15,11 @@
  */
 package ghidra.trace.model.symbol;
 
+/**
+ * A symbol view where names cannot be duplicated and things have an address
+ *
+ * @param <T> the type of symbols in the view
+ */
 public interface TraceSymbolWithAddressNoDuplicatesView<T extends TraceSymbol>
 		extends TraceSymbolWithAddressView<T>, TraceSymbolNoDuplicatesView<T> {
 	// Just combine the interfaces

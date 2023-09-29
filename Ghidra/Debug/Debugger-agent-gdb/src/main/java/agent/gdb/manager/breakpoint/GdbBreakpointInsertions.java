@@ -21,8 +21,10 @@ public interface GdbBreakpointInsertions {
 	/**
 	 * Insert a breakpoint
 	 * 
+	 * <p>
 	 * This is equivalent to the CLI command: {@code break [LOC]}, or {@code watch [LOC]}, etc.
 	 * 
+	 * <p>
 	 * Breakpoints in GDB can get pretty complicated. Depending on the location specification, the
 	 * actual location of the breakpoint may change during the lifetime of an inferior. Take note of
 	 * the breakpoint number to track those changes across breakpoint modification events.

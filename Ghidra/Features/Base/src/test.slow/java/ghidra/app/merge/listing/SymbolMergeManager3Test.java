@@ -48,45 +48,27 @@ public class SymbolMergeManager3Test extends AbstractListingMergeManagerTest {
 	public void testVariousNameNoConflictsInOverlay() throws Exception {
 		mtf.initialize("overlayCalc", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "TextOverlay::01001630", "FOO");
 					createGlobalSymbol(program, "TextOverlay::01001639", "ONE");
 					createGlobalSymbol(program, "TextOverlay::01001646", "UNO");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "TextOverlay::01001630", "FOO");
 					createGlobalSymbol(program, "TextOverlay::01001639", "TWO");
 					createGlobalSymbol(program, "TextOverlay::01001646", "DOS");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});
@@ -118,44 +100,25 @@ public class SymbolMergeManager3Test extends AbstractListingMergeManagerTest {
 	public void testLabelvsFunctionChange() throws Exception {
 		mtf.initialize("notepad3", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int txId = program.startTransaction("Modify Latest Program");
-				boolean commit = false;
 				try {
 					createGlobalSymbol(program, "01002efc", "FOO");
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
 				}
-				finally {
-					program.endTransaction(txId, commit);
-				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-
-				int txId = program.startTransaction("Modify My Program");
-				boolean commit = false;
 				try {
 					Address addr = addr(program, "01002f01");
 					disassemble(program, new AddressSet(addr, addr), true);
 					createAnalyzedFunction(program, "01002f01", null);
-					commit = true;
 				}
 				catch (Exception e) {
 					Assert.fail(e.getMessage());
-				}
-				finally {
-					program.endTransaction(txId, commit);
 				}
 			}
 		});

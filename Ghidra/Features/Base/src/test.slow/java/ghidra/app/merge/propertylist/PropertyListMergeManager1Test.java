@@ -44,30 +44,17 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 		// test case #3: property name does not exist in latest version,
 		//               but was added to private version
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Colors");
-					list.setString("Background", "Blue");
-					list.setString("Foreground", "Yellow");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Colors");
+				list.setString("Background", "Blue");
+				list.setString("Foreground", "Yellow");
 			}
 		});
 
@@ -92,20 +79,10 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 				// No changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Functions");
-					list.removeOption("Stack Analysis");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Functions");
+				list.removeOption("Stack Analysis");
 			}
 		});
 		executeMerge();
@@ -122,32 +99,14 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Data");
-					list.setInt("Create Address Tables.Minimum Table Size", 5);
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Data");
+				list.setInt("Create Address Tables.Minimum Table Size", 5);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Data");
-					list.removeOption("Create Address Tables.Minimum Table Size");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Data");
+				list.removeOption("Create Address Tables.Minimum Table Size");
 			}
 		});
 		executeMerge();
@@ -164,33 +123,15 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Colors");
-					list.setString("Background", "Blue");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Colors");
+				list.setString("Background", "Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Colors");
-					list.setString("Background", "Green");
-					list.removeOption("Background");
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Colors");
+				list.setString("Background", "Green");
+				list.removeOption("Background");
 			}
 		});
 		executeMerge(-1);// not a conflict
@@ -202,38 +143,17 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 	public void testAddedValuesChanged() throws Exception {
 		// test case #6: conflict because both values changed
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Colors");
-					list.setString("Background", "Blue");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Colors");
+				list.setString("Background", "Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Colors");
-					list.setString("Background", "Green");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Colors");
+				list.setString("Background", "Green");
 			}
 		});
 
@@ -246,38 +166,17 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 	public void testValuesChanged() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Program Information");
-					list.setString("Executable Format", "some undetermined format");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Program Information");
+				list.setString("Executable Format", "some undetermined format");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Program Information");
-					list.setString("Executable Format", "my format");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Program Information");
+				list.setString("Executable Format", "my format");
 			}
 		});
 
@@ -290,38 +189,17 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 	public void testValuesChanged2() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Program Information");
-					list.setString("Executable Format", "some undetermined format");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Program Information");
+				list.setString("Executable Format", "some undetermined format");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Program Information");
-					list.setString("Executable Format", "my format");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Program Information");
+				list.setString("Executable Format", "my format");
 			}
 		});
 
@@ -336,29 +214,16 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 		//               value changed in the private version
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// No changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Functions");
-					list.setBoolean("Stack Analysis", false);
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Functions");
+				list.setBoolean("Stack Analysis", false);
 			}
 		});
 		executeMerge();
@@ -371,26 +236,13 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 		// test case #8: value changed in the latest version,
 		//               no change in private version	
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Colors");
-					list.setString("Background", "Blue");
-
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Colors");
+				list.setString("Background", "Blue");
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				// No changes to My.
@@ -428,46 +280,27 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 
 	private void setupUseForAllTest() throws Exception {
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options infoList = program.getOptions("Program Information");
-					infoList.setString("Executable Format", "some undetermined format");
-					Options colorsList = program.getOptions("Colors");
-					colorsList.setString("Background", "Blue");
-					colorsList.setString("Foreground", "Yellow");
-					Options dataList = program.getOptions("Data");
-					dataList.setInt("Create Address Tables.Minimum Table Size", 5);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options infoList = program.getOptions("Program Information");
+				infoList.setString("Executable Format", "some undetermined format");
+				Options colorsList = program.getOptions("Colors");
+				colorsList.setString("Background", "Blue");
+				colorsList.setString("Foreground", "Yellow");
+				Options dataList = program.getOptions("Data");
+				dataList.setInt("Create Address Tables.Minimum Table Size", 5);
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
-				int transactionID = program.startTransaction("test");
-				try {
-					Options list = program.getOptions("Program Information");
-					list.setString("Executable Format", "my format");
-					Options colorsList = program.getOptions("Colors");
-					colorsList.setString("Background", "Grey");
-					colorsList.setString("Foreground", "Maroon");
-					Options dataList = program.getOptions("Data");
-					dataList.setInt("Create Address Tables.Minimum Table Size", 7);
-				}
-				finally {
-					program.endTransaction(transactionID, true);
-				}
-
+				Options list = program.getOptions("Program Information");
+				list.setString("Executable Format", "my format");
+				Options colorsList = program.getOptions("Colors");
+				colorsList.setString("Background", "Grey");
+				colorsList.setString("Foreground", "Maroon");
+				Options dataList = program.getOptions("Data");
+				dataList.setInt("Create Address Tables.Minimum Table Size", 7);
 			}
 		});
 	}

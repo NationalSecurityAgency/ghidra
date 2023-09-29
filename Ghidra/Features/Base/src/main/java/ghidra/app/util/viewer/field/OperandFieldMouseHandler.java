@@ -19,6 +19,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import docking.options.OptionsService;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigationUtils;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
@@ -27,7 +28,6 @@ import ghidra.app.services.GoToService;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.Playable;

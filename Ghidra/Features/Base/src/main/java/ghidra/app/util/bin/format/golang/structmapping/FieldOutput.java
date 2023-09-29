@@ -34,17 +34,44 @@ import ghidra.program.model.data.DataType;
 @Retention(RUNTIME)
 @Target(FIELD)
 public @interface FieldOutput {
+	/**
+	 * Overrides the default logic used to add the marked field to the structure.
+	 * 
+	 * @return {@link FieldOutputFunction} class that implements custom logic
+	 */
+	@SuppressWarnings("rawtypes")
 	Class<? extends FieldOutputFunction> fieldOutputFunc() default FieldOutputFunction.class;
 
+	/**
+	 * Optional ordinal of the marked field in the structure that will be created.
+	 * <p>
+	 * If unset, the order of the marked fields in the java class would be preserved.
+	 *   
+	 * @return integer field ordinal, or if unset, the native java field order
+	 */
 	int ordinal() default -1;
 
+	/**
+	 * Optional offset for the marked field to be added at.
+	 * <p>
+	 * If the structure under construction is smaller than the specified offset, padding will be
+	 * added to the structure.  If the structure is already larger than the specified offset,
+	 * an error will occur.
+	 *  
+	 * @return integer offset for the marked field, or if unset, the next location in the
+	 * structure will be used
+	 */
 	int offset() default -1;
 
 	/**
 	 * Specifies the name of a Ghidra {@link DataType} that will be used for this field when
 	 * creating a Ghidra structure.
+	 * <p>
+	 * If unset, the type of the java field will be consulted to pick a Ghidra {@link DataType}
+	 * for the structure field.
 	 * 
-	 * @return
+	 * @return name of the data type to use for this field, or if unset, the java field's type
+	 * will be used to pick the data type
 	 */
 	String dataTypeName() default "";
 
@@ -52,7 +79,8 @@ public @interface FieldOutput {
 	 * Marks this field as variable length, which will cause the Ghidra structure containing
 	 * this field to have a "_NN" name suffix that specifies the length of this instance.
 	 * 
-	 * @return
+	 * @return boolean true if the marked field's length varies between instances of the same
+	 * structure, false if it is a fixed length field
 	 */
 	boolean isVariableLength() default false;
 
@@ -60,7 +88,7 @@ public @interface FieldOutput {
 	 * Specifies a method that will return a Ghidra {@link DataType} that should be used for this
 	 * field when creating a Ghidra structure.
 	 * 
-	 * @return
+	 * @return optional name of getter method that will return a Ghidra {@link DataType}
 	 */
 	String getter() default "";
 

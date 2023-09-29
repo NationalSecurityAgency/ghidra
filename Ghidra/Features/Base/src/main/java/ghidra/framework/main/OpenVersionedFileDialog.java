@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.table.*;
@@ -163,7 +164,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 
 	@Override
 	protected JPanel buildMainPanel() {
-		
+
 		mainPanel = new JPanel(new BorderLayout());
 		mainPanel.add(super.buildMainPanel(), BorderLayout.CENTER);
 		JPanel historyButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -244,7 +245,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		openObjectsTable = new GFilterTable<>(new OpenObjectsTableModel());
 		GTable table = openObjectsTable.getTable();
 		table.getSelectionModel()
-				.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		openObjectsTable.addSelectionListener(e -> {
 			setOkEnabled(true);
 			okButton.setToolTipText("Use the selected " + domainObjectClass.getSimpleName());
@@ -402,7 +403,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 			return context;
 		}
 
-		ActionContext actionContext = new ActionContext(null, this, event.getComponent());
+		ActionContext actionContext = new DefaultActionContext(null, this, event.getComponent());
 		actionContext.setMouseEvent(event);
 
 		return actionContext;

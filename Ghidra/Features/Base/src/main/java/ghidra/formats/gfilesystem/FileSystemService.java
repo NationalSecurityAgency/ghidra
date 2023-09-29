@@ -15,9 +15,8 @@
  */
 package ghidra.formats.gfilesystem;
 
-import java.util.List;
-
 import java.io.*;
+import java.util.List;
 
 import ghidra.app.util.bin.*;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
@@ -211,11 +210,11 @@ public class FileSystemService {
 	}
 
 	/**
-	 * Returns a direct reference to a filesystem that represents the local filesystem.
+	 * Returns a direct reference to the {@link LocalFileSystem local filesystem}.
 	 *
-	 * @return {@link GFileSystem} that represents the local filesystem.
+	 * @return A direct reference to the {@link LocalFileSystem local filesystem}.
 	 */
-	public GFileSystem getLocalFS() {
+	public LocalFileSystem getLocalFS() {
 		return localFS;
 	}
 

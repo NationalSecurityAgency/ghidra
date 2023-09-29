@@ -121,9 +121,6 @@ class DomainObjectDBTransaction implements TransactionInfo {
 		return hasDBTransaction;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.data.XTransaction#getID()
-	 */
 	@Override
 	public long getID() {
 		return id;
@@ -148,8 +145,8 @@ class DomainObjectDBTransaction implements TransactionInfo {
 			throw new IllegalStateException("Transaction not found");
 		}
 		if (entry.status != Status.NOT_DONE) {
-			throw new IllegalStateException("Attempted to end Transaction " + "more that once: " +
-				entry.description);
+			throw new IllegalStateException(
+				"Attempted to end Transaction " + "more that once: " + entry.description);
 		}
 		entry.status = commit ? Status.COMMITTED : Status.ABORTED;
 		if (!commit) {
@@ -196,28 +193,20 @@ class DomainObjectDBTransaction implements TransactionInfo {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.data.XTransaction#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		if (list.isEmpty()) {
 			return "";
 		}
-		String description = "";
 		for (TransactionEntry entry : list) {
-			description = entry.description;
+			String description = entry.description;
 			if (description != null && description.length() != 0) {
-				description = domainObject.getDomainFile().getName() + ": " + description;
-				break;
+				return description;
 			}
 		}
-		return description;
+		return "";
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.data.XTransaction#getOpenSubTransactions()
-	 */
 	@Override
 	public ArrayList<String> getOpenSubTransactions() {
 		ArrayList<String> subTxList = new ArrayList<String>();

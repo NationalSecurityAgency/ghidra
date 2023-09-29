@@ -23,4 +23,11 @@ public interface TPI {
 	int getTypeIndexMaxExclusive();
 
 	AbstractMsType getRecord(int recordNumber);
+
+	/**
+	 * Random access of {@link AbstractMsType} record indicated by {@code recordNumber}
+	 * @param recordNumber record number of the record to retrieve
+	 * @return {@link AbstractMsType} pertaining to the record number
+	 */
+	AbstractMsType getRandomAccessRecord(int recordNumber);
 }

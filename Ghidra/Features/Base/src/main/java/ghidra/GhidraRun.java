@@ -30,8 +30,8 @@ import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DomainObjectAdapter;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.dialog.ExtensionUtils;
 import ghidra.framework.project.DefaultProjectManager;
+import ghidra.framework.project.extensions.ExtensionUtils;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.util.*;
@@ -81,7 +81,7 @@ public class GhidraRun implements GhidraLaunchable {
 			updateSplashScreenStatusMessage("Populating Ghidra help...");
 			GhidraHelpService.install();
 
-			ExtensionUtils.cleanupUninstalledExtensions();
+			ExtensionUtils.initializeExtensions();
 
 			// Allows handling of old content which did not have a content type property
 			DomainObjectAdapter.setDefaultContentClass(ProgramDB.class);

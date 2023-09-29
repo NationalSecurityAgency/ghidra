@@ -15,16 +15,15 @@
  */
 package ghidra.framework.task;
 
-import generic.concurrent.GThreadPool;
-import ghidra.framework.model.DomainObjectClosedListener;
-import ghidra.framework.model.UndoableDomainObject;
-import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
+import generic.concurrent.GThreadPool;
+import ghidra.framework.model.*;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 
 /** 
  * Class for managing a queue of tasks to be executed, one at a time, in priority order.  All the
@@ -95,7 +94,8 @@ public class GTaskManager {
 
 		domainObject.addCloseListener(new DomainObjectClosedListener() {
 			@Override
-			public void domainObjectClosed() {
+			public void domainObjectClosed(DomainObject dobj) {
+				// assert dobj == domainObj
 				GTaskManagerFactory.domainObjectClosed(domainObject);
 				domainObject = null;
 			}
@@ -107,7 +107,7 @@ public class GTaskManager {
 	 * 
 	 * @param task the task to be run.
 	 * @param priority the priority of the task.  Lower numbers are run before higher numbers.
-	 * @param useCurrentGroup. If true, this task will be rolled into the current transaction group
+	 * @param useCurrentGroup If true, this task will be rolled into the current transaction group
 	 * 							if one exists.  If false, any open transaction 
 	 * 							will be closed and a new transaction will be opened before 
 	 * 							this task is run.
@@ -680,7 +680,8 @@ public class GTaskManager {
 			taskListener.taskCompleted(task, result);
 		}
 		catch (Throwable unexpected) {
-			Msg.error(this, "Unexpected exception notifying listener of task completed", unexpected);
+			Msg.error(this, "Unexpected exception notifying listener of task completed",
+				unexpected);
 		}
 	}
 
@@ -705,7 +706,8 @@ public class GTaskManager {
 			taskListener.taskScheduled(scheduledTask);
 		}
 		catch (Throwable unexpected) {
-			Msg.error(this, "Unexpected exception notifying listener of task scheduled", unexpected);
+			Msg.error(this, "Unexpected exception notifying listener of task scheduled",
+				unexpected);
 		}
 	}
 

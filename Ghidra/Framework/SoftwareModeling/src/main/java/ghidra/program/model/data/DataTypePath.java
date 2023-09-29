@@ -15,11 +15,13 @@
  */
 package ghidra.program.model.data;
 
+import java.util.Objects;
+
 /**
  * Object to hold a category path and a datatype name.  They are held separately so that
  * the datatype name can contain a categoryPath delimiter ("/") character.
  */
-public class DataTypePath {
+public class DataTypePath implements Comparable<DataTypePath> {
 	private final CategoryPath categoryPath;
 	private final String dataTypeName;
 
@@ -43,8 +45,8 @@ public class DataTypePath {
 		if (dataTypeName == null || categoryPath == null) {
 			throw new IllegalArgumentException("null not allowed for categoryPath or datatypeName");
 		}
-		this.categoryPath = categoryPath;
-		this.dataTypeName = dataTypeName;
+		this.categoryPath = Objects.requireNonNull(categoryPath, "Category path cannot be null");
+		this.dataTypeName = Objects.requireNonNull(dataTypeName, "Data type name cannot be null");
 	}
 
 	/**
@@ -123,6 +125,15 @@ public class DataTypePath {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public int compareTo(DataTypePath other) {
+		int result = categoryPath.compareTo(other.categoryPath);
+		if (result == 0) {
+			result = dataTypeName.compareTo(other.dataTypeName);
+		}
+		return result;
 	}
 
 	@Override

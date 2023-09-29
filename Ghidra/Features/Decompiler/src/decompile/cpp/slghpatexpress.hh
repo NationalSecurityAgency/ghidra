@@ -102,7 +102,7 @@ public:
   virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(tok); }
   virtual TokenPattern genPattern(intb val) const;
   virtual intb minValue(void) const { return 0; }
-  virtual intb maxValue(void) const { intb res=0; res=~res; zero_extend(res,bitend-bitstart); return res; }
+  virtual intb maxValue(void) const { intb res=0; return zero_extend(~res,bitend-bitstart); }
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el,Translate *trans);
 };
@@ -122,7 +122,7 @@ public:
   virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(); }
   virtual TokenPattern genPattern(intb val) const;
   virtual intb minValue(void) const { return 0; }
-  virtual intb maxValue(void) const { intb res=0; res=~res; zero_extend(res,(endbit-startbit)); return res; }
+  virtual intb maxValue(void) const { intb res=0; return zero_extend(~res,(endbit-startbit)); }
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el,Translate *trans);
 };

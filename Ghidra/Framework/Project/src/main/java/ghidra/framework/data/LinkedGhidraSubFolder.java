@@ -108,6 +108,15 @@ class LinkedGhidraSubFolder implements LinkedDomainFolder {
 	}
 
 	@Override
+	public URL getLocalProjectURL() {
+		ProjectLocator projectLocator = parent.getProjectLocator();
+		if (!projectLocator.isTransient()) {
+			return GhidraURL.makeURL(projectLocator, getPathname(), null);
+		}
+		return null;
+	}
+
+	@Override
 	public ProjectLocator getProjectLocator() {
 		return parent.getProjectLocator();
 	}

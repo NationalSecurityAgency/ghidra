@@ -24,7 +24,7 @@ import java.util.Date;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.ToggleDockingAction;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.plugin.core.format.*;
@@ -153,7 +153,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 			ByteViewerComponent c = panelOne.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panelOne.getCurrentComponent();
@@ -183,7 +183,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 			ByteViewerComponent c = panelOne.getCurrentComponent();
 			c.setCursorPosition(loc.getIndex(), loc.getFieldNum(), 0, 0);
 			action.setSelected(true);
-			action.actionPerformed(new ActionContext());
+			action.actionPerformed(new DefaultActionContext());
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panelOne.getCurrentComponent();

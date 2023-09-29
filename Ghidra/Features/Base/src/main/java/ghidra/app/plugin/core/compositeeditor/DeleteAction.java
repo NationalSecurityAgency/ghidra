@@ -37,7 +37,7 @@ public class DeleteAction extends CompositeEditorTableAction {
 	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
 
 	public DeleteAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null, ICON);
+		super(provider, ACTION_NAME, GROUP_NAME, popupPath, null, ICON);
 
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		setDescription("Delete the selected components");

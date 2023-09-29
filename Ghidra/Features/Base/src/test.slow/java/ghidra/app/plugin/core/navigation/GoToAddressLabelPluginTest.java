@@ -25,6 +25,7 @@ import javax.swing.JCheckBox;
 import org.junit.*;
 
 import docking.ActionContext;
+import docking.DefaultActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GTable;
@@ -45,7 +46,7 @@ import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.QueryData;
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.navigation.GoToAddressLabelDialog;
 import ghidra.framework.options.*;
@@ -575,7 +576,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testQueryResultsMaxHitsDynamicFound() throws Exception {
 		loadProgram("x86");
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 20);
 
 		setText("L*");
@@ -587,7 +588,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testQueryResultsMaxHitsDefinedFound() throws Exception {
 		loadProgram("x86");
-		Options opt = plugin.getTool().getOptions(PluginConstants.SEARCH_OPTION_NAME);
+		Options opt = plugin.getTool().getOptions(SearchConstants.SEARCH_OPTION_NAME);
 		opt.setInt(GhidraOptions.OPTION_SEARCH_LIMIT, 5);
 
 		createLabel("1006960", "abc1");
@@ -689,7 +690,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		performOkCallback();
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
-		clear.actionPerformed(new ActionContext());
+		clear.actionPerformed(new DefaultActionContext());
 		assertFalse(clear.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
@@ -702,13 +703,13 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		prev.actionPerformed(new ActionContext());
+		prev.actionPerformed(new DefaultActionContext());
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
 		assertFalse(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		next.actionPerformed(new ActionContext());
+		next.actionPerformed(new DefaultActionContext());
 		assertEquals(addr("1001000"), cbPlugin.getCurrentAddress());
 
 		setText("1001010");
@@ -718,8 +719,8 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertFalse(next.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(prev.isEnabledForContext(provider.getActionContext(null)));
 
-		prev.actionPerformed(new ActionContext());
-		prev.actionPerformed(new ActionContext());
+		prev.actionPerformed(new DefaultActionContext());
+		prev.actionPerformed(new DefaultActionContext());
 
 		assertEquals(addr("100493b"), cbPlugin.getCurrentAddress());
 		assertTrue(next.isEnabledForContext(provider.getActionContext(null)));
@@ -1029,7 +1030,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	private ActionContext getActionContext() {
 		ActionContext context = runSwing(() -> cbPlugin.getProvider().getActionContext(null));
 		if (context == null) {
-			context = new ActionContext();
+			context = new DefaultActionContext();
 		}
 		return context;
 	}
@@ -1052,7 +1053,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 			TableComponentProvider<?>[] providers = getProviders();
 			if (providers.length > 0) {
 				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
-						.getInstanceField("threadedPanel", providers[0]);
+					.getInstanceField("threadedPanel", providers[0]);
 				GTable table = panel.getTable();
 				while (panel.isBusy()) {
 					Thread.sleep(50);

@@ -17,7 +17,6 @@
 // data and and then save the session.
 //@category Examples.Version Tracking
 
-import java.util.Iterator;
 import java.util.List;
 
 import ghidra.app.script.GhidraScript;
@@ -32,15 +31,27 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskLauncher;
 
 public class AutoVersionTrackingScript extends GhidraScript {
+
+	private Program sourceProgram;
+	private Program destinationProgram;
+
+	@Override
+	public void cleanup(boolean success) {
+		if (sourceProgram != null && sourceProgram.isUsedBy(this)) {
+			sourceProgram.release(this);
+		}
+		if (destinationProgram != null && destinationProgram.isUsedBy(this)) {
+			destinationProgram.release(this);
+		}
+		super.cleanup(success);
+	}
+
 	@Override
 	public void run() throws Exception {
 
 		DomainFolder folder =
 			askProjectFolder("Please choose a folder for your Version Tracking session.");
 		String name = askString("Please enter a Version Tracking session name", "Session Name");
-
-		Program sourceProgram;
-		Program destinationProgram;
 
 		boolean isCurrentProgramSourceProg = askYesNo("Current Program Source Program?",
 			"Is the current program your source program?");
@@ -52,6 +63,10 @@ public class AutoVersionTrackingScript extends GhidraScript {
 		else {
 			destinationProgram = currentProgram;
 			sourceProgram = askProgram("Please select the source (existing annotated) program");
+		}
+
+		if (sourceProgram == null || destinationProgram == null) {
+			return;
 		}
 
 		// Need to end the script transaction or it interferes with vt things that need locks
@@ -81,9 +96,7 @@ public class AutoVersionTrackingScript extends GhidraScript {
 
 	public static <T extends Plugin> T getPlugin(PluginTool tool, Class<T> c) {
 		List<Plugin> list = tool.getManagedPlugins();
-		Iterator<Plugin> it = list.iterator();
-		while (it.hasNext()) {
-			Plugin p = it.next();
+		for (Plugin p : list) {
 			if (p.getClass() == c) {
 				return c.cast(p);
 			}

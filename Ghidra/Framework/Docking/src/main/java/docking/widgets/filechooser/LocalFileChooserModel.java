@@ -260,6 +260,9 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 					}
 
 					Icon rootIcon = FS_VIEW.getSystemIcon(root); // possibly a slow call
+					if (rootIcon == null) {
+						rootIcon = PROBLEM_FILE_ICON;
+					}
 					iconMap.put(root, rootIcon);
 					callback.call();
 				}

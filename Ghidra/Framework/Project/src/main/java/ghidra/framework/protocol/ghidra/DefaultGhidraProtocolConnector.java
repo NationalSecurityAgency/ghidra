@@ -78,6 +78,7 @@ public class DefaultGhidraProtocolConnector extends GhidraProtocolConnector {
 			}
 			catch (RepositoryNotFoundException e) {
 				statusCode = StatusCode.NOT_FOUND;
+				return statusCode;
 			}
 		}
 		else if (!repositoryServerAdapter.isCancelled()) {

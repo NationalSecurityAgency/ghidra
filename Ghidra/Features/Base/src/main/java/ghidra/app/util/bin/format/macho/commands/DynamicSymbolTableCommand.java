@@ -25,10 +25,10 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.ProgramModule;
-import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -304,6 +304,16 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
+	public int getLinkerDataOffset() {
+		return indirectsymoff;
+	}
+
+	@Override
+	public int getLinkerDataSize() {
+		return nindirectsyms * Integer.BYTES;
+	}
+
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType(getCommandName(), 0);
 		struct.add(DWORD, "cmd", null);
@@ -336,22 +346,72 @@ public class DynamicSymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
-	public void markup(MachHeader header, FlatProgramAPI api, Address baseAddress, boolean isBinary,
-			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
-		updateMonitor(monitor);
-		try {
-			if (isBinary) {
-				createFragment(api, baseAddress, parentModule);
-				Address address = baseAddress.getNewAddress(getStartIndex());
-				api.createData(address, toDataType());
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		markupIndirectSymbolTable(program, header, source, monitor, log);
 
-				markupTOC(header, api, baseAddress, parentModule, monitor);
-				markupModules(header, api, baseAddress, parentModule, monitor);
-				markupReferencedSymbolTable(header, api, baseAddress, parentModule, monitor);
-				makupIndirectSymbolTable(header, api, baseAddress, parentModule, monitor);
-				markupExternalRelocations(api, baseAddress, parentModule, monitor);
-				markupLocalRelocations(api, baseAddress, parentModule, monitor);
+		// TODO: Handle more than just the indirect symbol table
+
+	}
+
+	private void markupIndirectSymbolTable(Program program, MachHeader header, String source,
+			TaskMonitor monitor, MessageLog log) {
+		Address indirectSymbolTableAddr =
+			fileOffsetToAddress(program, header, indirectsymoff, nindirectsyms);
+		if (indirectSymbolTableAddr == null) {
+			return;
+		}
+
+		markupPlateComment(program, indirectSymbolTableAddr, source, "indirect");
+		
+		SymbolTableCommand symbolTable = header.getFirstLoadCommand(SymbolTableCommand.class);
+		Address symbolTableAddr = fileOffsetToAddress(program, header,
+			symbolTable.getSymbolOffset(), symbolTable.getNumberOfSymbols());
+		Address stringTableAddr = fileOffsetToAddress(program, header,
+			symbolTable.getStringTableOffset(), symbolTable.getStringTableSize());
+
+		ReferenceManager referenceManager = program.getReferenceManager();
+		try {
+			for (int i = 0; i < nindirectsyms; i++) {
+				int nlistIndex = indirectSymbols[i];
+				Address dataAddr = indirectSymbolTableAddr.add(i * DWORD.getLength());
+				DataUtilities.createData(program, dataAddr, DWORD, -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				if (symbolTableAddr != null) {
+					NList nlist = symbolTable.getSymbolAt(nlistIndex);
+					if (nlist == null) {
+						continue;
+					}
+					Reference ref = referenceManager.addMemoryReference(dataAddr,
+						symbolTableAddr.add(nlistIndex * nlist.getSize()), RefType.DATA,
+						SourceType.IMPORTED, 0);
+					referenceManager.setPrimary(ref, true);
+					if (stringTableAddr != null) {
+						Address strAddr = stringTableAddr.add(nlist.getStringTableIndex());
+						referenceManager.addMemoryReference(dataAddr, strAddr, RefType.DATA,
+							SourceType.IMPORTED, 0);
+					}
+				}
 			}
+		}
+		catch (Exception e) {
+			log.appendMsg(DynamicSymbolTableCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, "indirect"));
+		}
+	}
+
+	@Override
+	public void markupRawBinary(MachHeader header, FlatProgramAPI api, Address baseAddress,
+			ProgramModule parentModule, TaskMonitor monitor, MessageLog log) {
+		try {
+			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
+
+			markupTOC(header, api, baseAddress, parentModule, monitor);
+			markupModules(header, api, baseAddress, parentModule, monitor);
+			markupReferencedSymbolTable(header, api, baseAddress, parentModule, monitor);
+			makupIndirectSymbolTable(header, api, baseAddress, parentModule, monitor);
+			markupExternalRelocations(api, baseAddress, parentModule, monitor);
+			markupLocalRelocations(api, baseAddress, parentModule, monitor);
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create " + getCommandName());

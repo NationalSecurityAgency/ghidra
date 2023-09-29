@@ -21,7 +21,6 @@ import java.awt.Dimension;
 import javax.swing.*;
 
 import ghidra.app.plugin.core.reloc.RelocationTableModel.RelocationRowObject;
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
@@ -76,9 +75,7 @@ class RelocationProvider extends ComponentProviderAdapter {
 		threadedPanel = new GhidraThreadedTablePanel<>(tableModel);
 		table = threadedPanel.getTable();
 
-		GoToService goToService = serviceProvider.getService(GoToService.class);
-		table.installNavigation(goToService, goToService.getDefaultNavigatable());
-
+		table.installNavigation(serviceProvider);
 		table.setPreferredScrollableViewportSize(new Dimension(300, 200));
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);

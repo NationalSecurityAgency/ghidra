@@ -39,7 +39,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 
 	private static Object sshPrivateKey;
 	private static String userID = ClientUtil.getUserName(); // default username
-	private static boolean passwordPromptAlowed;
+	private static boolean passwordPromptAllowed;
 
 	private Authenticator authenticator = new Authenticator() {
 		@Override
@@ -75,7 +75,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	 */
 	public static void installHeadlessClientAuthenticator(String username, String keystorePath,
 			boolean allowPasswordPrompt) throws IOException {
-		passwordPromptAlowed = allowPasswordPrompt;
+		passwordPromptAllowed = allowPasswordPrompt;
 		if (username != null) {
 			userID = username;
 		}
@@ -117,7 +117,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 				success = true;
 				Msg.info(HeadlessClientAuthenticator.class, "Loaded SSH key: " + keystorePath);
 			}
-			catch (InvalidKeyException e) { // keyfile is not a valid SSH provate key format
+			catch (InvalidKeyException e) { // keyfile is not a valid SSH private key format
 				// does not appear to be an SSH private key - try PKI keystore parse
 				if (ApplicationKeyManagerFactory.setKeyStore(keystorePath, false)) {
 					success = true;
@@ -140,7 +140,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 
 	private char[] getPassword(String usage, String prompt) {
 
-		if (!passwordPromptAlowed) {
+		if (!passwordPromptAllowed) {
 			Msg.warn(this, "Headless client not configured to supply required password");
 			return BADPASSWORD;
 		}
@@ -208,7 +208,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	public boolean processPasswordCallbacks(String title, String serverType, String serverName,
 			NameCallback nameCb, PasswordCallback passCb, ChoiceCallback choiceCb,
 			AnonymousCallback anonymousCb, String loginError) {
-		if (anonymousCb != null && !passwordPromptAlowed) {
+		if (anonymousCb != null && !passwordPromptAllowed) {
 			// Assume that login error will not occur with anonymous login
 			anonymousCb.setAnonymousAccessRequested(true);
 			return true;
@@ -238,7 +238,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	@Override
 	public char[] getKeyStorePassword(String keystorePath, boolean passwordError) {
 		if (passwordError) {
-			if (passwordPromptAlowed) {
+			if (passwordPromptAllowed) {
 				Msg.error(this, "Incorrect keystore password specified: " + keystorePath);
 			}
 			else {

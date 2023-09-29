@@ -182,7 +182,8 @@ public abstract class PcodeEmit {
 	 */
 	void resolveFinalFallthrough() throws IOException {
 		try {
-			if (fallOverride == null || fallOverride.equals(getStartAddress().add(fallOffset))) {
+			if (fallOverride == null) {
+				// handles both length-override and fallthrough override cases
 				return;
 			}
 		}

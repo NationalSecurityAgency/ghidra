@@ -28,6 +28,7 @@ import javax.swing.SwingUtilities;
 
 import com.google.common.cache.*;
 
+import docking.options.OptionsService;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.Highlight;
@@ -50,7 +51,6 @@ import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.graph.viewer.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;

@@ -568,7 +568,13 @@ class ProgramTextWriter {
 		}
 
 		try {
-			byte[] bytes = cu.getBytes();
+			byte[] bytes;
+			if (cu instanceof Instruction instr) {
+				bytes = instr.getParsedBytes();
+			}
+			else {
+				bytes = cu.getBytes();
+			}
 			StringBuffer bytesbuf = new StringBuffer();
 			for (int i = 0; i < bytes.length; ++i) {
 				if (i > 0) {
@@ -630,10 +636,7 @@ class ProgramTextWriter {
 
 				if (options.isHTML()) {
 					Reference ref =
-						cu.getProgram()
-							.getReferenceManager()
-							.getPrimaryReferenceFrom(cuAddress,
-								i);
+						cu.getProgram().getReferenceManager().getPrimaryReferenceFrom(cuAddress, i);
 					addReferenceLinkedText(ref, opReps[i], true);
 				}
 				else {

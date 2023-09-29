@@ -764,6 +764,8 @@ public class DecompInterface {
 			monitor.addCancelledListener(monitorListener);
 		}
 
+		dtmanage.clearTemporaryIds();
+
 		if (program == null) {
 			return new DecompileResults(func, pcodelanguage, null, dtmanage, decompileMessage, null,
 				DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);

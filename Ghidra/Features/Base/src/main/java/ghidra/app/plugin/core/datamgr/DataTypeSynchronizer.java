@@ -116,6 +116,15 @@ public class DataTypeSynchronizer {
 	}
 
 	public static void commitAssumingTransactionsOpen(DataTypeManager sourceDTM, DataType refDT) {
+
+		// Must refresh associations of refDt and its dependencies to ensure that any 
+		// non-sourced datatype is properly associated to the sourceDTM
+		DataTypeManager refDTM = refDT.getDataTypeManager();
+		SourceArchive sourceArchive = refDTM.getSourceArchive(sourceDTM.getUniversalID());
+		refDTM.associateDataTypeWithArchive(refDT, sourceArchive);
+
+		// Perform commit of changes by re-resolving and performing additional updates
+		// not handled by resolve.
 		long lastChangeTime = refDT.getLastChangeTime();
 		DataType sourceDT = sourceDTM.resolve(refDT, DataTypeConflictHandler.REPLACE_HANDLER);
 		if (!namesAreEquivalent(refDT, sourceDT)) {

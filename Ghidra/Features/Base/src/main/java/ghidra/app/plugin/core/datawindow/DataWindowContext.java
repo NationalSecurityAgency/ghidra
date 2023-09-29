@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,16 @@
  */
 package ghidra.app.plugin.core.datawindow;
 
+import docking.DefaultActionContext;
 import ghidra.util.table.GhidraTable;
-import docking.ActionContext;
 
-public class DataWindowContext extends ActionContext {
+public class DataWindowContext extends DefaultActionContext {
 
-    DataWindowContext( DataWindowProvider provider, GhidraTable dataTable ) {
-        super( provider, dataTable );
-    }
-    
-    GhidraTable getDataTable() {
-        return (GhidraTable) getContextObject();
-    }
+	DataWindowContext(DataWindowProvider provider, GhidraTable dataTable) {
+		super(provider, dataTable);
+	}
+
+	GhidraTable getDataTable() {
+		return (GhidraTable) getContextObject();
+	}
 }

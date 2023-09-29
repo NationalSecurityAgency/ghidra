@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +60,14 @@ public abstract class Relocation implements StructConverter {
 
 	public int getSizeInBytes() {
 		return 2;
+	}
+
+	public int getRepeatCount() {
+		return 0;
+	}
+
+	public int getRepeatChunks() {
+		return 0;
 	}
 
 	public DataType toDataType() throws DuplicateNameException, IOException {

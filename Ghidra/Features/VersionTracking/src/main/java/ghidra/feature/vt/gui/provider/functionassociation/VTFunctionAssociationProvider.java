@@ -40,7 +40,6 @@ import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
-import ghidra.app.services.GoToService;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.feature.vt.api.db.DeletedMatch;
@@ -443,8 +442,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 	private JComponent createSourceFunctionPanel() {
 
-		GoToService goToService = tool.getService(GoToService.class);
-
 		Program sourceProgram = controller.getSourceProgram();
 		sourceFunctionsModel =
 			new VTFunctionAssociationTableModel(tool, controller, sourceProgram, true);
@@ -453,10 +450,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		sourceFunctionsTable.setName("SourceFunctionTable");
 		sourceFunctionsTable.setPreferenceKey(
 			"VTFunctionAssociationTableModel - Source Function Table");
-		if (goToService != null) {
-			sourceFunctionsTable.installNavigation(goToService,
-				goToService.getDefaultNavigatable());
-		}
+		sourceFunctionsTable.installNavigation(tool);
 		sourceFunctionsTable.setAutoLookupColumn(VTFunctionAssociationTableModel.NAME_COL);
 		sourceFunctionsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		sourceFunctionsTable.setPreferredScrollableViewportSize(new Dimension(350, 150));
@@ -498,8 +492,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 	private JComponent createDestinationFunctionPanel() {
 
-		GoToService goToService = tool.getService(GoToService.class);
-
 		Program destinationProgram = controller.getDestinationProgram();
 		destinationFunctionsModel =
 			new VTFunctionAssociationTableModel(tool, controller, destinationProgram, false);
@@ -509,10 +501,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		destinationFunctionsTable.setName("DestinationFunctionTable");
 		destinationFunctionsTable.setPreferenceKey(
 			"VTFunctionAssociationTableModel - " + "Destination Function Table");
-		if (goToService != null) {
-			destinationFunctionsTable.installNavigation(goToService,
-				goToService.getDefaultNavigatable());
-		}
+		destinationFunctionsTable.installNavigation(tool);
 		destinationFunctionsTable.setAutoLookupColumn(VTFunctionAssociationTableModel.NAME_COL);
 		destinationFunctionsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		destinationFunctionsTable.setPreferredScrollableViewportSize(new Dimension(350, 150));

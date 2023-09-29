@@ -365,7 +365,7 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 	private Data getData(Address addr) {
 		Data data = program.getListing().getDataContaining(addr);
 		if (!data.getAddress().equals(addr)) {
-			data = data.getComponentAt((int) addr.subtract(data.getAddress()));
+			data = data.getComponentContaining((int) addr.subtract(data.getAddress()));
 		}
 		return data;
 	}

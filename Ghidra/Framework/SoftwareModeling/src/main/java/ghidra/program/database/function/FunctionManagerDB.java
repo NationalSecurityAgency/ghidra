@@ -219,6 +219,13 @@ public class FunctionManagerDB implements FunctionManager {
 		}
 	}
 
+	static void checkSingleAddressSpaceOnly(AddressSetView set) {
+		if (set.getMinAddress().getAddressSpace() != set.getMaxAddress().getAddressSpace()) {
+			throw new IllegalArgumentException(
+					"Function body must contain single address space only");
+		}
+	}
+
 	private Function createFunction(String name, Namespace nameSpace, Address entryPoint,
 			AddressSetView body, Function thunkedFunction, SourceType source)
 			throws InvalidInputException, OverlappingFunctionException {
@@ -231,11 +238,15 @@ public class FunctionManagerDB implements FunctionManager {
 			if (body == null || !body.contains(entryPoint)) {
 				throw new IllegalArgumentException("Function body must contain the entrypoint");
 			}
+			if (body.getNumAddresses() > Integer.MAX_VALUE) {
+				throw new IllegalArgumentException(
+					"Function body size must be <= 0x7fffffff byte addresses");
+			}
 			if (codeMgr.getDefinedDataAt(entryPoint) != null) {
 				throw new IllegalArgumentException(
 					"Function entryPoint may not be created on defined data");
 			}
-
+			checkSingleAddressSpaceOnly(body);
 			if (namespaceMgr.overlapsNamespace(body) != null) {
 				throw new OverlappingFunctionException(entryPoint);
 			}
@@ -990,6 +1001,7 @@ public class FunctionManagerDB implements FunctionManager {
 			throw new IllegalArgumentException(
 				"Function body size must be <= 0x7fffffff byte addresses");
 		}
+		checkSingleAddressSpaceOnly(newBody);
 		AddressSetView oldBody = function.getBody();
 
 		try {

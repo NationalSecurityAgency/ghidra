@@ -162,8 +162,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			new ClassicSampleX86ProgramBuilder("notepad", false, this);
 
 		// need a default label at 01002cf0, so make up a reference
-		builder.createMemoryReference("01002ce5", "01002cf0", RefType.FALL_THROUGH,
-			SourceType.ANALYSIS);
+		builder.createMemoryReference("01002ce5", "01002cf0", RefType.DATA, SourceType.ANALYSIS);
 
 		return builder.getProgram();
 	}
@@ -407,7 +406,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// 4) Put the cursor on a different label and execute the paste command
 		//
 
-		String oldLabelName = "LAB_01002cf0";
+		String oldLabelName = "DAT_01002cf0";
 		LabelFieldLocation location =
 			new LabelFieldLocation(program, addr("01002cf0"), oldLabelName, null, 0);
 		codeBrowserPlugin.goTo(location);
@@ -1345,7 +1344,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf action = getAction(plugin, "Byte Viewer Options");
 		assertTrue(action.isEnabled());
 
-		SwingUtilities.invokeLater(() -> action.actionPerformed(new ActionContext()));
+		SwingUtilities.invokeLater(() -> action.actionPerformed(new DefaultActionContext()));
 		waitForSwing();
 		ByteViewerOptionsDialog d = waitForDialogComponent(ByteViewerOptionsDialog.class);
 		return d;

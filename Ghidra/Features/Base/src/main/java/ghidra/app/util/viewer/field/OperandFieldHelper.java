@@ -23,8 +23,7 @@ import java.util.List;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.FieldLocation;
-import docking.widgets.fieldpanel.support.RowColLocation;
+import docking.widgets.fieldpanel.support.*;
 import ghidra.GhidraOptions;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
@@ -50,7 +49,7 @@ import ghidra.util.HelpLocation;
 abstract class OperandFieldHelper extends FieldFactory {
 
 	private final static String ENABLE_WORD_WRAP_MSG =
-		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
+		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + FieldUtils.WORD_WRAP_OPTION_NAME;
 	private final static String MAX_DISPLAY_LINES_MSG =
 		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Maximum Lines To Display";
 	private final static String UNDERLINE_OPTION =

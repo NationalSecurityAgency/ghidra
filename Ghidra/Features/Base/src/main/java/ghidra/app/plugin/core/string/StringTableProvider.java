@@ -31,7 +31,6 @@ import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.textfield.IntegerTextField;
 import generic.theme.GIcon;
-import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.model.DomainObjectChangedEvent;
@@ -518,8 +517,7 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 
 		stringModel.addTableModelListener(e -> updateSubTitle());
 
-		GoToService goToService = tool.getService(GoToService.class);
-		table.installNavigation(goToService, goToService.getDefaultNavigatable());
+		table.installNavigation(tool);
 		table.setDefaultRenderer(FoundString.DefinedState.class, new DefinedColumnRenderer());
 
 		filterPanel = new GhidraTableFilterPanel<>(table, stringModel);

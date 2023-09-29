@@ -41,7 +41,7 @@ public class DuplicateAction extends CompositeEditorTableAction {
 		KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK);
 
 	public DuplicateAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null,
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null,
 			ICON);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(KEY_STROKE));

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import java.util.List;
+
+import docking.DefaultActionContext;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.api.main.VTSession;
 
-import java.util.List;
-
-import docking.ActionContext;
-
-public class VTMatchContext extends ActionContext {
+public class VTMatchContext extends DefaultActionContext {
 
 	private final List<VTMatch> selectedMatches;
 	private final VTSession session;

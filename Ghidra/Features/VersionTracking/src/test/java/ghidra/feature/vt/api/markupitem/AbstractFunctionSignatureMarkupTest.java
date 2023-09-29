@@ -21,8 +21,7 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
-import org.apache.logging.log4j.*;
-import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.Level;
 import org.junit.After;
 import org.junit.Before;
 
@@ -119,11 +118,8 @@ public abstract class AbstractFunctionSignatureMarkupTest
 		controller = vtTestEnv.getVTController();
 		vtTestEnv.showTool();
 
-		Logger functionLogger = LogManager.getLogger(FunctionDB.class);
-		Configurator.setLevel(functionLogger.getName(), Level.TRACE);
-
-		Logger variableLogger = LogManager.getLogger(VariableSymbolDB.class);
-		Configurator.setLevel(variableLogger.getName(), Level.TRACE);
+		setLogLevel(FunctionDB.class, Level.TRACE);
+		setLogLevel(VariableSymbolDB.class, Level.TRACE);
 	}
 
 	private void disableAutoAnalysis(Program program) {

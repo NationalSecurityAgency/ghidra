@@ -472,8 +472,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	private boolean emulateAddThreadEnabled(ProgramLocationActionContext ctx) {
 		Program programOrView = ctx.getProgram();
-		if (programOrView instanceof TraceProgramView) {
-			TraceProgramView view = (TraceProgramView) programOrView;
+		if (programOrView instanceof TraceProgramView view) {
 			if (!ProgramEmulationUtils.isEmulatedProgram(view.getTrace())) {
 				return false;
 			}
@@ -503,8 +502,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	private void emulateAddThreadActivated(ProgramLocationActionContext ctx) {
 		Program programOrView = ctx.getProgram();
-		if (programOrView instanceof TraceProgramView) {
-			TraceProgramView view = (TraceProgramView) programOrView;
+		if (programOrView instanceof TraceProgramView view) {
 			Trace trace = view.getTrace();
 			Address tracePc = ctx.getAddress();
 

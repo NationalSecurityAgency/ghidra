@@ -35,7 +35,14 @@ public class RegExMemSearcherTaskTest extends AbstractGhidraHeadlessIntegrationT
 	private Program buildProgram() throws Exception {
 		ProgramBuilder builder = new ProgramBuilder("TestX86", ProgramBuilder._X86);
 		builder.createMemory(".text", Long.toHexString(0x1001000), 0x100);
+		builder.createMemory(".text1", Long.toHexString(0x1002000), 0x100);
+		return builder.getProgram();
+	}
 
+	private Program buildLargeProgram() throws Exception {
+		ProgramBuilder builder = new ProgramBuilder("TestX86", ProgramBuilder._X86);
+		builder.createMemory(".text", Long.toHexString(0x1001000), Integer.MAX_VALUE);
+		builder.createMemory(".text1", Long.toHexString(0x1001000 + Integer.MAX_VALUE), 0x100);
 		return builder.getProgram();
 	}
 
@@ -50,7 +57,31 @@ public class RegExMemSearcherTaskTest extends AbstractGhidraHeadlessIntegrationT
 		AddressSetView addrs = p.getMemory().getLoadedAndInitializedAddressSet();
 
 		RegExMemSearcherAlgorithm searcher =
-			new RegExMemSearcherAlgorithm(searchInfo, addrs, p, true);
+			new RegExMemSearcherAlgorithm(searchInfo, addrs, p, false);
+
+		ListAccumulator<MemSearchResult> accumulator = new ListAccumulator<>();
+		searcher.search(accumulator, TaskMonitor.DUMMY);
+		List<MemSearchResult> results = accumulator.asList();
+
+		assertEquals(max, results.size());
+
+		assertEquals(0x1001000, results.get(0).getAddress().getOffset());
+		assertEquals(0x1001001, results.get(1).getAddress().getOffset());
+		assertEquals(0x1001002, results.get(2).getAddress().getOffset());
+	}
+
+	@Test
+	public void testFindMatchesWithinMatchesLargeProgram() throws Exception {
+
+		Program p = buildLargeProgram();
+		String regex = "\\x00\\x00\\x00\\x00";
+		RegExSearchData searchData = new RegExSearchData(regex);
+		int max = 50;
+		SearchInfo searchInfo = new SearchInfo(searchData, max, false, true, 1, false, null);
+		AddressSetView addrs = p.getMemory().getLoadedAndInitializedAddressSet();
+
+		RegExMemSearcherAlgorithm searcher =
+			new RegExMemSearcherAlgorithm(searchInfo, addrs, p, false);
 
 		ListAccumulator<MemSearchResult> accumulator = new ListAccumulator<>();
 		searcher.search(accumulator, TaskMonitor.DUMMY);

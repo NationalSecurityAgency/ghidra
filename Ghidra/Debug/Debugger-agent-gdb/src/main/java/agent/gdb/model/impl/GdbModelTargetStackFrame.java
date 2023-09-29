@@ -113,6 +113,9 @@ public class GdbModelTargetStackFrame
 	}
 
 	protected void invalidateRegisterCaches() {
+		if (!valid) {
+			return;
+		}
 		broadcast().invalidateCacheRequested(this);
 	}
 

@@ -346,6 +346,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				block.getName() + " does not contain address " + start.toString(true));
 		}
 
+		// TODO: We should not really permit changing Data where Dynamic datatype resides
+		// since it could impact its computed length.
+
 		try {
 			Address endAddr = start.addNoWrap(length - 1);
 			if (!block.contains(start)) {
@@ -2294,7 +2297,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	void checkRangeForInstructions(Address start, Address end) throws MemoryAccessException {
 		CodeManager codeManager = program.getCodeManager();
-		Instruction instr = codeManager.getInstructionContaining(start);
+		Instruction instr = codeManager.getInstructionContaining(start, true);
 		if (instr != null) {
 			throw new MemoryAccessException(
 				"Memory change conflicts with instruction at " + instr.getMinAddress());

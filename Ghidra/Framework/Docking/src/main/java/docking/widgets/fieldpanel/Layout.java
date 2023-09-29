@@ -190,4 +190,12 @@ public interface Layout {
 	 * @return the smallest possible width of this layout that can display its full contents
 	 */
 	int getCompressableWidth();
+	
+	/**
+	 * Returns the index of the field at the given coordinates (relative to the layout)
+	 * @param x the x coordinate
+	 * @param y the y coordinate
+	 * @return the index of the field at the given coordinates (relative to the layout)
+	 */
+	int getFieldIndex(int x, int y);
 }

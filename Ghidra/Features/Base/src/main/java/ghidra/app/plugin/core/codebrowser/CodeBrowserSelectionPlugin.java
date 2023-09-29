@@ -25,7 +25,7 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.util.HelpTopics;
-import ghidra.app.util.PluginConstants;
+import ghidra.app.util.SearchConstants;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
@@ -65,48 +65,44 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 	private void createActions() {
 		new ActionBuilder("Select All", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&All in View")
-				.menuGroup(SELECT_GROUP, "a")
-				.keyBinding("ctrl A")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_SELECTION, "&All in View")
+			.menuGroup(SELECT_GROUP, "a")
+			.keyBinding("ctrl A")
+			.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
+			.withContext(CodeViewerActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
+			.buildAndInstall(tool);
 
 		new ActionBuilder("Clear Selection", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&Clear Selection")
-				.menuGroup(SELECT_GROUP, "b")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
-						.setSelection(new ProgramSelection()))
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_SELECTION, "&Clear Selection")
+			.menuGroup(SELECT_GROUP, "b")
+			.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
+			.withContext(CodeViewerActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
+				.setSelection(new ProgramSelection()))
+			.buildAndInstall(tool);
 
 		new ActionBuilder("Select Complement", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&Complement")
-				.menuGroup(SELECT_GROUP, "c")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_SELECTION, "&Complement")
+			.menuGroup(SELECT_GROUP, "c")
+			.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
+			.withContext(CodeViewerActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
+			.buildAndInstall(tool);
 
 		tool.addAction(new MarkAndSelectionAction(getName(), SELECT_GROUP, "d"));
 
 		new ActionBuilder("Create Table From Selection", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "Create Table From Selection")
-				.menuGroup("SelectUtils")
-				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Selection_Table"))
-				.supportsDefaultToolContext(true)
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> createTable((CodeViewerProvider) c.getComponentProvider()))
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_SELECTION, "Create Table From Selection")
+			.menuGroup("SelectUtils")
+			.helpLocation(new HelpLocation("CodeBrowserPlugin", "Selection_Table"))
+			.withContext(CodeViewerActionContext.class, true)
+			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+			.onAction(c -> createTable((CodeViewerProvider) c.getComponentProvider()))
+			.buildAndInstall(tool);
 
 	}
 
@@ -132,7 +128,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 		Icon markerIcon = new GIcon("icon.plugin.codebrowser.cursor.marker");
 		TableComponentProvider<Address> tableProvider =
 			tableService.showTableWithMarkers(title + " " + model.getName(), "Selection",
-				model, PluginConstants.SEARCH_HIGHLIGHT_COLOR, markerIcon, title, null);
+				model, SearchConstants.SEARCH_HIGHLIGHT_COLOR, markerIcon, title, null);
 		tableProvider.installRemoveItemsAction();
 	}
 
@@ -162,7 +158,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 			ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 			int resultsLimit = options.getInt(GhidraOptions.OPTION_SEARCH_LIMIT,
-				PluginConstants.DEFAULT_SEARCH_LIMIT);
+				SearchConstants.DEFAULT_SEARCH_LIMIT);
 
 			long size = selection.getNumAddresses();
 			monitor.initialize(size);
