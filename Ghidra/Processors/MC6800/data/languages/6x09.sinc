@@ -504,6 +504,7 @@ macro clear(op)
         op = 0;
         $(Z) = 1;
         $(N) = 0;	
+        $(C) = 0;
 }
 
 macro addition(reg, op)
