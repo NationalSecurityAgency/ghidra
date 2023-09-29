@@ -555,6 +555,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * Returns the TaskMonitor
 	 * @return the monitor
 	 */
+	@Override
 	public TaskMonitor getMonitor() {
 		return pdb.getMonitor();
 	}
@@ -951,7 +952,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		// Not using normalized address is OK, as we should have already set the context and
 		//  used the normalized address when creating the one-byte function
 		disassembleAddresses.add(applier.getAddress());
-		deferredFunctionWorkAppliers.add(applier);
+		//deferredFunctionWorkAppliers.add(applier);
 	}
 
 	//==============================================================================================
