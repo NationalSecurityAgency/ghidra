@@ -50,9 +50,9 @@ public class GnuDemangler implements Demangler {
 		if (isELF(executableFormat) || isMacho(executableFormat)) {
 			return true;
 		}
-		
-		String compiler = program.getCompiler(); 
-		if(compiler != null && compiler.contains("gcc")) {
+
+		String compiler = program.getCompiler();
+		if (compiler != null && compiler.contains("gcc")) {
 			return true;
 		}
 
@@ -93,7 +93,7 @@ public class GnuDemangler implements Demangler {
 			}
 		}
 		else if (mangled.startsWith("__Z")) {
-			mangled = mangled.substring(1);//removed first underscore....
+			mangled = mangled.substring(1);
 		}
 
 		boolean isDwarf = false;
