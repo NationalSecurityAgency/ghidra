@@ -345,7 +345,7 @@ const vector<uint1> &StringManagerUnicode::getStringData(const Address &addr,Dat
     stringData.byteData.reserve(newSize + 1);
     const uint1 *ptr = (const uint1 *)resString.c_str();
     stringData.byteData.assign(ptr,ptr+newSize);
-    stringData.byteData[newSize] = 0;		// Make sure there is a null terminator
+	stringData.byteData.push_back(0);	// Make sure there is a null terminator	
   }
   stringData.isTruncated = (numChars >= maximumChars);
   isTrunc = stringData.isTruncated;
