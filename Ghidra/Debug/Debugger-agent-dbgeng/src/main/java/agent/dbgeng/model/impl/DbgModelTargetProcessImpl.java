@@ -49,26 +49,32 @@ import ghidra.dbg.util.PathUtils;
 			name = "Debug",
 			type = DbgModelTargetDebugContainerImpl.class,
 			required = true,
-			fixed = true),
+			fixed = true
+		),
 		@TargetAttributeType(
 			name = "Memory",
 			type = DbgModelTargetMemoryContainerImpl.class,
 			required = true,
-			fixed = true),
+			fixed = true
+		),
 		@TargetAttributeType(
 			name = "Modules",
 			type = DbgModelTargetModuleContainerImpl.class,
 			required = true,
-			fixed = true),
+			fixed = true
+		),
 		@TargetAttributeType(
 			name = "Threads",
 			type = DbgModelTargetThreadContainerImpl.class,
 			required = true,
-			fixed = true),
+			fixed = true
+		),
 		@TargetAttributeType(
 			name = DbgModelTargetProcessImpl.EXIT_CODE_ATTRIBUTE_NAME,
-			type = Long.class),
-		@TargetAttributeType(type = Void.class) })
+			type = Long.class
+		),
+		@TargetAttributeType(type = Void.class) }
+)
 public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetProcess {
 
@@ -122,8 +128,8 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, DbgModelTargetThreadImpl.SUPPORTED_KINDS //
 		), "Initialized");
 		if (getManager().isKernelMode()) {
-			TargetExecutionState state = process.getPid() > 0 ?
-				TargetExecutionState.INACTIVE : TargetExecutionState.ALIVE;
+			TargetExecutionState state =
+				process.getPid() > 0 ? TargetExecutionState.INACTIVE : TargetExecutionState.ALIVE;
 			setExecutionState(state, "Initialized");
 		}
 		else {
@@ -139,14 +145,15 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		Long pid = process.getPid();
 		if (getManager().isKernelMode()) {
 			if (id.isSystem()) {
-				return "["+id.id()+"]";
+				return "[" + id.id() + "]";
 			}
 			String pidstr = Long.toString(pid, base);
 			if (base == 16) {
 				pidstr = "0x" + pidstr;
 			}
 			Long offset = process.getOffset();
-			return offset == null ? "[" + pidstr + "]" : "[" + pidstr + " : " + Long.toHexString(offset) + "]";
+			return offset == null ? "[" + pidstr + "]"
+					: "[" + pidstr + " : " + Long.toHexString(offset) + "]";
 		}
 		else {
 			if (pid < 0) {
@@ -156,7 +163,9 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			if (base == 16) {
 				pidstr = "0x" + pidstr;
 			}
-			return "[" + id.id() + ":" + pidstr + "]";
+			String name = process.getExecutableName();
+			return name == null ? "[" + id.id() + ":" + pidstr + "]"
+					: "[" + id.id() + ":" + pidstr + "]" + " : " + name;
 		}
 	}
 
@@ -284,7 +293,8 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes, RefreshBehavior refreshElements) {
+	public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+			RefreshBehavior refreshElements) {
 		if (memory != null) {
 			memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}

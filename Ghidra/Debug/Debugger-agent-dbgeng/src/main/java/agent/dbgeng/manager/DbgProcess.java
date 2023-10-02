@@ -241,4 +241,14 @@ public interface DbgProcess extends DbgMemoryOperations {
 	 */
 	Long getOffset();
 
+	/**
+	 * Get the executable's name
+	 */
+	String getExecutableName();
+
+	/**
+	 * Set the executable's name
+	 */
+	void setExecutableName(String name);
+
 }
