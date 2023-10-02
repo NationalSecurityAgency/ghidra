@@ -354,7 +354,7 @@ public class GnuDemanglerParser {
 		//       operator text.   Since the 'special handlers' perform more specific checks, it is
 		//       safe to do those first.
 		//
-		DemangledObjectBuilder handler = getSpecialPrefixHandler(mangledSource, demangled);
+		DemangledObjectBuilder handler = getSpecialPrefixHandler(demangled);
 		if (handler != null) {
 			return handler;
 		}
@@ -394,7 +394,7 @@ public class GnuDemanglerParser {
 		return null;
 	}
 
-	private SpecialPrefixHandler getSpecialPrefixHandler(String mangled, String demangled) {
+	private SpecialPrefixHandler getSpecialPrefixHandler(String demangled) {
 
 		Matcher matcher = DESCRIPTIVE_PREFIX_PATTERN.matcher(demangled);
 		if (matcher.matches()) {
