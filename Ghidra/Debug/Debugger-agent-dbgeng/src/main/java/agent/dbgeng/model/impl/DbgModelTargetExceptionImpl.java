@@ -171,6 +171,6 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 				throw new DebuggerIllegalArgumentException("Option should be numeric");
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

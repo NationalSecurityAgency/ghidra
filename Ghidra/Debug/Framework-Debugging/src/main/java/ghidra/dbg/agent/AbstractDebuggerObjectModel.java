@@ -218,7 +218,7 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 	@Override
 	public CompletableFuture<Void> close() {
 		clientExecutor.shutdown();
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public void removeExisting(List<String> path) {

@@ -156,7 +156,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 			}
 		}).thenCompose(__ -> {
 			if (closed) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			return gdb.runRC();
 		});

@@ -18,14 +18,14 @@ package ghidra.app.plugin.core.debug.service.emulation;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.debug.api.emulation.DebuggerPcodeEmulatorFactory;
 import ghidra.debug.api.emulation.DebuggerPcodeMachine;
-import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.guest.TracePlatform;
 
 public abstract class AbstractDebuggerPcodeEmulatorFactory implements DebuggerPcodeEmulatorFactory {
 	@Override
 	public DebuggerPcodeMachine<?> create(PluginTool tool, TracePlatform platform, long snap,
-			TraceRecorder recorder) {
-		return create(new DefaultPcodeDebuggerAccess(tool, recorder, platform, snap));
+			Target target) {
+		return create(new DefaultPcodeDebuggerAccess(tool, target, platform, snap));
 	}
 }

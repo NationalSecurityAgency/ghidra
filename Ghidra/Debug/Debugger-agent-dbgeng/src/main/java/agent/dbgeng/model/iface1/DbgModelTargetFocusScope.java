@@ -48,11 +48,11 @@ public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFo
 
 	public default CompletableFuture<Void> doRequestFocus(TargetObject obj) {
 		if (getManager().isWaiting()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		getModel().assertMine(TargetObject.class, obj);
 		if (obj.equals(getFocus())) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
 			throw new DebuggerIllegalArgumentException("Can only focus a successor of the scope");
@@ -63,7 +63,7 @@ public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFo
 				DbgModelSelectableObject sel = (DbgModelSelectableObject) cur;
 				//System.err.println("requestFocus " + obj);
 				setFocus(sel);
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			if (cur instanceof DbgModelTargetObject) {
 				DbgModelTargetObject def = (DbgModelTargetObject) cur;
@@ -72,7 +72,7 @@ public interface DbgModelTargetFocusScope extends DbgModelTargetObject, TargetFo
 			}
 			throw new AssertionError();
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

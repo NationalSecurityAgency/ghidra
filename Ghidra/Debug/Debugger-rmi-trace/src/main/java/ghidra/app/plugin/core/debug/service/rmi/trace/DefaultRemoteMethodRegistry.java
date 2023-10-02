@@ -17,13 +17,12 @@ package ghidra.app.plugin.core.debug.service.rmi.trace;
 
 import java.util.*;
 
-import ghidra.debug.api.tracermi.RemoteMethod;
-import ghidra.debug.api.tracermi.RemoteMethodRegistry;
-import ghidra.debug.api.tracermi.RemoteMethod.Action;
+import ghidra.debug.api.target.ActionName;
+import ghidra.debug.api.tracermi.*;
 
 public class DefaultRemoteMethodRegistry implements RemoteMethodRegistry {
 	private final Map<String, RemoteMethod> map = new HashMap<>();
-	private final Map<Action, Set<RemoteMethod>> byAction = new HashMap<>();
+	private final Map<ActionName, Set<RemoteMethod>> byAction = new HashMap<>();
 
 	protected void add(RemoteMethod method) {
 		synchronized (map) {
@@ -47,7 +46,7 @@ public class DefaultRemoteMethodRegistry implements RemoteMethodRegistry {
 	}
 
 	@Override
-	public Set<RemoteMethod> getByAction(Action action) {
+	public Set<RemoteMethod> getByAction(ActionName action) {
 		synchronized (map) {
 			return byAction.getOrDefault(action, Set.of());
 		}

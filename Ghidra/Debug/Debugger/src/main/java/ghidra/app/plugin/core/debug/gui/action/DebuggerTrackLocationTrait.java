@@ -178,9 +178,22 @@ public class DebuggerTrackLocationTrait {
 		return true;
 	}
 
+	protected boolean hasSpec(LocationTrackingSpec spec) {
+		for (ActionState<LocationTrackingSpec> state : action.getAllActionStates()) {
+			if (spec.equals(state.getUserData())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public void setSpec(LocationTrackingSpec spec) {
 		if (action == null) {
 			// It might if the client doesn't need a new button, e.g., TraceDiff
+			doSetSpec(spec);
+		}
+		else if (!hasSpec(spec)) {
+			Msg.warn(this, "No action state for given tracking spec: " + spec);
 			doSetSpec(spec);
 		}
 		else {

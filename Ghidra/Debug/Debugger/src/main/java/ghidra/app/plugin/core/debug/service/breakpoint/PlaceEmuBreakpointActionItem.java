@@ -100,11 +100,11 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 		try (Transaction tx = trace.openTransaction("Place Emulated Breakpoint")) {
 			// Defaults with emuEnable=true
 			TraceBreakpoint bpt = trace.getBreakpointManager()
-					.addBreakpoint(computePath(), Lifespan.at(snap), range(address, length),
-						Set.of(), kinds, false, null);
+					.addBreakpoint(computePath(), Lifespan.at(snap),
+						BreakpointActionItem.range(address, length), Set.of(), kinds, false, null);
 			bpt.setName(createName(address));
 			bpt.setEmuSleigh(emuSleigh);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertionError(e);

@@ -165,7 +165,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					}
 				}
 				nlist.addAll(list);
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 				//return processModelObjectElements(nlist);
 			}
 		}).thenAccept(__ -> {

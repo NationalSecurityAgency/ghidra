@@ -1392,7 +1392,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			}
 			attachDialog.fetchAndDisplayAttachable();
 			tool.showDialog(attachDialog);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}, "Couldn't attach");
 	}
 
@@ -1548,7 +1548,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (valid != null) {
 				startRecording(valid, true);
 			}
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}, "Couldn't record");
 	}
 
@@ -1591,7 +1591,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		performAction(context, false, TargetBreakpointSpecContainer.class, container -> {
 			breakpointDialog.setContainer(container);
 			tool.showDialog(breakpointDialog);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}, "Couldn't set breakpoint");
 	}
 
@@ -1621,12 +1621,12 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			Map<String, ParameterDescription<?>> configParameters =
 				configurable.getConfigurableOptions();
 			if (configParameters.isEmpty()) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			Map<String, ?> args = configDialog.promptArguments(configParameters);
 			if (args == null) {
 				// User cancelled
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			AsyncFence fence = new AsyncFence();
 			for (Entry<String, ?> entry : args.entrySet()) {
@@ -1642,14 +1642,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (t != null) {
 				navigateToSelectedObject(t, null);
 			}
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}, "Couldn't navigate");
 	}
 
 	public void initiateConsole(ActionContext context) {
 		performAction(context, false, TargetInterpreter.class, interpreter -> {
 			getPlugin().showConsole(interpreter);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}, "Couldn't show interpreter");
 	}
 

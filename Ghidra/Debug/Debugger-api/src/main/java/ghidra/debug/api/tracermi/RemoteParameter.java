@@ -18,9 +18,15 @@ package ghidra.debug.api.tracermi;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 
 public interface RemoteParameter {
+	String name();
+
 	SchemaName type();
 
 	boolean required();
 
 	Object getDefaultValue();
+
+	String display();
+
+	String description();
 }

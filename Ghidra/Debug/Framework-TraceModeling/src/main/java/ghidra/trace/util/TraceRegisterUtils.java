@@ -17,22 +17,86 @@ package ghidra.trace.util;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.*;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.util.OverlappingObjectIterator.Ranger;
 
 public enum TraceRegisterUtils {
 	;
+
+	private static class RegisterIndex {
+		// Could this all go into RegisterManager instead?
+		// Would need the overlapping object iterator, or replacement, moved up
+		private record RegEntry(AddressRange base, Set<Register> regs) {
+		}
+
+		private static final Ranger<RegEntry> ENTRY_RANGER = new Ranger<>() {
+			@Override
+			public Address getMinAddress(RegEntry t) {
+				return t.base.getMinAddress();
+			}
+
+			@Override
+			public Address getMaxAddress(RegEntry t) {
+				return t.base.getMaxAddress();
+			}
+		};
+		private NavigableMap<Address, RegEntry> map = new TreeMap<>();
+
+		private RegisterIndex(Language language) {
+			for (Register reg : language.getRegisters()) {
+				RegEntry re = map.computeIfAbsent(reg.getAddress(),
+					k -> new RegEntry(rangeForRegister(reg.getBaseRegister()), new HashSet<>()));
+				re.regs.add(reg);
+			}
+		}
+
+		private Set<Register> findIntersecting(AddressSetView set) {
+			AddressSet inBaseSpace = new AddressSet();
+			for (AddressRange rng : set) {
+				if (rng.getAddressSpace().isOverlaySpace()) {
+					inBaseSpace.add(rng.getMinAddress().getPhysicalAddress(),
+						rng.getMaxAddress().getPhysicalAddress());
+				}
+				else {
+					inBaseSpace.add(rng);
+				}
+			}
+			Set<Register> result = new HashSet<>();
+			OverlappingObjectIterator<AddressRange, RegEntry> ooit =
+				new OverlappingObjectIterator<>(
+					inBaseSpace.iterator(), OverlappingObjectIterator.ADDRESS_RANGE,
+					map.subMap(inBaseSpace.getMinAddress(), true,
+						inBaseSpace.getMaxAddress(), true).values().iterator(),
+					ENTRY_RANGER);
+			while (ooit.hasNext()) {
+				Pair<AddressRange, RegEntry> next = ooit.next();
+				for (Register reg : next.getRight().regs) {
+					if (rangeForRegister(reg).intersects(next.getLeft())) {
+						result.add(reg);
+					}
+				}
+			}
+			return result;
+		}
+	}
+
+	private static final Map<Language, RegisterIndex> REGISTER_INDICES = new WeakHashMap<>();
+
+	public static Set<Register> registersIntersecting(Language language, AddressSetView set) {
+		return REGISTER_INDICES.computeIfAbsent(language, RegisterIndex::new).findIntersecting(set);
+	}
 
 	public static AddressRange rangeForRegister(Register register) {
 		Address address = register.getAddress();

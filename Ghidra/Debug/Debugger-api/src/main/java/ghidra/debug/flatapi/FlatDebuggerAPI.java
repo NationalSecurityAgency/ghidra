@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
@@ -38,8 +37,9 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
-import ghidra.debug.api.model.TraceRecorder;
 import ghidra.debug.api.model.DebuggerProgramLaunchOffer.*;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.flatapi.FlatProgramAPI;
@@ -611,20 +611,7 @@ public interface FlatDebuggerAPI {
 	 * @throws IOException if the trace cannot be created
 	 */
 	default Trace emulateLaunch(Program program, Address address) throws IOException {
-		Trace trace = null;
-		try {
-			trace = ProgramEmulationUtils.launchEmulationTrace(program, address, this);
-			DebuggerTraceManagerService traceManager = getTraceManager();
-			traceManager.openTrace(trace);
-			traceManager.activateTrace(trace);
-			Swing.allowSwingToProcessEvents();
-		}
-		finally {
-			if (trace != null) {
-				trace.release(this);
-			}
-		}
-		return trace;
+		return getEmulationService().launchProgram(program, address);
 	}
 
 	/**
@@ -1433,15 +1420,15 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Get the recorder for the current target
+	 * Get the current target
 	 * 
 	 * <p>
 	 * If the current trace is not live, this returns null.
 	 * 
-	 * @return the recorder, or null
+	 * @return the target, or null
 	 */
-	default TraceRecorder getCurrentRecorder() {
-		return getTraceManager().getCurrent().getRecorder();
+	default Target getCurrentTarget() {
+		return getTraceManager().getCurrent().getTarget();
 	}
 
 	/**
@@ -1459,6 +1446,7 @@ public interface FlatDebuggerAPI {
 	 * @param program the program
 	 * @return the offers
 	 */
+	@Deprecated
 	default List<DebuggerProgramLaunchOffer> getLaunchOffers(Program program) {
 		return getModelService().getProgramLaunchOffers(program).collect(Collectors.toList());
 	}

@@ -34,6 +34,7 @@ import ghidra.trace.model.target.TraceObject;
  * return a {@link TraceObject}, so that a client can quickly associate the trace changes with the
  * method. Otherwise, please return null/void/None for all methods.
  * 
+ * <p>
  * <b>NOTE:</b> To avoid the mistake of blocking the Swing thread on an asynchronous result, the
  * {@link #get()} methods have been overridden to check for the Swing thread. If invoked on the
  * Swing thread with a timeout greater than 1 second, an assertion error will be thrown. Please use

@@ -60,13 +60,13 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
 		if (mappingService == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		Trace trace = coordinates.getTrace();
 		if (trace == null || coordinates.isAlive() ||
 			!ProgramEmulationUtils.isEmulatedProgram(trace)) {
 			// Never interfere with a live target
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		TraceMemoryManager mm = trace.getMemoryManager();
 		AddressSet toRead = new AddressSet(RecorderUtils.INSTANCE.quantize(12, visible));
@@ -80,7 +80,7 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 		}
 
 		if (toRead.isEmpty()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 
 		long snap = coordinates.getSnap();
@@ -94,7 +94,7 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 					mm.putBytes(snap, hostAddr, buf);
 				}
 			}.visit(trace, snap, toRead);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (MemoryAccessException e) {
 			throw new AssertionError(e);

@@ -281,6 +281,16 @@ public class DebuggerModelServicePlugin extends Plugin
 	}
 
 	@Override
+	public void fireFocusEvent(TargetObject focused) {
+		// Nothing to do
+	}
+
+	@Override
+	public void fireSnapEvent(TraceRecorder recorder, long snap) {
+		// Nothing to do
+	}
+
+	@Override
 	public TraceRecorder recordTarget(TargetObject target, DebuggerTargetTraceMapper mapper,
 			ActionSource source) throws IOException {
 		TraceRecorder recorder;
@@ -670,6 +680,5 @@ public class DebuggerModelServicePlugin extends Plugin
 	public CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory) {
 		return doShowConnectDialog(tool, factory, null);
 	}
-	
-	
+
 }

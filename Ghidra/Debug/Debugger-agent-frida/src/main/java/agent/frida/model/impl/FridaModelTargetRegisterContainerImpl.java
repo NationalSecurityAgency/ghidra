@@ -147,7 +147,7 @@ public class FridaModelTargetRegisterContainerImpl
 			reg.getRegister().setValue(val.toString());
 		}
 		broadcast().registersUpdated(getProxy(), values);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

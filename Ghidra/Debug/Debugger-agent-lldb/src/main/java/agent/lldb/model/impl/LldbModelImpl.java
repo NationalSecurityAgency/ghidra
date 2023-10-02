@@ -138,7 +138,7 @@ public class LldbModelImpl extends AbstractLldbModel implements DebuggerObjectMo
 		}
 		catch (RejectedExecutionException e) {
 			reportError(this, "Model is already closing", e);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (Throwable t) {
 			return CompletableFuture.failedFuture(t);

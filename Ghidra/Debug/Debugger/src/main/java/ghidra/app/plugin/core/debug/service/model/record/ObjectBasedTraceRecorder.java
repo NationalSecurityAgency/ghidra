@@ -52,6 +52,7 @@ import ghidra.trace.model.modules.*;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -294,7 +295,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		// TODO: Make this method synchronous?
 		timeRecorder.createSnapshot("Started recording " + target.getModel(), null, null);
 		target.getModel().addModelListener(listenerForRecord, true);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
@@ -357,6 +358,11 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	@Override
 	public TraceObject getTraceObject(TargetObject obj) {
 		return objectRecorder.toTrace(obj);
+	}
+
+	@Override
+	public TargetObject getTargetObject(TraceObjectKeyPath path) {
+		return target.getModel().getModelObject(path.getKeyList());
 	}
 
 	@Override
@@ -532,7 +538,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		 * what communicates that convention?
 		 */
 		if (regContainer == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return regContainer.resync();
 	}
@@ -592,7 +598,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			int frameLevel, Map<Register, RegisterValue> values) {
 		TargetRegisterContainer regContainer = getTargetRegisterContainer(thread, frameLevel);
 		if (regContainer == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		Map<TargetRegisterBank, Map<TargetRegister, byte[]>> writesByBank = new HashMap<>();
 		for (RegisterValue rv : values.values()) {

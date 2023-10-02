@@ -94,7 +94,7 @@ public class GdbModelTargetThreadContainer
 	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			updateUsingThreads(inferior.getKnownThreads());
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return doRefresh();
 	}
@@ -178,7 +178,7 @@ public class GdbModelTargetThreadContainer
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	protected CompletableFuture<?> refreshInternal() {

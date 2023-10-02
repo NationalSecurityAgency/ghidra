@@ -1641,7 +1641,7 @@ public class LldbManagerImpl implements LldbManager {
 			getEventListeners().fire.promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return execute(
 			new LldbConsoleExecCommand(this, command, LldbConsoleExecCommand.Output.CONSOLE))

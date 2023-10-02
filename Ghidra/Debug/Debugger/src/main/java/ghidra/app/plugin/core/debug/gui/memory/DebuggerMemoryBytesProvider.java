@@ -71,7 +71,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		if (!Objects.equals(a.getView(), b.getView())) {
 			return false; // Subsumes trace
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTarget(), b.getTarget())) {
 			return false; // For capture memory action
 		}
 		if (!Objects.equals(a.getTime(), b.getTime())) {

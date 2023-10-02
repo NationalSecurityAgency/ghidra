@@ -37,6 +37,7 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
@@ -59,7 +60,7 @@ import ghidra.util.task.TaskMonitor;
  * <li>The recorder may not have actually recorded the object yet, despite receiving notice.
  * Recording is asynchronous, and it may also be waiting for additional dependencies or attributes
  * before it can create the corresponding trace object.</li>
- * <li>The target object may not longer exist for a given trace object.</li>
+ * <li>The target object may no longer exist for a given trace object.</li>
  * </ol>
  * 
  * <p>
@@ -222,6 +223,14 @@ public interface TraceRecorder {
 	 * @return the target object, or null
 	 */
 	TargetObject getTargetObject(TraceObject obj);
+
+	/**
+	 * Get the target object corresponding to the given path
+	 * 
+	 * @param obj the trace object
+	 * @return the target object, or null
+	 */
+	TargetObject getTargetObject(TraceObjectKeyPath path);
 
 	/**
 	 * Get the trace object corresponding to the given target object

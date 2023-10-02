@@ -15,12 +15,15 @@
  */
 package ghidra.app.services;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.debug.api.emulation.DebuggerPcodeEmulatorFactory;
 import ghidra.debug.api.emulation.DebuggerPcodeMachine;
 import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.time.schedule.Scheduler;
@@ -150,6 +153,22 @@ public interface DebuggerEmulationService {
 	 * @return the factory
 	 */
 	DebuggerPcodeEmulatorFactory getEmulatorFactory();
+
+	/**
+	 * Load the given program into a trace suitable for emulation in the UI, starting at the given
+	 * address
+	 * 
+	 * <p>
+	 * Note that the program bytes are not actually loaded into the trace. Rather a static mapping
+	 * is generated, allowing the emulator to load bytes from the target program lazily. The trace
+	 * is automatically loaded into the UI (trace manager).
+	 * 
+	 * @param program the target program
+	 * @param address the initial program counter
+	 * @return the resulting trace
+	 * @throws IOException if the trace cannot be created
+	 */
+	Trace launchProgram(Program program, Address address) throws IOException;
 
 	/**
 	 * Perform emulation to realize the machine state of the given time coordinates

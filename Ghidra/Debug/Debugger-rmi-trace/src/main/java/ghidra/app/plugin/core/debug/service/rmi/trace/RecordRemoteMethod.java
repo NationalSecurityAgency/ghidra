@@ -18,12 +18,11 @@ package ghidra.app.plugin.core.debug.service.rmi.trace;
 import java.util.Map;
 
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.debug.api.tracermi.RemoteMethod;
-import ghidra.debug.api.tracermi.RemoteParameter;
-import ghidra.debug.api.tracermi.RemoteMethod.Action;
+import ghidra.debug.api.target.ActionName;
+import ghidra.debug.api.tracermi.*;
 import ghidra.trace.model.Trace;
 
-public record RecordRemoteMethod(TraceRmiHandler handler, String name, Action action,
+public record RecordRemoteMethod(TraceRmiHandler handler, String name, ActionName action,
 		String description, Map<String, RemoteParameter> parameters, SchemaName retType)
 		implements RemoteMethod {
 	@Override

@@ -186,7 +186,7 @@ public class LldbModelTargetProcessContainerImpl extends LldbModelTargetObjectIm
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

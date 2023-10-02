@@ -46,10 +46,10 @@ import ghidra.app.util.viewer.listingpanel.MarkerClickedListener;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
-import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
 import ghidra.debug.api.control.ControlMode;
-import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
@@ -724,7 +724,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	// @AutoServiceConsumed via method
 	DebuggerLogicalBreakpointService breakpointService;
 	@AutoServiceConsumed
-	private DebuggerModelService modelService;
+	private DebuggerTargetService targetService;
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
@@ -739,29 +739,29 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	private final AutoService.Wiring autoServiceWiring;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND, //
-		description = "Whether or not to color background for memory at an enabled breakpoint", //
+		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND,
+		description = "Whether or not to color background for memory at an enabled breakpoint",
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointEnabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND, //
-		description = "Whether or not to color background for memory at a disabled breakpoint", //
+		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND,
+		description = "Whether or not to color background for memory at a disabled breakpoint",
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointDisabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_DISABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND, //
-		description = "Whether or not to color background for memory at an enabled, but ineffective, breakpoint", //
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND,
+		description = "Whether or not to color background for memory at an enabled, but ineffective, breakpoint",
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointIneffEnColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND, //
-		description = "Whether or not to color background for memory at an disabled, but ineffective, breakpoint", //
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND,
+		description = "Whether or not to color background for memory at an disabled, but ineffective, breakpoint",
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointIneffDisColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND;
@@ -880,14 +880,14 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		if (mode.useEmulatedBreakpoints()) {
 			return EnumSet.allOf(TraceBreakpointKind.class);
 		}
-		if (modelService == null) {
+		if (targetService == null) {
 			return Set.of();
 		}
-		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder == null) {
+		Target target = targetService.getTarget(trace);
+		if (target == null) {
 			return Set.of();
 		}
-		return recorder.getSupportedBreakpointKinds();
+		return target.getSupportedBreakpointKinds();
 	}
 
 	protected Set<TraceBreakpointKind> getSupportedKindsFromContext(ActionContext context) {

@@ -29,21 +29,17 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.services.*;
-import ghidra.dbg.DebuggerObjectModel;
+import ghidra.app.services.DebuggerWorkflowFrontEndService;
 import ghidra.debug.api.workflow.DebuggerBot;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.AutoService.Wiring;
-import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginEventListener;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.datastruct.CollectionChangeListener;
 
 @PluginInfo(
 	shortDescription = "Debugger workflow service",
@@ -57,19 +53,6 @@ import ghidra.util.datastruct.CollectionChangeListener;
 public class DebuggerWorkflowServicePlugin extends Plugin
 		implements DebuggerWorkflowFrontEndService, ApplicationLevelOnlyPlugin,
 		OptionsChangeListener {
-
-	protected class ForBotsModelsChangeListener
-			implements CollectionChangeListener<DebuggerObjectModel> {
-		@Override
-		public void elementAdded(DebuggerObjectModel element) {
-			dispatch(a -> a.modelAdded(element));
-		}
-
-		@Override
-		public void elementRemoved(DebuggerObjectModel element) {
-			dispatch(a -> a.modelRemoved(element));
-		}
-	}
 
 	protected class ForTrackingOpenStuffPluginEventListener implements PluginEventListener {
 		private final PluginTool t;
@@ -117,11 +100,6 @@ public class DebuggerWorkflowServicePlugin extends Plugin
 		}
 	}
 
-	// @AutoServiceConsumed via method
-	private DebuggerModelService modelService;
-	@SuppressWarnings("unused")
-	private Wiring autoServiceWiring;
-
 	private final ChangeListener botsChangeListener = this::botsChanged;
 	private final Map<PluginTool, ForTrackingOpenStuffPluginEventListener> trackStuffListenersByTool =
 		new HashMap<>();
@@ -133,18 +111,14 @@ public class DebuggerWorkflowServicePlugin extends Plugin
 
 	@SuppressWarnings("hiding") // I'm FrontEndOnly
 	protected final FrontEndTool tool;
-	private ForBotsModelsChangeListener modelsChangedListener =
-		new ForBotsModelsChangeListener();
 
 	public DebuggerWorkflowServicePlugin(PluginTool tool) {
 		super(tool);
 		this.tool = (FrontEndTool) tool; // I'm FrontEndOnly
 
-		this.autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 		ToolOptions rootOptions = tool.getOptions(DebuggerResources.OPTIONS_CATEGORY_DEBUGGER);
 		rootOptions.addOptionsChangeListener(this);
 		this.options = rootOptions.getOptions(DebuggerResources.OPTIONS_CATEGORY_WORKFLOW);
-
 	}
 
 	@Override
@@ -296,18 +270,6 @@ public class DebuggerWorkflowServicePlugin extends Plugin
 		synchronized (trackStuffListenersByTool) {
 			return List.copyOf(trackStuffListenersByTool.keySet());
 		}
-	}
-
-	@AutoServiceConsumed
-	private void setModelService(DebuggerModelService modelService) {
-		if (this.modelService != null) {
-			this.modelService.removeModelsChangedListener(modelsChangedListener);
-		}
-		this.modelService = modelService;
-		if (this.modelService != null) {
-			this.modelService.addModelsChangedListener(modelsChangedListener);
-		}
-		// TODO: Invoke models removed/added
 	}
 
 	@Override

@@ -43,6 +43,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.DebugProgramAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
@@ -51,17 +52,21 @@ import ghidra.dbg.target.TargetThread;
 import ghidra.debug.api.action.ActionSource;
 import ghidra.debug.api.model.*;
 import ghidra.debug.api.model.DebuggerProgramLaunchOffer.PromptMode;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
@@ -78,6 +83,7 @@ import ghidra.util.task.TaskMonitor;
 		ProgramClosedPluginEvent.class,
 	},
 	servicesRequired = {
+		DebuggerTargetService.class,
 		DebuggerTraceManagerService.class,
 	},
 	servicesProvided = {
@@ -195,11 +201,19 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		@Override
 		public void elementAdded(TraceRecorder element) {
 			recorderListeners.fire.elementAdded(element);
+			Swing.runIfSwingOrRunLater(() -> {
+				TraceRecorderTarget target = new TraceRecorderTarget(tool, element);
+				targets.put(element, target);
+				targetService.publishTarget(target);
+			});
 		}
 
 		@Override
 		public void elementRemoved(TraceRecorder element) {
 			recorderListeners.fire.elementRemoved(element);
+			Swing.runIfSwingOrRunLater(() -> {
+				targetService.withdrawTarget(Objects.requireNonNull(targets.get(element)));
+			});
 		}
 
 		@Override
@@ -210,10 +224,12 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	protected DebuggerModelServicePlugin delegate;
 
-	/*@AutoServiceConsumed
-	private ProgramManager programManager;
-	@SuppressWarnings("unused") // need strong obj
-	private AutoService.Wiring autoServiceWiring;*/
+	@AutoServiceConsumed
+	private DebuggerTraceManagerService traceManager;
+	@AutoServiceConsumed
+	private DebuggerTargetService targetService;
+	@SuppressWarnings("unused")
+	private final AutoService.Wiring autoServiceWiring;
 
 	// This is not delegated. Each tool can have its own active model.
 	protected DebuggerObjectModel currentModel;
@@ -239,8 +255,11 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	protected final ListenerSet<CollectionChangeListener<TraceRecorder>> recorderListeners =
 		new ListenerSet<>(CollectionChangeListener.of(TraceRecorder.class));
 
+	protected final Map<TraceRecorder, TraceRecorderTarget> targets = new HashMap<>();
+
 	public DebuggerModelServiceProxyPlugin(PluginTool tool) {
 		super(tool);
+		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 	}
 
 	@Override
@@ -472,6 +491,39 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
+	public void fireFocusEvent(TargetObject focused) {
+		if (focused == null) {
+			return;
+		}
+		TraceRecorder recorder = getRecorderForSuccessor(focused);
+		if (recorder == null) {
+			return;
+		}
+		Trace trace = recorder.getTrace();
+		if (trace == null) {
+			return;
+		}
+		Trace curTrace = traceManager.getCurrentTrace();
+		if (curTrace != null && curTrace != trace) {
+			return;
+		}
+		DebuggerCoordinates focusedCoords =
+			traceManager.getCurrent().trace(trace).path(TraceObjectKeyPath.of(focused.getPath()));
+		traceManager.activate(focusedCoords, ActivationCause.SYNC_MODEL);
+	}
+
+	@Override
+	public void fireSnapEvent(TraceRecorder recorder, long snap) {
+		Trace trace = recorder.getTrace();
+		DebuggerCoordinates current = traceManager.getCurrentFor(trace);
+		if (current.getTrace() == null) {
+			return;
+		}
+		DebuggerCoordinates snapCoords = current.snapNoResolve(snap);
+		traceManager.activate(snapCoords, ActivationCause.FOLLOW_PRESENT);
+	}
+
+	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
 		if (event instanceof ProgramActivatedPluginEvent evt) {
@@ -594,16 +646,14 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	@Override
 	public TraceRecorder recordTargetAndActivateTrace(TargetObject target,
-			DebuggerTargetTraceMapper mapper, DebuggerTraceManagerService traceManager)
+			DebuggerTargetTraceMapper mapper, DebuggerTraceManagerService altTraceManager)
 			throws IOException {
-		return delegate.recordTargetAndActivateTrace(target, mapper, traceManager);
+		return delegate.recordTargetAndActivateTrace(target, mapper, altTraceManager);
 	}
 
 	@Override
 	public TraceRecorder recordTargetAndActivateTrace(TargetObject target,
 			DebuggerTargetTraceMapper mapper) throws IOException {
-		DebuggerTraceManagerService traceManager =
-			tool.getService(DebuggerTraceManagerService.class);
 		return delegate.recordTargetAndActivateTrace(target, mapper, traceManager);
 	}
 

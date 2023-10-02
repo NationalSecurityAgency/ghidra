@@ -138,7 +138,7 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 		}
 		catch (RejectedExecutionException e) {
 			reportError(this, "Model is already closing", e);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (Throwable t) {
 			return CompletableFuture.failedFuture(t);

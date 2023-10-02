@@ -203,7 +203,7 @@ public class GdbModelTargetBreakpointSpec extends
 		List<GdbModelTargetBreakpointLocation> locs = setInfoAndComputeLocations(oldInfo, newInfo);
 		updateAttributesFromInfo(reason);
 		setElements(locs, reason);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	protected CompletableFuture<Void> updateWptInfo(GdbBreakpointInfo oldInfo,

@@ -254,7 +254,7 @@ public class GdbModelTargetThread
 
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
 		GdbState gdbState = sco.getState();
-		CompletableFuture<Void> result = AsyncUtils.NIL;
+		CompletableFuture<Void> result = AsyncUtils.nil();
 		if (gdbState == GdbState.STOPPED) {
 			Msg.debug(this, "Updating stack for " + this);
 			result = CompletableFuture.allOf(updateInfo(), stack.stateChanged(sco));

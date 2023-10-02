@@ -52,7 +52,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.util.task.TaskMonitor;
 
-public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerGUITest {
 	public static class TestDynamicDataType extends CountedDynamicDataType {
 		public static final TestDynamicDataType dataType = new TestDynamicDataType();
 
