@@ -26,6 +26,7 @@ import agent.gdb.manager.impl.cmd.GdbCommandError;
 /**
  * A command queued on the GDB manager
  *
+ * <p>
  * A {@link GdbCommand} is queued by wrapping it in a {@link GdbPendingCommand} and submitting it to
  * the manager implementation's executor. This object also keep track of claimed/stolen events and
  * provides convenience methods for sifting through them.
@@ -92,6 +93,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 	/**
 	 * Claim an event
 	 * 
+	 * <p>
 	 * This stores the event for later retrieval and processing.
 	 * 
 	 * @param evt the event
@@ -104,6 +106,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 	/**
 	 * Steal an event
 	 * 
+	 * <p>
 	 * This stores the event for later retrieval and processing.
 	 * 
 	 * @param evt the event
@@ -205,6 +208,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 	/**
 	 * Check that the command completed with one of the given results
 	 * 
+	 * <p>
 	 * {@link GdbCommandErrorEvent} need not be listed. This method will handle it as a special case
 	 * already. To avoid the special treatment, list it explicitly.
 	 * 
