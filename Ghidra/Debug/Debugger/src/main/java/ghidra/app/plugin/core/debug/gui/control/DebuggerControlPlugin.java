@@ -56,6 +56,7 @@ import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.time.schedule.Scheduler;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 
 @PluginInfo(
@@ -875,7 +876,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			return;
 		}
 		DebuggerCoordinates current = this.current;
-		emulationService.backgroundRun(current.getPlatform(), current.getTime(),
+		TraceSchedule time = current.getTime();
+		emulationService.backgroundRun(current.getPlatform(), time.steppedForward(null, 0),
 			Scheduler.oneThread(current.getThread())).thenAcceptAsync(r -> {
 				traceManager.activate(current.time(r.schedule()), ActivationCause.USER);
 			}, AsyncUtils.SWING_EXECUTOR).exceptionally(ex -> {
