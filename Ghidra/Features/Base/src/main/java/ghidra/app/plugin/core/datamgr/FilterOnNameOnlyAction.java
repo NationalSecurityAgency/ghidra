@@ -13,32 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.datamgr.actions;
+package ghidra.app.plugin.core.datamgr;
 
 import docking.action.MenuData;
 import docking.action.ToggleDockingAction;
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesProvider;
+import docking.widgets.tree.GTreeNode;
 import ghidra.util.HelpLocation;
 
-public class IncludeDataTypesInFilterAction extends ToggleDockingAction {
+/**
+ * Allows user to filter on only the data type name.   When off, all information returned by
+ * {@link GTreeNode#getDisplayText()} is used for filtering.
+ */
+public class FilterOnNameOnlyAction extends ToggleDockingAction {
 
 	private final DataTypesProvider provider;
 
-	public IncludeDataTypesInFilterAction(DataTypeManagerPlugin plugin, DataTypesProvider provider,
+	public FilterOnNameOnlyAction(DataTypeManagerPlugin plugin, DataTypesProvider provider,
 			String menuSubGroup) {
-		super("Include Data Members in Filter", plugin.getName());
+		super("Filter on Name Only", plugin.getName());
 		this.provider = provider;
 
-		setMenuBarData(new MenuData(new String[] { "Include Data Members in Filter" }, null,
-			"VeryLast", MenuData.NO_MNEMONIC, menuSubGroup));
-		setDescription(
-			"Selected indicates to include member names and data types in filter operations.");
+		setMenuBarData(new MenuData(new String[] { "Filter on Name Only" }, null, "VeryLast",
+			MenuData.NO_MNEMONIC, menuSubGroup));
+		setDescription("Selected indicates to use only the data type name when filtering.");
 
 		setEnabled(true);
 		setSelected(false); // default to off!
 
-		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Filter"));
+		setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Filter_Name_Only"));
 	}
 
 	@Override
@@ -47,6 +49,6 @@ public class IncludeDataTypesInFilterAction extends ToggleDockingAction {
 			return;
 		}
 		super.setSelected(newValue);
-		provider.setIncludeDataTypeMembersInFilterCallback(newValue);
+		provider.setFilterOnNameOnlyCallback(newValue);
 	}
 }
