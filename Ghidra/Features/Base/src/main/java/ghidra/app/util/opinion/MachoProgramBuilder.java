@@ -124,7 +124,7 @@ public class MachoProgramBuilder {
 		processEntryPoint();
 		boolean exportsFound = processExports(machoHeader);
 		processSymbolTables(machoHeader, !exportsFound);
-		processIndirectSymbols();
+		processStubs();
 		processUndefinedSymbols();
 		processAbsoluteSymbols();
 		List<Address> chainedFixups = processChainedFixups(machoHeader);
@@ -570,19 +570,8 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void processIndirectSymbols() throws Exception {
-		// We only want to directly handle indirect symbols on incomplete dylibs that were extracted
-		// from a dyld_shared_cache.  If the Mach-O is fully-formed and contains binding information
-		// (found in the DyldChainedFixupsCommand or DyldInfoCommand), thunk analysis properly
-		// associates indirect symbols with their "real" symbol and we shouldn't do anything here.
-		// We hope to one day include binding information in our extracted dylibs, at which point
-		// this method can fully go away.
-		if (machoHeader.getFirstLoadCommand(DyldChainedFixupsCommand.class) != null ||
-			machoHeader.getFirstLoadCommand(DyldInfoCommand.class) != null) {
-			return;
-		}
-
-		monitor.setMessage("Processing indirect symbols...");
+	protected void processStubs() throws Exception {
+		monitor.setMessage("Processing stubs...");
 
 		SymbolTableCommand symbolTableCommand =
 			machoHeader.getFirstLoadCommand(SymbolTableCommand.class);
@@ -598,23 +587,13 @@ public class MachoProgramBuilder {
 			return;
 		}
 
-		List<Integer> sectionTypes = List.of(SectionTypes.S_NON_LAZY_SYMBOL_POINTERS,
-			SectionTypes.S_LAZY_SYMBOL_POINTERS, SectionTypes.S_SYMBOL_STUBS);
-
-		List<Section> sections = machoHeader.getAllSections()
-				.stream()
-				.filter(s -> sectionTypes.contains(s.getType()))
-				.toList();
-
-		for (Section section : sections) {
+		for (Section section : machoHeader.getAllSections()) {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			if (section.getSize() == 0) {
+			if (section.getSize() == 0 || section.getType() != SectionTypes.S_SYMBOL_STUBS) {
 				continue;
 			}
-
-			Namespace namespace = createNamespace(section.getSectionName());
 
 			int indirectSymbolTableIndex = section.getReserved1();
 
@@ -632,19 +611,19 @@ public class MachoProgramBuilder {
 				}
 				int symbolIndex = indirectSymbols[i];
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
-				if (symbol != null) {
-					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
-					if (name != null && name.length() > 0) {
-						try {
-							program.getSymbolTable()
-									.createLabel(startAddr, name, namespace, SourceType.IMPORTED);
-						}
-						catch (Exception e) {
-							log.appendMsg("Unable to create indirect symbol " + name);
-							log.appendException(e);
-						}
+				if (symbol == null) {
+					continue;
+				}
+				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
+				if (name != null && name.length() > 0) {
+					Function stubFunc = createOneByteFunction(name, startAddr);
+					if (stubFunc != null) {
+						ExternalLocation loc = program.getExternalManager()
+								.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
+						stubFunc.setThunkedFunction(loc.createFunction());
 					}
 				}
+
 				startAddr = startAddr.add(symbolSize);
 			}
 		}
@@ -1511,14 +1490,19 @@ public class MachoProgramBuilder {
 	 *
 	 * @param name the name of the function
 	 * @param address location to create the function
+	 * @return If a function already existed at the given address, that function will be returned.
+	 *   Otherwise, the newly created function will be returned.  If there was a problem creating
+	 *   the function, null will be returned.
 	 */
-	void createOneByteFunction(String name, Address address) {
+	Function createOneByteFunction(String name, Address address) {
 		FunctionManager functionMgr = program.getFunctionManager();
-		if (functionMgr.getFunctionAt(address) != null) {
-			return;
+		Function function = functionMgr.getFunctionAt(address);
+		if (function != null) {
+			return function;
 		}
 		try {
-			functionMgr.createFunction(name, address, new AddressSet(address), SourceType.IMPORTED);
+			return functionMgr.createFunction(name, address, new AddressSet(address),
+				SourceType.IMPORTED);
 		}
 		catch (InvalidInputException e) {
 			// ignore
@@ -1526,6 +1510,7 @@ public class MachoProgramBuilder {
 		catch (OverlappingFunctionException e) {
 			// ignore
 		}
+		return null;
 	}
 
 	/**
