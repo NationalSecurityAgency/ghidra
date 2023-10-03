@@ -578,7 +578,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			activate((DbgModelTargetExecutionStateful) obj);
 			// OK, this sucks, but not all threads are parented to activated objects
 			DbgModelTargetProcess parentProcess = ((DbgModelTargetObject) obj).getParentProcess();
-			if (obj instanceof DbgModelTargetExecutionStateful) {
+			if (parentProcess != null && obj instanceof DbgModelTargetExecutionStateful) {
 				activate(parentProcess);
 			}
 		}

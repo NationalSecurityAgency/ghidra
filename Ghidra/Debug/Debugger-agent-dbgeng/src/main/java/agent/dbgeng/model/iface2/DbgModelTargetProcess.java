@@ -75,7 +75,7 @@ public interface DbgModelTargetProcess extends //
 			String index = PathUtils.parseIndex(getName());
 			Long pid = Long.decode(index);
 			DebugProcessId id = new DebugProcessRecord(pid);
-			return manager.getProcessComputeIfAbsent(id, pid, fire);
+			return manager.getProcessComputeIfAbsent(id, pid, null, fire);
 		}
 		catch (IllegalArgumentException e) {
 			return manager.getCurrentProcess();
