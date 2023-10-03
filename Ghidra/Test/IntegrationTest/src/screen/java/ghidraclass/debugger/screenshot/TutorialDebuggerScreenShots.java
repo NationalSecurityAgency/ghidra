@@ -234,7 +234,6 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		workflowService = tool.getService(DebuggerWorkflowService.class);
 		enableBot(MapModulesDebuggerBot.class);
 		enableBot(DisassembleAtPcDebuggerBot.class);
-		enableBot(ShowInterpreterDebuggerBot.class);
 
 		modelService = tool.getService(DebuggerModelService.class);
 		gdbFactory = modelService.getModelFactories()

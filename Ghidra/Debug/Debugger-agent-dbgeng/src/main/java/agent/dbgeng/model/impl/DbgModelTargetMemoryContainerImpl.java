@@ -94,7 +94,7 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		DbgProcessImpl currentProcess = getManager().getCurrentProcess();
 		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS) ||
 			(currentProcess != null && !currentProcess.equals(targetProcess.getProcess()))) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return listMemory().thenAccept(byName -> {
 			List<TargetObject> sections;

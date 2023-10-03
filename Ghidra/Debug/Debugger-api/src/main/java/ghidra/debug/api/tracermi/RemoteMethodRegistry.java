@@ -18,12 +18,12 @@ package ghidra.debug.api.tracermi;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.debug.api.tracermi.RemoteMethod.Action;
+import ghidra.debug.api.target.ActionName;
 
 public interface RemoteMethodRegistry {
 	Map<String, RemoteMethod> all();
 
 	RemoteMethod get(String name);
 
-	Set<RemoteMethod> getByAction(Action action);
+	Set<RemoteMethod> getByAction(ActionName action);
 }

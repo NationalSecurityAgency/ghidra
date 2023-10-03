@@ -41,9 +41,9 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
-import ghidra.debug.api.tracermi.RemoteMethod.Action;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.AutoService.Wiring;
@@ -135,7 +135,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	protected record OpenTx(Tid txId, Transaction tx, boolean undoable) {
 	}
 
-	protected static class OpenTraceMap {
+	protected class OpenTraceMap {
 		private final Map<DoId, OpenTrace> byId = new HashMap<>();
 		private final Map<Trace, OpenTrace> byTrace = new HashMap<>();
 		private final CompletableFuture<OpenTrace> first = new CompletableFuture<>();
@@ -154,6 +154,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 				return null;
 			}
 			byTrace.remove(removed.trace);
+			plugin.withdrawTarget(removed.target);
 			return removed;
 		}
 
@@ -169,6 +170,8 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			byId.put(openTrace.doId, openTrace);
 			byTrace.put(openTrace.trace, openTrace);
 			first.complete(openTrace);
+
+			plugin.publishTarget(openTrace.target);
 		}
 
 		public CompletableFuture<OpenTrace> getFirstAsync() {
@@ -812,9 +815,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		DomainFolder folder = createFolders(traces, path.getParent());
 		CompilerSpec cs = requireCompilerSpec(req.getLanguage(), req.getCompiler());
 		DBTrace trace = new DBTrace(path.getFileName().toString(), cs, this);
-
+		TraceRmiTarget target = new TraceRmiTarget(plugin.getTool(), this, trace);
 		DoId doId = requireAvailableDoId(req.getOid());
-		openTraces.put(new OpenTrace(doId, trace));
+		openTraces.put(new OpenTrace(doId, trace, target));
 		createDeconflictedFile(folder, trace);
 		return ReplyCreateTrace.getDefaultInstance();
 	}
@@ -961,7 +964,8 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			throw error;
 		}
 		for (Method m : req.getMethodsList()) {
-			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(), new Action(m.getAction()),
+			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(),
+				new ActionName(m.getAction()),
 				m.getDescription(), m.getParametersList()
 						.stream()
 						.collect(Collectors.toMap(MethodParameter::getName, this::makeParameter)),

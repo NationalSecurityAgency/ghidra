@@ -46,7 +46,7 @@ public enum DebugModelConventions {
 		catch (Throwable e) {
 			Msg.error(originator, "Error in " + cbName, e);
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	/**
@@ -524,7 +524,7 @@ public enum DebugModelConventions {
 			DebugModelConventions.findSuitable(TargetActiveScope.class, obj);
 		return futureActivator.thenCompose(activator -> {
 			if (activator == null) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			return activator.requestActivation(obj);
 		});
@@ -544,7 +544,7 @@ public enum DebugModelConventions {
 			DebugModelConventions.findSuitable(TargetFocusScope.class, obj);
 		return futureScope.thenCompose(scope -> {
 			if (scope == null) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			return scope.requestFocus(obj);
 		});

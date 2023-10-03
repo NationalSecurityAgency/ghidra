@@ -53,6 +53,7 @@ import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectPropertyCo
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceInternal;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
+import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -545,6 +546,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	protected DebuggerModelService modelService;
 	protected DebuggerModelServiceInternal modelServiceInternal;
+	protected DebuggerTargetService targetService;
 	protected DebuggerTraceManagerService traceManager;
 	protected ProgramManager programManager;
 
@@ -595,6 +597,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		modelService = tool.getService(DebuggerModelService.class);
 		assertEquals(modelPlugin, modelService);
 		modelServiceInternal = modelPlugin;
+		targetService = addPlugin(tool, DebuggerTargetServicePlugin.class);
 
 		addPlugin(tool, DebuggerTraceManagerServicePlugin.class);
 		traceManager = tool.getService(DebuggerTraceManagerService.class);

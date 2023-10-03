@@ -29,6 +29,6 @@ public record DisableEmuBreakpointActionItem(TraceBreakpoint bpt)
 			bpt.getTrace().openTransaction("Disable Emulated Breakpoint")) {
 			bpt.setEmuEnabled(false);
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

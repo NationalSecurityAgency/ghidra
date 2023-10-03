@@ -359,6 +359,7 @@ public class DbgManagerImpl implements DbgManager {
 		}
 	}
 
+	@Override
 	public DbgSessionImpl getSessionComputeIfAbsent(DebugSessionId id, boolean fire) {
 		synchronized (sessions) {
 			if (!sessions.containsKey(id) && id.value() >= 0) {
@@ -1403,13 +1404,13 @@ public class DbgManagerImpl implements DbgManager {
 	@Override
 	public CompletableFuture<Void> addMemory(DbgModuleMemory region) {
 		memory.put(region.getId(), region);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
 	public CompletableFuture<Void> removeMemory(Long id) {
 		memory.remove(id);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
@@ -1622,7 +1623,7 @@ public class DbgManagerImpl implements DbgManager {
 			//getEventListeners().fire.promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return execute(
 			new DbgConsoleExecCommand(this, command, DbgConsoleExecCommand.Output.CONSOLE))

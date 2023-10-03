@@ -15,9 +15,7 @@
  */
 package ghidra.debug.api.workflow;
 
-import ghidra.app.services.DebuggerModelService;
 import ghidra.app.services.DebuggerWorkflowFrontEndService;
-import ghidra.dbg.DebuggerObjectModel;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.lifecycle.Internal;
@@ -26,7 +24,6 @@ import ghidra.trace.model.Trace;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPoint;
-import ghidra.util.datastruct.CollectionChangeListener;
 
 /**
  * A bot (or analyzer) that aids the user in the debugging workflow
@@ -185,24 +182,6 @@ public interface DebuggerBot extends ExtensionPoint {
 	 * enabled the first time.
 	 */
 	void disable();
-
-	/**
-	 * A model has been added to the model service
-	 * 
-	 * @see DebuggerModelService#addModelsChangedListener(CollectionChangeListener)
-	 * @param model the new model
-	 */
-	default void modelAdded(DebuggerObjectModel model) {
-	}
-
-	/**
-	 * A model has been removed from the model service
-	 * 
-	 * @see DebuggerModelService#addModelsChangedListener(CollectionChangeListener)
-	 * @param model the removed model
-	 */
-	default void modelRemoved(DebuggerObjectModel model) {
-	}
 
 	/**
 	 * A program has been opened in a tool

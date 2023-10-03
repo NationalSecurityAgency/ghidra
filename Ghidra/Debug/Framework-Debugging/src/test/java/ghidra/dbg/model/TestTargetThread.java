@@ -68,21 +68,21 @@ public class TestTargetThread
 
 	@Override
 	public CompletableFuture<Void> step(TargetStepKind kind) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
 	public CompletableFuture<Void> resume() {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
 	public CompletableFuture<Void> interrupt() {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
 	public CompletableFuture<Void> kill() {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

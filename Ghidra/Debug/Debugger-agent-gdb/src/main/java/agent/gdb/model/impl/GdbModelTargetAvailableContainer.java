@@ -86,7 +86,7 @@ public class GdbModelTargetAvailableContainer
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

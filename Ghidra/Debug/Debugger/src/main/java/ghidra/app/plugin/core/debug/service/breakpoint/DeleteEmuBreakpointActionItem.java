@@ -34,6 +34,6 @@ public record DeleteEmuBreakpointActionItem(TraceBreakpoint bpt) implements Brea
 				bpt.setEmuEnabled(false);
 			}
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

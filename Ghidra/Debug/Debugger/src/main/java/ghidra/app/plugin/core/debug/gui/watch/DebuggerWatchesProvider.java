@@ -230,7 +230,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		if (!Objects.equals(a.getPlatform(), b.getPlatform())) {
 			return false;
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTrace(), b.getTrace())) {
 			return false; // May need to read target
 		}
 		if (!Objects.equals(a.getTime(), b.getTime())) {

@@ -154,7 +154,7 @@ public class FridaModelTargetProcessImpl extends FridaModelTargetObjectImpl
 	public CompletableFuture<Void> launch(List<String> args) {
 		model.gateFuture(getManager().execute(new FridaLaunchProcessCommand(getManager(),
 			getProcess().getName(), args)));
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
@@ -200,7 +200,7 @@ public class FridaModelTargetProcessImpl extends FridaModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<Void> delete() {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 		//return model.gateFuture(process.remove());
 	}
 

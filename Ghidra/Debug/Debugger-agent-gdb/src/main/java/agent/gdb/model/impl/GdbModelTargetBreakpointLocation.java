@@ -114,7 +114,7 @@ public class GdbModelTargetBreakpointLocation
 
 			range = makeRange(impl.space.getAddress(vals.get(0)), vals.get(1).intValue());
 			doChangeAttributes("Initialized");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil(Void.class);
 		}).exceptionally(ex -> {
 			CompletableFuture<String> secondTry =
 				inf.inferior.evaluate(String.format("(long long)&(%s)", exp));

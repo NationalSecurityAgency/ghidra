@@ -64,7 +64,7 @@ public class GdbModelTargetSectionContainer
 	@Override
 	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		if (!refresh.isRefresh(elements.keySet())) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return module.module.listSections(true).thenAccept(this::updateUsingSections);
 	}

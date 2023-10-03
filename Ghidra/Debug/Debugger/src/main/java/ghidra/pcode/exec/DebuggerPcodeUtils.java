@@ -202,7 +202,7 @@ public enum DebuggerPcodeUtils {
 				"Given trace or platform does not use a Sleigh language");
 		}
 		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(tool,
-			coordinates.getRecorder(), platform, coordinates.getViewSnap());
+			coordinates.getTarget(), platform, coordinates.getViewSnap());
 		PcodeExecutorState<byte[]> shared =
 			new RWTargetMemoryPcodeExecutorState(access.getDataForSharedState(), Mode.RW);
 		if (coordinates.getThread() == null) {

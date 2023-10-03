@@ -676,10 +676,10 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 
 		// Step as written to fill the cache
 		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-1")),
-			ActivationCause.USER, false));
+			ActivationCause.USER));
 		waitForSwing();
 		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-2")),
-			ActivationCause.USER, false));
+			ActivationCause.USER));
 		waitForSwing();
 		long scratch = traceManager.getCurrentView().getSnap();
 
@@ -700,10 +700,10 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 
 		// Check the cache is still valid
 		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-1")),
-			ActivationCause.USER, false));
+			ActivationCause.USER));
 		waitForSwing();
 		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-2")),
-			ActivationCause.USER, false));
+			ActivationCause.USER));
 		waitForSwing();
 		assertEquals(scratch, traceManager.getCurrentView().getSnap());
 		assertEquals(new BigInteger("1234", 16),

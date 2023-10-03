@@ -153,7 +153,7 @@ public class LldbModelTargetStackFrameRegisterBankImpl
 			reg.getRegister().SetValueFromCString(val.toString());
 		}
 		broadcast().registersUpdated(getProxy(), values);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public Object getContainer() {

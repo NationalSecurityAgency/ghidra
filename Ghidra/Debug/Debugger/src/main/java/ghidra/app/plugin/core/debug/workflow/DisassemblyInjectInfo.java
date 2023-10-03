@@ -17,16 +17,41 @@ package ghidra.app.plugin.core.debug.workflow;
 
 import java.lang.annotation.*;
 
+/**
+ * Information about the applicability of a disassembly inject
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DisassemblyInjectInfo {
 	/**
-	 * A list of language IDs for which this inject applies
+	 * A language-compiler-ID pair
+	 */
+	public @interface CompilerInfo {
+		/**
+		 * The language ID, e.g., "x86:64:LE:default"
+		 * 
+		 * @return the language id
+		 */
+		String langID();
+
+		/**
+		 * The compiler ID, e.g., "gcc" or "windows"
+		 * 
+		 * <p>
+		 * Leave as the default ("") to apply to all compilers for the language
+		 * 
+		 * @return the compiler id
+		 */
+		String compilerID() default "";
+	}
+
+	/**
+	 * A list of language-compiler-ID pairs for which this inject applies
 	 * 
 	 * @see DisassemblyInject#isApplicable(ghidra.trace.model.Trace)
-	 * @return the language ID strings
+	 * @return the language-compiler-ID pairs
 	 */
-	String[] langIDs();
+	CompilerInfo[] compilers();
 
 	/**
 	 * The "position" of this inject's invocation

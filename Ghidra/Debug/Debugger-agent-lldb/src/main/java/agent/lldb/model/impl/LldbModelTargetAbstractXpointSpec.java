@@ -83,7 +83,7 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 	protected CompletableFuture<Void> init() {
 		Object info = getModelObject();
 		updateInfo(info, "Created");
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override

@@ -46,6 +46,6 @@ public class NoneAutoReadMemorySpec implements AutoReadMemorySpec {
 	@Override
 	public CompletableFuture<Void> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
 			AddressSetView visible) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

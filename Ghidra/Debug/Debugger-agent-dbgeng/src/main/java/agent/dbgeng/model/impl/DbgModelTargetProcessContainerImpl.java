@@ -211,7 +211,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@TargetMethod.Export("Populate")

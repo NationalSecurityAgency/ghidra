@@ -504,7 +504,7 @@ public class GadpClient extends AbstractDebuggerObjectModel
 		}
 		catch (RejectedExecutionException e) {
 			reportError(this, "Client already closed", e);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (IOException e) {
 			return CompletableFuture.failedFuture(e);

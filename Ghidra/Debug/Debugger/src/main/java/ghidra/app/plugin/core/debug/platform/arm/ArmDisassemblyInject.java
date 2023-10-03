@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
 import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo;
+import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo.CompilerInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
@@ -30,27 +31,27 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
 @DisassemblyInjectInfo(
-	langIDs = {
-		"ARM:LE:32:v8",
-		"ARM:LE:32:v8T",
-		"ARM:LEBE:32:v8LEInstruction",
-		"ARM:BE:32:v8",
-		"ARM:BE:32:v8T",
-		"ARM:LE:32:v7",
-		"ARM:LEBE:32:v7LEInstruction",
-		"ARM:BE:32:v7",
-		"ARM:LE:32:Cortex",
-		"ARM:BE:32:Cortex",
-		"ARM:LE:32:v6",
-		"ARM:BE:32:v6",
-		"ARM:LE:32:v5t",
-		"ARM:BE:32:v5t",
-		"ARM:LE:32:v5",
-		"ARM:BE:32:v5",
-		"ARM:LE:32:v4t",
-		"ARM:BE:32:v4t",
-		"ARM:LE:32:v4",
-		"ARM:BE:32:v4",
+	compilers = {
+		@CompilerInfo(langID = "ARM:LE:32:v8"),
+		@CompilerInfo(langID = "ARM:LE:32:v8T"),
+		@CompilerInfo(langID = "ARM:LEBE:32:v8LEInstruction"),
+		@CompilerInfo(langID = "ARM:BE:32:v8"),
+		@CompilerInfo(langID = "ARM:BE:32:v8T"),
+		@CompilerInfo(langID = "ARM:LE:32:v7"),
+		@CompilerInfo(langID = "ARM:LEBE:32:v7LEInstruction"),
+		@CompilerInfo(langID = "ARM:BE:32:v7"),
+		@CompilerInfo(langID = "ARM:LE:32:Cortex"),
+		@CompilerInfo(langID = "ARM:BE:32:Cortex"),
+		@CompilerInfo(langID = "ARM:LE:32:v6"),
+		@CompilerInfo(langID = "ARM:BE:32:v6"),
+		@CompilerInfo(langID = "ARM:LE:32:v5t"),
+		@CompilerInfo(langID = "ARM:BE:32:v5t"),
+		@CompilerInfo(langID = "ARM:LE:32:v5"),
+		@CompilerInfo(langID = "ARM:BE:32:v5"),
+		@CompilerInfo(langID = "ARM:LE:32:v4t"),
+		@CompilerInfo(langID = "ARM:BE:32:v4t"),
+		@CompilerInfo(langID = "ARM:LE:32:v4"),
+		@CompilerInfo(langID = "ARM:BE:32:v4"),
 	})
 public class ArmDisassemblyInject implements DisassemblyInject {
 	protected static final long THUMB_BIT = 0x20;

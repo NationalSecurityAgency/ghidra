@@ -23,10 +23,14 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
+import ghidra.app.services.DebuggerTargetService;
 import ghidra.app.services.TraceRmiService;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.AutoService.Wiring;
+import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.util.Swing;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
@@ -43,11 +47,20 @@ import ghidra.util.task.TaskMonitor;
 		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,
 	},
+	servicesRequired = {
+		DebuggerTargetService.class,
+	},
 	servicesProvided = {
 		TraceRmiService.class,
 	})
 public class TraceRmiPlugin extends Plugin implements TraceRmiService {
 	private static final int DEFAULT_PORT = 15432;
+
+	@AutoServiceConsumed
+	private DebuggerTargetService targetService;
+	@SuppressWarnings("unused")
+	private final Wiring autoServiceWiring;
+
 	private final TaskMonitor monitor = new ConsoleTaskMonitor();
 
 	private SocketAddress serverAddress = new InetSocketAddress("0.0.0.0", DEFAULT_PORT);
@@ -57,6 +70,7 @@ public class TraceRmiPlugin extends Plugin implements TraceRmiService {
 
 	public TraceRmiPlugin(PluginTool tool) {
 		super(tool);
+		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 	}
 
 	public TaskMonitor getTaskMonitor() {
@@ -131,5 +145,17 @@ public class TraceRmiPlugin extends Plugin implements TraceRmiService {
 	@Override
 	public Collection<TraceRmiConnection> getAllConnections() {
 		return List.copyOf(handlers);
+	}
+
+	void publishTarget(TraceRmiTarget target) {
+		Swing.runIfSwingOrRunLater(() -> {
+			targetService.publishTarget(target);
+		});
+	}
+
+	void withdrawTarget(TraceRmiTarget target) {
+		Swing.runIfSwingOrRunLater(() -> {
+			targetService.withdrawTarget(target);
+		});
 	}
 }

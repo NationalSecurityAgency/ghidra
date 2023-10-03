@@ -120,7 +120,7 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		public ThreadTableModel(DebuggerThreadsProvider provider) {
 			super(provider.getTool(), "Threads", ThreadTableColumns.class,
-				TraceThread::getObjectKey, t -> new ThreadRow(provider.modelService, t),
+				TraceThread::getObjectKey, t -> new ThreadRow(provider, t),
 				ThreadRow::getThread);
 		}
 	}

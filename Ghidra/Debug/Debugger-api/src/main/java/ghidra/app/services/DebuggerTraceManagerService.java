@@ -27,6 +27,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.TriConsumer;
@@ -281,11 +282,10 @@ public interface DebuggerTraceManagerService {
 	 * 
 	 * @param coordinates the desired coordinates
 	 * @param cause the cause of the activation
-	 * @param syncTarget true synchronize the current target to the same coordinates
 	 * @return a future which completes when emulation and navigation is complete
 	 */
 	CompletableFuture<Void> activateAndNotify(DebuggerCoordinates coordinates,
-			ActivationCause cause, boolean syncTarget);
+			ActivationCause cause);
 
 	/**
 	 * Activate the given coordinates, caused by the user
@@ -427,6 +427,24 @@ public interface DebuggerTraceManagerService {
 	 */
 	default void activateFrame(int frameLevel) {
 		activate(resolveFrame(frameLevel));
+	}
+
+	/**
+	 * Resolve coordinates for the given object path using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param path the path
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolvePath(TraceObjectKeyPath path);
+
+	/**
+	 * Activate the given object path
+	 * 
+	 * @param path the desired path
+	 */
+	default void activatePath(TraceObjectKeyPath path) {
+		activate(resolvePath(path));
 	}
 
 	/**

@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
-import ghidra.app.plugin.core.debug.service.emulation.data.*;
 import ghidra.debug.api.emulation.DebuggerPcodeMachine;
 import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 import ghidra.pcode.emu.PcodeEmulator;

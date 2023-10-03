@@ -759,7 +759,7 @@ public class GdbManagerImpl implements GdbManager {
 	protected CompletableFuture<Void> rc() {
 		if (cliThread != null) {
 			// NB. confirm and pagination are already disabled here
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		// NB. Don't disable pagination here. MI2 is not paginated.
 		return CompletableFuture.allOf(

@@ -1198,7 +1198,7 @@ public class FridaManagerImpl implements FridaManager {
 			getEventListeners().fire.promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return execute(
 			new FridaConsoleExecCommand(this, command, FridaConsoleExecCommand.Output.CONSOLE))

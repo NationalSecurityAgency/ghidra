@@ -22,6 +22,7 @@ import java.awt.datatransfer.StringSelection;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +46,8 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService;
+import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.dbg.model.*;
@@ -177,11 +179,13 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		waitRecorder(recorder);
 		waitForSwing();
 
-		performEnabledAction(null, controlPlugin.actionTargetResume, true);
+		DockingAction actionTargetResume = controlPlugin.getTargetAction("Resume");
+		performEnabledAction(null, actionTargetResume, true);
+		waitForTasks();
 		waitRecorder(recorder);
 		assertEquals(List.of("resume"), commands);
 		waitForSwing();
-		assertFalse(controlPlugin.actionTargetResume.isEnabled());
+		assertFalse(actionTargetResume.isEnabled());
 	}
 
 	@Test
@@ -195,17 +199,19 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		waitRecorder(recorder);
 		waitForSwing();
 
-		assertFalse(controlPlugin.actionTargetInterrupt.isEnabled());
+		DockingAction actionTargetInterrupt = controlPlugin.getTargetAction("Interrupt");
+		assertFalse(actionTargetInterrupt.isEnabled());
 		waitOn(mb.testThread1.resume());
 		waitRecorder(recorder);
 		commands.clear();
 		waitForSwing();
 
-		performEnabledAction(null, controlPlugin.actionTargetInterrupt, true);
+		performEnabledAction(null, actionTargetInterrupt, true);
+		waitForTasks();
 		waitRecorder(recorder);
 		assertEquals(List.of("interrupt"), commands);
 		waitForSwing();
-		assertFalse(controlPlugin.actionTargetInterrupt.isEnabled());
+		assertFalse(actionTargetInterrupt.isEnabled());
 	}
 
 	@Test
@@ -219,11 +225,13 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		waitRecorder(recorder);
 		waitForSwing();
 
-		performEnabledAction(null, controlPlugin.actionTargetKill, true);
+		DockingAction actionTargetKill = controlPlugin.getTargetAction("Kill");
+		performEnabledAction(null, actionTargetKill, true);
+		waitForTasks();
 		waitRecorder(recorder);
 		assertEquals(List.of("kill"), commands);
 		waitForSwing();
-		assertFalse(controlPlugin.actionTargetKill.isEnabled());
+		assertFalse(actionTargetKill.isEnabled());
 	}
 
 	@Test
@@ -235,13 +243,14 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		waitForSwing();
 
 		performEnabledAction(null, controlPlugin.actionTargetDisconnect, true);
+		waitForTasks();
 		waitRecorder(recorder);
 		assertEquals(List.of("close"), commands);
 		waitForSwing();
 		waitForPass(() -> assertFalse(controlPlugin.actionTargetDisconnect.isEnabled()));
 	}
 
-	protected void runTestTargetStepAction(DockingAction action, TargetStepKind expected)
+	protected void runTestTargetStepAction(Supplier<DockingAction> action, TargetStepKind expected)
 			throws Throwable {
 		createTestModel();
 		TraceRecorder recorder = recordAndWaitSync();
@@ -252,26 +261,30 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		waitRecorder(recorder);
 		waitForSwing();
 
-		performEnabledAction(null, action, true);
+		performEnabledAction(null, action.get(), true);
+		waitForTasks();
 		waitRecorder(recorder);
 		assertEquals(List.of("step(" + expected + ")"), commands);
 		waitForSwing();
-		assertTrue(action.isEnabled());
+		assertTrue(action.get().isEnabled());
 	}
 
 	@Test
 	public void testTargetStepIntoAction() throws Throwable {
-		runTestTargetStepAction(controlPlugin.actionTargetStepInto, TargetStepKind.INTO);
+		runTestTargetStepAction(() -> controlPlugin.getTargetAction("Step Into"),
+			TargetStepKind.INTO);
 	}
 
 	@Test
 	public void testTargetStepOverAction() throws Throwable {
-		runTestTargetStepAction(controlPlugin.actionTargetStepOver, TargetStepKind.OVER);
+		runTestTargetStepAction(() -> controlPlugin.getTargetAction("Step Over"),
+			TargetStepKind.OVER);
 	}
 
 	@Test
-	public void testTargetStepFinishAction() throws Throwable {
-		runTestTargetStepAction(controlPlugin.actionTargetStepFinish, TargetStepKind.FINISH);
+	public void testTargetStepOutAction() throws Throwable {
+		runTestTargetStepAction(() -> controlPlugin.getTargetAction("Step Out"),
+			TargetStepKind.FINISH);
 	}
 
 	TraceThread createToyLoopTrace() throws Throwable {

@@ -112,7 +112,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 			if (regs.size() != registersByName.size() || getCachedElements().isEmpty()) {
 				return requestElements(RefreshBehavior.REFRESH_NEVER);
 			}
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}).thenCompose(__ -> {
 			Set<DbgRegister> toRead = new LinkedHashSet<>();
 			for (String regname : names) {

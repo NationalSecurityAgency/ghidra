@@ -1339,30 +1339,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractCaptureTypesAction extends DockingAction {
-		public static final String NAME = "Capture Data Types";
-		public static final Icon ICON = ICON_DATA_TYPES;
-		public static final String HELP_ANCHOR = "capture_types";
-
-		public AbstractCaptureTypesAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Capture data types from selected modules");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
-		}
-	}
-
-	abstract class AbstractCaptureSymbolsAction extends DockingAction {
-		public static final String NAME = "Capture Symbols";
-		public static final Icon ICON = ICON_CAPTURE_SYMBOLS;
-		public static final String HELP_ANCHOR = "capture_symbols";
-
-		public AbstractCaptureSymbolsAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Capture symbols from selected modules");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
-		}
-	}
-
 	abstract class AbstractImportFromFileSystemAction extends DockingAction {
 		public static final String NAME = "Import From File System";
 		public static final String HELP_ANCHOR = "import_from_fs";

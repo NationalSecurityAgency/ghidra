@@ -27,11 +27,13 @@ import ghidra.trace.model.time.TraceSnapshot;
 class OpenTrace implements ValueDecoder {
 	final DoId doId;
 	final Trace trace;
+	final TraceRmiTarget target;
 	TraceSnapshot lastSnapshot;
 
-	OpenTrace(DoId doId, Trace trace) {
+	OpenTrace(DoId doId, Trace trace, TraceRmiTarget target) {
 		this.doId = doId;
 		this.trace = trace;
+		this.target = target;
 	}
 
 	public TraceSnapshot createSnapshot(Snap snap, String description) {

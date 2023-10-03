@@ -47,6 +47,7 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
@@ -108,6 +109,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	@Override
 	public TargetObject getTargetObject(TraceObject obj) {
 		return null;
+	}
+
+	@Override
+	public TargetObject getTargetObject(TraceObjectKeyPath path) {
+		return target.getModel().getModelObject(path.getKeyList());
 	}
 
 	@Override
@@ -279,7 +285,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	@Override
 	public CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor) {
 		if (set.isEmpty()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return memoryRecorder.captureProcessMemory(set, monitor);
 	}
@@ -288,7 +294,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	public CompletableFuture<Void> captureDataTypes(TargetDataTypeNamespace namespace,
 			TaskMonitor monitor) {
 		if (!valid) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return datatypeRecorder.captureDataTypes(namespace, monitor);
 	}
@@ -298,7 +304,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		TargetModule targetModule = getTargetModule(module);
 		if (targetModule == null) {
 			Msg.error(this, "Module " + module + " is not loaded");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return datatypeRecorder.captureDataTypes(targetModule, monitor);
 	}
@@ -307,7 +313,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	public CompletableFuture<Void> captureSymbols(TargetSymbolNamespace namespace,
 			TaskMonitor monitor) {
 		if (!valid) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return symbolRecorder.captureSymbols(namespace, monitor);
 	}
@@ -317,7 +323,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		TargetModule targetModule = getTargetModule(module);
 		if (targetModule == null) {
 			Msg.error(this, "Module " + module + " is not loaded");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return symbolRecorder.captureSymbols(targetModule, monitor);
 	}

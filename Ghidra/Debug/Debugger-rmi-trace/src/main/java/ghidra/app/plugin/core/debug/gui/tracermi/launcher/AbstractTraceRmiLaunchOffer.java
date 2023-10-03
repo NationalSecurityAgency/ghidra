@@ -156,7 +156,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			Trace trace) {
 		Address probeAddress = getMappingProbeAddress();
 		if (probeAddress == null) {
-			return AsyncUtils.NIL; // No need to wait on mapping of nothing
+			return AsyncUtils.nil(); // No need to wait on mapping of nothing
 		}
 		ProgramLocation probe = new ProgramLocation(program, probeAddress);
 		var result = new CompletableFuture<Void>() {

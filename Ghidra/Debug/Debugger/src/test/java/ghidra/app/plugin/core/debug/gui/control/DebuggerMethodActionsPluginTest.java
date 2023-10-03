@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -114,14 +114,14 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 										display = "Target",
 										name = "target") Address target) {
 								commands.add("advance(" + target + ")");
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 
 							// Takes no address context
 							@TargetMethod.Export("StepExt")
 							public CompletableFuture<Void> stepExt() {
 								commands.add("stepExt");
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 
 							// Takes a second required non-default parameter
@@ -136,7 +136,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 										display = "Flag",
 										name = "flag") boolean flag) {
 								commands.add("advanceWithFlag(" + address + "," + flag + ")");
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 
 							// Takes a second address parameter
@@ -151,7 +151,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 										display = "End",
 										name = "end") Address end) {
 								commands.add("between(" + start + "," + end + ")");
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 						};
 					}
@@ -197,6 +197,8 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 		ProgramLocationActionContext ctx =
 			new ProgramLocationActionContext(listingPlugin.getProvider(), program,
 				new ProgramLocation(program, addr(program, 0)), null, null);
+		waitOn(mb.testModel.requestFocus(mb.testProcess1));
+		waitForSwing();
 		assertEquals(List.of(), methodsPlugin.getPopupActions(tool, ctx));
 	}
 
