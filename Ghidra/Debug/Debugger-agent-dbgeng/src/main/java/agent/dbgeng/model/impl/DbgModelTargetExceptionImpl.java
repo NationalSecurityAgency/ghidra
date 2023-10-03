@@ -37,11 +37,8 @@ import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
-@TargetObjectSchemaInfo(
-	name = "Exception",
-	elements = {
-		@TargetElementType(type = Void.class) },
-	attributes = {
+@TargetObjectSchemaInfo(name = "Exception", elements = {
+	@TargetElementType(type = Void.class) }, attributes = {
 		@TargetAttributeType(type = Object.class) })
 public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetException {
@@ -102,6 +99,7 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public void eventSelected(AbstractDbgEvent<?> event, DbgCause cause) {
+		DbgManagerImpl manager = getManager();
 		changeAttributes(List.of(), List.of(), Map.of( //
 			MODIFIED_ATTRIBUTE_NAME, false), "Refreshed");
 		if (event instanceof DbgExceptionEvent) {
@@ -111,6 +109,8 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 						.setFocus(this);
 				changeAttributes(List.of(), List.of(), Map.of( //
 					MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
+				manager.getEventListeners().fire.consoleOutput(
+					"Exception " + filter.getExceptionCode() + " : " + filter.getName() + "\n", 0);
 			}
 		}
 	}
@@ -129,10 +129,9 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 			ParameterDescription.create(Integer.class, EXECUTE_OPTION_ATTRIBUTE_NAME, false,
 				execOption.getOption(), EXECUTE_OPTION_ATTRIBUTE_NAME, "filter execution option");
 		map.put(EXECUTE_OPTION_ATTRIBUTE_NAME, execDesc);
-		ParameterDescription<Integer> contDesc =
-			ParameterDescription.create(Integer.class, CONTINUE_OPTION_ATTRIBUTE_NAME, false,
-				contOption.getOption(), CONTINUE_OPTION_ATTRIBUTE_NAME,
-				"filter continuation option");
+		ParameterDescription<Integer> contDesc = ParameterDescription.create(Integer.class,
+			CONTINUE_OPTION_ATTRIBUTE_NAME, false, contOption.getOption(),
+			CONTINUE_OPTION_ATTRIBUTE_NAME, "filter continuation option");
 		map.put(CONTINUE_OPTION_ATTRIBUTE_NAME, contDesc);
 		return map;
 	}
@@ -146,8 +145,8 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 					this.changeAttributes(List.of(), Map.of(COMMAND_ATTRIBUTE_NAME, value),
 						"Modified");
 					String cmd = (String) getCachedAttribute(COMMAND_ATTRIBUTE_NAME);
-					return manager.execute(
-						new DbgSetFilterCommandCommand(manager, getEventIndex(), cmd));
+					return manager
+							.execute(new DbgSetFilterCommandCommand(manager, getEventIndex(), cmd));
 				}
 				throw new DebuggerIllegalArgumentException("Command should be a string");
 			case COMMAND2_ATTRIBUTE_NAME:
