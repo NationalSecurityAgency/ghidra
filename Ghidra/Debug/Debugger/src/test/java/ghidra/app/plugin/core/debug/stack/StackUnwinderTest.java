@@ -1389,7 +1389,22 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	public static HoverLocation findTokenLocation(DecompilerPanel decompilerPanel,
 			Function function, String tokText, String fieldText) {
 		DecompileResults results = waitForValue(() -> {
-			ProgramLocation pLoc = decompilerPanel.getCurrentLocation();
+			ProgramLocation pLoc;
+			try {
+				pLoc = decompilerPanel.getCurrentLocation();
+			}
+			catch (NullPointerException e) {
+				/**
+				 * HACK: There's an unlikely race condition where the layout controller has created
+				 * the array of layouts but not fully populated it by the time we ask for the
+				 * current location. This may cause a line we inspect to still have null in it and
+				 * throw an NPE. Whatever. Just catch the thing and return null so that we try
+				 * again. As far as I can tell, this is not indicative of a problem in production,
+				 * because the controller won't issue an updated event until that array is fully
+				 * populated.
+				 */
+				return null;
+			}
 			if (!(pLoc instanceof DecompilerLocation dLoc)) {
 				return null;
 			}
