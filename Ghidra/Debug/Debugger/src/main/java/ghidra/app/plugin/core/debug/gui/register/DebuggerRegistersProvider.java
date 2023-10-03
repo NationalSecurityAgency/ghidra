@@ -615,8 +615,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			catch (AddressOutOfBoundsException e) {
 				continue;
 			}
-			if (currentTrace.getMemoryManager()
-					.getRegionContaining(current.getSnap(), address) == null) {
+			// Use program view, not memory manager, so that "Force Full View" is respected.
+			if (!currentTrace.getProgramView().getMemory().contains(address)) {
 				continue;
 			}
 			String name = "Goto " + address.toString(true);
