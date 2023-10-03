@@ -1798,5 +1798,9 @@ public class DbgManagerImpl implements DbgManager {
 			getEventListeners().fire.threadSelected(eventThread, null, Causes.UNCLAIMED);
 		}
 	}
+	
+	public DebugStatus getStatus() {
+		return status;
+	}
 
 }
