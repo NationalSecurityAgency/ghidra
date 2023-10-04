@@ -26,6 +26,7 @@ import ghidra.pcode.emu.PcodeMachine.SwiMode;
 import ghidra.pcode.emulate.*;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.memstate.MemoryFaultHandler;
 import ghidra.pcode.memstate.MemoryState;
@@ -34,6 +35,7 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -126,14 +128,67 @@ public class AdaptedEmulator implements Emulator {
 			}
 			return adaptedBreakTable.doPcodeOpBreak(new PcodeOpRaw(op));
 		}
+
+		@Override
+		protected SleighInstructionDecoder createInstructionDecoder(
+				PcodeExecutorState<byte[]> sharedState) {
+			return new SleighInstructionDecoder(language, sharedState) {
+				@Override
+				public Instruction decodeInstruction(Address address, RegisterValue context) {
+					try {
+						isDecoding = true;
+						return super.decodeInstruction(address, context);
+					}
+					finally {
+						isDecoding = false;
+					}
+				}
+			};
+		}
 	}
 
 	record StateBacking(MemoryFaultHandler faultHandler, MemoryLoadImage loadImage) {
 	}
 
-	static class AdaptedBytesPcodeExecutorState extends BytesPcodeExecutorState {
+	class AdaptedBytesPcodeExecutorState extends BytesPcodeExecutorState {
 		public AdaptedBytesPcodeExecutorState(Language language, StateBacking backing) {
 			super(new AdaptedBytesPcodeExecutorStatePiece(language, backing));
+		}
+
+		@Override
+		public byte[] getVar(AddressSpace space, byte[] offset, int size, boolean quantize,
+				Reason reason) {
+			byte[] data = super.getVar(space, offset, size, quantize, reason);
+			if (reason != Reason.INSPECT) {
+				adaptedFilteredMemState.applyRead(space, arithmetic.toLong(offset, Purpose.LOAD),
+					size, data);
+			}
+			return data;
+		}
+
+		@Override
+		public byte[] getVar(AddressSpace space, long offset, int size, boolean quantize,
+				Reason reason) {
+			byte[] data = super.getVar(space, offset, size, quantize, reason);
+			if (reason != Reason.INSPECT) {
+				adaptedFilteredMemState.applyRead(space, offset, size, data);
+			}
+			return data;
+		}
+
+		@Override
+		public void setVar(AddressSpace space, byte[] offset, int size, boolean quantize,
+				byte[] val) {
+			adaptedFilteredMemState.applyWrite(space,
+				arithmetic.toLong(offset, Purpose.STORE), size, val);
+			super.setVar(space, offset, size, quantize, val);
+		}
+
+		@Override
+		public void setVar(AddressSpace space, long offset, int size, boolean quantize,
+				byte[] val) {
+			adaptedFilteredMemState.applyWrite(space, offset, size, val);
+			super.setVar(space, offset, size, quantize, val);
 		}
 	}
 
@@ -222,18 +277,59 @@ public class AdaptedEmulator implements Emulator {
 		}
 	}
 
+	/**
+	 * An adapter to keep track of the filter chain
+	 * 
+	 * <p>
+	 * We don't actually invoke this adapter's set/getChunk methods. Instead, we just use it to
+	 * track what filters are installed. The {@link AdaptedBytesPcodeExecutorState} will invoke the
+	 * filter chain and then perform the read or write itself.
+	 */
+	static class AdaptedFilteredMemoryState extends FilteredMemoryState {
+		private MemoryAccessFilter headFilter;
+
+		AdaptedFilteredMemoryState(Language lang) {
+			super(lang);
+		}
+
+		@Override
+		MemoryAccessFilter setFilter(MemoryAccessFilter filter) {
+			MemoryAccessFilter oldHead = this.headFilter;
+			this.headFilter = filter;
+			return oldHead;
+		}
+
+		void applyRead(AddressSpace space, long offset, int size, byte[] data) {
+			if (headFilter == null) {
+				return;
+			}
+			headFilter.filterRead(space, offset, size, data);
+		}
+
+		void applyWrite(AddressSpace space, long offset, int size, byte[] data) {
+			if (headFilter == null) {
+				return;
+			}
+			headFilter.filterWrite(space, offset, size, data);
+		}
+	}
+
 	private final Language language;
 	private final Register pcReg;
 	private final AdaptedPcodeEmulator emu;
 	private final AdaptedPcodeThread thread;
 	private final MemoryState adaptedMemState;
 	private final AdaptedBreakTableCallback adaptedBreakTable;
+	private final AdaptedFilteredMemoryState adaptedFilteredMemState;
 
+	// NB. Only a single thread is supported
+	private boolean isDecoding = false;
 	private boolean isExecuting = false;
 	private RuntimeException lastError;
 
 	public AdaptedEmulator(EmulatorConfiguration config) {
 		this.language = config.getLanguage();
+		this.adaptedFilteredMemState = new AdaptedFilteredMemoryState(language);
 		this.pcReg = language.getProgramCounter();
 		if (config.isWriteBackEnabled()) {
 			throw new IllegalArgumentException("write-back is not supported");
@@ -339,12 +435,11 @@ public class AdaptedEmulator implements Emulator {
 		if (lastError != null) {
 			return EmulateExecutionState.FAULT;
 		}
-		PcodeFrame frame = thread.getFrame();
-		if (frame != null) {
-			return EmulateExecutionState.EXECUTE;
+		if (isDecoding) {
+			return EmulateExecutionState.INSTRUCTION_DECODE;
 		}
 		if (isExecuting) {
-			return EmulateExecutionState.INSTRUCTION_DECODE;
+			return EmulateExecutionState.EXECUTE;
 		}
 		return EmulateExecutionState.STOPPED;
 	}
@@ -361,8 +456,7 @@ public class AdaptedEmulator implements Emulator {
 
 	@Override
 	public FilteredMemoryState getFilteredMemState() {
-		// Just a dummy to prevent NPEs
-		return new FilteredMemoryState(language);
+		return adaptedFilteredMemState;
 	}
 
 	@Override
