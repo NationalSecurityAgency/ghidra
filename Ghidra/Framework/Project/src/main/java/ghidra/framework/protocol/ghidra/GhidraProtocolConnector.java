@@ -56,7 +56,7 @@ public abstract class GhidraProtocolConnector {
 		checkProtocol();
 		checkUserInfo();
 		checkHostInfo();
-		this.repositoryName = GhidraURL.isServerRepositoryURL(url) ? parseRepositoryName() : null;
+		this.repositoryName = parseRepositoryName();
 		this.itemPath = parseItemPath();
 	}
 
@@ -185,6 +185,9 @@ public abstract class GhidraProtocolConnector {
 		String path = url.getPath();
 
 		if (repositoryName == null) {
+			if (!StringUtils.isEmpty(path) && !"/".equals(path)) {
+				throw new MalformedURLException();
+			}
 			return null; // presumed server-only URL
 		}
 
@@ -206,7 +209,8 @@ public abstract class GhidraProtocolConnector {
 	}
 
 	/**
-	 * Gets the repository name associated with the URL.
+	 * Gets the repository name associated with the URL.  If a local URL is used this will
+	 * correspond to the project name.
 	 * @return the repository name or null if URL does not identify a specific repository
 	 */
 	public String getRepositoryName() {
