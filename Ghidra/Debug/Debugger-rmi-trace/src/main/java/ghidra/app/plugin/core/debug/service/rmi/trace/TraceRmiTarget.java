@@ -309,8 +309,12 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public boolean isSupportsFocus() {
-		return trace.getObjectManager()
-				.getRootSchema()
+		TargetObjectSchema schema = trace.getObjectManager().getRootSchema();
+		if (schema == null) {
+			Msg.warn(this, "Checked for focus support before root schema is available");
+			return false;
+		}
+		return schema
 				.getInterfaces()
 				.contains(TargetFocusScope.class) &&
 			!connection.getMethods().getByAction(ActionName.ACTIVATE).isEmpty();
@@ -938,26 +942,21 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected Set<TraceBreakpointKind> computeSupportedBreakpointKinds() {
-		MatchedMethod breakHwExec = matches.getBest(BREAK_HW_EXEC, null, null);
-		MatchedMethod breakSwExec = matches.getBest(BREAK_SW_EXEC, null, null);
-		MatchedMethod breakRead = matches.getBest(BREAK_READ, null, null);
-		MatchedMethod breakWrite = matches.getBest(BREAK_WRITE, null, null);
-		MatchedMethod breakAccess = matches.getBest(BREAK_ACCESS, null, null);
-
 		Set<TraceBreakpointKind> result = new HashSet<>();
-		if (breakHwExec != null) {
+		RemoteMethodRegistry methods = connection.getMethods();
+		if (!methods.getByAction(ActionName.BREAK_HW_EXECUTE).isEmpty()) {
 			result.add(TraceBreakpointKind.HW_EXECUTE);
 		}
-		if (breakSwExec != null) {
+		if (!methods.getByAction(ActionName.BREAK_SW_EXECUTE).isEmpty()) {
 			result.add(TraceBreakpointKind.SW_EXECUTE);
 		}
-		if (breakRead != null) {
+		if (!methods.getByAction(ActionName.BREAK_READ).isEmpty()) {
 			result.add(TraceBreakpointKind.READ);
 		}
-		if (breakWrite != null) {
+		if (!methods.getByAction(ActionName.BREAK_WRITE).isEmpty()) {
 			result.add(TraceBreakpointKind.WRITE);
 		}
-		if (breakAccess != null) {
+		if (!methods.getByAction(ActionName.BREAK_ACCESS).isEmpty()) {
 			result.add(TraceBreakpointKind.READ);
 			result.add(TraceBreakpointKind.WRITE);
 		}
