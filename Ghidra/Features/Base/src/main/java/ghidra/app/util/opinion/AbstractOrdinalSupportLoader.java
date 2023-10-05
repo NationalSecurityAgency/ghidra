@@ -107,6 +107,7 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 		if (localLibFile == null ||
 			!LibraryLookupTable.libraryLookupTableFileExists(libName, size) ||
 			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(localLibFile, size)) {
+			log.appendMsg("Examining ordinal info in %s...".formatted(libFsrl));
 			try {
 				// Need to write correct library exports file (LibrarySymbolTable)
 				// for use with related imports
