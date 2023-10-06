@@ -454,11 +454,17 @@ public:
 /// This class can be used as the low-level back-end to EmitPrettyPrint to provide a solution
 /// that does both pretty printing and markup.
 class EmitMarkup : public Emit {
+public:
+  enum MarkupFormat {
+    format_xml,
+    format_packed,
+  };
 protected:
   ostream *s;				///< Stream being emitted to
   Encoder *encoder;			///< How markup is encoded to the output stream
+  MarkupFormat markup_format;		///< How to format the markup.
 public:
-  EmitMarkup(void) : Emit() { s = (ostream *)0; encoder = (Encoder *)0; }		///< Constructor
+  EmitMarkup(MarkupFormat format) : Emit() { s = (ostream *)0; encoder = (Encoder *)0; markup_format = format; }		///< Constructor
 
   virtual ~EmitMarkup(void);
   virtual int4 beginDocument(void);
@@ -1064,7 +1070,7 @@ public:
   virtual void setCommentFill(const string &fill) { commentfill = fill; }
   virtual bool emitsMarkup(void) const { return lowlevel->emitsMarkup(); }
   virtual void resetDefaults(void);
-  void setMarkup(bool val);	///< Toggle whether the low-level emitter emits markup or not
+  void setMarkup(bool val, EmitMarkup::MarkupFormat format);	///< Toggle whether the low-level emitter emits markup or not
 };
 
 /// \brief Helper class for sending cancelable print commands to an ExitXml

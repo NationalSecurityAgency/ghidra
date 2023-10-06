@@ -963,9 +963,10 @@ void IfcPrintCXml::execute(istream &s)
     throw IfaceExecutionError("No function selected");
 
   dcp->conf->print->setOutputStream(status->fileoptr);
-  dcp->conf->print->setMarkup(true);
+  dcp->conf->print->setMarkup(true, EmitMarkup::format_xml);
   dcp->conf->print->docFunction(dcp->fd);
   dcp->conf->print->setMarkup(false);
+  *status->fileoptr << endl;
 }
 
 /// \class IfcPrintCStruct

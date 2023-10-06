@@ -455,6 +455,7 @@ public:
   void setHeaderComment(uint4 val) { head_comment_type = val; }		///< Set the type of comments suitable for a function header
   bool emitsMarkup(void) const { return emit->emitsMarkup(); }		///< Does the low-level emitter, emit markup
   void setMarkup(bool val);						///< Set whether the low-level emitter, emits markup
+  void setMarkup(bool val, EmitMarkup::MarkupFormat format);		///< Set whether the low-level emitter, emits markup in the given format.
   void setFlat(bool val);						///< Set whether nesting code structure should be emitted
 
   virtual void initializeFromArchitecture(void)=0;		///< Initialize architecture specific aspects of printer

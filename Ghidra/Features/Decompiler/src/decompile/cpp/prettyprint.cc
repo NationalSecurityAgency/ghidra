@@ -294,7 +294,14 @@ void EmitMarkup::setOutputStream(ostream *t)
   if (encoder != (Encoder *)0)
     delete encoder;
   s = t;
-  encoder = new PackedEncode(*s);
+  switch (markup_format) {
+  case format_xml:
+    encoder = new XmlEncode(*s);
+    break;
+  case format_packed:
+    encoder = new PackedEncode(*s);
+    break;
+  }
 }
 
 int4 TokenSplit::countbase = 0;
@@ -1170,13 +1177,13 @@ void EmitPrettyPrint::flush(void)
 /// This method toggles the low-level emitter between EmitMarkup and EmitNoMarkup depending
 /// on whether markup is desired.
 /// \param val is \b true if markup is desired
-void EmitPrettyPrint::setMarkup(bool val)
+void EmitPrettyPrint::setMarkup(bool val, EmitMarkup::MarkupFormat format)
 
 {
   ostream *t = lowlevel->getOutputStream();
   delete lowlevel;
   if (val)
-    lowlevel = new EmitMarkup;
+    lowlevel = new EmitMarkup(format);
   else
     lowlevel = new EmitNoMarkup;
   lowlevel->setOutputStream(t);
