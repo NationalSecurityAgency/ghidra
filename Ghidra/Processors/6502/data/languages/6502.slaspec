@@ -9,7 +9,17 @@ define space register type=register_space size=1;
 define register offset=0x00  size=1 [ A X Y P ];
 define register offset=0x20 size=2  [ PC      SP   ];
 define register offset=0x20 size=1  [ PCL PCH S SH ];
-define register offset=0x30 size=1 [ N V B D I Z C ];	# status bits
+#define register offset=0x30 size=1 [ N V B D I Z C ];	# status bits
+
+# P Status Flags
+@define N_FLAG  "P[7,1]" # Negative
+@define V_FLAG  "P[6,1]" # Overflow
+@define T_FLAG  "P[5,1]" # Constant
+@define B_FLAG  "P[4,1]" # Break
+@define D_FLAG  "P[3,1]" # Decimal
+@define I_FLAG  "P[2,1]" # Interrupt
+@define Z_FLAG  "P[1,1]" # Zero
+@define C_FLAG  "P[0,1]" # Carry
 
 #TOKENS
 
@@ -44,20 +54,26 @@ macro popSR() {
 
 macro pushSR() {
 	local ccr:1 = 0xff;
-	ccr[7,1] = N;
-	ccr[6,1] = V;
-	ccr[4,1] = B;
-	ccr[3,1] = D;
-	ccr[2,1] = I;
-	ccr[1,1] = Z;
-	ccr[0,1] = C;
+	ccr[7,1] = $(N_FLAG);
+	ccr[6,1] = $(V_FLAG);
+	ccr[4,1] = $(B_FLAG);
+	ccr[3,1] = $(D_FLAG);
+	ccr[2,1] = $(I_FLAG);
+	ccr[1,1] = $(Z_FLAG);
+	ccr[0,1] = $(C_FLAG);
 	*:1 (SP) = ccr;
 	SP = SP -1;
 }
 
+macro stackPush(value) {
+    local temp:2 = zext(S);
+    *:1 (temp) = value:1 & 0xff;
+    S = S - 1;
+}
+
 macro resultFlags(value) {
-	Z = (value == 0);
-	N = (value s< 0);
+	$(Z_FLAG) = (value == 0);
+	$(N_FLAG) = (value s< 0);
 }
 
 macro subtraction_flags1(register, operand, result) {
@@ -127,14 +143,14 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :ADC OP1     is (cc=1 & aaa=3) ... & OP1
 {
 	local op1 = OP1;
-	local tmpC = C;
+	local tmpC = $(C_FLAG);
 	
-	C = carry(A, op1);
+	$(C_FLAG) = carry(A, op1);
 	
 	A = A + op1 + tmpC;
 
 	resultFlags(A);
-	V = C;
+	$(V_FLAG) = $(C_FLAG);
 }
 
 :AND OP1     is (cc=1 & aaa=1) ... & OP1
@@ -146,7 +162,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :ASL OP2     is (op=0x06 | op=0x0A | op=0x0E | op=0x16 | op=0x1E) ... & OP2
 {
 	local tmp = OP2;
-	C = tmp >> 7;
+	$(C_FLAG) = tmp >> 7;
 	tmp = tmp << 1;
 	OP2 = tmp;
 	resultFlags(tmp);	
@@ -154,81 +170,81 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :BCC  REL			is op=0x90; REL
 {
-	if (C == 0) goto REL;
+	if ($(C_FLAG) == 0) goto REL;
 }
 
 :BCS  REL			is op=0xB0; REL
 {
-	if (C) goto REL;
+	if ($(C_FLAG)) goto REL;
 }
 
 :BEQ  REL			is op=0xF0; REL
 {
-	if (Z) goto REL;
+	if ($(Z_FLAG)) goto REL;
 }
 
 :BIT OP2     is (op=0x24 | op=0x2C) ... & OP2
 {
-	N = (OP2 & 0x80) == 0x80;
-	V = (OP2 & 0x40) == 0x40;
+	$(N_FLAG) = (OP2 & 0x80) == 0x80;
+	$(V_FLAG) = (OP2 & 0x40) == 0x40;
 	local value = A & OP2;
-	Z = (value == 0);
+	$(Z_FLAG) = (value == 0);
 }
 
 :BMI  REL			is op=0x30; REL
 {
-	if (N) goto REL;
+	if ($(N_FLAG)) goto REL;
 }
 
 :BNE  REL			is op=0xD0; REL
 {
-	if (Z == 0) goto REL;
+	if ($(Z_FLAG) == 0) goto REL;
 }
 
 :BPL  REL			is op=0x10; REL
 {
-	if (N == 0) goto REL;
+	if ($(N_FLAG) == 0) goto REL;
 }
 
 :BRK   is op=0x00
 {
-	*:2 (SP - 1) = inst_next;
-	SP = SP - 2;
-	B = 1;
+    local temp:2 = inst_next;
+    stackPush((temp >> 8) & 0xFF);
+	stackPush(temp & 0xFF);
 	pushSR();
-	I = 1;
+    $(I_FLAG) = 1;
 	local target:2 = 0xFFFE;
 	goto [*:2 target];
 }
 
 :BVC  REL			is op=0x50; REL
 {
-	if (V == 0) goto REL;
+	if ($(V_FLAG) == 0) goto REL;
 }
 
 :BVS  REL			is op=0x70; REL
 {
-	if (V) goto REL;
+	if ($(V_FLAG)) goto REL;
 }
 
 :CLC     is op=0x18
 {
-	C = 0;
+	$(C_FLAG) = 0;
 }
 
 :CLD     is op=0xD8
 {
-	D = 0;
+	$(D_FLAG) = 0;
 }
 
 :CLI     is op=0x58
 {
-	I = 0;
+	$(I_FLAG) = 0;
 }
 
 :CLV     is op=0xB8
 {
-	V = 0;
+	$(V_FLAG) = 0;
 }
 
 :CMP OP1     is (cc=1 & aaa=6) ... & OP1
@@ -236,7 +252,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP1;
 	local tmp = A - op1;
 	resultFlags(tmp);
-	C = (A >= op1);
+	$(C_FLAG) = (A >= op1);
 }
 
 :CPX OP2     is (op=0xE0 | op=0xE4 | op=0xEC) ... & OP2
@@ -339,11 +355,11 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :LSR OP2     is (op=0x46 | op=0x4A | op=0x4E | op=0x56 | op=0x5E) ... & OP2
 {
 	local tmp = OP2;
-	C = tmp & 1;
+	$(C_FLAG) = tmp & 1;
 	tmp = tmp >> 1;
 	OP2 = tmp;
-	Z = (tmp == 0);
-	N = 0;	
+	$(Z_FLAG) = (tmp == 0);
+	$(N_FLAG) = 0;
 }
 
 :NOP     is op=0xEA
@@ -381,9 +397,9 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :ROL OP2     is (op=0x26 | op=0x2A | op=0x2E | op=0x36 | op=0x3E) ... & OP2
 {
-	local tmpC = C;
+	local tmpC = $(C_FLAG);
 	local op2 = OP2;
-	C = op2 >> 7;
+	$(C_FLAG) = op2 >> 7;
 	local result = op2 << 1;
 	result = result | tmpC;
 	OP2 = result;
@@ -392,9 +408,9 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :ROR OP2     is (op=0x66 | op=0x6A | op=0x6E | op=0x76 | op=0x7E) ... & OP2
 {
-	local tmpC = C << 7;
+	local tmpC = $(C_FLAG) << 7;
 	local tmp = OP2;
-	C = tmp & 1;
+	$(C_FLAG) = tmp & 1;
 	tmp = tmp >> 1;
 	tmp = tmp | tmpC;
 	OP2 = tmp;
@@ -424,7 +440,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :SBC OP1     is (cc=1 & aaa=7) ... & OP1
 {
 	local op1 = OP1;
-	local result = A - op1 - !C;
+	local result = A - op1 - !$(C_FLAG);
 	
 	subtraction_flags1(A, op1, result);
 	A = result;	
@@ -436,17 +452,17 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :SEC     is op=0x38
 {
-	C = 1;
+	$(C_FLAG) = 1;
 }
 
 :SED     is op=0xF8
 {
-	D = 1;	
+	$(D_FLAG) = 1;
 }
 
 :SEI     is op=0x78
 {
-	I = 1;
+	$(I_FLAG) = 1;
 }
 
 :STA OP1     is (cc=1 & aaa=4) ... & OP1
