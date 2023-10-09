@@ -73,4 +73,4 @@ fi
 # Patch the launch.properties with our library location
 LAUNCH_PROPERTIES=${GHIDRA_INSTALL_DIR}/support/launch.properties
 sed -i '' /llvm/d ${LAUNCH_PROPERTIES}
-echo "VMARGS=-Djava.library.path=${GHIDRA_INSTALL_DIR}/${LIBLLDB_JAVA_DIR}:${BREW_LLVM}/lib" >> ${LAUNCH_PROPERTIES}
+echo "VMARGS=-Dadditional.java.library.path=${GHIDRA_INSTALL_DIR}/${LIBLLDB_JAVA_DIR}:${BREW_LLVM}/lib" >> ${LAUNCH_PROPERTIES}

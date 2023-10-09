@@ -116,6 +116,9 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 				String javaCommand = System.getProperty("java.home") + File.separator + "bin" +
 					File.separator + "java";
 				cmd.add(javaCommand);
+				if (System.getProperty("additional.java.library.path") != null) {
+					cmd.add("-Djava.library.path=" + System.getProperty("java.library.path") + ":" + System.getProperty("additional.java.library.path"));
+				}
 				cmd.add("-cp");
 				cmd.add(System.getProperty("java.class.path"));
 				if (jdwpPort >= 0) {
