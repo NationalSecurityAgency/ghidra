@@ -9,7 +9,6 @@ define space register type=register_space size=1;
 define register offset=0x00  size=1 [ A X Y P ];
 define register offset=0x20 size=2  [ PC      SP   ];
 define register offset=0x20 size=1  [ PCL PCH S SH ];
-#define register offset=0x30 size=1 [ N V B D I Z C ];	# status bits
 
 # P Status Flags
 @define N_FLAG  "P[7,1]" # Negative
@@ -43,20 +42,22 @@ define token data (16)
 macro popSR() {
 	SP = SP + 1;
 	local ccr = *:1 SP;
-	N = ccr[7,1];
-	V = ccr[6,1];
-	B = ccr[4,1];
-	D = ccr[3,1];
-	I = ccr[2,1];
-	Z = ccr[1,1];
-	C = ccr[0,1];
+	$(N_FLAG) = ccr[7,1];
+	$(V_FLAG) = ccr[6,1];
+	$(T_FLAG) = 1; # Constant flag always set to 1 in pop
+	$(B_FLAG) = 1; # Break flag always set to 1 in push
+	$(D_FLAG) = ccr[3,1];
+	$(I_FLAG) = ccr[2,1];
+	$(Z_FLAG) = ccr[1,1];
+	$(C_FLAG) = ccr[0,1];
 }
 
 macro pushSR() {
 	local ccr:1 = 0xff;
 	ccr[7,1] = $(N_FLAG);
 	ccr[6,1] = $(V_FLAG);
-	ccr[4,1] = $(B_FLAG);
+	ccr[5,1] = 1; # Constant flag always set to 1 in push
+	ccr[4,1] = 1; # Break flag always set to 1 in push
 	ccr[3,1] = $(D_FLAG);
 	ccr[2,1] = $(I_FLAG);
 	ccr[1,1] = $(Z_FLAG);
@@ -66,9 +67,15 @@ macro pushSR() {
 }
 
 macro stackPush(value) {
-    local temp:2 = zext(S);
-    *:1 (temp) = value:1 & 0xff;
-    S = S - 1;
+	local temp:2 = zext(S) + 0x0100;
+	*:1 (temp) = value:1 & 0xff;
+	S = S - 1;
+}
+
+macro stackPop(value) {
+	S = S + 1;
+	local temp:2 = zext(S) + 0x0100;
+	value = *:1 (temp);
 }
 
 macro resultFlags(value) {
@@ -108,9 +115,28 @@ OP1: imm16,X    is bbb=7 & X; imm16		{ tmp:2 = imm16 + zext(X); export *:1 tmp; 
 # Absolute Indexed Y
 OP1: imm16,Y    is bbb=6 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; }
 # Indirect X
-OP1: (imm8,X)   is bbb=0 & X; imm8		{ addr:2 = zext(imm8 + X); tmp:2 = *:2 addr; export *:1 tmp; }
+OP1: (imm8,X)   is bbb=0 & X; imm8		{
+	# When the first (low) byte of address to load is 0xff,
+	# the second (high) byte to load is at 0x0000, not 0x0100
+	addr8_lo:1 = imm8 + X;
+	addr8_hi:1 = addr8_lo + 1;
+	addr16_lo:2 = zext(addr8_lo);
+	addr16_hi:2 = zext(addr8_hi);
+	tmp:2 = zext(*:1 addr16_hi) << 8 | zext(*:1 addr16_lo);
+	export *:1 tmp;
+}
 # Indirect Y
-OP1: (imm8),Y   is bbb=4 & Y; imm8		{ addr:2 = imm8; tmp:2 = *:2 addr; tmp = tmp + zext(Y); export *:1 tmp; }
+OP1: (imm8),Y   is bbb=4 & Y; imm8		{
+	# When the first (low) byte of address to load is 0xff,
+	# the second (high) byte to load is at 0x0000, not 0x0100
+	addr8_lo:1 = imm8;
+	addr8_hi:1 = addr8_lo + 1;
+	addr16_lo:2 = zext(addr8_lo);
+	addr16_hi:2 = zext(addr8_hi);
+	tmp:2 = zext(*:1 addr16_hi) << 8 | zext(*:1 addr16_lo);
+	tmp = tmp + zext(Y);
+	export *:1 tmp;
+}
 
 # Immediate
 OP2: "#"imm8    is bbb=0; imm8			{ tmp:1 = imm8; export tmp; }
@@ -133,7 +159,7 @@ OP2LD: imm16,Y  is bbb=7 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; 
 
 
 ADDR8:  imm8    is imm8		{ export *:1 imm8; }
-ADDR16: imm16   is imm16   	{ export *:1 imm16; }
+ADDR16: imm16   is imm16   	{ export *:2 imm16; }
 ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 
@@ -208,11 +234,11 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :BRK   is op=0x00
 {
-    local temp:2 = inst_next;
-    stackPush((temp >> 8) & 0xFF);
+	local temp:2 = inst_next;
+	stackPush((temp >> 8) & 0xFF);
 	stackPush(temp & 0xFF);
 	pushSR();
-    $(I_FLAG) = 1;
+	$(I_FLAG) = 1;
 	local target:2 = 0xFFFE;
 	goto [*:2 target];
 }
@@ -329,8 +355,9 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :JSR   ADDR16    is op=0x20; ADDR16
 {
-	*:2 (SP-1) = inst_next;
-	SP=SP-2; 
+	local temp:2 = inst_next - 1;
+	stackPush((temp >> 8) & 0xFF);
+	stackPush(temp & 0xFF);
 	call ADDR16;
 }
 
@@ -379,7 +406,9 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :PLP     is op=0x28
 {
-	popSR();
+	stackPop(P);
+	$(B_FLAG) = 0;
+	$(T_FLAG) = 1;
 }
 
 :PHA     is op=0x48
@@ -403,7 +432,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local result = op2 << 1;
 	result = result | tmpC;
 	OP2 = result;
-	resultFlags(result);	
+	resultFlags(result);
 }
 
 :ROR OP2     is (op=0x66 | op=0x6A | op=0x6E | op=0x76 | op=0x7E) ... & OP2
