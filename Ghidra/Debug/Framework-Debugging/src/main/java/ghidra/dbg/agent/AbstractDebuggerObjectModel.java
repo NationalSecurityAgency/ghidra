@@ -32,12 +32,12 @@ import ghidra.util.datastruct.ListenerSet;
 public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectModel {
 	public final Object lock = new Object();
 	public final Object cbLock = new Object();
-	protected final ExecutorService clientExecutor =
-		Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
-				.namingPattern(getClass().getSimpleName() + "-thread-%d")
+	protected final ExecutorService clientExecutor = Executors.newSingleThreadExecutor(
+		new BasicThreadFactory.Builder().namingPattern(getClass().getSimpleName() + "-thread-%d")
 				.build());
+
 	protected final ListenerSet<DebuggerModelListener> listeners =
-		new ListenerSet<>(DebuggerModelListener.class, clientExecutor);
+		new ListenerSet<>(DebuggerModelListener.class, true);
 
 	protected SpiTargetObject root;
 	protected boolean rootAdded;
@@ -98,7 +98,10 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 				return null;
 			});
 			this.completedRoot.completeAsync(() -> root, clientExecutor);
-			listeners.fire.rootAdded(root);
+
+			clientExecutor.execute(() -> {
+				listeners.invoke().rootAdded(root);
+			});
 		}
 	}
 
@@ -200,7 +203,7 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 
 	/**
 	 * Ensure that dependent computations occur on the client executor
-	 * 
+	 *
 	 * @param <T> the type of the future value
 	 * @param v the future
 	 * @return a future which completes after the given one on the client executor
@@ -249,13 +252,11 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 		}
 		DefaultTargetObject<?, ?> dtoParent = (DefaultTargetObject<?, ?>) delegate;
 		if (PathUtils.isIndex(path)) {
-			dtoParent.changeElements(List.of(PathUtils.getIndex(path)), List.of(),
-				"Replaced");
+			dtoParent.changeElements(List.of(PathUtils.getIndex(path)), List.of(), "Replaced");
 		}
 		else {
 			assert PathUtils.isName(path);
-			dtoParent.changeAttributes(List.of(PathUtils.getKey(path)), Map.of(),
-				"Replaced");
+			dtoParent.changeAttributes(List.of(PathUtils.getKey(path)), Map.of(), "Replaced");
 		}
 	}
 

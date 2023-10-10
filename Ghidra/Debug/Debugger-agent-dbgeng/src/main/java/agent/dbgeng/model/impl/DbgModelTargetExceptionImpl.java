@@ -109,8 +109,10 @@ public class DbgModelTargetExceptionImpl extends DbgModelTargetObjectImpl
 						.setFocus(this);
 				changeAttributes(List.of(), List.of(), Map.of( //
 					MODIFIED_ATTRIBUTE_NAME, true), "Refreshed");
-				manager.getEventListeners().fire.consoleOutput(
-					"Exception " + filter.getExceptionCode() + " : " + filter.getName() + "\n", 0);
+				manager.getEventListeners()
+						.invoke()
+						.consoleOutput("Exception " + filter.getExceptionCode() + " : " +
+							filter.getName() + "\n", 0);
 			}
 		}
 	}

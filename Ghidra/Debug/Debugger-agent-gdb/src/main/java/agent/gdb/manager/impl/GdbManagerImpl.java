@@ -239,11 +239,11 @@ public class GdbManagerImpl implements GdbManager {
 		Collections.unmodifiableMap(breakpoints);
 
 	protected final ListenerSet<GdbEventsListener> listenersEvent =
-		new ListenerSet<>(GdbEventsListener.class);
+		new ListenerSet<>(GdbEventsListener.class, true);
 	protected final ListenerSet<GdbTargetOutputListener> listenersTargetOutput =
-		new ListenerSet<>(GdbTargetOutputListener.class);
+		new ListenerSet<>(GdbTargetOutputListener.class, true);
 	protected final ListenerSet<GdbConsoleOutputListener> listenersConsoleOutput =
-		new ListenerSet<>(GdbConsoleOutputListener.class);
+		new ListenerSet<>(GdbConsoleOutputListener.class, true);
 	protected final ExecutorService eventThread = Executors.newSingleThreadExecutor();
 
 	/**
@@ -401,7 +401,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	@Internal // for detach command
 	public void fireThreadExited(int tid, GdbInferiorImpl inferior, GdbCause cause) {
-		event(() -> listenersEvent.fire.threadExited(tid, inferior, cause), "threadExited");
+		event(() -> listenersEvent.invoke().threadExited(tid, inferior, cause), "threadExited");
 	}
 
 	@Override
@@ -474,7 +474,7 @@ public class GdbManagerImpl implements GdbManager {
 			throw new IllegalArgumentException("There is already inferior " + exists);
 		}
 		inferiors.put(inferior.getId(), inferior);
-		event(() -> listenersEvent.fire.inferiorAdded(inferior, cause), "addInferior");
+		event(() -> listenersEvent.invoke().inferiorAdded(inferior, cause), "addInferior");
 	}
 
 	/**
@@ -488,7 +488,7 @@ public class GdbManagerImpl implements GdbManager {
 		if (inferiors.remove(iid) == null) {
 			throw new IllegalArgumentException("There is no inferior with id " + iid);
 		}
-		event(() -> listenersEvent.fire.inferiorRemoved(iid, cause), "removeInferior");
+		event(() -> listenersEvent.invoke().inferiorRemoved(iid, cause), "removeInferior");
 	}
 
 	/**
@@ -505,7 +505,7 @@ public class GdbManagerImpl implements GdbManager {
 		if (curInferior != inf) {
 			curInferior = inf;
 			if (fire) {
-				event(() -> listenersEvent.fire.inferiorSelected(inf, cause),
+				event(() -> listenersEvent.invoke().inferiorSelected(inf, cause),
 					"updateCurrentInferior");
 			}
 			return true;
@@ -1080,7 +1080,7 @@ public class GdbManagerImpl implements GdbManager {
 		String out = evt.getOutput();
 		//System.out.print(out);
 		if (!evt.isStolen()) {
-			listenersConsoleOutput.fire.output(Channel.STDOUT, out);
+			listenersConsoleOutput.invoke().output(Channel.STDOUT, out);
 		}
 		if (evt.getInterpreter() == Interpreter.MI2 &&
 			out.toLowerCase().contains("switching to inferior")) {
@@ -1097,7 +1097,7 @@ public class GdbManagerImpl implements GdbManager {
 	 * @param v nothing
 	 */
 	protected void processTargetOut(GdbTargetOutputEvent evt, Void v) {
-		listenersTargetOutput.fire.output(evt.getOutput());
+		listenersTargetOutput.invoke().output(evt.getOutput());
 	}
 
 	/**
@@ -1110,7 +1110,7 @@ public class GdbManagerImpl implements GdbManager {
 		String out = evt.getOutput();
 		//System.err.print(out);
 		if (!evt.isStolen()) {
-			listenersConsoleOutput.fire.output(Channel.STDERR, out);
+			listenersConsoleOutput.invoke().output(Channel.STDERR, out);
 		}
 	}
 
@@ -1134,7 +1134,7 @@ public class GdbManagerImpl implements GdbManager {
 		}
 		inferior.add(evt.getCause());
 		if (fireSelected) {
-			event(() -> listenersEvent.fire.inferiorSelected(inferior, evt.getCause()),
+			event(() -> listenersEvent.invoke().inferiorSelected(inferior, evt.getCause()),
 				"groupAdded-sel");
 		}
 	}
@@ -1161,7 +1161,7 @@ public class GdbManagerImpl implements GdbManager {
 		}
 		inferior.remove(evt.getCause());
 		if (fireSelected) {
-			event(() -> listenersEvent.fire.inferiorSelected(cur, evt.getCause()),
+			event(() -> listenersEvent.invoke().inferiorSelected(cur, evt.getCause()),
 				"groupRemoved-sel");
 			// Also cause GDB to generate thread selection events, if applicable
 			setActiveInferior(cur, false);
@@ -1182,7 +1182,7 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	public void fireInferiorStarted(GdbInferiorImpl inf, GdbCause cause, String text) {
-		event(() -> listenersEvent.fire.inferiorStarted(inf, cause), text);
+		event(() -> listenersEvent.invoke().inferiorStarted(inf, cause), text);
 	}
 
 	/**
@@ -1195,7 +1195,7 @@ public class GdbManagerImpl implements GdbManager {
 		int iid = evt.getInferiorId();
 		GdbInferiorImpl inf = getInferior(iid);
 		inf.setExitCode(evt.getExitCode());
-		event(() -> listenersEvent.fire.inferiorExited(inf, evt.getCause()), "inferiorExited");
+		event(() -> listenersEvent.invoke().inferiorExited(inf, evt.getCause()), "inferiorExited");
 	}
 
 	/**
@@ -1210,7 +1210,7 @@ public class GdbManagerImpl implements GdbManager {
 		GdbInferiorImpl inf = getInferior(iid);
 		GdbThreadImpl thread = new GdbThreadImpl(this, inf, tid);
 		thread.add();
-		event(() -> listenersEvent.fire.threadCreated(thread, evt.getCause()), "threadCreated");
+		event(() -> listenersEvent.invoke().threadCreated(thread, evt.getCause()), "threadCreated");
 	}
 
 	/**
@@ -1225,7 +1225,7 @@ public class GdbManagerImpl implements GdbManager {
 		GdbInferiorImpl inf = getInferior(iid);
 		GdbThreadImpl thread = inf.getThread(tid);
 		thread.remove();
-		event(() -> listenersEvent.fire.threadExited(tid, inf, evt.getCause()), "threadExited");
+		event(() -> listenersEvent.invoke().threadExited(tid, inf, evt.getCause()), "threadExited");
 	}
 
 	/**
@@ -1250,7 +1250,7 @@ public class GdbManagerImpl implements GdbManager {
 	 */
 	public void doThreadSelected(GdbThreadImpl thread, GdbStackFrame frame, GdbCause cause) {
 		updateCurrentInferior(thread.getInferior(), cause, true);
-		event(() -> listenersEvent.fire.threadSelected(thread, frame, cause), "threadSelected");
+		event(() -> listenersEvent.invoke().threadSelected(thread, frame, cause), "threadSelected");
 	}
 
 	/**
@@ -1265,14 +1265,14 @@ public class GdbManagerImpl implements GdbManager {
 		if (iid == null) { // Context of all inferiors
 			for (GdbInferiorImpl inf : inferiors.values()) {
 				inf.libraryLoaded(name);
-				event(() -> listenersEvent.fire.libraryLoaded(inf, name, evt.getCause()),
+				event(() -> listenersEvent.invoke().libraryLoaded(inf, name, evt.getCause()),
 					"libraryLoaded");
 			}
 		}
 		else {
 			GdbInferiorImpl inf = getInferior(iid);
 			inf.libraryLoaded(name);
-			event(() -> listenersEvent.fire.libraryLoaded(inf, name, evt.getCause()),
+			event(() -> listenersEvent.invoke().libraryLoaded(inf, name, evt.getCause()),
 				"libraryLoaded");
 		}
 	}
@@ -1289,14 +1289,14 @@ public class GdbManagerImpl implements GdbManager {
 		if (iid == null) { // Context of all inferiors
 			for (GdbInferiorImpl inf : inferiors.values()) {
 				inf.libraryUnloaded(name);
-				event(() -> listenersEvent.fire.libraryUnloaded(inf, name, evt.getCause()),
+				event(() -> listenersEvent.invoke().libraryUnloaded(inf, name, evt.getCause()),
 					"libraryUnloaded");
 			}
 		}
 		else {
 			GdbInferiorImpl inf = getInferior(iid);
 			inf.libraryUnloaded(name);
-			event(() -> listenersEvent.fire.libraryUnloaded(inf, name, evt.getCause()),
+			event(() -> listenersEvent.invoke().libraryUnloaded(inf, name, evt.getCause()),
 				"libraryUnloaded");
 		}
 	}
@@ -1310,7 +1310,7 @@ public class GdbManagerImpl implements GdbManager {
 	@Internal
 	public void doBreakpointCreated(GdbBreakpointInfo newInfo, GdbCause cause) {
 		addKnownBreakpoint(newInfo, false);
-		event(() -> listenersEvent.fire.breakpointCreated(newInfo, cause), "breakpointCreated");
+		event(() -> listenersEvent.invoke().breakpointCreated(newInfo, cause), "breakpointCreated");
 	}
 
 	/**
@@ -1332,7 +1332,7 @@ public class GdbManagerImpl implements GdbManager {
 	@Internal
 	public void doBreakpointModified(GdbBreakpointInfo newInfo, GdbCause cause) {
 		GdbBreakpointInfo oldInfo = addKnownBreakpoint(newInfo, true);
-		event(() -> listenersEvent.fire.breakpointModified(newInfo, oldInfo, cause),
+		event(() -> listenersEvent.invoke().breakpointModified(newInfo, oldInfo, cause),
 			"breakpointModified");
 	}
 
@@ -1358,7 +1358,7 @@ public class GdbManagerImpl implements GdbManager {
 		if (oldInfo == null) {
 			return;
 		}
-		event(() -> listenersEvent.fire.breakpointDeleted(oldInfo, cause), "breakpointDeleted");
+		event(() -> listenersEvent.invoke().breakpointDeleted(oldInfo, cause), "breakpointDeleted");
 	}
 
 	protected void doBreakpointModifiedSameLocations(GdbBreakpointInfo newInfo,
@@ -1367,7 +1367,7 @@ public class GdbManagerImpl implements GdbManager {
 			return;
 		}
 		addKnownBreakpoint(newInfo, true);
-		event(() -> listenersEvent.fire.breakpointModified(newInfo, oldInfo, cause),
+		event(() -> listenersEvent.invoke().breakpointModified(newInfo, oldInfo, cause),
 			"breakpointModified");
 	}
 
@@ -1412,7 +1412,7 @@ public class GdbManagerImpl implements GdbManager {
 	protected void processMemoryChanged(GdbMemoryChangedEvent evt, Void v) {
 		int iid = evt.getInferiorId();
 		GdbInferior inf = getInferior(iid);
-		event(() -> listenersEvent.fire.memoryChanged(inf, evt.getAddress(), evt.getLength(),
+		event(() -> listenersEvent.invoke().memoryChanged(inf, evt.getAddress(), evt.getLength(),
 			evt.getCause()), "memoryChanged");
 	}
 
@@ -1423,7 +1423,7 @@ public class GdbManagerImpl implements GdbManager {
 	 * @param v nothing
 	 */
 	protected void processParamChanged(GdbParamChangedEvent evt, Void v) {
-		event(() -> listenersEvent.fire.paramChanged(evt.getParam(), evt.getValue(),
+		event(() -> listenersEvent.invoke().paramChanged(evt.getParam(), evt.getValue(),
 			evt.getCause()), "paramChanged");
 	}
 
@@ -1467,7 +1467,7 @@ public class GdbManagerImpl implements GdbManager {
 		GdbMiFieldList newFrame = evt.checkFrame();
 		GdbStackFrameImpl frame =
 			newFrame == null ? null : GdbStackFrameImpl.fromFieldList(thread, newFrame);
-		event(() -> listenersEvent.fire.threadSelected(thread, frame, evt), "command-done");
+		event(() -> listenersEvent.invoke().threadSelected(thread, frame, evt), "command-done");
 	}
 
 	/**
@@ -1538,7 +1538,7 @@ public class GdbManagerImpl implements GdbManager {
 		if ("all".equals(threadId)) {
 			GdbInferiorImpl cur = curInferior;
 			event(() -> {
-				listenersEvent.fire.inferiorStateChanged(cur, cur.getKnownThreads().values(),
+				listenersEvent.invoke().inferiorStateChanged(cur, cur.getKnownThreads().values(),
 					evt.newState(), null, evt.getCause(), evt.getReason());
 			}, "inferiorState-running");
 			for (GdbThreadImpl thread : curInferior.getKnownThreadsImpl().values()) {
@@ -1549,7 +1549,7 @@ public class GdbManagerImpl implements GdbManager {
 			int id = Integer.parseUnsignedInt(threadId);
 			GdbThreadImpl thread = threads.get(id);
 			event(() -> {
-				listenersEvent.fire.inferiorStateChanged(thread.getInferior(),
+				listenersEvent.invoke().inferiorStateChanged(thread.getInferior(),
 					List.of(thread), evt.newState(), null, evt.getCause(), evt.getReason());
 			}, "inferiorState-running");
 			thread.setState(evt.newState(), evt.getCause(), evt.getReason());
@@ -1584,13 +1584,13 @@ public class GdbManagerImpl implements GdbManager {
 		}
 		for (Map.Entry<GdbInferior, Set<GdbThread>> ent : byInf.entrySet()) {
 			event(() -> {
-				listenersEvent.fire.inferiorStateChanged(ent.getKey(), ent.getValue(),
+				listenersEvent.invoke().inferiorStateChanged(ent.getKey(), ent.getValue(),
 					evt.newState(), evtThread, evt.getCause(), evt.getReason());
 			}, "inferiorState-stopped");
 		}
 		if (evtThread != null) {
 			GdbStackFrameImpl frame = evt.getFrame(evtThread);
-			event(() -> listenersEvent.fire.threadSelected(evtThread, frame, evt),
+			event(() -> listenersEvent.invoke().threadSelected(evtThread, frame, evt),
 				"inferiorState-stopped");
 		}
 	}
@@ -1701,7 +1701,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	@Internal
 	public void synthesizeConsoleOut(Channel channel, String line) {
-		listenersConsoleOutput.fire.output(channel, line);
+		listenersConsoleOutput.invoke().output(channel, line);
 	}
 
 	@Override

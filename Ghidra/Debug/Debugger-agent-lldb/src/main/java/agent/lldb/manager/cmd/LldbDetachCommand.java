@@ -39,7 +39,7 @@ public class LldbDetachCommand extends AbstractLldbCommand<Void> {
 			SBThread t = process.GetThreadAtIndex(i);
 			manager.removeThread(pid, DebugClient.getId(t));
 		}
-		manager.getEventListeners().fire.processRemoved(pid, LldbCause.Causes.UNCLAIMED);
+		manager.getEventListeners().invoke().processRemoved(pid, LldbCause.Causes.UNCLAIMED);
 		return null;
 	}
 

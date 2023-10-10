@@ -167,7 +167,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 	}
 
 	public void terminate() throws IOException {
-		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
+		listeners.invoke().modelClosed(DebuggerModelClosedReason.NORMAL);
 		session.invalidateSubtree(session, "GDB is terminating");
 		gdb.terminate();
 	}

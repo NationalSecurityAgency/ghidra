@@ -46,7 +46,7 @@ public class DefaultProcessRecorder implements ManagedProcessRecorder {
 
 	protected void processMemoryAccessibilityChanged(boolean old,
 			boolean acc, Void __) {
-		recorder.getListeners().fire.processMemoryAccessibilityChanged(recorder);
+		recorder.getListeners().invoke().processMemoryAccessibilityChanged(recorder);
 	}
 
 	public CompletableFuture<byte[]> readProcessMemory(Address start, int length) {

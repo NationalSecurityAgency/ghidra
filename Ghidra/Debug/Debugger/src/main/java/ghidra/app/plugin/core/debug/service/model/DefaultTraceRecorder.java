@@ -367,7 +367,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	@Override
 	public void stopRecording() {
 		invalidate();
-		getListeners().fire.recordingStopped(this);
+		getListeners().invoke().recordingStopped(this);
 	}
 
 	protected void invalidate() {

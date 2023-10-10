@@ -52,7 +52,7 @@ public class DefaultTimeRecorder {
 			RecorderPermanentTransaction tid) {
 		if (tid != null) {
 			doAdvanceSnap(description, eventThread);
-			recorder.getListeners().fire.snapAdvanced(recorder, getSnap());
+			recorder.getListeners().invoke().snapAdvanced(recorder, getSnap());
 			return;
 		}
 		// NB. The also serves as the snap counter, so it must be on the service thread
@@ -60,6 +60,6 @@ public class DefaultTimeRecorder {
 			RecorderPermanentTransaction.start(trace, description)) {
 			doAdvanceSnap(description, eventThread);
 		}
-		recorder.getListeners().fire.snapAdvanced(recorder, getSnap());
+		recorder.getListeners().invoke().snapAdvanced(recorder, getSnap());
 	}
 }

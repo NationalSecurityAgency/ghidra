@@ -15,7 +15,8 @@
  */
 package agent.gdb.model.impl;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -30,15 +31,11 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(
-	name = "BreakpointSpec",
-	attributes = {
-		@TargetAttributeType(type = Void.class) },
-	canonicalContainer = true)
+@TargetObjectSchemaInfo(name = "BreakpointSpec", attributes = {
+	@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public class GdbModelTargetBreakpointSpec extends
 		DefaultTargetObject<GdbModelTargetBreakpointLocation, GdbModelTargetBreakpointContainer>
 		implements TargetBreakpointSpec, TargetDeletable {
@@ -62,12 +59,7 @@ public class GdbModelTargetBreakpointSpec extends
 	protected final Map<Long, GdbModelTargetBreakpointLocation> breaksBySub =
 		new WeakValueHashMap<>();
 	protected final ListenerSet<TargetBreakpointAction> actions =
-		new ListenerSet<>(TargetBreakpointAction.class) {
-			// Use strong references on actions
-			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
-				return new LinkedHashMap<>();
-			};
-		};
+		new ListenerSet<>(TargetBreakpointAction.class, false);
 
 	public GdbModelTargetBreakpointSpec(GdbModelTargetBreakpointContainer breakpoints,
 			GdbBreakpointInfo info) {
@@ -171,13 +163,12 @@ public class GdbModelTargetBreakpointSpec extends
 	}
 
 	protected void updateAttributesFromInfo(String reason) {
-		changeAttributes(List.of(), Map.of(
-			ENABLED_ATTRIBUTE_NAME, enabled = info.isEnabled(),
-			EXPRESSION_ATTRIBUTE_NAME,
-			expression = info.getType() == GdbBreakpointType.CATCHPOINT ? info.getCatchType()
-					: info.getOriginalLocation(),
-			KINDS_ATTRIBUTE_NAME, kinds = computeKinds(info),
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay()),
+		changeAttributes(List.of(),
+			Map.of(ENABLED_ATTRIBUTE_NAME, enabled = info.isEnabled(), EXPRESSION_ATTRIBUTE_NAME,
+				expression = info.getType() == GdbBreakpointType.CATCHPOINT ? info.getCatchType()
+						: info.getOriginalLocation(),
+				KINDS_ATTRIBUTE_NAME, kinds = computeKinds(info), DISPLAY_ATTRIBUTE_NAME,
+				display = computeDisplay()),
 			reason);
 	}
 
@@ -232,7 +223,7 @@ public class GdbModelTargetBreakpointSpec extends
 
 	protected void breakpointHit(GdbModelTargetStackFrame frame,
 			GdbModelTargetBreakpointLocation eb) {
-		actions.fire.breakpointHit(this, frame.thread, frame, eb);
+		actions.invoke().breakpointHit(this, frame.thread, frame, eb);
 	}
 
 	public synchronized GdbModelTargetBreakpointLocation getTargetBreakpointLocation(
@@ -270,15 +261,21 @@ public class GdbModelTargetBreakpointSpec extends
 			case BREAKPOINT:
 			case HW_BREAKPOINT:
 			case OTHER:
-				return String.format("%d %s %s %s %s %s", info.getNumber(), info.getTypeName(),
-					info.getDisp(), enb, addr, what).trim();
+				return String
+						.format("%d %s %s %s %s %s", info.getNumber(), info.getTypeName(),
+							info.getDisp(), enb, addr, what)
+						.trim();
 			case CATCHPOINT:
-				return String.format("%d %s %s %s %s", info.getNumber(), info.getTypeName(),
-					info.getDisp(), enb, what).trim();
+				return String
+						.format("%d %s %s %s %s", info.getNumber(), info.getTypeName(),
+							info.getDisp(), enb, what)
+						.trim();
 			case DPRINTF:
 				// TODO: script?
-				return String.format("%d %s %s %s %s %s", info.getNumber(), info.getTypeName(),
-					info.getDisp(), enb, addr, what).trim();
+				return String
+						.format("%d %s %s %s %s %s", info.getNumber(), info.getTypeName(),
+							info.getDisp(), enb, addr, what)
+						.trim();
 		}
 		throw new AssertionError();
 	}

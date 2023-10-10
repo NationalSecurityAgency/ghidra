@@ -51,7 +51,7 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 	protected boolean showHidden = false;
 
 	private final ListenerSet<CellActivationListener> cellActivationListeners =
-		new ListenerSet<>(CellActivationListener.class);
+		new ListenerSet<>(CellActivationListener.class, true);
 
 	public AbstractQueryTablePanel(Plugin plugin) {
 		super(new BorderLayout());
@@ -236,6 +236,6 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 	}
 
 	protected void fireCellActivated() {
-		cellActivationListeners.fire.cellActivated(table);
+		cellActivationListeners.invoke().cellActivated(table);
 	}
 }

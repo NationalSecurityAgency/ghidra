@@ -81,7 +81,7 @@ public class GdbThreadImpl implements GdbThread {
 		this.inferior.addThread(this);
 		this.manager.addThread(this);
 		state.addChangeListener((oldState, newState, pair) -> {
-			manager.event(() -> manager.listenersEvent.fire.threadStateChanged(this, newState,
+			manager.event(() -> manager.listenersEvent.invoke().threadStateChanged(this, newState,
 				pair.cause, pair.reason), "threadState");
 		});
 	}

@@ -38,14 +38,18 @@ class CopyOnReadWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public synchronized void add(T t) {
+	public synchronized boolean add(T t) {
 		maybeWarnAboutAnonymousValue(t);
+		boolean contains = weakHashStorage.containsKey(t);
 		weakHashStorage.put(t, null);
+		return !contains;
 	}
 
 	@Override
-	public synchronized void remove(T t) {
+	public synchronized boolean remove(Object t) {
+		boolean contains = weakHashStorage.containsKey(t);
 		weakHashStorage.remove(t);
+		return contains;
 	}
 
 	@Override
@@ -64,7 +68,7 @@ class CopyOnReadWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public synchronized boolean contains(T t) {
+	public synchronized boolean contains(Object t) {
 		return weakHashStorage.containsKey(t);
 	}
 
@@ -86,6 +90,34 @@ class CopyOnReadWeakSet<T> extends WeakSet<T> {
 	@Override
 	public synchronized Stream<T> stream() {
 		return createCopy().stream();
+	}
+
+	@Override
+	public synchronized boolean addAll(Collection<? extends T> c) {
+		boolean changed = false;
+		for (T t : c) {
+			changed |= add(t);
+		}
+		return changed;
+	}
+
+	@Override
+	public synchronized boolean retainAll(Collection<?> c) {
+		boolean changed = false;
+		Iterator<T> it = iterator();
+		while (it.hasNext()) {
+			T t = it.next();
+			if (!c.contains(t)) {
+				it.remove();
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	@Override
+	public synchronized boolean removeAll(Collection<?> c) {
+		return weakHashStorage.keySet().removeAll(c);
 	}
 
 }

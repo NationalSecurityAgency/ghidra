@@ -154,7 +154,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 			return AsyncUtils.nil();
 		}
 		return initRegMapper(descs).thenAccept(__ -> {
-			recorder.getListeners().fire.registerBankMapped(recorder);
+			recorder.getListeners().invoke().registerBankMapped(recorder);
 		}).exceptionally(ex -> {
 			Msg.error(this, "Could not intialize register mapper", ex);
 			return null;

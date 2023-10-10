@@ -121,7 +121,7 @@ public class DbgModel2Impl extends AbstractDbgModel
 
 	@Override
 	public void terminate() throws IOException {
-		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
+		listeners.invoke().modelClosed(DebuggerModelClosedReason.NORMAL);
 		root.invalidateSubtree(root, "Dbgmodel is terminating");
 		dbg.terminate();
 	}

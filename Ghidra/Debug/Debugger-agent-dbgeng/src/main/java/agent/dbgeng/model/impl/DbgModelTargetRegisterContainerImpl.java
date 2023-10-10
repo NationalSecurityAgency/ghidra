@@ -162,7 +162,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 			return thread.writeRegisters(toWrite);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).thenAccept(__ -> {
-			manager.getEventListeners().fire.threadStateChanged(thread, thread.getState(),
+			manager.getEventListeners().invoke().threadStateChanged(thread, thread.getState(),
 				DbgCause.Causes.UNCLAIMED, DbgReason.Reasons.NONE);
 			broadcast().registersUpdated(getProxy(), values);
 		}));

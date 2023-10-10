@@ -81,7 +81,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	protected final ListenerForRecord listenerForRecord;
 
 	protected final ListenerSet<TraceRecorderListener> listeners =
-		new ListenerSet<>(TraceRecorderListener.class);
+		new ListenerSet<>(TraceRecorderListener.class, true);
 
 	// TODO: I don't like this here. Should ask the model, not the recorder.
 	protected TargetObject curFocus;
@@ -805,11 +805,11 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	protected void fireSnapAdvanced(long key) {
-		listeners.fire.snapAdvanced(this, key);
+		listeners.invoke().snapAdvanced(this, key);
 	}
 
 	protected void fireRecordingStopped() {
-		listeners.fire.recordingStopped(this);
+		listeners.invoke().recordingStopped(this);
 	}
 
 	// TODO: Deprecate/remove the other callbacks: registerBankMapped, *accessibilityChanged

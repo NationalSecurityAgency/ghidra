@@ -58,7 +58,7 @@ public class TraceObjectManager {
 	//private AbstractRecorderRegisterSet threadRegisters;
 
 	private final ListenerSet<TraceRecorderListener> listeners =
-		new ListenerSet<>(TraceRecorderListener.class);
+		new ListenerSet<>(TraceRecorderListener.class, true);
 
 	protected final Set<TargetBreakpointLocation> breakpoints = new HashSet<>();
 

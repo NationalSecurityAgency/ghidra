@@ -36,8 +36,8 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.debug.api.action.ActionSource;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
-import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.model.TraceRecorder;
 import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
@@ -53,7 +53,6 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.datastruct.ListenerMap;
 
 public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected static final long TIMEOUT_MILLIS =
@@ -61,14 +60,13 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 
 	/**
 	 * Tracks the current set of logical breakpoints.
-	 * 
+	 *
 	 * <p>
 	 * Its assertions require perfection in the sequence of events: 1) No double-adds. 2) No
 	 * double-removes. 3) No extraneous updates. At the end of each test, the current set of
 	 * breakpoints in this listener should be verified against those reported by the service.
 	 */
-	protected class NoDuplicatesTrackingChangeListener
-			implements LogicalBreakpointsChangeListener {
+	protected class NoDuplicatesTrackingChangeListener implements LogicalBreakpointsChangeListener {
 		private Set<LogicalBreakpoint> current = new HashSet<>();
 
 		@Override
@@ -152,8 +150,6 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 
 	@Before
 	public void setUpBreakpointServiceTest() throws Throwable {
-		ListenerMap.clearErr();
-
 		addPlugin(tool, DebuggerLogicalBreakpointServicePlugin.class);
 		breakpointService = tool.getService(DebuggerLogicalBreakpointService.class);
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
@@ -197,7 +193,6 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 				waitForLock(recorder3.getTrace());
 				recorder3.stopRecording();
 			}
-			ListenerMap.checkErr();
 		}
 		catch (Throwable t) {
 			Msg.error(this, "Failed during tear down: " + t);
@@ -226,8 +221,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		Map<Program, Set<LogicalBreakpoint>> breaksByProgramViaPer = new HashMap<>();
 		for (Program prog : programManager.getAllOpenPrograms()) {
 			Set<LogicalBreakpoint> breaks = new HashSet<>();
-			for (Entry<Address, Set<LogicalBreakpoint>> ent : breakpointService
-					.getBreakpoints(prog)
+			for (Entry<Address, Set<LogicalBreakpoint>> ent : breakpointService.getBreakpoints(prog)
 					.entrySet()) {
 				for (LogicalBreakpoint lb : ent.getValue()) {
 					ProgramLocation loc = lb.getProgramLocation();
@@ -264,8 +258,8 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	protected void addProgramTextBlock(Program p) throws Throwable {
 		try (Transaction tx = program.openTransaction("Add .text block")) {
 			p.getMemory()
-					.createInitializedBlock(".text", addr(p, 0x00400000), 0x1000, (byte) 0,
-						monitor, false);
+					.createInitializedBlock(".text", addr(p, 0x00400000), 0x1000, (byte) 0, monitor,
+						false);
 		}
 	}
 
@@ -290,8 +284,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(t, null, textRegion.getLifespan(),
 					textRegion.getMinAddress()),
-				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000,
-				false);
+				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000, false);
 		}
 	}
 
@@ -329,8 +322,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		TargetBreakpointSpecContainer cont = getBreakpointContainer(r);
 		cont.fetchElements().thenAccept(elements -> {
 			for (TargetObject obj : elements.values()) {
-				if (!(obj instanceof TargetBreakpointSpec) ||
-					!(obj instanceof TargetDeletable)) {
+				if (!(obj instanceof TargetBreakpointSpec) || !(obj instanceof TargetDeletable)) {
 					continue;
 				}
 				TargetBreakpointSpec spec = (TargetBreakpointSpec) obj;
@@ -394,8 +386,8 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 			int total) {
 		assertEquals(total, breakpointService.getAllBreakpoints().size());
 
-		LogicalBreakpoint enLb = Unique
-				.assertOne(breakpointService.getBreakpointsAt(trace, addr(trace, offset)));
+		LogicalBreakpoint enLb =
+			Unique.assertOne(breakpointService.getBreakpointsAt(trace, addr(trace, offset)));
 		assertNull(enLb.getProgramLocation());
 		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), enLb.getKinds());
 
@@ -958,10 +950,11 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		addTextMapping(recorder3, text3, program);
 		waitForSwing();
 		waitForPass(() -> {
-			assertEquals(2, mappingService
-					.getOpenMappedLocations(
-						new ProgramLocation(program, addr(program, 0x00400123)))
-					.size());
+			assertEquals(2,
+				mappingService
+						.getOpenMappedLocations(
+							new ProgramLocation(program, addr(program, 0x00400123)))
+						.size());
 		});
 		waitForSwing();
 
@@ -997,10 +990,11 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		addTextMapping(recorder3, text3, program);
 		waitForSwing();
 		waitForPass(() -> {
-			assertEquals(2, mappingService
-					.getOpenMappedLocations(
-						new ProgramLocation(program, addr(program, 0x00400123)))
-					.size());
+			assertEquals(2,
+				mappingService
+						.getOpenMappedLocations(
+							new ProgramLocation(program, addr(program, 0x00400123)))
+						.size());
 		});
 		waitForSwing();
 
@@ -1041,10 +1035,11 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		addTextMapping(recorder3, text3, program);
 		waitForSwing();
 		waitForPass(() -> {
-			assertEquals(2, mappingService
-					.getOpenMappedLocations(
-						new ProgramLocation(program, addr(program, 0x00400123)))
-					.size());
+			assertEquals(2,
+				mappingService
+						.getOpenMappedLocations(
+							new ProgramLocation(program, addr(program, 0x00400123)))
+						.size());
 		});
 		waitForSwing();
 
@@ -1094,10 +1089,11 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		addTextMapping(recorder3, text3, program);
 		waitForSwing();
 		waitForPass(() -> {
-			assertEquals(2, mappingService
-					.getOpenMappedLocations(
-						new ProgramLocation(program, addr(program, 0x00400123)))
-					.size());
+			assertEquals(2,
+				mappingService
+						.getOpenMappedLocations(
+							new ProgramLocation(program, addr(program, 0x00400123)))
+						.size());
 		});
 		waitForSwing();
 
@@ -1130,7 +1126,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	 * breakpoints, so there's no context in which testing this service with aborted transactions on
 	 * breakpoints is sane.
 	 */
-	//@Test 
+	//@Test
 	public void testAbortAddBreakpoint() throws Throwable {
 		startRecorder1();
 		Trace trace = recorder1.getTrace();
@@ -1548,8 +1544,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(tb.trace, null, textRegion.getLifespan(),
 					textRegion.getMinAddress()),
-				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000,
-				false);
+				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000, false);
 		}
 	}
 
@@ -1621,8 +1616,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	@Test
 	public void testAddTraceBreakpointSetSleighThenMapThenSaveToProgramCopiesSleigh()
 			throws Throwable {
-		DebuggerControlService editingService =
-			addPlugin(tool, DebuggerControlServicePlugin.class);
+		DebuggerControlService editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		// TODO: What if already mapped?
 		// Not sure I care about tb.setEmuSleigh() out of band
@@ -1637,8 +1631,7 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		try (Transaction tid = tb.startTransaction()) {
 			TraceBreakpoint bpt = tb.trace.getBreakpointManager()
 					.addBreakpoint("Processes[1].Breakpoints[0]", Lifespan.nowOn(0),
-						tb.addr(0x55550123),
-						Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
+						tb.addr(0x55550123), Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
 						false /* emuEnabled defaults to true */, "");
 			bpt.setEmuSleigh("r0=0xbeef;");
 		}
