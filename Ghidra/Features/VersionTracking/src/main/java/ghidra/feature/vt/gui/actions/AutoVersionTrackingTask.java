@@ -17,9 +17,11 @@ package ghidra.feature.vt.gui.actions;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.SwingConstants;
@@ -56,21 +58,17 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.OperandType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.CodeUnitIterator;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionManager;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ListingDiff;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.WrappingTaskMonitor;
-import util.CollectionUtils;
 
 /**
  *  This command runs all of the <b>exact</b> {@link VTProgramCorrelator}s that return
@@ -328,7 +326,7 @@ public class AutoVersionTrackingTask extends Task {
 
 	private void processImpliedMatches(TaskMonitor monitor) throws CancelledException {
 
-		List<VTAssociation> processedSrcDestPairs = new ArrayList<>();
+		Set<VTAssociation> processedSrcDestPairs = new HashSet<>();
 		List<VTMatchSet> matchSets = session.getMatchSets();
 
 		monitor.setMessage("Processing Implied Matches...");
@@ -443,7 +441,7 @@ public class AutoVersionTrackingTask extends Task {
 	 * correct matches based on matching operand values. Those matches are accepted and other
 	 * possible matches for those functions are blocked. Markup from accepted source functions
 	 * is applied to matching destination functions.
-	 *
+	 * 
 	 * @param factory The correlator factory used to create and run the desired VT correlator. In
 	 * this case, the duplicate function instruction match correlator.
 	 * @param monitor Checks to see if user has cancelled.
@@ -460,8 +458,8 @@ public class AutoVersionTrackingTask extends Task {
 
 		VTMatchSet results = correlator.correlate(session, monitor);
 		monitor.initialize(results.getMatchCount());
-		boolean hasMarkupErrors = applyDuplicateFunctionMatches(results.getMatches(), monitor);
 
+		boolean hasMarkupErrors = applyDuplicateFunctionMatches(results, monitor);
 		monitor.incrementProgress(1);
 
 		return hasMarkupErrors;
@@ -537,20 +535,27 @@ public class AutoVersionTrackingTask extends Task {
 	}
 
 	/**
-	 * Accept matches and apply markup for duplicate function instruction matches with matching
-	 * operands if they are a unique match within their associated set.
-	 * @param matches A collection of version tracking matches from the duplicate instruction
-	 * matcher
+	 * Method to accept matches and apply markup for duplicate function instruction matches with 
+	 * matching operands if they are a unique match within their associated subset. To explain in 
+	 * more depth, the duplicate function instruction correlator returns a set of function matches 
+	 * such that there are subsets of matches where each function pair has the same exact function 
+	 * instructions but possibly different operands. Also, there must be more than one possible
+	 * function pair association or it would have been identified as a unique match by the exact 
+	 * unique function instruction correltor. This method attempts to find unique matches from 
+	 * within the related subsets by comparing operand information. 
+	 * @param matches The set of matches from the duplicate function instruction correlator
 	 * @param monitor Allows user to cancel
-	 * @return true if any markup errors, false if no markup errors
+	 * @return true if there are any markup errors, false if no markup errors
 	 * @throws CancelledException if cancelled
 	 */
-	private boolean applyDuplicateFunctionMatches(Collection<VTMatch> matches, TaskMonitor monitor)
+	private boolean applyDuplicateFunctionMatches(VTMatchSet matchSet, TaskMonitor monitor)
 			throws CancelledException {
+
+		Collection<VTMatch> matches = matchSet.getMatches();
 
 		// If this value gets set to true later it indicates markup errors upon applying markup.
 		boolean someMatchesHaveMarkupErrors = false;
-		Set<VTMatch> copyOfMatches = new HashSet<>(matches);
+		Set<VTAssociation> processedSrcDestPairs = new HashSet<>();
 
 		String message = "Processing match %d of %d...";
 		int n = matches.size();
@@ -561,67 +566,570 @@ public class AutoVersionTrackingTask extends Task {
 
 			VTMatch match = it.next();
 
-			// skip if match has already been removed (it was in a set that was already processed)
-			if (!copyOfMatches.contains(match)) {
+			VTAssociation association = match.getAssociation();
+
+			// skip if match has already been processed (ie matched or determined to be unable 
+			// to match)
+			if (processedSrcDestPairs.contains(association)) {
 				continue;
 			}
 
-			// if already matched or blocked skip it
-			if (match.getAssociation().getStatus() != VTAssociationStatus.AVAILABLE) {
+			// if this association src/dest pair is already matched or blocked skip it
+			if (association.getStatus() != VTAssociationStatus.AVAILABLE) {
+				processedSrcDestPairs.add(association);
 				continue;
 			}
 
-			// Get a set of related matches from the set of all matches.  These all have the same
-			// instructions as each other but not necessarily the same operands.
-			Set<VTMatch> relatedMatches = getRelatedMatches(match, matches, monitor);
+			// get the entire set of functions with the same instructions as the given source and 
+			// destination pair
+			Set<VTAssociation> allRelatedAssociations = getAllRelatedAssociations(
+				match.getSourceAddress(), match.getDestinationAddress(), monitor);
 
-			// remove related matches from the copy of set of matches which gets checked
-			// and skipped if not in the set
-			removeMatches(copyOfMatches, relatedMatches);
+			// Try to find all the unique matches in this set with the same operands as each other.
+			// The duplicate function instruction correlator already grouped them into sets of
+			// functions pairs with exactly the same instructions. This is trying to find the 
+			// correct matches in this set.
+			Collection<VTAssociation> uniqueAssociations =
+				findUniqueAssociations(allRelatedAssociations, monitor);
 
-			if (relatedMatches.size() > 20) {
-				Msg.debug(this, "Too many related matches to process this match set " +
-					match.getSourceAddress());
+			// Whether or not a unique association has been found, add these associations to the 
+			// processed list so the check is not repeated for another src/dest pair in this
+			// set later.
+			processedSrcDestPairs.addAll(allRelatedAssociations);
+			if (uniqueAssociations == null) {
 				continue;
 			}
 
-			// remove any matches that have identical source functions - if more than one
-			// with exactly the same instructions and operands then cannot determine a unique match
-			Set<Address> sourceAddresses = getSourceAddressesFromMatches(relatedMatches, monitor);
-			Set<Address> uniqueSourceFunctionAddresses =
-				dedupMatchingFunctions(sourceProgram, sourceAddresses, monitor);
-
-			// remove any matches that have identical destination functions - if more than one
-			// with exactly the same instructions and operands then cannot determine a unique match
-			Set<Address> destAddresses =
-				getDestinationAddressesFromMatches(relatedMatches, monitor);
-			Set<Address> uniqueDestFunctionAddresses =
-				dedupMatchingFunctions(destinationProgram, destAddresses, monitor);
-
-			// Keep only matches containing unique source and destination functions from above
-			Set<VTMatch> dedupedMatches = getMatches(relatedMatches, uniqueSourceFunctionAddresses,
-				uniqueDestFunctionAddresses, monitor);
-
-			// loop through all the source functions
-			for (Address sourceAddress : uniqueSourceFunctionAddresses) {
+			// For each good match found, accept the match and apply markup
+			for (VTAssociation uniqueAssociation : uniqueAssociations) {
 				monitor.checkCancelled();
 
-				// find all destination functions with equivalent operands to source function
-				Set<VTMatch> matchesWithEquivalentOperands = getMatchesWithEquivalentOperands(
-					dedupedMatches, sourceAddress, uniqueDestFunctionAddresses, monitor);
-
-				// if there is just one equivalent match try to accept the match and apply markup
-				if (matchesWithEquivalentOperands.size() == 1) {
-					VTMatch theMatch = CollectionUtils.any(matchesWithEquivalentOperands);
-					someMatchesHaveMarkupErrors |=
-						tryToAcceptMatchAndApplyMarkup(theMatch, monitor);
+				VTMatch theMatch =
+					getAssociationMatchFromMatchSet(uniqueAssociation, matchSet, monitor);
+				if (theMatch == null) {
+					Msg.error(this,
+						uniqueAssociation.toString() + " Should be in the original match set used");
+					continue;
 				}
+
+				someMatchesHaveMarkupErrors |= tryToAcceptMatchAndApplyMarkup(theMatch, monitor);
 			}
 		}
 
 		return someMatchesHaveMarkupErrors;
 
 	}
+
+	/**
+	 * Get the entire set of related duplicate functions with the same instructions
+	 * @param source the given source address
+	 * @param destination the given destination address
+	 * @param monitor the task monitor
+	 * @return the entire set of related duplicate functions with the same instructions
+	 * @throws CancelledException if cancelled
+	 */
+	private Set<VTAssociation> getAllRelatedAssociations(Address source, Address destination,
+			TaskMonitor monitor) throws CancelledException {
+
+		// get all associations with the same source or the same destination address
+		VTAssociationManager vtAssocManager = session.getAssociationManager();
+		Collection<VTAssociation> relatedAssociations =
+			vtAssocManager.getRelatedAssociationsBySourceAndDestinationAddress(
+				source, destination);
+
+		Set<VTAssociation> allRelatedAssociations = new HashSet<VTAssociation>(relatedAssociations);
+
+		// from the initial set of related associations get all the other ones that have related
+		// associations with all the source/destinations of the newly found associations
+
+		for (VTAssociation association : relatedAssociations) {
+			monitor.checkCancelled();
+
+			allRelatedAssociations
+					.addAll(vtAssocManager.getRelatedAssociationsBySourceAndDestinationAddress(
+						association.getSourceAddress(), association.getDestinationAddress()));
+		}
+
+		return allRelatedAssociations;
+	}
+
+	/**
+	 * Given an association, get the VTMatch from the given matchSet (ie set of matches from a 
+	 * particular correlator). There may be multiple correlators that have found the same match. 
+	 * This is making sure the match is from the desired correlator.
+	 * @param association the given association
+	 * @param matchSet the given correlator matchSet
+	 * @param monitor the task monitor
+	 * @return the match with same source and destination addresss as the given association from the
+	 * given correlator's set of matches.
+	 * @throws CancelledException if cancelled
+	 */
+	private VTMatch getAssociationMatchFromMatchSet(VTAssociation association,
+			VTMatchSet matchSet, TaskMonitor monitor) throws CancelledException {
+
+		List<VTMatch> assocMatchesInMatchSet = new ArrayList<VTMatch>();
+
+		List<VTMatch> assocationMatches = session.getMatches(association);
+		Collection<VTMatch> matchSetMatches = matchSet.getMatches();
+
+		for (VTMatch match : assocationMatches) {
+			monitor.checkCancelled();
+
+			if (matchSetMatches.contains(match)) {
+				assocMatchesInMatchSet.add(match);
+			}
+
+		}
+
+		if (assocMatchesInMatchSet.size() == 1) {
+			return assocMatchesInMatchSet.get(0);
+		}
+
+		Msg.error(this,
+			"Expected single match in matchset for association " + association.toString());
+
+		return null;
+	}
+
+
+	/**
+	 * From the given related association, ie a group of src/dest pairs of functions with identical
+	 *  instructions, use operand information to find any unique matches in the set. 
+	 * @param relatedAssociations group of src/dest pairs of functions with identical instructions
+	 * @param monitor the task monitor
+	 * @return a list of src/destination associations that are uniquely matched based on matching
+	 *  operands
+	 * @throws CancelledException if cancelled
+	 */
+	private List<VTAssociation> findUniqueAssociations(
+			Collection<VTAssociation> relatedAssociations, TaskMonitor monitor)
+			throws CancelledException {
+
+
+		// create function to operand map maps for each source and destination function
+		// in the given related associations (src/dst function pairs)
+		Map<Function, Map<Long, Map<Integer, Object>>> sourceFunctionsMap =
+			createFunctionsMap(relatedAssociations, true, monitor);
+
+		Map<Function, Map<Long, Map<Integer, Object>>> destFunctionsMap =
+			createFunctionsMap(relatedAssociations, false, monitor);
+
+
+		// only functions with scalar or address operands are mapped so the lists could be
+		// empty if there are functions with no operand info to be mapped
+		if (sourceFunctionsMap.isEmpty() || destFunctionsMap.isEmpty()) {
+			return null;
+		}
+
+		List<VTAssociation> uniqueAssociations = findUniqueAssociationsUsingMaps(sourceFunctionsMap,
+			destFunctionsMap, monitor);
+
+		return uniqueAssociations;
+	}
+
+	/**
+	 * Method to use the given function to operand maps, for sets of source and destination functions 
+	 * with identical instructions, to identify any unique src/dst matches within the set. 
+	 * instructions
+	 * @param sourceFunctionsMap the source functions map
+	 * @param destFunctionsMap the destination functions map
+	 * @param monitor the task monitor
+	 * @return the list of unique associations (src/dest function pairs) if any
+	 * @throws CancelledException if cancelled
+	 */
+	private List<VTAssociation> findUniqueAssociationsUsingMaps(
+			Map<Function, Map<Long, Map<Integer, Object>>> sourceFunctionsMap,
+			Map<Function, Map<Long, Map<Integer, Object>>> destFunctionsMap,
+			TaskMonitor monitor)
+			throws CancelledException {
+
+		List<VTAssociation> uniqueAssociations = new ArrayList<VTAssociation>();
+
+		// for each source function, try to find a single matching destination function from 
+		// the associated functions that have map info
+		VTAssociationManager vtAssocManager = session.getAssociationManager();
+		Set<Function> sourceFunctions = sourceFunctionsMap.keySet();
+
+		Set<Function> matchedDestFunctions = new HashSet<Function>();
+
+		for (Function sourceFunction : sourceFunctions) {
+			monitor.checkCancelled();
+
+			Map<Long, Map<Integer, Object>> sourceFunctionMap =
+				sourceFunctionsMap.get(sourceFunction);
+
+			Function destFunction =
+				getSingleMatch(sourceFunctionMap, destFunctionsMap, matchedDestFunctions, monitor);
+
+			if (destFunction == null) {
+				continue;
+			}
+
+			// track matched destination functions so they are not checked again later
+			matchedDestFunctions.add(destFunction);
+
+			// add the association for the given src/dest pair to the list of good matches
+			VTAssociation association = vtAssocManager
+					.getAssociation(sourceFunction.getEntryPoint(), destFunction.getEntryPoint());
+			if (association != null) {
+				uniqueAssociations.add(association);
+			}
+		}
+		return uniqueAssociations;
+	}
+
+	/**
+	 * Create an operand map for each source or destination function in the given associations
+	 * @param associations The collection of associations (src/dest function pairs)
+	 * @param source if true use the source function, if false use the destination function
+	 * @param monitor the task monitor
+	 * @return the map of functions to their operand maps
+	 * @throws CancelledException if cancelled
+	 */
+	private Map<Function, Map<Long, Map<Integer, Object>>> createFunctionsMap(
+			Collection<VTAssociation> associations, boolean source, TaskMonitor monitor)
+			throws CancelledException {
+
+		Map<Function, Map<Long, Map<Integer, Object>>> functionsMap =
+			new HashMap<>();
+
+		// to keep track of which functions are attempted so only mapped once since there are 
+		// multiple pairs with same source function and multiple with the same dest function
+		Set<Function> functionsMapAttempted = new HashSet<Function>();
+
+		// make an operand map for each source and destination function in the given associations
+		for (VTAssociation association : associations) {
+			monitor.checkCancelled();
+
+			Function function = null;
+			if (source) {
+				function = getSourceFunction(association);
+			}
+			else {
+				function = getDestFunction(association);
+			}
+			if (function == null) {
+				continue;
+			}
+
+			if (functionsMapAttempted.contains(function)) {
+				continue;
+			}
+
+			functionsMapAttempted.add(function);
+
+			// create offset/operand info map for the given source function 
+			Map<Long, Map<Integer, Object>> map =
+				mapFunctionScalarAndAddressOperands(function, monitor);
+
+			// only keep the ones with operand info to map
+			if (map != null) {
+				functionsMap.put(function, map);
+			}
+		}
+		return functionsMap;
+	}
+
+
+	/**
+	 * Using the given source function's map and a list of destination function maps, and a list 
+	 * of destination functions to omit because they already have found matches, try to find a 
+	 * single match using matching operand info. 
+	 * 
+	 * @param sourceFunctionMap the operand map for the source function
+	 * @param destFunctionsMap the maps for the destination functions
+	 * @param destFunctionsToOmit the destination functions that already have been mapped
+	 * @param monitor the task monitor
+	 * @return a single matching destination function or null if none or more than one are found
+	 * @throws CancelledException if cancelled
+	 */
+	private Function getSingleMatch(Map<Long, Map<Integer, Object>> sourceFunctionMap,
+			Map<Function, Map<Long, Map<Integer, Object>>> destFunctionsMap,
+			Set<Function> destFunctionsToOmit,
+			TaskMonitor monitor) throws CancelledException {
+
+		Set<Function> destFunctions = destFunctionsMap.keySet();
+		Set<Function> matchingFunctions = new HashSet<>();
+
+		// remove the omitted ones which were previously matched to something else
+		destFunctions.removeAll(destFunctionsToOmit);
+
+		for (Function destFunction : destFunctions) {
+			monitor.checkCancelled();
+
+			Map<Long, Map<Integer, Object>> destFunctionMap =
+				destFunctionsMap.get(destFunction);
+
+			// skip if the operand maps don't match
+			if (!equalsFunctionMap(sourceFunctionMap, destFunctionMap, monitor)) {
+				continue;
+			}
+
+			// add to list of operand maps match
+			matchingFunctions.add(destFunction);
+
+		}
+		if (matchingFunctions.size() == 1) {
+			List<Function> list = new ArrayList<Function>(matchingFunctions);
+			return list.get(0);
+		}
+		return null;
+
+	}
+
+	private boolean equalsFunctionMap(Map<Long, Map<Integer, Object>> map1,
+			Map<Long, Map<Integer, Object>> map2, TaskMonitor monitor)
+			throws CancelledException {
+
+		if (!map1.keySet().equals(map2.keySet())) {
+			return false;
+		}
+		Set<Long> map1Longs = map1.keySet();
+
+		for (Long offset : map1Longs) {
+
+			Map<Integer, Object> opMap1 = map1.get(offset);
+			Map<Integer, Object> opMap2 = map2.get(offset);
+
+			if (!equivalentOperandMap(opMap1, opMap2, monitor)) {
+				return false;
+			}
+		}
+		return true;
+
+	}
+
+	private boolean equivalentOperandMap(Map<Integer, Object> map1,
+			Map<Integer, Object> map2,
+			TaskMonitor monitor) throws CancelledException {
+
+		if (!map1.keySet().equals(map2.keySet())) {
+			return false;
+		}
+
+		for (Integer i : map1.keySet()) {
+
+			monitor.checkCancelled();
+
+			Object op1 = map1.get(i);
+			Object op2 = map2.get(i);
+			if (!equivalentOperands(op1, op2)) {
+				return false;
+			}
+		}
+
+		return true;
+
+	}
+
+	private boolean equivalentOperands(Object op1, Object op2) {
+
+		if ((op1 instanceof Scalar)) {
+			return op1.equals(op2);
+		}
+
+		return isEquivalentAddressOperand(op1, op2);
+
+	}
+
+	/**
+	 * Method to determine if the two given operands are equivalent Address operands
+	 * @param op1 the first operand
+	 * @param op2 the second operand
+	 * @return true if the operands are equivalent Address operands, false otherwise
+	 */
+	private boolean isEquivalentAddressOperand(Object op1, Object op2) {
+
+		if (!(op1 instanceof Address)) {
+			return false;
+		}
+
+		if (!(op2 instanceof Address)) {
+			return false;
+		}
+
+		Address addr1 = (Address) op1;
+		Address addr2 = (Address) op2;
+
+		// if there a defined association then consider it an equivalent operand
+		VTAssociation association = session.getAssociationManager().getAssociation(addr1, addr2);
+		if (association != null) {
+			return true;
+		}
+
+		// if either has existing association with something else then consider not equivalent
+		if (hasAnyAssociations(addr1, addr2)) {
+			return false;
+		}
+
+		// if no association information then check to see if both are functions or if both are 
+		// same data type
+		return isSameOperandType(addr1, addr2);
+
+	}
+
+	/**
+	 * Method to check to see if both addresses have functions at them or the same data type at them
+	 * @param addr1 the first Address
+	 * @param addr2 the second Address
+	 * @return
+	 */
+	private boolean isSameOperandType(Address addr1, Address addr2) {
+
+		Function function1 = sourceProgram.getFunctionManager().getFunctionAt(addr1);
+		if (function1 != null) {
+			Function function2 = destinationProgram.getFunctionManager().getFunctionAt(addr2);
+			if (function2 != null) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+
+		Data data1 = sourceProgram.getListing().getDataAt(addr1);
+		if (data1 != null && data1.isDefined()) {
+			Data data2 = destinationProgram.getListing().getDataAt(addr2);
+			if (data2 == null) {
+				return false;
+			}
+			if (!data2.isDefined()) {
+				return false;
+			}
+
+			if (data1.getDataType().getName().equals(data2.getDataType().getName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Method to determine if the given src or dest addresses have existing association 
+	 * @param source the source address
+	 * @param dest the destination address
+	 * @return true if there are any existin associations, false if none
+	 */
+	private boolean hasAnyAssociations(Address source, Address dest) {
+
+
+		Collection<VTAssociation> sourceAssociations = session.getAssociationManager()
+				.getRelatedAssociationsBySourceAddress(source);
+
+		if (!sourceAssociations.isEmpty()) {
+			return true;
+		}
+
+		Collection<VTAssociation> destAssociations = session.getAssociationManager()
+				.getRelatedAssociationsByDestinationAddress(dest);
+
+		if (!destAssociations.isEmpty()) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private Function getSourceFunction(VTAssociation association) {
+
+		Address address = association.getSourceAddress();
+		return sourceProgram.getFunctionManager().getFunctionAt(address);
+	}
+
+	private Function getDestFunction(VTAssociation association) {
+
+		Address address = association.getDestinationAddress();
+		return destinationProgram.getFunctionManager().getFunctionAt(address);
+	}
+
+	/**
+	 * Method to create a map of the given functions scalar operands and address reference operands. 
+	 * The map keys will be offsets from the top of the function to the instruction containing the
+	 *  operand(s).
+	 * The map entries will be a map of the operands at the instruction indicated by the key's 
+	 *  offset value. This map has keys for operand index and entries for the type of object at
+	 *  that operand index, either Scalar or Address 
+	 * @param function the given function
+	 * @param monitor the task monitor
+	 * @return the resulting map for the given function
+	 * @throws CancelledException if cancelled
+	 */
+	private Map<Long, Map<Integer, Object>> mapFunctionScalarAndAddressOperands(
+			Function function, TaskMonitor monitor)
+			throws CancelledException {
+
+		Map<Long, Map<Integer, Object>> offsetToOperandsMap = new HashMap<>();
+		
+
+		Program program = function.getProgram();
+
+		InstructionIterator func1InstIter =
+			program.getListing().getInstructions(function.getBody(), true);
+
+		while (func1InstIter.hasNext()) {
+			monitor.checkCancelled();
+
+			Instruction inst = func1InstIter.next();
+
+			Map<Integer, Object> map = createOperandsMap(inst);
+
+			if (map.keySet().isEmpty()) {
+				continue;
+			}
+
+			// get offset from top of function to use in function to operandMap map
+			Long offset =
+				inst.getAddress().subtract(function.getEntryPoint().getOffset()).getOffset();
+			offsetToOperandsMap.put(offset, map);
+		}
+
+		if (offsetToOperandsMap.keySet().isEmpty()) {
+			return null;
+		}
+
+		return offsetToOperandsMap;
+	}
+
+	private Map<Integer, Object> createOperandsMap(Instruction inst) {
+
+		Map<Integer, Object> map = new HashMap<>();
+		int numOperands = inst.getNumOperands();
+
+		for (int opIndex = 0; opIndex < numOperands; opIndex++) {
+
+			int opType = inst.getOperandType(opIndex);
+
+			// save off operand if a scalar or a code or data reference
+			if (OperandType.isScalar(opType)) {
+				map.put(opIndex, inst.getScalar(opIndex));
+				continue;
+			}
+
+			// if operands are addresses check to see if both refer to data or both refer to code
+			if (OperandType.isAddress(opType)) {
+				if (OperandType.isDataReference(opType)) {
+					//Reference opRef = inst.getPrimaryReference(opIndex);
+					map.put(opIndex, inst.getAddress(opIndex));
+					continue;
+				}
+
+				if (OperandType.isCodeReference(opType)) {
+					map.put(opIndex, inst.getAddress(opIndex));
+					continue;
+				}
+
+			}
+		}
+		return map;
+	}
+
+
+	/**
+	 * Method to create offset/operand mapping for each function in match set
+	 * if more than one identical offset/operand mapping in src or dest piles then remove
+	 * if no operands remove
+	 * 
+	 */
 
 	/**
 	 * Try to accept the given match and if can accept the match try to apply its markup
@@ -655,366 +1163,6 @@ public class AutoVersionTrackingTask extends Task {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Get a set of matches with equivalent operands.
-	 * @param matches Set of version tracking matches with matching instructions
-	 * @param sourceAddress Address of source function to compare with destination functions
-	 * @param destAddresses Addresses of destination functions to compare with source function
-	 * @param monitor Allows user to cancel
-	 * @return Set of all matches with equivalent operands.
-	 * @throws CancelledException if cancelled
-	 */
-	private Set<VTMatch> getMatchesWithEquivalentOperands(Set<VTMatch> matches,
-			Address sourceAddress, Set<Address> destAddresses, TaskMonitor monitor)
-			throws CancelledException {
-
-		Set<VTMatch> matchesWithEquivalentOperands = new HashSet<>();
-		for (Address destAddress : destAddresses) {
-
-			if (haveEquivalentOperands(sourceProgram, sourceAddress, destinationProgram,
-				destAddress, monitor)) {
-				VTMatch goodMatch = getMatch(matches, sourceAddress, destAddress);
-				if (goodMatch != null) {
-					matchesWithEquivalentOperands.add(goodMatch);
-				}
-			}
-		}
-		return matchesWithEquivalentOperands;
-	}
-
-	/**
-	 * Determine which matches from a collection of matches are related to the given match, ie
-	 * have the same source or destination address as the current match.
-	 * @param match Current version tracking match
-	 * @param matches Collection version tracking matches
-	 * @param monitor Allows user to cancel
-	 * @return Set of matches related to the given match
-	 * @throws CancelledException if cancelled
-	 */
-	private Set<VTMatch> getRelatedMatches(VTMatch match, Collection<VTMatch> matches,
-			TaskMonitor monitor) throws CancelledException {
-
-		VTAssociationManager vtAssocManager = session.getAssociationManager();
-		Set<VTMatch> relatedMatches = new HashSet<>();
-
-		Collection<VTAssociation> relatedAssociations =
-			vtAssocManager.getRelatedAssociationsBySourceAndDestinationAddress(
-				match.getSourceAddress(), match.getDestinationAddress());
-
-		//Add the current match and all related matches to a new set to process
-		relatedMatches.add(match);
-		// create set of related duplicate matches and remove all related matches from the
-		// copied set of all matches so they are not processed more than once
-		for (VTAssociation relatedAssociation : relatedAssociations) {
-			monitor.checkCancelled();
-			VTMatch relMatch = getMatch(matches, relatedAssociation.getSourceAddress(),
-				relatedAssociation.getDestinationAddress());
-			if (relMatch != null) {
-				relatedMatches.add(relMatch);
-			}
-
-		}
-		return relatedMatches;
-	}
-
-	/**
-	 * Remove given matches from a set of matches.
-	 * @param matchSet Set of matches.
-	 * @param matchesToRemove Set of matches to remove from matches set.
-	 */
-	private void removeMatches(Set<VTMatch> matchSet, Set<VTMatch> matchesToRemove) {
-
-		for (VTMatch matchToRemove : matchesToRemove) {
-			VTMatch match = getMatch(matchSet, matchToRemove.getSourceAddress(),
-				matchToRemove.getDestinationAddress());
-			if (match != null) {
-				matchSet.remove(match);
-			}
-		}
-	}
-
-	/**
-	 * Get the source addresses from a set of version tracking matches.
-	 * @param matches Set of version tracking matches
-	 * @param monitor Allows user to cancel
-	 * @return A set of source addresses from the given set of version tracking matches.
-	 * @throws CancelledException if cancelled
-	 */
-	private Set<Address> getSourceAddressesFromMatches(Set<VTMatch> matches, TaskMonitor monitor)
-			throws CancelledException {
-
-		Set<Address> sourceAddresses = new HashSet<>();
-		for (VTMatch match : matches) {
-			monitor.checkCancelled();
-			sourceAddresses.add(match.getSourceAddress());
-		}
-		return sourceAddresses;
-	}
-
-	/**
-	 * Get the destination addresses from a set of version tracking matches.
-	 * @param matches Set of version tracking matches
-	 * @param monitor Allows user to cancel
-	 * @return A set of destination addresses from the given set of version tracking matches.
-	 * @throws CancelledException if cancelled
-	 */
-	private Set<Address> getDestinationAddressesFromMatches(Set<VTMatch> matches,
-			TaskMonitor monitor) throws CancelledException {
-
-		Set<Address> destAddresses = new HashSet<>();
-		for (VTMatch match : matches) {
-			monitor.checkCancelled();
-			destAddresses.add(match.getDestinationAddress());
-		}
-		return destAddresses;
-	}
-
-	/**
-	 * Given a set of version tracking matches, return the match with the given source/destination
-	 * address pair.
-	 * @param matches Set of version tracking matches.
-	 * @param sourceAddress Address of the source program match item.
-	 * @param destAddress Address of the destination program match item.
-	 * @return The match with the given source/destination address pair or null if not found.
-	 */
-	private VTMatch getMatch(Collection<VTMatch> matches, Address sourceAddress,
-			Address destAddress) {
-		for (VTMatch match : matches) {
-			if (match.getSourceAddress().equals(sourceAddress) &&
-				match.getDestinationAddress().equals(destAddress)) {
-				return match;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * From a set of matches get the subset that contains the given source and destination addresses.
-	 * @param matches Set of matches
-	 * @param sourceAddresses Set of source addresses
-	 * @param destAddresses Set of destination addresses
-	 * @param monitor Allows user to cancel
-	 * @return Set of matches containing given source and destination addresses.
-	 * @throws CancelledException if cancelled
-	 */
-	private Set<VTMatch> getMatches(Set<VTMatch> matches, Set<Address> sourceAddresses,
-			Set<Address> destAddresses, TaskMonitor monitor) throws CancelledException {
-
-		Set<VTMatch> results = new HashSet<>();
-		for (VTMatch match : matches) {
-			monitor.checkCancelled();
-			if (sourceAddresses.contains(match.getSourceAddress()) &&
-				destAddresses.contains(match.getDestinationAddress())) {
-				results.add(match);
-			}
-		}
-		return results;
-	}
-
-	/**
-	 *  * This method is only called to compare functions with identical instruction
-	 *  bytes, identical operand lengths, but possibly different operand values. It returns true
-	 *  if the two functions in the match have potentially equivalent operands. It returns false if
-	 *  any of the operands do not match.
-	 *  Potentially equivalent means corresponding scalar operands match, corresponding other operands have
-	 *  the same type of operand (i.e., code, data,register)
-	 * @param program1 Program containing function1
-	 * @param address1 Function to compare with function2
-	 * @param program2 Program containing function2
-	 * @param address2 Function to compare with function1
-	 * @param monitor Allows user to cancel
-	 * @return true if all operands between the two functions match and false otherwise.
-	 * @throws CancelledException if cancelled
-	 */
-	private boolean haveEquivalentOperands(Program program1, Address address1, Program program2,
-			Address address2, TaskMonitor monitor) throws CancelledException {
-
-		Function function1 = program1.getFunctionManager().getFunctionAt(address1);
-		Function function2 = program2.getFunctionManager().getFunctionAt(address2);
-		if (function1 == null || function2 == null) {
-			return false;
-		}
-
-		InstructionIterator func1InstIter =
-			program1.getListing().getInstructions(function1.getBody(), true);
-		InstructionIterator func2InstIter =
-			program2.getListing().getInstructions(function2.getBody(), true);
-
-		// Setup the function comparer
-		ListingDiff listingDiff = new ListingDiff();
-		listingDiff.setIgnoreByteDiffs(false);
-		listingDiff.setIgnoreConstants(false);
-		listingDiff.setIgnoreRegisters(false);
-
-		while (func1InstIter.hasNext() && func2InstIter.hasNext()) {
-			monitor.checkCancelled();
-
-			Instruction inst1 = func1InstIter.next();
-			Instruction inst2 = func2InstIter.next();
-
-			// Get the differing operands for this instruction
-			int[] operandsThatDiffer = listingDiff.getOperandsThatDiffer(inst1, inst2);
-			if (!haveEquivalentOperands(inst1, inst2, operandsThatDiffer)) {
-				return false;
-			}
-		}
-
-		// This should never happen but if it does then throw an error because that means something
-		// weird is happening like the action updating the source and destination match lengths
-		// didn't do it correctly.
-		if (func1InstIter.hasNext() || func2InstIter.hasNext()) {
-			throw new AssertException(
-				"Expected Source and Destination function number of instructions to be equal but they differ.");
-		}
-		// True does not necessarily mean they are THE match. This has hopefully weeded out more
-		// bad matches but there are cases where we can't determine one unique match
-		return true;
-	}
-
-	/**
-	 * Determine if the given instructions which have at least one differing operand, have equivalent
-	 * operand types. If operand type is a scalar, is it the same scalar.
-	 * @param inst1 Instruction 1
-	 * @param inst2 Instruction 2
-	 * @param operandsThatDiffer Array of indexes of operands that differ
-	 * @return true if all operands in the two instructions are equivalent types and scalars are equal,
-	 * else return false
-	 */
-	private boolean haveEquivalentOperands(Instruction inst1, Instruction inst2,
-			int[] operandsThatDiffer) {
-
-		for (int operand : operandsThatDiffer) {
-
-			// First, check to see if the op type is the same. If not, return false.
-			int srcOpType = inst1.getOperandType(operand);
-			int destOpType = inst2.getOperandType(operand);
-			if (srcOpType != destOpType) {
-				return false;
-			}
-
-			// If the matching op types are scalars, check to see if they are the same. If not
-			// return false.
-			if (OperandType.isScalar(srcOpType) &&
-				!inst1.getScalar(operand).equals(inst2.getScalar(operand))) {
-				return false;
-			}
-
-			// if operands are addresses check to see if both refer to data or both refer to code
-			if (OperandType.isAddress(srcOpType)) {
-				if (OperandType.isDataReference(srcOpType) &&
-					OperandType.isDataReference(destOpType)) {
-					continue;
-				}
-
-				if (OperandType.isCodeReference(srcOpType) &&
-					OperandType.isCodeReference(destOpType)) {
-					continue;
-				}
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Method to determine if two functions with exactly the same instructions also have exactly the
-	 * same operands.
-	 * @param program1 Program that contains function1
-	 * @param function1 Function to compare with function2
-	 * @param program2 Program that contains function2 (can be same or different than program1)
-	 * @param function2 Function to compare with function1
-	 * @param monitor the monitor
-	 * @return true if two functions have no operand differences, else returns false
-	 * @throws CancelledException if cancelled
-	 */
-	private boolean haveSameOperands(Program program1, Function function1, Program program2,
-			Function function2, TaskMonitor monitor) throws CancelledException {
-
-		CodeUnitIterator sourceFuncCodeUnitIter =
-			program1.getListing().getCodeUnits(function1.getBody(), true);
-		CodeUnitIterator destFuncCodeUnitIter =
-			program2.getListing().getCodeUnits(function2.getBody(), true);
-
-		ListingDiff listingDiff = new ListingDiff();
-		listingDiff.setIgnoreByteDiffs(false);
-		listingDiff.setIgnoreConstants(false);
-		listingDiff.setIgnoreRegisters(false);
-
-		while (sourceFuncCodeUnitIter.hasNext() && destFuncCodeUnitIter.hasNext()) {
-			monitor.checkCancelled();
-			CodeUnit srcCodeUnit = sourceFuncCodeUnitIter.next();
-			CodeUnit dstCodeUnit = destFuncCodeUnitIter.next();
-
-			int[] operandsThatDiffer = listingDiff.getOperandsThatDiffer(srcCodeUnit, dstCodeUnit);
-
-			if (operandsThatDiffer.length > 0) {
-				return false;
-			}
-		}
-		// This should never happen but if it does then throw an error because that means something
-		// weird is happening like the action updating the source and destination match lengths
-		// didn't do it correctly.
-		if (sourceFuncCodeUnitIter.hasNext() || destFuncCodeUnitIter.hasNext()) {
-			throw new AssertException(
-				"Expected Source and Destination function number of instructions to be equal but they differ.");
-		}
-		return true;
-	}
-
-	/**
-	 * Remove addresses from a set of function starting addresses if any functions have all matching
-	 * operands.
-	 * @param program the program
-	 * @param addresses Set of function start addresses
-	 * @param monitor the monitor
-	 * @return Set of addresses of deduped function bytes
-	 * @throws CancelledException if cancelled
-	 */
-	private Set<Address> dedupMatchingFunctions(Program program, Set<Address> addresses,
-			TaskMonitor monitor) throws CancelledException {
-
-		FunctionManager functionManager = program.getFunctionManager();
-
-		// Copy the list of addresses to a new array list
-		Set<Address> uniqueFunctionAddresses = new HashSet<>(addresses);
-
-		List<Address> list = new ArrayList<>(addresses);
-
-		// Compare 0 to 1, 0 to 2, ... 0 to j-1, 1 to 2, 1 to 3, ... 1- j-1, .... i-2 to j-1
-		for (int i = 0; i < list.size(); i++) {
-
-			Address address1 = list.get(i);
-			if (!uniqueFunctionAddresses.contains(address1)) {
-				continue;
-			}
-
-			for (int j = i + 1; j < list.size(); j++) {
-				monitor.checkCancelled();
-
-				Address address2 = list.get(j);
-
-				// If either of the two function addresses are not on the list, they have already
-				// been deemed a duplicate so no need to compare either of them again.
-				if (!uniqueFunctionAddresses.contains(address2)) {
-					continue;
-				}
-
-				// Compare the functions at address1 and address2 and see if they have no matching
-				// operands. Since all functions in this list already have matching instructions, then
-				// if their operands all match, they are completely identical functions and we
-				// want to throw them out so remove them from the list.
-				if (haveSameOperands(program, functionManager.getFunctionAt(address1), program,
-					functionManager.getFunctionAt(address2), monitor)) {
-
-					uniqueFunctionAddresses.remove(address1);
-					uniqueFunctionAddresses.remove(address2);
-				}
-			}
-		}
-
-		return uniqueFunctionAddresses;
 	}
 
 	public String getStatusMsg() {
