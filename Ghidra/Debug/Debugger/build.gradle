@@ -32,6 +32,7 @@ dependencies {
 	api project(':Decompiler')
 	api project(':ProposedUtils')
 
+	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':Base', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
