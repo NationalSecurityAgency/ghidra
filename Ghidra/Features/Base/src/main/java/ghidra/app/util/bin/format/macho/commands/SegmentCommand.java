@@ -106,6 +106,10 @@ public class SegmentCommand extends LoadCommand {
 		return segname;
 	}
 
+	public void setSegmentName(String name) {
+		this.segname = name;
+	}
+
 	public long getVMaddress() {
 		// Mask off possible chained fixup found in kernelcache segment addresses
 		if ((vmaddr & 0xfff000000000L) == 0xfff000000000L) {
