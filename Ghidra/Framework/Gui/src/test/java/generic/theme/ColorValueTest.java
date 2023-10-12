@@ -22,7 +22,7 @@ import java.awt.Color;
 import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.util.WebColors;
+import ghidra.util.*;
 
 public class ColorValueTest {
 
@@ -30,6 +30,10 @@ public class ColorValueTest {
 
 	@Before
 	public void setup() {
+
+		// disable warning messages when some test values cannot be found
+		Msg.setErrorLogger(new SpyErrorLogger());
+
 		values = new GThemeValueMap();
 	}
 
@@ -149,5 +153,35 @@ public class ColorValueTest {
 		ColorValue value = new ColorValue("color.value", gColor);
 		assertEquals("color.parent", value.getReferenceId());
 		assertNull(value.getRawValue());
+	}
+
+	@Test
+	public void testJavaColorValueRoundTrip() {
+
+		ColorValue value = ColorValue.parse("[laf.color]TextArea.background", "red");
+		values.addColor(value);
+
+		assertEquals("laf.color.TextArea.background", value.getId());
+		assertEquals(Color.RED, value.get(values));
+
+		assertEquals("[laf.color]TextArea.background = #ff0000 // Red",
+			value.getSerializationString());
+	}
+
+	@Test
+	public void testInheritsFrom_JavaValues() {
+
+		ColorValue parent = ColorValue.parse("[laf.color]TextArea.background", "red");
+		values.addColor(parent);
+		ColorValue value =
+			ColorValue.parse("[laf.color]Button.background", "[laf.color]TextArea.background");
+		values.addColor(value);
+
+		//
+		// Note: ColorValue.parse() works on external ids or normalized ids.
+		//
+		//       ColorValue() constructor and inheritsFrom() only work on normalized ids
+		//
+		assertTrue(value.inheritsFrom("laf.color.TextArea.background", values));
 	}
 }

@@ -70,6 +70,7 @@ public abstract class ThemeManager {
 	protected LafType activeLafType = activeTheme.getLookAndFeelType();
 	protected boolean useDarkDefaults = activeTheme.useDarkDefaults();
 
+	// this use our normalized ids (e.g., 'laf.')
 	protected GThemeValueMap javaDefaults = new GThemeValueMap();
 	protected GThemeValueMap currentValues = new GThemeValueMap();
 
@@ -89,10 +90,11 @@ public abstract class ThemeManager {
 			// default behavior is only install to INSTANCE if first time
 			INSTANCE = this;
 		}
-		applicationDefaults = getApplicationDefaults();
+
+		applicationDefaults = loadApplicationDefaults();
 	}
 
-	protected ApplicationThemeDefaults getApplicationDefaults() {
+	protected ApplicationThemeDefaults loadApplicationDefaults() {
 		return new PropertyFileThemeDefaults();
 	}
 
@@ -100,9 +102,35 @@ public abstract class ThemeManager {
 		Gui.setThemeManager(this);
 	}
 
+	/**
+	 * This method is called to create the internal set of theme value used by the application. To
+	 * do this, we use a layered approach to install values, with the last values added overwriting
+	 * any pre-existing values with the same key.  The values are added in the following order:
+	 * <pre>
+	 * java defaults -> light values -> dark values -> look and feel values -> property file values -> theme values
+	 * </pre>
+	 * <p>
+	 * At the point this method is called, this is the state of these various values:
+	 * <ul>
+	 *     <li>The 'javaValues' are normalized in the form of 'laf.font.TextArea'
+	 *     </li>
+	 *     <li>The 'applicationDefaults' contains values loaded from the {@code theme.properties}
+	 *     files:
+	 *     <pre>
+	 *     font.listing.base
+	 *     font.monospaced
+	 *     [color]Viewport.background = color.bg
+	 *     [laf.font]TextArea.font = font.monospaced
+	 *     [laf.boolean]Button.rollover = true
+	 *     </pre>
+	 *     </li>
+	 *     <li>The 'activeTheme' values are those loaded by the current theme, which has any changes
+	 *     made to the default values
+	 *     </li>
+	 * </ul>
+	 */
 	protected void buildCurrentValues() {
 		GThemeValueMap map = new GThemeValueMap();
-
 		map.load(javaDefaults);
 		map.load(applicationDefaults.getLightValues());
 		if (useDarkDefaults) {
@@ -497,6 +525,16 @@ public abstract class ThemeManager {
 	 * @return true if there are any unsaved changes to the current theme.
 	 */
 	public boolean hasThemeChanges() {
+		return false;
+	}
+
+	/**
+	 * Returns true if any theme values have changed.  This does not take into account the current
+	 * Look and Feel.   Use {@link #hasThemeChanges()} to also account for changes to the Look and
+	 * Feel.
+	 * @return true if any theme values have changed
+	 */
+	public boolean hasThemeValueChanges() {
 		return false;
 	}
 
