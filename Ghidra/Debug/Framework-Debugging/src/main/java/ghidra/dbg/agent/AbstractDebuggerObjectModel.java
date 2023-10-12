@@ -28,6 +28,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
+import ghidra.util.datastruct.PrivatelyQueuedListener;
 
 public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectModel {
 	public final Object lock = new Object();
@@ -38,6 +39,10 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 
 	protected final ListenerSet<DebuggerModelListener> listeners =
 		new ListenerSet<>(DebuggerModelListener.class, true);
+
+	protected final PrivatelyQueuedListener<DebuggerModelListener> asyncListeners =
+		new PrivatelyQueuedListener<DebuggerModelListener>(DebuggerModelListener.class,
+			clientExecutor, listeners.invoke());
 
 	protected SpiTargetObject root;
 	protected boolean rootAdded;
@@ -99,9 +104,8 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 			});
 			this.completedRoot.completeAsync(() -> root, clientExecutor);
 
-			clientExecutor.execute(() -> {
-				listeners.invoke().rootAdded(root);
-			});
+			// broadcast is privately queued on clientExecutor
+			broadcast().rootAdded(root);
 		}
 	}
 
@@ -199,6 +203,10 @@ public abstract class AbstractDebuggerObjectModel implements SpiDebuggerObjectMo
 	public void removeModelListener(DebuggerModelListener listener) {
 		// NB. Don't really care to lock here. Only making guarantees re/ adds,replays.
 		listeners.remove(listener);
+	}
+
+	protected DebuggerModelListener broadcast() {
+		return asyncListeners.in;
 	}
 
 	/**
