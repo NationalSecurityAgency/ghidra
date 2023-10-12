@@ -98,7 +98,7 @@ public class FridaModelImpl extends AbstractFridaModel implements DebuggerObject
 
 	@Override
 	public void terminate() throws IOException {
-		listeners.invoke().modelClosed(DebuggerModelClosedReason.NORMAL);
+		broadcast().modelClosed(DebuggerModelClosedReason.NORMAL);
 		root.invalidateSubtree(root, "Frida is terminating");
 		manager.terminate();
 	}
