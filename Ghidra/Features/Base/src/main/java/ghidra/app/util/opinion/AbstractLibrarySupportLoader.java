@@ -627,6 +627,15 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			TaskMonitor monitor) throws CancelledException, IOException {
 
 		Program library = null;
+		if (libraryDestFolderPath != null) {
+			String libraryPath = FilenameUtils.getPath(libraryName);
+			if (libraryPath != null && !libraryPath.isEmpty()) {
+				if (!libraryDestFolderPath.endsWith("/")) {
+					libraryDestFolderPath += "/";
+				}
+				libraryDestFolderPath += libraryPath;
+			}
+		}
 		String simpleLibraryName = FilenameUtils.getName(libraryName);
 		List<FSRL> candidateLibraryFsrls =
 			findLibrary(Path.of(libraryName), fsSearchPaths, log, monitor);
@@ -921,14 +930,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			List<DomainFolder> searchFolders, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		Map<String, Loaded<Program>> loadedByName = loadedPrograms.stream()
-				.collect(
-					Collectors.toMap(loaded -> loaded.getName(), loaded -> loaded));
-
-		monitor.initialize(loadedByName.size());
-		for (Loaded<Program> loadedProgram : loadedByName.values()) {
-			monitor.incrementProgress(1);
-			monitor.checkCancelled();
+		monitor.initialize(loadedPrograms.size());
+		for (Loaded<Program> loadedProgram : loadedPrograms) {
+			monitor.increment();
 
 			Program program = loadedProgram.getDomainObject();
 			ExternalManager extManager = program.getExternalManager();
@@ -941,7 +945,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			monitor.setMessage("Resolving..." + program.getName());
 			int id = program.startTransaction("Resolving external references");
 			try {
-				resolveExternalLibraries(program, loadedByName, searchFolders, monitor, messageLog);
+				resolveExternalLibraries(program, loadedPrograms, searchFolders, monitor,
+					messageLog);
 			}
 			finally {
 				program.endTransaction(id, true);
@@ -957,9 +962,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 *
 	 * @param program the program whose Library entries are to be resolved.  An open 
 	 *   transaction on program is required.
-	 * @param loadedByName map of recently loaded things to be considered
-	 *   first when resolving external Libraries.  Programs not saved to the project
-	 *   will be ignored.
+	 * @param loadedPrograms the list of {@link Loaded} {@link Program}s
 	 * @param searchFolders an order list of {@link DomainFolder}s which imported libraries will be
 	 *   searched. These folders will be searched if a library is not found within the list of 
 	 *   programs supplied.
@@ -968,7 +971,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	private void resolveExternalLibraries(Program program,
-			Map<String, Loaded<Program>> loadedByName, List<DomainFolder> searchFolders,
+			List<Loaded<Program>> loadedPrograms, List<DomainFolder> searchFolders,
 			TaskMonitor monitor, MessageLog messageLog) throws CancelledException {
 		ExternalManager extManager = program.getExternalManager();
 		String[] extLibNames = extManager.getExternalLibraryNames();
@@ -981,8 +984,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			}
 			monitor.checkCancelled();
 			try {
-				String externalFileName = FilenameUtils.getName(externalLibName);
-				Loaded<Program> matchingExtProgram = findLibrary(loadedByName, externalFileName);
+				Loaded<Program> matchingExtProgram = findLibrary(loadedPrograms, externalLibName);
 				if (matchingExtProgram != null) {
 					String path =
 						matchingExtProgram.getProjectFolderPath() + matchingExtProgram.getName();
@@ -1011,6 +1013,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				Msg.error(this, "Bad library name: " + externalLibName, e);
 			}
 		}
+		messageLog.appendMsg("------------------------------------------------\n");
 	}
 
 	/**
@@ -1134,21 +1137,28 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	/**
 	 * Find the library within the given {@link Map} of {@link Program}s
 	 * 
-	 * @param loadedByName The map to search
-	 * @param libraryName The library name to lookup
+	 * @param loadedPrograms the list of {@link Loaded} {@link Program}s
+	 * @param libraryName The library name to lookup.  Depending on the type of library, this could
+	 *   be a simple filename or an absolute path.
 	 * @return The found {@link Loaded} {@link Program} or null if not found
 	 */
-	private Loaded<Program> findLibrary(Map<String, Loaded<Program>> loadedByName,
-			String libraryName) {
+	private Loaded<Program> findLibrary(List<Loaded<Program>> loadedPrograms, String libraryName) {
 		Comparator<String> comparator = getLibraryNameComparator();
 		boolean noExtension = FilenameUtils.getExtension(libraryName).equals("");
-		for (String key : loadedByName.keySet()) {
-			String candidateName = key;
+		boolean absolute = libraryName.startsWith("/");
+		for (Loaded<Program> loadedProgram : loadedPrograms) {
+			String candidateName = loadedProgram.getName();
 			if (isOptionalLibraryFilenameExtensions() && noExtension) {
 				candidateName = FilenameUtils.getBaseName(candidateName);
 			}
-			if (comparator.compare(candidateName, libraryName) == 0) {
-				return loadedByName.get(key);
+			if (absolute) {
+				String loadedProgramPath = loadedProgram.getProjectFolderPath() + candidateName;
+				if (loadedProgramPath.endsWith(libraryName)) {
+					return loadedProgram;
+				}
+			}
+			else if (comparator.compare(candidateName, libraryName) == 0) {
+				return loadedProgram;
 			}
 		}
 		return null;
