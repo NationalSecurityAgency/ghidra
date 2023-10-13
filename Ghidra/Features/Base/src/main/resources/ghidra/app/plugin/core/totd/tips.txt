@@ -102,4 +102,6 @@ You can quickly change the font size of the Listing, Decompiler or the Bytes win
 
 You can quickly control the font size from the Theme Editor dialog via Edit->Theme->Configure.
 
+You can create a table whose rows correspond to the address ranges in a selection via Select->Create Table From Ranges.
+
 This is the last tip.  You can turn them off now.

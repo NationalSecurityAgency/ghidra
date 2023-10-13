@@ -35,6 +35,7 @@ import docking.widgets.table.GTable;
 import generic.test.TestUtils;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.app.plugin.core.codebrowser.SelectEndpointsAction.RangeEndpoint;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
 import ghidra.app.plugin.core.symtable.SymbolTablePlugin;
 import ghidra.app.plugin.core.table.TableComponentProvider;
@@ -49,7 +50,9 @@ import ghidra.program.util.InteriorSelection;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressPreviewTableModel;
+import ghidra.util.task.TaskMonitor;
 
 public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
@@ -168,7 +171,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 		ListSelectionModel selectionModel = table.getSelectionModel();
 
 		// select all the rows
-		selectionModel.setSelectionInterval(0, table.getRowCount() - 1);
+		runSwing(() -> selectionModel.setSelectionInterval(0, table.getRowCount() - 1));
 		AddressPreviewTableModel addressModel = (AddressPreviewTableModel) tableProvider.getModel();
 
 		// get a selection from the model and make sure it matches the original selection
@@ -179,6 +182,54 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 		for (; addresses.hasNext();) {
 			Address address = addresses.next();
 			assertTrue(ps.contains(address));
+		}
+	}
+
+	@Test
+	public void testAddressRangeTableFromSelection() throws CancelledException {
+		AddressSet undefined = new AddressSet(program.getListing()
+					.getUndefinedRanges(program.getMemory().getAllInitializedAddressSet(), true,
+					TaskMonitor.DUMMY));
+		setSelection(undefined);
+		DockingActionIf createTableAction =
+			getAction(tool, CodeBrowserSelectionPlugin.CREATE_ADDRESS_RANGE_TABLE_ACTION_NAME);
+		performAction(createTableAction, true);
+		TableComponentProvider<?> tableProvider =
+			waitForComponentProvider(tool.getToolFrame(), TableComponentProvider.class, 2000);
+		Object threadedPanel = TestUtils.getInstanceField("threadedPanel", tableProvider);
+		GTable table = (GTable) TestUtils.getInstanceField("table", threadedPanel);
+		assertEquals(7, table.getRowCount());
+		ListSelectionModel selectionModel = table.getSelectionModel();
+		// select all the rows
+		runSwing(() -> selectionModel.setSelectionInterval(0, table.getRowCount() - 1));
+		AddressRangeTableModel addressModel = (AddressRangeTableModel) tableProvider.getModel();
+
+		// get a selection from the model and make sure it matches the original selection
+		ProgramSelection tableProgramSelection =
+			addressModel.getProgramSelection(table.getSelectedRows());
+
+		AddressSet fromTable = new AddressSet();
+		tableProgramSelection.getAddressRanges().forEach(r -> fromTable.add(r));
+		assertEquals(fromTable, undefined);
+
+		DockingActionIf selectMinsAction =
+			getAction(tool, "Select " + RangeEndpoint.MIN.name());
+		assertNotNull(selectMinsAction);
+		performAction(selectMinsAction, true);
+		ProgramSelection minSelect = getCurrentSelection();
+		assertEquals(7, minSelect.getNumAddresses());
+		for (AddressRange range : fromTable.getAddressRanges()) {
+			assertTrue(minSelect.contains(range.getMinAddress()));
+		}
+
+		DockingActionIf selectMaxesAction =
+			getAction(tool, "Select " + RangeEndpoint.MAX.name());
+		assertNotNull(selectMaxesAction);
+		performAction(selectMaxesAction, true);
+		ProgramSelection maxSelect = getCurrentSelection();
+		assertEquals(7, maxSelect.getNumAddresses());
+		for (AddressRange range : fromTable.getAddressRanges()) {
+			assertTrue(maxSelect.contains(range.getMaxAddress()));
 		}
 	}
 
