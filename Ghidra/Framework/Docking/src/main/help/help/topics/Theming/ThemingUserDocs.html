@@ -233,9 +233,9 @@
 	<BlOCKQUOTE>
 
     <P>Theme Property Names (also referred to as IDs or keys) that are defined by the application
-    use a common format to help make sorting and viewing properties more intuitive as to their use. See
-    the <A href="ThemingDeveloperDocs.html#Resource_Ids">Developer Documentation</A> for more details on the property ID
-    format and naming conventions.</P>
+    use a common format to help make sorting and viewing properties more intuitive as to their use. 
+    See the <A href="ThemingDeveloperDocs.html#Resource_Ids">Developer Documentation</A> for more 
+    details on the property ID format and naming conventions.</P>
 
 	</BlOCKQUOTE>
     <H2>Theme Files</H2>
@@ -243,10 +243,10 @@
 
       <P>Theme Files are used to store saved custom themes. They are simple text files and are 
       stored in the user's home application directory under 
-      <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code>. The first three properties are always the
-      theme name, the Look and Feel name, and whether the theme uses standard defaults or dark
-      defaults. Finally, there is a list of overridden property "name = value" lines. The format
-      is:</P>
+      <code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code>. The first three properties 
+      are always the theme name, the Look and Feel name, and whether the theme uses standard 
+      defaults or dark defaults. Finally, there is a list of overridden property "name = value" 
+      lines. The format is:</P>
     <CODE>
 	<PRE>
         name = [theme name]
@@ -270,18 +270,18 @@
 		
         color.bg = Black
         color.bg.foo = #012345
-        [color]Panel.background = Red
         font.button = dialog-PLAIN-14
         icon.refresh = images/reload3.png    
         color.bg.bar = color.bg.foo   
-        color.bg.xxx = [color]Panel.background
+        [laf.color]Panel.background = silver
+        [laf.color]TextArea.background = [laf.color]Panel.background
 	</PRE>
 
 
       <P>Each property line is expected to begin with either "color.", "font.", or "icon." Since
-      java defined properties don't start with these prefixes, they will have "[color]", "[font]",
-      or "[icon]" prepended to their property name. These brackets are only used to aid in 
-      parsing this file. When the properties are used in Ghidra, the bracketed prefixes are
+      java defined properties don't start with these prefixes, they will have "[laf.color]", 
+      "[laf.font]", or "[laf.icon]" prepended to their property name. These brackets are only used 
+      to aid in parsing this file. When the properties are used in Ghidra, the bracketed prefixes are
       removed.</P>
 
       <P>Also, note that the values of these properties can reference other property names. If the
