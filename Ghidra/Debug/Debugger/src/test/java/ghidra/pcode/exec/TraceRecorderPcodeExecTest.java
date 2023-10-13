@@ -23,14 +23,15 @@ import java.util.Map;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.app.services.ActionSource;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.emulation.PcodeDebuggerAccess;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.DirectBytesTracePcodeExecutorState;
 import ghidra.pcode.utils.Utils;
@@ -44,7 +45,7 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 
 /**
  * Test the {@link DirectBytesTracePcodeExecutorState} in combination with
- * {@link PcodeDebuggerAccess} to ensure it read and writes the target when appropriate.
+ * {@link PcodeDebuggerAccess} to ensure it reads and writes the target when appropriate.
  */
 public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUITest {
 
@@ -67,8 +68,7 @@ public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUIT
 		Trace trace = recorder.getTrace();
 		SleighLanguage language = (SleighLanguage) trace.getBaseLanguage();
 
-		PcodeExpression expr = SleighProgramCompiler
-				.compileExpression(language, "r0 + r1");
+		PcodeExpression expr = SleighProgramCompiler.compileExpression(language, "r0 + r1");
 
 		Register r0 = language.getRegister("r0");
 		Register r1 = language.getRegister("r1");
@@ -83,8 +83,10 @@ public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUIT
 			assertTrue(rm.getRegistersOnTarget().contains(r1));
 		});
 
+		Target target = targetService.getTarget(trace);
+		assertNotNull(target);
 		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool,
-			DebuggerCoordinates.NOWHERE.recorder(recorder).thread(thread));
+			DebuggerCoordinates.NOWHERE.target(target).thread(thread));
 
 		// In practice, this should be backgrounded, but we're in a test thread
 		byte[] result = expr.evaluate(executor);
@@ -136,8 +138,10 @@ public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUIT
 			space.setValue(scratch.getKey(), new RegisterValue(r0, BigInteger.valueOf(10)));
 		}
 
+		Target target = targetService.getTarget(trace);
+		assertNotNull(target);
 		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool,
-			DebuggerCoordinates.NOWHERE.recorder(recorder).thread(thread).time(oneTick));
+			DebuggerCoordinates.NOWHERE.target(target).thread(thread).time(oneTick));
 
 		// In practice, this should be backgrounded, but we're in a test thread
 		byte[] result = expr.evaluate(executor);
@@ -180,8 +184,10 @@ public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUIT
 			assertTrue(rm.getRegistersOnTarget().contains(r1));
 		});
 
+		Target target = targetService.getTarget(trace);
+		assertNotNull(target);
 		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool,
-			DebuggerCoordinates.NOWHERE.recorder(recorder).thread(thread));
+			DebuggerCoordinates.NOWHERE.target(target).thread(thread));
 
 		executor.execute(prog, PcodeUseropLibrary.nil());
 		// Ignore return value. We'll assert that it got written to the trace

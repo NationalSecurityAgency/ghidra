@@ -1058,4 +1058,9 @@ public class WrappedDbgModel
 		client.getSymbols().setCurrentScopeFrameIndex(index);
 	}
 
+	@Override
+	public String getCurrentProcessExecutableName() {
+		return client.getSystemObjects().getCurrentProcessExecutableName();
+	}
+
 }

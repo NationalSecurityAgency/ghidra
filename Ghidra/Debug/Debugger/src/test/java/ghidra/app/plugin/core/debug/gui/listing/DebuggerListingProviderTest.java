@@ -40,7 +40,6 @@ import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.codebrowser.hover.ReferenceListingHoverPlugin;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
@@ -50,11 +49,13 @@ import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.BoundAct
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.*;
-import ghidra.lifecycle.Unfinished;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -898,7 +899,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// Check the default is track pc
 		assertEquals(PCLocationTrackingSpec.INSTANCE,
 			listingProvider.actionTrackLocation.getCurrentUserData());
-		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
+		waitForPass(
+			() -> assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress()));
 
 		goToDyn(tb.addr(0x00400000));
 		// Ensure it's changed so we know the action is effective
@@ -906,13 +908,15 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(tb.addr(0x00400000), listingProvider.getLocation().getAddress());
 
 		performAction(listingProvider.actionTrackLocation);
-		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
+		waitForPass(
+			() -> assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress()));
 
 		setActionStateWithTrigger(listingProvider.actionTrackLocation,
 			SPLocationTrackingSpec.INSTANCE,
 			EventTrigger.GUI_ACTION);
 		waitForSwing();
-		assertEquals(tb.addr(0x1fff8765), listingProvider.getLocation().getAddress());
+		waitForPass(
+			() -> assertEquals(tb.addr(0x1fff8765), listingProvider.getLocation().getAddress()));
 
 		listingProvider.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
 		waitForSwing();
@@ -921,10 +925,28 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	@Ignore("Haven't specified this action, yet")
-	public void testActionTrackOtherRegister() {
-		// TODO: Actually, can we make this an arbitrary (pcode/sleigh?) expression.
-		Unfinished.TODO();
+	public void testActionTrackWatch() throws Exception {
+		assertTrue(listingProvider.actionTrackLocation.isEnabled());
+		createAndOpenTrace();
+		listingProvider.setTrackingSpec(new WatchLocationTrackingSpec("*:4 (r0+0xe000)"));
+		TraceThread thread;
+		try (Transaction tx = tb.startTransaction()) {
+			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
+			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			mm.addRegion("[stack]", Lifespan.nowOn(0), tb.range(0x1f000000, 0x1fffffff),
+				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+			thread = tb.getOrAddThread("Thread 1", 0);
+			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
+			Register r0 = tb.language.getRegister("r0");
+			regs.setValue(0, new RegisterValue(r0, new BigInteger("00401234", 16)));
+		}
+		waitForDomainObject(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		waitForPass(
+			() -> assertEquals(tb.addr(0x0040f234), listingProvider.getLocation().getAddress()));
 	}
 
 	@Test

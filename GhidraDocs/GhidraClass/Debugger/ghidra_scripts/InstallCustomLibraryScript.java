@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 import ghidra.app.plugin.core.debug.service.emulation.*;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
+import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.emulation.PcodeDebuggerAccess;
 import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.pcode.exec.PcodeUseropLibrary;
 

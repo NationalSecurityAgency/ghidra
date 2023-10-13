@@ -21,9 +21,10 @@ import java.beans.PropertyChangeEvent;
 import docking.DockingWindowManager;
 import docking.EmptyBorderToggleButton;
 import docking.action.*;
+import ghidra.util.Swing;
 
 /**
- * Toolbar buttons for Dialogs.   
+ * Toolbar buttons for Dialogs.
  * 
  * <p>This class exists because dialog actions are not added to the regular tool's toolbars.  This
  * means that we have to create the dialog's toolbars outside of the tool.  Thus, this class
@@ -40,7 +41,7 @@ public class DialogToolbarButton extends EmptyBorderToggleButton {
 		addMouseListener(new MouseOverMouseListener());
 		action.addPropertyChangeListener(propertyChangeListener);
 
-		// make sure this button gets our specialized tooltip 
+		// make sure this button gets our specialized tooltip
 		DockingToolBarUtils.setToolTipText(this, dockingAction);
 	}
 
@@ -52,11 +53,18 @@ public class DialogToolbarButton extends EmptyBorderToggleButton {
 
 	@Override
 	protected void doActionPerformed(ActionEvent e) {
+
+		// The help is pointing to the toolbar button that triggered this call.  Reset the help so
+		// that it is correct for any widgets triggered by the actionPeformed call below.
+		DockingWindowManager.clearMouseOverHelp();
+
 		if (dockingAction instanceof ToggleDockingActionIf) {
 			ToggleDockingActionIf toggleAction = (ToggleDockingActionIf) dockingAction;
 			toggleAction.setSelected(!toggleAction.isSelected());
 		}
-		dockingAction.actionPerformed(contextProvider.getActionContext(null));
+
+		// Give the Swing thread a chance to repaint
+		Swing.runLater(() -> dockingAction.actionPerformed(contextProvider.getActionContext(null)));
 	}
 
 	@Override
@@ -84,7 +92,7 @@ public class DialogToolbarButton extends EmptyBorderToggleButton {
 
 	@Override
 	// overridden to account for the fact that "special" DockableActions can be either
-	// toggle buttons or regular non-toggle buttons, which dictates whether this 
+	// toggle buttons or regular non-toggle buttons, which dictates whether this
 	// button is selected (non-toggle buttons are not selectable).
 	protected boolean isButtonSelected() {
 		if (dockingAction instanceof ToggleDockingAction) {
@@ -101,7 +109,7 @@ public class DialogToolbarButton extends EmptyBorderToggleButton {
 	// overridden to reflect the potentiality that our action is a toggle action
 	public void setSelected(boolean b) {
 		if (dockingAction instanceof ToggleDockingActionIf) {
-			// only change the state if the action is a toggle action; doing otherwise would 
+			// only change the state if the action is a toggle action; doing otherwise would
 			// break the DockableAction
 			((ToggleDockingActionIf) dockingAction).setSelected(b);
 		}

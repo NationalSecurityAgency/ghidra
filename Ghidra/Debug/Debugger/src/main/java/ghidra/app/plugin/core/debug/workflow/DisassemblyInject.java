@@ -15,9 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.workflow;
 
-import java.util.Arrays;
-
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
+import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo.CompilerInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.Language;
@@ -38,9 +37,9 @@ import ghidra.util.classfinder.ExtensionPoint;
  * multiple injects should ever be needed, but it is supported, just in case. The injects are
  * invoked in order of priority, starting with the least. Since injects are meant simply to
  * configure the disassembler (namely seeding its context), the one invoked last will have "the last
- * word". As such, each inject should avoid unnecessarily erasing existing context.
+ * word." As such, each inject should avoid unnecessarily erasing existing context.
  */
-@DisassemblyInjectInfo(langIDs = {}) // Use as default
+@DisassemblyInjectInfo(compilers = {}) // Use as default
 public interface DisassemblyInject extends ExtensionPoint {
 	/**
 	 * If present, get the information annotation on this inject
@@ -64,8 +63,15 @@ public interface DisassemblyInject extends ExtensionPoint {
 	 * @return true if applicable, false otherwise
 	 */
 	default boolean isApplicable(Trace trace) {
-		return Arrays.asList(getInfo().langIDs())
-				.contains(trace.getBaseLanguage().getLanguageID().toString());
+		for (CompilerInfo info : getInfo().compilers()) {
+			if (info.langID().equals(trace.getBaseLanguage().getLanguageID().toString())) {
+				if (info.compilerID().isBlank() || info.compilerID()
+						.equals(trace.getBaseCompilerSpec().getCompilerSpecID().toString())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

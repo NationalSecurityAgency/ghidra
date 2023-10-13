@@ -15,15 +15,14 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
+import static ghidra.program.model.data.EndianSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
-
-import java.util.*;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.nio.*;
 import java.nio.charset.*;
+import java.util.*;
 
 import generic.stl.Pair;
 import ghidra.docking.settings.*;
@@ -759,20 +758,39 @@ public class StringDataInstance {
 	 * <p>
 	 * Example (quotes are part of result): {@code "Test\tstring",01,02,"Second\npart",00}
 	 *
-	 * @return formatted String
+	 * @return formatted String, or the translated value if present and the "show translated"
+	 * setting is enabled for this string's location
 	 */
 	public String getStringRepresentation() {
-		return getStringRep(StringRenderBuilder.DOUBLE_QUOTE, StringRenderBuilder.DOUBLE_QUOTE);
+		return showTranslation && translatedValue != null
+			? getTranslatedStringRepresentation(translatedValue)
+			: getStringRep(StringRenderBuilder.DOUBLE_QUOTE, StringRenderBuilder.DOUBLE_QUOTE);
+	}
+
+	/**
+	 * Returns a formatted version of the string returned by {@link #getStringValue()}.
+	 * <p>
+	 * The resulting string will be formatted with quotes around the parts that contain plain ASCII
+	 * alpha characters (and simple escape sequences), and out-of-range byte-ish values listed as
+	 * comma separated hex-encoded values:
+	 * <p>
+	 * Example (quotes are part of result): {@code "Test\tstring",01,02,"Second\npart",00}
+	 * 
+	 * @param originalOrTranslated boolean flag, if true returns the representation of the
+	 * string value, if false returns the representation of the translated value 
+	 * @return formatted String
+	 */
+	public String getStringRepresentation(boolean originalOrTranslated) {
+		return originalOrTranslated
+				? getStringRep(StringRenderBuilder.DOUBLE_QUOTE, StringRenderBuilder.DOUBLE_QUOTE)
+				: translatedValue != null ? getTranslatedStringRepresentation(translatedValue)
+				: UNKNOWN;
 	}
 
 	private String getStringRep(char quoteChar, char quoteCharMulti) {
 
 		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return UNKNOWN;
-		}
-
-		if (showTranslation && translatedValue != null) {
-			return getTranslatedStringRepresentation(translatedValue);
 		}
 
 		byte[] stringBytes = convertPaddedToUnpadded(getStringBytes());
@@ -909,6 +927,17 @@ public class StringDataInstance {
 			lastGoodChar--;
 		}
 		return s.substring(0, lastGoodChar + 1);
+	}
+
+	/**
+	 * Returns true if this string has a translated value that could
+	 * be displayed.
+	 * 
+	 * @return boolean true if translated value is present, false if no
+	 * value is present
+	 */
+	public boolean hasTranslatedValue() {
+		return translatedValue != null;
 	}
 
 	/**

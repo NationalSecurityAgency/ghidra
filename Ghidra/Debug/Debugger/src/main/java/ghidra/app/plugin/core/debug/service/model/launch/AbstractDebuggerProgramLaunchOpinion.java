@@ -22,6 +22,7 @@ import java.util.*;
 
 import ghidra.app.services.DebuggerModelService;
 import ghidra.dbg.DebuggerModelFactory;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;

@@ -124,6 +124,11 @@ public class GoFuncType extends GoType {
 		String name = typ.getNameString();
 		DataTypeManager dtm = programContext.getDTM();
 
+		FunctionDefinitionDataType funcDef =
+			new FunctionDefinitionDataType(programContext.getRecoveredTypesCp(), name, dtm);
+		Pointer funcDefPtr = dtm.getPointer(funcDef);
+		programContext.cacheRecoveredDataType(this, funcDefPtr);
+
 		List<GoType> paramTypes = getParamTypes();
 		List<GoType> inParamTypes = paramTypes.subList(0, inCount);
 		List<GoType> outParamTypes = paramTypes.subList(inCount, paramTypes.size());
@@ -148,12 +153,10 @@ public class GoFuncType extends GoType {
 			returnDT = multiReturn.getStruct();
 		}
 
-		FunctionDefinitionDataType funcDef = new FunctionDefinitionDataType(
-			programContext.getRecoveredTypesCp(), name, dtm);
 		funcDef.setArguments(params.toArray(ParameterDefinition[]::new));
 		funcDef.setReturnType(returnDT);
 
-		return dtm.getPointer(funcDef);
+		return funcDefPtr;
 	}
 
 	private List<DataType> recoverTypes(List<GoType> types) throws IOException {

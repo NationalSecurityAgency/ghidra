@@ -156,7 +156,8 @@ protected:
     type_incomplete = 0x400,	///< Set if \b this (recursive) data-type has not been fully defined yet
     needs_resolution = 0x800,	///< Datatype (union, pointer to union) needs resolution before propagation
     force_format = 0x7000,	///< 3-bits encoding display format, 0=none, 1=hex, 2=dec, 3=oct, 4=bin, 5=char
-    truncate_bigendian = 0x8000	///< Pointer can be truncated and is big endian
+    truncate_bigendian = 0x8000,	///< Pointer can be truncated and is big endian
+    pointer_to_array = 0x10000	///< Data-type is a pointer to an array
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
@@ -168,20 +169,24 @@ protected:
   type_metatype metatype;	///< Meta-type - type disregarding size
   sub_metatype submeta;		///< Sub-type of of the meta-type, for comparisons
   Datatype *typedefImm;		///< The immediate data-type being typedefed by \e this
+  int4 alignment;		///< Byte alignment expected for \b this data-type in addressable memory
+  int4 alignSize;		///< Size of data-type rounded up to a multiple of \b alignment
   void decodeBasic(Decoder &decoder);	///< Recover basic data-type properties
   void encodeBasic(type_metatype meta,Encoder &encoder) const;	///< Encode basic data-type properties
   void encodeTypedef(Encoder &encoder) const;	///< Encode \b this as a \e typedef element to a stream
   void markComplete(void) { flags &= ~(uint4)type_incomplete; }		///< Mark \b this data-type as completely defined
   void setDisplayFormat(uint4 format);		///< Set a specific display format
+  void calcAlignSize(void);	///< Calculate aligned size, assuming alignment is known
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
   static uint8 hashName(const string &nm);	///< Produce a data-type id by hashing the type name
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
 public:
   /// Construct the base data-type copying low-level properties of another
   Datatype(const Datatype &op) { size = op.size; name=op.name; displayName=op.displayName; metatype=op.metatype;
-    submeta=op.submeta; flags=op.flags; id=op.id; typedefImm=op.typedefImm; }
+    submeta=op.submeta; flags=op.flags; id=op.id; typedefImm=op.typedefImm; alignment=op.alignment; alignSize=op.alignSize; }
   /// Construct the base data-type providing size and meta-type
-  Datatype(int4 s,type_metatype m) { size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; }
+  Datatype(int4 s,int4 align,type_metatype m) {
+    size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; alignment=align; alignSize=s; }
   virtual ~Datatype(void) {}	///< Destructor
   bool isCoreType(void) const { return ((flags&coretype)!=0); }	///< Is this a core data-type
   bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32|opaque_string))!=0); }	///< Does this print as a 'char'
@@ -193,6 +198,7 @@ public:
   bool isVariableLength(void) const { return ((flags&variable_length)!=0); }	///< Is \b this a variable length structure
   bool hasSameVariableBase(const Datatype *ct) const;		///< Are these the same variable length data-type
   bool isOpaqueString(void) const { return ((flags&opaque_string)!=0); }	///< Is \b this an opaquely encoded string
+  bool isPointerToArray(void) const { return ((flags&pointer_to_array)!=0); }	///< Is \b this a pointer to an array
   bool isPointerRel(void) const { return ((flags & is_ptrrel)!=0); }	///< Is \b this a TypePointerRel
   bool isFormalPointerRel(void) const { return (flags & (is_ptrrel | has_stripped))==is_ptrrel; }	///< Is \b this a non-ephemeral TypePointerRel
   bool hasStripped(void) const { return (flags & has_stripped)!=0; }	///< Return \b true if \b this has a stripped form
@@ -205,6 +211,8 @@ public:
   uint8 getId(void) const { return id; }			///< Get the type id
   uint8 getUnsizedId(void) const;				///< Get the type id, without variable length size adjustment
   int4 getSize(void) const { return size; }			///< Get the type size
+  int4 getAlignSize(void) const { return alignSize; }		///< Get size rounded up to multiple of alignment
+  int4 getAlignment(void) const { return alignment; }		///< Get the expected byte alignment
   const string &getName(void) const { return name; }		///< Get the type name
   const string &getDisplayName(void) const { return displayName; }	///< Get string to use in display
   Datatype *getTypedef(void) const { return typedefImm; }	///< Get the data-type immediately typedefed by \e this (or null)
@@ -213,10 +221,30 @@ public:
   virtual Datatype *getSubType(int8 off,int8 *newoff) const; ///< Recover component data-type one-level down
   virtual Datatype *nearestArrayedComponentForward(int8 off,int8 *newoff,int8 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(int8 off,int8 *newoff,int8 *elSize) const;
-  virtual int4 getHoleSize(int4 off) const { return 0; }	///< Get number of bytes at the given offset that are padding
-  virtual int4 numDepend(void) const { return 0; }	///< Return number of component sub-types
-  virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }	///< Return the i-th component sub-type
-  virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
+
+  /// \brief Get number of bytes at the given offset that are padding
+  ///
+  /// For the given offset into \b this data-type, determine if the byte at that offset is considered
+  /// padding, and if so, return the number of bytes in the padding. Otherwise, return 0.
+  /// \return the number of bytes of padding or 0
+  virtual int4 getHoleSize(int4 off) const { return 0; }
+
+  /// \brief Get the number of component sub-types making up \b this data-type
+  ///
+  /// \return the number of components
+  virtual int4 numDepend(void) const { return 0; }
+
+  /// \brief Get a specific component sub-type by index
+  ///
+  /// \param index is the index specifying which sub-type to return
+  /// \return the i-th component sub-type
+  virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }
+
+  /// \brief Print (part of) the name of \b this data-type as short prefix for a label
+  ///
+  /// This is used for building variable names to give some indication of the variable's underlying data-type
+  /// \param s is the stream write the name prefix to
+  virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; }
   virtual int4 compare(const Datatype &op,int4 level) const; ///< Order types for propagation
   virtual int4 compareDependency(const Datatype &op) const; ///< Compare for storage in tree structure
   virtual void encode(Encoder &encoder) const;	///< Encode the data-type to a stream
@@ -281,9 +309,9 @@ public:
   /// Construct TypeBase copying properties from another data-type
   TypeBase(const TypeBase &op) : Datatype(op) {}
   /// Construct TypeBase from a size and meta-type
-  TypeBase(int4 s,type_metatype m) : Datatype(s,m) {}
+  TypeBase(int4 s,type_metatype m) : Datatype(s,-1,m) {}
   /// Construct TypeBase from a size, meta-type, and name
-  TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m) { name = n; displayName = n; }
+  TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,-1,m) { name = n; displayName = n; }
   virtual Datatype *clone(void) const { return new TypeBase(*this); }
 };
 
@@ -331,7 +359,7 @@ public:
   /// Construct from another TypeVoid
   TypeVoid(const TypeVoid &op) : Datatype(op) { flags |= Datatype::coretype; }
   /// Constructor
-  TypeVoid(void) : Datatype(0,TYPE_VOID) { name = "void"; displayName = name; flags |= Datatype::coretype; }
+  TypeVoid(void) : Datatype(0,1,TYPE_VOID) { name = "void"; displayName = name; flags |= Datatype::coretype; }
   virtual Datatype *clone(void) const { return new TypeVoid(*this); }
   virtual void encode(Encoder &encoder) const;
 };
@@ -348,15 +376,15 @@ protected:
   void calcSubmeta(void);	///< Calculate specific submeta for \b this pointer
   void calcTruncate(TypeFactory &typegrp);	// Assign a truncated pointer subcomponent if necessary
   /// Internal constructor for use with decode
-  TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; spaceid=(AddrSpace *)0; truncate=(TypePointer *)0; }
+  TypePointer(void) : Datatype(0,-1,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; spaceid=(AddrSpace *)0; truncate=(TypePointer *)0; }
 public:
   /// Construct from another TypePointer
   TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; wordsize=op.wordsize; spaceid=op.spaceid; truncate=op.truncate; }
   /// Construct from a size, pointed-to type, and wordsize
-  TypePointer(int4 s,Datatype *pt,uint4 ws) : Datatype(s,TYPE_PTR) {
+  TypePointer(int4 s,Datatype *pt,uint4 ws) : Datatype(s,-1,TYPE_PTR) {
     ptrto = pt; flags = ptrto->getInheritable(); wordsize=ws; spaceid=(AddrSpace *)0; truncate=(TypePointer *)0; calcSubmeta(); }
   /// Construct from a pointed-to type and an address space attribute
-  TypePointer(Datatype *pt,AddrSpace *spc) : Datatype(spc->getAddrSize(), TYPE_PTR) {
+  TypePointer(Datatype *pt,AddrSpace *spc) : Datatype(spc->getAddrSize(), -1, TYPE_PTR) {
     ptrto = pt; flags = ptrto->getInheritable(); spaceid=spc; wordsize=spc->getWordSize(); truncate=(TypePointer *)0; calcSubmeta(); }
   Datatype *getPtrTo(void) const { return ptrto; }	///< Get the pointed-to Datatype
   uint4 getWordSize(void) const { return wordsize; }	///< Get the size of the addressable unit being pointed to
@@ -384,7 +412,7 @@ protected:
   int4 arraysize;		///< Number of elements in the array
   void decode(Decoder &decoder,TypeFactory &typegrp);	///< Restore \b this array from a stream
   /// Internal constructor for decode
-  TypeArray(void) : Datatype(0,TYPE_ARRAY) { arraysize = 0; arrayof = (Datatype *)0; }
+  TypeArray(void) : Datatype(0,-1,TYPE_ARRAY) { arraysize = 0; arrayof = (Datatype *)0; }
 public:
   /// Construct from another TypeArray
   TypeArray(const TypeArray &op) : Datatype(op) { arrayof = op.arrayof; arraysize = op.arraysize; }
@@ -448,7 +476,7 @@ protected:
   void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
-  TypeStruct(void) : Datatype(0,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
+  TypeStruct(void) : Datatype(0,-1,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
   vector<TypeField>::const_iterator beginField(void) const { return field.begin(); }	///< Beginning of fields
   vector<TypeField>::const_iterator endField(void) const { return field.end(); }	///< End of fields
   virtual const TypeField *findTruncation(int8 off,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
@@ -465,7 +493,7 @@ public:
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
-  static void assignFieldOffsets(vector<TypeField> &list,int4 align);	///< Assign field offsets given a byte alignment
+  static void assignFieldOffsets(vector<TypeField> &list);	///< Assign field offsets
   static int4 scoreSingleComponent(Datatype *parent,PcodeOp *op,int4 slot);	///< Determine best type fit for given PcodeOp use
 };
 
@@ -481,7 +509,7 @@ protected:
   void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
 public:
   TypeUnion(const TypeUnion &op);	///< Construct from another TypeUnion
-  TypeUnion(void) : Datatype(0,TYPE_UNION) { flags |= (type_incomplete | needs_resolution); }	///< Construct incomplete TypeUnion
+  TypeUnion(void) : Datatype(0,-1,TYPE_UNION) { flags |= (type_incomplete | needs_resolution); }	///< Construct incomplete TypeUnion
   const TypeField *getField(int4 i) const { return &field[i]; }	///< Get the i-th field of the union
   virtual const TypeField *findTruncation(int8 offset,int4 sz,const PcodeOp *op,int4 slot,int8 &newoff) const;
   //  virtual Datatype *getSubType(int8 off,int8 *newoff) const;
@@ -636,7 +664,7 @@ public:
   }
   /// Construct given an address space, scope, and architecture
   TypeSpacebase(AddrSpace *id,const Address &frame,Architecture *g)
-    : Datatype(0,TYPE_SPACEBASE), localframe(frame) { spaceid = id; glb = g; }
+    : Datatype(0,1,TYPE_SPACEBASE), localframe(frame) { spaceid = id; glb = g; }
   Scope *getMap(void) const;	///< Get the symbol table indexed by \b this
   Address getAddress(uintb off,int4 sz,const Address &point) const;	///< Construct an Address given an offset
   virtual Datatype *getSubType(int8 off,int8 *newoff) const;
@@ -654,9 +682,9 @@ class TypeFactory {
   int4 sizeOfLong;		///< Size of the core "long" datatype
   int4 sizeOfPointer;		///< Size of pointers (into default data address space)
   int4 sizeOfAltPointer;	///< Size of alternate pointers used by architecture (if not 0)
-  int4 align;			///< Alignment of structures
   int4 enumsize;		///< Size of an enumerated type
   type_metatype enumtype;	///< Default enumeration meta-type (when parsing C)
+  vector<int4> alignMap;	///< Alignment of primitive data-types based on their size
   DatatypeSet tree;		///< Datatypes within this factory (sorted by function)
   DatatypeNameSet nametree;	///< Cross-reference by name
   Datatype *typecache[9][8];	///< Matrix of the most common atomic data-types
@@ -667,6 +695,8 @@ class TypeFactory {
   void insert(Datatype *newtype);	///< Insert pointer into the cross-reference sets
   Datatype *findAdd(Datatype &ct);	///< Find data-type in this container or add it
   void orderRecurse(vector<Datatype *> &deporder,DatatypeSet &mark,Datatype *ct) const;	///< Write out dependency list
+  void decodeAlignmentMap(Decoder &decoder);		///< Parse a \<size_alignment_map> element
+  void setDefaultAlignmentMap(void);			///< Provide default alignments for data-types
   Datatype *decodeTypedef(Decoder &decoder);		///< Restore a \<def> element describing a typedef
   Datatype *decodeStruct(Decoder &decoder,bool forcecore);	///< Restore a \<type> element describing a structure
   Datatype *decodeUnion(Decoder &decoder,bool forcecore);	///< Restore a \<type> element describing a union
@@ -687,8 +717,8 @@ public:
   void clear(void);		///< Clear out all types
   void clearNoncore(void);	///< Clear out non-core types
   virtual ~TypeFactory(void);	///< Destructor
-  void setStructAlign(int4 al) { align = al; }		///< Set the default structure alignment
-  int4 getStructAlign(void) const { return align; }	///< Get the default structure alignment
+  int4 getAlignment(uint4 size) const;	///< Get data-type alignment based on size
+  int4 getPrimitiveAlignSize(uint4 size) const;	///< Get the aligned size of a primitive data-type
   int4 getSizeOfInt(void) const { return sizeOfInt; }	///< Get the size of the default "int"
   int4 getSizeOfLong(void) const { return sizeOfLong; }	///< Get the size of the default "long"
   int4 getSizeOfPointer(void) const { return sizeOfPointer; }	///< Get the size of pointers
@@ -810,7 +840,7 @@ inline bool Datatype::isPieceStructured(void) const
   return (metatype <= TYPE_ARRAY);
 }
 
-inline TypeArray::TypeArray(int4 n,Datatype *ao) : Datatype(n*ao->getSize(),TYPE_ARRAY)
+inline TypeArray::TypeArray(int4 n,Datatype *ao) : Datatype(n*ao->getAlignSize(),ao->getAlignment(),TYPE_ARRAY)
 
 {
   arraysize = n;

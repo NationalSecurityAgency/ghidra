@@ -24,8 +24,8 @@ import java.util.concurrent.ExecutionException;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.manager.breakpoint.GdbBreakpointInsertions;
 import agent.gdb.manager.impl.GdbManagerImpl;
-import agent.gdb.pty.PtyFactory;
-import agent.gdb.pty.linux.LinuxPty;
+import ghidra.pty.PtyFactory;
+import ghidra.pty.linux.LinuxPty;
 
 /**
  * The controlling side of a GDB session, using GDB/MI, usually via a pseudo-terminal

@@ -49,20 +49,20 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 	private Icon helpIcon = EMPTY_ICON;
 	protected boolean isPaintingPrimarySortColumn;
 
-	private TableCellRenderer delegate;
+	private Component rendererComponent;
 
 	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 			boolean hasFocus, int row, int column) {
 
 		if (table == null) {
-			return this; // not sure when this can happen, but Java class protect against this case
+			return this; // not sure when this can happen, but Java does this internally
 		}
 
 		JTableHeader header = table.getTableHeader();
-		delegate = header.getDefaultRenderer();
+		TableCellRenderer delegate = header.getDefaultRenderer();
 
-		Component rendererComponent =
+		rendererComponent =
 			delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
 		int modelIndex = table.convertColumnIndexToModel(column);
@@ -84,13 +84,25 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 	@Override
 	public void setBounds(int x, int y, int w, int h) {
 		super.setBounds(x, y, w, h);
-		((Component) delegate).setBounds(x, y, w, h);
+		rendererComponent.setBounds(x, y, w, h);
 	}
 
 	@Override
 	public void paint(Graphics g) {
 
-		JLabel label = (JLabel) delegate;
+		updateClipping();
+
+		rendererComponent.paint(g);
+
+		// paint our items after the delegate call so that we paint on top
+		super.paint(g);
+	}
+
+	private void updateClipping() {
+		if (!(rendererComponent instanceof JLabel label)) {
+			return;
+		}
+
 		String text = label.getText();
 		String clippedText = checkForClipping(label, text);
 		if (!text.equals(clippedText)) {
@@ -99,11 +111,6 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 			// set the tooltips on us, the wrapper renderer, since Java will ask us for the tooltip
 			setToolTipText(text);
 		}
-
-		label.paint(g);
-
-		// paint our items after the delegate call so that we paint on top
-		super.paint(g);
 	}
 
 	private String checkForClipping(JLabel label, String text) {
@@ -169,8 +176,8 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 	// overridden to enforce a minimum height for the icon we use
 	public Dimension getPreferredSize() {
 		Dimension preferredSize = super.getPreferredSize();
-		if (delegate != null) {
-			return ((Component) delegate).getPreferredSize();
+		if (rendererComponent != null) {
+			return rendererComponent.getPreferredSize();
 		}
 
 		Border currentBorder = getBorder();

@@ -42,7 +42,7 @@ public interface LldbModelTargetActiveScope extends LldbModelTargetObject, Targe
 
 	public default CompletableFuture<Void> doRequestActivation(TargetObject obj) {
 		if (getManager().isWaiting()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		getModel().assertMine(TargetObject.class, obj);
 		if (!PathUtils.isAncestor(this.getPath(), obj.getPath())) {
@@ -62,7 +62,7 @@ public interface LldbModelTargetActiveScope extends LldbModelTargetObject, Targe
 			}
 			throw new AssertionError();
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

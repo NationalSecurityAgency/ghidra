@@ -19,9 +19,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
+import javax.swing.Icon;
+
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOpinion;
 import ghidra.app.services.DebuggerModelService;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
@@ -39,6 +42,11 @@ public class TestDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOp
 		@Override
 		public String getConfigName() {
 			return "TEST";
+		}
+
+		@Override
+		public Icon getIcon() {
+			return DebuggerResources.ICON_DEBUGGER;
 		}
 
 		@Override

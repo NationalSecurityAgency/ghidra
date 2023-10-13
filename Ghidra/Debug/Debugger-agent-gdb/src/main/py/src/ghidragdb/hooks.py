@@ -24,7 +24,7 @@ class GhidraHookPrefix(gdb.Command):
     """Commands for exporting data to a Ghidra trace"""
 
     def __init__(self):
-        super().__init__('ghidra-hook', gdb.COMMAND_NONE, prefix=True)
+        super().__init__('hooks-ghidra', gdb.COMMAND_NONE, prefix=True)
 
 
 GhidraHookPrefix()
@@ -386,7 +386,7 @@ def on_before_prompt():
 # This will be called by a catchpoint
 class GhidraTraceEventMemoryCommand(gdb.Command):
     def __init__(self):
-        super().__init__('ghidra-hook event-memory', gdb.COMMAND_NONE)
+        super().__init__('hooks-ghidra event-memory', gdb.COMMAND_NONE)
 
     def invoke(self, argument, from_tty):
         self.dont_repeat()
@@ -401,10 +401,10 @@ def cmd_hook(name):
         class _ActiveCommand(gdb.Command):
             def __init__(self):
                 # It seems we can't hook commands using the Python API....
-                super().__init__(f"ghidra-hook def-{name}", gdb.COMMAND_USER)
+                super().__init__(f"hooks-ghidra def-{name}", gdb.COMMAND_USER)
                 gdb.execute(f"""
                 define {name}
-                  ghidra-hook def-{name}
+                  hooks-ghidra def-{name}
                 end
                 """)
 
@@ -474,7 +474,7 @@ def install_hooks():
             catch syscall group:memory
             commands
             silent
-            ghidra-hook event-memory
+            hooks-ghidra event-memory
             cont
             end
             """)

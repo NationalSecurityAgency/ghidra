@@ -18,9 +18,9 @@ package agent.gdb.model.ssh;
 import java.util.Map;
 
 import agent.gdb.GdbOverSshDebuggerModelFactory;
-import agent.gdb.pty.ssh.SshPtyTest;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.test.AbstractModelHost;
+import ghidra.pty.ssh.SshPtyTest;
 import ghidra.util.exception.CancelledException;
 
 public class SshGdbModelHost extends AbstractModelHost {

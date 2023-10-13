@@ -19,14 +19,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import db.Transaction;
-import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.TraceMode;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.app.services.DebuggerControlService;
+import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.TraceMode;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -47,7 +47,7 @@ class TraceBreakpointSet {
 
 	private final Set<IDHashed<TraceBreakpoint>> breakpoints = new HashSet<>();
 
-	private TraceRecorder recorder;
+	private Target target;
 	private String emuSleigh;
 
 	/**
@@ -69,12 +69,12 @@ class TraceBreakpointSet {
 	}
 
 	/**
-	 * Set the recorder when the trace is associated to a live target
+	 * Set the target when the trace is associated to a live target
 	 * 
-	 * @param recorder the recorder
+	 * @param target the target
 	 */
-	public void setRecorder(TraceRecorder recorder) {
-		this.recorder = recorder;
+	public void setTarget(Target target) {
+		this.target = target;
 	}
 
 	private ControlMode getControlMode() {
@@ -111,18 +111,6 @@ class TraceBreakpointSet {
 	 */
 	public Address getAddress() {
 		return address;
-	}
-
-	/**
-	 * If there is a live target, get the dynamic address in the target's space
-	 * 
-	 * @return the dynamic address on target
-	 */
-	public Address computeTargetAddress() {
-		if (recorder == null) {
-			throw new AssertionError();
-		}
-		return recorder.getMemoryMapper().traceToTarget(address);
 	}
 
 	/**
@@ -316,7 +304,7 @@ class TraceBreakpointSet {
 			Collection<TraceBreakpointKind> kinds) {
 		long snap = getSnap();
 		if (breakpoints.isEmpty()) {
-			if (recorder == null || getControlMode().useEmulatedBreakpoints()) {
+			if (target == null || getControlMode().useEmulatedBreakpoints()) {
 				planPlaceEmu(actions, snap, length, kinds);
 			}
 			else {
@@ -324,7 +312,7 @@ class TraceBreakpointSet {
 			}
 		}
 		else {
-			if (recorder == null || getControlMode().useEmulatedBreakpoints()) {
+			if (target == null || getControlMode().useEmulatedBreakpoints()) {
 				planEnableEmu(actions);
 			}
 			else {
@@ -335,19 +323,12 @@ class TraceBreakpointSet {
 
 	private void planPlaceTarget(BreakpointActionSet actions, long snap, long length,
 			Collection<TraceBreakpointKind> kinds) {
-		if (snap != recorder.getSnap()) {
+		if (snap != target.getSnap()) {
 			throw new AssertionError("Target breakpoints must be requested at present snap");
 		}
-		Set<TargetBreakpointKind> tKinds =
-			TraceRecorder.traceToTargetBreakpointKinds(kinds);
 
-		for (TargetBreakpointSpecContainer cont : recorder
-				.collectBreakpointContainers(null)) {
-			LinkedHashSet<TargetBreakpointKind> supKinds = new LinkedHashSet<>(tKinds);
-			supKinds.retainAll(cont.getSupportedBreakpointKinds());
-			actions.add(new PlaceTargetBreakpointActionItem(cont, computeTargetAddress(),
-				length, supKinds));
-		}
+		actions.add(new PlaceTargetBreakpointActionItem(target,
+			BreakpointActionItem.range(address, length), kinds));
 	}
 
 	private void planPlaceEmu(BreakpointActionSet actions, long snap, long length,
@@ -359,11 +340,7 @@ class TraceBreakpointSet {
 
 	private void planEnableTarget(BreakpointActionSet actions) {
 		for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-			TargetBreakpointLocation loc = recorder.getTargetBreakpoint(bpt.obj);
-			if (loc == null) {
-				continue;
-			}
-			actions.planEnableTarget(loc);
+			actions.planEnableTarget(target, bpt.obj);
 		}
 	}
 
@@ -392,21 +369,8 @@ class TraceBreakpointSet {
 
 	private void planDisableTarget(BreakpointActionSet actions, long length,
 			Collection<TraceBreakpointKind> kinds) {
-		Set<TargetBreakpointKind> tKinds = TraceRecorder.traceToTargetBreakpointKinds(kinds);
-		Address targetAddr = computeTargetAddress();
-		for (TargetBreakpointLocation loc : recorder.collectBreakpoints(null)) {
-			AddressRange range = loc.getRange();
-			if (!targetAddr.equals(range.getMinAddress())) {
-				continue;
-			}
-			if (length != range.getLength()) {
-				continue;
-			}
-			TargetBreakpointSpec spec = loc.getSpecification();
-			if (!Objects.equals(spec.getKinds(), tKinds)) {
-				continue;
-			}
-			actions.planDisableTarget(loc);
+		for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
+			actions.planDisableTarget(target, bpt.obj);
 		}
 	}
 
@@ -435,21 +399,8 @@ class TraceBreakpointSet {
 
 	private void planDeleteTarget(BreakpointActionSet actions, long length,
 			Set<TraceBreakpointKind> kinds) {
-		Set<TargetBreakpointKind> tKinds = TraceRecorder.traceToTargetBreakpointKinds(kinds);
-		Address targetAddr = computeTargetAddress();
-		for (TargetBreakpointLocation loc : recorder.collectBreakpoints(null)) {
-			AddressRange range = loc.getRange();
-			if (!targetAddr.equals(range.getMinAddress())) {
-				continue;
-			}
-			if (length != range.getLength()) {
-				continue;
-			}
-			TargetBreakpointSpec spec = loc.getSpecification();
-			if (!Objects.equals(spec.getKinds(), tKinds)) {
-				continue;
-			}
-			actions.planDeleteTarget(loc);
+		for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
+			actions.planDeleteTarget(target, bpt.obj);
 		}
 	}
 

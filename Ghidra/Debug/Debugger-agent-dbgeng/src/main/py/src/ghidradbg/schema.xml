@@ -1,0 +1,434 @@
+<context>
+	<schema name="Session" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Access" />
+		<interface name="Attacher" />
+		<interface name="Interpreter" />
+		<interface name="Interruptible" />
+		<interface name="Launcher" />
+		<interface name="ActiveScope" />
+		<interface name="EventScope" />
+		<interface name="FocusScope" />
+		<interface name="Aggregate" />
+		<element schema="VOID" />
+		<attribute name="Processes" schema="ProcessContainer" required="yes" fixed="yes" />
+		<attribute name="Available" schema="AvailableContainer" required="yes" fixed="yes" />
+		<attribute name="_accessible" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="_supported_attach_kinds" schema="SET_ATTACH_KIND" required="yes" hidden="yes" />
+		<attribute name="_prompt" schema="STRING" required="yes" hidden="yes" />
+		<attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" hidden="yes" />
+		<attribute name="_event_thread" schema="OBJECT" hidden="yes" />
+		<attribute name="_focus" schema="Selectable" required="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Selectable" elementResync="NEVER" attributeResync="NEVER">
+		<element schema="OBJECT" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="BreakpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="BreakpointLocationContainer" />
+		<interface name="BreakpointSpecContainer" />
+		<element schema="BreakpointSpec" />
+		<attribute name="_supported_breakpoint_kinds" schema="SET_BREAKPOINT_KIND" required="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="AvailableContainer" canonical="yes" elementResync="ALWAYS" attributeResync="NEVER">
+		<interface name="Configurable" />
+		<element schema="Attachable" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute name="_base" schema="INT" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="ProcessContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Configurable" />
+		<element schema="Process" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute name="_base" schema="INT" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="BreakpointSpec" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="BreakpointSpec" />
+		<interface name="BreakpointLocation" />
+		<interface name="Deletable" />
+		<interface name="Togglable" />
+		<element schema="VOID" />
+		<attribute name="_container" schema="BreakpointContainer" required="yes" hidden="yes" />
+		<attribute name="_expression" schema="STRING" required="yes" hidden="yes" />
+		<attribute name="_kinds" schema="SET_BREAKPOINT_KIND" required="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_spec" schema="BreakpointSpec" />
+		<attribute name="_range" schema="RANGE" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute name="_enabled" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="Commands" schema="STRING" />
+		<attribute name="Condition" schema="STRING" />
+		<attribute name="Hit Count" schema="INT" />
+		<attribute name="Ignore Count" schema="INT" />
+		<attribute name="Pending" schema="BOOL" />
+		<attribute name="Silent" schema="BOOL" />
+		<attribute name="Temporary" schema="BOOL" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Attachable" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Attachable" />
+		<element schema="VOID" />
+		<attribute name="_pid" schema="LONG" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Process" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Process" />
+		<interface name="Aggregate" />
+		<interface name="ExecutionStateful" />
+		<interface name="Attacher" />
+		<interface name="Deletable" />
+		<interface name="Detachable" />
+		<interface name="Killable" />
+		<interface name="Launcher" />
+		<interface name="Resumable" />
+		<interface name="Steppable" />
+		<interface name="Interruptible" />
+		<element schema="VOID" />
+		<attribute name="Threads" schema="ThreadContainer" required="yes" fixed="yes" />
+		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="yes" />
+		<!-- attribute name="Breakpoints" schema="BreakpointLocationContainer" required="yes" fixed="yes" /-->
+		<attribute name="_exit_code" schema="LONG" />
+		<attribute name="Environment" schema="Environment" required="yes" fixed="yes" />
+		<attribute name="Memory" schema="Memory" required="yes" fixed="yes" />
+		<attribute name="Modules" schema="ModuleContainer" required="yes" fixed="yes" />
+		<attribute name="_pid" schema="LONG" hidden="yes" />
+		<attribute name="_state" schema="EXECUTION_STATE" required="yes" hidden="yes" />
+		<attribute name="_supported_attach_kinds" schema="SET_ATTACH_KIND" required="yes" hidden="yes" />
+		<attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" hidden="yes" />
+		<attribute name="_supported_step_kinds" schema="SET_STEP_KIND" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Environment" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Environment" />
+		<element schema="VOID" />
+		<attribute name="arch" schema="STRING" />
+		<attribute name="os" schema="STRING" />
+		<attribute name="endian" schema="STRING" />
+		<attribute name="_arch" schema="STRING" hidden="yes" />
+		<attribute name="_debugger" schema="STRING" hidden="yes" />
+		<attribute name="_os" schema="STRING" hidden="yes" />
+		<attribute name="_endian" schema="STRING" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="ModuleContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
+		<interface name="ModuleContainer" />
+		<element schema="Module" />
+		<attribute name="_supports_synthetic_modules" schema="BOOL" fixed="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Memory" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Memory" />
+		<element schema="MemoryRegion" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="BreakpointLocation" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="BreakpointLocation" />
+		<element schema="VOID" />
+		<attribute name="_range" schema="RANGE" hidden="yes" />
+		<attribute name="_spec" schema="BreakpointSpec" required="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="BreakpointLocationContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="BreakpointLocationContainer" />
+		<element schema="BreakpointLocation" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="ThreadContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Configurable" />
+		<element schema="Thread" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute name="_base" schema="INT" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Method" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Method" />
+		<element schema="VOID" />
+		<attribute name="_display" schema="STRING" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_return_type" schema="TYPE" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_parameters" schema="MAP_PARAMETERS" required="yes" fixed="yes" hidden="yes" />
+		<attribute schema="VOID" fixed="yes" hidden="yes" />
+	</schema>
+	<schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Thread" />
+		<interface name="ExecutionStateful" />
+		<interface name="Steppable" />
+		<interface name="Aggregate" />
+		<element schema="VOID" />
+		<attribute name="Stack" schema="Stack" required="yes" fixed="yes" />
+		<attribute name="Registers" schema="RegisterValueContainer" required="yes" fixed="yes" />
+		<attribute name="_tid" schema="LONG" hidden="yes" />
+		<attribute name="_state" schema="EXECUTION_STATE" required="yes" hidden="yes" />
+		<attribute name="_supported_step_kinds" schema="SET_STEP_KIND" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute name="Advance" schema="Method" required="yes" fixed="yes" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Module" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Module" />
+		<element schema="VOID" />
+		<attribute name="Sections" schema="SectionContainer" required="yes" fixed="yes" />
+		<attribute name="Symbols" schema="SymbolContainer" required="yes" fixed="yes" />
+		<attribute name="range" schema="RANGE" />
+		<attribute name="module name" schema="STRING" />
+		<attribute name="_module_name" schema="STRING" required="yes" hidden="yes" />
+		<attribute name="_range" schema="RANGE" required="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="MemoryRegion" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="MemoryRegion" />
+		<element schema="VOID" />
+		<attribute name="_offset" schema="LONG" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_objfile" schema="STRING" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_readable" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="_writable" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="_executable" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="_range" schema="RANGE" required="yes" hidden="yes" />
+		<attribute name="_memory" schema="Memory" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="SectionContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="SectionContainer" />
+		<element schema="Section" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Stack" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Stack" />
+		<element schema="StackFrame" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="SymbolContainer" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
+		<interface name="SymbolNamespace" />
+		<element schema="Symbol" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Symbol" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Symbol" />
+		<element schema="VOID" />
+		<attribute name="_size" schema="LONG" fixed="yes" hidden="yes" />
+		<attribute name="_namespace" schema="SymbolContainer" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_data_type" schema="DATA_TYPE" fixed="yes" hidden="yes" />
+		<attribute name="_value" schema="ADDRESS" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute name="_bpt" schema="STRING" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="StackFrame" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="StackFrame" />
+		<interface name="Aggregate" />
+		<element schema="VOID" />
+		<attribute name="_function" schema="STRING" hidden="yes" />
+		<attribute name="Registers" schema="RegisterValueContainer" required="yes" fixed="yes" />
+		<attribute name="_pc" schema="ADDRESS" required="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="Section" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Section" />
+		<element schema="VOID" />
+		<attribute name="range" schema="RANGE" />
+		<attribute name="_module" schema="Module" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_range" schema="RANGE" required="yes" fixed="yes" />
+		<attribute name="_offset" schema="INT" required="no" fixed="yes" />
+		<attribute name="_objfile" schema="STRING" required="no" fixed="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="RegisterValueContainer" canonical="yes" elementResync="ONCE" attributeResync="ONCE">
+		<interface name="RegisterContainer" />
+		<interface name="RegisterBank" />
+		<element schema="RegisterValue" />
+		<attribute name="General Purpose Registers" schema="RegisterBank" />
+		<attribute name="Floating Point Registers" schema="RegisterBank" />
+		<attribute name="Advanced Vector Extensions" schema="RegisterBank" />
+		<attribute name="Memory Protection Extensions" schema="RegisterBank" />
+		<attribute name="_descriptions" schema="RegisterValueContainer" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="RegisterBank" canonical="yes" elementResync="ONCE" attributeResync="NEVER">
+		<interface name="RegisterBank" />
+		<element schema="RegisterValue" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="RegisterValue" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Register" />
+		<element schema="VOID" />
+		<attribute name="_container" schema="OBJECT" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_length" schema="INT" required="yes" fixed="yes" hidden="yes" />
+		<attribute name="_value" schema="ANY" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+</context>

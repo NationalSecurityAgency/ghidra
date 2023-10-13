@@ -305,6 +305,13 @@ public class Varnode {
 	}
 
 	/**
+	 * @return false if the Varnode has a PcodeOp reading it that is part of function data-flow
+	 */
+	public boolean hasNoDescend() {
+		return true;
+	}
+
+	/**
 	 * @return the high level variable this varnode represents
 	 */
 	public HighVariable getHigh() {

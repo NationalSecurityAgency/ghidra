@@ -170,7 +170,7 @@ public class FridaModelTargetThreadContainerImpl extends FridaModelTargetObjectI
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

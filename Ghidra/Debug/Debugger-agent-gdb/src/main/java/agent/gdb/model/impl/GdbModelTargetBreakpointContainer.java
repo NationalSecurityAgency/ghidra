@@ -189,6 +189,6 @@ public class GdbModelTargetBreakpointContainer
 
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
 		// NB. This container should be updated via GDB's events.
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

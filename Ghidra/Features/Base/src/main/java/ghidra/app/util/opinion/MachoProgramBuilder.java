@@ -124,15 +124,15 @@ public class MachoProgramBuilder {
 		processEntryPoint();
 		boolean exportsFound = processExports(machoHeader);
 		processSymbolTables(machoHeader, !exportsFound);
-		processIndirectSymbols();
+		processStubs();
 		processUndefinedSymbols();
 		processAbsoluteSymbols();
-		List<Address> chainedFixups = processChainedFixups(machoHeader);
-		processBindings(false);
+		List<String> libraryPaths = processLibraries();
+		List<Address> chainedFixups = processChainedFixups(libraryPaths);
+		processBindings(false, libraryPaths);
 		processSectionRelocations();
 		processExternalRelocations();
 		processLocalRelocations();
-		processLibraries();
 		processEncryption();
 		processUnsupportedLoadCommands();
 
@@ -570,19 +570,8 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void processIndirectSymbols() throws Exception {
-		// We only want to directly handle indirect symbols on incomplete dylibs that were extracted
-		// from a dyld_shared_cache.  If the Mach-O is fully-formed and contains binding information
-		// (found in the DyldChainedFixupsCommand or DyldInfoCommand), thunk analysis properly
-		// associates indirect symbols with their "real" symbol and we shouldn't do anything here.
-		// We hope to one day include binding information in our extracted dylibs, at which point
-		// this method can fully go away.
-		if (machoHeader.getFirstLoadCommand(DyldChainedFixupsCommand.class) != null ||
-			machoHeader.getFirstLoadCommand(DyldInfoCommand.class) != null) {
-			return;
-		}
-
-		monitor.setMessage("Processing indirect symbols...");
+	protected void processStubs() throws Exception {
+		monitor.setMessage("Processing stubs...");
 
 		SymbolTableCommand symbolTableCommand =
 			machoHeader.getFirstLoadCommand(SymbolTableCommand.class);
@@ -598,23 +587,13 @@ public class MachoProgramBuilder {
 			return;
 		}
 
-		List<Integer> sectionTypes = List.of(SectionTypes.S_NON_LAZY_SYMBOL_POINTERS,
-			SectionTypes.S_LAZY_SYMBOL_POINTERS, SectionTypes.S_SYMBOL_STUBS);
-
-		List<Section> sections = machoHeader.getAllSections()
-				.stream()
-				.filter(s -> sectionTypes.contains(s.getType()))
-				.toList();
-
-		for (Section section : sections) {
+		for (Section section : machoHeader.getAllSections()) {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			if (section.getSize() == 0) {
+			if (section.getSize() == 0 || section.getType() != SectionTypes.S_SYMBOL_STUBS) {
 				continue;
 			}
-
-			Namespace namespace = createNamespace(section.getSectionName());
 
 			int indirectSymbolTableIndex = section.getReserved1();
 
@@ -632,19 +611,19 @@ public class MachoProgramBuilder {
 				}
 				int symbolIndex = indirectSymbols[i];
 				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
-				if (symbol != null) {
-					String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
-					if (name != null && name.length() > 0) {
-						try {
-							program.getSymbolTable()
-									.createLabel(startAddr, name, namespace, SourceType.IMPORTED);
-						}
-						catch (Exception e) {
-							log.appendMsg("Unable to create indirect symbol " + name);
-							log.appendException(e);
-						}
+				if (symbol == null) {
+					continue;
+				}
+				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
+				if (name != null && name.length() > 0) {
+					Function stubFunc = createOneByteFunction(name, startAddr);
+					if (stubFunc != null) {
+						ExternalLocation loc = program.getExternalManager()
+								.addExtLocation(Library.UNKNOWN, name, null, SourceType.IMPORTED);
+						stubFunc.setThunkedFunction(loc.createFunction());
 					}
 				}
+
 				startAddr = startAddr.add(symbolSize);
 			}
 		}
@@ -763,18 +742,19 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	public List<Address> processChainedFixups(MachHeader header) throws Exception {
-		DyldChainedFixups dyldChainedFixups = new DyldChainedFixups(program, header, log, monitor);
+	public List<Address> processChainedFixups(List<String> libraryPaths) throws Exception {
+		DyldChainedFixups dyldChainedFixups =
+			new DyldChainedFixups(program, machoHeader, libraryPaths, log, monitor);
 		return dyldChainedFixups.processChainedFixups();
 	}
 
-	protected void processBindings(boolean doClassic) throws Exception {
+	protected void processBindings(boolean doClassic, List<String> libraryPaths) throws Exception {
 
 		List<DyldInfoCommand> commands = machoHeader.getLoadCommands(DyldInfoCommand.class);
 		for (DyldInfoCommand command : commands) {
-			processBindings(command.getBindingTable());
-			processBindings(command.getLazyBindingTable());
-			processBindings(command.getWeakBindingTable());
+			processBindings(command.getBindingTable(), libraryPaths);
+			processBindings(command.getLazyBindingTable(), libraryPaths);
+			processBindings(command.getWeakBindingTable(), libraryPaths);
 		}
 
 		if (commands.size() == 0 && doClassic) {
@@ -798,7 +778,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processBindings(BindingTable bindingTable) throws Exception {
+	private void processBindings(BindingTable bindingTable, List<String> libraryPaths) throws Exception {
 		DataConverter converter = DataConverter.getInstance(program.getLanguage().isBigEndian());
 		SymbolTable symbolTable = program.getSymbolTable();
 
@@ -808,7 +788,7 @@ public class MachoProgramBuilder {
 		
 		if (threadedBindings != null) {
 			DyldChainedFixups dyldChainedFixups =
-				new DyldChainedFixups(program, machoHeader, log, monitor);
+				new DyldChainedFixups(program, machoHeader, libraryPaths, log, monitor);
 			DyldChainedImports chainedImports = new DyldChainedImports(bindings);
 			for (Binding threadedBinding : threadedBindings) {
 				List<Address> fixedAddresses = new ArrayList<>();
@@ -840,6 +820,8 @@ public class MachoProgramBuilder {
 				Address addr =
 					space.getAddress(segments.get(binding.getSegmentIndex()).getVMaddress() +
 						binding.getSegmentOffset());
+				
+				fixupExternalLibrary(binding.getLibraryOrdinal(), symbol, libraryPaths);
 
 				boolean success = false;
 				try {
@@ -855,6 +837,20 @@ public class MachoProgramBuilder {
 							.add(addr, success ? Status.APPLIED_OTHER : Status.FAILURE,
 								binding.getType(), null, bytes.length, binding.getSymbolName());
 				}
+			}
+		}
+	}
+
+	private void fixupExternalLibrary(int libraryOrdinal, Symbol symbol, List<String> libraryPaths)
+			throws InvalidInputException {
+		ExternalManager extManager = program.getExternalManager();
+		int libraryIndex = libraryOrdinal - 1;
+		if (libraryIndex >= 0 && libraryIndex < libraryPaths.size()) {
+			Library library = extManager.getExternalLibrary(libraryPaths.get(libraryIndex));
+			ExternalLocation loc =
+				extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
+			if (loc != null) {
+				loc.setName(library, symbol.getName(), SourceType.IMPORTED);
 			}
 		}
 	}
@@ -1164,15 +1160,16 @@ public class MachoProgramBuilder {
  		performRelocations(relocationMap);
 	}
 
-	protected void processLibraries() throws Exception {
+	protected List<String> processLibraries() throws Exception {
 		monitor.setMessage("Processing libraries...");
 
 		Options props = program.getOptions(Program.PROGRAM_INFO);
 		int libraryIndex = 0;
+		List<String> libraryPaths = new ArrayList<>();
 
 		for (LoadCommand command : machoHeader.getLoadCommands()) {
 			if (monitor.isCancelled()) {
-				return;
+				return libraryPaths;
 			}
 
 			String libraryPath = null;
@@ -1189,6 +1186,7 @@ public class MachoProgramBuilder {
 			}
 
 			if (libraryPath != null) {
+				libraryPaths.add(libraryPath);
 				int index = libraryPath.lastIndexOf("/");
 				String libraryName = index != -1 ? libraryPath.substring(index + 1) : libraryPath;
 				if (!libraryName.equals(program.getName())) {
@@ -1203,6 +1201,8 @@ public class MachoProgramBuilder {
 		if (program.getSymbolTable().getLibrarySymbol(Library.UNKNOWN) == null) {
 			program.getSymbolTable().createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
 		}
+		
+		return libraryPaths;
 	}
 
 	/**
@@ -1511,14 +1511,19 @@ public class MachoProgramBuilder {
 	 *
 	 * @param name the name of the function
 	 * @param address location to create the function
+	 * @return If a function already existed at the given address, that function will be returned.
+	 *   Otherwise, the newly created function will be returned.  If there was a problem creating
+	 *   the function, null will be returned.
 	 */
-	void createOneByteFunction(String name, Address address) {
+	Function createOneByteFunction(String name, Address address) {
 		FunctionManager functionMgr = program.getFunctionManager();
-		if (functionMgr.getFunctionAt(address) != null) {
-			return;
+		Function function = functionMgr.getFunctionAt(address);
+		if (function != null) {
+			return function;
 		}
 		try {
-			functionMgr.createFunction(name, address, new AddressSet(address), SourceType.IMPORTED);
+			return functionMgr.createFunction(name, address, new AddressSet(address),
+				SourceType.IMPORTED);
 		}
 		catch (InvalidInputException e) {
 			// ignore
@@ -1526,6 +1531,7 @@ public class MachoProgramBuilder {
 		catch (OverlappingFunctionException e) {
 			// ignore
 		}
+		return null;
 	}
 
 	/**

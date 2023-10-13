@@ -127,7 +127,7 @@ public class GdbModelTargetProcessMemory
 	protected CompletableFuture<Void> doRefresh() {
 		if (inferior.getPid() == null) {
 			setElements(List.of(), "Refreshed (while no process)");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return inferior.listMappings().exceptionally(ex -> {
 			Msg.error(this, "Could not list regions. Using default.");
@@ -193,6 +193,9 @@ public class GdbModelTargetProcessMemory
 	}
 
 	protected void invalidateMemoryCaches() {
+		if (!valid) {
+			return;
+		}
 		broadcast().invalidateCacheRequested(this);
 	}
 

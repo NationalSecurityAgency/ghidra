@@ -90,10 +90,10 @@ task zipSource (type: Zip) {
 
 task buildExtension (type: Zip) {
 				
-	def archiveBaseName = "${ZIP_NAME_PREFIX}_${project.name}"
-	def archiveExtension = 'zip'
-	def destinationDirectory = DISTRIBUTION_DIR
-	def archiveVersion = ''
+	archiveBaseName = "${ZIP_NAME_PREFIX}_${project.name}"
+	archiveExtension = 'zip'
+	destinationDirectory = DISTRIBUTION_DIR
+	archiveVersion = ''
 	
 	// Make sure that we don't try to copy the same file with the same path into the
 	// zip (this can happen!)
@@ -168,7 +168,7 @@ task buildExtension (type: Zip) {
 	}
 
 	doLast {
-		println "\nCreated " + archiveBaseName + "." + archiveExtension + " in " + destinationDirectory
+		println "\nCreated ${archiveBaseName.get()}.${archiveExtension.get()} in ${destinationDirectory.get()}"
 	}
 }
 

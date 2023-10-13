@@ -473,6 +473,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			pl.getString(PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY, null));
 	}
 
+	@Override
 	protected boolean propertyChanged(String propertyName, Object oldValue, Object newValue) {
 		if (propertyName.equals(PREFERRED_ROOT_NAMESPACE_CATEGORY_PROPERTY_PATHNAME)) {
 			String path = (String) newValue;
@@ -2028,7 +2029,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					Msg.info(this,
 						"Updating language version for Program " + getName() + ": " +
 							language.getLanguageDescription() + " (Version " +
-							language.getVersion() + "." + language.getMinorVersion());
+							language.getVersion() + "." + language.getMinorVersion() + ")");
 				}
 
 				if (newCompilerSpecID != null) {

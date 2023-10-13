@@ -61,12 +61,9 @@ import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider;
-import ghidra.app.plugin.core.debug.gui.watch.WatchRow;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin.EmulateProgramAction;
 import ghidra.app.plugin.core.debug.service.model.DebuggerConnectDialog;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.*;
 import ghidra.app.plugin.core.debug.stack.StackUnwinderTest;
 import ghidra.app.plugin.core.debug.stack.StackUnwinderTest.HoverLocation;
 import ghidra.app.plugin.core.debug.stack.UnwindStackCommand;
@@ -84,6 +81,10 @@ import ghidra.dbg.target.TargetLauncher;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.testutil.DummyProc;
 import ghidra.dbg.util.ConfigurableFactory.Property;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer.*;
+import ghidra.debug.api.watch.WatchRow;
+import ghidra.debug.api.workflow.DebuggerBot;
 import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.framework.Application;
 import ghidra.framework.TestApplicationUtils;
@@ -233,7 +234,6 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		workflowService = tool.getService(DebuggerWorkflowService.class);
 		enableBot(MapModulesDebuggerBot.class);
 		enableBot(DisassembleAtPcDebuggerBot.class);
-		enableBot(ShowInterpreterDebuggerBot.class);
 
 		modelService = tool.getService(DebuggerModelService.class);
 		gdbFactory = modelService.getModelFactories()

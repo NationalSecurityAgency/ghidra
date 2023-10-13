@@ -31,11 +31,11 @@ import org.junit.experimental.categories.Category;
 import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiAcceptor;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.dbg.testutil.DummyProc;
 import ghidra.dbg.util.PathPredicates;
+import ghidra.debug.api.tracermi.TraceRmiAcceptor;
+import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Float10DataType;
@@ -60,9 +60,9 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 		TraceRmiAcceptor acceptor = traceRmi.acceptOne(null);
 		Msg.info(this,
 			"Use: ghidra trace connect " + sockToStringForGdb(acceptor.getAddress()));
-		TraceRmiHandler handler = acceptor.accept();
-		Msg.info(this, "Connected: " + sockToStringForGdb(handler.getRemoteAddress()));
-		handler.waitClosed();
+		TraceRmiConnection connection = acceptor.accept();
+		Msg.info(this, "Connected: " + sockToStringForGdb(connection.getRemoteAddress()));
+		connection.waitClosed();
 		Msg.info(this, "Closed");
 	}
 

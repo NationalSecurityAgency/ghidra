@@ -36,8 +36,8 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 
 	private int transactionID;
 
-	public void createVersionTrackingSession(String sourceProgramPath, String destinationProgramPath)
-			throws Exception {
+	public void createVersionTrackingSession(String sourceProgramPath,
+			String destinationProgramPath) throws Exception {
 
 		if (vtSession != null) {
 			throw new RuntimeException("Attempted to open a new session with one already open!");
@@ -123,8 +123,8 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 
 	}
 
-	public Program openProgram(String path) throws VersionException, CancelledException,
-			IOException {
+	public Program openProgram(String path)
+			throws VersionException, CancelledException, IOException {
 		if (state.getProject() == null) {
 			throw new RuntimeException("No project open.");
 		}
@@ -174,10 +174,10 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 			throw new RuntimeException("You must have an open vt session to run a correlator");
 		}
 		VTProgramCorrelatorFactory correlatorFactory = getCorrelatorFactory(name);
-		VTProgramCorrelator correlator =
-			correlatorFactory.createCorrelator(null, sourceProgram,
-				sourceProgram.getMemory().getLoadedAndInitializedAddressSet(), destinationProgram,
-				destinationProgram.getMemory().getLoadedAndInitializedAddressSet(), new VTOptions("dummy"));
+		VTProgramCorrelator correlator = correlatorFactory.createCorrelator(sourceProgram,
+			sourceProgram.getMemory().getLoadedAndInitializedAddressSet(), destinationProgram,
+			destinationProgram.getMemory().getLoadedAndInitializedAddressSet(),
+			new VTOptions("dummy"));
 		correlator.correlate(vtSession, monitor);
 
 	}
@@ -205,20 +205,20 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 
 //==================================================================================================
 // Potential Methods
-//==================================================================================================	
+//==================================================================================================
 
-// to not correlate the entire program	
+// to not correlate the entire program
 //	public void runCorrelator(String name, AddressSet addresSet)
 
 	// TODO
-	// -a way to allow users to apply markup of matches, given some filtering criteria 
+	// -a way to allow users to apply markup of matches, given some filtering criteria
 	// (maybe via a callback)
 	// -a way to allow users to specify the **options** for applying, since this is how
-	// we perform applying now 
+	// we perform applying now
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private VTProgramCorrelatorFactory getCorrelatorFactory(String name) {
 		List<VTProgramCorrelatorFactory> generateList = getVTProgramCorrelatorFactory();

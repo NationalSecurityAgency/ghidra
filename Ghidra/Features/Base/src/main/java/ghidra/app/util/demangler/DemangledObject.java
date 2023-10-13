@@ -41,8 +41,45 @@ public abstract class DemangledObject implements Demangled {
 	protected static final String NAMESPACE_SEPARATOR = Namespace.DELIMITER;
 	protected static final String EMPTY_STRING = "";
 
+	/*
+	 	The following names probably need to be refactored.   Until then, this is how the following
+	 	fields are used.
+	 	
+	 		mangled - 
+	 			Source: The original mangled string as seen in the program
+	 		    Usage: Can be used to see if a program symbol has already been demangled
+	 		          
+	 		originalDemangled - 
+	 			Source: The raw demangled string returned from the demangler
+	 		    Usage: for display
+	 		    
+	 		demangledName - 
+	 			Source: The name as created by the parser which may transform or even replace the 
+	 			        string returned from the demangler
+	 		    Usage: for display
+	 		                
+	 		name - 
+	 			Source: This is derived from the 'demangledName' This is updated to be suitable 
+	 		            for use as a symbol name.  This may be null while building, but is 
+	 		            expected to be non-null when applyTo() is called	 		 		       
+	 		    Usage: The name that will be applied when applyTo() is called.  
+	 		    
+	 		    
+	 		    
+	 	Future: These variables should be refactored and renamed to be clearer and more cohesive, 
+	 	        something like: 
+	 	        
+	 	        mangled
+	 	        rawDemangled
+	 	        escapedDemangled
+	 	        symbolName 
+	 	
+	 */
 	protected final String mangled; // original mangled string
-	protected final String originalDemangled;
+	protected final String originalDemangled; // raw demangled string
+	private String demangledName; // updated demangled string
+	private String name; // version of demangled name suitable for symbols
+
 	protected String specialPrefix;
 	protected Demangled namespace;
 	protected String visibility;//public, protected, etc.
@@ -56,8 +93,7 @@ public abstract class DemangledObject implements Demangled {
 
 	//TODO: determine what type of keyword this is (not type qualifier or storage class).
 	protected boolean isVirtual;
-	private String demangledName;
-	private String name;
+
 	private boolean isConst;
 	private boolean isVolatile;
 	private boolean isPointer64;

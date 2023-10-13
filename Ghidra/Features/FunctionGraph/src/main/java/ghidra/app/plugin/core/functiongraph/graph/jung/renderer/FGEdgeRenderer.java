@@ -23,10 +23,9 @@ import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphOptions;
 import ghidra.graph.viewer.renderer.ArticulatedEdgeRenderer;
-import ghidra.program.model.symbol.FlowType;
 
 /**
- * A renderer used by the Function Graph API to provide additional edge coloring, as 
+ * A renderer used by the Function Graph API to provide additional edge coloring, as
  * determined by the {@link FunctionGraphOptions}.
  */
 public class FGEdgeRenderer extends ArticulatedEdgeRenderer<FGVertex, FGEdge> {
@@ -34,9 +33,7 @@ public class FGEdgeRenderer extends ArticulatedEdgeRenderer<FGVertex, FGEdge> {
 	@Override
 	public Color getDrawColor(Graph<FGVertex, FGEdge> g, FGEdge e) {
 		FunctionGraphOptions options = getOptions(g);
-		FlowType flowType = e.getFlowType();
-		Color color = options.getColor(flowType);
-		return color;
+		return options.getColor(e.getFlowType());
 	}
 
 	@Override
@@ -49,6 +46,12 @@ public class FGEdgeRenderer extends ArticulatedEdgeRenderer<FGVertex, FGEdge> {
 	public Color getSelectedColor(Graph<FGVertex, FGEdge> g, FGEdge e) {
 		FunctionGraphOptions options = getOptions(g);
 		return options.getHighlightColor(e.getFlowType());
+	}
+
+	@Override
+	public Color getHoveredColor(Graph<FGVertex, FGEdge> g, FGEdge e) {
+		FunctionGraphOptions options = getOptions(g);
+		return options.getColor(e.getFlowType());
 	}
 
 	private FunctionGraphOptions getOptions(Graph<FGVertex, FGEdge> g) {

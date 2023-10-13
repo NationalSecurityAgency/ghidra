@@ -25,12 +25,11 @@ import java.util.stream.Collectors;
 import db.Transaction;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
-import ghidra.app.services.TraceRecorder;
-import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncLazyMap;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.PathComparator;
+import ghidra.debug.api.model.*;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -59,7 +58,7 @@ public class TraceObjectManager {
 	//private AbstractRecorderRegisterSet threadRegisters;
 
 	private final ListenerSet<TraceRecorderListener> listeners =
-		new ListenerSet<>(TraceRecorderListener.class);
+		new ListenerSet<>(TraceRecorderListener.class, true);
 
 	protected final Set<TargetBreakpointLocation> breakpoints = new HashSet<>();
 

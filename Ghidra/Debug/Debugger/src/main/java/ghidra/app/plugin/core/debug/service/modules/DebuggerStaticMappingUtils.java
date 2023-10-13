@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
-import ghidra.app.services.MapEntry;
+import ghidra.debug.api.modules.MapEntry;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectData;
 import ghidra.program.model.address.*;

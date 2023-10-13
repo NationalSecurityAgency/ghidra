@@ -24,7 +24,6 @@ import ghidra.feature.vt.api.correlator.program.ExactMatchBytesProgramCorrelator
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTOptions;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -41,7 +40,6 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 	protected ArrayList<String> errors;
 
 	public AbstractCorrelatorTest() {
-		super();
 	}
 
 	protected abstract Program getSourceProgram();
@@ -87,7 +85,6 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 		try {
 			int sessionTransaction = session.startTransaction(name);
 			try {
-				PluginTool serviceProvider = env.getTool();
 				VTAssociationManager manager = session.getAssociationManager();
 
 				AddressSetView sourceAddressSet =
@@ -98,8 +95,8 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 				VTOptions options;
 				VTProgramCorrelator correlator;
 				options = factory.createDefaultOptions();
-				correlator = factory.createCorrelator(serviceProvider, sourceProgram,
-					sourceAddressSet, destinationProgram, destinationAddressSet, options);
+				correlator = factory.createCorrelator(sourceProgram, sourceAddressSet,
+					destinationProgram, destinationAddressSet, options);
 				correlator.correlate(session, TaskMonitor.DUMMY);
 
 				FunctionManager functionManager = sourceProgram.getFunctionManager();
@@ -154,7 +151,6 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 		try {
 			int sessionTransaction = session.startTransaction(name);
 			try {
-				PluginTool serviceProvider = env.getTool();
 				VTAssociationManager manager = session.getAssociationManager();
 
 				AddressSetView sourceAddressSet =
@@ -165,8 +161,8 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 				VTOptions options;
 				VTProgramCorrelator correlator;
 				options = factory.createDefaultOptions();
-				correlator = factory.createCorrelator(serviceProvider, sourceProgram,
-					sourceAddressSet, destinationProgram, destinationAddressSet, options);
+				correlator = factory.createCorrelator(sourceProgram, sourceAddressSet,
+					destinationProgram, destinationAddressSet, options);
 				correlator.correlate(session, TaskMonitor.DUMMY);
 
 				HashMap<Address, Address> mapCopy = new HashMap<>(map);

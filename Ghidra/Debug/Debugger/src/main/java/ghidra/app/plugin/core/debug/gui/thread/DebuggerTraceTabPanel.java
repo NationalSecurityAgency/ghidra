@@ -25,38 +25,37 @@ import javax.swing.event.ListSelectionEvent;
 
 import docking.action.DockingAction;
 import docking.widgets.HorizontalTabPanel;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTargetService;
+import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.target.TargetPublicationListener;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginEventListener;
 import ghidra.trace.model.Trace;
 import ghidra.util.Swing;
-import ghidra.util.datastruct.CollectionChangeListener;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
 public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 		implements PluginEventListener {
 
-	private class RecordersChangeListener implements CollectionChangeListener<TraceRecorder> {
+	private class TargetsChangeListener implements TargetPublicationListener {
 		@Override
-		public void elementAdded(TraceRecorder element) {
+		public void targetPublished(Target target) {
 			Swing.runIfSwingOrRunLater(() -> repaint());
+
 		}
 
 		@Override
-		public void elementModified(TraceRecorder element) {
+		public void targetWithdrawn(Target target) {
 			Swing.runIfSwingOrRunLater(() -> repaint());
-		}
 
-		@Override
-		public void elementRemoved(TraceRecorder element) {
-			Swing.runIfSwingOrRunLater(() -> repaint());
 		}
 	}
 
@@ -64,14 +63,13 @@ public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 	private final DebuggerThreadsProvider provider;
 
 	// @AutoServiceConsumed by method
-	DebuggerModelService modelService;
+	DebuggerTargetService targetService;
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	private final CollectionChangeListener<TraceRecorder> recordersListener =
-		new RecordersChangeListener();
+	private final TargetsChangeListener targetsListener = new TargetsChangeListener();
 
 	DockingAction actionCloseTrace;
 	DockingAction actionCloseOtherTraces;
@@ -98,11 +96,11 @@ public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 			}
 
 			protected Icon getIcon(Trace value) {
-				if (modelService == null) {
+				if (targetService == null) {
 					return super.getIcon(value);
 				}
-				TraceRecorder recorder = modelService.getRecorder(value);
-				if (recorder == null || !recorder.isRecording()) {
+				Target target = targetService.getTarget(value);
+				if (target == null || !target.isValid()) {
 					return super.getIcon(value);
 				}
 				return DebuggerResources.ICON_RECORD;
@@ -139,7 +137,7 @@ public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 				.buildAndInstallLocal(provider);
 		actionCloseDeadTraces = CloseDeadTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty() && modelService != null)
+				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty() && targetService != null)
 				.onAction(c -> traceManager.closeDeadTraces())
 				.buildAndInstallLocal(provider);
 	}
@@ -178,13 +176,13 @@ public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 	}
 
 	@AutoServiceConsumed
-	public void setModelService(DebuggerModelService modelService) {
-		if (this.modelService != null) {
-			this.modelService.removeTraceRecordersChangedListener(recordersListener);
+	public void setTargetService(DebuggerTargetService targetService) {
+		if (this.targetService != null) {
+			this.targetService.removeTargetPublicationListener(targetsListener);
 		}
-		this.modelService = modelService;
-		if (this.modelService != null) {
-			this.modelService.addTraceRecordersChangedListener(recordersListener);
+		this.targetService = targetService;
+		if (this.targetService != null) {
+			this.targetService.addTargetPublicationListener(targetsListener);
 		}
 	}
 

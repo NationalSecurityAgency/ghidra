@@ -164,7 +164,7 @@ public class LldbModelTargetProcessImpl extends LldbModelTargetObjectImpl
 	public CompletableFuture<Void> launch(List<String> args) {
 		model.gateFuture(getManager().execute(new LldbLaunchProcessCommand(getManager(),
 			getProcess().GetProcessInfo().GetName(), args)));
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
@@ -210,7 +210,7 @@ public class LldbModelTargetProcessImpl extends LldbModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<Void> delete() {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 		//return model.gateFuture(process.remove());
 	}
 

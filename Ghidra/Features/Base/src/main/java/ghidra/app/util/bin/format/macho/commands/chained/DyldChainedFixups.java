@@ -29,19 +29,22 @@ import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class DyldChainedFixups {
 
 	private MachHeader machoHeader;
 	private Program program;
+	private List<String> libraryPaths;
 	private MessageLog log;
 	private TaskMonitor monitor;
 	private Memory memory;
@@ -52,13 +55,15 @@ public class DyldChainedFixups {
 	 * 
 	 * @param program The {@link Program}
 	 * @param header The Mach-O header
+	 * @param libraryPaths A {@link List} of the library paths
 	 * @param log The log
 	 * @param monitor A cancelable task monitor.
 	 */
-	public DyldChainedFixups(Program program, MachHeader header, MessageLog log,
-			TaskMonitor monitor) {
+	public DyldChainedFixups(Program program, MachHeader header, List<String> libraryPaths,
+			MessageLog log, TaskMonitor monitor) {
 		this.program = program;
 		this.machoHeader = header;
+		this.libraryPaths = libraryPaths;
 		this.log = log;
 		this.monitor = monitor;
 		this.memory = program.getMemory();
@@ -265,12 +270,13 @@ public class DyldChainedFixups {
 				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
 				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
 				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
-				//int libOrdinal = chainedImport.getLibOrdinal();
 				symName = chainedImport.getName();
 				// lookup the symbol, and then add addend
 				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
 				if (globalSymbols.size() == 1) {
-					newChainValue = globalSymbols.get(0).getAddress().getOffset();
+					Symbol symbol = globalSymbols.get(0);
+					newChainValue = symbol.getAddress().getOffset();
+					fixupExternalLibrary(chainedImport.getLibOrdinal(), symbol);
 				}
 				newChainValue += addend;
 			}
@@ -288,7 +294,9 @@ public class DyldChainedFixups {
 				// lookup the symbol, and then add addend
 				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
 				if (globalSymbols.size() == 1) {
-					newChainValue = globalSymbols.get(0).getAddress().getOffset();
+					Symbol symbol = globalSymbols.get(0);
+					newChainValue = symbol.getAddress().getOffset();
+					fixupExternalLibrary(chainedImport.getLibOrdinal(), symbol);
 				}
 				newChainValue = newChainValue + auth_value_add;
 			}
@@ -323,6 +331,24 @@ public class DyldChainedFixups {
 			start = false;
 			next = DyldChainedPtr.getNext(pointerFormat, chainValue);
 			nextOff += next * DyldChainedPtr.getStride(pointerFormat);
+		}
+	}
+
+	private void fixupExternalLibrary(int libraryOrdinal, Symbol symbol) {
+		ExternalManager extManager = program.getExternalManager();
+		int libraryIndex = libraryOrdinal - 1;
+		if (libraryIndex >= 0 && libraryIndex < libraryPaths.size()) {
+			Library library = extManager.getExternalLibrary(libraryPaths.get(libraryIndex));
+			ExternalLocation loc =
+				extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
+			if (loc != null) {
+				try {
+					loc.setName(library, symbol.getName(), SourceType.IMPORTED);
+				}
+				catch (InvalidInputException e) {
+					log.appendException(e);
+				}
+			}
 		}
 	}
 

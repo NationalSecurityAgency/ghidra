@@ -27,6 +27,7 @@ import docking.widgets.PopupWindow;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.HoverProvider;
+import docking.widgets.shapes.PopupWindowPlacer;
 import ghidra.app.services.HoverService;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -42,7 +43,9 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 	private static final Comparator<HoverService> HOVER_PRIORITY_COMPARATOR =
 		(service1, service2) -> service2.getPriority() - service1.getPriority();
 	protected HoverService activeHoverService;
+
 	protected PopupWindow popupWindow;
+	protected PopupWindowPlacer popupWindowPlacer;
 
 	protected final String windowName;
 
@@ -78,6 +81,14 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 				"enable tooltip style popups, but none are currently enabled.\nTo enable these " +
 				"popups you must use the options menu: \"Options->Listing Popups\"");
 		}
+	}
+
+	/**
+	 * Sets the object that decides where to place the popup window. 
+	 * @param popupWindowPlacer the placer
+	 */
+	public void setPopupPlacer(PopupWindowPlacer popupWindowPlacer) {
+		this.popupWindowPlacer = popupWindowPlacer;
 	}
 
 	public boolean isForcePopups() {
@@ -176,8 +187,13 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 			activeWindow = JOptionPane.getRootFrame();
 		}
 
+		if (popupWindow != null) {
+			popupWindow.dispose();
+		}
+
 		popupWindow = new PopupWindow(activeWindow, comp);
 		popupWindow.setWindowName(windowName);
+		popupWindow.setPopupPlacer(popupWindowPlacer);
 
 		popupWindow.addComponentListener(new ComponentAdapter() {
 			@Override

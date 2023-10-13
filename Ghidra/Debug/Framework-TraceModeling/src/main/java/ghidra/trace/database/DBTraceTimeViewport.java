@@ -55,7 +55,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	 */
 	protected final List<Lifespan> ordered = new ArrayList<>();
 	protected final MutableLifeSet spanSet = new DefaultLifeSet();
-	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);
+	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class, true);
 
 	protected long snap = 0;
 
@@ -224,7 +224,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 			}
 		}
 		assert !ordered.isEmpty();
-		changeListeners.fire.run();
+		changeListeners.invoke().run();
 	}
 
 	@Override

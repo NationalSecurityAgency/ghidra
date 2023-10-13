@@ -46,7 +46,7 @@ public class FridaDetachCommand extends AbstractFridaCommand<Void> {
 		for (FridaThread thread : list) {
 			manager.removeThread(pid, FridaClient.getId(thread));
 		}
-		manager.getEventListeners().fire.processRemoved(pid, FridaCause.Causes.UNCLAIMED);
+		manager.getEventListeners().invoke().processRemoved(pid, FridaCause.Causes.UNCLAIMED);
 		return null;
 	}
 

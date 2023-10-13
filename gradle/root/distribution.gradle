@@ -482,40 +482,25 @@ def updateSlaFilesTimestamp(String distributionDirectoryPath, int timeOffsetMinu
 }
 
 /*********************************************************************************
- * 
- * Creates the local installation zip.
+ *
+ * Assemble all targets.
  *
  **********************************************************************************/
-task createInstallationZip(type: Zip) { t ->
-	
+task assembleAll() {
+
 	group 'private'
-	description "Creates local installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
-	
+	description "Assembles all targets to one installation directory (does not clean up artifacts) [gradle/root/distribution.gradle]"
+
 	dependsOn assembleDistribution
 	dependsOn assembleSource
 	dependsOn "assembleDistribution_$currentPlatform"
-	
+
 	if (project.hasProperty("allPlatforms")) {
 		project.PLATFORMS.each { platform ->
 			dependsOn ":assembleDistribution_${platform.name}"
 		}
 	}
 
-	if (project.hasProperty("allPlatforms")) {
-		archiveFileName = "${ZIP_NAME_PREFIX}.zip"
-	}
-	else {
-		archiveFileName = "${ZIP_NAME_PREFIX}_${currentPlatform}.zip"
-	}
-	destinationDirectory = DISTRIBUTION_DIR
-	
-	// Make sure that we don't try to copy the same file with the same path.
-	duplicatesStrategy 'exclude'
-
-	from (DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX) {
-		into ZIP_DIR_PREFIX
-	}
-		
 	doFirst {
 		// We always want the extensions directory to exist in the zip, even if there's nothing
 		// installed there.
@@ -529,6 +514,34 @@ task createInstallationZip(type: Zip) { t ->
 		// will ensure the zip archive has sla files newer than slaspec. Give new timestamp of now plus 
 		// two minutes.
 		updateSlaFilesTimestamp(DISTRIBUTION_DIR.getPath(), 2)
+	}
+}
+
+/*********************************************************************************
+ *
+ * Creates the local installation zip.
+ *
+ **********************************************************************************/
+task createInstallationZip(type: Zip) { t ->
+
+	group 'private'
+	description "Creates local installation zip (does not clean up artifacts) [gradle/root/distribution.gradle]"
+
+	dependsOn assembleAll
+
+	if (project.hasProperty("allPlatforms")) {
+		archiveFileName = "${ZIP_NAME_PREFIX}.zip"
+	}
+	else {
+		archiveFileName = "${ZIP_NAME_PREFIX}_${currentPlatform}.zip"
+	}
+	destinationDirectory = DISTRIBUTION_DIR
+
+	// Make sure that we don't try to copy the same file with the same path.
+	duplicatesStrategy 'exclude'
+
+	from (DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX) {
+		into ZIP_DIR_PREFIX
 	}
 	
 	doLast {

@@ -319,7 +319,7 @@ public:
 /// immediately.
 class ActionSetCasts : public Action {
   static void checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data);
-  static bool testStructOffset0(Varnode *vn,PcodeOp *op,Datatype *ct,CastStrategy *castStrategy);
+  static bool testStructOffset0(Datatype *reqtype,Datatype *curtype,CastStrategy *castStrategy);
   static bool tryResolutionAdjustment(PcodeOp *op,int4 slot,Funcdata &data);
   static bool isOpIdentical(Datatype *ct1,Datatype *ct2);
   static int4 resolveUnion(PcodeOp *op,int4 slot,Funcdata &data);

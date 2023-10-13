@@ -34,8 +34,6 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 import org.junit.rules.TestName;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
 import db.Transaction;
 import docking.ActionContext;
@@ -51,7 +49,9 @@ import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectPropertyColumn;
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.plugin.core.debug.service.model.*;
+import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceInternal;
+import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
+import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -59,6 +59,8 @@ import ghidra.dbg.model.AbstractTestTargetRegisterBank;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
 import ghidra.dbg.target.*;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.model.*;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -77,7 +79,7 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.InvalidNameException;
-import ghidra.util.datastruct.ListenerMap;
+import ghidra.util.datastruct.TestDataStructureErrorHandlerInstaller;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
 
@@ -99,8 +101,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		}
 
 		@Override
-		protected DebuggerRegisterMapper createRegisterMapper(
-				TargetRegisterContainer registers) {
+		protected DebuggerRegisterMapper createRegisterMapper(TargetRegisterContainer registers) {
 			return new DefaultDebuggerRegisterMapper(cSpec, registers, true);
 		}
 	}
@@ -138,7 +139,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	/**
 	 * Works like {@link #waitForValue(Supplier)}, except this caches {@link NoSuchElementException}
 	 * and tries again.
-	 * 
+	 *
 	 * @param <T> the type of object to wait for
 	 * @param supplier the supplier of the object
 	 * @return the object
@@ -168,7 +169,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * This is so gross
-	 * 
+	 *
 	 * @param lockable
 	 */
 	protected void waitForLock(DomainObject lockable) {
@@ -180,7 +181,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Get an address in the trace's default space
-	 * 
+	 *
 	 * @param trace the trace
 	 * @param offset the byte offset in the default space
 	 * @return the address
@@ -191,7 +192,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Get an address in the program's default space
-	 * 
+	 *
 	 * @param program the program
 	 * @param offset the byte offset in the default space
 	 * @return the address
@@ -202,7 +203,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Get an address range in the trace's default space
-	 * 
+	 *
 	 * @param program the program
 	 * @param min the min byte offset in the default space
 	 * @param max the max byte offset in the default space
@@ -223,7 +224,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	public static Language getToyBE64Language() {
 		try {
 			return DefaultLanguageService.getLanguageService()
-				.getLanguage(new LanguageID(LANGID_TOYBE64));
+					.getLanguage(new LanguageID(LANGID_TOYBE64));
 		}
 		catch (LanguageNotFoundException e) {
 			throw new AssertionError("Why is the Toy language missing?", e);
@@ -346,10 +347,10 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Find the sub menu item of the current selection by text
-	 * 
+	 *
 	 * Note that if the desired item is at the same level as the currently selected item, this
 	 * method will not find it. It searches the sub menu of the currently selected item.
-	 * 
+	 *
 	 * @param text the text
 	 * @return the found item
 	 * @throws NoSuchElementException if the desired item is not found
@@ -361,7 +362,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Activate via mouse the sub menu item of the current selection by text
-	 * 
+	 *
 	 * @param text the text on the item to click
 	 * @throws AWTException
 	 * @throws NoSuchElementException if no item with the given text is found
@@ -477,9 +478,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	protected static void performEnabledAction(ActionContextProvider provider,
 			DockingActionIf action, boolean wait) {
 		ActionContext context = waitForValue(() -> {
-			ActionContext ctx = provider == null
-					? new DefaultActionContext()
-					: provider.getActionContext(null);
+			ActionContext ctx =
+				provider == null ? new DefaultActionContext() : provider.getActionContext(null);
 			if (!action.isEnabledForContext(ctx)) {
 				return null;
 			}
@@ -542,6 +542,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	protected DebuggerModelService modelService;
 	protected DebuggerModelServiceInternal modelServiceInternal;
+	protected DebuggerTargetService targetService;
 	protected DebuggerTraceManagerService traceManager;
 	protected ProgramManager programManager;
 
@@ -551,15 +552,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	@Rule
 	public TestName name = new TestName();
-	@Rule
-	public TestWatcher watcher = new TestWatcher() {
-		@Override
-		protected void succeeded(Description description) {
-			if (description.isTest()) {
-				ListenerMap.checkErr();
-			}
-		}
-	};
+
 	protected final ConsoleTaskMonitor monitor = new ConsoleTaskMonitor();
 
 	protected void waitRecorder(TraceRecorder recorder) throws Throwable {
@@ -581,9 +574,16 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		waitForDomainObject(recorder.getTrace());
 	}
 
+	@BeforeClass
+	public static void beforeClass() {
+
+		// Note: we may decided to move this up to a framework-level base test class
+		TestDataStructureErrorHandlerInstaller.installConcurrentExceptionErrorHandler();
+	}
+
 	@Before
 	public void setUp() throws Exception {
-		ListenerMap.clearErr();
+
 		env = new TestEnv();
 		tool = env.getTool();
 
@@ -592,6 +592,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		modelService = tool.getService(DebuggerModelService.class);
 		assertEquals(modelPlugin, modelService);
 		modelServiceInternal = modelPlugin;
+		targetService = addPlugin(tool, DebuggerTargetServicePlugin.class);
 
 		addPlugin(tool, DebuggerTraceManagerServicePlugin.class);
 		traceManager = tool.getService(DebuggerTraceManagerService.class);
@@ -664,8 +665,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		populateTestModel();
 
 		TargetObject target = chooseTarget();
-		TraceRecorder recorder = modelService.recordTarget(target,
-			createTargetTraceMapper(target), ActionSource.AUTOMATIC);
+		TraceRecorder recorder = modelService.recordTarget(target, createTargetTraceMapper(target),
+			ActionSource.AUTOMATIC);
 
 		waitRecorder(recorder);
 		return recorder;
@@ -676,9 +677,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	protected void intoProject(DomainObject obj) {
 		waitForDomainObject(obj);
-		DomainFolder rootFolder = tool.getProject()
-			.getProjectData()
-			.getRootFolder();
+		DomainFolder rootFolder = tool.getProject().getProjectData().getRootFolder();
 		waitForCondition(() -> {
 			try {
 				rootFolder.createFile(obj.getName(), obj, monitor);
@@ -725,9 +724,9 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 			throws Exception {
 		return new TestDebuggerTargetTraceMapper(target) {
 			@Override
-			public TraceRecorder startRecording(DebuggerModelServicePlugin service, Trace trace) {
+			public TraceRecorder startRecording(PluginTool tool, Trace trace) {
 				useTrace(trace);
-				return super.startRecording(service, trace);
+				return super.startRecording(tool, trace);
 			}
 		};
 	}
@@ -793,8 +792,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 				listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
 			}
 
-			void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range,
-					byte[] oldValue, byte[] newValue) {
+			void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range, byte[] oldValue,
+					byte[] newValue) {
 				if (space.getThread() != traceThread) {
 					return;
 				}
@@ -819,8 +818,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 			// get() is not my favorite, but it'll do for testing
 			// can't remove listener until observedTraceChange has completed.
 			bank.writeRegistersNamed(values)
-				.thenCompose(__ -> observedTraceChange)
-				.get(timeoutMillis, TimeUnit.MILLISECONDS);
+					.thenCompose(__ -> observedTraceChange)
+					.get(timeoutMillis, TimeUnit.MILLISECONDS);
 		}
 		finally {
 			trace.removeListener(listener);
@@ -836,8 +835,8 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	protected DomainFile unpack(File pack) throws Exception {
 		return tool.getProject()
-			.getProjectData()
-			.getRootFolder()
-			.createFile("Restored", pack, monitor);
+				.getProjectData()
+				.getRootFolder()
+				.createFile("Restored", pack, monitor);
 	}
 }

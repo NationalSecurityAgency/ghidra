@@ -20,10 +20,10 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AutoReadMemoryAction;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
@@ -53,20 +53,16 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 	public CompletableFuture<?> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
 			AddressSetView visible) {
 		if (!coordinates.isAliveAndReadsPresent()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
-		TraceRecorder recorder = coordinates.getRecorder();
-		boolean ffv = coordinates.getView().getMemory().isForceFullView();
-		AddressSetView visibleAccessible =
-			ffv ? visible : recorder.getAccessibleMemory().intersect(visible);
+		Target target = coordinates.getTarget();
 		TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
-		AddressSetView alreadyKnown =
-			mm.getAddressesWithState(coordinates.getSnap(), visibleAccessible,
-				s -> s == TraceMemoryState.KNOWN);
-		AddressSet toRead = visibleAccessible.subtract(alreadyKnown);
+		AddressSetView alreadyKnown = mm.getAddressesWithState(coordinates.getSnap(), visible,
+			s -> s == TraceMemoryState.KNOWN);
+		AddressSet toRead = visible.subtract(alreadyKnown);
 
 		if (toRead.isEmpty()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 
 		AddressSet everKnown = new AddressSet();
@@ -89,9 +85,9 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 		toRead.delete(everKnown.intersect(readOnly));
 
 		if (toRead.isEmpty()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 
-		return recorder.readMemoryBlocks(toRead, TaskMonitor.DUMMY);
+		return target.readMemoryAsync(toRead, TaskMonitor.DUMMY);
 	}
 }

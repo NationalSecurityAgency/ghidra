@@ -26,6 +26,7 @@ import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Lifespan.LifeSet;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
 
 /**
  * The trace record of an observed {@link TargetObject}
@@ -552,8 +553,30 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @return the suitable object, or null if not found
 	 */
 	default TraceObject querySuitableTargetInterface(Class<? extends TargetObject> targetIf) {
+		if (targetIf == TargetObject.class) {
+			return this;
+		}
 		List<String> path = getRoot().getTargetSchema()
 				.searchForSuitable(targetIf, getCanonicalPath().getKeyList());
+		if (path == null) {
+			return null;
+		}
+		return getTrace().getObjectManager().getObjectByCanonicalPath(TraceObjectKeyPath.of(path));
+	}
+
+	/**
+	 * Search for a suitable object having the given schema
+	 * 
+	 * <p>
+	 * This operates by examining the schema for a unique suitable path, without regard to
+	 * lifespans. If needed, the caller should inspect the object's life.
+	 * 
+	 * @param schema the schema
+	 * @return the suitable object, or null if not found
+	 */
+	default TraceObject querySuitableSchema(TargetObjectSchema schema) {
+		List<String> path = getRoot().getTargetSchema()
+				.searchForSuitable(schema, getCanonicalPath().getKeyList());
 		if (path == null) {
 			return null;
 		}

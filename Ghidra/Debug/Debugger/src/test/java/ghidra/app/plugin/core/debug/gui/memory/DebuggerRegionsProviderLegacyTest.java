@@ -34,7 +34,7 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerLegacyRegionsPanel.RegionTableColumns;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionMapProposalDialog.RegionMapTableColumns;
-import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;

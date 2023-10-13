@@ -3,3 +3,7 @@
 Module.manifest||GHIDRA||||END|
 src/javaprovider/def/javaprovider.def||GHIDRA||||END|
 src/javaprovider/rc/javaprovider.rc||GHIDRA||||END|
+src/main/py/LICENSE||GHIDRA||||END|
+src/main/py/README.md||GHIDRA||||END|
+src/main/py/pyproject.toml||GHIDRA||||END|
+src/main/py/src/ghidradbg/schema.xml||GHIDRA||||END|

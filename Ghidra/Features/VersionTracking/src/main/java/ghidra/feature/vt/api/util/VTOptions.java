@@ -15,9 +15,9 @@
  */
 package ghidra.feature.vt.api.util;
 
-import ghidra.framework.options.ToolOptions;
-
 import org.jdom.Element;
+
+import ghidra.framework.options.ToolOptions;
 
 public class VTOptions extends ToolOptions {
 
@@ -37,6 +37,7 @@ public class VTOptions extends ToolOptions {
 	/**
 	 * A method that allows subclasses to tell the world where their options contain acceptable
 	 * values
+	 * @return true if valid
 	 */
 	public boolean validate() {
 		return true;

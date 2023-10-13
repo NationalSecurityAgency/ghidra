@@ -677,6 +677,11 @@ public interface TargetObjectSchema {
 			return searchForInAggregate(seed, ent -> ent.schema.getInterfaces().contains(type));
 		}
 
+		static List<String> searchForSuitableInAggregate(TargetObjectSchema seed,
+				TargetObjectSchema schema) {
+			return searchForInAggregate(seed, ent -> ent.schema == schema);
+		}
+
 		static List<String> searchForSuitableContainerInAggregate(TargetObjectSchema seed,
 				Class<? extends TargetObject> type) {
 			return searchForInAggregate(seed, ent -> {
@@ -776,6 +781,28 @@ public interface TargetObjectSchema {
 				return path;
 			}
 			List<String> inAgg = Private.searchForSuitableInAggregate(schema, type);
+			if (inAgg != null) {
+				return PathUtils.extend(path, inAgg);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Search for a suitable object with this schema at the given path
+	 * 
+	 * @param schema the schema of object sought
+	 * @param path the path of a seed object
+	 * @return the expected path of the suitable object, or null
+	 */
+	default List<String> searchForSuitable(TargetObjectSchema schema, List<String> path) {
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema check = schemas.get(path.size());
+			if (check == schema) {
+				return path;
+			}
+			List<String> inAgg = Private.searchForSuitableInAggregate(check, schema);
 			if (inAgg != null) {
 				return PathUtils.extend(path, inAgg);
 			}

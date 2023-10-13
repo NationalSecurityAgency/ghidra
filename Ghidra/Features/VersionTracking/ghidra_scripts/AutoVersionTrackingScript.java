@@ -17,15 +17,15 @@
 // data and and then save the session.
 //@category Examples.Version Tracking
 
-import java.util.List;
-
 import ghidra.app.script.GhidraScript;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.gui.actions.AutoVersionTrackingTask;
-import ghidra.feature.vt.gui.plugin.*;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.model.DomainFolder;
-import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskLauncher;
@@ -69,6 +69,9 @@ public class AutoVersionTrackingScript extends GhidraScript {
 			return;
 		}
 
+		boolean autoCreateImpliedMatches = askYesNo("Implied Matches?",
+			"Would you like the script to figure out implied matches from any matches it creates?");
+
 		// Need to end the script transaction or it interferes with vt things that need locks
 		end(true);
 
@@ -77,31 +80,39 @@ public class AutoVersionTrackingScript extends GhidraScript {
 
 		folder.createFile(name, session, monitor);
 
-		PluginTool tool = state.getTool();
-		VTPlugin vtPlugin = getPlugin(tool, VTPlugin.class);
-		if (vtPlugin == null) {
-			tool.addPlugin(VTPlugin.class.getName());
-			vtPlugin = getPlugin(tool, VTPlugin.class);
-		}
+		ToolOptions options = getOptions();
 
-		VTController controller = new VTControllerImpl(vtPlugin);
+		boolean originalImpliedMatchSetting =
+			options.getBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
 
-		//String description = "AutoVTScript";
+		options.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, autoCreateImpliedMatches);
 
 		AutoVersionTrackingTask autoVtTask =
-			new AutoVersionTrackingTask(controller, session, 1.0, 10.0);
+			new AutoVersionTrackingTask(session, options, 0.95, 10.0);
+
 
 		TaskLauncher.launch(autoVtTask);
+
+
+		// if not running headless user can decide whether to save or not
+		// if running headless - must save here or nothing that was done in this script will be
+		// accessible later.
+		if (isRunningHeadless()) {
+			session.save();
+		}
+		options.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, originalImpliedMatchSetting);
+
+		println(autoVtTask.getStatusMsg());
 	}
 
-	public static <T extends Plugin> T getPlugin(PluginTool tool, Class<T> c) {
-		List<Plugin> list = tool.getManagedPlugins();
-		for (Plugin p : list) {
-			if (p.getClass() == c) {
-				return c.cast(p);
-			}
+
+	private ToolOptions getOptions() {
+		ToolOptions vtOptions = new VTOptions("Dummy");
+		PluginTool tool = state.getTool();
+		if (tool != null) {
+			vtOptions = tool.getOptions(VTController.VERSION_TRACKING_OPTIONS_NAME);
 		}
-		return null;
+		return vtOptions;
 	}
 
 }

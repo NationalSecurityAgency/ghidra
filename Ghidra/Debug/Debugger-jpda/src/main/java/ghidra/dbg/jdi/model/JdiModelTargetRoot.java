@@ -244,7 +244,7 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 		catch (IOException e) {
 			Msg.error(this, "Could not interrupt", e);
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	protected void invalidateMemoryAndRegisterCaches() {

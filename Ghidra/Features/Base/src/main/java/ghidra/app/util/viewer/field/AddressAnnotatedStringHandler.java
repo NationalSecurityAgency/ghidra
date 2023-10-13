@@ -56,7 +56,7 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 
 		String addressText = address.toString();
 		if (text.length > 2) { // address and display text
-			StringBuffer buffer = new StringBuffer();
+			StringBuilder buffer = new StringBuilder();
 			for (int i = 2; i < text.length; i++) {
 				buffer.append(text[i]).append(" ");
 			}

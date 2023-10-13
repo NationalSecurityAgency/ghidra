@@ -427,6 +427,18 @@ void Datatype::encodeTypedef(Encoder &encoder) const
   encoder.closeElement(ELEM_DEF);
 }
 
+/// Calculate \b size rounded up to be a multiple of \b alignment.
+/// This value is returned by getAlignSize().
+void Datatype::calcAlignSize(void)
+
+{
+  int4 mod = size % alignment;
+  if (mod != 0)
+    alignSize = size + (alignment - mod);
+  else
+    alignSize = size;
+}
+
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
 /// Perform this check.
 /// \param off is the given offset
@@ -546,6 +558,7 @@ void Datatype::decodeBasic(Decoder &decoder)
   }
   if (size < 0)
     throw LowlevelError("Bad size for type "+name);
+  alignSize = size;
   submeta = base2sub[metatype];
   if ((id==0)&&(name.size()>0))	// If there is a type name
     id = hashName(name);	// There must be some kind of id
@@ -899,6 +912,9 @@ void TypePointer::calcSubmeta(void)
   else if (ptrtoMeta == TYPE_UNION) {
     submeta = SUB_PTR_STRUCT;
   }
+  else if (ptrtoMeta == TYPE_ARRAY) {
+    flags |= pointer_to_array;
+  }
   if (ptrto->needsResolution() && ptrtoMeta != TYPE_PTR)
     flags |= needs_resolution;		// Inherit needs_resolution, but only if not a pointer
 }
@@ -935,7 +951,7 @@ void TypePointer::calcTruncate(TypeFactory &typegrp)
 TypePointer *TypePointer::downChain(int8 &off,TypePointer *&par,int8 &parOff,bool allowArrayWrap,TypeFactory &typegrp)
 
 {
-  int4 ptrtoSize = ptrto->getSize();
+  int4 ptrtoSize = ptrto->getAlignSize();
   if (off < 0 || off >= ptrtoSize) {	// Check if we are wrapping
     if (ptrtoSize != 0 && !ptrto->isVariableLength()) {	// Check if pointed-to is wrappable
       if (!allowArrayWrap)
@@ -1049,14 +1065,14 @@ int4 TypeArray::compareDependency(const Datatype &op) const
 Datatype *TypeArray::getSubType(int8 off,int8 *newoff) const
 
 {				// Go down exactly one level, to type of element
-  *newoff = off % arrayof->getSize();
+  *newoff = off % arrayof->getAlignSize();
   return arrayof;
 }
 
 int4 TypeArray::getHoleSize(int4 off) const
 
 {
-  int4 newOff = off % arrayof->getSize();
+  int4 newOff = off % arrayof->getAlignSize();
   return arrayof->getHoleSize(newOff);
 }
 
@@ -1070,9 +1086,9 @@ int4 TypeArray::getHoleSize(int4 off) const
 Datatype *TypeArray::getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const
 
 {
-  int4 noff = off % arrayof->getSize();
-  int4 nel = off / arrayof->getSize();
-  if (noff+sz > arrayof->getSize()) // Requesting parts of more then one element
+  int4 noff = off % arrayof->getAlignSize();
+  int4 nel = off / arrayof->getAlignSize();
+  if (noff+sz > arrayof->getAlignSize()) // Requesting parts of more then one element
     return (Datatype *)0;
   *newoff = noff;
   *el = nel;
@@ -1148,8 +1164,9 @@ void TypeArray::decode(Decoder &decoder,TypeFactory &typegrp)
     }
   }
   arrayof = typegrp.decodeType(decoder);
-  if ((arraysize<=0)||(arraysize*arrayof->getSize()!=size))
+  if ((arraysize<=0)||(arraysize*arrayof->getAlignSize()!=size))
     throw LowlevelError("Bad size for array of type "+arrayof->getName());
+  alignment = arrayof->getAlignment();
   if (arraysize == 1)
     flags |= needs_resolution;		// Array of size 1 needs special treatment
 //  decoder.closeElement(elemId);
@@ -1361,6 +1378,7 @@ TypeStruct::TypeStruct(const TypeStruct &op)
 {
   setFields(op.field);
   size = op.size;		// setFields might have changed the size
+  alignSize = op.alignSize;
 }
 
 /// Copy a list of fields into this structure, establishing its size.
@@ -1371,18 +1389,24 @@ void TypeStruct::setFields(const vector<TypeField> &fd)
 {
   vector<TypeField>::const_iterator iter;
   int4 end;
-				// Need to calculate size
+				// Need to calculate size and alignment
   size = 0;
+  alignment = 1;
   for(iter=fd.begin();iter!=fd.end();++iter) {
     field.push_back(*iter);
-    end = (*iter).offset + (*iter).type->getSize();
+    Datatype *fieldType = (*iter).type;
+    end = (*iter).offset + fieldType->getSize();
     if (end > size)
       size = end;
+    int4 curAlign = fieldType->getAlignment();
+    if (curAlign > alignment)
+      alignment = curAlign;
   }
   if (field.size() == 1) {			// A single field
     if (field[0].type->getSize() == size)	// that fills the whole structure
       flags |= needs_resolution;		// needs special attention
   }
+  calcAlignSize();
 }
 
 /// Find the proper subfield given an offset. Return the index of that field
@@ -1489,7 +1513,7 @@ Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8
     Datatype *subtype = subfield.type;
     if (subtype->getMetatype() == TYPE_ARRAY) {
       *newoff = diff;
-      *elSize = ((TypeArray *)subtype)->getBase()->getSize();
+      *elSize = ((TypeArray *)subtype)->getBase()->getAlignSize();
       return subtype;
     }
     else {
@@ -1517,7 +1541,7 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
     Datatype *subtype = subfield.type;
     if (subtype->getMetatype() == TYPE_ARRAY) {
       *newoff = -diff;
-      *elSize = ((TypeArray *)subtype)->getBase()->getSize();
+      *elSize = ((TypeArray *)subtype)->getBase()->getAlignSize();
       return subtype;
     }
     else {
@@ -1622,6 +1646,7 @@ void TypeStruct::encode(Encoder &encoder) const
 void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
 
 {
+  alignment = 1;
   int4 maxoffset = 0;
   while(decoder.peekElement() != 0) {
     field.emplace_back(decoder,typegrp);
@@ -1633,6 +1658,9 @@ void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
       s << "Field " << field.back().name << " does not fit in structure " + name;
       throw LowlevelError(s.str());
     }
+    int4 curAlign = field.back().type->getAlignment();
+    if (curAlign > alignment)
+      alignment = curAlign;
   }
   if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
     flags |=  type_incomplete;
@@ -1642,6 +1670,7 @@ void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
     if (field[0].type->getSize() == size)	// that fills the whole structure
       flags |= needs_resolution;		// needs special resolution
   }
+  calcAlignSize();
 }
 
 /// If this method is called, the given data-type has a single component that fills it entirely
@@ -1728,24 +1757,17 @@ int4 TypeStruct::findCompatibleResolve(Datatype *ct) const
 
 /// Assign an offset to fields in order so that each field starts at an aligned offset within the structure
 /// \param list is the list of fields
-/// \param align is the given alignment
-void TypeStruct::assignFieldOffsets(vector<TypeField> &list,int4 align)
+void TypeStruct::assignFieldOffsets(vector<TypeField> &list)
 
 {
   int4 offset = 0;
   vector<TypeField>::iterator iter;
   for(iter=list.begin();iter!=list.end();++iter) {
     if ((*iter).offset != -1) continue;
-    int4 cursize = (*iter).type->getSize();
-    int4 curalign = 0;
-    if (align > 1) {
-      curalign = align;
-      while((curalign>>1) >= cursize)
-	curalign >>= 1;
-      curalign -= 1;
-    }
-    if ((offset & curalign)!=0)
-      offset = (offset-(offset & curalign) + (curalign+1));
+    int4 cursize = (*iter).type->getAlignSize();
+    int4 align = (*iter).type->getAlignment() - 1;
+    if (align > 0 && (offset & align)!=0)
+      offset = (offset-(offset & align) + (align+1));
     (*iter).offset = offset;
     (*iter).ident = offset;
     offset += cursize;
@@ -1759,14 +1781,20 @@ void TypeUnion::setFields(const vector<TypeField> &fd)
 
 {
   vector<TypeField>::const_iterator iter;
- 				// Need to calculate size
+ 				// Need to calculate size and alignment
   size = 0;
+  alignment = 1;
   for(iter=fd.begin();iter!=fd.end();++iter) {
     field.push_back(*iter);
-    int4 end = field.back().type->getSize();
+    Datatype *fieldType = field.back().type;
+    int4 end = fieldType->getSize();
     if (end > size)
       size = end;
+    int4 curAlign = fieldType->getAlignment();
+    if (curAlign > alignment)
+      alignment = curAlign;
   }
+  calcAlignSize();
 }
 
 /// Parse children of the \<type> element describing each field.
@@ -1775,6 +1803,7 @@ void TypeUnion::setFields(const vector<TypeField> &fd)
 void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
 
 {
+  alignment = 1;
   while(decoder.peekElement() != 0) {
     field.emplace_back(decoder,typegrp);
     if (field.back().offset + field.back().type->getSize() > size) {
@@ -1782,11 +1811,15 @@ void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
       s << "Field " << field.back().name << " does not fit in union " << name;
       throw LowlevelError(s.str());
     }
+    int4 curAlign = field.back().type->getAlignment();
+    if (curAlign > alignment)
+      alignment = curAlign;
   }
   if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
     flags |=  type_incomplete;
   else
     markComplete();		// Otherwise the union is complete
+  calcAlignSize();
 }
 
 TypeUnion::TypeUnion(const TypeUnion &op)
@@ -1794,6 +1827,7 @@ TypeUnion::TypeUnion(const TypeUnion &op)
 {
   setFields(op.field);
   size = op.size;		// setFields might have changed the size
+  alignSize = op.alignSize;
 }
 
 int4 TypeUnion::compare(const Datatype &op,int4 level) const
@@ -1983,7 +2017,7 @@ TypePartialStruct::TypePartialStruct(const TypePartialStruct &op)
 }
 
 TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip)
-  : Datatype(sz,TYPE_PARTIALSTRUCT)
+  : Datatype(sz,1,TYPE_PARTIALSTRUCT)
 {
 #ifdef CPUI_DEBUG
   if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
@@ -2064,7 +2098,7 @@ TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
 }
 
 TypePartialUnion::TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip)
-  : Datatype(sz,TYPE_PARTIALUNION)
+  : Datatype(sz,1,TYPE_PARTIALUNION)
 {
   flags |= (needs_resolution | has_stripped);
   stripped = strip;
@@ -2407,7 +2441,7 @@ TypeCode::TypeCode(const TypeCode &op) : Datatype(op)
   }
 }
 
-TypeCode::TypeCode(void) : Datatype(1,TYPE_CODE)
+TypeCode::TypeCode(void) : Datatype(1,1,TYPE_CODE)
 
 {
   proto = (FuncProto *)0;
@@ -2658,7 +2692,7 @@ Datatype *TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 *newoff,in
   symbolType = smallest->getSymbol()->getType();
   *newoff = addr.getOffset() - smallest->getAddr().getOffset();
   if (symbolType->getMetatype() == TYPE_ARRAY) {
-    *elSize = ((TypeArray *)symbolType)->getBase()->getSize();
+    *elSize = ((TypeArray *)symbolType)->getBase()->getAlignSize();
     return symbolType;
   }
   if (symbolType->getMetatype() == TYPE_STRUCT) {
@@ -2677,7 +2711,7 @@ Datatype *TypeSpacebase::nearestArrayedComponentBackward(int8 off,int8 *newoff,i
   if (subType == (Datatype *)0)
     return (Datatype *)0;
   if (subType->getMetatype() == TYPE_ARRAY) {
-    *elSize = ((TypeArray *)subType)->getBase()->getSize();
+    *elSize = ((TypeArray *)subType)->getBase()->getAlignSize();
     return subType;
   }
   if (subType->getMetatype() == TYPE_STRUCT) {
@@ -2760,7 +2794,6 @@ TypeFactory::TypeFactory(Architecture *g)
   sizeOfLong = 0;
   sizeOfPointer = 0;
   sizeOfAltPointer = 0;
-  align = 0;
   enumsize = 0;
 
   clearCache();
@@ -2803,10 +2836,10 @@ void TypeFactory::setupSizes(void)
     sizeOfPointer = segOp->getInnerSize();
     sizeOfAltPointer = sizeOfPointer + segOp->getBaseSize();
   }
-  if (align == 0)
-    align = glb->getDefaultSize();
+  if (alignMap.empty())
+    setDefaultAlignmentMap();
   if (enumsize == 0) {
-    enumsize = align;
+    enumsize = glb->getDefaultSize();
     enumtype = TYPE_UINT;
   }
 }
@@ -2924,6 +2957,35 @@ TypeFactory::~TypeFactory(void)
   clear();
 }
 
+/// Return the alignment associated with a primitive data-type of the given size
+/// \param size is the aligned size in bytes of the primitive
+/// \return the expected alignment in bytes
+int4 TypeFactory::getAlignment(uint4 size) const
+
+{
+  if (size >= alignMap.size()) {
+    if (alignMap.empty())
+      throw LowlevelError("TypeFactory alignment map not initialized");
+    return alignMap[alignMap.size()-1];
+  }
+  return alignMap[size];
+}
+
+/// Return the amount of room a data-type takes up in memory, which may be larger than the
+/// raw number of bytes in the data-type.  This is the size consistent with the \b sizeof operator
+/// in C.
+/// \param size is the raw number of bytes in the data-type
+/// \return the aligned size
+int4 TypeFactory::getPrimitiveAlignSize(uint4 size) const
+
+{
+  int4 align = getAlignment(size);
+  uint4 mod = size % align;
+  if (mod != 0)
+    size += (align-mod);
+  return size;
+}
+
 /// Looking just within this container, find a Datatype by \b name and/or \b id.
 /// \param n is the name of the data-type
 /// \param id is the type id of the data-type
@@ -3035,6 +3097,10 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
   }
 
   newtype = ct.clone();		// Add the new type to trees
+  if (newtype->alignment < 0) {
+    newtype->alignSize = getPrimitiveAlignSize(newtype->size);
+    newtype->alignment = getAlignment(newtype->alignSize);
+  }
   insert(newtype);
   return newtype;
 }
@@ -3109,8 +3175,10 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
   ot->flags &= ~(uint4)Datatype::type_incomplete;
   ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::type_incomplete));
   if (fixedsize > 0) {		// If the caller is trying to force a size
-    if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
+    if (fixedsize > ot->size) {	// If the forced size is bigger than the size required for fields
       ot->size = fixedsize;	//     Force the bigger size
+      ot->calcAlignSize();
+    }
     else if (fixedsize < ot->size) // If the forced size is smaller, this is an error
       throw LowlevelError("Trying to force too small a size on "+ot->getName());
   }
@@ -3147,8 +3215,10 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,u
   ot->flags &= ~(uint4)Datatype::type_incomplete;
   ot->flags |= (flags & (Datatype::variable_length | Datatype::type_incomplete));
   if (fixedsize > 0) {		// If the caller is trying to force a size
-    if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
+    if (fixedsize > ot->size) {	// If the forced size is bigger than the size required for fields
       ot->size = fixedsize;	//     Force the bigger size
+      ot->calcAlignSize();
+    }
     else if (fixedsize < ot->size) // If the forced size is smaller, this is an error
       throw LowlevelError("Trying to force too small a size on "+ot->getName());
   }
@@ -3827,7 +3897,6 @@ void TypeFactory::encode(Encoder &encoder) const
   encoder.openElement(ELEM_TYPEGRP);
   encoder.writeSignedInteger(ATTRIB_INTSIZE, sizeOfInt);
   encoder.writeSignedInteger(ATTRIB_LONGSIZE, sizeOfLong);
-  encoder.writeSignedInteger(ATTRIB_STRUCTALIGN, align);
   encoder.writeSignedInteger(ATTRIB_ENUMSIZE, enumsize);
   encoder.writeBool(ATTRIB_ENUMSIGNED, (enumtype==TYPE_INT));
   for(iter=deporder.begin();iter!=deporder.end();++iter) {
@@ -4154,7 +4223,6 @@ void TypeFactory::decode(Decoder &decoder)
 
   sizeOfInt = decoder.readSignedInteger(ATTRIB_INTSIZE);
   sizeOfLong = decoder.readSignedInteger(ATTRIB_LONGSIZE);
-  align = decoder.readSignedInteger(ATTRIB_STRUCTALIGN);
   enumsize = decoder.readSignedInteger(ATTRIB_ENUMSIZE);
   if (decoder.readBool(ATTRIB_ENUMSIGNED))
     enumtype = TYPE_INT;
@@ -4188,8 +4256,6 @@ void TypeFactory::decodeCoreTypes(Decoder &decoder)
 void TypeFactory::decodeDataOrganization(Decoder &decoder)
 
 {
-  uint4 defaultSize = glb->getDefaultSize();
-  align = 0;
   uint4 elemId = decoder.openElement(ELEM_DATA_ORGANIZATION);
   for(;;) {
     uint4 subId = decoder.openElement();
@@ -4204,15 +4270,7 @@ void TypeFactory::decodeDataOrganization(Decoder &decoder)
       sizeOfPointer = decoder.readSignedInteger(ATTRIB_VALUE);
     }
     else if (subId == ELEM_SIZE_ALIGNMENT_MAP) {
-      for(;;) {
-	uint4 mapId = decoder.openElement();
-	if (mapId != ELEM_ENTRY) break;
-	int4 sz = decoder.readSignedInteger(ATTRIB_SIZE);
-	int4 val = decoder.readSignedInteger(ATTRIB_ALIGNMENT);
-	if (sz <= defaultSize)
-	  align = val;
-	decoder.closeElement(mapId);
-      }
+      decodeAlignmentMap(decoder);
     }
     else {
       decoder.closeElementSkipping(subId);
@@ -4221,6 +4279,43 @@ void TypeFactory::decodeDataOrganization(Decoder &decoder)
     decoder.closeElement(subId);
   }
   decoder.closeElement(elemId);
+}
+
+/// Recover the map from data-type size to preferred alignment.
+/// \param decoder is the stream decoder
+void TypeFactory::decodeAlignmentMap(Decoder &decoder)
+
+{
+  alignMap.clear();
+  for(;;) {
+    uint4 mapId = decoder.openElement();
+    if (mapId != ELEM_ENTRY) break;
+    int4 sz = decoder.readSignedInteger(ATTRIB_SIZE);
+    int4 val = decoder.readSignedInteger(ATTRIB_ALIGNMENT);
+    while(alignMap.size() <= sz)
+      alignMap.push_back(-1);
+    alignMap[sz] = val;
+    decoder.closeElement(mapId);
+  }
+  int4 curAlign = 1;
+  for(int4 sz=1;sz < alignMap.size();++sz) {
+    int4 tmpAlign = alignMap[sz];
+    if (tmpAlign == -1)
+      alignMap[sz] = curAlign;	// Copy alignment from nearest explicitly set value
+    else
+      curAlign = tmpAlign;
+  }
+}
+
+/// The default is used if the compiler spec does not contain a \<size_alignment_map> element.
+void TypeFactory::setDefaultAlignmentMap(void)
+
+{
+  alignMap.resize(5,0);
+  alignMap[1] = 1;
+  alignMap[2] = 2;
+  alignMap[3] = 2;
+  alignMap[4] = 4;
 }
 
 /// Recover default enumeration properties (size and meta-type) from

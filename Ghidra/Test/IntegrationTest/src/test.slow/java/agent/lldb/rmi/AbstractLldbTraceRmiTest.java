@@ -32,10 +32,11 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.rmi.trace.*;
+import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.services.TraceRmiService;
 import ghidra.dbg.testutil.DummyProc;
+import ghidra.debug.api.tracermi.*;
 import ghidra.framework.*;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.DomainFile;
@@ -228,10 +229,10 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		return result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS).handle();
 	}
 
-	protected record LldbAndHandler(ExecInLldb exec, TraceRmiHandler handler)
+	protected record LldbAndConnection(ExecInLldb exec, TraceRmiConnection connection)
 			implements AutoCloseable {
 		protected RemoteMethod getMethod(String name) {
-			return Objects.requireNonNull(handler.getMethods().get(name));
+			return Objects.requireNonNull(connection.getMethods().get(name));
 		}
 
 		public void execute(String cmd) {
@@ -256,7 +257,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 			try {
 				LldbResult r = exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 				r.handle();
-				waitForPass(() -> assertTrue(handler.isClosed()));
+				waitForPass(() -> assertTrue(connection.isClosed()));
 			}
 			finally {
 				exec.lldb.destroyForcibly();
@@ -264,15 +265,15 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		}
 	}
 
-	protected LldbAndHandler startAndConnectLldb(Function<String, String> scriptSupplier)
+	protected LldbAndConnection startAndConnectLldb(Function<String, String> scriptSupplier)
 			throws Exception {
 		TraceRmiAcceptor acceptor = traceRmi.acceptOne(null);
 		ExecInLldb exec =
 			execInLldb(scriptSupplier.apply(sockToStringForLldb(acceptor.getAddress())));
 		acceptor.setTimeout(CONNECT_TIMEOUT_MS);
 		try {
-			TraceRmiHandler handler = acceptor.accept();
-			return new LldbAndHandler(exec, handler);
+			TraceRmiConnection connection = acceptor.accept();
+			return new LldbAndConnection(exec, connection);
 		}
 		catch (SocketTimeoutException e) {
 			exec.lldb.destroyForcibly();
@@ -281,7 +282,7 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 		}
 	}
 
-	protected LldbAndHandler startAndConnectLldb() throws Exception {
+	protected LldbAndConnection startAndConnectLldb() throws Exception {
 		return startAndConnectLldb(addr -> """
 				%s
 				ghidra_trace_connect %s
@@ -291,10 +292,10 @@ public abstract class AbstractLldbTraceRmiTest extends AbstractGhidraHeadedDebug
 	@SuppressWarnings("resource")
 	protected String runThrowError(Function<String, String> scriptSupplier)
 			throws Exception {
-		LldbAndHandler conn = startAndConnectLldb(scriptSupplier);
+		LldbAndConnection conn = startAndConnectLldb(scriptSupplier);
 		LldbResult r = conn.exec.future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		String stdout = r.handle();
-		waitForPass(() -> assertTrue(conn.handler.isClosed()));
+		waitForPass(() -> assertTrue(conn.connection.isClosed()));
 		return stdout;
 	}
 

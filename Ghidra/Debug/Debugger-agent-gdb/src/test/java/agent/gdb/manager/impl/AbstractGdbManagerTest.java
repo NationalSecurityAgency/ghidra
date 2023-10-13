@@ -26,21 +26,22 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.hamcrest.Matchers;
 import org.junit.*;
 
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
-import agent.gdb.pty.PtyFactory;
-import agent.gdb.pty.linux.LinuxPtyFactory;
 import generic.ULongSpan;
 import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncReference;
 import ghidra.dbg.testutil.DummyProc;
+import ghidra.pty.PtyFactory;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -52,7 +53,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 	protected File gdbBin;
 
 	protected File findGdbBin() {
-		return new File(GdbManager.DEFAULT_GDB_CMD);
+		return new File(System.getProperty("test.gdbmanager.path", GdbManager.DEFAULT_GDB_CMD));
 	}
 
 	@Before
@@ -62,8 +63,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 	}
 
 	protected PtyFactory getPtyFactory() {
-		// TODO: Choose by host OS
-		return new LinuxPtyFactory();
+		return PtyFactory.local();
 	}
 
 	protected abstract CompletableFuture<Void> startManager(GdbManager manager);
@@ -73,12 +73,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 	}
 
 	protected <T> T waitOn(CompletableFuture<T> future) throws Throwable {
-		try {
-			return future.get(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
-		}
-		catch (ExecutionException e) {
-			throw e.getCause();
-		}
+		return future.get(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
 	}
 
 	@After
@@ -164,9 +159,16 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 	@Test
 	public void testListModulesAndSections() throws Throwable {
 		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
+			// See testStartInterrupt
+			LibraryWaiter libcLoaded = new LibraryWaiter(name -> name.contains("libc"));
+			mgr.addEventsListener(libcLoaded);
 			waitOn(startManager(mgr));
 			GdbInferior inferior = mgr.currentInferior();
 			waitOn(inferior.fileExecAndSymbols("/usr/bin/echo"));
+			waitOn(inferior.start()); // listModules now requires info proc mappings
+			waitOn(libcLoaded);
+			Thread.sleep(100); // TODO: Why?
+			mgr.sendInterruptNow();
 			Map<String, GdbModule> modules = waitOn(inferior.listModules(false));
 			GdbModule modEcho = modules.get("/usr/bin/echo");
 			assertNotNull(modEcho);
@@ -287,6 +289,7 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			Msg.debug(this, "Interrupting");
 			mgr.sendInterruptNow();
 			Msg.debug(this, "Verifying at syscall");
+			Thread.sleep(100); // TODO: Actually wait for *stopped event
 			String out = waitOn(mgr.consoleCapture("x/1i $pc-2"));
 			// TODO: This is x86-specific
 			assertTrue("Didn't stop at syscall", out.contains("syscall"));
@@ -317,16 +320,12 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 		}
 	}
 
-	protected String getExpectedDefaultArgsVar() {
-		return null;
-	}
-
 	@Test
 	public void testSetVarGetVar() throws Throwable {
 		try (GdbManager mgr = GdbManager.newInstance(getPtyFactory())) {
 			waitOn(startManager(mgr));
 			String val = waitOn(mgr.currentInferior().getVar("args"));
-			assertEquals(getExpectedDefaultArgsVar(), val);
+			assertThat(val, Matchers.emptyOrNullString());
 			waitOn(mgr.currentInferior().setVar("args", "test"));
 			val = waitOn(mgr.currentInferior().getVar("args"));
 			assertEquals("test", val);

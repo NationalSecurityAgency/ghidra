@@ -43,7 +43,6 @@ import generic.theme.GColor;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.core.data.AbstractSettingsDialog;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
@@ -54,6 +53,8 @@ import ghidra.app.services.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.debug.api.watch.WatchRow;
 import ghidra.docking.settings.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
@@ -149,7 +150,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 	}
 
-	protected enum WatchTableColumns implements EnumeratedTableColumn<WatchTableColumns, WatchRow> {
+	protected enum WatchTableColumns
+		implements EnumeratedTableColumn<WatchTableColumns, DefaultWatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
 		ADDRESS("Address", Address.class, WatchRow::getAddress),
 		SYMBOL("Symbol", Symbol.class, WatchRow::getSymbol),
@@ -191,7 +193,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public Object getValueOf(WatchRow row) {
+		public Object getValueOf(DefaultWatchRow row) {
 			return getter.apply(row);
 		}
 
@@ -201,18 +203,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public void setValueOf(WatchRow row, Object value) {
+		public void setValueOf(DefaultWatchRow row, Object value) {
 			setter.accept(row, value);
 		}
 
 		@Override
-		public boolean isEditable(WatchRow row) {
+		public boolean isEditable(DefaultWatchRow row) {
 			return setter != null && (editable == null || editable.test(row));
 		}
 	}
 
 	protected static class WatchTableModel
-			extends DefaultEnumeratedColumnTableModel<WatchTableColumns, WatchRow> {
+			extends DefaultEnumeratedColumnTableModel<WatchTableColumns, DefaultWatchRow> {
 		public WatchTableModel(PluginTool tool) {
 			super(tool, "Watches", WatchTableColumns.class);
 		}
@@ -228,7 +230,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		if (!Objects.equals(a.getPlatform(), b.getPlatform())) {
 			return false;
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTrace(), b.getTrace())) {
 			return false; // May need to read target
 		}
 		if (!Objects.equals(a.getTime(), b.getTime())) {
@@ -356,7 +358,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	protected final WatchTableModel watchTableModel;
 	protected GhidraTable watchTable;
-	protected GhidraTableFilterPanel<WatchRow> watchFilterPanel;
+	protected GhidraTableFilterPanel<DefaultWatchRow> watchFilterPanel;
 
 	ToggleDockingAction actionEnableEdits;
 	DockingAction actionApplyDataType;
@@ -467,7 +469,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			}
 		}
 		else if (modelCol == WatchTableColumns.REPR.ordinal()) {
-			Object val = row.getValueObj();
+			Object val = row.getValueObject();
 			if (val instanceof Address) {
 				navigateToAddress((Address) val);
 			}
@@ -806,8 +808,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public WatchRow addWatch(String expression) {
-		WatchRow row = new WatchRow(this, "");
+	public DefaultWatchRow addWatch(String expression) {
+		DefaultWatchRow row = new DefaultWatchRow(this, "");
 		watchTableModel.add(row);
 		row.setExpression(expression);
 		return row;
@@ -815,7 +817,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	@Override
 	public void removeWatch(WatchRow row) {
-		watchTableModel.delete(row);
+		watchTableModel.delete((DefaultWatchRow) row);
 	}
 
 	@Override
@@ -849,7 +851,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		removeOldListeners();
 		this.currentTrace = trace;
 		addNewListeners();
-		for (WatchRow row : watchTableModel.getModelData()) {
+		for (DefaultWatchRow row : watchTableModel.getModelData()) {
 			row.updateType();
 		}
 	}
@@ -894,8 +896,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		if (asyncWatchExecutor == null) {
 			return;
 		}
-		List<WatchRow> toReevaluate = new ArrayList<>();
-		for (WatchRow row : watchTableModel.getModelData()) {
+		List<DefaultWatchRow> toReevaluate = new ArrayList<>();
+		for (DefaultWatchRow row : watchTableModel.getModelData()) {
 			AddressSetView reads = row.getReads();
 			if (reads == null || reads.intersects(changed)) {
 				toReevaluate.add(row);
@@ -903,7 +905,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		}
 		if (!toReevaluate.isEmpty()) {
 			clearCachedState();
-			for (WatchRow row : toReevaluate) {
+			for (DefaultWatchRow row : toReevaluate) {
 				row.reevaluate();
 			}
 		}
@@ -915,17 +917,17 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			return;
 		}
 		clearCachedState();
-		for (WatchRow row : watchTableModel.getModelData()) {
+		for (DefaultWatchRow row : watchTableModel.getModelData()) {
 			row.reevaluate();
 		}
 		changed.clear();
 	}
 
 	public void writeConfigState(SaveState saveState) {
-		List<WatchRow> rows = List.copyOf(watchTableModel.getModelData());
+		List<DefaultWatchRow> rows = List.copyOf(watchTableModel.getModelData());
 		saveState.putInt(KEY_ROW_COUNT, rows.size());
 		for (int i = 0; i < rows.size(); i++) {
-			WatchRow row = rows.get(i);
+			DefaultWatchRow row = rows.get(i);
 			String stateName = PREFIX_ROW + i;
 			SaveState rowState = new SaveState();
 			row.writeConfigState(rowState);
@@ -935,12 +937,12 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	public void readConfigState(SaveState saveState) {
 		int rowCount = saveState.getInt(KEY_ROW_COUNT, 0);
-		List<WatchRow> rows = new ArrayList<>();
+		List<DefaultWatchRow> rows = new ArrayList<>();
 		for (int i = 0; i < rowCount; i++) {
 			String stateName = PREFIX_ROW + i;
 			Element rowElement = saveState.getXmlElement(stateName);
 			if (rowElement != null) {
-				WatchRow r = new WatchRow(this, "");
+				DefaultWatchRow r = new DefaultWatchRow(this, "");
 				SaveState rowState = new SaveState(rowElement);
 				r.readConfigState(rowState);
 				rows.add(r);

@@ -206,7 +206,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Private methods
-//==================================================================================================    
+//==================================================================================================
 
 	private DockingAction getUnboundAction() {
 		return (DockingAction) getAction(tool, "Create Table From Selection");
@@ -244,7 +244,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 			(Map<KeyStroke, DockingKeyBindingAction>) getInstanceField("dockingKeyMap", kbm);
 		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0);
 		DockingKeyBindingAction dockingAction = dockingKeyMap.get(ks);
-		DockingAction f4Action = (DockingAction) getInstanceField("docakbleAction", dockingAction);
+		DockingAction f4Action = (DockingAction) getInstanceField("dockingAction", dockingAction);
 		return f4Action;
 	}
 

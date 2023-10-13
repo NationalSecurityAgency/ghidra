@@ -157,12 +157,6 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
-class OptionStructAlign : public ArchOption {
-public:
-  OptionStructAlign(void) { name = "structalign"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
-};
-
 class OptionWarning : public ArchOption {
 public:
   OptionWarning(void) { name = "warning"; }	///< Constructor

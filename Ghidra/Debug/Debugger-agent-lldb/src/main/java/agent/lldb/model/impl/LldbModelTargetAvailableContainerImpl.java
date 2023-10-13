@@ -95,7 +95,7 @@ public class LldbModelTargetAvailableContainerImpl extends LldbModelTargetObject
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

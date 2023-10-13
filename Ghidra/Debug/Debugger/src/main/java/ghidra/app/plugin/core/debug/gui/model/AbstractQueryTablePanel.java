@@ -26,7 +26,7 @@ import javax.swing.event.ListSelectionListener;
 
 import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -51,7 +51,7 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 	protected boolean showHidden = false;
 
 	private final ListenerSet<CellActivationListener> cellActivationListeners =
-		new ListenerSet<>(CellActivationListener.class);
+		new ListenerSet<>(CellActivationListener.class, true);
 
 	public AbstractQueryTablePanel(Plugin plugin) {
 		super(new BorderLayout());
@@ -236,6 +236,6 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 	}
 
 	protected void fireCellActivated() {
-		cellActivationListeners.fire.cellActivated(table);
+		cellActivationListeners.invoke().cellActivated(table);
 	}
 }

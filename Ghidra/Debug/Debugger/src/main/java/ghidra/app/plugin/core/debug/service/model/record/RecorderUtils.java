@@ -17,9 +17,9 @@ package ghidra.app.plugin.core.debug.service.model.record;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;

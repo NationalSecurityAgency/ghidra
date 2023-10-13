@@ -37,12 +37,14 @@ import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.async.AsyncLazyMap;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.emulation.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -60,8 +62,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.*;
 import ghidra.trace.model.time.schedule.Scheduler.RunResult;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
@@ -294,7 +295,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				.forgetValues((key, l) -> true);
 	protected final Map<CachedEmulator, Integer> busy = new LinkedHashMap<>();
 	protected final ListenerSet<EmulatorStateListener> stateListeners =
-		new ListenerSet<>(EmulatorStateListener.class);
+		new ListenerSet<>(EmulatorStateListener.class, true);
 
 	class BusyEmu implements AutoCloseable {
 		private final CachedEmulator ce;
@@ -313,7 +314,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				}
 			}
 			if (fire) {
-				stateListeners.fire.running(ce);
+				stateListeners.invoke().running(ce);
 			}
 		}
 
@@ -331,7 +332,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				}
 			}
 			if (fire) {
-				stateListeners.fire.stopped(ce);
+				stateListeners.invoke().stopped(ce);
 			}
 		}
 
@@ -343,7 +344,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
-	private DebuggerModelService modelService;
+	private DebuggerTargetService targetService;
 	@AutoServiceConsumed
 	private DebuggerPlatformService platformService;
 	@AutoServiceConsumed
@@ -724,7 +725,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			}
 		}
 		DebuggerPcodeMachine<?> emu = emulatorFactory.create(tool, platform, time.getSnap(),
-			modelService == null ? null : modelService.getRecorder(trace));
+			targetService == null ? null : targetService.getTarget(trace));
 		try (BusyEmu be = new BusyEmu(new CachedEmulator(key.trace, emu))) {
 			installBreakpoints(key.trace, key.time.getSnap(), be.ce.emulator());
 			monitor.initialize(time.totalTickCount());
@@ -811,6 +812,23 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	@Override
+	public Trace launchProgram(Program program, Address address) throws IOException {
+		Trace trace = null;
+		try {
+			trace = ProgramEmulationUtils.launchEmulationTrace(program, address, this);
+			traceManager.openTrace(trace);
+			traceManager.activateTrace(trace);
+			Swing.allowSwingToProcessEvents();
+		}
+		finally {
+			if (trace != null) {
+				trace.release(this);
+			}
+		}
+		return trace;
+	}
+
+	@Override
 	public long emulate(TracePlatform platform, TraceSchedule time, TaskMonitor monitor)
 			throws CancelledException {
 		requireOpen(platform.getTrace());
@@ -858,7 +876,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	@AutoServiceConsumed
-	private void setModelService(DebuggerModelService modelService) {
+	private void setModelService(DebuggerTargetService targetService) {
 		cache.clear();
 	}
 

@@ -35,7 +35,6 @@ import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
@@ -54,6 +53,8 @@ import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValuePcodeArithmetic;
@@ -1388,7 +1389,22 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	public static HoverLocation findTokenLocation(DecompilerPanel decompilerPanel,
 			Function function, String tokText, String fieldText) {
 		DecompileResults results = waitForValue(() -> {
-			ProgramLocation pLoc = decompilerPanel.getCurrentLocation();
+			ProgramLocation pLoc;
+			try {
+				pLoc = decompilerPanel.getCurrentLocation();
+			}
+			catch (NullPointerException e) {
+				/**
+				 * HACK: There's an unlikely race condition where the layout controller has created
+				 * the array of layouts but not fully populated it by the time we ask for the
+				 * current location. This may cause a line we inspect to still have null in it and
+				 * throw an NPE. Whatever. Just catch the thing and return null so that we try
+				 * again. As far as I can tell, this is not indicative of a problem in production,
+				 * because the controller won't issue an updated event until that array is fully
+				 * populated.
+				 */
+				return null;
+			}
 			if (!(pLoc instanceof DecompilerLocation dLoc)) {
 				return null;
 			}

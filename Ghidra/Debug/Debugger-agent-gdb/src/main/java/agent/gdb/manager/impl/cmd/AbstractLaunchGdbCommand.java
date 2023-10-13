@@ -41,7 +41,6 @@ public abstract class AbstractLaunchGdbCommand extends AbstractGdbCommand<GdbThr
 
 	@Override
 	public boolean handle(GdbEvent<?> evt, GdbPendingCommand<?> pending) {
-		evt = checkErrorViaCli(evt);
 		if (evt instanceof GdbThreadCreatedEvent) {
 			pending.claim(evt);
 		}

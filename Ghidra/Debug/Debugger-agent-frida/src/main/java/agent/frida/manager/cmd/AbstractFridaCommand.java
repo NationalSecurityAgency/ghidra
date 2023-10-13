@@ -80,7 +80,7 @@ public abstract class AbstractFridaCommand<T> implements FridaCommand<T> {
 			String type = jobj.get("type").getAsString();
 			if (type.equals("error")) {
 				String desc = jobj.get("description").getAsString();
-				manager.getEventListeners().fire.consoleOutput(desc+"\n", 0);		
+				manager.getEventListeners().invoke().consoleOutput(desc+"\n", 0);		
 				Msg.error(this, desc);
 				return;
 			}
@@ -88,14 +88,14 @@ public abstract class AbstractFridaCommand<T> implements FridaCommand<T> {
 		if (jobj.has("payload")) {
 			Object object = jobj.get("payload");
 			if (!(object instanceof JsonPrimitive)) {
-				manager.getEventListeners().fire.consoleOutput(object+" not a String\n", 0);		
+				manager.getEventListeners().invoke().consoleOutput(object+" not a String\n", 0);		
 				Msg.error(this, object);	
 				return;
 			} 
 			
 			String value = ((JsonPrimitive) object).getAsString();
 			if (!value.startsWith("{")) {
-				manager.getEventListeners().fire.consoleOutput(object+"\n", 0);		
+				manager.getEventListeners().invoke().consoleOutput(object+"\n", 0);		
 				return;
 			}
 			JsonElement res = JsonParser.parseString(value);
@@ -106,14 +106,14 @@ public abstract class AbstractFridaCommand<T> implements FridaCommand<T> {
 					res = keyValue.get("value");
 					String key = element.getAsString();
 					if (!key.equals(name)) {
-						manager.getEventListeners().fire.consoleOutput(res+"\n", 0);		
+						manager.getEventListeners().invoke().consoleOutput(res+"\n", 0);		
 						return;
 					}
 				} else {
-					manager.getEventListeners().fire.consoleOutput(object+"\n", 0);		
+					manager.getEventListeners().invoke().consoleOutput(object+"\n", 0);		
 				}
 			} else {
-				manager.getEventListeners().fire.consoleOutput(object+"\n", 0);		
+				manager.getEventListeners().invoke().consoleOutput(object+"\n", 0);		
 			}
 			if ("[]".equals(res.toString())) {
 				Msg.error(this, "nothing returned for "+this);

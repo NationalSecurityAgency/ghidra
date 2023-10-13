@@ -168,6 +168,10 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 	protected GhidraTable initializeMatchesTable() {
 		oneToManyTableModel = getMatchesTableModel();
 		oneToManyTableModel.addTableModelListener(e -> {
+			if (matchesTable == null) {
+				return; // we've been disposed
+			}
+
 			if (pendingMatchSelection != null) {
 				setSelectedMatch(pendingMatchSelection);
 			}
@@ -235,7 +239,7 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 		int row = oneToManyTableModel.getRowIndex(match);
 		if (row < 0) {
 			pendingMatchSelection = match;
-			// this happen while reloading. If so, save the match and listen for 
+			// this happen while reloading. If so, save the match and listen for
 			// the table data changed and restore the selection at that point
 			return;
 		}
@@ -469,7 +473,7 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 
 //==================================================================================================
 // FilterDialogModel Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public void addFilter(Filter<VTMatch> filter) {

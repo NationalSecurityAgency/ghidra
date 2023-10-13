@@ -285,7 +285,8 @@ bool SplitVarnode::findWholeSplitToPieces(void)
     }
     if (subhi->code() != CPUI_SUBPIECE) return false;
     if (subhi->getIn(1)->getOffset() != wholesize - hi->getSize()) return false;
-    whole = subhi->getIn(0);
+    Varnode *putativeWhole = subhi->getIn(0);
+    if (putativeWhole->getSize() != wholesize) return false;
     if (!lo->isWritten()) return false;
     PcodeOp *sublo = lo->getDef();
     if (sublo->code() == CPUI_COPY) { // Go thru one level of copy, if the piece is addrtied
@@ -294,14 +295,11 @@ bool SplitVarnode::findWholeSplitToPieces(void)
       sublo = otherlo->getDef();
     }
     if (sublo->code() != CPUI_SUBPIECE) return false;
-    Varnode *res = sublo->getIn(0);
-    if (whole == (Varnode*)0)
-      whole = res;
-    else if (whole != res)
+    if (putativeWhole != sublo->getIn(0))
       return false;		// Doesn't match between pieces
     if (sublo->getIn(1)->getOffset() != 0)
       return false;
-    if (whole == (Varnode*)0) return false;
+    whole = putativeWhole;
   }
 
   if (whole->isWritten()) {
@@ -3326,9 +3324,23 @@ int4 RuleDoubleLoad::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *piece1 = op->getIn(1);
   if (!piece0->isWritten()) return 0;
   if (!piece1->isWritten()) return 0;
-  if (piece0->getDef()->code() != CPUI_LOAD) return false;
-  if (piece1->getDef()->code() != CPUI_LOAD) return false;
-  if (!SplitVarnode::testContiguousPointers(piece0->getDef(),piece1->getDef(),loadlo,loadhi,spc))
+  PcodeOp *load1 = piece1->getDef();
+  if (load1->code() != CPUI_LOAD) return false;
+  PcodeOp *load0 = piece0->getDef();
+  OpCode opc = load0->code();
+  int4 offset = 0;
+  if (opc == CPUI_SUBPIECE) {
+    // Check for 2 LOADs but most significant part of most significant LOAD is discarded
+    if (load0->getIn(1)->getOffset() != 0) return false;
+    Varnode *vn0 = load0->getIn(0);
+    if (!vn0->isWritten()) return false;
+    offset = vn0->getSize() - piece0->getSize();
+    load0 = vn0->getDef();
+    opc = load0->code();
+  }
+  if (opc != CPUI_LOAD)
+    return false;
+  if (!SplitVarnode::testContiguousPointers(load0,load1,loadlo,loadhi,spc))
     return 0;
 
   size = piece0->getSize() + piece1->getSize();
@@ -3342,8 +3354,17 @@ int4 RuleDoubleLoad::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetOpcode(newload,CPUI_LOAD);
   data.opSetInput(newload,spcvn,0);
   Varnode *addrvn = loadlo->getIn(1);
-  if (addrvn->isConstant())
-    addrvn = data.newConstant(addrvn->getSize(),addrvn->getOffset());
+  if (spc->isBigEndian() && offset != 0) {
+    // If the most significant part of LOAD is discarded, we need to add discard amount to pointer
+    PcodeOp *newadd = data.newOp(2,latest->getAddr());
+    Varnode *addout = data.newUniqueOut(addrvn->getSize(),newadd);
+    data.opSetOpcode(newadd,CPUI_INT_ADD);
+    data.opSetInput(newadd,addrvn,0);
+    data.opSetInput(newadd,data.newConstant(addrvn->getSize(), offset),1);
+    data.opInsertAfter(newadd,latest);
+    addrvn = addout;
+    latest = newadd;
+  }
   data.opSetInput(newload,addrvn,1);
   // We need to guarantee that -newload- reads -addrvn- after
   // it has been defined. So insert it after the latest.

@@ -17,25 +17,28 @@ package ghidra.app.plugin.core.debug.service.rmi.trace;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.*;
 
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
+import ghidra.app.services.DebuggerTargetService;
 import ghidra.app.services.TraceRmiService;
+import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.AutoService.Wiring;
+import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.util.Swing;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
 	shortDescription = "Connect to back-end debuggers via Trace RMI",
 	description = """
-			Provides an alternative for connecting to back-end debuggers. The DebuggerModel has
-			become a bit onerous to implement. Despite its apparent flexibility, the recorder at
-			the front-end imposes many restrictions, and getting it to work turns into a lot of
-			guess work and frustration. Trace RMI should offer a more direct means of recording a
-			trace from a back-end.
+			Provides a means for connecting to back-end debuggers.
+			NOTE this is an alternative to the DebuggerModel and is meant to replace it.
 			""",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
@@ -44,18 +47,30 @@ import ghidra.util.task.TaskMonitor;
 		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,
 	},
+	servicesRequired = {
+		DebuggerTargetService.class,
+	},
 	servicesProvided = {
 		TraceRmiService.class,
 	})
 public class TraceRmiPlugin extends Plugin implements TraceRmiService {
 	private static final int DEFAULT_PORT = 15432;
+
+	@AutoServiceConsumed
+	private DebuggerTargetService targetService;
+	@SuppressWarnings("unused")
+	private final Wiring autoServiceWiring;
+
 	private final TaskMonitor monitor = new ConsoleTaskMonitor();
 
 	private SocketAddress serverAddress = new InetSocketAddress("0.0.0.0", DEFAULT_PORT);
 	private TraceRmiServer server;
 
+	private final Set<TraceRmiHandler> handlers = new LinkedHashSet<>();
+
 	public TraceRmiPlugin(PluginTool tool) {
 		super(tool);
+		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 	}
 
 	public TaskMonitor getTaskMonitor() {
@@ -107,13 +122,40 @@ public class TraceRmiPlugin extends Plugin implements TraceRmiService {
 	public TraceRmiHandler connect(SocketAddress address) throws IOException {
 		Socket socket = new Socket();
 		socket.connect(address);
-		return new TraceRmiHandler(this, socket);
+		TraceRmiHandler handler = new TraceRmiHandler(this, socket);
+		handler.start();
+		return handler;
 	}
 
 	@Override
-	public TraceRmiAcceptor acceptOne(SocketAddress address) throws IOException {
-		TraceRmiAcceptor acceptor = new TraceRmiAcceptor(this, address);
+	public DefaultTraceRmiAcceptor acceptOne(SocketAddress address) throws IOException {
+		DefaultTraceRmiAcceptor acceptor = new DefaultTraceRmiAcceptor(this, address);
 		acceptor.start();
 		return acceptor;
+	}
+
+	void addHandler(TraceRmiHandler handler) {
+		handlers.add(handler);
+	}
+
+	void removeHandler(TraceRmiHandler handler) {
+		handlers.remove(handler);
+	}
+
+	@Override
+	public Collection<TraceRmiConnection> getAllConnections() {
+		return List.copyOf(handlers);
+	}
+
+	void publishTarget(TraceRmiTarget target) {
+		Swing.runIfSwingOrRunLater(() -> {
+			targetService.publishTarget(target);
+		});
+	}
+
+	void withdrawTarget(TraceRmiTarget target) {
+		Swing.runIfSwingOrRunLater(() -> {
+			targetService.withdrawTarget(target);
+		});
 	}
 }

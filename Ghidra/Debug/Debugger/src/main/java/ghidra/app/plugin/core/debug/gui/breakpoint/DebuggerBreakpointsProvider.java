@@ -32,13 +32,17 @@ import docking.action.builder.ActionBuilder;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.context.ProgramLocationActionContext;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
-import ghidra.app.services.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -864,8 +868,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 				? ControlMode.DEFAULT
 				: controlService.getCurrentMode(trace);
 		DebuggerCoordinates currentFor = traceManager.getCurrentFor(trace);
-		TraceRecorder recorder = currentFor.getRecorder();
-		if (!mode.useEmulatedBreakpoints() && recorder == null) {
+		Target target = currentFor.getTarget();
+		if (!mode.useEmulatedBreakpoints() && target == null) {
 			return;
 		}
 		Lifespan span = Lifespan.at(currentFor.getSnap());
@@ -878,7 +882,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			}
 			else {
 				for (TraceBreakpoint l : breaks) {
-					if (recorder.getTargetBreakpoint(l) != null) {
+					if (target.isBreakpointValid(l)) {
 						visible.add(l);
 					}
 				}

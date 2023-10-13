@@ -96,7 +96,7 @@ public class FridaModelTargetAvailableProcessesContainerImpl extends FridaModelT
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

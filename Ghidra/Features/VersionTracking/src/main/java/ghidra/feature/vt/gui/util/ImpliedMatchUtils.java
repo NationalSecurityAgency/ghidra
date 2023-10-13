@@ -22,7 +22,6 @@ import java.util.*;
 import ghidra.feature.vt.api.impl.MatchSetImpl;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.plugin.AddressCorrelatorManager;
-import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.provider.impliedmatches.VTImpliedMatchInfo;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -34,27 +33,110 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Utility class for finding version tracking implied matches given an accepted matched function.
  * Each referenced data and function that exist in equivalent sections of the matched source
- * and destination functions will added to the current version tracking session as an implied match. 
+ * and destination functions will added to the current version tracking session as an implied match.
  */
 public class ImpliedMatchUtils {
+
+	/**
+	 * Called when a {@link VTAssociation} is accepted.  This method will create implied matches in
+	 * the current session based on the association.
+	 * @param sourceFunction The matched function from the source program
+	 * @param destinationFunction The matched function from the destination program
+	 * @param session The Version Tracking session
+	 * @param correlatorManager Keeps track of which section of the source function corresponds to
+	 * the which section of the destination function
+	 * @param monitor Handles user cancellations
+	 * @throws CancelledException if cancelled
+	 */
+	public static void updateImpliedMatchForAcceptedAssocation(Function sourceFunction,
+			Function destinationFunction, VTSession session,
+			AddressCorrelatorManager correlatorManager, TaskMonitor monitor)
+			throws CancelledException {
+
+		Set<VTImpliedMatchInfo> impliedMatches = findImpliedMatches(sourceFunction,
+			destinationFunction, session, correlatorManager, monitor);
+
+		for (VTImpliedMatchInfo impliedMatch : impliedMatches) {
+			Address sourceAddress = impliedMatch.getSourceAddress();
+			Address destinationAddress = impliedMatch.getDestinationAddress();
+			VTAssociation existingAssociation =
+				session.getAssociationManager().getAssociation(sourceAddress, destinationAddress);
+
+			if (existingAssociation == null) {
+				VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
+				VTMatch match = impliedMatchSet.addMatch(impliedMatch);
+				existingAssociation = match.getAssociation();
+			}
+			if (existingAssociation != null) {
+				existingAssociation.setVoteCount(existingAssociation.getVoteCount() + 1);
+			}
+		}
+
+	}
+
+	/**
+	 * Called when a {@link VTAssociation} is cleared.  This method will create implied matches in
+	 * the current session based on the association.
+	 * @param sourceFunction The matched function from the source program
+	 * @param destinationFunction The matched function from the destination program
+	 * @param session The Version Tracking session
+	 * @param correlatorManager Keeps track of which section of the source function corresponds to
+	 * the which section of the destination function
+	 * @param monitor Handles user cancellations
+	 * @throws CancelledException if cancelled
+	 */
+	public static void updateImpliedMatchForClearedAssocation(Function sourceFunction,
+			Function destinationFunction, VTSession session,
+			AddressCorrelatorManager correlatorManager, TaskMonitor monitor)
+			throws CancelledException {
+
+		Set<VTImpliedMatchInfo> impliedMatches = ImpliedMatchUtils.findImpliedMatches(
+			sourceFunction, destinationFunction, session, correlatorManager, monitor);
+
+		for (VTImpliedMatchInfo impliedMatch : impliedMatches) {
+			Address sourceAddress = impliedMatch.getSourceAddress();
+			Address destinationAddress = impliedMatch.getDestinationAddress();
+			VTAssociation existingAssociation =
+				session.getAssociationManager().getAssociation(sourceAddress, destinationAddress);
+
+			if (existingAssociation != null) {
+				int newVoteCount = Math.max(0, existingAssociation.getVoteCount() - 1);
+				existingAssociation.setVoteCount(newVoteCount);
+				if (newVoteCount == 0) {
+					removeImpliedMatch(existingAssociation);
+				}
+			}
+		}
+	}
+
+	private static void removeImpliedMatch(VTAssociation existingAssociation) {
+		VTSession session = existingAssociation.getSession();
+		List<VTMatch> matches = session.getMatches(existingAssociation);
+		VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
+		for (VTMatch vtMatch : matches) {
+			if (vtMatch.getMatchSet() == impliedMatchSet) {
+				impliedMatchSet.removeMatch(vtMatch);
+			}
+		}
+	}
 
 	/**
 	 * Method for finding version tracking implied matches given an accepted matched
 	 * function. Each referenced data and function that exist in equivalent sections
 	 * of the matched source and destination functions will added to the current
 	 * version tracking session as an implied match.
-	 * 
-	 * @param controller Version Tracking controller for the current VT tool
+	 *
 	 * @param sourceFunction The matched function from the source program
 	 * @param destinationFunction The matched function from the destination program
 	 * @param session The Version Tracking session
-	 * @param correlationManager Keeps track of which section of the source function corresponds to 
+	 * @param correlatorManager Keeps track of which section of the source function corresponds to
 	 * the which section of the destination function
 	 * @param monitor Handles user cancellations
 	 * @return a set of VTImpliedMatchInfo objects
+	 * @throws CancelledException if cancelled
 	 */
-	public static Set<VTImpliedMatchInfo> findImpliedMatches(VTController controller,
-			Function sourceFunction, Function destinationFunction, VTSession session,
+	public static Set<VTImpliedMatchInfo> findImpliedMatches(Function sourceFunction,
+			Function destinationFunction, VTSession session,
 			AddressCorrelatorManager correlatorManager, TaskMonitor monitor)
 			throws CancelledException {
 		Set<VTImpliedMatchInfo> set = new HashSet<>();
@@ -88,7 +170,7 @@ public class ImpliedMatchUtils {
 			Function sourceFunction, Function destinationFunction, Reference sourceRef,
 			VTMatchSet possibleMatchSet, TaskMonitor monitor) throws CancelledException {
 
-		// Get the reference type of the passed in reference and make sure it is either a call or 
+		// Get the reference type of the passed in reference and make sure it is either a call or
 		// data reference
 		RefType refType = sourceRef.getReferenceType();
 		if (!(refType.isCall() || refType.isData())) {
@@ -102,14 +184,14 @@ public class ImpliedMatchUtils {
 			return null;
 		}
 
-		// Get corrected source reference "to" address if necessary (ie if thunk get the thunked 
+		// Get corrected source reference "to" address if necessary (ie if thunk get the thunked
 		// function)
 		srcRefToAddress = getReference(sourceFunction.getProgram(), srcRefToAddress);
-		
+
 		// Get the source reference's "from" address (where the reference itself is located)
 		Address srcRefFromAddress = sourceRef.getFromAddress();
 
-		// Get the destination reference address corresponding to the given source reference address  
+		// Get the destination reference address corresponding to the given source reference address
 		AddressRange range = correlator.getCorrelatedDestinationRange(srcRefFromAddress, monitor);
 		if (range == null) {
 			return null;
@@ -121,11 +203,11 @@ public class ImpliedMatchUtils {
 		if (destinationRef == null) {
 			return null;
 		}
-		
+
 		// Get the destination reference's "to" address
 		Address destRefToAddress = destinationRef.getToAddress();
-		
-		// Get corrected destination reference "to" address if necessary (ie if thunk get the 
+
+		// Get corrected destination reference "to" address if necessary (ie if thunk get the
 		// thunked function)
 		destRefToAddress = getReference(destinationFunction.getProgram(), destRefToAddress);
 
@@ -141,8 +223,9 @@ public class ImpliedMatchUtils {
 
 		if (refType.isData()) {
 			type = DATA;
-			if (sourceFunction.getProgram().getListing().getInstructionAt(
-				srcRefToAddress) != null) {
+			if (sourceFunction.getProgram()
+					.getListing()
+					.getInstructionAt(srcRefToAddress) != null) {
 				if (refType != RefType.DATA) {
 					return null; // read/write reference to instruction - not sure what this is
 				}
@@ -155,8 +238,9 @@ public class ImpliedMatchUtils {
 		}
 
 		if (type == FUNCTION) {
-			if (sourceFunction.getProgram().getFunctionManager().getFunctionAt(
-				srcRefToAddress) == null) {
+			if (sourceFunction.getProgram()
+					.getFunctionManager()
+					.getFunctionAt(srcRefToAddress) == null) {
 				return null; // function may not have been created here.
 			}
 		}
@@ -173,11 +257,11 @@ public class ImpliedMatchUtils {
 	}
 
 	/**
-	 * This method checks to see if the given reference is a thunk function and if so returns 
+	 * This method checks to see if the given reference is a thunk function and if so returns
 	 * the address of the thunked function instead of thunk function
-	 * @param program
+	 * @param program the program
 	 * @param refToAddress The address of the interesting reference
-	 * @return Returns either the same address passed in or the address of the thunked function if 
+	 * @return Returns either the same address passed in or the address of the thunked function if
 	 * the original address refers to a thunk
 	 */
 	private static Address getReference(Program program, Address refToAddress) {
@@ -185,18 +269,19 @@ public class ImpliedMatchUtils {
 		// If the function is a thunk - get the thunked to function and make that the implied match
 		// source not the thunk
 
-		// if the reference is a thunk function change the refToAddress to the THUNKED function 
+		// if the reference is a thunk function change the refToAddress to the THUNKED function
 		// address instead of the thunk function address
 		Function referencedFunction = program.getFunctionManager().getFunctionAt(refToAddress);
 		if ((referencedFunction != null) && (referencedFunction.isThunk())) {
 			refToAddress = referencedFunction.getThunkedFunction(true).getEntryPoint();
 		}
-		
+
 		return refToAddress;
 	}
 
 	/**
-	 * Updates the length values for the source and dest functions or data in the VTMatchInfo object
+	 * Updates the length values for the source and destination functions or data in the
+	 * VTMatchInfo object
 	 */
 	private static void updateVTSourceAndDestinationLengths(VTMatchInfo matchInfo) {
 		VTSession session = matchInfo.getMatchSet().getSession();
@@ -292,7 +377,7 @@ public class ImpliedMatchUtils {
 	/**
 	 * Returns the source function given a version tracking session and association pair
 	 *
-	 * @param session The Version Tracking session 
+	 * @param session The Version Tracking session
 	 * @param association The association pair for a match
 	 * @return the source function given a version tracking session and association pair
 	 */
@@ -306,7 +391,7 @@ public class ImpliedMatchUtils {
 	/**
 	 * Returns the destination function given a version tracking session and association pair
 	 *
-	 * @param session The Version Tracking session 
+	 * @param session The Version Tracking session
 	 * @param association The association pair for a match
 	 * @return the destination function given a version tracking session and association pair
 	 */

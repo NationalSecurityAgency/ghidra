@@ -27,16 +27,19 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.async.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.target.TargetPublicationListener;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.data.DomainObjectAdapterDB;
@@ -54,7 +57,6 @@ import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
-import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
@@ -62,7 +64,6 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.database.DomainObjectLockHold;
-import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
@@ -79,8 +80,6 @@ import ghidra.util.task.*;
 	eventsConsumed = {
 		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,
-		ModelObjectFocusedPluginEvent.class,
-		TraceRecorderAdvancedPluginEvent.class,
 		DebuggerPlatformPluginEvent.class,
 	},
 	servicesRequired = {},
@@ -111,10 +110,14 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 
 		private void threadAdded(TraceThread thread) {
-			TraceRecorder recorder = current.getRecorder();
-			if (supportsFocus(recorder)) {
+			Target target = current.getTarget();
+			if (supportsFocus(target)) {
 				// TODO: Same for stack frame? I can't imagine it's as common as this....
-				if (thread == recorder.getTraceThreadForSuccessor(recorder.getFocus())) {
+				TraceObjectKeyPath focus = target.getFocus();
+				if (focus == null) {
+					return;
+				}
+				if (thread == target.getThreadForSuccessor(focus)) {
 					activate(current.thread(thread), ActivationCause.SYNC_MODEL);
 				}
 				return;
@@ -141,8 +144,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 
 		private void objectCreated(TraceObject object) {
-			TraceRecorder recorder = current.getRecorder();
-			if (supportsFocus(recorder)) {
+			Target target = current.getTarget();
+			if (supportsFocus(target)) {
 				return;
 			}
 			if (current.getTrace() != trace) {
@@ -192,36 +195,36 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	// TODO: This is a bit out of this manager's bounds, but acceptable for now.
-	class ForRecordersListener implements CollectionChangeListener<TraceRecorder> {
+	class ForTargetsListener implements TargetPublicationListener {
 		@Override
-		public void elementAdded(TraceRecorder recorder) {
-			Swing.runLater(() -> updateCurrentRecorder());
+		public void targetPublished(Target target) {
+			Swing.runLater(() -> updateCurrentTarget());
 		}
 
-		public CompletableFuture<Void> waitUnlockedDebounced(TraceRecorder recorder) {
-			Trace trace = recorder.getTrace();
+		public CompletableFuture<Void> waitUnlockedDebounced(Target target) {
+			Trace trace = target.getTrace();
 			return new TransactionEndFuture(trace)
 					.thenCompose(__ -> AsyncTimer.DEFAULT_TIMER.mark().after(100))
 					.thenComposeAsync(__ -> {
 						if (trace.isLocked()) {
-							return waitUnlockedDebounced(recorder);
+							return waitUnlockedDebounced(target);
 						}
-						return AsyncUtils.NIL;
+						return AsyncUtils.nil();
 					});
 		}
 
 		@Override
-		public void elementRemoved(TraceRecorder recorder) {
+		public void targetWithdrawn(Target target) {
 			boolean save = isSaveTracesByDefault();
 			CompletableFuture<Void> flush = save
-					? waitUnlockedDebounced(recorder)
-					: AsyncUtils.NIL;
+					? waitUnlockedDebounced(target)
+					: AsyncUtils.nil();
 			flush.thenRunAsync(() -> {
-				updateCurrentRecorder();
+				updateCurrentTarget();
 				if (!isAutoCloseOnTerminate()) {
 					return;
 				}
-				Trace trace = recorder.getTrace();
+				Trace trace = target.getTrace();
 				synchronized (listenersByTrace) {
 					if (!listenersByTrace.containsKey(trace)) {
 						return;
@@ -242,17 +245,17 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (trace != current.getTrace() || !mode.followsPresent()) {
 				return;
 			}
-			TraceRecorder curRecorder = current.getRecorder();
-			if (curRecorder == null) {
+			Target curTarget = current.getTarget();
+			if (curTarget == null) {
 				return;
 			}
 			DebuggerCoordinates coords = current;
-			TargetObject focus = curRecorder.getFocus();
+			TraceObjectKeyPath focus = curTarget.getFocus();
 			if (focus != null && synchronizeActive.get()) {
-				coords = coords.object(focus);
+				coords = coords.path(focus);
 			}
-			coords = coords.snap(curRecorder.getSnap());
-			activateAndNotify(coords, ActivationCause.FOLLOW_PRESENT, false);
+			coords = coords.snap(curTarget.getSnap());
+			activateAndNotify(coords, ActivationCause.FOLLOW_PRESENT);
 		}
 	}
 
@@ -260,7 +263,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	protected final Map<Trace, ListenerForTraceChanges> listenersByTrace = new WeakHashMap<>();
 	protected final Set<Trace> tracesView = Collections.unmodifiableSet(listenersByTrace.keySet());
 
-	private final ForRecordersListener forRecordersListener = new ForRecordersListener();
+	private final ForTargetsListener forTargetsListener = new ForTargetsListener();
 	private final ForFollowPresentListener forFollowPresentListener =
 		new ForFollowPresentListener();
 
@@ -274,7 +277,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	protected final AsyncReference<Boolean, Void> autoCloseOnTerminate = new AsyncReference<>(true);
 
 	// @AutoServiceConsumed via method
-	private DebuggerModelService modelService;
+	private DebuggerTargetService targetService;
 	@AutoServiceConsumed
 	private DebuggerEmulationService emulationService;
 	@AutoServiceConsumed
@@ -333,7 +336,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				.onAction(this::activatedCloseOtherTraces)
 				.buildAndInstall(tool);
 		actionCloseDeadTraces = CloseDeadTracesAction.builder(this)
-				.enabledWhen(ctx -> !tracesView.isEmpty() && modelService != null)
+				.enabledWhen(ctx -> !tracesView.isEmpty() && targetService != null)
 				.onAction(this::activatedCloseDeadTraces)
 				.buildAndInstall(tool);
 
@@ -447,12 +450,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public void closeDeadTraces() {
 		Swing.runIfSwingOrRunLater(() -> {
-			if (modelService == null) {
+			if (targetService == null) {
 				return;
 			}
 			for (Trace trace : getOpenTraces()) {
-				TraceRecorder recorder = modelService.getRecorder(trace);
-				if (recorder == null) {
+				Target target = targetService.getTarget(trace);
+				if (target == null) {
 					closeTrace(trace);
 				}
 			}
@@ -460,13 +463,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@AutoServiceConsumed
-	private void setModelService(DebuggerModelService modelService) {
-		if (this.modelService != null) {
-			this.modelService.removeTraceRecordersChangedListener(forRecordersListener);
+	private void setModelService(DebuggerTargetService targetService) {
+		if (this.targetService != null) {
+			this.targetService.removeTargetPublicationListener(forTargetsListener);
 		}
-		this.modelService = modelService;
-		if (this.modelService != null) {
-			this.modelService.addTraceRecordersChangedListener(forRecordersListener);
+		this.targetService = targetService;
+		if (this.targetService != null) {
+			this.targetService.addTargetPublicationListener(forTargetsListener);
 		}
 	}
 
@@ -504,37 +507,22 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return false;
 	}
 
-	protected TraceThread threadFromTargetFocus(TraceRecorder recorder, TargetObject focus) {
-		return focus == null ? null : recorder.getTraceThreadForSuccessor(focus);
+	protected boolean supportsFocus(Target target) {
+		return target != null && target.isSupportsFocus();
 	}
 
-	protected TraceObject objectFromTargetFocus(TraceRecorder recorder, TargetObject focus) {
-		return focus == null ? null
-				: recorder.getTrace()
-						.getObjectManager()
-						.getObjectByCanonicalPath(TraceObjectKeyPath.of(focus.getPath()));
-	}
-
-	protected TraceStackFrame frameFromTargetFocus(TraceRecorder recorder, TargetObject focus) {
-		return focus == null ? null : recorder.getTraceStackFrameForSuccessor(focus);
-	}
-
-	protected boolean supportsFocus(TraceRecorder recorder) {
-		return recorder != null && recorder.isSupportsFocus();
-	}
-
-	protected DebuggerCoordinates fillInRecorder(Trace trace, DebuggerCoordinates coordinates) {
+	protected DebuggerCoordinates fillInTarget(Trace trace, DebuggerCoordinates coordinates) {
 		if (trace == null) {
 			return DebuggerCoordinates.NOWHERE;
 		}
-		if (coordinates.getRecorder() != null) {
+		if (coordinates.getTarget() != null) {
 			return coordinates;
 		}
-		TraceRecorder recorder = computeRecorder(trace);
-		if (recorder == null) {
+		Target target = computeTarget(trace);
+		if (target == null) {
 			return coordinates;
 		}
-		return coordinates.recorder(recorder);
+		return coordinates.target(target);
 	}
 
 	protected DebuggerCoordinates fillInPlatform(DebuggerCoordinates coordinates) {
@@ -555,12 +543,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent,
 			ActivationCause cause) {
 		newCurrent = newCurrent == null ? DebuggerCoordinates.NOWHERE : newCurrent;
-		newCurrent = fillInRecorder(newCurrent.getTrace(), newCurrent);
+		newCurrent = fillInTarget(newCurrent.getTrace(), newCurrent);
 		newCurrent = fillInPlatform(newCurrent);
 		if (cause == ActivationCause.START_RECORDING || cause == ActivationCause.FOLLOW_PRESENT) {
-			TraceRecorder recorder = newCurrent.getRecorder();
-			if (recorder != null) {
-				newCurrent = newCurrent.snap(recorder.getSnap());
+			Target target = newCurrent.getTarget();
+			if (target != null) {
+				newCurrent = newCurrent.snap(target.getSnap());
 			}
 		}
 		synchronized (listenersByTrace) {
@@ -584,73 +572,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		tool.contextChanged(null);
 	}
 
-	protected boolean doModelObjectFocused(TargetObject obj, boolean requirePresent) {
-		curObj = obj;
-		if (!synchronizeActive.get()) {
-			return false;
-		}
-		if (requirePresent && !current.isDeadOrPresent()) {
-			return false;
-		}
-		if (modelService == null) {
-			// Bad timing could allow this
-			return false;
-		}
-		/**
-		 * TODO: Only switch if current trace belongs to the same model? There are many
-		 * considerations to avoid surprise here. If the user is focused on the CLI, then we should
-		 * always switch. It's harder if that CLI is outside of Ghidra.... For now, let's always
-		 * switch.
-		 */
-
-		TraceRecorder recorder = modelService.getRecorderForSuccessor(obj);
-		if (recorder == null) {
-			return false;
-		}
-		Trace trace = recorder.getTrace();
-		synchronized (listenersByTrace) {
-			if (!listenersByTrace.containsKey(trace)) {
-				return false;
-			}
-		}
-		activateAndNotify(getCurrentFor(trace).object(obj), ActivationCause.SYNC_MODEL, false);
-		return true;
-	}
-
 	private boolean isFollowsPresent(Trace trace) {
 		ControlMode mode = controlService == null
 				? ControlMode.DEFAULT
 				: controlService.getCurrentMode(trace);
 		return mode.followsPresent();
-	}
-
-	protected void doTraceRecorderAdvanced(TraceRecorder recorder, long snap) {
-		Trace trace = recorder.getTrace();
-		if (!isFollowsPresent(trace)) {
-			return;
-		}
-		if (trace != current.getTrace()) {
-			/**
-			 * The snap needs to match upon re-activating this trace, lest it look like the user
-			 * intentionally navigated to the past, causing the mode to switch away from target.
-			 */
-			DebuggerCoordinates inactive = null;
-			synchronized (listenersByTrace) {
-				DebuggerCoordinates curForTrace = getCurrentFor(trace);
-				inactive = curForTrace.snapNoResolve(snap);
-				lastCoordsByTrace.put(trace, inactive);
-			}
-			try {
-				trace.getProgramView().setSnap(snap);
-			}
-			catch (TraceClosedException e) {
-				// Whatever. Presumably, a closed event is already queued....
-				Msg.warn(this, "Ignoring snapshot advance for closed trace: " + e);
-			}
-			firePluginEvent(new TraceInactiveCoordinatesPluginEvent(getName(), inactive));
-			return;
-		}
-		activate(resolveSnap(snap), ActivationCause.FOLLOW_PRESENT);
 	}
 
 	protected TracePlatform getPlatformForMapper(Trace trace, TraceObject object,
@@ -675,24 +601,24 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
-	protected TraceRecorder computeRecorder(Trace trace) {
-		if (modelService == null) {
+	protected Target computeTarget(Trace trace) {
+		if (targetService == null) {
 			return null;
 		}
 		if (trace == null) {
 			return null;
 		}
-		return modelService.getRecorder(trace);
+		return targetService.getTarget(trace);
 	}
 
-	protected void updateCurrentRecorder() {
-		TraceRecorder recorder = computeRecorder(current.getTrace());
-		if (recorder == null) {
+	protected void updateCurrentTarget() {
+		Target target = computeTarget(current.getTrace());
+		if (target == null) {
 			return;
 		}
-		DebuggerCoordinates toActivate = current.recorder(recorder);
+		DebuggerCoordinates toActivate = current.target(target);
 		if (isFollowsPresent(current.getTrace())) {
-			toActivate = toActivate.snap(recorder.getSnap());
+			toActivate = toActivate.snap(target.getSnap());
 		}
 		activate(toActivate, ActivationCause.FOLLOW_PRESENT);
 	}
@@ -705,13 +631,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 		else if (event instanceof TraceClosedPluginEvent ev) {
 			doTraceClosed(ev.getTrace());
-		}
-		else if (event instanceof ModelObjectFocusedPluginEvent ev) {
-			doModelObjectFocused(ev.getFocus(), true);
-		}
-		else if (event instanceof TraceRecorderAdvancedPluginEvent ev) {
-			// TimedMsg.debug(this, "Processing trace-advanced event");
-			doTraceRecorderAdvanced(ev.getRecorder(), ev.getSnap());
 		}
 		else if (event instanceof DebuggerPlatformPluginEvent ev) {
 			doPlatformMapperSelected(ev.getTrace(), ev.getMapper());
@@ -731,8 +650,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public DebuggerCoordinates getCurrentFor(Trace trace) {
 		synchronized (listenersByTrace) {
-			// If known, fill in recorder ASAP, so it determines the time
-			return fillInRecorder(trace,
+			// If known, fill in target ASAP, so it determines the time
+			return fillInTarget(trace,
 				lastCoordsByTrace.getOrDefault(trace, DebuggerCoordinates.NOWHERE));
 		}
 	}
@@ -807,7 +726,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		TraceVariableSnapProgramView varView = (TraceVariableSnapProgramView) coordinates.getView();
 		if (varView == null) { // Should only happen with NOWHERE
 			fireLocationEvent(coordinates, cause);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return materialize(coordinates).thenAcceptAsync(snap -> {
 			if (!coordinates.equals(current)) {
@@ -1029,7 +948,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	public CompletableFuture<Void> saveTrace(Trace trace, boolean force) {
 		if (isDisposed()) {
 			Msg.error(this, "Cannot save trace after manager disposal! Data may have been lost.");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return saveTrace(tool, trace, force);
 	}
@@ -1094,91 +1013,70 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return elem.toString();
 	}
 
-	protected static boolean isSameFocus(DebuggerCoordinates prev, DebuggerCoordinates resolved) {
-		if (!Objects.equals(prev.getObject(), resolved.getObject())) {
-			return false;
-		}
-		if (!Objects.equals(prev.getFrame(), resolved.getFrame())) {
-			return false;
-		}
-		if (!Objects.equals(prev.getThread(), resolved.getThread())) {
-			return false;
-		}
-		if (!Objects.equals(prev.getTrace(), resolved.getTrace())) {
-			return false;
-		}
-		return true;
-	}
-
-	protected static TargetObject translateToTarget(DebuggerCoordinates prev,
-			DebuggerCoordinates resolved) {
-		if (!resolved.isAliveAndPresent()) {
-			return null;
-		}
-		if (isSameFocus(prev, resolved)) {
-			return null;
-		}
-		TraceRecorder recorder = resolved.getRecorder();
-		TraceObject obj = resolved.getObject();
-		if (obj != null) {
-			TargetObject object =
-				recorder.getTarget().getSuccessor(obj.getCanonicalPath().getKeyList());
-			if (object != null) {
-				return object;
-			}
-		}
-		TargetStackFrame frame =
-			recorder.getTargetStackFrame(resolved.getThread(), resolved.getFrame());
-		if (frame != null) {
-			return frame;
-		}
-		TargetThread thread = recorder.getTargetThread(resolved.getThread());
-		if (thread != null) {
-			return thread;
-		}
-		return recorder.getTarget();
-	}
-
 	@Override
 	public CompletableFuture<Void> activateAndNotify(DebuggerCoordinates coordinates,
-			ActivationCause cause, boolean syncTarget) {
-		DebuggerCoordinates prev;
-		DebuggerCoordinates resolved;
-
+			ActivationCause cause) {
 		Trace newTrace = coordinates.getTrace();
 		synchronized (listenersByTrace) {
 			if (newTrace != null && !listenersByTrace.containsKey(newTrace)) {
+				if (cause == ActivationCause.FOLLOW_PRESENT) {
+					Msg.error(this,
+						"Ignoring activation because FOLLOW_PRESENT for non-opened trace");
+					return AsyncUtils.nil();
+				}
 				throw new IllegalStateException(
 					"Trace must be opened before activated: " + newTrace);
 			}
 		}
+
+		if (!synchronizeActive.get() && cause == ActivationCause.SYNC_MODEL) {
+			return AsyncUtils.nil();
+		}
+		if (cause == ActivationCause.FOLLOW_PRESENT) {
+			if (!isFollowsPresent(newTrace)) {
+				return AsyncUtils.nil();
+			}
+			if (current.getTrace() != newTrace) {
+				/**
+				 * The snap needs to match upon re-activating this trace, lset it look like the user
+				 * intentionally navigated to the past. That may cause the control mode to switch
+				 * off of "Target."
+				 */
+				try {
+					newTrace.getProgramView().setSnap(coordinates.getViewSnap());
+				}
+				catch (TraceClosedException e) {
+					// Presumably, a closed event is queued
+					Msg.warn(this, "Ignoring time activation for closed trace: " + e);
+				}
+				firePluginEvent(new TraceInactiveCoordinatesPluginEvent(getName(), coordinates));
+				return AsyncUtils.nil();
+			}
+		}
+		DebuggerCoordinates prev;
+		DebuggerCoordinates resolved;
+
 		prev = current;
 		resolved = doSetCurrent(coordinates, cause);
 		if (resolved == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		CompletableFuture<Void> future = prepareViewAndFireEvent(resolved, cause);
-		if (!syncTarget) {
+
+		if (!synchronizeActive.get() || cause != ActivationCause.USER) {
 			return future;
 		}
-		if (!synchronizeActive.get()) {
+		Target target = resolved.getTarget();
+		if (target == null) {
 			return future;
 		}
-		TraceRecorder recorder = resolved.getRecorder();
-		if (recorder == null) {
-			return future;
-		}
-		TargetObject activate = translateToTarget(prev, resolved);
-		if (activate == null || !activate.isValid()) {
-			return future;
-		}
-		recorder.requestActivation(activate);
-		return future;
+
+		return future.thenCompose(__ -> target.activateAsync(prev, resolved));
 	}
 
 	@Override
 	public void activate(DebuggerCoordinates coordinates, ActivationCause cause) {
-		activateAndNotify(coordinates, cause, true); // Drop future on floor
+		activateAndNotify(coordinates, cause); // Drop future on floor
 	}
 
 	@Override
@@ -1217,6 +1115,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public DebuggerCoordinates resolveFrame(int frameLevel) {
 		return current.frame(frameLevel);
+	}
+
+	@Override
+	public DebuggerCoordinates resolvePath(TraceObjectKeyPath path) {
+		return current.path(path);
 	}
 
 	@Override

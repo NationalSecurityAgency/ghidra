@@ -19,6 +19,7 @@ package classrecovery;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -150,6 +151,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	private Map<RecoveredClass, Map<RecoveredClass, Long>> classToParentOffsetMap =
 		new HashMap<RecoveredClass, Map<RecoveredClass, Long>>();
+	
+	private Map<RecoveredClass, List<Vftable>> classToVftableMap = new HashMap<>();
 
 	boolean isDwarfLoaded;
 	boolean replaceClassStructs;
@@ -253,7 +256,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		updateClassesWithParentsAndFlags(typeinfos);
 
 		Msg.debug(this, "Updating classes with vftables");
-		updateClassWithVfunctions(recoveredClasses, vtables);
+		updateClassWithVfunctions(vtables);
 
 		Msg.debug(this, "Creating Class Hierarchy lists and maps");
 		createClassHierarchyListAndMap();
@@ -274,8 +277,55 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Msg.debug(this, "Creating and Applying Class structures");
 		createAndApplyClassStructures();
 
+		updateMultiVftableLabels();
+
 		return recoveredClasses;
 
+	}
+
+	//TODO: test with Windows and move to class helper
+	/**
+	 * Method to update the labels of vftables that belong to classes with multiple vftables in 
+	 * order to distinguish which base class the vftable is for.
+	 * @param recoveredClasses the list of RecoveredClass objects
+	 * @throws CancelledException if cancelled
+	 * @throws InvalidInputException if bad chars trying to label
+	 * @throws DuplicateNameException if duplicate name
+	 */
+	private void updateMultiVftableLabels()
+			throws CancelledException, DuplicateNameException, InvalidInputException {
+
+		if (recoveredClasses.isEmpty()) {
+			return;
+		}
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCancelled();
+
+			// if there are no vftables or only one vftable in this class then there is no need to 
+			// distinguish with a new label and can keep the generic one 
+			List<Address> vftableAddresses = recoveredClass.getVftableAddresses();
+			if (vftableAddresses.size() < 2) {
+				continue;
+			}
+
+			for (Address vftableAddress : vftableAddresses) {
+				RecoveredClass vftableBaseClass =
+					recoveredClass.getVftableBaseClass(vftableAddress);
+				if (vftableBaseClass != null) {
+					Symbol primarySymbol = symbolTable.getPrimarySymbol(vftableAddress);
+
+					String baseClassName = vftableBaseClass.getName();
+					// get simplified name by removing template 
+					String shortenedTemplateName = vftableBaseClass.getShortenedTemplateName();
+					if (!shortenedTemplateName.isBlank()) {
+						baseClassName = shortenedTemplateName;
+					}
+
+					primarySymbol.setName("vftable_for_" + baseClassName,
+						primarySymbol.getSource());
+				}
+			}
+		}
 	}
 
 	private List<GccTypeinfo> createSpecialTypeinfos() throws CancelledException {
@@ -638,7 +688,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return symbols;
 	}
 
-	// TODO: split out methods
 	private void updateClassesWithParentsAndFlags(List<GccTypeinfo> typeinfos)
 			throws CancelledException {
 
@@ -646,7 +695,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		for (GccTypeinfo typeinfo : typeinfos) {
 
 			monitor.checkCancelled();
-			Address typeinfoAddress = typeinfo.getAddress();
 
 			// skip the typeinfo symbols from the three special typeinfos
 			if (typeinfo.isSpecialTypeinfo()) {
@@ -658,25 +706,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			RecoveredClass recoveredClass = getClass(classNamespace);
 
 			if (recoveredClass == null) {
-				throw new IllegalArgumentException(
+				Msg.error(this,
 					"RecoveredClass should already exist for " + classNamespace.getName(true));
+				continue;
 			}
 
+			// per docs those on this list are public and have no-inherited classes
 			if (typeinfo.isClassTypeinfo()) {
-				recoveredClass.setHasSingleInheritance(true);
-				recoveredClass.setHasMultipleInheritance(false);
-				recoveredClass.setHasMultipleVirtualInheritance(false);
-				recoveredClass.setInheritsVirtualAncestor(false);
-
-				// no parents so just add empty order and parent maps to the class maps
-				Map<Integer, RecoveredClass> orderToParentMap =
-					new HashMap<Integer, RecoveredClass>();
-
-				classToParentOrderMap.put(recoveredClass, orderToParentMap);
-
-				Map<RecoveredClass, Long> parentToOffsetMap = new HashMap<RecoveredClass, Long>();
-
-				classToParentOffsetMap.put(recoveredClass, parentToOffsetMap);
+				addClassFlagsForNoInheritanceClass(recoveredClass);
 				continue;
 			}
 
@@ -684,46 +721,16 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			// classes containing only a single, public, non-virtual base at offset zero
 			if (typeinfo.isSiClassTypeinfo()) {
 
-				List<BaseTypeinfo> baseTypeinfos = typeinfo.getBaseTypeinfos();
-				if (baseTypeinfos.size() != 1) {
-					throw new IllegalArgumentException(
-						"SiClassTypeinfo " + classNamespace.getName(true) +
-							" should have exactly one parent");
-				}
+				RecoveredClass parentClass =
+					addClassParentAndFlagsForSiClass(recoveredClass, typeinfo);
 
-				GccTypeinfo siParentTypeinfo = baseTypeinfos.get(0).getBaseTypeinfo();
-				RecoveredClass parentClass = getClass(siParentTypeinfo.getNamespace());
-
-				// parent isn't a known class - possibly is an external parent
+				// parent isn't a known class - cannot continue processing recoveredClass
 				if (parentClass == null) {
-					throw new IllegalArgumentException(
-						"RecoveredClass should already exist for " +
-							siParentTypeinfo.getNamespace().getName(true));
+					Msg.error(this,
+						"Removing class: " + recoveredClass.getName() + " from list to" +
+						" process since parent information is not availalbe.");
+					recoveredClasses.remove(recoveredClass);
 				}
-
-				updateClassWithParent(parentClass, recoveredClass);
-				recoveredClass.setHasSingleInheritance(true);
-				recoveredClass.setHasMultipleInheritance(false);
-				recoveredClass.setHasMultipleVirtualInheritance(false);
-				parentClass.setIsPublicClass(true);
-				recoveredClass.addParentToBaseTypeMapping(parentClass, false);
-
-				// TODO: make method to check all ancestors not just parent
-				if (siParentTypeinfo.isVmiClassTypeinfo()) {
-					recoveredClass.setInheritsVirtualAncestor(true);
-				}
-
-				// add order to parent and parent offset
-				Map<Integer, RecoveredClass> orderToParentMap =
-					new HashMap<Integer, RecoveredClass>();
-				orderToParentMap.put(0, parentClass);
-				classToParentOrderMap.put(recoveredClass, orderToParentMap);
-
-				Map<RecoveredClass, Long> parentToOffsetMap = new HashMap<RecoveredClass, Long>();
-				parentToOffsetMap.put(parentClass, 0L);
-
-				classToParentOffsetMap.put(recoveredClass, parentToOffsetMap);
-
 				continue;
 			}
 
@@ -732,12 +739,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				List<RecoveredClass> parents =
 					addClassParentsAndFlagsForVmiClass(recoveredClass, typeinfo);
 
-				if (parents.isEmpty()) {
+				if (parents == null) {
 					Msg.debug(this,
-						"Could not get vmi parent from typeinfoAddress - removing class from list" +
-							typeinfoAddress.toString());
+						"Removing class: " + recoveredClass.getName() + " from list to" +
+							" process since full parent information is not availalbe.");
 					recoveredClasses.remove(recoveredClass);
-					continue;
 				}
 
 			}
@@ -1496,7 +1502,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			monitor.checkCancelled();
 
 			// get top of vtable
-			Address vtableAddress = getPrimaryVtableAddress(typeinfoRef);
+			Address vtableAddress = getPrimaryVtableAddress(typeinfoRef, typeinfo);
 
 			// no vtable associated with this typeinfo
 			if (vtableAddress == null) {
@@ -1706,7 +1712,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return subsetByType;
 	}
 
-	private Address getPrimaryVtableAddress(Address typeinfoRef) throws CancelledException {
+	private Address getPrimaryVtableAddress(Address typeinfoRef, GccTypeinfo typeinfo)
+			throws CancelledException {
 
 		if (typeinfoRef == null) {
 			return null;
@@ -1747,6 +1754,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return null;
 		}
 
+		Address vtableAddress = offsetToTop;
+
+		// NEW CHECK: check to see if referenced typeinfo is  non-inheritance type and if so
+		// return the current value of vtableAddress as there is only one long (zeres) for 
+		// vtables referencing non-inh class typeinfos
+		if (typeinfo.isClassTypeinfo()) {
+			return vtableAddress;
+		}
+
 		// start with last verified part of possible vtable and continue going backwards
 		// until top of vtable is found
 		// stop if top of mem block
@@ -1754,7 +1770,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// stop if referenced
 		// are they ever zero - not that i have seen so far in the last vftable
 		// if pointer to something or valid address or is in a structure
-		Address vtableAddress = offsetToTop;
+
 		MemoryBlock currentBlock = program.getMemory().getBlock(typeinfoRef);
 
 		while (vtableAddress != null) {
@@ -2527,8 +2543,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private boolean updateSiTypeinfo(GccTypeinfo typeinfo, Map<Address, GccTypeinfo> typeinfoMap)
-			throws CancelledException {
+	private boolean updateSiTypeinfo(GccTypeinfo typeinfo, Map<Address, GccTypeinfo> typeinfoMap) {
 
 		Data siTypeinfoStructure = listing.getDataAt(typeinfo.getAddress());
 
@@ -2871,11 +2886,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// get the newly created symbol to get the namespace
 		Symbol typeinfoNameSymbol = symbolTable.getPrimarySymbol(typeinfoNameAddress);
 
-		// TODO: need to account for rare case where there are more than one typeinfos
-		// with
+		// need to account for rare case where there are more than one typeinfos with
 		// exact same class and name so make two classes in this case - name second one
 		// dupe#
-		// TODO: instead/also - eliminate the ones with no refs or just pick one?
 		List<Symbol> symbols = symbolTable.getSymbols(typeinfoNameSymbol.getName(),
 			typeinfoNameSymbol.getParentNamespace());
 		if (symbols.size() > 1) {
@@ -2915,6 +2928,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// create the new typeinfo symbol in the demangled namespace
 		Symbol newSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo", classNamespace,
 			SourceType.ANALYSIS);
+		newSymbol.setPrimary();
 
 		api.setPlateComment(typeinfoAddress, "typeinfo for " + classNamespace.getName(true));
 
@@ -3482,15 +3496,72 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return vmiClassTypeInfoStructure;
 	}
 
+	private void addClassFlagsForNoInheritanceClass(RecoveredClass recoveredClass) {
+		recoveredClass.setHasSingleInheritance(true);
+		recoveredClass.setHasMultipleInheritance(false);
+		recoveredClass.setHasMultipleVirtualInheritance(false);
+		recoveredClass.setInheritsVirtualAncestor(false);
+
+		// no parents so just add empty order and parent maps to the class maps
+		Map<Integer, RecoveredClass> orderToParentMap = new HashMap<Integer, RecoveredClass>();
+
+		classToParentOrderMap.put(recoveredClass, orderToParentMap);
+
+		Map<RecoveredClass, Long> parentToOffsetMap = new HashMap<RecoveredClass, Long>();
+
+		classToParentOffsetMap.put(recoveredClass, parentToOffsetMap);
+	}
+
+	private RecoveredClass addClassParentAndFlagsForSiClass(RecoveredClass recoveredClass,
+			GccTypeinfo typeinfo) {
+		List<BaseTypeinfo> baseTypeinfos = typeinfo.getBaseTypeinfos();
+		if (baseTypeinfos.size() != 1) {
+			throw new IllegalArgumentException(
+				"SiClassTypeinfo " + recoveredClass.getClassNamespace().getName(true) +
+					" should have exactly one parent");
+		}
+
+		GccTypeinfo siParentTypeinfo = baseTypeinfos.get(0).getBaseTypeinfo();
+
+		RecoveredClass parentClass = getClass(siParentTypeinfo.getNamespace());
+		if (parentClass == null) {
+			Msg.error(this, "Parent class's RecoveredClass object for : " +
+				siParentTypeinfo.getNamespace().getName(true) + " should already exist. ");
+			return null;
+		}
+
+		updateClassWithParent(parentClass, recoveredClass);
+		recoveredClass.setHasSingleInheritance(true);
+		recoveredClass.setHasMultipleInheritance(false);
+		recoveredClass.setHasMultipleVirtualInheritance(false);
+		parentClass.setIsPublicClass(true);
+		recoveredClass.addParentToBaseTypeMapping(parentClass, false);
+
+		// NEW check to get all ancestor info
+		if (typeinfo.getNumAllVirtualBases() > 0) {
+			recoveredClass.setInheritsVirtualAncestor(true);
+		}
+
+		// add order to parent and parent offset
+		Map<Integer, RecoveredClass> orderToParentMap = new HashMap<Integer, RecoveredClass>();
+		orderToParentMap.put(0, parentClass);
+		classToParentOrderMap.put(recoveredClass, orderToParentMap);
+
+		Map<RecoveredClass, Long> parentToOffsetMap = new HashMap<RecoveredClass, Long>();
+		parentToOffsetMap.put(parentClass, 0L);
+
+		classToParentOffsetMap.put(recoveredClass, parentToOffsetMap);
+		return parentClass;
+
+	}
+
 	/**
 	 * Method to add parents to the given class
 	 * 
 	 * @param recoveredClass  the given class
-	 * @param typeinfoAddress the address of the typeinfo
+	 * @param typeinfo the the GccTypeinfo object for this class
 	 * @return list of parents for the given class
-	 * @throws CancelledException
-	 * @throws Exception          if cannot access the given typeinfo structure, one
-	 *                            of its components, or it is not a vmi structure
+	 * @throws CancelledException if cancelled
 	 */
 	private List<RecoveredClass> addClassParentsAndFlagsForVmiClass(RecoveredClass recoveredClass,
 			GccTypeinfo typeinfo)
@@ -3523,6 +3594,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		boolean hasVirtualInheritance = false;
 		if (typeinfo.getNumAllVirtualBases() > 0) {
+			recoveredClass.setInheritsVirtualAncestor(true);
 			hasVirtualInheritance = true;
 		}
 
@@ -3547,9 +3619,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			RecoveredClass parentClass = getClass(vmiParentTypeinfo.getNamespace());
 
 			if (parentClass == null) {
-				throw new IllegalArgumentException(
-					"RecoveredClass should already exist for " +
-						vmiParentTypeinfo.getNamespace().getName(true));
+
+				Msg.error(this, "Parent class's RecoveredClass object for : " +
+					vmiParentTypeinfo.getNamespace().getName(true) + " should already exist. ");
+				return null;
+
 			}
 
 			updateClassWithParent(parentClass, recoveredClass);
@@ -3966,36 +4040,99 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 	}
 
-	private void updateClassWithVfunctions(List<RecoveredClass> recoveredClasses,
-			List<Vtable> vtables)
-			throws Exception {
+	private void updateClassWithVfunctions(List<Vtable> vtables) throws Exception {
 
-		for (RecoveredClass recoveredClass : recoveredClasses) {
+		for (Vtable vtable : vtables) {
 
 			monitor.checkCancelled();
-			Namespace classNamespace = recoveredClass.getClassNamespace();
 
-			Vtable classVtable = getVtable(vtables, classNamespace);
+			Namespace classNamespace = vtable.getNamespace();
 
-			if (classVtable == null) {
-				Msg.debug(this, "No vtable for class: " + classNamespace.getName());
-				return;
+			RecoveredClass recoveredClass = getClass(classNamespace);
+
+			if (recoveredClass == null) {
+				Msg.error(this, "No class for vtable : " + classNamespace.getName());
+				continue;
 			}
 
-			Address vftableAddress = classVtable.getVfunctionTop();
+			Address vftableAddress = vtable.getVfunctionTop();
 			if (vftableAddress == null) {
-				return;
+				continue;
 			}
 
-			Symbol vftableSymbol = symbolTable.getPrimarySymbol(vftableAddress);
+			// get the number of bases
+			// if only one then check no internal vtables
+			// if more than one then check matches num internal vtables
+			// match up the offset with the correct internal vftaable
+			List<Vtable> internalVtables = vtable.getInternalVtables();
+			List<Address> vftableAddresses = new ArrayList<Address>();
+			vftableAddresses.add(vftableAddress);
+			for (Vtable internalVtable : internalVtables) {
+				monitor.checkCancelled();
 
-			updateClassWithVftable(recoveredClass, vftableSymbol, true, false);
+				Address vfunctionTop = internalVtable.getVfunctionTop();
+				if (vfunctionTop == null) {
+					continue;
+				}
+				vftableAddresses.add(vfunctionTop);
+			}
+			Collections.sort(vftableAddresses);
 
-			// For now just assume simple case
-			// will have to refactor helper to handle gcc better
-			recoveredClass.addClassOffsetToVftableMapping(0, vftableAddress);
+			List<Long> baseOffsets = new ArrayList<Long>();
+			GccTypeinfo referencedTypeinfo = vtable.getReferencedTypeinfo();
+			List<BaseTypeinfo> baseTypeinfos = referencedTypeinfo.getBaseTypeinfos();
+			List<BaseTypeinfo> allBaseTypeinfos = referencedTypeinfo.getAllBaseTypeinfos();
+
+			// handle no parent case
+			if (baseTypeinfos.size() == 0) {
+				Symbol vftableSymbol = symbolTable.getPrimarySymbol(vftableAddress);
+				updateClassWithVftable(recoveredClass, vftableSymbol, true, false);
+				recoveredClass.addClassOffsetToVftableMapping(0, vftableAddress);
+				continue;
+			}
+
+			// handle parent case
+			for (BaseTypeinfo baseTypeinfo : baseTypeinfos) {
+				monitor.checkCancelled();
+				baseOffsets.add(baseTypeinfo.getOffset());
+			}
+			
+
+			if (baseOffsets.size() != vftableAddresses.size()) {
+
+				Msg.debug(this,
+					classNamespace.getName(true) + " different size offset list and vftable list");
+
+				if (allBaseTypeinfos.size() == vftableAddresses.size()) {
+					Msg.debug(this, "Same number of total bases and vftables though");
+				}
+				continue;
+			}
+
+			for (int i = 0; i < baseOffsets.size(); i++) {
+
+				BaseTypeinfo baseTypeinfo = baseTypeinfos.get(i);
+				long offset = baseOffsets.get(i);
+
+				Address correspondingVftableAddress = vftableAddresses.get(i);
+				Symbol vftableSymbol = symbolTable.getPrimarySymbol(correspondingVftableAddress);
+
+				updateClassWithVftable(recoveredClass, vftableSymbol, true, false);
+				recoveredClass.addClassOffsetToVftableMapping((int) offset,
+					correspondingVftableAddress);
+
+				Namespace namespace = baseTypeinfo.getBaseTypeinfo().getNamespace();
+				RecoveredClass baseClass = getClass(namespace);
+				if (baseClass == null) {
+					continue;
+				}
+				recoveredClass.addVftableToBaseClassMapping(correspondingVftableAddress, baseClass);
+				
+				//TODO: populate the new Vftable objects
+			}
 		}
 	}
+
 
 	/**
 	 * Use information from RTTI Base class Arrays to create class hierarchy lists
@@ -4426,9 +4563,16 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		if (!recoveredClass.hasVftable()) {
-			createSimpleClassStructure(recoveredClass, null);
-			// return in this case because if there is no vftable for a class the script
-			// cannot
+
+			Structure classStructure = createSimpleClassStructure(recoveredClass, null);
+			if (classStructure == null) {
+				Msg.error(this, "Could not create class structure for " +
+					recoveredClass.getClassNamespace().getName(true));
+			}
+
+			updateClassFunctionsNotUsingNewClassStructure(recoveredClass,
+				classStructure);
+			// return in this case because if there is no vftable for a class the script cannot
 			// identify any member functions so there is no need to process the rest of this
 			// method
 			return;
@@ -4443,6 +4587,11 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// data
 		// structures, and class member data structure
 		Structure classStruct = createSimpleClassStructure(recoveredClass, vfPointerDataTypes);
+		if (classStruct == null) {
+			Msg.error(this, "Could not create class structure or continue processing for " +
+				recoveredClass.getClassNamespace().getName(true));
+			return;
+		}
 
 		// Now that we have a class data type
 		// name constructor and destructor functions and put into the class namespace
@@ -4469,6 +4618,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes,
 			classStruct);
 
+		updateClassFunctionsNotUsingNewClassStructure(recoveredClass, classStruct);
 	}
 
 	private Structure createSimpleClassStructure(RecoveredClass recoveredClass,
@@ -4479,8 +4629,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		CategoryPath classPath = recoveredClass.getClassPath();
 
 		// get either existing structure if prog has a structure created by pdb or
-		// computed
-		// structure from decompiled construtor(s) info
+		// computed structure from decompiled construtor(s) info
 		Structure classStructure;
 		if (recoveredClass.hasExistingClassStructure()) {
 			classStructure = recoveredClass.getExistingClassStructure();
@@ -4490,8 +4639,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		int structLen = 0;
+		// for gcc need to get actual length of components not the aligned length
 		if (classStructure != null) {
-			structLen = addAlignment(classStructure.getLength());
+
+			int numComponents = classStructure.getNumComponents();
+			classStructure.getNumDefinedComponents();
+
+			DataTypeComponent lastComponent = classStructure.getComponent(numComponents - 1);
+			structLen = lastComponent.getOffset() + lastComponent.getLength();
+
 		}
 
 		Structure classStructureDataType =
@@ -4501,8 +4657,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		if (nonInheritedClasses.contains(recoveredClass) && vfPointerDataTypes != null) {
 
 			// the size was checked before calling this method so we know there is one and
-			// only
-			// one for this simple case
+			// only one for this simple case
 			Address vftableAddress = recoveredClass.getVftableAddresses().get(0);
 			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
 
@@ -4513,24 +4668,25 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 		}
 		// if single inheritance or multi non-virtual (wouldn't have called this method
-		// if
-		// it were virtually inherited) put parent struct and data into class struct
+		// if it were virtually inherited) put parent struct and data into class struct
 		else {
 
 			Map<Integer, RecoveredClass> orderToParentMap =
 				classToParentOrderMap.get(recoveredClass);
 			if (orderToParentMap == null || orderToParentMap.isEmpty()) {
-				throw new Exception(
+				Msg.error(this,
 					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
 						" should have a parent in the classToParentOrderMap but doesn't");
+				return null;
 			}
 
 			Map<RecoveredClass, Long> parentToOffsetMap =
 				classToParentOffsetMap.get(recoveredClass);
 			if (parentToOffsetMap.isEmpty()) {
-				throw new Exception(
+				Msg.error(this,
 					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
 						" should have a parent in the classToParentOffsetMap but doesn't");
+				return null;
 			}
 
 			int numParents = orderToParentMap.keySet().size();
@@ -4539,29 +4695,33 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 				Long parentOffsetLong = parentToOffsetMap.get(parent);
 				if (parentOffsetLong == null) {
-					throw new Exception(
+					Msg.error(this,
 						"Can't get parent offset for " + parent.getClassNamespace().getName(true));
+					return null;
 				}
 				int parentOffset = parentOffsetLong.intValue();
 
 				Structure baseClassStructure = getClassStructureFromDataTypeManager(parent);
-				// if we can't get the parent throw exception because it shouldn't get here if
-				// the
-				// parent doesn't exist
-				if (baseClassStructure == null) {
-					throw new Exception(
-						parent.getClassNamespace().getName(true) +
-							" : structure should exist but doesn't.");
-				}
 
+				if (baseClassStructure == null) {
+					Msg.error(this, "Parent structure: " +
+						parent.getClassNamespace().getName(true) +
+						" should exist but doesn't.");
+					return null;
+				}
 				// if it fits at offset or is at the end and class structure can be grown,
 				// copy the whole baseClass structure to the class Structure at the given offset
 				EditStructureUtils.addDataTypeToStructure(classStructureDataType, parentOffset,
-					baseClassStructure,
-					baseClassStructure.getName(), monitor);
+					baseClassStructure, baseClassStructure.getName(), monitor);
+
 			}
 
 		}
+
+		// for gcc need to split out parent parts before figuring out data length
+		// to avoid internal alignment issues causing the wrong size
+		classStructureDataType =
+			addClassVftables(classStructureDataType, recoveredClass, vfPointerDataTypes);
 
 		// figure out class data, if any, create it and add to class structure
 		int dataOffset = getDataOffset(recoveredClass, classStructureDataType);
@@ -4588,11 +4748,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		}
 
-		classStructureDataType =
-			addClassVftables(classStructureDataType, recoveredClass, vfPointerDataTypes);
-
-		// unused at this point until something figures out how to create them and where
-		// to
+		// unused at this point until something figures out how to create them and where to
 		// put them
 		classStructureDataType =
 			addVbtableToClassStructure(recoveredClass, classStructureDataType, true);

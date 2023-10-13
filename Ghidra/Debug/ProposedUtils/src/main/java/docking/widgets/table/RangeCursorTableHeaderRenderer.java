@@ -84,7 +84,7 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 
 			double pos =
 				span * (e.getX() - colX) / myViewCol.getWidth() + fullRangeDouble.min();
-			listeners.fire.accept(pos);
+			listeners.invoke().accept(pos);
 		}
 	}
 
@@ -105,7 +105,7 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	private int savedViewColumn;
 
 	private final ForSeekMouseListener forSeekMouseListener = new ForSeekMouseListener();
-	private final ListenerSet<SeekListener> listeners = new ListenerSet<>(SeekListener.class);
+	private final ListenerSet<SeekListener> listeners = new ListenerSet<>(SeekListener.class, true);
 
 	public RangeCursorTableHeaderRenderer(N pos) {
 		this.pos = pos;

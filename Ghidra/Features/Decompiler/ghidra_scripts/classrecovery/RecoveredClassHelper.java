@@ -68,6 +68,7 @@ import ghidra.program.model.data.Undefined4DataType;
 import ghidra.program.model.data.Undefined8DataType;
 import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.BookmarkManager;
 import ghidra.program.model.listing.BookmarkType;
@@ -84,6 +85,7 @@ import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ReturnParameterImpl;
+import ghidra.program.model.listing.Variable;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighVariable;
@@ -3464,6 +3466,11 @@ public class RecoveredClassHelper {
 			monitor.checkCancelled();
 			Function constructorFunction = constructorsIterator.next();
 
+			// cannot edit external functions
+			if (constructorFunction.isExternal()) {
+				continue;
+			}
+
 			if (nameVfunctions) {
 				createNewSymbolAtFunction(constructorFunction, className, classNamespace, true,
 					true);
@@ -3550,6 +3557,11 @@ public class RecoveredClassHelper {
 		while (destructorIterator.hasNext()) {
 			monitor.checkCancelled();
 			Function destructorFunction = destructorIterator.next();
+
+			// cannot edit external functions
+			if (destructorFunction.isExternal()) {
+				continue;
+			}
 			String destructorName = "~" + className;
 
 			if (nameVfunctions) {
@@ -3577,6 +3589,11 @@ public class RecoveredClassHelper {
 		while (destructorIterator.hasNext()) {
 			monitor.checkCancelled();
 			Function destructorFunction = destructorIterator.next();
+
+			// cannot edit external functions
+			if (destructorFunction.isExternal()) {
+				continue;
+			}
 			String destructorName = "~" + className;
 
 			createNewSymbolAtFunction(destructorFunction, destructorName, classNamespace, false,
@@ -3596,7 +3613,9 @@ public class RecoveredClassHelper {
 		Namespace classNamespace = recoveredClass.getClassNamespace();
 
 		Function vbaseDestructorFunction = recoveredClass.getVBaseDestructor();
-		if (vbaseDestructorFunction != null) {
+
+		// only edit non-external functions
+		if (vbaseDestructorFunction != null && !vbaseDestructorFunction.isExternal()) {
 			String destructorName = VBASE_DESTRUCTOR_LABEL;
 
 			if (nameVfunctions) {
@@ -3728,6 +3747,10 @@ public class RecoveredClassHelper {
 			boolean setPrimary, boolean removeBadFID) throws DuplicateNameException,
 			InvalidInputException, CircularDependencyException, CancelledException {
 
+		// skip if external function
+		if (function.isExternal()) {
+			return;
+		}
 		// check for bad FID or FID that needs fix up and remove those bad symbols
 		if (removeBadFID) {
 			removeBadFIDSymbols(namespace, name, function);
@@ -4490,7 +4513,7 @@ public class RecoveredClassHelper {
 					recoveredClass.getName(), structLen, dataTypeManager);
 
 				int numComponents = computedClassDataStructure.getNumDefinedComponents();
-				for (int i = 1; i < numComponents; i++) {
+				for (int i = 0; i < numComponents; i++) {
 					monitor.checkCancelled();
 					DataTypeComponent component = computedClassDataStructure.getComponent(i);
 					int offset = component.getOffset();
@@ -4839,6 +4862,90 @@ public class RecoveredClassHelper {
 		return vfunctionSuffix;
 	}
 
+	/**
+	 * Method to update any class functions that are not already using it to use the given 
+	 * class structure
+	 * @param recoveredClass the given class
+	 * @param classStructure the given class structure
+	 * @throws CancelledException if cancelled
+	 */
+	protected void updateClassFunctionsNotUsingNewClassStructure(RecoveredClass recoveredClass,
+			Structure classStructure) throws CancelledException {
+
+		if (classStructure == null) {
+			return;
+		}
+
+		Namespace classNamespace = recoveredClass.getClassNamespace();
+
+		SymbolIterator symbols = symbolTable.getSymbols(classNamespace);
+
+		FunctionManager functionManager = program.getFunctionManager();
+
+		while (symbols.hasNext()) {
+			monitor.checkCancelled();
+
+			Symbol symbol = symbols.next();
+
+			Function function = functionManager.getFunctionAt(symbol.getAddress());
+
+			if (function == null) {
+				continue;
+			}
+
+			if (function.isThunk()) {
+				continue;
+			}
+			
+			PrototypeModel callingConvention = function.getCallingConvention();
+			if (callingConvention == null) {
+				Msg.debug(this, "no calling convention for: " + function.getEntryPoint());
+				continue;
+			}
+
+			if (!callingConvention.hasThisPointer()) {
+				continue;
+			}
+
+			Parameter[] parameters = function.getParameters();
+			if (parameters.length == 0) {
+				continue;
+			}
+
+			DataType dataType = parameters[0].getDataType();
+			if (!(dataType instanceof Pointer pointer)) {
+				continue;
+			}
+
+			DataType pointedToDt = pointer.getDataType();
+			if (!pointedToDt.equals(classStructure)) {
+				Pointer classStructurePointer = new PointerDataType(classStructure);
+				try {
+					List<Variable> newParamList = new ArrayList<>();
+					for (Parameter param : parameters) {
+
+						newParamList.add(param);
+					}
+					
+					FunctionUpdateType updateType = FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
+					if (function.hasCustomVariableStorage()) {
+						updateType = FunctionUpdateType.CUSTOM_STORAGE;
+					}
+
+					newParamList.get(0).setDataType(classStructurePointer, SourceType.ANALYSIS);
+					function.replaceParameters(newParamList,
+						updateType, false, SourceType.ANALYSIS);
+				}
+				catch (InvalidInputException | DuplicateNameException e) {
+					Msg.error(this, "Could not update function at " + function.getEntryPoint() +
+						" with new class structure due to exception: " + e.getMessage());
+				}
+
+			}
+
+		}
+	}
+
 	private boolean hasDeletingDestructorInNamespace(Address address, Namespace namespace)
 			throws CancelledException {
 
@@ -5109,6 +5216,11 @@ public class RecoveredClassHelper {
 		while (unknownsIterator.hasNext()) {
 			monitor.checkCancelled();
 			Function indeterminateFunction = unknownsIterator.next();
+
+			// cannot edit external functions
+			if (indeterminateFunction.isExternal()) {
+				continue;
+			}
 
 			if (nameVfunctions) {
 				createNewSymbolAtFunction(indeterminateFunction,
@@ -7711,11 +7823,17 @@ public class RecoveredClassHelper {
 
 		Address[] functionThunkAddresses = function.getFunctionThunkAddresses(true);
 
-		List<Address> functionAddresses = new ArrayList<>();
+		// add any thunk addresses to the list
+		List<Address> functionAddresses = new ArrayList<Address>();
+
 		// add the function itself to the list
 		functionAddresses.add(function.getEntryPoint());
 		if (functionThunkAddresses != null) {
 			// add any thunk addresses to the list
+			functionAddresses.addAll(Arrays.asList(functionThunkAddresses));
+		}
+
+		if (functionThunkAddresses != null) {
 			functionAddresses.addAll(Arrays.asList(functionThunkAddresses));
 		}
 
