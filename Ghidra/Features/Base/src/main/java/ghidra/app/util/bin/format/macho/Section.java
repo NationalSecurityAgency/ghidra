@@ -166,8 +166,16 @@ public class Section implements StructConverter {
 		return sectname;
 	}
 
+	public void setSectionName(String name) {
+		this.sectname = name;
+	}
+
 	public String getSegmentName() {
 		return segname;
+	}
+
+	public void setSegmentName(String name) {
+		this.segname = name;
 	}
 
 	public long getAddress() {
