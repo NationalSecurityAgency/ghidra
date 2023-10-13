@@ -38,10 +38,10 @@ public class DWARFImportOptions {
 		"Include source code location info (filename:linenumber) in comments attached to the " +
 			"Ghidra datatype or function or variable created.";
 
-	private static final String OPTION_SOURCE_LINEINFO = "Output Source Line Info";
+	private static final String OPTION_SOURCE_LINEINFO = "Import Source Line Info";
 	private static final String OPTION_SOURCE_LINEINFO_DESC =
-		"Place end-of-line comments containg the source code filename and line number at " +
-			"each location provided in the DWARF data";
+		"Create source map entries containing the source code filename, line number, address, and" +
+			" length at each location provided in the DWARF data";
 
 	private static final String OPTION_OUTPUT_DWARF_DIE_INFO = "Output DWARF DIE Info";
 	private static final String OPTION_OUTPUT_DWARF_DIE_INFO_DESC =
@@ -78,6 +78,10 @@ public class DWARFImportOptions {
 	private static final String OPTION_DEFAULT_CC_DESC =
 		"Name of default calling convention to assign to functions (e.g. __cdecl, __stdcall, etc), or leave blank.";
 
+	private static final String OPTION_MAX_SOURCE_ENTRY_LENGTH = "Maximum Source Map Entry Length";
+	private static final String OPTION_MAX_SOURCE_ENTRY_LENGTH_DESC =
+		"Maximum length for a source map entry.  Longer lengths will be replaced with 0";
+
 	//==================================================================================================
 	// Old Option Names - Should stick around for multiple major versions after 10.2
 	//==================================================================================================
@@ -111,9 +115,10 @@ public class DWARFImportOptions {
 	private boolean specialCaseSizedBaseTypes = true;
 	private boolean importLocalVariables = true;
 	private boolean useBookmarks = true;
-	private boolean outputSourceLineInfo = false;
+	private boolean outputSourceLineInfo = true;
 	private boolean ignoreParamStorage = false;
 	private String defaultCC = "";
+	private long maxSourceMapEntryLength = 2000;
 
 	/**
 	 * Create new instance
@@ -376,10 +381,20 @@ public class DWARFImportOptions {
 		return useBookmarks;
 	}
 
+	/**
+	 * Option to control whether source map info from DWARF is stored in the Program.
+	 * 
+	 * @return {@code true} if option turned on
+	 */
 	public boolean isOutputSourceLineInfo() {
 		return outputSourceLineInfo;
 	}
 
+	/**
+	 * Option to control whether source map info from DWARF is stored in the Program.
+	 * 
+	 * @param outputSourceLineInfo true to turn option on, false to turn off
+	 */
 	public void setOutputSourceLineInfo(boolean outputSourceLineInfo) {
 		this.outputSourceLineInfo = outputSourceLineInfo;
 	}
@@ -398,6 +413,29 @@ public class DWARFImportOptions {
 
 	public void setDefaultCC(String defaultCC) {
 		this.defaultCC = defaultCC;
+	}
+
+	/**
+	 * Option to control the maximum length of a source map entry.  If a longer length is calculated
+	 * it will be replaced with 0.
+	 * 
+	 * @return max source map entry length
+	 */
+	public long getMaxSourceMapEntryLength() {
+		return maxSourceMapEntryLength;
+	}
+
+	/**
+	 * Option to control the maximum length of a source map entry.  If a longer length is calculated
+	 * it will be replaced with 0.
+	 * 
+	 * @param maxLength new max source entry length
+	 */
+	public void setMaxSourceMapEntryLength(long maxLength) {
+		if (maxLength < 0) {
+			maxLength = 0;
+		}
+		maxSourceMapEntryLength = maxLength;
 	}
 
 	/**
@@ -440,6 +478,8 @@ public class DWARFImportOptions {
 			OPTION_IGNORE_PARAM_STORAGE_DESC);
 
 		options.registerOption(OPTION_DEFAULT_CC, getDefaultCC(), null, OPTION_DEFAULT_CC_DESC);
+		options.registerOption(OPTION_MAX_SOURCE_ENTRY_LENGTH, maxSourceMapEntryLength, null,
+			OPTION_MAX_SOURCE_ENTRY_LENGTH_DESC);
 	}
 
 	/**
@@ -467,6 +507,8 @@ public class DWARFImportOptions {
 		setIgnoreParamStorage(
 			options.getBoolean(OPTION_IGNORE_PARAM_STORAGE, isIgnoreParamStorage()));
 		setDefaultCC(options.getString(OPTION_DEFAULT_CC, getDefaultCC()));
+		setMaxSourceMapEntryLength(
+			options.getLong(OPTION_MAX_SOURCE_ENTRY_LENGTH, getMaxSourceMapEntryLength()));
 
 	}
 }

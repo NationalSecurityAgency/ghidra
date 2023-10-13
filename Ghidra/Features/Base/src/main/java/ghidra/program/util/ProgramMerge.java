@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,11 @@ package ghidra.program.util;
 
 import java.util.*;
 
+import ghidra.framework.store.LockException;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.properties.UnsupportedMapDB;
+import ghidra.program.database.sourcemap.SourceFile;
 import ghidra.program.disassemble.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -27,6 +29,8 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.sourcemap.SourceFileManager;
+import ghidra.program.model.sourcemap.SourceMapEntry;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
 import ghidra.util.*;
@@ -3949,6 +3953,50 @@ public class ProgramMerge {
 					Msg.error(this, msg);
 					errorMsg.append(msg + "\n");
 				}
+			}
+		}
+	}
+
+	/**
+	 * Merge the source map information from the origin program to the result program.
+	 * 
+	 * @param originAddrs address from origin program to merge
+	 * @param settings merge settings
+	 * @param monitor monitor
+	 * @throws LockException if invoked without exclusive access
+	 */
+	public void applySourceMapDifferences(AddressSet originAddrs, int settings, TaskMonitor monitor)
+			throws LockException {
+		SourceFileManager originManager = originProgram.getSourceFileManager();
+		SourceFileManager resultManager = resultProgram.getSourceFileManager();
+		AddressIterator originAddrIter = originAddrs.getAddresses(true);
+		while (originAddrIter.hasNext()) {
+			Address originAddr = originAddrIter.next();
+			try {
+				Address resultAddr = originToResultTranslator.getAddress(originAddr);
+				for (SourceMapEntry resultEntry : resultManager.getSourceMapEntries(resultAddr)) {
+					if (resultAddr.equals(resultEntry.getBaseAddress())) {
+						resultManager.removeSourceMapEntry(resultEntry);
+					}
+				}
+				for (SourceMapEntry originEntry : originManager.getSourceMapEntries(originAddr)) {
+					if (!originEntry.getBaseAddress().equals(originAddr)) {
+						continue;
+					}
+					SourceFile originFile = originEntry.getSourceFile();
+					resultManager.addSourceFile(originFile);
+					resultManager.addSourceMapEntry(originFile, originEntry.getLineNumber(),
+						resultAddr, originEntry.getLength());
+				}
+			}
+			catch (AddressTranslationException e) {
+				// as long as originAddrs comes from ProgramDiff.getSourceMapDifferences
+				// this shouldn't happen
+				throw new AssertException("couldn't translate " + originAddr + " in " +
+					originProgram.getName() + " to " + resultProgram.getName());
+			}
+			catch (AddressOverflowException e) {
+				throw new AssertException("Address overflow when merging source map entries");
 			}
 		}
 	}
