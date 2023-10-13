@@ -38,8 +38,8 @@
     <CODE>ColorValue</CODE>, <CODE>FontValue</CODE>, and
     <CODE>IconValue</CODE>. Resource values are stored in these <CODE>ThemeValue</CODE> sub-classes 
     because the value can be
-    either a concrete value or be a reference to some other resource of the same type. So, for
-    example, "color.bg.foo" could map directly to an actual color or its value could be reference
+    either a concrete value or a reference to some other resource of the same type. So, for
+    example, "color.bg.foo" could map directly to an actual color or its value could be a reference
     to some other indirect color like "color.bg.bar". In any <CODE>ThemeValue</CODE> object, either 
     the referenced ID or the direct value must be null. To get the ultimate concrete value, there
     is a convenience method called <CODE>get()</CODE> on <CODE>ThemeValue</CODE>s that takes a 

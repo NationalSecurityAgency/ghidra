@@ -71,9 +71,13 @@ import ghidra.util.Msg;
  *
  */
 public class UiDefaultsMapper {
-	public static final String LAF_COLOR_ID_PREFIX = "laf.color.";
-	public static final String LAF_FONT_ID_PREFIX = "laf.font.";
-	public static final String LAF_ICON_ID_PREFIX = "laf.icon.";
+
+	public static final String LAF_COLOR_ID_PREFIX = ColorValue.LAF_ID_PREFIX;
+	public static final String LAF_FONT_ID_PREFIX = FontValue.LAF_ID_PREFIX;
+	public static final String LAF_ICON_ID_PREFIX = IconValue.LAF_ID_PREFIX;
+
+	/** A prefix for UIManager properties that are not colors, fonts or icons (e.g., boolean) */
+	public static final String LAF_PROPERTY_PREFIX = "laf.property.";
 	private static final String LAF_COLOR_PALETTE_PREFIX = "laf.palette.color.";
 	private static final String LAF_FONT_PALETTE_PREFIX = "laf.palette.font.";
 
@@ -86,22 +90,25 @@ public class UiDefaultsMapper {
 
 	protected UIDefaults defaults;
 	private GThemeValueMap extractedValues;
+
+	/** 'normalized' values have keys that start with 'laf.' */
 	private GThemeValueMap normalizedValues = new GThemeValueMap();
 
-	private Map<String, String> lafIdToNormalizedIdMap = new HashMap<>();
-	protected Set<String> ignoredLafIds = new HashSet<>();
+	/** Maps Look and Feel keys to standardized keys that start with 'laf.' */
+	private Map<String, String> javaIdToNormalizedId = new HashMap<>();
+	protected Set<String> ignoredJavaIds = new HashSet<>();
 
-	private Map<String, ColorMatcher> componentToColorMatcherMap = new HashMap<>();
-	private Map<String, FontMatcher> componentToFontMatcherMap = new HashMap<>();
+	private Map<String, ColorGrouper> componentToColorGrouper = new HashMap<>();
+	private Map<String, FontGrouper> componentToFontGrouper = new HashMap<>();
 
 	// @formatter:off
-	protected ColorMatcher viewColorMatcher = new ColorMatcher(BG_VIEW_ID,
+	protected ColorGrouper viewColorGrouper = new ColorGrouper(BG_VIEW_ID,
 							 								   FG_VIEW_ID,
 							 								   BG_VIEW_SELECTED_ID,
 							 								   FG_VIEW_SELECTED_ID);
-	protected ColorMatcher tooltipColorMatcher = new ColorMatcher(BG_TOOLTIP_ID,
+	protected ColorGrouper tooltipColorGrouper = new ColorGrouper(BG_TOOLTIP_ID,
 																  FG_TOOLTIP_ID);
-	protected ColorMatcher defaultColorMatcher = new ColorMatcher(BG_CONTROL_ID,
+	protected ColorGrouper defaultColorMatcher = new ColorGrouper(BG_CONTROL_ID,
 							 									  FG_CONTROL_ID,
 							 									  BG_VIEW_ID,
 							 									  FG_VIEW_ID,
@@ -111,9 +118,9 @@ public class UiDefaultsMapper {
 							 									  BG_TOOLTIP_ID,
 							 									  BG_BORDER_ID);
 
-	protected FontMatcher menuFontMatcher = new FontMatcher(FONT_MENU_ID);
-	protected FontMatcher viewFontMatcher = new FontMatcher(FONT_VIEW_ID);
-	protected FontMatcher defaultFontMatcher = new FontMatcher(FONT_CONTROL_ID,
+	protected FontGrouper menuFontGrouper = new FontGrouper(FONT_MENU_ID);
+	protected FontGrouper viewFontGrouper = new FontGrouper(FONT_VIEW_ID);
+	protected FontGrouper defaultFontMatcher = new FontGrouper(FONT_CONTROL_ID,
 															   FONT_VIEW_ID,
 															   FONT_MENU_ID);
 
@@ -128,13 +135,13 @@ public class UiDefaultsMapper {
 		this.defaults = defaults;
 		this.extractedValues = extractColorFontAndIconValuesFromDefaults();
 
-		assignSystemColorValues();
-		assignSystemFontValues();
+		pickRepresentativeValueForColorGroups();
+		pickRepresentativeValueForFontGroups();
 
-		registerIgnoredLafIds();
+		registerIgnoredJavaIds();
 
-		assignColorMatchersToComponentIds();
-		assignFontMatchersToComponentIds();
+		buildComponentToColorGrouperMap();
+		buildComponentToFontGrouperMap();
 
 		assignNormalizedColorValues();
 		assignNormalizedFontValues();
@@ -142,12 +149,15 @@ public class UiDefaultsMapper {
 	}
 
 	/**
-	 * Returns the normalized id to value map that will be installed into the
-	 * ApplicationThemeManager to be the user changeable values for affecting the Java
-	 * LookAndFeel colors, fonts, and icons
+	 * Returns the normalized id to value map that will be installed into the theme manager to be
+	 * the user changeable values for affecting the Java LookAndFeel colors, fonts, and icons.
+	 * <p>
+	 * The keys in the returned map have been normalized and all start with 'laf.'
+	 * 
+	 * 
 	 * @return a map of changeable values that affect java LookAndFeel values
 	 */
-	public GThemeValueMap getJavaDefaults() {
+	public GThemeValueMap getNormalizedJavaDefaults() {
 		return normalizedValues;
 	}
 
@@ -161,22 +171,25 @@ public class UiDefaultsMapper {
 		//
 		// In the UI Defaults, colors use indirect values and fonts and icons use direct values.
 		// Here we install our GColors for the indirect colors.  Then we set any font and icon
-		// values that are different than the defaults.
+		// values that are different than the defaults.  Finally, we apply any overridden Java
+		// properties.
 		//
 		installGColorsIntoUIDefaults();
 		installOverriddenFontsIntoUIDefaults(currentValues);
 		installOverriddenIconsIntoUIDefaults(currentValues);
+		installOverriddenPropertiesIntoUIDefaults(currentValues);
 	}
 
 	/**
 	 * Returns a mapping of normalized LaF Ids so that when fonts and icons get changed using the
 	 * normalized ids that are presented to the user, we know which LaF ids need to be updated in
 	 * the UiDefaults so that the LookAndFeel will pick up and use the changes.
+	 * 
 	 * @return a mapping of normalized LaF ids to original LaF ids.
 	 */
 	public Map<String, String> getNormalizedIdToLafIdMap() {
 		Map<String, String> map = new HashMap<>();
-		for (Entry<String, String> entry : lafIdToNormalizedIdMap.entrySet()) {
+		for (Entry<String, String> entry : javaIdToNormalizedId.entrySet()) {
 			String lafId = entry.getKey();
 			String standardId = entry.getValue();
 			map.put(standardId, lafId);
@@ -191,41 +204,41 @@ public class UiDefaultsMapper {
 	 * used to seed the values for the system color and fonts. Subclasses should
 	 * override this method to add additional ids so they won't show up in the theme values.
 	 */
-	protected void registerIgnoredLafIds() {
+	protected void registerIgnoredJavaIds() {
 
-		ignoredLafIds.add("desktop");
-		ignoredLafIds.add("activeCaption");
-		ignoredLafIds.add("activeCaptionText");
-		ignoredLafIds.add("activeCaptionBorder");
-		ignoredLafIds.add("inactiveCaption");
-		ignoredLafIds.add("inactiveCaptionText");
-		ignoredLafIds.add("inactiveCaptionBorder");
-		ignoredLafIds.add("window");
-		ignoredLafIds.add("windowBorder");
-		ignoredLafIds.add("windowText");
-		ignoredLafIds.add("menu");
-		ignoredLafIds.add("menuText");
-		ignoredLafIds.add("text");
-		ignoredLafIds.add("textText");
-		ignoredLafIds.add("textHighlight");
-		ignoredLafIds.add("textHighightText");
-		ignoredLafIds.add("textInactiveText");
-		ignoredLafIds.add("control");
-		ignoredLafIds.add("controlText");
-		ignoredLafIds.add("controlHighlight");
-		ignoredLafIds.add("controlLtHighlight");
-		ignoredLafIds.add("controlShadow");
-		ignoredLafIds.add("controlDkShadow");
-		ignoredLafIds.add("info");
-		ignoredLafIds.add("infoText");
-		ignoredLafIds.add("scrollbar");
+		ignoredJavaIds.add("desktop");
+		ignoredJavaIds.add("activeCaption");
+		ignoredJavaIds.add("activeCaptionText");
+		ignoredJavaIds.add("activeCaptionBorder");
+		ignoredJavaIds.add("inactiveCaption");
+		ignoredJavaIds.add("inactiveCaptionText");
+		ignoredJavaIds.add("inactiveCaptionBorder");
+		ignoredJavaIds.add("window");
+		ignoredJavaIds.add("windowBorder");
+		ignoredJavaIds.add("windowText");
+		ignoredJavaIds.add("menu");
+		ignoredJavaIds.add("menuText");
+		ignoredJavaIds.add("text");
+		ignoredJavaIds.add("textText");
+		ignoredJavaIds.add("textHighlight");
+		ignoredJavaIds.add("textHighightText");
+		ignoredJavaIds.add("textInactiveText");
+		ignoredJavaIds.add("control");
+		ignoredJavaIds.add("controlText");
+		ignoredJavaIds.add("controlHighlight");
+		ignoredJavaIds.add("controlLtHighlight");
+		ignoredJavaIds.add("controlShadow");
+		ignoredJavaIds.add("controlDkShadow");
+		ignoredJavaIds.add("info");
+		ignoredJavaIds.add("infoText");
+		ignoredJavaIds.add("scrollbar");
 	}
 
 	/**
 	 * Defines the values to assign to all the system color ids based on the best representative
 	 * value defined in the {@link BasicLookAndFeel}
 	 */
-	protected void assignSystemColorValues() {
+	protected void pickRepresentativeValueForColorGroups() {
 		// Originally, these values were assigned to the corresponding concepts as defined
 		// in the BasicLookAndFeel such as "control", "text", etc. Unfortunately, those
 		// conventions are rarely used by specific look and feels.  It was discovered that using a
@@ -235,114 +248,118 @@ public class UiDefaultsMapper {
 		// subclassed where the values can be overridden. See the NimbusUiDefaultsMapper as an
 		// example.
 
-		assignSystemColorFromLafId(BG_CONTROL_ID, "Button.background");
-		assignSystemColorFromLafId(FG_CONTROL_ID, "Button.foreground");
-		assignSystemColorFromLafId(BG_BORDER_ID, "InternalFrame.borderColor");
+		setGroupColorUsingJavaRepresentative(BG_CONTROL_ID, "Button.background");
+		setGroupColorUsingJavaRepresentative(FG_CONTROL_ID, "Button.foreground");
+		setGroupColorUsingJavaRepresentative(BG_BORDER_ID, "InternalFrame.borderColor");
 
-		assignSystemColorFromLafId(BG_VIEW_ID, "TextArea.background");
-		assignSystemColorFromLafId(FG_VIEW_ID, "TextArea.foreground");
-		assignSystemColorFromLafId(BG_VIEW_SELECTED_ID, "TextArea.selectionBackground");
-		assignSystemColorFromLafId(FG_VIEW_SELECTED_ID, "TextArea.selectionForeground");
+		setGroupColorUsingJavaRepresentative(BG_VIEW_ID, "TextArea.background");
+		setGroupColorUsingJavaRepresentative(FG_VIEW_ID, "TextArea.foreground");
+		setGroupColorUsingJavaRepresentative(BG_VIEW_SELECTED_ID, "TextArea.selectionBackground");
+		setGroupColorUsingJavaRepresentative(FG_VIEW_SELECTED_ID, "TextArea.selectionForeground");
 
-		assignSystemColorFromLafId(FG_DISABLED_ID, "Label.disabledForeground");
+		setGroupColorUsingJavaRepresentative(FG_DISABLED_ID, "Label.disabledForeground");
 
-		assignSystemColorFromLafId(BG_TOOLTIP_ID, "ToolTip.background");
-		assignSystemColorFromLafId(FG_TOOLTIP_ID, "ToolTip.foreground");
+		setGroupColorUsingJavaRepresentative(BG_TOOLTIP_ID, "ToolTip.background");
+		setGroupColorUsingJavaRepresentative(FG_TOOLTIP_ID, "ToolTip.foreground");
 
 	}
 
 	/**
 	 * Assigns the system color id to a color value from the UiDefaults map.
-	 * @param systemColorId the system color id to get a value for
-	 * @param lafId the LaF key to use to retrieve a color from the UiDefaults
+	 * @param group the system color id to get a value for
+	 * @param javaId the LaF key to use to retrieve a color from the UiDefaults
 	 */
-	protected void assignSystemColorFromLafId(String systemColorId, String lafId) {
-		Color lafColor = defaults.getColor(lafId);
-		if (lafColor == null) {
-			Msg.debug(this, "Missing value for system color: \"" + systemColorId +
-				"\". No value for laf id: \"" + lafId + "\".");
+	protected void setGroupColorUsingJavaRepresentative(String group, String javaId) {
+		Color javaColor = defaults.getColor(javaId);
+		if (javaColor == null) {
+			Msg.debug(this, "Missing value for system color: \"" + group +
+				"\". No value for java id: \"" + javaId + "\".");
 			return;
 		}
-		normalizedValues.addColor(new ColorValue(systemColorId, lafColor));
+		normalizedValues.addColor(new ColorValue(group, javaColor));
 	}
 
 	/**
-	 * Assigns the system color id to a directly specified color and does not use the LaF to populate
-	 * the system color.
-	 * @param systemColorId the system color id to assign the given color
+	 * This allows clients to hard-code a chosen color for a group
+	 * 
+	 * @param group the system color id to assign the given color
 	 * @param color the color to be assigned to the system color id
 	 */
-	protected void assignSystemColorDirect(String systemColorId, Color color) {
-		normalizedValues.addColor(new ColorValue(systemColorId, color));
+	protected void setGroupColor(String group, Color color) {
+		normalizedValues.addColor(new ColorValue(group, color));
 	}
 
 	/**
-	 * Assigns the system font id a directly specified font and does not use the LaF to populate
-	 * the system font.
-	 * @param systemFontId the system font id to assign the given font
+	 * This allows clients to hard-code a chosen font for a group
+	 * 
+	 * @param group the system font id to assign the given font
 	 * @param font the font to be assigned to the system font id
 	 */
-	protected void assignSystemFontDirect(String systemFontId, Font font) {
-		normalizedValues.addFont(new FontValue(systemFontId, font));
+	protected void setGroupFont(String group, Font font) {
+		normalizedValues.addFont(new FontValue(group, font));
+	}
+
+	protected void setComponentFont(String componentName, Font font) {
+		normalizedValues.addFont(new FontValue(componentName, font));
 	}
 
 	/**
-	 * Defines the values to use for the system fonts.
+	 * Defines the font values to use for each group based upon a chosen Java representative.
 	 */
-	protected void assignSystemFontValues() {
-		assignSystemFontFromLafId(FONT_CONTROL_ID, "Button.font");
-		assignSystemFontFromLafId(FONT_VIEW_ID, "Table.font");
-		assignSystemFontFromLafId(FONT_MENU_ID, "Menu.font");
+	protected void pickRepresentativeValueForFontGroups() {
+		setGroupFontUsingRepresentative(FONT_CONTROL_ID, "Button.font");
+		setGroupFontUsingRepresentative(FONT_VIEW_ID, "Table.font");
+		setGroupFontUsingRepresentative(FONT_MENU_ID, "Menu.font");
 	}
 
-	private void assignSystemFontFromLafId(String systemFontId, String lafId) {
+	private void setGroupFontUsingRepresentative(String fontGroup, String javaId) {
 
-		Font lafFont = extractedValues.getResolvedFont(lafId);
-		if (lafFont == null) {
-			Msg.debug(this, "Missing value for system font: \"" + systemFontId +
-				"\". No value for laf id: \"" + lafId + "\".");
+		Font representativeFont = extractedValues.getResolvedFont(javaId);
+		if (representativeFont == null) {
+			Msg.debug(this, "Missing value for system font: \"" + fontGroup +
+				"\". No value for java id: \"" + javaId + "\".");
 			return;
 		}
-		normalizedValues.addFont(new FontValue(systemFontId, fromUiResource(lafFont)));
+		normalizedValues.addFont(new FontValue(fontGroup, fromUiResource(representativeFont)));
 	}
 
 	/**
-	 * Assigns the appropriate font matcher to each component in the related component group
+	 * Sets the font grouper for each component group
 	 */
-	protected void assignFontMatchersToComponentIds() {
-		defineComponentFontMatcher(MENU_COMPONENTS, menuFontMatcher);
-		defineComponentFontMatcher(VIEW_COMPONENTS, viewFontMatcher);
+	protected void buildComponentToFontGrouperMap() {
+		mapComponentsToFontGrouper(menuFontGrouper, MENU_COMPONENTS);
+		mapComponentsToFontGrouper(viewFontGrouper, VIEW_COMPONENTS);
 	}
 
 	/**
-	 * Assigns the appropriate color matcher to each component in the related component group
+	 * Sets the color grouper for each component group
 	 */
-	protected void assignColorMatchersToComponentIds() {
-		defineComponentColorMatcher(VIEW_COMPONENTS, viewColorMatcher);
-		defineComponentColorMatcher(TOOLTIP_COMPONENTS, tooltipColorMatcher);
+	protected void buildComponentToColorGrouperMap() {
+		mapComponentsToColorGrouper(viewColorGrouper, VIEW_COMPONENTS);
+		mapComponentsToColorGrouper(tooltipColorGrouper, TOOLTIP_COMPONENTS);
 	}
 
 	/**
 	 * Assigns every component name in the component group to the given ColorValueMatcher
-	 * @param componentGroups a list of component names
-	 * @param matcher the ColorMatcher that will provide the precedence of system ids to
+	 * @param grouper the ColorMatcher that will provide the precedence of system ids to
 	 * search when replacing LaF component specific values
+	 * @param componentGroup a list of component names
 	 */
-	private void defineComponentColorMatcher(String[] componentGroups, ColorMatcher matcher) {
-		for (String componentGroup : componentGroups) {
-			componentToColorMatcherMap.put(componentGroup, matcher);
+	private void mapComponentsToColorGrouper(ColorGrouper grouper, String... componentGroup) {
+		for (String name : componentGroup) {
+			componentToColorGrouper.put(name, grouper);
 		}
 	}
 
 	/**
 	 * Assigns every component name in a component group to the given FontValueMapper
-	 * @param componentGroups a list of component names
-	 * @param matcher the FontValueMatcher that will provide the precedence of ststem font ids to
+	 * @param grouper the FontValueMatcher that will provide the precedence of system font ids to
 	 * search when replacing LaF component specific fonts with a system Font
+	 * @param componentGroup a list of component names
 	 */
-	private void defineComponentFontMatcher(String[] componentGroups, FontMatcher matcher) {
-		for (String componentGroup : componentGroups) {
-			componentToFontMatcherMap.put(componentGroup, matcher);
+	private void mapComponentsToFontGrouper(FontGrouper grouper, String... componentGroup) {
+		for (String name : componentGroup) {
+			componentToFontGrouper.put(name, grouper);
 		}
 	}
 
@@ -356,12 +373,12 @@ public class UiDefaultsMapper {
 		for (String lafId : list) {
 			// we don't want to create java defaults for laf system ids since changing them would
 			// have no effect
-			if (ignoredLafIds.contains(lafId)) {
+			if (ignoredJavaIds.contains(lafId)) {
 				continue;
 			}
 
 			String createdId = LAF_FONT_ID_PREFIX + lafId;
-			lafIdToNormalizedIdMap.put(lafId, createdId);
+			javaIdToNormalizedId.put(lafId, createdId);
 
 			Font lafFont = extractedValues.getResolvedFont(lafId);
 			FontValue fontValue = getFontValue(createdId, lafId, lafFont);
@@ -380,7 +397,7 @@ public class UiDefaultsMapper {
 			Icon icon = extractedValues.getResolvedIcon(lafId);
 			if (icon != null) {
 				normalizedValues.addIcon(new IconValue(createdId, icon));
-				lafIdToNormalizedIdMap.put(lafId, createdId);
+				javaIdToNormalizedId.put(lafId, createdId);
 			}
 		}
 	}
@@ -393,11 +410,11 @@ public class UiDefaultsMapper {
 		List<String> list = new ArrayList<>(extractedValues.getColorIds());
 		Collections.sort(list);
 		for (String lafId : list) {
-			if (ignoredLafIds.contains(lafId)) {
+			if (ignoredJavaIds.contains(lafId)) {
 				continue;
 			}
 			String createdId = LAF_COLOR_ID_PREFIX + lafId;
-			lafIdToNormalizedIdMap.put(lafId, createdId);
+			javaIdToNormalizedId.put(lafId, createdId);
 
 			Color lafColor = extractedValues.getResolvedColor(lafId);
 			ColorValue colorValue = getColorValue(createdId, lafId, lafColor);
@@ -486,16 +503,16 @@ public class UiDefaultsMapper {
 	 */
 	private String findSystemColorId(String lafId, Color lafColor) {
 		String componentName = getComponentName(lafId);
-		ColorMatcher colorMatcher = componentToColorMatcherMap.get(componentName);
+		ColorGrouper colorMatcher = componentToColorGrouper.get(componentName);
 		// check in widget specific group first
 		if (colorMatcher != null) {
-			String systemId = colorMatcher.getSystemId(lafColor);
+			String systemId = colorMatcher.getGroupId(lafColor);
 			if (systemId != null) {
 				return systemId;
 			}
 		}
 		// not found in widget specific group, check general component groups
-		return defaultColorMatcher.getSystemId(lafColor);
+		return defaultColorMatcher.getGroupId(lafColor);
 	}
 
 	/**
@@ -508,16 +525,16 @@ public class UiDefaultsMapper {
 	 */
 	private String findSystemFontId(String lafId, Font lafFont) {
 		String componentName = getComponentName(lafId);
-		FontMatcher fontMatcher = componentToFontMatcherMap.get(componentName);
+		FontGrouper fontMatcher = componentToFontGrouper.get(componentName);
 		// check in widget specific group first
 		if (fontMatcher != null) {
-			String systemId = fontMatcher.getSystemId(lafFont);
+			String systemId = fontMatcher.getGroupId(lafFont);
 			if (systemId != null) {
 				return systemId;
 			}
 		}
 		// not found in widget specific group, check general component groups
-		return defaultFontMatcher.getSystemId(lafFont);
+		return defaultFontMatcher.getGroupId(lafFont);
 	}
 
 	/**
@@ -541,7 +558,7 @@ public class UiDefaultsMapper {
 		Map<String, GColorUIResource> cachedColors = new HashMap<>();
 
 		for (String lafId : extractedValues.getColorIds()) {
-			String standardColorId = lafIdToNormalizedIdMap.get(lafId);
+			String standardColorId = javaIdToNormalizedId.get(lafId);
 			if (standardColorId != null) {
 				GColorUIResource sharedGColor = getSharedGColor(cachedColors, standardColorId);
 				defaults.put(lafId, sharedGColor);
@@ -556,7 +573,7 @@ public class UiDefaultsMapper {
 	private void installOverriddenIconsIntoUIDefaults(GThemeValueMap currentValues) {
 		for (String lafId : extractedValues.getIconIds()) {
 			Icon currentIcon = extractedValues.getResolvedIcon(lafId);
-			String standardId = lafIdToNormalizedIdMap.get(lafId);
+			String standardId = javaIdToNormalizedId.get(lafId);
 			Icon overriddenIcon = currentValues.getResolvedIcon(standardId);
 			if (overriddenIcon != null && currentIcon != overriddenIcon) {
 				defaults.put(lafId, overriddenIcon);
@@ -572,11 +589,23 @@ public class UiDefaultsMapper {
 	private void installOverriddenFontsIntoUIDefaults(GThemeValueMap currentValues) {
 		for (String lafId : extractedValues.getFontIds()) {
 			Font currentFont = extractedValues.getResolvedFont(lafId);
-			String standardId = lafIdToNormalizedIdMap.get(lafId);
+			String standardId = javaIdToNormalizedId.get(lafId);
 			Font overriddenFont = currentValues.getResolvedFont(standardId);
 			if (overriddenFont != null && overriddenFont != currentFont) {
 				defaults.put(lafId, new FontUIResource(overriddenFont));
 			}
+		}
+	}
+
+	/**
+	 * Updates all non- (color/font/icon) UIManager properties.  These properties are UIManager
+	 * properties that the user has overridden in the {@code theme.properties} files.  These
+	 * properties may use any type of value that is not a color/font/icon.
+	 * @param currentValues the theme values that potentially override a laf font value
+	 */
+	private void installOverriddenPropertiesIntoUIDefaults(GThemeValueMap currentValues) {
+		for (JavaPropertyValue property : currentValues.getProperties()) {
+			defaults.put(property.getId(), property.get(currentValues));
 		}
 	}
 
@@ -598,7 +627,7 @@ public class UiDefaultsMapper {
 	}
 
 	protected void overrideColor(String lafId, String sytemId) {
-		String normalizedId = lafIdToNormalizedIdMap.get(lafId);
+		String normalizedId = javaIdToNormalizedId.get(lafId);
 		if (normalizedId == null) {
 			Msg.debug(this, "Missing value for laf id: \"" + lafId);
 			return;
@@ -644,54 +673,59 @@ public class UiDefaultsMapper {
 	 * @return a list of all ids that have the given value type
 	 */
 	private List<String> getLookAndFeelIdsForType(Class<?> clazz) {
-		List<String> colorKeys = new ArrayList<>();
+		List<String> ids = new ArrayList<>();
 		List<Object> keyList = IteratorUtils.toList(defaults.keys().asIterator());
 		for (Object key : keyList) {
 			if (key instanceof String) {
 				Object value = defaults.get(key);
 				if (clazz.isInstance(value)) {
-					colorKeys.add((String) key);
+					ids.add((String) key);
 				}
 			}
 		}
-		return colorKeys;
+		return ids;
 	}
 
 	/**
-	 * Used to match values (Colors or Fonts) into appropriate system ids. System ids are searched
-	 * in the order the system ids are given in the constructor.
+	 * Used to match values (Colors or Fonts) into appropriate system groups. System group are
+	 * searched in the order the groups are given in the constructor.
+	 * <p>
+	 * Groups allow us to use the same group id for many components that by default have the same
+	 * value (Color or Font).  This grouper allows us to specify the precedence to use when
+	 * searching for the best group.
+	 * 
 	 * @param <T> The theme value type (Color or Font)
 	 */
-	private abstract class ValueMatcher<T> {
-		private Map<T, String> map = new HashMap<>();
-		private List<String> systemIdList;
+	private abstract class ValueGrouper<T> {
+		private Map<T, String> idsByFont = new HashMap<>();
+		private List<String> groupIds;
 		private boolean initialized;
 
-		ValueMatcher(String... systemIds) {
-			systemIdList = new ArrayList<>(Arrays.asList(systemIds));
+		ValueGrouper(String... ids) {
+			groupIds = new ArrayList<>(Arrays.asList(ids));
 		}
 
 		private void initialize() {
 			initialized = true;
 
 			// process in reverse order so that earlier items in the list can overwrite later
-			// items if they have the same font
-			for (int i = systemIdList.size() - 1; i >= 0; i--) {
-				String systemId = systemIdList.get(i);
-				T value = getValueFromJavaDefaults(systemId);
+			// items if they have the same value
+			for (int i = groupIds.size() - 1; i >= 0; i--) {
+				String groupId = groupIds.get(i);
+				T value = getValueFromJavaDefaults(groupId);
 				if (value != null) {
-					map.put(value, systemId);
+					idsByFont.put(value, groupId);
 				}
 			}
 		}
 
 		protected abstract T getValueFromJavaDefaults(String systemId);
 
-		String getSystemId(T value) {
+		String getGroupId(T value) {
 			if (!initialized) {
 				initialize();
 			}
-			return map.get(value);
+			return idsByFont.get(value);
 		}
 	}
 
@@ -700,9 +734,9 @@ public class UiDefaultsMapper {
 	 * id that matches a given color. The order that color system ids are added is important and is
 	 * the precedence order if more than one system color id has the same color.
 	 */
-	private class ColorMatcher extends ValueMatcher<Color> {
+	private class ColorGrouper extends ValueGrouper<Color> {
 
-		ColorMatcher(String... systemIds) {
+		ColorGrouper(String... systemIds) {
 			super(systemIds);
 		}
 
@@ -718,8 +752,8 @@ public class UiDefaultsMapper {
 	 * that matches a given font. The order that system font ids are added is important and is
 	 * the precedence order if more than one system id has the same font.
 	 */
-	private class FontMatcher extends ValueMatcher<Font> {
-		FontMatcher(String... systemIds) {
+	private class FontGrouper extends ValueGrouper<Font> {
+		FontGrouper(String... systemIds) {
 			super(systemIds);
 		}
 

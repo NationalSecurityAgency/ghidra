@@ -73,7 +73,7 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	@Override
 	public void restoreThemeValues() {
-		applicationDefaults = getApplicationDefaults();
+		applicationDefaults = loadApplicationDefaults();
 		buildCurrentValues();
 		lookAndFeelManager.resetAll(javaDefaults);
 		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
@@ -286,6 +286,11 @@ public class ApplicationThemeManager extends ThemeManager {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean hasThemeValueChanges() {
+		return !changedValuesMap.isEmpty();
 	}
 
 	@Override

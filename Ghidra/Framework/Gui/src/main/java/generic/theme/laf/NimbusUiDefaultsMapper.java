@@ -28,45 +28,45 @@ public class NimbusUiDefaultsMapper extends UiDefaultsMapper {
 	}
 
 	@Override
-	protected void registerIgnoredLafIds() {
-		super.registerIgnoredLafIds();
-		ignoredLafIds.add("background");
+	protected void registerIgnoredJavaIds() {
+		super.registerIgnoredJavaIds();
+		ignoredJavaIds.add("background");
 
-		ignoredLafIds.add("controlLHighlight");
+		ignoredJavaIds.add("controlLHighlight");
 
-		ignoredLafIds.add("nimbusAlertYellow");
-		ignoredLafIds.add("nimbusBase");
-		ignoredLafIds.add("nimbusBlueGrey");
-		ignoredLafIds.add("nimbusDisabledText");
-		ignoredLafIds.add("nimbusFocus");
-		ignoredLafIds.add("nimbusGreen");
-		ignoredLafIds.add("nimbusInfoBlue");
-		ignoredLafIds.add("nimbusOrange");
-		ignoredLafIds.add("nimbusRed");
-		ignoredLafIds.add("nimbusSelectedText");
-		ignoredLafIds.add("nimbusSelection");
-		ignoredLafIds.add("nimbusSelectionBackground");
+		ignoredJavaIds.add("nimbusAlertYellow");
+		ignoredJavaIds.add("nimbusBase");
+		ignoredJavaIds.add("nimbusBlueGrey");
+		ignoredJavaIds.add("nimbusDisabledText");
+		ignoredJavaIds.add("nimbusFocus");
+		ignoredJavaIds.add("nimbusGreen");
+		ignoredJavaIds.add("nimbusInfoBlue");
+		ignoredJavaIds.add("nimbusOrange");
+		ignoredJavaIds.add("nimbusRed");
+		ignoredJavaIds.add("nimbusSelectedText");
+		ignoredJavaIds.add("nimbusSelection");
+		ignoredJavaIds.add("nimbusSelectionBackground");
 
 	}
 
 	@Override
-	protected void assignSystemColorValues() {
+	protected void pickRepresentativeValueForColorGroups() {
 
 		// different from base class
-		assignSystemColorFromLafId(BG_CONTROL_ID, "Button.background");
-		assignSystemColorFromLafId(FG_CONTROL_ID, "Button.foreground");
-		assignSystemColorFromLafId(BG_BORDER_ID, "nimbusBorder");
-		assignSystemColorFromLafId(BG_VIEW_ID, "nimbusLightBackground");
-		assignSystemColorFromLafId(FG_VIEW_ID, "controlText");
+		setGroupColorUsingJavaRepresentative(BG_CONTROL_ID, "Button.background");
+		setGroupColorUsingJavaRepresentative(FG_CONTROL_ID, "Button.foreground");
+		setGroupColorUsingJavaRepresentative(BG_BORDER_ID, "nimbusBorder");
+		setGroupColorUsingJavaRepresentative(BG_VIEW_ID, "nimbusLightBackground");
+		setGroupColorUsingJavaRepresentative(FG_VIEW_ID, "controlText");
 
 		// the following are the same as the base class (we can't just call super because
 		// it will report errors for missing lafIds such as "window"
 
-		assignSystemColorFromLafId(BG_VIEW_SELECTED_ID, "textHighlight");
-		assignSystemColorFromLafId(FG_VIEW_SELECTED_ID, "textHighlightText");
-		assignSystemColorFromLafId(FG_DISABLED_ID, "textInactiveText");
-		assignSystemColorFromLafId(BG_TOOLTIP_ID, "info");
-		assignSystemColorFromLafId(FG_TOOLTIP_ID, "infoText");
+		setGroupColorUsingJavaRepresentative(BG_VIEW_SELECTED_ID, "textHighlight");
+		setGroupColorUsingJavaRepresentative(FG_VIEW_SELECTED_ID, "textHighlightText");
+		setGroupColorUsingJavaRepresentative(FG_DISABLED_ID, "textInactiveText");
+		setGroupColorUsingJavaRepresentative(BG_TOOLTIP_ID, "info");
+		setGroupColorUsingJavaRepresentative(FG_TOOLTIP_ID, "infoText");
 	}
 
 	@Override
@@ -83,8 +83,8 @@ public class NimbusUiDefaultsMapper extends UiDefaultsMapper {
 		super.installGColorsIntoUIDefaults();
 
 		// The Nimbus selected text field color is not honored if the value is a ColorUIResource.
-		// We install GColorUIResources by default.  Thus, our setting for this particular 
-		// attribute was being ignored.   We set it here to be a GColor, which causes Nimbus 
+		// We install GColorUIResources by default.  Thus, our setting for this particular
+		// attribute was being ignored.   We set it here to be a GColor, which causes Nimbus
 		// to honor the value.  We may need to add more entries here as they are discovered.
 
 		defaults.put("TextField.selectionForeground",
