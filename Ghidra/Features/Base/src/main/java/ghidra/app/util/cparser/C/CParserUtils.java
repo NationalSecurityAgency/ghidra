@@ -535,7 +535,7 @@ public class CParserUtils {
 		String fName = dtMgr.getName();
 		
 		// make a path to tmpdir with name of data type manager
-		String path = System.getProperty("java.io.tmpdir") + File.pathSeparator + fName;
+		String path = System.getProperty("java.io.tmpdir") + File.separator + fName;
 		// if file data type manager, use path to .gdt file
 		if (dtMgr instanceof FileDataTypeManager) {
 			path = ((FileDataTypeManager) dtMgr).getPath();
