@@ -482,7 +482,7 @@ public class CParserUtils {
 				e.printStackTrace();
 			}
         }
-        
+
         return parseHeaderFiles(openDTMgrs, filenames, includePaths, args, existingDTMgr, monitor);
     }
 	
