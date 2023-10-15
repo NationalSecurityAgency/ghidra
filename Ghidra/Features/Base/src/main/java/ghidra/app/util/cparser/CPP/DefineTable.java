@@ -881,10 +881,9 @@ public class DefineTable {
 			pos = startPos;
 			int endParen = strValue.indexOf(')', pos + 1);
 			if (endParen != -1) {
-				String subStr = strValue.substring(pos + 1, endParen);
+				String subStr = strValue.substring(pos + 1, endParen).trim();
 				if (subStr.length() > 0) {
 					int subPos = 0;
-					subStr = subStr.trim();
 					boolean isValid = Character.isJavaIdentifierStart(subStr.charAt(0));
 					while (isValid && subPos < subStr.length()) {
 						char ch = subStr.charAt(subPos++);
