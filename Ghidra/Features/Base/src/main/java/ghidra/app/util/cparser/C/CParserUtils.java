@@ -628,11 +628,11 @@ public class CParserUtils {
 			throws ghidra.app.util.cparser.CPP.ParseException {
 		monitor.setMessage("PreProcessing " + filename);
 		try {
-			Msg.info(CParserUtils.class, "parse " + filename);
+			Msg.info(CParserUtils.class, "parse: " + filename);
 			cpp.parse(filename);
 		}
 		catch (Throwable e) {
-			Msg.error(CParserUtils.class, "Parsing file :" + filename);
+			Msg.error(CParserUtils.class, "Parsing file: " + filename);
 			Msg.error(CParserUtils.class, "Unexpected Exception: " + e.getMessage(), e);
 
 			throw new ghidra.app.util.cparser.CPP.ParseException(e.getMessage());
@@ -693,7 +693,7 @@ public class CParserUtils {
 	// the error message contains an 'after' text, which is the text that comes after the
 	// invalid text
 	private static int getTokenMgrErrorIndexOfInvalidText(String message, String functionString) {
-		String invalidCharMarker = "after : ";
+		String invalidCharMarker = "after: ";
 		int index = message.indexOf(invalidCharMarker);
 		if (index >= 0) {
 			String remainder = message.substring(index + invalidCharMarker.length());
