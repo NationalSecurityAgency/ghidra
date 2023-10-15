@@ -572,7 +572,7 @@ public class CParserUtils {
 						continue;
 					}
 					for (String element : children) {
-						File child = new File(file.getAbsolutePath() + "/" + element);
+						File child = new File(file.getAbsolutePath() + File.separator + element);
 						if (child.getName().endsWith(".h")) {
 							parseFile(child.getAbsolutePath(), monitor, cpp);
 						}
