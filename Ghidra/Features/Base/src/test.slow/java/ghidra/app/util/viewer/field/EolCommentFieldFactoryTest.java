@@ -65,7 +65,7 @@ public class EolCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 		ListingTextField tf = getFieldText(function);
 		assertEquals(2, tf.getNumRows());
 
-		setBooleanOption(EolCommentFieldFactory.ENABLE_WORD_WRAP_MSG, true);
+		setBooleanOption(EolCommentFieldFactory.ENABLE_WORD_WRAP_KEY, true);
 
 		tf = getFieldText(function);
 		assertEquals(4, tf.getNumRows());

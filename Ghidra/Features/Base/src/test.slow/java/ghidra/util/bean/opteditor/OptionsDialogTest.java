@@ -243,7 +243,8 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 			// skip options that are "not simple", i.e. have custom editors
 			if (simpleName.equals("Display Namespace") ||
 				simpleName.equals("Array Display Options") ||
-				simpleName.equals("Address Display Options")) {
+				simpleName.equals("Address Display Options") ||
+				simpleName.equals("Auto Comments")) {
 				continue;
 			}
 
