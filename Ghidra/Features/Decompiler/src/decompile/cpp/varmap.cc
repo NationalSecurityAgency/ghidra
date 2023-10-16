@@ -355,7 +355,7 @@ void ScopeLocal::checkUnaliasedReturn(const vector<uintb> &alias)
   if (retOp == (PcodeOp *)0 || retOp->numInput() < 2) return;
   Varnode *vn = retOp->getIn(1);
   if (vn->getSpace() != space) return;
-  if (!vn->isMapped()) return;
+  // Assume vn is mapped.  Cannot check vn->isMapped() as we are in the middle of restructuring.
   vector<uintb>::const_iterator iter = lower_bound(alias.begin(),alias.end(),vn->getOffset());
   if (iter != alias.end()) {
     // Alias is greater than or equal to vn offset
