@@ -99,6 +99,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			Program program = doLoad(provider, loadedName, loadSpec, libraryNameList, options,
 				consumer, log, monitor);
 			loadedProgramList.add(new Loaded<>(program, loadedName, projectFolderPath));
+			log.appendMsg("------------------------------------------------\n");
 
 			// Load the libraries
 			List<Loaded<Program>> libraries = loadLibraries(provider, program, project,
@@ -129,8 +130,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			log.appendMsg(message);
 			throw new LoadException(message);
 		}
-		log.appendMsg("----- Loading " + provider.getAbsolutePath() + " -----");
+		log.appendMsg("Loading " + provider.getAbsolutePath() + "...");
 		load(provider, loadSpec, options, program, monitor, log);
+		log.appendMsg("--------------------------------------------------------------------\n");
 	}
 
 	@Override
@@ -419,10 +421,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected boolean shouldLoadLibrary(String libraryName, FSRL libraryFsrl,
 			ByteProvider provider, LoadSpec desiredLoadSpec, MessageLog log) throws IOException {
-		if (matchSupportedLoadSpec(desiredLoadSpec, provider) == null) {
-			log.appendMsg("Skipping library which is the wrong architecture: " + libraryFsrl);
-			return false;
-		}
 		return true;
 	}
 
@@ -475,6 +473,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			createUnprocessedQueue(libraryNameList, getLibraryLoadDepth(options));
 		boolean loadLocalLibraries = isLoadLocalLibraries(options);
 		boolean loadSystemLibraries = isLoadSystemLibraries(options);
+		List<FileSystemSearchPath> customSearchPaths =
+			getCustomLibrarySearchPaths(provider, options, log, monitor);
 		List<FileSystemSearchPath> localSearchPaths =
 			getLocalLibrarySearchPaths(provider, options, log, monitor);
 		List<FileSystemSearchPath> systemSearchPaths =
@@ -498,38 +498,64 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				processed.add(libraryName);
 				if (libraryDestFolder != null &&
 					findLibrary(libraryName, libraryDestFolder) != null) {
-					log.appendMsg("Library " + libraryName + ": Already loaded ");
+					log.appendMsg("Found %s in %s...".formatted(libraryName, libraryDestFolder));
+					log.appendMsg("------------------------------------------------\n");
 				}
 				else if (linkSearchFolder != null &&
 					findLibrary(libraryName, linkSearchFolder) != null) {
-					log.appendMsg("Library " + libraryName + ": Already loaded ");
+					log.appendMsg("Found %s in %s...".formatted(libraryName, linkSearchFolder));
+					log.appendMsg("------------------------------------------------\n");
 				}
-				else {
+				else if (!customSearchPaths.isEmpty() || !localSearchPaths.isEmpty() ||
+					!systemSearchPaths.isEmpty()) {
 					// Note that it is possible to have local (or system) search paths with those
 					// options turned off (if shouldSearchAllPaths() is overridden to return true).
 					// In this case, we still want to process those libraries, but we 
 					// do not want to save them, so they can be released.
-					boolean loadedLocal = false;
-					if (!localSearchPaths.isEmpty()) {
-						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
-							libraryName, provider, localSearchPaths, libraryDestFolderPath,
-							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);
+					boolean found = false;
+					boolean loaded = false;
+					if (!customSearchPaths.isEmpty()) {
+						log.appendMsg("Searching %d custom path%s for library %s...".formatted(
+							customSearchPaths.size(), customSearchPaths.size() > 1 ? "s" : "",
+							libraryName));
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, customSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
+							found = true;
+							loaded = true;
+							loadedPrograms.add(loadedLibrary);
+						}
+					}
+					if (!loaded && !localSearchPaths.isEmpty()) {
+						log.appendMsg("Searching %d local path%s for library %s...".formatted(
+							localSearchPaths.size(), localSearchPaths.size() > 1 ? "s" : "",
+							libraryName));
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, localSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
+						if (loadedLibrary != null) {
+							found = true;
 							if (loadLocalLibraries) {
+								loaded = true;
 								loadedPrograms.add(loadedLibrary);
-								loadedLocal = true;
 							}
 							else {
 								loadedLibrary.release(consumer);
 							}
 						}
 					}
-					if (!loadedLocal && !systemSearchPaths.isEmpty()) {
-						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
-							libraryName, provider, systemSearchPaths, libraryDestFolderPath,
-							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);
+					if (!loaded && !systemSearchPaths.isEmpty()) {
+						log.appendMsg("Searching %d system path%s for library %s...".formatted(
+							systemSearchPaths.size(), systemSearchPaths.size() > 1 ? "s" : "",
+							libraryName));
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, systemSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
+							found = true;
 							if (loadSystemLibraries) {
+								loaded = true;
 								loadedPrograms.add(loadedLibrary);
 							}
 							else {
@@ -537,6 +563,19 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 							}
 						}
 					}
+					if (!found) {
+						log.appendMsg("Library not found.");
+					}
+					else {
+						if (loaded) {
+							log.appendMsg("Saving library to: " +
+								loadedPrograms.get(loadedPrograms.size() - 1).toString());
+						}
+						else {
+							log.appendMsg("Library not saved to project.");
+						}
+					}
+					log.appendMsg("------------------------------------------------\n");
 				}
 			}
 			success = true;
@@ -605,13 +644,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				if (library == null) {
 					continue;
 				}
-				log.appendMsg("Library " + libraryName + ": Examining " + candidateLibraryFsrl);
 				processLibrary(library, libraryName, candidateLibraryFsrl, provider,
 					desiredLoadSpec, options, log, monitor);
 				success = true;
 				return new Loaded<Program>(library, simpleLibraryName, libraryDestFolderPath);
 			}
-			log.appendMsg("Library " + libraryName + ": Not found");
 			return null;
 		}
 		finally {
@@ -793,15 +830,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				return null;
 			}
 
-			Program library = doLoad(provider, libraryName, libLoadSpec, libraryNameList, options,
-				consumer, log, monitor);
-
-			if (library == null) {
-				log.appendMsg("Library " + libraryFsrl + " failed to load for some reason");
-				return null;
-			}
-
-			return library;
+			return doLoad(provider, libraryName, libLoadSpec, libraryNameList,
+				options, consumer, log, monitor);
 		}
 	}
 
@@ -841,7 +871,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		int transactionID = program.startTransaction("Loading");
 		boolean success = false;
 		try {
-			log.appendMsg("----- Loading " + provider.getAbsolutePath() + " -----");
+			log.appendMsg("Loading %s...".formatted(provider.getFSRL()));
 			load(provider, loadSpec, options, program, monitor, log);
 
 			createDefaultMemoryBlocks(program, language, log);
@@ -867,7 +897,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			program.endTransaction(transactionID, true); // More efficient to commit when program will be discarded
 			if (!success) {
 				program.release(consumer);
-				program = null;
 			}
 		}
 	}
@@ -943,7 +972,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			TaskMonitor monitor, MessageLog messageLog) throws CancelledException {
 		ExternalManager extManager = program.getExternalManager();
 		String[] extLibNames = extManager.getExternalLibraryNames();
-		messageLog.appendMsg("Linking external programs to " + program.getName() + "...");
+		messageLog.appendMsg(
+			"Linking the External Programs of '%s' to imported libraries..."
+					.formatted(program.getName()));
 		for (String externalLibName : extLibNames) {
 			if (Library.UNKNOWN.equals(externalLibName)) {
 				continue;
@@ -972,7 +1003,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						}
 					}
 					if (!found) {
-						messageLog.appendMsg("  [" + externalLibName + "] -> not found");
+						messageLog.appendMsg("  [" + externalLibName + "] -> not found in project");
 					}
 				}
 			}
@@ -1011,7 +1042,24 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param fsRef A {@link FileSystemRef}
 	 * @param fsPath A {@link Path} relative to the root of the file system, or null for the root
 	 */
-	private record FileSystemSearchPath(FileSystemRef fsRef, Path fsPath) {}
+	protected record FileSystemSearchPath(FileSystemRef fsRef, Path fsPath) {}
+
+	/**
+	 * Gets a {@link List} of priority-ordered custom {@link FileSystemSearchPath}s used to search 
+	 * for libraries.  The default implementation of this method returns an empty {@link List}.
+	 * Subclasses can override it as needed.
+	 * 
+	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param options The options
+	 * @param log The log
+	 * @param monitor A cancelable task monitor
+	 * @return A {@link List} of priority-ordered custom {@link FileSystemSearchPath}s used to
+	 *   search for libraries
+	 */
+	protected List<FileSystemSearchPath> getCustomLibrarySearchPaths(ByteProvider provider,
+			List<Option> options, MessageLog log, TaskMonitor monitor) {
+		return List.of();
+	}
 
 	/**
 	 * Gets a {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to search 
@@ -1021,7 +1069,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param options The options
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
-	 * @return A {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to s
+	 * @return A {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to
 	 *   search for libraries
 	 */
 	private List<FileSystemSearchPath> getLocalLibrarySearchPaths(ByteProvider provider,

@@ -322,7 +322,7 @@ public abstract class ThemeManager {
 		FontValue font = currentValues.getFont(id);
 
 		if (font == null) {
-			error("No color value registered for: '" + id + "'");
+			error("No font value registered for: '" + id + "'");
 			return DEFAULT_FONT;
 		}
 		return font.get(currentValues);

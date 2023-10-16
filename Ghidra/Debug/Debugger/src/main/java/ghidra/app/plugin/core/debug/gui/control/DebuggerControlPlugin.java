@@ -17,9 +17,7 @@ package ghidra.app.plugin.core.debug.gui.control;
 
 import java.awt.event.KeyEvent;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiPredicate;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -28,35 +26,41 @@ import javax.swing.KeyStroke;
 import docking.ActionContext;
 import docking.DockingContextListener;
 import docking.action.*;
-import docking.action.builder.AbstractActionBuilder;
 import docking.action.builder.ActionBuilder;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.debug.*;
-import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
+import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
+import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
+import ghidra.app.plugin.core.debug.service.model.TraceRecorderTarget;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulatorStateListener;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.target.*;
-import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetSteppable.TargetStepKind;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.emulation.DebuggerPcodeMachine;
+import ghidra.debug.api.target.ActionName;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
-import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.time.schedule.Scheduler;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
 	shortDescription = "Debugger global controls",
@@ -67,7 +71,6 @@ import ghidra.util.*;
 	eventsConsumed = {
 		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,
-		ModelObjectFocusedPluginEvent.class,
 	},
 	servicesRequired = {
 		DebuggerControlService.class,
@@ -78,131 +81,6 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	static String intSubGroup(int subGroup) {
 		return String.format("%02d", subGroup);
-	}
-
-	abstract class TargetAction<T extends TargetObject> extends DockingAction {
-		TraceObject object;
-
-		public TargetAction(String name) {
-			super(name, DebuggerControlPlugin.this.getName());
-		}
-
-		abstract Class<T> getTargetInterface();
-
-		TraceObject findTraceObject() {
-			TraceObject focus = current.getObject();
-			if (focus == null) {
-				return null;
-			}
-			return focus.querySuitableTargetInterface(getTargetInterface());
-		}
-
-		T getTargetObject(TraceObject object) {
-			TraceRecorder recorder = current.getRecorder();
-			if (recorder == null || !recorder.isRecording()) {
-				return null;
-			}
-			Class<T> iface = getTargetInterface();
-			if (object != null) {
-				return iface.cast(recorder.getTargetObject(object));
-			}
-			TargetObject focus = recorder.getFocus();
-			if (focus == null) {
-				return null;
-			}
-			return focus.getCachedSuitable(iface);
-		}
-
-		abstract boolean isEnabledForObject(T t);
-
-		abstract void actionPerformed(T t);
-
-		@Override
-		public boolean isEnabledForContext(ActionContext context) {
-			object = findTraceObject();
-			T t = getTargetObject(object);
-			if (t == null || !t.getModel().isAlive()) {
-				return false;
-			}
-			return isEnabledForObject(t);
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			T t = getTargetObject(object);
-			if (t == null) {
-				return;
-			}
-			actionPerformed(t);
-		}
-	}
-
-	static class TargetActionBuilder<T extends TargetObject>
-			extends AbstractActionBuilder<TargetAction<T>, ActionContext, TargetActionBuilder<T>> {
-		final DebuggerControlPlugin owner;
-
-		@SuppressWarnings("unchecked")
-		Class<T> iface = (Class<T>) TargetObject.class;
-		Function<T, CompletableFuture<?>> actionCallback;
-		BiPredicate<TraceObject, T> enabledPredicate;
-
-		public TargetActionBuilder(String name, DebuggerControlPlugin owner) {
-			super(name, owner.getName());
-			this.owner = owner;
-		}
-
-		@SuppressWarnings("unchecked")
-		public <U extends TargetObject> TargetActionBuilder<U> withInterface(Class<U> iface) {
-			this.iface = (Class<T>) iface;
-			return (TargetActionBuilder<U>) self();
-		}
-
-		public TargetActionBuilder<T> enabledWhenTarget(
-				BiPredicate<TraceObject, T> enabledPredicate) {
-			this.enabledPredicate = enabledPredicate;
-			return self();
-		}
-
-		public TargetActionBuilder<T> onTargetAction(
-				Function<T, CompletableFuture<?>> actionCallback) {
-			this.actionCallback = actionCallback;
-			return self();
-		}
-
-		@Override
-		protected TargetActionBuilder<T> self() {
-			return this;
-		}
-
-		@Override
-		public TargetAction<T> build() {
-			Objects.requireNonNull(iface, "Must specify withInterface");
-			Objects.requireNonNull(enabledPredicate, "Must specify enabledWhenTarget");
-			Objects.requireNonNull(actionCallback, "Must specify onTargetAction");
-
-			TargetAction<T> action = owner.new TargetAction<>(name) {
-				@Override
-				Class<T> getTargetInterface() {
-					return iface;
-				}
-
-				@Override
-				boolean isEnabledForObject(T t) {
-					return enabledPredicate.test(object, t);
-				}
-
-				@Override
-				void actionPerformed(T t) {
-					actionCallback.apply(t).exceptionally(ex -> {
-						owner.tool.setStatusInfo(name + " failed: " + ex.getMessage(), true);
-						Msg.error(this, name + " failed", ex);
-						return null;
-					});
-				}
-			};
-			decorateAction(action);
-			return action;
-		}
 	}
 
 	interface ControlAction {
@@ -250,19 +128,15 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	interface TargetResumeAction extends ResumeAction {
-		String NAME = "Resume Target";
-		String DESCRIPTION = "Resume, i.e., go or continue execution of the target";
 		String HELP_ANCHOR = "target_resume";
 
-		static TargetActionBuilder<TargetResumable> builder(DebuggerControlPlugin owner) {
+		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
 			String ownerName = owner.getName();
-			return new TargetActionBuilder<>(NAME, owner)
-					.description(DESCRIPTION)
+			return new ActionBuilder(name, ownerName)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
 					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.withInterface(TargetResumable.class);
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -289,19 +163,15 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	interface TargetInterruptAction extends InterruptAction {
-		String NAME = "Interrupt Target";
-		String DESCRIPTION = "Interrupt, i.e., suspend, the target";
 		String HELP_ANCHOR = "target_interrupt";
 
-		static TargetActionBuilder<TargetInterruptible> builder(DebuggerControlPlugin owner) {
+		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
 			String ownerName = owner.getName();
-			return new TargetActionBuilder<>(NAME, owner)
-					.description(DESCRIPTION)
+			return new ActionBuilder(name, ownerName)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
 					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.withInterface(TargetInterruptible.class);
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -325,20 +195,16 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		Icon ICON = DebuggerResources.ICON_KILL;
 		String HELP_ANCHOR = "target_kill";
 		int SUB_GROUP = 2;
-		String NAME = "Kill Target";
-		String DESCRIPTION = "Kill, i.e., forcibly terminate the target";
 		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_K,
 			KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK);
 
-		static TargetActionBuilder<TargetKillable> builder(DebuggerControlPlugin owner) {
+		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
 			String ownerName = owner.getName();
-			return new TargetActionBuilder<>(NAME, owner)
-					.description(DESCRIPTION)
+			return new ActionBuilder(name, ownerName)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
 					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.withInterface(TargetKillable.class);
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -388,19 +254,15 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	interface TargetStepIntoAction extends StepIntoAction {
-		String NAME = "Step Target Into";
-		String DESCRIPTION = "Step the target a single instruction, descending into calls";
 		String HELP_ANCHOR = "target_step_into";
 
-		static TargetActionBuilder<TargetSteppable> builder(DebuggerControlPlugin owner) {
+		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
 			String ownerName = owner.getName();
-			return new TargetActionBuilder<>(NAME, owner)
-					.description(DESCRIPTION)
+			return new ActionBuilder(name, ownerName)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
 					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.withInterface(TargetSteppable.class);
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -422,22 +284,18 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	interface TargetStepOverAction extends ControlAction {
-		String NAME = "Step Target Over";
-		String DESCRIPTION = "Step the target a single instruction, without following calls";
 		Icon ICON = DebuggerResources.ICON_STEP_OVER;
 		String HELP_ANCHOR = "target_step_over";
 		int SUB_GROUP = 6;
 		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0);
 
-		static TargetActionBuilder<TargetSteppable> builder(DebuggerControlPlugin owner) {
+		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
 			String ownerName = owner.getName();
-			return new TargetActionBuilder<>(NAME, owner)
-					.description(DESCRIPTION)
+			return new ActionBuilder(name, ownerName)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
 					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.withInterface(TargetSteppable.class);
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -461,43 +319,35 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		}
 	}
 
-	interface TargetStepFinishAction extends ControlAction {
-		String NAME = "Step Target Finish";
-		String DESCRIPTION = "Step the target until it completes the current frame";
+	interface TargetStepOutAction extends ControlAction {
 		Icon ICON = DebuggerResources.ICON_STEP_FINISH;
-		String HELP_ANCHOR = "target_step_finish";
+		String HELP_ANCHOR = "target_step_out";
 		int SUB_GROUP = 8;
 		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0);
 
-		static TargetActionBuilder<TargetSteppable> builder(DebuggerControlPlugin owner) {
+		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
 			String ownerName = owner.getName();
-			return new TargetActionBuilder<>(NAME, owner)
-					.description(DESCRIPTION)
+			return new ActionBuilder(name, ownerName)
 					.toolBarIcon(ICON)
 					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
 					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.withInterface(TargetSteppable.class);
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
-	interface TargetStepLastAction extends ControlAction {
-		String NAME = "Step Target Repeat Last";
-		String DESCRIPTION = "Step the target in a target-defined way";
+	interface TargetStepExtAction extends ControlAction {
 		Icon ICON = DebuggerResources.ICON_STEP_LAST;
-		String HELP_ANCHOR = "target_step_last";
+		String HELP_ANCHOR = "target_step_ext";
 		int SUB_GROUP = 9;
 		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F8, KeyEvent.CTRL_DOWN_MASK);
 
-		static TargetActionBuilder<TargetSteppable> builder(DebuggerControlPlugin owner) {
+		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
 			String ownerName = owner.getName();
-			return new TargetActionBuilder<>(NAME, owner)
-					.description(DESCRIPTION)
+			return new ActionBuilder(name, ownerName)
 					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
+					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP) + name)
 					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.withInterface(TargetSteppable.class);
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
 
@@ -577,15 +427,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	protected MultiStateDockingAction<ControlMode> actionControlMode;
 
-	DockingAction actionTargetResume;
-	DockingAction actionTargetInterrupt;
-	DockingAction actionTargetKill;
 	DockingAction actionTargetDisconnect;
-	DockingAction actionTargetStepInto;
-	DockingAction actionTargetStepOver;
-	DockingAction actionTargetStepFinish;
-	DockingAction actionTargetStepLast;
-	Set<DockingAction> actionsTarget;
+	final Set<DockingAction> actionsTarget = new HashSet<>();
 
 	DockingAction actionEmulateResume;
 	DockingAction actionEmulateInterrupt;
@@ -655,41 +498,11 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		actionControlMode = new ControlModeAction();
 		tool.addAction(actionControlMode);
 
-		actionTargetResume = TargetResumeAction.builder(this)
-				.enabledWhenTarget(this::isActionTargetResumeEnabled)
-				.onTargetAction(this::activatedTargetResume)
-				.build();
-		actionTargetInterrupt = TargetInterruptAction.builder(this)
-				.enabledWhenTarget(this::isActionTargetInterruptEnabled)
-				.onTargetAction(this::activatedTargetInterrupt)
-				.build();
-		actionTargetKill = TargetKillAction.builder(this)
-				.enabledWhenTarget(this::isActionTargetKillEnabled)
-				.onTargetAction(this::activatedTargetKill)
-				.build();
 		actionTargetDisconnect = DisconnectAction.builder(this)
 				.enabledWhen(this::isActionTargetDisconnectEnabled)
 				.onAction(this::activatedTargetDisconnect)
 				.build();
-		actionTargetStepInto = TargetStepIntoAction.builder(this)
-				.enabledWhenTarget(this::isActionTargetStepEnabled)
-				.onTargetAction(this::activatedTargetStepInto)
-				.build();
-		actionTargetStepOver = TargetStepOverAction.builder(this)
-				.enabledWhenTarget(this::isActionTargetStepEnabled)
-				.onTargetAction(this::activatedTargetStepOver)
-				.build();
-		actionTargetStepFinish = TargetStepFinishAction.builder(this)
-				.enabledWhenTarget(this::isActionTargetStepEnabled)
-				.onTargetAction(this::activatedTargetStepFinish)
-				.build();
-		actionTargetStepLast = TargetStepLastAction.builder(this)
-				.enabledWhenTarget(this::isActionTargetStepEnabled)
-				.onTargetAction(this::activatedTargetStepLast)
-				.build();
-		actionsTarget = Set.of(actionTargetResume, actionTargetInterrupt, actionTargetKill,
-			actionTargetDisconnect, actionTargetStepInto, actionTargetStepOver,
-			actionTargetStepFinish, actionTargetStepLast);
+		updateTargetActions();
 
 		actionEmulateResume = EmulateResumeAction.builder(this)
 				.enabledWhen(this::isActionEmulateResumeEnabled)
@@ -729,6 +542,72 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		updateActions();
 	}
 
+	protected interface TargetActionBuilderFactory
+			extends BiFunction<String, DebuggerControlPlugin, ActionBuilder> {
+	}
+
+	protected DockingAction buildTargetAction(TargetActionBuilderFactory factory,
+			ActionEntry entry) {
+		return factory.apply(entry.display(), this)
+				.description(entry.details())
+				.enabledWhen(ctx -> entry.isEnabled())
+				.onAction(ctx -> runTask(entry))
+				.build();
+	}
+
+	protected void runTask(ActionEntry entry) {
+		tool.execute(new TargetActionTask(entry));
+	}
+
+	protected void addTargetActionsForName(Target target, ActionName name,
+			TargetActionBuilderFactory factory) {
+		for (ActionEntry entry : target.collectActions(name, context).values()) {
+			if (entry.requiresPrompt()) {
+				continue;
+			}
+			actionsTarget.add(buildTargetAction(factory, entry));
+		}
+	}
+
+	/**
+	 * This is for testing purposes only. Fetch an action from "targetActions" whose name matches
+	 * that given.
+	 * 
+	 * <p>
+	 * Since the tests are still assuming {@link TraceRecorderTarget}s, actions can be reliably
+	 * retrieved by name.
+	 * 
+	 * @param name the action name
+	 * @return the action, or null
+	 */
+	/* testing */ DockingAction getTargetAction(String name) {
+		for (DockingAction action : actionsTarget) {
+			if (name.equals(action.getName())) {
+				return action;
+			}
+		}
+		return null;
+	}
+
+	protected void updateTargetActions() {
+		hideActions(actionsTarget);
+		actionsTarget.clear();
+		actionsTarget.add(actionTargetDisconnect);
+
+		Target target = current.getTarget();
+		if (target == null || !target.isValid()) {
+			return;
+		}
+
+		addTargetActionsForName(target, ActionName.RESUME, TargetResumeAction::builder);
+		addTargetActionsForName(target, ActionName.INTERRUPT, TargetInterruptAction::builder);
+		addTargetActionsForName(target, ActionName.KILL, TargetKillAction::builder);
+		addTargetActionsForName(target, ActionName.STEP_INTO, TargetStepIntoAction::builder);
+		addTargetActionsForName(target, ActionName.STEP_OVER, TargetStepOverAction::builder);
+		addTargetActionsForName(target, ActionName.STEP_OUT, TargetStepOutAction::builder);
+		addTargetActionsForName(target, ActionName.STEP_EXT, TargetStepExtAction::builder);
+	}
+
 	protected void activateControlMode(ActionState<ControlMode> state, EventTrigger trigger) {
 		if (current.getTrace() == null) {
 			return;
@@ -749,83 +628,27 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		});
 	}
 
-	private TargetExecutionState getStateOf(TraceObject traceObject, TargetObject targetObject) {
-		if (traceObject != null) {
-			return traceObject.getExecutionState(current.getSnap());
-		}
-		TargetExecutionStateful stateful =
-			targetObject.getCachedSuitable(TargetExecutionStateful.class);
-		return stateful == null ? null : stateful.getExecutionState();
-	}
-
-	private boolean isActionTargetResumeEnabled(TraceObject object, TargetResumable resumable) {
-		TargetExecutionState state = getStateOf(object, resumable);
-		// If the object isn't stateful, always allow this action. Such models should be corrected
-		return state == null || state.isStopped();
-	}
-
-	private CompletableFuture<?> activatedTargetResume(TargetResumable resumable) {
-		return resumable.resume();
-	}
-
-	private boolean isActionTargetInterruptEnabled(TraceObject object,
-			TargetInterruptible interruptible) {
-		TargetExecutionState state = getStateOf(object, interruptible);
-		// If the object isn't stateful, always allow this action.
-		return state == null || state.isRunning();
-	}
-
-	private CompletableFuture<?> activatedTargetInterrupt(TargetInterruptible interruptible) {
-		return interruptible.interrupt();
-	}
-
-	private boolean isActionTargetKillEnabled(TraceObject object, TargetKillable killable) {
-		TargetExecutionState state = getStateOf(object, killable);
-		// If the object isn't stateful, always allow this action. Such models should be corrected
-		return state == null || state.isAlive();
-	}
-
-	private CompletableFuture<?> activatedTargetKill(TargetKillable killable) {
-		return killable.kill();
-	}
-
 	private boolean isActionTargetDisconnectEnabled(ActionContext context) {
 		return current.isAlive();
 	}
 
 	private void activatedTargetDisconnect(ActionContext context) {
-		TraceRecorder recorder = current.getRecorder();
-		if (recorder == null) {
+		Target target = current.getTarget();
+		if (target == null) {
 			return;
 		}
-		DebuggerObjectModel model = recorder.getTarget().getModel();
-		model.close().exceptionally(ex -> {
-			tool.setStatusInfo("Disconnect failed: " + ex.getMessage(), true);
-			Msg.error(this, "Disconnect failed", ex);
-			return null;
+		tool.execute(new Task("Disconnect", false, false, false) {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				try {
+					target.disconnect();
+				}
+				catch (Exception e) {
+					tool.setStatusInfo("Disconnect failed: " + e, true);
+					Msg.error(this, "Disconnect failed: " + e, e);
+				}
+			}
 		});
-	}
-
-	private boolean isActionTargetStepEnabled(TraceObject object, TargetSteppable steppable) {
-		TargetExecutionState state = getStateOf(object, steppable);
-		// If the object isn't stateful, always allow this action. Such models should be corrected
-		return state == null || state.isStopped();
-	}
-
-	private CompletableFuture<?> activatedTargetStepInto(TargetSteppable steppable) {
-		return steppable.step(TargetStepKind.INTO);
-	}
-
-	private CompletableFuture<?> activatedTargetStepOver(TargetSteppable steppable) {
-		return steppable.step(TargetStepKind.OVER);
-	}
-
-	private CompletableFuture<?> activatedTargetStepFinish(TargetSteppable steppable) {
-		return steppable.step(TargetStepKind.FINISH);
-	}
-
-	private CompletableFuture<?> activatedTargetStepLast(TargetSteppable steppable) {
-		return steppable.step(TargetStepKind.EXTENDED);
 	}
 
 	private boolean haveEmuAndTrace() {
@@ -875,7 +698,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			return;
 		}
 		DebuggerCoordinates current = this.current;
-		emulationService.backgroundRun(current.getPlatform(), current.getTime(),
+		TraceSchedule time = current.getTime();
+		emulationService.backgroundRun(current.getPlatform(), time.steppedForward(null, 0),
 			Scheduler.oneThread(current.getThread())).thenAcceptAsync(r -> {
 				traceManager.activate(current.time(r.schedule()), ActivationCause.USER);
 			}, AsyncUtils.SWING_EXECUTOR).exceptionally(ex -> {
@@ -977,6 +801,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			}
 		}
 		current = coords;
+		updateTargetActions();
 		updateActions();
 	}
 

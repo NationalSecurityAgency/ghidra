@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
 import org.junit.experimental.categories.Category;
@@ -30,7 +29,6 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.DynamicTableColumn;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractImportFromFileSystemAction;
@@ -44,34 +42,30 @@ import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapModulesAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapSectionsAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
-import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.services.DebuggerListingService;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
-import ghidra.app.services.SectionMapProposal.SectionMapEntry;
-import ghidra.app.services.TraceRecorder;
-import ghidra.dbg.attributes.TargetPrimitiveDataType.DefaultTargetPrimitiveDataType;
-import ghidra.dbg.attributes.TargetPrimitiveDataType.PrimitiveKind;
-import ghidra.dbg.model.TestTargetModule;
-import ghidra.dbg.model.TestTargetTypedefDataType;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.dbg.util.*;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerTargetTraceMapper;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.data.TraceBasedDataTypeManager;
-import ghidra.trace.model.modules.*;
-import ghidra.trace.model.symbol.TraceSymbol;
+import ghidra.trace.model.modules.TraceObjectModule;
+import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.util.table.GhidraTable;
@@ -697,118 +691,6 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		performEnabledAction(provider, provider.actionSelectAddresses, true);
 		assertEquals(tb.set(tb.range(0x55550000, 0x555500ff), tb.range(0x7f000000, 0x7f0003ff)),
 			new AddressSet(listing.getCurrentSelection()));
-	}
-
-	@Test
-	@Ignore("This action is hidden until supported")
-	public void testActionCaptureTypes() throws Exception {
-		assertFalse(provider.actionCaptureTypes.isEnabled());
-		createTestModel();
-		mb.createTestProcessesAndThreads();
-
-		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
-		Trace trace = recorder.getTrace();
-
-		// TODO: A region should not be required first. Just to get a memMapper?
-		mb.testProcess1.addRegion("Memory[first_proc:.text]", mb.rng(0x55550000, 0x555500ff),
-			"rx");
-		TestTargetModule module =
-			mb.testProcess1.modules.addModule("Modules[first_proc]",
-				mb.rng(0x55550000, 0x555500ff));
-		// NOTE: A section should not be required at this point.
-		TestTargetTypedefDataType typedef = module.types.addTypedefDataType("myInt",
-			new DefaultTargetPrimitiveDataType(PrimitiveKind.SINT, 4));
-		waitForDomainObject(trace);
-
-		// Still
-		assertFalse(provider.actionCaptureTypes.isEnabled());
-
-		traceManager.activateTrace(trace);
-		waitForSwing();
-		TraceModule traceModule = waitForValue(() -> recorder.getTraceModule(module));
-		provider.setSelectedModules(Set.of(traceModule));
-		waitForSwing();
-		// TODO: When action is included, put this assertion back
-		//assertTrue(modulesProvider.actionCaptureTypes.isEnabled());
-
-		performEnabledAction(provider, provider.actionCaptureTypes, true);
-		waitForBusyTool(tool);
-		waitForDomainObject(trace);
-
-		// TODO: A separate action/script to transfer types from trace DTM into mapped program DTMs
-		TraceBasedDataTypeManager dtm = trace.getDataTypeManager();
-		TargetDataTypeConverter conv = new TargetDataTypeConverter(dtm);
-		DataType expType =
-			conv.convertTargetDataType(typedef).get(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
-		// TODO: Some heuristic or convention to extract the module name, if applicable
-		waitForPass(() -> {
-			DataType actType = dtm.getDataType("/Modules[first_proc].Types/myInt");
-			assertTypeEquals(expType, actType);
-		});
-
-		// TODO: When capture-types action is included, put this assertion back
-		//assertTrue(modulesProvider.actionCaptureTypes.isEnabled());
-		waitForLock(trace);
-		recorder.stopRecording();
-		waitForSwing();
-		assertFalse(provider.actionCaptureTypes.isEnabled());
-	}
-
-	@Test
-	public void testActionCaptureSymbols() throws Throwable {
-		assertFalse(provider.actionCaptureSymbols.isEnabled());
-		createTestModel();
-		mb.createTestProcessesAndThreads();
-
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(recorder.getTrace());
-
-		// TODO: A region should not be required first. Just to get a memMapper?
-		mb.testProcess1.addRegion("first_proc:.text", mb.rng(0x55550000, 0x555500ff),
-			"rx");
-		TestTargetModule module =
-			mb.testProcess1.modules.addModule("first_proc", mb.rng(0x55550000, 0x555500ff));
-		// NOTE: A section should not be required at this point.
-		module.symbols.addSymbol("test", mb.addr(0x55550080), 8,
-			new DefaultTargetPrimitiveDataType(PrimitiveKind.UNDEFINED, 8));
-		waitForDomainObject(tb.trace);
-
-		// Still
-		assertFalse(provider.actionCaptureSymbols.isEnabled());
-
-		traceManager.activateTrace(tb.trace);
-		waitForTasks();
-		waitForPass(() -> {
-			TraceModule traceModule = recorder.getTraceModule(module);
-			assertNotNull(traceModule);
-			runSwing(() -> provider.setSelectedModules(Set.of(traceModule)));
-			assertTrue(provider.actionCaptureSymbols.isEnabled());
-		});
-
-		performEnabledAction(provider, provider.actionCaptureSymbols, true);
-		waitForBusyTool(tool);
-		waitForDomainObject(tb.trace);
-
-		// TODO: A separate action/script to transfer symbols from trace into mapped programs
-		// TODO: Let this action work on the TraceObjects instead of TargetObjects
-		// NOTE: Used types must go along.
-		Collection<? extends TraceSymbol> symbols =
-			tb.trace.getSymbolManager().allSymbols().getNamed("test");
-		assertEquals(1, symbols.size());
-		TraceSymbol sym = symbols.iterator().next();
-		// TODO: Some heuristic or convention to extract the module name, if applicable
-		assertEquals("Processes[1].Modules[first_proc].Symbols::test", sym.getName(true));
-		// NOTE: builder (b) is not initialized here
-		assertEquals(tb.addr(0x55550080),
-			sym.getAddress());
-		// TODO: Check data type once those are captured in Data units.
-
-		assertTrue(provider.actionCaptureSymbols.isEnabled());
-		waitForLock(tb.trace);
-		recorder.stopRecording();
-		waitForSwing();
-		assertFalse(provider.actionCaptureSymbols.isEnabled());
 	}
 
 	@Test

@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.nio.ByteBuffer;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 
 public class CachedBytePage {

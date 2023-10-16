@@ -28,7 +28,6 @@ import generic.lsh.vector.VectorCompare;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -62,7 +61,6 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 
 	/**
 	 * Correlator class constructor.
-	 * @param serviceProvider the service provider
 	 * @param sourceProgram the source program
 	 * @param sourceAddressSet the source addresses to correlate
 	 * @param destinationProgram the destination program
@@ -70,13 +68,11 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * @param correlatorName the correlator name
 	 * @param options the tool options
 	 */
-	public VTAbstractReferenceProgramCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram,
+	public VTAbstractReferenceProgramCorrelator(Program sourceProgram,
 			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, String correlatorName, ToolOptions options) {
 		// Call the constructor for the parent class.
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 		this.correlatorName = correlatorName;
 
 		this.sourceProgram = sourceProgram;
@@ -95,7 +91,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * First generates the sourceDictionary from the source program and matchSet,
 	 * then finds the destinations corresponding to the matchSet and the
 	 * sourceDictionary using the preset similarity and confidence thresholds.
-	 * 
+	 *
 	 * @param matchSet contains all existing matches
 	 * @param monitor the task monitor
 	 * @throws CancelledException if cancelled
@@ -114,10 +110,10 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * findDestinations updates matchSet with non-null VTMatchInfo members returned from transform.
 	 * For each of the entries in the destinationMap = {destMatchAddr:[list of source references]},
 	 * we test all pairs [list of source references] x [list of destination references]
-	 * 
+	 *
 	 * </br>
 	 * Note: {@code destinationMap} is a class variable set by {@code extractReferenceFeatures}
-	 * 
+	 *
 	 * @param matchSet The {@code VTMatchSet} for the current session (non-transitive)
 	 * @param monitor task monitor
 	 * @throws CancelledException if cancelled
@@ -126,8 +122,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 			throws CancelledException {
 
 		monitor.initialize(destVectorsByAddress.size());
-		Set<Entry<Address, LSHCosineVectorAccum>> destEntries =
-			destVectorsByAddress.entrySet();
+		Set<Entry<Address, LSHCosineVectorAccum>> destEntries = destVectorsByAddress.entrySet();
 		for (Entry<Address, LSHCosineVectorAccum> destEntry : destEntries) {
 
 			monitor.checkCancelled();
@@ -140,8 +135,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 			// Get the set of possible matches, neighbors, in the SourceProgram
 			Map<Address, DominantPair<Double, VectorCompare>> srcNeighbors = new HashMap<>();
 
-			Set<Entry<Address, LSHCosineVectorAccum>> srcEntries =
-				srcVectorsByAddress.entrySet();
+			Set<Entry<Address, LSHCosineVectorAccum>> srcEntries = srcVectorsByAddress.entrySet();
 			for (Entry<Address, LSHCosineVectorAccum> srcEntry : srcEntries) {
 				Address srcAddr = srcEntry.getKey();
 				LSHCosineVectorAccum srcVector = srcEntry.getValue();
@@ -156,8 +150,8 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 				}
 			}
 
-			List<VTMatchInfo> members = transform(matchSet, destFunc, dstVector, srcNeighbors,
-				monitor);
+			List<VTMatchInfo> members =
+				transform(matchSet, destFunc, dstVector, srcNeighbors, monitor);
 
 			for (VTMatchInfo member : members) {
 				if (member != null) {
@@ -172,7 +166,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * Scoring Mechanism: determines destination similarity and confidence for each of the
 	 * sourceNeighbors and if similarity and confidence pass the threshold, then VTMatchInfo will
 	 * be created and added to the result.
-	 * 
+	 *
 	 * @param matchSet match set for this correlator
 	 * @param destinationFunction function in the destination program that references an existing accepted match
 	 * @param destinationVector the destination function's feature vector
@@ -288,14 +282,14 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	/**
 	 * Recursively traces the reference chains from a given address and returns by reference a
 	 * list of functions found along the reference chain.
-	 * 
+	 *
 	 * @param depth the initial recursion depth
 	 * @param list a function accumulation list that is updated by this function
 	 * @param program the program
 	 * @param address an address represents a location in a program
 	 */
-	private void accumulateFunctionReferences(int depth, Set<Function> list,
-			Program program, Address address) {
+	private void accumulateFunctionReferences(int depth, Set<Function> list, Program program,
+			Address address) {
 
 		if (depth >= MAX_DEPTH) {
 			return;
@@ -362,7 +356,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	/**
 	 * Used to check that a match association is of the correct type (e.g. DATA or FUNCTION) for
 	 * the given correlator.
-	 * 
+	 *
 	 * @param associationType the type of match
 	 * @return true if the correct type
 	 */
@@ -371,7 +365,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	/**
 	 * Used to check that a match association is of the correct type (e.g. DATA or FUNCTION) for
 	 * the given correlator.
-	 * 
+	 *
 	 * @param ref the reference
 	 * @return true if the correct type
 	 */
@@ -382,17 +376,15 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * becomes a unique feature. At the end, all the source and destination functions will have
 	 * "vectors" of these features, which are unique match ids.  Then the LSH dictionary can be
 	 * made from the source and we can look for matches in the destination.
-	 * 
+	 *
 	 * @param matchSet the match set of previously user-accepted matches
 	 * @param monitor the monitor
 	 */
 	private void extractReferenceFeatures(VTMatchSet matchSet, TaskMonitor monitor)
 			throws CancelledException {
 
-		srcVectorsByAddress =
-			LazyMap.lazyMap(new HashMap<>(), addr -> new LSHCosineVectorAccum());
-		destVectorsByAddress =
-			LazyMap.lazyMap(new HashMap<>(), addr -> new LSHCosineVectorAccum());
+		srcVectorsByAddress = LazyMap.lazyMap(new HashMap<>(), addr -> new LSHCosineVectorAccum());
+		destVectorsByAddress = LazyMap.lazyMap(new HashMap<>(), addr -> new LSHCosineVectorAccum());
 
 		FunctionManager srcFuncManager = sourceProgram.getFunctionManager();
 		FunctionManager destFuncManager = destinationProgram.getFunctionManager();
@@ -449,14 +441,12 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 
 			// By the construction above, there may be duplicate functions in the RefMaps
 			for (Function function : sourceRefMap.get(match)) {
-				LSHCosineVectorAccum vector =
-					srcVectorsByAddress.get(function.getEntryPoint());
+				LSHCosineVectorAccum vector = srcVectorsByAddress.get(function.getEntryPoint());
 				vector.addHash(featureID, weight);
 			}
 
 			for (Function function : destinationRefMap.get(match)) {
-				LSHCosineVectorAccum vector =
-					destVectorsByAddress.get(function.getEntryPoint());
+				LSHCosineVectorAccum vector = destVectorsByAddress.get(function.getEntryPoint());
 				vector.addHash(featureID, weight);
 			}
 
@@ -475,9 +465,8 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 			// odd checks here: 1) assuming we do not want to include our own results when checking
 			// matches; 2) why keep only the newest match set data?  seems like we should take all
 			// matches and dedup the matches, not the match sets
-			if (name.equals(correlatorName) ||
-				(dedupedMatchSets.containsKey(name) &&
-					ms.getID() < dedupedMatchSets.get(name).getID())) {
+			if (name.equals(correlatorName) || (dedupedMatchSets.containsKey(name) &&
+				ms.getID() < dedupedMatchSets.get(name).getID())) {
 				continue;
 			}
 
@@ -489,8 +478,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 
 	}
 
-	private void accumulateMatchFunctionReferences(
-			Map<VTMatch, Set<Function>> sourceRefMap,
+	private void accumulateMatchFunctionReferences(Map<VTMatch, Set<Function>> sourceRefMap,
 			Map<VTMatch, Set<Function>> destinationRefMap, VTMatch match) {
 
 		// check match association type and status
@@ -538,7 +526,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 		 * In order to account unmatched/unaccepted matches that appear in the key set that
 		 * consists of possibly correlated functions, we can consider the cost of a reference
 		 * switching and the cost of a reference being dropped or picked up between versions.
-		 * 
+		 *
 		 * Theoretically this should be dependent on the probability of the referenced element
 		 * occurring, but for the moment we'll consider the model for a generalized switch and
 		 * drop/pickup.

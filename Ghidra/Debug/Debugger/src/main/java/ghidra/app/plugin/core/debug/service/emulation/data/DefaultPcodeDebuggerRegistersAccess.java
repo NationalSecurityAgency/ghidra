@@ -15,20 +15,17 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.emulation.PcodeDebuggerRegistersAccess;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceRegistersAccess;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.Msg;
 
 /**
  * The default data-and-debugger access shim for session registers
@@ -37,25 +34,25 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 		implements PcodeDebuggerRegistersAccess, InternalPcodeDebuggerDataAccess {
 
 	protected final PluginTool tool;
-	protected final TraceRecorder recorder;
+	protected final Target target;
 
 	/**
 	 * Construct a shim
 	 * 
 	 * @param tool the tool controlling the session
-	 * @param recorder the target's recorder
+	 * @param target the target
 	 * @param platform the associated platform, having the same trace as the recorder
 	 * @param snap the associated snap
 	 * @param thread the associated thread whose registers to access
 	 * @param frame the associated frame, or 0 if not applicable
 	 * @param viewport the viewport, set to the same snapshot
 	 */
-	protected DefaultPcodeDebuggerRegistersAccess(PluginTool tool, TraceRecorder recorder,
+	protected DefaultPcodeDebuggerRegistersAccess(PluginTool tool, Target target,
 			TracePlatform platform, long snap, TraceThread thread, int frame,
 			TraceTimeViewport viewport) {
 		super(platform, snap, thread, frame, viewport);
 		this.tool = tool;
-		this.recorder = recorder;
+		this.target = target;
 	}
 
 	@Override
@@ -69,38 +66,16 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 	}
 
 	@Override
-	public TraceRecorder getRecorder() {
-		return recorder;
+	public Target getTarget() {
+		return target;
 	}
 
 	@Override
 	public CompletableFuture<Boolean> readFromTargetRegisters(AddressSetView guestView) {
-		if (guestView.isEmpty() || !isLive()) {
+		if (!isLive()) {
 			return CompletableFuture.completedFuture(false);
 		}
-		Set<Register> toRead = new HashSet<>();
-		Language language = platform.getLanguage();
-		for (AddressRange guestRng : guestView) {
-			Register register =
-				language.getRegister(guestRng.getMinAddress().getPhysicalAddress(),
-					(int) guestRng.getLength());
-			if (register == null) {
-				Msg.error(this, "Could not figure register for " + guestRng);
-			}
-			else if (!recorder.getRegisterMapper(thread)
-					.getRegistersOnTarget()
-					.contains(register)) {
-				Msg.warn(this, "Register not recognized by target: " + register);
-			}
-			else {
-				toRead.add(register);
-			}
-		}
-		return recorder.captureThreadRegisters(platform, thread, 0, toRead)
-				.thenCompose(__ -> recorder.getTarget().getModel().flushEvents())
-				.thenCompose(__ -> recorder.flushTransactions())
-				.thenAccept(__ -> platform.getTrace().flushEvents())
-				.thenApply(__ -> true);
+		return target.readRegistersAsync(platform, thread, frame, guestView).thenApply(__ -> true);
 	}
 
 	@Override
@@ -108,10 +83,7 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 		if (!isLive()) {
 			return CompletableFuture.completedFuture(false);
 		}
-		return recorder.writeRegister(platform, thread, frame, address.getPhysicalAddress(), data)
-				.thenCompose(__ -> recorder.getTarget().getModel().flushEvents())
-				.thenCompose(__ -> recorder.flushTransactions())
-				.thenAccept(__ -> platform.getTrace().flushEvents())
+		return target.writeRegisterAsync(platform, thread, frame, address, data)
 				.thenApply(__ -> true);
 	}
 

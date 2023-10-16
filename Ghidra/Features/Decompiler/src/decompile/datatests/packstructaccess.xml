@@ -12,7 +12,6 @@
 <symbol space="ram" offset="0x1006da" name="getstruct"/>
 </binaryimage>
 <script>
-  <com>option structalign 1</com>
   <com>parse line struct tinystruct { int4 a; int2 b; int2 c; };</com>
   <com>parse line extern tinystruct getstruct(int4 i);</com>
   <com>parse line extern int4 access(int4 i);</com>

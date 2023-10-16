@@ -20,8 +20,8 @@ import java.util.concurrent.CompletableFuture;
 
 import generic.ULongSpan;
 import generic.ULongSpan.ULongSpanSet;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerDataAccess;
-import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerMemoryAccess;
+import ghidra.debug.api.emulation.PcodeDebuggerDataAccess;
+import ghidra.debug.api.emulation.PcodeDebuggerMemoryAccess;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;

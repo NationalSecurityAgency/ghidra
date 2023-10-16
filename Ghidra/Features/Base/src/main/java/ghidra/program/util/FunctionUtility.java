@@ -40,6 +40,24 @@ public class FunctionUtility {
 	}
 
 	/**
+	 * Applies the name and namespace from source function to the target function
+	 * @param target the function whose name is being changed.
+	 * @param source the source function from which to get name and namespace. The source function
+	 * can be from another program.
+	 * @throws DuplicateNameException if creating a namespace would create a invalid duplicate name
+	 * @throws InvalidInputException if the name or namespace from the source function is invalid
+	 * @throws CircularDependencyException if this function is an ancestor of
+	 * the target namespace. This probably can't happen
+	 */
+	public static void applyNameAndNamespace(Function target, Function source)
+		throws DuplicateNameException, InvalidInputException, CircularDependencyException {
+		String name = source.getName();
+		Namespace targetNamespace = getOrCreateSourceNamespaceInTarget(target, source);
+		Symbol symbol = target.getSymbol();
+		symbol.setNameAndNamespace(name, targetNamespace, source.getSymbol().getSource());
+	}
+
+	/**
 	 * Updates the destination function so its signature will match the source function's signature
 	 * as closely as possible. This method will try to create conflict names if necessary for the
 	 * function and its parameters.
@@ -50,16 +68,17 @@ public class FunctionUtility {
 	 * @throws DuplicateNameException This shouldn't happen since it will try to create conflict
 	 * names for the function and its variables if necessary. Otherwise, this would be because
 	 * the function's name or a variable name already exists.
+	 * @throws CircularDependencyException if namespaces have circular references
 	 */
 	public static void updateFunction(Function destinationFunction, Function sourceFunction)
-			throws InvalidInputException, DuplicateNameException {
+		throws InvalidInputException, DuplicateNameException, CircularDependencyException {
 
 		updateFunctionExceptName(destinationFunction, sourceFunction);
-		setFunctionName(destinationFunction, sourceFunction);
+		applyNameAndNamespace(destinationFunction, sourceFunction);
 	}
 
 	private static void updateFunctionExceptName(Function destinationFunction,
-			Function sourceFunction) throws InvalidInputException, DuplicateNameException {
+		Function sourceFunction) throws InvalidInputException, DuplicateNameException {
 
 		Program sourceProgram = sourceFunction.getProgram();
 		Program destinationProgram = destinationFunction.getProgram();
@@ -78,7 +97,7 @@ public class FunctionUtility {
 		setUniqueParameterNames(destinationFunction, newParams);
 		destinationFunction.updateFunction(callingConventionName, returnValue, newParams,
 			useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
-					: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
+				: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 			force, source);
 		applyInline(destinationFunction, sourceFunction);
 		applyNoReturn(destinationFunction, sourceFunction);
@@ -98,7 +117,7 @@ public class FunctionUtility {
 	 * @throws DuplicateNameException
 	 */
 	public static void setUniqueParameterNames(Function function, List<Parameter> parameters)
-			throws DuplicateNameException, InvalidInputException {
+		throws DuplicateNameException, InvalidInputException {
 		SymbolTable symbolTable = function.getProgram().getSymbolTable();
 
 		// Create a set containing all the unique parameter names determined so far so they can
@@ -127,7 +146,7 @@ public class FunctionUtility {
 	 * @return a unique parameter name
 	 */
 	private static String getUniqueReplacementParameterName(SymbolTable symbolTable,
-			Function function, String name, Set<String> namesNotToBeUsed) {
+		Function function, String name, Set<String> namesNotToBeUsed) {
 		if (name == null || SymbolUtilities.isDefaultParameterName(name)) {
 			return name;
 		}
@@ -147,7 +166,7 @@ public class FunctionUtility {
 	 * that doesn't conflict with any in the set of names not to be used.
 	 */
 	private static String getUniqueNameIgnoringCurrentParameters(SymbolTable symbolTable,
-			Function function, String baseName, Set<String> namesNotToBeUsed) {
+		Function function, String baseName, Set<String> namesNotToBeUsed) {
 		String name = baseName;
 		if (name != null) {
 			// establish unique name
@@ -192,7 +211,7 @@ public class FunctionUtility {
 	}
 
 	private static void applyCallFixup(Function destinationFunction, Function sourceFunction,
-			boolean sameLanguage) {
+		boolean sameLanguage) {
 		String sourceCallFixup = sourceFunction.getCallFixup();
 		String destCallFixup = destinationFunction.getCallFixup();
 		if (SystemUtilities.isEqual(destCallFixup, sourceCallFixup)) {
@@ -214,7 +233,7 @@ public class FunctionUtility {
 	 * already exists.
 	 */
 	static void setFunctionName(Function destinationFunction, Function sourceFunction)
-			throws InvalidInputException, DuplicateNameException {
+		throws InvalidInputException, DuplicateNameException {
 		String sourceName = sourceFunction.getName();
 		Address sourceEntryPoint = sourceFunction.getEntryPoint();
 		Namespace sourceNamespace = sourceFunction.getParentNamespace();
@@ -288,13 +307,13 @@ public class FunctionUtility {
 	}
 
 	private static String determineCallingConventionName(Function destinationFunction,
-			Function sourceFunction, boolean sameLanguageAndCompilerSpec) {
+		Function sourceFunction, boolean sameLanguageAndCompilerSpec) {
 		return sameLanguageAndCompilerSpec ? sourceFunction.getCallingConventionName()
-				: destinationFunction.getCallingConventionName();
+			: destinationFunction.getCallingConventionName();
 	}
 
 	private static boolean determineCustomStorageUse(Function destinationFunction,
-			Function sourceFunction, boolean sameLanguage) {
+		Function sourceFunction, boolean sameLanguage) {
 		boolean useCustomStorage = sourceFunction.hasCustomVariableStorage();
 		if (useCustomStorage) {
 			return sameLanguage; // only use for same language.
@@ -303,19 +322,19 @@ public class FunctionUtility {
 	}
 
 	private static Variable determineReturnValue(Function destinationFunction,
-			Function sourceFunction, boolean useCustomStorage) throws InvalidInputException {
+		Function sourceFunction, boolean useCustomStorage) throws InvalidInputException {
 		Program destinationProgram = destinationFunction.getProgram();
 		Parameter sourceReturn = sourceFunction.getReturn();
 		DataType dataType = sourceReturn.getDataType();
 		VariableStorage storage =
 			(useCustomStorage) ? sourceReturn.getVariableStorage().clone(destinationProgram)
-					: VariableStorage.UNASSIGNED_STORAGE;
+				: VariableStorage.UNASSIGNED_STORAGE;
 		Parameter returnValue = new ReturnParameterImpl(dataType, storage, destinationProgram);
 		return returnValue;
 	}
 
 	private static List<Parameter> determineParameters(Function destinationFunction,
-			Function sourceFunction, boolean useCustomStorage) throws InvalidInputException {
+		Function sourceFunction, boolean useCustomStorage) throws InvalidInputException {
 		Program destinationProgram = destinationFunction.getProgram();
 		List<Parameter> parameters = new ArrayList<>();
 		Parameter[] sourceParameters = sourceFunction.getParameters();
@@ -324,7 +343,7 @@ public class FunctionUtility {
 			DataType dataType = sourceParameter.getDataType();
 			VariableStorage storage =
 				(useCustomStorage) ? sourceParameter.getVariableStorage().clone(destinationProgram)
-						: VariableStorage.UNASSIGNED_STORAGE;
+					: VariableStorage.UNASSIGNED_STORAGE;
 			SourceType source = sourceParameter.getSource();
 			Parameter parameter =
 				new ParameterImpl(name, dataType, storage, destinationProgram, source);
@@ -378,4 +397,43 @@ public class FunctionUtility {
 		}
 		return HTMLUtilities.wrapAsHTML(buf.toString());
 	}
+
+	private static Namespace getOrCreateSourceNamespaceInTarget(Function target, Function source)
+		throws DuplicateNameException, InvalidInputException {
+
+		Namespace targetNamespace = target.getParentNamespace();
+		Namespace sourceNamespace = source.getParentNamespace();
+		if (targetNamespace.getName(true).equals(sourceNamespace.getName(true))) {
+			return targetNamespace;
+		}
+		return getOrCreateTargetNamespace(target.getProgram(), sourceNamespace);
+	}
+
+	private static Namespace getOrCreateTargetNamespace(Program program, Namespace otherNamespace)
+		throws DuplicateNameException, InvalidInputException {
+		if (otherNamespace.isGlobal()) {
+			return program.getGlobalNamespace();
+		}
+		Namespace otherParent = otherNamespace.getParentNamespace();
+		Namespace parent = getOrCreateTargetNamespace(program, otherParent);
+
+		SymbolTable symbolTable = program.getSymbolTable();
+		String otherName = otherNamespace.getName();
+
+		Namespace namespace = symbolTable.getNamespace(otherName, parent);
+		if (namespace != null) {
+			return namespace;
+		}
+
+		// not there, we need to create it.
+		SourceType source = otherNamespace.getSymbol().getSource();
+		if (otherNamespace instanceof GhidraClass) {
+			return symbolTable.createClass(parent, otherName, source);
+		}
+		else if (otherNamespace instanceof Library) {
+			return symbolTable.createExternalLibrary(otherName, source);
+		}
+		return symbolTable.createNameSpace(parent, otherName, source);
+	}
+
 }

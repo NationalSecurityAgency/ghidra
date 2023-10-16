@@ -165,7 +165,7 @@ public class AsyncTimer {
 	 */
 	public CompletableFuture<Void> atSystemTime(long timeMillis) {
 		if (timeMillis - System.currentTimeMillis() <= 0) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 
 		long delta = timeMillis - System.currentTimeMillis();

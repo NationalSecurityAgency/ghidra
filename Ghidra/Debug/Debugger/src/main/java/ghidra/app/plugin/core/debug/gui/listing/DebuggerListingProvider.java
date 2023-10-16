@@ -47,7 +47,6 @@ import ghidra.app.nav.ListingPanelContainer;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
@@ -62,6 +61,12 @@ import ghidra.app.services.*;
 import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.action.GoToInput;
+import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.listing.MultiBlendedListingBackgroundColorModel;
+import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState;
@@ -94,7 +99,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		if (!Objects.equals(a.getView(), b.getView())) {
 			return false; // Subsumes trace
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTarget(), b.getTarget())) {
 			return false; // For capture memory action
 		}
 		if (!Objects.equals(a.getTime(), b.getTime())) {
@@ -212,7 +217,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			trackingLabel.setText("");
 			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
-			trackingSpecChangeListeners.fire.locationTrackingSpecChanged(spec);
+			trackingSpecChangeListeners.invoke().locationTrackingSpecChanged(spec);
 		}
 
 		@Override
@@ -286,7 +291,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected final ForListingReadsMemoryTrait readsMemTrait;
 
 	protected final ListenerSet<LocationTrackingSpecChangeListener> trackingSpecChangeListeners =
-		new ListenerSet<>(LocationTrackingSpecChangeListener.class);
+		new ListenerSet<>(LocationTrackingSpecChangeListener.class, true);
 
 	protected final DebuggerLocationLabel locationLabel = new DebuggerLocationLabel();
 	protected final JLabel trackingLabel = new JLabel();

@@ -262,11 +262,11 @@ class HighIntersectTest {
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
   bool testUntiedCallIntersection(HighVariable *tied,HighVariable *untied);
 public:
-  HighIntersectTest(PcodeOpSet &cCover) : affectingOps(cCover) {}
+  HighIntersectTest(PcodeOpSet &cCover) : affectingOps(cCover) {}	///< Constructor
   void moveIntersectTests(HighVariable *high1,HighVariable *high2);
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   bool intersection(HighVariable *a,HighVariable *b);
-  void clear(void) { highedgemap.clear(); }
+  void clear(void) { highedgemap.clear(); }	///< Clear any cached tests
 };
 
 /// The internal cover is marked as dirty. If \b this is a piece of a VariableGroup, it and all the other

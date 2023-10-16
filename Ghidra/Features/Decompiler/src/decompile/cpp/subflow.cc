@@ -2017,7 +2017,7 @@ bool SplitDatatype::testCopyConstraints(PcodeOp *copyOp)
 
 /// \brief If the given Varnode is an extended precision constant, create split constants
 ///
-/// Look for ZEXT(#c) and CONCAT(#c1,#c2) forms. Try to split into single precision Varnodes.
+/// Look for ZEXT(c) and CONCAT(c1,c2) forms. Try to split into single precision Varnodes.
 /// \param vn is the given Varnode
 /// \param inVarnodes will contain the split constant Varnodes
 /// \return \b true if the Varnode is an extended precision constant and the split is successful
@@ -2138,7 +2138,7 @@ void SplitDatatype::buildInSubpieces(Varnode *rootVn,PcodeOp *followOp,vector<Va
 /// Extract different pieces from the given root based on the offsets and
 /// output data-types in \b dataTypePieces.
 /// \param rootVn is the given root Varnode
-/// \param inVarnodes is the container for the new Varnodes
+/// \param outVarnodes is the container for the new Varnodes
 void SplitDatatype::buildOutVarnodes(Varnode *rootVn,vector<Varnode *> &outVarnodes)
 
 {

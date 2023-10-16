@@ -256,11 +256,6 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 						}
 					}
 
-					// markup the data flow for this instruction
-					if (refType.isData()) {
-						return true;
-					}
-
 					return super.evaluateReference(context, instr, pcodeop, address, size, dataType, refType);
 				}
 
@@ -319,7 +314,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 			};
 
 		eval.setTrustWritableMemory(trustWriteMemOption)
-		    .setMinpeculativeOffset(minSpeculativeRefAddress)
+		    .setMinSpeculativeOffset(minSpeculativeRefAddress)
 		    .setMaxSpeculativeOffset(maxSpeculativeRefAddress)
 		    .setMinStoreLoadOffset(minStoreLoadRefAddress)
 		    .setCreateComplexDataFromPointers(createComplexDataFromPointers);

@@ -183,7 +183,9 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		Set<SegmentedAddress> knownSegments = new TreeSet<>();
 		relocationFixups.forEach(rf -> knownSegments.add(space.getAddress(rf.segment, 0)));
 		knownSegments.add(space.getAddress(INITIAL_SEGMENT_VAL, 0));
-
+		if (header.e_cs() > 0) {
+			knownSegments.add(space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, 0));
+		}
 		// Allocate an initialized memory block for each segment we know about
 		int endOffset = pagesToBytes(header.e_cp() - 1) + header.e_cblp();
 		MemoryBlock lastBlock = null;
@@ -392,8 +394,6 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				BigInteger.valueOf(
 					Integer.toUnsignedLong((header.e_ss() + INITIAL_SEGMENT_VAL) & 0xffff)));
 
-
-
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				Address start = block.getStart();
 				Address end = block.getEnd();
@@ -402,8 +402,8 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 					continue;
 				}
 				
-				BigInteger csValue = BigInteger.valueOf(
-						Integer.toUnsignedLong(((SegmentedAddress) start).getSegment()));
+				BigInteger csValue = BigInteger
+						.valueOf(Integer.toUnsignedLong(((SegmentedAddress) start).getSegment()));
 				
 				context.setValue(cs, start, end, csValue);
 				if (shouldSetDS) {

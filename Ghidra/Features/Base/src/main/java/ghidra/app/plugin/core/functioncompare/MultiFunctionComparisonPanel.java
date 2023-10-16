@@ -67,7 +67,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 * @param tool the active plugin tool
 	 */
 	public MultiFunctionComparisonPanel(MultiFunctionComparisonProvider provider,
-			PluginTool tool) {
+		PluginTool tool) {
 		super(provider, tool, null, null);
 
 		JPanel choicePanel = new JPanel(new GridLayout(1, 2));
@@ -79,6 +79,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 		// comparison panel because the name of the function/data being shown 
 		// is already visible in the combo box
 		getComparisonPanels().forEach(p -> p.setShowTitles(false));
+		setPreferredSize(new Dimension(1200, 600));
 	}
 
 	/**
@@ -311,7 +312,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 		@Override
 		public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-				boolean isSelected, boolean cellHasFocus) {
+			boolean isSelected, boolean cellHasFocus) {
 
 			if (value == null) {
 				// It's possible during a close program operation to have this 

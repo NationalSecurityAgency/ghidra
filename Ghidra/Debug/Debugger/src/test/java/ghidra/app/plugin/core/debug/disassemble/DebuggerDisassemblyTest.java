@@ -42,6 +42,8 @@ import ghidra.app.services.*;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.workflow.DebuggerBot;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;

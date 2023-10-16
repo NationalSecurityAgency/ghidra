@@ -52,6 +52,7 @@ public class DbgProcessImpl implements DbgProcess {
 	private Long pid;
 	private Long exitCode;
 	private Long offset;
+	private String name;
 
 	/**
 	 * Construct a new inferior
@@ -59,6 +60,13 @@ public class DbgProcessImpl implements DbgProcess {
 	 * @param manager the manager creating the process
 	 * @param id the dbgeng-assigned process ID
 	 */
+	public DbgProcessImpl(DbgManagerImpl manager, DebugProcessId id, long pid, String name) {
+		this.manager = manager;
+		this.id = id;
+		this.pid = pid;
+		this.name = name;
+	}
+
 	public DbgProcessImpl(DbgManagerImpl manager, DebugProcessId id, long pid) {
 		this.manager = manager;
 		this.id = id;
@@ -390,6 +398,16 @@ public class DbgProcessImpl implements DbgProcess {
 
 	public void setPid(Long pid) {
 		this.pid = pid;
+	}
+
+	@Override
+	public String getExecutableName() {
+		return name;
+	}
+
+	@Override
+	public void setExecutableName(String name) {
+		this.name = name;
 	}
 
 }

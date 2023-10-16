@@ -22,8 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Ignore;
 
 import agent.gdb.manager.GdbManager;
-import agent.gdb.pty.PtySession;
-import agent.gdb.pty.linux.LinuxPty;
+import ghidra.pty.PtySession;
+import ghidra.pty.linux.LinuxPty;
 import ghidra.util.Msg;
 
 @Ignore("Need compatible GDB version for CI")

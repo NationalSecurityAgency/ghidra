@@ -20,11 +20,12 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
-import ghidra.app.plugin.core.debug.gui.watch.WatchRow;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.debug.api.watch.WatchRow;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;

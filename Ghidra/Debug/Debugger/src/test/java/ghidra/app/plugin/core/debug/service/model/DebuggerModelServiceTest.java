@@ -20,7 +20,6 @@ import static org.junit.Assert.*;
 import java.awt.Component;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.swing.JLabel;
@@ -31,20 +30,18 @@ import org.junit.experimental.categories.Category;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.event.ModelObjectFocusedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractConnectAction;
 import ghidra.app.plugin.core.debug.service.model.DebuggerConnectDialog.FactoryEntry;
 import ghidra.app.plugin.core.debug.service.model.TestDebuggerProgramLaunchOpinion.TestDebuggerProgramLaunchOffer;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
-import ghidra.app.services.ActionSource;
-import ghidra.app.services.TraceRecorder;
-import ghidra.async.AsyncPairingQueue;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.model.TestDebuggerModelFactory;
 import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.target.TargetEnvironment;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Swing;
@@ -416,30 +413,6 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 			() -> assertEquals(mb.testThread2, modelService.getTargetFocus(mb.testProcess1)));
 		waitForPass(
 			() -> assertEquals(mb.testThread4, modelService.getTargetFocus(mb.testProcess3)));
-	}
-
-	@Test
-	public void testFocusGeneratesEvents() throws Exception {
-		createTestModel();
-		mb.createTestProcessesAndThreads();
-
-		// NOTE: These events are generated whether or not associated with a recorder
-		AsyncPairingQueue<ModelObjectFocusedPluginEvent> focusEvents = new AsyncPairingQueue<>();
-		tool.addListenerForAllPluginEvents(event -> {
-			if (event instanceof ModelObjectFocusedPluginEvent) {
-				ModelObjectFocusedPluginEvent evt = (ModelObjectFocusedPluginEvent) event;
-				focusEvents.give().complete(evt);
-			}
-		});
-
-		mb.testModel.requestFocus(mb.testThread1);
-		mb.testModel.requestFocus(mb.testThread2);
-		ModelObjectFocusedPluginEvent evt1 =
-			focusEvents.take().get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		ModelObjectFocusedPluginEvent evt2 =
-			focusEvents.take().get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-		assertEquals(mb.testThread1, evt1.getFocus());
-		assertEquals(mb.testThread2, evt2.getFocus());
 	}
 
 	@Test

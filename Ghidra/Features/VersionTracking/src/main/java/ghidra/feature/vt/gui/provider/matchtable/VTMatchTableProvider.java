@@ -146,6 +146,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		updateFilterDisplay();
 
 		setTableSelecionState(saveState);
+
+		refilter();
 	}
 
 	private void setTableSelecionState(SaveState saveState) {
@@ -229,6 +231,10 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	private VTMatchTableModel createTableModel() {
 		matchesTableModel = new VTMatchTableModel(controller);
 		matchesTableModel.addTableModelListener(e -> {
+			if (matchesTable == null) {
+				return; // we've been disposed
+			}
+
 			int filteredCount = matchesTableModel.getRowCount();
 			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 

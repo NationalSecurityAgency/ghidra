@@ -595,6 +595,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		JButton button = getActionButton("Make Selection");
 		assertNotNull(button);
 		pressButton(button);
+		waitForSwing();
 
 		CodeBrowserPlugin cbPlugin = getPlugin(tool, CodeBrowserPlugin.class);
 		ProgramSelection currentSelection = cbPlugin.getCurrentSelection();

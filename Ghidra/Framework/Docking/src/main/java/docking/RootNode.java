@@ -55,6 +55,8 @@ class RootNode extends WindowNode {
 	 * 
 	 * @param mgr the DockingWindowsManager
 	 * @param toolName the name of the tool to be displayed in all the top-level windows.
+	 * @param images the frame icons
+	 * @param isModal true if modal
 	 * @param factory a factory for creating drop targets for this nodes windows; may be null
 	 */
 	RootNode(DockingWindowManager mgr, String toolName, List<Image> images, boolean isModal,
@@ -198,7 +200,10 @@ class RootNode extends WindowNode {
 	void setVisible(boolean state) {
 		Window mainWindow = getMainWindow();
 		mainWindow.setVisible(state);
-		WindowUtilities.ensureOnScreen(mainWindow);
+
+		if (state) {
+			WindowUtilities.ensureOnScreen(mainWindow);
+		}
 
 		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
 		while (it.hasNext()) {
@@ -232,11 +237,6 @@ class RootNode extends WindowNode {
 		notifyWindowAdded(windowNode);
 	}
 
-	/**
-	 * Adds the component to the main window.
-	 * 
-	 * @param info the component to be added.
-	 */
 	void add(ComponentPlaceholder info, WindowPosition initialPosition) {
 		if (initialPosition == WindowPosition.WINDOW) {
 			add(info);
@@ -373,9 +373,6 @@ class RootNode extends WindowNode {
 		node.parent = null;
 	}
 
-	/**
-	 * Returns the main frame of the tool.
-	 */
 	public JFrame getFrame() {
 		return windowWrapper.getParentFrame();
 	}
@@ -398,10 +395,7 @@ class RootNode extends WindowNode {
 		return toolName;
 	}
 
-	/**
-	 * Returns list of detached windows (WindowNode objects).
-	 */
-	public List<DetachedWindowNode> getDetachedWindows() {
+	List<DetachedWindowNode> getDetachedWindows() {
 		return detachedWindows;
 	}
 
@@ -475,10 +469,12 @@ class RootNode extends WindowNode {
 		int y = Integer.parseInt(rootNodeElement.getAttributeValue("Y_POS"));
 		int width = Integer.parseInt(rootNodeElement.getAttributeValue("WIDTH"));
 		int height = Integer.parseInt(rootNodeElement.getAttributeValue("HEIGHT"));
+		int extendedState = Integer.parseInt(rootNodeElement.getAttributeValue("EX_STATE"));
 		JFrame frame = windowWrapper.getParentFrame();
 		Rectangle bounds = new Rectangle(x, y, width, height);
 		WindowUtilities.ensureOnScreen(frame, bounds);
 		frame.setBounds(bounds);
+		frame.setExtendedState(extendedState);
 
 		List<ComponentPlaceholder> restoredPlaceholders = new ArrayList<>();
 		Iterator<?> elementIterator = rootNodeElement.getChildren().iterator();

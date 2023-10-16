@@ -16,9 +16,12 @@
 package help;
 
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.Objects;
 
 import javax.help.*;
 import javax.swing.*;
@@ -26,6 +29,7 @@ import javax.swing.text.Document;
 
 import generic.theme.GIcon;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.bean.GGlassPane;
 import resources.Icons;
 import resources.MultiIconBuilder;
@@ -82,14 +86,23 @@ public class GHelpBroker extends DefaultHelpBroker {
 
 	/* Perform some shenanigans to force Java Help to reload the given URL */
 	protected void reloadHelpPage(URL url) {
+
 		clearContentViewer();
 		showNavigationAid(url);
 		try {
+			// Page loading is asynchronous.  Listen for the page to be loaded and then restore the
+			// users current view state.
+			htmlEditorPane.addPropertyChangeListener(new PageLocationUpdater());
 			htmlEditorPane.setPage(url);
 		}
 		catch (IOException e) {
 			Msg.error(this, "Unexpected error loading help page: " + url, e);
+			return;
 		}
+	}
+
+	private void reloadHelpPage() {
+		reloadHelpPage(getCurrentURL());
 	}
 
 	public void reload() {
@@ -241,9 +254,9 @@ public class GHelpBroker extends DefaultHelpBroker {
 				JToolBar toolbar = (JToolBar) component;
 				toolbar.addSeparator();
 
-				ImageIcon icon = new MultiIconBuilder(new EmptyIcon(24, 24))
-						.addCenteredIcon(ZOOM_OUT_ICON)
-						.build();
+				ImageIcon icon =
+					new MultiIconBuilder(new EmptyIcon(24, 24)).addCenteredIcon(ZOOM_OUT_ICON)
+							.build();
 
 				Icon zoomOutIcon = icon;
 				JButton zoomOutBtn = new JButton(zoomOutIcon);
@@ -253,12 +266,11 @@ public class GHelpBroker extends DefaultHelpBroker {
 
 					// Need to reload the page to force the scroll panes to resize properly. A
 					// simple revalidate/repaint won't do it.
-					reloadHelpPage(getCurrentURL());
+					reloadHelpPage();
 				});
 				toolbar.add(zoomOutBtn);
 
-				icon = new MultiIconBuilder(new EmptyIcon(24, 24))
-						.addCenteredIcon(ZOOM_IN_ICON)
+				icon = new MultiIconBuilder(new EmptyIcon(24, 24)).addCenteredIcon(ZOOM_IN_ICON)
 						.build();
 				Icon zoomInIcon = icon;
 				JButton zoomInBtn = new JButton(zoomInIcon);
@@ -268,7 +280,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 
 					// Need to reload the page to force the scroll panes to resize properly. A
 					// simple revalidate/repaint won't do it.
-					reloadHelpPage(getCurrentURL());
+					reloadHelpPage();
 				});
 				toolbar.add(zoomInBtn);
 
@@ -356,4 +368,44 @@ public class GHelpBroker extends DefaultHelpBroker {
 		}
 		return false;
 	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	private class PageLocationUpdater implements PropertyChangeListener {
+
+		private URL url;
+		private int caretPosition;
+		private Rectangle viewPosition;
+
+		PageLocationUpdater() {
+			url = getCurrentURL();
+			caretPosition = htmlEditorPane.getCaretPosition();
+			viewPosition = htmlEditorPane.getVisibleRect();
+		}
+
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			String name = evt.getPropertyName();
+			if (!name.equals("page")) {
+				return;
+			}
+
+			htmlEditorPane.removePropertyChangeListener(this);
+
+			URL currentUrl = getCurrentURL();
+			if (!Objects.equals(currentUrl, url)) {
+				return; // new page loaded; ignore
+			}
+
+			htmlEditorPane.setCaretPosition(caretPosition);
+			// not sure why this needs to be done later, but setting the caret seems to trigger a
+			// view updated, so try to run after that
+			Swing.runLater(() -> {
+				htmlEditorPane.scrollRectToVisible(viewPosition);
+			});
+		}
+	}
+
 }

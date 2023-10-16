@@ -23,12 +23,16 @@ import javax.swing.event.ChangeListener;
 import db.Transaction;
 import docking.DockingWindowManager;
 import docking.Tool;
-import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
-import ghidra.app.plugin.core.debug.mapping.DisassemblyResult;
-import ghidra.app.plugin.core.debug.service.workflow.*;
-import ghidra.app.services.*;
+import ghidra.app.plugin.core.debug.service.workflow.AbstractMultiToolTraceListener;
+import ghidra.app.plugin.core.debug.service.workflow.MultiToolTraceListenerManager;
+import ghidra.app.services.DebuggerPlatformService;
+import ghidra.app.services.DebuggerWorkflowFrontEndService;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
+import ghidra.debug.api.platform.DisassemblyResult;
+import ghidra.debug.api.workflow.DebuggerBot;
+import ghidra.debug.api.workflow.DebuggerBotInfo;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.annotation.HelpInfo;
@@ -53,12 +57,11 @@ import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.TaskMonitor;
 
-@DebuggerBotInfo( //
-	description = "Disassemble memory at the program counter", //
-	details = "Listens for changes in memory or pc (stack or registers) and disassembles", //
-	help = @HelpInfo(anchor = "disassemble_at_pc"), //
-	enabledByDefault = true //
-)
+@DebuggerBotInfo(
+	description = "Disassemble memory at the program counter",
+	details = "Listens for changes in memory or pc (stack or registers) and disassembles",
+	help = @HelpInfo(anchor = "disassemble_at_pc"),
+	enabledByDefault = true)
 public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 
 	protected class ForDisassemblyTraceListener extends AbstractMultiToolTraceListener {
@@ -338,11 +341,11 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 				}
 			};
 			// TODO: Queue commands so no two for the same trace run concurrently
-			plugin.getTool().executeBackgroundCommand(cmd, view);
+			service.getTool().executeBackgroundCommand(cmd, view);
 		}
 	}
 
-	private DebuggerWorkflowServicePlugin plugin;
+	private DebuggerWorkflowFrontEndService service;
 	private final MultiToolTraceListenerManager<ForDisassemblyTraceListener> listeners =
 		new MultiToolTraceListenerManager<>(ForDisassemblyTraceListener::new);
 
@@ -351,7 +354,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 	}
 
 	protected void reportError(String error, Throwable t) {
-		for (PluginTool tool : plugin.getProxyingPluginTools()) {
+		for (PluginTool tool : service.getProxyingPluginTools()) {
 			Msg.error(this, error, t);
 			tool.setStatusInfo(error, true);
 		}
@@ -370,7 +373,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 	 * @return the service, or null
 	 */
 	protected <T> T findService(Class<T> cls) {
-		Collection<PluginTool> proxied = plugin.getProxyingPluginTools();
+		Collection<PluginTool> proxied = service.getProxyingPluginTools();
 		List<DockingWindowManager> all = DockingWindowManager.getAllDockingWindowManagers();
 		Collections.reverse(all);
 		for (DockingWindowManager dwm : all) {
@@ -389,19 +392,19 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 
 	@Override
 	public boolean isEnabled() {
-		return plugin != null;
+		return service != null;
 	}
 
 	@Override
-	public void enable(DebuggerWorkflowServicePlugin wp) {
-		this.plugin = wp;
+	public void enable(DebuggerWorkflowFrontEndService service) {
+		this.service = service;
 
-		listeners.enable(wp);
+		listeners.enable(service);
 	}
 
 	@Override
 	public void disable() {
-		this.plugin = null;
+		this.service = null;
 
 		listeners.disable();
 	}

@@ -166,6 +166,16 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	private boolean installExtensions(List<File> files) {
 		boolean didInstall = false;
 		for (File file : files) {
+
+			// A sanity check for users that try to install an extension from a source folder
+			// instead of a fully built extension.
+			if (new File(file, "build.gradle").isFile()) {
+				Msg.showWarn(this, null, "Invalid Extension", "The selected extension " +
+					"contains a 'build.gradle' file.\nGhidra does not support installing " +
+					"extensions in source form.\nPlease build the extension and try again.");
+				continue;
+			}
+
 			boolean success = ExtensionUtils.install(file);
 			didInstall |= success;
 		}
@@ -200,7 +210,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	}
 
 	/**
-	 * Filter for a {@link GhidraFileChooser} that restricts selection to those files that are 
+	 * Filter for a {@link GhidraFileChooser} that restricts selection to those files that are
 	 * Ghidra Extensions (zip files with an extension.properties file) or folders.
 	 */
 	private class ExtensionFileFilter implements GhidraFileFilter {

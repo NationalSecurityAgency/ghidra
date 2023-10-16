@@ -26,9 +26,9 @@ import org.junit.Test;
 
 import docking.action.ToggleDockingActionIf;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
 import ghidra.app.services.DebuggerPlatformService;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.trace.database.ToyDBTraceBuilder;
 

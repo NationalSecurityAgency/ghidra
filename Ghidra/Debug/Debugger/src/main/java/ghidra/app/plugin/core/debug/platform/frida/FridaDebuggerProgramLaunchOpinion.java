@@ -21,6 +21,7 @@ import java.util.List;
 import ghidra.app.plugin.core.debug.service.model.launch.*;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 

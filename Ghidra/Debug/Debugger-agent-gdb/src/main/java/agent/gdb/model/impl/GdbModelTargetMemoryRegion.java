@@ -149,6 +149,6 @@ public class GdbModelTargetMemoryRegion
 
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
 		// Nothing to do here
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

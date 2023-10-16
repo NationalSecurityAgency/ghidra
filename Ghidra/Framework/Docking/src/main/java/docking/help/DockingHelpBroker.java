@@ -16,6 +16,7 @@
 package docking.help;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.geom.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -39,11 +40,11 @@ import docking.util.AnimationPainter;
 import docking.util.AnimationUtils;
 import generic.theme.GColor;
 import ghidra.framework.preferences.Preferences;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import help.CustomTOCView;
 import help.GHelpBroker;
+import resources.Icons;
 
 /**
  * An extension of the {@link GHelpBroker} that allows {@code Docking} classes to be installed.
@@ -129,6 +130,23 @@ public class DockingHelpBroker extends GHelpBroker {
 
 		ToggleNavigationAid action = new ToggleNavigationAid();
 		toolbar.add(new JButton(action));
+
+		if (SystemUtilities.isInDevelopmentMode()) {
+
+			Action refreshAction = new AbstractAction() {
+
+				{
+					putValue(Action.SMALL_ICON, Icons.REFRESH_ICON);
+					putValue(Action.SHORT_DESCRIPTION, "Reload the current page");
+				}
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					reloadHelpPage(getCurrentURL());
+				}
+			};
+			toolbar.add(new JButton(refreshAction));
+		}
 	}
 
 	@Override // opened access

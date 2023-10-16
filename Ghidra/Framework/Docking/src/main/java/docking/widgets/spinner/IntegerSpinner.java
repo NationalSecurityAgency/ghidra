@@ -77,6 +77,7 @@ public class IntegerSpinner {
 						break;
 				}
 				if (newVal != null) {
+					e.consume();
 					spinner.setValue(newVal);
 				}
 			}

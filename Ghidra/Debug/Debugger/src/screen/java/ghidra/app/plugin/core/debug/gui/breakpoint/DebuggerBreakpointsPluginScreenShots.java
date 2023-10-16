@@ -37,6 +37,9 @@ import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetTogglable;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -140,13 +143,11 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 
 		try (Transaction tx = program.openTransaction("Add breakpoint")) {
 			program.getBookmarkManager()
-					.setBookmark(addr(program, 0x00401234),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1",
-						"before connect");
+					.setBookmark(addr(program, 0x00401234), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
+						"SW_EXECUTE;1", "before connect");
 			program.getBookmarkManager()
-					.setBookmark(addr(program, 0x00604321),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "WRITE;4",
-						"write version");
+					.setBookmark(addr(program, 0x00604321), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
+						"WRITE;4", "write version");
 		}
 
 		TargetBreakpointSpecContainer bc1 =

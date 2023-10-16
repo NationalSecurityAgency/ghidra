@@ -26,14 +26,18 @@ class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public void add(T t) {
+	public boolean add(T t) {
 		maybeWarnAboutAnonymousValue(t);
+		boolean contains = weakHashStorage.containsKey(t);
 		weakHashStorage.put(t, null);
+		return !contains;
 	}
 
 	@Override
-	public void remove(T t) {
+	public boolean remove(Object t) {
+		boolean contains = weakHashStorage.containsKey(t);
 		weakHashStorage.remove(t);
+		return contains;
 	}
 
 	@Override
@@ -62,7 +66,7 @@ class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public boolean contains(T t) {
+	public boolean contains(Object t) {
 		return weakHashStorage.containsKey(t);
 	}
 
@@ -76,4 +80,31 @@ class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 		return values().stream();
 	}
 
+	@Override
+	public boolean addAll(Collection<? extends T> c) {
+		boolean changed = false;
+		for (T t : c) {
+			changed |= add(t);
+		}
+		return changed;
+	}
+
+	@Override
+	public boolean retainAll(Collection<?> c) {
+		boolean changed = false;
+		Iterator<T> it = iterator();
+		while (it.hasNext()) {
+			T t = it.next();
+			if (!c.contains(t)) {
+				it.remove();
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	@Override
+	public boolean removeAll(Collection<?> c) {
+		return weakHashStorage.keySet().removeAll(c);
+	}
 }

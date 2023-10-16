@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.clipboard;
 import java.awt.Rectangle;
 import java.awt.datatransfer.*;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -41,6 +42,7 @@ import ghidra.app.services.ClipboardContentProviderService;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.framework.cmd.Command;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.database.symbol.FunctionSymbol;
@@ -71,6 +73,10 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		new ClipboardType(CodeUnitInfoTransferable.localDataTypeFlavor, "Labels");
 	public static final ClipboardType COMMENTS_TYPE =
 		new ClipboardType(CodeUnitInfoTransferable.localDataTypeFlavor, "Comments");
+	public static final ClipboardType GHIDRA_LOCAL_URL_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Local GhidraURL");
+	public static final ClipboardType GHIDRA_SHARED_URL_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Shared GhidraURL");
 
 	private static final List<ClipboardType> COPY_TYPES = createCopyTypesList();
 
@@ -178,7 +184,32 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 	@Override
 	public List<ClipboardType> getCurrentCopyTypes() {
-		return COPY_TYPES;
+		ClipboardType urlType = getGhidraUrlClipboardType();
+		if (urlType == null) {
+			return COPY_TYPES;
+		}
+
+		List<ClipboardType> currentCopyTypes = new ArrayList<>(COPY_TYPES);
+		currentCopyTypes.add(urlType);
+		return currentCopyTypes;
+	}
+
+	private ClipboardType getGhidraUrlClipboardType() {
+		if (currentProgram == null) {
+			return null;
+		}
+
+		DomainFile domainFile = currentProgram.getDomainFile();
+		if (domainFile == null) {
+			return null;
+		}
+		if (domainFile.getLocalProjectURL(null) != null) {
+			return GHIDRA_LOCAL_URL_TYPE;
+		}
+		if (domainFile.getSharedProjectURL(null) != null) {
+			return GHIDRA_SHARED_URL_TYPE;
+		}
+		return null;
 	}
 
 	@Override
@@ -201,6 +232,12 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		}
 		else if (copyType == COMMENTS_TYPE) {
 			return copyLabelsComments(false, true, monitor);
+		}
+		else if (copyType == GHIDRA_LOCAL_URL_TYPE) {
+			return copyLocalGhidraURL();
+		}
+		else if (copyType == GHIDRA_SHARED_URL_TYPE) {
+			return copySharedGhidraURL();
 		}
 
 		return copyBytes(copyType, monitor);
@@ -388,6 +425,26 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		Address startAddr = addressSet.getMinAddress();
 		getCodeUnitInfo(addressSet, startAddr, list, copyLabels, copyComments, monitor);
 		return new CodeUnitInfoTransferable(list);
+	}
+
+	/**
+	 * Gets the Local GhidraURL to the currentLocation within the currentProgram.
+	 * @return string transferable GhidraURL type.
+	 */
+	private Transferable copyLocalGhidraURL() {
+		String address = currentLocation.getAddress().toString();
+		URL url = currentProgram.getDomainFile().getLocalProjectURL(address);
+		return createStringTransferable(url.toString());
+	}
+
+	/**
+	 * Gets the Shared GhidraURL to the currentLocation within the currentProgram.
+	 * @return string transferable GhidraURL type.
+	 */
+	private Transferable copySharedGhidraURL() {
+		String address = currentLocation.getAddress().toString();
+		URL url = currentProgram.getDomainFile().getSharedProjectURL(address);
+		return createStringTransferable(url.toString());
 	}
 
 	private boolean pasteLabelsComments(Transferable pasteData, boolean pasteLabels,

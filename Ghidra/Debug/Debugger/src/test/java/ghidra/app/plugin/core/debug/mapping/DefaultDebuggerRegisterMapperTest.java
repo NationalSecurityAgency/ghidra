@@ -25,12 +25,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.services.ActionSource;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegister;
 import ghidra.dbg.model.TestTargetRegisterValue;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegister;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.lang.*;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.model.thread.TraceThread;

@@ -94,7 +94,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private ToggleDockingAction filterPointersAction;
 	private ToggleDockingAction previewWindowAction;
 	private ToggleDockingAction includeDataMembersInSearchAction;
+	private FilterOnNameOnlyAction filterOnNameOnlyAction;
 	private boolean includeDataMembersInFilter;
+	private boolean filterOnNameOnly;
 
 	public DataTypesProvider(DataTypeManagerPlugin plugin, String providerName) {
 		this(plugin, providerName, false);
@@ -198,6 +200,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		addLocalAction(new FindStructuresBySizeAction(plugin, "4"));
 		includeDataMembersInSearchAction = new IncludeDataTypesInFilterAction(plugin, this, "5");
 		addLocalAction(includeDataMembersInSearchAction);
+
+		filterOnNameOnlyAction = new FilterOnNameOnlyAction(plugin, this, "6");
+		addLocalAction(filterOnNameOnlyAction);
 
 		addLocalAction(new ApplyFunctionDataTypesAction(plugin)); // Tree
 		addLocalAction(new CaptureFunctionDataTypesAction(plugin)); // Tree
@@ -820,23 +825,24 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		return selectedDataTypes;
 	}
 
-	// this is a callback from the action--we need this to prevent callbacks, as the other
-	// version of this method will update the action, which would trigger a callback
+	// this is called from the action
 	public void setIncludeDataTypeMembersInFilterCallback(boolean newValue) {
 		includeDataMembersInFilter = newValue;
-		archiveGTree.setIncludeDataTypeMembersInSearch(includeDataMembersInFilter);
+		archiveGTree.updateDataTransformer(this);
+	}
+
+	// this is called from the action
+	public void setFilterOnNameOnlyCallback(boolean newValue) {
+		filterOnNameOnly = newValue;
+		archiveGTree.updateDataTransformer(this);
 	}
 
 	public void setIncludeDataTypeMembersInFilter(boolean newValue) {
-		includeDataMembersInFilter = newValue;
-		archiveGTree.setIncludeDataTypeMembersInSearch(includeDataMembersInFilter);
+		includeDataMembersInSearchAction.setSelected(newValue);
+	}
 
-		// make sure the action is in sync
-		ToggleDockingAction action = includeDataMembersInSearchAction;
-		boolean selected = action.isSelected();
-		if (selected != includeDataMembersInFilter) {
-			action.setSelected(includeDataMembersInFilter);
-		}
+	public void setFilterOnNameOnly(boolean newValue) {
+		filterOnNameOnlyAction.setSelected(newValue);
 	}
 
 	public void setFilteringArrays(boolean b) {
@@ -847,8 +853,12 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		archiveGTree.enablePointerFilter(b);
 	}
 
-	boolean includeDataMembersInSearch() {
+	public boolean isIncludeDataMembersInSearch() {
 		return includeDataMembersInFilter;
+	}
+
+	public boolean isFilterOnNameOnly() {
+		return filterOnNameOnly;
 	}
 
 	@Override
@@ -978,4 +988,5 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		navigationHistory.add(new DataTypeUrl(dt));
 		contextChanged();
 	}
+
 }

@@ -18,6 +18,9 @@ package ghidra.util.bean;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.IntStream;
 
 import javax.swing.*;
 
@@ -55,7 +58,8 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 	@Before
 	public void setUp() throws Exception {
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		panel = new PathnameTablePanel(tablePaths, true, false, () -> reset());
+		// enable edits, add to bottom, ordered
+		panel = new PathnameTablePanel(tablePaths, () -> reset(), true, false, true);
 		table = panel.getTable();
 		frame = new JFrame("Test");
 		frame.getContentPane().add(panel);
@@ -243,6 +247,32 @@ public class PathnameTablePanelTest extends AbstractDockingTest {
 		String filename = (String) table.getModel().getValueAt(0, 0);
 		assertTrue(filename.endsWith("fred.h"));
 
+	}
+
+	@Test
+	public void testUnordered() throws Exception {
+		panel.setOrdered(false);
+		File temp = createTempFileForTest();
+		Preferences.setProperty(Preferences.LAST_PATH_DIRECTORY, temp.getParent());
+		panel.setFileChooserProperties("Select Source Files", Preferences.LAST_PATH_DIRECTORY,
+			GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
+			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
+
+		assertNotNull(addButton);
+		pressButton(addButton, false);
+
+		waitForSwing();
+		selectFromFileChooser();
+
+		assertEquals(6, table.getRowCount());
+
+		List<String> expected = new ArrayList<>(List.of(tablePaths));
+		expected.add(new File(temp.getParentFile(), "fred.h").getAbsolutePath());
+		expected.sort(String::compareTo);
+		List<String> actual = IntStream.range(0, 6)
+				.mapToObj(i -> (String) table.getModel().getValueAt(i, 0))
+				.toList();
+		assertEquals(expected, actual);
 	}
 
 	@Test

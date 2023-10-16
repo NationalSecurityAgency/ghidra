@@ -43,7 +43,7 @@ LLVM_TEMP_DIR=$(mktemp -d)
 # brew specific patches.
 brew unpack --patch --destdir ${LLVM_TEMP_DIR} llvm@${LLVM_VERSION}
 export LLVM_HOME="$(echo ${LLVM_TEMP_DIR}/llvm@${LLVM_VERSION}-*)"
-if [ -z "${LLVM_HOME}" ]; then
+if [ ! -d "${LLVM_HOME}" ]; then
 	export LLVM_HOME="$(echo ${LLVM_TEMP_DIR}/llvm-${LLVM_VERSION}.*)"
 fi
 

@@ -104,7 +104,6 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionForLoops());
   registerOption(new OptionInline());
   registerOption(new OptionNoReturn());
-  registerOption(new OptionStructAlign());
   registerOption(new OptionProtoEval());
   registerOption(new OptionWarning());
   registerOption(new OptionNullPrinting());
@@ -362,23 +361,6 @@ string OptionNoReturn::apply(Architecture *glb,const string &p1,const string &p2
     prop = "false";
   string res = "No return property for function "+p1+" = "+prop;
   return res;
-}
-
-/// \class OptionStructAlign
-/// \brief Alter the "structure alignment" data organization setting
-///
-/// The first parameter must an integer value indicating the desired alignment
-string OptionStructAlign::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
-
-{
-  int4 val  = -1;
-  istringstream s(p1);
-  s >> dec >> val;
-  if (val == -1)
-    throw ParseError("Missing alignment value");
-
-  glb->types->setStructAlign(val);
-  return "Structure alignment set";
 }
 
 /// \class OptionWarning
@@ -964,6 +946,13 @@ uint4 OptionSplitDatatypes::getOptionBit(const string &val)
   throw LowlevelError("Unknown data-type split option: "+val);
 }
 
+/// \class OptionSplitDatatypes
+/// \brief Control which data-type assignments are split into multiple COPY/LOAD/STORE operations
+///
+/// Any combination of the three options can be given:
+///   - "struct"  = Divide structure data-types into separate field assignments
+///   - "array"   = Divide array data-types into separate element assignments
+///   - "pointer" = Divide assignments, via LOAD/STORE, through pointers
 string OptionSplitDatatypes::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
 
 {
@@ -987,6 +976,14 @@ string OptionSplitDatatypes::apply(Architecture *glb,const string &p1,const stri
   return "Split data-type configuration set";
 }
 
+/// \class OptionNanIgnore
+/// \brief Which Not a Number (NaN) operations should be ignored
+///
+/// The option controls which p-code NaN operations are replaced with a \b false constant, assuming
+/// the input is a valid floating-point value.
+///   - "none"  = No operations are replaced
+///   - "compare" = Replace NaN operations associated with floating-poing comparisons
+///   - "all" = Replace all NaN operations
 string OptionNanIgnore::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
 
 {

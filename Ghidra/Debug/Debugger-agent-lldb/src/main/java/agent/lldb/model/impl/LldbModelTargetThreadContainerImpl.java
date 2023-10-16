@@ -173,7 +173,7 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

@@ -59,6 +59,14 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 		listeners.stream().forEach(l -> l.componentProviderActivated(provider));
 	}
 
+	public FunctionComparisonProvider createProvider() {
+		FunctionComparisonProvider provider = new MultiFunctionComparisonProvider(plugin);
+		provider.addToTool();
+		providers.add(provider);
+		provider.setVisible(true);
+		return provider;
+	}
+
 	/**
 	 * Creates a new comparison between the given set of functions
 	 * 
@@ -69,11 +77,8 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 		if (functions.isEmpty()) {
 			return null;
 		}
-		FunctionComparisonProvider provider = new MultiFunctionComparisonProvider(plugin);
-		provider.addToTool();
+		FunctionComparisonProvider provider = createProvider();
 		provider.getModel().compareFunctions(functions);
-		providers.add(provider);
-		provider.setVisible(true);
 		return provider;
 	}
 
@@ -85,7 +90,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 * @return the new comparison provider
 	 */
 	public FunctionComparisonProvider compareFunctions(Function source,
-			Function target) {
+		Function target) {
 		FunctionComparisonProvider provider = new MultiFunctionComparisonProvider(plugin);
 		provider.addToTool();
 		provider.getModel().compareFunctions(source, target);
@@ -118,7 +123,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 * @param provider the provider to add the functions to
 	 */
 	public void compareFunctions(Function source, Function target,
-			FunctionComparisonProvider provider) {
+		FunctionComparisonProvider provider) {
 		if (provider == null) {
 			return;
 		}
@@ -221,4 +226,5 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 			}
 		}
 	}
+
 }

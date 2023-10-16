@@ -51,16 +51,19 @@ public class DbgListProcessesCommand extends AbstractDbgCommand<Map<DebugProcess
 			// Need to create the inferior as if we received =thread-group-created
 			DebugSystemObjects so = manager.getSystemObjects();
 			long pid;
+			String name;
 			if (!manager.isKernelMode()) {
 				Msg.warn(this, "Resync: Was missing group: i" + id);
 				so.setCurrentProcessId(id);
 				pid = so.getCurrentProcessSystemId();
+				name = so.getCurrentProcessExecutableName();
 			} 
 			else {
 				id = new DebugSystemProcessRecord(id.value());
 				pid = -1;
+				name = so.getCurrentProcessExecutableName();;
 			}
-			DbgProcessImpl proc = manager.getProcessComputeIfAbsent(id, pid, true);
+			DbgProcessImpl proc = manager.getProcessComputeIfAbsent(id, pid, name, true);
 			Long offset = so.getCurrentProcessDataOffset();
 			proc.setOffset(offset);
 		}

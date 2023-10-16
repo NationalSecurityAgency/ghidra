@@ -131,7 +131,7 @@ public class GhidraState {
 
 	/**
 	 * If it differs, set the current location to the given address and fire a {@link ProgramLocationPluginEvent}.
-	 * 
+	 *
 	 * @param address the address
 	 */
 	public void setCurrentAddress(Address address) {
@@ -150,8 +150,8 @@ public class GhidraState {
 
 	/**
 	 * If it differs, set the current location and fire a {@link ProgramLocationPluginEvent}.
-	 * 
-	 * @param location
+	 *
+	 * @param location the location
 	 */
 	public void setCurrentLocation(ProgramLocation location) {
 		if (SystemUtilities.isEqual(currentLocation, location)) {
@@ -173,7 +173,7 @@ public class GhidraState {
 
 	/**
 	 * Set the currently highlighted selection and fire a {@link ProgramHighlightPluginEvent}.
-	 * 
+	 *
 	 * @param highlight the selection
 	 */
 	public void setCurrentHighlight(ProgramSelection highlight) {
@@ -199,7 +199,7 @@ public class GhidraState {
 
 	/**
 	 * Set the current selection and fire a {@link ProgramSelectionPluginEvent}.
-	 * 
+	 *
 	 * @param selection the selection
 	 */
 	public void setCurrentSelection(ProgramSelection selection) {

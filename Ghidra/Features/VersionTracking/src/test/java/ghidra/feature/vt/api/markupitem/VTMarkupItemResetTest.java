@@ -55,7 +55,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 		// destination address is cleared *and not other user-defined values are set*.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatch match = matchSet.addMatch(createRandomMatch(db));
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
@@ -80,7 +80,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 		// user's considered state is cleared *and not other user-defined values are set*.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatch match = matchSet.addMatch(createRandomMatch(db));
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
@@ -104,7 +104,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 		// markup item is unapplied *and not other user-defined values are set*.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatch match = matchSet.addMatch(createRandomMatch(db));
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
@@ -146,7 +146,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 		// is set by the user.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatch match = matchSet.addMatch(createRandomMatch(db));
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
@@ -186,7 +186,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 		// the the destination address is set by the user.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatch match = matchSet.addMatch(createRandomMatch(db));
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
@@ -216,7 +216,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 		// cleared, but the considered status was set.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
-			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+			createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 
 		VTMatch match = matchSet.addMatch(createRandomMatch(db));
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);

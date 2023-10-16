@@ -68,21 +68,57 @@ public abstract class VTAbstractProgramCorrelatorFactory implements VTProgramCor
 	}
 
 	@Override
-	public final VTProgramCorrelator createCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
+	public final VTProgramCorrelator createCorrelator(Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, VTOptions options) {
 
-		return doCreateCorrelator(serviceProvider, sourceProgram, sourceAddressSet,
-			destinationProgram, destinationAddressSet, options == null ? createDefaultOptions()
-					: (VTOptions) options.copy());
+		return doCreateCorrelator(sourceProgram, sourceAddressSet, destinationProgram,
+			destinationAddressSet,
+			options == null ? createDefaultOptions() : (VTOptions) options.copy());
 	}
 
-	/** 
+	/**
 	 * This method is added to the interface to enforce the fact that we want options passed into
 	 * this method to be copies so that changes during correlation do not spoil the options
 	 * of others.
+	 * @param sourceProgram the source program for this correlation.
+	 * @param sourceAddressSet the set of addresses in the source program to consider in this
+	 * correlation.
+	 * @param destinationProgram the destination program for this correlation.
+	 * @param destinationAddressSet the set of addresses in the destination program to consider in
+	 * this correlation.
+	 * @param options the options to use for this correlation.
+	 * @return a new VTProgramCorrelator instance created specifically for this set of given
+	 * parameters.
 	 */
-	protected abstract VTProgramCorrelator doCreateCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
+	protected abstract VTProgramCorrelator doCreateCorrelator(Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, VTOptions options);
+
+	/**
+	 * Deprecated.  Use {@link #createCorrelator(Program, AddressSetView, Program, AddressSetView, VTOptions)}
+	 * instead.
+	 *
+	 *
+	 * @param sourceProgram the source program for this correlation.
+	 * @param sourceAddressSet the set of addresses in the source program to consider in this
+	 * correlation.
+	 * @param destinationProgram the destination program for this correlation.
+	 * @param destinationAddressSet the set of addresses in the destination program to consider in
+	 * this correlation.
+	 * @param options the options to use for this correlation.
+	 * @return a new VTProgramCorrelator instance created specifically for this set of given
+	 * parameters.
+	 * @deprecated Use {@link #createCorrelator(Program, AddressSetView, Program, AddressSetView, VTOptions)}
+	 * instead.
+	 */
+	@Override
+	@Deprecated
+	public VTProgramCorrelator createCorrelator(ServiceProvider serviceProvider,
+			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
+			AddressSetView destinationAddressSet, VTOptions options) {
+		return doCreateCorrelator(sourceProgram, sourceAddressSet, destinationProgram,
+			destinationAddressSet, options);
+	}
+
 }

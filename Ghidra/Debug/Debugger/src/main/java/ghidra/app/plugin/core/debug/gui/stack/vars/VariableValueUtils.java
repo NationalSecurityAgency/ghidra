@@ -19,9 +19,9 @@ import java.util.*;
 
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.plugintool.PluginTool;

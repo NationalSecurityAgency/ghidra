@@ -37,6 +37,9 @@ public class GhidraURL {
 
 	private static final String PROTOCOL_URL_START = PROTOCOL + ":/";
 
+	private static Pattern IS_REMOTE_URL_PATTERN =
+		Pattern.compile("^" + PROTOCOL_URL_START + "/[^/].*"); // e.g., ghidra://path
+
 	private static Pattern IS_LOCAL_URL_PATTERN =
 		Pattern.compile("^" + PROTOCOL_URL_START + "[^/].*"); // e.g., ghidra:/path
 
@@ -69,6 +72,28 @@ public class GhidraURL {
 	}
 
 	/**
+	 * Determine if URL string uses a local format (e.g., {@code ghidra:/path...}).
+	 * Extensive validation is not performed.  This method is intended to differentiate
+	 * from a server URL only.
+	 * @param str URL string
+	 * @return true if string appears to be local Ghidra URL, else false
+	 */
+	public static boolean isLocalGhidraURL(String str) {
+		return IS_LOCAL_URL_PATTERN.matcher(str).matches();
+	}
+
+	/**
+	 * Determine if URL string uses a remote server format (e.g., {@code ghidra://host...}).
+	 * Extensive validation is not performed.  This method is intended to differentiate
+	 * from a local URL only.
+	 * @param str URL string
+	 * @return true if string appears to be remote server Ghidra URL, else false
+	 */
+	public static boolean isServerURL(String str) {
+		return IS_REMOTE_URL_PATTERN.matcher(str).matches();
+	}
+
+	/**
 	 * Determine if the specified URL is a local project URL.
 	 * No checking is performed as to the existence of the project.
 	 * @param url ghidra URL
@@ -76,7 +101,7 @@ public class GhidraURL {
 	 * project (ghidra:/path/projectName...)
 	 */
 	public static boolean isLocalProjectURL(URL url) {
-		return IS_LOCAL_URL_PATTERN.matcher(url.toExternalForm()).matches();
+		return isLocalGhidraURL(url.toExternalForm());
 	}
 
 	/**
@@ -92,7 +117,7 @@ public class GhidraURL {
 		}
 
 		String path = localProjectURL.getPath(); // assume path always starts with '/'
-		
+
 //		if (path.indexOf(":/") == 2 && Character.isLetter(path.charAt(1))) { // check for drive letter after leading '/'
 //			if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS) {
 //				path = path.substring(1); // Strip-off leading '/'
@@ -105,7 +130,7 @@ public class GhidraURL {
 
 		int index = path.lastIndexOf('/');
 		String dirPath = index != 0 ? path.substring(0, index) : "/";
-		
+
 		String name = path.substring(index + 1);
 		if (name.length() == 0) {
 			return null;
@@ -177,7 +202,7 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Determine if the specified URL is any type of server URL.
+	 * Determine if the specified URL is any type of supported server Ghidra URL.
 	 * No checking is performed as to the existence of the server or repository.
 	 * @param url ghidra URL
 	 * @return true if specified URL refers to a Ghidra server 
@@ -424,7 +449,7 @@ public class GhidraURL {
 	public static URL makeURL(String dirPath, String projectName) {
 		return makeURL(dirPath, projectName, null, null);
 	}
-	
+
 	/**
 	 * Create a URL which refers to a local Ghidra project
 	 * @param projectLocator absolute project location 
@@ -434,7 +459,7 @@ public class GhidraURL {
 	public static URL makeURL(ProjectLocator projectLocator) {
 		return makeURL(projectLocator, null, null);
 	}
-	
+
 	/**
 	 * Create a URL which refers to a local Ghidra project with optional project file and ref
 	 * @param projectLocation absolute path of project location directory 

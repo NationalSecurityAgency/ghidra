@@ -15,10 +15,8 @@
  */
 package ghidra.app.util.opinion;
 
-import javax.swing.JComponent;
-
-import docking.DialogComponentProvider;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.pathmanager.AbstractPathsDialog;
 import docking.widgets.pathmanager.PathnameTablePanel;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 
@@ -26,40 +24,35 @@ import ghidra.app.util.importer.LibrarySearchPathManager;
  * Dialog for editing Library Search Paths which are used by the importer to locate referenced
  * shared libraries.
  */
-public class LibraryPathsDialog extends DialogComponentProvider {
-
-	private PathnameTablePanel tablePanel;
+public class LibraryPathsDialog extends AbstractPathsDialog {
 
 	public LibraryPathsDialog() {
 		super("Edit Library Paths");
-		addWorkPanel(buildWorkPanel());
-		addOKButton();
-		addCancelButton();
-		setPreferredSize(600, 400);
-		setRememberSize(false);
-	}
-
-	private JComponent buildWorkPanel() {
-		String[] libraryPaths = LibrarySearchPathManager.getLibraryPaths();
-		tablePanel = new PathnameTablePanel(libraryPaths, false, true, () -> reset());
-		// false=> not editable, true=> add new paths to top of the table
-
-		tablePanel.setFileChooserProperties("Select Directory or Filesystem",
-			"LibrarySearchDirectory", GhidraFileChooserMode.FILES_AND_DIRECTORIES, false, null);
-
-		return tablePanel;
-	}
-
-	private void reset() {
-		LibrarySearchPathManager.reset();
-		tablePanel.setPaths(LibrarySearchPathManager.getLibraryPaths());
 	}
 
 	@Override
-	protected void okCallback() {
-		String[] paths = tablePanel.getPaths();
-		LibrarySearchPathManager.setLibraryPaths(paths);
-		close();
+	protected String[] loadPaths() {
+		return LibrarySearchPathManager.getLibraryPaths();
 	}
 
+	@Override
+	protected void savePaths(String[] paths) {
+		LibrarySearchPathManager.setLibraryPaths(paths);
+	}
+
+	@Override
+	protected PathnameTablePanel newPathnameTablePanel() {
+		// disable edits, add to top, ordered
+		PathnameTablePanel tablePanel =
+			new PathnameTablePanel(null, this::reset, false, true, true);
+		tablePanel.setFileChooserProperties("Select Directory or Filesystem",
+			"LibrarySearchDirectory", GhidraFileChooserMode.FILES_AND_DIRECTORIES, false, null);
+		return tablePanel;
+	}
+
+	@Override
+	protected void reset() {
+		LibrarySearchPathManager.reset();
+		super.reset();
+	}
 }

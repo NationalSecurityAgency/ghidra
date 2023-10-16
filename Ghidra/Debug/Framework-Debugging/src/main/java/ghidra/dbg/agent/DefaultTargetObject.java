@@ -159,7 +159,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * @return a future which completes when the cache has been updated
 	 */
 	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	private boolean shouldRequestElements(RefreshBehavior refresh) {
@@ -186,7 +186,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			if (shouldRequestElements(refresh)) {
 				curElemsRequest = model.gateFuture(requestElements(refresh));
 			}
-			req = curElemsRequest == null ? AsyncUtils.NIL : curElemsRequest;
+			req = curElemsRequest == null ? AsyncUtils.nil() : curElemsRequest;
 		}
 		return req.thenApply(__ -> getCachedElements());
 	}
@@ -347,7 +347,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * @return a future which completes when the cache has been updated
 	 */
 	protected CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	private boolean shouldRequestAttributes(RefreshBehavior refresh) {
@@ -375,7 +375,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			if (shouldRequestAttributes(refresh)) {
 				curAttrsRequest = model.gateFuture(requestAttributes(refresh));
 			}
-			req = curAttrsRequest == null ? AsyncUtils.NIL : curAttrsRequest;
+			req = curAttrsRequest == null ? AsyncUtils.nil() : curAttrsRequest;
 		}
 		return req.thenApply(__ -> {
 			synchronized (model.lock) {

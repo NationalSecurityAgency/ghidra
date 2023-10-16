@@ -18,9 +18,8 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.DebuggerModelService;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.SleighUtils;
@@ -81,14 +80,6 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		return true;
 	}
 
-	protected TraceRecorder requireRecorder(DebuggerModelService modelService, Trace trace) {
-		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder == null) {
-			throw new AssertionError("This trace is not live");
-		}
-		return recorder;
-	}
-
 	@Override
 	public void enableForProgram() {
 		progBreak.enable();
@@ -125,7 +116,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planEnable(actions, length, kinds);
 		return actions.execute();
@@ -139,7 +130,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planDisable(actions, length, kinds);
 		return actions.execute();
@@ -153,7 +144,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 			breaks = traceBreaks.get(trace);
 		}
 		if (breaks == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		breaks.planDelete(actions, length, kinds);
 		return actions.execute();
@@ -304,9 +295,9 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
-	public void setRecorder(Trace trace, TraceRecorder recorder) {
+	public void setTarget(Trace trace, Target target) {
 		synchronized (traceBreaks) {
-			traceBreaks.get(trace).setRecorder(recorder);
+			traceBreaks.get(trace).setTarget(target);
 		}
 	}
 

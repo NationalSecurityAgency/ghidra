@@ -21,9 +21,9 @@ import javax.swing.JLabel;
 
 import org.apache.commons.collections4.ComparatorUtils;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.*;

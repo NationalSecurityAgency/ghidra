@@ -30,16 +30,15 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
 import generic.theme.GIcon;
 import ghidra.framework.preferences.Preferences;
-import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import resources.Icons;
 import utility.function.Callback;
 
 /**
- * Component that has a table to show pathnames; the panel includes buttons to control
- * the order of the paths, and to add and remove paths. The add button brings up a
- * file chooser. Call the setFileChooser() method to control how the file chooser should
- * behave.  If the table entries should not be edited, call setEditingEnabled(false).
+ * Component that has a table to show pathnames; the panel includes buttons to control the order of
+ * the paths, and to add and remove paths. The add button brings up a file chooser. Call the
+ * setFileChooser() method to control how the file chooser should behave. If the table entries
+ * should not be edited, call setEditingEnabled(false).
  */
 public class PathnameTablePanel extends JPanel {
 
@@ -57,6 +56,7 @@ public class PathnameTablePanel extends JPanel {
 	private boolean allowMultiFileSelection;
 	private GhidraFileFilter filter;
 	private boolean addToTop;
+	private boolean ordered;
 
 	private Callback resetCallback;
 
@@ -64,30 +64,43 @@ public class PathnameTablePanel extends JPanel {
 
 	/**
 	 * Construct a new PathnameTablePanel.
+	 * 
 	 * @param paths list of paths to show; may be null
-	 * @param enableEdits true if edits should be allowed
-	 * @param addToTop true if new paths are to be added to the top of the table, false
-	 * if new paths are to be added to the end of the table
+	 * @param enableEdits true to allow editing of entries <em>directly in the table</em>, i.e., via
+	 *            the cell editor. The add and remove buttons still allow modification of the list.
+	 * @param addToTop true if the add button should add entries to the top of the list. False to
+	 *            add entries to the bottom. This behavior is overridden if if {@code ordered} is
+	 *            false.
+	 * @param ordered true if the order of entries matters. If so, up and down buttons are provided
+	 *            so the user may arrange the entries. If not, entries are sorted alphabetically.
 	 */
-	public PathnameTablePanel(String[] paths, boolean enableEdits, boolean addToTop) {
+	public PathnameTablePanel(String[] paths, boolean enableEdits, boolean addToTop,
+			boolean ordered) {
 		super(new BorderLayout(5, 5));
 		this.addToTop = addToTop;
+		this.ordered = ordered;
 		tableModel = new PathnameTableModel(paths, enableEdits);
 		create();
 	}
 
 	/**
-	 * Construct a new PathnameTablePanel will a reset button
+	 * Construct a new PathnameTablePanel with a reset button
+	 * 
 	 * @param paths list of paths to show; may be null
-	 * @param enableEdits true if edits should be allowed
-	 * @param addToTop true if new paths are to be added to the top of the table, false
-	 * @param resetCallback Callback containing the action to perform if the reset button is pressed
-	 * if new paths are to be added to the end of the table
+	 * @param resetCallback callback containing the action to perform if the reset button is pressed
+	 * @param enableEdits true to allow editing of entries <em>directly in the table</em>, i.e., via
+	 *            the cell editor. The add and remove buttons still allow modification of the list.
+	 * @param addToTop true if the add button should add entries to the top of the list. False to
+	 *            add entries to the bottom. This behavior is overridden if if {@code ordered} is
+	 *            false.
+	 * @param ordered true if the order of entries matters. If so, up and down buttons are provided
+	 *            so the user may arrange the entries. If not, entries are sorted alphabetically.
 	 */
-	public PathnameTablePanel(String[] paths, boolean enableEdits, boolean addToTop,
-			Callback resetCallback) {
+	public PathnameTablePanel(String[] paths, Callback resetCallback, boolean enableEdits,
+			boolean addToTop, boolean ordered) {
 		super(new BorderLayout(5, 5));
 		this.addToTop = addToTop;
+		this.ordered = ordered;
 		this.resetCallback = resetCallback;
 		tableModel = new PathnameTableModel(paths, enableEdits);
 		create();
@@ -95,9 +108,10 @@ public class PathnameTablePanel extends JPanel {
 
 	/**
 	 * Set properties on the file chooser that is displayed when the "Add" button is pressed.
+	 * 
 	 * @param title title of the file chooser
-	 * @param preferenceForLastSelectedDir Preference to use as the current directory in the
-	 * file chooser
+	 * @param preferenceForLastSelectedDir Preference to use as the current directory in the file
+	 *            chooser
 	 * @param selectionMode mode defined in GhidraFileFilter, e.g., GhidraFileFilter.FILES_ONLY
 	 * @param allowMultiSelection true if multiple files can be selected
 	 * @param filter filter to use; may be null if no filtering is required
@@ -115,6 +129,7 @@ public class PathnameTablePanel extends JPanel {
 
 	/**
 	 * Set whether the entries in the table can be edited.
+	 * 
 	 * @param enableEdits false means to not allow editing; the table is editable by default.
 	 */
 	public void setEditingEnabled(boolean enableEdits) {
@@ -122,12 +137,33 @@ public class PathnameTablePanel extends JPanel {
 	}
 
 	/**
-	 * Set whether new paths should be added to the top of the table (true) or at the end of
-	 * the table (false).
+	 * Set whether new paths should be added to the top of the table (true) or at the end of the
+	 * table (false).
+	 * 
 	 * @param addToTop true means to add to the top of the table
 	 */
 	public void setAddToTop(boolean addToTop) {
 		this.addToTop = addToTop;
+	}
+
+	/**
+	 * Set whether the order of entries in the table matters.
+	 * 
+	 * <p>
+	 * <b>WARNING:</b> When this is set to false, the entries are immediately sorted and the up and
+	 * down buttons removed. Setting it back to true will replace the buttons, but will <em>not</em>
+	 * restore the order. In general, this should be set once, at the start of the table's life
+	 * cycle.
+	 * 
+	 * @param ordered true means the user can control the order, false means they cannot.
+	 */
+	public void setOrdered(boolean ordered) {
+		this.ordered = ordered;
+		upButton.setVisible(ordered);
+		downButton.setVisible(ordered);
+		if (!ordered) {
+			tableModel.sortPaths();
+		}
 	}
 
 	public String[] getPaths() {
@@ -139,7 +175,7 @@ public class PathnameTablePanel extends JPanel {
 	}
 
 	public void setPaths(String[] paths) {
-		tableModel.setPaths(paths);
+		tableModel.setPaths(paths, !ordered);
 	}
 
 	public JTable getTable() {
@@ -160,13 +196,15 @@ public class PathnameTablePanel extends JPanel {
 		upButton.setName("UpArrow");
 		upButton.setToolTipText("Move the selected path up in list");
 		upButton.addActionListener(e -> up());
+		upButton.setVisible(ordered);
 		downButton = new GButton(Icons.DOWN_ICON);
 		downButton.setName("DownArrow");
 		downButton.setToolTipText("Move the selected path down in list");
 		downButton.addActionListener(e -> down());
+		downButton.setVisible(ordered);
 		addButton = new GButton(Icons.ADD_ICON);
 		addButton.setName("AddPath");
-		addButton.setToolTipText("Display file chooser to select files to add");
+		addButton.setToolTipText("Display file chooser to select paths to add");
 		addButton.addActionListener(e -> add());
 		removeButton = new GButton(Icons.DELETE_ICON);
 		removeButton.setName("RemovePath");
@@ -178,30 +216,13 @@ public class PathnameTablePanel extends JPanel {
 		resetButton.setToolTipText("Resets path list to the default values");
 		resetButton.addActionListener(e -> reset());
 
-		JPanel buttonPanel = new JPanel(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.NORTH;
-		gbc.insets = new Insets(0, 0, 0, 0);
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		buttonPanel.add(upButton, gbc);
-		gbc.gridy = 1;
-		buttonPanel.add(downButton, gbc);
-		gbc.gridy = 2;
-		buttonPanel.add(addButton, gbc);
-
+		Box buttonBox = Box.createVerticalBox();
+		buttonBox.add(upButton);
+		buttonBox.add(downButton);
+		buttonBox.add(addButton);
+		buttonBox.add(removeButton);
 		if (resetCallback != null) {
-			gbc.gridy = 3;
-			buttonPanel.add(removeButton, gbc);
-
-			gbc.weighty = 1;
-			gbc.gridy = 4;
-			buttonPanel.add(resetButton, gbc);
-		}
-		else {
-			gbc.weighty = 1;
-			gbc.gridy = 3;
-			buttonPanel.add(removeButton, gbc);
+			buttonBox.add(resetButton);
 		}
 
 		pathnameTable = new GTable(tableModel);
@@ -216,7 +237,7 @@ public class PathnameTablePanel extends JPanel {
 		setDefaultCellRenderer();
 
 		add(scrollPane, BorderLayout.CENTER);
-		add(buttonPanel, BorderLayout.EAST);
+		add(buttonBox, BorderLayout.EAST);
 
 		ListSelectionModel selModel = pathnameTable.getSelectionModel();
 		selModel.addListSelectionListener(e -> {
@@ -300,17 +321,7 @@ public class PathnameTablePanel extends JPanel {
 		fileChooser.setTitle(title);
 		fileChooser.setApproveButtonToolTipText(title);
 		if (filter != null) {
-			fileChooser.addFileFilter(new GhidraFileFilter() {
-				@Override
-				public String getDescription() {
-					return filter.getDescription();
-				}
-
-				@Override
-				public boolean accept(File f, GhidraFileChooserModel model) {
-					return filter.accept(f, model);
-				}
-			});
+			fileChooser.addFileFilter(filter);
 		}
 		String dir = Preferences.getProperty(preferenceForLastSelectedDir);
 		if (dir != null) {
@@ -318,26 +329,20 @@ public class PathnameTablePanel extends JPanel {
 		}
 
 		List<File> files = fileChooser.getSelectedFiles();
-		String[] paths = new String[0];
+		String[] paths = files.stream().map(File::getAbsolutePath).toArray(String[]::new);
 		if (!files.isEmpty()) {
 			if (allowMultiFileSelection) {
 				String parent = files.get(0).getParent();
 				Preferences.setProperty(preferenceForLastSelectedDir, parent);
-				paths = new String[files.size()];
-				for (int i = 0; i < files.size(); i++) {
-					paths[i] = files.get(i).getAbsolutePath();
-				}
 			}
 			else {
-				paths = new String[1];
-				paths[0] = files.get(0).getAbsolutePath();
 				Preferences.setProperty(preferenceForLastSelectedDir, paths[0]);
 			}
 		}
 
 		fileChooser.dispose();
 
-		tableModel.addPaths(paths, addToTop);
+		tableModel.addPaths(paths, addToTop, !ordered);
 	}
 
 	private void up() {
@@ -350,13 +355,19 @@ public class PathnameTablePanel extends JPanel {
 		tableModel.moveDown(pathnameTable, row);
 	}
 
+	protected int promptConfirmReset() {
+		String confirmation = """
+				<html><body width="200px">
+				  Are you sure you would like to reset the paths to the default list?
+				  This will remove all paths manually added.
+				</html>""";
+		String header = "Reset Paths?";
+
+		return OptionDialog.showYesNoDialog(this, header, confirmation);
+	}
+
 	private void reset() {
-		String confirmation = "Are you sure you would like to reset\nlibrary" +
-			" paths to the default list? This\nwill remove all paths manually added.";
-		String header = "Reset Library Paths?";
-
-		int optionChosen = OptionDialog.showYesNoDialog(this, header, confirmation);
-
+		int optionChosen = promptConfirmReset();
 		if (resetCallback != null && optionChosen == OptionDialog.YES_OPTION) {
 			resetCallback.call();
 		}

@@ -34,12 +34,12 @@ public class AsyncLockTest {
 
 	private CompletableFuture<Void> doCriticalStuff() {
 		// Placeholder for example
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	private CompletableFuture<Void> doMoreCriticalStuff() {
 		// Placeholder for example
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public CompletableFuture<Integer> fetchValue() {

@@ -12,7 +12,7 @@
 <symbol space="ram" offset="0x400517" name="readstruct"/>
 </binaryimage>
 <script>
-  <com>parse line struct twostruct { int4 field1; int4 array[5]; };</com>
+  <com>parse line struct twostruct { int4 field1; int4 field2; int4 array[5]; };</com>
   <com>parse line extern int4 readstruct(twostruct *ptr,int8 a,int8 b);</com>
   <com>lo fu readstruct</com>
   <com>decompile</com>

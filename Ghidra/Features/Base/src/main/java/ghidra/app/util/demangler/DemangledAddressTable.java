@@ -35,7 +35,7 @@ public class DemangledAddressTable extends DemangledObject {
 	 * @param mangled the source mangled string
 	 * @param originalDemangled the original demangled string
 	 * @param name the name of the address table
-	 * @param calculateLength true if the length of this address table should be calculdated at
+	 * @param calculateLength true if the length of this address table should be calculated at
 	 *        analysis time
 	 */
 	public DemangledAddressTable(String mangled, String originalDemangled, String name,

@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -34,7 +34,6 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.TargetMethod;
@@ -43,6 +42,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Lifespan;
@@ -114,14 +114,14 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 										display = "Target",
 										name = "target") Address target) {
 								commands.add("advance(" + target + ")");
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 
 							// Takes no address context
 							@TargetMethod.Export("StepExt")
 							public CompletableFuture<Void> stepExt() {
 								commands.add("stepExt");
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 
 							// Takes a second required non-default parameter
@@ -136,7 +136,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 										display = "Flag",
 										name = "flag") boolean flag) {
 								commands.add("advanceWithFlag(" + address + "," + flag + ")");
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 
 							// Takes a second address parameter
@@ -151,7 +151,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 										display = "End",
 										name = "end") Address end) {
 								commands.add("between(" + start + "," + end + ")");
-								return AsyncUtils.NIL;
+								return AsyncUtils.nil();
 							}
 						};
 					}
@@ -197,6 +197,8 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 		ProgramLocationActionContext ctx =
 			new ProgramLocationActionContext(listingPlugin.getProvider(), program,
 				new ProgramLocation(program, addr(program, 0)), null, null);
+		waitOn(mb.testModel.requestFocus(mb.testProcess1));
+		waitForSwing();
 		assertEquals(List.of(), methodsPlugin.getPopupActions(tool, ctx));
 	}
 

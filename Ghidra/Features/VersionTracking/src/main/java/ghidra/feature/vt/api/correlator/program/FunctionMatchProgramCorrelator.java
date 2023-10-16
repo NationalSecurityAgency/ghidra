@@ -24,7 +24,6 @@ import ghidra.app.plugin.match.MatchFunctions.MatchedFunctions;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Function;
@@ -38,12 +37,10 @@ public class FunctionMatchProgramCorrelator extends VTAbstractProgramCorrelator 
 	private final boolean oneToOne;
 	private final FunctionHasher hasher;
 
-	public FunctionMatchProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
-			AddressSetView sourceAddressSet, Program destinationProgram,
-			AddressSetView destinationAddressSet, ToolOptions options, String name,
-			boolean oneToOne, FunctionHasher hasher) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
+	public FunctionMatchProgramCorrelator(Program sourceProgram, AddressSetView sourceAddressSet,
+			Program destinationProgram, AddressSetView destinationAddressSet, ToolOptions options,
+			String name, boolean oneToOne, FunctionHasher hasher) {
+		super(sourceProgram, sourceAddressSet, destinationProgram, destinationAddressSet, options);
 		this.name = name;
 		this.oneToOne = oneToOne;
 		this.hasher = hasher;

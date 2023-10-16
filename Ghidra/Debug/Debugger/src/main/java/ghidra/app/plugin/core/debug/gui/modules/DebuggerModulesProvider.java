@@ -29,7 +29,6 @@ import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.filechooser.GhidraFileChooser;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -37,13 +36,11 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.plugin.core.debug.service.modules.MapModulesBackgroundCommand;
 import ghidra.app.plugin.core.debug.service.modules.MapSectionsBackgroundCommand;
-import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.*;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
-import ghidra.app.services.SectionMapProposal.SectionMapEntry;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
-import ghidra.dbg.target.TargetModule;
+import ghidra.debug.api.modules.*;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
@@ -59,7 +56,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.CollectionChangeListener;
 
 public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
@@ -222,23 +218,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		return null;
 	}
 
-	protected class RecordersChangedListener implements CollectionChangeListener<TraceRecorder> {
-		@Override
-		public void elementAdded(TraceRecorder element) {
-			contextChanged();
-		}
-
-		@Override
-		public void elementRemoved(TraceRecorder element) {
-			contextChanged();
-		}
-
-		@Override
-		public void elementModified(TraceRecorder element) {
-			contextChanged();
-		}
-	}
-
 	protected class SelectAddressesAction extends AbstractSelectAddressesAction {
 		public static final String GROUP = DebuggerResources.GROUP_GENERAL;
 
@@ -270,81 +249,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			return isContextNonEmpty(context);
-		}
-	}
-
-	protected class CaptureTypesAction extends AbstractCaptureTypesAction {
-		public static final String GROUP = DebuggerResources.GROUP_GENERAL;
-
-		public CaptureTypesAction() {
-			super(plugin);
-			setToolBarData(new ToolBarData(ICON, GROUP));
-			setPopupMenuData(new MenuData(new String[] { NAME }, GROUP));
-			// TODO: Until we support this in an agent, hide it
-			//addLocalAction(this);
-			setEnabled(false);
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			Set<TraceModule> modules = getSelectedModules(context);
-			if (modules == null) {
-				return;
-			}
-			TraceRecorder recorder = modelService.getRecorder(current.getTrace());
-			BackgroundUtils.async(tool, current.getTrace(), "Capture Types", true, true, false,
-				(__, monitor) -> AsyncUtils.each(TypeSpec.VOID, modules.iterator(), (m, loop) -> {
-					if (recorder.getTargetModule(m) == null) {
-						loop.repeatWhile(!monitor.isCancelled());
-					}
-					else {
-						recorder.captureDataTypes(m, monitor)
-								.thenApply(v -> !monitor.isCancelled())
-								.handle(loop::repeatWhile);
-					}
-				}));
-		}
-
-		@Override
-		public boolean isEnabledForContext(ActionContext context) {
-			return isCaptureApplicable(context);
-		}
-	}
-
-	protected class CaptureSymbolsAction extends AbstractCaptureSymbolsAction {
-		public static final String GROUP = DebuggerResources.GROUP_MAINTENANCE;
-
-		public CaptureSymbolsAction() {
-			super(plugin);
-			setToolBarData(new ToolBarData(ICON, GROUP));
-			setPopupMenuData(new MenuData(new String[] { NAME }, GROUP));
-			addLocalAction(this);
-			setEnabled(false);
-		}
-
-		@Override
-		public void actionPerformed(ActionContext context) {
-			Set<TraceModule> modules = getSelectedModules(context);
-			if (modules == null) {
-				return;
-			}
-			TraceRecorder recorder = modelService.getRecorder(current.getTrace());
-			BackgroundUtils.async(tool, current.getTrace(), NAME, true, true, false,
-				(__, monitor) -> AsyncUtils.each(TypeSpec.VOID, modules.iterator(), (m, loop) -> {
-					if (recorder.getTargetModule(m) == null) {
-						loop.repeatWhile(!monitor.isCancelled());
-					}
-					else {
-						recorder.captureSymbols(m, monitor)
-								.thenApply(v -> !monitor.isCancelled())
-								.handle(loop::repeatWhile);
-					}
-				}));
-		}
-
-		@Override
-		public boolean isEnabledForContext(ActionContext context) {
-			return isCaptureApplicable(context);
 		}
 	}
 
@@ -385,8 +289,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 	final DebuggerModulesPlugin plugin;
 
-	// @AutoServiceConsumed via method
-	private DebuggerModelService modelService;
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService staticMappingService;
 	@AutoServiceConsumed
@@ -403,9 +305,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private FileImporterService importerService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
-
-	private final RecordersChangedListener recordersChangedListener =
-		new RecordersChangedListener();
 
 	private final JSplitPane mainPanel = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
@@ -437,8 +336,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	DockingAction actionMapMissingModule;
 
 	SelectAddressesAction actionSelectAddresses;
-	CaptureTypesAction actionCaptureTypes;
-	CaptureSymbolsAction actionCaptureSymbols;
 	ImportFromFileSystemAction actionImportFromFileSystem;
 	// TODO: Save the state of this toggle? Not really compelled.
 	ToggleDockingAction actionFilterSectionsByModules;
@@ -476,18 +373,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		Project activeProject = Objects.requireNonNull(AppInfo.getActiveProject());
 		DomainFolder root = activeProject.getProjectData().getRootFolder();
 		importerService.importFile(root, file);
-	}
-
-	@AutoServiceConsumed
-	private void setModelService(DebuggerModelService modelService) {
-		if (this.modelService != null) {
-			this.modelService.removeTraceRecordersChangedListener(recordersChangedListener);
-		}
-		this.modelService = modelService;
-		if (this.modelService != null) {
-			this.modelService.addTraceRecordersChangedListener(recordersChangedListener);
-		}
-		contextChanged();
 	}
 
 	@AutoServiceConsumed
@@ -617,8 +502,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				.build();
 
 		actionSelectAddresses = new SelectAddressesAction();
-		actionCaptureTypes = new CaptureTypesAction();
-		actionCaptureSymbols = new CaptureSymbolsAction();
 		actionImportFromFileSystem = new ImportFromFileSystemAction();
 		actionFilterSectionsByModules = FilterAction.builder(plugin)
 				.description("Filter sections to those in selected modules")
@@ -809,35 +692,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				return;
 			}
 		}
-	}
-
-	private boolean isCaptureApplicable(ActionContext context) {
-		if (modelService == null) {
-			return false;
-		}
-		if (current.getTrace() == null) {
-			return false;
-		}
-		TraceRecorder recorder = modelService.getRecorder(current.getTrace());
-		if (recorder == null) {
-			return false;
-		}
-		if (context instanceof DebuggerModuleActionContext ctx) {
-			if (!ctx.getSelectedModules().isEmpty()) {
-				return true;
-			}
-		}
-		if (context instanceof DebuggerObjectActionContext ctx) {
-			if (!ctx.getObjectValues().isEmpty()) {
-				return ctx.getObjectValues()
-						.get(0)
-						.getChild()
-						.getTargetSchema()
-						.getInterfaces()
-						.contains(TargetModule.class);
-			}
-		}
-		return false;
 	}
 
 	protected void promptModuleProposal(Collection<ModuleMapEntry> proposal) {

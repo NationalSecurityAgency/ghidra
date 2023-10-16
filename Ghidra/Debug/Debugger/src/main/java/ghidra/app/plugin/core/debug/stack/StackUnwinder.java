@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.debug.stack;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;

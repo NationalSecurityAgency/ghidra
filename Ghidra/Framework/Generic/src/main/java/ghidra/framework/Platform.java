@@ -212,8 +212,11 @@ public enum Platform {
 		}
 		else if (operatingSystem == OperatingSystem.MAC_OS_X) {
 			paths.add("/System/Library/dyld/dyld_shared_cache_arm64e");
-			paths.add(
-				"/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e");
+			paths.add("/System/Library/dyld/dyld_shared_cache_x86_64");
+			paths.add("/System/Library/dyld/dyld_shared_cache_x86_64h");
+			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e");
+			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64");
+			paths.add("/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64h");
 		}
 		else if (CURRENT_PLATFORM == WIN_X86_64) {
 			String windir = System.getenv("SystemRoot");

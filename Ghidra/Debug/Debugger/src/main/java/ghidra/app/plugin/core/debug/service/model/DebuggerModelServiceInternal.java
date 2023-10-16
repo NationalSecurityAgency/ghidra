@@ -18,15 +18,16 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.io.IOException;
 import java.util.Collection;
 
-import ghidra.app.plugin.core.debug.event.*;
-import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
-import ghidra.app.services.*;
+import ghidra.app.plugin.core.debug.event.ModelActivatedPluginEvent;
+import ghidra.app.services.DebuggerModelService;
+import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerTargetTraceMapper;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.lifecycle.Internal;
-import ghidra.util.Swing;
 
 /**
  * Specifies additional methods on the model service which are available for internal testing
@@ -96,10 +97,7 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	 * 
 	 * @param focused the focused object
 	 */
-	default void fireFocusEvent(TargetObject focused) {
-		Swing.runIfSwingOrRunLater(
-			() -> firePluginEvent(new ModelObjectFocusedPluginEvent(getName(), focused)));
-	}
+	void fireFocusEvent(TargetObject focused);
 
 	/**
 	 * Fire a recorder-advanced event
@@ -107,12 +105,7 @@ public interface DebuggerModelServiceInternal extends DebuggerModelService {
 	 * @param recorder the recorder that advanced
 	 * @param snap the snap to which it advanced
 	 */
-	default void fireSnapEvent(TraceRecorder recorder, long snap) {
-		// firePluginEvent uses Swing.runNow, and I can't wait here.
-		// Especially since the swing thread gets real busy during a step
-		Swing.runIfSwingOrRunLater(
-			() -> firePluginEvent(new TraceRecorderAdvancedPluginEvent(getName(), recorder, snap)));
-	}
+	void fireSnapEvent(TraceRecorder recorder, long snap);
 
 	// Impl should inherit from Plugin
 	String getName();

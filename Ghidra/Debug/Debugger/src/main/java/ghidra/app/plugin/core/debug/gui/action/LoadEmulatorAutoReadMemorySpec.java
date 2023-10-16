@@ -21,13 +21,13 @@ import java.util.concurrent.CompletableFuture;
 import javax.swing.Icon;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AutoReadMemoryAction;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.model.record.RecorderUtils;
 import ghidra.app.plugin.core.debug.utils.AbstractMappedMemoryBytesVisitor;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -60,13 +60,13 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
 		if (mappingService == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		Trace trace = coordinates.getTrace();
 		if (trace == null || coordinates.isAlive() ||
 			!ProgramEmulationUtils.isEmulatedProgram(trace)) {
 			// Never interfere with a live target
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		TraceMemoryManager mm = trace.getMemoryManager();
 		AddressSet toRead = new AddressSet(RecorderUtils.INSTANCE.quantize(12, visible));
@@ -80,7 +80,7 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 		}
 
 		if (toRead.isEmpty()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 
 		long snap = coordinates.getSnap();
@@ -94,7 +94,7 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 					mm.putBytes(snap, hostAddr, buf);
 				}
 			}.visit(trace, snap, toRead);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (MemoryAccessException e) {
 			throw new AssertionError(e);

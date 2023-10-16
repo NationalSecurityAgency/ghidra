@@ -77,7 +77,7 @@ public interface GadpClientTargetBreakpointSpecContainer
 			GadpClientTargetBreakpointSpec specObj = (GadpClientTargetBreakpointSpec) spec;
 			ListenerSet<TargetBreakpointAction> actions = specObj.getDelegate().getActions(false);
 			if (actions != null) {
-				actions.fire.breakpointHit(specObj, trapped, frame, breakpoint);
+				actions.invoke().breakpointHit(specObj, trapped, frame, breakpoint);
 			}
 		}
 	}

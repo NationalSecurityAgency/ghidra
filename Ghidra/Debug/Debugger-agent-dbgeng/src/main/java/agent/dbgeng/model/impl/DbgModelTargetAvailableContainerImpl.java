@@ -90,7 +90,7 @@ public class DbgModelTargetAvailableContainerImpl extends DbgModelTargetObjectIm
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

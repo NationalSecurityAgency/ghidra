@@ -68,6 +68,7 @@ public class IntegerTextField {
 	private boolean allowsHexPrefix = true;
 	private boolean showNumbericDecoration = true;
 	private BigInteger maxValue;
+	private BigInteger minValue;
 
 	private List<ChangeListener> listeners = new ArrayList<>();
 
@@ -367,6 +368,31 @@ public class IntegerTextField {
 	}
 
 	/**
+	 * Sets the minimum allowed value.  The minimum must be a positive number.  Null indicates that
+	 * there is no minimum value.
+	 * <p>
+	 * If negative values are permitted (see {@link #setAllowNegativeValues(boolean)}) this value
+	 * will establish the minimum limit of the absolute value.
+	 *
+	 * @param minValue the minimum value to allow.
+	 */
+	public void setMinValue(BigInteger minValue) {
+		if (minValue != null && minValue.signum() < 0) {
+			throw new IllegalArgumentException("Min value must be positive");
+		}
+		BigInteger currentValue = getValue();
+		this.minValue = minValue;
+		if (minValue != null && !passesMinCheck(currentValue)) {
+			if (currentValue.signum() < 0) {
+				setValue(minValue.negate());
+			}
+			else {
+				setValue(minValue);
+			}
+		}
+	}
+
+	/**
 	 * Returns the JTextField component that this class manages.
 	 *
 	 * @return the JTextField component that this class manages.
@@ -492,6 +518,16 @@ public class IntegerTextField {
 		return value.abs().compareTo(maxValue) <= 0;
 	}
 
+	private boolean passesMinCheck(BigInteger value) {
+		if (value == null) {
+			return true;
+		}
+		if (minValue == null) {
+			return true;
+		}
+		return value.abs().compareTo(minValue) >= 0;
+	}
+
 	private boolean shouldParseAsHex(String text) {
 		if (allowsHexPrefix) {
 			// if allowing "0x" prefix, let the incoming text determine if we should parse as hex
@@ -596,7 +632,7 @@ public class IntegerTextField {
 				if (isNonAllowedNegativeNumber(value)) {
 					return false;
 				}
-				if (passesMaxCheck(value)) {
+				if (passesMaxCheck(value) && passesMinCheck(value)) {
 					// When the input is valid, update the hex mode to match how the text was parsed.
 					// See parseAsHex variable comment above.
 					isHexMode = parseAsHex;

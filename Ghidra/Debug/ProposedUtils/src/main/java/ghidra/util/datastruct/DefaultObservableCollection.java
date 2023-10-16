@@ -24,6 +24,7 @@ public class DefaultObservableCollection<E, L extends CollectionChangeListener<?
 
 	protected enum Change {
 		ADDED, REMOVED, MODIFIED;
+
 		static Change then(Change one, Change two) {
 			if (one == null) {
 				return two;
@@ -91,13 +92,13 @@ public class DefaultObservableCollection<E, L extends CollectionChangeListener<?
 				for (Map.Entry<E, Change> ent : changes.entrySet()) {
 					switch (ent.getValue()) {
 						case ADDED:
-							listeners.fire.elementAdded(ent.getKey());
+							listeners.invoke().elementAdded(ent.getKey());
 							break;
 						case REMOVED:
-							listeners.fire.elementRemoved(ent.getKey());
+							listeners.invoke().elementRemoved(ent.getKey());
 							break;
 						case MODIFIED:
-							listeners.fire.elementModified(ent.getKey());
+							listeners.invoke().elementModified(ent.getKey());
 							break;
 					}
 				}
@@ -115,7 +116,7 @@ public class DefaultObservableCollection<E, L extends CollectionChangeListener<?
 		@Override
 		public void close() {
 			if (--aggregatorCount == 0) {
-				l = listeners.fire;
+				l = listeners.getProxy();
 				changes.fire();
 			}
 		}
@@ -130,8 +131,8 @@ public class DefaultObservableCollection<E, L extends CollectionChangeListener<?
 
 	protected DefaultObservableCollection(Collection<E> wrapped, Class<L> listenerClass) {
 		this.wrapped = wrapped;
-		this.listeners = new ListenerSet<>(listenerClass);
-		this.l = this.listeners.fire;
+		this.listeners = new ListenerSet<>(listenerClass, true);
+		this.l = this.listeners.getProxy();
 	}
 
 	@Override

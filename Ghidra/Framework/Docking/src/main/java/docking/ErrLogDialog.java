@@ -246,7 +246,7 @@ public class ErrLogDialog extends AbstractErrDialog {
 
 	@Override
 	protected void dialogShown() {
-		WindowUtilities.ensureOnScreen(getDialog());
+		WindowUtilities.ensureEntirelyOnScreen(getDialog());
 		Swing.runLater(() -> okButton.requestFocusInWindow());
 	}
 

@@ -396,7 +396,7 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		@TargetMethod.Export("MyMethod")
 		public CompletableFuture<Void> myMethod() {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 	}
 

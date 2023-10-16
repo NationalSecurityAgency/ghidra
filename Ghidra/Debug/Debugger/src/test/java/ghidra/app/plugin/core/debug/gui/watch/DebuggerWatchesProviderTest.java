@@ -37,6 +37,9 @@ import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.*;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.options.SaveState;
@@ -58,7 +61,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
-	protected static void assertNoErr(WatchRow row) {
+	protected static void assertNoErr(DefaultWatchRow row) {
 		Throwable error = row.getError();
 		if (error != null) {
 			throw new AssertionError(error);
@@ -103,7 +106,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@After
 	public void tearDownWatchesProviderTest() throws Exception {
-		for (WatchRow row : watchesProvider.watchTableModel.getModelData()) {
+		for (DefaultWatchRow row : watchesProvider.watchTableModel.getModelData()) {
 			Throwable error = row.getError();
 			if (error != null) {
 				Msg.info(this, "Error on watch row: ", error);
@@ -124,7 +127,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("r0");
 
 		traceManager.openTrace(tb.trace);
@@ -143,7 +146,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("r0");
 
 		setRegisterValues(thread);
@@ -158,7 +161,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("r0");
 		row.setDataType(LongLongDataType.dataType);
 
@@ -177,7 +180,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testActionApplyDataType() {
 		setRegisterValues(thread);
-		WatchRow row = watchesProvider.addWatch("*:4 r0");
+		DefaultWatchRow row = watchesProvider.addWatch("*:4 r0");
 		row.setDataType(LongDataType.dataType);
 		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
 		format.setChoice(row.getSettings(), FormatSettingsDefinition.DECIMAL);
@@ -205,7 +208,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("r0");
 		row.setDataType(LongLongDataType.dataType);
 
@@ -231,7 +234,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("r0");
 		row.setDataType(LongLongDataType.dataType);
 
@@ -258,7 +261,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("0xdeadbeef:4");
 		row.setDataType(LongDataType.dataType);
 
@@ -280,7 +283,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("r0 + 8");
 		row.setDataType(LongLongDataType.dataType);
 
@@ -330,7 +333,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertArrayEquals(tb.arr(0, 0, 0, 0), buf.array());
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("*:4 r0");
 		row.setDataType(LongDataType.dataType);
 		waitForWatches();
@@ -344,7 +347,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression(expression);
 
 		assertFalse(row.isRawValueEditable());
@@ -375,11 +378,11 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		runTestIsEditableEmu("*:8 r0", true);
 	}
 
-	protected WatchRow prepareTestEditEmu(String expression) {
+	protected DefaultWatchRow prepareTestEditEmu(String expression) {
 		setRegisterValues(thread);
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression(expression);
 
 		traceManager.openTrace(tb.trace);
@@ -400,7 +403,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testEditRegisterEmu() {
-		WatchRow row = prepareTestEditEmu("r0");
+		DefaultWatchRow row = prepareTestEditEmu("r0");
 		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
@@ -425,7 +428,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testEditRegisterRepresentationEmu() {
-		WatchRow row = prepareTestEditEmu("r0");
+		DefaultWatchRow row = prepareTestEditEmu("r0");
 		assertFalse(row.isValueEditable());
 
 		row.setDataType(DoubleDataType.dataType);
@@ -448,7 +451,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testEditMemoryEmu() {
-		WatchRow row = prepareTestEditEmu("*:8 r0");
+		DefaultWatchRow row = prepareTestEditEmu("*:8 r0");
 
 		TraceMemoryOperations mem = tb.trace.getMemoryManager();
 		ByteBuffer buf = ByteBuffer.allocate(8);
@@ -480,7 +483,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testEditMemoryRepresentationEmu() {
-		WatchRow row = prepareTestEditEmu("*:8 r0");
+		DefaultWatchRow row = prepareTestEditEmu("*:8 r0");
 		assertFalse(row.isValueEditable());
 
 		row.setDataType(DoubleDataType.dataType);
@@ -507,7 +510,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testEditMemoryStringEmu() {
 		// Variable size must exceed that of desired string's bytes
-		WatchRow row = prepareTestEditEmu("*:16 r0");
+		DefaultWatchRow row = prepareTestEditEmu("*:16 r0");
 		assertFalse(row.isValueEditable());
 
 		row.setDataType(TerminatedStringDataType.dataType);
@@ -529,7 +532,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		});
 	}
 
-	protected WatchRow prepareTestEditTarget(String expression) throws Throwable {
+	protected DefaultWatchRow prepareTestEditTarget(String expression) throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		bank = mb.testThread1.addRegisterBank();
@@ -551,7 +554,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression(expression);
 		waitForWatches();
 
@@ -562,7 +565,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testEditRegisterTarget() throws Throwable {
-		WatchRow row = prepareTestEditTarget("r0");
+		DefaultWatchRow row = prepareTestEditTarget("r0");
 
 		runSwing(() -> row.setRawValueString("0x1234"));
 		retryVoid(() -> {
@@ -572,7 +575,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testEditMemoryTarget() throws Throwable {
-		WatchRow row = prepareTestEditTarget("*:8 r0");
+		DefaultWatchRow row = prepareTestEditTarget("*:8 r0");
 		// Wait for the async reads to settle.
 		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
 
@@ -585,7 +588,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testEditNonMappableRegisterTarget() throws Throwable {
-		WatchRow row = prepareTestEditTarget("r1");
+		DefaultWatchRow row = prepareTestEditTarget("r1");
 		TraceThread thread = recorder.getTraceThread(mb.testThread1);
 		// Sanity check
 		assertNull(recorder.isRegisterOnTarget(tb.host, thread, 0, r1));
@@ -649,8 +652,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		performEnabledAction(listingProvider, watchesProvider.actionAddFromLocation, true);
 
-		List<WatchRow> watches = new ArrayList<>(watchesProvider.watchTableModel.getModelData());
-		watches.sort(Comparator.comparing(WatchRow::getExpression));
+		List<DefaultWatchRow> watches = new ArrayList<>(watchesProvider.watchTableModel.getModelData());
+		watches.sort(Comparator.comparing(DefaultWatchRow::getExpression));
 		assertEquals(2, watches.size());
 		assertEquals("*:16 0x00600000:8", watches.get(0).getExpression());
 		assertEquals("*:16 0x00600020:8", watches.get(1).getExpression());
@@ -666,8 +669,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		performEnabledAction(codeViewerProvider, watchesProvider.actionAddFromLocation, true);
 
-		List<WatchRow> watches = new ArrayList<>(watchesProvider.watchTableModel.getModelData());
-		watches.sort(Comparator.comparing(WatchRow::getExpression));
+		List<DefaultWatchRow> watches = new ArrayList<>(watchesProvider.watchTableModel.getModelData());
+		watches.sort(Comparator.comparing(DefaultWatchRow::getExpression));
 		assertEquals(2, watches.size());
 		assertEquals("*:16 0x55750000:8", watches.get(0).getExpression());
 		assertEquals("*:16 0x55750020:8", watches.get(1).getExpression());
@@ -691,7 +694,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		performEnabledAction(listingProvider, watchesProvider.actionAddFromLocation, true);
 
-		WatchRow watch = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow watch = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		assertEquals("*:8 0x00600000:8", watch.getExpression());
 		assertTypeEquals(structDt, watch.getDataType());
 	}
@@ -713,7 +716,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		performEnabledAction(codeViewerProvider, watchesProvider.actionAddFromLocation, true);
 
-		WatchRow watch = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow watch = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		assertEquals("*:8 0x55750000:8", watch.getExpression());
 		assertTypeEquals(structDt, watch.getDataType());
 	}
@@ -736,7 +739,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		performEnabledAction(registersProvider, watchesProvider.actionAddFromRegister, true);
 		waitForWatches();
 
-		WatchRow watch = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow watch = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		assertEquals("r0", watch.getExpression());
 		assertTypeEquals(PointerDataType.dataType, watch.getDataType());
 	}
@@ -757,7 +760,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 
 		performAction(watchesProvider.actionAdd);
-		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		DefaultWatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("*:8 r0");
 
 		traceManager.activateThread(thread);
@@ -769,8 +772,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testSaveConfigState() throws Throwable {
 		// Setup some state
-		WatchRow row0 = watchesProvider.addWatch("r0");
-		WatchRow row1 = watchesProvider.addWatch("*:4 r1");
+		DefaultWatchRow row0 = watchesProvider.addWatch("r0");
+		DefaultWatchRow row1 = watchesProvider.addWatch("*:4 r1");
 
 		row0.setDataType(LongLongDataType.dataType);
 		Settings settings = row0.getSettings();
@@ -784,7 +787,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// Change some things
 		row1.setDataType(Pointer64DataType.dataType);
-		WatchRow row2 = watchesProvider.addWatch("r2");
+		DefaultWatchRow row2 = watchesProvider.addWatch("r2");
 		waitForSwing();
 		assertEquals(Set.of(row0, row1, row2),
 			Set.copyOf(watchesProvider.watchTableModel.getModelData()));
@@ -794,12 +797,12 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		// Assert the older state
-		Map<String, WatchRow> rows = watchesProvider.watchTableModel.getModelData()
+		Map<String, DefaultWatchRow> rows = watchesProvider.watchTableModel.getModelData()
 				.stream()
 				.collect(Collectors.toMap(r -> r.getExpression(), r -> r));
 		assertEquals(2, rows.size());
 
-		WatchRow rRow0 = rows.get("r0");
+		DefaultWatchRow rRow0 = rows.get("r0");
 		assertTrue(LongLongDataType.dataType.isEquivalent(rRow0.getDataType()));
 		assertEquals(FormatSettingsDefinition.DECIMAL, format.getChoice(rRow0.getSettings()));
 	}

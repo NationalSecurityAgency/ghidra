@@ -1380,6 +1380,7 @@ void Architecture::init(DocumentStorage &store)
   buildDatabase(store);
 
   restoreFromSpec(store);
+  buildCoreTypes(store);
   print->initializeFromArchitecture();
   symboltab->adjustCaches();	// In case the specs created additional address spaces
   buildSymbols(store);

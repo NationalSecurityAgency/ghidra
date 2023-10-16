@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import agent.dbgeng.dbgeng.DebugClient.DebugStatus;
 import agent.dbgeng.dbgeng.DebugModuleInfo;
 import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.dbgeng.DebugThreadId;
@@ -113,6 +114,12 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 			DbgReason reason) {
 		DbgModelTargetProcess process = getTargetProcess(thread.getProcess());
 		process.threadStateChangedSpecific(thread, state);
+		if (!getManager().getStatus().equals(DebugStatus.STEP_INTO)) {
+			DbgModelTargetMemoryContainer memory = process.getMemory();
+			if (memory != null) {
+				memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
+			}		
+		}
 	}
 
 	@Override
@@ -211,7 +218,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@TargetMethod.Export("Populate")

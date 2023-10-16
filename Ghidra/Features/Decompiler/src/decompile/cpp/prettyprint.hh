@@ -292,6 +292,15 @@ public:
   /// \param off is the offset of the code address being labeled
   virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)=0;
 
+  /// \brief Emit a \e case label constant
+  ///
+  /// A string describing the \e switch variable value is emitted and starting PcodeOp of the \e case block.
+  /// \param name is the character data of the value
+  /// \param hl indicates how the value should be highlighted
+  /// \param op is the first PcodeOp in the \e case block
+  /// \param value is the raw integer value underlying the switch value
+  virtual void tagCaseLabel(const string &name,syntax_highlight hl,const PcodeOp *op,uintb value)=0;
+
   /// \brief Emit other (more unusual) syntax as part of source code generation
   ///
   /// This method is used to emit syntax not covered by the other methods, such as
@@ -328,7 +337,9 @@ public:
   /// Inform the emitter that a printing group is ending.
   /// \param id is the id associated with the group (as returned by openGroup)
   virtual void closeGroup(int4 id) {}
-  virtual void clear(void) { parenlevel = 0; indentlevel=0; pendPrint=(PendPrint *)0; }	///< Reset the emitter to its initial state
+
+  /// \brief Reset the emitter to its initial state
+  virtual void clear(void) { parenlevel = 0; indentlevel=0; pendPrint=(PendPrint *)0; }
   virtual void setOutputStream(ostream *t)=0;			///< Set the output stream for the emitter
   virtual ostream *getOutputStream(void) const=0;		///< Get the current output stream
   virtual void spaces(int4 num,int4 bump=0);
@@ -473,6 +484,7 @@ public:
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
   virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
+  virtual void tagCaseLabel(const string &name,syntax_highlight hl,const PcodeOp *op,uintb value);
   virtual void print(const string &data,syntax_highlight hl=no_color);
   virtual int4 openParen(const string &paren,int4 id=0);
   virtual void closeParen(const string &paren,int4 id);
@@ -521,6 +533,8 @@ public:
   virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off) {
     *s << name; }
   virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off) {
+    *s << name; }
+  virtual void tagCaseLabel(const string &name,syntax_highlight hl,const PcodeOp *op,uintb value) {
     *s << name; }
   virtual void print(const string &data,syntax_highlight hl=no_color) {
     *s << data; }
@@ -584,6 +598,7 @@ public:
     field_t,		///< A field name for a structured data-type
     comm_t,		///< Part of a comment block
     label_t,		///< A code label
+    case_t,		///< A case label
     synt_t,		///< Other unspecified syntax
     opar_t,		///< Open parenthesis
     cpar_t,		///< Close parenthesis
@@ -773,6 +788,16 @@ public:
   void tagLabel(const string &name,EmitMarkup::syntax_highlight h,const AddrSpace *s,uintb o) {
     tok = name; size = tok.size(); ptr_second.spc=s; off=o;
     tagtype=label_t; delimtype=tokenstring; hl=h; }
+
+  /// \brief Create a \e case label token
+  ///
+  /// \param name is the character data of the label
+  /// \param h indicates how the label should be highlighted
+  /// \param inOp is the first PcodeOp in the \e case block
+  /// \param intValue is the constant value underlying the case label
+  void tagCaseLabel(const string &name,EmitMarkup::syntax_highlight h,const PcodeOp *inOp,uintb intValue) {
+    tok = name;	size = tok.size(); op = inOp; off = intValue;
+    tagtype=case_t; delimtype=tokenstring; hl=h; }
 
   /// \brief Create a token for other (more unusual) syntax in source code
   ///
@@ -1019,6 +1044,7 @@ public:
   virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
   virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
   virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
+  virtual void tagCaseLabel(const string &name,syntax_highlight hl,const PcodeOp *op,uintb value);
   virtual void print(const string &data,syntax_highlight hl=no_color);
   virtual int4 openParen(const string &paren,int4 id=0);
   virtual void closeParen(const string &paren,int4 id);

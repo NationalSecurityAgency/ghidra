@@ -15,32 +15,27 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.ActionContext;
 import docking.Tool;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
-import ghidra.app.context.ProgramLocationActionContext;
+import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.services.*;
-import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
-import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.util.PathPredicates;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.Address;
-import ghidra.program.util.MarkerLocation;
-import ghidra.program.util.ProgramLocation;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.util.Msg;
 
 @PluginInfo(
 	shortDescription = "Debugger model method actions",
@@ -56,40 +51,18 @@ import ghidra.util.Msg;
 public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionProvider {
 	public static final String GROUP_METHODS = "Debugger Methods";
 
-	private static String getDisplay(TargetMethod method) {
-		String display = method.getDisplay();
-		if (display != null) {
-			return display;
-		}
-		return method.getName();
-	}
+	class InvokeActionEntryAction extends DockingAction {
+		private final ActionEntry entry;
 
-	class InvokeMethodAction extends DockingAction {
-		private final TargetMethod method;
-
-		public InvokeMethodAction(TargetMethod method) {
-			super(getDisplay(method), DebuggerMethodActionsPlugin.this.getName());
-			this.method = method;
+		public InvokeActionEntryAction(ActionEntry entry) {
+			super(entry.display(), DebuggerMethodActionsPlugin.this.getName());
+			this.entry = entry;
 			setPopupMenuData(new MenuData(new String[] { getName() }, GROUP_METHODS));
 		}
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			Map<String, Object> arguments = collectArguments(method.getParameters(), context);
-			if (arguments == null) {
-				// Context changed out from under me?
-				return;
-			}
-			method.invoke(arguments).thenAccept(result -> {
-				if (consoleService != null && method.getReturnType() != Void.class) {
-					consoleService.log(null, getDisplay(method) + " returned " + result);
-				}
-			}).exceptionally(ex -> {
-				tool.setStatusInfo(
-					"Invocation of " + getDisplay(method) + " failed: " + ex.getMessage(), true);
-				Msg.error(this, "Invocation of " + method.getPath() + " failed", ex);
-				return null;
-			});
+			tool.execute(new TargetActionTask(entry));
 		}
 	}
 
@@ -127,91 +100,30 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 		if (!isControlTarget()) {
 			return List.of();
 		}
-		TargetObject curObj = getCurrentTargetObject();
-		if (curObj == null) {
+		Target target = getTarget(context);
+		if (target == null) {
 			return List.of();
 		}
+
 		List<DockingActionIf> result = new ArrayList<>();
-		PathPredicates matcher = curObj.getModel()
-				.getRootSchema()
-				.matcherForSuitable(TargetMethod.class, curObj.getPath());
-		for (TargetObject obj : matcher.getCachedSuccessors(curObj.getModel().getModelRoot())
-				.values()) {
-			if (!(obj instanceof TargetMethod method)) {
-				continue;
-			}
-			Map<String, Object> arguments = collectArguments(method.getParameters(), context);
-			if (arguments == null) {
-				continue;
-			}
-			result.add(new InvokeMethodAction(method));
+		for (ActionEntry entry : target.collectActions(null, context).values()) {
+			result.add(new InvokeActionEntryAction(entry));
 		}
 		return result;
 	}
 
-	private TargetObject getCurrentTargetObject() {
+	private Target getTarget(ActionContext context) {
 		if (traceManager == null) {
 			return null;
+		}
+		if (context instanceof ProgramActionContext ctx) {
+			Program program = ctx.getProgram();
+			if (program instanceof TraceProgramView view) {
+				DebuggerCoordinates coords = traceManager.getCurrentFor(view.getTrace());
+				return coords == null ? null : coords.getTarget();
+			}
 		}
 		DebuggerCoordinates current = traceManager.getCurrent();
-		TraceRecorder recorder = current.getRecorder();
-		if (recorder == null) {
-			return null;
-		}
-		TraceObject object = current.getObject();
-		if (object != null) {
-			return recorder.getTargetObject(object);
-		}
-		return recorder.getFocus();
-	}
-
-	private Address dynamicAddress(ProgramLocation loc) {
-		if (loc.getProgram() instanceof TraceProgramView) {
-			return loc.getAddress();
-		}
-		if (traceManager == null) {
-			return null;
-		}
-		ProgramLocation dloc =
-			mappingService.getDynamicLocationFromStatic(traceManager.getCurrentView(), loc);
-		if (dloc == null) {
-			return null;
-		}
-		return dloc.getByteAddress();
-	}
-
-	private Map<String, Object> collectArguments(TargetParameterMap params, ActionContext context) {
-		// The only required non-defaulted argument allowed must be an Address
-		// There must be an Address parameter
-		ParameterDescription<?> addrParam = null;
-		for (ParameterDescription<?> p : params.values()) {
-			if (p.type == Address.class) {
-				if (addrParam != null) {
-					return null;
-				}
-				addrParam = p;
-			}
-			else if (p.required && p.defaultValue == null) {
-				return null;
-			}
-		}
-		if (addrParam == null) {
-			return null;
-		}
-		if (context instanceof ProgramLocationActionContext ctx) {
-			Address address = dynamicAddress(ctx.getLocation());
-			if (address == null) {
-				return null;
-			}
-			return Map.of(addrParam.name, address);
-		}
-		if (context.getContextObject() instanceof MarkerLocation ml) {
-			Address address = dynamicAddress(new ProgramLocation(ml.getProgram(), ml.getAddr()));
-			if (address == null) {
-				return null;
-			}
-			return Map.of(addrParam.name, address);
-		}
-		return null;
+		return current == null ? null : current.getTarget();
 	}
 }

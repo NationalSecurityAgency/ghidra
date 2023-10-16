@@ -93,7 +93,7 @@ public class DbgThreadImpl implements DbgThread {
 		//manager.getEventListeners().fire.threadCreated(this, DbgCause.Causes.UNCLAIMED);
 		process.addThread(this);
 		state.addChangeListener((oldState, newState, pair) -> {
-			this.manager.getEventListeners().fire.threadStateChanged(this, newState, pair.cause,
+			this.manager.getEventListeners().invoke().threadStateChanged(this, newState, pair.cause,
 				pair.reason);
 		});
 	}

@@ -141,7 +141,7 @@ public:
   int4 getSlot(const Address &addr,int4 skip) const;
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get the address space containing \b this entry
   uintb getBase(void) const { return addressbase; }	///< Get the starting offset of \b this entry
-  Address getAddrBySlot(int4 &slot,int4 sz) const;
+  Address getAddrBySlot(int4 &slot,int4 sz,int4 typeAlign) const;
   void decode(Decoder &decoder,bool normalstack,bool grouped,list<ParamEntry> &curList);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
   bool isParamCheckLow(void) const { return ((flags & extracheck_low)!=0); }	///< Return \b true if there is a low overlap
@@ -949,8 +949,15 @@ public:
   /// \return the maximum number of passes across all output parameters in \b this model
   int4 getMaxOutputDelay(void) const { return output->getMaxDelay(); }
 
-  virtual bool isMerged(void) const { return false; }	///< Is \b this a merged prototype model
-  virtual bool isUnknown(void) const { return false; }	///< Is \b this an unrecognized prototype model
+  /// \brief Is \b this a merged prototype model
+  ///
+  /// \return \b true if \b this is a merged form of multiple independent prototype models
+  virtual bool isMerged(void) const { return false; }
+
+  /// \brief If \b this an unrecognized prototype model
+  ///
+  /// \return \b true if \b this is a placeholder for an unrecognized prototype model name
+  virtual bool isUnknown(void) const { return false; }
   virtual void decode(Decoder &decoder);		///< Restore \b this model from a stream
   static uint4 lookupEffect(const vector<EffectRecord> &efflist,const Address &addr,int4 size);
   static int4 lookupRecord(const vector<EffectRecord> &efflist,int4 listSize,const Address &addr,int4 size);

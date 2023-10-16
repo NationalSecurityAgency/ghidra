@@ -15,6 +15,8 @@
  */
 package ghidra.feature.vt.db;
 
+import java.util.*;
+
 //import generic.test.GenericTestCase;
 import generic.test.AbstractGenericTest;
 import ghidra.feature.vt.api.db.VTAssociationDB;
@@ -25,27 +27,24 @@ import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markupitem.MarkupTypeTestStub;
 import ghidra.feature.vt.api.markuptype.VTMarkupType;
 import ghidra.feature.vt.api.markuptype.VTMarkupTypeFactory;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.*;
-
 public class VTTestUtils {
 
 	private static String[] randomTags = { "TAG1", "TAG2", "TAG3" };
-	private static GenericAddressSpace space = new GenericAddressSpace("Test", 32,
-		AddressSpace.TYPE_RAM, 3);
+	private static GenericAddressSpace space =
+		new GenericAddressSpace("Test", 32, AddressSpace.TYPE_RAM, 3);
 
 	private VTTestUtils() {
 		// utility class
 	}
 
-	public static VTProgramCorrelator createProgramCorrelator(ServiceProvider serviceProvider,
-			Program sourceProgram, Program destinationProgram) {
-		return new DummyTestProgramCorrelator(serviceProvider, sourceProgram, destinationProgram);
+	public static VTProgramCorrelator createProgramCorrelator(Program sourceProgram,
+			Program destinationProgram) {
+		return new DummyTestProgramCorrelator(sourceProgram, destinationProgram);
 	}
 
 	/**
@@ -99,7 +98,7 @@ public class VTTestUtils {
 
 	/**
 	 * Create a random match.
-	 * @param session the match set manager to use when creating a random tag or 
+	 * @param session the match set manager to use when creating a random tag or
 	 * null if you don't want to create a random tag.
 	 * @return the match
 	 */
@@ -110,7 +109,7 @@ public class VTTestUtils {
 	/**
 	 * Create a random match
 	 * @param association the association to use for the source and destination address.
-	 * @param session the match set manager to use when creating a random tag or 
+	 * @param session the match set manager to use when creating a random tag or
 	 * null if you don't want to create a random tag.
 	 * @return the match
 	 */
@@ -149,7 +148,8 @@ public class VTTestUtils {
 
 		VTMarkupItem markupItem = new MarkupItemImpl(associationDB, markupType, sourceAddress);
 
-		Object markupItemManager = AbstractGenericTest.getInstanceField("markupManager", associationDB);
+		Object markupItemManager =
+			AbstractGenericTest.getInstanceField("markupManager", associationDB);
 		if (!(markupItemManager instanceof MarkupItemManagerImplDummy)) {
 
 			// Odd Code Alert: we don't want the MarkupItemManager actually looking for markup items
@@ -193,9 +193,8 @@ public class VTTestUtils {
 		try {
 			testTransactionID = db.startTransaction("Test Match Set Setup");
 			VTMatchInfo info = createRandomMatch(sourceAddress, destinationAddress, db);
-			VTMatchSet matchSet =
-				db.createMatchSet(createProgramCorrelator(null, db.getSourceProgram(),
-					db.getDestinationProgram()));
+			VTMatchSet matchSet = db.createMatchSet(
+				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 			return matchSet.addMatch(info);
 		}
 		finally {
@@ -210,9 +209,8 @@ public class VTTestUtils {
 			testTransactionID = db.startTransaction("Test Create Data Match Set");
 			VTMatchInfo info = createRandomMatch(sourceAddress, destinationAddress, db);
 			info.setAssociationType(VTAssociationType.DATA);
-			VTMatchSet matchSet =
-				db.createMatchSet(createProgramCorrelator(null, db.getSourceProgram(),
-					db.getDestinationProgram()));
+			VTMatchSet matchSet = db.createMatchSet(
+				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 			return matchSet.addMatch(info);
 		}
 		finally {
@@ -243,8 +241,8 @@ public class VTTestUtils {
 			VTMarkupItemStatus.values()[getRandomInt(1, VTMarkupItemStatus.values().length - 1)];
 
 		while (status == statusSeed) {
-			status =
-				VTMarkupItemStatus.values()[getRandomInt(1, VTMarkupItemStatus.values().length - 1)];
+			status = VTMarkupItemStatus.values()[getRandomInt(1,
+				VTMarkupItemStatus.values().length - 1)];
 		}
 
 		return status;

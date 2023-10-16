@@ -68,7 +68,7 @@ public class GdbModelTargetRegisterContainer
 	protected CompletableFuture<Void> completeUsingThreads(Map<Integer, GdbThread> byId) {
 		if (byId.isEmpty()) {
 			setElements(List.of(), "Refreshed (with no thread)");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		GdbThread thread = byId.values().iterator().next();
 		return thread.listRegisters().thenAccept(regs -> {

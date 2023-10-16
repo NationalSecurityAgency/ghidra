@@ -66,7 +66,7 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 	public CompletableFuture<Void> init() {
 		DebuggerObjectModel model = target.getModel();
 		model.addModelListener(queue.in, true);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	private boolean successor(TargetObject ref) {

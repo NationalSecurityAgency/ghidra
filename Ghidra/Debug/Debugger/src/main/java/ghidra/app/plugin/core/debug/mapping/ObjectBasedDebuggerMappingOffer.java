@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.mapping;
 import java.util.Set;
 
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerTargetTraceMapper;
 import ghidra.program.model.lang.*;
 
 public class ObjectBasedDebuggerMappingOffer extends DefaultDebuggerMappingOffer {

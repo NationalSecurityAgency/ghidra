@@ -26,13 +26,13 @@ import org.apache.commons.lang3.ArrayUtils;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.SynchronizeTargetAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.ToToggleSelectionListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.plugintool.AutoService;
@@ -49,7 +49,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		if (!Objects.equals(a.getTrace(), b.getTrace())) {
 			return false;
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTarget(), b.getTarget())) {
 			return false; // For live read/writes
 		}
 		if (!Objects.equals(a.getThread(), b.getThread())) {
@@ -99,8 +99,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	Trace currentTrace; // Copy for transition
 
-	// @AutoServiceConsumed by method
-	DebuggerModelService modelService;
+	@AutoServiceConsumed
+	DebuggerTargetService targetService;
 	// @AutoServiceConsumed by method
 	private DebuggerTraceManagerService traceManager;
 	@SuppressWarnings("unused")
@@ -119,6 +119,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	DebuggerLegacyThreadsPanel legacyPanel;
 
 	DockingAction actionSaveTrace;
+	// TODO: This should probably be moved to ModelProvider
 	ToggleDockingAction actionSyncTarget;
 
 	ActionContext myActionContext;
@@ -149,7 +150,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	@AutoServiceConsumed
 	public void setTraceManager(DebuggerTraceManagerService traceManager) {
 		if (this.traceManager != null) {
-			this.traceManager.removeSynchronizeActiveChangeListener(synchronizeTargetChangeListener);
+			this.traceManager
+					.removeSynchronizeActiveChangeListener(synchronizeTargetChangeListener);
 		}
 		this.traceManager = traceManager;
 		if (traceManager != null) {
