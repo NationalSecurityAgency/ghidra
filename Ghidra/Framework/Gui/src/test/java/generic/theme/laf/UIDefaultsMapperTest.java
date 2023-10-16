@@ -28,6 +28,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.theme.*;
+import ghidra.util.Msg;
+import ghidra.util.SpyErrorLogger;
 import resources.ResourceManager;
 
 public class UIDefaultsMapperTest {
@@ -40,6 +42,10 @@ public class UIDefaultsMapperTest {
 
 	@Before
 	public void setup() {
+
+		// disable warning messages when some default UI values cannot be found
+		Msg.setErrorLogger(new SpyErrorLogger());
+
 		defaults = createDefaults();
 		defaults.put("control", Color.RED);
 		defaults.put("Button.background", Color.RED);
@@ -51,7 +57,7 @@ public class UIDefaultsMapperTest {
 	@Test
 	public void testGetJavaDefaults() {
 		mapper = new UiDefaultsMapper(defaults);
-		GThemeValueMap javaDefaults = mapper.getJavaDefaults();
+		GThemeValueMap javaDefaults = mapper.getNormalizedJavaDefaults();
 
 		assertEquals(Color.RED, javaDefaults.getResolvedColor("system.color.bg.control"));
 		assertEquals(Color.RED, javaDefaults.getResolvedColor("laf.color.Button.background"));
@@ -71,7 +77,7 @@ public class UIDefaultsMapperTest {
 		defaults.put("RadioButton.background", Color.BLUE);		// Blue not defined in a color group
 		mapper = new UiDefaultsMapper(defaults);
 
-		GThemeValueMap javaDefaults = mapper.getJavaDefaults();
+		GThemeValueMap javaDefaults = mapper.getNormalizedJavaDefaults();
 
 		// expecting two palette groups to be created
 		String greenPalette = findPaletteColor(javaDefaults, Color.GREEN);
@@ -90,7 +96,7 @@ public class UIDefaultsMapperTest {
 		defaults.put("ToggleButton.font", SMALL_FONT);	// Green not defined in a color group
 		mapper = new UiDefaultsMapper(defaults);
 
-		GThemeValueMap javaDefaults = mapper.getJavaDefaults();
+		GThemeValueMap javaDefaults = mapper.getNormalizedJavaDefaults();
 
 		assertDirectFont(javaDefaults, "laf.palette.font.01", SMALL_FONT);
 		assertIndirectFont(javaDefaults, "laf.font.ToggleButton.font", "laf.palette.font.01");

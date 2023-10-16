@@ -127,6 +127,7 @@ public class ComponentThemeInspectorAction extends DockingAction {
 
 		Color bg = component.getBackground();
 		Color fg = component.getForeground();
+		Font font = component.getFont();
 		String id;
 		String clazz = component.getClass().getSimpleName();
 		if (clazz.isEmpty()) {
@@ -175,6 +176,10 @@ public class ComponentThemeInspectorAction extends DockingAction {
 				.append(spacer)
 				.append("fg: ")
 				.append(fgText)
+				.append(tabs)
+				.append(spacer)
+				.append("font: ")
+				.append(font)
 				.append('\n');
 	}
 

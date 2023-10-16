@@ -304,6 +304,6 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 
 	@Override
 	public DebuggerModelListener broadcast() {
-		return model.listeners.invoke();
+		return model.broadcast();
 	}
 }

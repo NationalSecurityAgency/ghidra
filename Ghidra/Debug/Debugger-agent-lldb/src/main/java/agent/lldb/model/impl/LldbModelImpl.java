@@ -110,7 +110,7 @@ public class LldbModelImpl extends AbstractLldbModel implements DebuggerObjectMo
 
 	@Override
 	public void terminate() throws IOException {
-		listeners.invoke().modelClosed(DebuggerModelClosedReason.NORMAL);
+		broadcast().modelClosed(DebuggerModelClosedReason.NORMAL);
 		root.invalidateSubtree(root, "LLDB is terminating");
 		manager.terminate();
 	}

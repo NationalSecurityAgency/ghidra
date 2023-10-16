@@ -19,6 +19,8 @@ import java.text.ParseException;
 
 import javax.swing.Icon;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.util.Msg;
 import resources.ResourceManager;
 import resources.icons.EmptyIcon;
@@ -33,14 +35,14 @@ import resources.icons.UrlImageIcon;
 public class IconValue extends ThemeValue<Icon> {
 	private static final String EMPTY_ICON_STRING = "EMPTY_ICON";
 
+	public static final String LAF_ID_PREFIX = "laf.icon.";
+	public static final String EXTERNAL_LAF_ID_PREFIX = "[laf.icon]";
+
 	static final String ICON_ID_PREFIX = "icon.";
-
-	public static final Icon LAST_RESORT_DEFAULT = ResourceManager.getDefaultIcon();
-
 	private static final String EXTERNAL_PREFIX = "[icon]";
 
+	public static final Icon LAST_RESORT_DEFAULT = ResourceManager.getDefaultIcon();
 	private static final int STANDARD_EMPTY_ICON_SIZE = 16;
-
 	private IconModifier modifier;
 
 	/**
@@ -94,13 +96,14 @@ public class IconValue extends ThemeValue<Icon> {
 		return icon;
 	}
 
-	/** 
+	/**
 	* Returns true if the given key string is a valid external key for an icon value
 	* @param key the key string to test
 	* @return true if the given key string is a valid external key for an icon value
 	*/
 	public static boolean isIconKey(String key) {
-		return key.startsWith(ICON_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX);
+		return StringUtils.startsWithAny(key, ICON_ID_PREFIX, EXTERNAL_PREFIX,
+			EXTERNAL_LAF_ID_PREFIX);
 	}
 
 	/**
@@ -172,9 +175,7 @@ public class IconValue extends ThemeValue<Icon> {
 	}
 
 	private static IconValue parseRefIcon(String id, String value) throws ParseException {
-		if (value.startsWith(EXTERNAL_PREFIX)) {
-			value = value.substring(EXTERNAL_PREFIX.length());
-		}
+		value = fromExternalId(value);
 		int modifierIndex = getModifierIndex(value);
 		if (modifierIndex < 0) {
 			return new IconValue(id, value);
@@ -213,12 +214,21 @@ public class IconValue extends ThemeValue<Icon> {
 		if (internalId.startsWith(ICON_ID_PREFIX)) {
 			return internalId;
 		}
+
+		if (internalId.startsWith(LAF_ID_PREFIX)) {
+			String baseId = internalId.substring(LAF_ID_PREFIX.length());
+			return EXTERNAL_LAF_ID_PREFIX + baseId;
+		}
+
 		return EXTERNAL_PREFIX + internalId;
 	}
 
 	private static String fromExternalId(String externalId) {
 		if (externalId.startsWith(EXTERNAL_PREFIX)) {
 			return externalId.substring(EXTERNAL_PREFIX.length());
+		}
+		if (externalId.startsWith(EXTERNAL_LAF_ID_PREFIX)) {
+			return LAF_ID_PREFIX + externalId.substring(EXTERNAL_LAF_ID_PREFIX.length());
 		}
 		return externalId;
 	}

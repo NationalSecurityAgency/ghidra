@@ -30,7 +30,7 @@ public class GtkLookAndFeelManager extends LookAndFeelManager {
 	}
 
 	@Override
-	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+	protected UiDefaultsMapper createUiDefaultsMapper(UIDefaults defaults) {
 		return new UiDefaultsMapper(defaults);
 	}
 }

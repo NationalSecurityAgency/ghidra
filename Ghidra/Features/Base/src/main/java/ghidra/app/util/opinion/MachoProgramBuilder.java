@@ -196,32 +196,26 @@ public class MachoProgramBuilder {
 		}
 
 		// Create memory blocks for segments.
-		ListIterator<SegmentCommand> it = header.getAllSegments().listIterator();
-		while (it.hasNext()) {
-			int i = it.nextIndex();
-			final SegmentCommand segment = it.next();
-
+		for (SegmentCommand segment : header.getAllSegments()) {
 			if (monitor.isCancelled()) {
 				break;
 			}
 
 			if (segment.getFileSize() > 0 && (allowZeroAddr || segment.getVMaddress() != 0)) {
-				String segmentName = segment.getSegmentName();
-				if (segmentName.isBlank()) {
-					segmentName = "SEGMENT." + i;
-				}
-				if (createMemoryBlock(segmentName, space.getAddress(segment.getVMaddress()),
-					segment.getFileOffset(), segment.getFileSize(), segmentName, source,
-					segment.isRead(), segment.isWrite(), segment.isExecute(), false) == null) {
+				if (createMemoryBlock(segment.getSegmentName(),
+					space.getAddress(segment.getVMaddress()), segment.getFileOffset(),
+					segment.getFileSize(), segment.getSegmentName(), source, segment.isRead(),
+					segment.isWrite(), segment.isExecute(), false) == null) {
 					log.appendMsg(String.format("Failed to create block: %s 0x%x 0x%x",
 						segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
 				}
 				if (segment.getVMsize() > segment.getFileSize()) {
 					// Pad the remaining address range with uninitialized data
-					if (createMemoryBlock(segmentName,
+					if (createMemoryBlock(segment.getSegmentName(),
 						space.getAddress(segment.getVMaddress()).add(segment.getFileSize()), 0,
-						segment.getVMsize() - segment.getFileSize(), segmentName, source,
-						segment.isRead(), segment.isWrite(), segment.isExecute(), true) == null) {
+						segment.getVMsize() - segment.getFileSize(), segment.getSegmentName(),
+						source, segment.isRead(), segment.isWrite(), segment.isExecute(),
+						true) == null) {
 						log.appendMsg(String.format("Failed to create block: %s 0x%x 0x%x",
 							segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
 					}
@@ -341,11 +335,7 @@ public class MachoProgramBuilder {
 	 */
 	protected void fixupProgramTree() throws Exception {
 		ProgramModule rootModule = listing.getDefaultRootModule();
-		ListIterator<SegmentCommand> it = machoHeader.getAllSegments().listIterator();
-		while (it.hasNext()) {
-			int i = it.nextIndex();
-			SegmentCommand segment = it.next();
-
+		for (SegmentCommand segment : machoHeader.getAllSegments()) {
 			if (segment.getVMsize() == 0) {
 				continue;
 			}
@@ -361,9 +351,6 @@ public class MachoProgramBuilder {
 			// section fragments, it will represent the parts of the segment that weren't in any
 			// section.
 			String segmentName = segment.getSegmentName();
-			if (segmentName.isBlank()) {
-				segmentName = "SEGMENT." + i;
-			}
 			String noSectionsName = segmentName + " <no section>";
 			ProgramFragment segmentFragment = null;
 			for (Group group : rootModule.getChildren()) {
