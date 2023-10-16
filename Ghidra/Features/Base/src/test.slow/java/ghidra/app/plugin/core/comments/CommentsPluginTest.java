@@ -247,8 +247,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setFieldWidth(browser, EolCommentFieldFactory.FIELD_NAME, 100);
 
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-		options.setBoolean(EolCommentFieldFactory.ENABLE_WORD_WRAP_MSG, true);
-		options.setInt(EolCommentFieldFactory.MAX_DISPLAY_LINES_MSG, 100);
+		options.setBoolean(EolCommentFieldFactory.ENABLE_WORD_WRAP_KEY, true);
+		options.setInt(EolCommentFieldFactory.MAX_DISPLAY_LINES_KEY, 100);
 
 		runSwing(() -> tool.getToolFrame().setSize(800, 800));
 

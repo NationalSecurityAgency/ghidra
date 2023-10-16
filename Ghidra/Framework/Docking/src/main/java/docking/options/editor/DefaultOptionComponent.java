@@ -32,7 +32,6 @@ public class DefaultOptionComponent extends GenericOptionsComponent {
 	private Component component;
 
 	public DefaultOptionComponent(EditorState editorState) {
-		super(editorState);
 		setLayout(new PairLayout(0, 6, 40));
 		this.component = editorState.getEditorComponent();
 
@@ -71,7 +70,7 @@ public class DefaultOptionComponent extends GenericOptionsComponent {
 	}
 
 	@Override
-	protected void setAlignmentPreferredSize(Dimension dimension) {
+	protected void setPreferredAlignmentSize(Dimension dimension) {
 		label.setPreferredSize(dimension);
 	}
 

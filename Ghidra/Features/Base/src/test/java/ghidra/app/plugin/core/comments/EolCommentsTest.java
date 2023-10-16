@@ -18,13 +18,16 @@ package ghidra.app.plugin.core.comments;
 import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.cmd.refs.AddMemRefCmd;
-import ghidra.app.util.DisplayableEol;
+import ghidra.app.util.EolComments;
+import ghidra.app.util.viewer.field.EolEnablement;
+import ghidra.app.util.viewer.field.EolExtraCommentsOption;
 import ghidra.framework.cmd.Command;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -37,11 +40,11 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.exception.RollbackException;
 
-public class DisplayableEolTest extends AbstractGenericTest {
+public class EolCommentsTest extends AbstractGenericTest {
 
 	private ProgramDB program;
 
-	public DisplayableEolTest() {
+	public EolCommentsTest() {
 		super();
 	}
 
@@ -72,12 +75,22 @@ public class DisplayableEolTest extends AbstractGenericTest {
 
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x110"));
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, true, true);
 
-		String[] comments = displayableEol.getAutomaticComment();
-		assertEquals(1, comments.length);
-		assertEquals("?  ->  00000120", comments[0]);
+		EolExtraCommentsOption eolOption = createShowAllOption();
+		EolComments eolComments = new EolComments(cu, false, 5, eolOption);
+
+		List<String> comments = eolComments.getAutomaticComment();
+		assertEquals(1, comments.size());
+		assertEquals("?  ->  00000120", comments.get(0));
+	}
+
+	private EolExtraCommentsOption createShowAllOption() {
+		EolExtraCommentsOption eolOption = new EolExtraCommentsOption();
+		eolOption.setRepeatable(EolEnablement.ALWAYS);
+		eolOption.setRefRepeatable(EolEnablement.ALWAYS);
+		eolOption.setAutoData(EolEnablement.ALWAYS);
+		eolOption.setAutoFunction(EolEnablement.ALWAYS);
+		return eolOption;
 	}
 
 	@Test
@@ -89,12 +102,12 @@ public class DisplayableEolTest extends AbstractGenericTest {
 
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x1001000"));
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, true, true);
+		EolExtraCommentsOption eolOption = createShowAllOption();
+		EolComments eolComments = new EolComments(cu, false, 5, eolOption);
 
-		String[] comments = displayableEol.getAutomaticComment();
-		assertEquals(1, comments.length);
-		assertEquals("= \"one.two\"", comments[0]);
+		List<String> comments = eolComments.getAutomaticComment();
+		assertEquals(1, comments.size());
+		assertEquals("= \"one.two\"", comments.get(0));
 	}
 
 	@Test
@@ -109,15 +122,15 @@ public class DisplayableEolTest extends AbstractGenericTest {
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x1001000"));
 
+		EolExtraCommentsOption eolOption = createShowAllOption();
+
 		// with this at false, all of the string will be rendered
-		boolean useAbbreviatedComments = false;
+		eolOption.setUseAbbreviatedComments(false);
+		EolComments eolComments = new EolComments(cu, false, 5, eolOption);
 
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, useAbbreviatedComments, true);
-
-		String[] comments = displayableEol.getAutomaticComment();
-		assertEquals(1, comments.length);
-		assertEquals("= \"one.two\"", comments[0]);
+		List<String> comments = eolComments.getAutomaticComment();
+		assertEquals(1, comments.size());
+		assertEquals("= \"one.two\"", comments.get(0));
 	}
 
 	@Test
@@ -132,16 +145,16 @@ public class DisplayableEolTest extends AbstractGenericTest {
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x1001000"));
 
-		// with this at false, all of the string will be rendered
-		boolean useAbbreviatedComments = false;
-		boolean showAutoFunctions = false;
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, useAbbreviatedComments,
-				showAutoFunctions);
+		EolExtraCommentsOption eolOption = createShowAllOption();
 
-		String[] comments = displayableEol.getAutomaticComment();
-		assertEquals(1, comments.length);
-		assertEquals("= \"one.two\"", comments[0]);
+		// with this at false, all of the string will be rendered
+		eolOption.setUseAbbreviatedComments(false);
+		eolOption.setAutoFunction(EolEnablement.NEVER);
+		EolComments eolComments = new EolComments(cu, false, 5, eolOption);
+
+		List<String> comments = eolComments.getAutomaticComment();
+		assertEquals(1, comments.size());
+		assertEquals("= \"one.two\"", comments.get(0));
 	}
 
 	@Test
@@ -159,15 +172,15 @@ public class DisplayableEolTest extends AbstractGenericTest {
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(addr("0x1001000"));
 
+		EolExtraCommentsOption eolOption = createShowAllOption();
+
 		// with this at true, only the used part of the string will be rendered
-		boolean useAbbreviatedComments = true;
+		eolOption.setUseAbbreviatedComments(true);
+		EolComments eolComments = new EolComments(cu, false, 5, eolOption);
 
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, useAbbreviatedComments, true);
-
-		String[] comments = displayableEol.getAutomaticComment();
-		assertEquals(1, comments.length);
-		assertEquals("= \"two\"", comments[0]);// full string is one.two
+		List<String> comments = eolComments.getAutomaticComment();
+		assertEquals(1, comments.size());
+		assertEquals("= \"two\"", comments.get(0));// full string is one.two
 	}
 
 	@Test
@@ -181,13 +194,13 @@ public class DisplayableEolTest extends AbstractGenericTest {
 
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(from);
-		boolean showAutoFunctions = true;
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, false, showAutoFunctions);
 
-		String[] comments = displayableEol.getAutomaticComment();
-		assertEquals(1, comments.length);
-		assertEquals("undefined FUN_01001050()", comments[0]);
+		EolExtraCommentsOption eolOption = createShowAllOption();
+		EolComments eolComments = new EolComments(cu, false, 5, eolOption);
+
+		List<String> comments = eolComments.getAutomaticComment();
+		assertEquals(1, comments.size());
+		assertEquals("undefined FUN_01001050()", comments.get(0));
 	}
 
 	@Test
@@ -201,12 +214,16 @@ public class DisplayableEolTest extends AbstractGenericTest {
 
 		Listing listing = program.getListing();
 		CodeUnit cu = listing.getCodeUnitAt(from);
-		boolean showAutoFunctions = false;
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, true, true, true, false, 5, false, showAutoFunctions);
 
-		String[] comments = displayableEol.getAutomaticComment();
-		assertEquals(0, comments.length);
+		EolExtraCommentsOption eolOption = createShowAllOption();
+
+		// with this at false, all of the string will be rendered
+		eolOption.setUseAbbreviatedComments(false);
+		eolOption.setAutoFunction(EolEnablement.NEVER);
+		EolComments eolComments = new EolComments(cu, false, 5, eolOption);
+
+		List<String> comments = eolComments.getAutomaticComment();
+		assertEquals(0, comments.size());
 	}
 
 	public boolean applyCmd(Command cmd) throws RollbackException {
