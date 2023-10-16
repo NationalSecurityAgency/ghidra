@@ -273,7 +273,7 @@ public class DyldChainedFixups {
 				symName = chainedImport.getName();
 				// lookup the symbol, and then add addend
 				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
-				if (globalSymbols.size() == 1) {
+				if (globalSymbols.size() > 0) {
 					Symbol symbol = globalSymbols.get(0);
 					newChainValue = symbol.getAddress().getOffset();
 					fixupExternalLibrary(chainedImport.getLibOrdinal(), symbol);
@@ -293,7 +293,7 @@ public class DyldChainedFixups {
 
 				// lookup the symbol, and then add addend
 				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
-				if (globalSymbols.size() == 1) {
+				if (globalSymbols.size() > 0) {
 					Symbol symbol = globalSymbols.get(0);
 					newChainValue = symbol.getAddress().getOffset();
 					fixupExternalLibrary(chainedImport.getLibOrdinal(), symbol);

@@ -118,7 +118,6 @@ public class MachoProgramBuilder {
 		// Setup memory
 		setImageBase();
 		processMemoryBlocks(machoHeader, provider.getName(), true, true);
-		fixupProgramTree();
 
 		// Process load commands
 		processEntryPoint();
@@ -139,7 +138,7 @@ public class MachoProgramBuilder {
 		// Markup structures
 		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
 		markupSections();
-		markupLoadCommandData(machoHeader, null);
+		markupLoadCommandData(machoHeader, provider.getName());
 		markupChainedFixups(machoHeader, chainedFixups);
 		markupProgramVars();
 
@@ -149,6 +148,7 @@ public class MachoProgramBuilder {
 
 		// Perform additional actions
 		renameObjMsgSendRtpSymbol();
+		fixupProgramTree(null); // should be done last to account for new memory blocks
 	}
 	
 	/**
@@ -331,9 +331,14 @@ public class MachoProgramBuilder {
 	/**
 	 * Fixes up the Program Tree to better visualize the memory blocks that were split into sections
 	 * 
+	 * @param suffix An optional suffix that will get appended to tree segment and segment nodes
 	 * @throws Exception if there was a problem fixing up the Program Tree
 	 */
-	protected void fixupProgramTree() throws Exception {
+	protected void fixupProgramTree(String suffix)
+			throws Exception {
+		if (suffix == null) {
+			suffix = "";
+		}
 		ProgramModule rootModule = listing.getDefaultRootModule();
 		for (SegmentCommand segment : machoHeader.getAllSegments()) {
 			if (segment.getVMsize() == 0) {
@@ -351,7 +356,7 @@ public class MachoProgramBuilder {
 			// section fragments, it will represent the parts of the segment that weren't in any
 			// section.
 			String segmentName = segment.getSegmentName();
-			String noSectionsName = segmentName + " <no section>";
+			String noSectionsName = segmentName + " <no section>" + suffix;
 			ProgramFragment segmentFragment = null;
 			for (Group group : rootModule.getChildren()) {
 				if (group instanceof ProgramFragment fragment &&
@@ -365,7 +370,7 @@ public class MachoProgramBuilder {
 				log.appendMsg("Could not find/fixup segment in Program Tree: " + segmentName);
 				continue;
 			}
-			ProgramModule segmentModule = rootModule.createModule(segmentName);
+			ProgramModule segmentModule = rootModule.createModule(segmentName + suffix);
 			try {
 				segmentModule.reparent(noSectionsName, rootModule);
 			}
@@ -384,14 +389,24 @@ public class MachoProgramBuilder {
 				if (!memory.contains(sectionEnd)) {
 					sectionEnd = memory.getBlock(sectionStart).getEnd();
 				}
-				ProgramFragment sectionFragment = segmentModule.createFragment(
-					String.format("%s %s", section.getSegmentName(), section.getSectionName()));
+				ProgramFragment sectionFragment =
+					segmentModule.createFragment(String.format("%s %s", section.getSegmentName(),
+						section.getSectionName() + suffix));
 				sectionFragment.move(sectionStart, sectionEnd);
 			}
 			
 			// If the sections fully filled the segment, we can remove the now-empty segment
 			if (segmentFragment.isEmpty()) {
 				segmentModule.removeChild(segmentFragment.getName());
+			}
+		}
+
+		// Update EXTERNAL block if it exists
+		for (Group group : rootModule.getChildren()) {
+			if (group instanceof ProgramFragment fragment &&
+				fragment.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
+				fragment.setName(MemoryBlock.EXTERNAL_BLOCK_NAME + suffix);
+				break;
 			}
 		}
 	}
@@ -470,9 +485,7 @@ public class MachoProgramBuilder {
 		for (ExportEntry export : exports) {
 			String name = SymbolUtilities.replaceInvalidChars(export.name(), true);
 			try {
-				Address exportAddr = baseAddr.add(export.address());
-				program.getSymbolTable().addExternalEntryPoint(exportAddr);
-				program.getSymbolTable().createLabel(exportAddr, name, SourceType.IMPORTED);
+				processNewExport(baseAddr, export, name);
 			}
 			catch (AddressOutOfBoundsException e) {
 				log.appendMsg("Failed to process export '" + export + "': " + e.getMessage());
@@ -484,6 +497,13 @@ public class MachoProgramBuilder {
 
 		return !exports.isEmpty();
  	}
+
+	protected void processNewExport(Address baseAddr, ExportEntry export, String name)
+			throws AddressOutOfBoundsException, Exception {
+		Address exportAddr = baseAddr.add(export.address());
+		program.getSymbolTable().addExternalEntryPoint(exportAddr);
+		program.getSymbolTable().createLabel(exportAddr, name, SourceType.IMPORTED);
+	}
 
 	protected void processSymbolTables(MachHeader header, boolean processExports) throws Exception {
 		monitor.setMessage("Processing symbol tables...");
@@ -670,6 +690,8 @@ public class MachoProgramBuilder {
 				String name = SymbolUtilities.replaceInvalidChars(symbol.getString(), true);
 				if (name != null && name.length() > 0) {
 					program.getSymbolTable().createLabel(start, name, SourceType.IMPORTED);
+					program.getExternalManager()
+							.addExtLocation(Library.UNKNOWN, name, start, SourceType.IMPORTED);
 				}
 			}
 			catch (Exception e) {
@@ -1330,7 +1352,15 @@ public class MachoProgramBuilder {
 	}
 
 	private Address getAddress() {
-		Address maxAddress = program.getMaxAddress();
+		Address maxAddress = null;
+		for (MemoryBlock block : program.getMemory().getBlocks()) {
+			if (block.isOverlay()) {
+				continue;
+			}
+			if (maxAddress == null || block.getEnd().compareTo(maxAddress) > 0) {
+				maxAddress = block.getEnd();
+			}
+		}
 		if (maxAddress == null) {
 			return space.getAddress(0x1000);
 		}
