@@ -33,13 +33,13 @@ import ghidra.util.StringUtilities;
 import util.CollectionUtils;
 
 /**
- * Utility class with methods to get comment information that can be displayed in the end of line 
- * comment field. Each instance of this class is associated with a code unit.  This class uses the 
- * provided options to decide how to load and filter existing comments.  
- * 
- * <p>Comment types that can be shown include the End of Line comment for the code unit, the 
- * Repeatable comment for the code unit, any repeatable comments for the code units that this code 
- * unit has references to, and possibly a comment indicating the data at a code unit that is 
+ * Utility class with methods to get comment information that can be displayed in the end of line
+ * comment field. Each instance of this class is associated with a code unit.  This class uses the
+ * provided options to decide how to load and filter existing comments.
+ *
+ * <p>Comment types that can be shown include the End of Line comment for the code unit, the
+ * Repeatable comment for the code unit, any repeatable comments for the code units that this code
+ * unit has references to, and possibly a comment indicating the data at a code unit that is
  * referenced by this code unit.
  */
 public class EolComments {
@@ -91,7 +91,7 @@ public class EolComments {
 	}
 
 	/**
-	 * Returns the number of comments that can be added before reaching the maximum number of 
+	 * Returns the number of comments that can be added before reaching the maximum number of
 	 * comments
 	 * @return the number of comments
 	 */
@@ -490,9 +490,11 @@ public class EolComments {
 					return null;
 			}
 
-			Address potentialAddr = codeUnitAddress.getNewAddress(offset);
-			if (memory.contains(potentialAddr)) {
-				return "?  ->  " + potentialAddr.toString();
+			if (offset != 0) {
+				Address potentialAddr = codeUnitAddress.getNewAddress(offset);
+				if (memory.contains(potentialAddr)) {
+					return "?  ->  " + potentialAddr.toString();
+				}
 			}
 		}
 		catch (MemoryAccessException | AddressOutOfBoundsException e) {
@@ -511,8 +513,8 @@ public class EolComments {
 
 	private String getFunctionSignature(Program program, Address a) {
 
-		// Note: Users have complained the 'undefined' return type clutters the display.  Update 
-		// signature to omit return type if it is undefined.  
+		// Note: Users have complained the 'undefined' return type clutters the display.  Update
+		// signature to omit return type if it is undefined.
 		Function f = program.getFunctionManager().getFunctionAt(a);
 		if (f != null) {
 			return f.getPrototypeString(false, false);
@@ -757,8 +759,8 @@ public class EolComments {
 			cpath = ((Data) codeUnit).getComponentPath();
 		}
 		if (eolRow < beforeRepeatable) {
-			return new EolCommentFieldLocation(program, minAddress, cpath,
-				getCommentsArray(), eolRow, eolColumn, eolRow);
+			return new EolCommentFieldLocation(program, minAddress, cpath, getCommentsArray(),
+				eolRow, eolColumn, eolRow);
 		}
 
 		if (eolRow < beforeRefRepeats) {
@@ -768,14 +770,14 @@ public class EolComments {
 
 		if (eolRow < beforeAutomatic) {
 			int rowInAllRefRepeats = eolRow - beforeRefRepeats;
-			return new RefRepeatCommentFieldLocation(program, minAddress, cpath,
-				getCommentsArray(), eolRow, eolColumn, getRefRepeatRow(rowInAllRefRepeats),
+			return new RefRepeatCommentFieldLocation(program, minAddress, cpath, getCommentsArray(),
+				eolRow, eolColumn, getRefRepeatRow(rowInAllRefRepeats),
 				getRefRepeatAddress(rowInAllRefRepeats));
 		}
 
 		if (eolRow < numTotal) {
-			return new AutomaticCommentFieldLocation(program, minAddress, cpath,
-				getCommentsArray(), eolRow, eolColumn, eolRow - beforeAutomatic);
+			return new AutomaticCommentFieldLocation(program, minAddress, cpath, getCommentsArray(),
+				eolRow, eolColumn, eolRow - beforeAutomatic);
 		}
 
 		return null;

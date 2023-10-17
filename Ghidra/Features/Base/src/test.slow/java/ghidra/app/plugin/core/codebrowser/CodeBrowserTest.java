@@ -32,7 +32,6 @@ import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.table.GTable;
-import generic.test.TestUtils;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.SelectEndpointsAction.RangeEndpoint;
@@ -52,6 +51,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressPreviewTableModel;
+import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.TaskMonitor;
 
 public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
@@ -165,12 +165,13 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 		performAction(createTableAction, true);
 
 		TableComponentProvider<?> tableProvider =
-			waitForComponentProvider(tool.getToolFrame(), TableComponentProvider.class, 2000);
-		Object threadedPanel = TestUtils.getInstanceField("threadedPanel", tableProvider);
-		GTable table = (GTable) TestUtils.getInstanceField("table", threadedPanel);
-		ListSelectionModel selectionModel = table.getSelectionModel();
+			waitForComponentProvider(TableComponentProvider.class);
+		GhidraProgramTableModel<?> model = tableProvider.getModel();
+		waitForTableModel(model);
+		GTable table = tableProvider.getThreadedTablePanel().getTable();
 
 		// select all the rows
+		ListSelectionModel selectionModel = table.getSelectionModel();
 		runSwing(() -> selectionModel.setSelectionInterval(0, table.getRowCount() - 1));
 		AddressPreviewTableModel addressModel = (AddressPreviewTableModel) tableProvider.getModel();
 
@@ -188,19 +189,21 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddressRangeTableFromSelection() throws CancelledException {
 		AddressSet undefined = new AddressSet(program.getListing()
-					.getUndefinedRanges(program.getMemory().getAllInitializedAddressSet(), true,
+				.getUndefinedRanges(program.getMemory().getAllInitializedAddressSet(), true,
 					TaskMonitor.DUMMY));
 		setSelection(undefined);
 		DockingActionIf createTableAction =
 			getAction(tool, CodeBrowserSelectionPlugin.CREATE_ADDRESS_RANGE_TABLE_ACTION_NAME);
 		performAction(createTableAction, true);
 		TableComponentProvider<?> tableProvider =
-			waitForComponentProvider(tool.getToolFrame(), TableComponentProvider.class, 2000);
-		Object threadedPanel = TestUtils.getInstanceField("threadedPanel", tableProvider);
-		GTable table = (GTable) TestUtils.getInstanceField("table", threadedPanel);
+			waitForComponentProvider(TableComponentProvider.class);
+		GhidraProgramTableModel<?> model = tableProvider.getModel();
+		waitForTableModel(model);
+		GTable table = tableProvider.getThreadedTablePanel().getTable();
 		assertEquals(7, table.getRowCount());
-		ListSelectionModel selectionModel = table.getSelectionModel();
+
 		// select all the rows
+		ListSelectionModel selectionModel = table.getSelectionModel();
 		runSwing(() -> selectionModel.setSelectionInterval(0, table.getRowCount() - 1));
 		AddressRangeTableModel addressModel = (AddressRangeTableModel) tableProvider.getModel();
 
@@ -212,8 +215,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 		tableProgramSelection.getAddressRanges().forEach(r -> fromTable.add(r));
 		assertEquals(fromTable, undefined);
 
-		DockingActionIf selectMinsAction =
-			getAction(tool, "Select " + RangeEndpoint.MIN.name());
+		DockingActionIf selectMinsAction = getAction(tool, "Select " + RangeEndpoint.MIN.name());
 		assertNotNull(selectMinsAction);
 		performAction(selectMinsAction, true);
 		ProgramSelection minSelect = getCurrentSelection();
@@ -222,8 +224,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(minSelect.contains(range.getMinAddress()));
 		}
 
-		DockingActionIf selectMaxesAction =
-			getAction(tool, "Select " + RangeEndpoint.MAX.name());
+		DockingActionIf selectMaxesAction = getAction(tool, "Select " + RangeEndpoint.MAX.name());
 		assertNotNull(selectMaxesAction);
 		performAction(selectMaxesAction, true);
 		ProgramSelection maxSelect = getCurrentSelection();
@@ -331,7 +332,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 
 		clickMouse(fp, 1, p2.x, p2.y, 1, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 
-// TODO		
+// TODO
 		ProgramSelection ps = getCurrentSelection();
 		assertEquals(26, ps.getNumAddresses());
 //		assertEquals(2, ps.getNumAddressRanges());
