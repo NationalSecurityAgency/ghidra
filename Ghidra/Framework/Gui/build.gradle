@@ -26,7 +26,7 @@ eclipse.project.name = 'Framework Gui'
 
 dependencies {
 	api project(':Generic')
-	api 'com.formdev:flatlaf:2.6'
+	api 'com.formdev:flatlaf:3.2.1'
 	
 	compileOnly "junit:junit:4.12"
 	
