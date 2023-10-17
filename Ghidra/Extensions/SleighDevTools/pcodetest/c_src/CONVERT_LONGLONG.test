@@ -1,0 +1,533 @@
+#if defined(HAS_LONGLONG)
+
+#include "pcode_test.h"
+
+TEST i8_to_i1_convert_Main()
+{
+	extern i1 i8_to_i1_convert(i8 a);
+	ASSERTI1(i8_to_i1_convert(U8_MAGIC), U1_MAGIC);
+	ASSERTI1(i8_to_i1_convert(0), 0);
+	ASSERTI1(i8_to_i1_convert(-1), -1);
+	ASSERTI1(i8_to_i1_convert(U1_55), U1_55);
+	ASSERTI1(i8_to_i1_convert(U1_AA), -U1_56);
+	ASSERTI1(i8_to_i1_convert(U2_55), U1_55);
+	ASSERTI1(i8_to_i1_convert(U2_AA), -U1_56);
+	ASSERTI1(i8_to_i1_convert(U4_55), U1_55);
+	ASSERTI1(i8_to_i1_convert(U4_AA), -U1_56);
+	ASSERTI1(i8_to_i1_convert(U8_55), U1_55);
+	ASSERTI1(i8_to_i1_convert(U4_AA), -U1_56);
+	ASSERTI1(i8_to_i1_convert(-U1_55), -U1_55);
+	ASSERTI1(i8_to_i1_convert(-U1_AA), U1_56);
+	ASSERTI1(i8_to_i1_convert(-U2_55), -U1_55);
+	ASSERTI1(i8_to_i1_convert(-U2_AA), U1_56);
+	ASSERTI1(i8_to_i1_convert(-U4_55), -U1_55);
+	ASSERTI1(i8_to_i1_convert(-U8_55), -U1_55);
+	ASSERTI1(i8_to_i1_convert(I8_MIN), 0);
+	ASSERTI1(i8_to_i1_convert(I8_MAX), -1);
+	ASSERTI1(i8_to_i1_convert(I1_MAX), I1_MAX);
+	ASSERTI1(i8_to_i1_convert(I1_MIN), I1_MIN);
+	ASSERTI1(i8_to_i1_convert(U1_MAX), -1);
+}
+
+TEST i8_to_i2_convert_Main()
+{
+	extern i2 i8_to_i2_convert(i8 a);
+	ASSERTI2(i8_to_i2_convert(U8_MAGIC), U2_MAGIC);
+	ASSERTI2(i8_to_i2_convert(0), 0);
+	ASSERTI2(i8_to_i2_convert(-1), -1);
+	ASSERTI2(i8_to_i2_convert(U1_55), U1_55);
+	ASSERTI2(i8_to_i2_convert(U1_AA), U1_AA);
+	ASSERTI2(i8_to_i2_convert(U2_55), U2_55);
+	ASSERTI2(i8_to_i2_convert(U2_AA), -U2_56);
+	ASSERTI2(i8_to_i2_convert(U4_55), U2_55);
+	ASSERTI2(i8_to_i2_convert(U4_AA), -U2_56);
+	ASSERTI2(i8_to_i2_convert(U8_55), U2_55);
+	ASSERTI2(i8_to_i2_convert(-U1_55), -U1_55);
+	ASSERTI2(i8_to_i2_convert(-U1_AA), -U1_AA);
+	ASSERTI2(i8_to_i2_convert(-U2_55), -U2_55);
+	ASSERTI2(i8_to_i2_convert(-U2_AA), U2_56);
+	ASSERTI2(i8_to_i2_convert(-U4_55), -U2_55);
+	ASSERTI2(i8_to_i2_convert(-U8_55), -U2_55);
+	ASSERTI2(i8_to_i2_convert(I8_MIN), 0);
+	ASSERTI2(i8_to_i2_convert(I8_MAX), -1);
+	ASSERTI2(i8_to_i2_convert(I2_MAX), I2_MAX);
+	ASSERTI2(i8_to_i2_convert(I2_MIN), I2_MIN);
+	ASSERTI2(i8_to_i2_convert(U2_MAX), -1);
+}
+
+TEST i8_to_i4_convert_Main()
+{
+	extern i4 i8_to_i4_convert(i8 a);
+	ASSERTI4(i8_to_i4_convert(U8_MAGIC), U4_MAGIC);
+	ASSERTI4(i8_to_i4_convert(0), 0);
+	ASSERTI4(i8_to_i4_convert(-1), -1);
+	ASSERTI4(i8_to_i4_convert(U1_55), U1_55);
+	ASSERTI4(i8_to_i4_convert(U1_AA), U1_AA);
+	ASSERTI4(i8_to_i4_convert(U2_55), U2_55);
+	ASSERTI4(i8_to_i4_convert(U2_AA), U2_AA);
+	ASSERTI4(i8_to_i4_convert(U4_55), U4_55);
+	ASSERTI4(i8_to_i4_convert(U4_AA), -U4_56);
+	ASSERTI4(i8_to_i4_convert(U8_55), U4_55);
+	ASSERTI4(i8_to_i4_convert(-U1_55), -U1_55);
+	ASSERTI4(i8_to_i4_convert(-U1_AA), -U1_AA);
+	ASSERTI4(i8_to_i4_convert(-U2_55), -U2_55);
+	ASSERTI4(i8_to_i4_convert(-U2_AA), -U2_AA);
+	ASSERTI4(i8_to_i4_convert(-U4_55), -U4_55);
+	ASSERTI4(i8_to_i4_convert(-U8_55), -U4_55);
+	ASSERTI4(i8_to_i4_convert(I8_MIN), 0);
+	ASSERTI4(i8_to_i4_convert(I8_MAX), -1);
+	ASSERTI4(i8_to_i4_convert(I4_MAX), I4_MAX);
+	ASSERTI4(i8_to_i4_convert(I4_MIN), I4_MIN);
+	ASSERTI4(i8_to_i4_convert(U4_MAX), -1);
+}
+
+TEST i1_to_i8_convert_Main()
+{
+	extern i8 i1_to_i8_convert(i1 a);
+	ASSERTI8(i1_to_i8_convert(U1_MAGIC), U1_MAGIC);
+	ASSERTI8(i1_to_i8_convert(0), 0);
+	ASSERTI8(i1_to_i8_convert(-1), -1);
+	ASSERTI8(i1_to_i8_convert(U1_55), U1_55);
+	ASSERTI8(i1_to_i8_convert(-U1_55), -U1_55);
+	ASSERTI8(i1_to_i8_convert(I1_MIN), I1_MIN);
+	ASSERTI8(i1_to_i8_convert(I1_MAX), I1_MAX);
+}
+
+TEST i2_to_i8_convert_Main()
+{
+	extern i8 i2_to_i8_convert(i2 a);
+	ASSERTI8(i2_to_i8_convert(U2_MAGIC), U2_MAGIC);
+	ASSERTI8(i2_to_i8_convert(0), 0);
+	ASSERTI8(i2_to_i8_convert(-1), -1);
+	ASSERTI8(i2_to_i8_convert(U1_55), U1_55);
+	ASSERTI8(i2_to_i8_convert(U1_AA), U1_AA);
+	ASSERTI8(i2_to_i8_convert(U2_55), U2_55);
+	ASSERTI8(i2_to_i8_convert(-U1_55), -U1_55);
+	ASSERTI8(i2_to_i8_convert(-U1_AA), -U1_AA);
+	ASSERTI8(i2_to_i8_convert(-U2_55), -U2_55);
+	ASSERTI8(i2_to_i8_convert(I2_MIN), I2_MIN);
+	ASSERTI8(i2_to_i8_convert(I2_MAX), I2_MAX);
+}
+
+TEST i4_to_i8_convert_Main()
+{
+	extern i8 i4_to_i8_convert(i4 a);
+	ASSERTI8(i4_to_i8_convert(U4_MAGIC), U4_MAGIC);
+	ASSERTI8(i4_to_i8_convert(0), 0);
+	ASSERTI8(i4_to_i8_convert(-1), -1);
+	ASSERTI8(i4_to_i8_convert(U1_55), U1_55);
+	ASSERTI8(i4_to_i8_convert(U1_AA), U1_AA);
+	ASSERTI8(i4_to_i8_convert(U2_55), U2_55);
+	ASSERTI8(i4_to_i8_convert(U2_AA), U2_AA);
+	ASSERTI8(i4_to_i8_convert(U4_55), U4_55);
+	ASSERTI8(i4_to_i8_convert(-U1_55), -U1_55);
+	ASSERTI8(i4_to_i8_convert(-U1_AA), -U1_AA);
+	ASSERTI8(i4_to_i8_convert(-U2_55), -U2_55);
+	ASSERTI8(i4_to_i8_convert(-U2_AA), -U2_AA);
+	ASSERTI8(i4_to_i8_convert(-U4_55), -U4_55);
+	ASSERTI8(i4_to_i8_convert(I4_MAX), I4_MAX);
+	ASSERTI8(i4_to_i8_convert(I4_MIN), I4_MIN);
+}
+
+TEST i8_to_i8_convert_Main()
+{
+	extern i8 i8_to_i8_convert(i8 a);
+	ASSERTI8(i8_to_i8_convert(U8_MAGIC), U8_MAGIC);
+	ASSERTI8(i8_to_i8_convert(0), 0);
+	ASSERTI8(i8_to_i8_convert(-1), -1);
+	ASSERTI8(i8_to_i8_convert(U1_55), U1_55);
+	ASSERTI8(i8_to_i8_convert(U1_AA), U1_AA);
+	ASSERTI8(i8_to_i8_convert(U2_55), U2_55);
+	ASSERTI8(i8_to_i8_convert(U2_AA), U2_AA);
+	ASSERTI8(i8_to_i8_convert(U4_55), U4_55);
+	ASSERTI8(i8_to_i8_convert(U4_AA), U4_AA);
+	ASSERTI8(i8_to_i8_convert(U8_55), U8_55);
+	ASSERTI8(i8_to_i8_convert(-U1_55), -U1_55);
+	ASSERTI8(i8_to_i8_convert(-U1_AA), -U1_AA);
+	ASSERTI8(i8_to_i8_convert(-U2_55), -U2_55);
+	ASSERTI8(i8_to_i8_convert(-U2_AA), -U2_AA);
+	ASSERTI8(i8_to_i8_convert(-U4_55), -U4_55);
+	ASSERTI8(i8_to_i8_convert(-U8_55), -U8_55);
+	ASSERTI8(i8_to_i8_convert(I8_MAX), I8_MAX);
+	ASSERTI8(i8_to_i8_convert(I8_MIN), I8_MIN);
+}
+
+TEST u1_to_i8_convert_Main()
+{
+	extern i8 u1_to_i8_convert(u1 a);
+	ASSERTI8(u1_to_i8_convert(U1_MAGIC), U1_MAGIC);
+	ASSERTI8(u1_to_i8_convert(0), 0);
+	ASSERTI8(u1_to_i8_convert(U1_55), U1_55);
+	ASSERTI8(u1_to_i8_convert(U1_AA), U1_AA);
+	ASSERTI8(u1_to_i8_convert(U1_MAX), U1_MAX);
+	ASSERTI8(u1_to_i8_convert(U1_MSB), U1_MSB);
+	ASSERTI8(u1_to_i8_convert(I1_MAX), I1_MAX);
+}
+
+TEST u2_to_i8_convert_Main()
+{
+	extern i8 u2_to_i8_convert(u2 a);
+	ASSERTI8(u2_to_i8_convert(U2_MAGIC), U2_MAGIC);
+	ASSERTI8(u2_to_i8_convert(0), 0);
+	ASSERTI8(u2_to_i8_convert(U1_55), U1_55);
+	ASSERTI8(u2_to_i8_convert(U1_AA), U1_AA);
+	ASSERTI8(u2_to_i8_convert(U2_55), U2_55);
+	ASSERTI8(u2_to_i8_convert(U2_AA), U2_AA);
+	ASSERTI8(u2_to_i8_convert(U2_MAX), U2_MAX);
+	ASSERTI8(u2_to_i8_convert(U2_MSB), U2_MSB);
+	ASSERTI8(u2_to_i8_convert(I2_MAX), I2_MAX);
+}
+
+TEST u4_to_i8_convert_Main()
+{
+	extern i8 u4_to_i8_convert(u4 a);
+	ASSERTI8(u4_to_i8_convert(U4_MAGIC), U4_MAGIC);
+	ASSERTI8(u4_to_i8_convert(0), 0);
+	ASSERTI8(u4_to_i8_convert(U4_MAX), U4_MAX);
+	ASSERTI8(u4_to_i8_convert(U1_55), U1_55);
+	ASSERTI8(u4_to_i8_convert(U1_AA), U1_AA);
+	ASSERTI8(u4_to_i8_convert(U2_55), U2_55);
+	ASSERTI8(u4_to_i8_convert(U2_AA), U2_AA);
+	ASSERTI8(u4_to_i8_convert(U4_55), U4_55);
+	ASSERTI8(u4_to_i8_convert(U4_AA), U4_AA);
+	ASSERTI8(u4_to_i8_convert(U4_MSB), U4_MSB);
+	ASSERTI8(u4_to_i8_convert(I4_MAX), I4_MAX);
+}
+
+TEST i8_to_u1_convert_Main()
+{
+	extern u1 i8_to_u1_convert(i8 a);
+	ASSERTU1(i8_to_u1_convert(0), 0);
+	ASSERTU1(i8_to_u1_convert(-1), U1_MAX);
+	ASSERTU1(i8_to_u1_convert(U1_55), U1_55);
+	ASSERTU1(i8_to_u1_convert(U1_AA), U1_AA);
+	ASSERTU1(i8_to_u1_convert(U2_55), U1_55);
+	ASSERTU1(i8_to_u1_convert(U2_AA), U1_AA);
+	ASSERTU1(i8_to_u1_convert(U4_55), U1_55);
+	ASSERTU1(i8_to_u1_convert(U4_AA), U1_AA);
+	ASSERTU1(i8_to_u1_convert(U8_55), U1_55);
+	ASSERTU1(i8_to_u1_convert(-U1_55), U1_AB);
+	ASSERTU1(i8_to_u1_convert(-U1_AA), U1_56);
+	ASSERTU1(i8_to_u1_convert(-U2_55), U1_AB);
+	ASSERTU1(i8_to_u1_convert(-U2_AA), U1_56);
+	ASSERTU1(i8_to_u1_convert(-U4_55), U1_AB);
+	ASSERTU1(i8_to_u1_convert(-U8_55), U1_AB);
+	ASSERTU1(i8_to_u1_convert(I8_MAX), U1_MAX);
+	ASSERTU1(i8_to_u1_convert(I8_MIN), 0);
+	ASSERTU1(i8_to_u1_convert(U8_MAGIC), U1_MAGIC);
+}
+
+TEST i8_to_u2_convert_Main()
+{
+	extern u2 i8_to_u2_convert(i8 a);
+	ASSERTU2(i8_to_u2_convert(0), 0);
+	ASSERTU2(i8_to_u2_convert(-1), U2_MAX);
+	ASSERTU2(i8_to_u2_convert(U1_55), U1_55);
+	ASSERTU2(i8_to_u2_convert(U1_AA), U1_AA);
+	ASSERTU2(i8_to_u2_convert(U2_55), U2_55);
+	ASSERTU2(i8_to_u2_convert(U2_AA), U2_AA);
+	ASSERTU2(i8_to_u2_convert(U4_55), U2_55);
+	ASSERTU2(i8_to_u2_convert(U4_AA), U2_AA);
+	ASSERTU2(i8_to_u2_convert(U8_55), U2_55);
+	ASSERTU2(i8_to_u2_convert(-U1_55), U21_AB);
+	ASSERTU2(i8_to_u2_convert(-U1_AA), U21_56);
+	ASSERTU2(i8_to_u2_convert(-U2_55), U2_AB);
+	ASSERTU2(i8_to_u2_convert(-U2_AA), U2_56);
+	ASSERTU2(i8_to_u2_convert(-U4_55), U2_AB);
+	ASSERTU2(i8_to_u2_convert(-U8_55), U2_AB);
+	ASSERTU2(i8_to_u2_convert(I8_MAX), U2_MAX);
+	ASSERTU2(i8_to_u2_convert(I8_MIN), 0);
+	ASSERTU2(i8_to_u2_convert(U8_MAGIC), U2_MAGIC);
+}
+
+TEST i8_to_u4_convert_Main()
+{
+	extern u4 i8_to_u4_convert(i8 a);
+	ASSERTU4(i8_to_u4_convert(0), 0);
+	ASSERTU4(i8_to_u4_convert(-1), U4_MAX);
+	ASSERTU4(i8_to_u4_convert(U1_55), U1_55);
+	ASSERTU4(i8_to_u4_convert(U1_AA), U1_AA);
+	ASSERTU4(i8_to_u4_convert(U2_55), U2_55);
+	ASSERTU4(i8_to_u4_convert(U2_AA), U2_AA);
+	ASSERTU4(i8_to_u4_convert(U4_55), U4_55);
+	ASSERTU4(i8_to_u4_convert(U4_AA), U4_AA);
+	ASSERTU4(i8_to_u4_convert(U8_55), U4_55);
+	ASSERTU4(i8_to_u4_convert(-U1_55), U41_AB);
+	ASSERTU4(i8_to_u4_convert(-U1_AA), U41_56);
+	ASSERTU4(i8_to_u4_convert(-U2_55), U42_AB);
+	ASSERTU4(i8_to_u4_convert(-U2_AA), U42_56);
+	ASSERTU4(i8_to_u4_convert(-U4_55), U4_AB);
+	ASSERTU4(i8_to_u4_convert(-U8_55), U4_AB);
+	ASSERTU4(i8_to_u4_convert(I8_MAX), U4_MAX);
+	ASSERTU4(i8_to_u4_convert(I8_MIN), 0);
+	ASSERTU4(i8_to_u4_convert(U8_MAGIC), U4_MAGIC);
+}
+
+TEST u8_to_i1_convert_Main()
+{
+	extern i1 u8_to_i1_convert(u8 a);
+	ASSERTI1(u8_to_i1_convert(U8_MAGIC), U1_MAGIC);
+	ASSERTI1(u8_to_i1_convert(0), 0);
+	ASSERTI1(u8_to_i1_convert(U1_55), U1_55);
+	ASSERTI1(u8_to_i1_convert(U1_AA), -U1_56);
+	ASSERTI1(u8_to_i1_convert(U2_55), U1_55);
+	ASSERTI1(u8_to_i1_convert(U2_AA), -U1_56);
+	ASSERTI1(u8_to_i1_convert(U4_55), U1_55);
+	ASSERTI1(u8_to_i1_convert(U4_AA), -U1_56);
+	ASSERTI1(u8_to_i1_convert(U8_55), U1_55);
+	ASSERTI1(u8_to_i1_convert(U8_AA), -U1_56);
+	ASSERTI1(u8_to_i1_convert(U8_MAX), -1);
+	ASSERTI1(u8_to_i1_convert(U1_MAX), -1);
+	ASSERTI1(u8_to_i1_convert(I8_MAX), -1);
+	ASSERTI1(u8_to_i1_convert(U8_MSB), 0);
+	ASSERTI1(u8_to_i1_convert(I1_MAX), I1_MAX);
+	ASSERTI1(u8_to_i1_convert(U1_MSB), I1_MIN);
+}
+
+TEST u8_to_i2_convert_Main()
+{
+	extern i2 u8_to_i2_convert(u8 a);
+	ASSERTI2(u8_to_i2_convert(U8_MAGIC), U2_MAGIC);
+	ASSERTI2(u8_to_i2_convert(0), 0);
+	ASSERTI2(u8_to_i2_convert(U1_55), U1_55);
+	ASSERTI2(u8_to_i2_convert(U1_AA), U1_AA);
+	ASSERTI2(u8_to_i2_convert(U2_55), U2_55);
+	ASSERTI2(u8_to_i2_convert(U2_AA), -U2_56);
+	ASSERTI2(u8_to_i2_convert(U4_55), U2_55);
+	ASSERTI2(u8_to_i2_convert(U4_AA), -U2_56);
+	ASSERTI2(u8_to_i2_convert(U8_55), U2_55);
+	ASSERTI2(u8_to_i2_convert(U8_AA), -U2_56);
+	ASSERTI2(u8_to_i2_convert(U8_MAX), -1);
+	ASSERTI2(u8_to_i2_convert(U2_MAX), -1);
+	ASSERTI2(u8_to_i2_convert(I8_MAX), -1);
+	ASSERTI2(u8_to_i2_convert(U8_MSB), 0);
+	ASSERTI2(u8_to_i2_convert(I2_MAX), I2_MAX);
+	ASSERTI2(u8_to_i2_convert(U2_MSB), I2_MIN);
+}
+
+TEST u8_to_i4_convert_Main()
+{
+	extern i4 u8_to_i4_convert(u8 a);
+	ASSERTI4(u8_to_i4_convert(U8_MAGIC), U4_MAGIC);
+	ASSERTI4(u8_to_i4_convert(0), 0);
+	ASSERTI4(u8_to_i4_convert(U1_55), U1_55);
+	ASSERTI4(u8_to_i4_convert(U1_AA), U1_AA);
+	ASSERTI4(u8_to_i4_convert(U2_55), U2_55);
+	ASSERTI4(u8_to_i4_convert(U2_AA), U2_AA);
+	ASSERTI4(u8_to_i4_convert(U4_55), U4_55);
+	ASSERTI4(u8_to_i4_convert(U4_AA), -U4_56);
+	ASSERTI4(u8_to_i4_convert(U8_55), U4_55);
+	ASSERTI4(u8_to_i4_convert(U8_AA), -U4_56);
+	ASSERTI4(u8_to_i4_convert(U8_MAX), -1);
+	ASSERTI4(u8_to_i4_convert(U4_MAX), -1);
+	ASSERTI4(u8_to_i4_convert(I8_MAX), -1);
+	ASSERTI4(u8_to_i4_convert(U8_MSB), 0);
+	ASSERTI4(u8_to_i4_convert(I4_MAX), I4_MAX);
+	ASSERTI4(u8_to_i4_convert(U4_MSB), I4_MIN);
+}
+
+TEST u8_to_u1_convert_Main()
+{
+	extern u1 u8_to_u1_convert(u8 a);
+	ASSERTU1(u8_to_u1_convert(0), 0);
+	ASSERTU1(u8_to_u1_convert(U1_55), U1_55);
+	ASSERTU1(u8_to_u1_convert(U1_AA), U1_AA);
+	ASSERTU1(u8_to_u1_convert(U2_55), U1_55);
+	ASSERTU1(u8_to_u1_convert(U2_AA), U1_AA);
+	ASSERTU1(u8_to_u1_convert(U4_55), U1_55);
+	ASSERTU1(u8_to_u1_convert(U4_AA), U1_AA);
+	ASSERTU1(u8_to_u1_convert(U8_55), U1_55);
+	ASSERTU1(u8_to_u1_convert(U8_AA), U1_AA);
+	ASSERTU1(u8_to_u1_convert(U8_MAX), U1_MAX);
+	ASSERTU1(u8_to_u1_convert(I8_MAX), U1_MAX);
+	ASSERTU1(u8_to_u1_convert(U8_MSB), 0);
+	ASSERTU1(u8_to_u1_convert(U8_MAGIC), U1_MAGIC);
+}
+
+TEST u8_to_u2_convert_Main()
+{
+	extern u2 u8_to_u2_convert(u8 a);
+	ASSERTU2(u8_to_u2_convert(0), 0);
+	ASSERTU2(u8_to_u2_convert(U1_55), U1_55);
+	ASSERTU2(u8_to_u2_convert(U1_AA), U1_AA);
+	ASSERTU2(u8_to_u2_convert(U2_55), U2_55);
+	ASSERTU2(u8_to_u2_convert(U2_AA), U2_AA);
+	ASSERTU2(u8_to_u2_convert(U4_55), U2_55);
+	ASSERTU2(u8_to_u2_convert(U4_AA), U2_AA);
+	ASSERTU2(u8_to_u2_convert(U8_55), U2_55);
+	ASSERTU2(u8_to_u2_convert(U8_AA), U2_AA);
+	ASSERTU2(u8_to_u2_convert(U8_MAX), U2_MAX);
+	ASSERTU2(u8_to_u2_convert(I8_MAX), U2_MAX);
+	ASSERTU2(u8_to_u2_convert(U8_MSB), 0);
+	ASSERTU2(u8_to_u2_convert(U8_MAGIC), U2_MAGIC);
+}
+
+TEST u8_to_u4_convert_Main()
+{
+	extern u4 u8_to_u4_convert(u8 a);
+	ASSERTU4(u8_to_u4_convert(0), 0);
+	ASSERTU4(u8_to_u4_convert(U1_55), U1_55);
+	ASSERTU4(u8_to_u4_convert(U1_AA), U1_AA);
+	ASSERTU4(u8_to_u4_convert(U2_55), U2_55);
+	ASSERTU4(u8_to_u4_convert(U2_AA), U2_AA);
+	ASSERTU4(u8_to_u4_convert(U4_55), U4_55);
+	ASSERTU4(u8_to_u4_convert(U4_AA), U4_AA);
+	ASSERTU4(u8_to_u4_convert(U8_55), U4_55);
+	ASSERTU4(u8_to_u4_convert(U8_AA), U4_AA);
+	ASSERTU4(u8_to_u4_convert(U8_MAX), U4_MAX);
+	ASSERTU4(u8_to_u4_convert(I8_MAX), U4_MAX);
+	ASSERTU4(u8_to_u4_convert(U8_MSB), 0);
+	ASSERTU4(u8_to_u4_convert(U8_MAGIC), U4_MAGIC);
+}
+
+TEST i1_to_u8_convert_Main()
+{
+	extern u8 i1_to_u8_convert(i1 a);
+	ASSERTU8(i1_to_u8_convert(0), 0);
+	ASSERTU8(i1_to_u8_convert(-1), U8_MAX);
+	ASSERTU8(i1_to_u8_convert(U1_55), U1_55);
+	ASSERTU8(i1_to_u8_convert(I1_MIN), U81_MSB);
+	ASSERTU8(i1_to_u8_convert(I1_MAX), I1_MAX);
+	ASSERTU8(i1_to_u8_convert(U1_MAGIC), U1_MAGIC);
+}
+
+TEST i2_to_u8_convert_Main()
+{
+	extern u8 i2_to_u8_convert(i2 a);
+	ASSERTU8(i2_to_u8_convert(0), 0);
+	ASSERTU8(i2_to_u8_convert(-1), U8_MAX);
+	ASSERTU8(i2_to_u8_convert(U1_55), U1_55);
+	ASSERTU8(i2_to_u8_convert(U1_AA), U1_AA);
+	ASSERTU8(i2_to_u8_convert(U2_55), U2_55);
+	ASSERTU8(i2_to_u8_convert(-U1_55), U81_AB);
+	ASSERTU8(i2_to_u8_convert(-U1_AA), U81_56);
+	ASSERTU8(i2_to_u8_convert(-U2_55), U82_AB);
+	ASSERTU8(i2_to_u8_convert(I2_MIN), U82_MSB);
+	ASSERTU8(i2_to_u8_convert(I2_MAX), I2_MAX);
+	ASSERTU8(i2_to_u8_convert(U2_MAGIC), U2_MAGIC);
+}
+
+TEST i4_to_u8_convert_Main()
+{
+	extern u8 i4_to_u8_convert(i4 a);
+	ASSERTU8(i4_to_u8_convert(0), U8_MIN);
+	ASSERTU8(i4_to_u8_convert(-1), U8_MAX);
+	ASSERTU8(i4_to_u8_convert(U1_55), U1_55);
+	ASSERTU8(i4_to_u8_convert(U1_AA), U1_AA);
+	ASSERTU8(i4_to_u8_convert(U2_55), U2_55);
+	ASSERTU8(i4_to_u8_convert(U2_AA), U2_AA);
+	ASSERTU8(i4_to_u8_convert(U4_55), U4_55);
+	ASSERTU8(i4_to_u8_convert(-U1_55), U81_AB);
+	ASSERTU8(i4_to_u8_convert(-U1_AA), U81_56);
+	ASSERTU8(i4_to_u8_convert(-U2_55), U82_AB);
+	ASSERTU8(i4_to_u8_convert(-U2_AA), U82_56);
+	ASSERTU8(i4_to_u8_convert(-U4_55), U84_AB);
+	ASSERTU8(i4_to_u8_convert(I4_MAX), I4_MAX);
+	ASSERTU8(i4_to_u8_convert(I4_MIN), U84_MSB);
+	ASSERTU8(i4_to_u8_convert(U4_MAGIC), U4_MAGIC);
+}
+
+TEST u1_to_u8_convert_Main()
+{
+	extern u8 u1_to_u8_convert(u1 a);
+	ASSERTU8(u1_to_u8_convert(0), 0);
+	ASSERTU8(u1_to_u8_convert(U1_55), U1_55);
+	ASSERTU8(u1_to_u8_convert(U1_AA), U1_AA);
+	ASSERTU8(u1_to_u8_convert(U1_MAX), U1_MAX);
+	ASSERTU8(u1_to_u8_convert(U1_MSB), U1_MSB);
+	ASSERTU8(u1_to_u8_convert(I1_MAX), I1_MAX);
+	ASSERTU8(u1_to_u8_convert(U1_MAGIC), U1_MAGIC);
+}
+
+TEST u2_to_u8_convert_Main()
+{
+	extern u8 u2_to_u8_convert(u2 a);
+	ASSERTU8(u2_to_u8_convert(0), 0);
+	ASSERTU8(u2_to_u8_convert(U1_55), U1_55);
+	ASSERTU8(u2_to_u8_convert(U1_AA), U1_AA);
+	ASSERTU8(u2_to_u8_convert(U2_55), U2_55);
+	ASSERTU8(u2_to_u8_convert(U2_AA), U2_AA);
+	ASSERTU8(u2_to_u8_convert(U2_MAX), U2_MAX);
+	ASSERTU8(u2_to_u8_convert(U2_MSB), U2_MSB);
+	ASSERTU8(u2_to_u8_convert(I2_MAX), I2_MAX);
+	ASSERTU8(u2_to_u8_convert(U2_MAGIC), U2_MAGIC);
+}
+
+TEST u4_to_u8_convert_Main()
+{
+	extern u8 u4_to_u8_convert(u4 a);
+	ASSERTU8(u4_to_u8_convert(0), 0);
+	ASSERTU8(u4_to_u8_convert(U1_55), U1_55);
+	ASSERTU8(u4_to_u8_convert(U1_AA), U1_AA);
+	ASSERTU8(u4_to_u8_convert(U2_55), U2_55);
+	ASSERTU8(u4_to_u8_convert(U2_AA), U2_AA);
+	ASSERTU8(u4_to_u8_convert(U4_55), U4_55);
+	ASSERTU8(u4_to_u8_convert(U4_AA), U4_AA);
+	ASSERTU8(u4_to_u8_convert(U4_MAX), U4_MAX);
+	ASSERTU8(u4_to_u8_convert(U4_MSB), U4_MSB);
+	ASSERTU8(u4_to_u8_convert(I4_MAX), I4_MAX);
+	ASSERTU8(u4_to_u8_convert(U4_MAGIC), U4_MAGIC);
+}
+
+TEST u8_to_u8_convert_Main()
+{
+	extern u8 u8_to_u8_convert(u8 a);
+	ASSERTU8(u8_to_u8_convert(0), 0);
+	ASSERTU8(u8_to_u8_convert(U1_55), U1_55);
+	ASSERTU8(u8_to_u8_convert(U1_AA), U1_AA);
+	ASSERTU8(u8_to_u8_convert(U2_55), U2_55);
+	ASSERTU8(u8_to_u8_convert(U2_AA), U2_AA);
+	ASSERTU8(u8_to_u8_convert(U4_55), U4_55);
+	ASSERTU8(u8_to_u8_convert(U4_AA), U4_AA);
+	ASSERTU8(u8_to_u8_convert(U8_55), U8_55);
+	ASSERTU8(u8_to_u8_convert(U8_AA), U8_AA);
+	ASSERTU8(u8_to_u8_convert(U8_MAX), U8_MAX);
+	ASSERTU8(u8_to_u8_convert(U8_MSB), U8_MSB);
+	ASSERTU8(u8_to_u8_convert(I8_MAX), I8_MAX);
+	ASSERTU8(u8_to_u8_convert(U8_MAGIC), U8_MAGIC);
+}
+
+TEST u8_to_i8_convert_Main()
+{
+	extern i8 u8_to_i8_convert(u8 a);
+	ASSERTI8(u8_to_i8_convert(U8_MAGIC), U8_MAGIC);
+	ASSERTI8(u8_to_i8_convert(0), 0);
+	ASSERTI8(u8_to_i8_convert(U1_55), U1_55);
+	ASSERTI8(u8_to_i8_convert(U1_AA), U1_AA);
+	ASSERTI8(u8_to_i8_convert(U2_55), U2_55);
+	ASSERTI8(u8_to_i8_convert(U2_AA), U2_AA);
+	ASSERTI8(u8_to_i8_convert(U4_55), U4_55);
+	ASSERTI8(u8_to_i8_convert(U4_AA), U4_AA);
+	ASSERTI8(u8_to_i8_convert(U8_55), U8_55);
+	ASSERTI8(u8_to_i8_convert(U8_AA), -U8_56);
+	ASSERTI8(u8_to_i8_convert(U8_MAX), -1);
+	ASSERTI8(u8_to_i8_convert(U8_MSB), I8_MIN);
+	ASSERTI8(u8_to_i8_convert(I8_MAX), I8_MAX);
+}
+
+TEST i8_to_u8_convert_Main()
+{
+	extern u8 i8_to_u8_convert(i8 a);
+	ASSERTU8(i8_to_u8_convert(0), 0);
+	ASSERTU8(i8_to_u8_convert(-1), U8_MAX);
+	ASSERTU8(i8_to_u8_convert(U1_55), U1_55);
+	ASSERTU8(i8_to_u8_convert(U1_AA), U1_AA);
+	ASSERTU8(i8_to_u8_convert(U2_55), U2_55);
+	ASSERTU8(i8_to_u8_convert(U2_AA), U2_AA);
+	ASSERTU8(i8_to_u8_convert(U4_55), U4_55);
+	ASSERTU8(i8_to_u8_convert(U4_AA), U4_AA);
+	ASSERTU8(i8_to_u8_convert(U8_55), U8_55);
+	ASSERTU8(i8_to_u8_convert(-U1_55), U81_AB);
+	ASSERTU8(i8_to_u8_convert(-U1_AA), U81_56);
+	ASSERTU8(i8_to_u8_convert(-U2_55), U82_AB);
+	ASSERTU8(i8_to_u8_convert(-U2_AA), U82_56);
+	ASSERTU8(i8_to_u8_convert(-U4_55), U84_AB);
+	ASSERTU8(i8_to_u8_convert(-U8_55), U8_AB);
+	ASSERTU8(i8_to_u8_convert(I8_MAX), I8_MAX);
+	ASSERTU8(i8_to_u8_convert(I8_MIN), U8_MSB);
+	ASSERTU8(i8_to_u8_convert(U8_MAGIC), U8_MAGIC);
+}
+
+MAIN CONVERT_LONGLONG_main() { }
+
+#endif

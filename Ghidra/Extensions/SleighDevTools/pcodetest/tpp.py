@@ -72,7 +72,8 @@ static const char %(main)s_NAME [] = "%(main)s";
         self.data['num'] = str(len(re.findall(r'^\s+ASSERT', self.data['body'], flags=re.MULTILINE)))
         self.c_write('''#define %(name)s_NUMB %(num)s
 static const char %(name)s_NAME [] = "%(name)s";
-static void %(name)s()
+static void %(name)s(void);
+static void %(name)s(void)
 {
 	noteTestMain(__FILE__, __LINE__, %(name)s_NAME);
 	{
@@ -122,7 +123,7 @@ static GroupInfo Info = {
  * get optimized away.
  **/
 
-GroupInfo *%(main)s_Force() {
+GroupInfo *%(main)s_Force(void) {
 	return &Info;
 }
 

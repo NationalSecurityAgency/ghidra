@@ -18,7 +18,7 @@ TEST pcode_AccessAndModifyGlobal_Main()
 
 TEST pcode_AccessGlobal_Main()
 {
-	extern i4 pcode_AccessGlobal();
+	extern i4 pcode_AccessGlobal(void);
 	i4 ret = pcode_AccessGlobal();
 	ASSERTI4(GLOBAL, GLOBAL);
 }

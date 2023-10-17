@@ -31,7 +31,7 @@ i4 pcode_AccessAndModifyGlobal(i4 arg1)
 	return tmp;
 }
 
-i4 pcode_AccessGlobal()
+i4 pcode_AccessGlobal(void)
 {
 	return GLOBAL;
 }

@@ -16,394 +16,80 @@
 #include "pcode_test.h"
 
 #ifdef HAS_LONGLONG
-i8 i8_complexLogic(i8 a, i8 b, i8 c, i8 d, i8 e, i8 f)
-{
-	i8 ret = 0;
-
-	if (a > b && b > c || d < e && f < e) {
-		ret += 1;
-	}
-	if (a != b || a != c && d != e || f != e) {
-		ret += 2;
-	}
-	if (a && b && c || d && e && f) {
-		ret += 4;
-	}
-	if (a || b || c && d || e || f) {
-		ret += 8;
-	}
-	return ret;
-}
-
-u8 u8_complexLogic(u8 a, u8 b, u8 c, u8 d, u8 e, u8 f)
-{
-	u8 ret = 0;
-
-	if (a > b && b > c || d < e && f < e) {
-		ret += 1;
-	}
-	if (a != b || a != c && d != e || f != e) {
-		ret += 2;
-	}
-	if (a && b && c || d && e && f) {
-		ret += 4;
-	}
-	if (a || b || c && d || e || f) {
-		ret += 8;
-	}
-	return ret;
-}
-
-i8 i8_compareLogic(i8 lhs, i8 rhs)
-{
-	if (lhs < 0)
-		lhs += 2;
-	if (lhs > 0)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
-
-u8 u8_compareLogic(u8 lhs, u8 rhs)
-{
-	if (lhs < rhs)
-		lhs += 2;
-	if (lhs > rhs)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
-/* Comparison operators */
-u8 u8_greaterThan(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs > rhs;
-	return z;
-}
-
-u8 u8_greaterThanEquals(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs >= rhs;
-	return z;
-}
-
-u8 u8_lessThan(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs < rhs;
-	return z;
-}
-
-u8 u8_lessThanEquals(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs <= rhs;
-	return z;
-}
-
-u8 u8_equals(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs == rhs;
-	return z;
-}
-
-u8 u8_notEquals(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs != rhs;
-	return z;
-}
-
-i8 i8_greaterThan(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs > rhs;
-	return z;
-}
-
-i8 i8_greaterThanEquals(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs >= rhs;
-	return z;
-}
-
-i8 i8_lessThan(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs < rhs;
-	return z;
-}
-
-i8 i8_lessThanEquals(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs <= rhs;
-	return z;
-}
-
-i8 i8_equals(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs == rhs;
-	return z;
-}
-
-i8 i8_notEquals(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs != rhs;
-	return z;
-}
-
-/* Bitwise operators */
-u8 u8_bitwiseAnd(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs & rhs;
-	return z;
-}
-
-u8 u8_bitwiseOr(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs | rhs;
-	return z;
-}
-
-u8 u8_bitwiseXor(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs ^ rhs;
-	return z;
-}
-
-i8 i8_bitwiseAnd(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs & rhs;
-	return z;
-}
-
-i8 i8_bitwiseOr(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs | rhs;
-	return z;
-}
-
-i8 i8_bitwiseXor(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs ^ rhs;
-	return z;
-}
-
-/* Logical operators */
-u8 u8_logicalAnd(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-u8 u8_logicalOr(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-u8 u8_logicalNot(u8 lhs)
-{
-	u8 z;
-
-	z = !lhs;
-	return z;
-}
-
-i8 i8_logicalAnd(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-i8 i8_logicalOr(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-i8 i8_logicalNot(i8 lhs)
-{
-	i8 z;
-
-	z = !lhs;
-	return z;
-}
-
-/* Shift operators */
-u8 u8_shiftLeft(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs << rhs;
-	return z;
-}
-
-u8 u8_shiftRight(u8 lhs, u8 rhs)
-{
-	u8 z;
-
-	z = lhs >> rhs;
-	return z;
-}
-
-i8 i8_shiftLeft(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs << rhs;
-	return z;
-}
-
-i8 i8_shiftRight(i8 lhs, i8 rhs)
-{
-	i8 z;
-
-	z = lhs >> rhs;
-	return z;
-}
 
-/* Arithmetic operators */
-u8 u8_unaryPlus(u8 lhs)
-{
-	u8 z;
+PCODE_COMPLEX_LOGIC(u8)
+PCODE_COMPLEX_LOGIC(i8)
 
-	z = +lhs;
-	return z;
-}
+PCODE_COMPARE_LOGIC(u8)
+PCODE_COMPARE_LOGIC(i8)
 
-u8 u8_addition(u8 lhs, u8 rhs)
-{
-	u8 z;
+PCODE_GREATERTHAN(u8)
+PCODE_GREATERTHAN(i8)
 
-	z = lhs + rhs;
-	return z;
-}
+PCODE_GREATERTHANEQUALS(u8)
+PCODE_GREATERTHANEQUALS(i8)
 
-u8 u8_subtract(u8 lhs, u8 rhs)
-{
-	u8 z;
+PCODE_LESSTHAN(u8)
+PCODE_LESSTHAN(i8)
 
-	z = lhs - rhs;
-	return z;
-}
+PCODE_LESSTHANEQUALS(u8)
+PCODE_LESSTHANEQUALS(i8)
 
-u8 u8_multiply(u8 lhs, u8 rhs)
-{
-	u8 z;
+PCODE_EQUALS(u8)
+PCODE_EQUALS(i8)
 
-	z = lhs * rhs;
-	return z;
-}
+PCODE_NOTEQUALS(u8)
+PCODE_NOTEQUALS(i8)
 
-u8 u8_divide(u8 lhs, u8 rhs)
-{
-	u8 z;
+PCODE_BITWISE_AND(u8)
+PCODE_BITWISE_AND(i8)
 
-	z = lhs / rhs;
-	return z;
-}
+PCODE_BITWISE_OR(u8)
+PCODE_BITWISE_OR(i8)
 
+PCODE_LOGICAL_AND(u8)
+PCODE_LOGICAL_AND(i8)
 
-i8 i8_unaryMinus(i8 lhs)
-{
-	i8 z;
+PCODE_LOGICAL_OR(u8)
+PCODE_LOGICAL_OR(i8)
 
-	z = -lhs;
-	return z;
-}
+PCODE_LOGICAL_NOT(u8)
+PCODE_LOGICAL_NOT(i8)
 
-i8 i8_unaryPlus(i8 lhs)
-{
-	i8 z;
+PCODE_XOR(u8)
+PCODE_XOR(i8)
 
-	z = +lhs;
-	return z;
-}
+PCODE_SHIFTLEFT(u8)
+PCODE_SHIFTLEFT(i8)
 
-i8 i8_addition(i8 lhs, i8 rhs)
-{
-	i8 z;
+PCODE_SHIFTRIGHT(u8)
+PCODE_SHIFTRIGHT(i8)
 
-	z = lhs + rhs;
-	return z;
-}
+PCODE_UNARY_PLUS(u8)
+PCODE_UNARY_PLUS(i8)
 
-i8 i8_subtract(i8 lhs, i8 rhs)
-{
-	i8 z;
+PCODE_UNARY_MINUS(u8)
+PCODE_UNARY_MINUS(i8)
 
-	z = lhs - rhs;
-	return z;
-}
+PCODE_ADDITION(u8)
+PCODE_ADDITION(i8)
 
-i8 i8_multiply(i8 lhs, i8 rhs)
-{
-	i8 z;
+PCODE_SUBTRACT(u8)
+PCODE_SUBTRACT(i8)
 
-	z = lhs * rhs;
-	return z;
-}
+#ifdef HAS_MULTIPLY
 
-i8 i8_divide(i8 lhs, i8 rhs)
-{
-	i8 z;
+PCODE_MUL(u8)
+PCODE_MUL(i8)
 
-	z = lhs / rhs;
-	return z;
-}
+#endif /* #ifdef HAS_MULTIPLY */
+#ifdef HAS_DIVIDE
 
-i8 i8_remainder(i8 lhs, i8 rhs)
-{
-	i8 z;
+PCODE_DIV(u8)
+PCODE_DIV(i8)
 
-	z = lhs % rhs;
-	return z;
-}
+PCODE_REM(u8)
+PCODE_REM(i8)
 
-
+#endif /* #ifdef HAS_DIVIDE */
 #endif /* #ifdef HAS_LONGLONG */

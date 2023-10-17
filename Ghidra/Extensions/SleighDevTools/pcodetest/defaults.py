@@ -39,6 +39,7 @@ PCodeTest.defaults.has_float = 1
 PCodeTest.defaults.has_longlong = 1
 PCodeTest.defaults.has_shortfloat = 0
 PCodeTest.defaults.has_vector = 0
+PCodeTest.defaults.has_builtin = 0
 PCodeTest.defaults.small_build = 0
 PCodeTest.defaults.ld_library_path = ''
 PCodeTest.defaults.toolchain_type = 'gcc'

@@ -308,45 +308,65 @@ typedef i1 size_t;
 #define I8_MAX                   9223372036854775807LL
 #define I8_MIN                   (-I8_MAX - 1LL)
 
+/* made up useful defines */
+#define U1_MSB   0x80
+#define U2_MSB   0x8000
+#define U21_MSB  0xff80
+#define U4_MSB   0x80000000
+#define U41_MSB  0xffffff80
+#define U42_MSB  0xffff8000
+#define U8_MSB   0x8000000000000000
+#define U81_MSB  0xffffffffffffff80
+#define U82_MSB  0xffffffffffff8000
+#define U84_MSB  0xffffffff80000000
+#define U1_MAGIC 0x11
+#define U2_MAGIC 0x1211
+#define U4_MAGIC 0x14131211
+#define U8_MAGIC 0x1817161514131211
+#define U1_55    0x55
+#define U1_56    0x56
+#define U1_AA    0xAA
+#define U1_AB    0xAB
+#define U2_55    0x5555
+#define U2_56    0x5556
+#define U2_AA    0xAAAA
+#define U2_AB    0xAAAB
+#define U21_AB   0xFFAB
+#define U21_56   0xFF56
+#define U4_55    0x55555555
+#define U4_56    0x55555556
+#define U4_AA    0xAAAAAAAA
+#define U4_AB    0xAAAAAAAB
+#define U41_56   0xFFFFFF56
+#define U41_AB   0xFFFFFFAB
+#define U42_56   0xFFFF5556
+#define U42_AB   0xFFFFAAAB
+#define U8_55    0x5555555555555555
+#define U8_56    0x5555555555555556
+#define U8_AA    0xAAAAAAAAAAAAAAAA
+#define U8_AB    0xAAAAAAAAAAAAAAAB
+#define U81_AB   0xFFFFFFFFFFFFFFAB
+#define U82_AB   0xFFFFFFFFFFFFAAAB
+#define U84_AB   0xFFFFFFFFAAAAAAAB
+#define U81_56   0xFFFFFFFFFFFFFF56
+#define U82_56   0xFFFFFFFFFFFF5556
+
+
+
 /* Simulate float.h assumes IEEE standard format and 4 8 10 byte formats (FLT_, DBL_, LDBL_) (FLT_ maps to F4, DBL_ maps to F8) */
+#define DBL_MAX                  ((double)1.79769313486231570814527423731704357e+308L)
+#define DBL_MIN                  ((double)2.22507385850720138309023271733240406e-308L)
 
-#define DBL_DIG                  15
-#define DBL_EPSILON              2.2204460492503131e-16
-#define DBL_MANT_DIG             53
-#define DBL_MAX_10_EXP           308
-#define DBL_MAX                  1.7976931348623157e+308
+#define LDBL_MAX                 ((long double)1.18973149535723176502126385303097021e+4932L)
+#define LDBL_MIN                 ((long double)3.36210314311209350626267781732175260e-4932L)
 
-#define DBL_MAX_EXP              1024
-#define DBL_MIN_10_EXP           (-307)
-#define DBL_MIN                  2.2250738585072014e-308
-#define DBL_MIN_EXP              (-1021)
-
-#define LDBL_DIG                 18
-#define LDBL_EPSILON             1.08420217248550443401e-19L
-#define LDBL_MANT_DIG            64
-#define LDBL_MAX_10_EXP          4932
-#define LDBL_MAX_EXP             16384
-
-#define LDBL_MAX                 1.18973149535723176502e+4932L
-#define LDBL_MIN_10_EXP          (-4931)
-#define LDBL_MIN_EXP             (-16381)
-#define LDBL_MIN                 3.36210314311209350626e-4932L
-
-#define FLT_DIG                  6
-#define FLT_EPSILON              1.19209290e-7F
-#define FLT_MANT_DIG             24
-#define FLT_MAX_10_EXP           38
-#define FLT_MAX_EXP              128
-
-#define FLT_MAX                  3.40282347e+38F
-#define FLT_MIN_10_EXP           (-37)
-#define FLT_MIN_EXP              (-125)
-#define FLT_MIN                  1.17549435e-38F
-#define FLT_RADIX                2
-
-#define FLT_ROUNDS               1
+#define FLT_MAX                  ((float)3.40282346638528859811704183484516925e+38F)
+#define FLT_MIN                  ((float)1.17549435082228750796873653722224568e-38F)
 
 #define PI_SHORT 3.14
+#define M_PI     ((float)3.14159265358979323846)
+#define M_PIl    ((double)3.141592653589793238462643383279502884L)
+
 
 #ifdef HAS_LIBC
 #include <stdio.h>
@@ -363,4 +383,175 @@ void print_uint(char *file, int line, char *func, unsigned int expected, unsigne
 void print_ulong(char *file, int line, char *func, unsigned long expected, unsigned long val, char *ok);
 void print_float(char *file, int line, char *func, float expected, float val, char *ok);
 void print_val(char *name, int val);
+#endif
+
+
+/**
+ *  @attn  This is extremely unportable for endianess
+ *
+ *  Any checks that use `y` should be careful, there is no real good
+ *  way to do bitfield access with endianess correctly here it looks like.
+ */
+
+typedef union u1bits {
+    struct {
+	u1 b0:1;
+	u1 b1:1;
+	u1 b2:1;
+	u1 b3:1;
+	u1 b4:1;
+	u1 b5:1;
+	u1 b6:1;
+	u1 b7:1;
+    } x;
+    struct {
+	u1 w0:2;
+	u1 w1:4;
+	u1 w2:1;
+    } y;
+    u1 z;
+} u1bits;
+typedef union u2bits {
+    struct {
+	u2 b0:1;
+	u2 b1:1;
+	u2 b2:1;
+	u2 b3:1;
+	u2 b4:1;
+	u2 b5:1;
+	u2 b6:1;
+	u2 b7:1;
+	u2 b8:1;
+	u2 b9:1;
+	u2 b10:1;
+	u2 b11:1;
+	u2 b12:1;
+	u2 b13:1;
+	u2 b14:1;
+	u2 b15:1;
+    } x;
+    struct {
+	u2 w0:4;
+	u2 w1:8;
+	u2 w2:1;
+    } y;
+    u2 z;
+} u2bits;
+typedef union u4bits {
+    struct {
+	u4 b0:1;
+	u4 b1:1;
+	u4 b2:1;
+	u4 b3:1;
+	u4 b4:1;
+	u4 b5:1;
+	u4 b6:1;
+	u4 b7:1;
+	u4 b8:1;
+	u4 b9:1;
+	u4 b10:1;
+	u4 b11:1;
+	u4 b12:1;
+	u4 b13:1;
+	u4 b14:1;
+	u4 b15:1;
+	u4 b16:1;
+	u4 b17:1;
+	u4 b18:1;
+	u4 b19:1;
+	u4 b20:1;
+	u4 b21:1;
+	u4 b22:1;
+	u4 b23:1;
+	u4 b24:1;
+	u4 b25:1;
+	u4 b26:1;
+	u4 b27:1;
+	u4 b28:1;
+	u4 b29:1;
+	u4 b30:1;
+	u4 b31:1;
+    } x;
+    struct {
+	u4 w0:8;
+	u4 w1:16;
+	u4 w2:1;
+    } y;
+    u4 z;
+} u4bits;
+#ifdef HAS_LONGLONG
+typedef union u8bits {
+    struct {
+	u8 b0:1;
+	u8 b1:1;
+	u8 b2:1;
+	u8 b3:1;
+	u8 b4:1;
+	u8 b5:1;
+	u8 b6:1;
+	u8 b7:1;
+	u8 b8:1;
+	u8 b9:1;
+	u8 b10:1;
+	u8 b11:1;
+	u8 b12:1;
+	u8 b13:1;
+	u8 b14:1;
+	u8 b15:1;
+	u8 b16:1;
+	u8 b17:1;
+	u8 b18:1;
+	u8 b19:1;
+	u8 b20:1;
+	u8 b21:1;
+	u8 b22:1;
+	u8 b23:1;
+	u8 b24:1;
+	u8 b25:1;
+	u8 b26:1;
+	u8 b27:1;
+	u8 b28:1;
+	u8 b29:1;
+	u8 b30:1;
+	u8 b31:1;
+	u8 b32:1;
+	u8 b33:1;
+	u8 b34:1;
+	u8 b35:1;
+	u8 b36:1;
+	u8 b37:1;
+	u8 b38:1;
+	u8 b39:1;
+	u8 b40:1;
+	u8 b41:1;
+	u8 b42:1;
+	u8 b43:1;
+	u8 b44:1;
+	u8 b45:1;
+	u8 b46:1;
+	u8 b47:1;
+	u8 b48:1;
+	u8 b49:1;
+	u8 b50:1;
+	u8 b51:1;
+	u8 b52:1;
+	u8 b53:1;
+	u8 b54:1;
+	u8 b55:1;
+	u8 b56:1;
+	u8 b57:1;
+	u8 b58:1;
+	u8 b59:1;
+	u8 b60:1;
+	u8 b61:1;
+	u8 b62:1;
+	u8 b63:1;
+    } x;
+    struct {
+	u8 w0:16;
+	u8 w1:32;
+	u8 w2:1;
+    } y;
+    u8 z;
+} u8bits;
 #endif
