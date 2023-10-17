@@ -122,6 +122,7 @@ public class AddressInput extends JPanel implements FocusableEditor {
 	/**
 	 * Returns the address in the field or null if the address can't
 	 * be parsed.
+	 * @return The address for the current value in the text field
 	 * 
 	 * @throws NullPointerException if AddressFactory has not been set.
 	 */
@@ -158,6 +159,14 @@ public class AddressInput extends JPanel implements FocusableEditor {
 	 */
 	public boolean hasInput() {
 		return textField.getText().length() != 0;
+	}
+
+	/**
+	 * Returns the text in this field.
+	 * @return the text in this field
+	 */
+	public String getText() {
+		return textField.getText();
 	}
 
 	public AddressFactory getAddressFactory() {
