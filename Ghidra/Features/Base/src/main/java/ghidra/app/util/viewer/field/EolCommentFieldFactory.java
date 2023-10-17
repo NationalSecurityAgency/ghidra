@@ -69,8 +69,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private EolExtraCommentsOption extraCommentsOption = new EolExtraCommentsOption();
 	private PropertyEditor extraCommmentsEditor = new EolExtraCommentsPropertyEditor();
 
-	// The codeUnitFormatOptions is used to monitor "follow pointer..." option to avoid duplication 
-	// of data within auto-comment.  We don't bother adding a listener to kick the model since this 
+	// The codeUnitFormatOptions is used to monitor "follow pointer..." option to avoid duplication
+	// of data within auto-comment.  We don't bother adding a listener to kick the model since this
 	// is done by the operand field.
 	private BrowserCodeUnitFormatOptions codeUnitFormatOptions;
 
@@ -131,8 +131,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 
 		if (!(customOption instanceof EolExtraCommentsOption)) {
 			throw new AssertException("Someone set an option for " + EXTRA_COMMENT_KEY +
-				" that is not the expected " +
-				EolExtraCommentsOption.class.getName() + " type.");
+				" that is not the expected " + EolExtraCommentsOption.class.getName() + " type.");
 		}
 
 		extraCommentsOption = (EolExtraCommentsOption) customOption;
@@ -257,19 +256,18 @@ public class EolCommentFieldFactory extends FieldFactory {
 			}
 		}
 
-		EolComments comments =
-			new EolComments(cu, codeUnitFormatOptions.followReferencedPointers(),
-				maxDisplayLines, extraCommentsOption);
+		EolComments comments = new EolComments(cu, codeUnitFormatOptions.followReferencedPointers(),
+			maxDisplayLines, extraCommentsOption);
 
 		// This Code Unit's End of Line Comment
 		List<FieldElement> elementList = new ArrayList<>();
-		AttributedString prefix = createPrefix(style);
+		AttributedString prefix = createPrefix(CommentStyle.EOL);
 		List<String> eols = comments.getEOLComments();
 		List<FieldElement> eolElements = convertToFieldElements(program, eols, prefix, 0);
 		elementList.addAll(eolElements);
 
 		if (comments.isShowingRepeatables()) {
-			prefix = createPrefix(repeatableCommentStyle);
+			prefix = createPrefix(CommentStyle.REPEATABLE);
 			int row = getNextRow(elementList);
 			List<String> repeatables = comments.getRepeatableComments();
 			List<FieldElement> elements = convertToFieldElements(program, repeatables, prefix, row);
@@ -277,20 +275,19 @@ public class EolCommentFieldFactory extends FieldFactory {
 		}
 
 		if (comments.isShowingRefRepeatables()) {
-			prefix = createPrefix(refRepeatableCommentStyle);
-			List<RefRepeatComment> refRepeatables =
-				comments.getReferencedRepeatableComments();
+			prefix = createPrefix(CommentStyle.REF_REPEATABLE);
+			List<RefRepeatComment> refRepeatables = comments.getReferencedRepeatableComments();
 			for (RefRepeatComment comment : refRepeatables) {
 				int row = getNextRow(elementList);
 				String[] lines = comment.getCommentLines();
-				List<FieldElement> elements = convertToRefFieldElements(
-					lines, program, prefix, comment.getAddress(), row);
+				List<FieldElement> elements =
+					convertToRefFieldElements(lines, program, prefix, comment.getAddress(), row);
 				elementList.addAll(elements);
 			}
 		}
 
 		if (comments.isShowingAutoComments()) {
-			prefix = createPrefix(automaticCommentStyle);
+			prefix = createPrefix(CommentStyle.AUTO);
 			int row = getNextRow(elementList);
 			List<String> autos = comments.getAutomaticComment();
 			List<FieldElement> elements = convertToFieldElements(program, autos, prefix, row);
@@ -305,25 +302,28 @@ public class EolCommentFieldFactory extends FieldFactory {
 			maxDisplayLines, hlProvider);
 	}
 
-	private AttributedString createPrefix(int commentStyle) {
-		if (commentStyle == style) {
+	private AttributedString createPrefix(CommentStyle commentStyle) {
+		if (commentStyle == CommentStyle.EOL) {
 			return new AttributedString(SEMICOLON_PREFIX, CommentColors.EOL, getMetrics(style),
-				false,
-				null);
+				false, null);
 		}
-		if (commentStyle == repeatableCommentStyle) {
-			return new AttributedString(SEMICOLON_PREFIX,
-				CommentColors.REPEATABLE, getMetrics(repeatableCommentStyle), false, null);
+		if (commentStyle == CommentStyle.REPEATABLE) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.REPEATABLE,
+				getMetrics(repeatableCommentStyle), false, null);
 		}
-		if (commentStyle == refRepeatableCommentStyle) {
-			return new AttributedString(SEMICOLON_PREFIX,
-				CommentColors.REF_REPEATABLE, getMetrics(refRepeatableCommentStyle), false, null);
+		if (commentStyle == CommentStyle.REF_REPEATABLE) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.REF_REPEATABLE,
+				getMetrics(refRepeatableCommentStyle), false, null);
 		}
-		if (commentStyle == automaticCommentStyle) {
-			return new AttributedString(SEMICOLON_PREFIX,
-				CommentColors.AUTO, getMetrics(automaticCommentStyle), false, null);
+		if (commentStyle == CommentStyle.AUTO) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.AUTO,
+				getMetrics(automaticCommentStyle), false, null);
 		}
 		throw new AssertException("Unexected comment style: " + commentStyle);
+	}
+
+	private enum CommentStyle {
+		EOL, REPEATABLE, REF_REPEATABLE, AUTO;
 	}
 
 	private int getNextRow(List<FieldElement> elementList) {
@@ -339,20 +339,21 @@ public class EolCommentFieldFactory extends FieldFactory {
 	}
 
 	private List<FieldElement> convertToFieldElements(Program program, List<String> comments,
-			AttributedString currentPrefixString, int nextRow) {
+			AttributedString prefix, int row) {
 
 		List<FieldElement> fieldElements = new ArrayList<>();
 		if (comments.isEmpty()) {
 			return fieldElements;
 		}
-		for (int rowIndex = 0; rowIndex < comments.size(); rowIndex++) {
-			int encodedRow = nextRow + rowIndex;
-			fieldElements.add(CommentUtils.parseTextForAnnotations(comments.get(rowIndex), program,
-				currentPrefixString, encodedRow));
+
+		for (int commentRow = 0; commentRow < comments.size(); commentRow++) {
+			int offsetRow = row + commentRow;
+			fieldElements.add(CommentUtils.parseTextForAnnotations(comments.get(commentRow),
+				program, prefix, offsetRow));
 		}
 
 		if (isWordWrap) {
-			int lineWidth = showSemicolon ? width - currentPrefixString.getStringWidth() : width;
+			int lineWidth = showSemicolon ? width - prefix.getStringWidth() : width;
 			fieldElements = FieldUtils.wrap(fieldElements, lineWidth);
 		}
 
@@ -362,10 +363,9 @@ public class EolCommentFieldFactory extends FieldFactory {
 					fieldElements.get(i).getDataLocationForCharacterIndex(0);
 				int encodedRow = startRowCol.row();
 				int encodedCol = startRowCol.col();
-				FieldElement prefix =
-					new TextFieldElement(currentPrefixString, encodedRow, encodedCol);
+				FieldElement prefixElement = new TextFieldElement(prefix, encodedRow, encodedCol);
 				fieldElements.set(i,
-					new CompositeFieldElement(new FieldElement[] { prefix, fieldElements.get(i) }));
+					new CompositeFieldElement(List.of(prefixElement, fieldElements.get(i))));
 			}
 		}
 		return fieldElements;
@@ -435,9 +435,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 		CodeUnit cu = (CodeUnit) obj;
-		EolComments displayableEol =
-			new EolComments(cu, codeUnitFormatOptions.followReferencedPointers(),
-				maxDisplayLines, extraCommentsOption);
+		EolComments displayableEol = new EolComments(cu,
+			codeUnitFormatOptions.followReferencedPointers(), maxDisplayLines, extraCommentsOption);
 
 		// Hold position in connected tool if navigating within semicolon.
 		int numLeadColumns = 0;
@@ -472,9 +471,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		EolComments displayableEol =
-			new EolComments((CodeUnit) obj, codeUnitFormatOptions.followReferencedPointers(),
-				maxDisplayLines, extraCommentsOption);
+		EolComments displayableEol = new EolComments((CodeUnit) obj,
+			codeUnitFormatOptions.followReferencedPointers(), maxDisplayLines, extraCommentsOption);
 
 		ListingTextField btf = (ListingTextField) bf;
 		RowColLocation eolRowCol = displayableEol.getRowCol((CommentFieldLocation) loc);
