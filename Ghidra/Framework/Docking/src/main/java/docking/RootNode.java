@@ -427,12 +427,16 @@ class RootNode extends WindowNode {
 	Element saveToXML() {
 		Element root = new Element(ROOT_NODE_ELEMENT_NAME);
 		JFrame frame = windowWrapper.getParentFrame();
-		Rectangle r = frame.getBounds();
+		// Save un-maximized/un-iconified bounds rather than e.g. whole screen if maximized
+		int state = frame.getExtendedState();	// Remember current state
+		frame.setExtendedState(JFrame.NORMAL);	// Un-maximize & un-iconify
+		Rectangle r = frame.getBounds();	// The un-maximized & un-iconified bounds
+		frame.setExtendedState(state);		// Revert to original state
 		root.setAttribute("X_POS", "" + r.x);
 		root.setAttribute("Y_POS", "" + r.y);
 		root.setAttribute("WIDTH", "" + r.width);
 		root.setAttribute("HEIGHT", "" + r.height);
-		root.setAttribute("EX_STATE", "" + frame.getExtendedState());
+		root.setAttribute("EX_STATE", "" + state);
 		if (child != null) {
 			root.addContent(child.saveToXML());
 		}
