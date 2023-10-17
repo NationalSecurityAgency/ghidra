@@ -403,7 +403,9 @@ public class MachHeader implements StructConverter {
 			List<Section> sections = segment.getSections();
 			for (int j = 0; j < sections.size(); j++) {
 				Section section = sections.get(j);
-				section.setSegmentName(segment.getSegmentName());
+				if (invalid.apply(section.getSegmentName())) {
+					section.setSegmentName("__INVALID.%d".formatted(i));
+				}
 				if (invalid.apply(section.getSectionName())) {
 					section.setSectionName("__invalid.%d".formatted(j));
 				}
