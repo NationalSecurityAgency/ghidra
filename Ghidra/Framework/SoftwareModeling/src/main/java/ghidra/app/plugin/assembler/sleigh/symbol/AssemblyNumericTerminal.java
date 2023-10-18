@@ -192,13 +192,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 
     /** Return a long with n least significant bits filled in. */
     public static long fillBits(long n) {
-        long out = 0;
-        while (n > 0) {
-            out = out << 1;
-            out += 1;
-            n -= 1;
-        }
-        return out;
+        return -1L >>> (64 - n);
     }
 
     /**

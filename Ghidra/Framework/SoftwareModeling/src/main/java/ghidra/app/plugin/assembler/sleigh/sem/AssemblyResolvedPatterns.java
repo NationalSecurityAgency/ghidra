@@ -350,7 +350,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	 * @param cop the context operation specifying the location of the value to encode
 	 * @param val the masked value to encode
 	 * @return the result
-	 * <p>
+	 * 
 	 *         This is the forward (as in disassembly) direction of applying context operations. The
 	 *         pattern expression is evaluated, and the result is written as specified.
 	 */

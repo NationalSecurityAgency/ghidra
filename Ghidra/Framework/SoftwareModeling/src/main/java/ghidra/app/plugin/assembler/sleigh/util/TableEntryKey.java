@@ -38,8 +38,7 @@ public class TableEntryKey implements Comparable<TableEntryKey> {
 	 */
 	public TableEntryKey(int state, AssemblySymbol sym) {
 		this.state = state;
-		if (sym instanceof AssemblyWildcardTerminal) {
-			AssemblyWildcardTerminal awt = (AssemblyWildcardTerminal) sym;
+		if (sym instanceof AssemblyWildcardTerminal awt) {
 			this.sym = awt.getInternal();
 		} else {
 			this.sym = sym;
