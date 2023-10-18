@@ -27,7 +27,8 @@ import ghidra.program.model.listing.Program;
  */
 public interface OverviewProvider {
 	/**
-	 * Returns the component to diplay in the right margin of the listing.
+	 * Returns the component to display in the right margin of the listing.
+	 * @return the component
 	 */
 	JComponent getComponent();
 

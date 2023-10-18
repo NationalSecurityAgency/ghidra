@@ -155,7 +155,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return preferredSize;
 	}
 
-	/** A width for new windows that shows a reasonable amount of the Listing */
+	/** 
+	 * A width for new windows that shows a reasonable amount of the Listing
+	 * @return the width
+	 */
 	protected int getNewWindowDefaultWidth() {
 		return 500;
 	}
@@ -215,11 +218,12 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		listingModel = newModel;
 		layoutModel = createLayoutModel(newModel);
 		fieldPanel.setLayoutModel(layoutModel);
-		SwingUtilities.invokeLater(() -> updateProviders());
+		Swing.runLater(() -> updateProviders());
 	}
 
 	/**
 	 * Returns the current ListingModel used by this panel.
+	 * @return the model
 	 */
 	public ListingModel getListingModel() {
 		return listingModel;
@@ -255,6 +259,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns true if the field header component is showing.
+	 * @return true if showing
 	 */
 	public boolean isHeaderShowing() {
 		return headerPanel != null;
@@ -471,6 +476,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the FieldPanel used by this ListingPanel.
+	 * @return the field panel
 	 */
 	public FieldPanel getFieldPanel() {
 		return fieldPanel;
@@ -502,6 +508,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the divider location between the left margin areas and the main display.
+	 * @return the location
 	 */
 	public int getDividerLocation() {
 		if (splitPane != null) {
@@ -562,6 +569,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * location in the screen.
 	 *
 	 * @param loc the location to move to.
+	 * @return true if successful
 	 */
 	public boolean goTo(ProgramLocation loc) {
 		return goTo(loc, true);
@@ -576,6 +584,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 *            the screen. In that case, when this parameter is true, then the given location
 	 *            will be placed in the center of the screen; when the parameter is false, then the
 	 *            screen will be scrolled only enough to show the cursor.
+	 * @return true if succussful
 	 */
 	public boolean goTo(ProgramLocation loc, boolean centerWhenNotVisible) {
 
@@ -598,13 +607,19 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		return true;
 	}
 
-	/** Scroll the view of the listing to the given location. */
+	/** 
+	 * Scroll the view of the listing to the given location.
+	 * @param location the location
+	 */
 	public void scrollTo(ProgramLocation location) {
 		FieldLocation fieldLocation = getFieldLocation(location);
 		fieldPanel.scrollTo(fieldLocation);
 	}
 
-	/** Center the view of the listing around the given location. */
+	/** 
+	 * Center the view of the listing around the given location.
+	 * @param location the location
+	 */
 	public void center(ProgramLocation location) {
 		FieldLocation fieldLocation = getFieldLocation(location);
 		fieldPanel.center(fieldLocation);
@@ -718,6 +733,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * Positions the ListingPanel to the given address.
 	 *
 	 * @param addr the address at which to position the listing.
+	 * @return true if successful
 	 */
 	public boolean goTo(Address addr) {
 		Program p = getProgram();
@@ -817,6 +833,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Gets the view of this listing panel (meant to be used in conjunction with
 	 * {@link #setView(AddressSetView)}.
+	 * @return the addresses
 	 */
 	public AddressSetView getView() {
 		AddressIndexMap map = layoutModel.getAddressIndexMap();
@@ -845,6 +862,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Sets the background color for the listing panel. This will set the background for the main
 	 * listing display.
+	 * @param c the color
 	 */
 	public void setTextBackgroundColor(Color c) {
 		if (fieldPanel != null) {
@@ -861,6 +879,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns true if this component has focus.
+	 * @return true if this component has focus.
 	 */
 	public boolean isActive() {
 		return fieldPanel.isFocused();
@@ -868,6 +887,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the current program location of the cursor.
+	 * @return the location
 	 */
 	public ProgramLocation getProgramLocation() {
 		FieldLocation loc = fieldPanel.getCursorLocation();
@@ -880,7 +900,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get a program location for the given point.
-	 *
+	 * @param point the point
 	 * @return program location, or null if point does not correspond to a program location
 	 */
 	public ProgramLocation getProgramLocation(Point point) {
@@ -888,13 +908,14 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		ListingField field = (ListingField) fieldPanel.getFieldAt(point.x, point.y, dropLoc);
 		if (field != null) {
 			return field.getFieldFactory()
-				.getProgramLocation(dropLoc.getRow(), dropLoc.getCol(), field);
+					.getProgramLocation(dropLoc.getRow(), dropLoc.getCol(), field);
 		}
 		return null;
 	}
 
 	/**
 	 * Get the margin providers in this ListingPanel.
+	 * @return the providers
 	 */
 	public List<MarginProvider> getMarginProviders() {
 		return marginProviders;
@@ -902,6 +923,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get the overview providers in this ListingPanel.
+	 * @return the providers
 	 */
 	public List<OverviewProvider> getOverviewProviders() {
 		return overviewProviders;
@@ -909,6 +931,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns true if the mouse is at a location that can be dragged.
+	 * @return true if the mouse is at a location that can be dragged.
 	 */
 	public boolean isStartDragOk() {
 		return fieldPanel.isStartDragOK();
@@ -958,6 +981,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the AddressIndexMap currently used by this listing panel.
+	 * @return the map
 	 */
 	public AddressIndexMap getAddressIndexMap() {
 		return layoutModel.getAddressIndexMap();
@@ -965,6 +989,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the vertical scrollbar used by this panel.
+	 * @return the scroll bar
 	 */
 	public JScrollBar getVerticalScrollBar() {
 		return scroller.getVerticalScrollBar();
@@ -972,6 +997,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the FormatManager used by this listing panel.
+	 * @return the format manager
 	 */
 	public FormatManager getFormatManager() {
 		return formatManager;
@@ -1012,6 +1038,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the current program selection.
+	 * @return the selection
 	 */
 	public ProgramSelection getProgramSelection() {
 		return layoutModel.getProgramSelection(fieldPanel.getSelection());
@@ -1032,6 +1059,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the selection to the complement of the current selection in the listing view.
+	 * @return the addresses
 	 */
 	public AddressSet selectComplement() {
 		fieldPanel.requestFocus();
@@ -1111,7 +1139,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	@Override
 	public void selectionChanged(FieldSelection selection, EventTrigger trigger) {
 		if (listingModel == null) {
-			// SCR 7092 - Dragging in a popup window that contains a listing while that window
+			// Dragging in a popup window that contains a listing while that window
 			// closes can trigger this condition
 			return;
 		}
