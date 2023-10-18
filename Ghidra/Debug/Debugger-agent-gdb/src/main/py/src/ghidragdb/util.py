@@ -65,7 +65,10 @@ class Index:
             self.regions[r.start] = r
             self.bases.append(r.start)
     def compute_base(self, address):
-        floor = self.bases[bisect.bisect_right(self.bases, address) - 1]
+        index = bisect.bisect_right(self.bases, address) - 1
+        if index == -1:
+            return address
+        floor = self.bases[index]
         if floor == None:
             return address
         else:
@@ -223,7 +226,10 @@ class RegionInfoReader(object):
 
     def get_regions(self):
         regions = []
-        out = gdb.execute(self.cmd, to_string=True)
+        try:
+            out = gdb.execute(self.cmd, to_string=True)
+        except:
+            return regions
         for line in out.split('\n'):
             r = self.region_from_line(line)
             if r is None:
