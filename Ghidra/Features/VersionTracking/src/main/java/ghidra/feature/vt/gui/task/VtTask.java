@@ -175,7 +175,12 @@ public abstract class VtTask extends Task {
 	}
 
 	protected void reportError(Exception e) {
-		String message = e.getMessage();
+		Throwable t = e;
+		Throwable cause = e.getCause();
+		if (cause != null) {
+			t = cause;
+		}
+		String message = t.getMessage();
 		if (message == null) {
 			message = "Unexpected Exception: " + e.toString();
 		}

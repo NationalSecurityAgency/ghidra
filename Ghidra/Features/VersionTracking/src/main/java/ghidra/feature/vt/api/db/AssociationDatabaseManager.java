@@ -38,15 +38,11 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 
 	private VTAssociationTableDBAdapter associationTableAdapter;
 
-	// A cache of accepted associations that allow this class to check isBlocked() quickly.  This
-	// was added to fix a major performance bottleneck.
-	private Set<Address> acceptedSourceAssociations = new HashSet<>();
-	private Set<Address> acceptedDestinationAssociations = new HashSet<>();
-
 	private VTMatchMarkupItemTableDBAdapter markupItemTableAdapter;
 	private DBObjectCache<MarkupItemStorageDB> markupItemCache;
 	private List<AssociationHook> associationHooks = new ArrayList<>();
 	private DBObjectCache<VTAssociationDB> associationCache;
+	private AcceptedStatusCache acceptedStatusCache = new AcceptedStatusCache();
 	Lock lock;
 
 	public static AssociationDatabaseManager createAssociationManager(DBHandle dbHandle,
@@ -80,32 +76,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 	 * when a new session is created.
 	 */
 	void sessionInitialized() {
-		TaskLauncher.launchModal("Loading Associations",
-			monitor -> loadAcceptedAssociations(monitor));
-	}
-
-	private void loadAcceptedAssociations(TaskMonitor monitor) {
-
-		monitor.setMessage("Loading accepted associations...");
-
-		try {
-			RecordIterator it = associationTableAdapter.getRecords();
-			while (it.hasNext() && !monitor.isCancelled()) {
-				DBRecord record = it.next();
-				VTAssociationDB associationDB = getAssociationForRecord(record);
-				VTAssociationStatus status = associationDB.getStatus();
-				if (status == ACCEPTED) {
-					Address sourceAddress = associationDB.getSourceAddress();
-					Address destinationAddress = associationDB.getDestinationAddress();
-					acceptedSourceAssociations.add(sourceAddress);
-					acceptedDestinationAssociations.add(destinationAddress);
-				}
-			}
-			monitor.setMessage("Finished loading accepted associations");
-		}
-		catch (IOException e) {
-			session.dbError(e);
-		}
+		acceptedStatusCache.initialize();
 	}
 
 	public Collection<MarkupItemStorageDB> getAppliedMarkupItems(TaskMonitor monitor,
@@ -299,16 +270,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 	}
 
 	private boolean isBlocked(Address sourceAddress, Address destinationAddress) {
-
-		if (acceptedSourceAssociations.contains(sourceAddress)) {
-			return true;
-		}
-
-		if (acceptedDestinationAssociations.contains(destinationAddress)) {
-			return true;
-		}
-
-		return false;
+		return acceptedStatusCache.isBlocked(sourceAddress, destinationAddress);
 	}
 
 	@Override
@@ -631,12 +593,10 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		Address destinationAddress = association.getDestinationAddress();
 		VTAssociationStatus status = association.getStatus();
 		if (status == ACCEPTED) {
-			acceptedSourceAssociations.add(sourceAddress);
-			acceptedDestinationAssociations.add(destinationAddress);
+			acceptedStatusCache.add(sourceAddress, destinationAddress);
 		}
 		else {
-			acceptedSourceAssociations.remove(sourceAddress);
-			acceptedDestinationAssociations.remove(destinationAddress);
+			acceptedStatusCache.remove(sourceAddress, destinationAddress);
 		}
 	}
 
@@ -652,6 +612,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 	void invalidateCache() {
 		associationCache.invalidate();
 		markupItemCache.invalidate();
+		acceptedStatusCache.invalidate();
 	}
 
 	void addAssociationHook(AssociationHook hook) {
@@ -678,7 +639,177 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 	}
 
 	void dispose() {
-		acceptedSourceAssociations.clear();
-		acceptedDestinationAssociations.clear();
+		acceptedStatusCache.dispose();
+	}
+
+	/**
+	 * A cache of accepted associations that allow this class to check isBlocked() quickly.  This
+	 * was added to fix a major performance bottleneck.
+	 * <p>
+	 * The cache will be invalidated and cleared after an undo or redo event.  Once cleared, the
+	 * cache will stay empty until the next request to check the blocked status of an association.
+	 * This is to allow the user to perform multiple undo/redo operations without this class having
+	 * to reload.
+	 * 
+	 * Assumptions:
+	 * <ul>
+	 *  <li>This isBlocked() method of class is used by background task threads, not the Swing
+	 *  thread.  This method will reload the cache when it is invalid.  Further, loading the cache
+	 *  in this case will require a lock.  To avoid deadlocks, isBlock() should only be used by
+	 *  background threads and not the Swing thread.
+	 *  </li>
+	 * </ul>
+	 */
+	private class AcceptedStatusCache {
+
+		private Set<Address> acceptedSourceAssociations = new HashSet<>();
+		private Set<Address> acceptedDestinationAssociations = new HashSet<>();
+		private boolean invalid = true;
+		private boolean disposed = false;
+
+		void dispose() {
+			lock.acquire();
+			try {
+				disposed = true;
+				invalidate();
+			}
+			finally {
+				lock.release();
+			}
+		}
+
+		void invalidate() {
+			lock.acquire();
+			try {
+				invalid = true;
+				acceptedSourceAssociations.clear();
+				acceptedDestinationAssociations.clear();
+			}
+			finally {
+				lock.release();
+			}
+		}
+
+		void remove(Address sourceAddress, Address destinationAddress) {
+			lock.acquire();
+			try {
+				if (disposed || invalid) {
+					return;
+				}
+				acceptedSourceAssociations.remove(sourceAddress);
+				acceptedDestinationAssociations.remove(destinationAddress);
+			}
+			finally {
+				lock.release();
+			}
+		}
+
+		void add(Address sourceAddress, Address destinationAddress) {
+			lock.acquire();
+			try {
+				if (disposed || invalid) {
+					return;
+				}
+				acceptedSourceAssociations.add(sourceAddress);
+				acceptedDestinationAssociations.add(destinationAddress);
+			}
+			finally {
+				lock.release();
+			}
+		}
+
+		boolean isBlocked(Address sourceAddress, Address destinationAddress) {
+
+			lock.acquire();
+			try {
+
+				if (disposed) {
+					return true;
+				}
+
+				if (invalid) {
+					doLoadAcceptedAssociations(TaskMonitor.DUMMY);
+					if (invalid) { // some sort of error
+						return isBlockedInDb(sourceAddress, destinationAddress);
+					}
+				}
+
+				if (acceptedSourceAssociations.contains(sourceAddress)) {
+					return true;
+				}
+
+				if (acceptedDestinationAssociations.contains(destinationAddress)) {
+					return true;
+				}
+			}
+			finally {
+				lock.release();
+			}
+			return false;
+		}
+
+		private boolean isBlockedInDb(Address sourceAddress, Address destinationAddress) {
+			long sourceID = session.getLongFromSourceAddress(sourceAddress);
+			long destinationID = session.getLongFromDestinationAddress(destinationAddress);
+			try {
+				Set<DBRecord> relatedRecords =
+					associationTableAdapter
+							.getRelatedAssociationRecordsBySourceAndDestinationAddress(
+								sourceID, destinationID);
+				for (DBRecord record : relatedRecords) {
+					VTAssociationDB associationDB = getAssociationForRecord(record);
+					VTAssociationStatus status = associationDB.getStatus();
+					if (status == ACCEPTED) {
+						return true;
+					}
+				}
+			}
+			catch (IOException e) {
+				session.dbError(e);
+			}
+
+			return false;
+		}
+
+		/**
+		 * This is called by the Swing thread.  We use a task monitor to show progress.  This method
+		 * will load associations without acquiring a lock, with the assumption that while the
+		 * session is being loaded, no other threads will be running that may require the use of
+		 * this class.
+		 */
+		void initialize() {
+			TaskLauncher.launchModal("Loading Associations",
+				monitor -> doLoadAcceptedAssociations(monitor));
+		}
+
+		/**
+		 * Loads the cache of accepted associations.  This method assumes locking is handled by the
+		 * client.
+		 */
+		private void doLoadAcceptedAssociations(TaskMonitor monitor) {
+			try {
+				monitor.setMessage("Loading accepted associations...");
+				RecordIterator it = associationTableAdapter.getRecords();
+				while (it.hasNext()) {
+					monitor.increment();
+					DBRecord record = it.next();
+					VTAssociationDB associationDB = getAssociationForRecord(record);
+					VTAssociationStatus status = associationDB.getStatus();
+					if (status == ACCEPTED) {
+						Address sourceAddress = associationDB.getSourceAddress();
+						Address destinationAddress = associationDB.getDestinationAddress();
+						add(sourceAddress, destinationAddress);
+					}
+				}
+				monitor.setMessage("Finished loading accepted associations");
+				invalid = false;
+			}
+			catch (CancelledException e) {
+				// nothing to do
+			}
+			catch (IOException e) {
+				session.dbError(e);
+			}
+		}
 	}
 }
