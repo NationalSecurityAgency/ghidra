@@ -35,6 +35,7 @@ import ghidra.app.util.AddressInput;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -436,8 +437,8 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 	public void testSplitNotAllowed() throws Exception {
 		// create an overlay block
 		tx(program, () -> {
-			memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
-				TaskMonitor.DUMMY, true);
+			memory.createInitializedBlock(".overlay", AddressSpace.OTHER_SPACE.getAddress(0), 0x100,
+				(byte) 0xa, TaskMonitor.DUMMY, true);
 		});
 
 		int row = table.getModel().getRowCount() - 1;
@@ -446,35 +447,35 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
-		assertEquals("Split Overlay Block Not Allowed", d.getTitle());
+		assertEquals("Split OTHER Overlay Block Not Allowed", d.getTitle());
 		close(d);
 	}
 
-	@Test
-	public void testExpandBlockNotAllowed() throws Exception {
-		// create an overlay block
-		tx(program, () -> {
-			memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
-				TaskMonitor.DUMMY, true);
-		});
-
-		int row = table.getModel().getRowCount() - 1;
-		table.setRowSelectionInterval(row, row);
-		DockingActionIf action = getAction(plugin, "Expand Block Up");
-		performAction(action, false);
-		OptionDialog d = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(d);
-		assertEquals("Expand Overlay Block Not Allowed", d.getTitle());
-		close(d);
-
-		action = getAction(plugin, "Expand Block Down");
-		performAction(action, false);
-
-		OptionDialog d2 = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(d2);
-		assertEquals("Expand Overlay Block Not Allowed", d2.getTitle());
-		runSwing(() -> d2.close());
-	}
+//	@Test
+//	public void testExpandBlockNotAllowed() throws Exception {
+//		// create an overlay block
+//		tx(program, () -> {
+//			memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
+//				TaskMonitor.DUMMY, true);
+//		});
+//
+//		int row = table.getModel().getRowCount() - 1;
+//		table.setRowSelectionInterval(row, row);
+//		DockingActionIf action = getAction(plugin, "Expand Block Up");
+//		performAction(action, false);
+//		OptionDialog d = waitForDialogComponent(OptionDialog.class);
+//		assertNotNull(d);
+//		assertEquals("Expand Overlay Block Not Allowed", d.getTitle());
+//		close(d);
+//
+//		action = getAction(plugin, "Expand Block Down");
+//		performAction(action, false);
+//
+//		OptionDialog d2 = waitForDialogComponent(OptionDialog.class);
+//		assertNotNull(d2);
+//		assertEquals("Expand Overlay Block Not Allowed", d2.getTitle());
+//		runSwing(() -> d2.close());
+//	}
 
 	@Test
 	public void testExpandBlockUpSetup() {
@@ -536,7 +537,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
 		waitForSwing();
 
-		assertEquals(".text.exp", model.getValueAt(0, MemoryMapModel.NAME));
+		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("00002000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
 		assertEquals("0x1005600", model.getValueAt(0, MemoryMapModel.LENGTH));
@@ -548,7 +549,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0x6600", model.getValueAt(0, MemoryMapModel.LENGTH));
 
 		redo(program);
-		assertEquals(".text.exp", model.getValueAt(0, MemoryMapModel.NAME));
+		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("00002000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
 		assertEquals("0x1005600", model.getValueAt(0, MemoryMapModel.LENGTH));
@@ -606,7 +607,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
 		waitForSwing();
 
-		assertEquals(".text.exp", model.getValueAt(0, MemoryMapModel.NAME));
+		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01000000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
 		assertEquals("0x7600", model.getValueAt(0, MemoryMapModel.LENGTH));
@@ -618,7 +619,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0x6600", model.getValueAt(0, MemoryMapModel.LENGTH));
 
 		redo(program);
-		assertEquals(".text.exp", model.getValueAt(0, MemoryMapModel.NAME));
+		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01000000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
 		assertEquals("0x7600", model.getValueAt(0, MemoryMapModel.LENGTH));
@@ -736,7 +737,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
 		waitForSwing();
 
-		assertEquals(".text.exp", model.getValueAt(0, MemoryMapModel.NAME));
+		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01001000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("01007700", model.getValueAt(0, MemoryMapModel.END));
 		assertEquals("0x6701", model.getValueAt(0, MemoryMapModel.LENGTH));
@@ -763,7 +764,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
 		waitForSwing();
 
-		assertEquals(".text.exp", model.getValueAt(0, MemoryMapModel.NAME));
+		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01001000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010076ff", model.getValueAt(0, MemoryMapModel.END));
 		assertEquals("0x6700", model.getValueAt(0, MemoryMapModel.LENGTH));

@@ -29,7 +29,54 @@ import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Interface for Memory.
+ * {@link Memory} provides the ability to inspect and manage the memory model for a {@link Program}.
+ * In addition to conventional {@link MemoryBlock}s defined within physical memory 
+ * {@link AddressSpace}s other special purpose memory block types may be defined (e.g.,
+ * byte-mapped, bit-mapped, overlays, etc.).  
+ * <p>
+ * All memory block manipulations require excusive access (see {@link Program#hasExclusiveAccess()})
+ * and all memory changes should generally be completed prior to analysis.  In particular, adding 
+ * additional overlay blocks to an existing overlay space that has already been analyzed should be 
+ * avoided.  Code references discovered during analysis from an overlay block will give preference 
+ * to remaining within the corresponding overlay address space provided a block exists at the 
+ * referenced offset.
+ * <p>
+ * <u>Block Types</u>
+ * <ul>
+ * <li><b>Initialized</b> - a memory block which defines a memory region with specific data.  
+ * Data may be initialized from defined {@link FileBytes}, an {@link InputStream}, or set to all 
+ * zeros.</li>
+ * <li><b>Uninitialized</b> - a memory block which defines a memory region whose data is unknown.</li>
+ * <li><b>Byte-Mapped</b> - a memory block whose bytes are mapped to another memory region using 
+ * either a 1:1 byte-mapping or other specified mapping scheme  (see {@link ByteMappingScheme}).
+ * Byte read/write operations are passed-through the mapped region.
+ * </li>
+ * <li><b>Bit-Mapped</b> - a memory block whose bytes are mapped to a corresponding bit in another
+ * memory region where a mapped byte has a value of 0 or 1 only.  Byte read/write operations are 
+ * passed-through to the corresponding bit within the mapped region.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * <u>Overlay Blocks</u>
+ * An overlay memory block provides the ability to define alternate content for a physical memory
+ * region.  Any of the Block Types above may be created as an overlay block. The use of an overlay 
+ * block and its corresponding overlay address space can be used to reflect a different execution 
+ * context.  Use of overlays during analysis has limitations that must be considered.</p>
+ * <p>
+ * <u>Loaded vs. Non-Loaded</u>
+ * A special purpose {@link AddressSpace#OTHER_SPACE} has been established for storing adhoc
+ * non-loaded data as a memory block.  This is frequently used for storing portions of a file
+ * that never actually get loaded into memory.  All blocks created using the
+ * {@link AddressSpace#OTHER_SPACE} must be created as an overlay memory block.  All other
+ * blocks based upon a memory address space, including overlays, are treated as Loaded and
+ * use offsets into a physical memory space.</p>
+ * <p>
+ * <u>Sub-Blocks</u>
+ * When a memory block is first created it corresponds to a single sub-block.  When
+ * a block join operation is performed the resulting block will consist of multiple sub-blocks.
+ * However, the join operation is restricted to default block types only and does not support
+ * byte/bit-mapped types.
+ * </p>
  */
 public interface Memory extends AddressSetView {
 
@@ -118,24 +165,28 @@ public interface Memory extends AddressSetView {
 	public LiveMemoryHandler getLiveMemoryHandler();
 
 	/**
-	 * Returns true if exclusive lock exists and memory blocks may be
-	 * created, removed, split, joined or moved.  If false is returned,
-	 * these types of methods will throw a LockException.  The manner in which
-	 * a lock is acquired is application specific.
-	 */
-//	public boolean haveLock();
-
-	/**
-	 * Create an initialized memory block and add it to this Memory.
+	 * Create an initialized memory block based upon a data {@link InputStream} and add it to 
+	 * this Memory.
+	 * <p>
+	 * Overlay Blocks: An overlay memory block may be created in two ways:
+	 * <ul>
+	 * <li>Specifying a {@code start} address within an existing overlay address space 
+	 * ({@code overlay} parameter is ignored), or</li>
+	 * <li>Specifying a {@code start} address within a physical memory address space and passing
+	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
+	 * address space.</li>
+	 * </ul>
 	 * @param name block name (See {@link Memory#isValidMemoryBlockName(String)} for
 	 * naming rules)
 	 * @param start start address of the block
 	 * @param is source of the data used to fill the block or null for zero initialization.
 	 * @param length the size of the block
 	 * @param monitor task monitor
-	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
-	 * overlay address space will be created and the block will have a starting address at the same
-	 * offset as the given start address parameter, but in the new address space.
+	 * @param overlay if true, the block will be created as an OVERLAY block.  If the {@code start}
+	 * address is a non-overlay memory address a new overlay address space will be created and the 
+	 * block will have a starting address at the same offset within the new overlay space.  If the
+	 * specified {@code start} address is an overlay address an overlay block will be created at
+	 * that overlay address.
 	 * @return new Initialized Memory Block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
@@ -150,16 +201,29 @@ public interface Memory extends AddressSetView {
 			CancelledException, IllegalArgumentException;
 
 	/**
-	 * Create an initialized memory block and add it to this Memory.
+	 * Create an initialized memory block initialized and add it to this Memory.  All bytes
+	 * will be initialized to the specified value (NOTE: use of zero as the initial value
+	 * is encouraged for reduced storage).
+	 * <p>
+	 * Overlay Blocks: An overlay memory block may be created in two ways:
+	 * <ul>
+	 * <li>Specifying a {@code start} address within an existing overlay address space 
+	 * ({@code overlay} parameter is ignored), or</li>
+	 * <li>Specifying a {@code start} address within a physical memory address space and passing
+	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
+	 * address space.</li>
+	 * </ul>
 	 * @param name block name (See {@link Memory#isValidMemoryBlockName(String)} for
 	 * naming rules)
 	 * @param start start of the block
 	 * @param size block length (positive non-zero value required)
 	 * @param initialValue initialization value for every byte in the block.
 	 * @param monitor progress monitor, may be null.
-	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
-	 * overlay address space will be created and the block will have a starting address at the same
-	 * offset as the given start address parameter, but in the new address space.
+	 * @param overlay if true, the block will be created as an OVERLAY block.  If the {@code start}
+	 * address is a non-overlay memory address a new overlay address space will be created and the 
+	 * block will have a starting address at the same offset within the new overlay space.  If the
+	 * specified {@code start} address is an overlay address an overlay block will be created at
+	 * that overlay address.
 	 * @return new Initialized Memory Block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
@@ -175,16 +239,26 @@ public interface Memory extends AddressSetView {
 
 	/**
 	 * Create an initialized memory block using bytes from a {@link FileBytes} object.
-	 * 
+	 * <p>
+	 * Overlay Blocks: An overlay memory block may be created in two ways:
+	 * <ul>
+	 * <li>Specifying a {@code start} address within an existing overlay address space 
+	 * ({@code overlay} parameter is ignored), or</li>
+	 * <li>Specifying a {@code start} address within a physical memory address space and passing
+	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
+	 * address space.</li>
+	 * </ul>
 	 * @param name block name (See {@link Memory#isValidMemoryBlockName(String)} for
 	 * naming rules)
 	 * @param start starting address of the block
 	 * @param fileBytes the {@link FileBytes} object to use as the underlying source of bytes.
 	 * @param offset the offset into the FileBytes for the first byte of this memory block.
 	 * @param size block length (positive non-zero value required)
-	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
-	 * overlay address space will be created and the block will have a starting address at the same
-	 * offset as the given start address parameter, but in the new address space.
+	 * @param overlay if true, the block will be created as an OVERLAY block.  If the {@code start}
+	 * address is a non-overlay memory address a new overlay address space will be created and the 
+	 * block will have a starting address at the same offset within the new overlay space.  If the
+	 * specified {@code start} address is an overlay address an overlay block will be created at
+	 * that overlay address.
 	 * @return new Initialized Memory Block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
@@ -200,13 +274,24 @@ public interface Memory extends AddressSetView {
 
 	/**
 	 * Create an uninitialized memory block and add it to this Memory.
+	 * <p>
+	 * Overlay Blocks: An overlay memory block may be created in two ways:
+	 * <ul>
+	 * <li>Specifying a {@code start} address within an existing overlay address space 
+	 * ({@code overlay} parameter is ignored), or</li>
+	 * <li>Specifying a {@code start} address within a physical memory address space and passing
+	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
+	 * address space.</li>
+	 * </ul>
 	 * @param name block name (See {@link Memory#isValidMemoryBlockName(String)} for
 	 * naming rules)
 	 * @param start start of the block
 	 * @param size block length
-	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
-	 * overlay address space will be created and the block will have a starting address at the same
-	 * offset as the given start address parameter, but in the new address space.
+	 * @param overlay if true, the block will be created as an OVERLAY block.  If the {@code start}
+	 * address is a non-overlay memory address a new overlay address space will be created and the 
+	 * block will have a starting address at the same offset within the new overlay space.  If the
+	 * specified {@code start} address is an overlay address an overlay block will be created at
+	 * that overlay address.
 	 * @return new Uninitialized Memory Block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
@@ -219,16 +304,29 @@ public interface Memory extends AddressSetView {
 			MemoryConflictException, AddressOverflowException;
 
 	/**
-	 * Create a bit overlay memory block and add it to this Memory.
+	 * Create a bit-mapped overlay memory block and add it to this Memory.  Each byte address
+	 * within the resulting memory block will correspond to a single bit location within the mapped
+	 * region specified by {@code mappedAddress}.
+	 * <p>
+	 * Overlay Blocks: An overlay memory block may be created in two ways:
+	 * <ul>
+	 * <li>Specifying a {@code start} address within an existing overlay address space 
+	 * ({@code overlay} parameter is ignored), or</li>
+	 * <li>Specifying a {@code start} address within a physical memory address space and passing
+	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
+	 * address space.</li>
+	 * </ul>
 	 * @param name block name (See {@link Memory#isValidMemoryBlockName(String)} for
 	 * naming rules)
 	 * @param start start of the block
 	 * @param mappedAddress  start address in the source block for the
 	 * beginning of this block
 	 * @param length block length
-	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
-	 * overlay address space will be created and the block will have a starting address at the same
-	 * offset as the given start address parameter, but in the new address space.
+	 * @param overlay if true, the block will be created as an OVERLAY block.  If the {@code start}
+	 * address is a non-overlay memory address a new overlay address space will be created and the 
+	 * block will have a starting address at the same offset within the new overlay space.  If the
+	 * specified {@code start} address is an overlay address an overlay block will be created at
+	 * that overlay address.
 	 * @return new Bit Memory Block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
@@ -243,8 +341,19 @@ public interface Memory extends AddressSetView {
 			AddressOverflowException, IllegalArgumentException;
 
 	/**
-	 * Create a memory block that uses the bytes located at a different location with a 1:1
-	 * byte mapping scheme.
+	 * Create a byte-mapped memory block and add it to this memory.  Each byte address
+	 * within the resulting memory block will correspond to a byte within the mapped
+	 * region specified by {@code mappedAddress}.  While a 1:1 byte-mapping is the default,
+	 * a specific byte-mapping ratio may be specified.
+	 * <p>
+	 * Overlay Blocks: An overlay memory block may be created in two ways:
+	 * <ul>
+	 * <li>Specifying a {@code start} address within an existing overlay address space 
+	 * ({@code overlay} parameter is ignored), or</li>
+	 * <li>Specifying a {@code start} address within a physical memory address space and passing
+	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
+	 * address space.</li>
+	 * </ul>
 	 * @param name block name (See {@link Memory#isValidMemoryBlockName(String)} for
 	 * naming rules)
 	 * @param start start of the block
@@ -252,9 +361,11 @@ public interface Memory extends AddressSetView {
 	 * beginning of this block
 	 * @param length block length
 	 * @param byteMappingScheme byte mapping scheme (may be null for 1:1 mapping)
-	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
-	 * overlay address space will be created and the block will have a starting address at the same
-	 * offset as the given start address parameter, but in the new address space.
+	 * @param overlay if true, the block will be created as an OVERLAY block.  If the {@code start}
+	 * address is a non-overlay memory address a new overlay address space will be created and the 
+	 * block will have a starting address at the same offset within the new overlay space.  If the
+	 * specified {@code start} address is an overlay address an overlay block will be created at
+	 * that overlay address.
 	 * @return new Bit Memory Block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a previous block
@@ -266,17 +377,29 @@ public interface Memory extends AddressSetView {
 			MemoryConflictException, AddressOverflowException, IllegalArgumentException;
 
 	/**
-	 * Create a memory block that uses the bytes located at a different location with a 1:1
-	 * byte mapping scheme.
+	 * Create a byte-mapped memory block and add it to this memory.  Each byte address
+	 * within the resulting memory block will correspond to a byte within the mapped
+	 * region specified by {@code mappedAddress} using a 1:1 byte-mapping.
+	 * <p>
+	 * Overlay Blocks: An overlay memory block may be created in two ways:
+	 * <ul>
+	 * <li>Specifying a {@code start} address within an existing overlay address space 
+	 * ({@code overlay} parameter is ignored), or</li>
+	 * <li>Specifying a {@code start} address within a physical memory address space and passing
+	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
+	 * address space.</li>
+	 * </ul>
 	 * @param name block name (See {@link Memory#isValidMemoryBlockName(String)} for
 	 * naming rules)
 	 * @param start start of the block
 	 * @param mappedAddress  start address in the source block for the
 	 * beginning of this block
 	 * @param length block length
-	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
-	 * overlay address space will be created and the block will have a starting address at the same
-	 * offset as the given start address parameter, but in the new address space.
+	 * @param overlay if true, the block will be created as an OVERLAY block.  If the {@code start}
+	 * address is a non-overlay memory address a new overlay address space will be created and the 
+	 * block will have a starting address at the same offset within the new overlay space.  If the
+	 * specified {@code start} address is an overlay address an overlay block will be created at
+	 * that overlay address.
 	 * @return new Bit Memory Block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a previous block
@@ -871,7 +994,8 @@ public interface Memory extends AddressSetView {
 	 * @return a list of addresses that are associated with the given
 	 * FileBytes and offset 
 	 */
-	public default List<Address> locateAddressesForFileBytesOffset(FileBytes fileBytes, long offset) {
+	public default List<Address> locateAddressesForFileBytesOffset(FileBytes fileBytes,
+			long offset) {
 		List<Address> list = new ArrayList<>();
 		for (MemoryBlock memBlock : getBlocks()) {
 			for (MemoryBlockSourceInfo info : memBlock.getSourceInfos()) {

@@ -238,8 +238,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		if (show) {
 			headerPanel = new FieldHeader(formatManager, scroller, fieldPanel);
 			// set the model to that of the field at the cursor location
-			ListingField currentField = (ListingField) fieldPanel.getCurrentField();
-			if (currentField != null) {
+			Field f = fieldPanel.getCurrentField();
+			if (f instanceof ListingField currentField) {
 				headerPanel.setSelectedFieldFactory(currentField.getFieldFactory());
 			}
 		}
@@ -771,12 +771,12 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	@Override
 	public void buttonPressed(FieldLocation fieldLocation, Field field, MouseEvent mouseEvent) {
-		if (fieldLocation == null || field == null) {
+		if (fieldLocation == null || !(field instanceof ListingField listingField)) {
 			return;
 		}
 
-		ListingField listingField = (ListingField) field;
-		ProgramLocation programLocation = layoutModel.getProgramLocation(fieldLocation, field);
+		ProgramLocation programLocation =
+			layoutModel.getProgramLocation(fieldLocation, listingField);
 		if (programLocation == null) {
 			return;
 		}
@@ -798,8 +798,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	@Override
 	public void fieldLocationChanged(FieldLocation location, Field field, EventTrigger trigger) {
-		ListingField lf = (ListingField) field;
-		if (lf == null) {
+		if (!(field instanceof ListingField lf)) {
 			return;
 		}
 
@@ -905,10 +904,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 */
 	public ProgramLocation getProgramLocation(Point point) {
 		FieldLocation dropLoc = new FieldLocation();
-		ListingField field = (ListingField) fieldPanel.getFieldAt(point.x, point.y, dropLoc);
-		if (field != null) {
-			return field.getFieldFactory()
-					.getProgramLocation(dropLoc.getRow(), dropLoc.getCol(), field);
+		Field field = fieldPanel.getFieldAt(point.x, point.y, dropLoc);
+		if (field instanceof ListingField lf) {
+			return lf.getFieldFactory().getProgramLocation(dropLoc.getRow(), dropLoc.getCol(), lf);
 		}
 		return null;
 	}

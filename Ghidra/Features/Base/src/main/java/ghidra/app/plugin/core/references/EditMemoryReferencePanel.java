@@ -19,8 +19,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.WeakHashMap;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -198,7 +199,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 			toAddr = toAddr.subtractWrap(defaultOffset);
 		}
 
-		toAddressField.setAddressFactory(fromCu.getProgram().getAddressFactory(), false, false);
+		toAddressField.setAddressFactory(fromCu.getProgram().getAddressFactory());
 		toAddressField.setAddress(toAddr);
 		enableOffsetField(editReference.isOffsetReference());
 
@@ -223,7 +224,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		addrHistoryButton.setEnabled(getAddressHistorySize(p) != 0);
 
-		toAddressField.setAddressFactory(p.getAddressFactory(), false, false);
+		toAddressField.setAddressFactory(p.getAddressFactory());
 
 		Address cuAddr = fromCu.getMinAddress();
 
@@ -297,8 +298,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 			}
 			if (toAddr != null) {
 				Reference r = p.getReferenceManager()
-						.getReference(fromCu.getMinAddress(), toAddr,
-							fromOpIndex);
+						.getReference(fromCu.getMinAddress(), toAddr, fromOpIndex);
 				if (r != null) {
 					toAddr = null;
 					if (r.isOffsetReference()) {
@@ -582,25 +582,23 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		historyWin.setLocation(p);
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager()
-				.addPropertyChangeListener(
-					"focusOwner", new PropertyChangeListener() {
-						boolean hasFocus = false;
+				.addPropertyChangeListener("focusOwner", new PropertyChangeListener() {
+					boolean hasFocus = false;
 
-						@Override
-						public void propertyChange(PropertyChangeEvent evt) {
-							Object focusOwner = evt.getNewValue();
-							if (focusOwner == displayTable || focusOwner == historyWin) {
-								hasFocus = true;
-							}
-							else if (hasFocus) {
-								hasFocus = false;
-								KeyboardFocusManager.getCurrentKeyboardFocusManager()
-										.removePropertyChangeListener(
-											"focusOwner", this);
-								hideAddressHistoryPopup();
-							}
+					@Override
+					public void propertyChange(PropertyChangeEvent evt) {
+						Object focusOwner = evt.getNewValue();
+						if (focusOwner == displayTable || focusOwner == historyWin) {
+							hasFocus = true;
 						}
-					});
+						else if (hasFocus) {
+							hasFocus = false;
+							KeyboardFocusManager.getCurrentKeyboardFocusManager()
+									.removePropertyChangeListener("focusOwner", this);
+							hideAddressHistoryPopup();
+						}
+					}
+				});
 
 		historyWin.setVisible(true);
 
@@ -669,17 +667,13 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 	@SuppressWarnings("unchecked")
 	void readXmlDataState(Element element) {
 		List<Element> programElements = element.getChildren("ADDR_HISTORY");
-		Iterator<Element> iter = programElements.iterator();
-		while (iter.hasNext()) {
-			Element programElement = iter.next();
+		for (Element programElement : programElements) {
 			String programName = programElement.getAttributeValue("PROGRAM");
 			Program program = getOpenProgram(programName);
 			if (program != null) {
 				AddressFactory addrFactory = program.getAddressFactory();
 				List<Element> addrElements = programElement.getChildren("ADDRESS");
-				Iterator<Element> addrIter = addrElements.iterator();
-				while (addrIter.hasNext()) {
-					Element addrElement = addrIter.next();
+				for (Element addrElement : addrElements) {
 					String addrStr = addrElement.getAttributeValue("VALUE");
 					if (addrStr != null) {
 						Address addr = addrFactory.getAddress(addrStr);

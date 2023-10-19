@@ -15,9 +15,8 @@
  */
 package ghidra.program.model.address;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.util.NumericUtilities;
+import ghidra.util.StringUtilities;
 
 /**
  * Address Space for dealing with (intel) segmented address spaces.
@@ -134,26 +133,17 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 		return null;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.address.AddressSpace#getAddress(java.lang.String)
-	 */
-	@Override
-	public Address getAddress(String addrString) throws AddressFormatException {
-		return getAddress(addrString, true);
-	}
-
 	@Override
 	public Address getAddress(String addrString, boolean caseSensitive)
 			throws AddressFormatException {
 
-		int colonPos = addrString.indexOf(':');
+		int colonPos = addrString.indexOf(Address.SEPARATOR);
 
 		if (colonPos >= 0) {
 			String addrSpaceStr = addrString.substring(0, colonPos);
 			String offStr = addrString.substring(colonPos + 1);
-			if (StringUtils.equals(getName(), addrSpaceStr)) {
-				colonPos = offStr.indexOf(':');
+			if (StringUtilities.equals(getName(), addrSpaceStr, caseSensitive)) {
+				colonPos = offStr.indexOf(Address.SEPARATOR);
 				if (colonPos >= 0) {
 					String segString = offStr.substring(0, colonPos);
 					offStr = offStr.substring(colonPos + 1);
@@ -161,11 +151,11 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 				}
 				return parseNonSegmented(offStr);
 			}
+			// treat addrSpaceStr as segment
 			return parseSegmented(addrSpaceStr, offStr);
 		}
 
 		return parseNonSegmented(addrString);
-
 	}
 
 	/**
@@ -266,7 +256,7 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 		}
 		catch (NumberFormatException e) {
 			throw new AddressFormatException(
-				"Cannot parse (" + segStr + ':' + offStr + ") as a number.");
+				"Cannot parse (" + segStr + Address.SEPARATOR + offStr + ") as a number.");
 		}
 
 		try {
