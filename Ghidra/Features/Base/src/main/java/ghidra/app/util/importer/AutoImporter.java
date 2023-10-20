@@ -17,7 +17,6 @@ package ghidra.app.util.importer;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.AccessMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -25,8 +24,8 @@ import java.util.function.Predicate;
 import generic.stl.Pair;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.opinion.*;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.AddressFactory;
@@ -83,8 +82,49 @@ public final class AutoImporter {
 			String projectFolderPath, Object consumer, MessageLog messageLog, TaskMonitor monitor)
 			throws IOException, CancelledException, DuplicateNameException, InvalidNameException,
 			VersionException, LoadException {
-		return importFresh(file, project, projectFolderPath, consumer, messageLog,
-			monitor, LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED, null,
+		return importByUsingBestGuess(fileToFsrl(file), project, projectFolderPath, consumer,
+			messageLog, monitor);
+	}
+
+	/**
+	 * Automatically imports the given {@link FSRL} with the best matching {@link Loader} for the
+	 * {@link File}'s format.
+	 * <p>
+	 * Note that when the import completes, the returned {@link Loaded} {@link Program}s are not 
+	 * saved to a project.  That is the responsibility of the caller (see 
+	 * {@link LoadResults#save(Project, Object, MessageLog, TaskMonitor)}).
+	 * <p>
+	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
+	 * {@link Program}s with {@link LoadResults#release(Object)} when they are no longer needed.
+	 * 
+	 * @param fsrl The {@link FSRL} to import
+	 * @param project The {@link Project}.  Loaders can use this to take advantage of existing
+	 *   {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
+	 *   libraries. Could be null if there is no project.
+	 * @param projectFolderPath A suggested project folder path for the {@link Loaded} 
+	 *   {@link Program}s. This is just a suggestion, and a {@link Loader} implementation 
+	 *   reserves the right to change it for each {@link Loaded} result. The {@link Loaded} results 
+	 *   should be queried for their true project folder paths using 
+	 *   {@link Loaded#getProjectFolderPath()}.
+	 * @param consumer A consumer
+	 * @param messageLog The log
+	 * @param monitor A task monitor
+	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
+	 *   (created but not saved)
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws DuplicateNameException if the load resulted in a {@link Program} naming conflict
+	 * @throws InvalidNameException if an invalid {@link Program} name was used during load
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if nothing was loaded
+	 */
+	public static LoadResults<Program> importByUsingBestGuess(FSRL fsrl, Project project,
+			String projectFolderPath, Object consumer, MessageLog messageLog, TaskMonitor monitor)
+			throws IOException, CancelledException, DuplicateNameException, InvalidNameException,
+			VersionException, LoadException {
+		return importFresh(fsrl, project, projectFolderPath, consumer, messageLog, monitor,
+			LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED, null,
 			OptionChooser.DEFAULT_OPTIONS);
 	}
 
@@ -169,9 +209,52 @@ public final class AutoImporter {
 			List<Pair<String, String>> loaderArgs, Object consumer, MessageLog messageLog,
 			TaskMonitor monitor) throws IOException, CancelledException, DuplicateNameException,
 			InvalidNameException, VersionException, LoadException {
+		return importByUsingSpecificLoaderClass(fileToFsrl(file), project, projectFolderPath,
+			loaderClass, loaderArgs, consumer, messageLog, monitor);
+	}
+
+	/**
+	 * Automatically imports the given {@link FSRL} with the given type of {@link Loader}.
+	 * <p>
+	 * Note that when the import completes, the returned {@link Loaded} {@link Program}s are not 
+	 * saved to a project.  That is the responsibility of the caller (see 
+	 * {@link LoadResults#save(Project, Object, MessageLog, TaskMonitor)}).
+	 * <p>
+	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
+	 * {@link Program}s with {@link LoadResults#release(Object)} when they are no longer needed.
+	 * 
+	 * @param fsrl The {@link FSRL} to import
+	 * @param project The {@link Project}.  Loaders can use this to take advantage of existing
+	 *   {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
+	 *   libraries. Could be null if there is no project.
+	 * @param projectFolderPath A suggested project folder path for the {@link Loaded} 
+	 *   {@link Program}s. This is just a suggestion, and a {@link Loader} implementation 
+	 *   reserves the right to change it for each {@link Loaded} result. The {@link Loaded} results 
+	 *   should be queried for their true project folder paths using 
+	 *   {@link Loaded#getProjectFolderPath()}.
+	 * @param loaderClass The {@link Loader} class to use
+	 * @param loaderArgs A {@link List} of optional {@link Loader}-specific arguments
+	 * @param consumer A consumer
+	 * @param messageLog The log
+	 * @param monitor A task monitor
+	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
+	 *   (created but not saved)
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws DuplicateNameException if the load resulted in a {@link Program} naming conflict
+	 * @throws InvalidNameException if an invalid {@link Program} name was used during load
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if nothing was loaded
+	 */
+	public static LoadResults<Program> importByUsingSpecificLoaderClass(FSRL fsrl, Project project,
+			String projectFolderPath, Class<? extends Loader> loaderClass,
+			List<Pair<String, String>> loaderArgs, Object consumer, MessageLog messageLog,
+			TaskMonitor monitor) throws IOException, CancelledException, DuplicateNameException,
+			InvalidNameException, VersionException, LoadException {
 		SingleLoaderFilter loaderFilter = new SingleLoaderFilter(loaderClass, loaderArgs);
-		return importFresh(file, project, projectFolderPath, consumer, messageLog,
-			monitor, loaderFilter, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED, null,
+		return importFresh(fsrl, project, projectFolderPath, consumer, messageLog, monitor,
+			loaderFilter, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED, null,
 			new LoaderArgsOptionChooser(loaderFilter));
 	}
 
@@ -214,9 +297,52 @@ public final class AutoImporter {
 			String projectFolderPath, Language language, CompilerSpec compilerSpec, Object consumer,
 			MessageLog messageLog, TaskMonitor monitor) throws IOException, CancelledException,
 			DuplicateNameException, InvalidNameException, VersionException, LoadException {
-		return importFresh(file, project, projectFolderPath, consumer, messageLog,
-			monitor, LoaderService.ACCEPT_ALL, new LcsHintLoadSpecChooser(language, compilerSpec),
-			null, OptionChooser.DEFAULT_OPTIONS);
+		return importByLookingForLcs(fileToFsrl(file), project, projectFolderPath, language,
+			compilerSpec, consumer, messageLog, monitor);
+	}
+
+	/**
+	 * Automatically imports the given {@link FSRL} with the best matching {@link Loader} that
+	 * supports the given language and compiler specification.
+	 * <p>
+	 * Note that when the import completes, the returned {@link Loaded} {@link Program}s are not 
+	 * saved to a project.  That is the responsibility of the caller (see 
+	 * {@link LoadResults#save(Project, Object, MessageLog, TaskMonitor)}).
+	 * <p>
+	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
+	 * {@link Program}s with {@link LoadResults#release(Object)} when they are no longer needed.
+	 * 
+	 * @param fsrl The {@link FSRL} to import
+	 * @param project The {@link Project}.  Loaders can use this to take advantage of existing
+	 *   {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
+	 *   libraries. Could be null if there is no project.
+	 * @param projectFolderPath A suggested project folder path for the {@link Loaded} 
+	 *   {@link Program}s. This is just a suggestion, and a {@link Loader} implementation 
+	 *   reserves the right to change it for each {@link Loaded} result. The {@link Loaded} results 
+	 *   should be queried for their true project folder paths using 
+	 *   {@link Loaded#getProjectFolderPath()}.
+	 * @param language The desired {@link Language}
+	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
+	 * @param consumer A consumer
+	 * @param messageLog The log
+	 * @param monitor A task monitor
+	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
+	 *   (created but not saved)
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws DuplicateNameException if the load resulted in a {@link Program} naming conflict
+	 * @throws InvalidNameException if an invalid {@link Program} name was used during load
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if nothing was loaded
+	 */
+	public static LoadResults<Program> importByLookingForLcs(FSRL fsrl, Project project,
+			String projectFolderPath, Language language, CompilerSpec compilerSpec, Object consumer,
+			MessageLog messageLog, TaskMonitor monitor) throws IOException, CancelledException,
+			DuplicateNameException, InvalidNameException, VersionException, LoadException {
+		return importFresh(fsrl, project, projectFolderPath, consumer, messageLog, monitor,
+			LoaderService.ACCEPT_ALL, new LcsHintLoadSpecChooser(language, compilerSpec), null,
+			OptionChooser.DEFAULT_OPTIONS);
 	}
 
 	/**
@@ -260,9 +386,54 @@ public final class AutoImporter {
 			List<Pair<String, String>> loaderArgs, Language language, CompilerSpec compilerSpec,
 			Object consumer, MessageLog messageLog, TaskMonitor monitor) throws IOException,
 			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
+		return importByUsingSpecificLoaderClassAndLcs(fileToFsrl(file), project, projectFolderPath,
+			loaderClass, loaderArgs, language, compilerSpec, consumer, messageLog, monitor);
+	}
+
+	/**
+	 * Automatically imports the given {@link FSRL} with the given type of {@link Loader}, language,
+	 * and compiler specification.
+	 * <p>
+	 * Note that when the import completes, the returned {@link Loaded} {@link Program}s are not 
+	 * saved to a project.  That is the responsibility of the caller (see 
+	 * {@link LoadResults#save(Project, Object, MessageLog, TaskMonitor)}).
+	 * <p>
+	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
+	 * {@link Program}s with {@link LoadResults#release(Object)} when they are no longer needed.
+	 * 
+	 * @param fsrl The {@link FSRL} to import
+	 * @param project The {@link Project}.  Loaders can use this to take advantage of existing
+	 *   {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
+	 *   libraries. Could be null if there is no project.
+	 * @param projectFolderPath A suggested project folder path for the {@link Loaded} 
+	 *   {@link Program}s. This is just a suggestion, and a {@link Loader} implementation 
+	 *   reserves the right to change it for each {@link Loaded} result. The {@link Loaded} results 
+	 *   should be queried for their true project folder paths using 
+	 *   {@link Loaded#getProjectFolderPath()}.
+	 * @param loaderClass The {@link Loader} class to use
+	 * @param loaderArgs A {@link List} of optional {@link Loader}-specific arguments
+	 * @param language The desired {@link Language}
+	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
+	 * @param consumer A consumer
+	 * @param messageLog The log
+	 * @param monitor A task monitor
+	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
+	 *   (created but not saved)
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws DuplicateNameException if the load resulted in a {@link Program} naming conflict
+	 * @throws InvalidNameException if an invalid {@link Program} name was used during load
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 */
+	public static LoadResults<Program> importByUsingSpecificLoaderClassAndLcs(FSRL fsrl,
+			Project project, String projectFolderPath, Class<? extends Loader> loaderClass,
+			List<Pair<String, String>> loaderArgs, Language language, CompilerSpec compilerSpec,
+			Object consumer, MessageLog messageLog, TaskMonitor monitor) throws IOException,
+			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
 		SingleLoaderFilter loaderFilter = new SingleLoaderFilter(loaderClass, loaderArgs);
-		return importFresh(file, project, projectFolderPath, consumer, messageLog,
-			monitor, loaderFilter, new LcsHintLoadSpecChooser(language, compilerSpec), null,
+		return importFresh(fsrl, project, projectFolderPath, consumer, messageLog, monitor,
+			loaderFilter, new LcsHintLoadSpecChooser(language, compilerSpec), null,
 			new LoaderArgsOptionChooser(loaderFilter));
 	}
 
@@ -405,12 +576,61 @@ public final class AutoImporter {
 			String importNameOverride, OptionChooser optionChooser) throws IOException,
 			CancelledException, DuplicateNameException, InvalidNameException, VersionException,
 			LoadException {
-		if (file == null) {
-			throw new LoadException("Cannot load null file");
+		return importFresh(fileToFsrl(file), project, projectFolderPath, consumer, messageLog,
+			monitor, loaderFilter, loadSpecChooser, importNameOverride, optionChooser);
+	}
+
+	/**
+	 * Automatically imports the given {@link FSRL} with advanced options.
+	 * <p>
+	 * Note that when the import completes, the returned {@link Loaded} {@link Program}s are not 
+	 * saved to a project.  That is the responsibility of the caller (see 
+	 * {@link LoadResults#save(Project, Object, MessageLog, TaskMonitor)}).
+	 * <p>
+	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
+	 * {@link Program}s with {@link LoadResults#release(Object)} when they are no longer needed.
+	 * 
+	 * @param fsrl The {@link FSRL} to import
+	 * @param project The {@link Project}.  Loaders can use this to take advantage of existing
+	 *   {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
+	 *   libraries. Could be null if there is no project.
+	 * @param projectFolderPath A suggested project folder path for the {@link Loaded} 
+	 *   {@link Program}s. This is just a suggestion, and a {@link Loader} implementation 
+	 *   reserves the right to change it for each {@link Loaded} result. The {@link Loaded} results 
+	 *   should be queried for their true project folder paths using 
+	 *   {@link Loaded#getProjectFolderPath()}.
+	 * @param loaderFilter A {@link Predicate} used to choose what {@link Loader}(s) get used
+	 * @param loadSpecChooser A {@link LoadSpecChooser} used to choose what {@link LoadSpec}(s) get
+	 *   used
+	 * @param importNameOverride The name to use for the imported thing.  Null to use the 
+	 *   {@link Loader}'s preferred name.
+	 * @param optionChooser A {@link OptionChooser} used to choose what {@link Loader} options get
+	 *   used
+	 * @param consumer A consumer
+	 * @param messageLog The log
+	 * @param monitor A task monitor
+	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
+	 *   (created but not saved)
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws CancelledException if the operation was cancelled 
+	 * @throws DuplicateNameException if the load resulted in a {@link Program} naming conflict
+	 * @throws InvalidNameException if an invalid {@link Program} name was used during load
+	 * @throws VersionException if there was an issue with database versions, probably due to a 
+	 *   failed language upgrade
+	 * @throws LoadException if nothing was loaded
+	 */
+	public static LoadResults<Program> importFresh(FSRL fsrl, Project project,
+			String projectFolderPath, Object consumer, MessageLog messageLog, TaskMonitor monitor,
+			Predicate<Loader> loaderFilter, LoadSpecChooser loadSpecChooser,
+			String importNameOverride, OptionChooser optionChooser)
+			throws IOException, CancelledException, DuplicateNameException, InvalidNameException,
+			VersionException, LoadException {
+		if (fsrl == null) {
+			throw new LoadException("Cannot load null fsrl");
 		}
 
-		try (ByteProvider provider = new FileByteProvider(file,
-			FileSystemService.getInstance().getLocalFSRL(file), AccessMode.READ)) {
+		try (ByteProvider provider =
+			FileSystemService.getInstance().getByteProvider(fsrl, true, monitor)) {
 			return importFresh(provider, project, projectFolderPath, consumer, messageLog, monitor,
 				loaderFilter, loadSpecChooser, importNameOverride, optionChooser);
 		}
@@ -532,5 +752,18 @@ public final class AutoImporter {
 		String name = f != null ? f.getAbsolutePath() : provider.getName();
 		Msg.info(AutoImporter.class, "No load spec found for import file: " + name);
 		return null;
+	}
+
+	/**
+	 * Converts a {@link File} to a local file system {@link FSRL}
+	 * @param file The {@link File} to convert
+	 * @return A {@link FSRL} that represents the given {@link File}
+	 * @throws LoadException if the given {@link File} is null
+	 */
+	private static FSRL fileToFsrl(File file) throws LoadException {
+		if (file == null) {
+			throw new LoadException("Cannot load null file");
+		}
+		return FileSystemService.getInstance().getLocalFSRL(file);
 	}
 }
