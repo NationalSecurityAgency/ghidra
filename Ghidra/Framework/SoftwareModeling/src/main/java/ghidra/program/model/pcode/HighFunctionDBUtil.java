@@ -793,8 +793,21 @@ public class HighFunctionDBUtil {
 		boolean nameCollision = false;
 		Variable[] localVariables =
 			function.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER);
+		// Clean out any facet symbols with bad data-types
+		for (int i = 0; i < localVariables.length; ++i) {
+			Variable var = localVariables[i];
+			if (var.getName().startsWith(UnionFacetSymbol.BASENAME)) {
+				if (!UnionFacetSymbol.isUnionType(var.getDataType())) {
+					function.removeVariable(var);
+					localVariables[i] = null;
+				}
+			}
+		}
 		Variable preexistingVar = null;
 		for (Variable var : localVariables) {
+			if (var == null) {
+				continue;
+			}
 			if (var.getFirstUseOffset() == firstUseOffset &&
 				var.getFirstStorageVarnode().getOffset() == hash) {
 				preexistingVar = var;
@@ -807,10 +820,12 @@ public class HighFunctionDBUtil {
 			symbolName = symbolName + '_' + Integer.toHexString(DynamicHash.getComparable(hash));
 		}
 		if (preexistingVar != null) {
-			if (preexistingVar.getName().equals(symbolName)) {
-				return;			// No change to make
+			if (!preexistingVar.getName().equals(symbolName)) {
+				preexistingVar.setName(symbolName, source);		// Change the name
 			}
-			preexistingVar.setName(symbolName, source);		// Change the name
+			if (!preexistingVar.getDataType().equals(dt)) {
+				preexistingVar.setDataType(dt, source);
+			}
 			return;
 		}
 		Program program = function.getProgram();
