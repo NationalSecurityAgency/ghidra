@@ -367,7 +367,7 @@ public class GnuDemanglerParser {
 		// Note: this really is a 'special handler' check that used to be handled above.  However,
 		//       some demangled operator strings begin with this text.  If we do this check above,
 		//       then we will not correctly handle those operators.
-		if (mangledSource.startsWith("_ZZ")) {
+		if (mangledSource.startsWith("_ZZ") || mangledSource.startsWith("__ZZ")) {
 			return new ItemInNamespaceHandler(demangled);
 		}
 
