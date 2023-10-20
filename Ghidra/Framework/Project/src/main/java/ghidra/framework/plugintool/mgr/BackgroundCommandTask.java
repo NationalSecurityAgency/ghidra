@@ -87,6 +87,7 @@ class BackgroundCommandTask extends Task implements AbortedTransactionListener {
 				taskMgr.clearTasks(obj);
 				taskMgr.taskFailed(obj, cmd, monitor);
 			}
+			TaskUtilities.removeTrackedTask(this);
 			return;
 		}
 		finally {
