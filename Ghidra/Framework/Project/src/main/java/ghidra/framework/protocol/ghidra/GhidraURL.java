@@ -15,6 +15,7 @@
  */
 package ghidra.framework.protocol.ghidra;
 
+import java.io.File;
 import java.net.*;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -32,6 +33,8 @@ import ghidra.framework.remote.GhidraServerHandle;
  * </ul>
  */
 public class GhidraURL {
+
+	// TODO: URL encoding/decoding should be used
 
 	public static final String PROTOCOL = "ghidra";
 
@@ -216,24 +219,67 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Ensure that absolute path is specified.  Any use of Windows 
-	 * separator (back-slash) will be converted to a forward-slash. 
+	 * Ensure that absolute path is specified and normalize its format.
+	 * An absolute path may start with a windows drive letter (e.g., c:/a/b, /c:/a/b)
+	 * or without (e.g., /a/b).  Although for Windows the lack of a drive letter is
+	 * not absolute, for consistency with Linux we permit this form which on
+	 * Windows will use the default drive for the process. If path starts with a drive 
+	 * letter (e.g., "c:/") it will have a "/" prepended (e.g., "/c:/", both forms
+	 * are treated the same by the {@link File} class under Windows).
 	 * @param path path to be checked and possibly modified.
 	 * @return path to be used
+	 * @throws IllegalArgumentException if an invalid path is specified
 	 */
 	private static String checkAbsolutePath(String path) {
+		int scanIndex = 0;
 		path = path.replace('\\', '/');
+		int len = path.length();
 		if (!path.startsWith("/")) {
-			if (path.length() >= 3 && path.indexOf(":/") == 1 &&
-				Character.isLetter(path.charAt(0))) {
-				// prepend a "/" on Windows paths (e.g., C:/mydir)
+			// Allow paths to start with windows drive letter (e.g., c:/a/b)
+			if (len >= 3 && hasAbsoluteDriveLetter(path, 0)) {
 				path = "/" + path;
 			}
-			else { // absence of drive letter is tolerated even if not absolute on windows
-				throw new IllegalArgumentException("Absolute directory path required");
+			else {
+				throw new IllegalArgumentException("absolute path required");
+			}
+			scanIndex = 3;
+		}
+		else if (len >= 3 && hasDriveLetter(path, 1)) {
+			if (len < 4 || path.charAt(3) != '/') {
+				// path such as "/c:" not permitted
+				throw new IllegalArgumentException("absolute path required");
+			}
+			scanIndex = 4;
+		}
+		checkInvalidChar("path", path, scanIndex);
+		return path;
+	}
+
+	private static boolean hasDriveLetter(String path, int index) {
+		return Character.isLetter(path.charAt(index++)) && path.charAt(index) == ':';
+	}
+
+	private static boolean hasAbsoluteDriveLetter(String path, int index) {
+		int pathIndex = index + 2;
+		return path.length() > pathIndex && hasDriveLetter(path, index) &&
+			path.charAt(pathIndex) == '/';
+	}
+
+	/**
+	 * Check for characters explicitly disallowed in path or project name.
+	 * @param type type of string to include in exception
+	 * @param str string to check
+	 * @param startIndex index at which to start checking
+	 * @throws IllegalArgumentException if str contains invalid character
+	 */
+	private static void checkInvalidChar(String type, String str, int startIndex) {
+		for (int i = startIndex; i < str.length(); i++) {
+			char c = str.charAt(i);
+			if (ProjectLocator.DISALLOWED_CHARS.contains(c)) {
+				throw new IllegalArgumentException(
+					type + " contains invalid character: '" + c + "'");
 			}
 		}
-		return path;
 	}
 
 	/**
@@ -256,8 +302,15 @@ public class GhidraURL {
 				throw new IllegalArgumentException("Unsupported query/ref used with project path");
 			}
 			projectPathOrURL = checkAbsolutePath(projectPathOrURL);
-			String[] splitName = splitOffName(projectPathOrURL);
-			return makeURL(splitName[0], splitName[1]);
+			int minSplitIndex = projectPathOrURL.charAt(2) == ':' ? 3 : 0;
+			int splitIndex = projectPathOrURL.lastIndexOf('/');
+			if (splitIndex < minSplitIndex || projectPathOrURL.length() == (splitIndex + 1)) {
+				throw new IllegalArgumentException("Absolute project path is missing project name");
+			}
+			++splitIndex;
+			String location = projectPathOrURL.substring(0, splitIndex);
+			String projectName = projectPathOrURL.substring(splitIndex);
+			return makeURL(location, projectName);
 		}
 		try {
 			return new URL(projectPathOrURL);
@@ -467,11 +520,12 @@ public class GhidraURL {
 	 * @param projectFilePath file path (e.g., /a/b/c, may be null)
 	 * @param ref location reference (may be null)
 	 * @return local Ghidra project URL
+	 * @throws IllegalArgumentException if an absolute projectLocation path is not specified
 	 */
 	public static URL makeURL(String projectLocation, String projectName, String projectFilePath,
 			String ref) {
 		if (StringUtils.isBlank(projectLocation) || StringUtils.isBlank(projectName)) {
-			throw new IllegalArgumentException("Inavlid project location and/or name");
+			throw new IllegalArgumentException("Invalid project location and/or name");
 		}
 		String path = checkAbsolutePath(projectLocation);
 		if (!path.endsWith("/")) {

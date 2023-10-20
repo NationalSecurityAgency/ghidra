@@ -21,7 +21,7 @@ import static ghidra.program.model.pcode.ElementId.*;
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 
 /**
  * A specialized HighSymbol that directs the decompiler to use a specific field of a union,
@@ -79,5 +79,27 @@ public class UnionFacetSymbol extends HighSymbol {
 			return -1;
 		}
 		return Integer.decode(nm.substring(pos + BASENAME.length(), endpos)) - 1;
+	}
+
+	/**
+	 * Return true if the given data-type is either a union or a pointer to a union
+	 * and is suitable for being the data-type of UnionFacetSymbol
+	 * @param dt is the given data-type
+	 * @return true if the data-type is a union or a pointer to a union
+	 */
+	public static boolean isUnionType(DataType dt) {
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
+		if (dt instanceof Pointer) {
+			dt = ((Pointer) dt).getDataType();
+			if (dt == null) {
+				return false;
+			}
+			if (dt instanceof TypeDef) {
+				dt = ((TypeDef) dt).getBaseDataType();
+			}
+		}
+		return (dt instanceof Union);
 	}
 }
