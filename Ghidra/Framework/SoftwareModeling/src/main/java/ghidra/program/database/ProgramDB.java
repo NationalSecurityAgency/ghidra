@@ -51,7 +51,6 @@ import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
@@ -109,10 +108,12 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            property map (StringTranslations).
 	 * 19-Jan-2023 - version 26   Improved relocation data records to incorporate status and 
 	 *                            byte-length when original FileBytes should be used.
-	 * 10-Jul-2023 - VERSION 27   Add support for Instruction length override which utilizes
+	 * 10-Jul-2023 - version 27   Add support for Instruction length override which utilizes
 	 *                            unused flag bits.
+	 * 19-Oct-2023 - version 28   Revised overlay address space table and eliminated min/max.
+	 *                            Multiple blocks are permitted within a single overlay space.
 	 */
-	static final int DB_VERSION = 27;
+	static final int DB_VERSION = 28;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -211,7 +212,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	private Address effectiveImageBase = null;
 	private boolean recordChanges;
 
-	private OverlaySpaceAdapterDB overlaySpaceAdapter;
+	private OverlaySpaceDBAdapter overlaySpaceAdapter;
 
 	private Map<String, AddressSetPropertyMapDB> addrSetPropertyMap = new HashMap<>();
 	private Map<String, IntRangeMapDB> intRangePropertyMap = new HashMap<>();
@@ -246,7 +247,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		languageVersion = language.getVersion();
 		languageMinorVersion = language.getMinorVersion();
 
-		addressFactory = new ProgramAddressFactory(language, compilerSpec);
+		addressFactory =
+			new ProgramAddressFactory(language, compilerSpec, s -> getDefinedAddressSet(s));
 
 		recordChanges = false;
 		boolean success = false;
@@ -339,7 +341,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 			initCompilerSpec();
 
-			addressFactory = new ProgramAddressFactory(language, compilerSpec);
+			addressFactory =
+				new ProgramAddressFactory(language, compilerSpec, s -> getDefinedAddressSet(s));
 
 			VersionException versionExc = createManagers(openMode, monitor);
 			if (dbVersionExc != null) {
@@ -378,6 +381,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					}
 					languageUpgradeRequired = false;
 				}
+				addressFactory.invalidateOverlayCache();
 				postUpgrade(oldVersion, monitor);
 				changed = true;
 			}
@@ -402,6 +406,14 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 		// for tracking during testing
 		ProgramUtilities.addTrackedProgram(this);
+	}
+
+	private AddressSetView getDefinedAddressSet(AddressSpace s) {
+		MemoryMapDB memory = getMemory();
+		if (memory != null) {
+			return memory.intersectRange(s.getMinAddress(), s.getMaxAddress());
+		}
+		return null;
 	}
 
 	/**
@@ -741,7 +753,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	@Override
-	public AddressFactory getAddressFactory() {
+	public ProgramAddressFactory getAddressFactory() {
 		return addressFactory;
 	}
 
@@ -1183,33 +1195,29 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 	}
 
-	/**
-	 * Create a new OverlayAddressSpace based upon the given overlay blockName and base AddressSpace
-	 * @param blockName the name of the overlay memory block which corresponds to the new overlay address
-	 * space to be created.  This name may be modified to produce a valid overlay space name and avoid 
-	 * duplication.
-	 * @param originalSpace the base AddressSpace to overlay	
-	 * @param minOffset the min offset of the space
-	 * @param maxOffset the max offset of the space
-	 * @return the new space
-	 * @throws LockException if the program is shared and not checked out exclusively.
-	 * @throws MemoryConflictException if image base override is active
-	 */
-	public AddressSpace addOverlaySpace(String blockName, AddressSpace originalSpace,
-			long minOffset, long maxOffset) throws LockException, MemoryConflictException {
+	@Override
+	public ProgramOverlayAddressSpace createOverlaySpace(String overlaySpaceName,
+			AddressSpace baseSpace) throws IllegalStateException, DuplicateNameException,
+			InvalidNameException, LockException {
 
 		checkExclusiveAccess();
-		if (imageBaseOverride) {
-			throw new MemoryConflictException(
-				"Overlay spaces may not be created while an image-base override is active");
+
+		if (!addressFactory.isValidOverlayBaseSpace(baseSpace)) {
+			throw new IllegalArgumentException(
+				"Invalid address space for overlay: " + baseSpace.getName());
 		}
 
-		OverlayAddressSpace ovSpace = null;
+		ProgramOverlayAddressSpace ovSpace = null;
 		lock.acquire();
 		try {
-			ovSpace = addressFactory.addOverlayAddressSpace(blockName, false, originalSpace,
-				minOffset, maxOffset);
-			overlaySpaceAdapter.addOverlaySpace(ovSpace);
+			if (imageBaseOverride) {
+				throw new IllegalStateException(
+					"Overlay spaces may not be created while an image-base override is active");
+			}
+			ovSpace =
+				overlaySpaceAdapter.createOverlaySpace(addressFactory, overlaySpaceName, baseSpace);
+
+			setChanged(ChangeManager.DOCR_OVERLAY_SPACE_ADDED, overlaySpaceName, null);
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -1220,35 +1228,61 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return ovSpace;
 	}
 
-	public void renameOverlaySpace(String oldOverlaySpaceName, String newName)
-			throws LockException {
-		checkExclusiveAccess();
-		String revisedName = addressFactory.renameOverlaySpace(oldOverlaySpaceName, newName);
-		if (!revisedName.equals(oldOverlaySpaceName)) {
-			try {
-				overlaySpaceAdapter.renameOverlaySpace(oldOverlaySpaceName, revisedName);
-				addrMap.renameOverlaySpace(oldOverlaySpaceName, revisedName);
-			}
-			catch (IOException e) {
-				dbError(e);
-			}
-		}
-	}
+	@Override
+	public void renameOverlaySpace(String overlaySpaceName, String newName)
+			throws NotFoundException, InvalidNameException, DuplicateNameException, LockException {
 
-	public boolean removeOverlaySpace(AddressSpace overlaySpace) throws LockException {
 		lock.acquire();
 		try {
 			checkExclusiveAccess();
-			MemoryBlock[] blocks = memoryManager.getBlocks();
-			for (MemoryBlock block : blocks) {
-				if (block.getStart().getAddressSpace().equals(overlaySpace)) {
-					return false;
-				}
+
+			AddressSpace space = addressFactory.getAddressSpace(overlaySpaceName);
+			if (space == null || !(space instanceof ProgramOverlayAddressSpace os)) {
+				throw new NotFoundException("Overlay " + overlaySpaceName + " not found");
 			}
-			addressFactory.removeOverlaySpace(overlaySpace.getName());
-			overlaySpaceAdapter.removeOverlaySpace(overlaySpace.getName());
-			addrMap.deleteOverlaySpace(overlaySpace.getName());
+
+			addressFactory.checkValidOverlaySpaceName(newName);
+
+			if (overlaySpaceAdapter.renameOverlaySpace(overlaySpaceName, newName)) {
+				os.setName(newName);
+				addressFactory.overlaySpaceRenamed(overlaySpaceName, newName, true);
+				addrMap.renameOverlaySpace(overlaySpaceName, newName);
+				clearCache(true);
+				setChanged(ChangeManager.DOCR_OVERLAY_SPACE_RENAMED, overlaySpaceName, newName);
+				fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+			}
+		}
+		catch (IOException e) {
+			dbError(e);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
+	public boolean removeOverlaySpace(String overlaySpaceName)
+			throws LockException, NotFoundException {
+
+		lock.acquire();
+		try {
+			checkExclusiveAccess();
+
+			AddressSpace space = addressFactory.getAddressSpace(overlaySpaceName);
+			if (space == null || !(space instanceof ProgramOverlayAddressSpace os)) {
+				throw new NotFoundException("Overlay " + overlaySpaceName + " not found");
+			}
+
+			if (!os.getOverlayAddressSet().isEmpty()) {
+				return false; // memory blocks are still defined
+			}
+
+			addressFactory.removeOverlaySpace(overlaySpaceName);
+			overlaySpaceAdapter.removeOverlaySpace(overlaySpaceName);
+			addrMap.deleteOverlaySpace(overlaySpaceName);
 			clearCache(true);
+			setChanged(ChangeManager.DOCR_OVERLAY_SPACE_REMOVED, overlaySpaceName, null);
+			fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
 			return true;
 		}
 		catch (IOException e) {
@@ -1589,7 +1623,25 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			throws CancelledException, IOException {
 
 		VersionException versionExc = null;
-		overlaySpaceAdapter = new OverlaySpaceAdapterDB(dbh);
+		try {
+			overlaySpaceAdapter =
+				OverlaySpaceDBAdapter.getOverlaySpaceAdapter(dbh, openMode, monitor);
+		}
+		catch (VersionException e) {
+			versionExc = e.combine(versionExc);
+			try {
+				overlaySpaceAdapter =
+					OverlaySpaceDBAdapter.getOverlaySpaceAdapter(dbh, READ_ONLY, monitor);
+			}
+			catch (VersionException e1) {
+				if (e1.isUpgradable()) {
+					throw new RuntimeException(
+						"OverlaySpaceDBAdapter is supported but failed to open as READ-ONLY!");
+				}
+				// Unable to proceed without overlay space adapter !
+				return versionExc;
+			}
+		}
 		overlaySpaceAdapter.initializeOverlaySpaces(addressFactory);
 		monitor.checkCancelled();
 
@@ -2047,7 +2099,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				languageMinorVersion = language.getMinorVersion();
 
 				if (translator != null) {
-					addressFactory = new ProgramAddressFactory(language, compilerSpec);
+					addressFactory = new ProgramAddressFactory(language, compilerSpec,
+						s -> getDefinedAddressSet(s));
 
 					addrMap.setLanguage(language, addressFactory, translator);
 					overlaySpaceAdapter.setLanguage(language, addressFactory, translator);

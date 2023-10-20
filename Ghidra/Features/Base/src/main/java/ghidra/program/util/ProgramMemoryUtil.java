@@ -29,7 +29,7 @@ import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import utility.function.TerminatingConsumer; 
+import utility.function.TerminatingConsumer;
 
 /**
  * <CODE>ProgramMemoryUtil</CODE> contains some static methods for 
@@ -152,7 +152,7 @@ public class ProgramMemoryUtil {
 			throws MemoryAccessException {
 
 // TODO: Addresses from one program cannot be used with another program (e.g., overlays)
-// TODO: Should be using AddressTranslator
+// TODO: Should be using AddressTranslator (see DiffUtility.getCompatibleAddressRange)
 // TODO: Method relies too heavily on caller limiting range to valid initialized memory in both programs
 
 		// Copy the bytes for this range
@@ -737,7 +737,7 @@ public class ProgramMemoryUtil {
 			}
 		}
 	}
-    
+
 	/**
 	 * Finds the string in memory indicated by the searchString limited to the indicated 
 	 * memory blocks and address set.
@@ -752,14 +752,14 @@ public class ProgramMemoryUtil {
 	public static List<Address> findString(String searchString, Program program,
 			List<MemoryBlock> blocks, AddressSetView set, TaskMonitor monitor)
 			throws CancelledException {
-	    
-	    List<Address> addresses = new ArrayList<>();
-	    
-	    // just add each found location to the list, no termination of search
-        TerminatingConsumer<Address> collector = (i) -> addresses.add(i);
-		
+
+		List<Address> addresses = new ArrayList<>();
+
+		// just add each found location to the list, no termination of search
+		TerminatingConsumer<Address> collector = (i) -> addresses.add(i);
+
 		locateString(searchString, collector, program, blocks, set, monitor);
-		
+
 		return addresses;
 	}
 
@@ -777,7 +777,8 @@ public class ProgramMemoryUtil {
 	 * @param monitor a task monitor to allow 
 	 * @throws CancelledException if the user cancels
 	 */
-	public static void locateString(String searchString, TerminatingConsumer<Address> foundLocationConsumer, Program program,
+	public static void locateString(String searchString,
+			TerminatingConsumer<Address> foundLocationConsumer, Program program,
 			List<MemoryBlock> blocks, AddressSetView set, TaskMonitor monitor)
 			throws CancelledException {
 

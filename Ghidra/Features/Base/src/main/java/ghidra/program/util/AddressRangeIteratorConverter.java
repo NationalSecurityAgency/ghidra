@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +17,31 @@ package ghidra.program.util;
 
 import java.util.Iterator;
 
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeIterator;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 
 public class AddressRangeIteratorConverter implements AddressRangeIterator {
-	
+
 	private AddressRangeIterator iterator;
 	private Program program;
 	AddressRange nextRange;
-	
+
 	public AddressRangeIteratorConverter(AddressRangeIterator iterator, Program program) {
 		this.iterator = iterator;
 		this.program = program;
 	}
 
+	@Override
 	public Iterator<AddressRange> iterator() {
 		return this;
 	}
-	
+
+	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();
 	}
-	
+
+	@Override
 	public boolean hasNext() {
 		if (nextRange != null) {
 			return true;
@@ -48,15 +49,17 @@ public class AddressRangeIteratorConverter implements AddressRangeIterator {
 		while (iterator.hasNext()) {
 			AddressRange range = iterator.next();
 			// TODO Future change: May want to get as much of the range as you can if you can't get it all.
-			AddressRange convertedRange = DiffUtility.getCompatibleAddressRange(range, program);
-			if (convertedRange != null) {
-				nextRange = convertedRange;
+			AddressSet convertedRangeSet =
+				DiffUtility.getCompatibleAddressSet(range, program, true);
+			if (convertedRangeSet != null && !convertedRangeSet.isEmpty()) {
+				nextRange = convertedRangeSet.getFirstRange();
 				return true;
 			}
 		}
 		return false;
 	}
 
+	@Override
 	public AddressRange next() {
 		if (nextRange != null) {
 			AddressRange convertedRange = nextRange;

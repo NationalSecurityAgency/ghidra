@@ -20,6 +20,7 @@ import java.awt.FontMetrics;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.function.Predicate;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -44,18 +45,17 @@ public class AddressInput extends JPanel implements FocusableEditor {
 	private boolean stateChanging;
 	private JTextField spaceField;
 
-	private static final Comparator<AddressSpace> ADDRESS_SPACE_SORT_COMPARATOR =
-		(s1, s2) -> {
-			if (s1.isOverlaySpace()) {
-				if (!s2.isOverlaySpace()) {
-					return 1;
-				}
+	private static final Comparator<AddressSpace> ADDRESS_SPACE_SORT_COMPARATOR = (s1, s2) -> {
+		if (s1.isOverlaySpace()) {
+			if (!s2.isOverlaySpace()) {
+				return 1;
 			}
-			else if (s2.isOverlaySpace()) {
-				return -1;
-			}
-			return s1.getName().compareTo(s2.getName());
-		};
+		}
+		else if (s2.isOverlaySpace()) {
+			return -1;
+		}
+		return s1.getName().compareTo(s2.getName());
+	};
 
 	/**
 	 * Constructor for AddressInput.
@@ -160,30 +160,47 @@ public class AddressInput extends JPanel implements FocusableEditor {
 		return textField.getText().length() != 0;
 	}
 
-	/**
-	 * Set the address factory to be used to parse addresses.  Also
-	 * used to set the combo box with the list of valid address spaces
-	 * if there is more than one space.
-	 */
-	public void setAddressFactory(AddressFactory factory) {
-		setAddressFactory(factory, false, false);
-	}
-
 	public AddressFactory getAddressFactory() {
 		return addrFactory;
 	}
 
 	/**
-	 * Set the address factory to be used to parse addresses. Also used to set the combo box
-	 * with the list of valid address spaces if there is more than one space.
-	 * @param factory address factory to use
-	 * @param filterOverlaySpaces true if overlay spaces should not appear in the combo box
-	 * for the address spaces.
-	 * @param allowOtherSpace true if the OTHER space should appear in the combo box for 
-	 * the address spaces
+	 * Address Space predicate which includes all loaded memory spaces.
+	 * See {@link AddressSpace#isLoadedMemorySpace()}.
+	 * Intended for use with {@link #setAddressFactory(AddressFactory, Predicate)}.
 	 */
-	public void setAddressFactory(AddressFactory factory, boolean filterOverlaySpaces,
-			boolean allowOtherSpace) {
+	public final static Predicate<AddressSpace> INCLUDE_LOADED_MEMORY_SPACES = (s) -> {
+		return s.isLoadedMemorySpace();
+	};
+
+	/**
+	 * Address Space predicate which include all loaded memory spaces plus the 
+	 * {@link AddressSpace#OTHER_SPACE}.  See {@link AddressSpace#isLoadedMemorySpace()}.
+	 * Intended for use with {@link #setAddressFactory(AddressFactory, Predicate)}.
+	 */
+	public final static Predicate<AddressSpace> INCLUDE_OTHER_AND_LOADED_MEMORY_SPACES = (s) -> {
+		return s.isLoadedMemorySpace() || s.equals(AddressSpace.OTHER_SPACE);
+	};
+
+	/**
+	 * Set the address factory to be used to parse addresses.  Also
+	 * used to set the combo box with the list of valid address spaces
+	 * if there is more than one space.  Only loaded memory spaces
+	 * will be allowed (see {@link AddressSpace#isLoadedMemorySpace()}).
+	 * @param factory address factory to use
+	 */
+	public void setAddressFactory(AddressFactory factory) {
+		setAddressFactory(factory, INCLUDE_LOADED_MEMORY_SPACES);
+	}
+
+	/**
+	 * Set the address factory to be used to parse addresses. Also used to set the combo box
+	 * with the list of valid address spaces if there is more than one space.  The specified
+	 * predicate will be used to determine if an address space should be included.
+	 * @param factory address factory to use
+	 * @param predicate callback used to determine if an address space should be included for selection
+	 */
+	public void setAddressFactory(AddressFactory factory, Predicate<AddressSpace> predicate) {
 		this.addrFactory = factory;
 		AddressSpace[] spaces = factory.getAddressSpaces();
 
@@ -194,14 +211,9 @@ public class AddressInput extends JPanel implements FocusableEditor {
 		FontMetrics fm = combo.getFontMetrics(combo.getFont());
 		int width = 0;
 		for (AddressSpace space : spaces) {
-			if (filterOverlaySpaces && space.isOverlaySpace()) {
+			if (!predicate.test(space)) {
 				continue;
 			}
-
-			if (!allowOtherSpace && space.equals(AddressSpace.OTHER_SPACE)) {
-				continue;
-			}
-
 			String s = space.toString();
 			width = Math.max(width, fm.stringWidth(s));
 
@@ -260,11 +272,23 @@ public class AddressInput extends JPanel implements FocusableEditor {
 	}
 
 	/**
-	 * Set the offset part of the address field.
+	 * Set the offset part of the address offset field without changing address space.
+	 * NOTE: This method is intended for test use only and mimicks user input.
 	 * @param value the offset value string
 	 */
 	public void setValue(String value) {
 		textField.setText(value);
+	}
+
+	/**
+	 * Set the address space and offset.
+	 * NOTE: Unlike {@link #setAddress(Address)} this method is intended for test use only 
+	 * and mimicks user input with {@link #stateChanged()} notification.
+	 * @param addr the address value
+	 */
+	public void setValue(Address addr) {
+		setAddress(addr);
+		stateChanged();
 	}
 
 	@Override

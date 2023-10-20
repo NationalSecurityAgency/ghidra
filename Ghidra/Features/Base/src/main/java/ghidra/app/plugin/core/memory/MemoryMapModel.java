@@ -66,7 +66,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	final static String WRITE_COL = "W";
 	final static String EXECUTE_COL = "X";
 	final static String VOLATILE_COL = "Volatile";
-	final static String OVERLAY_COL = "Overlay";
+	final static String OVERLAY_COL = "Overlayed Space";
 	final static String BLOCK_TYPE_COL = "Type";
 	final static String INIT_COL = "Initialized";
 	final static String BYTE_SOURCE_COL = "Byte Source";
@@ -124,7 +124,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	@Override
 	public boolean isSortable(int columnIndex) {
 		if (columnIndex == READ || columnIndex == WRITE || columnIndex == EXECUTE ||
-			columnIndex == VOLATILE || columnIndex == OVERLAY || columnIndex == INIT) {
+			columnIndex == VOLATILE || columnIndex == INIT) {
 			return false;
 		}
 		return true;
@@ -163,7 +163,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		if (columnIndex == READ || columnIndex == WRITE || columnIndex == EXECUTE ||
-			columnIndex == VOLATILE || columnIndex == OVERLAY || columnIndex == INIT) {
+			columnIndex == VOLATILE || columnIndex == INIT) {
 			return Boolean.class;
 		}
 		return String.class;
@@ -198,12 +198,6 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	}
 
 	private String getAddressString(Address address) {
-		AddressSpace space = address.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			OverlayAddressSpace ovSpace = (OverlayAddressSpace) space;
-			AddressSpace baseSpace = ovSpace.getOverlayedSpace();
-			address = baseSpace.getAddress(address.getOffset());
-		}
 		return address.toString();
 	}
 
@@ -435,7 +429,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 				case VOLATILE:
 					return block.isVolatile() ? Boolean.TRUE : Boolean.FALSE;
 				case OVERLAY:
-					return block.isOverlay() ? Boolean.TRUE : Boolean.FALSE;
+					return getOverlayBaseSpaceName(block);
 				case INIT:
 					MemoryBlockType blockType = block.getType();
 					if (blockType == MemoryBlockType.BIT_MAPPED) {
@@ -532,6 +526,14 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 		return program;
 	}
 
+	private String getOverlayBaseSpaceName(MemoryBlock block) {
+		AddressSpace space = block.getStart().getAddressSpace();
+		if (space instanceof OverlayAddressSpace ovSpace) {
+			return ovSpace.getOverlayedSpace().getName();
+		}
+		return "";
+	}
+
 	private class MemoryMapComparator implements Comparator<MemoryBlock> {
 		private final int sortColumn;
 
@@ -568,9 +570,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 					int b2v = (b2.isVolatile() ? 1 : -1);
 					return (b1v - b2v);
 				case OVERLAY:
-					int b1o = (b1.isOverlay() ? 1 : -1);
-					int b2o = (b2.isOverlay() ? 1 : -1);
-					return (b1o - b2o);
+					String ov1 = getOverlayBaseSpaceName(b1);
+					String ov2 = getOverlayBaseSpaceName(b2);
+					return ov1.compareTo(ov2);
 				case INIT:
 					int b1init = (b1.isInitialized() ? 1 : -1);
 					int b2init = (b2.isInitialized() ? 1 : -1);

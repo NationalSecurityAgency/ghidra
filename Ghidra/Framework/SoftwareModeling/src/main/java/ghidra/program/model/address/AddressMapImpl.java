@@ -17,8 +17,6 @@ package ghidra.program.model.address;
 
 import java.util.*;
 
-import ghidra.util.UniversalIdGenerator;
-
 /**
  * <code>AddressMapImpl</code> provides a stand-alone AddressMap.
  * An AddressMapImpl instance should only be used to decode keys which it has generated.
@@ -77,7 +75,6 @@ public class AddressMapImpl {
 		for (int i = 0; i < sortedBaseStartAddrs.length; i++) {
 			long max = sortedBaseStartAddrs[i].getAddressSpace().getMaxAddress().getOffset();
 			max = max < 0 ? MAX_OFFSET : Math.min(max, MAX_OFFSET);
-			// Avoid use of add which fails for overlay addresses which have restricted min/max offsets
 			long off = sortedBaseStartAddrs[i].getOffset() | max;
 			sortedBaseEndAddrs[i] =
 				sortedBaseStartAddrs[i].getAddressSpace().getAddressInThisSpaceOnly(off);
@@ -332,15 +329,16 @@ public class AddressMapImpl {
 	private static class ObsoleteOverlaySpace extends OverlayAddressSpace {
 
 		private final OverlayAddressSpace originalSpace;
+		private String name;
 
 		ObsoleteOverlaySpace(OverlayAddressSpace ovSpace) {
-			super(makeName(), ovSpace.getOverlayedSpace(), ovSpace.getUnique(),
-				ovSpace.getMinOffset(), ovSpace.getMaxOffset());
+			super(ovSpace.getOverlayedSpace(), ovSpace.getUnique(), createName(ovSpace));
 			this.originalSpace = ovSpace;
+			this.name = createName(ovSpace);
 		}
 
-		private static String makeName() {
-			return "DELETED_" + Long.toHexString(UniversalIdGenerator.nextID().getValue());
+		private static String createName(OverlayAddressSpace ovSpace) {
+			return "DELETED_" + ovSpace.getName() + "_" + ovSpace.getSpaceID();
 		}
 
 		OverlayAddressSpace getOriginalSpace() {
@@ -348,20 +346,20 @@ public class AddressMapImpl {
 		}
 
 		@Override
-		public boolean equals(Object obj) {
-			if (obj == this) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (!(obj instanceof ObsoleteOverlaySpace)) {
-				return false;
-			}
-			ObsoleteOverlaySpace s = (ObsoleteOverlaySpace) obj;
-
-			return originalSpace.equals(s.originalSpace) && name.equals(s.name) &&
-				getMinOffset() == s.getMinOffset() && getMaxOffset() == s.getMaxOffset();
+		public String getName() {
+			return name;
 		}
+
+		@Override
+		public boolean contains(long offset) {
+			return false;
+		}
+
+		@Override
+		public AddressSetView getOverlayAddressSet() {
+			return new AddressSet();
+		}
+
 	}
+
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,5 +171,17 @@ public interface AddressFactory {
 	 * Returns true if there is more than one memory address space
 	 */
 	public boolean hasMultipleMemorySpaces();
+
+	/**
+	 * Determine if this address factory contains a stale overlay address space
+	 * whose name was recently changed.  When this condition occurs, issues may arise when
+	 * comparing {@link Address} and {@link AddressSpace}-related objects when overlay 
+	 * address spaces are involved.  A common case for this is a Diff type operation.
+	 * 
+	 * @return true if this factory contains one or more stale overlay address space instances.
+	 */
+	public default boolean hasStaleOverlayCondition() {
+		return false;
+	}
 
 }

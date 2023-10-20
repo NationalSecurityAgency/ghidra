@@ -544,7 +544,8 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		addrField = new AddressInput();
 		addrField.setName("Start Addr");
 		addrFactory = model.getProgram().getAddressFactory();
-		addrField.setAddressFactory(addrFactory, true, true);
+		addrField.setAddressFactory(addrFactory,
+			AddressInput.INCLUDE_OTHER_AND_LOADED_MEMORY_SPACES);
 		addrField.addChangeListener(ev -> addrChanged());
 		return addrField;
 	}
