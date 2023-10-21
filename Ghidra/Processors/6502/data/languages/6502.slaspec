@@ -40,12 +40,14 @@ define token data (16)
 ;
 
 macro popSR() {
-	SP = SP + 1;
-	local ccr = *:1 SP;
+	S = S + 1;
+	local temp:2 = zext(S) + 0x0100;
+
+	local ccr = *:1 temp;
 	$(N_FLAG) = ccr[7,1];
 	$(V_FLAG) = ccr[6,1];
 	$(T_FLAG) = 1; # Constant flag always set to 1 in pop
-	$(B_FLAG) = 1; # Break flag always set to 1 in push
+	$(B_FLAG) = 0; # Break flag always set to 0 in push
 	$(D_FLAG) = ccr[3,1];
 	$(I_FLAG) = ccr[2,1];
 	$(Z_FLAG) = ccr[1,1];
@@ -53,6 +55,7 @@ macro popSR() {
 }
 
 macro pushSR() {
+	local temp:2 = zext(S) + 0x0100;
 	local ccr:1 = 0xff;
 	ccr[7,1] = $(N_FLAG);
 	ccr[6,1] = $(V_FLAG);
@@ -62,8 +65,8 @@ macro pushSR() {
 	ccr[2,1] = $(I_FLAG);
 	ccr[1,1] = $(Z_FLAG);
 	ccr[0,1] = $(C_FLAG);
-	*:1 (SP) = ccr;
-	SP = SP -1;
+	*:1 (temp) = ccr;
+	S = S -1;
 }
 
 macro stackPush(value) {
@@ -234,7 +237,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :BRK   is op=0x00
 {
-	local temp:2 = inst_next;
+	local temp:2 = inst_next + 1;
 	stackPush((temp >> 8) & 0xFF);
 	stackPush(temp & 0xFF);
 	pushSR();
@@ -286,7 +289,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP2;
 	local tmp = X - op1;
 	resultFlags(tmp);
-	C = (X >= op1);
+	$(C_FLAG) = (X >= op1);
 }
 
 :CPY OP2     is (op=0xC0 | op=0xC4 | op=0xCC) ... & OP2
@@ -294,7 +297,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local op1 = OP2;
 	local tmp = Y - op1;
 	resultFlags(tmp);
-	C = (Y >= op1);
+	$(C_FLAG) = (Y >= op1);
 }
 
 :DEC OP2     is (op=0xC6 | op=0xCE | op=0xD6 | op=0xDE) ... & OP2
@@ -449,12 +452,13 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :RTI      is op=0x40
 {
 	popSR();
+
+	S = S + 1;
+	local temp:2 = zext(S) + 0x0100;
+	dest:2 = *:2 temp;
+	S = S + 1;
 	
-    SP = SP+1;
-	tmp:2 = *:2 SP;
-	SP = SP+1;
-	
-	return [tmp];
+	return [dest];
 }
 
 :RTS      is op=0x60
