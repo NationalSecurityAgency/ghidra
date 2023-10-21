@@ -121,9 +121,10 @@ class MemoryMapManager {
 			// make sure that the block after the first block is the second block
 			Address nextStart = blockA.getEnd();
 			AddressSpace space = nextStart.getAddressSpace();
-			if (space.isOverlaySpace()) {
+			if (space.isOverlaySpace() && space.isNonLoadedMemorySpace()) {
+				// impose convention-based restriction
 				Msg.showError(this, plugin.getMemoryMapProvider().getComponent(),
-					"Merge Blocks Failed", "Can't merge overlay blocks");
+					"Merge Blocks Failed", "Cannot merge OTHER overlay blocks");
 				return false;
 			}
 

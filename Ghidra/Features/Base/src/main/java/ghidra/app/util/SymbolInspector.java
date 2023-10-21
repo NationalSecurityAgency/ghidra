@@ -111,7 +111,7 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Call this when you are done with this inspector and will not use it again. 
+	 * Call this when you are done with this inspector and will not use it again.
 	 * Cleans up listeners, etc.
 	 */
 	public void dispose() {
@@ -307,8 +307,8 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Gets the color and style used to render the given symbol.  Calling this method is 
-	 * faster than calling {@link #getColor(Symbol)} and {@link #getStyle(Symbol)} 
+	 * Gets the color and style used to render the given symbol.  Calling this method is
+	 * faster than calling {@link #getColor(Symbol)} and {@link #getStyle(Symbol)}
 	 * separately.
 	 * 
 	 * @param s the symbol
@@ -340,7 +340,7 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Get the ScreenElement corresponding to the type of the symbol 
+	 * Get the ScreenElement corresponding to the type of the symbol
 	 * @param s symbol to inspect
 	 * @return the screen element
 	 */
@@ -432,7 +432,7 @@ public class SymbolInspector implements OptionsChangeListener {
 
 	private Color getColor(ScreenElement se) {
 		if (se == null) {
-			return Colors.BACKGROUND;
+			return Colors.FOREGROUND;
 		}
 		return se.getDefaultColor();
 	}

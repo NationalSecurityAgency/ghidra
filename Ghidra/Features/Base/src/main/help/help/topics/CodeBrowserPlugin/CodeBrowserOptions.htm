@@ -518,24 +518,46 @@
       <H3><A name="EOL_Comments_Field"></A>EOL Comments Field</H3>
 
       <BLOCKQUOTE>
-        <P>The EOL Comments field displays the end-of-line comment at this address. If there is no
-        EOL comment, it displays the repeatable comment. If there is no repeatable comment, it
-        displays the repeatable comments from all referenced addresses. If there aren't any
-        referenced repeatable comments, it displays an automatic comment if it can.</P>
+        <P>The EOL Comments field displays the end-of-line comment at this address.  By default, 
+        if there is no EOL comment, then other comment types may be displayed. 
+		</P>
 
-        <P><B>Always Show the Automatic Comment -</B> Normally automatic comments are not shown if
-        there is an EOL comment, repeatable comment, or referenced repeatable comment. By selecting
-        this option, the automatic comment will be shown even if there is an EOL comment,
-        repeatable comment, or referenced repeatable comment.</P>
+		<P><B>Additional Comment Types -</B> The following comment types may be optionally displayed
+		in the EOL Comments field.   For each type below, the following setting may be applied:
+			<UL>
+				<LI><B>ALWAYS -</B> Always show the comment type, regardless of other comment types
+				that are showing.  The appearance of any comment will be limited by the maximum 
+				number of lines currently set on the EOL Comments field. 
+				</LI>
+				<LI><B>DEFAULT -</B> Show the comment type only when there is no other comment type
+				of a higher precedence.  When all fields are set to this option, then the EOL 
+				Comments field will only display one comment type at a time.
+				</LI>
+				<LI><B>NEVER -</B> Do not show this comment type.
+				</LI>
+			</UL>
+		</P>
+		
+		<P>
+		Each of the comments below is listed in order of precedence.   The default behavior is to 
+		show one comment in the EOL Comments field at a time, based on this precedence, with the EOL
+		Comment being the highest.
+		</P>
+		
+			<BLOCKQUOTE>
+				<P><B>Repeatable -</B> The Repeatable Comment defined <I>at the current
+				code unit address</I>.</P>
+		
+		        <P><B>Referenced Repeatable -</B> The Repeatable Comment that is defined at the 
+		        target reference address that the code unit at this address refers to.</P>	
+		
+				<P><B>Automatic Function -</B> A preview of the referenced function.</P>
+		
+		        <P><B>Automatic Data -</B> A preview of the referenced data.  For example, a String
+		        reference will show a preview of the target String.</P>
+		        
+			</BLOCKQUOTE>
 
-        <P><B>Always Show the Referenced Repeatable Comment -</B> Normally referenced repeatable
-        comments are not shown if there is an EOL comment or repeatable comment. By selecting this
-        option, the referenced repeatable comment will be shown even if there is an EOL comment or
-        repeatable comment.</P>
-
-        <P><B>Always Show the Repeatable Comment -</B> Normally repeatable comments are not shown
-        if there is an EOL comment. By selecting this option, the repeatable comment will be shown
-        even if there is an EOL comment.</P>
 
         <P><B>Enable Word Wrapping -</B> If this option is not set, each comment line is displayed
         on a line by itself. By turning on word-wrapping, comment lines are displayed in paragraph

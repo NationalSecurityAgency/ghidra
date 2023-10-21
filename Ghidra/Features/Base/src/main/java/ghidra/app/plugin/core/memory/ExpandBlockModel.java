@@ -161,11 +161,12 @@ abstract class ExpandBlockModel implements DomainObjectListener {
 			Program prog = (Program) obj;
 			Memory memory = prog.getMemory();
 			try {
+				String blockName = expandBlock.getName();
 				MemoryBlock newBlock = memory.createBlock(expandBlock,
 					expandBlock.getName() + ".exp", startAddr, length);
 				MemoryBlock b = memory.join(expandBlock, newBlock);
-				if (!b.getName().endsWith(".exp")) {
-					b.setName(b.getName() + ".exp");
+				if (!b.getName().equals(blockName)) {
+					b.setName(blockName); // preserve block name
 				}
 				return true;
 			}

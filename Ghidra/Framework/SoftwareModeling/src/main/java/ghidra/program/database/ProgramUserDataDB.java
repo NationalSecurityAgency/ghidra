@@ -24,7 +24,6 @@ import ghidra.framework.store.FileSystem;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.database.properties.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.util.*;
@@ -102,7 +101,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	private int languageVersion;
 	private Language language;
 	private LanguageTranslator languageUpgradeTranslator;
-	private AddressFactory addressFactory;
+	private ProgramAddressFactory addressFactory;
 	private HashMap<Long, PropertyMap<?>> propertyMaps = new HashMap<Long, PropertyMap<?>>();
 	private HashSet<String> propertyMapOwners = null;
 
@@ -126,7 +125,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		languageID = language.getLanguageID();
 		languageVersion = language.getVersion();
 
-		addressFactory = language.getAddressFactory();
+		addressFactory = program.getAddressFactory();
 
 		setEventsEnabled(false); // events not support
 
@@ -184,7 +183,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 				languageVersionExc = checkForLanguageChange(e);
 			}
 
-			addressFactory = language.getAddressFactory();
+			addressFactory = program.getAddressFactory();
 
 			VersionException versionExc = createManagers(UPGRADE, program, monitor);
 			if (dbVersionExc != null) {
@@ -238,8 +237,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			Language newLanguage = language;
 
 			Language oldLanguage = OldLanguageFactory.getOldLanguageFactory()
-					.getOldLanguage(
-						languageID, languageVersion);
+					.getOldLanguage(languageID, languageVersion);
 			if (oldLanguage == null) {
 				// Assume minor version behavior - old language does not exist for current major version
 				Msg.error(this, "Old language specification not found: " + languageID +
@@ -248,10 +246,8 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			}
 
 			// Ensure that we can upgrade the language
-			languageUpgradeTranslator =
-				LanguageTranslatorFactory.getLanguageTranslatorFactory()
-						.getLanguageTranslator(
-							oldLanguage, newLanguage);
+			languageUpgradeTranslator = LanguageTranslatorFactory.getLanguageTranslatorFactory()
+					.getLanguageTranslator(oldLanguage, newLanguage);
 			if (languageUpgradeTranslator == null) {
 				throw new LanguageNotFoundException(language.getLanguageID(),
 					"(Ver " + languageVersion + ".x" + " -> " + newLanguage.getVersion() + "." +
@@ -278,10 +274,8 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	private VersionException checkForLanguageChange(LanguageNotFoundException e)
 			throws LanguageNotFoundException {
 
-		languageUpgradeTranslator =
-			LanguageTranslatorFactory.getLanguageTranslatorFactory()
-					.getLanguageTranslator(
-						languageID, languageVersion);
+		languageUpgradeTranslator = LanguageTranslatorFactory.getLanguageTranslatorFactory()
+				.getLanguageTranslator(languageID, languageVersion);
 		if (languageUpgradeTranslator == null) {
 			throw e;
 		}
@@ -428,7 +422,8 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 				languageID = language.getLanguageID();
 				languageVersion = language.getVersion();
 
-				addressFactory = language.getAddressFactory();
+				// AddressFactory need not change since we are using the instance from the
+				// Program which would have already been subject to an upgrade
 				addressMap.setLanguage(language, addressFactory, translator);
 
 				clearCache(true);
@@ -528,31 +523,26 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			switch (type) {
 				case PROPERTY_TYPE_STRING:
 					map = new StringPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
-						addressMap, rec.getString(PROPERTY_NAME_COL),
-						TaskMonitor.DUMMY);
+						addressMap, rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_LONG:
-					map =
-						new LongPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr, addressMap,
-							rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
+					map = new LongPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
+						addressMap, rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_INT:
-					map =
-						new IntPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr, addressMap,
-							rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
+					map = new IntPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
+						addressMap, rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_BOOLEAN:
-					map =
-						new VoidPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr, addressMap,
-							rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
+					map = new VoidPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
+						addressMap, rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_SAVEABLE:
 					String className = rec.getString(PROPERTY_CLASS_COL);
 					Class<? extends Saveable> c =
 						ObjectPropertyMapDB.getSaveableClassForName(className);
 					return new ObjectPropertyMapDB<>(dbh, DBConstants.UPGRADE, this, changeMgr,
-						addressMap, rec.getString(PROPERTY_NAME_COL), c,
-						TaskMonitor.DUMMY, true);
+						addressMap, rec.getString(PROPERTY_NAME_COL), c, TaskMonitor.DUMMY, true);
 				default:
 					throw new IllegalArgumentException("Unsupported property type: " + type);
 			}

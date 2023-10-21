@@ -389,7 +389,15 @@ public class MachHeader implements StructConverter {
 
 	/**
 	 * Sanitizes invalid segment/section names so they can be used as memory blocks and program tree
-	 * modules
+	 * modules.
+	 * <p>
+	 * There are 3 main cases we have come across that need sanitization:
+	 * <ol>
+	 *   <li>Segment names have a null character in the middle</li>
+	 *   <li>.o files have one segment with a blank name, but the sections refer to more than one
+	 *   normal looking segment name</li>
+	 *   <li>Some segment and section name are complete garbage bytes</li>
+	 * </ol>
 	 * 
 	 * @param segments A {@link List} of {@link SegmentCommand segments} to sanitize
 	 */
@@ -397,13 +405,18 @@ public class MachHeader implements StructConverter {
 		Function<String, Boolean> invalid = s -> s.isBlank() || !Memory.isValidMemoryBlockName(s);
 		for (int i = 0; i < segments.size(); i++) {
 			SegmentCommand segment = segments.get(i);
+			segment.setSegmentName(segment.getSegmentName().replace('\0', '_'));
 			if (invalid.apply(segment.getSegmentName())) {
 				segment.setSegmentName("__INVALID.%d".formatted(i));
 			}
 			List<Section> sections = segment.getSections();
 			for (int j = 0; j < sections.size(); j++) {
 				Section section = sections.get(j);
-				section.setSegmentName(segment.getSegmentName());
+				section.setSegmentName(section.getSegmentName().replace('\0', '_'));
+				section.setSectionName(section.getSectionName().replace('\0', '_'));
+				if (invalid.apply(section.getSegmentName())) {
+					section.setSegmentName("__INVALID.%d".formatted(i));
+				}
 				if (invalid.apply(section.getSectionName())) {
 					section.setSectionName("__invalid.%d".formatted(j));
 				}

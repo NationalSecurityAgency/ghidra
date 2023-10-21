@@ -24,6 +24,7 @@ import java.util.List;
 import org.junit.After;
 
 import docking.widgets.fieldpanel.*;
+import docking.widgets.fieldpanel.field.Field;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -246,8 +247,9 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 
 		int instanceNum = 1;
 		for (int i = 0; i < layout.getNumFields(); i++) {
-			ListingField bf = (ListingField) layout.getField(i);
-			if (bf.getFieldFactory().getFieldName().equals(fieldName)) {
+			Field f = layout.getField(i);
+			if ((f instanceof ListingField bf) &&
+				bf.getFieldFactory().getFieldName().equals(fieldName)) {
 				if (instanceNum++ == occurrence) {
 					return bf;
 				}

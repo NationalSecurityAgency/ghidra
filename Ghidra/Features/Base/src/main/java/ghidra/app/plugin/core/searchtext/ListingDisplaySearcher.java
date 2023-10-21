@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import docking.widgets.fieldpanel.Layout;
+import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.app.plugin.core.searchtext.iterators.*;
@@ -287,15 +288,15 @@ class ListingDisplaySearcher implements Searcher {
 			}
 
 			if (options.isForward()) {
-				while (!monitor.isCancelled() && results.size() == 0 &&
-					currentLayout != null && currentFieldIndex < currentLayout.getNumFields()) {
+				while (!monitor.isCancelled() && results.size() == 0 && currentLayout != null &&
+					currentFieldIndex < currentLayout.getNumFields()) {
 					findNextMatch();
 				}
 			}
 			else {
 				currentFieldIndex = currentLayout.getNumFields() - 1;
-				while (!monitor.isCancelled() && results.size() == 0 &&
-					currentLayout != null && currentFieldIndex >= 0) {
+				while (!monitor.isCancelled() && results.size() == 0 && currentLayout != null &&
+					currentFieldIndex >= 0) {
 					findNextMatch();
 				}
 			}
@@ -343,7 +344,10 @@ class ListingDisplaySearcher implements Searcher {
 	 * Returns the number of fields used in the match.
 	 */
 	private int findLocations(int fieldIndex) {
-		ListingField field = (ListingField) currentLayout.getField(fieldIndex);
+		Field f = currentLayout.getField(fieldIndex);
+		if (!(f instanceof ListingField field)) {
+			return 0;
+		}
 		FieldFactory ff = field.getFieldFactory();
 		String fieldName = ff.getFieldName();
 		if (!doSearchField(fieldName)) {
@@ -360,9 +364,13 @@ class ListingDisplaySearcher implements Searcher {
 				options.searchBothInstructionMnemonicAndOperands();
 		if (isMnemonic && isInstructionsOrData) {
 			if (currentFieldIndex <= currentLayout.getNumFields() - 2) {
-				ListingField opField = (ListingField) currentLayout.getField(fieldIndex + 1);
-				findMnemonicOperandLocations(field, opField);
-				fieldCount = 2; // if we match here, then signal that we matched across two fields
+				Field f2 = currentLayout.getField(fieldIndex + 1);
+				if ((f2 instanceof ListingField opField) && opField.getFieldFactory()
+						.getFieldName()
+						.equals(OperandFieldFactory.FIELD_NAME)) {
+					findMnemonicOperandLocations(field, opField);
+					fieldCount = 2; // if we match here, then signal that we matched across two fields
+				}
 			}
 			else {
 				findLocations(field);
@@ -389,8 +397,8 @@ class ListingDisplaySearcher implements Searcher {
 			if (startLocation.getAddress().equals(currentAddress)) {
 				// set the current Field index to correspond to the program location
 				for (int i = 0; i < currentLayout.getNumFields(); i++) {
-					ListingField field = (ListingField) currentLayout.getField(i);
-					if (getFieldForLocation(field, i)) {
+					Field f = currentLayout.getField(i);
+					if ((f instanceof ListingField field) && getFieldForLocation(field, i)) {
 						break;
 					}
 				}

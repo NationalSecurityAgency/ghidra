@@ -14,6 +14,7 @@
 #  limitations under the License.
 ##
 from collections import namedtuple
+import bisect
 import re
 
 import gdb
@@ -56,6 +57,26 @@ GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for "
 class Module(namedtuple('BaseModule', ['name', 'base', 'max', 'sections'])):
     pass
 
+class Index:
+    def __init__(self, regions):
+        self.regions = {}
+        self.bases = []
+        for r in regions:
+            self.regions[r.start] = r
+            self.bases.append(r.start)
+    def compute_base(self, address):
+        index = bisect.bisect_right(self.bases, address) - 1
+        if index == -1:
+            return address
+        floor = self.bases[index]
+        if floor == None:
+            return address
+        else:
+            region = self.regions[floor]
+            if region.objfile == None or region.end <= address:
+                return address
+            else:
+                return region.start
 
 class Section(namedtuple('BaseSection', ['name', 'start', 'end', 'offset', 'attrs'])):
     def better(self, other):
@@ -97,17 +118,17 @@ class ModuleInfoReader(object):
         attrs = [a for a in mat['attrs'].split(' ') if a != '']
         return Section(name, start, end, offset, attrs)
 
-    def finish_module(self, name, sections):
+    def finish_module(self, name, sections, index):
         alloc = {k: s for k, s in sections.items() if 'ALLOC' in s.attrs}
         if len(alloc) == 0:
             return Module(name, 0, 0, alloc)
-        # TODO: This may not be the module base, depending on headers
-        base_addr = min(s.start - s.offset for s in alloc.values())
+        base_addr = min(index.compute_base(s.start) for s in alloc.values())
         max_addr = max(s.end for s in alloc.values())
         return Module(name, base_addr, max_addr, alloc)
 
     def get_modules(self):
         modules = {}
+        index = Index(REGION_INFO_READER.get_regions())
         out = gdb.execute(self.cmd, to_string=True)
         name = None
         sections = None
@@ -115,7 +136,7 @@ class ModuleInfoReader(object):
             n = self.name_from_line(line)
             if n is not None:
                 if name is not None:
-                    modules[name] = self.finish_module(name, sections)
+                    modules[name] = self.finish_module(name, sections, index)
                 name = n
                 sections = {}
                 continue
@@ -128,7 +149,7 @@ class ModuleInfoReader(object):
                     s = s.better(sections[s.name])
                 sections[s.name] = s
         if name is not None:
-            modules[name] = self.finish_module(name, sections)
+            modules[name] = self.finish_module(name, sections, index)
         return modules
 
 
@@ -205,7 +226,10 @@ class RegionInfoReader(object):
 
     def get_regions(self):
         regions = []
-        out = gdb.execute(self.cmd, to_string=True)
+        try:
+            out = gdb.execute(self.cmd, to_string=True)
+        except:
+            return regions
         for line in out.split('\n'):
             r = self.region_from_line(line)
             if r is None:

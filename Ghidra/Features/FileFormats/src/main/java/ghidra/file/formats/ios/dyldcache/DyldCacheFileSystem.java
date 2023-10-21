@@ -42,8 +42,10 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link GFileSystem} implementation for the components of a DYLD Cache
  */
-@FileSystemInfo(type = "dyldcachev1", description = "iOS DYLD Cache Version 1", factory = GFileSystemBaseFactory.class)
+@FileSystemInfo(type = DyldCacheFileSystem.DYLD_CACHE_FSTYPE, description = "iOS DYLD Cache Version 1", factory = GFileSystemBaseFactory.class)
 public class DyldCacheFileSystem extends GFileSystemBase {
+
+	public static final String DYLD_CACHE_FSTYPE = "dyldcachev1";
 
 	private SplitDyldCache splitDyldCache;
 	private boolean parsedLocalSymbols = false;

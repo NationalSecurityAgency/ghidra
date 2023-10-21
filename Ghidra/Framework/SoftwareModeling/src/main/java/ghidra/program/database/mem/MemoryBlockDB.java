@@ -185,9 +185,6 @@ public class MemoryBlockDB implements MemoryBlock {
 			}
 			memMap.checkBlockName(name);
 			try {
-				if (isOverlay()) {
-					memMap.overlayBlockRenamed(startAddress.getAddressSpace().getName(), name);
-				}
 				record.setString(MemoryMapDBAdapter.NAME_COL, name);
 				adapter.updateBlockRecord(record);
 			}
@@ -750,6 +747,24 @@ public class MemoryBlockDB implements MemoryBlock {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append(getName());
+		buf.append("(");
+		Address start = getStart();
+		buf.append(start.toString());
+		buf.append(" - ");
+		buf.append(getEnd().toString());
+		AddressSpace space = start.getAddressSpace();
+		if (space instanceof OverlayAddressSpace os) {
+			buf.append(", overlays: ");
+			buf.append(os.getOverlayedSpace().getName());
+		}
+		buf.append(")");
+		return buf.toString();
 	}
 
 }

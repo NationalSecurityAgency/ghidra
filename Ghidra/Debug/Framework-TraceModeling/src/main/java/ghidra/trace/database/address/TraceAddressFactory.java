@@ -15,46 +15,51 @@
  */
 package ghidra.trace.database.address;
 
-import ghidra.program.database.ProgramAddressFactory;
+import ghidra.program.database.*;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.util.exception.DuplicateNameException;
 
 public class TraceAddressFactory extends ProgramAddressFactory {
 
-	public TraceAddressFactory(Language language, CompilerSpec compilerSpec) {
-		super(language, compilerSpec);
+	public TraceAddressFactory(Language language, CompilerSpec compilerSpec,
+			OverlayRegionSupplier overlayRegionSupplier) {
+		super(language, compilerSpec, overlayRegionSupplier);
 	}
 
 	@Override
-	protected boolean validateOriginalSpace(AddressSpace originalSpace) {
-		return (originalSpace.isMemorySpace() || originalSpace.isRegisterSpace()) &&
-			!originalSpace.isOverlaySpace();
-	}
-
-	@Override
-	protected boolean assignUniqueID(AddressSpace originalSpace) {
-		return super.assignUniqueID(originalSpace) ||
-			originalSpace.getType() == AddressSpace.TYPE_REGISTER;
+	protected boolean isValidOverlayBaseSpace(AddressSpace baseSpace) {
+		return super.isValidOverlayBaseSpace(baseSpace) ||
+			baseSpace.getType() == AddressSpace.TYPE_REGISTER;
 	}
 
 	@Override // for peer access
-	protected OverlayAddressSpace addOverlayAddressSpace(String name, boolean preserveName,
-			AddressSpace originalSpace, long minOffset, long maxOffset) {
-		return super.addOverlayAddressSpace(name, preserveName, originalSpace, minOffset,
-			maxOffset);
+	protected ProgramOverlayAddressSpace addOverlaySpace(long key, String overlayName,
+			AddressSpace baseSpace) throws DuplicateNameException {
+		return super.addOverlaySpace(key, overlayName, baseSpace);
 	}
 
 	@Override // for peer access
-	protected void addOverlayAddressSpace(OverlayAddressSpace ovSpace)
+	protected void addOverlaySpace(ProgramOverlayAddressSpace ovSpace)
 			throws DuplicateNameException {
-		super.addOverlayAddressSpace(ovSpace);
+		super.addOverlaySpace(ovSpace);
 	}
 
 	@Override // for peer access
 	protected void removeOverlaySpace(String name) {
 		super.removeOverlaySpace(name);
 	}
+
+	@Override // for peer access
+	protected void overlaySpaceRenamed(String oldOverlaySpaceName, String newName,
+			boolean refreshStatusIfNeeded) {
+		super.overlaySpaceRenamed(oldOverlaySpaceName, newName, refreshStatusIfNeeded);
+	}
+
+	@Override // for peer access
+	protected void refreshStaleOverlayStatus() {
+		super.refreshStaleOverlayStatus();
+	}
+
 }
