@@ -72,12 +72,18 @@
     <unaffected>
       <register name="a1"/>
       <register name="a0"/>
-      <register name="a2"/>
-      <register name="a3"/>
-      <register name="a4"/>
-      <register name="a5"/>
-      <register name="a6"/>
-      <register name="a7"/>
+      <!--
+         These are commented out, because they get preserved by the current
+         windowing mechanism swapX, callX, restorX
+         Removing them here makes the default calling convention
+         generally compatible with the CALL0 convention in most cases
+         <register name="a2"/>
+         <register name="a3"/>
+         <register name="a4"/>
+         <register name="a5"/>
+         <register name="a6"/>
+         <register name="a7"/>
+      -->
       <register name="a8"/>
       <register name="a9"/>
       <register name="a10"/>
