@@ -32,6 +32,7 @@ import ghidra.app.plugin.core.functiongraph.graph.*;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
+import ghidra.app.plugin.core.marker.MarginProviderSupplier;
 import ghidra.app.services.*;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.framework.model.*;
@@ -129,8 +130,6 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			new SwingUpdateManager(250, 750, () -> setPendingLocationFromUpdateManager());
 
 		clipboardProvider = new FGClipboardProvider(tool, controller);
-		ClipboardService service = tool.getService(ClipboardService.class);
-		setClipboardService(service);
 	}
 
 	@Override
@@ -139,7 +138,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		return !isConnected();
 	}
 
-	public void setClipboardService(ClipboardService service) {
+	void setClipboardService(ClipboardService service) {
 		clipboardService = service;
 		if (clipboardService != null) {
 			clipboardService.registerClipboardContentProvider(clipboardProvider);
@@ -1136,6 +1135,16 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		controller.setGraphPerspective(info);
 	}
 
+	void addMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		controller.addMarkerProviderSupplier(supplier);
+		refreshAndKeepPerspective();
+	}
+
+	void removeMarkerProviderSupplier(MarginProviderSupplier supplier) {
+		controller.removeMarkerProviderSupplier(supplier);
+		refreshAndKeepPerspective();
+	}
+
 //==================================================================================================
 // Navigatable interface methods
 //==================================================================================================
@@ -1298,7 +1307,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	@Override
-	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+			Program program) {
 		// currently unsupported
 	}
 
