@@ -306,6 +306,12 @@ public class AutoVersionTrackingTask extends Task {
 			monitor.doIncrementProgress();
 		}
 
+		// if user had implied match option chosen then figure out implied matches now
+		// TODO: add option for applying good matches and num votes/conflicts
+		if (autoCreateImpliedMatches) {
+			hasApplyErrors = hasApplyErrors | createImpliedMatches(true, monitor);
+		}
+
 		String applyMarkupStatus = " with no apply markup errors.";
 		if (hasApplyErrors) {
 			applyMarkupStatus =
@@ -313,61 +319,158 @@ public class AutoVersionTrackingTask extends Task {
 		}
 		statusMsg = NAME + " completed successfully" + applyMarkupStatus;
 
-		// if user had implied match option chosen then figure out implied matches now
-		if (autoCreateImpliedMatches) {
-			processImpliedMatches(monitor);
-		}
+
 
 		// reset auto implied match option to user choice
+		// TODO: make separate AutoVT implied match option
 		applyOptions.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH,
 			autoCreateImpliedMatches);
 
 	}
 
-	private void processImpliedMatches(TaskMonitor monitor) throws CancelledException {
+	/**
+	 * Method to create implied matches for the existing applied matches in the current session
+	 * @param applyGoodMatches if true, create applied matches for "good" implied matches based on
+	 * votes/conflict information. For all the applied implied matches, rerun the creation of 
+	 * applied matches until no new ones found.
+	 * @param monitor the task monitor
+	 * @return true if there are any apply errors, false otherwise
+	 * @throws CancelledException if cancelled
+	 */
+	private boolean createImpliedMatches(boolean applyGoodMatches, TaskMonitor monitor)
+			throws CancelledException {
 
 		Set<VTAssociation> processedSrcDestPairs = new HashSet<>();
 		List<VTMatchSet> matchSets = session.getMatchSets();
 
-		monitor.setMessage("Processing Implied Matches...");
+		//TODO: make these options 
+		int minVoteCountNeeded = 2;
+		int maxConflictsAllowed = 0;
+
+		monitor.setMessage("Creating Implied Matches...");
 		monitor.initialize(matchSets.size());
 
+		// create implied matches for the existing matchSets (ie sets of results from various 
+		// correlators
 		for (VTMatchSet matchSet : matchSets) {
 			monitor.checkCancelled();
 
 			Collection<VTMatch> matches = matchSet.getMatches();
-			for (VTMatch match : matches) {
+			createImpliedMatches(monitor, processedSrcDestPairs, matches);
+			monitor.incrementProgress();
+		}
+
+		// if user chose not to apply good implied matches then don't continue
+		if (!applyGoodMatches) {
+			return false;
+		}
+
+		// otherwise, try to find and apply good implied matches until no more to be found
+		boolean hasApplyErrors = false;
+
+		VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
+
+		Set<VTMatch> goodImpliedMatches =
+			findGoodImpliedMatches(impliedMatchSet.getMatches(), minVoteCountNeeded,
+				maxConflictsAllowed, monitor);
+
+		while (goodImpliedMatches.size() > 0) {
+
+			monitor.checkCancelled();
+
+			// apply the "good" implied matches
+			hasApplyErrors |= applyMatches(goodImpliedMatches, monitor);
+
+			// possibly create more implied matches from the newly applied matches
+			createImpliedMatches(monitor, processedSrcDestPairs, goodImpliedMatches);
+
+			// possibly find more "good" implied matches from any new implied matches found
+			impliedMatchSet = session.getImpliedMatchSet();
+			goodImpliedMatches = findGoodImpliedMatches(impliedMatchSet.getMatches(),
+				minVoteCountNeeded, maxConflictsAllowed, monitor);
+		}
+
+		return hasApplyErrors;
+
+	}
+
+	private void createImpliedMatches(TaskMonitor monitor, Set<VTAssociation> processedSrcDestPairs,
+			Collection<VTMatch> matches) throws CancelledException {
+		for (VTMatch match : matches) {
+			monitor.checkCancelled();
+
+			VTAssociation association = match.getAssociation();
+
+			// Implied matches currently only created for functions so skip matches that are
+			// data matches
+			if (association.getType() == VTAssociationType.DATA) {
+				continue;
+			}
+
+			// Implied matches should only be created for matches that user has accepted as 
+			// good matches
+			if (association.getStatus() != VTAssociationStatus.ACCEPTED) {
+				continue;
+			}
+			// only process the same match pair once so implied vote counts are not overinflated
+			if (processedSrcDestPairs.contains(association)) {
+				continue;
+			}
+
+			MatchInfo matchInfo = matchInfoFactory.getMatchInfo(match, addressCorrelator);
+
+			ImpliedMatchUtils.updateImpliedMatchForAcceptedAssocation(
+				matchInfo.getSourceFunction(),
+				matchInfo.getDestinationFunction(), session,
+				addressCorrelator, monitor);
+
+			processedSrcDestPairs.add(association);
+		}
+	}
+
+	/**
+	 * Method to find good implied matches based on number of votes and conflicts
+	 * @param matchesToProcess the set of matches to process for good implied matches
+	 * @param minVoteCountNeeded the minimum vote count needed for a "good" implied match
+	 * @param maxConflictsAllowed the maximum number of conflicts allowed for a "good" implied match
+	 * @param monitor the monitor
+	 * @return a set of good implied matches based on the minVoteCountNeeded needed and
+	 *  maxConfictsAllowed
+	 * @throws CancelledException if cancelled
+	 */
+	private Set<VTMatch> findGoodImpliedMatches(Collection<VTMatch> matchesToProcess,
+			int minVoteCountNeeded, int maxConflictsAllowed,
+			TaskMonitor monitor) throws CancelledException {
+
+
+		Set<VTMatch> goodImpliedMatches = new HashSet<>();
+
+		for (VTMatch match : matchesToProcess) {
 				monitor.checkCancelled();
 
 				VTAssociation association = match.getAssociation();
 
-				// Implied matches currently only created for functions so skip matches that are
-				// data matches
-				if (association.getType() == VTAssociationType.DATA) {
+				// skip if already accepted or blocked match
+				if (association.getStatus() != VTAssociationStatus.AVAILABLE) {
 					continue;
 				}
 
-				// Implied matches should only be created for matches that user has accepted as 
-				// good matches
-				if (association.getStatus() != VTAssociationStatus.ACCEPTED) {
-					continue;
-				}
-				// only process the same match pair once so implied vote counts are not overinflated
-				if (processedSrcDestPairs.contains(association)) {
+				// skip if there are any conflicting associations
+				int numConflicts = association.getRelatedAssociations().size() - 1;
+				if (numConflicts > maxConflictsAllowed) {
 					continue;
 				}
 
-				MatchInfo matchInfo = matchInfoFactory.getMatchInfo(match, addressCorrelator);
+				int voteCount = association.getVoteCount();
 
-				ImpliedMatchUtils.updateImpliedMatchForAcceptedAssocation(
-					matchInfo.getSourceFunction(),
-					matchInfo.getDestinationFunction(), session,
-					addressCorrelator, monitor);
+				if (voteCount >= minVoteCountNeeded) {
+					goodImpliedMatches.add(match);
+				}
 
-				processedSrcDestPairs.add(association);
-			}
-			monitor.incrementProgress();
+				monitor.incrementProgress();
 		}
+
+		return goodImpliedMatches;
 
 	}
 
@@ -428,7 +531,7 @@ public class AutoVersionTrackingTask extends Task {
 
 		VTMatchSet results = correlator.correlate(session, monitor);
 		monitor.initialize(results.getMatchCount());
-		boolean hasMarkupErrors = applyMatches(results.getMatches(), correlator.getName(), monitor);
+		boolean hasMarkupErrors = applyMatches(results.getMatches(), monitor);
 
 		monitor.incrementProgress(1);
 
@@ -468,15 +571,13 @@ public class AutoVersionTrackingTask extends Task {
 	/**
 	 * Called for all correlators that are run by this command except the duplicate function
 	 * instruction match correlator.
-	 * @param matches The set of matches to try to accept as matches.
-	 * @param correlatorName The name of the Version Tracking correlator whose matches are being
-	 * applied here.
-	 * @param monitor Checks to see if user has cancelled.
-	 * @return true if some matches have markup errors and false if none have markup errors.
+	 * @param matches The set of matches to try to accept
+	 * @param monitor the task monitor
+	 * @return true if some matches have markup errors and false if none have markup errors
 	 * @throws CancelledException if cancelled
 	 */
-	private boolean applyMatches(Collection<VTMatch> matches, String correlatorName,
-			TaskMonitor monitor) throws CancelledException {
+	private boolean applyMatches(Collection<VTMatch> matches, TaskMonitor monitor)
+			throws CancelledException {
 
 		// If this value gets set to true then there are some markup errors in the whole set of
 		// matches.
