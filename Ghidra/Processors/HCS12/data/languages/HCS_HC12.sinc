@@ -333,10 +333,10 @@ macro Store(addr, value) {
 #
 
 macro pageCAddr(addr, shift, page, offset) {
-     addr = (page << shift) | offset;
+     addr = addr | (page << shift) | offset;
 }
 macro pagePAddr(addr, shift, page, offset) {
-     addr = (zext(page) << shift) | offset;
+     addr = addr | (zext(page) << shift) | offset;
 }
 
 @if defined(HCS12X)
