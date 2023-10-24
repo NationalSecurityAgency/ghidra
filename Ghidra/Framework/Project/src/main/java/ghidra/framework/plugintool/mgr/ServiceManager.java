@@ -28,7 +28,7 @@ import ghidra.util.exception.AssertException;
  * it may depend on a service. The ServiceManager maintains a list of
  * service names and plugins that provide those services. A plugin may
  * dynamically add and remove services from the service registry. As services
- * are added and removed, all the plugins (ServiceListener) 
+ * are added and removed, all the plugins (ServiceListener)
  * in the tool are notified.
  */
 
@@ -93,20 +93,24 @@ public class ServiceManager {
 	/**
 	 * Add the service to the tool. Notify the service listeners if the
 	 * notification indicator is true; otherwise, add the service to a list
-	 * that will be used to notify listeners when notifications are 
+	 * that will be used to notify listeners when notifications are
 	 * turned on again.
 	 * @param interfaceClass class of the service interface being added
 	 * @param service implementation of the service; it may be a plugin or
 	 * may be some object created by the plugin
-	 * 
-	 * @see #setServiceAddedNotificationsOn(boolean) 
+	 *
+	 * @see #setServiceAddedNotificationsOn(boolean)
 	 */
 	public synchronized <T> void addService(Class<? extends T> interfaceClass, T service) {
 		List<Object> list =
 			servicesByInterface.computeIfAbsent(interfaceClass, (k) -> new ArrayList<>());
 		if (list.contains(service)) {
+			// Note: this can happen if a plugin implements a service it declares and also calls
+			// Plugin.registerServiceProvided(), which is a mistake, since the plugin will get
+			// auto-wired when it implements the service interface.
 			throw new AssertException(
-				"Same Service implementation cannot be " + "added more than once");
+				"The same Service implementation cannot be added more than once.  Interface: " +
+					interfaceClass + ". Service: " + service);
 		}
 
 		list.add(service);
@@ -120,6 +124,8 @@ public class ServiceManager {
 
 	/**
 	 * Remove the service from the tool.
+	 * @param interfaceClass the service interface
+	 * @param service the service implementation
 	 */
 	public void removeService(Class<?> interfaceClass, Object service) {
 		List<Object> list = servicesByInterface.get(interfaceClass);

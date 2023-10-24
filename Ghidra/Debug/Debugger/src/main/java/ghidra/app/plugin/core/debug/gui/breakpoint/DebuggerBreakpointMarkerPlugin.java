@@ -41,6 +41,9 @@ import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.plugin.core.functiongraph.FunctionGraphMarginService;
+import ghidra.app.plugin.core.marker.MarginProviderSupplier;
+import ghidra.app.plugin.core.marker.MarkerMarginProvider;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.MarkerClickedListener;
 import ghidra.async.AsyncDebouncer;
@@ -501,6 +504,16 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 	}
 
+	private class DefaultMarginProviderSupplier implements MarginProviderSupplier {
+		@Override
+		public MarkerMarginProvider createMarginProvider() {
+			if (markerService != null) {
+				return markerService.createMarginProvider();
+			}
+			return null;
+		}
+	}
+	
 	protected static State computeState(LogicalBreakpoint breakpoint, Program programOrView) {
 		if (programOrView instanceof TraceProgramView view) {
 			return breakpoint.computeStateForTrace(view.getTrace());
@@ -735,6 +748,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	private DebuggerControlService controlService;
 	// @AutoServiceConsumed via method
 	DecompilerMarginService decompilerMarginService;
+	// @AutoServiceConsumed via method
+	private FunctionGraphMarginService functionGraphMarginService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -793,6 +808,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	DebuggerPlaceBreakpointDialog placeBreakpointDialog = new DebuggerPlaceBreakpointDialog();
 
 	BreakpointsDecompilerMarginProvider decompilerMarginProvider;
+	private MarginProviderSupplier functionGraphMarginSupplier =
+			new DefaultMarginProviderSupplier();
 
 	public DebuggerBreakpointMarkerPlugin(PluginTool tool) {
 		super(tool);
@@ -1038,6 +1055,21 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 	}
 
+	@AutoServiceConsumed
+	private void setFunctionGraphMarginService(
+			FunctionGraphMarginService functionGraphMarginService) {
+
+		if (this.functionGraphMarginService != null) {
+			this.functionGraphMarginService
+					.removeMarkerProviderSupplier(functionGraphMarginSupplier);
+		}
+
+		this.functionGraphMarginService = functionGraphMarginService;
+		if (this.functionGraphMarginService != null) {
+			this.functionGraphMarginService.addMarkerProviderSupplier(functionGraphMarginSupplier);
+		}
+	}
+	
 	protected void createActions() {
 		actionSetSoftwareBreakpoint =
 			new SetBreakpointAction(Set.of(TraceBreakpointKind.SW_EXECUTE));
