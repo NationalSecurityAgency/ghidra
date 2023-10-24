@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,6 +32,7 @@ import org.junit.Test;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.feature.vt.api.db.VTSessionDB;
+import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.api.main.VTAssociationStatus;
 import ghidra.feature.vt.api.main.VTAssociationType;
 import ghidra.feature.vt.api.main.VTMatch;
@@ -818,7 +820,33 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
 		runAutoVTCommand(0.999999999, 10.0);
 
-		assertTrue(session.getImpliedMatchSet().getMatchCount() > 0);
+		VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
+		assertTrue(impliedMatchSet.getMatchCount() > 0);
+
+		// test whether good implied matches were accepted
+		Collection<VTMatch> matches = impliedMatchSet.getMatches();
+		for (VTMatch match : matches) {
+
+			VTAssociationStatus matchStatus = getMatchStatus(session, "Implied Match",
+				match.getSourceAddress(), match.getDestinationAddress());
+
+			if (matchStatus == VTAssociationStatus.BLOCKED) {
+				continue;
+			}
+
+			VTAssociation association = match.getAssociation();
+			int numConflicts = association.getRelatedAssociations().size() - 1;
+
+			// TODO: use options once options created
+
+			// if not min vote count or has conflicts - make sure not accepted match
+			if (association.getVoteCount() < 2 || numConflicts > 0) {
+				assertEquals(VTAssociationStatus.AVAILABLE, matchStatus);
+				continue;
+			}
+			// else make sure the match was accepted
+			assertEquals(VTAssociationStatus.ACCEPTED, matchStatus);
+		}
 	}
 
 	/*
