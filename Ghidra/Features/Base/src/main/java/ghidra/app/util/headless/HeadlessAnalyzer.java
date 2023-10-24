@@ -1656,10 +1656,11 @@ public class HeadlessAnalyzer {
 			messageLog, TaskMonitor.DUMMY);
 	}
 
-	private void processWithImport(FSRL fsrl, String folderPath, int depth) throws IOException {
+	private void processWithImport(FSRL fsrl, String folderPath, int depth, boolean isFirstTime)
+			throws IOException {
 		try (RefdFile refdFile = fsService.getRefdFile(fsrl, TaskMonitor.DUMMY)) {
 			GFile file = refdFile.file;
-			if (options.recursive && file.isDirectory()) {
+			if ((options.recursive || isFirstTime) && file.isDirectory()) {
 				processFS(file.getFilesystem(), file, folderPath, depth);
 				return;
 			}
@@ -1698,7 +1699,7 @@ public class HeadlessAnalyzer {
 			}
 			try {
 				checkValidFilename(fqFSRL.getName());
-				processWithImport(fqFSRL, folderPath, depth);
+				processWithImport(fqFSRL, folderPath, depth, false);
 			}
 			catch (InvalidInputException e) {
 				// Just move on if not valid
@@ -1716,7 +1717,7 @@ public class HeadlessAnalyzer {
 				folderPath += DomainFolder.SEPARATOR;
 			}
 			folderPath += fsrl.getName();
-			processWithImport(fsRef.getFilesystem().getFSRL(), folderPath, depth - 1);
+			processWithImport(fsRef.getFilesystem().getFSRL(), folderPath, depth - 1, false);
 			return true;
 		}
 		catch (IOException e) {
@@ -1751,7 +1752,7 @@ public class HeadlessAnalyzer {
 			Msg.info(this, "     project: " + project.getProjectLocator());
 			List<FSRL> fsrls = inputDirFiles.stream().map(f -> fsService.getLocalFSRL(f)).toList();
 			for (FSRL fsrl : fsrls) {
-				processWithImport(fsrl, folderPath, options.recursiveDepth);
+				processWithImport(fsrl, folderPath, options.recursiveDepth, true);
 			}
 		}
 		else {
