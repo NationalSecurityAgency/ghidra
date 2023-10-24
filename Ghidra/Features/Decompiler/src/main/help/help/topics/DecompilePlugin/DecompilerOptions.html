@@ -436,6 +436,47 @@
 	</p>
       </dd>
 <dt>
+<a name="DisplayBraceFormatting"></a><span class="term"><span class="bold"><strong>Brace Format for &lt;kind-of&gt; blocks</strong></span></span>
+</dt>
+<dd>
+	<p>
+          Choose how braces are placed after function declarations, or other kinds of code blocks in Decompiler output.
+          Formatting can be controlled for:
+          </p>
+<div class="informalexample">
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>function blocks</strong></span> - the main function bodies</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>if/else blocks</strong></span> - blocks delineated by the <code class="code">if</code> and <code class="code">else</code> keywords</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>loop blocks</strong></span> - blocks delineated by the <code class="code">for</code>, <code class="code">do</code>, and <code class="code">while</code> keywords</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>switch blocks</strong></span> - blocks delineated by the <code class="code">switch</code> keyword</li>
+</ul></div>
+          </div>
+<p>
+          The different formatting options primarily control how the opening brace is displayed relative to the line containing
+          the declaration or keyword starting the block.  The formatting options are:
+          </p>
+<div class="informalexample">
+            <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Same line</strong></span> - opening brace placed on same line</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Next line</strong></span> - opening brace placed on the next line</li>
+<li class="listitem" style="list-style-type: disc">
+<span class="bold"><strong>Skip one line</strong></span> - opening brace placed on line after a blank line</li>
+</ul></div>
+          </div>
+<p>
+	</p>
+        <p>
+          The "Same line" option is consistent with K &amp; R code formatting style.  The "Next line" option is consistent with
+          the Allman formatting style.
+        </p>
+      </dd>
+<dt>
 <a name="DisplayColorDefault"></a><span class="term"><span class="bold"><strong>Color Default</strong></span></span>
 </dt>
 <dd>

@@ -120,6 +120,13 @@ public:
     error_color = 9,		///< Indicates a warning or error state
     special_color = 10		///< A token with special/highlighted meaning
   };
+
+  /// \brief Different brace formatting styles
+  enum brace_style {
+    same_line = 0,		///< Opening brace on the same line as if/do/while/for/switch
+    next_line = 1,		///< Opening brace is on next line
+    skip_line = 2		///< Opening brace is two lines down
+  };
   virtual ~Emit(void) {}				///< Destructor
 
   /// \brief Begin a whole document of output
@@ -294,7 +301,7 @@ public:
 
   /// \brief Emit a \e case label constant
   ///
-  /// A string describing the \e switch variable value is emitted and starting PcodeOp of the \e case block.
+  /// A string describing the \e switch variable value and starting PcodeOp of the \e case block.
   /// \param name is the character data of the value
   /// \param hl indicates how the value should be highlighted
   /// \param op is the first PcodeOp in the \e case block
@@ -436,6 +443,31 @@ public:
   /// \return \b true if the specific print callback is pending
   bool hasPendingPrint(PendPrint *pend) const { return (pendPrint == pend); }
 
+  /// \brief Emit an opening brace given a specific format and add an indent level
+  ///
+  /// The brace is emitted on the same line, or on a following line,
+  /// depending on the selected style.  One level of indent is added.
+  /// \param brace is the string to display as the opening brace
+  /// \param style indicates how the brace should be formatted
+  /// \return the nesting id associated with the index
+  int4 openBraceIndent(const string &brace,brace_style style);
+
+  /// \brief Emit an opening brace given a specific format
+  ///
+  /// The indent level is \e not increased.  The brace is emitted on the same
+  /// line, or on a following line, depending on the selected style.
+  /// \param brace is the string to display as the opening brace
+  /// \param style indicates how the brace should be formatted
+  void openBrace(const string &brace,brace_style style);
+
+  /// \brief Emit a closing brace and remove an indent level
+  ///
+  /// The brace is emitted on the next line.
+  /// \param brace is the string to display as the closing brace
+  /// \param id is nesting id of the indent being removed
+  void closeBraceIndent(const string &brace,int4 id) {
+    stopIndent(id); tagLine(); print(brace);
+  }
 };
 
 /// \brief Emitter that associates markup with individual tokens
@@ -1083,8 +1115,9 @@ inline void Emit::emitPending(void)
 
 {
   if (pendPrint != (PendPrint *)0) {
-    pendPrint->callback(this);
-    pendPrint = (PendPrint *)0;
+    PendPrint *tmp = pendPrint;
+    pendPrint = (PendPrint *)0;		// Clear pending before callback
+    tmp->callback(this);
   }
 }
 
