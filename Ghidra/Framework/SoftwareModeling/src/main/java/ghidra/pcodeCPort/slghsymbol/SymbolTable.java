@@ -30,8 +30,8 @@ import ghidra.sleigh.grammar.Location;
 
 public class SymbolTable {
 
-	private VectorSTL<SleighSymbol> symbollist = new VectorSTL<SleighSymbol>();
-	private VectorSTL<SymbolScope> table = new VectorSTL<SymbolScope>();
+	private VectorSTL<SleighSymbol> symbollist = new VectorSTL<>();
+	private VectorSTL<SymbolScope> table = new VectorSTL<>();
 	private SymbolScope curscope;
 
 	public SymbolTable() {
@@ -51,7 +51,7 @@ public class SymbolTable {
 	}
 
 	public VectorSTL<SleighSymbol> getUnsoughtSymbols() {
-		VectorSTL<SleighSymbol> result = new VectorSTL<SleighSymbol>();
+		VectorSTL<SleighSymbol> result = new VectorSTL<>();
 		IteratorSTL<SleighSymbol> siter;
 		for (siter = symbollist.begin(); !siter.isEnd(); siter.increment()) {
 			SleighSymbol sleighSymbol = siter.get();
@@ -333,10 +333,12 @@ public class SymbolTable {
 					case token_symbol:
 					case epsilon_symbol:
 					case section_symbol:
+					case bitrange_symbol:
 						break;
 					case macro_symbol: { // Delete macro's local symbols
 						MacroSymbol macro = (MacroSymbol) sym;
-						for (int macroIndex = 0; macroIndex < macro.getNumOperands(); ++macroIndex) {
+						for (int macroIndex = 0; macroIndex < macro
+								.getNumOperands(); ++macroIndex) {
 							SleighSymbol opersym = macro.getOperand(macroIndex);
 							table.get(opersym.scopeid).removeSymbol(opersym);
 							symbollist.set(opersym.id, null);
@@ -349,11 +351,13 @@ public class SymbolTable {
 						if (subsym.getPattern() != null) {
 							continue;
 						}
-						for (int subtableIndex = 0; subtableIndex < subsym.getNumConstructors(); ++subtableIndex) { // Go thru
+						for (int subtableIndex = 0; subtableIndex < subsym
+								.getNumConstructors(); ++subtableIndex) { // Go thru
 							// each
 							// constructor
 							Constructor con = subsym.getConstructor(subtableIndex);
-							for (int operandIndex = 0; operandIndex < con.getNumOperands(); ++operandIndex) { // Go thru each operand
+							for (int operandIndex = 0; operandIndex < con
+									.getNumOperands(); ++operandIndex) { // Go thru each operand
 								OperandSymbol oper = con.getOperand(operandIndex);
 								table.get(oper.scopeid).removeSymbol(oper);
 								symbollist.set(oper.id, null);
@@ -382,8 +386,8 @@ public class SymbolTable {
 	// Renumber all the scopes and symbols
 	// so that there are no gaps
 	private void renumber() {
-		VectorSTL<SymbolScope> newtable = new VectorSTL<SymbolScope>();
-		VectorSTL<SleighSymbol> newsymbol = new VectorSTL<SleighSymbol>();
+		VectorSTL<SymbolScope> newtable = new VectorSTL<>();
+		VectorSTL<SleighSymbol> newsymbol = new VectorSTL<>();
 
 		// First renumber the scopes
 		SymbolScope scope = null;
