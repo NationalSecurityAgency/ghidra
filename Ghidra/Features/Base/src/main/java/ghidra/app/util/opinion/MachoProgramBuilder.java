@@ -201,7 +201,8 @@ public class MachoProgramBuilder {
 				break;
 			}
 
-			if (segment.getFileSize() > 0 && (allowZeroAddr || segment.getVMaddress() != 0)) {
+			if (segment.getFileSize() > 0 && segment.getVMsize() > 0 &&
+				(allowZeroAddr || segment.getVMaddress() != 0)) {
 				if (createMemoryBlock(segment.getSegmentName(),
 					space.getAddress(segment.getVMaddress()), segment.getFileOffset(),
 					segment.getFileSize(), segment.getSegmentName(), source, segment.isRead(),
