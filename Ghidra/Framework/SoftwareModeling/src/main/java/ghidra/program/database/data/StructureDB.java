@@ -1317,6 +1317,8 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			(!isPackingEnabled() || dataType.getAlignment() == oldDt.getAlignment())) {
 
 			oldComponent.update(componentName, dataType, comment);
+			oldDt.removeParent(this);
+			dataType.addParent(this);
 
 			setLastChangeTime(System.currentTimeMillis());
 			dataMgr.dataTypeChanged(this, false);
