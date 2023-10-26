@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.exec;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,9 +78,7 @@ public class SleighProgramCompilerTest extends AbstractGTest {
 		Location loc = entry.loc();
 		assertEquals("test", loc.filename);
 		assertEquals(1, loc.lineno);
-		assertEquals(
-			"unknown start, end, next2, operand, epsilon, or varnode 'noreg' in varnode reference",
-			entry.msg());
+		assertEquals("unknown varnode or bitrange symbol 'noreg' in expression", entry.msg());
 	}
 
 	@Test
@@ -97,8 +94,6 @@ public class SleighProgramCompilerTest extends AbstractGTest {
 		Location loc = entry.loc();
 		assertEquals("expression", loc.filename);
 		assertEquals(1, loc.lineno);
-		assertEquals(
-			"unknown start, end, next2, operand, epsilon, or varnode 'noreg' in varnode reference",
-			entry.msg());
+		assertEquals("unknown varnode or bitrange symbol 'noreg' in expression", entry.msg());
 	}
 }

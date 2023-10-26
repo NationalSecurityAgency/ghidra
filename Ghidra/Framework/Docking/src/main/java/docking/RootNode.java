@@ -448,13 +448,24 @@ class RootNode extends WindowNode {
 
 	private Rectangle getSaveableBounds() {
 
+		//
+		// The goal of this method is to get the correct window bounds to save.  When not maximized,
+		// this is simply the window's bounds.  However, when maximized, we wish to save the last
+		// non-maximized bounds so that toggle in and out of the maximized state will use the 
+		// correct non-maximized bounds.
+		//
+		JFrame frame = windowWrapper.getParentFrame();
+		int state = frame.getExtendedState();
+		if (state != Frame.MAXIMIZED_BOTH) {
+			return frame.getBounds();
+		}
+
 		Rectangle bounds = windowWrapper.getLastBounds();
 		if (bounds != null) {
 			return bounds;
 		}
 
 		// This implies the user has never maximized the window; just use the window bounds.
-		JFrame frame = windowWrapper.getParentFrame();
 		return frame.getBounds();
 	}
 
@@ -673,7 +684,6 @@ class RootNode extends WindowNode {
 				// wish to save the non-maximized bounds.
 				return;
 			}
-
 			this.lastBounds = bounds;
 		}
 
