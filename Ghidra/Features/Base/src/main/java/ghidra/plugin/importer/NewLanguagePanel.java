@@ -299,6 +299,9 @@ public class NewLanguagePanel extends JPanel {
 	}
 
 	public boolean setSelectedLcsPair(LanguageCompilerSpecPair lcsPair) {
+		if (lcsPair == null) {
+			return false;
+		}
 		int index = tableModel.getFirstLcsPairIndex(lcsPair);
 		if (index == -1) {
 			return false;

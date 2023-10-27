@@ -436,6 +436,14 @@ public class DataTreeDialog extends DialogComponentProvider
 	}
 
 	/**
+	 * Select a folder in the tree.
+	 * @param folder the folder to select
+	 */
+	public void selectFolder(DomainFolder folder) {
+		Swing.runLater(() -> treePanel.selectDomainFolder(folder));
+	}
+
+	/**
 	 * Select the node that corresponds to the given domain file.
 	 * @param file the file
 	 */
