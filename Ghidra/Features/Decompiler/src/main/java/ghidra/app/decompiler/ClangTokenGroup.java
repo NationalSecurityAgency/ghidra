@@ -192,6 +192,17 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 	}
 
 	/**
+	 * Create iterator across all ClangToken objects in this group.
+	 * The iterator will run over tokens in display order (forward=true) or in reverse of
+	 * display order (forward=false)
+	 * @param forward is true for a forward iterator, false for a backward iterator
+	 * @return the iterator
+	 */
+	public Iterator<ClangToken> tokenIterator(boolean forward) {
+		return new TokenIterator(this, forward);
+	}
+
+	/**
 	 * Gets a stream over this group's children
 	 * @return a stream of this group's children
 	 */

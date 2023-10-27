@@ -1119,7 +1119,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 			for (Path searchPath : searchPaths) {
 				try {
-					FSRL searchFSRL = fsService.getLocalFSRL(searchPath.toFile());
+					FSRL searchFSRL =
+						fsService.getLocalFSRL(searchPath.toFile().getCanonicalFile());
 					FileSystemRef fsRef =
 						fsService.probeFileForFilesystem(searchFSRL, monitor, null);
 					if (fsRef != null) {

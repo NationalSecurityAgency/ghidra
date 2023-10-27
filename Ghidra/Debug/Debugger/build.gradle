@@ -30,6 +30,7 @@ dependencies {
 	api project(':Base')
 	api project(':ByteViewer')
 	api project(':Decompiler')
+	api project(':FunctionGraph')
 	api project(':ProposedUtils')
 
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')

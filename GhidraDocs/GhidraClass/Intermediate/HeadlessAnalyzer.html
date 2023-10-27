@@ -34,7 +34,7 @@
        [-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;]
        [-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;]
        [-log &lt;path to log file&gt;] [-scriptlog &lt;path to script log file&gt;]
-       [-overwrite] [-recursive] [-readOnly] [-deleteProject]
+       [-overwrite] [-recursive [&lt;depth&gt;]] [-readOnly] [-deleteProject]
        [-noanalysis]
        [-processor &lt;languageID&gt;] [-cspec &lt;compilerSpecID&gt;]
        [-analysisTimeoutPerFile &lt;timeout in seconds&gt;]
@@ -263,11 +263,12 @@
 </section>
 
 <section>
-<header><span style="color:#FFD700">-recursive</span></header>
+<header><span style="color:#FFD700">-recursive [&lt;depth&gt;]</span></header>
 <br><br>
 <ul>
   <li>Enables recursive descent into directories and project sub-folders when a directory has been specified in -import or -process mode.</li>
   <li>If not used, only the immediate files contained within the specified directory are imported or processed.</li>
+  <li>Specify a value for the optional depth argument to recurse into various levels of nested supported container files (e.g., zip, tar, .a, etc.).</li>
 </ul>
 <div role="note">
   <p>Affects -import or -process modes – used for determining whether to process files in current directory or files in current directory + all its subfolders.</p>

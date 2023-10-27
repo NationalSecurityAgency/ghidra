@@ -573,9 +573,12 @@ public class VarnodeContext implements ProcessorContext {
 					value = (value << 8 * (8 - size)) >> 8 * (8 - size);
 				}
 
-				//  constants pulled from memory are suspec
+				// constants pulled from memory are suspect
 				// unless memory is readonly, or given access from evaluator (trustWriteAccess)
-				int spaceId = (isReadOnly || evaluator.allowAccess(this, addr)) ? 0 : SUSPECT_OFFSET_SPACEID;
+				int spaceId = SUSPECT_OFFSET_SPACEID;
+				if (isReadOnly || (evaluator != null && evaluator.allowAccess(this, addr))) {
+					spaceId = 0;
+				}
 				return createVarnode(value, spaceId, size);
 
 			}

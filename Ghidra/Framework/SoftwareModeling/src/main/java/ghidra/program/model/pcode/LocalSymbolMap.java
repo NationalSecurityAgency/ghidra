@@ -453,7 +453,7 @@ public class LocalSymbolMap {
 			id = getNextId();
 		}
 		HighSymbol sym;
-		if (DynamicHash.getMethodFromHash(hash) > 3) {
+		if (DynamicHash.getMethodFromHash(hash) > 3 && UnionFacetSymbol.isUnionType(dt)) {
 			int fieldNum = UnionFacetSymbol.extractFieldNumber(nm);
 			sym = new UnionFacetSymbol(id, nm, dt, fieldNum, func);
 		}
