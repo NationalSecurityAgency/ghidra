@@ -49,7 +49,7 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 
 		if (showSplashScreen) {
 			showUserAgreement();
-			SplashScreen.showSplashScreen();
+			SplashScreen.showLater();
 			this.monitor = new StatusReportingTaskMonitor();
 		}
 

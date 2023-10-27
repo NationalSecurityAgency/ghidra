@@ -159,7 +159,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 	private void showSplashScreen(final boolean makeVisible) {
 
 		if (makeVisible) {
-			SplashScreen splash = runSwing(() -> SplashScreen.showSplashScreen());
+			SplashScreen splash = SplashScreen.showNow();
 			assertNotNull("Failed showing splash screen", splash);
 			waitForSwing();
 			return;
