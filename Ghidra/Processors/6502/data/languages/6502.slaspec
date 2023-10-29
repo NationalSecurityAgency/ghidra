@@ -95,6 +95,13 @@ macro subtraction_flags1(register, operand, result) {
 	C = ( ((complement_register & operand) | (operand & result) | (result & complement_register)) & 0b10000000 ) != 0;
 }
 
+macro adc(op1) {
+    local result:2 = zext(A) + zext(op1) + zext($(C_FLAG));
+    resultFlags(result:1);
+    $(V_FLAG) = (~(A ^ op1) & (A ^ result:1) & 0x80) != 0;
+    $(C_FLAG) = (result & 0x100) != 0;
+    A = result:1;
+}
 
 ################################################################
 # Pseudo Instructions
@@ -417,12 +424,12 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :PHA     is op=0x48
 {
 	*:1 (SP) = A;
-	SP = SP - 1;
+	S = S - 1;
 }
 
 :PLA     is op=0x68
 {
-	SP = SP + 1;
+	S = S + 1;
 	A = *:1 (SP);
 	resultFlags(A);
 }
@@ -455,32 +462,31 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 	S = S + 1;
 	local temp:2 = zext(S) + 0x0100;
-	dest:2 = *:2 temp;
+	local dest:2 = zext(*:1 temp);
 	S = S + 1;
+	temp = zext(S) + 0x0100;
+	dest = dest + (zext(*:1 temp) << 8);
 	
 	return [dest];
 }
 
 :RTS      is op=0x60
 {
-	SP = SP+1;
-	tmp:2 = *:2 SP;
-	SP = SP+1;
+	S = S + 1;
+	local temp:2 = zext(S) + 0x0100;
+	local dest:2 = zext(*:1 temp);
+	S = S + 1;
+	temp = zext(S) + 0x0100;
+	dest = dest + (zext(*:1 temp) << 8);
+
+	dest = dest + 1;
 	
-	return [tmp];
+	return [dest];
 }
 
 :SBC OP1     is (cc=1 & aaa=7) ... & OP1
 {
-	local op1 = OP1;
-	local result = A - op1 - !$(C_FLAG);
-	
-	subtraction_flags1(A, op1, result);
-	A = result;	
-	
-	# resultFlags(tmp);
-	# C = ((A <= op1) * C) | (A < op1);
-	# A = tmp;
+	adc(~OP1);
 }
 
 :SEC     is op=0x38
