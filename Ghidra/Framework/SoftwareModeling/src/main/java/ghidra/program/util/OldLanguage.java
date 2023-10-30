@@ -251,7 +251,9 @@ class OldLanguage implements Language {
 				langDescription = parseDescription(element, version);
 			}
 			else if ("compiler".equals(elementName)) {
-				associatedCompilerSpecs.add(parseCompilerSpecDescription(element));
+				if (!descriptionOnly) {
+					associatedCompilerSpecs.add(parseCompilerSpecDescription(element));
+				}
 			}
 			else if ("spaces".equals(elementName)) {
 				if (spacesFound) {
