@@ -17,6 +17,8 @@ package docking.widgets.table;
 
 import java.awt.*;
 
+import javax.swing.JTable;
+
 import docking.widgets.checkbox.GCheckBox;
 
 public class GBooleanCellRenderer extends GTableCellRenderer {
@@ -37,8 +39,15 @@ public class GBooleanCellRenderer extends GTableCellRenderer {
 		super.getTableCellRendererComponent(data);
 
 		Object value = data.getValue();
-		cb.setEnabled(true);
-		setValue(value);
+
+		JTable table = data.getTable();
+		int row = data.getRowViewIndex();
+		int col = data.getColumnViewIndex();
+		boolean isEditable = table.isCellEditable(row, col);
+
+		cb.setEnabled(isEditable);
+		setValue(value, isEditable);
+
 		return this;
 	}
 
@@ -73,14 +82,7 @@ public class GBooleanCellRenderer extends GTableCellRenderer {
 		return cb.getPreferredSize();
 	}
 
-	/**
-	 * Sets the <code>Boolean</code> object for the cell being rendered to
-	 * <code>value</code>.
-	 *
-	 * @param value  the boolean value for this cell; if value is
-	 *          <code>null</code> it sets the text value "N/A"
-	 */
-	protected void setValue(Object value) {
+	protected void setValue(Object value, boolean isEditable) {
 		if (value == null) {
 			setText("N/A");
 			cb.setVisible(false);
@@ -88,7 +90,9 @@ public class GBooleanCellRenderer extends GTableCellRenderer {
 		else {
 			setText("");
 			cb.setVisible(true);
-			cb.setSelected(((Boolean) value).booleanValue());
+			boolean isSelected = ((Boolean) value).booleanValue();
+			cb.setSelected(isSelected);
+			setToolTipText(isSelected ? "true" : "false" + (!isEditable ? " (uneditable)" : ""));
 		}
 	}
 }
