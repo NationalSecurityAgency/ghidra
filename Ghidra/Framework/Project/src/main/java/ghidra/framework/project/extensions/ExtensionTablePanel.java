@@ -41,7 +41,7 @@ public class ExtensionTablePanel extends JPanel {
 
 	/**
 	 * Constructor; builds the panel and sets table attributes.
-	 * 
+	 *
 	 * @param tool the tool showing the extension dialog
 	 */
 	public ExtensionTablePanel(PluginTool tool) {
@@ -56,7 +56,6 @@ public class ExtensionTablePanel extends JPanel {
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		JScrollPane sp = new JScrollPane(table);
-		sp.getViewport().setBackground(table.getBackground());
 		add(sp, BorderLayout.CENTER);
 
 		tableFilterPanel = new GTableFilterPanel<>(table, tableModel);
@@ -98,7 +97,7 @@ public class ExtensionTablePanel extends JPanel {
 
 	/**
 	 * Returns the filter panel.
-	 * 
+	 *
 	 * @return the filter panel
 	 */
 	public GTableFilterPanel<ExtensionDetails> getFilterPanel() {
@@ -107,7 +106,7 @@ public class ExtensionTablePanel extends JPanel {
 
 	/**
 	 * Replaces the contents of the table with the given list of extensions.
-	 * 
+	 *
 	 * @param extensions the new model data
 	 */
 	public void setExtensions(Set<ExtensionDetails> extensions) {

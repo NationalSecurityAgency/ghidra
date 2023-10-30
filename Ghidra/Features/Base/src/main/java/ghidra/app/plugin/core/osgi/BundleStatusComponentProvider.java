@@ -122,7 +122,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		filterPanel = new GTableFilterPanel<>(bundleStatusTable, bundleStatusTableModel);
 
 		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
-		scrollPane.getViewport().setBackground(bundleStatusTable.getBackground());
 
 		panel.add(filterPanel, BorderLayout.SOUTH);
 		panel.add(scrollPane, BorderLayout.CENTER);
@@ -159,8 +158,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		addBundlesAction("DisableBundles", "Disable selected bundle(s)",
 			new GIcon("icon.plugin.bundlemanager.disable"), this::doDisableBundles);
 
-		addBundlesAction("CleanBundles", "Clean selected bundle build cache(s)",
-			Icons.CLEAR_ICON, this::doCleanBundleBuildCaches);
+		addBundlesAction("CleanBundles", "Clean selected bundle build cache(s)", Icons.CLEAR_ICON,
+			this::doCleanBundleBuildCaches);
 
 		icon = Icons.ADD_ICON;
 		new ActionBuilder("AddBundles", this.getName()).popupMenuPath("Add bundle(s)")
