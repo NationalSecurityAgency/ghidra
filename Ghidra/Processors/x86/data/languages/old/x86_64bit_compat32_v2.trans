@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language_translation>
+    <from_language version="2">x86:LE:64:compat32</from_language>
+    <to_language version="3">x86:LE:64:compat32</to_language>
+    <map_compiler_spec from="windows" to="windows" />
+    <map_compiler_spec from="gcc" to="gcc" />
+</language_translation>
+
