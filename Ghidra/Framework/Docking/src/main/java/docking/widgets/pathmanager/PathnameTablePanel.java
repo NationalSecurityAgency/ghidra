@@ -64,7 +64,7 @@ public class PathnameTablePanel extends JPanel {
 
 	/**
 	 * Construct a new PathnameTablePanel.
-	 * 
+	 *
 	 * @param paths list of paths to show; may be null
 	 * @param enableEdits true to allow editing of entries <em>directly in the table</em>, i.e., via
 	 *            the cell editor. The add and remove buttons still allow modification of the list.
@@ -85,7 +85,7 @@ public class PathnameTablePanel extends JPanel {
 
 	/**
 	 * Construct a new PathnameTablePanel with a reset button
-	 * 
+	 *
 	 * @param paths list of paths to show; may be null
 	 * @param resetCallback callback containing the action to perform if the reset button is pressed
 	 * @param enableEdits true to allow editing of entries <em>directly in the table</em>, i.e., via
@@ -108,7 +108,7 @@ public class PathnameTablePanel extends JPanel {
 
 	/**
 	 * Set properties on the file chooser that is displayed when the "Add" button is pressed.
-	 * 
+	 *
 	 * @param title title of the file chooser
 	 * @param preferenceForLastSelectedDir Preference to use as the current directory in the file
 	 *            chooser
@@ -129,7 +129,7 @@ public class PathnameTablePanel extends JPanel {
 
 	/**
 	 * Set whether the entries in the table can be edited.
-	 * 
+	 *
 	 * @param enableEdits false means to not allow editing; the table is editable by default.
 	 */
 	public void setEditingEnabled(boolean enableEdits) {
@@ -139,7 +139,7 @@ public class PathnameTablePanel extends JPanel {
 	/**
 	 * Set whether new paths should be added to the top of the table (true) or at the end of the
 	 * table (false).
-	 * 
+	 *
 	 * @param addToTop true means to add to the top of the table
 	 */
 	public void setAddToTop(boolean addToTop) {
@@ -148,13 +148,13 @@ public class PathnameTablePanel extends JPanel {
 
 	/**
 	 * Set whether the order of entries in the table matters.
-	 * 
+	 *
 	 * <p>
 	 * <b>WARNING:</b> When this is set to false, the entries are immediately sorted and the up and
 	 * down buttons removed. Setting it back to true will replace the buttons, but will <em>not</em>
 	 * restore the order. In general, this should be set once, at the start of the table's life
 	 * cycle.
-	 * 
+	 *
 	 * @param ordered true means the user can control the order, false means they cannot.
 	 */
 	public void setOrdered(boolean ordered) {
@@ -232,7 +232,6 @@ public class PathnameTablePanel extends JPanel {
 		pathnameTable.setTableHeader(null);
 		pathnameTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		JScrollPane scrollPane = new JScrollPane(pathnameTable);
-		scrollPane.getViewport().setBackground(pathnameTable.getBackground());
 
 		setDefaultCellRenderer();
 

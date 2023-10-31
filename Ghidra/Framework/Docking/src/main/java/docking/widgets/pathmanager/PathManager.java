@@ -239,7 +239,6 @@ public class PathManager {
 		});
 
 		JScrollPane scrollPane = new JScrollPane(pathTable);
-		scrollPane.getViewport().setBackground(pathTable.getBackground());
 
 		ListSelectionModel selModel = pathTable.getSelectionModel();
 		selModel.addListSelectionListener(e -> {
