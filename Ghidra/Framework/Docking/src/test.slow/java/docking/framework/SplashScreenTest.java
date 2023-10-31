@@ -74,7 +74,8 @@ public class SplashScreenTest extends AbstractDockingTest {
 		String newStatusText = "New Status Text";
 		SplashScreen.updateSplashScreenStatus(newStatusText);
 
-		String updatedText = statusLabel.getText().trim();
+		waitForSwing();
+		String updatedText = runSwing(() -> statusLabel.getText().trim());
 
 		assertEquals("The text of the label does not match the updated " + "text that was passed.",
 			newStatusText, updatedText);
