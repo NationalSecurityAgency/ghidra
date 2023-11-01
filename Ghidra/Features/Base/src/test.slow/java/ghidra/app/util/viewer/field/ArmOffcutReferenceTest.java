@@ -76,10 +76,9 @@ public class ArmOffcutReferenceTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOffcutReferenceInLabelAndOperandFieldWithNoLabelAtInstruction() {
-
 		assertTrue(cb.goToField(addr("0045b3a0"), OperandFieldFactory.FIELD_NAME, 0, 1));
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
-		assertEquals("test+1", tf.getText());
+		assertEquals("LAB_0023303a+1", tf.getText());
 
 		assertTrue(cb.goToField(addr("0023303a"), LabelFieldFactory.FIELD_NAME, 0, 1));
 		tf = (ListingTextField) cb.getCurrentField();
