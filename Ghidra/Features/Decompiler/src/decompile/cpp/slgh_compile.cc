@@ -1235,7 +1235,7 @@ void ConsistencyChecker::examineVn(map<uintb,OptimizeRecord> &recs,
   if (vn->getOffset().getType() != ConstTpl::real) return;
 
   map<uintb,OptimizeRecord>::iterator iter;
-  iter = recs.insert( pair<uint4,OptimizeRecord>(vn->getOffset().getReal(),OptimizeRecord())).first;
+  iter = recs.insert({vn->getOffset().getReal(),OptimizeRecord()}).first;
   if (inslot>=0) {
     (*iter).second.readop = i;
     (*iter).second.readcount += 1;
