@@ -48,12 +48,12 @@
     <listitem>
       Transformation toward a high-level representation via
       <itemizedlist mark='circle' spacing='compact'>
-	<listitem>
+	    <listitem>
           Data-flow analysis, including dead code analysis and copy propagation.
-	</listitem>
-	<listitem>
-          Control-flow analysis using graph reducibility to achieve a structured representation.
-	</listitem>
+	    </listitem>
+	    <listitem>
+          Control-flow analysis, using graph reducibility to achieve a structured representation.
+	    </listitem>
       </itemizedlist>
     </listitem>
     <listitem>
@@ -72,17 +72,11 @@
 	<firstname>Cristina</firstname><surname>Cifuentes</surname>
       </personname></author>
     </authorgroup>
-    <title>
-      Reverse Compilation Techniques
-    </title>
+    <title>Reverse Compilation Techniques</title>
     <pubdate>1994</pubdate>
     <publisher>
       <publishername>Ph.D. Dissertation. Queensland University of Technology</publishername>
-      <address>
-	<city>Brisbane City</city>,
-	<state>QLD</state>,
-	<country>Australia</country>
-      </address>
+      <address><city>Brisbane City</city>, <state>QLD</state>, <country>Australia</country></address>
     </publisher>
   </biblioentry>
   <biblioentry id="Cifuentes00">
