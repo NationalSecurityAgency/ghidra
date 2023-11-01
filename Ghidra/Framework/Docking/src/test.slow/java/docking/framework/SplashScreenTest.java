@@ -46,6 +46,7 @@ public class SplashScreenTest extends AbstractDockingTest {
 		for (Window window : getAllWindows()) {
 			runSwing(window::dispose);
 		}
+		waitForSwing();
 	}
 
 	@Test
@@ -96,11 +97,13 @@ public class SplashScreenTest extends AbstractDockingTest {
 		assertSpashScreenVisible(true);
 
 		// show a modal dialog with no parent (this will use the Splash Screen's parent)
-		showModalPasswordDialog(null);
+		DockingDialog dialog = showModalPasswordDialog(null);
 
 		// When the splash screen and the dialog share a parent, then the dialog should NOT
 		// cause the splash screen to go away
 		assertSpashScreenVisible(true);
+
+		close(dialog);
 	}
 
 	@Test
@@ -114,6 +117,8 @@ public class SplashScreenTest extends AbstractDockingTest {
 		showModalPasswordDialog(frame);
 
 		ensureSplashScreenWillClose();
+
+		close(frame);
 	}
 
 //==================================================================================================
@@ -144,12 +149,11 @@ public class SplashScreenTest extends AbstractDockingTest {
 		}
 
 		Frame finalParent = parentFrame;
-		executeOnSwingWithoutBlocking(
-			() -> {
-				DockingDialog dialog =
-					DockingDialog.createDialog(finalParent, passwordDialog, finalParent);
-				dialog.setVisible(true);
-			});
+		executeOnSwingWithoutBlocking(() -> {
+			DockingDialog dialog =
+				DockingDialog.createDialog(finalParent, passwordDialog, finalParent);
+			dialog.setVisible(true);
+		});
 
 		JDialog dialog = waitForJDialog(dialogTitle);
 		assertNotNull(dialog);

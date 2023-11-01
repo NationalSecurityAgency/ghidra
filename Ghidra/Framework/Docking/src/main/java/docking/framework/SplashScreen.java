@@ -296,6 +296,10 @@ public class SplashScreen extends JWindow {
 		hideSplashWindowTimer.stop();
 		closeSplashScreen();
 		if (hiddenFrame != null) {
+			WindowListener[] windowListeners = hiddenFrame.getWindowListeners();
+			for (WindowListener l : windowListeners) {
+				hiddenFrame.removeWindowListener(l);
+			}
 			hiddenFrame.setVisible(false);
 			hiddenFrame.dispose();
 			hiddenFrame = null;
