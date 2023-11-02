@@ -35,7 +35,7 @@ import ghidra.util.Swing;
  * The plugin that provides {@link TerminalService}
  */
 @PluginInfo(
-	status = PluginStatus.UNSTABLE,
+	status = PluginStatus.STABLE,
 	category = PluginCategoryNames.COMMON,
 	packageName = CorePluginPackage.NAME,
 	description = "Provides VT100 Terminal Emulation",
@@ -74,6 +74,7 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 			provider.setVisible(true);
 			providers.add(provider);
 			provider.setClipboardService(clipboardService);
+			provider.toFront();
 			return provider;
 		});
 	}
@@ -93,7 +94,7 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 					channel.write(buf);
 				}
 				catch (IOException e) {
-					Msg.error(this, "Could not write terminal output", e);
+					Msg.error(this, "Could not write terminal output: " + e);
 				}
 			}
 		}), in);

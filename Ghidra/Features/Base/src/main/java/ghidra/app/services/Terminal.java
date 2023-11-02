@@ -203,4 +203,11 @@ public interface Terminal extends AutoCloseable {
 	 * @param action the action to terminate the session, or null to remove the action
 	 */
 	void setTerminateAction(Runnable action);
+
+	/**
+	 * Check whether the terminal is terminated or active
+	 * 
+	 * @return true for terminated, false for active
+	 */
+	boolean isTerminated();
 }

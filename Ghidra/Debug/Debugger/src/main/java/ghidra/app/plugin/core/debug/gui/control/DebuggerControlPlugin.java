@@ -15,28 +15,22 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
-import java.awt.event.KeyEvent;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-
-import javax.swing.Icon;
-import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.DockingContextListener;
-import docking.action.*;
-import docking.action.builder.ActionBuilder;
+import docking.action.DockingAction;
+import docking.action.DockingActionIf;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.service.model.TraceRecorderTarget;
+import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
@@ -52,12 +46,15 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -78,316 +75,6 @@ import ghidra.util.task.TaskMonitor;
 	})
 public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		implements DockingContextListener {
-
-	static String intSubGroup(int subGroup) {
-		return String.format("%02d", subGroup);
-	}
-
-	interface ControlAction {
-		String GROUP = DebuggerResources.GROUP_CONTROL;
-	}
-
-	protected class ControlModeAction extends MultiStateDockingAction<ControlMode> {
-		public static final String NAME = "Control Mode";
-		public static final String DESCRIPTION = "Choose what to control and edit in dynamic views";
-		public static final String GROUP = DebuggerResources.GROUP_CONTROL;
-		public static final String HELP_ANCHOR = "control_mode";
-
-		public ControlModeAction() {
-			super(NAME, DebuggerControlPlugin.this.getName());
-			setDescription(DESCRIPTION);
-			setToolBarData(new ToolBarData(DebuggerResources.ICON_BLANK, GROUP, ""));
-			setHelpLocation(new HelpLocation(getOwner(), HELP_ANCHOR));
-			setActionStates(ControlMode.ALL.stream()
-					.map(m -> new ActionState<>(m.name, m.icon, m))
-					.collect(Collectors.toList()));
-			setEnabled(false);
-		}
-
-		@Override
-		public boolean isEnabledForContext(ActionContext context) {
-			return current.getTrace() != null;
-		}
-
-		@Override
-		protected boolean isStateEnabled(ActionState<ControlMode> state) {
-			return state.getUserData().isSelectable(current);
-		}
-
-		@Override
-		public void actionStateChanged(ActionState<ControlMode> newActionState,
-				EventTrigger trigger) {
-			activateControlMode(newActionState, trigger);
-		}
-	}
-
-	interface ResumeAction extends ControlAction {
-		Icon ICON = DebuggerResources.ICON_RESUME;
-		int SUB_GROUP = 0;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0);
-	}
-
-	interface TargetResumeAction extends ResumeAction {
-		String HELP_ANCHOR = "target_resume";
-
-		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(name, ownerName)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EmulateResumeAction extends ResumeAction {
-		String NAME = "Resume Emulator";
-		String DESCRIPTION = "Resume, i.e., go or continue execution of the integrated emulator";
-		String HELP_ANCHOR = "emu_resume";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface InterruptAction extends ControlAction {
-		Icon ICON = DebuggerResources.ICON_INTERRUPT;
-		int SUB_GROUP = 1;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_I, KeyEvent.CTRL_DOWN_MASK);
-	}
-
-	interface TargetInterruptAction extends InterruptAction {
-		String HELP_ANCHOR = "target_interrupt";
-
-		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(name, ownerName)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EmulateInterruptAction extends InterruptAction {
-		String NAME = "Interrupt Emulator";
-		String DESCRIPTION = "Interrupt, i.e., suspend, the integrated emulator";
-		String HELP_ANCHOR = "emu_interrupt";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface TargetKillAction extends ControlAction {
-		Icon ICON = DebuggerResources.ICON_KILL;
-		String HELP_ANCHOR = "target_kill";
-		int SUB_GROUP = 2;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_K,
-			KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK);
-
-		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(name, ownerName)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface DisconnectAction extends ControlAction {
-		String NAME = "Disconnect";
-		String DESCRIPTION = "Close the connection to the debugging agent";
-		Icon ICON = DebuggerResources.ICON_DISCONNECT;
-		String HELP_ANCHOR = "target_disconnect";
-		int SUB_GROUP = 3;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_K,
-			KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK);
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EmulateStepBackAction extends ControlAction {
-		String NAME = "Step Emulator Back";
-		String DESCRIPTION = "Step the integrated emulator a single instruction backward";
-		Icon ICON = DebuggerResources.ICON_STEP_BACK;
-		String HELP_ANCHOR = "emu_step_back";
-		int SUB_GROUP = 4;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0);
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface StepIntoAction extends ControlAction {
-		Icon ICON = DebuggerResources.ICON_STEP_INTO;
-		int SUB_GROUP = 5;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0);
-	}
-
-	interface TargetStepIntoAction extends StepIntoAction {
-		String HELP_ANCHOR = "target_step_into";
-
-		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(name, ownerName)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EmulateStepIntoAction extends StepIntoAction {
-		String NAME = "Step Emulator Into";
-		String DESCRIPTION =
-			"Step the integrated emulator a single instruction, descending into calls";
-		String HELP_ANCHOR = "emu_step_into";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface TargetStepOverAction extends ControlAction {
-		Icon ICON = DebuggerResources.ICON_STEP_OVER;
-		String HELP_ANCHOR = "target_step_over";
-		int SUB_GROUP = 6;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0);
-
-		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(name, ownerName)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EmulateSkipOverAction extends ControlAction {
-		String NAME = "Skip Emulator";
-		String DESCRIPTION =
-			"Skip the integrated emulator a single instruction, ignoring its effects";
-		Icon ICON = DebuggerResources.ICON_SKIP_OVER;
-		String HELP_ANCHOR = "emu_skip_over";
-		int SUB_GROUP = 7;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F10, KeyEvent.CTRL_DOWN_MASK);
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface TargetStepOutAction extends ControlAction {
-		Icon ICON = DebuggerResources.ICON_STEP_FINISH;
-		String HELP_ANCHOR = "target_step_out";
-		int SUB_GROUP = 8;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F12, 0);
-
-		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(name, ownerName)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface TargetStepExtAction extends ControlAction {
-		Icon ICON = DebuggerResources.ICON_STEP_LAST;
-		String HELP_ANCHOR = "target_step_ext";
-		int SUB_GROUP = 9;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F8, KeyEvent.CTRL_DOWN_MASK);
-
-		static ActionBuilder builder(String name, DebuggerControlPlugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(name, ownerName)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP) + name)
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface TraceSnapBackwardAction extends ControlAction {
-		String NAME = "Trace Snapshot Backward";
-		String DESCRIPTION = "Navigate the trace recording backward one snapshot";
-		Icon ICON = DebuggerResources.ICON_SNAP_BACKWARD;
-		String HELP_ANCHOR = "trace_snap_backward";
-		int SUB_GROUP = 10;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0);
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface TraceSnapForwardAction extends ControlAction {
-		String NAME = "Trace Snapshot Forward";
-		String DESCRIPTION = "Navigate the trace recording forward one snapshot";
-		Icon ICON = DebuggerResources.ICON_SNAP_FORWARD;
-		String HELP_ANCHOR = "trace_snap_backward";
-		int SUB_GROUP = 11;
-		KeyStroke KEY_BINDING = KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0);
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP, intSubGroup(SUB_GROUP))
-					.keyBinding(KEY_BINDING)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
 
 	private final TraceDomainObjectListener listenerForObjects = new TraceDomainObjectListener() {
 		{
@@ -427,8 +114,16 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	protected MultiStateDockingAction<ControlMode> actionControlMode;
 
+	DockingAction actionTargetResume;
+	DockingAction actionTargetInterrupt;
+	DockingAction actionTargetKill;
+	DockingAction actionTargetStepInto;
+	DockingAction actionTargetStepOver;
+	DockingAction actionTargetStepOut;
 	DockingAction actionTargetDisconnect;
-	final Set<DockingAction> actionsTarget = new HashSet<>();
+	Set<DockingAction> actionsTarget;
+	final Set<DockingAction> actionsTargetStepExt = new HashSet<>();
+	final Set<DockingAction> actionsTargetAll = new HashSet<>();
 
 	DockingAction actionEmulateResume;
 	DockingAction actionEmulateInterrupt;
@@ -442,7 +137,6 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	Set<DockingAction> actionsTrace;
 
 	Set<Set<DockingAction>> actionSets;
-	Collection<? extends DockingActionIf> curActionSet;
 
 	ActionContext context;
 
@@ -463,7 +157,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		switch (mode) {
 			case RO_TARGET:
 			case RW_TARGET:
-				return actionsTarget;
+				return actionsTargetAll;
 			case RO_TRACE:
 			case RW_TRACE:
 				return actionsTrace;
@@ -475,7 +169,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected Set<DockingAction> getActionSet() {
-		return getActionSet(computeCurrentEditingMode());
+		return getActionSet(computeCurrentControlMode());
 	}
 
 	protected void updateActionsEnabled(ControlMode mode) {
@@ -485,24 +179,70 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected void updateActionsEnabled() {
-		updateActionsEnabled(computeCurrentEditingMode());
+		updateActionsEnabled(computeCurrentControlMode());
+	}
+
+	protected static boolean isSameContext(ActionContext ctx1, ActionContext ctx2) {
+		if (ctx1 instanceof ProgramLocationActionContext locCtx1) {
+			if (!(ctx2 instanceof ProgramLocationActionContext locCtx2)) {
+				return false;
+			}
+			Program prog1 = locCtx1.getProgram();
+			Program prog2 = locCtx2.getProgram();
+			if (prog1 != prog2) {
+				return false;
+			}
+			Address addr1 = locCtx1.getAddress();
+			Address addr2 = locCtx2.getAddress();
+			if (!Objects.equals(addr1, addr2)) {
+				return false;
+			}
+			return true;
+		}
+		if (ctx1 instanceof DebuggerObjectActionContext objCtx1) {
+			if (!(ctx2 instanceof DebuggerObjectActionContext objCtx2)) {
+				return false;
+			}
+			return Objects.equals(objCtx1.getObjectValues(), objCtx2.getObjectValues());
+		}
+		return true; // Treat all unknowns as same.
 	}
 
 	@Override
 	public void contextChanged(ActionContext context) {
+		boolean same = isSameContext(this.context, context);
 		this.context = context;
-		updateActionsEnabled();
+		if (same) {
+			return;
+		}
+		updateTargetStepExtActions();
+		updateActions();
 	}
 
 	protected void createActions() {
-		actionControlMode = new ControlModeAction();
+		actionControlMode = new ControlModeAction(this);
 		tool.addAction(actionControlMode);
 
+		actionTargetResume = TargetResumeAction.builder(this)
+				.build();
+		actionTargetInterrupt = TargetInterruptAction.builder(this)
+				.build();
+		actionTargetKill = TargetKillAction.builder(this)
+				.build();
+		actionTargetStepInto = TargetStepIntoAction.builder(this)
+				.build();
+		actionTargetStepOver = TargetStepOverAction.builder(this)
+				.build();
+		actionTargetStepOut = TargetStepOutAction.builder(this)
+				.build();
 		actionTargetDisconnect = DisconnectAction.builder(this)
 				.enabledWhen(this::isActionTargetDisconnectEnabled)
 				.onAction(this::activatedTargetDisconnect)
 				.build();
-		updateTargetActions();
+		actionsTarget = Set.of(actionTargetResume, actionTargetInterrupt, actionTargetKill,
+			actionTargetStepInto, actionTargetStepOver, actionTargetStepOut,
+			actionTargetDisconnect);
+		updateTargetStepExtActions();
 
 		actionEmulateResume = EmulateResumeAction.builder(this)
 				.enabledWhen(this::isActionEmulateResumeEnabled)
@@ -537,51 +277,37 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 				.build();
 		actionsTrace = Set.of(actionTraceSnapBackward, actionTraceSnapForward);
 
-		actionSets = Set.of(actionsTarget, actionsEmulate, actionsTrace);
+		actionSets = Set.of(actionsTargetAll, actionsEmulate, actionsTrace);
 
 		updateActions();
 	}
 
-	protected interface TargetActionBuilderFactory
-			extends BiFunction<String, DebuggerControlPlugin, ActionBuilder> {
+	protected void runTask(String title, ActionEntry entry) {
+		tool.execute(new TargetActionTask(title, entry));
 	}
 
-	protected DockingAction buildTargetAction(TargetActionBuilderFactory factory,
-			ActionEntry entry) {
-		return factory.apply(entry.display(), this)
-				.description(entry.details())
-				.enabledWhen(ctx -> entry.isEnabled())
-				.onAction(ctx -> runTask(entry))
-				.build();
-	}
-
-	protected void runTask(ActionEntry entry) {
-		tool.execute(new TargetActionTask(entry));
-	}
-
-	protected void addTargetActionsForName(Target target, ActionName name,
-			TargetActionBuilderFactory factory) {
-		for (ActionEntry entry : target.collectActions(name, context).values()) {
+	protected void addTargetStepExtActions(Target target) {
+		for (ActionEntry entry : target.collectActions(ActionName.STEP_EXT, context).values()) {
 			if (entry.requiresPrompt()) {
 				continue;
 			}
-			actionsTarget.add(buildTargetAction(factory, entry));
+			actionsTargetStepExt.add(TargetStepExtAction.builder(entry.display(), this)
+					.description(entry.details())
+					.enabledWhen(ctx -> entry.isEnabled())
+					.onAction(ctx -> runTask(entry.display(), entry))
+					.build());
 		}
 	}
 
 	/**
-	 * This is for testing purposes only. Fetch an action from "targetActions" whose name matches
-	 * that given.
-	 * 
-	 * <p>
-	 * Since the tests are still assuming {@link TraceRecorderTarget}s, actions can be reliably
-	 * retrieved by name.
+	 * This is for testing purposes only. Fetch an action from {@link #actionsTargetStepExt} whose
+	 * name matches that given.
 	 * 
 	 * @param name the action name
 	 * @return the action, or null
 	 */
-	/* testing */ DockingAction getTargetAction(String name) {
-		for (DockingAction action : actionsTarget) {
+	/* testing */ DockingAction getTargetStepExtAction(String name) {
+		for (DockingAction action : actionsTargetStepExt) {
 			if (name.equals(action.getName())) {
 				return action;
 			}
@@ -589,23 +315,19 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		return null;
 	}
 
-	protected void updateTargetActions() {
-		hideActions(actionsTarget);
-		actionsTarget.clear();
-		actionsTarget.add(actionTargetDisconnect);
+	protected void updateTargetStepExtActions() {
+		hideActions(actionsTargetStepExt);
+		actionsTargetStepExt.clear();
+		actionsTargetAll.clear();
+		actionsTargetAll.addAll(actionsTarget);
 
 		Target target = current.getTarget();
 		if (target == null || !target.isValid()) {
 			return;
 		}
 
-		addTargetActionsForName(target, ActionName.RESUME, TargetResumeAction::builder);
-		addTargetActionsForName(target, ActionName.INTERRUPT, TargetInterruptAction::builder);
-		addTargetActionsForName(target, ActionName.KILL, TargetKillAction::builder);
-		addTargetActionsForName(target, ActionName.STEP_INTO, TargetStepIntoAction::builder);
-		addTargetActionsForName(target, ActionName.STEP_OVER, TargetStepOverAction::builder);
-		addTargetActionsForName(target, ActionName.STEP_OUT, TargetStepOutAction::builder);
-		addTargetActionsForName(target, ActionName.STEP_EXT, TargetStepExtAction::builder);
+		addTargetStepExtActions(target);
+		actionsTargetAll.addAll(actionsTargetStepExt);
 	}
 
 	protected void activateControlMode(ActionState<ControlMode> state, EventTrigger trigger) {
@@ -792,7 +514,9 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected void coordinatesActivated(DebuggerCoordinates coords) {
+		boolean sameTrace = true;
 		if (current.getTrace() != coords.getTrace()) {
+			sameTrace = false;
 			if (current.getTrace() != null) {
 				current.getTrace().removeListener(listenerForObjects);
 			}
@@ -801,11 +525,13 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			}
 		}
 		current = coords;
-		updateTargetActions();
+		if (!sameTrace) {
+			updateTargetStepExtActions();
+		}
 		updateActions();
 	}
 
-	private ControlMode computeCurrentEditingMode() {
+	private ControlMode computeCurrentControlMode() {
 		if (controlService == null) {
 			return ControlMode.DEFAULT;
 		}
@@ -819,9 +545,6 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		if (tool == null) {
 			return;
 		}
-		if (curActionSet == actions) {
-			curActionSet = null;
-		}
 		for (DockingActionIf action : actions) {
 			tool.removeAction(action);
 		}
@@ -831,17 +554,16 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		if (tool == null) {
 			return;
 		}
-		if (curActionSet == actions) {
-			return;
-		}
+		Set<DockingActionIf> already = tool.getDockingActionsByOwnerName(name);
 		for (DockingActionIf action : actions) {
-			tool.addAction(action);
+			if (!already.contains(action)) {
+				tool.addAction(action);
+			}
 		}
-		curActionSet = actions;
 	}
 
 	private void updateActions() {
-		ControlMode mode = computeCurrentEditingMode();
+		ControlMode mode = computeCurrentControlMode();
 		actionControlMode.setCurrentActionStateByUserData(mode);
 
 		Set<DockingAction> actions = getActionSet(mode);
@@ -860,6 +582,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		if (current.getTrace() == trace) {
 			trace.removeListener(listenerForObjects);
 			current = DebuggerCoordinates.NOWHERE;
+			updateTargetStepExtActions();
 		}
 		updateActions();
 	}

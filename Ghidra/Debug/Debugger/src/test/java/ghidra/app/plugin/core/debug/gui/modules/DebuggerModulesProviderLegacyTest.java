@@ -32,6 +32,8 @@ import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractImportFromFileSystemAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSelectAddressesAction;
+import ghidra.app.plugin.core.debug.gui.action.AutoMapSpec;
+import ghidra.app.plugin.core.debug.gui.action.NoneAutoMapSpec;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.ModuleMapTableColumns;
@@ -53,7 +55,7 @@ import ghidra.trace.model.modules.*;
 import ghidra.util.exception.DuplicateNameException;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerModulesPlugin modulesPlugin;
 	protected DebuggerModulesProvider modulesProvider;
 
@@ -69,6 +71,9 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 	public void setUpModulesProviderTest() throws Exception {
 		modulesPlugin = addPlugin(tool, DebuggerModulesPlugin.class);
 		modulesProvider = waitForComponentProvider(DebuggerModulesProvider.class);
+
+		// TODO: This seems to hold up the task manager.
+		modulesProvider.setAutoMapSpec(AutoMapSpec.fromConfigName(NoneAutoMapSpec.CONFIG_NAME));
 	}
 
 	protected void addRegionsFromModules()

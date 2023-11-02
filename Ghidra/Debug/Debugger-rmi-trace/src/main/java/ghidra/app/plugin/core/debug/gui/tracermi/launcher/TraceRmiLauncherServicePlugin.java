@@ -31,7 +31,7 @@ import ghidra.app.services.*;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchConfigurator;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.PromptMode;
-import ghidra.debug.api.tracermi.TraceRmiLaunchOpinion;
+import ghidra.debug.spi.tracermi.TraceRmiLaunchOpinion;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
@@ -67,6 +67,13 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		implements TraceRmiLauncherService, OptionsChangeListener {
 	protected static final String OPTION_NAME_SCRIPT_PATHS = "Script Paths";
 
+	private final static LaunchConfigurator RELAUNCH = new LaunchConfigurator() {
+		@Override
+		public PromptMode getPromptMode() {
+			return PromptMode.ON_ERROR;
+		}
+	};
+
 	private final static LaunchConfigurator PROMPT = new LaunchConfigurator() {
 		@Override
 		public PromptMode getPromptMode() {
@@ -90,7 +97,7 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			offer.launchProgram(monitor);
+			offer.launchProgram(monitor, RELAUNCH);
 		}
 	}
 
@@ -166,18 +173,13 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 	}
 
 	@Override
-	public Collection<TraceRmiLaunchOpinion> getOpinions() {
-		return ClassSearcher.getInstances(TraceRmiLaunchOpinion.class);
-	}
-
-	@Override
 	public Collection<TraceRmiLaunchOffer> getOffers(Program program) {
 		if (program == null) {
 			return List.of();
 		}
 		return ClassSearcher.getInstances(TraceRmiLaunchOpinion.class)
 				.stream()
-				.flatMap(op -> op.getOffers(program, getTool()).stream())
+				.flatMap(op -> op.getOffers(this, program).stream())
 				.toList();
 	}
 

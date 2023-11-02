@@ -15,7 +15,7 @@
  */
 package ghidra.pty.ssh;
 
-import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.*;
 
 import ghidra.pty.PtySession;
 
@@ -40,5 +40,17 @@ public class SshPtySession implements PtySession {
 	@Override
 	public void destroyForcibly() {
 		channel.disconnect();
+	}
+
+	@Override
+	public String description() {
+		Session session;
+		try {
+			session = channel.getSession();
+		}
+		catch (JSchException e) {
+			return "ssh";
+		}
+		return "ssh " + session.getUserName() + "@" + session.getHost() + ":" + session.getPort();
 	}
 }

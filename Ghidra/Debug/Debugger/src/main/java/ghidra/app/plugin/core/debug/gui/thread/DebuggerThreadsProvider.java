@@ -207,6 +207,10 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		super.addLocalAction(action);
 	}
 
+	void threadsPanelContextChanged() {
+		myActionContext = panel.getActionContext();
+	}
+	
 	void legacyThreadsPanelContextChanged() {
 		myActionContext = legacyPanel.getActionContext();
 	}

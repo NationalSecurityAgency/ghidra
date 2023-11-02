@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import db.Transaction;
 import ghidra.app.plugin.assembler.*;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncUtils.TemperamentalRunnable;
@@ -41,7 +41,7 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
-public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerControlService editingService;
 
 	protected Register r0;

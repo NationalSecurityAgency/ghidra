@@ -17,10 +17,8 @@ package ghidra.app.plugin.core.debug.platform.arm;
 
 import java.math.BigInteger;
 
-import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo.CompilerInfo;
+import ghidra.app.plugin.core.debug.disassemble.*;
+import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.CompilerInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;

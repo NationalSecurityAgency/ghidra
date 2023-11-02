@@ -296,7 +296,7 @@ public interface DebuggerResources {
 	boolean DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND = false;
 
 	String OPTION_NAME_LOG_BUFFER_LIMIT = "Log Buffer Size";
-	int DEFAULT_LOG_BUFFER_LIMIT = 100;
+	int DEFAULT_LOG_BUFFER_LIMIT = 20;
 
 	// TODO: Re-assign/name groups
 	String GROUP_GENERAL = "Dbg1. General";
@@ -878,7 +878,8 @@ public interface DebuggerResources {
 
 		static <T> MultiStateActionBuilder<T> builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new MultiStateActionBuilder<T>(NAME, ownerName).description(DESCRIPTION)
+			return new MultiStateActionBuilder<T>(NAME, ownerName)
+					.description(DESCRIPTION)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

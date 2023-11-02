@@ -36,8 +36,7 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -79,6 +78,7 @@ public abstract class DebuggerReadsMemoryTrait {
 					target.invalidateMemoryCaches();
 					try {
 						target.readMemory(sel, monitor);
+						memoryWasRead(sel);
 					}
 					catch (CancelledException e) {
 						return false;
@@ -219,7 +219,12 @@ public abstract class DebuggerReadsMemoryTrait {
 		if (!isConsistent()) {
 			return;
 		}
-		autoSpec.readMemory(tool, current, visible).exceptionally(ex -> {
+		AddressSet visible = new AddressSet(this.visible);
+		autoSpec.readMemory(tool, current, visible).thenAccept(b -> {
+			if (b) {
+				memoryWasRead(visible);
+			}
+		}).exceptionally(ex -> {
 			Msg.error(this, "Could not auto-read memory: " + ex);
 			return null;
 		});
@@ -286,4 +291,8 @@ public abstract class DebuggerReadsMemoryTrait {
 	protected abstract AddressSetView getSelection();
 
 	protected abstract void repaintPanel();
+
+	protected void memoryWasRead(AddressSetView read) {
+		// Extension point
+	}
 }

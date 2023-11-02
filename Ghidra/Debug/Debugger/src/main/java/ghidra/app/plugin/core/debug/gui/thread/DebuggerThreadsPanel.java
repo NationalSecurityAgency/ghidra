@@ -18,10 +18,11 @@ package ghidra.app.plugin.core.debug.gui.thread;
 import java.util.List;
 
 import javax.swing.JTable;
+import javax.swing.event.ListSelectionEvent;
 
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
-import docking.widgets.table.threaded.ThreadedTableModelListener;
 import docking.widgets.table.TableColumnDescriptor;
+import docking.widgets.table.threaded.ThreadedTableModelListener;
 import ghidra.app.plugin.core.debug.gui.model.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
@@ -165,6 +166,8 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	@AutoServiceConsumed
 	protected DebuggerTraceManagerService traceManager;
 
+	private final DebuggerThreadsProvider provider;
+
 	private final SeekListener seekListener = pos -> {
 		long snap = Math.round(pos);
 		if (current.getTrace() == null || snap < 0) {
@@ -175,6 +178,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	public DebuggerThreadsPanel(DebuggerThreadsProvider provider) {
 		super(provider.plugin, provider, TraceObjectThread.class);
+		this.provider = provider;
 		setLimitToSnap(false); // TODO: Toggle for this?
 
 		addSeekListener(seekListener);
@@ -238,5 +242,14 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		if (item != null) {
 			traceManager.activateObject(item.getValue().getChild());
 		}
+	}
+
+	@Override
+	public void valueChanged(ListSelectionEvent e) {
+		super.valueChanged(e);
+		if (e.getValueIsAdjusting()) {
+			return;
+		}
+		provider.threadsPanelContextChanged();
 	}
 }

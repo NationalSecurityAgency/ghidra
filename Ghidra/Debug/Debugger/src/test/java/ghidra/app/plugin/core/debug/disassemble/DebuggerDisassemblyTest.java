@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.junit.*;
 
@@ -32,19 +31,17 @@ import docking.action.DockingActionIf;
 import generic.Unique;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.core.assembler.AssemblerPluginTestHelper;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.*;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
-import ghidra.app.plugin.core.debug.service.workflow.DebuggerWorkflowServiceProxyPlugin;
-import ghidra.app.plugin.core.debug.workflow.DisassembleAtPcDebuggerBot;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService;
+import ghidra.app.services.DebuggerPlatformService;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
-import ghidra.debug.api.control.ControlMode;
-import ghidra.debug.api.workflow.DebuggerBot;
 import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.debug.api.control.ControlMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.LanguageID;
@@ -70,7 +67,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.task.TaskMonitor;
 
-public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerDisassemblerPlugin disassemblerPlugin;
 	protected DebuggerPlatformService platformService;
 	protected DebuggerListingProvider listingProvider;
@@ -128,6 +125,9 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		platformService = addPlugin(tool, DebuggerPlatformServicePlugin.class);
 		disassemblerPlugin = addPlugin(tool, DebuggerDisassemblerPlugin.class);
 		listingProvider = waitForComponentProvider(DebuggerListingProvider.class);
+
+		// TODO: Maybe this shouldn't be the default for these tests?
+		listingProvider.setAutoDisassemble(false);
 	}
 
 	protected void assertX86Nop(Instruction instruction) {
@@ -136,14 +136,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	protected void enableAutoDisassembly() throws Throwable {
-		DebuggerWorkflowService workflowService =
-			addPlugin(tool, DebuggerWorkflowServiceProxyPlugin.class);
-		Set<DebuggerBot> disBot = workflowService.getAllBots()
-				.stream()
-				.filter(b -> b instanceof DisassembleAtPcDebuggerBot)
-				.collect(Collectors.toSet());
-		assertEquals(1, disBot.size());
-		workflowService.enableBots(disBot);
+		listingProvider.setAutoDisassemble(true);
 	}
 
 	protected DebuggerListingActionContext createActionContext(Address start, int len) {
@@ -219,7 +212,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			assertX86Nop(instructions.getAt(0, tb.addr(0x00400000)));
 			assertX86Nop(instructions.getAt(0, tb.addr(0x00400001)));
 			assertX86Nop(instructions.getAt(0, tb.addr(0x00400002)));
-			assertNull(instructions.getAt(0, tb.addr(0x00400003)));
+			// NB. The auto disassembler will now proceed into "never known" memory.
+			// It's too much trouble to prevent it, and it's different behavior than the D key.
 		});
 	}
 

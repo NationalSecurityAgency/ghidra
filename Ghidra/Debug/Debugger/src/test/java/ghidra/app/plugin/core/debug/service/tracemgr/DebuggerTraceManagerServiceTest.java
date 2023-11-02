@@ -25,7 +25,7 @@ import org.junit.experimental.categories.Category;
 
 import db.Transaction;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.services.*;
 import ghidra.dbg.model.TestTargetStack;
@@ -48,7 +48,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerControlService editingService;
 

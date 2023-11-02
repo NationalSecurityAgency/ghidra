@@ -23,8 +23,8 @@ import ghidra.util.task.TaskMonitor;
 class TargetActionTask extends Task {
 	private ActionEntry entry;
 
-	public TargetActionTask(ActionEntry entry) {
-		super(entry.display(), false, false, false);
+	public TargetActionTask(String title, ActionEntry entry) {
+		super(title, false, false, false);
 		this.entry = entry;
 	}
 

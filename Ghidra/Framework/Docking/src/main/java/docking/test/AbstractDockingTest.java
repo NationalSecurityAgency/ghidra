@@ -1742,8 +1742,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		Objects.requireNonNull(c);
 		Objects.requireNonNull(consumer);
 
-		if (c instanceof JTextComponent) {
-			JTextComponent tf = (JTextComponent) c;
+		if (c instanceof JTextComponent tf) {
 			forceTextComponentFocus(tf);
 		}
 

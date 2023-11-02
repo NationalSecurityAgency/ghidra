@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
@@ -34,7 +34,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
 
-public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerTraceViewDiffPlugin traceDiffPlugin;
 	protected DebuggerListingPlugin listingPlugin;

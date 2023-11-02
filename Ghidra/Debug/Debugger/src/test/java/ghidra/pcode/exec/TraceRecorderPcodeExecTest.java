@@ -23,7 +23,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
 import ghidra.debug.api.action.ActionSource;
@@ -47,7 +47,7 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
  * Test the {@link DirectBytesTracePcodeExecutorState} in combination with
  * {@link PcodeDebuggerAccess} to ensure it reads and writes the target when appropriate.
  */
-public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testExecutorEval() throws Throwable {

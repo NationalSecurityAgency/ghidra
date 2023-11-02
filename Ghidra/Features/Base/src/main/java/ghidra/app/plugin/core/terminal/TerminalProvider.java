@@ -34,6 +34,7 @@ import docking.action.DockingActionIf;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.OkDialog;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GColor;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.terminal.TerminalPanel.FindOptions;
 import ghidra.app.plugin.core.terminal.vt.VtOutput;
@@ -48,6 +49,8 @@ import ghidra.util.Swing;
  * This also provides UI actions for searching the terminal's contents.
  */
 public class TerminalProvider extends ComponentProviderAdapter {
+	// TODO: A separate color?
+	private static final Color COLOR_TERMINATED = new GColor("color.border.provider.disconnected");
 
 	protected class FindDialog extends DialogComponentProvider {
 		protected final JTextField txtFind = new JTextField(20);
@@ -173,6 +176,10 @@ public class TerminalProvider extends ComponentProviderAdapter {
 		});
 		createActions();
 		setWindowMenuGroup("Terminals");
+		setDefaultWindowPosition(WindowPosition.BOTTOM);
+
+		// Avoid change in dimension when "terminated" border is applied
+		panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 	}
 
 	@Override
@@ -362,6 +369,9 @@ public class TerminalProvider extends ComponentProviderAdapter {
 			setSubTitle("Terminated");
 			if (!isVisible()) {
 				removeFromTool();
+			}
+			else {
+				panel.setBorder(BorderFactory.createLineBorder(COLOR_TERMINATED, 2));
 			}
 		});
 	}

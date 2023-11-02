@@ -26,7 +26,6 @@ import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Lifespan.LifeSet;
-import ghidra.trace.model.target.TraceObject.ConflictResolution;
 
 /**
  * The trace record of an observed {@link TargetObject}

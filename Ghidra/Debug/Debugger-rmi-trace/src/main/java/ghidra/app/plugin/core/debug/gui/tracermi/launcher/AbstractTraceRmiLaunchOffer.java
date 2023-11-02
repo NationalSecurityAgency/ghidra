@@ -30,10 +30,14 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import db.Transaction;
+import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
+import ghidra.app.plugin.core.debug.service.rmi.trace.DefaultTraceRmiAcceptor;
+import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
 import ghidra.app.plugin.core.terminal.TerminalListener;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.util.ShellUtils;
@@ -50,8 +54,7 @@ import ghidra.pty.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.util.MessageType;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -77,6 +80,16 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			pty.close();
 			waiter.interrupt();
 		}
+
+		@Override
+		public boolean isTerminated() {
+			return terminal.isTerminated();
+		}
+
+		@Override
+		public String description() {
+			return session.description();
+		}
 	}
 
 	protected record NullPtyTerminalSession(Terminal terminal, Pty pty, String name)
@@ -91,6 +104,16 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		public void terminate() throws IOException {
 			terminal.terminated();
 			pty.close();
+		}
+
+		@Override
+		public boolean isTerminated() {
+			return terminal.isTerminated();
+		}
+
+		@Override
+		public String description() {
+			return name;
 		}
 	}
 
@@ -113,13 +136,15 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		}
 	}
 
+	protected final TraceRmiLauncherServicePlugin plugin;
 	protected final Program program;
 	protected final PluginTool tool;
 	protected final TerminalService terminalService;
 
-	public AbstractTraceRmiLaunchOffer(Program program, PluginTool tool) {
+	public AbstractTraceRmiLaunchOffer(TraceRmiLauncherServicePlugin plugin, Program program) {
+		this.plugin = Objects.requireNonNull(plugin);
 		this.program = Objects.requireNonNull(program);
-		this.tool = Objects.requireNonNull(tool);
+		this.tool = plugin.getTool();
 		this.terminalService = Objects.requireNonNull(tool.getService(TerminalService.class));
 	}
 
@@ -151,9 +176,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		return null; // I guess we won't wait for a mapping, then
 	}
 
-	protected CompletableFuture<Void> listenForMapping(
-			DebuggerStaticMappingService mappingService, TraceRmiConnection connection,
-			Trace trace) {
+	protected CompletableFuture<Void> listenForMapping(DebuggerStaticMappingService mappingService,
+			TraceRmiConnection connection, Trace trace) {
 		Address probeAddress = getMappingProbeAddress();
 		if (probeAddress == null) {
 			return AsyncUtils.nil(); // No need to wait on mapping of nothing
@@ -469,9 +493,20 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			Map<String, TerminalSession> sessions, Map<String, ?> args, SocketAddress address)
 			throws Exception;
 
+	static class NoStaticMappingException extends Exception {
+		public NoStaticMappingException(String message) {
+			super(message);
+		}
+
+		@Override
+		public String toString() {
+			return getMessage();
+		}
+	}
+
 	@Override
 	public LaunchResult launchProgram(TaskMonitor monitor, LaunchConfigurator configurator) {
-		TraceRmiService service = tool.getService(TraceRmiService.class);
+		InternalTraceRmiService service = tool.getService(InternalTraceRmiService.class);
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
 		DebuggerTraceManagerService traceManager =
@@ -479,9 +514,9 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		final PromptMode mode = configurator.getPromptMode();
 		boolean prompt = mode == PromptMode.ALWAYS;
 
-		TraceRmiAcceptor acceptor = null;
+		DefaultTraceRmiAcceptor acceptor = null;
 		Map<String, TerminalSession> sessions = new LinkedHashMap<>();
-		TraceRmiConnection connection = null;
+		TraceRmiHandler connection = null;
 		Trace trace = null;
 		Throwable lastExc = null;
 
@@ -509,10 +544,12 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				monitor.setMessage("Waiting for connection");
 				acceptor.setTimeout(getTimeoutMillis());
 				connection = acceptor.accept();
+				connection.registerTerminals(sessions.values());
 				monitor.setMessage("Waiting for trace");
 				trace = connection.waitForTrace(getTimeoutMillis());
 				traceManager.openTrace(trace);
-				traceManager.activateTrace(trace);
+				traceManager.activate(traceManager.resolveTrace(trace),
+					ActivationCause.START_RECORDING);
 				monitor.setMessage("Waiting for module mapping");
 				try {
 					listenForMapping(mappingService, connection, trace).get(getTimeoutMillis(),
@@ -529,25 +566,132 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 						throw new CancellationException(e.getMessage());
 					}
 					if (mapped.isEmpty()) {
-						monitor.setMessage(
-							"Could not formulate a mapping with the target program. " +
-								"Continuing without one.");
-						Msg.showWarn(this, null, "Launch " + program,
-							"The resulting target process has no mapping to the static image " +
-								program + ". Intervention is required before static and dynamic " +
-								"addresses can be translated. Check the target's module list.");
+						throw new NoStaticMappingException(
+							"The resulting target process has no mapping to the static image.");
 					}
 				}
 			}
 			catch (Exception e) {
 				lastExc = e;
 				prompt = mode != PromptMode.NEVER;
+				LaunchResult result =
+					new LaunchResult(program, sessions, connection, trace, lastExc);
 				if (prompt) {
+					switch (promptError(result)) {
+						case KEEP:
+							return result;
+						case RETRY:
+							try {
+								result.close();
+							}
+							catch (Exception e1) {
+								Msg.error(this, "Could not close", e1);
+							}
+							continue;
+						case TERMINATE:
+							try {
+								result.close();
+							}
+							catch (Exception e1) {
+								Msg.error(this, "Could not close", e1);
+							}
+							return new LaunchResult(program, Map.of(), null, null, lastExc);
+					}
 					continue;
 				}
-				return new LaunchResult(program, sessions, connection, trace, lastExc);
+				return result;
 			}
 			return new LaunchResult(program, sessions, connection, trace, null);
 		}
+	}
+
+	enum ErrPromptResponse {
+		KEEP, RETRY, TERMINATE;
+	}
+
+	protected ErrPromptResponse promptError(LaunchResult result) {
+		String message = """
+				<html><body width="400px">
+				<h3>Failed to launch %s due to an exception:</h3>
+
+				<tt>%s</tt>
+
+				<h3>Troubleshooting</h3>
+				<p>
+				<b>Check the Terminal!</b>
+				If no terminal is visible, check the menus: <b>Window &rarr; Terminals &rarr;
+				...</b>.
+				A path or other configuration parameter may be incorrect.
+				The back-end debugger may have paused for user input.
+				There may be a missing dependency.
+				There may be an incorrect version, etc.</p>
+
+				<h3>These resources remain after the failed launch:</h3>
+				<ul>
+				%s
+				</ul>
+
+				<h3>Do you want to keep these resources?</h3>
+				<ul>
+				<li>Choose <b>Yes</b> to stop here and diagnose or complete the launch manually.
+				</li>
+				<li>Choose <b>No</b> to clean up and retry at the launch dialog.</li>
+				<li>Choose <b>Cancel</b> to clean up without retrying.</li>
+				""".formatted(
+			htmlProgramName(result), htmlExceptionMessage(result), htmlResources(result));
+		return LaunchFailureDialog.show(message);
+	}
+
+	static class LaunchFailureDialog extends OptionDialog {
+		public LaunchFailureDialog(String message) {
+			super("Launch Failed", message, "&Yes", "&No", OptionDialog.ERROR_MESSAGE, null,
+				true, "No");
+		}
+
+		static ErrPromptResponse show(String message) {
+			return switch (new LaunchFailureDialog(message).show()) {
+				case OptionDialog.YES_OPTION -> ErrPromptResponse.KEEP;
+				case OptionDialog.NO_OPTION -> ErrPromptResponse.RETRY;
+				case OptionDialog.CANCEL_OPTION -> ErrPromptResponse.TERMINATE;
+				default -> throw new AssertionError();
+			};
+		}
+	}
+
+	protected String htmlProgramName(LaunchResult result) {
+		if (result.program() == null) {
+			return "";
+		}
+		return "<tt>" + HTMLUtilities.escapeHTML(result.program().getName()) + "</tt>";
+	}
+
+	protected String htmlExceptionMessage(LaunchResult result) {
+		if (result.exception() == null) {
+			return "(No exception)";
+		}
+		return HTMLUtilities.escapeHTML(result.exception().toString());
+	}
+
+	protected String htmlResources(LaunchResult result) {
+		StringBuilder sb = new StringBuilder();
+		for (Entry<String, TerminalSession> ent : result.sessions().entrySet()) {
+			TerminalSession session = ent.getValue();
+			sb.append("<li>Terminal: " + HTMLUtilities.escapeHTML(ent.getKey()) + " &rarr; <tt>" +
+				HTMLUtilities.escapeHTML(session.description()) + "</tt>");
+			if (session.isTerminated()) {
+				sb.append(" (Terminated)");
+			}
+			sb.append("</li>\n");
+		}
+		if (result.connection() != null) {
+			sb.append("<li>Connection: <tt>" +
+				HTMLUtilities.escapeHTML(result.connection().getRemoteAddress().toString()) +
+				"</tt></li>\n");
+		}
+		if (result.trace() != null) {
+			sb.append(
+				"<li>Trace: " + HTMLUtilities.escapeHTML(result.trace().getName()) + "</li>\n");
+		}
+		return sb.toString();
 	}
 }

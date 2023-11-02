@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
@@ -29,7 +29,7 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.target.TraceObjectValue;
 
-public class ModelQueryTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class ModelQueryTest extends AbstractGhidraHeadedDebuggerTest {
 	@Test
 	public void testIncludes() throws Throwable {
 		createTrace();

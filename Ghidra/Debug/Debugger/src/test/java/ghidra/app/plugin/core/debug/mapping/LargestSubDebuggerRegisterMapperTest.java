@@ -23,7 +23,7 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.CollectionUtils.Delta;
@@ -33,7 +33,7 @@ import ghidra.program.model.lang.*;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.model.thread.TraceThread;
 
-public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDebuggerTest {
 
 	static class TestTargetMapper extends DefaultDebuggerTargetTraceMapper {
 		public TestTargetMapper(TargetObject target)

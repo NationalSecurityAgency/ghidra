@@ -165,6 +165,11 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 		public boolean affectedByStackChange(TraceStack stack, DebuggerCoordinates coordinates) {
 			return false;
 		}
+
+		@Override
+		public boolean shouldDisassemble() {
+			return false;
+		}
 	}
 
 	@Override

@@ -19,8 +19,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.*;
@@ -72,7 +72,7 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 		recorder.forceSnapshot();
 		TestTargetThread handler2Thread = process.addThread(4);
 		waitForValue(() -> recorder.getTraceThread(handler2Thread));
-		AbstractGhidraHeadedDebuggerGUITest.waitForDomainObject(trace);
+		AbstractGhidraHeadedDebuggerTest.waitForDomainObject(trace);
 
 		try (Transaction tx = trace.openTransaction("Comments")) {
 			recorder.getTraceThread(mainThread).setComment("GUI main loop");

@@ -23,9 +23,11 @@ import ghidra.util.Msg;
  */
 public class LocalProcessPtySession implements PtySession {
 	private final Process process;
+	private final String ptyName;
 
-	public LocalProcessPtySession(Process process) {
+	public LocalProcessPtySession(Process process, String ptyName) {
 		this.process = process;
+		this.ptyName = ptyName;
 		Msg.info(this, "local Pty session. PID = " + process.pid());
 	}
 
@@ -37,5 +39,10 @@ public class LocalProcessPtySession implements PtySession {
 	@Override
 	public void destroyForcibly() {
 		process.destroyForcibly();
+	}
+
+	@Override
+	public String description() {
+		return "process " + process.pid() + " on " + ptyName;
 	}
 }

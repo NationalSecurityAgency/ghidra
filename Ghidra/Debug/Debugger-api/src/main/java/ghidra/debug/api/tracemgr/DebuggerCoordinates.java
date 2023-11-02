@@ -658,13 +658,12 @@ public class DebuggerCoordinates {
 				projData = new DefaultProjectData(projLoc, false, false);
 			}
 			catch (NotOwnerException e) {
-				Msg.showError(DebuggerCoordinates.class, tool.getToolFrame(), "Trace Open Failed",
+				Msg.error(DebuggerCoordinates.class,
 					"Not project owner: " + projLoc + "(" + pathname + ")");
 				return null;
 			}
 			catch (IOException | LockException e) {
-				Msg.showError(DebuggerCoordinates.class, tool.getToolFrame(), "Trace Open Failed",
-					"Project error: " + e.getMessage());
+				Msg.error(DebuggerCoordinates.class, "Project error: " + e.getMessage());
 				return null;
 			}
 		}
@@ -676,8 +675,7 @@ public class DebuggerCoordinates {
 			if (version != DomainFile.DEFAULT_VERSION) {
 				message += " version " + version;
 			}
-			String title = df == null ? "Trace Not Found" : "Wrong File Type";
-			Msg.showError(DebuggerCoordinates.class, tool.getToolFrame(), title, message);
+			Msg.error(DebuggerCoordinates.class, message);
 			return null;
 		}
 		return df;

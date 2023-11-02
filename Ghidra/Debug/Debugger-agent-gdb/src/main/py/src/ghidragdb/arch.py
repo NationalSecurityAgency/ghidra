@@ -239,11 +239,18 @@ class DefaultRegisterMapper(object):
                                .format(name, value, value.type))
         return RegVal(self.map_name(inf, name), av)
 
+    def convert_value_back(self, value, size=None):
+        if size is not None:
+            value = value[-size:].rjust(size, b'\0')
+        if self.byte_order == 'little':
+            value = bytes(reversed(value))
+        return value
+
     def map_name_back(self, inf, name):
         return name
 
     def map_value_back(self, inf, name, value):
-        return RegVal(self.map_name_back(inf, name), value)
+        return RegVal(self.map_name_back(inf, name), self.convert_value_back(value))
 
 
 class Intel_x86_64_RegisterMapper(DefaultRegisterMapper):
@@ -268,6 +275,7 @@ class Intel_x86_64_RegisterMapper(DefaultRegisterMapper):
     def map_name_back(self, inf, name):
         if name == 'rflags':
             return 'eflags'
+        return name
 
 
 DEFAULT_BE_REGISTER_MAPPER = DefaultRegisterMapper('big')

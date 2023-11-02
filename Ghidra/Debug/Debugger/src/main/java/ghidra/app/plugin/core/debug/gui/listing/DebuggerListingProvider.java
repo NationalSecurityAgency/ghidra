@@ -38,6 +38,7 @@ import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import docking.action.builder.ToggleActionBuilder;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.support.ViewerPosition;
@@ -47,6 +48,7 @@ import ghidra.app.nav.ListingPanelContainer;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
+import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
@@ -61,6 +63,8 @@ import ghidra.app.services.*;
 import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.async.AsyncDebouncer;
+import ghidra.async.AsyncTimer;
 import ghidra.debug.api.action.GoToInput;
 import ghidra.debug.api.action.LocationTrackingSpec;
 import ghidra.debug.api.control.ControlMode;
@@ -69,11 +73,11 @@ import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.AutoConfigState;
-import ghidra.framework.plugintool.AutoService;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -112,6 +116,20 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			return false; // for reg/pc tracking
 		}
 		return true;
+	}
+
+	interface AutoDisassembleAction {
+		String NAME = "Auto-Disassembly";
+		String DESCRIPTION = "If the tracking spec follows the PC, disassemble automatically.";
+		String HELP_ANCHOR = "auto_disassembly";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
 	}
 
 	protected class MarkerSetChangeListener implements ChangeListener {
@@ -223,6 +241,14 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		@Override
 		protected void locationTracked() {
 			doGoToTracked();
+			if (!autoDisassemble || !trackingTrait.shouldDisassemble()) {
+				return;
+			}
+			disassemblyDebouncer.contact(trackedLocation.getByteAddress());
+		}
+
+		boolean shouldDisassemble() {
+			return trackedLocation != null && tracker.shouldDisassemble();
 		}
 	}
 
@@ -240,6 +266,18 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		@Override
 		protected void repaintPanel() {
 			getListingPanel().getFieldPanel().repaint();
+		}
+
+		@Override
+		protected void memoryWasRead(AddressSetView read) {
+			if (!autoDisassemble || !trackingTrait.shouldDisassemble()) {
+				return;
+			}
+			ProgramLocation loc = trackingTrait.getTrackedLocation();
+			if (!read.contains(loc.getByteAddress())) {
+				return;
+			}
+			disassemblyDebouncer.contact(loc.getByteAddress());
 		}
 	}
 
@@ -276,6 +314,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected DockingAction actionSyncSelectionIntoStaticListing;
 	protected DockingAction actionSyncSelectionFromStaticListing;
 	protected ToggleDockingAction actionFollowsCurrentThread;
+	protected ToggleDockingAction actionAutoDisassemble;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
 	protected DockingAction actionRefreshSelectedMemory;
 	protected DockingAction actionOpenProgram;
@@ -284,11 +323,16 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	@AutoConfigStateField
 	protected boolean followsCurrentThread = true;
 	// TODO: followsCurrentSnap?
+	@AutoConfigStateField
+	protected boolean autoDisassemble = true;
 
 	protected final ForListingSyncTrait syncTrait;
 	protected final ForListingGoToTrait goToTrait;
 	protected final ForListingTrackingTrait trackingTrait;
 	protected final ForListingReadsMemoryTrait readsMemTrait;
+
+	protected final AsyncDebouncer<Address> disassemblyDebouncer =
+		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
 
 	protected final ListenerSet<LocationTrackingSpecChangeListener> trackingSpecChangeListeners =
 		new ListenerSet<>(LocationTrackingSpecChangeListener.class, true);
@@ -321,6 +365,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		goToTrait = new ForListingGoToTrait();
 		trackingTrait = new ForListingTrackingTrait();
 		readsMemTrait = new ForListingReadsMemoryTrait();
+
+		disassemblyDebouncer.addListener(this::doAutoDisassemble);
 
 		ListingPanel listingPanel = getListingPanel();
 		colorModel = plugin.createListingBackgroundColorModel(listingPanel);
@@ -467,6 +513,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			actionFollowsCurrentThread.setSelected(followsCurrentThread);
 			updateBorder();
 		}
+		actionAutoDisassemble.setSelected(autoDisassemble);
 	}
 
 	@Override
@@ -705,6 +752,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					.buildAndInstallLocal(this);
 		}
 
+		actionAutoDisassemble = AutoDisassembleAction.builder(plugin)
+				.enabled(true)
+				.selected(true)
+				.onAction(ctx -> doSetAutoDisassemble(actionAutoDisassemble.isSelected()))
+				.buildAndInstallLocal(this);
+
 		actionSyncSelectionIntoStaticListing =
 			syncTrait.installSyncSelectionIntoStaticListingAction();
 		actionSyncSelectionFromStaticListing =
@@ -757,17 +810,16 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	 * which applies to many things in general. This one is for changes in the listing model's
 	 * "size", i.e., the memory mapping or assigned view has changed. This should be the perfect
 	 * place to ensure the tracked location is centered, if applicable.
+	 * 
+	 * <p>
+	 * It seems this method gets called a bit spuriously. A change in bytes, which does not imply a
+	 * change in layout, will also land us here. Thus, we do some simple test here to verify that
+	 * the layout has actually changed. A good proxy is if the number of addresses in the listing
+	 * has changed. To detect that, we have to record what we've seen each change.
 	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		super.stateChanged(e);
-		/*
-		 * It seems this method gets called a bit spuriously. A change in bytes, which does not
-		 * imply a change in layout, will also land us here. Thus, we do some simple test here to
-		 * verify that the layout has actually changed. A good proxy is if the number of addresses
-		 * in the listing has changed. To detect that, we have to record what we've seen each
-		 * change.
-		 */
 		long newCountAddressesInIndex =
 			getListingPanel().getAddressIndexMap().getIndexedAddressSet().getNumAddresses();
 		if (this.countAddressesInIndex == newCountAddressesInIndex) {
@@ -776,7 +828,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		this.countAddressesInIndex = newCountAddressesInIndex;
 		ProgramLocation trackedLocation = trackingTrait.getTrackedLocation();
 		if (trackedLocation != null && !isEffectivelyDifferent(getLocation(), trackedLocation)) {
-			cbGoTo.invoke(() -> getListingPanel().goTo(trackedLocation, true));
+			cbGoTo.invoke(() -> Swing.runLater(() -> {
+				boolean goneTo = getListingPanel().goTo(trackedLocation, true);
+				if (goneTo) {
+					getListingPanel().center(trackedLocation);
+				}
+			}));
 		}
 	}
 
@@ -1037,6 +1094,15 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		coordinatesActivated(traceManager.getCurrent());
 	}
 
+	public void setAutoDisassemble(boolean auto) {
+		actionAutoDisassemble.setSelected(true);
+		doSetAutoDisassemble(auto);
+	}
+
+	protected void doSetAutoDisassemble(boolean auto) {
+		this.autoDisassemble = auto;
+	}
+
 	protected void updateBorder() {
 		// TODO: Probably make this accessible from abstract class, instead
 		ListingPanelContainer decoration = (ListingPanelContainer) getComponent();
@@ -1045,6 +1111,10 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	public boolean isFollowsCurrentThread() {
 		return followsCurrentThread;
+	}
+
+	public boolean isAutoDisassemble() {
+		return autoDisassemble;
 	}
 
 	public void setAutoReadMemorySpec(AutoReadMemorySpec spec) {
@@ -1111,6 +1181,27 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				plugin.fireStaticLocationEvent(trackedStatic);
 			});
 		}
+	}
+
+	protected void doAutoDisassemble(Address start) {
+		TraceProgramView view = current.getView();
+		if (view == null) {
+			return;
+		}
+		/**
+		 * We'll avoid re-disassembly only if there already exists an instruction <em>at the start
+		 * address</em>. If it's in the middle, then we're off cut and should re-disassemble at the
+		 * new start.
+		 */
+		Instruction exists = view.getListing().getInstructionAt(start);
+		if (exists != null) {
+			return;
+		}
+		AddressSpace space = start.getAddressSpace();
+		AddressSet set = new AddressSet(space.getMinAddress(), space.getMaxAddress());
+		TraceDisassembleCommand dis =
+			new TraceDisassembleCommand(current.getPlatform(), start, set);
+		dis.run(tool, view);
 	}
 
 	@Override

@@ -36,11 +36,14 @@ import com.google.protobuf.ByteString;
 import db.Transaction;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
+import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
@@ -48,7 +51,6 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
@@ -158,6 +160,16 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			return removed;
 		}
 
+		public synchronized OpenTrace removeByTrace(Trace trace) {
+			OpenTrace removed = byTrace.remove(trace);
+			if (removed == null) {
+				return null;
+			}
+			byId.remove(removed.doId);
+			plugin.withdrawTarget(removed.target);
+			return removed;
+		}
+
 		public synchronized OpenTrace getById(DoId doId) {
 			return byId.get(doId);
 		}
@@ -185,6 +197,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	private final OutputStream out;
 	private final CompletableFuture<Void> negotiate = new CompletableFuture<>();
 	private final CompletableFuture<Void> closed = new CompletableFuture<>();
+	private final Set<TerminalSession> terminals = new LinkedHashSet<>();
 
 	private final OpenTraceMap openTraces = new OpenTraceMap();
 	private final Map<Tid, OpenTx> openTxes = new HashMap<>();
@@ -195,6 +208,8 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
+	@AutoServiceConsumed
+	private DebuggerControlService controlService;
 	@SuppressWarnings("unused")
 	private final Wiring autoServiceWiring;
 
@@ -230,9 +245,30 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 	}
 
+	protected void terminateTerminals() {
+		List<TerminalSession> terminals;
+		synchronized (this.terminals) {
+			terminals = List.copyOf(this.terminals);
+			this.terminals.clear();
+		}
+		for (TerminalSession term : terminals) {
+			CompletableFuture.runAsync(() -> {
+				try {
+					term.terminate();
+				}
+				catch (Exception e) {
+					Msg.error(this, "Could not terminate " + term + ": " + e);
+				}
+			});
+		}
+	}
+
 	public void dispose() throws IOException {
 		plugin.removeHandler(this);
 		flushXReqQueue(new TraceRmiError("Socket closed"));
+
+		terminateTerminals();
+
 		socket.close();
 		while (!openTxes.isEmpty()) {
 			Tid nextKey = openTxes.keySet().iterator().next();
@@ -467,6 +503,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 				case REQUEST_START_TX -> "startTx(%d,%s)".formatted(
 					req.getRequestStartTx().getTxid().getId(),
 					req.getRequestStartTx().getDescription());
+				case REQUEST_SET_VALUE -> "setValue(%d,%s,%s)".formatted(
+					req.getRequestSetValue().getValue().getParent().getId(),
+					req.getRequestSetValue().getValue().getParent().getPath().getPath(),
+					req.getRequestSetValue().getValue().getKey());
 				default -> null;
 			};
 		}
@@ -751,25 +791,26 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		TraceObject object = open.getObject(req.getObject(), true);
 		DebuggerCoordinates coords = traceManager.getCurrent();
-		if (coords.getTrace() == object.getTrace()) {
-			coords = coords.object(object);
+		if (coords.getTrace() != open.trace) {
+			coords = DebuggerCoordinates.NOWHERE;
 		}
-		else {
-			coords = DebuggerCoordinates.NOWHERE.object(object);
-		}
-		if (open.lastSnapshot != null) {
+		ControlMode mode = controlService.getCurrentMode(open.trace);
+		if (open.lastSnapshot != null && mode.followsPresent()) {
 			coords = coords.snap(open.lastSnapshot.getKey());
 		}
-		if (!traceManager.getOpenTraces().contains(open.trace)) {
-			traceManager.openTrace(open.trace);
-			traceManager.activate(coords);
-		}
-		else {
-			Trace currentTrace = traceManager.getCurrentTrace();
-			if (currentTrace == null || openTraces.getByTrace(currentTrace) != null) {
-				traceManager.activate(coords);
+		DebuggerCoordinates finalCoords = coords.object(object);
+		Swing.runLater(() -> {
+			if (!traceManager.getOpenTraces().contains(open.trace)) {
+				traceManager.openTrace(open.trace);
+				traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
 			}
-		}
+			else {
+				Trace currentTrace = traceManager.getCurrentTrace();
+				if (currentTrace == null || openTraces.getByTrace(currentTrace) != null) {
+					traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
+				}
+			}
+		});
 		return ReplyActivate.getDefaultInstance();
 	}
 
@@ -965,7 +1006,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		for (Method m : req.getMethodsList()) {
 			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(),
-				new ActionName(m.getAction()),
+				ActionName.name(m.getAction()),
 				m.getDescription(), m.getParametersList()
 						.stream()
 						.collect(Collectors.toMap(MethodParameter::getName, this::makeParameter)),
@@ -996,7 +1037,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		for (RegVal rv : req.getValuesList()) {
 			Register register = open.getRegister(rv.getName(), false);
 			if (register == null) {
-				Msg.warn(this, "Ignoring unrecognized register: " + rv.getName());
+				Msg.trace(this, "Ignoring unrecognized register: " + rv.getName());
 				rep.addSkippedNames(rv.getName());
 				continue;
 			}
@@ -1182,9 +1223,12 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	@Override
-	@Internal
 	public long getLastSnapshot(Trace trace) {
-		TraceSnapshot lastSnapshot = openTraces.getByTrace(trace).lastSnapshot;
+		OpenTrace byTrace = openTraces.getByTrace(trace);
+		if (byTrace == null) {
+			throw new NoSuchElementException();
+		}
+		TraceSnapshot lastSnapshot = byTrace.lastSnapshot;
 		if (lastSnapshot == null) {
 			return 0;
 		}
@@ -1198,6 +1242,23 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		catch (InterruptedException | ExecutionException e) {
 			throw new TraceRmiError(e);
+		}
+	}
+
+	@Override
+	public void forceCloseTrace(Trace trace) {
+		OpenTrace open = openTraces.removeByTrace(trace);
+		open.trace.release(this);
+	}
+
+	@Override
+	public boolean isTarget(Trace trace) {
+		return openTraces.getByTrace(trace) != null;
+	}
+
+	public void registerTerminals(Collection<TerminalSession> terminals) {
+		synchronized (this.terminals) {
+			this.terminals.addAll(terminals);
 		}
 	}
 }

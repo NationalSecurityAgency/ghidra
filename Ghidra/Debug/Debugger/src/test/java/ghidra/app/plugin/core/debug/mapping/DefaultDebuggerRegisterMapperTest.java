@@ -24,7 +24,7 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.dbg.model.TestTargetRegister;
 import ghidra.dbg.model.TestTargetRegisterValue;
 import ghidra.dbg.target.TargetObject;
@@ -36,7 +36,7 @@ import ghidra.program.model.lang.*;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.model.thread.TraceThread;
 
-public class DefaultDebuggerRegisterMapperTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DefaultDebuggerRegisterMapperTest extends AbstractGhidraHeadedDebuggerTest {
 
 	static class TestTargetMapper extends DefaultDebuggerTargetTraceMapper {
 		public TestTargetMapper(TargetObject target)

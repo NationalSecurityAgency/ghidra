@@ -15,6 +15,9 @@
  */
 package ghidra.debug.api.target;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * A name for a commonly-recognized target action.
  * 
@@ -31,15 +34,43 @@ package ghidra.debug.api.target;
  * effort to match its methods to these stock actions where applicable, but ultimately, it is up to
  * the UI to decide what is presented where.
  */
-public record ActionName(String name) {
-	public static final ActionName REFRESH = new ActionName("refresh");
+public record ActionName(String name, boolean builtIn) {
+	private static final Map<String, ActionName> NAMES = new HashMap<>();
+
+	public static ActionName name(String name) {
+		synchronized (NAMES) {
+			return NAMES.computeIfAbsent(name, n -> new ActionName(n, false));
+		}
+	}
+
+	private static ActionName builtIn(String name) {
+		synchronized (NAMES) {
+			ActionName action = new ActionName(name, true);
+			if (NAMES.put(name, action) != null) {
+				throw new AssertionError();
+			}
+			return action;
+		}
+	}
+
+	private static ActionName extended(String name) {
+		synchronized (NAMES) {
+			ActionName action = new ActionName(name, false);
+			if (NAMES.put(name, action) != null) {
+				throw new AssertionError();
+			}
+			return action;
+		}
+	}
+
+	public static final ActionName REFRESH = builtIn("refresh");
 	/**
 	 * Activate a given object and optionally a time
 	 * 
 	 * <p>
 	 * Forms: (focus:Object), (focus:Object, snap:LONG), (focus:Object, time:STR)
 	 */
-	public static final ActionName ACTIVATE = new ActionName("activate");
+	public static final ActionName ACTIVATE = builtIn("activate");
 	/**
 	 * A weaker form of activate.
 	 * 
@@ -48,9 +79,9 @@ public record ActionName(String name) {
 	 * used to communicate selection (i.e., highlight) of the object. Whereas, double-clicking or
 	 * pressing enter would more likely invoke 'activate.'
 	 */
-	public static final ActionName FOCUS = new ActionName("focus");
-	public static final ActionName TOGGLE = new ActionName("toggle");
-	public static final ActionName DELETE = new ActionName("delete");
+	public static final ActionName FOCUS = builtIn("focus");
+	public static final ActionName TOGGLE = builtIn("toggle");
+	public static final ActionName DELETE = builtIn("delete");
 
 	/**
 	 * Execute a CLI command
@@ -58,7 +89,7 @@ public record ActionName(String name) {
 	 * <p>
 	 * Forms: (cmd:STRING):STRING; Optional arguments: capture:BOOL
 	 */
-	public static final ActionName EXECUTE = new ActionName("execute");
+	public static final ActionName EXECUTE = builtIn("execute");
 
 	/**
 	 * Connect the back-end to a (usually remote) target
@@ -66,23 +97,23 @@ public record ActionName(String name) {
 	 * <p>
 	 * Forms: (spec:STRING)
 	 */
-	public static final ActionName CONNECT = new ActionName("connect");
+	public static final ActionName CONNECT = extended("connect");
 
 	/**
 	 * Forms: (target:Attachable), (pid:INT), (spec:STRING)
 	 */
-	public static final ActionName ATTACH = new ActionName("attach");
-	public static final ActionName DETACH = new ActionName("detach");
+	public static final ActionName ATTACH = extended("attach");
+	public static final ActionName DETACH = extended("detach");
 
 	/**
 	 * Forms: (command_line:STRING), (file:STRING,args:STRING), (file:STRING,args:STRING_ARRAY),
 	 * (ANY*)
 	 */
-	public static final ActionName LAUNCH = new ActionName("launch");
-	public static final ActionName KILL = new ActionName("kill");
+	public static final ActionName LAUNCH = extended("launch");
+	public static final ActionName KILL = builtIn("kill");
 
-	public static final ActionName RESUME = new ActionName("resume");
-	public static final ActionName INTERRUPT = new ActionName("interrupt");
+	public static final ActionName RESUME = builtIn("resume");
+	public static final ActionName INTERRUPT = builtIn("interrupt");
 
 	/**
 	 * All of these will show in the "step" portion of the control toolbar, if present. The
@@ -93,25 +124,25 @@ public record ActionName(String name) {
 	 * context. (Multiple will appear, but may confuse the user.) You can have as many extended step
 	 * actions as you like. They will be ordered lexicographically by name.
 	 */
-	public static final ActionName STEP_INTO = new ActionName("step_into");
-	public static final ActionName STEP_OVER = new ActionName("step_over");
-	public static final ActionName STEP_OUT = new ActionName("step_out");
+	public static final ActionName STEP_INTO = builtIn("step_into");
+	public static final ActionName STEP_OVER = builtIn("step_over");
+	public static final ActionName STEP_OUT = builtIn("step_out");
 	/**
 	 * Skip is not typically available, except in emulators. If the back-end debugger does not have
 	 * a command for this action out-of-the-box, we do not recommend trying to implement it
 	 * yourself. The purpose of these actions just to expose/map each command to the UI, not to
 	 * invent new features for the back-end debugger.
 	 */
-	public static final ActionName STEP_SKIP = new ActionName("step_skip");
+	public static final ActionName STEP_SKIP = builtIn("step_skip");
 	/**
 	 * Step back is not typically available, except in emulators and timeless (or time-travel)
 	 * debuggers.
 	 */
-	public static final ActionName STEP_BACK = new ActionName("step_back");
+	public static final ActionName STEP_BACK = builtIn("step_back");
 	/**
 	 * The action for steps that don't fit one of the common stepping actions.
 	 */
-	public static final ActionName STEP_EXT = new ActionName("step_ext");
+	public static final ActionName STEP_EXT = extended("step_ext");
 
 	/**
 	 * Forms: (addr:ADDRESS), R/W(rng:RANGE), (expr:STRING)
@@ -123,25 +154,25 @@ public record ActionName(String name) {
 	 * The client may pass either null or "" for condition and/or commands to indicate omissions of
 	 * those arguments.
 	 */
-	public static final ActionName BREAK_SW_EXECUTE = new ActionName("break_sw_execute");
-	public static final ActionName BREAK_HW_EXECUTE = new ActionName("break_hw_execute");
-	public static final ActionName BREAK_READ = new ActionName("break_read");
-	public static final ActionName BREAK_WRITE = new ActionName("break_write");
-	public static final ActionName BREAK_ACCESS = new ActionName("break_access");
-	public static final ActionName BREAK_EXT = new ActionName("break_ext");
+	public static final ActionName BREAK_SW_EXECUTE = builtIn("break_sw_execute");
+	public static final ActionName BREAK_HW_EXECUTE = builtIn("break_hw_execute");
+	public static final ActionName BREAK_READ = builtIn("break_read");
+	public static final ActionName BREAK_WRITE = builtIn("break_write");
+	public static final ActionName BREAK_ACCESS = builtIn("break_access");
+	public static final ActionName BREAK_EXT = extended("break_ext");
 
 	/**
 	 * Forms: (rng:RANGE)
 	 */
-	public static final ActionName READ_MEM = new ActionName("read_mem");
+	public static final ActionName READ_MEM = builtIn("read_mem");
 	/**
 	 * Forms: (addr:ADDRESS,data:BYTES)
 	 */
-	public static final ActionName WRITE_MEM = new ActionName("write_mem");
+	public static final ActionName WRITE_MEM = builtIn("write_mem");
 
 	// NOTE: no read_reg. Use refresh(RegContainer), refresh(RegGroup), refresh(Register)
 	/**
 	 * Forms: (frame:Frame,name:STRING,value:BYTES), (register:Register,value:BYTES)
 	 */
-	public static final ActionName WRITE_REG = new ActionName("write_reg");
+	public static final ActionName WRITE_REG = builtIn("write_reg");
 }

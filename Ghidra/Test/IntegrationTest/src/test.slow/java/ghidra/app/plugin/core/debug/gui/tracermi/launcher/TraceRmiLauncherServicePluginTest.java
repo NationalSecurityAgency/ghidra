@@ -24,13 +24,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.TraceRmiLauncherService;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
 import ghidra.util.task.ConsoleTaskMonitor;
 
-public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebuggerTest {
 	TraceRmiLauncherService launcherService;
 
 	@Before
@@ -41,11 +41,6 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 	protected TraceRmiLaunchOffer findByTitle(Collection<TraceRmiLaunchOffer> offers,
 			String title) {
 		return offers.stream().filter(o -> o.getTitle().equals(title)).findFirst().get();
-	}
-
-	@Test
-	public void testGetOpinions() throws Exception {
-		assertFalse(launcherService.getOpinions().isEmpty());
 	}
 
 	@Test

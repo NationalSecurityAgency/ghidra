@@ -30,7 +30,7 @@ import org.junit.experimental.categories.Category;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractConnectAction;
 import ghidra.app.plugin.core.debug.service.model.DebuggerConnectDialog.FactoryEntry;
 import ghidra.app.plugin.core.debug.service.model.TestDebuggerProgramLaunchOpinion.TestDebuggerProgramLaunchOffer;
@@ -55,7 +55,7 @@ import ghidra.util.datastruct.CollectionChangeListener;
  * TODO: Cover cases where multiple recorders are present
  */
 @Category(NightlyCategory.class)
-public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerTest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 

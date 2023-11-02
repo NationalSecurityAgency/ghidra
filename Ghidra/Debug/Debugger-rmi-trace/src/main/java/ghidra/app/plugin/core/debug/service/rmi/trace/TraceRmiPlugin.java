@@ -23,8 +23,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.services.DebuggerTargetService;
-import ghidra.app.services.TraceRmiService;
+import ghidra.app.services.*;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.AutoService.Wiring;
@@ -52,8 +51,9 @@ import ghidra.util.task.TaskMonitor;
 	},
 	servicesProvided = {
 		TraceRmiService.class,
+		InternalTraceRmiService.class,
 	})
-public class TraceRmiPlugin extends Plugin implements TraceRmiService {
+public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 	private static final int DEFAULT_PORT = 15432;
 
 	@AutoServiceConsumed

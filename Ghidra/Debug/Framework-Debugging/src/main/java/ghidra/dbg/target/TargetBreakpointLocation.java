@@ -17,7 +17,6 @@ package ghidra.dbg.target;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 
 /**
@@ -48,45 +47,6 @@ public interface TargetBreakpointLocation extends TargetObject {
 	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME, hidden = true)
 	public default AddressRange getRange() {
 		return getTypedAttributeNowByName(RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
-	}
-
-	/**
-	 * The minimum address of this location
-	 * 
-	 * @return the address
-	 * @deprecated use {@link #getRange()} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public default Address getAddress() {
-		return getRange().getMinAddress();
-	}
-
-	/**
-	 * If available, get the length in bytes, of the range covered by the breakpoint.
-	 * 
-	 * <p>
-	 * In most cases, where the length is not available, a length of 1 should be presumed.
-	 * 
-	 * @return the length, or {@code null} if not known
-	 * @deprecated use {@link #getRange()} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public default Integer getLength() {
-		AddressRange range = getRange();
-		return range == null ? null : (int) range.getLength();
-	}
-
-	/**
-	 * Get the length, defaulting to a given fallback, usually 1
-	 * 
-	 * @param fallback the fallback value
-	 * @return the length, or the fallback
-	 * @deprecated use {@link #getRange()} instead
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	public default int getLengthOrDefault(int fallback) {
-		Integer length = getLength();
-		return length == null ? 1 : length;
 	}
 
 	/**

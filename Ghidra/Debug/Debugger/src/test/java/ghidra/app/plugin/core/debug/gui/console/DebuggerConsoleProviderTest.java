@@ -22,11 +22,11 @@ import org.junit.Test;
 
 import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.util.Msg;
 
-public class DebuggerConsoleProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerConsoleProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	DebuggerConsolePlugin consolePlugin;
 	DebuggerConsoleProvider consoleProvider;
 

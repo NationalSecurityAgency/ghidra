@@ -18,7 +18,6 @@ package ghidra.app.services;
 import java.util.Collection;
 
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
-import ghidra.debug.api.tracermi.TraceRmiLaunchOpinion;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.listing.Program;
 
@@ -29,13 +28,6 @@ import ghidra.program.model.listing.Program;
 	description = "Manages and presents launchers for Trace RMI Targets",
 	defaultProviderName = "ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin")
 public interface TraceRmiLauncherService {
-	/**
-	 * Get all of the installed opinions
-	 * 
-	 * @return the opinions
-	 */
-	Collection<TraceRmiLaunchOpinion> getOpinions();
-
 	/**
 	 * Get all offers for the given program
 	 * 

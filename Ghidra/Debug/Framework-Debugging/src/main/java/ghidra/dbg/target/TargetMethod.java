@@ -639,7 +639,7 @@ public interface TargetMethod extends TargetObject {
 	 * @param permitExtras false to require every named argument has a named parameter
 	 * @return the map of validated arguments
 	 */
-	static Map<String, ?> validateArguments(Map<String, ParameterDescription<?>> parameters,
+	static Map<String, Object> validateArguments(Map<String, ParameterDescription<?>> parameters,
 			Map<String, ?> arguments, boolean permitExtras) {
 		if (!permitExtras) {
 			if (!parameters.keySet().containsAll(arguments.keySet())) {

@@ -43,7 +43,7 @@ import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.byteviewer.ByteViewerComponent;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPanel;
 import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
@@ -71,7 +71,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 
 @Category(NightlyCategory.class)
-public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerMemoryBytesPlugin memBytesPlugin;
 	protected DebuggerMemoryBytesProvider memBytesProvider;

@@ -27,14 +27,14 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
 import ghidra.dbg.model.TestTargetInterpreter.ExecuteCall;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.debug.api.interpreter.DebuggerInterpreterConnection;
 
 @Category(NightlyCategory.class)
-public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerTest {
 	private DebuggerInterpreterPlugin interpreterPlugin;
 
 	@Before

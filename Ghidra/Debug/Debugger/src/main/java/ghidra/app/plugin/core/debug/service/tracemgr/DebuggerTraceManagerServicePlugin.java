@@ -463,7 +463,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@AutoServiceConsumed
-	private void setModelService(DebuggerTargetService targetService) {
+	private void setTargetService(DebuggerTargetService targetService) {
 		if (this.targetService != null) {
 			this.targetService.removeTargetPublicationListener(forTargetsListener);
 		}

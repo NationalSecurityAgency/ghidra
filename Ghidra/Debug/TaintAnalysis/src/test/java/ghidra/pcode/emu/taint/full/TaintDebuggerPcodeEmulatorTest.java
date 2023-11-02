@@ -26,7 +26,7 @@ import org.junit.Test;
 import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.DebuggerEmulationService;
@@ -45,7 +45,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.*;
 import ghidra.util.task.TaskMonitor;
 
-public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebuggerTest {
 	private DebuggerStaticMappingService mappingService;
 	private DebuggerEmulationService emuService;
 

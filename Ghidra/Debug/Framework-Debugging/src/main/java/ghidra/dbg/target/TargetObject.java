@@ -156,6 +156,13 @@ import ghidra.lifecycle.Internal;
  * object or throw an exception. In those cases, unless otherwise noted, this actually means the
  * future will complete with that object, or complete exceptionally. Specifying this in every
  * instance is just pedantic.
+ * 
+ * <p>
+ * Assuming Trace RMI is successful, this interface will face a serious identity crisis. It will no
+ * longer serve its purpose as a proper Java interface, and instead will only serve as a type name
+ * in the object-model schema, which survives in the trace database. For some of the interfaces, we
+ * already have defined equivalent interfaces in the trace object manager. We will probably port
+ * additional interfaces over and eventually remove all of these.
  */
 public interface TargetObject extends Comparable<TargetObject> {
 

@@ -620,7 +620,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		private boolean isVisible(TraceBreakpoint location) {
 			long snap = traceManager.getCurrentFor(trace).getSnap();
-			return location.getLifespan().contains(snap);
+			Lifespan span = location.getLifespan();
+			return span != null && span.contains(snap);
 		}
 
 		private void locationAdded(TraceBreakpoint location) {

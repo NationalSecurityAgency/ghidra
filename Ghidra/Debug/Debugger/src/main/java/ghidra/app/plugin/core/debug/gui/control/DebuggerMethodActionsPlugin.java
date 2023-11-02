@@ -23,8 +23,10 @@ import docking.Tool;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
 import ghidra.app.context.ProgramActionContext;
+import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.services.*;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.target.Target;
@@ -62,7 +64,7 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			tool.execute(new TargetActionTask(entry));
+			tool.execute(new TargetActionTask(entry.display(), entry));
 		}
 	}
 
@@ -95,11 +97,28 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 		return mode.isTarget();
 	}
 
+	/**
+	 * While it may be possible to retrieve sufficient context from the "current state," it's not
+	 * always appropriate to display all of these actions. They should really only appear when an
+	 * address is clearly intended, or when a trace object is clearly intended. We'll have to see
+	 * how/if this works in the type-specific trace object tables, e.g., the Modules panel.
+	 */
+	protected boolean isAppropriate(ActionContext context) {
+		if (context instanceof ProgramLocationActionContext) {
+			return true;
+		}
+		if (context instanceof DebuggerObjectActionContext) {
+			return true;
+		}
+		return false;
+	}
+
 	@Override
 	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
-		if (!isControlTarget()) {
+		if (!isControlTarget() || !isAppropriate(context)) {
 			return List.of();
 		}
+
 		Target target = getTarget(context);
 		if (target == null) {
 			return List.of();
@@ -107,6 +126,9 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 
 		List<DockingActionIf> result = new ArrayList<>();
 		for (ActionEntry entry : target.collectActions(null, context).values()) {
+			if (entry.requiresPrompt() || entry.builtIn()) {
+				continue;
+			}
 			result.add(new InvokeActionEntryAction(entry));
 		}
 		return result;
