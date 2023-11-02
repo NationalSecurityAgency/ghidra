@@ -34,28 +34,30 @@ import ghidra.util.SystemUtilities;
 /**
  * TextField for entering integer numbers, either in decimal or hex.
  *
- * <P> This field does continuous checking, so
- * you can't enter a bad value.
+ * <P>
+ * This field does continuous checking, so you can't enter a bad value.
  *
- * <P> Internally, values are maintained using BigIntegers so this field can
- * contain numbers as large as desired.  There are convenience methods for getting the value as
- * either an int or long.  If using these convenience methods, you should also set the max allowed
- * value so that users can't enter a value larger than can be represented by the {@link #getIntValue()}
- * or {@link #getLongValue()} methods as appropriate.
+ * <P>
+ * Internally, values are maintained using BigIntegers so this field can contain numbers as large as
+ * desired. There are convenience methods for getting the value as either an int or long. If using
+ * these convenience methods, you should also set the max allowed value so that users can't enter a
+ * value larger than can be represented by the {@link #getIntValue()} or {@link #getLongValue()}
+ * methods as appropriate.
  *
- * <P> There are several configuration options as follows:
+ * <P>
+ * There are several configuration options as follows:
  * <UL>
- *      <LI> Allows negative numbers - either support all integer numbers or just non-negative
- *           numbers. See {@link #setAllowNegativeValues(boolean)} </LI>
- *      <LI> Allows hex prefix - If this mode is on, then hex mode is turned on and off automatically
- *           depending whether or not the text starts with 0x. Otherwise, the hex/decimal mode is set externally
- *           (either programmatically or pressing &lt;CTRL&gt; M) and the user is restricted to the numbers/letters
- *           appropriate for that mode. See {@link #setAllowsHexPrefix(boolean)}</LI>
- *      <LI> Have a max value - a max value can be set (must be positive) such that the user can not type a
- *           number whose absolute value is greater than the max. Otherwise, the value is unlimited if max is 
- *           null/unspecified. See {@link #setMaxValue(BigInteger)}</LI>
- *      <LI> Show the number mode as hint text - If on either "Hex" or "Dec" is displayed lightly in the
- * 		     bottom right portion of the text field. See {@link #setShowNumberMode(boolean)}</LI>
+ * <LI>Allows negative numbers - either support all integer numbers or just non-negative numbers.
+ * See {@link #setAllowNegativeValues(boolean)}</LI>
+ * <LI>Allows hex prefix - If this mode is on, then hex mode is turned on and off automatically
+ * depending whether or not the text starts with 0x. Otherwise, the hex/decimal mode is set
+ * externally (either programmatically or pressing &lt;CTRL&gt; M) and the user is restricted to the
+ * numbers/letters appropriate for that mode. See {@link #setAllowsHexPrefix(boolean)}</LI>
+ * <LI>Have a max value - a max value can be set (must be positive) such that the user can not type
+ * a number whose absolute value is greater than the max. Otherwise, the value is unlimited if max
+ * is null/unspecified. See {@link #setMaxValue(BigInteger)}</LI>
+ * <LI>Show the number mode as hint text - If on either "Hex" or "Dec" is displayed lightly in the
+ * bottom right portion of the text field. See {@link #setShowNumberMode(boolean)}</LI>
  * </UL>
  *
  */
@@ -92,9 +94,9 @@ public class IntegerTextField {
 	 * Creates a new IntegerTextField with the specified number of columns and an initial value
 	 *
 	 * @param columns the number of columns to display in the JTextField.
-	 * @param initialValue the initial value. This constructor takes an initialValue as a long.  If
-	 * you need a value that is bigger (or smaller) than can be specified as a long, then use
-	 * the constructor that takes a BigInteger as an initial value.
+	 * @param initialValue the initial value. This constructor takes an initialValue as a long. If
+	 *            you need a value that is bigger (or smaller) than can be specified as a long, then
+	 *            use the constructor that takes a BigInteger as an initial value.
 	 */
 	public IntegerTextField(int columns, long initialValue) {
 		this(columns, BigInteger.valueOf(initialValue));
@@ -159,11 +161,13 @@ public class IntegerTextField {
 	/**
 	 * Returns the current value as an int.
 	 *
-	 * <P> If the field has no current value, 0 will be returned. If
-	 * the value is bigger (or smaller) than an int, it will be cast to an int.
+	 * <P>
+	 * If the field has no current value, 0 will be returned. If the value is bigger (or smaller)
+	 * than an int, it will be cast to an int.
 	 *
-	 * <P> If using this method, it is highly recommended that you set the max value to {@link Integer#MAX_VALUE}
-	 * or lower.
+	 * <P>
+	 * If using this method, it is highly recommended that you set the max value to
+	 * {@link Integer#MAX_VALUE} or lower.
 	 *
 	 * @return the current value as an int. Or 0 if there is no value
 	 * @throws ArithmeticException if the value in this field will not fit into an int
@@ -179,11 +183,13 @@ public class IntegerTextField {
 	/**
 	 * Returns the current value as a long.
 	 *
-	 * <P> If the field has no current value, 0 will be returned. If
-	 * the value is bigger (or smaller) than an long, it will be cast to a long.
+	 * <P>
+	 * If the field has no current value, 0 will be returned. If the value is bigger (or smaller)
+	 * than an long, it will be cast to a long.
 	 *
-	 * <P> If using this method, it is highly recommended that you set the max value to {@link Long#MAX_VALUE}
-	 * or lower.
+	 * <P>
+	 * If using this method, it is highly recommended that you set the max value to
+	 * {@link Long#MAX_VALUE} or lower.
 	 *
 	 * @return the current value as a long. Or 0 if there is no value
 	 * @throws ArithmeticException if the value in this field will not fit into a long
@@ -215,13 +221,13 @@ public class IntegerTextField {
 	}
 
 	/**
-	 * Sets the field to the given text. The text must be a properly formated string that is 
-	 * a value that is valid for this field. If the field is set to not allow "0x" prefixes, then
-	 * the input string cannot start with 0x and furthermore, if the field is in decimal mode, then
-	 * input string cannot take in hex digits a-f. On the other hand, if "0x" prefixes are allowed,
-	 * then the input string can be either a decimal number or a hex number depending on if the
-	 * input string starts with "0x". In this case, the field's hex mode will be set to match
-	 * the input text. If the text is not valid, the field will not change.
+	 * Sets the field to the given text. The text must be a properly formated string that is a value
+	 * that is valid for this field. If the field is set to not allow "0x" prefixes, then the input
+	 * string cannot start with 0x and furthermore, if the field is in decimal mode, then input
+	 * string cannot take in hex digits a-f. On the other hand, if "0x" prefixes are allowed, then
+	 * the input string can be either a decimal number or a hex number depending on if the input
+	 * string starts with "0x". In this case, the field's hex mode will be set to match the input
+	 * text. If the text is not valid, the field will not change.
 	 * 
 	 * @param text the value as text to set on this field
 	 * @return true if the set was successful
@@ -233,7 +239,7 @@ public class IntegerTextField {
 	}
 
 	/**
-	 * Sets the value of the field to the given value.  A null value will clear the field.
+	 * Sets the value of the field to the given value. A null value will clear the field.
 	 *
 	 * @param newValue the new value or null.
 	 */
@@ -259,8 +265,9 @@ public class IntegerTextField {
 	/**
 	 * Sets the radix mode to Hex.
 	 *
-	 * <P> If the field is currently in decimal mode, the current text will be
-	 * change from displaying the current value from decimal to hex.
+	 * <P>
+	 * If the field is currently in decimal mode, the current text will be change from displaying
+	 * the current value from decimal to hex.
 	 */
 	public void setHexMode() {
 		BigInteger currentValue = getValue();
@@ -271,8 +278,9 @@ public class IntegerTextField {
 	/**
 	 * Sets the mode to Decimal.
 	 *
-	 * <P> If the field is currently in hex mode, the current text will be
-	 * change from displaying the current value from hex to decimal.
+	 * <P>
+	 * If the field is currently in hex mode, the current text will be change from displaying the
+	 * current value from hex to decimal.
 	 */
 	public void setDecimalMode() {
 		BigInteger currentValue = getValue();
@@ -283,12 +291,12 @@ public class IntegerTextField {
 	/**
 	 * Sets whether on not the field supports the 0x prefix.
 	 *
-	 * <P> If 0x is supported, hex numbers
-	 * will be displayed with the 0x prefix.  Also, when typing, you must type 0x first to enter
-	 * a hex number, otherwise it will only allow digits 0-9.  If the 0x prefix option is turned
-	 * off, then hex numbers are displayed without the 0x prefix and you can't change the decimal/hex
-	 * mode by typing 0x.  The field will either be in decimal or hex mode and the typed text
-	 * will be interpreted appropriately for the mode.
+	 * <P>
+	 * If 0x is supported, hex numbers will be displayed with the 0x prefix. Also, when typing, you
+	 * must type 0x first to enter a hex number, otherwise it will only allow digits 0-9. If the 0x
+	 * prefix option is turned off, then hex numbers are displayed without the 0x prefix and you
+	 * can't change the decimal/hex mode by typing 0x. The field will either be in decimal or hex
+	 * mode and the typed text will be interpreted appropriately for the mode.
 	 *
 	 * @param allowsHexPrefix true to use the 0x convention for hex.
 	 */
@@ -333,9 +341,10 @@ public class IntegerTextField {
 	}
 
 	/**
-	 * Returns the current maximum allowed value.  Null indicates that there is no maximum value.
-	 * If negative values are permitted (see {@link #setAllowNegativeValues(boolean)}) this value
-	 * will establish the upper and lower limit of the absolute value.
+	 * Returns the current maximum allowed value. Null indicates that there is no maximum value. If
+	 * negative values are permitted (see {@link #setAllowNegativeValues(boolean)}) this value will
+	 * establish the upper and lower limit of the absolute value.
+	 * 
 	 * @return the current maximum value allowed.
 	 */
 	public BigInteger getMaxValue() {
@@ -343,7 +352,7 @@ public class IntegerTextField {
 	}
 
 	/**
-	 * Sets the maximum allowed value.  The maximum must be a positive number.  Null indicates that
+	 * Sets the maximum allowed value. The maximum must be a positive number. Null indicates that
 	 * there is no maximum value.
 	 * <p>
 	 * If negative values are permitted (see {@link #setAllowNegativeValues(boolean)}) this value
@@ -449,6 +458,15 @@ public class IntegerTextField {
 	 */
 	public void selectAll() {
 		textField.selectAll();
+	}
+
+	/**
+	 * Sets the horizontal alignment of the JTextField
+	 * 
+	 * @param alignment the alignment as in {@link JTextField#setHorizontalAlignment(int)}
+	 */
+	public void setHorizontalAlignment(int alignment) {
+		textField.setHorizontalAlignment(alignment);
 	}
 
 	private String computeTextForValue(BigInteger value) {
@@ -724,7 +742,13 @@ public class IntegerTextField {
 
 			Dimension size = getSize();
 			Insets insets = getInsets();
-			int x = size.width - insets.right - hintWidth;
+			int x;
+			if (getHorizontalAlignment() == RIGHT) {
+				x = insets.left;
+			}
+			else {
+				x = size.width - insets.right - hintWidth;
+			}
 			int y = size.height - insets.bottom - 1;
 			String mode = isHexMode ? "Hex" : "Dec";
 			GraphicsUtils.drawString(this, g, mode, x, y);

@@ -51,7 +51,7 @@ import ghidra.base.widgets.table.DataTypeTableCellEditor;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.AutoOptions;
@@ -80,6 +80,7 @@ import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
 
 public class DebuggerRegistersProvider extends ComponentProviderAdapter
@@ -143,33 +144,53 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected enum RegisterTableColumns
 		implements EnumeratedTableColumn<RegisterTableColumns, RegisterRow> {
-		FAV("Fav", Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, //
+		FAV("Fav", 1, Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, //
 				r -> true, SortDirection.DESCENDING),
-		NUMBER("#", Integer.class, RegisterRow::getNumber),
-		NAME("Name", String.class, RegisterRow::getName),
-		VALUE("Value", BigInteger.class, RegisterRow::getValue, RegisterRow::setValue, //
-				RegisterRow::isValueEditable, SortDirection.ASCENDING),
-		TYPE("Type", DataType.class, RegisterRow::getDataType, RegisterRow::setDataType, //
+		NUMBER("#", 1, Integer.class, RegisterRow::getNumber),
+		NAME("Name", 40, String.class, RegisterRow::getName),
+		VALUE("Value", 100, BigInteger.class, RegisterRow::getValue, RegisterRow::setValue, //
+				RegisterRow::isValueEditable, SortDirection.ASCENDING) {
+			private static final RegisterValueCellRenderer RENDERER =
+				new RegisterValueCellRenderer();
+			private static final SettingsDefinition[] DEFS = new SettingsDefinition[] {
+				FormatSettingsDefinition.DEF_HEX,
+			};
+
+			@Override
+			public GColumnRenderer<BigInteger> getRenderer() {
+				return RENDERER;
+			}
+
+			@Override
+			public SettingsDefinition[] getSettingsDefinitions() {
+				return DEFS;
+			}
+		},
+		TYPE("Type", 40, DataType.class, RegisterRow::getDataType, RegisterRow::setDataType, //
 				r -> true, SortDirection.ASCENDING),
-		REPR("Repr", String.class, RegisterRow::getRepresentation, RegisterRow::setRepresentation, //
+		REPR("Repr", 100, String.class, RegisterRow::getRepresentation, RegisterRow::setRepresentation, //
 				RegisterRow::isRepresentationEditable, SortDirection.ASCENDING);
 
 		private final String header;
+		private final int width;
 		private final Function<RegisterRow, ?> getter;
 		private final BiConsumer<RegisterRow, Object> setter;
 		private final Predicate<RegisterRow> editable;
 		private final Class<?> cls;
 		private final SortDirection direction;
 
-		<T> RegisterTableColumns(String header, Class<T> cls, Function<RegisterRow, T> getter) {
-			this(header, cls, getter, null, null, SortDirection.ASCENDING);
+		<T> RegisterTableColumns(String header, int width, Class<T> cls,
+				Function<RegisterRow, T> getter) {
+			this(header, width, cls, getter, null, null, SortDirection.ASCENDING);
 		}
 
 		@SuppressWarnings("unchecked")
-		<T> RegisterTableColumns(String header, Class<T> cls, Function<RegisterRow, T> getter,
+		<T> RegisterTableColumns(String header, int width, Class<T> cls,
+				Function<RegisterRow, T> getter,
 				BiConsumer<RegisterRow, T> setter, Predicate<RegisterRow> editable,
 				SortDirection direction) {
 			this.header = header;
+			this.width = width;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<RegisterRow, Object>) setter;
@@ -205,6 +226,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		@Override
 		public SortDirection defaultSortDirection() {
 			return direction;
+		}
+
+		@Override
+		public int getPreferredWidth() {
+			return width;
 		}
 	}
 
@@ -387,7 +413,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 	}
 
-	class RegisterValueCellRenderer extends HexBigIntegerTableCellRenderer {
+	static class RegisterValueCellRenderer extends HexDefaultGColumnRenderer<BigInteger> {
 		@Override
 		public final Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
@@ -574,21 +600,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		});
 
 		TableColumnModel columnModel = regsTable.getColumnModel();
-		TableColumn favCol = columnModel.getColumn(RegisterTableColumns.FAV.ordinal());
-		favCol.setPreferredWidth(1);
-		TableColumn numCol = columnModel.getColumn(RegisterTableColumns.NUMBER.ordinal());
-		numCol.setPreferredWidth(1);
-		TableColumn nameCol = columnModel.getColumn(RegisterTableColumns.NAME.ordinal());
-		nameCol.setPreferredWidth(40);
 		TableColumn valCol = columnModel.getColumn(RegisterTableColumns.VALUE.ordinal());
-		valCol.setCellRenderer(new RegisterValueCellRenderer());
 		valCol.setCellEditor(new HexBigIntegerTableCellEditor());
-		valCol.setPreferredWidth(100);
 		TableColumn typeCol = columnModel.getColumn(RegisterTableColumns.TYPE.ordinal());
 		typeCol.setCellEditor(new RegisterDataTypeEditor());
-		typeCol.setPreferredWidth(50);
-		TableColumn reprCol = columnModel.getColumn(RegisterTableColumns.REPR.ordinal());
-		reprCol.setPreferredWidth(100);
 	}
 
 	@Override
