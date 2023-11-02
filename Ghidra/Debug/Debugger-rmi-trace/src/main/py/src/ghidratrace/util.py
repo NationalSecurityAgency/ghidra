@@ -17,23 +17,14 @@ import socket
 import traceback
 
 
-def send_all(s, data):
-    sent = 0
-    while sent < len(data):
-        l = s.send(data[sent:])
-        if l == 0:
-            raise Exception("Socket closed")
-        sent += l
-
-
 def send_length(s, value):
-    send_all(s, value.to_bytes(4, 'big'))
+    s.sendall(value.to_bytes(4, 'big'))
 
 
 def send_delimited(s, msg):
     data = msg.SerializeToString()
     send_length(s, len(data))
-    send_all(s, data)
+    s.sendall(data)
 
 
 def recv_all(s, size):
@@ -44,7 +35,7 @@ def recv_all(s, size):
             return buf
         buf += part
     return buf
-    #return s.recv(size, socket.MSG_WAITALL)
+    # return s.recv(size, socket.MSG_WAITALL)
 
 
 def recv_length(s):

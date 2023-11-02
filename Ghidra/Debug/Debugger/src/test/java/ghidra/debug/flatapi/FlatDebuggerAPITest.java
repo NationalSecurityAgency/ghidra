@@ -33,8 +33,9 @@ import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
@@ -70,7 +71,7 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
-public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
+public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected static class TestFactory implements DebuggerModelFactory {
 		private final DebuggerObjectModel model;
@@ -143,6 +144,9 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		listingService = addPlugin(tool, DebuggerListingPlugin.class);
 		editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		flat = new TestFlatAPI();
+
+		// TODO: This seems to hold up the task manager.
+		waitForComponentProvider(DebuggerListingProvider.class).setAutoDisassemble(false);
 	}
 
 	@Test

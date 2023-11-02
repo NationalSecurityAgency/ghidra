@@ -14,6 +14,7 @@
 #  limitations under the License.
 ##
 from concurrent.futures import Future, Executor
+from contextlib import contextmanager
 import re
 
 from ghidratrace import sch
@@ -24,13 +25,30 @@ import gdb
 from . import commands, hooks, util
 
 
+@contextmanager
+def no_pagination():
+    before = gdb.parameter('pagination')
+    gdb.set_parameter('pagination', False)
+    yield
+    gdb.set_parameter('pagination', before)
+
+
+@contextmanager
+def no_confirm():
+    before = gdb.parameter('confirm')
+    gdb.set_parameter('confirm', False)
+    yield
+    gdb.set_parameter('confirm', before)
+
+
 class GdbExecutor(Executor):
     def submit(self, fn, *args, **kwargs):
         fut = Future()
 
         def _exec():
             try:
-                result = fn(*args, **kwargs)
+                with no_pagination():
+                    result = fn(*args, **kwargs)
                 hooks.HOOK_STATE.end_batch()
                 fut.set_result(result)
             except Exception as e:
@@ -186,7 +204,9 @@ def find_frame_by_regs_obj(object):
 # Because there's no method to get a register by name....
 def find_reg_by_name(f, name):
     for reg in f.architecture().registers():
-        if reg.name == name:
+        # TODO: gdb appears to be case sensitive, but until we encounter a
+        # situation where case matters, we'll be insensitive
+        if reg.name.lower() == name.lower():
             return reg
     raise KeyError(f"No such register: {name}")
 
@@ -453,7 +473,8 @@ def launch_run(inferior: sch.Schema('Inferior'),
 def kill(inferior: sch.Schema('Inferior')):
     """Kill execution of the inferior."""
     switch_inferior(find_inf_by_obj(inferior))
-    gdb.execute('kill')
+    with no_confirm():
+        gdb.execute('kill')
 
 
 @REGISTRY.method
@@ -463,8 +484,11 @@ def resume(inferior: sch.Schema('Inferior')):
     gdb.execute('continue')
 
 
+# Technically, inferior is not required, but it hints that the affected object
+# is the current inferior. This in turn queues the UI to enable or disable the
+# button appropriately
 @REGISTRY.method
-def interrupt():
+def interrupt(inferior: sch.Schema('Inferior')):
     """Interrupt the execution of the debugged program."""
     gdb.execute('interrupt')
 
@@ -490,7 +514,7 @@ def step_out(thread: sch.Schema('Thread')):
     gdb.execute('finish')
 
 
-@REGISTRY.method(action='step_ext')
+@REGISTRY.method(action='step_ext', name='Advance')
 def step_advance(thread: sch.Schema('Thread'), address: Address):
     """Continue execution up to the given address (advance)."""
     t = find_thread_by_obj(thread)
@@ -499,7 +523,7 @@ def step_advance(thread: sch.Schema('Thread'), address: Address):
     gdb.execute(f'advance *0x{offset:x}')
 
 
-@REGISTRY.method(action='step_ext')
+@REGISTRY.method(action='step_ext', name='Return')
 def step_return(thread: sch.Schema('Thread'), value: int=None):
     """Skip the remainder of the current function (return)."""
     find_thread_by_obj(thread).switch()
@@ -641,13 +665,13 @@ def write_mem(inferior: sch.Schema('Inferior'), address: Address, data: bytes):
 
 
 @REGISTRY.method
-def write_reg(frame: sch.Schema('Frame'), name: str, value: bytes):
+def write_reg(frame: sch.Schema('StackFrame'), name: str, value: bytes):
     """Write a register."""
     f = find_frame_by_obj(frame)
     f.select()
     inf = gdb.selected_inferior()
     mname, mval = frame.trace.register_mapper.map_value_back(inf, name, value)
     reg = find_reg_by_name(f, mname)
-    size = int(gdb.parse_and_eval(f'sizeof(${mname})'))
+    size = int(gdb.parse_and_eval(f'sizeof(${reg.name})'))
     arr = '{' + ','.join(str(b) for b in mval) + '}'
-    gdb.execute(f'set ((unsigned char[{size}])${mname}) = {arr}')
+    gdb.execute(f'set ((unsigned char[{size}])${reg.name}) = {arr}')

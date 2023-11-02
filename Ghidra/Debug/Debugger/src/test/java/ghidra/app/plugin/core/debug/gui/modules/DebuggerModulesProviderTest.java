@@ -42,7 +42,6 @@ import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapModulesAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapSectionsAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
-import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.services.DebuggerListingService;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.SchemaContext;
@@ -50,16 +49,12 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
-import ghidra.debug.api.model.DebuggerTargetTraceMapper;
-import ghidra.debug.api.model.TraceRecorder;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Lifespan;
@@ -71,7 +66,7 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
-public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	DebuggerModulesProvider provider;
 
@@ -86,42 +81,8 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	protected SchemaContext ctx;
 
 	@Override
-	protected DebuggerTargetTraceMapper createTargetTraceMapper(TargetObject target)
-			throws Exception {
-		return new ObjectBasedDebuggerTargetTraceMapper(target,
-			new LanguageID("DATA:BE:64:default"), new CompilerSpecID("pointer64"), Set.of());
-	}
-
-	@Override
-	protected TraceRecorder recordAndWaitSync() throws Throwable {
-		TraceRecorder recorder = super.recordAndWaitSync();
-		useTrace(recorder.getTrace());
-		return recorder;
-	}
-
-	@Override
-	protected TargetObject chooseTarget() {
-		return mb.testModel.session;
-	}
-
-	@Override
 	protected void createTrace(String langID) throws IOException {
 		super.createTrace(langID);
-		try {
-			activateObjectsMode();
-		}
-		catch (Exception e) {
-			throw new AssertionError(e);
-		}
-	}
-
-	@Override
-	protected void useTrace(Trace trace) {
-		super.useTrace(trace);
-		if (trace.getObjectManager().getRootObject() != null) {
-			// If live, recorder will have created it
-			return;
-		}
 		try {
 			activateObjectsMode();
 		}

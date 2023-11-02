@@ -15,8 +15,21 @@
  */
 package ghidra.debug.api.target;
 
+/**
+ * A listener for changes to the set of published targets
+ */
 public interface TargetPublicationListener {
+	/**
+	 * The given target was published
+	 * 
+	 * @param target the published target
+	 */
 	void targetPublished(Target target);
 
+	/**
+	 * The given target was withdrawn, usually because it's no longer valid
+	 * 
+	 * @param target the withdrawn target
+	 */
 	void targetWithdrawn(Target target);
 }

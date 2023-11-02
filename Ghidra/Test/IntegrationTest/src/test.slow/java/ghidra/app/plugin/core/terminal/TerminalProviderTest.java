@@ -31,13 +31,13 @@ import org.junit.Test;
 import docking.widgets.OkDialog;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.*;
 import ghidra.framework.OperatingSystem;
 import ghidra.pty.*;
 import ghidra.util.SystemUtilities;
 
-public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected static byte[] ascii(String str) {
 		try {
 			return str.getBytes("UTF-8");

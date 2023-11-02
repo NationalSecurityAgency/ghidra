@@ -46,6 +46,11 @@ public class DefaultTerminal implements Terminal {
 	}
 
 	@Override
+	public boolean isTerminated() {
+		return provider.isTerminated();
+	}
+
+	@Override
 	public void addTerminalListener(TerminalListener listener) {
 		provider.addTerminalListener(listener);
 	}

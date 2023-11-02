@@ -21,10 +21,8 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo.CompilerInfo;
+import ghidra.app.plugin.core.debug.disassemble.*;
+import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.CompilerInfo;
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemBufferByteProvider;

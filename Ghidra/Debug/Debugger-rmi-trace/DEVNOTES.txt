@@ -280,8 +280,35 @@ For the user to open a second transaction may be considered an error.
 Take care as you're coding (and likely re-using command logic) that you don't accidentally take or otherwise conflict with the CLI's transaction manager when processing an event.
 
 
-
 # Regarding launcher shell scripts:
 
 Need to document all the @metadata stuff
 In particular, "Image" is a special parameter that will get the program executable by default.
+
+
+# Regarding the schema and method signatures
+
+An interface like Togglable requires that a TOGGLE action takes the given schema as a parameter
+(e.g., a BreakpointLocation)
+
+
+# Regarding registers
+
+The register container has to exist, even if its left empty in favor of the register space.
+
+1. The space is named after the container
+2. The UI uses the container as an anchor in its searches
+
+To allow register writes, each writable register must exist as an object it the register container.
+
+1. I might like to relax this....
+2. The UI it to validate the register is editable, even though the RemoteMethod may accept
+   frame/thread,name,val.
+
+
+# Regarding reading and writing memory
+
+The process parameter, if accepted, is technically redundant.
+Because all address spaces among all targets must be unique, the address space encodes the process (or other target object).
+If taken, the back end must validate that the address space belongs to the given process.
+Otherwise, the back end must figure out the applicable target based on the space name.

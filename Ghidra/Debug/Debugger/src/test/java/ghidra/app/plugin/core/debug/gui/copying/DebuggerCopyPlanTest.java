@@ -29,7 +29,7 @@ import db.Transaction;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyPlan.AllCopiers;
 import ghidra.app.util.viewer.listingpanel.PropertyBasedBackgroundColorModel;
@@ -52,7 +52,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.util.task.TaskMonitor;
 
-public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerCopyPlanTest extends AbstractGhidraHeadedDebuggerTest {
 	public static class TestDynamicDataType extends CountedDynamicDataType {
 		public static final TestDynamicDataType dataType = new TestDynamicDataType();
 

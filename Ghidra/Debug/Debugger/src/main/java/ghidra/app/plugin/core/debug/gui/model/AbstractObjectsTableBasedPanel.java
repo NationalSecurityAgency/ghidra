@@ -115,7 +115,7 @@ public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterf
 		List<ValueRow> sel = getSelectedItems();
 		if (!sel.isEmpty()) {
 			myActionContext = new DebuggerObjectActionContext(
-				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, this);
+				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, table);
 		}
 	}
 

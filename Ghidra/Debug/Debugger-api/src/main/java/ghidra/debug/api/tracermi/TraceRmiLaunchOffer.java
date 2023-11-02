@@ -15,7 +15,6 @@
  */
 package ghidra.debug.api.tracermi;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -36,19 +35,6 @@ import ghidra.util.task.TaskMonitor;
  * may vary wildly from platform to platform.
  */
 public interface TraceRmiLaunchOffer {
-
-	/**
-	 * A terminal with some back-end element attached to it
-	 */
-	interface TerminalSession extends AutoCloseable {
-		@Override
-		void close() throws IOException;
-
-		/**
-		 * Terminate the session without closing the terminal
-		 */
-		void terminate() throws IOException;
-	}
 
 	/**
 	 * The result of launching a program

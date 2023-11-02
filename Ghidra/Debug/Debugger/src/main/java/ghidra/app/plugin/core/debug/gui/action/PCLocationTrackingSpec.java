@@ -100,4 +100,9 @@ public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTrac
 			DebuggerCoordinates coordinates) {
 		return BY_REG.affectedByBytesChange(space, range, coordinates);
 	}
+
+	@Override
+	public boolean shouldDisassemble() {
+		return true;
+	}
 }

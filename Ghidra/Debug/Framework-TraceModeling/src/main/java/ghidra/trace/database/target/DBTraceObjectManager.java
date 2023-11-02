@@ -37,6 +37,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
+import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointLocation;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.module.TraceObjectSection;
@@ -45,8 +46,7 @@ import ghidra.trace.database.target.visitors.SuccessorsRelativeVisitor;
 import ghidra.trace.database.thread.DBTraceObjectThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceObjectModule;
 import ghidra.trace.model.stack.TraceObjectStack;
@@ -599,14 +599,17 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 				"breakpoint specification on the given path.");
 		}
 		try (LockHold hold = trace.lockWrite()) {
-			TraceObjectBreakpointLocation loc =
-				doAddWithInterface(path, TraceObjectBreakpointLocation.class);
+			DBTraceObjectBreakpointLocation loc =
+				(DBTraceObjectBreakpointLocation) doAddWithInterface(path,
+					TraceObjectBreakpointLocation.class);
 			loc.setName(lifespan, path);
 			loc.setRange(lifespan, range);
-			// NB. Ignore threads. I'd like to deprecate that field, anyway.
-			loc.setKinds(lifespan, kinds);
 			loc.setEnabled(lifespan, enabled);
 			loc.setComment(lifespan, comment);
+
+			TraceObjectBreakpointSpec spec = loc.getOrCreateSpecification();
+			// NB. Ignore threads. I'd like to deprecate that field, anyway.
+			spec.setKinds(lifespan, kinds);
 			loc.getObject().insert(lifespan, ConflictResolution.DENY);
 			return loc;
 		}

@@ -61,4 +61,9 @@ public enum PCByRegisterLocationTrackingSpec implements RegisterLocationTracking
 	public AddressSpace computeDefaultAddressSpace(DebuggerCoordinates coordinates) {
 		return coordinates.getPlatform().getLanguage().getDefaultSpace();
 	}
+
+	@Override
+	public boolean shouldDisassemble() {
+		return true;
+	}
 }

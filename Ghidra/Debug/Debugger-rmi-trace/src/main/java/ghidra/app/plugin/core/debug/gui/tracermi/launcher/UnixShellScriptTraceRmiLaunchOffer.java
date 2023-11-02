@@ -27,8 +27,8 @@ import generic.theme.GIcon;
 import generic.theme.Gui;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.util.ShellUtils;
+import ghidra.debug.api.tracermi.TerminalSession;
 import ghidra.framework.Application;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -471,8 +471,8 @@ public class UnixShellScriptTraceRmiLaunchOffer extends AbstractTraceRmiLaunchOf
 	 *            the target image is mapped in the resulting target trace.
 	 * @throws FileNotFoundException
 	 */
-	public static UnixShellScriptTraceRmiLaunchOffer create(Program program, PluginTool tool,
-			File script) throws FileNotFoundException {
+	public static UnixShellScriptTraceRmiLaunchOffer create(TraceRmiLauncherServicePlugin plugin,
+			Program program, File script) throws FileNotFoundException {
 		try (BufferedReader reader =
 			new BufferedReader(new InputStreamReader(new FileInputStream(script)))) {
 			AttributesParser attrs = new AttributesParser();
@@ -491,7 +491,7 @@ public class UnixShellScriptTraceRmiLaunchOffer extends AbstractTraceRmiLaunchOf
 				}
 			}
 			attrs.validate(script.getName());
-			return new UnixShellScriptTraceRmiLaunchOffer(program, tool, script,
+			return new UnixShellScriptTraceRmiLaunchOffer(plugin, program, script,
 				"UNIX_SHELL:" + script.getName(), attrs.title, attrs.getDescription(),
 				attrs.menuPath, attrs.menuGroup, attrs.menuOrder, new GIcon(attrs.iconId),
 				attrs.helpLocation, attrs.parameters, attrs.extraTtys);
@@ -517,11 +517,11 @@ public class UnixShellScriptTraceRmiLaunchOffer extends AbstractTraceRmiLaunchOf
 	protected final Map<String, ParameterDescription<?>> parameters;
 	protected final List<String> extraTtys;
 
-	public UnixShellScriptTraceRmiLaunchOffer(Program program, PluginTool tool, File script,
-			String configName, String title, String description, List<String> menuPath,
+	public UnixShellScriptTraceRmiLaunchOffer(TraceRmiLauncherServicePlugin plugin, Program program,
+			File script, String configName, String title, String description, List<String> menuPath,
 			String menuGroup, String menuOrder, Icon icon, HelpLocation helpLocation,
 			Map<String, ParameterDescription<?>> parameters, Collection<String> extraTtys) {
-		super(program, tool);
+		super(plugin, program);
 		this.script = script;
 		this.configName = configName;
 		this.title = title;

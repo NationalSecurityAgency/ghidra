@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.mapping;
 import java.util.Collection;
 import java.util.Set;
 
+import ghidra.app.plugin.core.debug.disassemble.DisassemblyInject;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.platform.DisassemblyResult;
 import ghidra.framework.plugintool.PluginTool;

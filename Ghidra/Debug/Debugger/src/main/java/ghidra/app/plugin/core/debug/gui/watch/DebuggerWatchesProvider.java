@@ -875,12 +875,32 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			language = null;
 		}
 
-		asyncWatchExecutor = current.getPlatform() == null ? null
-				: DebuggerPcodeUtils.buildWatchExecutor(tool, current);
-		prevValueExecutor = current.getPlatform() == null || previous.getPlatform() == null ? null
-				: TraceSleighUtils.buildByteExecutor(previous.getPlatform(),
-					previous.getViewSnap(), previous.getThread(), previous.getFrame());
+		try {
+			asyncWatchExecutor = current.getPlatform() == null ? null
+					: DebuggerPcodeUtils.buildWatchExecutor(tool, current);
+		}
+		catch (Exception e) {
+			Msg.error(this, "Error constructing watch executor: " + e);
+			asyncWatchExecutor = null;
+		}
+		try {
+			prevValueExecutor =
+				current.getPlatform() == null || previous.getPlatform() == null ? null
+						: TraceSleighUtils.buildByteExecutor(previous.getPlatform(),
+							previous.getViewSnap(), previous.getThread(), previous.getFrame());
+		}
+		catch (Exception e) {
+			Msg.error(this, "Error constructing previous-value executor: " + e);
+			prevValueExecutor = null;
+		}
 		reevaluate();
+	}
+
+	public void traceClosed(Trace trace) {
+		if (previous.getTrace() == trace) {
+			previous = DebuggerCoordinates.NOWHERE;
+			prevValueExecutor = null;
+		}
 	}
 
 	protected void clearCachedState() {

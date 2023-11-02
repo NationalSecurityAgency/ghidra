@@ -46,7 +46,10 @@ shift
 target_args="$@"
 
 "$OPT_GDB_PATH" \
+  -q \
   -ex "set pagination off" \
+  -ex "set confirm off" \
+  -ex "show version" \
   -ex "python import ghidragdb" \
   -ex "file \"$target_image\"" \
   -ex "set args $target_args" \
@@ -55,4 +58,5 @@ target_args="$@"
   -ex "ghidra trace start" \
   -ex "ghidra trace sync-enable" \
   -ex "$OPT_START_CMD" \
+  -ex "set confirm on" \
   -ex "set pagination on"

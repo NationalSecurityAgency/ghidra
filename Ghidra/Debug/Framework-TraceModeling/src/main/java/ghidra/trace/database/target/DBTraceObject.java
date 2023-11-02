@@ -863,6 +863,22 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 				.map(p -> p.getSource(this).queryInterface(ifClass));
 	}
 
+	public TraceObject queryOrCreateCanonicalAncestorTargetInterface(
+			Class<? extends TargetObject> targetIf) {
+		PathMatcher matcher = getManager().getRootSchema().searchFor(targetIf, false);
+		return path.streamMatchingAncestry(matcher)
+				.limit(1)
+				.map(kp -> manager.createObject(kp))
+				.findAny()
+				.orElseThrow();
+	}
+
+	public <I extends TraceObjectInterface> I queryOrCreateCanonicalAncestorInterface(
+			Class<I> ifClass) {
+		return queryOrCreateCanonicalAncestorTargetInterface(
+			TraceObjectInterfaceUtils.toTargetIf(ifClass)).queryInterface(ifClass);
+	}
+
 	@Override
 	public Stream<? extends TraceObject> queryCanonicalAncestorsTargetInterface(
 			Class<? extends TargetObject> targetIf) {

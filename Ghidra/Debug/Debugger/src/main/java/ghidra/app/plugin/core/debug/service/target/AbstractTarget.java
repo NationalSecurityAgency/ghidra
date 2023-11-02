@@ -58,6 +58,10 @@ public abstract class AbstractTarget implements Target {
 		this.tool = tool;
 	}
 
+	public PluginTool getTool() {
+		return tool;
+	}
+
 	private Address staticToDynamicAddress(ProgramLocation location) {
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
@@ -73,10 +77,14 @@ public abstract class AbstractTarget implements Target {
 	}
 
 	protected Address findAddress(Navigatable nav) {
-		if (nav.isDynamic()) {
-			return nav.getLocation().getAddress();
+		ProgramLocation location = nav.getLocation();
+		if (location == null) {
+			return null;
 		}
-		return staticToDynamicAddress(nav.getLocation());
+		if (nav.isDynamic()) {
+			return location.getAddress();
+		}
+		return staticToDynamicAddress(location);
 	}
 
 	protected Address findAddress(MarkerLocation location) {
@@ -118,7 +126,7 @@ public abstract class AbstractTarget implements Target {
 	}
 
 	protected AddressRange singleRange(AddressSetView set) {
-		if (set.getNumAddressRanges() != 1) {
+		if (set == null || set.getNumAddressRanges() != 1) {
 			return null;
 		}
 		return set.getFirstRange();
@@ -384,6 +392,11 @@ public abstract class AbstractTarget implements Target {
 	public void toggleBreakpoint(TraceBreakpoint breakpoint, boolean enabled) {
 		String msg = enabled ? "enable breakpoint" : "disable breakpoint";
 		runSync(msg, () -> toggleBreakpointAsync(breakpoint, enabled));
+	}
+
+	@Override
+	public void forceTerminate() {
+		runSync("force terminate", () -> forceTerminateAsync());
 	}
 
 	@Override

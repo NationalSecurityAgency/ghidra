@@ -192,10 +192,14 @@ public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 			return;
 		}
 		if (event instanceof TraceOpenedPluginEvent evt) {
-			addItem(evt.getTrace());
+			try (Suppression supp = cbCoordinateActivation.suppress(null)) {
+				addItem(evt.getTrace());
+			}
 		}
 		else if (event instanceof TraceClosedPluginEvent evt) {
-			removeItem(evt.getTrace());
+			try (Suppression supp = cbCoordinateActivation.suppress(null)) {
+				removeItem(evt.getTrace());
+			}
 		}
 	}
 
@@ -204,6 +208,8 @@ public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 			return;
 		}
 		Trace newTrace = setTraceTabActionContext(null);
-		cbCoordinateActivation.invoke(() -> traceManager.activateTrace(newTrace));
+		cbCoordinateActivation.invoke(() -> {
+			traceManager.activateTrace(newTrace);
+		});
 	}
 }

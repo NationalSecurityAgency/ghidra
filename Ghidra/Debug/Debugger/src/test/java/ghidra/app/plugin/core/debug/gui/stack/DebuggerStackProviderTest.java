@@ -25,7 +25,7 @@ import org.junit.*;
 
 import db.Transaction;
 import docking.widgets.table.DynamicTableColumn;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
@@ -58,7 +58,7 @@ import ghidra.util.task.TaskMonitor;
  * NOTE: I no longer synthesize a stack frame when the stack is absent. It's a bit of a hack, and I
  * don't know if it's really valuable. In fact, in might obscure the fact that the stack is absent.
  */
-public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerStackPlugin stackPlugin;
 	protected DebuggerStackProvider stackProvider;
 	protected DebuggerStaticMappingService mappingService;

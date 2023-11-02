@@ -31,7 +31,7 @@ import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOpinion;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
@@ -62,7 +62,7 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerEmulationServicePlugin emulationPlugin;
 	protected CodeBrowserPlugin codeBrowser;
 

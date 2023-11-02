@@ -89,7 +89,8 @@ public class CanonicalSuccessorsRelativeVisitor implements Visitor {
 
 		Stream<TraceObjectValue> restStream = nextKeys.stream()
 				.filter(k -> !"".equals(k) && !"[]".equals(k))
-				.map(k -> getCanonicalValue(object, k));
+				.map(k -> getCanonicalValue(object, k))
+				.filter(v -> v != null);
 
 		return Stream.concat(Stream.concat(attrStream, elemStream), restStream);
 	}

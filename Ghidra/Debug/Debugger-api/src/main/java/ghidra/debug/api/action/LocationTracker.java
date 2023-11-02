@@ -87,4 +87,14 @@ public interface LocationTracker {
 	 * @return true if re-computation and "goto" is warranted
 	 */
 	boolean affectedByStackChange(TraceStack stack, DebuggerCoordinates coordinates);
+
+	/**
+	 * Indicates whether the user should expect instructions at the tracked location.
+	 * 
+	 * <p>
+	 * Essentially, is this tracking the program counter?
+	 * 
+	 * @return true to disassemble, false not to
+	 */
+	boolean shouldDisassemble();
 }

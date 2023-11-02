@@ -18,6 +18,7 @@ package ghidra.pty.linux;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Memory;
 
 /**
@@ -60,12 +61,20 @@ public class FdOutputStream extends OutputStream {
 		}
 		Memory buf = new Memory(len);
 		buf.write(0, b, off, len);
-		int total = 0;
-		do {
-			int ret = LIB_POSIX.write(fd, buf, len - total);
-			total += ret;
+		try {
+			int total = 0;
+			do {
+				int ret = LIB_POSIX.write(fd, buf, len - total);
+				total += ret;
+			}
+			while (total < len);
 		}
-		while (total < len);
+		catch (LastErrorException e) {
+			if (e.getErrorCode() == 5 || e.getErrorCode() == 9) {
+				throw new IOException(e);
+			}
+			throw e;
+		}
 	}
 
 	@Override

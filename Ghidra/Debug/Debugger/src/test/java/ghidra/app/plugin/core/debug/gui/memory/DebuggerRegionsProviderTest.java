@@ -27,7 +27,7 @@ import db.Transaction;
 import docking.widgets.table.DynamicTableColumn;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
@@ -56,7 +56,7 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
-public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	DebuggerRegionsProvider provider;
 

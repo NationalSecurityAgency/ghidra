@@ -101,7 +101,7 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 
 		return new LocalWindowsNativeProcessPtySession(pi.dwProcessId.intValue(),
 			pi.dwThreadId.intValue(),
-			new Handle(pi.hProcess), new Handle(pi.hThread));
+			new Handle(pi.hProcess), new Handle(pi.hThread), "ConPTY");
 	}
 
 	@Override

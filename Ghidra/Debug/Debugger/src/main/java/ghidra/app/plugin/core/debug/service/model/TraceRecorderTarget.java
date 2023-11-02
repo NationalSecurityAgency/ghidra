@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import docking.ActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
+import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.service.target.AbstractTarget;
 import ghidra.app.services.DebuggerConsoleService;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -176,6 +177,14 @@ public class TraceRecorderTarget extends AbstractTarget {
 	}
 
 	private record MethodWithArgs(TargetMethod method, Map<String, Object> arguments) {
+		public boolean requiresPrompt() {
+			for (ParameterDescription<?> param : method.getParameters().values()) {
+				if (param.required && !arguments.containsKey(param.name)) {
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 
 	private List<MethodWithArgs> findAddressMethods(ProgramLocationActionContext context) {
@@ -215,23 +224,59 @@ public class TraceRecorderTarget extends AbstractTarget {
 		return method.getName();
 	}
 
-	private ActionEntry makeEntry(TargetMethod method, Map<String, ?> arguments) {
-		return new ActionEntry(method.getDisplay(), null, null, false, () -> true, () -> {
-			return method.invoke(arguments).thenAccept(result -> {
-				DebuggerConsoleService consoleService =
-					tool.getService(DebuggerConsoleService.class);
-				if (consoleService != null && method.getReturnType() != Void.class) {
-					consoleService.log(null, getDisplay(method) + " returned " + result);
+	private Map<String, ?> promptArgs(TargetMethod method, Map<String, ?> defaults) {
+		DebuggerMethodInvocationDialog dialog = new DebuggerMethodInvocationDialog(tool,
+			method.getDisplay(), method.getDisplay(), null);
+		while (true) {
+			for (ParameterDescription<?> param : method.getParameters().values()) {
+				Object val = defaults.get(param.name);
+				if (val != null) {
+					dialog.setMemorizedArgument(param.name, param.type.asSubclass(Object.class),
+						val);
 				}
-			});
+			}
+			Map<String, ?> args = dialog.promptArguments(method.getParameters());
+			if (args == null) {
+				// Cancelled
+				return null;
+			}
+			if (dialog.isResetRequested()) {
+				continue;
+			}
+			return args;
+		}
+	}
+
+	private CompletableFuture<?> invokeMethod(boolean prompt, TargetMethod method,
+			Map<String, ?> arguments) {
+		Map<String, ?> chosenArgs;
+		if (prompt) {
+			chosenArgs = promptArgs(method, arguments);
+		}
+		else {
+			chosenArgs = arguments;
+		}
+		return method.invoke(chosenArgs).thenAccept(result -> {
+			DebuggerConsoleService consoleService =
+				tool.getService(DebuggerConsoleService.class);
+			if (consoleService != null && method.getReturnType() != Void.class) {
+				consoleService.log(null, getDisplay(method) + " returned " + result);
+			}
 		});
+	}
+
+	private ActionEntry makeEntry(boolean requiresPrompt, TargetMethod method,
+			Map<String, ?> arguments) {
+		return new ActionEntry(method.getDisplay(), null, null, requiresPrompt, () -> true,
+			prompt -> invokeMethod(prompt, method, arguments));
 	}
 
 	@Override
 	public Map<String, ActionEntry> collectAddressActions(ProgramLocationActionContext context) {
 		Map<String, ActionEntry> result = new HashMap<>();
 		for (MethodWithArgs mwa : findAddressMethods(context)) {
-			result.put(mwa.method.getJoinedPath("."), makeEntry(mwa.method, mwa.arguments));
+			result.put(mwa.method.getJoinedPath("."),
+				makeEntry(mwa.requiresPrompt(), mwa.method, mwa.arguments));
 		}
 		return result;
 	}
@@ -244,7 +289,7 @@ public class TraceRecorderTarget extends AbstractTarget {
 			return Map.of();
 		}
 		return Map.of(display, new ActionEntry(display, name, description, false,
-			() -> enabled.test(object), () -> action.apply(object)));
+			() -> enabled.test(object), prompt -> action.apply(object)));
 	}
 
 	private TargetExecutionState getStateOf(TargetObject object) {
@@ -539,6 +584,12 @@ public class TraceRecorderTarget extends AbstractTarget {
 		}
 		TargetBreakpointSpec spec = loc.getSpecification();
 		return spec.toggle(enabled);
+	}
+
+	@Override
+	public CompletableFuture<Void> forceTerminateAsync() {
+		recorder.stopRecording();
+		return AsyncUtils.nil();
 	}
 
 	@Override

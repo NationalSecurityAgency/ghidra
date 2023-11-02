@@ -25,17 +25,19 @@ import ghidra.pty.windows.Handle;
 import ghidra.util.Msg;
 
 public class LocalWindowsNativeProcessPtySession implements PtySession {
-	//private final int pid;
+	private final int pid;
 	//private final int tid;
 	private final Handle processHandle;
 	//private final Handle threadHandle;
+	private final String ptyName;
 
 	public LocalWindowsNativeProcessPtySession(int pid, int tid, Handle processHandle,
-			Handle threadHandle) {
-		//this.pid = pid;
+			Handle threadHandle, String ptyName) {
+		this.pid = pid;
 		//this.tid = tid;
 		this.processHandle = processHandle;
 		//this.threadHandle = threadHandle;
+		this.ptyName = ptyName;
 
 		Msg.info(this, "local Windows Pty session. PID = " + pid);
 	}
@@ -73,5 +75,10 @@ public class LocalWindowsNativeProcessPtySession implements PtySession {
 			}
 			throw new LastErrorException(error);
 		}
+	}
+
+	@Override
+	public String description() {
+		return "process " + pid + " on " + ptyName;
 	}
 }

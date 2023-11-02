@@ -28,7 +28,7 @@ import org.junit.experimental.categories.Category;
 
 import docking.widgets.tree.GTreeNode;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.service.model.DebuggerConnectDialog;
 import ghidra.dbg.model.TestDebuggerObjectModel;
@@ -37,7 +37,7 @@ import ghidra.dbg.model.TestDebuggerObjectModel;
  * Tests of the target provider
  */
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerTargetsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTargetsProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerTargetsPlugin targetsPlugin;
 	protected DebuggerTargetsProvider targetsProvider;
 

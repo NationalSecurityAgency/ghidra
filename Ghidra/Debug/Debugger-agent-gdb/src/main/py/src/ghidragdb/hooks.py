@@ -31,12 +31,13 @@ GhidraHookPrefix()
 
 
 class HookState(object):
-    __slots__ = ('installed', 'mem_catchpoint', 'batch')
+    __slots__ = ('installed', 'mem_catchpoint', 'batch', 'skip_continue')
 
     def __init__(self):
         self.installed = False
         self.mem_catchpoint = None
         self.batch = None
+        self.skip_continue = False
 
     def ensure_batch(self):
         if self.batch is None:
@@ -47,6 +48,11 @@ class HookState(object):
             return
         commands.STATE.client.end_batch()
         self.batch = None
+
+    def check_skip_continue(self):
+        skip = self.skip_continue
+        self.skip_continue = False
+        return skip
 
 
 class InferiorState(object):
@@ -70,6 +76,8 @@ class InferiorState(object):
         if first:
             commands.put_inferiors()
             commands.put_environment()
+        else:
+            commands.put_inferior_state(gdb.selected_inferior())
         if self.threads:
             commands.put_threads()
             self.threads = False
@@ -81,7 +89,8 @@ class InferiorState(object):
             frame = gdb.selected_frame()
             hashable_frame = (thread, frame.level())
             if first or hashable_frame not in self.visited:
-                commands.putreg(frame, frame.architecture().registers())
+                commands.putreg(
+                    frame, frame.architecture().registers('general'))
                 commands.putmem("$pc", "1", from_tty=False)
                 commands.putmem("$sp", "1", from_tty=False)
                 self.visited.add(hashable_frame)
@@ -224,7 +233,6 @@ def on_memory_changed(event):
 
 
 def on_register_changed(event):
-    gdb.write("Register changed: {}".format(dir(event)))
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -240,6 +248,8 @@ def on_register_changed(event):
 
 
 def on_cont(event):
+    if (HOOK_STATE.check_skip_continue()):
+        return
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
         return
@@ -254,6 +264,7 @@ def on_cont(event):
 
 def on_stop(event):
     if hasattr(event, 'breakpoints') and HOOK_STATE.mem_catchpoint in event.breakpoints:
+        HOOK_STATE.skip_continue = True
         return
     inf = gdb.selected_inferior()
     if inf.num not in INF_STATES:
@@ -337,6 +348,8 @@ def on_breakpoint_created(b):
 
 
 def on_breakpoint_modified(b):
+    if b == HOOK_STATE.mem_catchpoint:
+        return
     inf = gdb.selected_inferior()
     notify_others_breaks(inf)
     if inf.num not in INF_STATES:
@@ -438,6 +451,16 @@ def hook_frame():
     on_frame_selected()
 
 
+@cmd_hook('hookpost-up')
+def hook_frame_up():
+    on_frame_selected()
+
+
+@cmd_hook('hookpost-down')
+def hook_frame_down():
+    on_frame_selected()
+
+
 # TODO: Checks and workarounds for events missing in gdb 8
 def install_hooks():
     if HOOK_STATE.installed:
@@ -451,6 +474,8 @@ def install_hooks():
     gdb.events.new_thread.connect(on_new_thread)
     hook_thread.hook()
     hook_frame.hook()
+    hook_frame_up.hook()
+    hook_frame_down.hook()
 
     # Respond to user-driven state changes: (Not target-driven)
     gdb.events.memory_changed.connect(on_memory_changed)
@@ -508,6 +533,8 @@ def remove_hooks():
     gdb.events.new_thread.disconnect(on_new_thread)
     hook_thread.unhook()
     hook_frame.unhook()
+    hook_frame_up.unhook()
+    hook_frame_down.unhook()
 
     gdb.events.memory_changed.disconnect(on_memory_changed)
     gdb.events.register_changed.disconnect(on_register_changed)

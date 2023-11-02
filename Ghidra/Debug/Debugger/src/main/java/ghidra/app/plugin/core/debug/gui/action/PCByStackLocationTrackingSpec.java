@@ -125,4 +125,9 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 			DebuggerCoordinates coordinates) {
 		return false;
 	}
+
+	@Override
+	public boolean shouldDisassemble() {
+		return true;
+	}
 }

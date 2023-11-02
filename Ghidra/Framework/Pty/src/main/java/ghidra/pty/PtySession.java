@@ -40,4 +40,11 @@ public interface PtySession {
 	 * whatever local resources are used in maintaining and controlling the remote session.
 	 */
 	void destroyForcibly();
+
+	/**
+	 * Get a human-readable description of the session
+	 * 
+	 * @return the description
+	 */
+	String description();
 }

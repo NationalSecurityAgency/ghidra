@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
-import ghidra.debug.api.tracermi.TraceRmiLaunchOpinion;
+import ghidra.debug.spi.tracermi.TraceRmiLaunchOpinion;
 import ghidra.framework.Application;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
@@ -63,12 +63,13 @@ public class UnixShellScriptTraceRmiLaunchOpinion implements TraceRmiLaunchOpini
 	}
 
 	@Override
-	public Collection<TraceRmiLaunchOffer> getOffers(Program program, PluginTool tool) {
-		return getScriptPaths(tool)
+	public Collection<TraceRmiLaunchOffer> getOffers(TraceRmiLauncherServicePlugin plugin,
+			Program program) {
+		return getScriptPaths(plugin.getTool())
 				.flatMap(rf -> Stream.of(rf.listFiles(crf -> crf.getName().endsWith(".sh"))))
 				.flatMap(sf -> {
 					try {
-						return Stream.of(UnixShellScriptTraceRmiLaunchOffer.create(program, tool,
+						return Stream.of(UnixShellScriptTraceRmiLaunchOffer.create(plugin, program,
 							sf.getFile(false)));
 					}
 					catch (Exception e) {

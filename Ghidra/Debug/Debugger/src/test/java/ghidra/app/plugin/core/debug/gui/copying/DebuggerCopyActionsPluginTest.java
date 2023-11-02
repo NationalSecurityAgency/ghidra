@@ -28,7 +28,7 @@ import db.Transaction;
 import docking.action.DockingActionIf;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneAutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyIntoProgramDialog.RangeEntry;
@@ -49,7 +49,7 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 
 @Category(NightlyCategory.class)
-public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerTest {
 
 	DebuggerCopyActionsPlugin copyActionsPlugin;
 	DebuggerListingPlugin listingPlugin;

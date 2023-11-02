@@ -61,4 +61,9 @@ public enum SPLocationTrackingSpec implements RegisterLocationTrackingSpec {
 	public AddressSpace computeDefaultAddressSpace(DebuggerCoordinates coordinates) {
 		return coordinates.getTrace().getBaseLanguage().getDefaultDataSpace();
 	}
+
+	@Override
+	public boolean shouldDisassemble() {
+		return false;
+	}
 }

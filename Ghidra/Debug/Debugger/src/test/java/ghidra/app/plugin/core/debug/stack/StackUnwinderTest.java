@@ -36,7 +36,7 @@ import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.stack.vars.*;
 import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueRow.*;
@@ -81,7 +81,7 @@ import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
-public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	public static final AssemblySelector NO_16BIT_CALLS = new AssemblySelector() {
 		@Override

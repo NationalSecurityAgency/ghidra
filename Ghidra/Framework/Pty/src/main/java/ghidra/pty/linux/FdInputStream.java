@@ -75,7 +75,7 @@ public class FdInputStream extends InputStream {
 			ret = LIB_POSIX.read(fd, buf, len);
 		}
 		catch (LastErrorException e) {
-			if (e.getErrorCode() == 5) {
+			if (e.getErrorCode() == 5 || e.getErrorCode() == 9) {
 				throw new IOException(e);
 			}
 			throw e;

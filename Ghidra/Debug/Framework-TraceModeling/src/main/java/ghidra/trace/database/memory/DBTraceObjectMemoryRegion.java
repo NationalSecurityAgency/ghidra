@@ -312,7 +312,8 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	public Set<TraceMemoryFlag> getFlags(long snap) {
 		EnumSet<TraceMemoryFlag> result = EnumSet.noneOf(TraceMemoryFlag.class);
 		for (TraceMemoryFlag flag : TraceMemoryFlag.values()) {
-			if (object.getValue(snap, keyForFlag(flag)) != null) {
+			TraceObjectValue value = object.getValue(snap, keyForFlag(flag));
+			if (value != null && value.getValue() == Boolean.TRUE) {
 				result.add(flag);
 			}
 		}

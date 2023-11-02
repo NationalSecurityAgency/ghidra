@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AutoReadMemoryAction;
-import ghidra.async.AsyncUtils;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
@@ -31,7 +30,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.util.task.TaskMonitor;
 
 public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
-	public static final String CONFIG_NAME = "READ_VISIBLE";
+	public static final String CONFIG_NAME = "1_READ_VISIBLE";
 
 	@Override
 	public String getConfigName() {
@@ -49,10 +48,10 @@ public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
 	}
 
 	@Override
-	public CompletableFuture<?> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
+	public CompletableFuture<Boolean> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
 			AddressSetView visible) {
 		if (!coordinates.isAliveAndReadsPresent()) {
-			return AsyncUtils.nil();
+			return CompletableFuture.completedFuture(false);
 		}
 		Target target = coordinates.getTarget();
 		TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
@@ -61,9 +60,9 @@ public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
 		AddressSet toRead = visible.subtract(alreadyKnown);
 
 		if (toRead.isEmpty()) {
-			return AsyncUtils.nil();
+			return CompletableFuture.completedFuture(false);
 		}
 
-		return target.readMemoryAsync(toRead, TaskMonitor.DUMMY);
+		return target.readMemoryAsync(toRead, TaskMonitor.DUMMY).thenApply(__ -> true);
 	}
 }
