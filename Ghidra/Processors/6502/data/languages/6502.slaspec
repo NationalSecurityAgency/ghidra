@@ -103,6 +103,27 @@ macro adc(op1) {
     A = result:1;
 }
 
+# reads two bytes from the specified address
+# if the address straddles a page boundary
+# Concrete example:
+# * JMP ($A0FD) constructs target address as low byte = $A0FD's value and high byte = $A0FF's value, however...
+# * JMP ($A0FF) constructs target address as low byte = $A0FF's value and high byte = $A000's value.
+macro read_page_safe(addr, value) {
+
+    local addr_high:1 = addr(1);
+    local addr_low:1 = addr(0);
+    local temp_addr:2 = (zext(addr_high) << 8) | zext(addr_low);
+
+    local result_low:1 = *:1 temp_addr;
+
+    addr_low = addr_low + 1;
+    temp_addr = (zext(addr_high) << 8) | zext(addr_low);
+    local result_high:1 = *:1 temp_addr;
+
+    value = (zext(result_high) << 8) | zext(result_low);
+
+}
+
 ################################################################
 # Pseudo Instructions
 ################################################################
@@ -358,9 +379,13 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	goto ADDR16;
 }
 
-:JMP ADDRI     is (op=0x6c); ADDRI
+:JMP imm16     is (op=0x6c); imm16
 {
-	goto [ADDRI];
+	local addr:2 = imm16;
+	local dest:2 = 0;
+
+	read_page_safe(addr, dest);
+	goto [dest];
 }
 
 :JSR   ADDR16    is op=0x20; ADDR16
