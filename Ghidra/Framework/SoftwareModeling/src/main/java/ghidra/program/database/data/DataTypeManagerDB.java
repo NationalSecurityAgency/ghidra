@@ -315,7 +315,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		try (Transaction tx = openTransaction("")) {
 			init(openMode, monitor);
 
-			if (openMode != DBConstants.CREATE && hasDataOrganizationChange()) {
+			if (openMode != DBConstants.CREATE && hasDataOrganizationChange(true)) {
 				// check for data organization change with possible upgrade
 				handleDataOrganizationChange(openMode, monitor);
 			}
@@ -341,7 +341,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	/**
 	 * Constructor for a database-backed <code>DataTypeManagerDB</code> extension.
 	 * NOTE: This does not check for and handle data organization changes which must be
-	 * handled later (use {@link #hasDataOrganizationChange()} and 
+	 * handled later (use {@link #hasDataOrganizationChange(boolean)} and 
 	 * {@link #compilerSpecChanged(TaskMonitor)} to check for and initiate response to changes).
 	 * 
 	 * @param handle     database handle
@@ -842,7 +842,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			throw new ReadOnlyException();
 		}
 
-		boolean hasDataOrgChange = hasDataOrganizationChange();
+		boolean hasDataOrgChange = hasDataOrganizationChange(false);
 
 		saveDataOrganization();
 
@@ -854,8 +854,21 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		// on function definitions
 	}
 
-	protected final boolean hasDataOrganizationChange() throws IOException {
+	/**
+	 * Check if the active {@link #getDataOrganization()} differs from the stored data organization.
+	 * False will be returned when {@code ifPreviouslyStored} is true and data organization has never 
+	 * beeen saved.
+	 * @param ifPreviouslyStored if true and data organization has never been saved false will be returned
+	 * @return true if a data organization change has occured
+	 * @throws IOException if an IO error occurs
+	 */
+	protected final boolean hasDataOrganizationChange(boolean ifPreviouslyStored)
+			throws IOException {
 		// compare DB-stored data organization with the one in affect
+		DataOrganization storedDataOrg = readDataOrganization();
+		if (ifPreviouslyStored && storedDataOrg == null) {
+			return false;
+		}
 		return !Objects.equals(readDataOrganization(), getDataOrganization());
 	}
 
@@ -3944,7 +3957,19 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	@Override
 	public final DataOrganization getDataOrganization() {
 		if (dataOrganization == null) {
-			dataOrganization = DataOrganizationImpl.getDefaultOrganization();
+			try {
+				// Initialization of dataOrganization may never have been established
+				// if either an architecture has never been specified or a language
+				// error occured during initializtion.  In such cases the stored
+				// data organization should be used if available.
+				dataOrganization = readDataOrganization();
+			}
+			catch (IOException e) {
+				dbError(e);
+			}
+			if (dataOrganization == null) {
+				dataOrganization = DataOrganizationImpl.getDefaultOrganization();
+			}
 		}
 		return dataOrganization;
 	}

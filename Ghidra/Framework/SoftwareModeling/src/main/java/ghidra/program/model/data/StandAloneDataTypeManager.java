@@ -201,7 +201,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 			Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
 		super(handle, null, openMode, null, errHandler, lock, monitor);
-		if (openMode != DBConstants.CREATE && hasDataOrganizationChange()) {
+		if (openMode != DBConstants.CREATE && hasDataOrganizationChange(true)) {
 			handleDataOrganizationChange(openMode, monitor);
 		}
 	}
