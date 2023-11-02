@@ -47,7 +47,7 @@ macro popSR() {
 	$(N_FLAG) = ccr[7,1];
 	$(V_FLAG) = ccr[6,1];
 	$(T_FLAG) = 1; # Constant flag always set to 1 in pop
-	$(B_FLAG) = 0; # Break flag always set to 0 in push
+	$(B_FLAG) = 0; # Break flag always set to 0 in pop
 	$(D_FLAG) = ccr[3,1];
 	$(I_FLAG) = ccr[2,1];
 	$(Z_FLAG) = ccr[1,1];
