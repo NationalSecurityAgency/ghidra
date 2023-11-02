@@ -21,8 +21,10 @@ import java.util.function.Predicate;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.util.table.column.GColumnRenderer;
 
 /**
  * A table model whose columns are described using an {@link Enum}.
@@ -106,6 +108,26 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		default public SortDirection defaultSortDirection() {
 			return SortDirection.ASCENDING;
 		}
+
+		default public int getPreferredWidth() {
+			return -1;
+		}
+
+		/**
+		 * Because of limitations with Java generics and Enumerations, type checking cannot be
+		 * guaranteed here. The user must ensure that any returned by {@link #getValueOf(Object)}
+		 * can be accepted by the renderer returned here. The framework will perform an unchecked
+		 * cast of the renderer.
+		 * 
+		 * @return the renderer
+		 */
+		default public GColumnRenderer<?> getRenderer() {
+			return null;
+		}
+
+		default public SettingsDefinition[] getSettingsDefinitions() {
+			return null;
+		}
 	}
 
 	private final List<R> modelData = new ArrayList<>();
@@ -166,6 +188,26 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		public void setValueOf(R row, Object value, Settings settings, Void dataSource,
 				ServiceProvider serviceProvider) {
 			col.setValueOf(row, value);
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public GColumnRenderer<Object> getColumnRenderer() {
+			return (GColumnRenderer<Object>) col.getRenderer();
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return col.getPreferredWidth();
+		}
+
+		@Override
+		public SettingsDefinition[] getSettingsDefinitions() {
+			SettingsDefinition[] defs = col.getSettingsDefinitions();
+			if (defs != null) {
+				return defs;
+			}
+			return super.getSettingsDefinitions();
 		}
 	}
 
