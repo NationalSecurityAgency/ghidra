@@ -35,9 +35,9 @@ public class StartInstructionValueSolver extends AbstractExpressionSolver<StartI
 	}
 
 	@Override
-	public AssemblyResolution solve(StartInstructionValue iv, MaskedLong goal,
-			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) {
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			StartInstructionValue iv, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description) {
 		throw new AssertionError(
 			"INTERNAL: Should never be asked to solve for " + AssemblyTreeResolver.INST_START);
 	}

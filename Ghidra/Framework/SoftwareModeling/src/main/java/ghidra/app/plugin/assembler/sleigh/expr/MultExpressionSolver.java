@@ -18,8 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.MultExpression;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
@@ -102,25 +101,26 @@ public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExp
 		super(MultExpression.class);
 	}
 
-	protected AssemblyResolution tryRep(PatternExpression lexp, MaskedLong rval, MaskedLong repGoal,
-			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
-			Set<SolverHint> hints, String description) throws NeedsBackfillException {
+	protected AssemblyResolution tryRep(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression lexp, MaskedLong rval, MaskedLong repGoal, MaskedLong goal,
+			Map<String, Long> vals, AssemblyResolvedPatterns cur, Set<SolverHint> hints,
+			String description) throws NeedsBackfillException {
 		MaskedLong lval = repGoal.divideUnsigned(rval);
 		if (lval.multiply(rval).agrees(goal)) {
-			return solver.solve(lexp, lval, vals, cur, hints, description);
+			return solver.solve(factory, lexp, lval, vals, cur, hints, description);
 		}
 		return null;
 	}
 
 	@Override
-	protected AssemblyResolution solveLeftSide(PatternExpression lexp, MaskedLong rval,
-			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
-			Set<SolverHint> hints, String description)
+	protected AssemblyResolution solveLeftSide(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression lexp, MaskedLong rval, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
 			throws NeedsBackfillException, SolverException {
 		// Try the usual case first
 		ResultTracker tracker = new ResultTracker();
 		AssemblyResolution sol = tracker.trySolverFunc(() -> {
-			return super.solveLeftSide(lexp, rval, goal, vals, cur, hints, description);
+			return super.solveLeftSide(factory, lexp, rval, goal, vals, cur, hints, description);
 		});
 		if (sol != null) {
 			return sol;
@@ -150,7 +150,8 @@ public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExp
 			if (reps > 0) {
 				MaskedLong repRightGoal = MaskedLong.fromMaskAndValue(repMsk, repVal);
 				sol = tracker.trySolverFunc(() -> {
-					return tryRep(lexp, rval, repRightGoal, goal, vals, cur, hintsWithRepetition,
+					return tryRep(factory, lexp, rval, repRightGoal, goal, vals, cur,
+						hintsWithRepetition,
 						description);
 				});
 				if (sol != null) {
@@ -168,8 +169,8 @@ public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExp
 				repMsk = -1L >>> i;
 				MaskedLong repLeftGoal = MaskedLong.fromMaskAndValue(repMsk, repVal);
 				sol = tracker.trySolverFunc(() -> {
-					return tryRep(lexp, rval, repLeftGoal, goal, vals, cur, hintsWithRepetition,
-						description);
+					return tryRep(factory, lexp, rval, repLeftGoal, goal, vals, cur,
+						hintsWithRepetition, description);
 				});
 				if (sol != null) {
 					return sol;
@@ -180,11 +181,11 @@ public class MultExpressionSolver extends AbstractBinaryExpressionSolver<MultExp
 	}
 
 	@Override
-	protected AssemblyResolution solveRightSide(PatternExpression rexp, MaskedLong lval,
-			MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
-			Set<SolverHint> hints, String description)
+	protected AssemblyResolution solveRightSide(AbstractAssemblyResolutionFactory<?, ?> factory,
+			PatternExpression rexp, MaskedLong lval, MaskedLong goal, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description)
 			throws NeedsBackfillException, SolverException {
-		return solveLeftSide(rexp, lval, goal, vals, cur, hints, description);
+		return solveLeftSide(factory, rexp, lval, goal, vals, cur, hints, description);
 	}
 
 	@Override

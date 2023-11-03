@@ -36,13 +36,13 @@ import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.app.plugin.processors.sleigh.template.HandleTpl;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
-import ghidra.program.model.lang.*;
-import ghidra.program.util.DefaultLanguageService;
+import ghidra.program.model.lang.LanguageID;
 import ghidra.util.Msg;
 import ghidra.xml.XmlPullParser;
 import ghidra.xml.XmlPullParserFactory;
 
 public class SolverTest {
+	static final DefaultAssemblyResolutionFactory FACTORY = new DefaultAssemblyResolutionFactory();
 
 	private static final MaskedLong nil = MaskedLong.ZERO;
 	private static final MaskedLong unk = MaskedLong.UNKS;
@@ -165,28 +165,25 @@ public class SolverTest {
 
 	@Test
 	public void testCatOrSolver() throws SAXException, NeedsBackfillException {
-		XmlPullParser parser = XmlPullParserFactory.create("" + //
-			//
-			"<or_exp>\n" + //
-			"  <lshift_exp>\n" + //
-			"    <tokenfield bigendian='false' signbit='false' bitstart='0' bitend='3' bytestart='0' byteend='0' shift='0'/>\n" + //
-			"    <intb val='4'/>\n" + //
-			"  </lshift_exp>\n" + //
-			"  <tokenfield bigendian='false' signbit='false' bitstart='8' bitend='11' bytestart='1' byteend='1' shift='0'/>\n" + //
-			"</or_exp>\n" + //
-			"", "Test", null, true);
+		XmlPullParser parser = XmlPullParserFactory.create("""
+				<or_exp>
+				  <lshift_exp>
+				    <tokenfield bigendian='false' signbit='false' bitstart='0' bitend='3'
+				                bytestart='0' byteend='0' shift='0'/>
+				    <intb val='4'/>
+				  </lshift_exp>
+				  <tokenfield bigendian='false' signbit='false' bitstart='8' bitend='11'
+				              bytestart='1' byteend='1' shift='0'/>
+				</or_exp>
+				""",
+			"Test", null, true);
 		PatternExpression exp = PatternExpression.restoreExpression(parser, null);
 		RecursiveDescentSolver solver = RecursiveDescentSolver.getSolver();
 		AssemblyResolution res =
-			solver.solve(exp, MaskedLong.fromLong(0x78), Collections.emptyMap(),
-				AssemblyResolution.nop("NOP"), "Test");
-		AssemblyResolution e = AssemblyResolvedPatterns.fromString("ins:X7:X8", "Test", null);
+			solver.solve(FACTORY, exp, MaskedLong.fromLong(0x78), Collections.emptyMap(),
+				FACTORY.nop("NOP"), "Test");
+		AssemblyResolution e = FACTORY.fromString("ins:X7:X8", "Test", null);
 		assertEquals(e, res);
-	}
-	
-	private static Language getLanguage(String languageName) throws LanguageNotFoundException {
-		LanguageService languageService = DefaultLanguageService.getLanguageService();
-		return languageService.getLanguage(new LanguageID(languageName));
 	}
 
 	public static Constructor findConstructor(String langId, String subtableName, String patternStr)
@@ -328,5 +325,91 @@ public class SolverTest {
 
 		assertTrue(MaskedLong.fromLong(-0x800000000000000L).isInRange(0xffffffffffffffffL, true));
 		// NOTE: -0x8000000000000001L will wrap around and appear positive
+	}
+
+	@Test
+	public void testAssemblyPatternBlockMaskOut() {
+		AssemblyPatternBlock base = AssemblyPatternBlock.fromString("8C:45:00:00");
+		AssemblyPatternBlock extraMask = AssemblyPatternBlock.fromString("XX:X5:XX:XX");
+		AssemblyPatternBlock expectedAnswer = AssemblyPatternBlock.fromString("8C:4X:00:00");
+		AssemblyPatternBlock computed = base.maskOut(extraMask);
+		assertEquals(expectedAnswer, computed);
+
+		base = AssemblyPatternBlock.fromString("8C:45:00:00");
+		extraMask = AssemblyPatternBlock.fromString("XX:X5:XX:XX");
+		expectedAnswer = AssemblyPatternBlock.fromString("8C:4X:00:00");
+		computed = base.maskOut(extraMask);
+		assertEquals(expectedAnswer, computed);
+
+		base = AssemblyPatternBlock.fromString("8C:45:67:89");
+		byte[] z = new byte[2];
+		z[0] = 0x44;
+		z[1] = 0x77;
+		extraMask = AssemblyPatternBlock.fromBytes(2, z);
+		expectedAnswer = AssemblyPatternBlock.fromString("8C:45:XX:XX");
+		computed = base.maskOut(extraMask);
+		assertEquals(expectedAnswer, computed);
+
+		extraMask = AssemblyPatternBlock.fromBytes(1, z);
+		expectedAnswer = AssemblyPatternBlock.fromString("8C:XX:XX:89");
+		computed = base.maskOut(extraMask);
+		assertEquals(expectedAnswer, computed);
+
+		base = AssemblyPatternBlock.fromString("01:02:03:04:05:06:07:08");
+		extraMask = AssemblyPatternBlock.fromBytes(1, z);
+		expectedAnswer = AssemblyPatternBlock.fromString("01:XX:XX:04:05:06:07:08");
+		computed = base.maskOut(extraMask);
+		assertEquals(expectedAnswer, computed);
+
+		byte[] z3 = new byte[3];
+		z3[0] = 0x44;
+		z3[1] = 0x77;
+		z3[2] = 0x78;
+		base = AssemblyPatternBlock.fromBytes(4, z3);
+		extraMask = AssemblyPatternBlock.fromBytes(1, z);
+		expectedAnswer = AssemblyPatternBlock.fromBytes(4, z3);
+		computed = base.maskOut(extraMask);
+		assertEquals(expectedAnswer, computed);
+
+		extraMask = AssemblyPatternBlock.fromBytes(4, z);
+		byte[] z4 = new byte[1];
+		z4[0] = 0x78;
+		expectedAnswer = AssemblyPatternBlock.fromBytes(6, z4);
+		computed = base.maskOut(extraMask);
+		assertEquals(expectedAnswer, computed);
+	}
+
+	@Test
+	public void testAssemblyPatternBlockTrim() {
+		AssemblyPatternBlock base = AssemblyPatternBlock.fromString("XC:45:00:0X");
+		AssemblyPatternBlock expectedAnswer = AssemblyPatternBlock.fromString("c4:50:00");
+		var computed = base.trim();
+		assertEquals(expectedAnswer, computed);
+
+		base = base.shift(5);
+		computed = base.trim();
+		assertEquals(expectedAnswer, computed);
+
+		base = AssemblyPatternBlock.fromString("XX:XX:00:XX:10:XX");
+		expectedAnswer = AssemblyPatternBlock.fromString("00:XX:10");
+		computed = base.trim();
+		assertEquals(expectedAnswer, computed);
+
+		base = base.shift(2);
+		expectedAnswer = AssemblyPatternBlock.fromString("00:XX:10");
+		computed = base.trim();
+		assertEquals(expectedAnswer, computed);
+
+		base = AssemblyPatternBlock.fromString("[x1xx]X");
+		expectedAnswer = AssemblyPatternBlock.fromString("X[xxx1]");
+		computed = base.trim();
+		assertEquals(expectedAnswer, computed);
+
+		// The "f" here has the "sign bit" set... we wan't to make sure it's treated as
+		// unsigned
+		base = AssemblyPatternBlock.fromString("F[x1xx]").shift(3);
+		expectedAnswer = AssemblyPatternBlock.fromString("[xx11][11x1]");
+		computed = base.trim();
+		assertEquals(expectedAnswer, computed);
 	}
 }

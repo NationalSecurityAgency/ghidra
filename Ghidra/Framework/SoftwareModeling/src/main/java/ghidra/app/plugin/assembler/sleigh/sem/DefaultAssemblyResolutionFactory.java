@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.assembler.sleigh.grammars;
+package ghidra.app.plugin.assembler.sleigh.sem;
 
-import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNonTerminal;
+public class DefaultAssemblyResolutionFactory extends
+		AbstractAssemblyResolutionFactory<AssemblyResolvedPatterns, AssemblyResolvedBackfill> {
 
-/**
- * Defines a production for parsing mnemonic assembly
- * 
- * @see AssemblyGrammar
- */
-public class AssemblyProduction extends AbstractAssemblyProduction<AssemblyNonTerminal> {
-
-	public AssemblyProduction(AssemblyNonTerminal lhs,
-			AssemblySentential<AssemblyNonTerminal> rhs) {
-		super(lhs, rhs);
+	@Override
+	public DefaultAssemblyResolvedPatternBuilder newPatternsBuilder() {
+		return new DefaultAssemblyResolvedPatternBuilder();
 	}
 
-	public boolean isConstructor() {
-		return true;
+	@Override
+	public DefaultAssemblyResolvedBackfillBuilder newBackfillBuilder() {
+		return new DefaultAssemblyResolvedBackfillBuilder();
 	}
 }

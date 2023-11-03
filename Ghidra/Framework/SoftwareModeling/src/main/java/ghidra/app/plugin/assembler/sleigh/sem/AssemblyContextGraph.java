@@ -46,6 +46,7 @@ import ghidra.graph.algo.DijkstraShortestPathsAlgorithm;
  * much larger its LALR(1) parser would become.
  */
 public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge> {
+	protected final AbstractAssemblyResolutionFactory<?, ?> factory;
 	protected final Map<String, Set<AssemblyConstructorSemantic>> semantics =
 		LazyMap.lazyMap(new HashMap<>(), () -> new HashSet<>());
 	protected final AssemblyGrammar grammar;
@@ -72,7 +73,9 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	 * @param lang the language
 	 * @param grammar the grammar derived from the given language
 	 */
-	public AssemblyContextGraph(SleighLanguage lang, AssemblyGrammar grammar) {
+	public AssemblyContextGraph(AbstractAssemblyResolutionFactory<?, ?> factory,
+			SleighLanguage lang, AssemblyGrammar grammar) {
+		this.factory = factory;
 		this.grammar = grammar;
 		this.lang = lang;
 
@@ -343,7 +346,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 		Set<Edge> result = new HashSet<>();
 		for (AssemblyConstructorSemantic sem : semantics.get(from.subtable)) {
 			for (AssemblyResolvedPatterns rc : sem.patterns) {
-				AssemblyPatternBlock pattern = rc.ctx;
+				AssemblyPatternBlock pattern = rc.getContext();
 				AssemblyPatternBlock outer = from.context.combine(pattern);
 				if (outer == null) {
 					continue;
@@ -352,8 +355,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 					continue;
 				}
 
-				AssemblyResolvedPatterns orc =
-					AssemblyResolution.contextOnly(outer, "For context transition");
+				AssemblyResolvedPatterns orc = factory.contextOnly(outer, "For context transition");
 				AssemblyResolvedPatterns irc = sem.applyContextChangesForward(Map.of(), orc);
 				AssemblyPatternBlock inner = irc.getContext();
 

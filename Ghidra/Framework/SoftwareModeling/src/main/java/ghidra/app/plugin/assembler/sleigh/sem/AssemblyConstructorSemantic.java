@@ -36,9 +36,10 @@ import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
  */
 public class AssemblyConstructorSemantic implements Comparable<AssemblyConstructorSemantic> {
 	protected static final RecursiveDescentSolver SOLVER = RecursiveDescentSolver.getSolver();
-	protected static final DbgTimer DBG = AssemblyTreeResolver.DBG;
+	protected static final DbgTimer DBG = AbstractAssemblyTreeResolver.DBG;
 
 	protected final Set<AssemblyResolvedPatterns> patterns = new HashSet<>();
+	protected final AbstractAssemblyResolutionFactory<?, ?> factory;
 	protected final Constructor cons;
 	protected final List<Integer> indices;
 	protected final List<ContextChange> contextChanges;
@@ -54,7 +55,9 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * @param indices the indices of RHS non-terminals in the associated production that represent
 	 *            an operand in the SLEIGH constructor
 	 */
-	public AssemblyConstructorSemantic(Constructor cons, List<Integer> indices) {
+	public AssemblyConstructorSemantic(AbstractAssemblyResolutionFactory<?, ?> factory,
+			Constructor cons, List<Integer> indices) {
+		this.factory = factory;
 		this.cons = cons;
 		this.indices = Collections.unmodifiableList(indices);
 		List<ContextChange> changes = new ArrayList<>(cons.getContextChanges());
@@ -69,7 +72,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * @param pat the pattern
 	 */
 	public void addPattern(DisjointPattern pat) {
-		addPattern(AssemblyResolution.fromPattern(pat, cons.getMinimumLength(),
+		addPattern(factory.fromPattern(pat, cons.getMinimumLength(),
 			"Generated constructor pattern " + getLocation(), cons));
 	}
 
@@ -238,7 +241,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 				 */
 
 				// If the two patterns cannot be combined, then they are disjoint.
-				AssemblyResolvedPatterns sibpat = AssemblyResolution.fromPattern(sibDP,
+				AssemblyResolvedPatterns sibpat = factory.fromPattern(sibDP,
 					sibcons.getMinimumLength(), "For specialization check", sibcons);
 				AssemblyResolvedPatterns comb = pat.combine(sibpat);
 				if (null == comb) {
@@ -258,7 +261,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 				}
 
 				// We can't apply the line number rule unless the sibling's context is an overset
-				if (!comb.ctx.equals(pat.ctx)) {
+				if (!comb.getContext().equals(pat.getContext())) {
 					return CONTINUE;
 				}
 
@@ -295,7 +298,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * 
 	 * @param res the combined resolution requirements derived from the subconstructors
 	 * @param vals any defined symbols (usually {@code inst_start}, and {@code inst_next})
-	 * @return the resolution with context changes applied in reverse, or an error 
+	 * @return the resolution with context changes applied in reverse, or an error
 	 */
 	public AssemblyResolution solveContextChanges(AssemblyResolvedPatterns res,
 			Map<String, Long> vals) {
@@ -320,12 +323,12 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 				DBG.println("Masked out: " + res.lineToString());
 
 				// Now, solve
-				AssemblyResolution sol = AssemblyTreeResolver.solveOrBackfill(
-					cop.getPatternExpression(), reqval, vals, res, "Solution to " + cop);
+				AssemblyResolution sol = factory.solveOrBackfill(cop.getPatternExpression(), reqval,
+					vals, res, "Solution to " + cop);
 				DBG.println("Solution: " + sol.lineToString());
 				if (sol.isError()) {
 					AssemblyResolvedError err = (AssemblyResolvedError) sol;
-					return AssemblyResolution.error(err.getError(), res);
+					return factory.error(err.getError(), res);
 				}
 
 				// Now, forward the new requirements to my parents.
@@ -333,8 +336,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 					AssemblyResolvedPatterns solcon = (AssemblyResolvedPatterns) sol;
 					AssemblyResolvedPatterns check = res.combine(solcon);
 					if (null == check) {
-						return AssemblyResolution.error(
-							"A context change caused a conflict: " + sol, res);
+						return factory.error("A context change caused a conflict: " + sol, res);
 					}
 					res = check;
 				}

@@ -18,8 +18,7 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 import java.util.Map;
 import java.util.Set;
 
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.ConstantValue;
 
 /**
@@ -36,11 +35,11 @@ public class ConstantValueSolver extends AbstractExpressionSolver<ConstantValue>
 	}
 
 	@Override
-	public AssemblyResolution solve(ConstantValue cv, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints,
-			String description) {
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			ConstantValue cv, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) {
 		MaskedLong value = getValue(cv, vals, cur);
-		return checkConstAgrees(value, goal, description);
+		return checkConstAgrees(factory, value, goal, description);
 	}
 
 	@Override
@@ -60,12 +59,15 @@ public class ConstantValueSolver extends AbstractExpressionSolver<ConstantValue>
 		return MaskedLong.fromLong(cv.getValue());
 	}
 
-	static AssemblyResolution checkConstAgrees(MaskedLong value, MaskedLong goal,
+	static AssemblyResolution checkConstAgrees(
+			AbstractAssemblyResolutionFactory<?, ?> factory, MaskedLong value, MaskedLong goal,
 			String description) {
 		if (!value.agrees(goal)) {
-			return AssemblyResolution.error(
-				"Constant value " + value + " does not agree with child requirements", description);
+			return factory.newErrorBuilder()
+					.error("Constant value " + value + " does not agree with child requirements")
+					.description(description)
+					.build();
 		}
-		return AssemblyResolution.nop(description, null, null);
+		return factory.nop(description);
 	}
 }

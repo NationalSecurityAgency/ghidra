@@ -55,7 +55,12 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	}
 
 	@Test
-	public void testAssembly_T_add_w_pc_r0_r7_asr_0xf() {
+	public void testAssemble_mov_pc_n0x0() {
+		assertOneCompatRestExact("mov pc,#0x0", "00:f0:a0:e3");
+	}
+
+	@Test
+	public void testAssemble_T_add_w_pc_r0_r7_asr_0xf() {
 		assertOneCompatRestExact("add.w pc,r0,r7, asr #0xf", "00:eb:e7:3f", THUMB, 0x0000c3b8,
 			"add.w pc,r0,r7, asr #0xf");
 	}
