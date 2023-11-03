@@ -26,12 +26,29 @@ import ghidra.util.LockHold;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
+	// I think size should be about how many instructions may appear on screen at once.
+	// Double for good measure (in case windows are cloned, maximized, etc.)
+	private static final int REGION_CACHE_BY_ADDRESS_SIZE = 300;
+
+	// Size should be about how many distinct regions are involved in displayed instructions
+	// Probably only about 5, but cost of 30 is still small.
+	private static final int REGION_CACHE_BY_NAME_SIZE = 30;
 
 	// NB. Keep both per-region and force-full (per-space) block sets ready
 	private final Map<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> regionBlocks =
 		new WeakValueHashMap<>();
 	private final Map<AddressSpace, DBTraceProgramViewMemorySpaceBlock> spaceBlocks =
 		new WeakValueHashMap<>();
+	private final Map<Address, TraceMemoryRegion> regionCacheByAddress = new LinkedHashMap<>() {
+		protected boolean removeEldestEntry(Map.Entry<Address, TraceMemoryRegion> eldest) {
+			return this.size() > REGION_CACHE_BY_ADDRESS_SIZE;
+		}
+	};
+	private final Map<String, TraceMemoryRegion> regionCacheByName = new LinkedHashMap<>() {
+		protected boolean removeEldestEntry(Map.Entry<String, TraceMemoryRegion> eldest) {
+			return this.size() > REGION_CACHE_BY_NAME_SIZE;
+		}
+	};
 
 	public DBTraceProgramViewMemory(DBTraceProgramView program) {
 		super(program);
@@ -90,8 +107,24 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 		if (forceFullView) {
 			return getSpaceBlock(addr.getAddressSpace());
 		}
-		TraceMemoryRegion region = getTopRegion(s -> memoryManager.getRegionContaining(s, addr));
-		return region == null ? null : getRegionBlock(region);
+		TraceMemoryRegion region = regionCacheByAddress.get(addr);
+		if (region != null && !region.isDeleted()) {
+			/**
+			 * TODO: This is assuming: 1) We never fork in non-scratch space. 2) Regions are not
+			 * created in scratch space. These are convention, but weren't originally intended to be
+			 * rules. This makes them rules.
+			 */
+			long s = program.viewport.getReversedSnaps().get(0);
+			if (region.getLifespan().contains(s)) {
+				return getRegionBlock(region);
+			}
+		}
+		region = getTopRegion(s -> memoryManager.getRegionContaining(s, addr));
+		if (region != null) {
+			regionCacheByAddress.put(addr, region);
+			return getRegionBlock(region);
+		}
+		return null;
 	}
 
 	@Override
@@ -100,9 +133,19 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 			AddressSpace space = program.getAddressFactory().getAddressSpace(blockName);
 			return space == null ? null : getSpaceBlock(space);
 		}
-		TraceMemoryRegion region =
-			getTopRegion(s -> memoryManager.getLiveRegionByPath(s, blockName));
-		return region == null ? null : getRegionBlock(region);
+		TraceMemoryRegion region = regionCacheByName.get(blockName);
+		if (region != null && !region.isDeleted()) {
+			long s = program.viewport.getReversedSnaps().get(0);
+			if (region.getLifespan().contains(s)) {
+				return getRegionBlock(region);
+			}
+		}
+		region = getTopRegion(s -> memoryManager.getLiveRegionByPath(s, blockName));
+		if (region != null) {
+			regionCacheByName.put(blockName, region);
+			return getRegionBlock(region);
+		}
+		return null;
 	}
 
 	@Override

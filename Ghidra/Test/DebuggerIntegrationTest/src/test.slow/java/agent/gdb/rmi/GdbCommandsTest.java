@@ -786,7 +786,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				Map.entry("[1]", Lifespan.nowOn(0)),
 				Map.entry("[2]", Lifespan.span(0, 9)),
 				Map.entry("[3]", Lifespan.nowOn(0))),
-				object.getValues()
+				object.getValues(Lifespan.ALL)
 						.stream()
 						.collect(Collectors.toMap(v -> v.getEntryKey(), v -> v.getLifespan())));
 		}

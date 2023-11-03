@@ -18,8 +18,10 @@ package ghidra.trace.database.target;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +33,7 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.dbg.util.PathUtils;
+import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
@@ -111,22 +114,22 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			TraceObjectKeyPath pathTargets = TraceObjectKeyPath.of("Targets");
 			targetContainer = manager.createObject(pathTargets);
 			root.setAttribute(Lifespan.nowOn(0), "Targets", targetContainer);
-			dumpStore(manager.valueStore);
+			dumpStore(manager.valueTree.getDataStore());
 
 			for (int i = 0; i < targetCount; i++) {
 				Lifespan lifespan = Lifespan.nowOn(i);
 				TraceObject target = manager.createObject(pathTargets.index(i));
 				target.setAttribute(Lifespan.ALL, "self", target);
-				dumpStore(manager.valueStore);
+				dumpStore(manager.valueTree.getDataStore());
 				targetContainer.setElement(lifespan, i, target);
-				dumpStore(manager.valueStore);
+				dumpStore(manager.valueTree.getDataStore());
 				targets.add(target);
 				root.setAttribute(lifespan, "curTarget", target);
-				dumpStore(manager.valueStore);
+				dumpStore(manager.valueTree.getDataStore());
 			}
 
 			root.setValue(Lifespan.ALL, "anAttribute", "A primitive string");
-			dumpStore(manager.valueStore);
+			dumpStore(manager.valueTree.getDataStore());
 		}
 	}
 
@@ -268,8 +271,8 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			TraceObjectValue rangeVal =
 				root.setValue(Lifespan.nowOn(0), "a", b.range(0x1000, 0x1fff));
 
-			assertTrue(root.getValues().contains(rangeVal));
-			assertFalse(targetContainer.getValues().contains(rangeVal));
+			assertTrue(root.getValues(Lifespan.at(0)).contains(rangeVal));
+			assertFalse(targetContainer.getValues(Lifespan.ALL).contains(rangeVal));
 			assertEquals(rangeVal, root.getValue(0, "a"));
 			assertNull(root.getValue(0, "b"));
 
@@ -292,10 +295,14 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(Set.of(rangeVal),
 				Set.copyOf(manager.getValuesIntersecting(Lifespan.ALL, b.range(0, -1))));
+			assertEquals(Set.of(rangeVal),
+				Set.copyOf(manager.getValuesIntersecting(Lifespan.ALL, b.range(0, -1), "a")));
 			assertEquals(Set.of(),
 				Set.copyOf(manager.getValuesIntersecting(Lifespan.toNow(-1), b.range(0, -1))));
 			assertEquals(Set.of(),
 				Set.copyOf(manager.getValuesIntersecting(Lifespan.ALL, b.range(0, 0xfff))));
+			assertEquals(Set.of(),
+				Set.copyOf(manager.getValuesIntersecting(Lifespan.ALL, b.range(0, -1), "b")));
 		}
 	}
 
@@ -444,32 +451,33 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testGetParents() {
 		populateModel(3);
 
-		assertEquals(1, root.getParents().size());
-		assertEquals(root, Unique.assertOne(targetContainer.getParents()).getParent());
-		assertEquals(3, targets.get(0).getParents().size()); // curTarget, targetContainer, self
+		assertEquals(1, root.getParents(Lifespan.ALL).size());
+		assertEquals(root, Unique.assertOne(targetContainer.getParents(Lifespan.ALL)).getParent());
+		assertEquals(3, targets.get(0).getParents(Lifespan.ALL).size());
+		// curTarget, targetContainer, self
 	}
 
 	@Test
 	public void testGetValues() {
 		populateModel(3);
 
-		assertEquals(3, targetContainer.getValues().size());
+		assertEquals(3, targetContainer.getValues(Lifespan.ALL).size());
 	}
 
 	@Test
 	public void testGetElements() {
 		populateModel(3);
 
-		assertEquals(0, root.getElements().size());
-		assertEquals(3, targetContainer.getElements().size());
+		assertEquals(0, root.getElements(Lifespan.ALL).size());
+		assertEquals(3, targetContainer.getElements(Lifespan.ALL).size());
 	}
 
 	@Test
 	public void testGetAttributes() {
 		populateModel(3);
 
-		assertEquals(5, root.getAttributes().size()); // Targets, curTarget(x3), string
-		assertEquals(0, targetContainer.getAttributes().size());
+		assertEquals(5, root.getAttributes(Lifespan.ALL).size()); // Targets, curTarget(x3), string
+		assertEquals(0, targetContainer.getAttributes(Lifespan.ALL).size());
 	}
 
 	@Test
@@ -610,7 +618,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(valA, root.setValue(Lifespan.span(-10, -1), "a", 1));
 			assertEquals(Lifespan.span(-10, 9), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -624,7 +632,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			assertEquals(valA,
 				root.setValue(Lifespan.span(-10, -1), "a", b.range(0x1000, 0x1fff)));
 			assertEquals(Lifespan.span(-10, 9), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -636,7 +644,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(valA, root.setValue(Lifespan.span(10, 19), "a", 1));
 			assertEquals(Lifespan.span(0, 19), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -648,7 +656,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(valA, root.setValue(Lifespan.span(-5, 4), "a", 1));
 			assertEquals(Lifespan.span(-5, 9), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -660,7 +668,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(valA, root.setValue(Lifespan.span(5, 14), "a", 1));
 			assertEquals(Lifespan.span(0, 14), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -672,7 +680,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(valA, root.setValue(Lifespan.span(0, 9), "a", 1));
 			assertEquals(Lifespan.span(0, 9), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -684,11 +692,11 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(valA, root.setValue(Lifespan.at(5), "a", 1));
 			assertEquals(Lifespan.span(0, 9), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 
 			assertEquals(valA, root.setValue(Lifespan.span(-5, 14), "a", 1));
 			assertEquals(Lifespan.span(-5, 14), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -700,11 +708,11 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(valA, root.setValue(Lifespan.span(0, 5), "a", 1));
 			assertEquals(Lifespan.span(0, 9), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 
 			assertEquals(valA, root.setValue(Lifespan.span(0, 14), "a", 1));
 			assertEquals(Lifespan.span(0, 14), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -716,11 +724,11 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 			assertEquals(valA, root.setValue(Lifespan.span(5, 9), "a", 1));
 			assertEquals(Lifespan.span(0, 9), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 
 			assertEquals(valA, root.setValue(Lifespan.span(-5, 9), "a", 1));
 			assertEquals(Lifespan.span(-5, 9), valA.getLifespan());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -731,12 +739,12 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			TraceObjectValue valA = root.setValue(Lifespan.span(0, 9), "a", 1);
 			TraceObjectValue valB = root.setValue(Lifespan.span(20, 29), "a", 1);
 			assertNotSame(valA, valB);
-			assertEquals(2, root.getValues().size());
+			assertEquals(2, root.getValues(Lifespan.ALL).size());
 
 			assertEquals(valA, root.setValue(Lifespan.span(10, 19), "a", 1));
 			assertEquals(Lifespan.span(0, 29), valA.getLifespan());
 			assertTrue(valB.isDeleted());
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -825,13 +833,13 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 			assertNull(root.setValue(Lifespan.span(0, 9), "a", null));
-			assertEquals(0, root.getValues().size());
+			assertEquals(0, root.getValues(Lifespan.ALL).size());
 
 			assertNotNull(root.setValue(Lifespan.span(0, 9), "a", 1));
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 
 			assertNull(root.setValue(Lifespan.at(5), "a", null));
-			assertEquals(2, root.getValues().size());
+			assertEquals(2, root.getValues(Lifespan.ALL).size());
 
 			assertEquals(List.of(Lifespan.span(0, 4), Lifespan.span(6, 9)),
 				root.getOrderedValues(Lifespan.ALL, "a", true)
@@ -845,10 +853,10 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 			assertNotNull(root.setValue(Lifespan.span(0, 9), "a", 1));
-			assertEquals(1, root.getValues().size());
+			assertEquals(1, root.getValues(Lifespan.ALL).size());
 
 			assertNull(root.setValue(Lifespan.span(0, 9), "a", null));
-			assertEquals(0, root.getValues().size());
+			assertEquals(0, root.getValues(Lifespan.ALL).size());
 		}
 	}
 
@@ -879,7 +887,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		// Delete a leaf
 		TraceObject t1 = targets.get(1);
 		assertFalse(t1.isDeleted());
-		assertEquals(3, targetContainer.getValues().size());
+		assertEquals(3, targetContainer.getValues(Lifespan.ALL).size());
 		assertEquals(t1, Unique.assertOne(
 			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[1]"))));
 		assertEquals(t1, t1.getAttribute(1, "self").getValue());
@@ -890,8 +898,8 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		}
 
 		assertTrue(t1.isDeleted());
-		assertTrue(t1.getParents().isEmpty());
-		assertEquals(2, targetContainer.getValues().size());
+		assertTrue(t1.getParents(Lifespan.ALL).isEmpty());
+		assertEquals(2, targetContainer.getValues(Lifespan.ALL).size());
 		assertEquals(0,
 			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[1]")).count());
 		assertNull(t1.getAttribute(2, "self"));
@@ -901,13 +909,14 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		TraceObject t0 = targets.get(0);
 		assertEquals(2,
 			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[]")).count());
-		assertTrue(t0.getParents().stream().anyMatch(v -> v.getParent() == targetContainer));
-		assertEquals(2, targetContainer.getValues().size());
+		assertTrue(
+			t0.getParents(Lifespan.ALL).stream().anyMatch(v -> v.getParent() == targetContainer));
+		assertEquals(2, targetContainer.getValues(Lifespan.ALL).size());
 
 		b.trace.undo();
 		b.trace.redo();
 
-		assertEquals(2, targetContainer.getValues().size());
+		assertEquals(2, targetContainer.getValues(Lifespan.ALL).size());
 
 		try (Transaction tx = b.startTransaction()) {
 			targetContainer.delete();
@@ -916,7 +925,8 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		assertEquals(0,
 			manager.getObjectsByPath(Lifespan.ALL, TraceObjectKeyPath.parse("Targets[]")).count());
 		assertFalse(t0.isDeleted());
-		assertFalse(t0.getParents().stream().anyMatch(v -> v.getParent() == targetContainer));
+		assertFalse(
+			t0.getParents(Lifespan.ALL).stream().anyMatch(v -> v.getParent() == targetContainer));
 		// A little odd, but allows branch to be replaced and successors restored later
 		assertEquals(t0, root.getValue(0, "curTarget").getValue());
 	}
@@ -1092,5 +1102,77 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			hiddenOutside.insert(Lifespan.ALL, ConflictResolution.DENY);
 			assertTrue(hiddenOutside.getCanonicalParent(0).isHidden());
 		}
+	}
+
+	protected String randomIdentifier(Random random, int length) {
+		StringBuilder sb = new StringBuilder(length);
+		while (sb.length() < length) {
+			char c = (char) random.nextInt();
+			boolean isValid = sb.isEmpty()
+					? Character.isJavaIdentifierStart(c)
+					: Character.isJavaIdentifierPart(c);
+			if (isValid) {
+				sb.append(c);
+				continue;
+			}
+		}
+		return sb.toString();
+	}
+
+	protected Address randomAddress(Random random) {
+		List<AddressSpace> spaces = Stream.of(b.trace.getBaseAddressFactory().getAllAddressSpaces())
+				.filter(s -> s.isMemorySpace() || s.isRegisterSpace())
+				.toList();
+		AddressSpace space = spaces.get(random.nextInt(spaces.size()));
+		while (true) {
+			BigInteger offset = new BigInteger(space.getSize(), random);
+			try {
+				return space.getAddress(offset.longValue());
+			}
+			catch (AddressOutOfBoundsException e) {
+				continue;
+			}
+		}
+	}
+
+	protected Lifespan randomLifespan(Random random) {
+		boolean isNowOn = random.nextInt(4) < 3;
+		if (isNowOn) {
+			return Lifespan.nowOn(random.nextLong(10000));
+		}
+		int length = random.nextInt(10000);
+		long start = random.nextLong(10000);
+		return Lifespan.span(start, start + length);
+	}
+
+	protected void assertSameResult(Collection<TraceObjectValue> values, Lifespan span,
+			AddressRange range) {
+		List<TraceObjectValue> expected = values.stream()
+				.filter(v -> v.getLifespan().intersects(span) && range.contains(v.castValue()))
+				.toList();
+		List<TraceObjectValue> actual =
+			List.copyOf(b.trace.getObjectManager().getValuesIntersecting(span, range));
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testManyAddressValuesAcrossSpaces() {
+		Random random = new Random();
+		List<TraceObjectValue> values = new ArrayList<>();
+		try (Transaction tx = b.startTransaction()) {
+			TraceObjectValue rootVal =
+				manager.createRootObject(ctx.getSchema(new SchemaName("Session")));
+			root = rootVal.getChild();
+
+			for (int i = 0; i < 1000; i++) {
+				String key = randomIdentifier(random, 6);
+				Address addr = randomAddress(random);
+				Lifespan lifespan = randomLifespan(random);
+
+				values.add(root.setAttribute(lifespan, key, addr));
+			}
+		}
+
+		b.trace.getObjectManager().getValuesIntersecting(Lifespan.ALL, b.range(0, -1));
 	}
 }

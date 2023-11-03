@@ -13,19 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.database.spatial.rect;
+package ghidra.util.database.spatial.hyper;
 
-public interface Point2D<X, Y> {
-	X getX();
-
-	Y getY();
-
-	EuclideanSpace2D<X, Y> getSpace();
-
-	default double computeDistance(Point2D<X, Y> point) {
-		double distX = getSpace().distX(getX(), point.getX());
-		double distY = getSpace().distY(getY(), point.getY());
-		// NB. Square root is unnecessary, if this is just for comparison
-		return distX * distX + distY * distY;
-	}
+public interface HyperPoint {
 }

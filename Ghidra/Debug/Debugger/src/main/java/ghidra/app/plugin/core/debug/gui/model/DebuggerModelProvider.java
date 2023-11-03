@@ -453,7 +453,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (parent == null) {
 			return null;
 		}
-		for (TraceObjectValue value : parent.getValues()) {
+		for (TraceObjectValue value : parent.getValues(
+			isLimitToCurrentSnap() ? Lifespan.at(current.getSnap()) : Lifespan.ALL)) {
 			if (Objects.equals(object, value.getValue())) {
 				return value.getCanonicalPath();
 			}

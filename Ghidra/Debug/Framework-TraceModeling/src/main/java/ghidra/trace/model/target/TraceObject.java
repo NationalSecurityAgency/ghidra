@@ -202,18 +202,19 @@ public interface TraceObject extends TraceUniqueObject {
 	<I extends TraceObjectInterface> I queryInterface(Class<I> ifClass);
 
 	/**
-	 * Get all values whose child is this object
+	 * Get all values intersecting the given span and whose child is this object
 	 * 
+	 * @param span the span
 	 * @return the parent values
 	 */
-	Collection<? extends TraceObjectValue> getParents();
+	Collection<? extends TraceObjectValue> getParents(Lifespan span);
 
 	/**
-	 * Get all values (elements and attributes) of this object
+	 * Get all values (elements and attributes) of this object intersecting the given span
 	 * 
 	 * @return the values
 	 */
-	Collection<? extends TraceObjectValue> getValues();
+	Collection<? extends TraceObjectValue> getValues(Lifespan span);
 
 	/**
 	 * Get values with the given key intersecting the given span
@@ -236,18 +237,18 @@ public interface TraceObject extends TraceUniqueObject {
 			boolean forward);
 
 	/**
-	 * Get all elements of this object
+	 * Get all elements of this object intersecting the given span
 	 * 
 	 * @return the element values
 	 */
-	Collection<? extends TraceObjectValue> getElements();
+	Collection<? extends TraceObjectValue> getElements(Lifespan span);
 
 	/**
-	 * Get all attributes of this object
+	 * Get all attributes of this object intersecting the given span
 	 * 
 	 * @return the attribute values
 	 */
-	Collection<? extends TraceObjectValue> getAttributes();
+	Collection<? extends TraceObjectValue> getAttributes(Lifespan span);
 
 	/**
 	 * Get the value for the given snap and key

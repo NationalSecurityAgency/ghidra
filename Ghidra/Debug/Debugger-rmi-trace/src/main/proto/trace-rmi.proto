@@ -361,6 +361,7 @@ message ReplyGetValues {
 message RequestGetValuesIntersecting {
 	DomObjId oid = 1;
 	Box box = 2;
+	string key = 3;
 }
 
 // Analysis operations

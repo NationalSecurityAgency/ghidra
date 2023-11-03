@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.database.spatial.rect;
+package ghidra.trace.database.target;
 
-public interface Point2D<X, Y> {
-	X getX();
+import ghidra.util.database.spatial.hyper.HyperBox;
 
-	Y getY();
+public interface ValueBox extends HyperBox<ValueTriple, ValueBox> {
+	@Override
+	default ValueBox immutable(ValueTriple lCorner, ValueTriple uCorner) {
+		return new ImmutableValueBox(lCorner, uCorner);
+	}
 
-	EuclideanSpace2D<X, Y> getSpace();
+	@Override
+	default ValueBox getBounds() {
+		return this;
+	}
 
-	default double computeDistance(Point2D<X, Y> point) {
-		double distX = getSpace().distX(getX(), point.getX());
-		double distY = getSpace().distY(getY(), point.getY());
-		// NB. Square root is unnecessary, if this is just for comparison
-		return distX * distX + distY * distY;
+	@Override
+	default ValueSpace space() {
+		return ValueSpace.INSTANCE;
+	}
+
+	@Override
+	default String description() {
+		return new ImmutableValueBox(this).toString();
 	}
 }

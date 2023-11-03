@@ -356,6 +356,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 				name = object.getName() + "." + nextId;
 			}
 		}
+		name = object.getName() + "." + System.currentTimeMillis();
 		// Don't catch it this last time
 		return parent.createFile(name, object, monitor);
 	}
@@ -948,9 +949,12 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			tx.tx.abortOnClose();
 		}
 		tx.tx.close();
+		OpenTrace open = requireOpenTrace(tx.txId.doId);
 		if (!tx.undoable) {
-			requireOpenTrace(tx.txId.doId).trace.clearUndo();
+			open.trace.clearUndo();
 		}
+		// TODO: Check for other transactions on the same trace?
+		open.trace.setEventsEnabled(true);
 		return ReplyEndTx.getDefaultInstance();
 	}
 
@@ -976,10 +980,11 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			RequestGetValuesIntersecting req) throws AddressOverflowException {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		AddressRange range = open.toRange(req.getBox().getRange(), false);
+		String key = req.getKey() == "" ? null : req.getKey();
 		Collection<? extends TraceObjectValue> col = range == null
 				? List.of()
 				: open.trace.getObjectManager()
-						.getValuesIntersecting(toLifespan(req.getBox().getSpan()), range);
+						.getValuesIntersecting(toLifespan(req.getBox().getSpan()), range, key);
 		return ReplyGetValues.newBuilder()
 				.addAllValues(col.stream().map(TraceRmiHandler::makeValDesc).toList())
 				.build();
@@ -1074,16 +1079,15 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		if (object == null) {
 			return ReplyRetainValues.getDefaultInstance();
 		}
+		Lifespan span = toLifespan(req.getSpan());
 		Collection<? extends TraceObjectValue> values = switch (req.getKinds()) {
-			case VK_ELEMENTS -> object.getElements();
-			case VK_ATTRIBUTES -> object.getAttributes();
-			case VK_BOTH -> object.getValues();
+			case VK_ELEMENTS -> object.getElements(span);
+			case VK_ATTRIBUTES -> object.getAttributes(span);
+			case VK_BOTH -> object.getValues(span);
 			default -> throw new TraceRmiError("Protocol error: Invalid value kinds");
 		};
-		Lifespan span = toLifespan(req.getSpan());
 		Set<String> keysToKeep = Set.copyOf(req.getKeysList());
 		List<String> keysToDelete = values.stream()
-				.filter(v -> v.getLifespan().intersects(span))
 				.map(v -> v.getEntryKey())
 				.filter(k -> !keysToKeep.contains(k))
 				.distinct()
@@ -1123,6 +1127,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			// Implies request was to set value to null
 			return ReplySetValue.newBuilder().setSpan(makeSpan(Lifespan.EMPTY)).build();
 		}
+
 		TraceObjectValue val = object.setValue(toLifespan(value.getSpan()), value.getKey(),
 			objVal, toResolution(req.getResolution()));
 		return ReplySetValue.newBuilder()
@@ -1144,6 +1149,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	protected ReplyStartTx handleStartTx(RequestStartTx req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		Tid tid = requireAvailableTid(open, req.getTxid());
+		open.trace.setEventsEnabled(false);
 		@SuppressWarnings("resource")
 		OpenTx tx =
 			new OpenTx(tid, open.trace.openTransaction(req.getDescription()), req.getUndoable());

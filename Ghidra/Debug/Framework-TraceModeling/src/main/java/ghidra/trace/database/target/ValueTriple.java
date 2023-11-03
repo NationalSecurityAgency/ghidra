@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.database.spatial.rect;
+package ghidra.trace.database.target;
 
-public interface Point2D<X, Y> {
-	X getX();
+import java.util.Objects;
 
-	Y getY();
+import ghidra.util.database.DBCachedObjectStoreFactory.RecAddress;
+import ghidra.util.database.spatial.hyper.HyperPoint;
 
-	EuclideanSpace2D<X, Y> getSpace();
-
-	default double computeDistance(Point2D<X, Y> point) {
-		double distX = getSpace().distX(getX(), point.getX());
-		double distY = getSpace().distY(getY(), point.getY());
-		// NB. Square root is unnecessary, if this is just for comparison
-		return distX * distX + distY * distY;
+record ValueTriple(long parentKey, long childKey, String entryKey, long snap, RecAddress address)
+		implements HyperPoint {
+	public ValueTriple(long parentKey, long childKey, String entryKey, long snap,
+			RecAddress address) {
+		this.parentKey = parentKey;
+		this.childKey = childKey;
+		this.entryKey = entryKey;
+		this.snap = snap;
+		this.address = Objects.requireNonNull(address);
 	}
 }

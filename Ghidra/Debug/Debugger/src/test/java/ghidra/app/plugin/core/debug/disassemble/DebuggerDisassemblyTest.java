@@ -75,51 +75,51 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Before
 	public void setUpDisassemblyTest() throws Exception {
-		ctx = XmlSchemaContext.deserialize("" + //
-			"<context>" + //
-			"    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>" + //
-			"        <attribute name='Targets' schema='TargetContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='TargetContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='ONCE'>" + //
-			"        <element schema='Target' />" + //
-			"    </schema>" + //
-			"    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='Process' />" + //
-			"        <interface name='Aggregate' />" + //
-			"        <attribute name='Environment' schema='Environment' />" + //
-			"        <attribute name='Memory' schema='Memory' />" + //
-			"        <attribute name='Threads' schema='ThreadContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='Environment' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <interface name='Environment' />" + //
-			"    </schema>" + //
-			"    <schema name='Memory' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <element schema='MemoryRegion' />" + //
-			"    </schema>" + //
-			"    <schema name='MemoryRegion' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='MemoryRegion' />" + //
-			"    </schema>" + //
-			"    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <element schema='Thread' />" + //
-			"    </schema>" + //
-			"    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='Thread' />" + //
-			"        <interface name='Aggregate' />" + //
-			"        <attribute name='Stack' schema='Stack' />" + //
-			"    </schema>" + //
-			"    <schema name='Stack' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <interface name='Stack' />" + //
-			"        <element schema='Frame' />" + //
-			"    </schema>" + //
-			"    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='StackFrame' />" + //
-			"    </schema>" + //
-			"</context>");
+		ctx = XmlSchemaContext.deserialize("""
+				<context>
+				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Targets' schema='TargetContainer' />
+				    </schema>
+				    <schema name='TargetContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Target' />
+				    </schema>
+				    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='Process' />
+				        <interface name='Aggregate' />
+				        <attribute name='Environment' schema='Environment' />
+				        <attribute name='Memory' schema='Memory' />
+				        <attribute name='Threads' schema='ThreadContainer' />
+				    </schema>
+				    <schema name='Environment' elementResync='NEVER'
+				            attributeResync='NEVER'>"
+				        <interface name='Environment' />
+				    </schema>
+				    <schema name='Memory' canonical='yes' elementResync='NEVER'
+				            attributeResync='NEVER'>
+				        <element schema='MemoryRegion' />"
+				    </schema>
+				    <schema name='MemoryRegion' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='MemoryRegion' />
+				    </schema>"
+				    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='NEVER'>
+				        <element schema='Thread' />
+				    </schema>
+				    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='Thread' />
+				        <interface name='Aggregate' />
+				        <attribute name='Stack' schema='Stack' />
+				    </schema>
+				    <schema name='Stack' canonical='yes' elementResync='NEVER'
+				            attributeResync='NEVER'>
+				        <interface name='Stack' />
+				        <element schema='Frame' />
+				    </schema>
+				    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='StackFrame' />
+				    </schema>
+				</context>""");
 
 		addPlugin(tool, DebuggerListingPlugin.class);
 		platformService = addPlugin(tool, DebuggerPlatformServicePlugin.class);
