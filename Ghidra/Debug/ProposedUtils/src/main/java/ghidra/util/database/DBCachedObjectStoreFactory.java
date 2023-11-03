@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import db.*;
+import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.database.annot.*;
 import ghidra.util.database.annot.DBAnnotatedField.DefaultCodec;
@@ -109,6 +110,32 @@ import ghidra.util.exception.VersionException;
  *           store for that class.
  */
 public class DBCachedObjectStoreFactory {
+
+	public record RecAddress(int spaceId, long offset) {
+		public static RecAddress fromAddress(Address address) {
+			return new RecAddress(address.getAddressSpace().getSpaceID(), address.getOffset());
+		}
+
+		public long offset() {
+			return offset;
+		}
+
+		public Address toAddress(AddressFactory factory) {
+			return factory.getAddressSpace(spaceId).getAddress(offset);
+		}
+	}
+
+	public record RecRange(int spaceId, long min, long max) {
+		public static RecRange fromRange(AddressRange range) {
+			return new RecRange(range.getAddressSpace().getSpaceID(),
+				range.getMinAddress().getOffset(), range.getMaxAddress().getOffset());
+		}
+
+		public AddressRange toRange(AddressFactory factory) {
+			AddressSpace space = factory.getAddressSpace(spaceId);
+			return new AddressRangeImpl(space.getAddress(min), space.getAddress(max));
+		}
+	}
 
 	/**
 	 * A codec for encoding alternative data types
@@ -928,11 +955,41 @@ public class DBCachedObjectStoreFactory {
 		/** Codec for {@code String[]} */
 		PrimitiveCodec<String[]> STRING_ARR =
 			new ArrayObjectCodec<>(new LengthBoundCodec<>(STRING));
+		PrimitiveCodec<RecAddress> ADDRESS = new AbstractPrimitiveCodec<>(RecAddress.class) {
+			@Override
+			public RecAddress decode(ByteBuffer buffer) {
+				int spaceId = buffer.getInt();
+				long offset = buffer.getLong();
+				return new RecAddress(spaceId, offset);
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, RecAddress value) {
+				buffer.putInt(value.spaceId);
+				buffer.putLong(value.offset);
+			}
+		};
+		PrimitiveCodec<RecRange> RANGE = new AbstractPrimitiveCodec<>(RecRange.class) {
+			@Override
+			public RecRange decode(ByteBuffer buffer) {
+				int spaceId = buffer.getInt();
+				long min = buffer.getLong();
+				long max = buffer.getLong();
+				return new RecRange(spaceId, min, max);
+			}
+
+			@Override
+			public void encode(ByteBuffer buffer, RecRange value) {
+				buffer.putInt(value.spaceId);
+				buffer.putLong(value.min);
+				buffer.putLong(value.max);
+			}
+		};
 
 		// TODO: No floats?
 		Map<Byte, PrimitiveCodec<?>> CODECS_BY_SELECTOR = Stream
 				.of(BOOL, BYTE, CHAR, SHORT, INT, LONG, STRING, BOOL_ARR, BYTE_ARR, CHAR_ARR,
-					SHORT_ARR, INT_ARR, LONG_ARR, STRING_ARR)
+					SHORT_ARR, INT_ARR, LONG_ARR, STRING_ARR, ADDRESS, RANGE)
 				.collect(Collectors.toMap(c -> c.getSelector(), c -> c));
 		Map<Class<?>, PrimitiveCodec<?>> CODECS_BY_CLASS = CODECS_BY_SELECTOR.values()
 				.stream()

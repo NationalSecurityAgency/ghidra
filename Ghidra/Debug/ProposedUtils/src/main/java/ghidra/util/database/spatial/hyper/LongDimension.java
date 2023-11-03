@@ -13,19 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.database.spatial.rect;
+package ghidra.util.database.spatial.hyper;
 
-public interface Point2D<X, Y> {
-	X getX();
+public interface LongDimension<P extends HyperPoint, B extends HyperBox<P, B>>
+		extends Dimension<Long, P, B> {
 
-	Y getY();
+	@Override
+	default int compare(Long a, Long b) {
+		return Long.compare(a, b);
+	}
 
-	EuclideanSpace2D<X, Y> getSpace();
+	@Override
+	default double distance(Long a, Long b) {
+		return a - b;
+	}
 
-	default double computeDistance(Point2D<X, Y> point) {
-		double distX = getSpace().distX(getX(), point.getX());
-		double distY = getSpace().distY(getY(), point.getY());
-		// NB. Square root is unnecessary, if this is just for comparison
-		return distX * distX + distY * distY;
+	@Override
+	default Long mid(Long a, Long b) {
+		return a + (b - a) / 2;
+	}
+
+	@Override
+	default Long absoluteMin() {
+		return Long.MIN_VALUE;
+	}
+
+	@Override
+	default Long absoluteMax() {
+		return Long.MAX_VALUE;
 	}
 }

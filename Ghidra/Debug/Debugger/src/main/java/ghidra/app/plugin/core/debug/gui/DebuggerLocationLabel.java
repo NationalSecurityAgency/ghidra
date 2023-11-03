@@ -136,7 +136,10 @@ public class DebuggerLocationLabel extends JLabel {
 		if (sections.isEmpty()) {
 			return null;
 		}
-		// TODO: DB's R-Tree could probably do this natively
+		/**
+		 * TODO: DB's R-Tree could probably do this natively. Not sure it's an optimization, though,
+		 * since few, if any, overlapping sections are expected.
+		 */
 		sections.sort(ComparatorUtils.chainedComparator(List.of(
 			Comparator.comparing(s -> s.getRange().getMinAddress()),
 			Comparator.comparing(s -> -s.getRange().getLength()))));

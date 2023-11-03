@@ -73,7 +73,7 @@ public class CanonicalSuccessorsRelativeVisitor implements Visitor {
 
 		Stream<? extends TraceObjectValue> attrStream;
 		if (nextKeys.contains("")) {
-			attrStream = object.getAttributes().stream().filter(TraceObjectValue::isCanonical);
+			attrStream = object.getAttributes(span).stream().filter(TraceObjectValue::isCanonical);
 		}
 		else {
 			attrStream = Stream.empty();
@@ -81,7 +81,7 @@ public class CanonicalSuccessorsRelativeVisitor implements Visitor {
 
 		Stream<? extends TraceObjectValue> elemStream;
 		if (nextKeys.contains("[]")) {
-			elemStream = object.getElements().stream().filter(TraceObjectValue::isCanonical);
+			elemStream = object.getElements(span).stream().filter(TraceObjectValue::isCanonical);
 		}
 		else {
 			elemStream = Stream.empty();

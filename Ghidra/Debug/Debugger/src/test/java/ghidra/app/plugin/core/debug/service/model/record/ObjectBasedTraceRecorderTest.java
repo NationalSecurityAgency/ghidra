@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
-import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerMappingOpinion;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.*;
@@ -77,7 +77,7 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerTe
 
 	protected void dumpValues(TraceObject obj) {
 		System.err.println("Values of " + obj);
-		for (TraceObjectValue val : obj.getValues()) {
+		for (TraceObjectValue val : obj.getValues(Lifespan.ALL)) {
 			System.err.println("  " + val.getEntryKey() + " = " + val.getValue());
 		}
 	}

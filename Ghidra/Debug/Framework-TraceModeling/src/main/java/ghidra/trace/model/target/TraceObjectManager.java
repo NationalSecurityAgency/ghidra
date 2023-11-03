@@ -139,10 +139,23 @@ public interface TraceObjectManager {
 	 * 
 	 * @param span the span that desired values lifespans must intersect
 	 * @param range the range that desired address-ranged values must intersect
+	 * @param entryKey the entry key if a single one should be matched, or null for any
 	 * @return the collection of values
 	 */
 	Collection<? extends TraceObjectValue> getValuesIntersecting(Lifespan span,
-			AddressRange range);
+			AddressRange range, String entryKey);
+
+	/**
+	 * Get all address-ranged values intersecting the given span and address range
+	 * 
+	 * @param span the span that desired values lifespans must intersect
+	 * @param range the range that desired address-ranged values must intersect
+	 * @return the collection of values
+	 */
+	default Collection<? extends TraceObjectValue> getValuesIntersecting(Lifespan span,
+			AddressRange range) {
+		return getValuesIntersecting(span, range, null);
+	}
 
 	/**
 	 * Get all interfaces of the given type in the database

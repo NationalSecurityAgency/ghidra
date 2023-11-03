@@ -847,11 +847,10 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	protected TraceObject getProcessForSpace(AddressSpace space) {
 		for (TraceObjectValue objVal : trace.getObjectManager()
-				.getValuesIntersecting(Lifespan.at(getSnap()),
-					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()))) {
-			if (!TargetMemoryRegion.RANGE_ATTRIBUTE_NAME.equals(objVal.getEntryKey())) {
-				continue;
-			}
+				.getValuesIntersecting(
+					Lifespan.at(getSnap()),
+					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()),
+					TargetMemoryRegion.RANGE_ATTRIBUTE_NAME)) {
 			TraceObject obj = objVal.getParent();
 			if (!obj.getInterfaces().contains(TraceObjectMemoryRegion.class)) {
 				continue;
