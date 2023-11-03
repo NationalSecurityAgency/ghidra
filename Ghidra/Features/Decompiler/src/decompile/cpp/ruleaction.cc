@@ -9124,12 +9124,12 @@ bool RuleConditionalMove::BoolExpress::initialize(Varnode *vn)
   case CPUI_FLOAT_NOTEQUAL:
   case CPUI_FLOAT_LESS:
   case CPUI_FLOAT_LESSEQUAL:
-  case CPUI_FLOAT_NAN:
     in0 = op->getIn(0);
     in1 = op->getIn(1);
     optype = 2;
     break;
   case CPUI_BOOL_NEGATE:
+  case CPUI_FLOAT_NAN:
     in0 = op->getIn(0);
     optype = 1;
     break;
