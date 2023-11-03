@@ -24,7 +24,6 @@ import ghidra.app.plugin.assembler.sleigh.parse.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNumericSymbols;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
-import ghidra.app.plugin.querylanguage.lexer.ast.InstructionNode;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -184,7 +183,7 @@ public class SleighAssembler implements Assembler {
 	}
 	
 	@Override
-	public Collection<AssemblyParseResult> parseLine(InstructionNode line, TaskMonitor monitor) {
+	public Collection<AssemblyParseResult> parseLine(WildcardedInstruction line, TaskMonitor monitor) {
 		return parser.parse(line, getNumericSymbols(), monitor);
 	}
 
@@ -245,7 +244,7 @@ public class SleighAssembler implements Assembler {
 	}
 	
 	@Override
-	public AssemblyResolutionResults resolveLine(Address at, InstructionNode line,
+	public AssemblyResolutionResults resolveLine(Address at, WildcardedInstruction line,
 			AssemblyPatternBlock ctx, TaskMonitor monitor) throws AssemblySyntaxException {
 
 		if (!ctx.isFullMask()) {

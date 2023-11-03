@@ -20,7 +20,8 @@ import java.util.regex.Pattern;
 
 import generic.util.DequePush;
 import ghidra.util.task.TaskMonitor;
-
+import ghidra.app.plugin.assembler.sleigh.WildcardMetadata;
+import ghidra.app.plugin.assembler.sleigh.WildcardedInstruction;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyProduction;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential.TruncatedWhiteSpaceParseToken;
@@ -30,8 +31,6 @@ import ghidra.app.plugin.assembler.sleigh.tree.*;
 import ghidra.app.plugin.assembler.sleigh.util.AsmUtil;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
-import ghidra.app.plugin.querylanguage.lexer.ast.InstructionNode;
-import ghidra.app.plugin.querylanguage.lexer.ast.WildcardNode;
 
 /**
  * This is the same as an AssemblyParseMachine BUT it takes an InstructionNode
@@ -53,7 +52,7 @@ public class AssemblyParseMachineWild implements Comparable<AssemblyParseMachine
 	// The stack of trees actually used by the assembler
 	protected final Stack<AssemblyParseTreeNode> treeStack = new Stack<>();
 	// The instruction this parse machine is going to parse
-	protected final InstructionNode inputInstruction;
+	protected final WildcardedInstruction inputInstruction;
 	// The formal input buffer of the parser
 	protected final String buffer;
 	// The position in the buffer where we are parsing.
@@ -84,7 +83,7 @@ public class AssemblyParseMachineWild implements Comparable<AssemblyParseMachine
 	 * @param symbols a map of valid tokens to number for numeric terminals
 	 * @param monitor the monitor to check if user cancelled
 	 */
-	public AssemblyParseMachineWild(AssemblyParser parser, InstructionNode input, int pos,
+	public AssemblyParseMachineWild(AssemblyParser parser, WildcardedInstruction input, int pos,
 			AssemblyParseToken lastTok, AssemblyNumericSymbols symbols, TaskMonitor monitor) {
 		this.parser = parser;
 		this.stack.push(0);
@@ -274,7 +273,7 @@ public class AssemblyParseMachineWild implements Comparable<AssemblyParseMachine
 			Set<AssemblyParseMachineWild> results, Deque<AssemblyParseMachineWild> visited) {
 		try (DbgCtx dc = DBG.start("Matched " + t + " " + tok)) {
 			int consumeAmount = tok.getString().length();
-			WildcardNode currentWildcard = inputInstruction.getWildcardMap().get(pos);
+			WildcardMetadata currentWildcard = inputInstruction.getWildcardMap().get(pos);
 			if (currentWildcard != null && termIsValidForWildcard(t)) {
 				consumeAmount = currentWildcard.getName().length();
 			}
@@ -358,7 +357,7 @@ public class AssemblyParseMachineWild implements Comparable<AssemblyParseMachine
 				}
 
 				// See if our current character is part of a wildcard
-				WildcardNode currentWildcard = inputInstruction.getWildcardMap().get(pos);
+				WildcardMetadata currentWildcard = inputInstruction.getWildcardMap().get(pos);
 				Pattern filter = null;
 				if (currentWildcard != null) {
 					// It is: wrap all our (non-whitespace) possible terms in AssemblyWildcardTerminals

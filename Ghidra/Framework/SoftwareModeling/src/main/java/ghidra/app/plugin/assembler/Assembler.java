@@ -19,7 +19,7 @@ import java.util.Collection;
 
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
-import ghidra.app.plugin.querylanguage.lexer.ast.InstructionNode;
+import ghidra.app.plugin.assembler.sleigh.WildcardedInstruction;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -114,7 +114,7 @@ public interface Assembler {
 	 */
 	public Collection<AssemblyParseResult> parseLine(String line);
 	
-	public Collection<AssemblyParseResult> parseLine(InstructionNode node, TaskMonitor monitor);
+	public Collection<AssemblyParseResult> parseLine(WildcardedInstruction node, TaskMonitor monitor);
 
 	/**
 	 * Resolve a given parse tree at the given address, assuming the given context
@@ -169,7 +169,7 @@ public interface Assembler {
 	public AssemblyResolutionResults resolveLine(Address at, String line)
 			throws AssemblySyntaxException;
 	
-	public AssemblyResolutionResults resolveLine(Address at, InstructionNode line,
+	public AssemblyResolutionResults resolveLine(Address at, WildcardedInstruction line,
 			AssemblyPatternBlock ctx, TaskMonitor monitor) throws AssemblySyntaxException;
 
 	/**

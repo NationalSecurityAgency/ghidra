@@ -22,12 +22,12 @@ import java.util.function.Consumer;
 import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 
+import ghidra.app.plugin.assembler.sleigh.WildcardedInstruction;
 import ghidra.app.plugin.assembler.sleigh.grammars.*;
 import ghidra.app.plugin.assembler.sleigh.symbol.*;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer.DbgCtx;
 import ghidra.app.plugin.assembler.sleigh.util.TableEntry;
-import ghidra.app.plugin.querylanguage.lexer.ast.InstructionNode;
 
 import ghidra.util.task.TaskMonitor;
 
@@ -393,7 +393,7 @@ public class AssemblyParser {
 		return ret;
 	}
 	
-	public Collection<AssemblyParseResult> parse(final InstructionNode input, AssemblyNumericSymbols symbols, TaskMonitor monitor) {
+	public Collection<AssemblyParseResult> parse(final WildcardedInstruction input, AssemblyNumericSymbols symbols, TaskMonitor monitor) {
 		AssemblyParseMachineWild init = new AssemblyParseMachineWild(this, input, 0, null, symbols, monitor);
 		Set<AssemblyParseMachineWild> results = init.exhaust();
 
