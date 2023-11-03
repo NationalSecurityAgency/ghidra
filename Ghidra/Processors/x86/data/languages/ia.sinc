@@ -3295,22 +3295,22 @@ define pcodeop swap_bytes;
 :PAUSE          is vexMode=0 & opsize=0 & $(PRE_F3) & byte=0x90     {  }
 :PAUSE          is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x90     {  }
 
-:POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { pop22(rm16); }
-:POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { pop42(rm16); }
-:POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { pop24(rm32); }
-:POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { pop44(rm32); }
+:POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { local val:2 = 0; pop22(val); build rm16; rm16 = val; }
+:POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { local val:2 = 0; pop42(val); build rm16; rm16 = val; }
+:POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { local val:4 = 0; pop24(val); build rm32; rm32 = val; }
+:POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { local val:4 = 0; pop44(val); build rm32; rm32 = val; }
 @ifdef IA64
-:POP rm16        is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { pop82(rm16); }
-:POP rm64        is $(LONGMODE_ON) & vexMode=0 &            byte=0x8f; rm64 & reg_opcode=0 ... { pop88(rm64); }
+:POP rm16        is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { local val:2 = 0; pop82(val); build rm16; rm16 = val; }
+:POP rm64        is $(LONGMODE_ON) & vexMode=0 &            byte=0x8f; rm64 & reg_opcode=0 ... { local val:8 = 0; pop88(val); build rm64; rm64 = val; }
 @endif
 
-:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & row=5 & page=1 & Rmr16       { pop22(Rmr16); }
-:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & row=5 & page=1 & Rmr16       { pop42(Rmr16); }
-:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & row=5 & page=1 & Rmr32       { pop24(Rmr32); }
-:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & row=5 & page=1 & Rmr32       { pop44(Rmr32); }
+:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop22(val); Rmr16 = val; }
+:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop22(val); Rmr16 = val; }
+:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & row=5 & page=1 & Rmr32       { local val:4 = 0; pop44(val); Rmr32 = val; }
+:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & row=5 & page=1 & Rmr32       { local val:4 = 0; pop44(val); Rmr32 = val; }
 @ifdef IA64
-:POP Rmr16      is $(LONGMODE_ON) & vexMode=0 & opsize=0 & row=5 & page=1 & Rmr16       { pop82(Rmr16); }
-:POP Rmr64      is $(LONGMODE_ON) & vexMode=0 &            row=5 & page=1 & Rmr64       { pop88(Rmr64); }
+:POP Rmr16      is $(LONGMODE_ON) & vexMode=0 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop82(val); Rmr16 = val; }
+:POP Rmr64      is $(LONGMODE_ON) & vexMode=0 &            row=5 & page=1 & Rmr64       { local val:8 = 0; pop88(val); Rmr64 = val; }
 @endif
 
 :POP DS         is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0x1f & DS              { pop22(DS); }
