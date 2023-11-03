@@ -1445,19 +1445,8 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_uimm4_def15 & Op
 is sf=0 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x5 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
 	local tmp:4 = (Rn_GPR32 ^ (Rn_GPR32<<1))|0x1;
-	# first make all lower bits =1
-	tmp = tmp | (tmp >> 1);
-	tmp = tmp | (tmp >> 2);
-	tmp = tmp | (tmp >> 4);
-	tmp = tmp | (tmp >> 8);
-	tmp = tmp | (tmp >> 16);
-	# now add the 1 bits together, voila
-	tmp = ((tmp & 0xaaaaaaaa)>>1) + (tmp & 0x55555555);
-	tmp = ((tmp & 0xcccccccc)>>2) + (tmp & 0x33333333);
-	tmp = ((tmp & 0xf0f0f0f0)>>4) + (tmp & 0x0f0f0f0f);
-	tmp = ((tmp & 0xff00ff00)>>8) + (tmp & 0x00ff00ff);
-	tmp = ((tmp & 0xffff0000)>>16) + (tmp & 0x0000ffff);
-	Rd_GPR64 = zext(32 - (tmp & 0x3f));
+	
+	Rd_GPR64 = lzcount(tmp);
 }
 
 # C6.2.57 CLS page C6-1243 line 72939 MATCH x5ac01400/mask=x7ffffc00
@@ -1468,21 +1457,8 @@ is sf=0 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x5
 is sf=1 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x5 & Rn_GPR64 & Rd_GPR64
 {
 	local tmp:8 = (Rn_GPR64 ^ (Rn_GPR64<<1))|0x1;
-	# first make all lower bits =1
-	tmp = tmp | (tmp >> 1);
-	tmp = tmp | (tmp >> 2);
-	tmp = tmp | (tmp >> 4);
-	tmp = tmp | (tmp >> 8);
-	tmp = tmp | (tmp >> 16);
-	tmp = tmp | (tmp >> 32);
-	# now add the 1 bits together, voila
-	tmp = ((tmp & 0xaaaaaaaaaaaaaaaa)>>1) + (tmp & 0x5555555555555555);
-	tmp = ((tmp & 0xcccccccccccccccc)>>2) + (tmp & 0x3333333333333333);
-	tmp = ((tmp & 0xf0f0f0f0f0f0f0f0)>>4) + (tmp & 0x0f0f0f0f0f0f0f0f);
-	tmp = ((tmp & 0xff00ff00ff00ff00)>>8) + (tmp & 0x00ff00ff00ff00ff);
-	tmp = ((tmp & 0xffff0000ffff0000)>>16) + (tmp & 0x0000ffff0000ffff);
-	tmp = ((tmp & 0xffffffff00000000)>>32) + (tmp & 0x00000000ffffffff);
-	Rd_GPR64 = 64 - (tmp & 0x7f);
+
+	Rd_GPR64 = lzcount(tmp);
 }
 
 # C6.2.58 CLZ page C6-1245 line 73022 MATCH x5ac01000/mask=x7ffffc00
@@ -1493,19 +1469,7 @@ is sf=1 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x5
 is sf=0 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x4 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
 	local tmp:4 = Rn_GPR32;
-	# first make all lower bits =1
-	tmp = tmp | (tmp >> 1);
-	tmp = tmp | (tmp >> 2);
-	tmp = tmp | (tmp >> 4);
-	tmp = tmp | (tmp >> 8);
-	tmp = tmp | (tmp >> 16);
-	# now add the 1 bits together, voila
-	tmp = ((tmp & 0xaaaaaaaa)>>1) + (tmp & 0x55555555);
-	tmp = ((tmp & 0xcccccccc)>>2) + (tmp & 0x33333333);
-	tmp = ((tmp & 0xf0f0f0f0)>>4) + (tmp & 0x0f0f0f0f);
-	tmp = ((tmp & 0xff00ff00)>>8) + (tmp & 0x00ff00ff);
-	tmp = ((tmp & 0xffff0000)>>16) + (tmp & 0x0000ffff);
-	Rd_GPR64 = zext(32 - (tmp & 0x3f));
+	Rd_GPR64 = lzcount(tmp);
 }
 
 # C6.2.58 CLZ page C6-1245 line 73022 MATCH x5ac01000/mask=x7ffffc00
@@ -1516,21 +1480,8 @@ is sf=0 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x4
 is sf=1 & b_3030=1 & S=0 & b_2428=0x1a & b_2123=6 & dp1.opcode2=0x0 & b_1015=0x4 & Rn_GPR64 & Rd_GPR64
 {
 	local tmp:8 = Rn_GPR64;
-	# first make all lower bits =1
-	tmp = tmp | (tmp >> 1);
-	tmp = tmp | (tmp >> 2);
-	tmp = tmp | (tmp >> 4);
-	tmp = tmp | (tmp >> 8);
-	tmp = tmp | (tmp >> 16);
-	tmp = tmp | (tmp >> 32);
-	# now add the 1 bits together, voila
-	tmp = ((tmp & 0xaaaaaaaaaaaaaaaa)>>1) + (tmp & 0x5555555555555555);
-	tmp = ((tmp & 0xcccccccccccccccc)>>2) + (tmp & 0x3333333333333333);
-	tmp = ((tmp & 0xf0f0f0f0f0f0f0f0)>>4) + (tmp & 0x0f0f0f0f0f0f0f0f);
-	tmp = ((tmp & 0xff00ff00ff00ff00)>>8) + (tmp & 0x00ff00ff00ff00ff);
-	tmp = ((tmp & 0xffff0000ffff0000)>>16) + (tmp & 0x0000ffff0000ffff);
-	tmp = ((tmp & 0xffffffff00000000)>>32) + (tmp & 0x00000000ffffffff);
-	Rd_GPR64 = 64 - (tmp & 0x7f);
+
+	Rd_GPR64 = lzcount(tmp);
 }
 
 # C6.2.59 CMN (extended register) page C6-1246 line 73092 MATCH x2b20001f/mask=x7fe0001f

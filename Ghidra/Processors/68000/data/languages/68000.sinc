@@ -1065,21 +1065,25 @@ with : extGUARD=1 {
 	# f_off and f_wd specify the offset and width of the field of the source to consider.
 	# If f_off=0 and f_wd=0 then this means the full 32-bit source is examined (implemented here).
 	#
-	tmp:4 = e2l;
+	local tmp:4 = e2l;
 	NF = (tmp & 0x80000000) != 0;
 	ZF = (tmp == 0);
 	VF = 0;
 	CF = 0;
-	tmp2:4 = lzcount(tmp);
-	# NB- it seems the MSB left most bit is really at offset 0,
-	# and the right LSB is at offset 31
-	tmp3:4 = (tmp2 % 32); # need mod for when there are all zeros, when tmp2 would = 32
-	f_reg = tmp3;
+	f_reg = zext(tmp != 0) * lzcount(tmp);
 }
 
-# TODO: complete bfffo for when f_off or f_wd !=0, and for when f_off and f_wd are in registers
-:bfffo e2l{f_off:f_wd},f_reg    is opbig=0xed & op67=3 & $(DAT_DIR_CTL_ADDR_MODES); f_off & f_wd & f_reg ; e2l
-                                        [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:bfffo e2l{f_off:f_wd},f_reg    is opbig=0xed & op67=3 & $(DAT_DIR_CTL_ADDR_MODES); f_off & f_wd & f_reg ; e2l [ savmod2=savmod1; regtsan=regtfan; ] {
+	local tmp:4 = e2l;
+	tmp = (tmp << f_off) >> (32 - f_wd);
+	tmp = (tmp << (32 - f_wd));
+	local offw = f_off + f_wd;
+	NF = (tmp & 0x80000000) != 0;
+	ZF = (tmp == 0);
+	VF = 0;
+	CF = 0;
+	f_reg = (zext(tmp != 0) * lzcount(tmp)) + (zext(tmp == 0) * zext(offw));
+}
 
 
 :bfins f_reg,e2l{f_off:f_wd}	is opbig=0xef & op67=3 & $(DAT_DIR_CTL_ADDR_MODES); f_off & f_wd & f_reg; e2l [ savmod2=savmod1; regtsan=regtfan; ] {
@@ -2930,10 +2934,9 @@ accreg: ACC1	is ACC1 & acclsb=1 ; accmsb=0 		{ export ACC1; }
 accreg: ACC2	is ACC2 & acclsb=0 ; accmsb=1 		{ export ACC2; }
 accreg: ACC3	is ACC3 & acclsb=1 ; accmsb=1 		{ export ACC3; }
 
-define pcodeop findFirstOne;
 
 :ff1 regdn							is reg315=0x98 & regdn {
-	regdn = findFirstOne(regdn);
+	regdn = lzcount(regdn);
 	VF = 0;
 	CF = 0;
 	resflags(regdn);
