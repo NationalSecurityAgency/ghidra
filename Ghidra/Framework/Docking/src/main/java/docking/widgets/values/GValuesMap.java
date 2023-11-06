@@ -553,4 +553,14 @@ public class GValuesMap {
 		}
 	}
 
+	/**
+	 * Resets the values back to their original values when constructed. Used by the dialog
+	 * when the user cancels.
+	 */
+	protected void reset() {
+		for (AbstractValue<?> inputValue : valuesMap.values()) {
+			inputValue.reset();
+		}
+	}
+
 }

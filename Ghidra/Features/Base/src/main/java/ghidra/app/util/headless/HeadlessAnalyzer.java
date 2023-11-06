@@ -39,6 +39,7 @@ import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.project.DefaultProject;
 import ghidra.framework.project.DefaultProjectManager;
@@ -424,6 +425,7 @@ public class HeadlessAnalyzer {
 
 			if (locator.getProjectDir().exists()) {
 				project = openProject(locator);
+				AppInfo.setActiveProject(project);
 			}
 			else {
 				if (options.runScriptsNoImport) {
@@ -440,6 +442,7 @@ public class HeadlessAnalyzer {
 				Msg.info(this, "Creating " + (options.deleteProject ? "temporary " : "") +
 					"project: " + locator);
 				project = getProjectManager().createProject(locator, null, false);
+				AppInfo.setActiveProject(project);
 			}
 
 			try {
@@ -457,6 +460,7 @@ public class HeadlessAnalyzer {
 			}
 			finally {
 				project.close();
+				AppInfo.setActiveProject(null);
 				if (!options.runScriptsNoImport && options.deleteProject) {
 					FileUtilities.deleteDir(locator.getProjectDir());
 					locator.getMarkerFile().delete();
@@ -1546,8 +1550,7 @@ public class HeadlessAnalyzer {
 
 			// Analyze the primary program, and determine if we should save.
 			// TODO: Analyze non-primary programs (GP-2965).
-			boolean doSave =
-				analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
+			boolean doSave = analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
 
 			// The act of marking the program as temporary by a script will signal 
 			// us to discard any changes
@@ -1706,7 +1709,7 @@ public class HeadlessAnalyzer {
 			}
 		}
 	}
-	
+
 	private boolean processAsFS(FSRL fsrl, String folderPath, int depth) throws CancelledException {
 		try (FileSystemRef fsRef = fsService.probeFileForFilesystem(fsrl, TaskMonitor.DUMMY,
 			FileSystemProbeConflictResolver.CHOOSEFIRST)) {
@@ -1745,7 +1748,6 @@ public class HeadlessAnalyzer {
 	private void processWithImport(String folderPath, List<File> inputDirFiles) throws IOException {
 
 		storage.clear();
-
 
 		if (inputDirFiles != null && !inputDirFiles.isEmpty()) {
 			Msg.info(this, "REPORT: Processing input files: ");

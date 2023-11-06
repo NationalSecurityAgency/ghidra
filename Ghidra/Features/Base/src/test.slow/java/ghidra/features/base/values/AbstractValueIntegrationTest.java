@@ -15,6 +15,8 @@
  */
 package ghidra.features.base.values;
 
+import static org.junit.Assert.*;
+
 import javax.swing.JButton;
 import javax.swing.JTextField;
 
@@ -25,13 +27,14 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.values.AbstractValue;
 import docking.widgets.values.ValuesMapDialog;
-import ghidra.features.base.values.GhidraValuesMap;
-import ghidra.features.base.values.ProjectBrowserPanel;
+import ghidra.features.base.values.ProjectFileValue.ProjectFileBrowserPanel;
+import ghidra.features.base.values.ProjectFolderValue.ProjectFolderBrowserPanel;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
 import ghidra.program.database.ProgramBuilder;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
@@ -43,30 +46,47 @@ public abstract class AbstractValueIntegrationTest extends AbstractGhidraHeadedI
 
 	protected TestEnv env;
 	protected DomainFolder rootFolder;
-	protected DomainFolder folder;
+	protected DomainFolder folderA;
+	protected DomainFolder folderB;
 	protected DomainFile fileA;
 	protected DomainFile fileB;
-	protected ProgramDB programA;
-	protected ProgramDB programB;
+	protected DomainFile fileC;
+	protected Program programA;
+	protected Program programB;
+	protected Project project;
 
 	@Before
 	public void setup() throws Exception {
 		env = new TestEnv();
-		Project project = env.getProject();
-		runSwing(() -> env.getFrontEndTool().setActiveProject(project));
+		project = env.getProject();
+		AppInfo.setActiveProject(project);
 		rootFolder = project.getProjectData().getRootFolder();
-		folder = rootFolder.createFolder("A");
-		ProgramBuilder programBuilderA = new ProgramBuilder("A", ProgramBuilder._TOY);
-		ProgramBuilder programBuilderB = new ProgramBuilder("B", ProgramBuilder._TOY);
+		folderA = rootFolder.createFolder("A");
+		folderB = rootFolder.createFolder("B");
+		ProgramBuilder programBuilderA = new ProgramBuilder("A", ProgramBuilder._TOY, this);
+		ProgramBuilder programBuilderB = new ProgramBuilder("B", ProgramBuilder._TOY, this);
+		ProgramBuilder programBuilderC = new ProgramBuilder("C", ProgramBuilder._TOY, this);
 		programA = programBuilderA.getProgram();
 		programB = programBuilderB.getProgram();
-		fileA = folder.createFile("A", programA, TaskMonitor.DUMMY);
-		fileB = folder.createFile("B", programB, TaskMonitor.DUMMY);
+		Program programC = programBuilderC.getProgram();
+		fileA = folderA.createFile("A", programA, TaskMonitor.DUMMY);
+		fileB = folderA.createFile("B", programB, TaskMonitor.DUMMY);
+		fileC = folderA.createFile("C", programC, TaskMonitor.DUMMY);
+		programBuilderC.dispose(); // closes program C
+		programC.release(this);
+		assertTrue(programC.isClosed());
 
 	}
 
 	@After
 	public void tearDown() {
+		// some tests close the programs
+		if (!programA.isClosed()) {
+			programA.release(this);
+		}
+		if (!programB.isClosed()) {
+			programB.release(this);
+		}
 		env.dispose();
 	}
 
@@ -91,7 +111,7 @@ public abstract class AbstractValueIntegrationTest extends AbstractGhidraHeadedI
 	}
 
 	protected void setProjectFileOnProjectTree(AbstractValue<?> value, DomainFile file) {
-		ProjectBrowserPanel projectWidget = (ProjectBrowserPanel) value.getComponent();
+		ProjectFileBrowserPanel projectWidget = (ProjectFileBrowserPanel) value.getComponent();
 		pressButtonByName(projectWidget, "BrowseButton", false);
 
 		DataTreeDialog dataTreeDialog = waitForDialogComponent(DataTreeDialog.class);
@@ -104,7 +124,7 @@ public abstract class AbstractValueIntegrationTest extends AbstractGhidraHeadedI
 	}
 
 	protected void setProjectFolderOnProjectTree(AbstractValue<?> value, DomainFolder folder) {
-		ProjectBrowserPanel projectWidget = (ProjectBrowserPanel) value.getComponent();
+		ProjectFolderBrowserPanel projectWidget = (ProjectFolderBrowserPanel) value.getComponent();
 		pressButtonByName(projectWidget, "BrowseButton", false);
 
 		DataTreeDialog dataTreeDialog = waitForDialogComponent(DataTreeDialog.class);

@@ -40,6 +40,7 @@ import javax.swing.JComponent;
 public abstract class AbstractValue<T> {
 	private final String name;
 	private T value;
+	private T originalValue;
 
 	/**
 	 * Constructor that assigned a name and optional initial value for this object.
@@ -49,6 +50,7 @@ public abstract class AbstractValue<T> {
 	protected AbstractValue(String name, T defaultValue) {
 		this.name = Objects.requireNonNull(name);
 		this.value = defaultValue;
+		this.originalValue = defaultValue;
 	}
 
 	/**
@@ -114,6 +116,13 @@ public abstract class AbstractValue<T> {
 	 */
 	public String getAsText() {
 		return value == null ? null : toString(value);
+	}
+
+	/**
+	 * Resets the value to its original value when constructed
+	 */
+	protected void reset() {
+		value = originalValue;
 	}
 
 	protected String toString(T t) {

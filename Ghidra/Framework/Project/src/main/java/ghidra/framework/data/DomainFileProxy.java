@@ -313,11 +313,6 @@ public class DomainFileProxy implements DomainFile {
 		return true;
 	}
 
-	public boolean isUsedExclusivelyBy(Object consumer) {
-		DomainObjectAdapter dobj = getDomainObject();
-		return dobj != null ? dobj.isUsedExclusivelyBy(consumer) : false;
-	}
-
 	@Override
 	public ArrayList<?> getConsumers() {
 		DomainObjectAdapter dobj = getDomainObject();

@@ -15,6 +15,8 @@
  */
 package ghidra.features.base.values;
 
+import java.io.IOException;
+
 import docking.Tool;
 import docking.widgets.values.GValuesMap;
 import ghidra.framework.model.DomainFile;
@@ -23,12 +25,24 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Extends GValuesMap to add Ghidra specific types such as Address and Program
  */
 public class GhidraValuesMap extends GValuesMap {
+	private TaskMonitor monitor = TaskMonitor.DUMMY;
 
+	/**
+	 * Sets a task monitor to be used when opening programs. Otherwise, {@link TaskMonitor#DUMMY} is
+	 * used.
+	 * @param monitor the TaskMonitor to use for opening programs
+	 */
+	public void setTaskMonitor(TaskMonitor monitor) {
+		this.monitor = TaskMonitor.dummyIfNull(monitor);
+	}
 //==================================================================================================
 // Define Value Methods
 //==================================================================================================	
@@ -88,36 +102,23 @@ public class GhidraValuesMap extends GValuesMap {
 	}
 
 	/**
-	 * Defines a value of type Program. This method opens programs using the given
-	 * consumer and must be properly released when it is no longer needed. This is true
-	 * even if the program is also opened in the tool.
+	 * Defines a value of type Program file.
 	 * @param name the name for this value
-	 * @param consumer the consumer to be used to open the program
-	 * @param tool if non-null, the program will also be opened in the given tool
-	 * @return the user-selected Program if a program was 
-	 * not selected or null.  NOTE: It is very important that the program instance
-	 * returned by this method ALWAYS be properly released from the consumer when no 
-	 * longer needed  (i.e., {@code program.release(consumer) } - failure to 
-	 * properly release the program may result in improper project disposal.  If the program was 
-	 * also opened in the tool, the tool will be a second consumer responsible for its 
-	 * own release.
+	 * @return the new ProgramFileValue defined 
 	 */
-	public ProgramValue defineProgram(String name, Object consumer, Tool tool) {
-		return defineProgram(name, null, consumer, tool);
+	public ProgramFileValue defineProgram(String name) {
+		return defineProgram(name, null);
 	}
 
 	/**
-	 * Defines a value of type Program.
+	 * Defines a value of type Program file.
 	 * @param name the name for this value
-	 * @param defaultValue the initial value
-	 * @param consumer the consumer to be used to open the program
-	 * @param tool if non-null, the program will also be opened in the given tool
-	 * @return the new ProgramValue that was defined
+	 * @param startPath the starting folder to display when picking programs from the chooser
+	 * @return the new ProgramFileValue that was defined
 	 */
-	public ProgramValue defineProgram(String name, Program defaultValue, Object consumer,
-			Tool tool) {
+	public ProgramFileValue defineProgram(String name, String startPath) {
 		checkDup(name);
-		ProgramValue value = new ProgramValue(name, defaultValue, consumer, tool);
+		ProgramFileValue value = new ProgramFileValue(name, startPath);
 		valuesMap.put(name, value);
 		return value;
 	}
@@ -134,12 +135,12 @@ public class GhidraValuesMap extends GValuesMap {
 	/**
 	 * Defines a value of type DomainFile (files in a Ghidra project).
 	 * @param name the name for this value
-	 * @param defaultValue the initial value
+	 * @param startingPath the initial folder path for the chooser widget
 	 * @return the new ProjectFileValue that was defined
 	 */
-	public ProjectFileValue defineProjectFile(String name, DomainFile defaultValue) {
+	public ProjectFileValue defineProjectFile(String name, String startingPath) {
 		checkDup(name);
-		ProjectFileValue value = new ProjectFileValue(name, defaultValue);
+		ProjectFileValue value = new ProjectFileValue(name, startingPath);
 		valuesMap.put(name, value);
 		return value;
 	}
@@ -156,12 +157,12 @@ public class GhidraValuesMap extends GValuesMap {
 	/**
 	 * Defines a value of type DomainFolder (files in a Ghidra project).
 	 * @param name the name for this value
-	 * @param defaultValue the initial value (can be null)
+	 * @param defaultValuePath the path for the initial value (can be null)
 	 * @return the new ProjectFolderValue that was defined
 	 */
-	public ProjectFolderValue defineProjectFolder(String name, DomainFolder defaultValue) {
+	public ProjectFolderValue defineProjectFolder(String name, String defaultValuePath) {
 		checkDup(name);
-		ProjectFolderValue value = new ProjectFolderValue(name, defaultValue);
+		ProjectFolderValue value = new ProjectFolderValue(name, defaultValuePath);
 		valuesMap.put(name, value);
 		return value;
 	}
@@ -192,14 +193,33 @@ public class GhidraValuesMap extends GValuesMap {
 	}
 
 	/**
-	 * Gets the {@link Program} value for the given name.
-	 * @param name the name of a previously defined project folder value
+	 * Gets (opens) the {@link Program} value for the given name. If the program is already open,
+	 * then the consumer will be added to the program. The caller of this method is responsible
+	 * for calling {@link Program#release(Object)} with the same consumer when it is done using this
+	 * program. Program are only closed after all consumers are released. If multiple calls
+	 * are made to this method, then the consumer will be added multiple times and must be released
+	 * multiple times.
+	 * <P>
+	 * The consumer can be any object, but since the consumer's purpose is to keep the program open 
+	 * while some object is using it, the object itself is typically passed in as
+	 * the consumer. For example, when used in a script, passing in the java keyword "this" as the
+	 * consumer will make the script itself the consumer.
+	 * <P>
+	 * @param name the name of a previously defined program value
+	 * @param consumer the consumer to be used to open the program
+	 * @param tool if non-null, the program will also be opened in the given tool. Note: the
+	 * program will only be added to the tool once even if this method is called multiple times.
 	 * @return the project folder value
+	 * @throws VersionException if the Program being opened is an older version than the 
+	 * current Ghidra Program version.
+	 * @throws IOException if there is an error accessing the Program's DomainObject
+	 * @throws CancelledException if the operation is cancelled
 	 * @throws IllegalArgumentException if the name hasn't been defined as a project folder type
 	 */
-	public Program getProgram(String name) {
-		ProgramValue programValue = getValue(name, ProgramValue.class, "Program");
-		return programValue.getValue();
+	public Program getProgram(String name, Object consumer, Tool tool)
+			throws VersionException, IOException, CancelledException {
+		ProgramFileValue programFileValue = getValue(name, ProgramFileValue.class, "Program");
+		return programFileValue.openProgram(consumer, tool, monitor);
 	}
 
 	/**
@@ -258,8 +278,8 @@ public class GhidraValuesMap extends GValuesMap {
 	 * @throws IllegalArgumentException if the name hasn't been defined as a Program type
 	 */
 	public void setProgram(String name, Program program) {
-		ProgramValue programValue = getValue(name, ProgramValue.class, "Program");
-		programValue.setValue(program);
+		ProgramFileValue programFileValue = getValue(name, ProgramFileValue.class, "Program");
+		programFileValue.setValue(program == null ? null : program.getDomainFile());
 	}
 
 	/**
