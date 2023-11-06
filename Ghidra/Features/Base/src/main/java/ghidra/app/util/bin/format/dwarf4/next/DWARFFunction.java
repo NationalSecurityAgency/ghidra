@@ -16,7 +16,7 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_unspecified_parameters;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -75,14 +75,17 @@ public class DWARFFunction {
 	 */
 	public static DWARFFunction read(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
-		if (isBadSubprogramDef(diea)) {
+		if (diea.isDanglingDeclaration()) {
+			return null;
+		}
+		Address funcAddr = getFuncEntry(diea);
+		if (funcAddr == null) {
 			return null;
 		}
 
 		DWARFProgram prog = diea.getProgram();
 		DWARFDataTypeManager dwarfDTM = prog.getDwarfDTM();
 
-		Address funcAddr = prog.getCodeAddress(diea.getLowPC(0));
 		DWARFFunction dfunc = new DWARFFunction(diea, prog.getName(diea), funcAddr);
 
 		dfunc.namespace = dfunc.name.getParentNamespace(prog.getGhidraProgram());
@@ -334,25 +337,29 @@ public class DWARFFunction {
 			name, address, params, sourceInfo, localVarErrors, retval);
 	}
 
-	private static boolean isBadSubprogramDef(DIEAggregate diea) {
-		if (diea.isDanglingDeclaration() || !diea.hasAttribute(DW_AT_low_pc)) {
-			return true;
-		}
-
-		// fetch the low_pc attribute directly instead of calling diea.getLowPc() to avoid
-		// any fixups applied by lower level code
-		DWARFNumericAttribute attr =
-			diea.getAttribute(DW_AT_low_pc, DWARFNumericAttribute.class);
-		if (attr != null && attr.getUnsignedValue() == 0) {
-			return true;
-		}
-
-		return false;
-	}
-
 	private void appendComment(Address address, int commentType, String comment, String sep) {
 		DWARFUtil.appendComment(getProgram().getGhidraProgram(), address, commentType, "", comment,
 			sep);
+	}
+
+	//---------------------------------------------------------------------------------------------
+
+	private static Address getFuncEntry(DIEAggregate diea) throws IOException {
+		// TODO: dw_at_entry_pc is also sometimes available, typically in things like inlined_subroutines 
+		DWARFProgram dprog = diea.getProgram();
+		DWARFNumericAttribute lowpcAttr =
+			diea.getAttribute(DW_AT_low_pc, DWARFNumericAttribute.class);
+		if (lowpcAttr != null && lowpcAttr.getUnsignedValue() != 0) {
+			return dprog.getCodeAddress(
+				lowpcAttr.getUnsignedValue() + dprog.getProgramBaseAddressFixup());
+		}
+		if (diea.hasAttribute(DW_AT_ranges)) {
+			List<DWARFRange> bodyRanges = diea.readRange(DW_AT_ranges);
+			if (!bodyRanges.isEmpty()) {
+				return dprog.getCodeAddress(bodyRanges.get(0).getFrom());
+			}
+		}
+		return null;
 	}
 
 }
