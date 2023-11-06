@@ -331,7 +331,8 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 			pathCheckbox = new GCheckBox("Use Path");
 			pathCheckbox.setToolTipText("<html>" +
-				"Adds each node's path to its filter information, which allows for path filtering");
+				"Allows filtering on node paths, for example '*/folder/node' or " +
+				"'*folder1*folder2*node'");
 			if (initialFilterOptions.shouldUsePath()) {
 				pathCheckbox.setSelected(true);
 			}
