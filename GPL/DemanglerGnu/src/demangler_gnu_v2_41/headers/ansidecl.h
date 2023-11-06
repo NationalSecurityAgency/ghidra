@@ -2,8 +2,8 @@
  * IP: LGPL 2.1
  * NOTE: See binutils/include/COPYING
  */
-/* ANSI and traditional C compatability macros
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+/* Compiler compatibility macros
+   Copyright (C) 1991-2023 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
 This program is free software; you can redistribute it and/or modify
@@ -20,18 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-/* ANSI and traditional C compatibility macros
-
-   ANSI C is assumed if __STDC__ is #defined.
-
-   Macro		ANSI C definition	Traditional C definition
-   -----		---- - ----------	----------- - ----------
-   PTR			`void *'		`char *'
-   const		not defined		`'
-   volatile		not defined		`'
-   signed		not defined		`'
-
-   For ease of writing code which uses GCC extensions but needs to be
+/* For ease of writing code which uses GCC extensions but needs to be
    portable to other compilers, we provide the GCC_VERSION macro that
    simplifies testing __GNUC__ and __GNUC_MINOR__ together, and various
    wrappers around __attribute__.  Also, __extension__ will be #defined
@@ -66,24 +55,10 @@ So instead we use the macro below and test it against specific values.  */
 #define GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
 #endif /* GCC_VERSION */
 
-#if defined (__STDC__) || defined(__cplusplus) || defined (_AIX) || (defined (__mips) && defined (_SYSTYPE_SVR4)) || defined(_WIN32)
-/* All known AIX compilers implement these things (but don't always
-   define __STDC__).  The RISC/OS MIPS compiler defines these things
-   in SVR4 mode, but does not define __STDC__.  */
-/* eraxxon@alumni.rice.edu: The Compaq C++ compiler, unlike many other
-   C++ compilers, does not define __STDC__, though it acts as if this
-   was so. (Verified versions: 5.7, 6.2, 6.3, 6.5) */
-
-#define PTR		void *
-
-#undef const
-#undef volatile
-#undef signed
-
 /* inline requires special treatment; it's in C99, and GCC >=2.7 supports
    it too, but it's not in C89.  */
 #undef inline
-#if __STDC_VERSION__ >= 199901L || defined(__cplusplus) || (defined(__SUNPRO_C) && defined(__C99FEATURES__))
+#if (!defined(__cplusplus) && __STDC_VERSION__ >= 199901L) || defined(__cplusplus) || (defined(__SUNPRO_C) && defined(__C99FEATURES__))
 /* it's a keyword */
 #else
 # if GCC_VERSION >= 2007
@@ -92,22 +67,6 @@ So instead we use the macro below and test it against specific values.  */
 #  define inline  /* nothing */
 # endif
 #endif
-
-#else	/* Not ANSI C.  */
-
-#define PTR		char *
-
-/* some systems define these in header files for non-ansi mode */
-#undef const
-#undef volatile
-#undef signed
-#undef inline
-#define const
-#define volatile
-#define signed
-#define inline
-
-#endif	/* ANSI C.  */
 
 /* Define macros for some gcc attributes.  This permits us to use the
    macros freely, and know that they will come into play for the
@@ -296,6 +255,40 @@ So instead we use the macro below and test it against specific values.  */
 # endif
 #endif
 
+/* Attribute `alloc_size' was valid as of gcc 4.3.  */
+#ifndef ATTRIBUTE_RESULT_SIZE_1
+# if (GCC_VERSION >= 4003)
+#  define ATTRIBUTE_RESULT_SIZE_1 __attribute__ ((alloc_size (1)))
+# else
+#  define ATTRIBUTE_RESULT_SIZE_1
+#endif
+#endif
+
+#ifndef ATTRIBUTE_RESULT_SIZE_2
+# if (GCC_VERSION >= 4003)
+#  define ATTRIBUTE_RESULT_SIZE_2 __attribute__ ((alloc_size (2)))
+# else
+#  define ATTRIBUTE_RESULT_SIZE_2
+#endif
+#endif
+
+#ifndef ATTRIBUTE_RESULT_SIZE_1_2
+# if (GCC_VERSION >= 4003)
+#  define ATTRIBUTE_RESULT_SIZE_1_2 __attribute__ ((alloc_size (1, 2)))
+# else
+#  define ATTRIBUTE_RESULT_SIZE_1_2
+#endif
+#endif
+
+/* Attribute `warn_unused_result' was valid as of gcc 3.3.  */
+#ifndef ATTRIBUTE_WARN_UNUSED_RESULT
+# if GCC_VERSION >= 3003
+#  define ATTRIBUTE_WARN_UNUSED_RESULT __attribute__ ((warn_unused_result))
+# else
+#  define ATTRIBUTE_WARN_UNUSED_RESULT
+# endif
+#endif
+
 /* We use __extension__ in some places to suppress -pedantic warnings
    about GCC extensions.  This feature didn't work properly before
    gcc 2.8.  */
@@ -326,51 +319,10 @@ So instead we use the macro below and test it against specific values.  */
 #define ENUM_BITFIELD(TYPE) unsigned int
 #endif
 
-#if __cpp_constexpr >= 200704
+#if defined(__cplusplus) && __cpp_constexpr >= 200704
 #define CONSTEXPR constexpr
 #else
 #define CONSTEXPR
-#endif
-
-/* C++11 adds the ability to add "override" after an implementation of a
-   virtual function in a subclass, to:
-     (A) document that this is an override of a virtual function
-     (B) allow the compiler to issue a warning if it isn't (e.g. a mismatch
-         of the type signature).
-
-   Similarly, it allows us to add a "final" to indicate that no subclass
-   may subsequently override the vfunc.
-
-   Provide OVERRIDE and FINAL as macros, allowing us to get these benefits
-   when compiling with C++11 support, but without requiring C++11.
-
-   For gcc, use "-std=c++11" to enable C++11 support; gcc 6 onwards enables
-   this by default (actually GNU++14).  */
-
-#if defined __cplusplus
-# if __cplusplus >= 201103
-   /* C++11 claims to be available: use it.  Final/override were only
-      implemented in 4.7, though.  */
-#  if GCC_VERSION < 4007
-#   define OVERRIDE
-#   define FINAL
-#  else
-#   define OVERRIDE override
-#   define FINAL final
-#  endif
-# elif GCC_VERSION >= 4007
-   /* G++ 4.7 supports __final in C++98.  */
-#  define OVERRIDE
-#  define FINAL __final
-# else
-   /* No C++11 support; leave the macros empty.  */
-#  define OVERRIDE
-#  define FINAL
-# endif
-#else
-  /* No C++11 support; leave the macros empty.  */
-# define OVERRIDE
-# define FINAL
 #endif
 
 /* A macro to disable the copy constructor and assignment operator.
@@ -389,7 +341,7 @@ So instead we use the macro below and test it against specific values.  */
 
    so that most attempts at copy are caught at compile-time.  */
 
-#if __cplusplus >= 201103
+#if defined(__cplusplus) && __cplusplus >= 201103
 #define DISABLE_COPY_AND_ASSIGN(TYPE)		\
   TYPE (const TYPE&) = delete;			\
   void operator= (const TYPE &) = delete

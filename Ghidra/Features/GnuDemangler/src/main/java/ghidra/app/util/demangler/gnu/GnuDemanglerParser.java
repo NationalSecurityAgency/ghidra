@@ -320,6 +320,22 @@ public class GnuDemanglerParser {
 	 */
 	private static final Pattern LITERAL_NUMBER_PATTERN = Pattern.compile("-*\\d+[ul]{0,1}");
 
+	/**
+	 * Pattern to identify a legacy rust string that contains its hash id suffix and capture the
+	 * non-hash portion.
+	 * 
+	 * Legacy mangled rust symbols:
+	 * - start with _ZN
+	 * - end withe E or E.
+	 * - have a 16 digit hash that starts with 17h
+	 * 
+	 * The demangled string has the leading '17' and trailing 'E|E.' removed.
+	 * 
+	 * Sample: std::io::Read::read_to_end::hb85a0f6802e14499
+	 */
+	private static final Pattern RUST_LEGACY_SUFFIX_PATTERN =
+		Pattern.compile("(.*)::h[0-9a-f]{16}");
+
 	private String mangledSource;
 	private String demangledSource;
 
@@ -332,6 +348,8 @@ public class GnuDemanglerParser {
 	 * @throws DemanglerParseException if there is an unexpected error parsing
 	 */
 	public DemangledObject parse(String mangled, String demangled) throws DemanglerParseException {
+
+		demangled = cleanupRustLegacySymbol(demangled);
 
 		this.mangledSource = mangled;
 		this.demangledSource = demangled;
@@ -463,6 +481,14 @@ public class GnuDemanglerParser {
 		}
 
 		return function;
+	}
+
+	private String cleanupRustLegacySymbol(String demangled) {
+		Matcher m = RUST_LEGACY_SUFFIX_PATTERN.matcher(demangled);
+		if (m.matches()) {
+			return m.group(1);
+		}
+		return demangled;
 	}
 
 	private void setReturnType(String demangled, DemangledFunction function, String returnType) {

@@ -1,5 +1,5 @@
 /* ###
- * IP: GPL 3
+ * IP: GPL 3 Linking Permitted
  * NOTE: See binutils/include/COPYING3
  */
 /* Getopt for GNU.
@@ -7,7 +7,7 @@
    "Keep this file name-space clean" means, talk to drepper@gnu.org
    before changing it!
 
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2023 Free Software Foundation, Inc.
 
    NOTE: This source is derived from an old version taken from the GNU C
    Library (glibc).

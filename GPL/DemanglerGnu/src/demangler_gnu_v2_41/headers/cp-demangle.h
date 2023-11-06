@@ -1,9 +1,9 @@
 /* ###
- * IP: GPL 3 Linking Permitted
- * NOTE: See binutils/libiberty/COPYING.LIB; Used GPL 3 from this file's header
+ * IP: LGPL 2.1
+ * NOTE: See binutils/include/COPYING
  */
 /* Internal demangler interface for g++ V3 ABI.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@wasabisystems.com>.
 
    This file is part of the libiberty library, which is part of GCC.
@@ -126,6 +126,10 @@ struct d_info
   /* Non-zero if we are parsing the type operand of a conversion
      operator, but not when in an expression.  */
   int is_conversion;
+  /*  1: using new unresolved-name grammar.
+     -1: using new unresolved-name grammar and saw an unresolved-name.
+      0: using old unresolved-name grammar.  */
+  int unresolved_name_state;
   /* If DMGL_NO_RECURSE_LIMIT is not active then this is set to
      the current recursion level.  */
   unsigned int recursion_level;
@@ -180,7 +184,7 @@ d_advance (struct d_info *di, int i)
 extern const struct demangle_operator_info cplus_demangle_operators[];
 #endif
 
-#define D_BUILTIN_TYPE_COUNT (34)
+#define D_BUILTIN_TYPE_COUNT (36)
 
 CP_STATIC_IF_GLIBCPP_V3
 const struct demangle_builtin_type_info
