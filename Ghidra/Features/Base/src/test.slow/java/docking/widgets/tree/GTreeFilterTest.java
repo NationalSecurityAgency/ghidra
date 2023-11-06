@@ -19,6 +19,8 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
+import javax.swing.tree.TreePath;
+
 import org.junit.*;
 
 import docking.DockingWindowManager;
@@ -453,6 +455,148 @@ public class GTreeFilterTest extends AbstractDockingTest {
 
 	}
 
+	@Test
+	public void testUsePath() {
+
+		/*
+		  Create a tree with the following nodes in order to test matching of a node name that 
+		  exists at multiple levels.
+		  
+		  	Root/XYZ
+		  	Root/folder1/XYZ
+			Root/folder1/folder1_1/XYZ
+			Root/folder1/folder1_1/folder1_1_1/XYZ
+			Root/folder2/XYZ
+		  
+		 */
+
+		String xyzName = "XYZ";
+		GTreeNode root = new TestRootNode();
+		TestNode folder1 = new TestNode("folder1");
+		LeafNode leaf1 = new LeafNode(xyzName);
+		folder1.addNode(leaf1);
+		TestNode folder1_1 = new TestNode("folder1_1");
+		LeafNode leaf1_1 = new LeafNode(xyzName);
+		folder1_1.addNode(leaf1_1);
+		TestNode folder1_1_1 = new TestNode("folder1_1_1");
+		LeafNode leaf1_1_1 = new LeafNode(xyzName);
+		folder1_1_1.addNode(leaf1_1_1);
+		TestNode folder2 = new TestNode("folder2");
+		LeafNode leaf2 = new LeafNode(xyzName);
+		folder2.addNode(leaf2);
+
+		folder1.addNode(folder1_1);
+		folder1_1.addNode(folder1_1_1);
+
+		root.addNode(folder1);
+		root.addNode(folder2);
+
+		gTree.setRootNode(root);
+		waitForTree();
+
+		setFilterOnPath(true);
+
+		// name only; match all
+		setFilterText(xyzName);
+		//@formatter:off
+		assertNodes(
+			root.getChild(xyzName),
+			leaf1,
+			leaf1_1,
+			leaf1_1_1,
+			leaf2
+		);
+		//@formatter:on
+
+		// folder1 and name; match all under folder1
+		setFilterText("*folder1*" + xyzName);
+		//@formatter:off
+		assertNodes(
+			// root.getChild(xyzName),  no match here
+			leaf1,
+			leaf1_1,
+			leaf1_1_1
+			// leaf2                    no match here
+		);
+		//@formatter:on
+
+		// folder1_1 and name; match all under folder1_1
+		setFilterText("*folder1_1*" + xyzName);
+		//@formatter:off
+		assertNodes(
+			// root.getChild(xyzName),  no match here
+			// leaf1,                   no match here
+			leaf1_1,
+			leaf1_1_1
+			// leaf2                    no match here
+		);
+		//@formatter:on
+
+		// folder1_1_1 and name; match only under folder1_1_1
+		setFilterText("*folder1_1_1*" + xyzName);
+		//@formatter:off
+		assertNodes(
+			// root.getChild(xyzName),  no match here
+			// leaf1,                   no match here
+			// leaf1_1,                 no match here
+			leaf1_1_1
+			// leaf2                    no match here
+		);
+		//@formatter:on
+
+		// folder1_1_1 and name; match only under folder1_1_1
+		setFilterText("Root/folder1/folder1_1/folder1_1_1/" + xyzName);
+		//@formatter:off
+		assertNodes(
+			// root.getChild(xyzName),  no match here
+			// leaf1,                   no match here
+			// leaf1_1,                 no match here
+			leaf1_1_1
+			// leaf2                    no match here
+		);
+		//@formatter:on
+
+		setFilterOnPath(false);
+		// folder1_1_1 and name; match only under folder1_1_1
+		setFilterText("*folder1_1_1*" + xyzName);
+		assertNoMatches();
+	}
+
+	private void assertNoMatches() {
+		assertEquals(0, viewRoot().getChildCount());
+	}
+
+	private void assertNodes(GTreeNode... nodes) {
+
+		int count = 0;
+		int rows = gTree.getRowCount();
+		for (int i = 0; i < rows; i++) {
+			TreePath path = gTree.getPathForRow(i);
+			GTreeNode node = (GTreeNode) path.getLastPathComponent();
+			if (node.isLeaf()) {
+				if (node.isLeaf()) {
+					count++;
+				}
+			}
+		}
+
+		assertEquals(nodes.length, count);
+		for (GTreeNode node : nodes) {
+			assertTrue(gTree.getRowForPath(node.getTreePath()) != -1);
+		}
+	}
+
+	private void setFilterOnPath(boolean usePath) {
+		runSwing(() -> {
+			FilterOptions filterOptions = new FilterOptions(TextFilterStrategy.CONTAINS,
+				true, false, false, usePath, false, FilterOptions.DEFAULT_DELIMITER,
+				MultitermEvaluationMode.AND);
+			((DefaultGTreeFilterProvider) gTree.getFilterProvider()).setFilterOptions(
+				filterOptions);
+		});
+		waitForTree();
+	}
+
 	private void restorePreferences() {
 		runSwing(() -> {
 			GTreeFilterProvider filterProvider = gTree.getFilterProvider();
@@ -499,14 +643,13 @@ public class GTreeFilterTest extends AbstractDockingTest {
 				filterOptions);
 		});
 		waitForTree();
-
 	}
 
 	private void setFilterOptions(TextFilterStrategy filterStrategy, boolean inverted,
 			boolean multiTerm, char splitCharacter, MultitermEvaluationMode evalMode) {
 		runSwing(() -> {
 			FilterOptions filterOptions = new FilterOptions(filterStrategy, false, false, inverted,
-				multiTerm, splitCharacter, evalMode);
+				false, multiTerm, splitCharacter, evalMode);
 			((DefaultGTreeFilterProvider) gTree.getFilterProvider()).setFilterOptions(
 				filterOptions);
 		});

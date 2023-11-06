@@ -2112,7 +2112,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 			if (waitTime >= DEFAULT_WAIT_TIMEOUT) {
 				createStackTraceForAllThreads(); // this may help debug indecent table models
-				throw new AssertException("Timed out waiting for table model to load");
+				throw new AssertException("Timed out waiting for tree to load");
 			}
 		}
 		waitForSwing();

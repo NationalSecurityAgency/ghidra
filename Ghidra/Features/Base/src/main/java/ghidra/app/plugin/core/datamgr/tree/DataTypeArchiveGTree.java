@@ -261,6 +261,7 @@ public class DataTypeArchiveGTree extends GTree {
 // Inner Classes
 //==================================================================================================
 
+	/** Only filters on name or display name, not dt contents */
 	private class DefaultDtTreeDataTransformer extends DefaultGTreeDataTransformer {
 
 		private boolean filterOnNameOnly;
@@ -274,10 +275,11 @@ public class DataTypeArchiveGTree extends GTree {
 			if (filterOnNameOnly) {
 				return node.getName(); // the node name is the type name
 			}
-			return super.toString(node);
+			return super.toString(node); // display text
 		}
 	}
 
+	/** Filters on dt contents */
 	private class DataTypeTransformer extends DefaultDtTreeDataTransformer {
 
 		DataTypeTransformer(boolean filterOnNameOnly) {
