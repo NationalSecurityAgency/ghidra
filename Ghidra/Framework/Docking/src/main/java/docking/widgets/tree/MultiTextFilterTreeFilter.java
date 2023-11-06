@@ -43,7 +43,7 @@ public class MultiTextFilterTreeFilter implements GTreeFilter {
 		}
 
 		List<String> nodeData = transformer.transform(node);
-		Stream<TextFilter> stream = filters.parallelStream();
+		Stream<TextFilter> stream = filters.stream();
 		if (evalMode == MultitermEvaluationMode.AND) {
 			return stream.allMatch(f -> matches(f, nodeData));
 		}
@@ -56,7 +56,7 @@ public class MultiTextFilterTreeFilter implements GTreeFilter {
 	}
 
 	private static boolean matches(TextFilter filter, List<String> nodeData) {
-		return nodeData.parallelStream().anyMatch(data -> filter.matches(data));
+		return nodeData.stream().anyMatch(data -> filter.matches(data));
 	}
 
 }
